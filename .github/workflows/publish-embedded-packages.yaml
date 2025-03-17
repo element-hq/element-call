@@ -86,7 +86,7 @@ jobs:
         working-directory: embedded/web
         run: |
           npm version ${{ env.VERSION }} --no-git-tag-version
-          echo "NPM_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
+          echo "ARTIFACT_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
           npm publish --provenance --access public ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
@@ -99,10 +99,10 @@ jobs:
           body: |
             ## NPM embedded package
 
-            This package provides a version of Element Call that can be both used as an embedded widget within another application.
+            This package provides a build of Element Call that can be used as an embedded widget within another application.
 
             ```
-            npm install @element-hq/element-call-embedded@${{ env.NPM_VERSION }}
+            npm install @element-hq/element-call-embedded@${{ env.ARTIFACT_VERSION }}
             ```
 
   publish_android:
@@ -130,11 +130,14 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
+      - name: Get artifact version
+        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
+  
       - name: Publish AAR
         if: ${{ env.DRY_RUN == 'false' }}
         # TODO: can we do some kind of dry run?
         env:
-          EC_VERSION: ${{ env.VERSION }}
+          EC_VERSION: ${{ env.ARTIFACT_VERSION }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_RELEASE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_RELEASE_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
@@ -149,11 +152,11 @@ jobs:
           body: |
             ## Android AAR embedded package
 
-            This package provides a version of Element Call that can be both used as an embedded widget within another application.
+            This package provides a build of Element Call that can be used as an embedded widget within another application.
 
             ```
             dependencies {
-              implementation 'io.element.call:element-call-embedded:${{ env.VERSION}}'
+              implementation 'io.element.call:element-call-embedded:${{ env.ARTIFACT_VERSION}}'
             }
             ```
 
@@ -188,6 +191,9 @@ jobs:
       - name: Copy files
         run: rsync -a --delete --exclude .git element-call/embedded/ios/ element-call-swift
 
+      - name: Get artifact version
+        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
+
       - name: Commit and tag
         working-directory: element-call-swift
         run: |
@@ -195,7 +201,7 @@ jobs:
           git config --global user.name "Element CI"
           git add -A
           git commit -am "Release ${{ env.VERSION }}"
-          git tag -a ${{ env.VERSION }} -m "${{ github.event.release.html_url }}"
+          git tag -a ${{ env.ARTIFACT_VERSION }} -m "${{ github.event.release.html_url }}"
 
       - name: Push
         working-directory: element-call-swift
@@ -210,8 +216,8 @@ jobs:
           body: |
             ## SwiftPM embedded package
 
-            This package provides a version of Element Call that can be both used as an embedded widget within another application.
+            This package provides a build of Element Call that can be used as an embedded widget within another application.
 
             ```
-            .package(url: "https://github.com/element-hq/element-call-swift.git", from: "${{ env.VERSION }}")
+            .package(url: "https://github.com/element-hq/element-call-swift.git", from: "${{ env.ARTIFACT_VERSION }}")
             ```
