@@ -12,7 +12,7 @@ jobs:
     uses: ./.github/workflows/build-element-call.yaml
     with:
       package: full
-      vite_app_version: ${{ github.env.VERSION }}
+      vite_app_version: ${{ github.event.release.tag_name }} # Using ${{ env.VERSION }} here doesn't work
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -27,7 +27,7 @@ jobs:
       contents: write # required to upload release asset
       packages: write
     env:
-      FILENAME_PREFIX: element-call-${{ github.env.VERSION }}
+      FILENAME_PREFIX: element-call-${{ github.event.release.tag_name }} # Using ${{ env.VERSION }} here doesn't work
     steps:
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
