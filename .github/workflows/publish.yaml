@@ -26,8 +26,6 @@ jobs:
     permissions:
       contents: write # required to upload release asset
       packages: write
-    env:
-      FILENAME_PREFIX: element-call-${{ github.event.release.tag_name }} # Using ${{ env.VERSION }} here doesn't work
     steps:
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
@@ -36,16 +34,18 @@ jobs:
           run-id: ${{ github.event.workflow_run.id || github.run_id }}
           name: build-output-full
           path: dist
+      - name: Determine filename
+        run: echo "FILENAME_PREFIX=element-call-${VERSION:1}" >> "$GITHUB_ENV"
       - name: Create Tarball
-        run: |
-          tar --numeric-owner --transform "s/dist/${{ env.FILENAME_PREFIX }}/" -cvzf ${{ env.FILENAME_PREFIX }}.tar.gz dist
-          sha256sum ${{ env.FILENAME_PREFIX }}.tar.gz | tee ${{ env.FILENAME_PREFIX }}.tar.gz.sha256
+        run: tar --numeric-owner --transform "s/dist/${{ env.FILENAME_PREFIX }}/" -cvzf ${{ env.FILENAME_PREFIX }}.tar.gz dist
+      - name: Create Checksum
+        run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ${{ env.FILENAME_PREFIX }}.tar.gz
-            ${{ env.FILENAME_PREFIX }}.tar.gz.sha256
+            ${{ env.FILENAME_PREFIX }}.sha256
 
   publish_docker:
     needs: build_element_call

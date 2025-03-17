@@ -34,8 +34,6 @@ jobs:
     permissions:
       contents: write # required to upload release asset
       packages: write
-    env:
-      FILENAME_PREFIX: element-call-embedded-${{ github.event.release.tag_name || 'v0.0.0-pre.0' }} # Using ${{ env.VERSION }} here doesn't work
     steps:
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
@@ -44,6 +42,8 @@ jobs:
           run-id: ${{ github.event.workflow_run.id || github.run_id }}
           name: build-output-embedded
           path: ${{ env.FILENAME_PREFIX}}
+      - name: Determine filename
+        run: echo "FILENAME_PREFIX=element-call-embedded-${VERSION:1}" >> "$GITHUB_ENV"
       - name: Create Tarball
         run: tar --numeric-owner -cvzf ${{ env.FILENAME_PREFIX }}.tar.gz ${{ env.FILENAME_PREFIX }}
       - name: Create Checksum
