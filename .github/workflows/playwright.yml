@@ -19,7 +19,7 @@ jobs:
         run: yarn playwright install --with-deps
       - name: Run backend components
         run: |
-          docker compose -f dev-backend-docker-compose.yml up -d
+          docker compose -f playwright-backend-docker-compose.yml up -d
           docker ps
       - name: Copy config file
         run: cp config/config.devenv.json public/config.json
