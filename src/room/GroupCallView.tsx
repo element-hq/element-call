@@ -68,7 +68,6 @@ import {
   useSetting,
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
-import { GroupCallErrorBoundaryContextProvider } from "./GroupCallErrorBoundaryContextProvider.tsx";
 import { useGroupCallErrorBoundary } from "./useCallErrorBoundary.ts";
 
 declare global {
@@ -90,15 +89,7 @@ interface Props {
   widget: WidgetHelpers | null;
 }
 
-export const GroupCallView: FC<Props> = (props) => {
-  return (
-    <GroupCallErrorBoundaryContextProvider>
-      <GroupCallViewInner {...props} />
-    </GroupCallErrorBoundaryContextProvider>
-  );
-};
-
-export const GroupCallViewInner: FC<Props> = ({
+export const GroupCallView: FC<Props> = ({
   client,
   isPasswordlessUser,
   confineToRoom,

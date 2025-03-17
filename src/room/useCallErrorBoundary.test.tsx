@@ -11,7 +11,6 @@ import { type ReactElement, useCallback } from "react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 
-import { GroupCallErrorBoundaryContextProvider } from "./GroupCallErrorBoundaryContextProvider.tsx";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
 import { useGroupCallErrorBoundary } from "./useCallErrorBoundary.ts";
 import { ConnectionLostError } from "../utils/errors.ts";
@@ -36,11 +35,9 @@ it("should show async error", async () => {
 
   render(
     <BrowserRouter>
-      <GroupCallErrorBoundaryContextProvider>
-        <GroupCallErrorBoundary widget={null} recoveryActionHandler={vi.fn()}>
-          <TestComponent />
-        </GroupCallErrorBoundary>
-      </GroupCallErrorBoundaryContextProvider>
+      <GroupCallErrorBoundary widget={null} recoveryActionHandler={vi.fn()}>
+        <TestComponent />
+      </GroupCallErrorBoundary>
     </BrowserRouter>,
   );
 
