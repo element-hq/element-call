@@ -1,0 +1,58 @@
+import { expect, test } from "@playwright/test";
+
+test("Should show error screen if fails to get JWT token", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByTestId("home_callName").click();
+  await page.getByTestId("home_callName").fill("HelloCall");
+  await page.getByTestId("home_displayName").click();
+  await page.getByTestId("home_displayName").fill("John Doe");
+  await page.getByTestId("home_go").click();
+
+  await page.route("**/openid/request_token", (route) =>
+    route.fulfill({
+      // 418 is a non retryable error, so test will fail immediately
+      status: 418,
+    }),
+  );
+
+  // Join the call
+  await page.getByTestId("lobby_joinCall").click();
+
+  // Should fail
+  await expect(page.getByText("Something went wrong")).toBeVisible();
+  await expect(page.getByText("OPEN_ID_ERROR")).toBeVisible();
+});
+
+test("Should automatically retry non fatal JWT errors", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByTestId("home_callName").click();
+  await page.getByTestId("home_callName").fill("HelloCall");
+  await page.getByTestId("home_displayName").click();
+  await page.getByTestId("home_displayName").fill("John Doe");
+  await page.getByTestId("home_go").click();
+
+  let firstCall = true;
+  let hasRetriedCallback: (value: PromiseLike<void> | void) => void;
+  let hasRetriedPromise = new Promise<void>((resolve) => {
+    hasRetriedCallback = resolve;
+  });
+  await page.route("**/openid/request_token", (route) => {
+    if (firstCall) {
+      firstCall = false;
+      route.fulfill({
+        status: 429,
+      });
+    } else {
+      route.continue();
+      hasRetriedCallback();
+    }
+  });
+
+  // Join the call
+  await page.getByTestId("lobby_joinCall").click();
+  // Expect that the call has been retried
+  await hasRetriedPromise;
+  await expect(page.getByText("Something went wrong")).not.toBeVisible();
+});
