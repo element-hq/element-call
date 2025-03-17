@@ -11,13 +11,13 @@ on:
         required: true
     secrets:
       SENTRY_ORG:
-        required: false
+        required: true
       SENTRY_PROJECT:
-        required: false
+        required: true
       SENTRY_URL:
-        required: false
+        required: true
       SENTRY_AUTH_TOKEN:
-        required: false
+        required: true
       CODECOV_TOKEN:
         required: false
 

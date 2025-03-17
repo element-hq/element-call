@@ -25,7 +25,12 @@ jobs:
     with:
       vite_app_version: embedded-${{ github.event.release.tag_name || 'v0.0.0-pre.0' }} # Using ${{ env.VERSION }} here doesn't work
       package: embedded
-
+    secrets:
+      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+      SENTRY_URL: ${{ secrets.SENTRY_URL }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+  
   publish_tarball:
     needs: build_element_call
     if: always()
