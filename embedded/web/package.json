@@ -9,6 +9,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/element-hq/element-call.git"
+    "url": "git+https://github.com/element-hq/element-call.git"
   }
 }
