@@ -20,7 +20,7 @@ utilizes
 **[MSC4195](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)**
 with **[LiveKit](https://livekit.io/)** as its backend.
 
-![A demo of Element Call with six people](demo.jpg)
+![A demo of Element Call with six people](demo.gif)
 
 You can find the latest development version continuously deployed to
 [call.element.dev](https://call.element.dev/).
@@ -188,6 +188,64 @@ yarn backend
 # or  for podman-compose
 # podman-compose -f dev-backend-docker-compose.yml up
 ```
+
+### Playwright tests
+
+Our Playwright tests run automatically as part of our CI along with our other tests,
+on every pull request.
+
+You may need to follow instructions to set up your development environment for running
+Playwright by following <https://playwright.dev/docs/browsers#install-browsers> and
+<https://playwright.dev/docs/browsers#install-system-dependencies>.
+
+However the Playwright tests are run, an element-call instance must be running on
+https://localhost:3000 (this is configured in `playwright.config.ts`) - this is what will
+be tested.
+
+The local backend environment should be running for the test to work:
+`yarn backend`
+
+There are a few different ways to run the tests yourself. The simplest is to run:
+
+```shell
+yarn run test:playwright
+```
+
+This will run the Playwright tests once, non-interactively.
+
+There is a more user-friendly way to run the tests in interactive mode:
+
+```shell
+yarn run test:playwright:open
+```
+
+The easiest way to develop new test is to use the codegen feature of Playwright:
+
+```shell
+npx playwright codegen
+```
+
+This will record your action and write the test code for you. Use the tool bar to test visibility, text content,
+clicking.
+
+##### Investigate a failed test from the CI
+
+In the failed action page, click on the failed job, then scroll down to the `upload-artifact` step.
+You will find a link to download the zip report, as per:
+
+```
+Artifact playwright-report has been successfully uploaded! Final size is 1360358 bytes. Artifact ID is 2746265841
+Artifact download URL: https://github.com/element-hq/element-call/actions/runs/13837660687/artifacts/2746265841
+```
+
+Unzip the report then use this command to open the report in your browser:
+
+```shell
+npx playwright show-report ~/Downloads/playwright-report/
+```
+
+Under the failed test there is a small icon looking like "3 columns" (next to test name file name),
+click on it to see the live screenshots/console output.
 
 ### Test Coverage
 
