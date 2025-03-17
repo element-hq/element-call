@@ -41,10 +41,23 @@ max_event_delay_duration: 24h
 #   - burst_count: number of requests a client can send before being throttled.
 
 rc_message:
-  # This needs to match at least the heart-beat frequency plus a bit of headroom
-  # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2s
-  per_second: 0.5
-  burst_count: 30
+  per_second: 10000
+  burst_count: 10000
+
+rc_login:
+  address:
+    per_second: 10000
+    burst_count: 10000
+  account:
+    per_second: 10000
+    burst_count: 10000
+  failed_attempts:
+    per_second: 10000
+    burst_count: 10000
+
+rc_registration:
+  per_second: 10000
+  burst_count: 10000
 
 # Required for Element Call in Single Page Mode due to on-the-fly user registration
 enable_registration: true
