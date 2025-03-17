@@ -20,7 +20,7 @@ utilizes
 **[MSC4195](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)**
 with **[LiveKit](https://livekit.io/)** as its backend.
 
-![A demo of Element Call with six people](demo.jpg)
+![A demo of Element Call with six people](demo.gif)
 
 You can find the latest development version continuously deployed to
 [call.element.dev](https://call.element.dev/).
