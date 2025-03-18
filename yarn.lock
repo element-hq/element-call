@@ -1773,10 +1773,10 @@
   resolved "https://registry.yarnpkg.com/@livekit/mutex/-/mutex-1.1.1.tgz#72492b611d55be8130ba2271b7a436d94b1bc6d4"
   integrity sha512-EsshAucklmpuUAfkABPxJNhzj9v2sG7JuzFDL4ML1oJQSV14sqrpTYnsaOudMAw9yOaW53NU3QQTlUQoRs4czw==
 
-"@livekit/protocol@1.30.0":
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.30.0.tgz#c79e98aca2a822f9bd217d016c6efd0f472f206f"
-  integrity sha512-SDI9ShVKj8N3oOSinr8inaxD3FXgmgoJlqN35uU/Yx1sdoDeQbzAuBFox7bYjM+VhnZ1V22ivIDjAsKr00H+XQ==
+"@livekit/protocol@1.33.0":
+  version "1.33.0"
+  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.33.0.tgz#b8dfcf82ca501e747533d519e51b5c80176bf03e"
+  integrity sha512-361mBlFgI3nvn8oSQIL38gDUBGbOSwsEOqPgX0c1Jwz75/sD/TTvPeAM4zAz6OrV5Q4vI4Ruswecnyv5SG4oig==
   dependencies:
     "@bufbuild/protobuf" "^1.10.0"
 
@@ -5253,11 +5253,6 @@ fs.realpath@^1.0.0:
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==
 
-fsevents@2.3.2:
-  version "2.3.2"
-  resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
-  integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==
-
 fsevents@~2.3.2, fsevents@~2.3.3:
   version "2.3.3"
   resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.3.tgz#cac6407785d03675a2a5e1a5305c697b347d90d6"
@@ -6186,13 +6181,13 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
-livekit-client@2.8.1:
-  version "2.8.1"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.8.1.tgz#2492587cde93ffb7bafcc3ce91f67e108fc63c4a"
-  integrity sha512-HPv9iHNrnBANI9ucK7CKZspx0sBZK3hjR2EbwaV08+J3RM9+tNGL2ob2n76nxJLEZG7LzdWlLZdbr4fQBP6Hkg==
+livekit-client@2.9.1:
+  version "2.9.1"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.9.1.tgz#7286d845dc3a063354a92caf5821d4e9d7584de0"
+  integrity sha512-MqBxnOmkOB88+n2Whq2pgXVwevfJ+yhERNf0tZf/7RG1ZpCWF+pk7/muRVzZeCxal4fwGOB3Z3MIT0KBJoT0RQ==
   dependencies:
     "@livekit/mutex" "1.1.1"
-    "@livekit/protocol" "1.30.0"
+    "@livekit/protocol" "1.33.0"
     events "^3.3.0"
     loglevel "^1.8.0"
     sdp-transform "^2.14.1"
