@@ -91,7 +91,7 @@ test("As a guest, create a call, share link and other join", async ({
   await expect(creatorPage.getByTestId("modal_inviteLink")).toBeVisible();
   await creatorPage.getByTestId("modal_inviteLink").click();
 
-  let inviteLink = (await creatorPage.evaluate(
+  const inviteLink = (await creatorPage.evaluate(
     "navigator.clipboard.readText()",
   )) as string;
   expect(inviteLink).toContain("room/#/");
