@@ -61,5 +61,5 @@ test("Should automatically retry non fatal JWT errors", async ({ page }) => {
   await page.getByTestId("lobby_joinCall").click();
   // Expect that the call has been retried
   await hasRetriedPromise;
-  await expect(page.getByText("Something went wrong")).not.toBeVisible();
+  await expect(page.getByTestId("video").first()).toBeVisible();
 });
