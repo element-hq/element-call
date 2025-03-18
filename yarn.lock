@@ -5395,6 +5395,11 @@ fs.realpath@^1.0.0:
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==
 
+fsevents@2.3.2:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
+  integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==
+
 fsevents@~2.3.2, fsevents@~2.3.3:
   version "2.3.3"
   resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.3.tgz#cac6407785d03675a2a5e1a5305c697b347d90d6"
@@ -6346,20 +6351,20 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
-livekit-client@^2.5.7:
-  version "2.9.5"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.9.5.tgz#b9bcce5972ccf194ee36eabbf8d93b20dd672b19"
-  integrity sha512-2EJmiB4XItaRjTEmL4XxGzsahLYTer9T5N6lKyhBHQxwH4GrjBWewPySvJEO8zCpD2nvWZCmCQjIJx0+w+y6DA==
+livekit-client@2.9.1:
+  version "2.9.1"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.9.1.tgz#7286d845dc3a063354a92caf5821d4e9d7584de0"
+  integrity sha512-MqBxnOmkOB88+n2Whq2pgXVwevfJ+yhERNf0tZf/7RG1ZpCWF+pk7/muRVzZeCxal4fwGOB3Z3MIT0KBJoT0RQ==
   dependencies:
     "@livekit/mutex" "1.1.1"
     "@livekit/protocol" "1.33.0"
     events "^3.3.0"
-    loglevel "^1.9.2"
-    sdp-transform "^2.15.0"
+    loglevel "^1.8.0"
+    sdp-transform "^2.14.1"
     ts-debounce "^4.0.0"
     tslib "2.8.1"
     typed-emitter "^2.1.0"
-    webrtc-adapter "^9.0.1"
+    webrtc-adapter "^9.0.0"
 
 locate-path@^5.0.0:
   version "5.0.0"
@@ -6400,7 +6405,7 @@ loglevel@1.9.1:
   resolved "https://registry.yarnpkg.com/loglevel/-/loglevel-1.9.1.tgz#d63976ac9bcd03c7c873116d41c2a85bafff1be7"
   integrity sha512-hP3I3kCrDIMuRwAwHltphhDM1r8i55H33GgqjXbrisuJhF4kRhW1dNuxsRklp4bXl8DSdLaNLuiL4A/LWRfxvg==
 
-loglevel@^1.7.1, loglevel@^1.9.1, loglevel@^1.9.2:
+loglevel@^1.7.1, loglevel@^1.8.0, loglevel@^1.9.1:
   version "1.9.2"
   resolved "https://registry.yarnpkg.com/loglevel/-/loglevel-1.9.2.tgz#c2e028d6c757720107df4e64508530db6621ba08"
   integrity sha512-HgMmCqIJSAKqo68l0rS2AanEWfkxaZ5wNiEFb5ggm08lDs9Xl2KxBlX3PTcaD2chBM1gXAYf491/M2Rv8Jwayg==
@@ -7923,7 +7928,7 @@ scheduler@^0.23.2:
   dependencies:
     loose-envify "^1.1.0"
 
-sdp-transform@^2.14.1, sdp-transform@^2.15.0:
+sdp-transform@^2.14.1:
   version "2.15.0"
   resolved "https://registry.yarnpkg.com/sdp-transform/-/sdp-transform-2.15.0.tgz#79d37a2481916f36a0534e07b32ceaa87f71df42"
   integrity sha512-KrOH82c/W+GYQ0LHqtr3caRpM3ITglq3ljGUIb8LTki7ByacJZ9z+piSGiwZDsRyhQbYBOBJgr2k6X4BZXi3Kw==
@@ -9006,7 +9011,7 @@ webpack-virtual-modules@^0.6.2:
   resolved "https://registry.yarnpkg.com/webpack-virtual-modules/-/webpack-virtual-modules-0.6.2.tgz#057faa9065c8acf48f24cb57ac0e77739ab9a7e8"
   integrity sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==
 
-webrtc-adapter@^9.0.1:
+webrtc-adapter@^9.0.0:
   version "9.0.1"
   resolved "https://registry.yarnpkg.com/webrtc-adapter/-/webrtc-adapter-9.0.1.tgz#d4efa22ca9604cb2c8cdb9e492815ba37acfa0b2"
   integrity sha512-1AQO+d4ElfVSXyzNVTOewgGT/tAomwwztX/6e3totvyyzXPvXIIuUUjAmyZGbKBKbZOXauuJooZm3g6IuFuiNQ==
