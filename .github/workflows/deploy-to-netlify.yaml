@@ -50,7 +50,7 @@ jobs:
         with:
           github-token: ${{ secrets.ELEMENT_BOT_TOKEN }}
           run-id: ${{ inputs.artifact_run_id }}
-          name: build-output
+          name: build-output-full
           path: webapp
 
       - name: Add redirects file
