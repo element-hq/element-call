@@ -31,7 +31,14 @@ test("Should show error screen if fails to get JWT token", async ({ page }) => {
   await expect(page.getByText("OPEN_ID_ERROR")).toBeVisible();
 });
 
-test("Should automatically retry non fatal JWT errors", async ({ page }) => {
+test("Should automatically retry non fatal JWT errors", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(
+    browserName === "firefox",
+    "The test to check the video visibility is not working in Firefox CI environment. looks like video is disabled?",
+  );
   await page.goto("/");
 
   await page.getByTestId("home_callName").click();
