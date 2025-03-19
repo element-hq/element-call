@@ -12,6 +12,9 @@ import { useEffect, useState } from "react";
 import { type LivekitFocus } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
 import { useActiveLivekitFocus } from "../room/useActiveFocus";
+import { useGroupCallErrorBoundary } from "../room/useCallErrorBoundary.ts";
+import { FailToGetOpenIdToken } from "../utils/errors.ts";
+import { doNetworkOperationWithRetry } from "../utils/matrix.ts";
 
 export interface SFUConfig {
   url: string;
@@ -38,6 +41,7 @@ export function useOpenIDSFU(
   const [sfuConfig, setSFUConfig] = useState<SFUConfig | undefined>(undefined);
 
   const activeFocus = useActiveLivekitFocus(rtcSession);
+  const { showGroupCallErrorBoundary } = useGroupCallErrorBoundary();
 
   useEffect(() => {
     if (activeFocus) {
@@ -46,13 +50,14 @@ export function useOpenIDSFU(
           setSFUConfig(sfuConfig);
         },
         (e) => {
+          showGroupCallErrorBoundary(new FailToGetOpenIdToken(e));
           logger.error("Failed to get SFU config", e);
         },
       );
     } else {
       setSFUConfig(undefined);
     }
-  }, [client, activeFocus]);
+  }, [client, activeFocus, showGroupCallErrorBoundary]);
 
   return sfuConfig;
 }
@@ -61,7 +66,16 @@ export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
   activeFocus: LivekitFocus,
 ): Promise<SFUConfig | undefined> {
-  const openIdToken = await client.getOpenIdToken();
+  let openIdToken: IOpenIDToken;
+  try {
+    openIdToken = await doNetworkOperationWithRetry(async () =>
+      client.getOpenIdToken(),
+    );
+  } catch (error) {
+    throw new FailToGetOpenIdToken(
+      error instanceof Error ? error : new Error("Unknown error"),
+    );
+  }
   logger.debug("Got openID token", openIdToken);
 
   try {
