@@ -10,17 +10,13 @@ import {
   describe,
   it,
   vi,
-  type Mock,
   beforeEach,
   beforeAll,
   afterAll,
 } from "vitest";
 
 import { ElementCallOpenTelemetry } from "./otel";
-import { getUrlParams } from "../UrlParams";
 import { mockConfig } from "../utils/test";
-
-vi.mock("../UrlParams", () => ({ getUrlParams: vi.fn() }));
 
 describe("ElementCallOpenTelemetry", () => {
   describe("embedded package", () => {
@@ -30,7 +26,6 @@ describe("ElementCallOpenTelemetry", () => {
 
     beforeEach(() => {
       mockConfig({});
-      (getUrlParams as Mock).mockReturnValue({});
     });
 
     afterAll(() => {
@@ -60,7 +55,6 @@ describe("ElementCallOpenTelemetry", () => {
 
     beforeEach(() => {
       mockConfig({});
-      (getUrlParams as Mock).mockReturnValue({});
     });
 
     afterAll(() => {

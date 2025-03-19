@@ -10,17 +10,13 @@ import {
   describe,
   it,
   vi,
-  type Mock,
   beforeEach,
   beforeAll,
   afterAll,
 } from "vitest";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
-import { getUrlParams } from "../UrlParams";
 import { mockConfig } from "../utils/test";
-
-vi.mock("../UrlParams", () => ({ getUrlParams: vi.fn() }));
 
 describe("PosthogAnalytics", () => {
   describe("embedded package", () => {
@@ -30,7 +26,7 @@ describe("PosthogAnalytics", () => {
 
     beforeEach(() => {
       mockConfig({});
-      (getUrlParams as Mock).mockReturnValue({});
+      window.location.hash = "#";
       PosthogAnalytics.resetInstance();
     });
 
@@ -38,7 +34,7 @@ describe("PosthogAnalytics", () => {
       vi.unstubAllEnvs();
     });
 
-    it("does not create instance without config value", () => {
+    it("does not create instance without config value or URL params", () => {
       expect(PosthogAnalytics.instance.isEnabled()).toBe(false);
     });
 
@@ -53,10 +49,7 @@ describe("PosthogAnalytics", () => {
     });
 
     it("uses URL params if both set", () => {
-      (getUrlParams as Mock).mockReturnValue({
-        posthogApiHost: "https://url.example.com.localhost",
-        posthogApiKey: "api_key",
-      });
+      window.location.hash = `#?posthogApiHost=${encodeURIComponent("https://url.example.com.localhost")}&posthogApiKey=api_key`;
       expect(PosthogAnalytics.instance.isEnabled()).toBe(true);
     });
   });
@@ -68,7 +61,7 @@ describe("PosthogAnalytics", () => {
 
     beforeEach(() => {
       mockConfig({});
-      (getUrlParams as Mock).mockReturnValue({});
+      window.location.hash = "#";
       PosthogAnalytics.resetInstance();
     });
 
@@ -81,10 +74,7 @@ describe("PosthogAnalytics", () => {
     });
 
     it("ignores URL params and does not create instance", () => {
-      (getUrlParams as Mock).mockReturnValue({
-        posthogApiHost: "https://url.example.com.localhost",
-        posthogApiKey: "api_key",
-      });
+      window.location.hash = `#?posthogApiHost=${encodeURIComponent("https://url.example.com.localhost")}&posthogApiKey=api_key`;
       expect(PosthogAnalytics.instance.isEnabled()).toBe(false);
     });
 
