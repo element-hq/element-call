@@ -37,8 +37,7 @@ jobs:
     name: Publish tarball
     runs-on: ubuntu-latest
     permissions:
-      contents: write # required to upload release asset
-      packages: write
+      contents: write # required to upload release asset and notes
     steps:
       - name: Determine filename
         run: echo "FILENAME_PREFIX=element-call-embedded-${VERSION:1}" >> "$GITHUB_ENV"
@@ -67,8 +66,7 @@ jobs:
     name: Publish NPM
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      id-token: write
+      contents: write # to update release notes
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -116,7 +114,7 @@ jobs:
     name: Publish Android AAR
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # to update release notes
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -170,7 +168,7 @@ jobs:
     name: Publish SwiftPM Library
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # to update release notes
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
