@@ -109,11 +109,11 @@ class DependencyLoadStates {
 }
 
 export class Initializer {
-  private static internalInstance: Initializer;
+  private static internalInstance: Initializer | undefined;
   private isInitialized = false;
 
   public static isInitialized(): boolean {
-    return Initializer.internalInstance?.isInitialized;
+    return !!Initializer.internalInstance?.isInitialized;
   }
 
   public static async initBeforeReact(): Promise<void> {
@@ -193,9 +193,17 @@ export class Initializer {
     Initializer.internalInstance.initPromise = new Promise<void>((resolve) => {
       // initStep calls itself recursively until everything is initialized in the correct order.
       // Then the promise gets resolved.
-      Initializer.internalInstance.initStep(resolve);
+      Initializer.internalInstance?.initStep(resolve);
     });
     return Initializer.internalInstance.initPromise;
+  }
+
+  /**
+   * Resets the initializer. This is used in tests to ensure that the initializer
+   * is re-initialized for each test.
+   */
+  public static reset(): void {
+    Initializer.internalInstance = undefined;
   }
 
   private loadStates = new DependencyLoadStates();
