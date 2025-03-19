@@ -37,7 +37,7 @@ jobs:
     name: Publish tarball
     runs-on: ubuntu-latest
     permissions:
-      contents: write # required to upload release asset and notes
+      contents: write # required to upload release asset
     steps:
       - name: Determine filename
         run: echo "FILENAME_PREFIX=element-call-embedded-${VERSION:1}" >> "$GITHUB_ENV"
@@ -66,7 +66,7 @@ jobs:
     name: Publish NPM
     runs-on: ubuntu-latest
     permissions:
-      contents: write # to update release notes
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -94,27 +94,13 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
 
-      - name: Add release note
-        if: ${{ env.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
-        with:
-          append_body: true
-          body: |
-            ## NPM embedded package
-
-            This package provides a build of Element Call that can be used as an embedded widget within another application.
-
-            ```
-            npm install @element-hq/element-call-embedded@${{ env.ARTIFACT_VERSION }}
-            ```
-
   publish_android:
     needs: build_element_call
     if: always()
     name: Publish Android AAR
     runs-on: ubuntu-latest
     permissions:
-      contents: write # to update release notes
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -146,29 +132,13 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
         run: ./gradlew publishAndReleaseToMavenCentral --no-daemon ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
 
-      - name: Add release note
-        if: ${{ env.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
-        with:
-          append_body: true
-          body: |
-            ## Android AAR embedded package
-
-            This package provides a build of Element Call that can be used as an embedded widget within another application.
-
-            ```
-            dependencies {
-              implementation 'io.element.android:element-call-embedded:${{ env.ARTIFACT_VERSION }}'
-            }
-            ```
-
   publish_ios:
     needs: build_element_call
     if: always()
     name: Publish SwiftPM Library
     runs-on: ubuntu-latest
     permissions:
-      contents: write # to update release notes
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -210,15 +180,44 @@ jobs:
         run: |
           git push --tags ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
 
-      - name: Add release note
+  release_notes:
+    needs: [publish_npm, publish_android, publish_ios]
+    if: always()
+    name: Update release notes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to update release notes
+    steps:
+      - name: Get artifact version
+        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
+
+      - name: Add release notes
         if: ${{ env.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
         with:
           append_body: true
           body: |
-            ## SwiftPM embedded package
 
-            This package provides a build of Element Call that can be used as an embedded widget within another application.
+            ## Embedded packages
+
+            This release includes the following embedded packages that allow Element Call to be used as an embedded widget
+            within another application.
+
+            ### NPM
+
+            ```
+            npm install @element-hq/element-call-embedded@${{ env.ARTIFACT_VERSION }}
+            ```
+
+            ### Android AAR
+
+            ```
+            dependencies {
+              implementation 'io.element.android:element-call-embedded:${{ env.ARTIFACT_VERSION }}'
+            }
+            ```
+
+            ### SwiftPM
 
             ```
             .package(url: "https://github.com/element-hq/element-call-swift.git", from: "${{ env.ARTIFACT_VERSION }}")
