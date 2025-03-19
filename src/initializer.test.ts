@@ -17,7 +17,6 @@ import {
 } from "vitest";
 
 import { mockConfig } from "./utils/test";
-import { trace } from "console";
 
 const sentryInitSpy = vi.fn();
 
