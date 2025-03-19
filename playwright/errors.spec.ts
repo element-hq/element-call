@@ -16,11 +16,13 @@ test("Should show error screen if fails to get JWT token", async ({ page }) => {
   await page.getByTestId("home_displayName").fill("John Doe");
   await page.getByTestId("home_go").click();
 
-  await page.route("**/openid/request_token", (route) =>
-    route.fulfill({
-      // 418 is a non retryable error, so test will fail immediately
-      status: 418,
-    }),
+  await page.route(
+    "**/openid/request_token",
+    async (route) =>
+      await route.fulfill({
+        // 418 is a non retryable error, so test will fail immediately
+        status: 418,
+      }),
   );
 
   // Join the call
@@ -49,17 +51,17 @@ test("Should automatically retry non fatal JWT errors", async ({
 
   let firstCall = true;
   let hasRetriedCallback: (value: PromiseLike<void> | void) => void;
-  let hasRetriedPromise = new Promise<void>((resolve) => {
+  const hasRetriedPromise = new Promise<void>((resolve) => {
     hasRetriedCallback = resolve;
   });
-  await page.route("**/openid/request_token", (route) => {
+  await page.route("**/openid/request_token", async (route) => {
     if (firstCall) {
       firstCall = false;
-      route.fulfill({
+      await route.fulfill({
         status: 429,
       });
     } else {
-      route.continue();
+      await route.continue();
       hasRetriedCallback();
     }
   });
