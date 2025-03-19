@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "EmbeddedElementCall",
+    platforms: [.iOS(.v17_6)],
     products: [
         .library(
             name: "EmbeddedElementCall",
