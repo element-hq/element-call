@@ -139,15 +139,15 @@ jobs:
         run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
 
       - name: Publish AAR
-        if: ${{ env.DRY_RUN == 'false' }}
-        # TODO: can we do some kind of dry run?
+        working-directory: embedded/android
         env:
           EC_VERSION: ${{ env.ARTIFACT_VERSION }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_RELEASE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_RELEASE_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
-        run: embedded/android/publish_android_package.sh -s
+        run: ./gradlew publishAndReleaseToMavenCentral --no-daemon ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+
 
       - name: Add release note
         if: ${{ env.DRY_RUN == 'false' }}

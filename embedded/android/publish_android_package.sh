@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# This script is used for local build and testing of the AAR packaging
+# In CI we call gradlew directly
+
 EC_ASSETS_FOLDER=lib/src/main/assets/element-call
 CURRENT_DIR=$( dirname -- "${BASH_SOURCE[0]}" )
 
