@@ -108,6 +108,11 @@ export class PosthogAnalytics {
     return this.internalInstance;
   }
 
+  public static resetInstance(): void {
+    // Reset the singleton instance
+    this.internalInstance = null;
+  }
+
   private constructor(private readonly posthog: PostHog) {
     let apiKey: string | undefined;
     let apiHost: string | undefined;
