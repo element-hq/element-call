@@ -1,34 +1,44 @@
-# Url Format and parameters
+# URL Format and parameters
 
-There are two formats for Element Call urls.
+There are two formats for Element Call URLs.
 
-- **Current Format**
+## Link for sharing
 
-  ```text
-  https://element_call.domain/room/#
-  /<room_name_alias>?roomId=!id:domain&password=1234&<other params see below>
-  ```
+Requires Element Call to be deployed in [standalone](./embedded-standalone.md) mode.
 
-  The url is split into two sections. The `https://element_call.domain/room/#`
-  contains the app and the intend that the link brings you into a specific room
-  (`https://call.element.io/#` would be the homepage). The fragment is used for
-  query parameters to make sure they never get sent to the element_call.domain
-  server. Here we have the actual matrix roomId and the password which are used
-  to connect all participants with e2ee. This allows that `<room_name_alias>` does
-  not need to be unique. Multiple meetings with the label weekly-sync can be created
-  without collisions.
+```text
+https://element_call.domain/room/#
+/<room_name_alias>?roomId=!id:domain&password=1234&<other params see below>
+```
 
-- **deprecated**
+The URL is split into two sections. The `https://element_call.domain/room/#`
+contains the app and the intend that the link brings you into a specific room
+(`https://call.element.io/#` would be the homepage). The fragment is used for
+query parameters to make sure they never get sent to the element_call.domain
+server. Here we have the actual Matrix room ID and the password which are used
+to connect all participants with E2EE. This allows that `<room_name_alias>` does
+not need to be unique. Multiple meetings with the label weekly-sync can be created
+without collisions.
 
-  ```text
-  https://element_call.domain/<room_name>
-  ```
+Additionally the following **deprecated** format is supported:
 
-  With this format the livekit alias that will be used is the `<room_name>`.
-  All people connecting to this URL will end up in the same unencrypted room.
-  This does not scale, is super unsecure
-  (people could end up in the same room by accident) and it also is not really
-  possible to support encryption.
+```text
+https://element_call.domain/<room_name>
+```
+
+With this format the livekit alias that will be used is the `<room_name>`.
+All people connecting to this URL will end up in the same unencrypted room.
+This does not scale, is super unsecure
+(people could end up in the same room by accident) and it also is not really
+possible to support encryption.
+
+## Widget within a messenger app
+
+| Package  | Deployment                    | URL                                                                           |
+| -------- | ----------------------------- | ----------------------------------------------------------------------------- |
+| Full     | All                           | `https://element_call.domain/room`                                            |
+| Embedded | Remote URL                    | `https://element_call.domain/` n.b. no `/room` part                           |
+| Embedded | Embedded within messenger app | Platform dependent, but you load the `index.html` file without a `/room` part |
 
 ## Parameters
 
