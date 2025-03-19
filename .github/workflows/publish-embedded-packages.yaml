@@ -55,7 +55,7 @@ jobs:
         run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
       - name: Upload
         if: ${{ env.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
         with:
           files: |
             ${{ env.FILENAME_PREFIX }}.tar.gz
@@ -98,7 +98,7 @@ jobs:
 
       - name: Add release note
         if: ${{ env.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
         with:
           append_body: true
           body: |
@@ -151,7 +151,7 @@ jobs:
 
       - name: Add release note
         if: ${{ env.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
         with:
           append_body: true
           body: |
@@ -215,7 +215,7 @@ jobs:
 
       - name: Add release note
         if: ${{ env.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
         with:
           append_body: true
           body: |
