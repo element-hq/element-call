@@ -144,11 +144,16 @@ async function connectAndPublish(
       websocketTimeout: window.websocketTimeout ?? 45000,
     });
   } catch (e) {
-    // LiveKit uses 503 to indicate that the server has hit its track limits
-    // or equivalently, 429 in LiveKit Cloud
-    // For reference, the 503 response is generated at: https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
-
-    if (e instanceof ConnectionError && (e.status === 503 || e.status === 429))
+    // LiveKit uses 503 to indicate that the server has hit its track limits.
+    // https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
+    // It also errors with a status code of 200 (yes, really) for room
+    // participant limits.
+    // LiveKit Cloud uses 429 for connection limits.
+    // Either way, all these errors can be explained as "insufficient capacity".
+    if (
+      e instanceof ConnectionError &&
+      (e.status === 503 || e.status === 200 || e.status === 429)
+    )
       throw new InsufficientCapacityError();
     throw e;
   }

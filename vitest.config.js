@@ -13,6 +13,7 @@ export default defineConfig((configEnv) =>
           },
         },
         setupFiles: ["src/vitest.setup.ts"],
+        include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
         coverage: {
           reporter: ["html", "json"],
           include: ["src/"],
@@ -21,6 +22,7 @@ export default defineConfig((configEnv) =>
             "src/utils/test.ts",
             "src/utils/test-viewmodel.ts",
             "src/utils/test-fixtures.ts",
+            "playwright/**",
           ],
         },
       },

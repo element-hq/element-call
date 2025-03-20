@@ -50,6 +50,7 @@
   "include": [
     "./node_modules/matrix-js-sdk/src/@types/*.d.ts",
     "./src/**/*.ts",
-    "./src/**/*.tsx"
+    "./src/**/*.tsx",
+    "./playwright/**/*.ts"
   ]
 }
