@@ -86,7 +86,7 @@ These parameters are only available in [widget](./embedded-standalone.md) mode.
 
 ### Embedded-only parameters
 
-These parameters are only available in the [embedded](./embedded-standalone.md) package of Element Call and will be ignored in the [full](./embedded-standalone.md) package.
+These parameters are only supported in the [embedded](./embedded-standalone.md) package of Element Call and will be ignored in the [full](./embedded-standalone.md) package.
 
 | Name                 | Values                                                                     | Required | Description                                                                                                                        |
 | -------------------- | -------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
