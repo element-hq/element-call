@@ -41,7 +41,7 @@ jobs:
           cache: "yarn"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
       - name: Install Playwright Browsers
         run: yarn playwright install --with-deps
       - name: Run backend components
