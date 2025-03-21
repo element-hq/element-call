@@ -71,7 +71,7 @@ These parameters are relevant to both [widget](./embedded-standalone.md) and [st
 
 ### Widget-only parameters
 
-These parameters are only available in [widget](./embedded-standalone.md) mode.
+These parameters are only supported in [widget](./embedded-standalone.md) mode.
 
 | Name            | Values                                                                                    | Required                | Description                                                                                                                                                                                                                                                                                                                                        |
 | --------------- | ----------------------------------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
