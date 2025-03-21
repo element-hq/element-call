@@ -36,7 +36,12 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
-        permissions: ["microphone", "camera"],
+        permissions: [
+          "clipboard-write",
+          "clipboard-read",
+          "microphone",
+          "camera",
+        ],
         ignoreHTTPSErrors: true,
         launchOptions: {
           args: [

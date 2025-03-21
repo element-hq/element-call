@@ -89,7 +89,7 @@ to implement
     {
         "type": "another_foci",
         "props_for_another_foci": "val"
-    },
+    }
 ]
 ```
 

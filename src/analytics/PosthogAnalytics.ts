@@ -70,11 +70,6 @@ interface PlatformProperties {
   cryptoVersion?: string;
 }
 
-interface PosthogSettings {
-  project_api_key?: string;
-  api_host?: string;
-}
-
 export class PosthogAnalytics {
   /* Wrapper for Posthog analytics.
    * 3 modes of anonymity are supported, governed by this.anonymity
@@ -112,24 +107,27 @@ export class PosthogAnalytics {
     return this.internalInstance;
   }
 
+  public static resetInstance(): void {
+    // Reset the singleton instance
+    this.internalInstance = null;
+  }
+
   private constructor(private readonly posthog: PostHog) {
-    const posthogConfig: PosthogSettings = {
-      project_api_key: Config.get().posthog?.api_key,
-      api_host: Config.get().posthog?.api_host,
-    };
+    let apiKey: string | undefined;
+    let apiHost: string | undefined;
+    if (import.meta.env.VITE_PACKAGE === "embedded") {
+      // for the embedded package we always use the values from the URL as the widget host is responsible for analytics configuration
+      apiKey = getUrlParams().posthogApiKey ?? undefined;
+      apiHost = getUrlParams().posthogApiHost ?? undefined;
+    } else if (import.meta.env.VITE_PACKAGE === "full") {
+      // in full package it is the server responsible for the analytics
+      apiKey = Config.get().posthog?.api_key;
+      apiHost = Config.get().posthog?.api_host;
+    }
 
-    if (posthogConfig.project_api_key && posthogConfig.api_host) {
-      if (
-        PosthogAnalytics.getPlatformProperties().matrixBackend === "embedded"
-      ) {
-        const { analyticsID } = getUrlParams();
-        // if the embedding platform (element web) already got approval to communicating with posthog
-        // element call can also send events to posthog
-        optInAnalytics.setValue(Boolean(analyticsID));
-      }
-
-      this.posthog.init(posthogConfig.project_api_key, {
-        api_host: posthogConfig.api_host,
+    if (apiKey && apiHost) {
+      this.posthog.init(apiKey, {
+        api_host: apiHost,
         autocapture: false,
         mask_all_text: true,
         mask_all_element_attributes: true,
@@ -273,7 +271,7 @@ export class PosthogAnalytics {
     const client: MatrixClient = window.matrixclient;
     let accountAnalyticsId: string | null;
     if (widget) {
-      accountAnalyticsId = getUrlParams().analyticsID;
+      accountAnalyticsId = getUrlParams().posthogUserId;
     } else {
       const accountData = await client.getAccountDataFromServer(
         PosthogAnalytics.ANALYTICS_EVENT_TYPE,
