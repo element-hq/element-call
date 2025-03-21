@@ -109,11 +109,11 @@ class DependencyLoadStates {
 }
 
 export class Initializer {
-  private static internalInstance: Initializer;
+  private static internalInstance: Initializer | undefined;
   private isInitialized = false;
 
   public static isInitialized(): boolean {
-    return Initializer.internalInstance?.isInitialized;
+    return !!Initializer.internalInstance?.isInitialized;
   }
 
   public static async initBeforeReact(): Promise<void> {
@@ -193,9 +193,17 @@ export class Initializer {
     Initializer.internalInstance.initPromise = new Promise<void>((resolve) => {
       // initStep calls itself recursively until everything is initialized in the correct order.
       // Then the promise gets resolved.
-      Initializer.internalInstance.initStep(resolve);
+      Initializer.internalInstance?.initStep(resolve);
     });
     return Initializer.internalInstance.initPromise;
+  }
+
+  /**
+   * Resets the initializer. This is used in tests to ensure that the initializer
+   * is re-initialized for each test.
+   */
+  public static reset(): void {
+    Initializer.internalInstance = undefined;
   }
 
   private loadStates = new DependencyLoadStates();
@@ -220,10 +228,22 @@ export class Initializer {
       this.loadStates.sentry === LoadState.None &&
       this.loadStates.config === LoadState.Loaded
     ) {
-      if (Config.get().sentry?.DSN && Config.get().sentry?.environment) {
+      let dsn: string | undefined;
+      let environment: string | undefined;
+      if (import.meta.env.VITE_PACKAGE === "embedded") {
+        // for the embedded package we always use the values from the URL as the widget host is responsible for analytics configuration
+        dsn = getUrlParams().sentryDsn ?? undefined;
+        environment = getUrlParams().sentryEnvironment ?? undefined;
+      }
+      if (import.meta.env.VITE_PACKAGE === "full") {
+        // in full package it is the server responsible for the analytics
+        dsn = Config.get().sentry?.DSN;
+        environment = Config.get().sentry?.environment;
+      }
+      if (dsn) {
         Sentry.init({
-          dsn: Config.get().sentry?.DSN,
-          environment: Config.get().sentry?.environment,
+          dsn,
+          environment,
           integrations: [
             Sentry.reactRouterV7BrowserTracingIntegration({
               useEffect: React.useEffect,
