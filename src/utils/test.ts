@@ -264,6 +264,8 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
     ...DEFAULT_CONFIG,
     ...config,
   });
+  // simulate loading the config
+  vi.spyOn(Config, "init").mockResolvedValue(void 0);
 }
 
 export class MockRTCSession extends TypedEventEmitter<

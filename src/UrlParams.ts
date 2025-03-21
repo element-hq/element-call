@@ -105,7 +105,15 @@ export interface UrlParams {
   /**
    * The Posthog analytics ID. It is only available if the user has given consent for sharing telemetry in element web.
    */
-  analyticsID: string | null;
+  posthogUserId: string | null;
+  /**
+   * The Posthog API host. This is only used in the embedded package of Element Call.
+   */
+  posthogApiHost: string | null;
+  /**
+   * The Posthog API key. This is only used in the embedded package of Element Call.
+   */
+  posthogApiKey: string | null;
   /**
    * Whether the app is allowed to use fallback STUN servers for ICE in case the
    * user's homeserver doesn't provide any.
@@ -155,6 +163,20 @@ export interface UrlParams {
    * If it was a Join Call button, it would be `join_existing`.
    */
   intent: string | null;
+
+  /**
+   * The rageshake submit URL. This is only used in the embedded package of Element Call.
+   */
+  rageshakeSubmitUrl: string | null;
+
+  /**
+   * The Sentry DSN. This is only used in the embedded package of Element Call.
+   */
+  sentryDsn: string | null;
+  /**
+   * The Sentry environment. This is only used in the embedded package of Element Call.
+   */
+  sentryEnvironment: string | null;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -257,7 +279,6 @@ export const getUrlParams = (
     lang: parser.getParam("lang"),
     fonts: parser.getAllParams("font"),
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
-    analyticsID: parser.getParam("analyticsID"),
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
     skipLobby: parser.getFlagParam(
@@ -271,6 +292,13 @@ export const getUrlParams = (
     viaServers: !isWidget ? parser.getParam("viaServers") : null,
     homeserver: !isWidget ? parser.getParam("homeserver") : null,
     intent,
+    posthogApiHost: parser.getParam("posthogApiHost"),
+    posthogApiKey: parser.getParam("posthogApiKey"),
+    posthogUserId:
+      parser.getParam("posthogUserId") ?? parser.getParam("analyticsID"),
+    rageshakeSubmitUrl: parser.getParam("rageshakeSubmitUrl"),
+    sentryDsn: parser.getParam("sentryDsn"),
+    sentryEnvironment: parser.getParam("sentryEnvironment"),
   };
 };
 

@@ -1,0 +1,14 @@
+{
+  "name": "@element-hq/element-call-embedded",
+  "version": "0.0.0",
+  "files": [
+    "README.md",
+    "LICENSE-AGPL-3.0",
+    "LICENSE-COMMERCIAL",
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/element-hq/element-call.git"
+  }
+}

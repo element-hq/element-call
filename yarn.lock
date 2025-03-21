@@ -6912,7 +6912,7 @@ __metadata:
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
     knip: "npm:^5.27.2"
-    livekit-client: "npm:^2.5.7"
+    livekit-client: "npm:2.9.1"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
     matrix-js-sdk: "github:matrix-org/matrix-js-sdk#8395919f0fd1af7cab1e793d736f2cdf18ef7686"
@@ -9282,20 +9282,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"livekit-client@npm:^2.5.7":
-  version: 2.9.5
-  resolution: "livekit-client@npm:2.9.5"
+"livekit-client@npm:2.9.1":
+  version: 2.9.1
+  resolution: "livekit-client@npm:2.9.1"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
     "@livekit/protocol": "npm:1.33.0"
     events: "npm:^3.3.0"
-    loglevel: "npm:^1.9.2"
-    sdp-transform: "npm:^2.15.0"
+    loglevel: "npm:^1.8.0"
+    sdp-transform: "npm:^2.14.1"
     ts-debounce: "npm:^4.0.0"
     tslib: "npm:2.8.1"
     typed-emitter: "npm:^2.1.0"
-    webrtc-adapter: "npm:^9.0.1"
-  checksum: 10c0/0e722c7752adeb9c39423f7533dc7b6438db30dec0ba6664205bd58bfd4068eb0c1828752ba8c4578f6c96897efde76879d824ae43b320ce4d6126085b1db52b
+    webrtc-adapter: "npm:^9.0.0"
+  checksum: 10c0/06c4bcfe22c2629bd3e2a7fdf5d104425ed9c781d77a39fd61940d30a85dff0b9e3364b0ad8e584a8dc2d885f625532dd6ec151f5c8a4ecfb16cdcf2718e817f
   languageName: node
   linkType: hard
 
@@ -9352,7 +9352,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loglevel@npm:^1.7.1, loglevel@npm:^1.9.1, loglevel@npm:^1.9.2":
+"loglevel@npm:^1.7.1, loglevel@npm:^1.8.0, loglevel@npm:^1.9.1":
   version: 1.9.2
   resolution: "loglevel@npm:1.9.2"
   checksum: 10c0/1e317fa4648fe0b4a4cffef6de037340592cee8547b07d4ce97a487abe9153e704b98451100c799b032c72bb89c9366d71c9fb8192ada8703269263ae77acdc7
@@ -11700,7 +11700,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sdp-transform@npm:^2.14.1, sdp-transform@npm:^2.15.0":
+"sdp-transform@npm:^2.14.1":
   version: 2.15.0
   resolution: "sdp-transform@npm:2.15.0"
   bin:
@@ -13288,7 +13288,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webrtc-adapter@npm:^9.0.1":
+"webrtc-adapter@npm:^9.0.0":
   version: 9.0.1
   resolution: "webrtc-adapter@npm:9.0.1"
   dependencies:
