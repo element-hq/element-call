@@ -47,7 +47,7 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
           recaptchaResponse,
           true,
         );
-        setClient({ client, session });
+        setClient(client, session);
       } catch (e) {
         reset();
         throw e;
