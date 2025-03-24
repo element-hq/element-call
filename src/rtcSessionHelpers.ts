@@ -166,7 +166,6 @@ const widgetPostHangupProcedure = async (
       logger.error("Failed to send close action", e);
     }
     widget.api.transport.stop();
-    PosthogAnalytics.instance.logout();
   }
 };
 
