@@ -15,6 +15,7 @@ import {
   debugTileLayout as debugTileLayoutSetting,
   showNonMemberTiles as showNonMemberTilesSetting,
   showConnectionStats as showConnectionStatsSetting,
+  useNewMembershipManagerSetting,
 } from "./settings";
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room as LivekitRoom } from "livekit-client";
@@ -36,6 +37,10 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
+  );
+
+  const [useNewMembershipManager, setNewMembershipManager] = useSetting(
+    useNewMembershipManagerSetting,
   );
 
   const sfuUrl = useMemo((): URL | null => {
@@ -131,6 +136,20 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
               setShowConnectionStats(event.target.checked);
             },
             [setShowConnectionStats],
+          )}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="useNewMembershipManager"
+          type="checkbox"
+          label={t("developer_mode.use_new_membership_manager")}
+          checked={!!useNewMembershipManager}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setNewMembershipManager(event.target.checked);
+            },
+            [setNewMembershipManager],
           )}
         />
       </FieldRow>

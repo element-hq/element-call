@@ -72,7 +72,11 @@ export const App: FC = () => {
               <Suspense fallback={null}>
                 <ClientProvider>
                   <MediaDevicesProvider>
-                    <Sentry.ErrorBoundary fallback={ErrorPage}>
+                    <Sentry.ErrorBoundary
+                      fallback={(error) => (
+                        <ErrorPage error={error} widget={widget} />
+                      )}
+                    >
                       <DisconnectedBanner />
                       <Routes>
                         <SentryRoute path="/" element={<HomePage />} />

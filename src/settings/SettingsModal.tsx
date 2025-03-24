@@ -30,6 +30,7 @@ import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
+import { isRageshakeAvailable } from "./submit-rageshake";
 
 type SettingsTab =
   | "audio"
@@ -146,7 +147,12 @@ export const SettingsModal: FC<Props> = ({
 
   const tabs = [audioTab, videoTab];
   if (widget === null) tabs.push(profileTab);
-  tabs.push(preferencesTab, feedbackTab);
+  tabs.push(preferencesTab);
+  if (isRageshakeAvailable() || import.meta.env.VITE_PACKAGE === "full") {
+    // for full package we want to show the analytics consent checkbox
+    // even if rageshake is not available
+    tabs.push(feedbackTab);
+  }
   if (showDeveloperSettingsTab) tabs.push(developerTab);
 
   return (

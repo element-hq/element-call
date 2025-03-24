@@ -7,16 +7,20 @@ Please see LICENSE in the repository root for full details.
 
 import { defineConfig, loadEnv } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
-import htmlTemplate from "vite-plugin-html-template";
+import { createHtmlPlugin } from "vite-plugin-html";
 import { codecovVitePlugin } from "@codecov/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import react from "@vitejs/plugin-react";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, packageType }) => {
   const env = loadEnv(mode, process.cwd());
-
+  // Environment variables with the VITE_ prefix are accessible at runtime.
+  // So, we set this to allow for build/package specific behaviour.
+  // In future we might be able to do what is needed via code splitting at
+  // build time.
+  process.env.VITE_PACKAGE = packageType ?? "full";
   const plugins = [
     react(),
     basicSsl(),
@@ -27,9 +31,14 @@ export default defineConfig(({ mode }) => {
         ref: true,
       },
     }),
-    htmlTemplate.default({
-      data: {
-        title: env.VITE_PRODUCT_NAME || "Element Call",
+
+    createHtmlPlugin({
+      entry: "src/main.tsx",
+      inject: {
+        data: {
+          brand: env.VITE_PRODUCT_NAME || "Element Call",
+          packageType: process.env.VITE_PACKAGE,
+        },
       },
     }),
 

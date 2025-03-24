@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
 import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import {
+  calculateRetryBackoff,
   createClient,
   type ICreateClientOpts,
   Preset,
@@ -17,6 +18,7 @@ import { ClientEvent } from "matrix-js-sdk/src/client";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/src/sync";
 import { logger } from "matrix-js-sdk/src/logger";
 import { secureRandomBase64Url } from "matrix-js-sdk/src/randomstring";
+import { sleep } from "matrix-js-sdk/src/utils";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
@@ -69,7 +71,7 @@ async function waitForSync(client: MatrixClient): Promise<void> {
  * otherwise rust crypto will throw since it is not ready to initialize a new session.
  * If another client is running make sure `.logout()` is called before executing this function.
  * @param clientOptions Object of options passed through to the client
- * @param restore If the rust crypto should be reset before the cient initialization or
+ * @param restore If the rust crypto should be reset before the client initialization or
  * if the initialization should try to restore the crypto state from the indexDB.
  * @returns The MatrixClient instance
  */
@@ -160,7 +162,6 @@ export async function initClient(
     );
   }
 
-  client.setGlobalErrorOnUnknownDevices(false);
   // Once startClient is called, syncs are run asynchronously.
   // Also, sync completion is communicated only via events.
   // So, apply the event listener *before* starting the client.
@@ -335,4 +336,31 @@ export function getRelativeRoomUrl(
     ? "/" + roomAliasLocalpartFromRoomName(roomName)
     : "";
   return `/room/#${roomPart}?${generateUrlSearchParams(roomId, encryptionSystem, viaServers).toString()}`;
+}
+
+/**
+ * Perfom a network operation with retries on ConnectionError.
+ * If the error is not retryable, or the max number of retries is reached, the error is rethrown.
+ * Supports handling of matrix quotas.
+ */
+export async function doNetworkOperationWithRetry<T>(
+  operation: () => Promise<T>,
+): Promise<T> {
+  let currentRetryCount = 0;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      return await operation();
+    } catch (e) {
+      currentRetryCount++;
+      const backoff = calculateRetryBackoff(e, currentRetryCount, true);
+      if (backoff < 0) {
+        // Max number of retries reached, or error is not retryable. rethrow the error
+        throw e;
+      }
+      // wait for the specified time and then retry the request
+      await sleep(backoff);
+    }
+  }
 }

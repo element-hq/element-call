@@ -5,6 +5,10 @@ on:
       vite_app_version:
         required: true
         type: string
+      package:
+        type: string # This would ideally be a `choice` type, but that isn't supported yet
+        description: The package type to be built. Must be one of 'full' or 'embedded'
+        required: true
     secrets:
       SENTRY_ORG:
         required: true
@@ -31,8 +35,20 @@ jobs:
           node-version-file: ".node-version"
       - name: Install dependencies
         run: "yarn install --frozen-lockfile"
-      - name: Build
-        run: "yarn run build"
+      - name: Build full version
+        if: ${{ inputs.package == 'full' }}
+        run: "yarn run build:full"
+        env:
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_URL: ${{ secrets.SENTRY_URL }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          VITE_APP_VERSION: ${{ inputs.vite_app_version }}
+          NODE_OPTIONS: "--max-old-space-size=4096"
+      - name: Build embedded
+        if: ${{ inputs.package == 'embedded' }}
+        run: "yarn run build:embedded"
         env:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -44,7 +60,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
         with:
-          name: build-output
+          name: build-output-${{ inputs.package }}
           path: dist
           # We'll only use this in a triggered job, then we're done with it
           retention-days: 1
