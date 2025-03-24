@@ -16,6 +16,7 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { PosthogSpanProcessor } from "../analytics/PosthogSpanProcessor";
 import { Config } from "../config/Config";
 import { RageshakeSpanProcessor } from "../analytics/RageshakeSpanProcessor";
+import { getRageshakeSubmitUrl } from "../settings/submit-rageshake";
 
 const SERVICE_NAME = "element-call";
 
@@ -28,20 +29,24 @@ export class ElementCallOpenTelemetry {
   public readonly rageshakeProcessor?: RageshakeSpanProcessor;
 
   public static globalInit(): void {
-    const config = Config.get();
+    // this is only supported in the full package as the is currently no support for passing in the collector URL from the widget host
+    const collectorUrl =
+      import.meta.env.VITE_PACKAGE === "full"
+        ? Config.get().opentelemetry?.collector_url
+        : undefined;
     // we always enable opentelemetry in general. We only enable the OTLP
     // collector if a URL is defined (and in future if another setting is defined)
     // Posthog reporting is enabled or disabled
     // within the posthog code.
-    const shouldEnableOtlp = Boolean(config.opentelemetry?.collector_url);
+    const shouldEnableOtlp = Boolean(collectorUrl);
 
     if (!sharedInstance || sharedInstance.isOtlpEnabled !== shouldEnableOtlp) {
       logger.info("(Re)starting OpenTelemetry debug reporting");
       sharedInstance?.dispose();
 
       sharedInstance = new ElementCallOpenTelemetry(
-        config.opentelemetry?.collector_url,
-        config.rageshake?.submit_url,
+        collectorUrl,
+        getRageshakeSubmitUrl(),
       );
     }
   }

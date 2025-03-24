@@ -9,16 +9,17 @@ import { type ComponentProps, useCallback, useEffect, useState } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
   ClientEvent,
-  type Crypto,
   type MatrixClient,
   type MatrixEvent,
 } from "matrix-js-sdk/src/matrix";
+import { type CryptoApi } from "matrix-js-sdk/src/crypto-api";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
 import { Config } from "../config/Config";
 import { ElementCallOpenTelemetry } from "../otel/otel";
 import { type RageshakeRequestModal } from "../room/RageshakeRequestModal";
+import { getUrlParams } from "../UrlParams";
 
 const gzip = async (text: string): Promise<Blob> => {
   // pako is relatively large (200KB), so we only import it when needed
@@ -34,7 +35,7 @@ const gzip = async (text: string): Promise<Blob> => {
  * Collects crypto related information.
  */
 async function collectCryptoInfo(
-  cryptoApi: Crypto.CryptoApi,
+  cryptoApi: CryptoApi,
   body: FormData,
 ): Promise<void> {
   body.append("crypto_version", cryptoApi.getVersion());
@@ -82,7 +83,7 @@ async function collectCryptoInfo(
  */
 async function collectRecoveryInfo(
   client: MatrixClient,
-  cryptoApi: Crypto.CryptoApi,
+  cryptoApi: CryptoApi,
   body: FormData,
 ): Promise<void> {
   const secretStorage = client.secretStorage;
@@ -116,11 +117,30 @@ interface RageShakeSubmitOptions {
   label?: string;
 }
 
+export function getRageshakeSubmitUrl(): string | undefined {
+  if (import.meta.env.VITE_PACKAGE === "full") {
+    // in full package we always use the one configured on the server
+    return Config.get().rageshake?.submit_url;
+  }
+
+  if (import.meta.env.VITE_PACKAGE === "embedded") {
+    // in embedded package we always use the one provided by the widget host
+    return getUrlParams().rageshakeSubmitUrl ?? undefined;
+  }
+
+  return undefined;
+}
+
+export function isRageshakeAvailable(): boolean {
+  return !!getRageshakeSubmitUrl();
+}
+
 export function useSubmitRageshake(): {
   submitRageshake: (opts: RageShakeSubmitOptions) => Promise<void>;
   sending: boolean;
   sent: boolean;
   error?: Error;
+  available: boolean;
 } {
   const { client } = useClient();
 
@@ -138,7 +158,7 @@ export function useSubmitRageshake(): {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     async (opts) => {
-      if (!Config.get().rageshake?.submit_url) {
+      if (!getRageshakeSubmitUrl()) {
         throw new Error("No rageshake URL is configured");
       }
 
@@ -297,6 +317,7 @@ export function useSubmitRageshake(): {
     sending,
     sent,
     error,
+    available: isRageshakeAvailable(),
   };
 }
 

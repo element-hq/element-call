@@ -20,7 +20,11 @@ import * as Sentry from "@sentry/react";
 
 import { type SFUConfig, sfuConfigEquals } from "./openIDSFU";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
-import { InsufficientCapacityError, RichError } from "../RichError";
+import {
+  ElementCallError,
+  InsufficientCapacityError,
+  UnknownCallError,
+} from "../utils/errors.ts";
 
 declare global {
   interface Window {
@@ -140,11 +144,16 @@ async function connectAndPublish(
       websocketTimeout: window.websocketTimeout ?? 45000,
     });
   } catch (e) {
-    // LiveKit uses 503 to indicate that the server has hit its track limits
-    // or equivalently, 429 in LiveKit Cloud
-    // For reference, the 503 response is generated at: https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
-
-    if (e instanceof ConnectionError && (e.status === 503 || e.status === 429))
+    // LiveKit uses 503 to indicate that the server has hit its track limits.
+    // https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
+    // It also errors with a status code of 200 (yes, really) for room
+    // participant limits.
+    // LiveKit Cloud uses 429 for connection limits.
+    // Either way, all these errors can be explained as "insufficient capacity".
+    if (
+      e instanceof ConnectionError &&
+      (e.status === 503 || e.status === 200 || e.status === 429)
+    )
       throw new InsufficientCapacityError();
     throw e;
   }
@@ -188,7 +197,7 @@ export function useECConnectionState(
 
   const [isSwitchingFocus, setSwitchingFocus] = useState(false);
   const [isInDoConnect, setIsInDoConnect] = useState(false);
-  const [error, setError] = useState<RichError | null>(null);
+  const [error, setError] = useState<ElementCallError | null>(null);
   if (error !== null) throw error;
 
   const onConnStateChanged = useCallback((state: ConnectionState) => {
@@ -271,9 +280,11 @@ export function useECConnectionState(
         initialAudioOptions,
       )
         .catch((e) => {
-          if (e instanceof RichError)
+          if (e instanceof ElementCallError) {
             setError(e); // Bubble up any error screens to React
-          else logger.error("Failed to connect to SFU", e);
+          } else if (e instanceof Error) {
+            setError(new UnknownCallError(e));
+          } else logger.error("Failed to connect to SFU", e);
         })
         .finally(() => setIsInDoConnect(false));
     }

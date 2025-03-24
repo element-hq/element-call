@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 export interface ConfigOptions {
   /**
    * The Posthog endpoint to which analytics data will be sent.
+   * This is only used in the full package of Element Call.
    */
   posthog?: {
     api_key: string;
@@ -15,6 +16,7 @@ export interface ConfigOptions {
   };
   /**
    * The Sentry endpoint to which crash data will be sent.
+   * This is only used in the full package of Element Call.
    */
   sentry?: {
     DSN: string;
@@ -22,6 +24,7 @@ export interface ConfigOptions {
   };
   /**
    * The rageshake server to which feedback and debug logs will be sent.
+   * This is only used in the full package of Element Call.
    */
   rageshake?: {
     submit_url: string;
@@ -29,7 +32,7 @@ export interface ConfigOptions {
 
   /**
    * Sets the URL to send opentelemetry data to. If unset, opentelemetry will
-   * be disabled.
+   * be disabled. This is only used in the full package of Element Call.
    */
   opentelemetry?: {
     collector_url: string;
@@ -76,7 +79,7 @@ export interface ConfigOptions {
   /**
    * A link to the end-user license agreement (EULA)
    */
-  eula: string;
+  eula?: string;
 
   media_devices?: {
     /**
@@ -131,6 +134,7 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       server_name: string;
     };
   };
+  eula: string;
   media_devices: {
     enable_audio: boolean;
     enable_video: boolean;
