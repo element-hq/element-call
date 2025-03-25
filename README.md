@@ -169,6 +169,10 @@ You're now ready to launch the development server:
 yarn dev
 ```
 
+See also:
+
+- [Developing with linked packages](./linking.md)
+
 ### Backend
 
 A docker compose file `dev-backend-docker-compose.yml` is provided to start the
