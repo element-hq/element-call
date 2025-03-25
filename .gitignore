@@ -20,6 +20,7 @@ yarn-error.log
 !/.yarn/sdks
 !/.yarn/versions
 /.links.yaml
+/.links.disabled.yaml
 
 # Playwright
 /test-results/
