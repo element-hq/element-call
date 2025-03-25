@@ -68,6 +68,17 @@ services:
     networks:
       - ecbackend
 
+  element-web:
+    image: ghcr.io/element-hq/element-web:develop
+    volumes:
+      - ./backend/ew.test.config.json:/app/config.json
+    environment:
+      ELEMENT_WEB_PORT: 81
+    ports:
+      - "8081:81"
+    networks:
+      - ecbackend
+
   nginx:
     #  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout tls_localhost_key.pem -out tls_localhost_cert.pem -subj "/C=GB/ST=London/L=London/O=Alros/OU=IT Department/CN=localhost"
     hostname: synapse.localhost
