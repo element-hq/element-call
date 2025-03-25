@@ -95,14 +95,14 @@ deployment for three different sites A, B and C is depicted below.
 
 MatrixRTC backend (according to
 [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143))
-is announced by the homeserver's `.well-known/matrix/client` file and discovered
+is announced by the Matrix site's `.well-known/matrix/client` file and discovered
 via the `org.matrix.msc4143.rtc_foci` key, e.g.:
 
 ```json
 "org.matrix.msc4143.rtc_foci": [
     {
         "type": "livekit",
-        "livekit_service_url": "https://someurl.com"
+        "livekit_service_url": "https://matrix-rtc.example.com/livekit/jwt"
     },
 ]
 ```
