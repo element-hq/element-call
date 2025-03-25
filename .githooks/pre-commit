@@ -1,0 +1,12 @@
+#!/usr/bin/sh
+
+FILE=".links.yaml"
+if test -f "$FILE"; then
+  # echo "$FILE exists. -> moving to .links.disabled.yaml"
+  mv .links.yaml .links.disabled.yaml
+  # echo "running yarn"
+  x=$(yarn)
+  y=$(git add yarn.lock)
+  echo "YARN-LINKER-HOOK: We do not allow to commit with local links in the yarn.lock file. The pre-commit hook MODIFIED the yarn.lock file with disabled .links.yaml. Check the new git status (the hook added yarn.lock, was this desired?). The post-commit hook enables the links again. It moves .links.disabled.yaml to .links.yaml and runs yarn. Run \`git commit\` again!"
+  exit 1
+fi
