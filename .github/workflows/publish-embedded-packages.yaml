@@ -164,6 +164,10 @@ jobs:
       - name: Copy files
         run: rsync -a --delete --exclude .git element-call/embedded/ios/ element-call-swift
 
+      - name: Test build
+        working-directory: element-call-swift
+        run: swift build
+
       - name: Get artifact version
         run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
 
