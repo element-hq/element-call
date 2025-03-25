@@ -225,8 +225,8 @@ The easiest way to develop new test is to use the codegen feature of Playwright:
 npx playwright codegen
 ```
 
-This will record your action and write the test code for you. Use the tool bar to test visibility, text content,
-clicking.
+This will record your action and write the test code for you. Use the tool bar
+to test visibility, text content, clicking.
 
 ##### Investigate a failed test from the CI
 
@@ -244,8 +244,8 @@ Unzip the report then use this command to open the report in your browser:
 npx playwright show-report ~/Downloads/playwright-report/
 ```
 
-Under the failed test there is a small icon looking like "3 columns" (next to test name file name),
-click on it to see the live screenshots/console output.
+Under the failed test there is a small icon looking like "3 columns" (next to
+test name file name), click on it to see the live screenshots/console output.
 
 ### Test Coverage
 
