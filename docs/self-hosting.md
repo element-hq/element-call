@@ -76,13 +76,13 @@ to implement
 In the context of MatrixRTC, we suggest using a single hostname for backend
 communication by implementing endpoint routing within a reverse proxy setup. For
 the example above, this results in:
-| Service    | Endpoint | Example |
+| Service | Endpoint | Example |
 | -------- | ------- | ------- |
-| [Livekit SFU](https://github.com/livekit/livekit) WebSocket signalling connection  |  `/livekit/sfu` | `matrix-rtc.example.com/livekit/sfu` |
+| [Livekit SFU](https://github.com/livekit/livekit) WebSocket signalling connection | `/livekit/sfu` | `matrix-rtc.example.com/livekit/sfu` |
 | [Matrix Livekit JWT auth service](https://github.com/element-hq/lk-jwt-service) | `/livekit/jwt` | `matrix-rtc.example.com/livekit/jwt` |
 
-
 Using Nginx, you can achieve this by:
+
 ```jsonc
 server {
     ...
@@ -114,8 +114,7 @@ server {
       proxy_pass http://localhost:7880/;
     }
 }
-````
-
+```
 
 #### MatrixRTC backend announcement
 
@@ -147,8 +146,6 @@ server {
 > [!NOTE]  
 > Most `org.matrix.msc4143.rtc_foci` configurations will only have one entry in
 > the array
-
-
 
 ## Building Element Call
 
