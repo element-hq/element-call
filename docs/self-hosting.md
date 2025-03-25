@@ -30,8 +30,9 @@ required for Element Call to work properly:
   sync v2 API that allows them to correctly track the state of the room. This is
   required by Element Call to track room state reliably.
 
-If you're using [Synapse](https://github.com/element-hq/synapse/) as your homeserver, you'll need
-to additionally add the following config items to `homeserver.yaml` to comply with Element Call:
+If you're using [Synapse](https://github.com/element-hq/synapse/) as your
+homeserver, you'll need to additionally add the following config items to
+`homeserver.yaml` to comply with Element Call:
 
 ```yaml
 experimental_features:
@@ -64,34 +65,90 @@ required for each site deployment.
 
 ![MSC4195 compatible setup](MSC4195_setup.drawio.png)
 
-As depicted above, Element Call requires a
+As depicted above in the `example.com` site deployment, Element Call requires a
 [Livekit SFU](https://github.com/livekit/livekit) alongside a
 [Matrix Livekit JWT auth service](https://github.com/element-hq/lk-jwt-service)
 to implement
 [MSC4195: MatrixRTC using LiveKit backend](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md).
 
+#### Matrix site endpoint routing
+
+In the context of MatrixRTC, we suggest using a single hostname for backend
+communication by implementing endpoint routing within a reverse proxy setup. For
+the example above, this results in:
+| Service    | Endpoint | Example |
+| -------- | ------- | ------- |
+| [Livekit SFU](https://github.com/livekit/livekit) WebSocket signalling connection  |  `/livekit/sfu` | `matrix-rtc.example.com/livekit/sfu` |
+| [Matrix Livekit JWT auth service](https://github.com/element-hq/lk-jwt-service) | `/livekit/jwt` | `matrix-rtc.example.com/livekit/jwt` |
+
+
+Using Nginx, you can achieve this by:
+```jsonc
+server {
+    ...
+    location ^~ /livekit/jwt/ {
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+
+      # JWT Service running at port 8080
+      proxy_pass http://localhost:8080/;
+    }
+
+    location ^~ /livekit/sfu/ {
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+
+      proxy_send_timeout 120;
+      proxy_read_timeout 120;
+      proxy_buffering off;
+
+      proxy_set_header Accept-Encoding gzip;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+
+      # LiveKit SFU websocket connection running at port 7880
+      proxy_pass http://localhost:7880/;
+    }
+}
+````
+
+
+#### MatrixRTC backend announcement
+
 > [!IMPORTANT]
 > As defined in
 > [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143)
-> MatrixRTC backend must be announced to the client via your **homeserver's
-> `.well-known/matrix/client`**. The configuration is a list of Foci configs:
+> MatrixRTC backend must be announced to the client via your **Matrix site's
+> `.well-known/matrix/client`** file (e.g.
+> `example.com/.well-known/matrix/client` matching the site deployment example
+> from above). The configuration is a list of Foci configs:
 
 ```json
 "org.matrix.msc4143.rtc_foci": [
     {
         "type": "livekit",
-        "livekit_service_url": "https://someurl.com"
-    },
-     {
-        "type": "livekit",
-        "livekit_service_url": "https://livekit2.com"
+        "livekit_service_url": "https://matrix-rtc.example.com"
     },
     {
-        "type": "another_foci",
-        "props_for_another_foci": "val"
+        "type": "livekit",
+        "livekit_service_url": "https://matrix-rtc-2.example.com"
+    },
+    {
+        "type": "nextgen_new_foci_type",
+        "props_for_nextgen_foci": "val"
     }
 ]
 ```
+
+> [!NOTE]  
+> Most `org.matrix.msc4143.rtc_foci` configurations will only have one entry in
+> the array
+
+
 
 ## Building Element Call
 
