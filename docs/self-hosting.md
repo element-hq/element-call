@@ -130,11 +130,11 @@ server {
 "org.matrix.msc4143.rtc_foci": [
     {
         "type": "livekit",
-        "livekit_service_url": "https://matrix-rtc.example.com"
+        "livekit_service_url": "https://matrix-rtc.example.com/livekit/jwt"
     },
     {
         "type": "livekit",
-        "livekit_service_url": "https://matrix-rtc-2.example.com"
+        "livekit_service_url": "https://matrix-rtc-2.example.com/livekit/jwt"
     },
     {
         "type": "nextgen_new_foci_type",
