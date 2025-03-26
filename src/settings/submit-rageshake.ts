@@ -158,7 +158,8 @@ export function useSubmitRageshake(): {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     async (opts) => {
-      if (!getRageshakeSubmitUrl()) {
+      const submitUrl = getRageshakeSubmitUrl();
+      if (!submitUrl) {
         throw new Error("No rageshake URL is configured");
       }
 
@@ -292,7 +293,7 @@ export function useSubmitRageshake(): {
           );
         }
 
-        const res = await fetch(Config.get().rageshake!.submit_url, {
+        const res = await fetch(submitUrl, {
           method: "POST",
           body,
         });
