@@ -245,7 +245,7 @@ npx playwright show-report ~/Downloads/playwright-report/
 ```
 
 Under the failed test there is a small icon looking like "3 columns" (next to
-test name file name), click on it to see the live screenshots/console output.
+the test name file name), click on it to see the live screenshots/console output.
 
 ### Test Coverage
 
