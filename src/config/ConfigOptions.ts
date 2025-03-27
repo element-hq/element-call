@@ -158,7 +158,7 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
   features: {
     feature_use_device_session_member_events: true,
   },
-  ssla: " https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
+  ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
   media_devices: {
     enable_audio: true,
     enable_video: true,
