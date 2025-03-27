@@ -22,11 +22,15 @@ import { GroupCallErrorBoundary } from "../room/GroupCallErrorBoundary.tsx";
 
 test.each<[string, ConnectionError]>([
   [
-    "LiveKit",
+    "LiveKit hits track limit",
     new ConnectionError("", ConnectionErrorReason.InternalError, 503),
   ],
   [
-    "LiveKit Cloud",
+    "LiveKit hits room participant limit",
+    new ConnectionError("", ConnectionErrorReason.ServerUnreachable, 200),
+  ],
+  [
+    "LiveKit Cloud hits connection limit",
     new ConnectionError("", ConnectionErrorReason.NotAllowed, 429),
   ],
 ])(

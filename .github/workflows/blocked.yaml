@@ -1,6 +1,6 @@
 name: Prevent blocked
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, labeled, unlabeled]
 jobs:
   prevent-blocked:

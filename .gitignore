@@ -9,4 +9,21 @@ dist-ssr
 public/config.json
 backend/synapse_tmp/*
 /coverage
+
+# Yarn
 yarn-error.log
+/.pnp.*
+/.yarn/*
+!/.yarn/patches
+!/.yarn/plugins
+!/.yarn/releases
+!/.yarn/sdks
+!/.yarn/versions
+/.links.yaml
+/.links.disabled.yaml
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
