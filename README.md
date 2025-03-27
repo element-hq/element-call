@@ -149,6 +149,7 @@ To get started clone and set up this project:
 ```sh
 git clone https://github.com/element-hq/element-call.git
 cd element-call
+corepack enable
 yarn
 ```
 
@@ -167,6 +168,10 @@ You're now ready to launch the development server:
 ```sh
 yarn dev
 ```
+
+See also:
+
+- [Developing with linked packages](./linking.md)
 
 ### Backend
 
