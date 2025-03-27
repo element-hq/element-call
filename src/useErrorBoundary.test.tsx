@@ -11,19 +11,19 @@ import { type ReactElement, useCallback } from "react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 
-import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
-import { useGroupCallErrorBoundary } from "./useCallErrorBoundary.ts";
-import { ConnectionLostError } from "../utils/errors.ts";
+import { GroupCallErrorBoundary } from "./room/GroupCallErrorBoundary";
+import { useErrorBoundary } from "./useErrorBoundary";
+import { ConnectionLostError } from "./utils/errors";
 
 it("should show async error", async () => {
   const user = userEvent.setup();
 
   const TestComponent = (): ReactElement => {
-    const { showGroupCallErrorBoundary } = useGroupCallErrorBoundary();
+    const { showErrorBoundary } = useErrorBoundary();
 
     const onClick = useCallback((): void => {
-      showGroupCallErrorBoundary(new ConnectionLostError());
-    }, [showGroupCallErrorBoundary]);
+      showErrorBoundary(new ConnectionLostError());
+    }, [showErrorBoundary]);
 
     return (
       <div>
