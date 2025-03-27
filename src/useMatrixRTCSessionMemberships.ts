@@ -6,8 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import {
+  type CallMembership,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
