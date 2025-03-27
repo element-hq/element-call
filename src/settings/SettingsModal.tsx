@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk";
 import { Root as Form } from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
 

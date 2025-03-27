@@ -5,8 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { EventType } from "matrix-js-sdk/src/@types/event";
-import { type RoomState } from "matrix-js-sdk/src/models/room-state";
+import { EventType, type RoomState } from "matrix-js-sdk";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 

@@ -13,7 +13,7 @@ import {
   useMemo,
 } from "react";
 import { type IWidgetApiRequest } from "matrix-widget-api";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   type MediaDevice,

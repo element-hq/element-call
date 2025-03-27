@@ -11,7 +11,7 @@ import {
   type Span,
 } from "@opentelemetry/sdk-trace-base";
 import { hrTimeToMilliseconds } from "@opentelemetry/core";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
 

@@ -6,12 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useCallback } from "react";
-import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
+import { InteractiveAuth } from "matrix-js-sdk";
 import {
   createClient,
   type LoginResponse,
   type MatrixClient,
-} from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk";
 
 import { initClient } from "../utils/matrix";
 import { type Session } from "../ClientContext";

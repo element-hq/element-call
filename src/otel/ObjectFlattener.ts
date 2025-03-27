@@ -5,13 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 import { type Attributes } from "@opentelemetry/api";
-import { type VoipEvent } from "matrix-js-sdk/src/webrtc/call";
-import { type GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
+import { type VoipEvent } from "matrix-js-sdk/lib/webrtc/call";
+import { type GroupCallStatsReport } from "matrix-js-sdk/lib/webrtc/groupCall";
 import {
   type ByteSentStatsReport,
   type ConnectionStatsReport,
   type SummaryStatsReport,
-} from "matrix-js-sdk/src/webrtc/stats/statsReport";
+} from "matrix-js-sdk/lib/webrtc/stats/statsReport";
 
 export class ObjectFlattener {
   public static flattenReportObject(

@@ -16,7 +16,7 @@ import {
   afterEach,
 } from "vitest";
 import { act } from "react";
-import { type CallMembership } from "matrix-js-sdk/src/matrixrtc";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 
 import { mockRtcMembership } from "../utils/test";
 import {

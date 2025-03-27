@@ -11,7 +11,7 @@ import type {
   Listener,
   ListenerMap,
   TypedEventEmitter,
-} from "matrix-js-sdk/src/models/typed-event-emitter";
+} from "matrix-js-sdk/lib/models/typed-event-emitter";
 
 // Shortcut for registering a listener on an EventTarget
 export function useEventTarget<T extends Event>(

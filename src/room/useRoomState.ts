@@ -5,13 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type RoomState,
-  RoomStateEvent,
-} from "matrix-js-sdk/src/models/room-state";
 import { useCallback, useMemo, useState } from "react";
+import { type RoomState, RoomStateEvent, type Room } from "matrix-js-sdk";
 
-import type { Room } from "matrix-js-sdk/src/models/room";
 import { useTypedEventEmitter } from "../useEvents";
 
 /**
