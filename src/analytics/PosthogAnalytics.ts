@@ -12,7 +12,6 @@ import posthog, {
 } from "posthog-js";
 import { logger } from "matrix-js-sdk/src/logger";
 import { type MatrixClient } from "matrix-js-sdk/src/matrix";
-import { Buffer } from "buffer";
 import { type Subscription } from "rxjs";
 
 import { widget } from "../widget";
@@ -296,7 +295,7 @@ export class PosthogAnalytics {
     const posthogIdMaterial = "ec" + accountAnalyticsId + client.getUserId();
     const bufferForPosthogId = await crypto.subtle.digest(
       "sha-256",
-      Buffer.from(posthogIdMaterial, "utf-8"),
+      new TextEncoder().encode(posthogIdMaterial),
     );
     const view = new Int32Array(bufferForPosthogId);
     return Array.from(view)
