@@ -67,7 +67,6 @@ import {
   useSetting,
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
-import { useGroupCallErrorBoundary } from "./useCallErrorBoundary.ts";
 
 declare global {
   interface Window {
@@ -100,6 +99,11 @@ export const GroupCallView: FC<Props> = ({
   muteStates,
   widget,
 }) => {
+  // Used to thread through any errors that occur outside the error boundary
+  const [externalError, setExternalError] = useState<ElementCallError | null>(
+    null,
+  );
+
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const leaveSoundContext = useLatest(
     useAudioContext({
@@ -121,13 +125,11 @@ export const GroupCallView: FC<Props> = ({
     };
   }, [rtcSession]);
 
-  const { showGroupCallErrorBoundary } = useGroupCallErrorBoundary();
-
   useTypedEventEmitter(
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
     (error) => {
-      showGroupCallErrorBoundary(
+      setExternalError(
         new RTCSessionError(
           ErrorCode.MEMBERSHIP_MANAGER_UNRECOVERABLE,
           error.message ?? error,
@@ -190,17 +192,17 @@ export const GroupCallView: FC<Props> = ({
         );
       } catch (e) {
         if (e instanceof ElementCallError) {
-          showGroupCallErrorBoundary(e);
+          setExternalError(e);
         } else {
           logger.error(`Unknown Error while entering RTC session`, e);
           const error = new UnknownCallError(
             e instanceof Error ? e : new Error("Unknown error", { cause: e }),
           );
-          showGroupCallErrorBoundary(error);
+          setExternalError(error);
         }
       }
     },
-    [showGroupCallErrorBoundary],
+    [setExternalError],
   );
 
   useEffect(() => {
@@ -422,7 +424,15 @@ export const GroupCallView: FC<Props> = ({
   );
 
   let body: ReactNode;
-  if (isJoined) {
+  if (externalError) {
+    // If an error was recorded within this component but outside
+    // GroupCallErrorBoundary, create a component that rethrows the error from
+    // within the error boundary, so it can be handled uniformly
+    const ErrorComponent = (): ReactNode => {
+      throw externalError;
+    };
+    body = <ErrorComponent />;
+  } else if (isJoined) {
     body = (
       <>
         {shareModal}

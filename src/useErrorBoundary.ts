@@ -7,18 +7,16 @@ Please see LICENSE in the repository root for full details.
 
 import { useMemo, useState } from "react";
 
-import type { ElementCallError } from "../utils/errors.ts";
-
 export type UseErrorBoundaryApi = {
-  showGroupCallErrorBoundary: (error: ElementCallError) => void;
+  showErrorBoundary: (error: Error) => void;
 };
 
-export function useGroupCallErrorBoundary(): UseErrorBoundaryApi {
-  const [error, setError] = useState<ElementCallError | null>(null);
+export function useErrorBoundary(): UseErrorBoundaryApi {
+  const [error, setError] = useState<Error | null>(null);
 
   const memoized: UseErrorBoundaryApi = useMemo(
     () => ({
-      showGroupCallErrorBoundary: (error: ElementCallError) => setError(error),
+      showErrorBoundary: (error: Error) => setError(error),
     }),
     [],
   );

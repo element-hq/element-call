@@ -286,8 +286,9 @@ export class MockRTCSession extends TypedEventEmitter<
     super();
   }
 
-  public isJoined(): true {
-    return true;
+  public joined = true;
+  public isJoined(): boolean {
+    return this.joined;
   }
 
   public withMemberships(
