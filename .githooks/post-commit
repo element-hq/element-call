@@ -6,6 +6,6 @@ if test -f "$FILE"; then
   mv .links.disabled.yaml .links.yaml
   # echo "running yarn"
   yarnLog=$(yarn)
-  echo "The post-commit hook enabled the links again: moved .links.disabled.yaml to .links.yaml and ran yarn."
+  echo "[yarn-linker] The post-commit hook has re-enabled .links.yaml."
   exit 1
 fi
