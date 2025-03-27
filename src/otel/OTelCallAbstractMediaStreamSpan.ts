@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import opentelemetry, { type Span } from "@opentelemetry/api";
-import { type TrackStats } from "matrix-js-sdk/src/webrtc/stats/statsReport";
+import { type TrackStats } from "matrix-js-sdk/lib/webrtc/stats/statsReport";
 
 import { type ElementCallOpenTelemetry } from "./otel";
 import { OTelCallMediaStreamTrackSpan } from "./OTelCallMediaStreamTrackSpan";

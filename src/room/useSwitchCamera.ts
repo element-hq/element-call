@@ -20,7 +20,7 @@ import {
   TrackEvent,
 } from "livekit-client";
 import { useObservable, useObservableEagerState } from "observable-hooks";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { platform } from "../Platform";

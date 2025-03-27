@@ -6,10 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useState, type FormEventHandler } from "react";
-import { secureRandomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk/lib/randomstring";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { useNavigate } from "react-router-dom";
 
 import { useClient } from "../ClientContext";

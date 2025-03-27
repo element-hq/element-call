@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { BehaviorSubject } from "rxjs";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type MediaViewModel, type UserMediaViewModel } from "./MediaViewModel";
 import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";

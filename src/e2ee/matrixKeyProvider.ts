@@ -6,11 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { BaseKeyProvider, createKeyMaterialFromBuffer } from "livekit-client";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-} from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+} from "matrix-js-sdk/lib/matrixrtc";
 
 export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;

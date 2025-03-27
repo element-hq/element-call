@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Config } from "./config/Config";
 import { type EncryptionSystem } from "./e2ee/sharedKeyManagement";
