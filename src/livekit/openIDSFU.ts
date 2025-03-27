@@ -12,9 +12,9 @@ import { useEffect, useState } from "react";
 import { type LivekitFocus } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
 import { useActiveLivekitFocus } from "../room/useActiveFocus";
-import { useGroupCallErrorBoundary } from "../room/useCallErrorBoundary.ts";
-import { FailToGetOpenIdToken } from "../utils/errors.ts";
-import { doNetworkOperationWithRetry } from "../utils/matrix.ts";
+import { useErrorBoundary } from "../useErrorBoundary";
+import { FailToGetOpenIdToken } from "../utils/errors";
+import { doNetworkOperationWithRetry } from "../utils/matrix";
 
 export interface SFUConfig {
   url: string;
@@ -41,7 +41,7 @@ export function useOpenIDSFU(
   const [sfuConfig, setSFUConfig] = useState<SFUConfig | undefined>(undefined);
 
   const activeFocus = useActiveLivekitFocus(rtcSession);
-  const { showGroupCallErrorBoundary } = useGroupCallErrorBoundary();
+  const { showErrorBoundary } = useErrorBoundary();
 
   useEffect(() => {
     if (activeFocus) {
@@ -50,14 +50,14 @@ export function useOpenIDSFU(
           setSFUConfig(sfuConfig);
         },
         (e) => {
-          showGroupCallErrorBoundary(new FailToGetOpenIdToken(e));
+          showErrorBoundary(new FailToGetOpenIdToken(e));
           logger.error("Failed to get SFU config", e);
         },
       );
     } else {
       setSFUConfig(undefined);
     }
-  }, [client, activeFocus, showGroupCallErrorBoundary]);
+  }, [client, activeFocus, showErrorBoundary]);
 
   return sfuConfig;
 }
