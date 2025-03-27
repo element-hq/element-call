@@ -20,6 +20,7 @@ import {
 import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
+import { useUrlParams } from "../UrlParams";
 interface Props {
   client: MatrixClient;
   livekitRoom?: LivekitRoom;
@@ -42,6 +43,8 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
   const [useNewMembershipManager, setNewMembershipManager] = useSetting(
     useNewMembershipManagerSetting,
   );
+
+  const urlParams = useUrlParams();
 
   const sfuUrl = useMemo((): URL | null => {
     if (livekitRoom?.engine.client.ws?.url) {
@@ -169,6 +172,10 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
           </pre>
         </>
       ) : null}
+      <p>{t("developer_mode.environment_variables")}</p>
+      <pre>{JSON.stringify(import.meta.env, null, 2)}</pre>
+      <p>{t("developer_mode.url_params")}</p>
+      <pre>{JSON.stringify(urlParams, null, 2)}</pre>
     </>
   );
 };
