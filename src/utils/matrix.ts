@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   ClientEvent,
+  calculateRetryBackoff,
   createClient,
   IndexedDBStore,
   MemoryStore,
@@ -16,6 +17,7 @@ import {
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { secureRandomBase64Url } from "matrix-js-sdk/lib/randomstring";
+import { sleep } from "matrix-js-sdk/lib/utils";
 
 import type { ICreateClientOpts, MatrixClient, Room } from "matrix-js-sdk";
 import IndexedDBWorker from "../IndexedDBWorker?worker";
@@ -332,4 +334,31 @@ export function getRelativeRoomUrl(
     ? "/" + roomAliasLocalpartFromRoomName(roomName)
     : "";
   return `/room/#${roomPart}?${generateUrlSearchParams(roomId, encryptionSystem, viaServers).toString()}`;
+}
+
+/**
+ * Perfom a network operation with retries on ConnectionError.
+ * If the error is not retryable, or the max number of retries is reached, the error is rethrown.
+ * Supports handling of matrix quotas.
+ */
+export async function doNetworkOperationWithRetry<T>(
+  operation: () => Promise<T>,
+): Promise<T> {
+  let currentRetryCount = 0;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      return await operation();
+    } catch (e) {
+      currentRetryCount++;
+      const backoff = calculateRetryBackoff(e, currentRetryCount, true);
+      if (backoff < 0) {
+        // Max number of retries reached, or error is not retryable. rethrow the error
+        throw e;
+      }
+      // wait for the specified time and then retry the request
+      await sleep(backoff);
+    }
+  }
 }

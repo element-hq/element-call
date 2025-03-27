@@ -13,15 +13,17 @@
     "prettier:check": "prettier -c .",
     "prettier:format": "prettier -w .",
     "lint": "yarn lint:types && yarn lint:eslint && yarn lint:knip",
-    "lint:eslint": "eslint --max-warnings 0 src",
-    "lint:eslint-fix": "eslint --max-warnings 0 src --fix",
+    "lint:eslint": "eslint --max-warnings 0 src playwright",
+    "lint:eslint-fix": "eslint --max-warnings 0 src playwright --fix",
     "lint:knip": "knip",
     "lint:types": "tsc",
     "i18n": "i18next",
     "i18n:check": "i18next --fail-on-warnings --fail-on-update",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "backend": "docker-compose -f dev-backend-docker-compose.yml up"
+    "backend": "docker-compose -f dev-backend-docker-compose.yml up",
+    "test:playwright": "playwright test",
+    "test:playwright:open": "yarn test:playwright --ui"
   },
   "devDependencies": {
     "@babel/core": "^7.16.5",
@@ -43,6 +45,7 @@
     "@opentelemetry/sdk-trace-base": "^1.25.1",
     "@opentelemetry/sdk-trace-web": "^1.9.1",
     "@opentelemetry/semantic-conventions": "^1.25.1",
+    "@playwright/test": "^1.51.0",
     "@radix-ui/react-dialog": "^1.0.4",
     "@radix-ui/react-slider": "^1.1.2",
     "@radix-ui/react-visually-hidden": "^1.0.3",
@@ -92,7 +95,7 @@
     "i18next-parser": "^9.1.0",
     "jsdom": "^26.0.0",
     "knip": "^5.27.2",
-    "livekit-client": "^2.5.7",
+    "livekit-client": "2.9.1",
     "lodash-es": "^4.17.21",
     "loglevel": "^1.9.1",
     "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#8395919f0fd1af7cab1e793d736f2cdf18ef7686",
@@ -127,5 +130,6 @@
   "resolutions": {
     "@livekit/components-core/rxjs": "^7.8.1",
     "matrix-widget-api": "1.11.0"
-  }
+  },
+  "packageManager": "yarn@4.7.0"
 }

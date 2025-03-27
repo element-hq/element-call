@@ -16,6 +16,11 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, packageType }) => {
   const env = loadEnv(mode, process.cwd());
+  // Environment variables with the VITE_ prefix are accessible at runtime.
+  // So, we set this to allow for build/package specific behaviour.
+  // In future we might be able to do what is needed via code splitting at
+  // build time.
+  process.env.VITE_PACKAGE = packageType ?? "full";
   const plugins = [
     react(),
     basicSsl(),
@@ -32,7 +37,7 @@ export default defineConfig(({ mode, packageType }) => {
       inject: {
         data: {
           brand: env.VITE_PRODUCT_NAME || "Element Call",
-          packageType: packageType ?? "full",
+          packageType: process.env.VITE_PACKAGE,
         },
       },
     }),

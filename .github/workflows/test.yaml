@@ -1,22 +1,24 @@
-name: Run unit tests
+name: Test
 on:
   pull_request: {}
   push:
     branches: [livekit, full-mesh]
 jobs:
   vitest:
-    name: Run vitest tests
+    name: Run unit tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Enable Corepack
+        run: corepack enable
       - name: Yarn cache
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4
         with:
           cache: "yarn"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "yarn install --frozen-lockfile"
+        run: "yarn install --immutable"
       - name: Vitest
         run: "yarn run test:coverage"
       - name: Upload to codecov
@@ -26,3 +28,33 @@ jobs:
         with:
           flags: unittests
           fail_ci_if_error: true
+  playwright:
+    name: Run end-to-end tests
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable Corepack
+        run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          cache: "yarn"
+          node-version-file: ".node-version"
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Install Playwright Browsers
+        run: yarn playwright install --with-deps
+      - name: Run backend components
+        run: |
+          docker compose -f playwright-backend-docker-compose.yml up -d
+          docker ps
+      - name: Copy config file
+        run: cp config/config.devenv.json public/config.json
+      - name: Run Playwright tests
+        run: yarn playwright test
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 3
