@@ -125,7 +125,7 @@ jobs:
         run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
 
       - name: Set version string
-        run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" embedded/android/lib/src/main/io/element/android/call/embedded/Version.kt
+        run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" embedded/android/lib/src/main/kotlin/io/element/android/call/embedded/Version.kt
 
       - name: Publish AAR
         working-directory: embedded/android
