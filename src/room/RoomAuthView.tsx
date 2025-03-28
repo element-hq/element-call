@@ -82,8 +82,7 @@ export const RoomAuthView: FC = () => {
             <Text size="sm">
               <Trans i18nKey="room_auth_view_ssla_caption">
                 By clicking "Join call now", you agree to our{" "}
-                {/* if the deprecated eula field is setup we still show it. */}
-                <ExternalLink href={Config.get().eula ?? Config.get().ssla}>
+                <ExternalLink href={Config.get().ssla}>
                   Software and Services License Agreement (SSLA)
                 </ExternalLink>
               </Trans>

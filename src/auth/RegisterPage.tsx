@@ -216,8 +216,7 @@ export const RegisterPage: FC = () => {
                   apply.
                   <br />
                   By clicking "Register", you agree to our{" "}
-                  {/* if the deprecated eula field is setup we still show it. */}
-                  <ExternalLink href={Config.get().eula ?? Config.get().ssla}>
+                  <ExternalLink href={Config.get().ssla}>
                     Software and Services License Agreement (SSLA)
                   </ExternalLink>
                 </Trans>

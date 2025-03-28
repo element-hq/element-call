@@ -187,8 +187,7 @@ export const UnauthenticatedView: FC = () => {
             <Text size="sm" className={styles.notice}>
               <Trans i18nKey="unauthenticated_view_ssla_caption">
                 By clicking "Go", you agree to our{" "}
-                {/* if the deprecated eula field is setup we still show it. */}
-                <ExternalLink href={Config.get().eula ?? Config.get().ssla}>
+                <ExternalLink href={Config.get().ssla}>
                   Software and Services License Agreement (SSLA)
                 </ExternalLink>
               </Trans>

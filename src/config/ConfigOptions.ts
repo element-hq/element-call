@@ -78,12 +78,6 @@ export interface ConfigOptions {
 
   /**
    * A link to the software and services license agreement (SSLA)
-   * @deprecated renamed to ssla
-   */
-  eula?: string;
-
-  /**
-   * A link to the software and services license agreement (SSLA)
    */
   ssla?: string;
 
