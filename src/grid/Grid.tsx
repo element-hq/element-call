@@ -32,7 +32,7 @@ import {
 } from "react";
 import useMeasure from "react-use-measure";
 import classNames from "classnames";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { useObservableEagerState } from "observable-hooks";
 import { fromEvent, map, startWith } from "rxjs";
 

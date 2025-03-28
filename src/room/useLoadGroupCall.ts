@@ -13,18 +13,20 @@ import {
   type ComponentType,
   type SVGAttributes,
 } from "react";
-import { logger } from "matrix-js-sdk/src/logger";
-import { EventType } from "matrix-js-sdk/src/@types/event";
 import {
+  JoinRule,
+  EventType,
+  SyncState,
+  MatrixError,
+  KnownMembership,
   ClientEvent,
   type MatrixClient,
   type RoomSummary,
-} from "matrix-js-sdk/src/client";
-import { SyncState } from "matrix-js-sdk/src/sync";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { RoomEvent, type Room } from "matrix-js-sdk/src/models/room";
-import { KnownMembership } from "matrix-js-sdk/src/types";
-import { JoinRule, MatrixError } from "matrix-js-sdk/src/matrix";
+  RoomEvent,
+  type Room,
+} from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { useTranslation } from "react-i18next";
 import {
   AdminIcon,

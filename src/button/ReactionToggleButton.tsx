@@ -22,7 +22,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import classNames from "classnames";
 import { useObservableState } from "observable-hooks";
 import { map } from "rxjs";

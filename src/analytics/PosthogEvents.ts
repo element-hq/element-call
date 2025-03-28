@@ -6,8 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type DisconnectReason } from "livekit-client";
-import { logger } from "matrix-js-sdk/src/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   type IPosthogEvent,

@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { type FC, useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { Button, Heading, Text } from "@vector-im/compound-web";
 
 import styles from "./RoomAuthView.module.css";

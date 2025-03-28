@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { useTranslation } from "react-i18next";
 import { type FC, useCallback, type JSX } from "react";
 import { Button } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Config } from "../config/Config";
 import styles from "./RageshakeButton.module.css";

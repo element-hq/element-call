@@ -12,10 +12,10 @@ import {
   type FormEventHandler,
   type FC,
 } from "react";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { Button } from "@vector-im/compound-web";
 import { useNavigate } from "react-router-dom";
 

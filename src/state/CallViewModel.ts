@@ -18,11 +18,7 @@ import {
   type RemoteParticipant,
   Track,
 } from "livekit-client";
-import {
-  RoomStateEvent,
-  type Room,
-  type RoomMember,
-} from "matrix-js-sdk/src/matrix";
+import { RoomStateEvent, type Room, type RoomMember } from "matrix-js-sdk";
 import {
   BehaviorSubject,
   EMPTY,
@@ -49,12 +45,12 @@ import {
   timer,
   withLatestFrom,
 } from "rxjs";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
 import {

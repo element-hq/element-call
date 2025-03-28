@@ -14,13 +14,12 @@ import {
   vi,
 } from "vitest";
 import { render, waitFor, screen } from "@testing-library/react";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { of } from "rxjs";
-import { JoinRule, type RoomState } from "matrix-js-sdk/src/matrix";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
-import { type RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
+import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
 

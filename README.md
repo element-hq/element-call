@@ -97,14 +97,14 @@ deployment for three different sites A, B and C is depicted below.
 
 MatrixRTC backend (according to
 [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143))
-is announced by the homeserver's `.well-known/matrix/client` file and discovered
+is announced by the Matrix site's `.well-known/matrix/client` file and discovered
 via the `org.matrix.msc4143.rtc_foci` key, e.g.:
 
 ```json
 "org.matrix.msc4143.rtc_foci": [
     {
         "type": "livekit",
-        "livekit_service_url": "https://someurl.com"
+        "livekit_service_url": "https://matrix-rtc.example.com/livekit/jwt"
     },
 ]
 ```
@@ -149,6 +149,7 @@ To get started clone and set up this project:
 ```sh
 git clone https://github.com/element-hq/element-call.git
 cd element-call
+corepack enable
 yarn
 ```
 
@@ -167,6 +168,10 @@ You're now ready to launch the development server:
 ```sh
 yarn dev
 ```
+
+See also:
+
+- [Developing with linked packages](./linking.md)
 
 ### Backend
 
@@ -227,8 +232,8 @@ The easiest way to develop new test is to use the codegen feature of Playwright:
 npx playwright codegen
 ```
 
-This will record your action and write the test code for you. Use the tool bar to test visibility, text content,
-clicking.
+This will record your action and write the test code for you. Use the tool bar
+to test visibility, text content and clicking.
 
 ##### Investigate a failed test from the CI
 
@@ -246,8 +251,8 @@ Unzip the report then use this command to open the report in your browser:
 npx playwright show-report ~/Downloads/playwright-report/
 ```
 
-Under the failed test there is a small icon looking like "3 columns" (next to test name file name),
-click on it to see the live screenshots/console output.
+Under the failed test there is a small icon looking like "3 columns" (next to
+the test name file name), click on it to see the live screenshots/console output.
 
 ### Test Coverage
 
