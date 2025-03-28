@@ -5,16 +5,8 @@ on:
       - synchronize
       - opened
       - labeled
-    paths-ignore:
-      - ".github/ISSUE_TEMPLATE/**"
-      - ".github/CODEOWNERS"
-      - "docs/**"
   push:
     branches: [livekit, full-mesh]
-    paths-ignore:
-      - ".github/ISSUE_TEMPLATE/**"
-      - ".github/CODEOWNERS"
-      - "docs/**"
 jobs:
   build_full_element_call:
     # Use the full package vite build
