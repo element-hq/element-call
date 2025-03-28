@@ -140,6 +140,7 @@ describe("useSubmitRageshake", () => {
 
     describe("full package", () => {
       beforeEach(() => {
+        mockConfig({});
         vi.stubEnv("VITE_PACKAGE", "full");
       });
       it("returns false with no config value", () => {
@@ -169,6 +170,7 @@ describe("useSubmitRageshake", () => {
 
   describe("when rageshake is available", () => {
     beforeEach(() => {
+      mockConfig({});
       vi.unstubAllGlobals();
     });
 
