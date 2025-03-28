@@ -17,7 +17,7 @@ import {
   skip,
   switchMap,
 } from "rxjs";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk";
 import {
   ConnectionState,
   type LocalParticipant,
@@ -30,7 +30,7 @@ import { isEqual } from "lodash-es";
 import {
   type CallMembership,
   type MatrixRTCSession,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
 
 import { CallViewModel, type Layout } from "./CallViewModel";
 import {

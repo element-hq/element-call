@@ -14,7 +14,7 @@ import { initReactI18next } from "react-i18next";
 import { afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "vitest-axe/extend-expect";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import "@testing-library/jest-dom/vitest";
 
 import EN from "../locales/en/app.json";

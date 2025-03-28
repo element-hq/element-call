@@ -9,7 +9,7 @@ import { describe, expect, test, vi } from "vitest";
 import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
 import { KeyProviderEvent } from "livekit-client";
 
 import { MatrixKeyProvider } from "./matrixKeyProvider";

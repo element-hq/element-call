@@ -5,16 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { logger } from "matrix-js-sdk/src/logger";
-import { EventType } from "matrix-js-sdk/src/@types/event";
-import { createRoomWidgetClient } from "matrix-js-sdk/src/matrix";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { EventType, createRoomWidgetClient } from "matrix-js-sdk";
 import {
   WidgetApi,
   MatrixCapabilities,
   WidgetApiToWidgetAction,
 } from "matrix-widget-api";
 
-import type { MatrixClient } from "matrix-js-sdk/src/client";
+import type { MatrixClient } from "matrix-js-sdk";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";

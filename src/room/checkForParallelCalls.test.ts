@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { vi, type Mocked, test, expect } from "vitest";
-import { type RoomState } from "matrix-js-sdk/src/models/room-state";
+import { type RoomState } from "matrix-js-sdk";
 
 import { PosthogAnalytics } from "../../src/analytics/PosthogAnalytics";
 import { checkForParallelCalls } from "../../src/room/checkForParallelCalls";

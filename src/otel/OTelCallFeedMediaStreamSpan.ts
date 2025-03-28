@@ -9,7 +9,7 @@ import { type Span } from "@opentelemetry/api";
 import {
   type CallFeedStats,
   type TrackStats,
-} from "matrix-js-sdk/src/webrtc/stats/statsReport";
+} from "matrix-js-sdk/lib/webrtc/stats/statsReport";
 
 import { type ElementCallOpenTelemetry } from "./otel";
 import { OTelCallAbstractMediaStreamSpan } from "./OTelCallAbstractMediaStreamSpan";

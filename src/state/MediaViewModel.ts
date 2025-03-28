@@ -26,7 +26,7 @@ import {
   RoomEvent as LivekitRoomEvent,
   RemoteTrack,
 } from "livekit-client";
-import { type RoomMember } from "matrix-js-sdk/src/matrix";
+import { type RoomMember } from "matrix-js-sdk";
 import {
   BehaviorSubject,
   type Observable,

@@ -13,13 +13,13 @@ import {
   useRef,
   type JSX,
 } from "react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { type MatrixError } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { Trans, useTranslation } from "react-i18next";
 import {
   CheckIcon,
   UnknownSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
-import { type MatrixError } from "matrix-js-sdk/src/http-api";
 
 import { useClientLegacy } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
