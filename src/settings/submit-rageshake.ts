@@ -131,11 +131,9 @@ export function getRageshakeSubmitUrl(): string | undefined {
   return undefined;
 }
 
-export function isRageshakeAvailable(): boolean {
-  return !!getRageshakeSubmitUrl();
-}
-
-export function useSubmitRageshake(): {
+export function useSubmitRageshake(
+  injectedGetRageshakeSubmitUrl = getRageshakeSubmitUrl,
+): {
   submitRageshake: (opts: RageShakeSubmitOptions) => Promise<void>;
   sending: boolean;
   sent: boolean;
@@ -158,7 +156,7 @@ export function useSubmitRageshake(): {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     async (opts) => {
-      const submitUrl = getRageshakeSubmitUrl();
+      const submitUrl = injectedGetRageshakeSubmitUrl();
       if (!submitUrl) {
         throw new Error("No rageshake URL is configured");
       }
@@ -310,7 +308,7 @@ export function useSubmitRageshake(): {
         logger.error(error);
       }
     },
-    [client, sending],
+    [client, sending, injectedGetRageshakeSubmitUrl],
   );
 
   return {
@@ -318,7 +316,7 @@ export function useSubmitRageshake(): {
     sending,
     sent,
     error,
-    available: isRageshakeAvailable(),
+    available: !!injectedGetRageshakeSubmitUrl(),
   };
 }
 
