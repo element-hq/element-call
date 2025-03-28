@@ -1,0 +1,17 @@
+changelog:
+  categories:
+    - title: 🛠 Breaking Changes
+      labels:
+        - T-Breaking-Change
+    - title: ✨ Features
+      labels:
+        - T-Enhancement
+    - title: Others
+      labels:
+        - "*"
+      exclude:
+        labels:
+          - dependencies
+    - title: 👒 Dependencies
+      labels:
+        - dependencies
