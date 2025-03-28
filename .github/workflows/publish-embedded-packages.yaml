@@ -172,7 +172,7 @@ jobs:
         run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
 
       - name: Set version string
-        run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" element-call-swift/Sources/EmbeddedElementCall/Package.swift
+        run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" element-call-swift/Sources/EmbeddedElementCall/EmbeddedElementCall.swift
 
       - name: Test build
         working-directory: element-call-swift
