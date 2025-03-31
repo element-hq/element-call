@@ -124,6 +124,9 @@ jobs:
       - name: Get artifact version
         run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
 
+      - name: Set version string
+        run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" embedded/android/lib/src/main/kotlin/io/element/android/call/embedded/Version.kt
+
       - name: Publish AAR
         working-directory: embedded/android
         env:
@@ -165,12 +168,15 @@ jobs:
       - name: Copy files
         run: rsync -a --delete --exclude .git element-call/embedded/ios/ element-call-swift
 
+      - name: Get artifact version
+        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
+
+      - name: Set version string
+        run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" element-call-swift/Sources/EmbeddedElementCall/EmbeddedElementCall.swift
+
       - name: Test build
         working-directory: element-call-swift
         run: swift build
-
-      - name: Get artifact version
-        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
 
       - name: Commit and tag
         working-directory: element-call-swift
