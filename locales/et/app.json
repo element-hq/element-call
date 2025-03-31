@@ -78,7 +78,6 @@
   "rageshake_sending": "Saatmine…",
   "rageshake_sending_logs": "Veaotsingulogide saatmine…",
   "rageshake_sent": "Tänud!",
-  "recaptcha_caption": "Selles saidis on kasutusel ReCAPTCHA ja kehtivad Google'i <2>Privaatsuspoliitika</2> ning <6>Teenusetingimused</6>.<9></9>Klõpsides „Registreeru“, sa nõustud meie <12>Lõppkasutaja litsentsilepingu (EULA) tingimustega</12>",
   "recaptcha_dismissed": "Robotilõks on vahele jäetud",
   "recaptcha_not_loaded": "Robotilõks pole laetud",
   "register": {
@@ -88,7 +87,6 @@
   "register_auth_links": "<0>On sul juba konto?</0><1><0>Logi sisse</0> Või <2>Logi sisse külalisena</2></1>",
   "register_confirm_password_label": "Kinnita salasõna",
   "return_home_button": "Tagasi avalehele",
-  "room_auth_view_eula_caption": "Klõpsides „Liitu kõnega kohe“, nõustud sa meie <2>Lõppkasutaja litsentsilepinguga (EULA)</2>",
   "screenshare_button_label": "Jaga ekraani",
   "settings": {
     "developer_tab_title": "Arendaja",
@@ -108,7 +106,6 @@
   "stop_video_button_label": "Peata videovoog",
   "submitting": "Saadan…",
   "unauthenticated_view_body": "Sa pole veel registreerunud? <2>Loo kasutajakonto</2>",
-  "unauthenticated_view_eula_caption": "Klõpsides „Jätka“, nõustud sa meie <2>Lõppkasutaja litsentsilepinguga (EULA)</2>",
   "unauthenticated_view_login_button": "Logi oma kontosse sisse",
   "unmute_microphone_button_label": "Lülita mikrofon sisse",
   "version": "Versioon: {{version}}"
