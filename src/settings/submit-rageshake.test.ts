@@ -15,77 +15,11 @@ import {
   beforeEach,
 } from "vitest";
 
-import {
-  getRageshakeSubmitUrl,
-  isRageshakeAvailable,
-} from "./submit-rageshake";
+import { getRageshakeSubmitUrl } from "./submit-rageshake";
 import { getUrlParams } from "../UrlParams";
 import { mockConfig } from "../utils/test";
 
 vi.mock("../UrlParams", () => ({ getUrlParams: vi.fn() }));
-
-describe("isRageshakeAvailable", () => {
-  beforeEach(() => {
-    (getUrlParams as Mock).mockReturnValue({});
-    mockConfig({});
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.clearAllMocks();
-  });
-
-  describe("embedded package", () => {
-    beforeEach(() => {
-      vi.stubEnv("VITE_PACKAGE", "embedded");
-    });
-
-    it("returns false with no rageshakeSubmitUrl URL param", () => {
-      expect(isRageshakeAvailable()).toBe(false);
-    });
-
-    it("ignores config value and returns false with no rageshakeSubmitUrl URL param", () => {
-      mockConfig({
-        rageshake: {
-          submit_url: "https://config.example.com.localhost",
-        },
-      });
-      expect(isRageshakeAvailable()).toBe(false);
-    });
-
-    it("returns true with rageshakeSubmitUrl URL param", () => {
-      (getUrlParams as Mock).mockReturnValue({
-        rageshakeSubmitUrl: "https://url.example.com.localhost",
-      });
-      expect(isRageshakeAvailable()).toBe(true);
-    });
-  });
-
-  describe("full package", () => {
-    beforeEach(() => {
-      vi.stubEnv("VITE_PACKAGE", "full");
-    });
-    it("returns false with no config value", () => {
-      expect(isRageshakeAvailable()).toBe(false);
-    });
-
-    it("ignores rageshakeSubmitUrl URL param and returns false with no config value", () => {
-      (getUrlParams as Mock).mockReturnValue({
-        rageshakeSubmitUrl: "https://url.example.com.localhost",
-      });
-      expect(isRageshakeAvailable()).toBe(false);
-    });
-
-    it("returns true with config value", () => {
-      mockConfig({
-        rageshake: {
-          submit_url: "https://config.example.com.localhost",
-        },
-      });
-      expect(isRageshakeAvailable()).toBe(true);
-    });
-  });
-});
 
 describe("getRageshakeSubmitUrl", () => {
   beforeEach(() => {
