@@ -80,7 +80,6 @@
   "rageshake_sending": "傳送中…",
   "rageshake_sending_logs": "傳送除錯記錄檔中…",
   "rageshake_sent": "感謝！",
-  "recaptcha_caption": "此網站被 ReCAPTCHA 保護，並適用 Google 的<2>隱私權政策</2>與<6>服務條款</6>。<9></9>點擊「註冊」即表示您同意我們的<12>終端使用者授權協議 (EULA)</12>",
   "recaptcha_dismissed": "略過驗證碼",
   "recaptcha_not_loaded": "驗證碼未載入",
   "register": {
@@ -90,7 +89,6 @@
   "register_auth_links": "<0>已經有帳號?</0><1><0>登入</0> 或<2>以訪客身份登入</2></1>",
   "register_confirm_password_label": "確認密碼",
   "return_home_button": "回到首頁",
-  "room_auth_view_eula_caption": "點擊「立刻加入通話」即表示您同意我們的<2>終端使用者授權協議 (EULA)</2>",
   "screenshare_button_label": "分享畫面",
   "settings": {
     "developer_tab_title": "開發者",
@@ -110,7 +108,6 @@
   "stop_video_button_label": "停止影片",
   "submitting": "正在遞交……",
   "unauthenticated_view_body": "還沒註冊嗎？<2>建立帳號</2>",
-  "unauthenticated_view_eula_caption": "點擊「前往」即表示您同意我們的<2>終端使用者授權協議 (EULA)</2>",
   "unauthenticated_view_login_button": "登入您的帳號",
   "unmute_microphone_button_label": "將麥克風取消靜音",
   "version": "版本： {{version}}"

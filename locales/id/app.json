@@ -77,7 +77,6 @@
   "rageshake_sending": "Mengirimkan…",
   "rageshake_sending_logs": "Mengirimkan catatan pengawakutuan…",
   "rageshake_sent": "Terima kasih!",
-  "recaptcha_caption": "Situs ini dilindungi oleh reCAPTCHA dan <2>Kebijakan Privasi</2> dan <6>Ketentuan Layanan</6> Google berlaku.<9></9>Dengan mengeklik \"Daftar\", Anda menyetujui <12>Perjanjian Lisensi Pengguna Akhir (EULA)</12> kami",
   "recaptcha_dismissed": "Recaptcha ditutup",
   "recaptcha_not_loaded": "Recaptcha tidak dimuat",
   "register": {
@@ -87,7 +86,6 @@
   "register_auth_links": "<0>Sudah punya akun?</0><1><0>Masuk</0> Atau <2>Akses sebagai tamu</2></1>",
   "register_confirm_password_label": "Konfirmasi kata sandi",
   "return_home_button": "Kembali ke layar beranda",
-  "room_auth_view_eula_caption": "Dengan mengeklik \"Bergabung ke panggilan sekarang\", Anda menyetujui <2>Perjanjian Lisensi Pengguna Akhir (EULA)</2> kami",
   "screenshare_button_label": "Bagikan layar",
   "settings": {
     "developer_tab_title": "Pengembang",
@@ -107,7 +105,6 @@
   "stop_video_button_label": "Matikan video",
   "submitting": "Mengirim…",
   "unauthenticated_view_body": "Belum terdaftar? <2>Buat sebuah akun</2>",
-  "unauthenticated_view_eula_caption": "Dengan mengeklik \"Bergabung\", Anda menyetujui <2>Perjanjian Lisensi Pengguna Akhir (EULA)</2>",
   "unauthenticated_view_login_button": "Masuk ke akun Anda",
   "unmute_microphone_button_label": "Nyalakan mikrofon",
   "version": "Versi: {{version}}"

@@ -78,7 +78,6 @@
   "rageshake_sending": "Odosielanie…",
   "rageshake_sending_logs": "Odosielanie záznamov o ladení…",
   "rageshake_sent": "Ďakujeme!",
-  "recaptcha_caption": "Táto stránka je chránená systémom ReCAPTCHA a platia na ňu <2>Pravidlá ochrany osobných údajov spoločnosti Google</2> a <6>Podmienky poskytovania služieb</6>.<9></9>Kliknutím na tlačidlo \"Registrovať sa\" súhlasíte s našou <12>Licenčnou zmluvou s koncovým používateľom (EULA)</12>",
   "recaptcha_dismissed": "Recaptcha zamietnutá",
   "recaptcha_not_loaded": "Recaptcha sa nenačítala",
   "register": {
@@ -88,7 +87,6 @@
   "register_auth_links": "<0>Už máte konto?</0><1><0>Prihláste sa</0> Alebo <2>Prihlásiť sa ako hosť</2></1>",
   "register_confirm_password_label": "Potvrdiť heslo",
   "return_home_button": "Návrat na domovskú obrazovku",
-  "room_auth_view_eula_caption": "Kliknutím na \"Pripojiť sa k hovoru teraz\" súhlasíte s našou <2>Licenčnou zmluvou s koncovým používateľom (EULA)</2>",
   "screenshare_button_label": "Zdieľať obrazovku",
   "settings": {
     "developer_tab_title": "Vývojár",
@@ -108,7 +106,6 @@
   "stop_video_button_label": "Zastaviť video",
   "submitting": "Odosielanie…",
   "unauthenticated_view_body": "Ešte nie ste zaregistrovaný? <2>Vytvorte si účet</2>",
-  "unauthenticated_view_eula_caption": "Kliknutím na tlačidlo \"Prejsť\" vyjadrujete súhlas s našou <2>Licenčnou zmluvou s koncovým používateľom (EULA)</2>",
   "unauthenticated_view_login_button": "Prihláste sa do svojho konta",
   "unmute_microphone_button_label": "Zrušiť stlmenie mikrofónu",
   "version": "Verzia: {{version}}"
