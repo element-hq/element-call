@@ -204,7 +204,7 @@ export const RegisterPage: FC = () => {
                 />
               </FieldRow>
               <Text size="sm">
-                <Trans i18nKey="recaptcha_caption">
+                <Trans i18nKey="recaptcha_ssla_caption">
                   This site is protected by ReCAPTCHA and the Google{" "}
                   <ExternalLink href="https://www.google.com/policies/privacy/">
                     Privacy Policy
@@ -216,8 +216,8 @@ export const RegisterPage: FC = () => {
                   apply.
                   <br />
                   By clicking "Register", you agree to our{" "}
-                  <ExternalLink href={Config.get().eula}>
-                    End User Licensing Agreement (EULA)
+                  <ExternalLink href={Config.get().ssla}>
+                    Software and Services License Agreement (SSLA)
                   </ExternalLink>
                 </Trans>
               </Text>
