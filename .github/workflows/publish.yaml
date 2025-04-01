@@ -31,7 +31,7 @@ jobs:
       - name: Determine filename
         run: echo "FILENAME_PREFIX=element-call-${VERSION:1}" >> "$GITHUB_ENV"
       - name: 📥 Download built element-call artifact
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id || github.run_id }}
