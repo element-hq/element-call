@@ -2,15 +2,28 @@ changelog:
   categories:
     - title: 🛠 Breaking Changes
       labels:
-        - T-Breaking-Change
+        - PR-Breaking-Change
     - title: ✨ Features
       labels:
-        - T-Enhancement
+        - PR-Feature
+    - title: 🙌 Improvements
+      labels:
+        - PR-Improvement
+    - title: 📄 Documentation
+      labels:
+        - PR-Documentation
+    - title: 🐛 Bugfixes
+      labels:
+        - PR-Bug-Fix
+    - title: 💾 Developer Experience
+      labels:
+        - PR-Developer-Experience
     - title: Others
       labels:
         - "*"
       exclude:
         labels:
+          - PR-Task
           - dependencies
     - title: 👒 Dependencies
       labels:
