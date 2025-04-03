@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type Page, test, expect, type JSHandle } from "@playwright/test";
 
-import type { MatrixClient } from "matrix-js-sdk/src";
+import type { MatrixClient } from "matrix-js-sdk";
 
 export type UserBaseFixture = {
   mxId: string;
