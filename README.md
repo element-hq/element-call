@@ -45,28 +45,31 @@ organize the flow of the meeting.
 ✅ **Emoji Reactions** – Users can react with emojis 👍️ 🎉 👏 🤘, adding
 engagement and interactivity to the conversation.
 
-## 🚀 Deployment Options
+## 🚀 Deployment & Packaging Options
 
-Element Call can be packaged in two ways:
+Element Call is developed using the
+[Matrix js-sdk](https://github.com/matrix-org/matrix-js-sdk) with Matroska mode.
+This allows the app to run either as a Standalone App directly connected to a
+homeserver with login interfaces or it can be used as a widget within a Matrix
+client.
 
-**Full Package** – Supports both **Standalone** and **Widget** mode. Hosted as
-a static web page and accessed via a URL when used as a widget.
+### 🖥️  Standalone Mode
 
 <p align="center">
   <img src="./docs/element_call_standalone.drawio.png" alt="Element Call in Standalone Mode">
 </p>
 
-See the [here](./docs/embedded-standalone.md) for more information on the packages.
 
-### Standalone mode
-
-![Element Call in Standalone Mode](./docs/element_call_standalone.drawio.png)
-
-In Standalone mode Element Call operates as an independent, full-featured video
-conferencing web application, allowing users to join or host calls without
+In Standalone mode, Element Call operates as an independent, full-featured video
+conferencing web application, enabling users to join or host calls without
 requiring a separate Matrix client.
 
-### Widget mode embedded in Messenger Apps
+### 📲 In-App Calling (Widget Mode in Messenger Apps)
+
+As a widget 🧩, Element Call utilizes only the core calling (MatrixRTC)
+components, while authentication, event handling, and room state updates are
+managed by the hosting client. Element Call and the hosting client communicate
+via the widget API.
 
 <p align="center">
   <img src="./docs/element_call_widget.drawio.png" alt="Element Call in Widget Mode">
