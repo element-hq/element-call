@@ -101,8 +101,8 @@ deployment for three different sites A, B and C is depicted below.
 ### Backend Discovery
 
 MatrixRTC backend (according to
-[MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143))
-is announced by the Matrix site's `.well-known/matrix/client` file and discovered
+[MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143)) is
+announced by the Matrix site's `.well-known/matrix/client` file and discovered
 via the `org.matrix.msc4143.rtc_foci` key, e.g.:
 
 ```json
@@ -135,6 +135,8 @@ points them to a Matrix LiveKit JWT Auth Service via `livekit_service_url`.
 The example below illustrates how backend selection works across **Matrix
 federation**, using the setup from sites A, B, and C. It demonstrates backend
 selection for **Matrix rooms 123 and 456**, which include users from different
+homeservers.
+
 <p align="center">
   <img src="./docs/SFU_selection.drawio.png" alt="Element Call SFU selection over Matrix federation">
 </p>
@@ -204,21 +206,23 @@ yarn backend
 
 ### Playwright tests
 
-Our Playwright tests run automatically as part of our CI along with our other tests,
-on every pull request.
+Our Playwright tests run automatically as part of our CI along with our other
+tests, on every pull request.
 
-You may need to follow instructions to set up your development environment for running
-Playwright by following <https://playwright.dev/docs/browsers#install-browsers> and
+You may need to follow instructions to set up your development environment for
+running Playwright by following
+<https://playwright.dev/docs/browsers#install-browsers> and
 <https://playwright.dev/docs/browsers#install-system-dependencies>.
 
-However the Playwright tests are run, an element-call instance must be running on
-https://localhost:3000 (this is configured in `playwright.config.ts`) - this is what will
-be tested.
+However the Playwright tests are run, an element-call instance must be running
+on https://localhost:3000 (this is configured in `playwright.config.ts`) - this
+is what will be tested.
 
 The local backend environment should be running for the test to work:
 `yarn backend`
 
-There are a few different ways to run the tests yourself. The simplest is to run:
+There are a few different ways to run the tests yourself. The simplest is to
+run:
 
 ```shell
 yarn run test:playwright
@@ -243,8 +247,8 @@ to test visibility, text content and clicking.
 
 ##### Investigate a failed test from the CI
 
-In the failed action page, click on the failed job, then scroll down to the `upload-artifact` step.
-You will find a link to download the zip report, as per:
+In the failed action page, click on the failed job, then scroll down to the
+`upload-artifact` step. You will find a link to download the zip report, as per:
 
 ```
 Artifact playwright-report has been successfully uploaded! Final size is 1360358 bytes. Artifact ID is 2746265841
@@ -258,7 +262,8 @@ npx playwright show-report ~/Downloads/playwright-report/
 ```
 
 Under the failed test there is a small icon looking like "3 columns" (next to
-the test name file name), click on it to see the live screenshots/console output.
+the test name file name), click on it to see the live screenshots/console
+output.
 
 ### Test Coverage
 
