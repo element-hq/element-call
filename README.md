@@ -53,12 +53,11 @@ This allows the app to run either as a Standalone App directly connected to a
 homeserver with login interfaces or it can be used as a widget within a Matrix
 client.
 
-### 🖥️  Standalone Mode
+### 🖥️ Standalone Mode
 
 <p align="center">
   <img src="./docs/element_call_standalone.drawio.png" alt="Element Call in Standalone Mode">
 </p>
-
 
 In Standalone mode, Element Call operates as an independent, full-featured video
 conferencing web application, enabling users to join or host calls without
@@ -123,7 +122,6 @@ deployment for three different sites A, B and C is depicted below.
 <p align="center">
   <img src="./docs/Federated_Setup.drawio.png" alt="Element Call federated setup">
 </p>
-
 
 ### Backend Discovery
 
