@@ -12,5 +12,13 @@ declare global {
     mxMatrixClientPeg: {
       get(): Matrix.MatrixClient;
     };
+    mxSettingsStore: {
+      setValue: (
+        settingKey: string,
+        room: string | null,
+        level: string,
+        setting: string,
+      ) => void;
+    };
   }
 }
