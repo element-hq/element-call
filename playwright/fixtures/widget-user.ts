@@ -73,14 +73,6 @@ export const widgetTest = test.extend<MyFixtures>({
       reducedMotion: "reduce",
     });
     const ewPage1 = await user1Context.newPage();
-    await ewPage1.evaluate(() => {
-      window.mxSettingsStore.setValue(
-        "Developer.elementCallUrl",
-        null,
-        "device",
-        "https://localhost:3000/room",
-      );
-    });
     // Register the first user
     await ewPage1.goto("http://localhost:8081/#/welcome");
     await ewPage1.getByRole("link", { name: "Create Account" }).click();
@@ -96,6 +88,14 @@ export const widgetTest = test.extend<MyFixtures>({
     await expect(
       ewPage1.getByRole("heading", { name: `Welcome ${userA}` }),
     ).toBeVisible();
+    await ewPage1.evaluate(() => {
+      window.mxSettingsStore.setValue(
+        "Developer.elementCallUrl",
+        null,
+        "device",
+        "https://localhost:3000/room",
+      );
+    });
 
     const brooksClientHandle = await ewPage1.evaluateHandle(() =>
       window.mxMatrixClientPeg.get(),
@@ -108,14 +108,6 @@ export const widgetTest = test.extend<MyFixtures>({
       reducedMotion: "reduce",
     });
     const ewPage2 = await user2Context.newPage();
-    await ewPage2.evaluate(() => {
-      window.mxSettingsStore.setValue(
-        "Developer.elementCallUrl",
-        null,
-        "device",
-        "https://localhost:3000/room",
-      );
-    });
     // Register the second user
     await ewPage2.goto("http://localhost:8081/#/welcome");
     await ewPage2.getByRole("link", { name: "Create Account" }).click();
@@ -131,6 +123,14 @@ export const widgetTest = test.extend<MyFixtures>({
     await expect(
       ewPage2.getByRole("heading", { name: `Welcome ${userB}` }),
     ).toBeVisible();
+    await ewPage2.evaluate(() => {
+      window.mxSettingsStore.setValue(
+        "Developer.elementCallUrl",
+        null,
+        "device",
+        "https://localhost:3000/room",
+      );
+    });
 
     const whistlerClientHandle = await ewPage2.evaluateHandle(() =>
       window.mxMatrixClientPeg.get(),
