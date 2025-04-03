@@ -36,7 +36,7 @@ const CONFIG_JSON = {
   },
 
   element_call: {
-    url: "https://localhost:3000",
+    url: "https://localhost:3000/room/",
     participant_limit: 8,
     brand: "Element Call",
   },
