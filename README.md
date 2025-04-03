@@ -52,9 +52,9 @@ Element Call can be packaged in two ways:
 **Full Package** – Supports both **Standalone** and **Widget** mode. Hosted as
 a static web page and accessed via a URL when used as a widget.
 
-**Embedded Package** – Designed for **Widget mode** only. Bundled with a
-messenger app for seamless integration. This is the recommended method for
-embedding Element Call into a messenger app.
+<p align="center">
+  <img src="./docs/element_call_standalone.drawio.png" alt="Element Call in Standalone Mode">
+</p>
 
 See the [here](./docs/embedded-standalone.md) for more information on the packages.
 
@@ -68,7 +68,9 @@ requiring a separate Matrix client.
 
 ### Widget mode embedded in Messenger Apps
 
-![Element Call in Widget Mode](./docs/element_call_widget.drawio.png)
+<p align="center">
+  <img src="./docs/element_call_widget.drawio.png" alt="Element Call in Widget Mode">
+</p>
 
 Element Call can be embedded as a widget inside apps like
 [**Element Web**](https://github.com/element-hq/element-web) or **Element X
@@ -91,7 +93,10 @@ For proper Element Call operation each site deployment needs a MatrixRTC backend
 setup as outlined in the [Self-Hosting](#self-hosting). A typical federated site
 deployment for three different sites A, B and C is depicted below.
 
-![Element Call federated setup](./docs/Federated_Setup.drawio.png)
+<p align="center">
+  <img src="./docs/Federated_Setup.drawio.png" alt="Element Call federated setup">
+</p>
+
 
 ### Backend Discovery
 
@@ -130,8 +135,9 @@ points them to a Matrix LiveKit JWT Auth Service via `livekit_service_url`.
 The example below illustrates how backend selection works across **Matrix
 federation**, using the setup from sites A, B, and C. It demonstrates backend
 selection for **Matrix rooms 123 and 456**, which include users from different
-homeservers.  
-![Element Call SFU selection over Matrix federation](./docs/SFU_selection.drawio.png)
+<p align="center">
+  <img src="./docs/SFU_selection.drawio.png" alt="Element Call SFU selection over Matrix federation">
+</p>
 
 ## 🌍 Translation
 
