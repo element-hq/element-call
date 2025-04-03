@@ -82,6 +82,30 @@ and voice calls within Matrix rooms.
 > [!IMPORTANT]
 > Embedded packaging is recommended for Element Call in widget mode!
 
+### 📦 Element Call Packaging
+
+Element Call offers two packaging options: one for standalone or widget
+deployment, and another for widget-based seamless integration into messenger
+apps. Below is an overview of each option.
+
+**Full Package** – Supports both **Standalone** and **Widget** mode. It is
+hosted as a static web page and can be accessed via a URL when used as a widget.
+
+<p align="center">
+  <img src="./docs/full_package.drawio.png" alt="Element Call Full Package">
+</p>
+
+**Embedded Package** – Designed specifically for **Widget mode** only. It is
+bundled with a messenger app for seamless integration and this is the
+recommended method for embedding Element Call.
+
+<p align="center">
+  <img src="./docs/embedded_package.drawio.png" alt="Element Call Embedded Package">
+</p>
+
+For more details on the packages, see the
+[Embedded vs. Standalone Guide](./docs/embedded-standalone.md).
+
 ## 🛠️ Self-Hosting
 
 For operating and deploying Element Call on your own server, refer to the
