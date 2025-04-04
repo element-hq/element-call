@@ -70,7 +70,7 @@ export default defineConfig(({ mode, packageType }) => {
   // crypto (which could reside anywhere on their file system), Vite
   // needs to be told to recognize it as a legitimate file access.
   const allow = [searchForWorkspaceRoot(process.cwd())];
-  for (path of [
+  for (const path of [
     "node_modules/matrix-js-sdk/node_modules/@matrix-org/matrix-sdk-crypto-wasm",
     "node_modules/@matrix-org/matrix-sdk-crypto-wasm",
   ]) {
