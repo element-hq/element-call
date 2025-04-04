@@ -60,6 +60,21 @@ const CONFIG_JSON = {
   },
 };
 
+/**
+ * Set the Element Call URL in the dev tool settings using `window.mxSettingsStore` via `page.evaluate`.
+ * @param page
+ */
+async function setDevToolElementCallDevUrl(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    window.mxSettingsStore.setValue(
+      "Developer.elementCallUrl",
+      null,
+      "device",
+      "https://localhost:3000/room",
+    );
+  });
+}
+
 export const widgetTest = test.extend<MyFixtures>({
   asWidget: async ({ browser, context }, pUse) => {
     await context.route(`http://localhost:8081/config.json*`, async (route) => {
@@ -88,14 +103,7 @@ export const widgetTest = test.extend<MyFixtures>({
     await expect(
       ewPage1.getByRole("heading", { name: `Welcome ${userA}` }),
     ).toBeVisible();
-    await ewPage1.evaluate(() => {
-      window.mxSettingsStore.setValue(
-        "Developer.elementCallUrl",
-        null,
-        "device",
-        "https://localhost:3000/room",
-      );
-    });
+    await setDevToolElementCallDevUrl(ewPage1);
 
     const brooksClientHandle = await ewPage1.evaluateHandle(() =>
       window.mxMatrixClientPeg.get(),
@@ -123,14 +131,7 @@ export const widgetTest = test.extend<MyFixtures>({
     await expect(
       ewPage2.getByRole("heading", { name: `Welcome ${userB}` }),
     ).toBeVisible();
-    await ewPage2.evaluate(() => {
-      window.mxSettingsStore.setValue(
-        "Developer.elementCallUrl",
-        null,
-        "device",
-        "https://localhost:3000/room",
-      );
-    });
+    await setDevToolElementCallDevUrl(ewPage2);
 
     const whistlerClientHandle = await ewPage2.evaluateHandle(() =>
       window.mxMatrixClientPeg.get(),

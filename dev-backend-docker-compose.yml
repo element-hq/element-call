@@ -70,6 +70,7 @@ services:
 
   element-web:
     image: ghcr.io/element-hq/element-web:develop
+    pull_policy: always
     volumes:
       - ./backend/ew.test.config.json:/app/config.json
     environment:
