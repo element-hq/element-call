@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -64,14 +64,12 @@ test("SpotlightTile is accessible", async () => {
           // Bob should be out of the spotlight, and therefore invisible
           expect(isInaccessible(screen.getByText("Bob"))).toBe(true);
           // Now navigate to Bob
-          await user.click(screen.getByRole("button", { name: "common.next" }));
+          await user.click(screen.getByRole("button", { name: "Next" }));
           screen.getByText("Bob");
           expect(screen.getByRole("img")).not.toBe(aliceAvatar);
           expect(isInaccessible(screen.getByText("Alice"))).toBe(true);
           // Can toggle whether the tile is expanded
-          await user.click(
-            screen.getByRole("button", { name: "video_tile.expand" }),
-          );
+          await user.click(screen.getByRole("button", { name: "Expand" }));
           expect(toggleExpanded).toHaveBeenCalled();
         },
       );

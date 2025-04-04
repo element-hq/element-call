@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -13,7 +13,8 @@ import {
   type TrackReference,
   type TrackReferencePlaceholder,
 } from "@livekit/components-core";
-import { Track, TrackPublication } from "livekit-client";
+import { LocalTrackPublication, Track } from "livekit-client";
+import { TrackInfo } from "@livekit/protocol";
 import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
@@ -28,7 +29,10 @@ describe("MediaView", () => {
   };
   const trackReference: TrackReference = {
     ...trackReferencePlaceholder,
-    publication: new TrackPublication(Track.Kind.Video, "id", "name"),
+    publication: new LocalTrackPublication(
+      Track.Kind.Video,
+      new TrackInfo({ sid: "id", name: "name" }),
+    ),
   };
 
   const baseProps: ComponentProps<typeof MediaView> = {
@@ -66,16 +70,14 @@ describe("MediaView", () => {
         <MediaView {...baseProps} video={undefined} localParticipant={true} />,
       );
       expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
-      expect(screen.queryAllByText("video_tile.waiting_for_media").length).toBe(
-        0,
-      );
+      expect(screen.queryAllByText("Waiting for media...").length).toBe(0);
     });
     it("shows avatar and label for remote user", () => {
       render(
         <MediaView {...baseProps} video={undefined} localParticipant={false} />,
       );
       expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
-      expect(screen.getByText("video_tile.waiting_for_media")).toBeVisible();
+      expect(screen.getByText("Waiting for media...")).toBeVisible();
     });
   });
 
@@ -94,9 +96,7 @@ describe("MediaView", () => {
         </TooltipProvider>,
       );
       expect(await axe(container)).toHaveNoViolations();
-      expect(
-        screen.getByRole("img", { name: "common.unencrypted" }),
-      ).toBeTruthy();
+      expect(screen.getByRole("img", { name: "Not encrypted" })).toBeTruthy();
     });
 
     test("is not shown", () => {
@@ -106,7 +106,7 @@ describe("MediaView", () => {
         </TooltipProvider>,
       );
       expect(
-        screen.queryAllByRole("img", { name: "common.unencrypted" }).length,
+        screen.queryAllByRole("img", { name: "Not encrypted" }).length,
       ).toBe(0);
     });
   });

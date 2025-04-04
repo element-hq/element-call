@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -26,7 +26,7 @@ import { useObservableEagerState, useObservableRef } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
-import { type RoomMember } from "matrix-js-sdk/src/matrix";
+import { type RoomMember } from "matrix-js-sdk";
 
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
@@ -36,7 +36,6 @@ import {
   type MediaViewModel,
   ScreenShareViewModel,
   type UserMediaViewModel,
-  useDisplayName,
 } from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
 import { useMergedRefs } from "../useMergedRefs";
@@ -132,7 +131,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
   ) => {
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
-    const displayName = useDisplayName(vm);
+    const displayName = useObservableEagerState(vm.displayname$);
     const video = useObservableEagerState(vm.video$);
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
     const encryptionStatus = useObservableEagerState(vm.encryptionStatus$);

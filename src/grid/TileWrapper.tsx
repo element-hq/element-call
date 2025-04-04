@@ -1,11 +1,17 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ComponentType, memo, type RefObject, useRef } from "react";
+import {
+  type ComponentType,
+  type JSX,
+  memo,
+  type RefObject,
+  useRef,
+} from "react";
 import { type EventTypes, type Handler, useDrag } from "@use-gesture/react";
 import { type SpringValue } from "@react-spring/web";
 import classNames from "classnames";

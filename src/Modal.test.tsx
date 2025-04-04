@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -46,7 +46,7 @@ test("the modal can be closed by clicking the close button", async () => {
   }
   const user = userEvent.setup();
   const { queryByRole, getByRole } = render(<ModalFn />);
-  await user.click(getByRole("button", { name: "action.close" }));
+  await user.click(getByRole("button", { name: "Close" }));
   expect(queryByRole("dialog")).toBeNull();
 });
 

@@ -1,22 +1,22 @@
 /*
 Copyright 2021-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, Suspense, useEffect, useState } from "react";
+import { type FC, type JSX, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Route, useLocation, Routes } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
 import { ClientProvider } from "./ClientContext";
-import { CrashView, LoadingView } from "./FullScreenView";
+import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
@@ -24,7 +24,7 @@ import { widget } from "./widget";
 import { useTheme } from "./useTheme";
 import { ProcessorProvider } from "./livekit/TrackProcessorContext";
 
-const SentryRoute = Sentry.withSentryReactRouterV6Routing(Route);
+const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
 interface SimpleProviderProps {
   children: JSX.Element;
@@ -62,8 +62,6 @@ export const App: FC = () => {
       .catch(logger.error);
   });
 
-  const errorPage = <CrashView />;
-
   return (
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -73,40 +71,35 @@ export const App: FC = () => {
           <TooltipProvider>
             {loaded ? (
               <Suspense fallback={null}>
-                <Providers>
-                  <Sentry.ErrorBoundary fallback={errorPage}>
-                    <DisconnectedBanner />
-                    <Routes>
-                      <SentryRoute path="/" element={<HomePage />} />
-                      <SentryRoute path="/login" element={<LoginPage />} />
-                      <SentryRoute
-                        path="/register"
-                        element={<RegisterPage />}
-                      />
-                      <SentryRoute path="*" element={<RoomPage />} />
-                    </Routes>
-                  </Sentry.ErrorBoundary>
-                </Providers>
+                <ClientProvider>
+                  <MediaDevicesProvider>
+                    <ProcessorProvider>
+                      <Sentry.ErrorBoundary
+                        fallback={(error) => (
+                          <ErrorPage error={error} widget={widget} />
+                        )}
+                      >
+                        <DisconnectedBanner />
+                        <Routes>
+                          <SentryRoute path="/" element={<HomePage />} />
+                          <SentryRoute path="/login" element={<LoginPage />} />
+                          <SentryRoute
+                            path="/register"
+                            element={<RegisterPage />}
+                          />
+                          <SentryRoute path="*" element={<RoomPage />} />
+                        </Routes>
+                      </Sentry.ErrorBoundary>
+                    </ProcessorProvider>
+                  </MediaDevicesProvider>
+                </ClientProvider>
               </Suspense>
             ) : (
-              <LoadingView />
+              <LoadingPage />
             )}
           </TooltipProvider>
         </ThemeProvider>
       </BackgroundProvider>
     </BrowserRouter>
-  );
-};
-
-const Providers: FC<{
-  children: JSX.Element;
-}> = ({ children }) => {
-  // We use this to stack all used providers to not make the App component to verbose
-  return (
-    <ClientProvider>
-      <MediaDevicesProvider>
-        <ProcessorProvider>{children}</ProcessorProvider>
-      </MediaDevicesProvider>
-    </ClientProvider>
   );
 };

@@ -1,7 +1,7 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -10,9 +10,9 @@ import posthog, {
   type PostHog,
   type Properties,
 } from "posthog-js";
-import { logger } from "matrix-js-sdk/src/logger";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
-import { Buffer } from "buffer";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixClient } from "matrix-js-sdk";
+import { type Subscription } from "rxjs";
 
 import { widget } from "../widget";
 import {
@@ -71,11 +71,6 @@ interface PlatformProperties {
   cryptoVersion?: string;
 }
 
-interface PosthogSettings {
-  project_api_key?: string;
-  api_host?: string;
-}
-
 export class PosthogAnalytics {
   /* Wrapper for Posthog analytics.
    * 3 modes of anonymity are supported, governed by this.anonymity
@@ -91,7 +86,7 @@ export class PosthogAnalytics {
    * 1. Declare a type for the event, extending IPosthogEvent.
    */
 
-  private static ANALYTICS_EVENT_TYPE = "im.vector.analytics";
+  private static ANALYTICS_EVENT_TYPE = "im.vector.analytics" as const;
 
   // set true during the constructor if posthog config is present, otherwise false
   private static internalInstance: PosthogAnalytics | null = null;
@@ -101,6 +96,7 @@ export class PosthogAnalytics {
   private anonymity = Anonymity.Disabled;
   private platformSuperProperties = {};
   private registrationType: RegistrationType = RegistrationType.Guest;
+  private optInListener: Subscription | null = null;
 
   public static hasInstance(): boolean {
     return Boolean(this.internalInstance);
@@ -113,24 +109,27 @@ export class PosthogAnalytics {
     return this.internalInstance;
   }
 
+  public static resetInstance(): void {
+    // Reset the singleton instance
+    this.internalInstance = null;
+  }
+
   private constructor(private readonly posthog: PostHog) {
-    const posthogConfig: PosthogSettings = {
-      project_api_key: Config.get().posthog?.api_key,
-      api_host: Config.get().posthog?.api_host,
-    };
+    let apiKey: string | undefined;
+    let apiHost: string | undefined;
+    if (import.meta.env.VITE_PACKAGE === "embedded") {
+      // for the embedded package we always use the values from the URL as the widget host is responsible for analytics configuration
+      apiKey = getUrlParams().posthogApiKey ?? undefined;
+      apiHost = getUrlParams().posthogApiHost ?? undefined;
+    } else if (import.meta.env.VITE_PACKAGE === "full") {
+      // in full package it is the server responsible for the analytics
+      apiKey = Config.get().posthog?.api_key;
+      apiHost = Config.get().posthog?.api_host;
+    }
 
-    if (posthogConfig.project_api_key && posthogConfig.api_host) {
-      if (
-        PosthogAnalytics.getPlatformProperties().matrixBackend === "embedded"
-      ) {
-        const { analyticsID } = getUrlParams();
-        // if the embedding platform (element web) already got approval to communicating with posthog
-        // element call can also send events to posthog
-        optInAnalytics.setValue(Boolean(analyticsID));
-      }
-
-      this.posthog.init(posthogConfig.project_api_key, {
-        api_host: posthogConfig.api_host,
+    if (apiKey && apiHost) {
+      this.posthog.init(apiKey, {
+        api_host: apiHost,
         autocapture: false,
         mask_all_text: true,
         mask_all_element_attributes: true,
@@ -146,7 +145,6 @@ export class PosthogAnalytics {
       );
       this.enabled = false;
     }
-    this.startListeningToSettingsChanges(); // Triggers maybeIdentifyUser
   }
 
   private sanitizeProperties = (
@@ -272,14 +270,14 @@ export class PosthogAnalytics {
 
   private async getAnalyticsId(): Promise<string | null> {
     const client: MatrixClient = window.matrixclient;
-    let accountAnalyticsId;
+    let accountAnalyticsId: string | null;
     if (widget) {
-      accountAnalyticsId = getUrlParams().analyticsID;
+      accountAnalyticsId = getUrlParams().posthogUserId;
     } else {
       const accountData = await client.getAccountDataFromServer(
         PosthogAnalytics.ANALYTICS_EVENT_TYPE,
       );
-      accountAnalyticsId = accountData?.id;
+      accountAnalyticsId = accountData?.id ?? null;
     }
     if (accountAnalyticsId) {
       // we dont just use the element web analytics ID because that would allow to associate
@@ -297,7 +295,7 @@ export class PosthogAnalytics {
     const posthogIdMaterial = "ec" + accountAnalyticsId + client.getUserId();
     const bufferForPosthogId = await crypto.subtle.digest(
       "sha-256",
-      Buffer.from(posthogIdMaterial, "utf-8"),
+      new TextEncoder().encode(posthogIdMaterial),
     );
     const view = new Int32Array(bufferForPosthogId);
     return Array.from(view)
@@ -328,6 +326,8 @@ export class PosthogAnalytics {
     if (this.enabled) {
       this.posthog.reset();
     }
+    this.optInListener?.unsubscribe();
+    this.optInListener = null;
     this.setAnonymity(Anonymity.Disabled);
   }
 
@@ -406,7 +406,7 @@ export class PosthogAnalytics {
     }
   }
 
-  private startListeningToSettingsChanges(): void {
+  public startListeningToSettingsChanges(): void {
     // Listen to account data changes from sync so we can observe changes to relevant flags and update.
     // This is called -
     //  * On page load, when the account data is first received by sync
@@ -415,7 +415,7 @@ export class PosthogAnalytics {
     //  * When the user changes their preferences on this device
     // Note that for new accounts, pseudonymousAnalyticsOptIn won't be set, so updateAnonymityFromSettings
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
-    optInAnalytics.value$.subscribe((optIn) => {
+    this.optInListener ??= optInAnalytics.value$.subscribe((optIn) => {
       this.setAnonymity(optIn ? Anonymity.Pseudonymous : Anonymity.Disabled);
       this.maybeIdentifyUser().catch(() =>
         logger.log("Could not identify user"),

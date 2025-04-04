@@ -1,13 +1,14 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 export interface ConfigOptions {
   /**
    * The Posthog endpoint to which analytics data will be sent.
+   * This is only used in the full package of Element Call.
    */
   posthog?: {
     api_key: string;
@@ -15,6 +16,7 @@ export interface ConfigOptions {
   };
   /**
    * The Sentry endpoint to which crash data will be sent.
+   * This is only used in the full package of Element Call.
    */
   sentry?: {
     DSN: string;
@@ -22,6 +24,7 @@ export interface ConfigOptions {
   };
   /**
    * The rageshake server to which feedback and debug logs will be sent.
+   * This is only used in the full package of Element Call.
    */
   rageshake?: {
     submit_url: string;
@@ -29,7 +32,7 @@ export interface ConfigOptions {
 
   /**
    * Sets the URL to send opentelemetry data to. If unset, opentelemetry will
-   * be disabled.
+   * be disabled. This is only used in the full package of Element Call.
    */
   opentelemetry?: {
     collector_url: string;
@@ -74,9 +77,9 @@ export interface ConfigOptions {
   };
 
   /**
-   * A link to the end-user license agreement (EULA)
+   * A link to the software and services license agreement (SSLA)
    */
-  eula: string;
+  ssla?: string;
 
   media_devices?: {
     /**
@@ -131,6 +134,7 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       server_name: string;
     };
   };
+  ssla: string;
   media_devices: {
     enable_audio: boolean;
     enable_video: boolean;
@@ -148,7 +152,7 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
   features: {
     feature_use_device_session_member_events: true,
   },
-  eula: "https://static.element.io/legal/online-EULA.pdf",
+  ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
   media_devices: {
     enable_audio: true,
     enable_video: true,

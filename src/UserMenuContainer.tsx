@@ -1,12 +1,13 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useClientLegacy } from "./ClientContext";
 import { useProfile } from "./profile/useProfile";
@@ -45,7 +46,9 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
           logout?.();
           break;
         case "login":
-          navigate("/login", { state: { from: location } });
+          navigate("/login", { state: { from: location } })?.catch((error) =>
+            logger.error("Failed to navigate to login", error),
+          );
           break;
       }
     },

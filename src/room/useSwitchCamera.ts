@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -20,7 +20,7 @@ import {
   TrackEvent,
 } from "livekit-client";
 import { useObservable, useObservableEagerState } from "observable-hooks";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { platform } from "../Platform";

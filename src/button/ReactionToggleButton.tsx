@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -22,7 +22,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import classNames from "classnames";
 import { useObservableState } from "observable-hooks";
 import { map } from "rxjs";
@@ -87,7 +87,7 @@ export function ReactionPopupMenu({
         <Alert
           className={styles.alert}
           type="critical"
-          title={t("common.something_went_wrong")}
+          title={t("error.generic")}
         >
           {errorText}
         </Alert>

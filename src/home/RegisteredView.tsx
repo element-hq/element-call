@@ -1,7 +1,7 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -12,10 +12,10 @@ import {
   type FormEventHandler,
   type FC,
 } from "react";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { Button } from "@vector-im/compound-web";
 import { useNavigate } from "react-router-dom";
 
@@ -77,7 +77,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         if (!createRoomResult.password)
           throw new Error("Failed to create room with shared secret");
 
-        navigate(
+        await navigate(
           getRelativeRoomUrl(
             createRoomResult.roomId,
             { kind: E2eeType.SHARED_KEY, secret: createRoomResult.password },
@@ -106,7 +106,9 @@ export const RegisteredView: FC<Props> = ({ client }) => {
 
   const [existingAlias, setExistingAlias] = useState<string>();
   const onJoinExistingRoom = useCallback(() => {
-    navigate(`/${existingAlias}`);
+    navigate(`/${existingAlias}`)?.catch((error) => {
+      logger.error("Failed to navigate to existing alias", error);
+    });
   }, [navigate, existingAlias]);
 
   return (

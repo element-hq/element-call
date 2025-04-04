@@ -1,0 +1,30 @@
+changelog:
+  categories:
+    - title: 🛠 Breaking Changes
+      labels:
+        - PR-Breaking-Change
+    - title: ✨ Features
+      labels:
+        - PR-Feature
+    - title: 🙌 Improvements
+      labels:
+        - PR-Improvement
+    - title: 📄 Documentation
+      labels:
+        - PR-Documentation
+    - title: 🐛 Bugfixes
+      labels:
+        - PR-Bug-Fix
+    - title: 💾 Developer Experience
+      labels:
+        - PR-Developer-Experience
+    - title: Others
+      labels:
+        - "*"
+      exclude:
+        labels:
+          - PR-Task
+          - dependencies
+    - title: 👒 Dependencies
+      labels:
+        - dependencies

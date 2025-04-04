@@ -1,12 +1,12 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { useCallback } from "react";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk/lib/randomstring";
 
 import { useClient } from "../ClientContext";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
@@ -42,12 +42,12 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
         const userName = generateRandomName();
         const [client, session] = await register(
           userName,
-          randomString(16),
+          secureRandomString(16),
           displayName,
           recaptchaResponse,
           true,
         );
-        setClient({ client, session });
+        setClient(client, session);
       } catch (e) {
         reset();
         throw e;

@@ -1,7 +1,7 @@
 /*
 Copyright 2021-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -14,22 +14,22 @@ import {
   useContext,
   useRef,
   useMemo,
+  type JSX,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { logger } from "matrix-js-sdk/src/logger";
-import { useTranslation } from "react-i18next";
-import { type ISyncStateData, type SyncState } from "matrix-js-sdk/src/sync";
-import { ClientEvent, type MatrixClient } from "matrix-js-sdk/src/client";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
+import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
 
 import type { WidgetApi } from "matrix-widget-api";
-import { ErrorView } from "./FullScreenView";
+import { ErrorPage } from "./FullScreenView";
 import { widget } from "./widget";
 import {
   PosthogAnalytics,
   RegistrationType,
 } from "./analytics/PosthogAnalytics";
-import { translatedError } from "./TranslatedError";
 import { useEventTarget } from "./useEvents";
+import { OpenElsewhereError } from "./RichError";
 
 declare global {
   interface Window {
@@ -50,7 +50,7 @@ export type ValidClientState = {
     reactions: boolean;
     thumbnails: boolean;
   };
-  setClient: (params?: SetClientParams) => void;
+  setClient: (client: MatrixClient, session: Session) => void;
 };
 
 export type AuthenticatedClient = {
@@ -65,11 +65,6 @@ export type ErrorState = {
   error: Error;
 };
 
-export type SetClientParams = {
-  client: MatrixClient;
-  session: Session;
-};
-
 const ClientContext = createContext<ClientState | undefined>(undefined);
 
 export const ClientContextProvider = ClientContext.Provider;
@@ -79,7 +74,7 @@ export const useClientState = (): ClientState | undefined =>
 
 export function useClient(): {
   client?: MatrixClient;
-  setClient?: (params?: SetClientParams) => void;
+  setClient?: (client: MatrixClient, session: Session) => void;
 } {
   let client;
   let setClient;
@@ -96,7 +91,7 @@ export function useClient(): {
 // Plain representation of the `ClientContext` as a helper for old components that expected an object with multiple fields.
 export function useClientLegacy(): {
   client?: MatrixClient;
-  setClient?: (params?: SetClientParams) => void;
+  setClient?: (client: MatrixClient, session: Session) => void;
   passwordlessUser: boolean;
   loading: boolean;
   authenticated: boolean;
@@ -160,7 +155,11 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     initializing.current = true;
 
     loadClient()
-      .then(setInitClientState)
+      .then((initResult) => {
+        setInitClientState(initResult);
+        if (PosthogAnalytics.instance.isEnabled())
+          PosthogAnalytics.instance.startListeningToSettingsChanges();
+      })
       .catch((err) => logger.error(err))
       .finally(() => (initializing.current = false));
   }, []);
@@ -196,24 +195,20 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   );
 
   const setClient = useCallback(
-    (clientParams?: SetClientParams) => {
+    (client: MatrixClient, session: Session) => {
       const oldClient = initClientState?.client;
-      const newClient = clientParams?.client;
-      if (oldClient && oldClient !== newClient) {
+      if (oldClient && oldClient !== client) {
         oldClient.stopClient();
       }
 
-      if (clientParams) {
-        saveSession(clientParams.session);
-        setInitClientState({
-          widgetApi: null,
-          client: clientParams.client,
-          passwordlessUser: clientParams.session.passwordlessUser,
-        });
-      } else {
-        clearSession();
-        setInitClientState(null);
-      }
+      saveSession(session);
+      setInitClientState({
+        widgetApi: null,
+        client,
+        passwordlessUser: session.passwordlessUser,
+      });
+      if (PosthogAnalytics.instance.isEnabled())
+        PosthogAnalytics.instance.startListeningToSettingsChanges();
     },
     [initClientState?.client],
   );
@@ -228,11 +223,10 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     await client.clearStores();
     clearSession();
     setInitClientState(null);
-    navigate("/");
+    await navigate("/");
+    PosthogAnalytics.instance.logout();
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
   }, [navigate, initClientState?.client]);
-
-  const { t } = useTranslation();
 
   // To protect against multiple sessions writing to the same storage
   // simultaneously, we send a broadcast message that shuts down all other
@@ -250,8 +244,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     "message",
     useCallback(() => {
       initClientState?.client.stopClient();
-      setAlreadyOpenedErr(translatedError("application_opened_another_tab", t));
-    }, [initClientState?.client, setAlreadyOpenedErr, t]),
+      setAlreadyOpenedErr(new OpenElsewhereError());
+    }, [initClientState?.client, setAlreadyOpenedErr]),
   );
 
   const [isDisconnected, setIsDisconnected] = useState(false);
@@ -353,7 +347,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   }, [initClientState, onSync]);
 
   if (alreadyOpenedErr) {
-    return <ErrorView error={alreadyOpenedErr} />;
+    return <ErrorPage widget={widget} error={alreadyOpenedErr} />;
   }
 
   return (

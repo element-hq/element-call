@@ -1,26 +1,30 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { logger } from "matrix-js-sdk/src/logger";
-import { EventType } from "matrix-js-sdk/src/@types/event";
-import { createRoomWidgetClient } from "matrix-js-sdk/src/matrix";
-import { WidgetApi, MatrixCapabilities } from "matrix-widget-api";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { EventType, createRoomWidgetClient } from "matrix-js-sdk";
+import {
+  WidgetApi,
+  MatrixCapabilities,
+  WidgetApiToWidgetAction,
+} from "matrix-widget-api";
 
-import type { MatrixClient } from "matrix-js-sdk/src/client";
+import type { MatrixClient } from "matrix-js-sdk";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { ElementCallReactionEventType } from "./reactions";
 
-// Subset of the actions in matrix-react-sdk
+// Subset of the actions in element-web
 export enum ElementWidgetActions {
   JoinCall = "io.element.join",
   HangupCall = "im.vector.hangup",
+  Close = "io.element.close",
   TileLayout = "io.element.tile_layout",
   SpotlightLayout = "io.element.spotlight_layout",
   // This can be sent as from or to widget
@@ -70,6 +74,7 @@ export const widget = ((): WidgetHelpers | null => {
       // intend for the app to handle
       const lazyActions = new LazyEventEmitter();
       [
+        WidgetApiToWidgetAction.ThemeChange,
         ElementWidgetActions.JoinCall,
         ElementWidgetActions.HangupCall,
         ElementWidgetActions.TileLayout,
@@ -134,6 +139,7 @@ export const widget = ((): WidgetHelpers | null => {
         EventType.CallSDPStreamMetadataChanged,
         EventType.CallSDPStreamMetadataChangedPrefix,
         EventType.CallReplaces,
+        EventType.CallEncryptionKeysPrefix,
       ];
 
       const client = createRoomWidgetClient(

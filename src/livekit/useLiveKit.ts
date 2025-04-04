@@ -1,7 +1,7 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -16,8 +16,8 @@ import {
 } from "livekit-client";
 import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
-import { logger } from "matrix-js-sdk/src/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { defaultLiveKitOptions } from "./options";
 import { type SFUConfig } from "./openIDSFU";

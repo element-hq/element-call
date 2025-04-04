@@ -1,23 +1,27 @@
 /*
 Copyright 2021-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { defineConfig, loadEnv } from "vite";
-import { compression } from "vite-plugin-compression2";
+import { defineConfig, loadEnv, searchForWorkspaceRoot } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
-import htmlTemplate from "vite-plugin-html-template";
+import { createHtmlPlugin } from "vite-plugin-html";
 import { codecovVitePlugin } from "@codecov/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import react from "@vitejs/plugin-react";
 import basicSsl from "@vitejs/plugin-basic-ssl";
+import { realpathSync } from "fs";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, packageType }) => {
   const env = loadEnv(mode, process.cwd());
-
+  // Environment variables with the VITE_ prefix are accessible at runtime.
+  // So, we set this to allow for build/package specific behaviour.
+  // In future we might be able to do what is needed via code splitting at
+  // build time.
+  process.env.VITE_PACKAGE = packageType ?? "full";
   const plugins = [
     react(),
     basicSsl(),
@@ -28,9 +32,14 @@ export default defineConfig(({ mode }) => {
         ref: true,
       },
     }),
-    htmlTemplate.default({
-      data: {
-        title: env.VITE_PRODUCT_NAME || "Element Call",
+
+    createHtmlPlugin({
+      entry: "src/main.tsx",
+      inject: {
+        data: {
+          brand: env.VITE_PRODUCT_NAME || "Element Call",
+          packageType: process.env.VITE_PACKAGE,
+        },
       },
     }),
 
@@ -38,10 +47,6 @@ export default defineConfig(({ mode }) => {
       enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
       bundleName: "element-call",
       uploadToken: process.env.CODECOV_TOKEN,
-    }),
-
-    compression({
-      exclude: [/config.json/],
     }),
   ];
 
@@ -60,9 +65,25 @@ export default defineConfig(({ mode }) => {
     );
   }
 
+  // The crypto WASM module is imported dynamically. Since it's common
+  // for developers to use a linked copy of matrix-js-sdk or Rust
+  // crypto (which could reside anywhere on their file system), Vite
+  // needs to be told to recognize it as a legitimate file access.
+  const allow = [searchForWorkspaceRoot(process.cwd())];
+  for (const path of [
+    "node_modules/matrix-js-sdk/node_modules/@matrix-org/matrix-sdk-crypto-wasm",
+    "node_modules/@matrix-org/matrix-sdk-crypto-wasm",
+  ]) {
+    try {
+      allow.push(realpathSync(path));
+    } catch {}
+  }
+  console.log("Allowed vite paths:", allow);
+
   return {
     server: {
       port: 3000,
+      fs: { allow },
     },
     build: {
       sourcemap: true,

@@ -1,7 +1,7 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 import { map, type Observable, of, type SchedulerLike } from "rxjs";
@@ -13,14 +13,14 @@ import {
   MatrixEvent,
   type Room,
   TypedEventEmitter,
-} from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk";
 import {
   CallMembership,
   type Focus,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
   type SessionMembershipData,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
 import {
   type LocalParticipant,
   type LocalTrackPublication,
@@ -48,6 +48,10 @@ export function withFakeTimers(continuation: () => void): void {
   } finally {
     vi.useRealTimers();
   }
+}
+
+export async function flushPromises(): Promise<void> {
+  await new Promise<void>((resolve) => window.setTimeout(resolve));
 }
 
 export interface OurRunHelpers extends RunHelpers {
@@ -205,6 +209,7 @@ export async function withLocalMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({ localParticipant }),
+    of(roomMember.rawDisplayName ?? "nodisplayname"),
     of(null),
     of(null),
   );
@@ -243,6 +248,7 @@ export async function withRemoteMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
+    of(roomMember.rawDisplayName ?? "nodisplayname"),
     of(null),
     of(null),
   );
@@ -258,6 +264,8 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
     ...DEFAULT_CONFIG,
     ...config,
   });
+  // simulate loading the config
+  vi.spyOn(Config, "init").mockResolvedValue(void 0);
 }
 
 export class MockRTCSession extends TypedEventEmitter<
@@ -278,8 +286,9 @@ export class MockRTCSession extends TypedEventEmitter<
     super();
   }
 
-  public isJoined(): true {
-    return true;
+  public joined = true;
+  public isJoined(): boolean {
+    return this.joined;
   }
 
   public withMemberships(

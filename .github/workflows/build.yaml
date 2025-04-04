@@ -5,18 +5,61 @@ on:
       - synchronize
       - opened
       - labeled
-    paths-ignore:
-      - ".github/**"
-      - "docs/**"
   push:
     branches: [livekit, full-mesh]
-    paths-ignore:
-      - ".github/**"
-      - "docs/**"
 jobs:
-  build_element_call:
-    uses: ./.github/workflows/element-call.yaml
+  build_full_element_call:
+    # Use the full package vite build
+    uses: ./.github/workflows/build-element-call.yaml
     with:
+      package: full
+      vite_app_version: ${{ github.event.release.tag_name || github.sha }}
+    secrets:
+      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+      SENTRY_URL: ${{ secrets.SENTRY_URL }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  deploy_develop:
+    # Deploy livekit branch to call.element.dev after build completes
+    if: github.ref == 'refs/heads/livekit'
+    needs: build_full_element_call
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to call.element.dev
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
+        with:
+          github-token: ${{ secrets.DEVELOP_DEPLOYMENT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+                owner: 'element-hq',
+                repo: 'element-call-webapp-deployments',
+                workflow_id: 'deploy.yml',
+                ref: 'main',
+                inputs: {
+                  target: 'call.element.dev',
+                  version: '${{ github.sha }}'
+                }
+            })
+  docker_for_develop:
+    # Build docker and publish docker for livekit branch after build completes
+    if: github.ref == 'refs/heads/livekit'
+    needs: build_full_element_call
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/build-and-publish-docker.yaml
+    with:
+      artifact_run_id: ${{ github.run_id }}
+      docker_tags: |
+        type=sha,format=short,event=branch
+        type=raw,value=latest-ci
+        type=raw,value=latest-ci_{{date 'X' }}
+  build_embedded_element_call:
+    # Use the embedded package vite build
+    uses: ./.github/workflows/build-element-call.yaml
+    with:
+      package: embedded
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}

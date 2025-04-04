@@ -1,7 +1,7 @@
 /*
 Copyright 2021-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -48,12 +48,12 @@ export const LoginPage: FC = () => {
       }
 
       login(homeserver, usernameRef.current.value, passwordRef.current.value)
-        .then(([client, session]) => {
+        .then(async ([client, session]) => {
           if (!setClient) {
             return;
           }
 
-          setClient({ client, session });
+          setClient(client, session);
 
           const locationState = location.state;
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -61,9 +61,9 @@ export const LoginPage: FC = () => {
           if (locationState && locationState.from) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            navigate(locationState.from);
+            await navigate(locationState.from);
           } else {
-            navigate("/");
+            await navigate("/");
           }
           PosthogAnalytics.instance.eventLogin.track();
         })

@@ -1,7 +1,7 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -14,7 +14,7 @@ import i18n, {
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import * as Sentry from "@sentry/react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
 import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill";
 import {
@@ -28,6 +28,7 @@ import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { ElementCallOpenTelemetry } from "./otel/otel";
 import { platform } from "./Platform";
+import { isFailure } from "./utils/fetch";
 
 // This generates a map of locale names to their URL (based on import.meta.url), which looks like this:
 // {
@@ -79,7 +80,7 @@ const Backend = {
         },
       });
 
-      if (!response.ok) {
+      if (isFailure(response)) {
         throw Error(`Failed to fetch ${url}`);
       }
 
@@ -108,11 +109,11 @@ class DependencyLoadStates {
 }
 
 export class Initializer {
-  private static internalInstance: Initializer;
+  private static internalInstance: Initializer | undefined;
   private isInitialized = false;
 
   public static isInitialized(): boolean {
-    return Initializer.internalInstance?.isInitialized;
+    return !!Initializer.internalInstance?.isInitialized;
   }
 
   public static async initBeforeReact(): Promise<void> {
@@ -192,9 +193,17 @@ export class Initializer {
     Initializer.internalInstance.initPromise = new Promise<void>((resolve) => {
       // initStep calls itself recursively until everything is initialized in the correct order.
       // Then the promise gets resolved.
-      Initializer.internalInstance.initStep(resolve);
+      Initializer.internalInstance?.initStep(resolve);
     });
     return Initializer.internalInstance.initPromise;
+  }
+
+  /**
+   * Resets the initializer. This is used in tests to ensure that the initializer
+   * is re-initialized for each test.
+   */
+  public static reset(): void {
+    Initializer.internalInstance = undefined;
   }
 
   private loadStates = new DependencyLoadStates();
@@ -219,12 +228,24 @@ export class Initializer {
       this.loadStates.sentry === LoadState.None &&
       this.loadStates.config === LoadState.Loaded
     ) {
-      if (Config.get().sentry?.DSN && Config.get().sentry?.environment) {
+      let dsn: string | undefined;
+      let environment: string | undefined;
+      if (import.meta.env.VITE_PACKAGE === "embedded") {
+        // for the embedded package we always use the values from the URL as the widget host is responsible for analytics configuration
+        dsn = getUrlParams().sentryDsn ?? undefined;
+        environment = getUrlParams().sentryEnvironment ?? undefined;
+      }
+      if (import.meta.env.VITE_PACKAGE === "full") {
+        // in full package it is the server responsible for the analytics
+        dsn = Config.get().sentry?.DSN;
+        environment = Config.get().sentry?.environment;
+      }
+      if (dsn) {
         Sentry.init({
-          dsn: Config.get().sentry?.DSN,
-          environment: Config.get().sentry?.environment,
+          dsn,
+          environment,
           integrations: [
-            Sentry.reactRouterV6BrowserTracingIntegration({
+            Sentry.reactRouterV7BrowserTracingIntegration({
               useEffect: React.useEffect,
               useLocation,
               useNavigationType,

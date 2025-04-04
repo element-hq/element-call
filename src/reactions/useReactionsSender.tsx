@@ -1,20 +1,21 @@
 /*
 Copyright 2024 Milton Moura <miltonmoura@gmail.com>
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { EventType, RelationType } from "matrix-js-sdk/src/matrix";
+import { EventType, RelationType } from "matrix-js-sdk";
 import {
   createContext,
   useContext,
   type ReactNode,
   useCallback,
   useMemo,
+  type JSX,
 } from "react";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { logger } from "matrix-js-sdk/src/logger";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { useObservableEagerState } from "observable-hooks";
 
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
@@ -59,6 +60,7 @@ export const ReactionsSenderProvider = ({
   const room = rtcSession.room;
   const myUserId = room.client.getUserId();
   const myDeviceId = room.client.getDeviceId();
+  const myMembershipIdentifier = `${myUserId}:${myDeviceId}`;
 
   const myMembershipEvent = useMemo(
     () =>
@@ -67,12 +69,6 @@ export const ReactionsSenderProvider = ({
       )?.eventId,
     [memberships, myUserId, myDeviceId],
   );
-  const myMembershipIdentifier = useMemo(() => {
-    const membership = memberships.find((m) => m.sender === myUserId);
-    return membership
-      ? `${membership.sender}:${membership.deviceId}`
-      : undefined;
-  }, [memberships, myUserId]);
 
   const reactions = useObservableEagerState(vm.reactions$);
   const myReaction = useMemo(

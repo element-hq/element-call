@@ -1,12 +1,13 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import {
   type AudioCaptureOptions,
+  ConnectionError,
   ConnectionState,
   type LocalTrack,
   type Room,
@@ -14,11 +15,16 @@ import {
   Track,
 } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import * as Sentry from "@sentry/react";
 
 import { type SFUConfig, sfuConfigEquals } from "./openIDSFU";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import {
+  ElementCallError,
+  InsufficientCapacityError,
+  UnknownCallError,
+} from "../utils/errors.ts";
 
 declare global {
   interface Window {
@@ -106,7 +112,8 @@ async function doConnect(
     await connectAndPublish(livekitRoom, sfuConfig, preCreatedAudioTrack, []);
   } catch (e) {
     preCreatedAudioTrack?.stop();
-    logger.warn("Stopped precreated audio tracks.", e);
+    logger.debug("Stopped precreated audio tracks.");
+    throw e;
   }
 }
 
@@ -129,12 +136,27 @@ async function connectAndPublish(
   tracker.cacheConnectStart();
   livekitRoom.once(RoomEvent.SignalConnected, tracker.cacheWsConnect);
 
-  await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt, {
-    // Due to stability issues on Firefox we are testing the effect of different
-    // timeouts, and allow these values to be set through the console
-    peerConnectionTimeout: window.peerConnectionTimeout ?? 45000,
-    websocketTimeout: window.websocketTimeout ?? 45000,
-  });
+  try {
+    await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt, {
+      // Due to stability issues on Firefox we are testing the effect of different
+      // timeouts, and allow these values to be set through the console
+      peerConnectionTimeout: window.peerConnectionTimeout ?? 45000,
+      websocketTimeout: window.websocketTimeout ?? 45000,
+    });
+  } catch (e) {
+    // LiveKit uses 503 to indicate that the server has hit its track limits.
+    // https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
+    // It also errors with a status code of 200 (yes, really) for room
+    // participant limits.
+    // LiveKit Cloud uses 429 for connection limits.
+    // Either way, all these errors can be explained as "insufficient capacity".
+    if (
+      e instanceof ConnectionError &&
+      (e.status === 503 || e.status === 200 || e.status === 429)
+    )
+      throw new InsufficientCapacityError();
+    throw e;
+  }
 
   // remove listener in case the connect promise rejects before `SignalConnected` is emitted.
   livekitRoom.off(RoomEvent.SignalConnected, tracker.cacheWsConnect);
@@ -175,6 +197,8 @@ export function useECConnectionState(
 
   const [isSwitchingFocus, setSwitchingFocus] = useState(false);
   const [isInDoConnect, setIsInDoConnect] = useState(false);
+  const [error, setError] = useState<ElementCallError | null>(null);
+  if (error !== null) throw error;
 
   const onConnStateChanged = useCallback((state: ConnectionState) => {
     if (state == ConnectionState.Connected) setSwitchingFocus(false);
@@ -256,7 +280,11 @@ export function useECConnectionState(
         initialAudioOptions,
       )
         .catch((e) => {
-          logger.error("Failed to connect to SFU", e);
+          if (e instanceof ElementCallError) {
+            setError(e); // Bubble up any error screens to React
+          } else if (e instanceof Error) {
+            setError(new UnknownCallError(e));
+          } else logger.error("Failed to connect to SFU", e);
         })
         .finally(() => setIsInDoConnect(false));
     }
