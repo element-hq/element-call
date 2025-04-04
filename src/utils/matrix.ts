@@ -259,6 +259,15 @@ export async function createRoom(
         [client.getUserId()!]: 100,
       },
     },
+    initial_state: [
+      {
+        type: "m.room.encryption",
+        state_key: "",
+        content: {
+          algorithm: "m.megolm.v1.aes-sha2",
+        },
+      },
+    ],
   });
 
   // Wait for the room to arrive
