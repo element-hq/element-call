@@ -64,6 +64,11 @@ export default defineConfig(({ mode, packageType }) => {
       }),
     );
   }
+
+  // The crypto WASM module is imported dynamically. Since it's common
+  // for developers to use a linked copy of matrix-js-sdk or Rust
+  // crypto (which could reside anywhere on their file system), Vite
+  // needs to be told to recognize it as a legitimate file access.
   const allow = [searchForWorkspaceRoot(process.cwd())];
   for (path of [
     "node_modules/matrix-js-sdk/node_modules/@matrix-org/matrix-sdk-crypto-wasm",
