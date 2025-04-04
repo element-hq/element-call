@@ -125,6 +125,7 @@ export async function enterRTCSession(
       membershipKeepAlivePeriod:
         matrixRtcSessionConfig?.membership_keep_alive_period,
       makeKeyDelay: matrixRtcSessionConfig?.key_rotation_on_leave_delay,
+      useExperimentalToDeviceTransport: true,
     },
   );
   if (widget) {
