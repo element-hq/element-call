@@ -49,11 +49,14 @@ export function useLiveKit(
     if (e2eeSystem.kind === E2eeType.NONE) return undefined;
 
     if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
+      logger.info("Created MatrixKeyProvider (per participant)");
       return {
         keyProvider: new MatrixKeyProvider(),
         worker: new E2EEWorker(),
       };
     } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
+      logger.info("Created ExternalE2EEKeyProvider (shared key)");
+
       return {
         keyProvider: new ExternalE2EEKeyProvider(),
         worker: new E2EEWorker(),
