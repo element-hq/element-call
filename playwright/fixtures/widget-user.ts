@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type Page, test, expect, type JSHandle } from "@playwright/test";
 
-import type { MatrixClient } from "matrix-js-sdk/src";
+import type { MatrixClient } from "matrix-js-sdk";
 
 export type UserBaseFixture = {
   mxId: string;
@@ -36,7 +36,6 @@ const CONFIG_JSON = {
   },
 
   element_call: {
-    url: "https://localhost:3000",
     participant_limit: 8,
     brand: "Element Call",
   },
@@ -59,6 +58,21 @@ const CONFIG_JSON = {
     feature_group_calls: true,
   },
 };
+
+/**
+ * Set the Element Call URL in the dev tool settings using `window.mxSettingsStore` via `page.evaluate`.
+ * @param page
+ */
+async function setDevToolElementCallDevUrl(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    window.mxSettingsStore.setValue(
+      "Developer.elementCallUrl",
+      null,
+      "device",
+      "https://localhost:3000/room",
+    );
+  });
+}
 
 export const widgetTest = test.extend<MyFixtures>({
   asWidget: async ({ browser, context }, pUse) => {
@@ -88,6 +102,7 @@ export const widgetTest = test.extend<MyFixtures>({
     await expect(
       ewPage1.getByRole("heading", { name: `Welcome ${userA}` }),
     ).toBeVisible();
+    await setDevToolElementCallDevUrl(ewPage1);
 
     const brooksClientHandle = await ewPage1.evaluateHandle(() =>
       window.mxMatrixClientPeg.get(),
@@ -115,6 +130,7 @@ export const widgetTest = test.extend<MyFixtures>({
     await expect(
       ewPage2.getByRole("heading", { name: `Welcome ${userB}` }),
     ).toBeVisible();
+    await setDevToolElementCallDevUrl(ewPage2);
 
     const whistlerClientHandle = await ewPage2.evaluateHandle(() =>
       window.mxMatrixClientPeg.get(),
