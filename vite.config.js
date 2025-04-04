@@ -12,10 +12,10 @@ import { codecovVitePlugin } from "@codecov/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import react from "@vitejs/plugin-react";
 import basicSsl from "@vitejs/plugin-basic-ssl";
-import { realpath } from "fs/promises";
+import { realpathSync } from "fs";
 
 // https://vitejs.dev/config/
-export default defineConfig(async ({ mode, packageType }) => {
+export default defineConfig(({ mode, packageType }) => {
   const env = loadEnv(mode, process.cwd());
   // Environment variables with the VITE_ prefix are accessible at runtime.
   // So, we set this to allow for build/package specific behaviour.
@@ -67,9 +67,9 @@ export default defineConfig(async ({ mode, packageType }) => {
   const allow = [searchForWorkspaceRoot(process.cwd())];
   const matrixSdkCryptoWasmPath =
     "node_modules/matrix-js-sdk/node_modules/@matrix-org/matrix-sdk-crypto-wasm";
-  await realpath(matrixSdkCryptoWasmPath)
-    .then((p) => allow.push(p))
-    .catch(() => {});
+  try {
+    allow.push(realpathSync(matrixSdkCryptoWasmPath));
+  } catch {}
   console.log("Allowed vite paths:", allow);
 
   return {
