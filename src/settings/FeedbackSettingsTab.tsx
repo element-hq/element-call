@@ -1,15 +1,15 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { type ChangeEvent, type FC, useCallback } from "react";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk/lib/randomstring";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Text } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake, useRageshakeRequest } from "./submit-rageshake";
@@ -23,7 +23,8 @@ interface Props {
 
 export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
   const { t } = useTranslation();
-  const { submitRageshake, sending, sent, error } = useSubmitRageshake();
+  const { submitRageshake, sending, sent, error, available } =
+    useSubmitRageshake();
   const sendRageshakeRequest = useRageshakeRequest();
 
   const onSubmitFeedback = useCallback(
@@ -36,7 +37,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
       const description =
         typeof descriptionData === "string" ? descriptionData : "";
       const sendLogs = Boolean(data.get("sendLogs"));
-      const rageshakeRequestId = randomString(16);
+      const rageshakeRequestId = secureRandomString(16);
 
       submitRageshake({
         description,
@@ -66,20 +67,27 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
     </Text>
   );
 
-  return (
-    <div>
-      <h4>{t("common.analytics")}</h4>
-      <FieldRow>
-        <InputField
-          id="optInAnalytics"
-          type="checkbox"
-          checked={optInAnalytics ?? undefined}
-          description={optInDescription}
-          onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-            setOptInAnalytics?.(event.target.checked);
-          }}
-        />
-      </FieldRow>
+  // in the embedded package the widget host is responsible for analytics consent
+  const analyticsConsentBlock =
+    import.meta.env.VITE_PACKAGE === "embedded" ? null : (
+      <>
+        <h4>{t("common.analytics")}</h4>
+        <FieldRow>
+          <InputField
+            id="optInAnalytics"
+            type="checkbox"
+            checked={optInAnalytics ?? undefined}
+            description={optInDescription}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+              setOptInAnalytics?.(event.target.checked);
+            }}
+          />
+        </FieldRow>
+      </>
+    );
+
+  const feedbackBlock = available ? (
+    <>
       <h4>{t("settings.feedback_tab_h4")}</h4>
       <Text>{t("settings.feedback_tab_body")}</Text>
       <form onSubmit={onSubmitFeedback}>
@@ -113,6 +121,13 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
           {sent && <Text>{t("settings.feedback_tab_thank_you")}</Text>}
         </FieldRow>
       </form>
+    </>
+  ) : null;
+
+  return (
+    <div>
+      {analyticsConsentBlock}
+      {feedbackBlock}
     </div>
   );
 };

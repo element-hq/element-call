@@ -1,45 +1,67 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { beforeEach, expect, type MockedFunction, test, vitest } from "vitest";
-import { render } from "@testing-library/react";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import {
+  beforeEach,
+  expect,
+  type MockedFunction,
+  onTestFinished,
+  test,
+  vi,
+} from "vitest";
+import { render, waitFor, screen } from "@testing-library/react";
+import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { of } from "rxjs";
-import { JoinRule, type RoomState } from "matrix-js-sdk/src/matrix";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
-import { type RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
+import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
+import { useState } from "react";
+import { TooltipProvider } from "@vector-im/compound-web";
 
 import { type MuteStates } from "./MuteStates";
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 import { ActiveCall } from "./InCallView";
 import {
+  flushPromises,
   mockMatrixRoom,
   mockMatrixRoomMember,
   mockRtcMembership,
   MockRTCSession,
 } from "../utils/test";
 import { GroupCallView } from "./GroupCallView";
-import { leaveRTCSession } from "../rtcSessionHelpers";
 import { type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
+import { MatrixRTCFocusMissingError } from "../utils/errors";
 
-vitest.mock("../soundUtils");
-vitest.mock("../useAudioContext");
-vitest.mock("./InCallView");
+vi.mock("../soundUtils");
+vi.mock("../useAudioContext");
+vi.mock("./InCallView");
+vi.mock("react-use-measure", () => ({
+  default: (): [() => void, object] => [(): void => {}, {}],
+}));
 
-vitest.mock("../rtcSessionHelpers", async (importOriginal) => {
+const enterRTCSession = vi.hoisted(() => vi.fn(async () => Promise.resolve()));
+const leaveRTCSession = vi.hoisted(() =>
+  vi.fn(
+    async (
+      rtcSession: unknown,
+      cause: unknown,
+      promiseBeforeHangup = Promise.resolve(),
+    ) => await promiseBeforeHangup,
+  ),
+);
+
+vi.mock("../rtcSessionHelpers", async (importOriginal) => {
   // TODO: perhaps there is a more elegant way to manage the type import here?
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   const orig = await importOriginal<typeof import("../rtcSessionHelpers")>();
-  vitest.spyOn(orig, "leaveRTCSession");
-  return orig;
+  return { ...orig, enterRTCSession, leaveRTCSession };
 });
 
 let playSound: MockedFunction<
@@ -51,13 +73,13 @@ const carol = mockMatrixRoomMember(localRtcMember);
 const roomMembers = new Map([carol].map((p) => [p.userId, p]));
 
 const roomId = "!foo:bar";
-const soundPromise = Promise.resolve(true);
 
 beforeEach(() => {
+  vi.clearAllMocks();
   (prefetchSounds as MockedFunction<typeof prefetchSounds>).mockResolvedValue({
     sound: new ArrayBuffer(0),
   });
-  playSound = vitest.fn().mockReturnValue(soundPromise);
+  playSound = vi.fn();
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
   });
@@ -73,7 +95,10 @@ beforeEach(() => {
   );
 });
 
-function createGroupCallView(widget: WidgetHelpers | null): {
+function createGroupCallView(
+  widget: WidgetHelpers | null,
+  joined = true,
+): {
   rtcSession: MockRTCSession;
   getByText: ReturnType<typeof render>["getByText"];
 } {
@@ -86,7 +111,7 @@ function createGroupCallView(widget: WidgetHelpers | null): {
   const room = mockMatrixRoom({
     relations: {
       getChildEventsForEvent: () =>
-        vitest.mocked({
+        vi.mocked({
           getRelations: () => [],
         }),
     } as unknown as RelationsContainer,
@@ -104,23 +129,27 @@ function createGroupCallView(widget: WidgetHelpers | null): {
     localRtcMember,
     [],
   ).withMemberships(of([]));
+  rtcSession.joined = joined;
   const muteState = {
     audio: { enabled: false },
     video: { enabled: false },
   } as MuteStates;
   const { getByText } = render(
     <BrowserRouter>
-      <GroupCallView
-        client={client}
-        isPasswordlessUser={false}
-        confineToRoom={false}
-        preload={false}
-        skipLobby={false}
-        hideHeader={true}
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-        muteStates={muteState}
-        widget={widget}
-      />
+      <TooltipProvider>
+        <GroupCallView
+          client={client}
+          isPasswordlessUser={false}
+          confineToRoom={false}
+          preload={false}
+          skipLobby={false}
+          hideHeader={true}
+          rtcSession={rtcSession as unknown as MatrixRTCSession}
+          isJoined={joined}
+          muteStates={muteState}
+          widget={widget}
+        />
+      </TooltipProvider>
     </BrowserRouter>,
   );
   return {
@@ -129,17 +158,24 @@ function createGroupCallView(widget: WidgetHelpers | null): {
   };
 }
 
-test("will play a leave sound asynchronously in SPA mode", async () => {
+test("GroupCallView plays a leave sound asynchronously in SPA mode", async () => {
   const user = userEvent.setup();
   const { getByText, rtcSession } = createGroupCallView(null);
   const leaveButton = getByText("Leave");
   await user.click(leaveButton);
   expect(playSound).toHaveBeenCalledWith("left");
-  expect(leaveRTCSession).toHaveBeenCalledWith(rtcSession, undefined);
-  expect(rtcSession.leaveRoomSession).toHaveBeenCalledOnce();
+  expect(leaveRTCSession).toHaveBeenCalledWith(
+    rtcSession,
+    "user",
+    expect.any(Promise),
+  );
+  expect(leaveRTCSession).toHaveBeenCalledOnce();
+  // Ensure that the playSound promise resolves within this test to avoid
+  // impacting the results of other tests
+  await waitFor(() => expect(leaveRTCSession).toHaveResolved());
 });
 
-test("will play a leave sound synchronously in widget mode", async () => {
+test("GroupCallView plays a leave sound synchronously in widget mode", async () => {
   const user = userEvent.setup();
   const widget = {
     api: {
@@ -147,12 +183,63 @@ test("will play a leave sound synchronously in widget mode", async () => {
     } as Partial<WidgetHelpers["api"]>,
     lazyActions: new LazyEventEmitter(),
   };
+  let resolvePlaySound: () => void;
+  playSound = vi
+    .fn()
+    .mockReturnValue(
+      new Promise<void>((resolve) => (resolvePlaySound = resolve)),
+    );
+  (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
+    playSound,
+  });
+
   const { getByText, rtcSession } = createGroupCallView(
     widget as WidgetHelpers,
   );
   const leaveButton = getByText("Leave");
   await user.click(leaveButton);
+  await flushPromises();
+  expect(leaveRTCSession).not.toHaveResolved();
+  resolvePlaySound!();
+  await flushPromises();
+
   expect(playSound).toHaveBeenCalledWith("left");
-  expect(leaveRTCSession).toHaveBeenCalledWith(rtcSession, soundPromise);
-  expect(rtcSession.leaveRoomSession).toHaveBeenCalledOnce();
+  expect(leaveRTCSession).toHaveBeenCalledWith(
+    rtcSession,
+    "user",
+    expect.any(Promise),
+  );
+  expect(leaveRTCSession).toHaveBeenCalledOnce();
+});
+
+test("GroupCallView leaves the session when an error occurs", async () => {
+  (ActiveCall as MockedFunction<typeof ActiveCall>).mockImplementation(() => {
+    const [error, setError] = useState<Error | null>(null);
+    if (error !== null) throw error;
+    return (
+      <div>
+        <button onClick={() => setError(new Error())}>Panic!</button>
+      </div>
+    );
+  });
+  const user = userEvent.setup();
+  const { rtcSession } = createGroupCallView(null);
+  await user.click(screen.getByRole("button", { name: "Panic!" }));
+  screen.getByText("Something went wrong");
+  expect(leaveRTCSession).toHaveBeenCalledWith(
+    rtcSession,
+    "error",
+    expect.any(Promise),
+  );
+});
+
+test("GroupCallView shows errors that occur during joining", async () => {
+  const user = userEvent.setup();
+  enterRTCSession.mockRejectedValue(new MatrixRTCFocusMissingError(""));
+  onTestFinished(() => {
+    enterRTCSession.mockReset();
+  });
+  createGroupCallView(null, false);
+  await user.click(screen.getByRole("button", { name: "Join call" }));
+  screen.getByText("Call is not supported");
 });

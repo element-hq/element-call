@@ -1,10 +1,10 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
-import { useState } from "react";
+import { useState, type JSX } from "react";
 import { useTranslation } from "react-i18next";
 
 import styles from "./StarRatingInput.module.css";

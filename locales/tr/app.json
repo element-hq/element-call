@@ -15,11 +15,9 @@
   },
   "common": {
     "audio": "Ses",
-    "camera": "Kamera",
     "display_name": "Ekran adı",
     "home": "Ev",
     "loading": "Yükleniyor…",
-    "microphone": "Mikrofon",
     "password": "Parola",
     "settings": "Ayarlar"
   },

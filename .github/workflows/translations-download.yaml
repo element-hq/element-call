@@ -15,13 +15,16 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4
         with:
           cache: "yarn"
           node-version-file: ".node-version"
 
       - name: Install Deps
-        run: "yarn install --frozen-lockfile"
+        run: "yarn install --immutable"
 
       - name: Prune i18n
         run: "rm -R locales"
@@ -39,7 +42,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # v7.0.6
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           token: ${{ secrets.ELEMENT_BOT_TOKEN }}
           branch: actions/localazy-download

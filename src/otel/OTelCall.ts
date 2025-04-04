@@ -1,17 +1,17 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { type Span } from "@opentelemetry/api";
-import { type MatrixCall } from "matrix-js-sdk/src/matrix";
-import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
+import { type MatrixCall } from "matrix-js-sdk";
+import { CallEvent } from "matrix-js-sdk/lib/webrtc/call";
 import {
   type TransceiverStats,
   type CallFeedStats,
-} from "matrix-js-sdk/src/webrtc/stats/statsReport";
+} from "matrix-js-sdk/lib/webrtc/stats/statsReport";
 
 import { ObjectFlattener } from "./ObjectFlattener";
 import { ElementCallOpenTelemetry } from "./otel";

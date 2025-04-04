@@ -1,13 +1,13 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { type DisconnectReason } from "livekit-client";
-import { logger } from "matrix-js-sdk/src/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   type IPosthogEvent,

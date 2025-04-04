@@ -1,16 +1,16 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useCallback, useMemo, useState } from "react";
+import { type FC, useCallback, useMemo, useState, type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk";
 import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { usePreviewTracks } from "@livekit/components-react";
 import {
   type CreateLocalTracksOptions,
@@ -97,7 +97,11 @@ export const LobbyView: FC<Props> = ({
   );
 
   const navigate = useNavigate();
-  const onLeaveClick = useCallback(() => navigate("/"), [navigate]);
+  const onLeaveClick = useCallback(() => {
+    navigate("/")?.catch((error) => {
+      logger.error("Failed to navigate to /", error);
+    });
+  }, [navigate]);
 
   const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
   const recentsButton = !confineToRoom && (

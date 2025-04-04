@@ -1,72 +1,83 @@
-name: Build & publish images to the package registry for tags
+name: Build & publish full packages for releases
 
 on:
   release:
     types: [published]
-  workflow_run:
-    workflows: ["Build"]
-    branches: [livekit]
-    types:
-      - completed
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  VERSION: ${{ github.event.release.tag_name }}
 
 jobs:
   build_element_call:
-    if: ${{ github.event_name == 'release' }}
-    uses: ./.github/workflows/element-call.yaml
+    uses: ./.github/workflows/build-element-call.yaml
     with:
-      vite_app_version: ${{ github.event.release.tag_name || github.sha }}
+      package: full
+      vite_app_version: ${{ github.event.release.tag_name }} # Using ${{ env.VERSION }} here doesn't work
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
   publish_tarball:
     needs: build_element_call
     if: always()
     name: Publish tarball
     runs-on: ubuntu-latest
-    outputs:
-      unix_time: ${{steps.current-time.outputs.unix_time}}
     permissions:
       contents: write # required to upload release asset
       packages: write
     steps:
-      - name: Get current time
-        id: current-time
-        run: echo "unix_time=$(date +'%s')" >> $GITHUB_OUTPUT
-      - name: 📥 Download artifact
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+      - name: Determine filename
+        run: echo "FILENAME_PREFIX=element-call-${VERSION:1}" >> "$GITHUB_ENV"
+      - name: 📥 Download built element-call artifact
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id || github.run_id }}
-          name: build-output
-          path: dist
+          name: build-output-full
+          path: ${{ env.FILENAME_PREFIX }}
       - name: Create Tarball
-        env:
-          TARBALL_VERSION: ${{ github.event.release.tag_name || github.sha }}
-        run: |
-          tar --numeric-owner --transform "s/dist/element-call-${TARBALL_VERSION}/" -cvzf element-call-${TARBALL_VERSION}.tar.gz dist
+        run: tar --numeric-owner --transform "s/dist/${{ env.FILENAME_PREFIX }}/" -cvzf ${{ env.FILENAME_PREFIX }}.tar.gz ${{ env.FILENAME_PREFIX }}
+      - name: Create Checksum
+        run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
       - name: Upload
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
         with:
-          path: "./element-call-*.tar.gz"
+          files: |
+            ${{ env.FILENAME_PREFIX }}.tar.gz
+            ${{ env.FILENAME_PREFIX }}.sha256
+
   publish_docker:
-    needs: publish_tarball
+    needs: build_element_call
     if: always()
+    name: Publish docker
     permissions:
       contents: write
       packages: write
-    uses: ./.github/workflows/docker.yaml
+    uses: ./.github/workflows/build-and-publish-docker.yaml
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |
         type=sha,format=short,event=branch
         type=semver,pattern=v{{version}}
-        type=raw,value=latest-ci,enable={{is_default_branch}}
-        type=raw,value=latest-ci_${{needs.publish_tarball.outputs.unix_time}},enable={{is_default_branch}}
+  add_docker_release_note:
+    needs: publish_docker
+    name: Add docker release note
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get artifact version
+        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
+      - name: Add release note
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
+        with:
+          append_body: true
+          body: |
+            ## Docker full package
+            Element Call is available as a Docker image from the [GitHub Container Registry](https://github.com/element-hq/element-call/pkgs/container/element-call).
+
+            The image provides a full build of Element Call that can be used both in standalone and as a widget (on a remote URL).
+
+            ```
+            docker pull ghcr.io/element-hq/element-call:${{ env.ARTIFACT_VERSION }}
+            ```

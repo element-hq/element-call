@@ -21,9 +21,7 @@
     "text": "Gotowy, by dołączyć?",
     "title": "Wybierz aplikację"
   },
-  "browser_media_e2ee_unsupported": "Twoja przeglądarka nie wspiera szyfrowania end-to-end. Wspierane przeglądarki to Chrome, Safari, Firefox >=117",
   "call_ended_view": {
-    "body": "Rozłączono Cię z połączenia",
     "create_account_button": "Utwórz konto",
     "create_account_prompt": "<0>Może zechcesz ustawić hasło, aby zachować swoje konto?</0><1>Będziesz w stanie utrzymać swoją nazwę i ustawić awatar do wyświetlania podczas połączeń w przyszłości</1>",
     "feedback_done": "<0>Dziękujemy za Twoją opinię!</0>",
@@ -37,12 +35,10 @@
   "common": {
     "audio": "Dźwięk",
     "avatar": "Awatar",
-    "camera": "Kamera",
     "display_name": "Nazwa wyświetlana",
     "encrypted": "Szyfrowane",
     "home": "Strona domowa",
     "loading": "Ładowanie…",
-    "microphone": "Mikrofon",
     "password": "Hasło",
     "profile": "Profil",
     "settings": "Ustawienia",
@@ -51,8 +47,6 @@
     "video": "Wideo"
   },
   "disconnected_banner": "Utracono połączenie z serwerem.",
-  "full_screen_view_description": "<0>Wysłanie dzienników debuggowania pomoże nam ustalić przyczynę problemu.</0>",
-  "full_screen_view_h1": "<0>Ojej, coś poszło nie tak.</0>",
   "hangup_button_label": "Zakończ połączenie",
   "header_label": "Strona główna Element Call",
   "header_participants_label": "Uczestnicy",
@@ -86,7 +80,6 @@
   "rageshake_sending": "Wysyłanie…",
   "rageshake_sending_logs": "Wysyłanie dzienników debugowania…",
   "rageshake_sent": "Dziękujemy!",
-  "recaptcha_caption": "Ta witryna jest chroniona przez ReCAPTCHA, więc obowiązują <2>Polityka prywatności</2> i <6>Warunki usług</6> Google. Klikając \"Zarejestruj\", zgadzasz się na naszą <12>Umowę licencyjną (EULA)</12>",
   "recaptcha_dismissed": "Recaptcha odrzucona",
   "recaptcha_not_loaded": "Recaptcha nie została załadowana",
   "register": {
@@ -96,7 +89,6 @@
   "register_auth_links": "<0>Masz już konto?</0><1><0>Zaloguj się</0> lub <2>Dołącz jako gość</2></1>",
   "register_confirm_password_label": "Potwierdź hasło",
   "return_home_button": "Powróć do strony głównej",
-  "room_auth_view_eula_caption": "Klikając \"Dołącz teraz do rozmowy\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
   "screenshare_button_label": "Udostępnij ekran",
   "settings": {
     "developer_tab_title": "Programista",
@@ -106,8 +98,7 @@
     "feedback_tab_send_logs_label": "Dołącz dzienniki debugowania",
     "feedback_tab_thank_you": "Dziękujemy, otrzymaliśmy Twoją opinię!",
     "feedback_tab_title": "Opinia użytkownika",
-    "opt_in_description": "<0></0><1></1>Możesz wycofać swoją zgodę poprzez odznaczenie tego pola. Jeśli już jesteś w trakcie rozmowy, opcja zostanie zastosowana po jej zakończeniu.",
-    "speaker_device_selection_label": "Głośnik"
+    "opt_in_description": "<0></0><1></1>Możesz wycofać swoją zgodę poprzez odznaczenie tego pola. Jeśli już jesteś w trakcie rozmowy, opcja zostanie zastosowana po jej zakończeniu."
   },
   "star_rating_input_label_one": "{{count}} gwiazdki",
   "star_rating_input_label_other": "{{count}} gwiazdki",
@@ -117,7 +108,6 @@
   "stop_video_button_label": "Zakończ wideo",
   "submitting": "Wysyłanie…",
   "unauthenticated_view_body": "Nie masz konta? <2>Utwórz je</2>",
-  "unauthenticated_view_eula_caption": "Klikając \"Przejdź\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
   "unauthenticated_view_login_button": "Zaloguj się do swojego konta",
   "unmute_microphone_button_label": "Odcisz mikrofon",
   "version": "Wersja: {{version}}"

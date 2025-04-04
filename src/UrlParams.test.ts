@@ -1,7 +1,7 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -110,8 +110,8 @@ describe("UrlParams", () => {
   });
 
   describe("returnToLobby", () => {
-    it("is true in SPA mode", () => {
-      expect(getUrlParams("?returnToLobby=false").returnToLobby).toBe(true);
+    it("is false in SPA mode", () => {
+      expect(getUrlParams("?returnToLobby=true").returnToLobby).toBe(false);
     });
 
     it("defaults to false in widget mode", () => {

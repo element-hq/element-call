@@ -1,7 +1,7 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -11,7 +11,7 @@ import type {
   Listener,
   ListenerMap,
   TypedEventEmitter,
-} from "matrix-js-sdk/src/models/typed-event-emitter";
+} from "matrix-js-sdk/lib/models/typed-event-emitter";
 
 // Shortcut for registering a listener on an EventTarget
 export function useEventTarget<T extends Event>(

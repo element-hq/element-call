@@ -1,14 +1,12 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { Link } from "react-router-dom";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
-import { type RoomMember } from "matrix-js-sdk/src/models/room-member";
-import { type Room } from "matrix-js-sdk/src/models/room";
+import { type RoomMember, type Room, type MatrixClient } from "matrix-js-sdk";
 import { type FC, useCallback, type MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { IconButton, Text } from "@vector-im/compound-web";

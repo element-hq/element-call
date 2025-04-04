@@ -8,7 +8,7 @@ exports[`RaisedHandIndicator > renders a smaller indicator when miniature is spe
     class="reaction"
   >
     <span
-      aria-label="common.reaction"
+      aria-label="Reaction"
       role="img"
     >
       ✋
@@ -28,7 +28,7 @@ exports[`RaisedHandIndicator > renders an indicator when a hand has been raised 
     class="reaction reactionLarge"
   >
     <span
-      aria-label="common.reaction"
+      aria-label="Reaction"
       role="img"
     >
       ✋
@@ -48,7 +48,7 @@ exports[`RaisedHandIndicator > renders an indicator when a hand has been raised 
     class="reaction reactionLarge"
   >
     <span
-      aria-label="common.reaction"
+      aria-label="Reaction"
       role="img"
     >
       ✋

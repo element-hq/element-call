@@ -1,7 +1,7 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -13,7 +13,7 @@ import {
   useMemo,
 } from "react";
 import { type IWidgetApiRequest } from "matrix-widget-api";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   type MediaDevice,
@@ -57,8 +57,9 @@ function useMuteState(
   enabledByDefault: () => boolean,
 ): MuteState {
   const [enabled, setEnabled] = useReactiveState<boolean | undefined>(
+    // Determine the default value once devices are actually connected
     (prev) =>
-      device.available.size > 0 ? (prev ?? enabledByDefault()) : undefined,
+      prev ?? (device.available.size > 0 ? enabledByDefault() : undefined),
     [device],
   );
   return useMemo(
@@ -73,17 +74,17 @@ function useMuteState(
   );
 }
 
-export function useMuteStates(): MuteStates {
+export function useMuteStates(isJoined: boolean): MuteStates {
   const devices = useMediaDevices();
 
   const { skipLobby } = useUrlParams();
 
   const audio = useMuteState(devices.audioInput, () => {
-    return Config.get().media_devices.enable_audio && !skipLobby;
+    return Config.get().media_devices.enable_audio && !skipLobby && !isJoined;
   });
   const video = useMuteState(
     devices.videoInput,
-    () => Config.get().media_devices.enable_video && !skipLobby,
+    () => Config.get().media_devices.enable_video && !skipLobby && !isJoined,
   );
 
   useEffect(() => {

@@ -19,11 +19,9 @@
   "common": {
     "audio": "صدا",
     "avatar": "آواتار",
-    "camera": "دوربین",
     "display_name": "نام نمایشی",
     "home": "خانه",
     "loading": "بارگزاری…",
-    "microphone": "میکروفون",
     "password": "رمز عبور",
     "profile": "پروفایل",
     "settings": "تنظیمات",
@@ -63,8 +61,7 @@
   "settings": {
     "developer_tab_title": "توسعه دهنده",
     "feedback_tab_h4": "بازخورد ارائه دهید",
-    "feedback_tab_send_logs_label": "شامل لاگ‌های عیب‌یابی",
-    "speaker_device_selection_label": "بلندگو"
+    "feedback_tab_send_logs_label": "شامل لاگ‌های عیب‌یابی"
   },
   "unauthenticated_view_body": "هنوز ثبت‌نام نکرده‌اید؟ <2>ساخت حساب کاربری</2>",
   "unauthenticated_view_login_button": "به حساب کاربری خود وارد شوید",

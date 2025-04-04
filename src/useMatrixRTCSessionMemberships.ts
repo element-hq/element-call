@@ -1,16 +1,16 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { logger } from "matrix-js-sdk/src/logger";
-import { type CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
+  type CallMembership,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-} from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+} from "matrix-js-sdk/lib/matrixrtc";
 import { useCallback, useEffect, useState } from "react";
 
 export function useMatrixRTCSessionMemberships(

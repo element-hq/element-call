@@ -1,15 +1,15 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useState, type FormEventHandler } from "react";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk/lib/randomstring";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { useNavigate } from "react-router-dom";
 
 import { useClient } from "../ClientContext";
@@ -67,7 +67,7 @@ export const UnauthenticatedView: FC = () => {
         const userName = generateRandomName();
         const [client, session] = await register(
           userName,
-          randomString(16),
+          secureRandomString(16),
           displayName,
           recaptchaResponse,
           true,
@@ -89,9 +89,11 @@ export const UnauthenticatedView: FC = () => {
           // @ts-ignore
           if (error.errcode === "M_ROOM_IN_USE") {
             setOnFinished(() => {
-              setClient({ client, session });
+              setClient(client, session);
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
-              navigate(`/${aliasLocalpart}`);
+              navigate(`/${aliasLocalpart}`)?.catch((error) => {
+                logger.error("Failed to navigate to alias localpart", error);
+              });
             });
 
             setLoading(false);
@@ -109,8 +111,8 @@ export const UnauthenticatedView: FC = () => {
         if (!createRoomResult.password)
           throw new Error("Failed to create room with shared secret");
 
-        setClient({ client, session });
-        navigate(
+        setClient(client, session);
+        await navigate(
           getRelativeRoomUrl(
             createRoomResult.roomId,
             { kind: E2eeType.SHARED_KEY, secret: createRoomResult.password },
@@ -183,10 +185,10 @@ export const UnauthenticatedView: FC = () => {
               </Text>
             )}
             <Text size="sm" className={styles.notice}>
-              <Trans i18nKey="unauthenticated_view_eula_caption">
+              <Trans i18nKey="unauthenticated_view_ssla_caption">
                 By clicking "Go", you agree to our{" "}
-                <ExternalLink href={Config.get().eula}>
-                  End User Licensing Agreement (EULA)
+                <ExternalLink href={Config.get().ssla}>
+                  Software and Services License Agreement (SSLA)
                 </ExternalLink>
               </Trans>
             </Text>

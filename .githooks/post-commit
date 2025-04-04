@@ -1,0 +1,11 @@
+#!/usr/bin/sh
+
+FILE=.links.disabled.yaml
+if test -f "$FILE"; then
+  # echo "$FILE exists. -> moving to .links.disabled.yaml"
+  mv .links.disabled.yaml .links.yaml
+  # echo "running yarn"
+  yarnLog=$(yarn)
+  echo "[yarn-linker] The post-commit hook has re-enabled .links.yaml."
+  exit 1
+fi

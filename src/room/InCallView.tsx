@@ -1,7 +1,7 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -11,7 +11,7 @@ import {
   useLocalParticipant,
 } from "@livekit/components-react";
 import { ConnectionState, type Room } from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk";
 import {
   type FC,
   type PointerEvent,
@@ -23,13 +23,14 @@ import {
   useMemo,
   useRef,
   useState,
+  type JSX,
 } from "react";
 import useMeasure from "react-use-measure";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -96,6 +97,7 @@ import {
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
+import { ConnectionLostError } from "../utils/errors.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -172,7 +174,8 @@ export interface InCallViewProps {
   livekitRoom: Room;
   muteStates: MuteStates;
   participantCount: number;
-  onLeave: (error?: Error) => void;
+  /** Function to call when the user explicitly ends the call */
+  onLeave: () => void;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
   connState: ECConnectionState;
@@ -197,13 +200,10 @@ export const InCallView: FC<InCallViewProps> = ({
 
   useWakeLock();
 
-  useEffect(() => {
-    if (connState === ConnectionState.Disconnected) {
-      // annoyingly we don't get the disconnection reason this way,
-      // only by listening for the emitted event
-      onLeave(new Error("Disconnected from call server"));
-    }
-  }, [connState, onLeave]);
+  // annoyingly we don't get the disconnection reason this way,
+  // only by listening for the emitted event
+  if (connState === ConnectionState.Disconnected)
+    throw new ConnectionLostError();
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure();
@@ -678,6 +678,7 @@ export const InCallView: FC<InCallViewProps> = ({
             onDismiss={closeSettings}
             tab={settingsTab}
             onTabChange={setSettingsTab}
+            livekitRoom={livekitRoom}
           />
         </>
       )}

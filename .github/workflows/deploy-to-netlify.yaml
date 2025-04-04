@@ -1,4 +1,4 @@
-name: Netlify - Deploy
+name: Deploy to Netlify
 on:
   workflow_call:
     inputs:
@@ -46,11 +46,11 @@ jobs:
             Exercise caution. Use test accounts.
 
       - name: 📥 Download artifact
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
         with:
           github-token: ${{ secrets.ELEMENT_BOT_TOKEN }}
           run-id: ${{ inputs.artifact_run_id }}
-          name: build-output
+          name: build-output-full
           path: webapp
 
       - name: Add redirects file

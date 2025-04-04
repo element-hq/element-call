@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <% if (packageType === "full") { %>
+    <link rel="icon" type="image/svg+xml" href="favicon.png" />
+    <link rel="preload" href="/config.json" as="fetch" />
+    <% } %>
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title><%- brand %></title>
+    <script>
+      window.global = window;
+    </script>
+
+    <% if (packageType === "full") { %>
+    <!-- Open graph meta tags -->
+
+    <meta property="og:title" content="<%- brand %>" />
+    <meta
+      property="og:description"
+      content="You're invited to join a call on <%- brand %>"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="favicon.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="<%- brand %>" />
+    <meta
+      name="twitter:description"
+      content="You're invited to join a call on <%- brand %>"
+    />
+    <meta name="twitter:image" content="favicon.png" />
+    <% } %>
+  </head>
+
+  <!-- The default class is: .no-theme {display: none}. It will be overwritten once the app is loaded. -->
+  <body class="no-theme">
+    <div id="root"></div>
+  </body>
+</html>

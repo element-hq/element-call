@@ -1,0 +1,17 @@
+name: Prevent blocked
+on:
+  pull_request_target:
+    types: [opened, labeled, unlabeled]
+jobs:
+  prevent-blocked:
+    name: Prevent blocked
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Add notice
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        if: contains(github.event.pull_request.labels.*.name, 'X-Blocked')
+        with:
+          script: |
+            core.setFailed("PR has been labeled with X-Blocked; it cannot be merged.");

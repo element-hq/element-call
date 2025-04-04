@@ -1,14 +1,14 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { useEffect, useCallback, useRef, useState } from "react";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk/lib/randomstring";
 import { useTranslation } from "react-i18next";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { translatedError } from "../TranslatedError";
 declare global {
@@ -31,8 +31,8 @@ export function useRecaptcha(sitekey?: string): {
   recaptchaId: string;
 } {
   const { t } = useTranslation();
-  const [recaptchaId] = useState(() => randomString(16));
-  const promiseRef = useRef<RecaptchaPromiseRef>();
+  const [recaptchaId] = useState(() => secureRandomString(16));
+  const promiseRef = useRef<RecaptchaPromiseRef | undefined>(undefined);
 
   useEffect(() => {
     if (!sitekey) return;

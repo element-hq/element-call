@@ -1,22 +1,21 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { ConnectionState } from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
-import { type RoomMember } from "matrix-js-sdk/src/matrix";
 import {
   type CallMembership,
   type MatrixRTCSession,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, of } from "rxjs";
 import { vitest } from "vitest";
-import { type RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
+import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import EventEmitter from "events";
 
+import type { RoomMember, MatrixClient } from "matrix-js-sdk";
 import { E2eeType } from "../e2ee/e2eeType";
 import { CallViewModel } from "../state/CallViewModel";
 import { mockLivekitRoom, mockMatrixRoom, MockRTCSession } from "./test";

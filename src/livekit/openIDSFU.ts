@@ -1,17 +1,20 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type IOpenIDToken, type MatrixClient } from "matrix-js-sdk/src/matrix";
-import { logger } from "matrix-js-sdk/src/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type IOpenIDToken, type MatrixClient } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { useEffect, useState } from "react";
-import { type LivekitFocus } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
+import { type LivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
 
 import { useActiveLivekitFocus } from "../room/useActiveFocus";
+import { useErrorBoundary } from "../useErrorBoundary";
+import { FailToGetOpenIdToken } from "../utils/errors";
+import { doNetworkOperationWithRetry } from "../utils/matrix";
 
 export interface SFUConfig {
   url: string;
@@ -38,6 +41,7 @@ export function useOpenIDSFU(
   const [sfuConfig, setSFUConfig] = useState<SFUConfig | undefined>(undefined);
 
   const activeFocus = useActiveLivekitFocus(rtcSession);
+  const { showErrorBoundary } = useErrorBoundary();
 
   useEffect(() => {
     if (activeFocus) {
@@ -46,13 +50,14 @@ export function useOpenIDSFU(
           setSFUConfig(sfuConfig);
         },
         (e) => {
+          showErrorBoundary(new FailToGetOpenIdToken(e));
           logger.error("Failed to get SFU config", e);
         },
       );
     } else {
       setSFUConfig(undefined);
     }
-  }, [client, activeFocus]);
+  }, [client, activeFocus, showErrorBoundary]);
 
   return sfuConfig;
 }
@@ -61,7 +66,16 @@ export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
   activeFocus: LivekitFocus,
 ): Promise<SFUConfig | undefined> {
-  const openIdToken = await client.getOpenIdToken();
+  let openIdToken: IOpenIDToken;
+  try {
+    openIdToken = await doNetworkOperationWithRetry(async () =>
+      client.getOpenIdToken(),
+    );
+  } catch (error) {
+    throw new FailToGetOpenIdToken(
+      error instanceof Error ? error : new Error("Unknown error"),
+    );
+  }
   logger.debug("Got openID token", openIdToken);
 
   try {

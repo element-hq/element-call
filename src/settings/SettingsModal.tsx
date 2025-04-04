@@ -1,14 +1,15 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
-import { Root as Form, Separator } from "@vector-im/compound-web";
+import { type MatrixClient } from "matrix-js-sdk";
+import { Root as Form ,Separator} from "@vector-im/compound-web";
+import { type Room as LivekitRoom } from "livekit-client";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -32,6 +33,7 @@ import { DeviceSelection } from "./DeviceSelection";
 import { useTrackProcessor } from "../livekit/TrackProcessorContext";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
 import { FieldRow, InputField } from "../input/Input";
+import { useSubmitRageshake } from "./submit-rageshake";
 
 type SettingsTab =
   | "audio"
@@ -49,6 +51,7 @@ interface Props {
   onTabChange: (tab: SettingsTab) => void;
   client: MatrixClient;
   roomId?: string;
+  livekitRoom?: LivekitRoom;
 }
 
 export const defaultSettingsTab: SettingsTab = "audio";
@@ -60,6 +63,7 @@ export const SettingsModal: FC<Props> = ({
   onTabChange,
   client,
   roomId,
+  livekitRoom,
 }) => {
   const { t } = useTranslation();
 
@@ -97,6 +101,8 @@ export const SettingsModal: FC<Props> = ({
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
 
   const [showDeveloperSettingsTab] = useSetting(developerMode);
+
+  const { available: isRageshakeAvailable } = useSubmitRageshake();
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
@@ -173,12 +179,17 @@ export const SettingsModal: FC<Props> = ({
   const developerTab: Tab<SettingsTab> = {
     key: "developer",
     name: t("settings.developer_tab_title"),
-    content: <DeveloperSettingsTab client={client} />,
+    content: <DeveloperSettingsTab client={client} livekitRoom={livekitRoom} />,
   };
 
   const tabs = [audioTab, videoTab];
   if (widget === null) tabs.push(profileTab);
-  tabs.push(preferencesTab, feedbackTab);
+  tabs.push(preferencesTab);
+  if (isRageshakeAvailable || import.meta.env.VITE_PACKAGE === "full") {
+    // for full package we want to show the analytics consent checkbox
+    // even if rageshake is not available
+    tabs.push(feedbackTab);
+  }
   if (showDeveloperSettingsTab) tabs.push(developerTab);
 
   return (

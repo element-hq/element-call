@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -9,7 +9,7 @@ import { describe, expect, test, vi } from "vitest";
 import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
 import { KeyProviderEvent } from "livekit-client";
 
 import { MatrixKeyProvider } from "./matrixKeyProvider";

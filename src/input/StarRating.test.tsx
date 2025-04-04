@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -20,10 +20,6 @@ test("StarRatingInput is accessible", async () => {
   );
   expect(await axe(container)).toHaveNoViolations();
   // Change the rating to 4 stars
-  await user.click(
-    (
-      await screen.findAllByRole("radio", { name: "star_rating_input_label" })
-    )[3],
-  );
+  await user.click(await screen.findByLabelText("4 stars"));
   expect(onChange).toBeCalledWith(4);
 });

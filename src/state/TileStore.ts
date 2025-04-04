@@ -1,12 +1,12 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { BehaviorSubject } from "rxjs";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type MediaViewModel, type UserMediaViewModel } from "./MediaViewModel";
 import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";

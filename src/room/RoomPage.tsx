@@ -1,19 +1,28 @@
 /*
 Copyright 2021-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useEffect, useState, type ReactNode, useRef } from "react";
-import { logger } from "matrix-js-sdk/src/logger";
-import { useTranslation } from "react-i18next";
-import { CheckIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
-import { type MatrixError } from "matrix-js-sdk/src/http-api";
-import { Heading, Text } from "@vector-im/compound-web";
+import {
+  type FC,
+  useEffect,
+  useState,
+  type ReactNode,
+  useRef,
+  type JSX,
+} from "react";
+import { type MatrixError } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { Trans, useTranslation } from "react-i18next";
+import {
+  CheckIcon,
+  UnknownSolidIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { useClientLegacy } from "../ClientContext";
-import { ErrorView, FullScreenView, LoadingView } from "../FullScreenView";
+import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallView } from "./GroupCallView";
 import { useRoomIdentifier, useUrlParams } from "../UrlParams";
@@ -30,6 +39,8 @@ import { useMuteStates } from "./MuteStates";
 import { useOptInAnalytics } from "../settings/settings";
 import { Config } from "../config/Config";
 import { Link } from "../button/Link";
+import { ErrorView } from "../ErrorView";
+import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
 
 export const RoomPage: FC = () => {
   const {
@@ -56,7 +67,10 @@ export const RoomPage: FC = () => {
   const { avatarUrl, displayName: userDisplayName } = useProfile(client);
 
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
-  const muteStates = useMuteStates();
+  const isJoined = useMatrixRTCSessionJoinState(
+    groupCallState.kind === "loaded" ? groupCallState.rtcSession : undefined,
+  );
+  const muteStates = useMuteStates(isJoined);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
@@ -101,6 +115,7 @@ export const RoomPage: FC = () => {
             widget={widget}
             client={client!}
             rtcSession={groupCallState.rtcSession}
+            isJoined={isJoined}
             isPasswordlessUser={passwordlessUser}
             confineToRoom={confineToRoom}
             preload={preload}
@@ -164,29 +179,42 @@ export const RoomPage: FC = () => {
         if ((groupCallState.error as MatrixError).errcode === "M_NOT_FOUND") {
           return (
             <FullScreenView>
-              <Heading>{t("group_call_loader.failed_heading")}</Heading>
-              <Text>{t("group_call_loader.failed_text")}</Text>
-              {/* XXX: A 'create it for me' button would be the obvious UX here. Two screens already have
-            dupes of this flow, let's make a common component and put it here. */}
-              <Link to="/">{t("common.home")}</Link>
+              <ErrorView
+                Icon={UnknownSolidIcon}
+                title={t("error.call_not_found")}
+                widget={widget}
+              >
+                <Trans i18nKey="error.call_not_found_description">
+                  <p>
+                    That link doesn't appear to belong to any existing call.
+                    Check that you have the right link, or{" "}
+                    <Link to="/">create a new one</Link>.
+                  </p>
+                </Trans>
+              </ErrorView>
             </FullScreenView>
           );
         } else if (groupCallState.error instanceof CallTerminatedMessage) {
           return (
             <FullScreenView>
-              <Heading>{groupCallState.error.message}</Heading>
-              <Text>{groupCallState.error.messageBody}</Text>
-              {groupCallState.error.reason && (
-                <>
-                  {t("group_call_loader.reason")}:
-                  <Text size="sm">"{groupCallState.error.reason}"</Text>
-                </>
-              )}
-              <Link to="/">{t("common.home")}</Link>
+              <ErrorView
+                Icon={groupCallState.error.icon}
+                title={groupCallState.error.message}
+                widget={widget}
+              >
+                <p>{groupCallState.error.messageBody}</p>
+                {groupCallState.error.reason && (
+                  <p>
+                    {t("group_call_loader.reason", {
+                      reason: groupCallState.error.reason,
+                    })}
+                  </p>
+                )}
+              </ErrorView>
             </FullScreenView>
           );
         } else {
-          return <ErrorView error={groupCallState.error} />;
+          return <ErrorPage widget={widget} error={groupCallState.error} />;
         }
       default:
         return <> </>;
@@ -195,9 +223,9 @@ export const RoomPage: FC = () => {
 
   let content: ReactNode;
   if (loading || isRegistering) {
-    content = <LoadingView />;
+    content = <LoadingPage />;
   } else if (error) {
-    content = <ErrorView error={error} />;
+    content = <ErrorPage widget={widget} error={error} />;
   } else if (!client) {
     content = <RoomAuthView />;
   } else if (!roomIdOrAlias) {
