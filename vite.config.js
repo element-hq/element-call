@@ -65,11 +65,14 @@ export default defineConfig(({ mode, packageType }) => {
     );
   }
   const allow = [searchForWorkspaceRoot(process.cwd())];
-  const matrixSdkCryptoWasmPath =
-    "node_modules/matrix-js-sdk/node_modules/@matrix-org/matrix-sdk-crypto-wasm";
-  try {
-    allow.push(realpathSync(matrixSdkCryptoWasmPath));
-  } catch {}
+  for (path of [
+    "node_modules/matrix-js-sdk/node_modules/@matrix-org/matrix-sdk-crypto-wasm",
+    "node_modules/@matrix-org/matrix-sdk-crypto-wasm",
+  ]) {
+    try {
+      allow.push(realpathSync(path));
+    } catch {}
+  }
   console.log("Allowed vite paths:", allow);
 
   return {
