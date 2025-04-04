@@ -337,7 +337,7 @@ export function getRelativeRoomUrl(
 }
 
 /**
- * Perfom a network operation with retries on ConnectionError.
+ * Perform a network operation with retries on ConnectionError.
  * If the error is not retryable, or the max number of retries is reached, the error is rethrown.
  * Supports handling of matrix quotas.
  */
