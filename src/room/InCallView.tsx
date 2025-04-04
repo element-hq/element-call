@@ -11,7 +11,7 @@ import {
   useLocalParticipant,
 } from "@livekit/components-react";
 import { ConnectionState, type Room } from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk";
 import {
   type FC,
   type PointerEvent,
@@ -26,11 +26,11 @@ import {
   type JSX,
 } from "react";
 import useMeasure from "react-use-measure";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";

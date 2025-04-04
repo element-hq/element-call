@@ -9,15 +9,15 @@ import {
   type CallMembership,
   MatrixRTCSessionEvent,
   type MatrixRTCSession,
-} from "matrix-js-sdk/src/matrixrtc";
-import { logger } from "matrix-js-sdk/src/logger";
-import { type MatrixEvent, MatrixEventEvent } from "matrix-js-sdk/src/matrix";
-import { type ReactionEventContent } from "matrix-js-sdk/src/types";
+} from "matrix-js-sdk/lib/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixEvent, MatrixEventEvent } from "matrix-js-sdk";
+import { type ReactionEventContent } from "matrix-js-sdk/lib/types";
 import {
   RelationType,
   EventType,
   RoomEvent as MatrixRoomEvent,
-} from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk";
 import { BehaviorSubject, delay, type Subscription } from "rxjs";
 
 import {

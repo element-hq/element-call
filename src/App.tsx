@@ -9,7 +9,7 @@ import { type FC, type JSX, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Route, useLocation, Routes } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
@@ -72,7 +72,11 @@ export const App: FC = () => {
               <Suspense fallback={null}>
                 <ClientProvider>
                   <MediaDevicesProvider>
-                    <Sentry.ErrorBoundary fallback={ErrorPage}>
+                    <Sentry.ErrorBoundary
+                      fallback={(error) => (
+                        <ErrorPage error={error} widget={widget} />
+                      )}
+                    >
                       <DisconnectedBanner />
                       <Routes>
                         <SentryRoute path="/" element={<HomePage />} />

@@ -19,7 +19,7 @@ import {
 import { createMediaDeviceObserver } from "@livekit/components-core";
 import { map, startWith } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   useSetting,

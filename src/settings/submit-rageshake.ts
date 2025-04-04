@@ -6,19 +6,20 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ComponentProps, useCallback, useEffect, useState } from "react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   ClientEvent,
   type MatrixClient,
   type MatrixEvent,
-} from "matrix-js-sdk/src/matrix";
-import { type CryptoApi } from "matrix-js-sdk/src/crypto-api";
+} from "matrix-js-sdk";
+import { type CryptoApi } from "matrix-js-sdk/lib/crypto-api";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
 import { Config } from "../config/Config";
 import { ElementCallOpenTelemetry } from "../otel/otel";
 import { type RageshakeRequestModal } from "../room/RageshakeRequestModal";
+import { getUrlParams } from "../UrlParams";
 
 const gzip = async (text: string): Promise<Blob> => {
   // pako is relatively large (200KB), so we only import it when needed
@@ -116,11 +117,28 @@ interface RageShakeSubmitOptions {
   label?: string;
 }
 
-export function useSubmitRageshake(): {
+export function getRageshakeSubmitUrl(): string | undefined {
+  if (import.meta.env.VITE_PACKAGE === "full") {
+    // in full package we always use the one configured on the server
+    return Config.get().rageshake?.submit_url;
+  }
+
+  if (import.meta.env.VITE_PACKAGE === "embedded") {
+    // in embedded package we always use the one provided by the widget host
+    return getUrlParams().rageshakeSubmitUrl ?? undefined;
+  }
+
+  return undefined;
+}
+
+export function useSubmitRageshake(
+  injectedGetRageshakeSubmitUrl = getRageshakeSubmitUrl,
+): {
   submitRageshake: (opts: RageShakeSubmitOptions) => Promise<void>;
   sending: boolean;
   sent: boolean;
   error?: Error;
+  available: boolean;
 } {
   const { client } = useClient();
 
@@ -138,7 +156,8 @@ export function useSubmitRageshake(): {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     async (opts) => {
-      if (!Config.get().rageshake?.submit_url) {
+      const submitUrl = injectedGetRageshakeSubmitUrl();
+      if (!submitUrl) {
         throw new Error("No rageshake URL is configured");
       }
 
@@ -272,7 +291,7 @@ export function useSubmitRageshake(): {
           );
         }
 
-        const res = await fetch(Config.get().rageshake!.submit_url, {
+        const res = await fetch(submitUrl, {
           method: "POST",
           body,
         });
@@ -289,7 +308,7 @@ export function useSubmitRageshake(): {
         logger.error(error);
       }
     },
-    [client, sending],
+    [client, sending, injectedGetRageshakeSubmitUrl],
   );
 
   return {
@@ -297,6 +316,7 @@ export function useSubmitRageshake(): {
     sending,
     sent,
     error,
+    available: !!injectedGetRageshakeSubmitUrl(),
   };
 }
 

@@ -7,14 +7,14 @@ Please see LICENSE in the repository root for full details.
 
 import { renderHook } from "@testing-library/react";
 import { afterEach, test, vitest } from "vitest";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import {
   RoomEvent as MatrixRoomEvent,
   MatrixEvent,
   type IRoomTimelineData,
   EventType,
   MatrixEventEvent,
-} from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk";
 
 import { ReactionsReader, REACTION_ACTIVE_TIME_MS } from "./ReactionsReader";
 import {

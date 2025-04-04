@@ -7,10 +7,10 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, useCallback, useMemo, useState, type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk";
 import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { usePreviewTracks } from "@livekit/components-react";
 import { type LocalVideoTrack, Track } from "livekit-client";
 import { useObservable } from "observable-hooks";

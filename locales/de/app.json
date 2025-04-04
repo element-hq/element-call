@@ -65,12 +65,15 @@
     "debug_tile_layout_label": "Kachel-Layout debuggen",
     "device_id": "Geräte-ID: {{id}}",
     "duplicate_tiles_label": "Anzahl zusätzlicher Kachelkopien pro Teilnehmer",
+    "environment_variables": "Umgebungsvariablen",
     "hostname": "Hostname: {{hostname}}",
     "livekit_server_info": "LiveKit-Server Informationen",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix-ID: {{id}}",
     "show_connection_stats": "Verbindungsstatistiken anzeigen",
-    "show_non_member_tiles": "Kacheln für Nicht-Mitgliedermedien anzeigen"
+    "show_non_member_tiles": "Kacheln für Nicht-Mitgliedermedien anzeigen",
+    "url_params": "URL-Parameter",
+    "use_new_membership_manager": "Neuen MembershipManager verwenden"
   },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
   "error": {
@@ -87,7 +90,7 @@
     "insufficient_capacity_description": "Der Server hat seine maximale Kapazität erreicht, daher ist ein Beitritt zum Anruf derzeit nicht möglich. Bitte später erneut versuchen oder den Serveradministrator kontaktieren, falls das Problem weiterhin besteht.",
     "matrix_rtc_focus_missing": "Der Server ist nicht für die Verwendung mit {{brand}} konfiguriert. Bitte den Serveradministrator kontaktieren (Domain: {{domain}}, Fehlercode: {{ errorCode }}).",
     "open_elsewhere": "In einem anderen Tab geöffnet",
-    "open_elsewhere_description": "{{brand}}wurde in einem anderen Tab geöffnet. Wenn das nicht richtig klingt, versuchen Sie, die Seite neu zu laden.",
+    "open_elsewhere_description": "{{brand}} wurde in einem anderen Tab geöffnet. Wenn das nicht richtig klingt, versuchen Sie, die Seite neu zu laden.",
     "unexpected_ec_error": "Ein unerwarteter Fehler ist aufgetreten (<0>Fehlercode: </0> <1>{{ errorCode }}</1>). Bitte den Serveradministrator kontaktieren."
   },
   "group_call_loader": {
@@ -141,9 +144,9 @@
   "rageshake_sending": "Senden …",
   "rageshake_sending_logs": "Sende Debug-Protokolle …",
   "rageshake_sent": "Danke!",
-  "recaptcha_caption": "Diese Seite wird durch reCAPTCHA geschützt und es gelten Googles <2>Datenschutzerklärung</2> und <6>Nutzungsbedingungen</6>. <9></9>Mit einem Klick auf „Registrieren“ akzeptierst du unseren <2>Endbenutzer-Lizenzvertrag (EULA)</2>",
   "recaptcha_dismissed": "Recaptcha abgelehnt",
   "recaptcha_not_loaded": "Recaptcha nicht geladen",
+  "recaptcha_ssla_caption": "Diese Website wird durch ReCAPTCHA geschützt, und es gelten die Google <2>Datenschutzbestimmungen</2> sowie die <6>Nutzungsbedingungen</6>.<9></9> Durch das Klicken auf \"Registrieren\" wird der <12>Software- und Dienstleistungslizenzvereinbarung (SSLA)</12> zugestimmt.",
   "register": {
     "passwords_must_match": "Passwörter müssen übereinstimmen",
     "registering": "Registrierung …"
@@ -153,7 +156,7 @@
   "register_heading": "Erstelle Dein Konto",
   "return_home_button": "Zurück zur Startseite",
   "room_auth_view_continue_button": "Weiter",
-  "room_auth_view_eula_caption": "Mit einem Klick auf „Weiter“ akzeptierst du unseren <2>Endbenutzer-Lizenzvertrag (EULA)</2>",
+  "room_auth_view_ssla_caption": "Durch das Klicken auf \"Anruf jetzt beitreten\" wird dem <2>Software and Services License Agreement (SSLA)</2> zugestimmt.",
   "screenshare_button_label": "Bildschirm teilen",
   "settings": {
     "audio_tab": {
@@ -199,8 +202,8 @@
   "submitting": "Sende …",
   "switch_camera": "Kamera wechseln",
   "unauthenticated_view_body": "Noch nicht registriert? <2>Konto erstellen</2>",
-  "unauthenticated_view_eula_caption": "Mit einem Klick auf „Los geht’s“ akzeptierst du unseren <2>Endbenutzer-Lizenzvertrag (EULA)</2>",
   "unauthenticated_view_login_button": "Melde dich mit deinem Konto an",
+  "unauthenticated_view_ssla_caption": "Durch das Klicken auf \"Weiter\" wird dem <2>Software and Services License Agreement (SSLA)</2> zugestimmt.",
   "unmute_microphone_button_label": "Mikrofon einschalten",
   "version": "{{productName}} Version: {{version}}",
   "video_tile": {

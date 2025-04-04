@@ -15,26 +15,26 @@ import {
   type MatrixClient,
   type MatrixEvent,
   type RoomMember,
-} from "matrix-js-sdk/src/matrix";
-import { logger } from "matrix-js-sdk/src/logger";
+} from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallError,
   type CallState,
   type MatrixCall,
   type VoipEvent,
-} from "matrix-js-sdk/src/webrtc/call";
+} from "matrix-js-sdk/lib/webrtc/call";
 import {
   type CallsByUserAndDevice,
   type GroupCallError,
   GroupCallEvent,
   type GroupCallStatsReport,
-} from "matrix-js-sdk/src/webrtc/groupCall";
+} from "matrix-js-sdk/lib/webrtc/groupCall";
 import {
   type ConnectionStatsReport,
   type ByteSentStatsReport,
   type SummaryStatsReport,
   type CallFeedReport,
-} from "matrix-js-sdk/src/webrtc/stats/statsReport";
+} from "matrix-js-sdk/lib/webrtc/stats/statsReport";
 
 import { ElementCallOpenTelemetry } from "./otel";
 import { ObjectFlattener } from "./ObjectFlattener";

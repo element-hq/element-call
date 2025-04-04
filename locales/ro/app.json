@@ -117,7 +117,6 @@
   "rageshake_sending": "Trimiterea...",
   "rageshake_sending_logs": "Trimiterea jurnalelor de depanare...",
   "rageshake_sent": "Multumesc!",
-  "recaptcha_caption": "Acest site este protejat de reCAPTCHA și se aplică Politica de <2> confidențialitate Google </2> și <6> Termenii și condițiile. </6> <9></9>Făcând clic pe „Înregistrare”, sunteți de acord cu Acordul nostru de licențiere pentru utilizatorul <12> final (EULA) </12>",
   "recaptcha_dismissed": "Recaptcha a fost respins",
   "recaptcha_not_loaded": "Recaptcha nu a fost încărcat",
   "register": {
@@ -129,7 +128,6 @@
   "register_heading": "Creează-ți contul",
   "return_home_button": "Reveniți la ecranul de pornire",
   "room_auth_view_continue_button": "Continuă",
-  "room_auth_view_eula_caption": "Făcând clic pe „Continuați”, sunteți de acord cu Acordul nostru de licențiere pentru utilizatorul <2> final (EULA) </2>",
   "screenshare_button_label": "Partajare ecran",
   "settings": {
     "audio_tab": {
@@ -158,7 +156,6 @@
   "submitting": "Trimiterea...",
   "switch_camera": "Comutați camera",
   "unauthenticated_view_body": "Nu sunteți încă înregistrat? <2>Creați un cont </2>",
-  "unauthenticated_view_eula_caption": "Făcând clic pe „Go”, sunteți de acord cu Acordul nostru de licențiere pentru utilizatorul <2> final (EULA) </2>",
   "unauthenticated_view_login_button": "Conectați-vă la contul dvs.",
   "unmute_microphone_button_label": "Anulează microfonul",
   "version": "{{productName}}Versiune: {{version}}",

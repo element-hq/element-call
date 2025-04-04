@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useState } from "react";
-import { test } from "vitest";
+import { test, vi } from "vitest";
 import {
   ConnectionError,
   ConnectionErrorReason,
@@ -14,20 +14,23 @@ import {
 } from "livekit-client";
 import userEvent from "@testing-library/user-event";
 import { render, screen } from "@testing-library/react";
-import { ErrorBoundary } from "@sentry/react";
 import { MemoryRouter } from "react-router-dom";
 
-import { ErrorPage } from "../FullScreenView";
 import { useECConnectionState } from "./useECConnectionState";
 import { type SFUConfig } from "./openIDSFU";
+import { GroupCallErrorBoundary } from "../room/GroupCallErrorBoundary.tsx";
 
 test.each<[string, ConnectionError]>([
   [
-    "LiveKit",
+    "LiveKit hits track limit",
     new ConnectionError("", ConnectionErrorReason.InternalError, 503),
   ],
   [
-    "LiveKit Cloud",
+    "LiveKit hits room participant limit",
+    new ConnectionError("", ConnectionErrorReason.ServerUnreachable, 200),
+  ],
+  [
+    "LiveKit Cloud hits connection limit",
     new ConnectionError("", ConnectionErrorReason.NotAllowed, 429),
   ],
 ])(
@@ -61,9 +64,9 @@ test.each<[string, ConnectionError]>([
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <ErrorBoundary fallback={ErrorPage}>
+        <GroupCallErrorBoundary recoveryActionHandler={vi.fn()} widget={null}>
           <TestComponent />
-        </ErrorBoundary>
+        </GroupCallErrorBoundary>
       </MemoryRouter>,
     );
     await user.click(screen.getByRole("button", { name: "Connect" }));

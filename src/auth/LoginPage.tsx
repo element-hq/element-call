@@ -53,7 +53,7 @@ export const LoginPage: FC = () => {
             return;
           }
 
-          setClient({ client, session });
+          setClient(client, session);
 
           const locationState = location.state;
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment

@@ -13,14 +13,14 @@ import {
   MatrixEvent,
   type Room,
   TypedEventEmitter,
-} from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk";
 import {
   CallMembership,
   type Focus,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
   type SessionMembershipData,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
 import {
   type LocalParticipant,
   type LocalTrackPublication,
@@ -264,6 +264,8 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
     ...DEFAULT_CONFIG,
     ...config,
   });
+  // simulate loading the config
+  vi.spyOn(Config, "init").mockResolvedValue(void 0);
 }
 
 export class MockRTCSession extends TypedEventEmitter<
@@ -284,8 +286,9 @@ export class MockRTCSession extends TypedEventEmitter<
     super();
   }
 
-  public isJoined(): true {
-    return true;
+  public joined = true;
+  public isJoined(): boolean {
+    return this.joined;
   }
 
   public withMemberships(
