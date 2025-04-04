@@ -2545,6 +2545,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@livekit/track-processors@npm:^0.3.3":
+  version: 0.3.3
+  resolution: "@livekit/track-processors@npm:0.3.3"
+  dependencies:
+    "@mediapipe/holistic": "npm:0.5.1675471629"
+    "@mediapipe/tasks-vision": "npm:0.10.9"
+  peerDependencies:
+    livekit-client: ^1.12.0 || ^2.1.0
+  checksum: 10c0/a33478a340f89ae489ac2e1dcfbc1c69744943301c5f3bd22f604b63b188ef0feebe065d4cf084fcb53d9766d10c7655f8045e19549772471d52d3a976c36778
+  languageName: node
+  linkType: hard
+
 "@matrix-org/matrix-sdk-crypto-wasm@npm:^14.0.1":
   version: 14.0.1
   resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:14.0.1"
@@ -2556,6 +2568,27 @@ __metadata:
   version: 3.2.15
   resolution: "@matrix-org/olm@npm:3.2.15"
   checksum: 10c0/82a40d6e4e632a90670d4f15e8962272e302f4b9deed4fc78455c5ca78422c13bde6b53ebfc406630336926c9574386c9d9069c9c023db1c3d143117985c1e50
+  languageName: node
+  linkType: hard
+
+"@mediapipe/holistic@npm:0.5.1675471629":
+  version: 0.5.1675471629
+  resolution: "@mediapipe/holistic@npm:0.5.1675471629"
+  checksum: 10c0/241cacfbff10b6418a815dfb24c36d77c626f5e10c60045a3d8cdb9f89c6e346e0d356dcfe1e8bbc4d00040983b4bc426e802a45af3f7142554afda3239ff8fc
+  languageName: node
+  linkType: hard
+
+"@mediapipe/tasks-vision@npm:0.10.9":
+  version: 0.10.9
+  resolution: "@mediapipe/tasks-vision@npm:0.10.9"
+  checksum: 10c0/38a3112bf5f073e6b15f3a1556c4d628371f1068cbe16aabeae288f43be62f8c17f4ae66590bda11be6a9aeb098736c85d102751277db5bb4b881516a23e43a5
+  languageName: node
+  linkType: hard
+
+"@mediapipe/tasks-vision@npm:^0.10.18":
+  version: 0.10.21
+  resolution: "@mediapipe/tasks-vision@npm:0.10.21"
+  checksum: 10c0/11b2bdf98b8cb6e044f2a954e7c8393169e62c86ff49b3d0b61c3b327d18e1ccd47a187999b023bad48380c9da41bfa66eb165301c80da07746390482cb18a19
   languageName: node
   linkType: hard
 
@@ -4609,6 +4642,22 @@ __metadata:
   version: 0.6.0
   resolution: "@types/cookie@npm:0.6.0"
   checksum: 10c0/5b326bd0188120fb32c0be086b141b1481fec9941b76ad537f9110e10d61ee2636beac145463319c71e4be67a17e85b81ca9e13ceb6e3bb63b93d16824d6c149
+  languageName: node
+  linkType: hard
+
+"@types/dom-mediacapture-transform@npm:^0.1.10":
+  version: 0.1.11
+  resolution: "@types/dom-mediacapture-transform@npm:0.1.11"
+  dependencies:
+    "@types/dom-webcodecs": "npm:*"
+  checksum: 10c0/19c76d54cf31aa2a925011fc5f973dff9a10bdecfdf2285e5e568e61850a0fa2b8c9f1807a1462cbefd57ec26d32eeaa9c359117aca9d9fe7f0d6f2fff33f51e
+  languageName: node
+  linkType: hard
+
+"@types/dom-webcodecs@npm:*":
+  version: 0.1.14
+  resolution: "@types/dom-webcodecs@npm:0.1.14"
+  checksum: 10c0/20f2e9a52986f861eb5725365561c57d4d8c7494322e55f5df1b0639e97d399c3c427e05d2bc7772c9c975197dc12db3e047e3e0ad7b49ae13181514e3d54f56
   languageName: node
   linkType: hard
 
@@ -6862,6 +6911,8 @@ __metadata:
     "@livekit/components-core": "npm:^0.12.0"
     "@livekit/components-react": "npm:^2.0.0"
     "@livekit/protocol": "npm:^1.33.0"
+    "@livekit/track-processors": "npm:^0.3.3"
+    "@mediapipe/tasks-vision": "npm:^0.10.18"
     "@opentelemetry/api": "npm:^1.4.0"
     "@opentelemetry/core": "npm:^1.25.1"
     "@opentelemetry/exporter-trace-otlp-http": "npm:^0.57.0"
@@ -6882,6 +6933,7 @@ __metadata:
     "@testing-library/react": "npm:^16.0.0"
     "@testing-library/user-event": "npm:^14.5.1"
     "@types/content-type": "npm:^1.1.5"
+    "@types/dom-mediacapture-transform": "npm:^0.1.10"
     "@types/grecaptcha": "npm:^3.0.9"
     "@types/jsdom": "npm:^21.1.7"
     "@types/lodash-es": "npm:^4.17.12"
