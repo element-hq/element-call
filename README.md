@@ -87,7 +87,7 @@ and voice calls within Matrix rooms.
 ### 📦 Element Call Packaging
 
 Element Call offers two packaging options: one for standalone or widget
-deployment, and another for widget-based seamless integration into messenger
+deployment, and another for seamless widget-based integration into messenger
 apps. Below is an overview of each option.
 
 **Full Package** – Supports both **Standalone** and **Widget** mode. It is
