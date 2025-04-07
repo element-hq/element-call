@@ -65,7 +65,7 @@ requiring a separate Matrix client.
 
 ### 📲 In-App Calling (Widget Mode in Messenger Apps)
 
-When used as a widget 🧩, Element Call relies solely on the core calling
+When used as a widget 🧩, Element Call is solely responsible on the core calling
 functionality (MatrixRTC). Authentication, event handling, and room state
 updates (via the Client-Server API) are handled by the hosting client.
 Communication between Element Call and the client is managed through the widget
