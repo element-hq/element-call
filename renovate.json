@@ -48,6 +48,20 @@
       "groupName": "Vaul",
       "matchDepNames": ["vaul"],
       "prHeader": "Please review modals on mobile for visual regressions."
+    },
+    {
+      "groupName": "bundled element-call dependencies",
+      "matchPackageNames": [
+        "com.vanniktech.maven.publish",
+        "com.android.library",
+        "com.android.tools.build",
+        "gradle"
+      ]
+    },
+    {
+      "groupName": "Yarn",
+      "matchPackageNames": ["yarn"],
+      "extends": ["schedule:weekly"]
     }
   ],
   "semanticCommits": "disabled",
