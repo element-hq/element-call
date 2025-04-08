@@ -2527,21 +2527,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/protocol@npm:1.36.1":
+"@livekit/protocol@npm:1.36.1, @livekit/protocol@npm:^1.33.0":
   version: 1.36.1
   resolution: "@livekit/protocol@npm:1.36.1"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
   checksum: 10c0/bb2e56785c542446bef3e2f2fd20b33d01db43b786be87ccb834feee8a664fd32c8231e249b4e1915d7a8eda13af0d59eea479fa710327079a1a370daf05c42e
-  languageName: node
-  linkType: hard
-
-"@livekit/protocol@npm:^1.33.0":
-  version: 1.34.0
-  resolution: "@livekit/protocol@npm:1.34.0"
-  dependencies:
-    "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/f6c8ad1fe5da151e2fc103118e61c5110df32088e13a03a30dd2de9cce401e9c99eed3cc61324272a8a2fef1c001bb4d215b2a9479774f493b6a301f547f01e5
   languageName: node
   linkType: hard
 
