@@ -2527,21 +2527,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/protocol@npm:1.33.0":
-  version: 1.33.0
-  resolution: "@livekit/protocol@npm:1.33.0"
+"@livekit/protocol@npm:1.36.1, @livekit/protocol@npm:^1.33.0":
+  version: 1.36.1
+  resolution: "@livekit/protocol@npm:1.36.1"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/5eced9581c4af7fd67e65e93a40a389202b8a9031b4e76d7709d5c1e35ae5816c11a7b9265d6b9cf8b19c3b4077dbdd2a17275a29e98f9ec785232c4750d8ded
-  languageName: node
-  linkType: hard
-
-"@livekit/protocol@npm:^1.33.0":
-  version: 1.34.0
-  resolution: "@livekit/protocol@npm:1.34.0"
-  dependencies:
-    "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/f6c8ad1fe5da151e2fc103118e61c5110df32088e13a03a30dd2de9cce401e9c99eed3cc61324272a8a2fef1c001bb4d215b2a9479774f493b6a301f547f01e5
+  checksum: 10c0/bb2e56785c542446bef3e2f2fd20b33d01db43b786be87ccb834feee8a664fd32c8231e249b4e1915d7a8eda13af0d59eea479fa710327079a1a370daf05c42e
   languageName: node
   linkType: hard
 
@@ -6919,7 +6910,7 @@ __metadata:
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
     knip: "npm:^5.27.2"
-    livekit-client: "npm:2.9.1"
+    livekit-client: "npm:2.10.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
     matrix-js-sdk: "github:matrix-org/matrix-js-sdk#8395919f0fd1af7cab1e793d736f2cdf18ef7686"
@@ -9289,20 +9280,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"livekit-client@npm:2.9.1":
-  version: 2.9.1
-  resolution: "livekit-client@npm:2.9.1"
+"livekit-client@npm:2.10.0":
+  version: 2.10.0
+  resolution: "livekit-client@npm:2.10.0"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
-    "@livekit/protocol": "npm:1.33.0"
+    "@livekit/protocol": "npm:1.36.1"
     events: "npm:^3.3.0"
-    loglevel: "npm:^1.8.0"
-    sdp-transform: "npm:^2.14.1"
+    loglevel: "npm:^1.9.2"
+    sdp-transform: "npm:^2.15.0"
     ts-debounce: "npm:^4.0.0"
     tslib: "npm:2.8.1"
     typed-emitter: "npm:^2.1.0"
-    webrtc-adapter: "npm:^9.0.0"
-  checksum: 10c0/06c4bcfe22c2629bd3e2a7fdf5d104425ed9c781d77a39fd61940d30a85dff0b9e3364b0ad8e584a8dc2d885f625532dd6ec151f5c8a4ecfb16cdcf2718e817f
+    webrtc-adapter: "npm:^9.0.1"
+  checksum: 10c0/bc5d1d1e08576da3356f567836090a58dfad9b2d9ca2280584acf31676949a88d9526940ab10a9b6cf79545a49f82678cb0665f65851628e6148a9d559cacc90
   languageName: node
   linkType: hard
 
@@ -9359,7 +9350,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loglevel@npm:^1.7.1, loglevel@npm:^1.8.0, loglevel@npm:^1.9.1":
+"loglevel@npm:^1.7.1, loglevel@npm:^1.9.1, loglevel@npm:^1.9.2":
   version: 1.9.2
   resolution: "loglevel@npm:1.9.2"
   checksum: 10c0/1e317fa4648fe0b4a4cffef6de037340592cee8547b07d4ce97a487abe9153e704b98451100c799b032c72bb89c9366d71c9fb8192ada8703269263ae77acdc7
@@ -11710,7 +11701,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sdp-transform@npm:^2.14.1":
+"sdp-transform@npm:^2.14.1, sdp-transform@npm:^2.15.0":
   version: 2.15.0
   resolution: "sdp-transform@npm:2.15.0"
   bin:
@@ -13298,7 +13289,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webrtc-adapter@npm:^9.0.0":
+"webrtc-adapter@npm:^9.0.1":
   version: 9.0.1
   resolution: "webrtc-adapter@npm:9.0.1"
   dependencies:
