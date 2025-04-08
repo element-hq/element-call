@@ -1,5 +1,9 @@
 # Self-Hosting Element Call
 
+> [!NOTE]  
+> For In-App calling (Element X, Element Web, Element Desktop) use-case only
+> section [Prerequisites](#Prerequisites) is required.
+
 ## Prerequisites
 
 > [!IMPORTANT]  
