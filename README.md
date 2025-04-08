@@ -45,30 +45,35 @@ organize the flow of the meeting.
 ✅ **Emoji Reactions** – Users can react with emojis 👍️ 🎉 👏 🤘, adding
 engagement and interactivity to the conversation.
 
-## 🚀 Deployment Options
+## 🚀 Deployment & Packaging Options
 
-Element Call can be packaged in two ways:
+Element Call is developed using the
+[Matrix js-sdk](https://github.com/matrix-org/matrix-js-sdk) with Matroska mode.
+This allows the app to run either as a Standalone App directly connected to a
+homeserver with login interfaces or it can be used as a widget within a Matrix
+client.
 
-**Full Package** – Supports both **Standalone** and **Widget** mode. Hosted as
-a static web page and accessed via a URL when used as a widget.
+### 🖥️ Standalone Mode
 
-**Embedded Package** – Designed for **Widget mode** only. Bundled with a
-messenger app for seamless integration. This is the recommended method for
-embedding Element Call into a messenger app.
+<p align="center">
+  <img src="./docs/element_call_standalone.drawio.png" alt="Element Call in Standalone Mode">
+</p>
 
-See the [here](./docs/embedded-standalone.md) for more information on the packages.
-
-### Standalone mode
-
-![Element Call in Standalone Mode](./docs/element_call_standalone.drawio.png)
-
-In Standalone mode Element Call operates as an independent, full-featured video
-conferencing web application, allowing users to join or host calls without
+In Standalone mode, Element Call operates as an independent, full-featured video
+conferencing web application, enabling users to join or host calls without
 requiring a separate Matrix client.
 
-### Widget mode embedded in Messenger Apps
+### 📲 In-App Calling (Widget Mode in Messenger Apps)
 
-![Element Call in Widget Mode](./docs/element_call_widget.drawio.png)
+When used as a widget 🧩, Element Call is solely responsible on the core calling
+functionality (MatrixRTC). Authentication, event handling, and room state
+updates (via the Client-Server API) are handled by the hosting client.
+Communication between Element Call and the client is managed through the widget
+API.
+
+<p align="center">
+  <img src="./docs/element_call_widget.drawio.png" alt="Element Call in Widget Mode">
+</p>
 
 Element Call can be embedded as a widget inside apps like
 [**Element Web**](https://github.com/element-hq/element-web) or **Element X
@@ -79,6 +84,30 @@ and voice calls within Matrix rooms.
 
 > [!IMPORTANT]
 > Embedded packaging is recommended for Element Call in widget mode!
+
+### 📦 Element Call Packaging
+
+Element Call offers two packaging options: one for standalone or widget
+deployment, and another for seamless widget-based integration into messenger
+apps. Below is an overview of each option.
+
+**Full Package** – Supports both **Standalone** and **Widget** mode. It is
+hosted as a static web page and can be accessed via a URL when used as a widget.
+
+<p align="center">
+  <img src="./docs/full_package.drawio.png" alt="Element Call Full Package">
+</p>
+
+**Embedded Package** – Designed specifically for **Widget mode** only. It is
+bundled with a messenger app for seamless integration and this is the
+recommended method for embedding Element Call.
+
+<p align="center">
+  <img src="./docs/embedded_package.drawio.png" alt="Element Call Embedded Package">
+</p>
+
+For more details on the packages, see the
+[Embedded vs. Standalone Guide](./docs/embedded-standalone.md).
 
 ## 🛠️ Self-Hosting
 
@@ -91,13 +120,15 @@ For proper Element Call operation each site deployment needs a MatrixRTC backend
 setup as outlined in the [Self-Hosting](#self-hosting). A typical federated site
 deployment for three different sites A, B and C is depicted below.
 
-![Element Call federated setup](./docs/Federated_Setup.drawio.png)
+<p align="center">
+  <img src="./docs/Federated_Setup.drawio.png" alt="Element Call federated setup">
+</p>
 
 ### Backend Discovery
 
 MatrixRTC backend (according to
-[MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143))
-is announced by the Matrix site's `.well-known/matrix/client` file and discovered
+[MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143)) is
+announced by the Matrix site's `.well-known/matrix/client` file and discovered
 via the `org.matrix.msc4143.rtc_foci` key, e.g.:
 
 ```json
@@ -130,8 +161,11 @@ points them to a Matrix LiveKit JWT Auth Service via `livekit_service_url`.
 The example below illustrates how backend selection works across **Matrix
 federation**, using the setup from sites A, B, and C. It demonstrates backend
 selection for **Matrix rooms 123 and 456**, which include users from different
-homeservers.  
-![Element Call SFU selection over Matrix federation](./docs/SFU_selection.drawio.png)
+homeservers.
+
+<p align="center">
+  <img src="./docs/SFU_selection.drawio.png" alt="Element Call SFU selection over Matrix federation">
+</p>
 
 ## 🌍 Translation
 
@@ -198,21 +232,23 @@ yarn backend
 
 ### Playwright tests
 
-Our Playwright tests run automatically as part of our CI along with our other tests,
-on every pull request.
+Our Playwright tests run automatically as part of our CI along with our other
+tests, on every pull request.
 
-You may need to follow instructions to set up your development environment for running
-Playwright by following <https://playwright.dev/docs/browsers#install-browsers> and
+You may need to follow instructions to set up your development environment for
+running Playwright by following
+<https://playwright.dev/docs/browsers#install-browsers> and
 <https://playwright.dev/docs/browsers#install-system-dependencies>.
 
-However the Playwright tests are run, an element-call instance must be running on
-https://localhost:3000 (this is configured in `playwright.config.ts`) - this is what will
-be tested.
+However the Playwright tests are run, an element-call instance must be running
+on https://localhost:3000 (this is configured in `playwright.config.ts`) - this
+is what will be tested.
 
 The local backend environment should be running for the test to work:
 `yarn backend`
 
-There are a few different ways to run the tests yourself. The simplest is to run:
+There are a few different ways to run the tests yourself. The simplest is to
+run:
 
 ```shell
 yarn run test:playwright
@@ -237,8 +273,8 @@ to test visibility, text content and clicking.
 
 ##### Investigate a failed test from the CI
 
-In the failed action page, click on the failed job, then scroll down to the `upload-artifact` step.
-You will find a link to download the zip report, as per:
+In the failed action page, click on the failed job, then scroll down to the
+`upload-artifact` step. You will find a link to download the zip report, as per:
 
 ```
 Artifact playwright-report has been successfully uploaded! Final size is 1360358 bytes. Artifact ID is 2746265841
@@ -252,7 +288,8 @@ npx playwright show-report ~/Downloads/playwright-report/
 ```
 
 Under the failed test there is a small icon looking like "3 columns" (next to
-the test name file name), click on it to see the live screenshots/console output.
+the test name file name), click on it to see the live screenshots/console
+output.
 
 ### Test Coverage
 
