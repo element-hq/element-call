@@ -143,10 +143,13 @@
     "feedback_tab_title": "Feedback",
     "opt_in_description": "<0></0><1></1>Puteți retrage consimțământul debifând această casetă. Dacă sunteți în prezent la un apel, această setare va intra în vigoare la sfârșitul apelului.",
     "preferences_tab": {
+      "introduction": "Aici puteți configura opțiuni suplimentare pentru o experiență îmbunătățită.",
       "reactions_play_sound_description": "Redați un efect sonor atunci când cineva trimite o reacție la un apel.",
       "reactions_play_sound_label": "Redați sunete de reacție",
       "reactions_show_description": "Afișați o animație atunci când cineva trimite o reacție.",
-      "reactions_show_label": "Afișați reacțiile"
+      "reactions_show_label": "Afișați reacțiile",
+      "show_hand_raised_timer_description": "Afișați un cronometru atunci când un participant ridică mâna.",
+      "show_hand_raised_timer_label": "Afișați durata ridicării mâinii"
     }
   },
   "start_new_call": "Începe un nou apel",
