@@ -4,61 +4,120 @@
   },
   "action": {
     "close": "閉じる",
+    "copy_link": "リンクをコピー",
     "go": "続行",
+    "invite": "招待",
     "no": "いいえ",
     "register": "登録",
     "remove": "削除",
     "sign_in": "サインイン",
-    "sign_out": "サインアウト"
+    "sign_out": "サインアウト",
+    "submit": "送信"
+  },
+  "analytics_notice": "ベータ版への参加と同時に、製品の改善のために匿名データを収集することに同意したことになります。追跡するデータの詳細については、<2>プライバシーポリシー</2>と<6>クッキーポリシー</6>をご確認下さい。",
+  "app_selection_modal": {
+    "continue_in_browser": "ブラウザで続行",
+    "open_in_app": "アプリで開く",
+    "text": "準備完了？",
+    "title": "アプリを選択"
   },
   "call_ended_view": {
-    "create_account_button": "アカウントを作成"
+    "create_account_button": "アカウントを作成",
+    "create_account_prompt": "<0>パスワードを設定してアカウント設定を保持してみませんか?</0><1>名前とアバターの設定を次の通話に利用する事ができます。</1>",
+    "feedback_done": "<0>フィードバックありがとうございます！</0>",
+    "feedback_prompt": "<0>品質向上のため、皆様のフィードバックをお待ちしております。</0>",
+    "headline": "{{displayName}} さんの通話は終了しました。",
+    "not_now_button": "終了せずホーム画面に戻る",
+    "reconnect_button": "再接続",
+    "survey_prompt": "通話はどうでしたか？"
   },
+  "call_name": "通話名",
   "common": {
+    "analytics": "分析",
     "audio": "音声",
     "avatar": "アバター",
     "display_name": "表示名",
+    "encrypted": "暗号化済み",
     "home": "ホーム",
     "loading": "読み込んでいます…",
+    "options": "オプション",
     "password": "パスワード",
     "profile": "プロフィール",
     "settings": "設定",
+    "unencrypted": "暗号化されていません",
     "username": "ユーザー名",
     "video": "ビデオ"
   },
+  "disconnected_banner": "サーバーへの接続が失われました。",
+  "hangup_button_label": "通話終了",
   "header_label": "Element Call ホーム",
+  "header_participants_label": "参加者",
+  "invite_modal": {
+    "link_copied_toast": "リンクがクリップボードにコピーされました",
+    "title": "この通話に招待する"
+  },
   "join_existing_call_modal": {
     "join_button": "はい、通話に参加",
     "text": "この通話は既に存在します。参加しますか？",
     "title": "既存の通話に参加しますか？"
   },
+  "layout_grid_label": "グリッド",
   "layout_spotlight_label": "スポットライト",
   "lobby": {
-    "join_button": "通話に参加"
+    "join_button": "通話に参加",
+    "leave_button": "最近に戻る"
   },
+  "log_in": "ログイン",
   "logging_in": "ログインしています…",
   "login_auth_links": "<0>アカウントを作成</0>または<2>ゲストとしてアクセス</2>",
+  "login_auth_links_prompt": "登録はまだですか？",
+  "login_subheading": "Element を続けるには",
   "login_title": "ログイン",
+  "microphone_off": "マイクオフ",
+  "microphone_on": "マイクオン",
+  "mute_microphone_button_label": "ミュート",
+  "rageshake_button_error_caption": "ログ送信の再試行",
   "rageshake_request_modal": {
+    "body": "この通話に参加している別のユーザーに問題が発生しています。この問題のより良い診断のため、デバッグ ログを収集したいと考えています。",
     "title": "デバッグログを要求"
   },
   "rageshake_send_logs": "デバッグログを送信",
   "rageshake_sending": "送信しています…",
   "rageshake_sending_logs": "デバッグログを送信しています…",
+  "rageshake_sent": "ありがとうございます！",
+  "recaptcha_dismissed": "Recaptcha は却下されました",
+  "recaptcha_not_loaded": "Recaptcha が読み込まれませんでした",
   "register": {
     "passwords_must_match": "パスワードが一致する必要があります",
     "registering": "登録しています…"
   },
   "register_auth_links": "<0>既にアカウントをお持ちですか？</0><1><0>ログイン</0>または<2>ゲストとしてアクセス</2></1>",
   "register_confirm_password_label": "パスワードを確認",
+  "register_heading": "アカウントを作成",
   "return_home_button": "ホーム画面に戻る",
   "screenshare_button_label": "画面共有",
   "settings": {
     "developer_tab_title": "開発者",
+    "feedback_tab_body": "問題が発生している場合、もしくはフィードバックを提供したい場合は、以下に簡単な説明を入力してお送りください。",
+    "feedback_tab_description_label": "フィードバック",
     "feedback_tab_h4": "フィードバックを送信",
-    "feedback_tab_send_logs_label": "デバッグログを含める"
+    "feedback_tab_send_logs_label": "デバッグログを含める",
+    "feedback_tab_thank_you": "ありがとうございます。フィードバックを受け取りました！",
+    "feedback_tab_title": "フィードバック",
+    "opt_in_description": "<0></0><1></1>このボックスのチェックを外すと同意を取り消すことができます。現在通話中の場合、この変更は通話終了後に有効になります。"
   },
+  "start_new_call": "新しい通話を開始",
+  "start_video_button_label": "ビデオを開始",
+  "stop_screenshare_button_label": "共有画面",
+  "stop_video_button_label": "ビデオを停止",
+  "submitting": "送信中…",
   "unauthenticated_view_body": "アカウントがありませんか？ <2>アカウントを作成</2>",
   "unauthenticated_view_login_button": "アカウントにログイン",
-  "version": "バージョン：{{version}}"
+  "unmute_microphone_button_label": "マイクのミュート解除",
+  "version": "バージョン：{{version}}",
+  "video_tile": {
+    "change_fit_contain": "フレームに合わせる",
+    "mute_for_me": "ミュートする",
+    "volume": "ボリューム"
+  }
 }
