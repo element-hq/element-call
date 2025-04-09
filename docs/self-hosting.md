@@ -147,6 +147,14 @@ server {
 ]
 ```
 
+Make sure this file is served with the correct MIME type (`application/json`). Additionally, ensure the appropriate CORS headers are set to allow web clients to access it across origins. For more details, refer to the [Matrix Client-Server API: 2. Web Browser Clients](https://spec.matrix.org/latest/client-server-api/#web-browser-clients).
+
+```
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: X-Requested-With, Content-Type, Authorization
+```
+
 > [!NOTE]  
 > Most `org.matrix.msc4143.rtc_foci` configurations will only have one entry in
 > the array
