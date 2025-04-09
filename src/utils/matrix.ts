@@ -251,7 +251,7 @@ export async function createRoom(
         "m.room.encryption": 100,
         "m.room.name": 50,
         "m.room.message": 0,
-        "m.room.encrypted": 50,
+        "m.room.encrypted": 0,
         "m.sticker": 50,
         "org.matrix.msc3401.call.member": 0,
       },
