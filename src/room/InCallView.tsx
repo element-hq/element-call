@@ -10,6 +10,7 @@ import {
   RoomContext,
   useLocalParticipant,
 } from "@livekit/components-react";
+import { Text } from "@vector-im/compound-web";
 import { ConnectionState, type Room } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk";
 import {
@@ -94,11 +95,11 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
+  useExperimentalToDeviceTransportSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
 import { ConnectionLostError } from "../utils/errors.ts";
-
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
 const maxTapDurationMs = 400;
@@ -215,6 +216,10 @@ export const InCallView: FC<InCallViewProps> = ({
   const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
     room: livekitRoom,
   });
+
+  const [toDeviceEncryption] = useSetting(
+    useExperimentalToDeviceTransportSetting,
+  );
 
   const toggleMicrophone = useCallback(
     () => muteStates.audio.setEnabled?.((e) => !e),
@@ -662,6 +667,18 @@ export const InCallView: FC<InCallViewProps> = ({
             </RightNav>
           </Header>
         ))}
+      {
+        // TODO: remove this once we remove the developer flag
+        // and find a better way to device what key transport to use.
+        toDeviceEncryption && (
+          <Text
+            style={{ height: 0, zIndex: 1, alignSelf: "center", margin: 0 }}
+            size="sm"
+          >
+            using to Device key transport
+          </Text>
+        )
+      }
       <RoomAudioRenderer />
       {renderContent()}
       <CallEventAudioRenderer vm={vm} />
