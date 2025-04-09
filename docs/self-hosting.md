@@ -232,7 +232,6 @@ and to ensure Element Call continues to work in case any user decides to log in
 to their Element Call account using the standard Element app and joins normal
 rooms that Element Call cannot handle.
 
-
 # 📚 Community Guides & How-Tos
 
 Looking for real-world tips, tutorials, and experiences from the community?
@@ -244,16 +243,18 @@ self-hosters and developers working with Element Call.
 > versions. Use them alongside the official documentation for best results.
 
 ## 🌐 Blog Posts & Articles
+
 - [How to resolve stuck MatrixRTC calls](https://sspaeth.de/2025/02/how-to-resolve-stuck-matrixrtc-calls/)
 
 ## 🛠️ How-Tos & Tutorials
+
 - [MatrixRTC aka Element-call setup (Geek warning)](https://sspaeth.de/2024/11/sfu/)
 - [MatrixRTC with Synology Container Manager (Docker)](https://ztfr.de/matrixrtc-with-synology-container-manager-docker/)
 - [Encrypted & Scalable Video Calls: How to deploy an Element Call backend with Synapse Using Docker-Compose](https://willlewis.co.uk/blog/posts/deploy-element-call-backend-with-synapse-and-docker-compose/)
 - [Element Call einrichten: Verschlüsselte Videoanrufe mit Element X und Matrix Synapse](https://www.cleveradmin.de/blog/2025/04/matrixrtc-element-call-backend-einrichten/)
 
-
 ## 🤝 Want to Contribute?
+
 Have a guide or blog post you'd like to share? Open a
 [PR](https://github.com/element-hq/element-call/pulls) to add it here, or drop a
 link in the [#webrtc:matrix.org](https://matrix.to/#/#webrtc:matrix.org) room.
