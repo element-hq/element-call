@@ -22,6 +22,10 @@ import Logo from "./icons/Logo.svg?react";
 import { Avatar, Size } from "./Avatar";
 import { EncryptionLock } from "./room/EncryptionLock";
 import { useMediaQuery } from "./useMediaQuery";
+import {
+  useExperimentalToDeviceTransportSetting,
+  useSetting,
+} from "./settings/settings";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
@@ -133,7 +137,9 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
 }) => {
   const { t } = useTranslation();
   const size = useMediaQuery("(max-width: 550px)") ? "sm" : "lg";
-
+  const [toDeviceEncryption] = useSetting(
+    useExperimentalToDeviceTransportSetting,
+  );
   return (
     <div className={styles.roomHeaderInfo} data-size={size}>
       <Avatar
@@ -153,6 +159,11 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
           {name}
         </Heading>
         <EncryptionLock encrypted={encrypted} />
+        {
+          // TODO: remove this once we remove the developer flag
+          // and find a better way to device what key transport to use.
+          toDeviceEncryption && <Text size="sm">To Device key transport</Text>
+        }
       </div>
       {(participantCount ?? 0) > 0 && (
         <div className={styles.participantsLine}>
