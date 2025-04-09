@@ -4,7 +4,10 @@
   },
   "action": {
     "close": "Cerrar",
+    "copy_link": "Copiar vínculo",
     "go": "Comenzar",
+    "invite": "Invitar",
+    "no": "No",
     "register": "Registrarse",
     "remove": "Eliminar",
     "sign_in": "Iniciar sesión",
@@ -12,6 +15,12 @@
     "submit": "Enviar"
   },
   "analytics_notice": "Al participar en esta beta, consientes a la recogida de datos anónimos, los cuales usaremos para mejorar el producto. Puedes encontrar más información sobre que datos recogemos en nuestra <2>Política de privacidad</2> y en nuestra <5>Política sobre Cookies</5>.",
+  "app_selection_modal": {
+    "continue_in_browser": "Continuar en el navegador",
+    "open_in_app": "Abrir en la aplicación",
+    "text": "¿Listo para unirte?",
+    "title": "Selecciona aplicación"
+  },
   "call_ended_view": {
     "create_account_button": "Crear cuenta",
     "create_account_prompt": "<0>¿Por qué no mantienes tu cuenta estableciendo una contraseña?</0><1>Podrás mantener tu nombre y establecer un avatar para usarlo en futuras llamadas</1>",
