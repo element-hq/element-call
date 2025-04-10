@@ -120,7 +120,7 @@ export const useNewMembershipManagerSetting = new Setting<boolean>(
 
 export const useExperimentalToDeviceTransportSetting = new Setting<boolean>(
   "experimental-to-device-transport",
-  false,
+  true,
 );
 
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
