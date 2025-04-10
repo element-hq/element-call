@@ -251,8 +251,7 @@ export async function createRoom(
         "m.room.encryption": 100,
         "m.room.name": 50,
         "m.room.message": 0,
-        // revert this once we do not rely on room messages for perSenderKeys anymore
-        "m.room.encrypted": 0,
+        "m.room.encrypted": 50,
         "m.sticker": 50,
         "org.matrix.msc3401.call.member": 0,
       },
@@ -260,15 +259,6 @@ export async function createRoom(
         [client.getUserId()!]: 100,
       },
     },
-    initial_state: [
-      {
-        type: "m.room.encryption",
-        state_key: "",
-        content: {
-          algorithm: "m.megolm.v1.aes-sha2",
-        },
-      },
-    ],
   });
 
   // Wait for the room to arrive
