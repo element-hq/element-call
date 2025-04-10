@@ -6910,7 +6910,7 @@ __metadata:
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
     knip: "npm:^5.27.2"
-    livekit-client: "npm:2.10.0"
+    livekit-client: "npm:2.11.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
     matrix-js-sdk: "github:matrix-org/matrix-js-sdk#8395919f0fd1af7cab1e793d736f2cdf18ef7686"
@@ -9280,9 +9280,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"livekit-client@npm:2.10.0":
-  version: 2.10.0
-  resolution: "livekit-client@npm:2.10.0"
+"livekit-client@npm:2.11.0":
+  version: 2.11.0
+  resolution: "livekit-client@npm:2.11.0"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
     "@livekit/protocol": "npm:1.36.1"
@@ -9293,7 +9293,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typed-emitter: "npm:^2.1.0"
     webrtc-adapter: "npm:^9.0.1"
-  checksum: 10c0/bc5d1d1e08576da3356f567836090a58dfad9b2d9ca2280584acf31676949a88d9526940ab10a9b6cf79545a49f82678cb0665f65851628e6148a9d559cacc90
+  checksum: 10c0/68d06ffdb066d148a9280fb27ae2de84e7163ac3f134dd74138fbddf2bb6f2b45d837751b379af25935c3b1bf8cd02b719db4f37cccb320e7bc438e0f4d38cd9
   languageName: node
   linkType: hard
 
