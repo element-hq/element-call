@@ -51,7 +51,7 @@
     },
     {
       "groupName": "bundled element-call dependencies",
-      "matchPackageNames": [
+      "matchDepNames": [
         "com.vanniktech.maven.publish",
         "com.android.library",
         "com.android.tools.build",
@@ -60,7 +60,7 @@
     },
     {
       "groupName": "Yarn",
-      "matchPackageNames": ["yarn"],
+      "matchDepNames": ["yarn"],
       "extends": ["schedule:weekly"]
     }
   ],
