@@ -60,7 +60,8 @@ jobs:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |
         type=sha,format=short,event=branch
-        type=semver,pattern=v{{version}}
+        type=raw,value=${{ github.event.release.tag_name }}
+      # Like before, using ${{ env.VERSION }} above doesn't work
   add_docker_release_note:
     needs: publish_docker
     name: Add docker release note
