@@ -32,6 +32,7 @@ import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -100,6 +101,8 @@ import {
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
 import { ConnectionLostError } from "../utils/errors.ts";
+import { useTypedEventEmitter } from "../useEvents.ts";
+
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
 const maxTapDurationMs = 400;
@@ -217,8 +220,19 @@ export const InCallView: FC<InCallViewProps> = ({
     room: livekitRoom,
   });
 
-  const [toDeviceEncryption] = useSetting(
+  const [toDeviceEncryptionSetting] = useSetting(
     useExperimentalToDeviceTransportSetting,
+  );
+  const [showToDeviceEncryption, setShowToDeviceEncryption] = useState(
+    () => toDeviceEncryptionSetting,
+  );
+  useEffect(() => {
+    setShowToDeviceEncryption(toDeviceEncryptionSetting);
+  }, [toDeviceEncryptionSetting]);
+  useTypedEventEmitter(
+    rtcSession,
+    RoomAndToDeviceEvents.EnabledTransportsChanged,
+    (enabled) => setShowToDeviceEncryption(enabled.to_device),
   );
 
   const toggleMicrophone = useCallback(
@@ -668,9 +682,9 @@ export const InCallView: FC<InCallViewProps> = ({
           </Header>
         ))}
       {
-        // TODO: remove this once we remove the developer flag
-        // and find a better way to device what key transport to use.
-        toDeviceEncryption && (
+        // TODO: remove this once we remove the developer flag gets removed and we have shipped to
+        // device transport as the default.
+        showToDeviceEncryption && (
           <Text
             style={{ height: 0, zIndex: 1, alignSelf: "center", margin: 0 }}
             size="sm"
