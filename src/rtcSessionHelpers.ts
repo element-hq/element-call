@@ -98,6 +98,7 @@ export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   encryptMedia: boolean,
   useNewMembershipManager = true,
+  useExperimentalToDeviceTransport = false,
 ): Promise<void> {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
@@ -125,6 +126,7 @@ export async function enterRTCSession(
       membershipKeepAlivePeriod:
         matrixRtcSessionConfig?.membership_keep_alive_period,
       makeKeyDelay: matrixRtcSessionConfig?.key_rotation_on_leave_delay,
+      useExperimentalToDeviceTransport,
     },
   );
   if (widget) {

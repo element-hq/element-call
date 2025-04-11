@@ -112,6 +112,7 @@ test("It joins the correct Session", async () => {
       manageMediaKeys: false,
       useLegacyMemberEvents: false,
       useNewMembershipManager: true,
+      useExperimentalToDeviceTransport: false,
     },
   );
 });
