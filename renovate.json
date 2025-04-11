@@ -55,8 +55,7 @@
     },
     {
       "groupName": "Yarn",
-      "matchDepNames": ["yarn"],
-      "extends": ["schedule:weekly"]
+      "matchDepNames": ["yarn"]
     }
   ],
   "semanticCommits": "disabled",
