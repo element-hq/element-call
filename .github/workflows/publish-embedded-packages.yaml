@@ -72,7 +72,7 @@ jobs:
       contents: write # required to upload release asset
     steps:
       - name: Determine filename
-        run: echo "FILENAME_PREFIX=element-call-embedded-${{ needs.versioning.outputs.PREFIXED_VERSION }}" >> "$GITHUB_ENV"
+        run: echo "FILENAME_PREFIX=element-call-embedded-${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
         with:
