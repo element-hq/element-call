@@ -19,6 +19,7 @@ jobs:
       DRY_RUN: ${{ steps.dry_run.outputs.DRY_RUN }}
       PREFIXED_VERSION: ${{ steps.prefixed_version.outputs.PREFIXED_VERSION }}
       UNPREFIXED_VERSION: ${{ steps.unprefixed_version.outputs.UNPREFIXED_VERSION }}
+      TAG: ${{ steps.tag.outputs.TAG }}
     steps:
       - name: Calculate VERSION
         # We should only use the hard coded test value for a dry run
@@ -36,6 +37,19 @@ jobs:
         name: Set UNPREFIXED_VERSION
         # This just strips the leading character
         run: echo "UNPREFIXED_VERSION=${VERSION:1}" >> "$GITHUB_OUTPUT"
+      - id: tag
+        # latest = a proper release
+        # next = a release-candidate
+        # other = anything else
+        name: Set tag
+        run: |
+          if [[ "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "TAG=latest" >> "$GITHUB_OUTPUT"
+          elif [[ "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]; then
+            echo "TAG=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "TAG=other" >> "$GITHUB_OUTPUT"
+          fi
 
   build_element_call:
     needs: versioning
@@ -112,7 +126,7 @@ jobs:
         run: |
           npm version ${{ needs.versioning.outputs.PREFIXED_VERSION }} --no-git-tag-version
           echo "ARTIFACT_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
-          npm publish --provenance --access public ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+          npm publish --provenance --access public --tag ${{ needs.versioning.outputs.TAG }} ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
 
@@ -148,7 +162,13 @@ jobs:
           java-version: "17"
 
       - name: Get artifact version
-        run: echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
+        # Anything that is not a final release will be tagged as a snapshot
+        run: |
+          if [[ "${{ needs.versioning.outputs.TAG }}" == "latest" ]]; then
+            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
+          else
+            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}-SNAPSHOT" >> "$GITHUB_ENV"
+          fi
 
       - name: Set version string
         run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" embedded/android/lib/src/main/kotlin/io/element/android/call/embedded/Version.kt
