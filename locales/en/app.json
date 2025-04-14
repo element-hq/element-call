@@ -74,7 +74,7 @@
     "show_non_member_tiles": "Show tiles for non-member media",
     "url_params": "URL parameters",
     "use_new_membership_manager": "Use the new implementation of the call MembershipManager",
-    "use_to_device_key_transport": "Use to device messages to distribute keys for matrixRTC media"
+    "use_to_device_key_transport": "Use to device key transport. This will fallback to room key transport when another call member sent a room key"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "error": {
