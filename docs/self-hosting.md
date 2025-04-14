@@ -42,6 +42,8 @@ homeserver, you'll need to additionally add the following config items to
 experimental_features:
   # MSC3266: Room summary API. Used for knocking over federation
   msc3266_enabled: true
+  # MSC4140: Delayed events are required for proper call participation signalling. If disabled it is very likely that you end up with stuck calls in Matrix rooms
+  msc4140_enabled: true
   # MSC4222 needed for syncv2 state_after. This allow clients to
   # correctly track the state of the room.
   msc4222_enabled: true
@@ -88,9 +90,19 @@ the example above, this results in:
 
 Using Nginx, you can achieve this by:
 
-```jsonc
+```
 server {
     ...
+
+    location ~ ^(/sfu/get|/healthz) {
+      proxy_pass http://localhost:8080;
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-Server $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     location ^~ /livekit/jwt/ {
       proxy_set_header Host $host;
       proxy_set_header X-Real-IP $remote_addr;
@@ -131,7 +143,7 @@ server {
 > `example.com/.well-known/matrix/client` matching the site deployment example
 > from above). The configuration is a list of Foci configs:
 
-```json
+```
 "org.matrix.msc4143.rtc_foci": [
     {
         "type": "livekit",
@@ -198,7 +210,7 @@ Because Element Call uses client-side routing, your server must be able to route
 any requests to non-existing paths back to `/index.html`. For example, in Nginx
 you can achieve this with the `try_files` directive:
 
-```jsonc
+```
 server {
     ...
     location / {
