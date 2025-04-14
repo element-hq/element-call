@@ -178,7 +178,7 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_RELEASE_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
-        run: ./gradlew publishAndReleaseToMavenCentral --no-daemon ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+        run: ./gradlew publishToMavenCentral --no-daemon ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
 
       - id: artifact_version
         name: Output artifact version
