@@ -5,7 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { BaseKeyProvider, createKeyMaterialFromBuffer } from "livekit-client";
+import {
+  BaseKeyProvider,
+  createKeyMaterialFromBuffer,
+  KeyProviderEvent,
+} from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type MatrixRTCSession,
@@ -16,7 +20,11 @@ export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
 
   public constructor() {
-    super({ ratchetWindowSize: 100, keyringSize: 256 });
+    // ratchetWindowSize the amount of ratchets we try consecutively before
+    // throwing an error log. After those attempts we will still try more retry batches.
+    // So there can be more than 10 ratchets in total.
+    super({ ratchetWindowSize: 10, keyringSize: 256 });
+    this.on(KeyProviderEvent.KeyRatcheted, this.onKeyRatcheted);
   }
 
   public setRTCSession(rtcSession: MatrixRTCSession): void {
@@ -58,6 +66,14 @@ export class MatrixKeyProvider extends BaseKeyProvider {
           e,
         );
       },
+    );
+  };
+
+  public onKeyRatcheted = (material: CryptoKey, keyIndex?: number): void => {
+    logger.debug(
+      `Key ratcheted event received for livekit room=${this.rtcSession?.room.roomId} keyIndex=${keyIndex}`,
+      `material:`,
+      material,
     );
   };
 }

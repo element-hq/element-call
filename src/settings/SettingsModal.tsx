@@ -49,6 +49,7 @@ interface Props {
   client: MatrixClient;
   roomId?: string;
   livekitRoom?: LivekitRoom;
+  doKeyRatchet?: () => void;
 }
 
 export const defaultSettingsTab: SettingsTab = "audio";
@@ -61,6 +62,7 @@ export const SettingsModal: FC<Props> = ({
   client,
   roomId,
   livekitRoom,
+  doKeyRatchet,
 }) => {
   const { t } = useTranslation();
 
@@ -144,7 +146,13 @@ export const SettingsModal: FC<Props> = ({
   const developerTab: Tab<SettingsTab> = {
     key: "developer",
     name: t("settings.developer_tab_title"),
-    content: <DeveloperSettingsTab client={client} livekitRoom={livekitRoom} />,
+    content: (
+      <DeveloperSettingsTab
+        client={client}
+        livekitRoom={livekitRoom}
+        doKeyRatchet={doKeyRatchet}
+      />
+    ),
   };
 
   const tabs = [audioTab, videoTab];

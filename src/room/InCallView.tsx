@@ -114,7 +114,7 @@ export interface ActiveCallProps
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
-  const { livekitRoom, connState } = useLiveKit(
+  const { livekitRoom, connState, doKeyRatchet } = useLiveKit(
     props.rtcSession,
     props.muteStates,
     sfuConfig,
@@ -164,6 +164,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
           vm={vm}
           livekitRoom={livekitRoom}
           connState={connState}
+          doKeyRatchet={doKeyRatchet}
         />
       </ReactionsSenderProvider>
     </RoomContext.Provider>
@@ -184,6 +185,7 @@ export interface InCallViewProps {
   otelGroupCallMembership?: OTelGroupCallMembership;
   connState: ECConnectionState;
   onShareClick: (() => void) | null;
+  doKeyRatchet?: () => void;
 }
 
 export const InCallView: FC<InCallViewProps> = ({
@@ -198,6 +200,7 @@ export const InCallView: FC<InCallViewProps> = ({
   hideHeader,
   connState,
   onShareClick,
+  doKeyRatchet,
 }) => {
   const { supportsReactions, sendReaction, toggleRaisedHand } =
     useReactionsSender();
@@ -710,6 +713,7 @@ export const InCallView: FC<InCallViewProps> = ({
             tab={settingsTab}
             onTabChange={setSettingsTab}
             livekitRoom={livekitRoom}
+            doKeyRatchet={doKeyRatchet}
           />
         </>
       )}

@@ -13,7 +13,7 @@ import {
   type RoomOptions,
   Track,
 } from "livekit-client";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
@@ -37,6 +37,7 @@ import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 interface UseLivekitResult {
   livekitRoom?: Room;
   connState: ECConnectionState;
+  doKeyRatchet: () => void;
 }
 
 export function useLiveKit(
@@ -331,8 +332,16 @@ export function useLiveKit(
     }
   }, [room, devices, connectionState]);
 
+  const doKeyRatchet = useCallback(() => {
+    // not providing a key index will default to the current key
+    e2eeOptions?.keyProvider.ratchetKey(
+      room.localParticipant.identity,
+      undefined,
+    );
+  }, [e2eeOptions?.keyProvider, room.localParticipant.identity]);
   return {
     connState: connectionState,
     livekitRoom: room,
+    doKeyRatchet,
   };
 }

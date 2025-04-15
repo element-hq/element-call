@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type ChangeEvent, type FC, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "@vector-im/compound-web";
 
 import { FieldRow, InputField } from "../input/Input";
 import {
@@ -25,9 +26,14 @@ import { useUrlParams } from "../UrlParams";
 interface Props {
   client: MatrixClient;
   livekitRoom?: LivekitRoom;
+  doKeyRatchet?: () => void;
 }
 
-export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
+export const DeveloperSettingsTab: FC<Props> = ({
+  client,
+  livekitRoom,
+  doKeyRatchet,
+}) => {
   const { t } = useTranslation();
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
   const [debugTileLayout, setDebugTileLayout] = useSetting(
@@ -88,7 +94,13 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
         {t("developer_mode.device_id", {
           id: client.getDeviceId() || "unknown",
         })}
-      </p>
+      </p>{" "}
+      <FieldRow>
+        <Button size="sm" onClick={() => doKeyRatchet?.()}>
+          {" "}
+          Ratchet current key{" "}
+        </Button>{" "}
+      </FieldRow>
       <FieldRow>
         <InputField
           id="duplicateTiles"
