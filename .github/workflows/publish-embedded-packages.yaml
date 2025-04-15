@@ -11,19 +11,48 @@ on:
   push:
     branches: [livekit]
 
-env:
-  # We perform a dry run for all events except releases.
-  # This is to help make sure that we notice if the packaging process has become
-  # broken ahead of a release.
-  DRY_RUN: ${{ github.event_name != 'release' }}
-  # We should only use the hard coded test value for a dry run
-  VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || 'v0.0.0-pre.0' }}
-
 jobs:
+  versioning:
+    name: Versioning
+    runs-on: ubuntu-latest
+    outputs:
+      DRY_RUN: ${{ steps.dry_run.outputs.DRY_RUN }}
+      PREFIXED_VERSION: ${{ steps.prefixed_version.outputs.PREFIXED_VERSION }}
+      UNPREFIXED_VERSION: ${{ steps.unprefixed_version.outputs.UNPREFIXED_VERSION }}
+      TAG: ${{ steps.tag.outputs.TAG }}
+    steps:
+      - name: Calculate VERSION
+        # We should only use the hard coded test value for a dry run
+        run: echo "VERSION=${{ github.event_name == 'release' && github.event.release.tag_name || 'v0.0.0-pre.0' }}" >> "$GITHUB_ENV"
+      - id: dry_run
+        name: Set DRY_RUN
+        # We perform a dry run for all events except releases.
+        # This is to help make sure that we notice if the packaging process has become
+        # broken ahead of a release.
+        run: echo "DRY_RUN=${{ github.event_name != 'release' }}" >> "$GITHUB_OUTPUT"
+      - id: prefixed_version
+        name: Set PREFIXED_VERSION
+        run: echo "PREFIXED_VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
+      - id: unprefixed_version
+        name: Set UNPREFIXED_VERSION
+        # This just strips the leading character
+        run: echo "UNPREFIXED_VERSION=${VERSION:1}" >> "$GITHUB_OUTPUT"
+      - id: tag
+        # latest = a proper release
+        # other = anything else
+        name: Set tag
+        run: |
+          if [[ "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "TAG=latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "TAG=other" >> "$GITHUB_OUTPUT"
+          fi
+
   build_element_call:
+    needs: versioning
     uses: ./.github/workflows/build-element-call.yaml
     with:
-      vite_app_version: embedded-${{ github.event.release.tag_name || 'v0.0.0-pre.0' }} # Using ${{ env.VERSION }} here doesn't work
+      vite_app_version: embedded-${{ needs.versioning.outputs.PREFIXED_VERSION }}
       package: embedded
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
@@ -32,7 +61,7 @@ jobs:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
   publish_tarball:
-    needs: build_element_call
+    needs: [build_element_call, versioning]
     if: always()
     name: Publish tarball
     runs-on: ubuntu-latest
@@ -40,7 +69,7 @@ jobs:
       contents: write # required to upload release asset
     steps:
       - name: Determine filename
-        run: echo "FILENAME_PREFIX=element-call-embedded-${VERSION:1}" >> "$GITHUB_ENV"
+        run: echo "FILENAME_PREFIX=element-call-embedded-${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
         with:
@@ -53,7 +82,7 @@ jobs:
       - name: Create Checksum
         run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
       - name: Upload
-        if: ${{ env.DRY_RUN == 'false' }}
+        if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
         with:
           files: |
@@ -61,10 +90,12 @@ jobs:
             ${{ env.FILENAME_PREFIX }}.sha256
 
   publish_npm:
-    needs: build_element_call
+    needs: [build_element_call, versioning]
     if: always()
     name: Publish NPM
     runs-on: ubuntu-latest
+    outputs:
+      ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
     permissions:
       contents: read
       id-token: write # required for the provenance flag on npm publish
@@ -90,17 +121,23 @@ jobs:
       - name: Publish npm
         working-directory: embedded/web
         run: |
-          npm version ${{ env.VERSION }} --no-git-tag-version
+          npm version ${{ needs.versioning.outputs.PREFIXED_VERSION }} --no-git-tag-version
           echo "ARTIFACT_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
-          npm publish --provenance --access public ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+          npm publish --provenance --access public --tag ${{ needs.versioning.outputs.TAG }} ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
 
+      - id: artifact_version
+        name: Output artifact version
+        run: echo "ARTIFACT_VERSION=${{env.ARTIFACT_VERSION}}" >> "$GITHUB_OUTPUT"
+
   publish_android:
-    needs: build_element_call
+    needs: [build_element_call, versioning]
     if: always()
     name: Publish Android AAR
     runs-on: ubuntu-latest
+    outputs:
+      ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
     permissions:
       contents: read
     steps:
@@ -122,7 +159,13 @@ jobs:
           java-version: "17"
 
       - name: Get artifact version
-        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
+        # Anything that is not a final release will be tagged as a snapshot
+        run: |
+          if [[ "${{ needs.versioning.outputs.TAG }}" == "latest" ]]; then
+            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
+          else
+            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}-SNAPSHOT" >> "$GITHUB_ENV"
+          fi
 
       - name: Set version string
         run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" embedded/android/lib/src/main/kotlin/io/element/android/call/embedded/Version.kt
@@ -135,13 +178,19 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_RELEASE_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
-        run: ./gradlew publishAndReleaseToMavenCentral --no-daemon ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+        run: ./gradlew publishToMavenCentral --no-daemon ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+
+      - id: artifact_version
+        name: Output artifact version
+        run: echo "ARTIFACT_VERSION=${{env.ARTIFACT_VERSION}}" >> "$GITHUB_OUTPUT"
 
   publish_ios:
-    needs: build_element_call
+    needs: [build_element_call, versioning]
     if: always()
     name: Publish SwiftPM Library
     runs-on: ubuntu-latest
+    outputs:
+      ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
     permissions:
       contents: read
     steps:
@@ -169,7 +218,7 @@ jobs:
         run: rsync -a --delete --exclude .git element-call/embedded/ios/ element-call-swift
 
       - name: Get artifact version
-        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
+        run: echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
 
       - name: Set version string
         run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" element-call-swift/Sources/EmbeddedElementCall/EmbeddedElementCall.swift
@@ -184,27 +233,33 @@ jobs:
           git config --global user.email "ci@element.io"
           git config --global user.name "Element CI"
           git add -A
-          git commit -am "Release ${{ env.VERSION }}"
+          git commit -am "Release ${{ needs.versioning.outputs.PREFIXED_VERSION }}"
           git tag -a ${{ env.ARTIFACT_VERSION }} -m "${{ github.event.release.html_url }}"
 
       - name: Push
         working-directory: element-call-swift
         run: |
-          git push --tags ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+          git push --tags ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+
+      - id: artifact_version
+        name: Output artifact version
+        run: echo "ARTIFACT_VERSION=${{env.ARTIFACT_VERSION}}" >> "$GITHUB_OUTPUT"
 
   release_notes:
-    needs: [publish_npm, publish_android, publish_ios]
+    needs: [versioning, publish_npm, publish_android, publish_ios]
     if: always()
     name: Update release notes
     runs-on: ubuntu-latest
     permissions:
       contents: write # to update release notes
     steps:
-      - name: Get artifact version
-        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
-
+      - name: Log versions
+        run: |
+          echo "NPM: ${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}"
+          echo "Android: ${{ needs.publish_android.outputs.ARTIFACT_VERSION }}"
+          echo "iOS: ${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}"
       - name: Add release notes
-        if: ${{ env.DRY_RUN == 'false' }}
+        if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
         with:
           append_body: true
@@ -218,19 +273,19 @@ jobs:
             ### NPM
 
             ```
-            npm install @element-hq/element-call-embedded@${{ env.ARTIFACT_VERSION }}
+            npm install @element-hq/element-call-embedded@${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}
             ```
 
             ### Android AAR
 
             ```
             dependencies {
-              implementation 'io.element.android:element-call-embedded:${{ env.ARTIFACT_VERSION }}'
+              implementation 'io.element.android:element-call-embedded:${{ needs.publish_android.outputs.ARTIFACT_VERSION }}'
             }
             ```
 
             ### SwiftPM
 
             ```
-            .package(url: "https://github.com/element-hq/element-call-swift.git", from: "${{ env.ARTIFACT_VERSION }}")
+            .package(url: "https://github.com/element-hq/element-call-swift.git", from: "${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}")
             ```
