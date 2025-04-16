@@ -73,7 +73,10 @@ import {
 import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
-import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  useRoomEncryptionSystem,
+  type EncryptionSystem,
+} from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import {
@@ -96,7 +99,7 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
-  useExperimentalToDeviceTransportSetting,
+  useExperimentalToDeviceTransportSetting as useToDeviceTransportSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
@@ -220,19 +223,21 @@ export const InCallView: FC<InCallViewProps> = ({
     room: livekitRoom,
   });
 
-  const [toDeviceEncryptionSetting] = useSetting(
-    useExperimentalToDeviceTransportSetting,
-  );
-  const [showToDeviceEncryption, setShowToDeviceEncryption] = useState(
-    () => toDeviceEncryptionSetting,
-  );
-  useEffect(() => {
-    setShowToDeviceEncryption(toDeviceEncryptionSetting);
-  }, [toDeviceEncryptionSetting]);
+  const [didFallbackToRoomKey, setDidFallbackToRoomKey] = useState(false);
   useTypedEventEmitter(
     rtcSession,
     RoomAndToDeviceEvents.EnabledTransportsChanged,
-    (enabled) => setShowToDeviceEncryption(enabled.to_device),
+    (enabled) => setDidFallbackToRoomKey(enabled.room),
+  );
+  const [toDeviceEncryptionSetting] = useSetting(useToDeviceTransportSetting);
+  const encryptionSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
+
+  const showToDeviceEncryption = useMemo(
+    () =>
+      toDeviceEncryptionSetting &&
+      encryptionSystem.kind === E2eeType.PER_PARTICIPANT &&
+      !didFallbackToRoomKey,
+    [encryptionSystem.kind, didFallbackToRoomKey, toDeviceEncryptionSetting],
   );
 
   const toggleMicrophone = useCallback(
