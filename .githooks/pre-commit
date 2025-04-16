@@ -2,8 +2,7 @@
 
 FILE=".links.yaml"
 if test -f "$FILE"; then
-  # echo "$FILE exists. -> moving to .links.disabled.yaml"
-  mv .links.yaml .links.disabled.yaml
+  mv .links.yaml .links.temp-disabled.yaml
   # echo "running yarn"
   x=$(yarn)
   y=$(git add yarn.lock)
