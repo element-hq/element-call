@@ -63,8 +63,8 @@ rc_delayed_event_mgmt:
   burst_count: 20
 ```
 
-As a prerequisites for the
-[Matrix Livekit JWT auth service](https://github.com/element-hq/lk-jwt-service)
+As a prerequisite for the
+[Matrix LiveKit JWT auth service](https://github.com/element-hq/lk-jwt-service)
 make sure that your Synapse server has either a `federation` or `openid`
 [listener configured](https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html#listeners).
 
