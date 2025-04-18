@@ -16,6 +16,7 @@ import {
   showNonMemberTiles as showNonMemberTilesSetting,
   showConnectionStats as showConnectionStatsSetting,
   useNewMembershipManagerSetting,
+  useExperimentalToDeviceTransportSetting,
 } from "./settings";
 import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
@@ -44,6 +45,10 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
     useNewMembershipManagerSetting,
   );
 
+  const [
+    useExperimentalToDeviceTransport,
+    setUseExperimentalToDeviceTransport,
+  ] = useSetting(useExperimentalToDeviceTransportSetting);
   const urlParams = useUrlParams();
 
   const sfuUrl = useMemo((): URL | null => {
@@ -153,6 +158,20 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
               setNewMembershipManager(event.target.checked);
             },
             [setNewMembershipManager],
+          )}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="useToDeviceKeyTransport"
+          type="checkbox"
+          label={t("developer_mode.use_to_device_key_transport")}
+          checked={!!useExperimentalToDeviceTransport}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setUseExperimentalToDeviceTransport(event.target.checked);
+            },
+            [setUseExperimentalToDeviceTransport],
           )}
         />
       </FieldRow>

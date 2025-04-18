@@ -2527,21 +2527,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/protocol@npm:1.33.0":
-  version: 1.33.0
-  resolution: "@livekit/protocol@npm:1.33.0"
+"@livekit/protocol@npm:1.36.1, @livekit/protocol@npm:^1.33.0":
+  version: 1.36.1
+  resolution: "@livekit/protocol@npm:1.36.1"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/5eced9581c4af7fd67e65e93a40a389202b8a9031b4e76d7709d5c1e35ae5816c11a7b9265d6b9cf8b19c3b4077dbdd2a17275a29e98f9ec785232c4750d8ded
-  languageName: node
-  linkType: hard
-
-"@livekit/protocol@npm:^1.33.0":
-  version: 1.34.0
-  resolution: "@livekit/protocol@npm:1.34.0"
-  dependencies:
-    "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/f6c8ad1fe5da151e2fc103118e61c5110df32088e13a03a30dd2de9cce401e9c99eed3cc61324272a8a2fef1c001bb4d215b2a9479774f493b6a301f547f01e5
+  checksum: 10c0/bb2e56785c542446bef3e2f2fd20b33d01db43b786be87ccb834feee8a664fd32c8231e249b4e1915d7a8eda13af0d59eea479fa710327079a1a370daf05c42e
   languageName: node
   linkType: hard
 
@@ -6971,10 +6962,10 @@ __metadata:
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
     knip: "npm:^5.27.2"
-    livekit-client: "npm:2.9.1"
+    livekit-client: "npm:2.11.2"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#8395919f0fd1af7cab1e793d736f2cdf18ef7686"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#64e27f5d3cdab6aafeb7c22f1264416ffa72b83f"
     matrix-widget-api: "npm:1.11.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -9341,20 +9332,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"livekit-client@npm:2.9.1":
-  version: 2.9.1
-  resolution: "livekit-client@npm:2.9.1"
+"livekit-client@npm:2.11.2":
+  version: 2.11.2
+  resolution: "livekit-client@npm:2.11.2"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
-    "@livekit/protocol": "npm:1.33.0"
+    "@livekit/protocol": "npm:1.36.1"
     events: "npm:^3.3.0"
-    loglevel: "npm:^1.8.0"
-    sdp-transform: "npm:^2.14.1"
+    loglevel: "npm:^1.9.2"
+    sdp-transform: "npm:^2.15.0"
     ts-debounce: "npm:^4.0.0"
     tslib: "npm:2.8.1"
     typed-emitter: "npm:^2.1.0"
-    webrtc-adapter: "npm:^9.0.0"
-  checksum: 10c0/06c4bcfe22c2629bd3e2a7fdf5d104425ed9c781d77a39fd61940d30a85dff0b9e3364b0ad8e584a8dc2d885f625532dd6ec151f5c8a4ecfb16cdcf2718e817f
+    webrtc-adapter: "npm:^9.0.1"
+  checksum: 10c0/03a184f3a4f81beefb47a78adb37d3ba3b95a5d1f01e2ebbb83fb3769a120f6b8726ee8ccd96eb634164eeec508850cf05d40e2330fe7c1eda0e3d7f481561f7
   languageName: node
   linkType: hard
 
@@ -9411,7 +9402,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loglevel@npm:^1.7.1, loglevel@npm:^1.8.0, loglevel@npm:^1.9.1":
+"loglevel@npm:^1.7.1, loglevel@npm:^1.9.1, loglevel@npm:^1.9.2":
   version: 1.9.2
   resolution: "loglevel@npm:1.9.2"
   checksum: 10c0/1e317fa4648fe0b4a4cffef6de037340592cee8547b07d4ce97a487abe9153e704b98451100c799b032c72bb89c9366d71c9fb8192ada8703269263ae77acdc7
@@ -9565,9 +9556,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#8395919f0fd1af7cab1e793d736f2cdf18ef7686":
-  version: 37.1.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=8395919f0fd1af7cab1e793d736f2cdf18ef7686"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#64e27f5d3cdab6aafeb7c22f1264416ffa72b83f":
+  version: 37.3.0
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=64e27f5d3cdab6aafeb7c22f1264416ffa72b83f"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.0.1"
@@ -9584,7 +9575,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/a0eb3be822e07cfe53965f6ca4f0c3cdf8ba3728d03a15f2322a463a7543206583e0c2f34d6b6d45089ce36eec60d77d9e90eb0635d3c65a343f77728908fe57
+  checksum: 10c0/716f89b4fffc67ae42fad55f47b96792a0c49bd6d741410758dfbe1d0e4673097627b4c8f8a77063702cb41a5e0f7f0c5ff96c109ed332d3b3bc973f4d31f555
   languageName: node
   linkType: hard
 
@@ -11762,7 +11753,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sdp-transform@npm:^2.14.1":
+"sdp-transform@npm:^2.14.1, sdp-transform@npm:^2.15.0":
   version: 2.15.0
   resolution: "sdp-transform@npm:2.15.0"
   bin:
@@ -13153,8 +13144,8 @@ __metadata:
   linkType: hard
 
 "vite@npm:^5.0.0 || ^6.0.0, vite@npm:^6.0.0":
-  version: 6.2.5
-  resolution: "vite@npm:6.2.5"
+  version: 6.2.6
+  resolution: "vite@npm:6.2.6"
   dependencies:
     esbuild: "npm:^0.25.0"
     fsevents: "npm:~2.3.3"
@@ -13200,7 +13191,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c0/226bb3c1875e1982559007007580e8d083b81f5289f18e28841d622ba030599e1bd9926adccc8264879e319e9f9e4f48a38a0dc52a5dfcdf2a9cb7313bfc1816
+  checksum: 10c0/68a2ed3e61bdd654c59b817b4f3203065241c66d1739faa707499130f3007bc3a666c7a8320a4198e275e62b5e4d34d9b78a6533f69e321d366e76f5093b2071
   languageName: node
   linkType: hard
 
@@ -13350,7 +13341,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webrtc-adapter@npm:^9.0.0":
+"webrtc-adapter@npm:^9.0.1":
   version: 9.0.1
   resolution: "webrtc-adapter@npm:9.0.1"
   dependencies:

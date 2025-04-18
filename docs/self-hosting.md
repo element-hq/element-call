@@ -1,5 +1,9 @@
 # Self-Hosting Element Call
 
+> [!NOTE]  
+> For In-App calling (Element X, Element Web, Element Desktop) use-case only
+> section [Prerequisites](#Prerequisites) is required.
+
 ## Prerequisites
 
 > [!IMPORTANT]  
@@ -51,12 +55,18 @@ rc_message:
   # Note key sharing events are bursty
   per_second: 0.5
   burst_count: 30
+
+rc_delayed_event_mgmt:
   # This needs to match at least the heart-beat frequency plus a bit of headroom
   # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2s
-rc_delayed_event_mgmt:
   per_second: 1
   burst_count: 20
 ```
+
+As a prerequisite for the
+[Matrix LiveKit JWT auth service](https://github.com/element-hq/lk-jwt-service)
+make sure that your Synapse server has either a `federation` or `openid`
+[listener configured](https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html#listeners).
 
 ### MatrixRTC Backend
 
@@ -143,6 +153,17 @@ server {
 ]
 ```
 
+Make sure this file is served with the correct MIME type (`application/json`).
+Additionally, ensure the appropriate CORS headers are set to allow web clients
+to access it across origins. For more details, refer to the
+[Matrix Client-Server API: 2. Web Browser Clients](https://spec.matrix.org/latest/client-server-api/#web-browser-clients).
+
+```
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: X-Requested-With, Content-Type, Authorization
+```
+
 > [!NOTE]  
 > Most `org.matrix.msc4143.rtc_foci` configurations will only have one entry in
 > the array
@@ -219,3 +240,30 @@ federation, so as to prevent spam registrations (if you keep registrations open)
 and to ensure Element Call continues to work in case any user decides to log in
 to their Element Call account using the standard Element app and joins normal
 rooms that Element Call cannot handle.
+
+# 📚 Community Guides & How-Tos
+
+Looking for real-world tips, tutorials, and experiences from the community?
+Below is a collection of blog posts, walkthroughs, and how-tos created by other
+self-hosters and developers working with Element Call.
+
+> [!NOTE]  
+> These resources are community-created and may reflect different setups or
+> versions. Use them alongside the official documentation for best results.
+
+## 🌐 Blog Posts & Articles
+
+- [How to resolve stuck MatrixRTC calls](https://sspaeth.de/2025/02/how-to-resolve-stuck-matrixrtc-calls/)
+
+## 🛠️ How-Tos & Tutorials
+
+- [MatrixRTC aka Element-call setup (Geek warning)](https://sspaeth.de/2024/11/sfu/)
+- [MatrixRTC with Synology Container Manager (Docker)](https://ztfr.de/matrixrtc-with-synology-container-manager-docker/)
+- [Encrypted & Scalable Video Calls: How to deploy an Element Call backend with Synapse Using Docker-Compose](https://willlewis.co.uk/blog/posts/deploy-element-call-backend-with-synapse-and-docker-compose/)
+- [Element Call einrichten: Verschlüsselte Videoanrufe mit Element X und Matrix Synapse](https://www.cleveradmin.de/blog/2025/04/matrixrtc-element-call-backend-einrichten/)
+
+## 🤝 Want to Contribute?
+
+Have a guide or blog post you'd like to share? Open a
+[PR](https://github.com/element-hq/element-call/pulls) to add it here, or drop a
+link in the [#webrtc:matrix.org](https://matrix.to/#/#webrtc:matrix.org) room.
