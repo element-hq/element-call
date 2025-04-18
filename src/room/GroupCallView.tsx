@@ -62,6 +62,7 @@ import {
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
 import {
+  useExperimentalToDeviceTransportSetting,
   useNewMembershipManagerSetting as useNewMembershipManagerSetting,
   useSetting,
 } from "../settings/settings";
@@ -151,6 +152,9 @@ export const GroupCallView: FC<Props> = ({
   const { perParticipantE2EE, returnToLobby } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
   const [useNewMembershipManager] = useSetting(useNewMembershipManagerSetting);
+  const [useExperimentalToDeviceTransport] = useSetting(
+    useExperimentalToDeviceTransportSetting,
+  );
 
   usePageTitle(roomName);
 
@@ -178,16 +182,13 @@ export const GroupCallView: FC<Props> = ({
   const latestMuteStates = useLatest(muteStates);
 
   const enterRTCSessionOrError = useCallback(
-    async (
-      rtcSession: MatrixRTCSession,
-      perParticipantE2EE: boolean,
-      newMembershipManager: boolean,
-    ): Promise<void> => {
+    async (rtcSession: MatrixRTCSession): Promise<void> => {
       try {
         await enterRTCSession(
           rtcSession,
           perParticipantE2EE,
-          newMembershipManager,
+          useNewMembershipManager,
+          useExperimentalToDeviceTransport,
         );
       } catch (e) {
         if (e instanceof ElementCallError) {
@@ -201,7 +202,11 @@ export const GroupCallView: FC<Props> = ({
         }
       }
     },
-    [setExternalError],
+    [
+      perParticipantE2EE,
+      useExperimentalToDeviceTransport,
+      useNewMembershipManager,
+    ],
   );
 
   useEffect(() => {
@@ -253,11 +258,7 @@ export const GroupCallView: FC<Props> = ({
               await defaultDeviceSetup(
                 ev.detail.data as unknown as JoinCallData,
               );
-              await enterRTCSessionOrError(
-                rtcSession,
-                perParticipantE2EE,
-                useNewMembershipManager,
-              );
+              await enterRTCSessionOrError(rtcSession);
               widget.api.transport.reply(ev.detail, {});
             })().catch((e) => {
               logger.error("Error joining RTC session", e);
@@ -270,21 +271,13 @@ export const GroupCallView: FC<Props> = ({
         } else {
           // No lobby and no preload: we enter the rtc session right away
           (async (): Promise<void> => {
-            await enterRTCSessionOrError(
-              rtcSession,
-              perParticipantE2EE,
-              useNewMembershipManager,
-            );
+            await enterRTCSessionOrError(rtcSession);
           })().catch((e) => {
             logger.error("Error joining RTC session", e);
           });
         }
       } else {
-        void enterRTCSessionOrError(
-          rtcSession,
-          perParticipantE2EE,
-          useNewMembershipManager,
-        );
+        void enterRTCSessionOrError(rtcSession);
       }
     }
   }, [
@@ -407,13 +400,7 @@ export const GroupCallView: FC<Props> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={() =>
-          void enterRTCSessionOrError(
-            rtcSession,
-            perParticipantE2EE,
-            useNewMembershipManager,
-          )
-        }
+        onEnter={() => void enterRTCSessionOrError(rtcSession)}
         confineToRoom={confineToRoom}
         hideHeader={hideHeader}
         participantCount={participantCount}
@@ -491,11 +478,7 @@ export const GroupCallView: FC<Props> = ({
       recoveryActionHandler={(action) => {
         if (action == "reconnect") {
           setLeft(false);
-          enterRTCSessionOrError(
-            rtcSession,
-            perParticipantE2EE,
-            useNewMembershipManager,
-          ).catch((e) => {
+          enterRTCSessionOrError(rtcSession).catch((e) => {
             logger.error("Error re-entering RTC session", e);
           });
         }

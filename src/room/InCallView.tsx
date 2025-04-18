@@ -10,6 +10,7 @@ import {
   RoomContext,
   useLocalParticipant,
 } from "@livekit/components-react";
+import { Text } from "@vector-im/compound-web";
 import { ConnectionState, type Room } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk";
 import {
@@ -31,6 +32,7 @@ import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -94,10 +96,12 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
+  useExperimentalToDeviceTransportSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
 import { ConnectionLostError } from "../utils/errors.ts";
+import { useTypedEventEmitter } from "../useEvents.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -215,6 +219,21 @@ export const InCallView: FC<InCallViewProps> = ({
   const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
     room: livekitRoom,
   });
+
+  const [toDeviceEncryptionSetting] = useSetting(
+    useExperimentalToDeviceTransportSetting,
+  );
+  const [showToDeviceEncryption, setShowToDeviceEncryption] = useState(
+    () => toDeviceEncryptionSetting,
+  );
+  useEffect(() => {
+    setShowToDeviceEncryption(toDeviceEncryptionSetting);
+  }, [toDeviceEncryptionSetting]);
+  useTypedEventEmitter(
+    rtcSession,
+    RoomAndToDeviceEvents.EnabledTransportsChanged,
+    (enabled) => setShowToDeviceEncryption(enabled.to_device),
+  );
 
   const toggleMicrophone = useCallback(
     () => muteStates.audio.setEnabled?.((e) => !e),
@@ -662,6 +681,18 @@ export const InCallView: FC<InCallViewProps> = ({
             </RightNav>
           </Header>
         ))}
+      {
+        // TODO: remove this once we remove the developer flag gets removed and we have shipped to
+        // device transport as the default.
+        showToDeviceEncryption && (
+          <Text
+            style={{ height: 0, zIndex: 1, alignSelf: "center", margin: 0 }}
+            size="sm"
+          >
+            using to Device key transport
+          </Text>
+        )
+      }
       <RoomAudioRenderer />
       {renderContent()}
       <CallEventAudioRenderer vm={vm} />

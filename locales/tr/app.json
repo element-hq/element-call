@@ -1,42 +1,141 @@
 {
+  "a11y": {
+    "user_menu": "Kullanıcı menüsü"
+  },
   "action": {
     "close": "Kapat",
+    "copy_link": "Bağlantıyı kopyala",
+    "edit": "Düzenle",
     "go": "Git",
+    "invite": "Davet et",
+    "lower_hand": "Elini indir",
     "no": "Hayır",
+    "pick_reaction": "Tepki seç",
+    "raise_hand": "Elini kaldır",
     "register": "Kaydol",
     "remove": "Çıkar",
+    "show_less": "Daha az göster",
+    "show_more": "Daha fazla göster",
     "sign_in": "Gir",
-    "sign_out": "Çık"
+    "sign_out": "Çık",
+    "submit": "Gönder",
+    "upload_file": "Dosya Yükle"
+  },
+  "analytics_notice": "Bu beta sürümüne katılarak, ürünü geliştirmek için kullandığımız anonim verilerin toplanmasına izin vermiş olursunuz. Hangi verileri izlediğimiz hakkında daha fazla bilgiyi <2>Gizlilik Politikamızda</2> ve <6>Çerez Politikamızda bulabilirsiniz</6>..",
+  "app_selection_modal": {
+    "continue_in_browser": "Tarayıcıda devam et",
+    "open_in_app": "Uygulamada aç",
+    "text": "Katılmaya hazır mısınız?",
+    "title": "Uygulama seçin"
   },
   "call_ended_view": {
     "create_account_button": "Hesap aç",
     "create_account_prompt": "<0>Hesabınızı tutmak için niye bir parola açmıyorsunuz?</0><1>Böylece ileriki aramalarda adınızı ve avatarınızı kullanabileceksiniz</1>",
-    "not_now_button": "Şimdi değil, ev ekranına dön"
+    "feedback_done": "<0>Geri bildiriminiz için teşekkürler!</0>",
+    "feedback_prompt": "<0>Deneyiminizi geliştirebilmemiz için geri bildirimlerinizi duymak isteriz.</0>",
+    "headline": "{{displayName}}, çağrınız sona erdi.",
+    "not_now_button": "Şimdi değil, ev ekranına dön",
+    "reconnect_button": "Yeniden bağlan",
+    "survey_prompt": "Nasıl geçti?"
   },
+  "call_name": "Aramanın adı",
   "common": {
+    "analytics": "Analiz",
     "audio": "Ses",
+    "avatar": "Avatar",
+    "back": "Geri",
     "display_name": "Ekran adı",
+    "encrypted": "Şifrelenmiş",
     "home": "Ev",
     "loading": "Yükleniyor…",
+    "next": "İleri",
+    "options": "Seçenekler",
     "password": "Parola",
-    "settings": "Ayarlar"
+    "preferences": "Tercihler",
+    "profile": "Profil",
+    "reaction": "Tepki",
+    "reactions": "Tepkiler",
+    "settings": "Ayarlar",
+    "unencrypted": "Şifrelenmemiş",
+    "username": "Kullanıcı adı",
+    "video": "Video"
+  },
+  "developer_mode": {
+    "crypto_version": "Şifreleme sürümü: {{version}}",
+    "debug_tile_layout_label": "Hata ayıklama döşeme düzeni",
+    "device_id": "Cihaz Kimliği: {{id}}",
+    "duplicate_tiles_label": "Katılımcı başına ek döşeme sayısı",
+    "hostname": "Sunucu adı: {{hostname}}",
+    "livekit_server_info": "LiveKit Sunucu Bilgisi",
+    "livekit_sfu": "LiveKit SFU: {{url}}",
+    "matrix_id": "Matrix Kimliği: {{id}}",
+    "show_connection_stats": "Bağlantı istatistiklerini göster",
+    "show_non_member_tiles": "Üye olmayan kullanıcılar için ortam döşemelerini göster"
+  },
+  "disconnected_banner": "Sunucuyla bağlantı kesildi.",
+  "error": {
+    "call_not_found": "Çağrı bulunamadı",
+    "call_not_found_description": "<0>Bu bağlantı mevcut herhangi bir çağrıya ait görünmüyor. Doğru bağlantıya sahip olduğunuzu kontrol edin veya <1> yeni bir bağlantı oluşturun</1>. </0>",
+    "connection_lost": "Bağlantı kesildi",
+    "connection_lost_description": "Çağrıdan bağlantınız kesildi.",
+    "e2ee_unsupported": "Uyumsuz Tarayıcı",
+    "e2ee_unsupported_description": "İnternet tarayıcınız şifreli aramaları desteklemiyor. Desteklenen tarayıcılar arasında Chrome, Safari ve Firefox 117+ bulunur.",
+    "generic": "Bir şeyler ters gitti",
+    "generic_description": "Hata ayıklama günlüklerini göndermeniz sorunu tespit etmemizde yardımcı olacaktır.",
+    "open_elsewhere": "Başka bir sekmede açıldı",
+    "open_elsewhere_description": "{{brand}} başka bir sekmede açıldı. Bu doğru değilse, sayfayı yeniden yüklemeyi deneyin."
+  },
+  "group_call_loader": {
+    "banned_body": "Odaya girmeniz yasaklandı.",
+    "banned_heading": "Yasaklandı",
+    "call_ended_body": "Aramadan çıkarıldınız.",
+    "call_ended_heading": "Arama sonlandırıldı",
+    "knock_reject_body": "Katılma isteğiniz reddedildi.",
+    "knock_reject_heading": "Erişim reddedildi",
+    "reason": "Neden: {{reason}}"
+  },
+  "hangup_button_label": "Aramayı sonlandır",
+  "header_label": "Element Call Ana Sayfa",
+  "header_participants_label": "Katılımcılar",
+  "invite_modal": {
+    "link_copied_toast": "Bağlantı panoya kopyalandı",
+    "title": "Bu görüşmeye davet edin"
   },
   "join_existing_call_modal": {
+    "join_button": "Evet, aramaya katıl",
     "text": "Bu arama zaten var, katılmak ister misiniz?",
     "title": "Mevcut aramaya katıl?"
   },
+  "layout_grid_label": "Izgara",
+  "layout_spotlight_label": "İlgi Odağı",
   "lobby": {
-    "join_button": "Aramaya katıl"
+    "ask_to_join": "Aramaya katılma isteği gönder",
+    "join_as_guest": "Misafir olarak katıl",
+    "join_button": "Aramaya katıl",
+    "leave_button": "Son aramalara dön",
+    "waiting_for_invite": "İstek gönderildi! Katılmak için izin verilmesi bekleniyor…"
   },
+  "log_in": "Giriş yap",
   "logging_in": "Giriliyor…",
   "login_auth_links": "<0>Hesap oluştur</0> yahut <2>Konuk olarak gir</2>",
+  "login_auth_links_prompt": "Henüz kaydolmadınız mı?",
+  "login_subheading": "Element'e devam etmek için",
   "login_title": "Gir",
+  "microphone_off": "Mikrofon kapalı",
+  "microphone_on": "Mikrofon açık",
+  "mute_microphone_button_label": "Mikrofonu sessize al",
+  "participant_count_one": "{{count, number}}",
+  "participant_count_other": "{{count, number}}",
+  "qr_code": "QR Kodu",
+  "rageshake_button_error_caption": "Günlükleri göndermeyi yeniden dene",
   "rageshake_request_modal": {
     "body": "Bu aramadaki başka bir kullanıcı sorun yaşıyor. Sorunu daha iyi çözebilmemiz için hata ayıklama kütüğünü almak isteriz.",
     "title": "Hata ayıklama kütük istemi"
   },
   "rageshake_send_logs": "Hata ayıklama kütüğünü gönder",
   "rageshake_sending": "Gönderiliyor…",
+  "rageshake_sending_logs": "Hata ayıklama günlükleri gönderiliyor...",
+  "rageshake_sent": "Teşekkürler!",
   "recaptcha_dismissed": "reCAPTCHA atlandı",
   "recaptcha_not_loaded": "reCAPTCHA yüklenmedi",
   "register": {
@@ -45,13 +144,66 @@
   },
   "register_auth_links": "<0>Mevcut hesabınız mı var?</0><1><0>Gir</0> yahut <2>Konuk girişi</2></1>",
   "register_confirm_password_label": "Parolayı tekrar edin",
+  "register_heading": "Hesabınızı Oluşturun",
   "return_home_button": "Ev ekranına geri dön",
+  "room_auth_view_continue_button": "Devam et",
   "screenshare_button_label": "Ekran paylaş",
   "settings": {
+    "audio_tab": {
+      "effect_volume_description": "Tepkilerin ve el kaldırmaların çaldığı ses düzeyini ayarlayın.",
+      "effect_volume_label": "Ses efekti sesi"
+    },
     "developer_tab_title": "Geliştirici",
+    "devices": {
+      "camera": "Kamera",
+      "camera_numbered": "Kamera {{n}}",
+      "default": "Varsayılan",
+      "default_named": "Varsayılan <2>({{name}})</2>",
+      "microphone": "Mikrofon",
+      "microphone_numbered": "Mikrofon {{n}}",
+      "speaker": "Hoparlör",
+      "speaker_numbered": "Hoparlör {{n}}"
+    },
+    "feedback_tab_body": "Sorun yaşıyorsanız veya yalnızca geri bildirimde bulunmak istiyorsanız, lütfen bize aşağıdan kısa bir açıklama gönderin.",
+    "feedback_tab_description_label": "Görüşleriniz",
     "feedback_tab_h4": "Geri bildirim ver",
-    "feedback_tab_send_logs_label": "Hata ayıklama kütüğünü dahil et"
+    "feedback_tab_send_logs_label": "Hata ayıklama kütüğünü dahil et",
+    "feedback_tab_thank_you": "Teşekkürler, geri bildiriminizi aldık!",
+    "feedback_tab_title": "Geri Bildirim",
+    "opt_in_description": "<0></0><1></1>Bu kutunun işaretini kaldırarak onayınızı geri çekebilirsiniz. Şu anda bir aramadaysanız, bu ayar aramanın sonunda geçerli olacaktır.",
+    "preferences_tab": {
+      "developer_mode_label": "Geliştirici modu",
+      "developer_mode_label_description": "Geliştirici modunu etkinleştir ve geliştirici ayarları sekmesini göster.",
+      "introduction": "Burada daha iyi bir deneyim için ek seçenekleri yapılandırabilirsiniz.",
+      "reactions_play_sound_description": "Birisi aramada tepki gönderdiğinde ses efekti çal.",
+      "reactions_play_sound_label": "Tepki seslerini çal",
+      "reactions_show_description": "Biri tepki gönderdiğinde animasyon göster.",
+      "reactions_show_label": "Tepkileri göster",
+      "show_hand_raised_timer_description": "Bir katılımcı elini kaldırdığında bir zamanlayıcı göster",
+      "show_hand_raised_timer_label": "El kaldırma süresini göster"
+    }
   },
+  "star_rating_input_label_one": "{{count}} yıldız",
+  "star_rating_input_label_other": "{{count}} yıldız",
+  "start_new_call": "Yeni arama başlat",
+  "start_video_button_label": "Videoy paylaşımı Başlat",
+  "stop_screenshare_button_label": "Ekran paylaşılıyor",
+  "stop_video_button_label": "Video paylaşımını durdur",
+  "submitting": "Gönderiliyor...",
+  "switch_camera": "Kamerayı değiştir",
   "unauthenticated_view_body": "Kaydolmadınız mı? <2>Hesap açın</2>",
-  "unauthenticated_view_login_button": "Hesabınıza girin"
+  "unauthenticated_view_login_button": "Hesabınıza girin",
+  "unmute_microphone_button_label": "Mikrofonun sesini aç",
+  "version": "{{productName}} sürüm: {{version}}",
+  "video_tile": {
+    "always_show": "Her zaman göster",
+    "camera_starting": "Video paylaşımı başlatılıyor...",
+    "change_fit_contain": "Çerçeveye sığdır",
+    "collapse": "Daralt",
+    "expand": "Genişlet",
+    "mute_for_me": "Benim için sessize al",
+    "muted_for_me": "Benim için susturulanlar",
+    "volume": "Ses",
+    "waiting_for_media": "Ortam bekleniyor..."
+  }
 }
