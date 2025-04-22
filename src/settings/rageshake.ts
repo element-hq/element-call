@@ -473,11 +473,6 @@ export async function init(): Promise<void> {
 
   // configure loglevel based loggers:
   setLogExtension(logger, global.mx_rage_logger.log);
-  // these are the child/prefixed loggers we want to capture from js-sdk
-  // there doesn't seem to be an easy way to capture all children
-  ["MatrixRTCSession", "MatrixRTCSessionManager"].forEach((loggerName) => {
-    setLogExtension(logger.getChild(loggerName), global.mx_rage_logger.log);
-  });
 
   // intercept console logging so that we can get matrix_sdk logs:
   // this is nasty, but no logging hooks are provided
