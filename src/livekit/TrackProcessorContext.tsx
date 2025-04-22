@@ -7,18 +7,10 @@ Please see LICENSE in the repository root for full details.
 
 import {
   ProcessorWrapper,
+  supportsBackgroundProcessors,
   type BackgroundOptions,
 } from "@livekit/track-processors";
-import {
-  createContext,
-  type FC,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { createContext, type FC, useContext, useEffect, useMemo } from "react";
 import { type LocalVideoTrack } from "livekit-client";
 
 import {
@@ -30,23 +22,23 @@ import { BlurBackgroundTransformer } from "./BlurBackgroundTransformer";
 type ProcessorState = {
   supported: boolean | undefined;
   processor: undefined | ProcessorWrapper<BackgroundOptions>;
-  /**
-   * Call this method to try to initialize a processor.
-   * This only needs to happen if supported is undefined.
-   * If the backgroundBlur setting is set to true this does not need to be called
-   * and the processorState.supported will update automatically to the correct value.
-   */
-  checkSupported: () => void;
 };
+
 const ProcessorContext = createContext<ProcessorState | undefined>(undefined);
 
-export const useTrackProcessor = (): ProcessorState | undefined =>
-  useContext(ProcessorContext);
+export function useTrackProcessor(): ProcessorState {
+  const state = useContext(ProcessorContext);
+  if (state === undefined)
+    throw new Error(
+      "useTrackProcessor must be used within a ProcessorProvider",
+    );
+  return state;
+}
 
 export const useTrackProcessorSync = (
   videoTrack: LocalVideoTrack | null,
 ): void => {
-  const { processor } = useTrackProcessor() || {};
+  const { processor } = useTrackProcessor();
   useEffect(() => {
     if (!videoTrack) return;
     if (processor && !videoTrack.getProcessor()) {
@@ -61,53 +53,28 @@ export const useTrackProcessorSync = (
 interface Props {
   children: JSX.Element;
 }
+
 export const ProcessorProvider: FC<Props> = ({ children }) => {
   // The setting the user wants to have
   const [blurActivated] = useSetting(backgroundBlurSettings);
-
-  // If `ProcessorState.supported` is undefined the user can activate that we want
-  // to have it at least checked (this is useful to show the settings menu properly)
-  // We dont want to try initializing the blur if the user is not even looking at the setting
-  const [shouldCheckSupport, setShouldCheckSupport] = useState(blurActivated);
-
-  // Cache the processor so we only need to initialize it once.
-  const blur = useRef<ProcessorWrapper<BackgroundOptions> | undefined>(
-    undefined,
+  const supported = useMemo(() => supportsBackgroundProcessors(), []);
+  const blur = useMemo(
+    () =>
+      new ProcessorWrapper(
+        new BlurBackgroundTransformer({ blurRadius: 15 }),
+        "background-blur",
+      ),
+    [],
   );
 
-  const checkSupported = useCallback(() => {
-    setShouldCheckSupport(true);
-  }, []);
   // This is the actual state exposed through the context
-  const [processorState, setProcessorState] = useState<ProcessorState>(() => ({
-    supported: false,
-    processor: undefined,
-    checkSupported,
-  }));
-
-  useEffect(() => {
-    if (!shouldCheckSupport) return;
-    try {
-      if (!blur.current) {
-        blur.current = new ProcessorWrapper(
-          new BlurBackgroundTransformer({ blurRadius: 15 }),
-          "background-blur",
-        );
-      }
-      setProcessorState({
-        checkSupported,
-        supported: true,
-        processor: blurActivated ? blur.current : undefined,
-      });
-    } catch (e) {
-      setProcessorState({
-        checkSupported,
-        supported: false,
-        processor: undefined,
-      });
-      logger.error("disable background blur", e);
-    }
-  }, [blurActivated, checkSupported, shouldCheckSupport]);
+  const processorState = useMemo(
+    () => ({
+      supported,
+      processor: supported && blurActivated ? blur : undefined,
+    }),
+    [supported, blurActivated, blur],
+  );
 
   return (
     <ProcessorContext.Provider value={processorState}>

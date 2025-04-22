@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactNode, useEffect, useState } from "react";
+import { type FC, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
-import { Root as Form ,Separator} from "@vector-im/compound-web";
+import { Root as Form, Separator } from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
 
 import { Modal } from "../Modal";
@@ -69,8 +69,7 @@ export const SettingsModal: FC<Props> = ({
 
   // Generate a `Checkbox` input to turn blur on or off.
   const BlurCheckbox: React.FC = (): ReactNode => {
-    const { supported, checkSupported } = useTrackProcessor() || {};
-    useEffect(() => checkSupported?.(), [checkSupported]);
+    const { supported } = useTrackProcessor();
 
     const [blurActive, setBlurActive] = useSetting(backgroundBlurSetting);
 

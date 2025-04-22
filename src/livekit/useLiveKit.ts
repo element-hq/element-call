@@ -88,7 +88,7 @@ export function useLiveKit(
   const devices = useMediaDevices();
   const initialDevices = useRef<MediaDevices>(devices);
 
-  const { processor } = useTrackProcessor() || {};
+  const { processor } = useTrackProcessor();
   const initialProcessor = useInitial(() => processor);
   const roomOptions = useMemo(
     (): RoomOptions => ({
