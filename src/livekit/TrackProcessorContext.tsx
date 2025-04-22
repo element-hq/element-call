@@ -90,7 +90,7 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
     try {
       if (!blur.current) {
         blur.current = new ProcessorWrapper(
-          new BlurBackgroundTransformer({}),
+          new BlurBackgroundTransformer({ blurRadius: 15 }),
           "background-blur",
         );
       }
