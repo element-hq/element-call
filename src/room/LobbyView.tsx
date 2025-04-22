@@ -120,7 +120,7 @@ export const LobbyView: FC<Props> = ({
       muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
   );
 
-  const { processor } = useTrackProcessor() || {};
+  const { processor } = useTrackProcessor();
 
   const initialProcessor = useInitial(() => processor);
   const localTrackOptions = useMemo<CreateLocalTracksOptions>(
