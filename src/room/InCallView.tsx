@@ -98,7 +98,7 @@ import { useSwitchCamera } from "./useSwitchCamera";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
-  debugTileLayout as debugTileLayoutSetting,
+  debugTileLayout as debugTileLayoutSetting, developerMode as settingsDeveloperMode,
   useExperimentalToDeviceTransportSetting as useToDeviceTransportSetting,
   useSetting,
 } from "../settings/settings";
@@ -230,14 +230,16 @@ export const InCallView: FC<InCallViewProps> = ({
     (enabled) => setDidFallbackToRoomKey(enabled.room),
   );
   const [toDeviceEncryptionSetting] = useSetting(useToDeviceTransportSetting);
+  const [developerMode] = useSetting(settingsDeveloperMode);
   const encryptionSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
 
   const showToDeviceEncryption = useMemo(
     () =>
+      developerMode &&
       toDeviceEncryptionSetting &&
       encryptionSystem.kind === E2eeType.PER_PARTICIPANT &&
       !didFallbackToRoomKey,
-    [encryptionSystem.kind, didFallbackToRoomKey, toDeviceEncryptionSetting],
+    [encryptionSystem.kind, didFallbackToRoomKey, toDeviceEncryptionSetting, developerMode],
   );
 
   const toggleMicrophone = useCallback(
