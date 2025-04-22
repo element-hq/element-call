@@ -54,7 +54,7 @@ services:
   element-web:
     image: ghcr.io/element-hq/element-web:develop
     volumes:
-      - ./backend/ew.test.config.json:/app/config.json
+      - ./backend/ew.test.config.json:/app/config.json:Z
     environment:
       ELEMENT_WEB_PORT: 81
     ports:
