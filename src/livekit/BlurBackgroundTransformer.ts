@@ -54,9 +54,14 @@ export class BlurBackgroundTransformer extends BackgroundTransformer {
         delegate: "GPU",
         ...this.options.segmenterOptions,
       },
+      canvas: this.canvas,
       runningMode: "VIDEO",
       outputCategoryMask: true,
       outputConfidenceMasks: false,
     });
+
+    if (this.options.blurRadius) {
+      this.gl?.setBlurRadius(this.options.blurRadius);
+    }
   }
 }
