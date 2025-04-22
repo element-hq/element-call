@@ -2561,13 +2561,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mediapipe/tasks-vision@npm:0.10.14":
-  version: 0.10.14
-  resolution: "@mediapipe/tasks-vision@npm:0.10.14"
-  checksum: 10c0/dea1d094153fcb91e76d1a266b6a79baf9cbdd106a786adc0236ded87099b5242c89e0e5b73a3f5d57d7e23ff657dd37f40b9261e12a330762041cd9549fadcc
-  languageName: node
-  linkType: hard
-
 "@mediapipe/tasks-vision@npm:^0.10.18":
   version: 0.10.21
   resolution: "@mediapipe/tasks-vision@npm:0.10.21"
