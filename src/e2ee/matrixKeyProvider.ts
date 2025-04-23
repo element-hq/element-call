@@ -16,7 +16,7 @@ export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
 
   public constructor() {
-    super({ ratchetWindowSize: 0, keyringSize: 256 });
+    super({ ratchetWindowSize: 10, keyringSize: 256 });
   }
 
   public setRTCSession(rtcSession: MatrixRTCSession): void {
