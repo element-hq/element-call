@@ -192,11 +192,6 @@ To use it, create a local config by, e.g.,
 The `config.devenv.json` config should work with the backend development
 environment as outlined in the next section out of box.
 
-> [!NOTE]
-> Be aware, that this `config.devenv.json` is exposing a deprecated fallback
-> LiveKit config key. If the homeserver advertises SFU backend via
-> `.well-known/matrix/client` this has precedence.
-
 You're now ready to launch the development server:
 
 ```sh
