@@ -93,7 +93,7 @@ the example above, this results in:
 
 Using Nginx, you can achieve this by:
 
-```nginx configuration file`
+```nginx configuration file
 server {
     ...
     location ^~ /livekit/jwt/ {
