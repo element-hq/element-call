@@ -97,7 +97,7 @@
     "i18next-parser": "^9.1.0",
     "jsdom": "^26.0.0",
     "knip": "^5.27.2",
-    "livekit-client": "2.10.0",
+    "livekit-client": "^2.11.3",
     "lodash-es": "^4.17.21",
     "loglevel": "^1.9.1",
     "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#19b1b901f575755d29d1fe03ca48cbf7c1cae05c",
