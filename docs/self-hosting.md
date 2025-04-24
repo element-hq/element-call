@@ -93,7 +93,7 @@ the example above, this results in:
 
 Using Nginx, you can achieve this by:
 
-```jsonc
+```nginx configuration file`
 server {
     ...
     location ^~ /livekit/jwt/ {
@@ -203,7 +203,7 @@ Because Element Call uses client-side routing, your server must be able to route
 any requests to non-existing paths back to `/index.html`. For example, in Nginx
 you can achieve this with the `try_files` directive:
 
-```jsonc
+```nginx configuration file
 server {
     ...
     location / {
