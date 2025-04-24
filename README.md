@@ -225,6 +225,13 @@ yarn backend
 # podman-compose -f dev-backend-docker-compose.yml up
 ```
 
+> [!NOTE]
+> To ensure your local development frontend functions properly, you’ll need to add
+> certificate exceptions in your browser for both `https://localhost:3000` and
+> `https://synapse.localhost/.well-known/matrix/client`. The easiest way to do this
+> is to simply copy and paste each URL into your browser’s address bar and follow
+> the prompts to add the exception.
+
 ### Playwright tests
 
 Our Playwright tests run automatically as part of our CI along with our other
