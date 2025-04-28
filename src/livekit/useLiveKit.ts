@@ -9,7 +9,7 @@ import {
   ConnectionState,
   type E2EEManagerOptions,
   ExternalE2EEKeyProvider,
-  type LocalVideoTrack,
+  LocalVideoTrack,
   Room,
   type RoomOptions,
   Track,
@@ -18,6 +18,8 @@ import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { useObservable, useObservableEagerState } from "observable-hooks";
+import { map } from "rxjs";
 
 import { defaultLiveKitOptions } from "./options";
 import { type SFUConfig } from "./openIDSFU";
@@ -39,6 +41,7 @@ import {
   useTrackProcessorSync,
 } from "./TrackProcessorContext";
 import { useInitial } from "../useInitial";
+import { observeTrackReference$ } from "../state/MediaViewModel";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -132,20 +135,24 @@ export function useLiveKit(
     return r;
   }, [roomOptions, e2eeSystem]);
 
-  const videoTrack = useMemo(
-    () =>
-      Array.from(room.localParticipant.videoTrackPublications.values()).find(
-        (v) => v.source === Track.Source.Camera,
-      )?.track as LocalVideoTrack | null,
-    [
-      room.localParticipant.videoTrackPublications,
-      // We need to update on map changes
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      room.localParticipant.videoTrackPublications.keys(),
-    ],
+  // Sync the requested track processors with LiveKit
+  useTrackProcessorSync(
+    useObservableEagerState(
+      useObservable(
+        (room$) =>
+          observeTrackReference$(
+            room$.pipe(map(([room]) => room.localParticipant)),
+            Track.Source.Camera,
+          ).pipe(
+            map((trackRef) => {
+              const track = trackRef?.publication?.track;
+              return track instanceof LocalVideoTrack ? track : null;
+            }),
+          ),
+        [room],
+      ),
+    ),
   );
-
-  useTrackProcessorSync(videoTrack);
 
   const connectionState = useECConnectionState(
     {
