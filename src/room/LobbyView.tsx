@@ -156,10 +156,12 @@ export const LobbyView: FC<Props> = ({
 
   const tracks = usePreviewTracks(localTrackOptions, onError);
 
-  const videoTrack = useMemo(() => {
-    const track = tracks?.find((t) => t.kind === Track.Kind.Video);
-    return track as LocalVideoTrack | null;
-  }, [tracks]);
+  const videoTrack = useMemo(
+    () =>
+      (tracks?.find((t) => t.kind === Track.Kind.Video) ??
+        null) as LocalVideoTrack | null,
+    [tracks],
+  );
   useTrackProcessorSync(videoTrack);
   const showSwitchCamera = useShowSwitchCamera(
     useObservable(
