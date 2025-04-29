@@ -96,6 +96,8 @@ export const videoInput = new Setting<string | undefined>(
   undefined,
 );
 
+export const backgroundBlur = new Setting<boolean>("background-blur", false);
+
 export const showHandRaisedTimer = new Setting<boolean>(
   "hand-raised-show-timer",
   false,
