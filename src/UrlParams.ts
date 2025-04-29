@@ -124,9 +124,15 @@ export interface UrlParams {
    */
   password: string | null;
   /**
-   * Whether we the app should use per participant keys for E2EE.
+   * Whether the app should use per participant keys for E2EE.
    */
   perParticipantE2EE: boolean;
+  /**
+   * Whether the global JS controls for audio output devices should be enabled,
+   * allowing the list of output devices to be controlled by the app hosting
+   * Element Call.
+   */
+  controlledOutput: boolean;
   /**
    * Setting this flag skips the lobby and brings you in the call directly.
    * In the widget this can be combined with preload to pass the device settings
@@ -156,19 +162,16 @@ export interface UrlParams {
    * creating a spa link.
    */
   homeserver: string | null;
-
   /**
    * The user's intent with respect to the call.
    * e.g. if they clicked a Start Call button, this would be `start_call`.
    * If it was a Join Call button, it would be `join_existing`.
    */
   intent: string | null;
-
   /**
    * The rageshake submit URL. This is only used in the embedded package of Element Call.
    */
   rageshakeSubmitUrl: string | null;
-
   /**
    * The Sentry DSN. This is only used in the embedded package of Element Call.
    */
@@ -281,6 +284,7 @@ export const getUrlParams = (
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
+    controlledOutput: parser.getFlagParam("controlledMediaDevices"),
     skipLobby: parser.getFlagParam(
       "skipLobby",
       isWidget && intent === UserIntent.StartNewCall,

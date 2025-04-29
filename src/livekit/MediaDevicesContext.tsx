@@ -1,5 +1,5 @@
 /*
-Copyright 2023, 2024 New Vector Ltd.
+Copyright 2023-2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -18,7 +18,7 @@ import {
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
 import { map, startWith } from "rxjs";
-import { useObservableEagerState } from "observable-hooks";
+import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -29,6 +29,7 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   type Setting,
 } from "../settings/settings";
+import { type OutputDevice, setOutputDevices } from "../controls";
 
 export const EARPIECE_CONFIG_ID = "earpiece-id";
 
@@ -59,12 +60,16 @@ export interface MediaDevice {
   select: (deviceId: string) => void;
 }
 
-export interface MediaDevices {
+interface InputDevices {
   audioInput: MediaDevice;
-  audioOutput: MediaDevice;
   videoInput: MediaDevice;
   startUsingDeviceNames: () => void;
   stopUsingDeviceNames: () => void;
+  usingNames: boolean;
+}
+
+export interface MediaDevices extends Omit<InputDevices, "usingNames"> {
+  audioOutput: MediaDevice;
 }
 
 function useMediaDevice(
@@ -215,11 +220,7 @@ export const devicesStub: MediaDevices = {
 
 export const MediaDevicesContext = createContext<MediaDevices>(devicesStub);
 
-interface Props {
-  children: JSX.Element;
-}
-
-export const MediaDevicesProvider: FC<Props> = ({ children }) => {
+function useInputDevices(): InputDevices {
   // Counts the number of callers currently using device names.
   const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
   const usingNames = numCallersUsingNames > 0;
@@ -227,11 +228,6 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const audioInput = useMediaDevice(
     "audioinput",
     audioInputSetting,
-    usingNames,
-  );
-  const audioOutput = useMediaDevice(
-    "audiooutput",
-    audioOutputSetting,
     usingNames,
   );
   const videoInput = useMediaDevice(
@@ -248,6 +244,115 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
     () => setNumCallersUsingNames((n) => n - 1),
     [setNumCallersUsingNames],
   );
+
+  return {
+    audioInput,
+    videoInput,
+    startUsingDeviceNames,
+    stopUsingDeviceNames,
+    usingNames,
+  };
+}
+
+interface Props {
+  children: JSX.Element;
+}
+
+export const MediaDevicesProvider: FC<Props> = ({ children }) => {
+  const {
+    audioInput,
+    videoInput,
+    startUsingDeviceNames,
+    stopUsingDeviceNames,
+    usingNames,
+  } = useInputDevices();
+
+  const audioOutput = useMediaDevice(
+    "audiooutput",
+    audioOutputSetting,
+    usingNames,
+  );
+
+  const context: MediaDevices = useMemo(
+    () => ({
+      audioInput,
+      audioOutput,
+      videoInput,
+      startUsingDeviceNames,
+      stopUsingDeviceNames,
+    }),
+    [
+      audioInput,
+      audioOutput,
+      videoInput,
+      startUsingDeviceNames,
+      stopUsingDeviceNames,
+    ],
+  );
+
+  return (
+    <MediaDevicesContext.Provider value={context}>
+      {children}
+    </MediaDevicesContext.Provider>
+  );
+};
+
+function useControlledOutput(): MediaDevice {
+  const available = useObservableEagerState(
+    useObservable(() =>
+      setOutputDevices.pipe(
+        startWith<OutputDevice[]>([]),
+        map(
+          (devices) =>
+            new Map<string, DeviceLabel>(
+              devices.map(({ id, name }) => [id, { type: "name", name }]),
+            ),
+        ),
+      ),
+    ),
+  );
+  const [preferredId, select] = useSetting(audioOutputSetting);
+  const selectedId = useMemo(() => {
+    if (available.size) {
+      // If the preferred device is available, use it. Or if every available
+      // device ID is falsy, the browser is probably just being paranoid about
+      // fingerprinting and we should still try using the preferred device.
+      // Worst case it is not available and the browser will gracefully fall
+      // back to some other device for us when requesting the media stream.
+      // Otherwise, select the first available device.
+      return (preferredId !== undefined && available.has(preferredId)) ||
+        (available.size === 1 && available.has(""))
+        ? preferredId
+        : available.keys().next().value;
+    }
+    return undefined;
+  }, [available, preferredId]);
+  useEffect(() => {
+    if (selectedId !== undefined)
+      window.controls.onOutputDeviceSelect?.(selectedId);
+  }, [selectedId]);
+
+  return useMemo(
+    () => ({
+      available,
+      selectedId,
+      selectedGroupId: undefined,
+      select,
+    }),
+    [available, selectedId, select],
+  );
+}
+
+export const ControlledOutputMediaDevicesProvider: FC<Props> = ({
+  children,
+}) => {
+  const {
+    audioInput,
+    videoInput,
+    startUsingDeviceNames,
+    stopUsingDeviceNames,
+  } = useInputDevices();
+  const audioOutput = useControlledOutput();
 
   const context: MediaDevices = useMemo(
     () => ({
