@@ -47,7 +47,7 @@
     "@opentelemetry/sdk-trace-base": "^1.25.1",
     "@opentelemetry/sdk-trace-web": "^1.9.1",
     "@opentelemetry/semantic-conventions": "^1.25.1",
-    "@playwright/test": "^1.51.0",
+    "@playwright/test": "^1.52.0",
     "@radix-ui/react-dialog": "^1.0.4",
     "@radix-ui/react-slider": "^1.1.2",
     "@radix-ui/react-visually-hidden": "^1.0.3",
