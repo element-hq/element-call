@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useState } from "react";
+import { type FC, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
-import { Root as Form } from "@vector-im/compound-web";
+import { Root as Form, Separator } from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
 
 import { Modal } from "../Modal";
@@ -24,12 +24,15 @@ import { widget } from "../widget";
 import {
   useSetting,
   soundEffectVolumeSetting,
+  backgroundBlur as backgroundBlurSetting,
   developerMode,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
+import { useTrackProcessor } from "../livekit/TrackProcessorContext";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
+import { FieldRow, InputField } from "../input/Input";
 import { useSubmitRageshake } from "./submit-rageshake";
 
 type SettingsTab =
@@ -63,6 +66,33 @@ export const SettingsModal: FC<Props> = ({
   livekitRoom,
 }) => {
   const { t } = useTranslation();
+
+  // Generate a `Checkbox` input to turn blur on or off.
+  const BlurCheckbox: React.FC = (): ReactNode => {
+    const { supported } = useTrackProcessor();
+
+    const [blurActive, setBlurActive] = useSetting(backgroundBlurSetting);
+
+    return (
+      <>
+        <h4>{t("settings.background_blur_header")}</h4>
+
+        <FieldRow>
+          <InputField
+            id="activateBackgroundBlur"
+            label={t("settings.background_blur_label")}
+            description={
+              supported ? "" : t("settings.blur_not_supported_by_browser")
+            }
+            type="checkbox"
+            checked={!!blurActive}
+            onChange={(b): void => setBlurActive(b.target.checked)}
+            disabled={!supported}
+          />
+        </FieldRow>
+      </>
+    );
+  };
 
   const devices = useMediaDevices();
   useMediaDeviceNames(devices, open);
@@ -113,13 +143,17 @@ export const SettingsModal: FC<Props> = ({
     key: "video",
     name: t("common.video"),
     content: (
-      <Form>
-        <DeviceSelection
-          devices={devices.videoInput}
-          title={t("settings.devices.camera")}
-          numberedLabel={(n) => t("settings.devices.camera_numbered", { n })}
-        />
-      </Form>
+      <>
+        <Form>
+          <DeviceSelection
+            devices={devices.videoInput}
+            title={t("settings.devices.camera")}
+            numberedLabel={(n) => t("settings.devices.camera_numbered", { n })}
+          />
+        </Form>
+        <Separator />
+        <BlurCheckbox />
+      </>
     ),
   };
 

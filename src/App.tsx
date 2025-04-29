@@ -22,6 +22,7 @@ import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
+import { ProcessorProvider } from "./livekit/TrackProcessorContext";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -72,22 +73,24 @@ export const App: FC = () => {
               <Suspense fallback={null}>
                 <ClientProvider>
                   <MediaDevicesProvider>
-                    <Sentry.ErrorBoundary
-                      fallback={(error) => (
-                        <ErrorPage error={error} widget={widget} />
-                      )}
-                    >
-                      <DisconnectedBanner />
-                      <Routes>
-                        <SentryRoute path="/" element={<HomePage />} />
-                        <SentryRoute path="/login" element={<LoginPage />} />
-                        <SentryRoute
-                          path="/register"
-                          element={<RegisterPage />}
-                        />
-                        <SentryRoute path="*" element={<RoomPage />} />
-                      </Routes>
-                    </Sentry.ErrorBoundary>
+                    <ProcessorProvider>
+                      <Sentry.ErrorBoundary
+                        fallback={(error) => (
+                          <ErrorPage error={error} widget={widget} />
+                        )}
+                      >
+                        <DisconnectedBanner />
+                        <Routes>
+                          <SentryRoute path="/" element={<HomePage />} />
+                          <SentryRoute path="/login" element={<LoginPage />} />
+                          <SentryRoute
+                            path="/register"
+                            element={<RegisterPage />}
+                          />
+                          <SentryRoute path="*" element={<RoomPage />} />
+                        </Routes>
+                      </Sentry.ErrorBoundary>
+                    </ProcessorProvider>
                   </MediaDevicesProvider>
                 </ClientProvider>
               </Suspense>
