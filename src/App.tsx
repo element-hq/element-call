@@ -19,10 +19,14 @@ import { ClientProvider } from "./ClientContext";
 import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
-import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
+import {
+  ControlledOutputMediaDevicesProvider,
+  MediaDevicesProvider,
+} from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
 import { ProcessorProvider } from "./livekit/TrackProcessorContext";
+import { useUrlParams } from "./UrlParams";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -51,6 +55,7 @@ const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
 };
 
 export const App: FC = () => {
+  const { controlledOutput } = useUrlParams();
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     Initializer.init()
@@ -62,6 +67,20 @@ export const App: FC = () => {
       .catch(logger.error);
   });
 
+  const inner = (
+    <Sentry.ErrorBoundary
+      fallback={(error) => <ErrorPage error={error} widget={widget} />}
+    >
+      <DisconnectedBanner />
+      <Routes>
+        <SentryRoute path="/" element={<HomePage />} />
+        <SentryRoute path="/login" element={<LoginPage />} />
+        <SentryRoute path="/register" element={<RegisterPage />} />
+        <SentryRoute path="*" element={<RoomPage />} />
+      </Routes>
+    </Sentry.ErrorBoundary>
+  );
+
   return (
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -72,26 +91,15 @@ export const App: FC = () => {
             {loaded ? (
               <Suspense fallback={null}>
                 <ClientProvider>
-                  <MediaDevicesProvider>
-                    <ProcessorProvider>
-                      <Sentry.ErrorBoundary
-                        fallback={(error) => (
-                          <ErrorPage error={error} widget={widget} />
-                        )}
-                      >
-                        <DisconnectedBanner />
-                        <Routes>
-                          <SentryRoute path="/" element={<HomePage />} />
-                          <SentryRoute path="/login" element={<LoginPage />} />
-                          <SentryRoute
-                            path="/register"
-                            element={<RegisterPage />}
-                          />
-                          <SentryRoute path="*" element={<RoomPage />} />
-                        </Routes>
-                      </Sentry.ErrorBoundary>
-                    </ProcessorProvider>
-                  </MediaDevicesProvider>
+                  <ProcessorProvider>
+                    {controlledOutput ? (
+                      <ControlledOutputMediaDevicesProvider>
+                        {inner}
+                      </ControlledOutputMediaDevicesProvider>
+                    ) : (
+                      <MediaDevicesProvider>{inner}</MediaDevicesProvider>
+                    )}
+                  </ProcessorProvider>
                 </ClientProvider>
               </Suspense>
             ) : (
