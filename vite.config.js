@@ -82,11 +82,11 @@ export default defineConfig(({ mode, packageType }) => {
   return {
     server: {
       port: 3000,
-       fs: { allow },
-       https: {
-         key: fs.readFileSync('./backend/dev_tls_m.localhost.key'),
-         cert: fs.readFileSync('./backend/dev_tls_m.localhost.crt'),
-       },	
+      fs: { allow },
+      https: {
+        key: fs.readFileSync("./backend/dev_tls_m.localhost.key"),
+        cert: fs.readFileSync("./backend/dev_tls_m.localhost.crt"),
+      },
     },
     build: {
       sourcemap: true,
