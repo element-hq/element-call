@@ -207,12 +207,19 @@ See also:
 A docker compose file `dev-backend-docker-compose.yml` is provided to start the
 whole stack of components which is required for a local development environment:
 
-- Minimum Synapse Setup (servername: `synapse.localhost`)
-- LiveKit JWT Service (Note requires Federation API and hence a TLS reverse proxy)
-- Minimum TLS reverse proxy (servername: `synapse.localhost`) Note certificates
-  are valid for at least 10 years from now
+- Minimum Synapse Setup (servername: `synapse.m.localhost`)
+- LiveKit Authorization Service (Note requires Federation API and hence a TLS reverse proxy)
 - Minimum LiveKit SFU Setup using dev defaults for config
 - Redis db for completeness
+- Minimum `localhost` Certificate Authority (CA) for Transport Layer Security (TLS)
+  - Hostnames: `m.localhost`, `*.m.localhost` 
+  - Add [./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt) to your web browsers trusted 
+    certificates
+- Minimum TLS reverse proxy for
+  - Synapse homeserver: `synapse.m.localhost`
+  - MatrixRTC backend: `matrix-rtc.m.localhost`
+  - Local Element Call development `call.m.localhost`
+  - Note certificates will expire on Thu, 03 May 2035 10:32:02 GMT
 
 These use a test 'secret' published in this repository, so this must be used
 only for local development and **_never be exposed to the public Internet._**
@@ -226,11 +233,14 @@ yarn backend
 ```
 
 > [!NOTE]
-> To ensure your local development frontend functions properly, you’ll need to add
-> certificate exceptions in your browser for both `https://localhost:3000` and
-> `https://synapse.localhost/.well-known/matrix/client`. The easiest way to do this
-> is to simply copy and paste each URL into your browser’s address bar and follow
-> the prompts to add the exception.
+> To ensure your local development frontend functions properly, you’ll need to
+> add certificate exceptions in your browser for `https://localhost:3000`,
+> `https://matrix-rtc.m.localhost/livekit/jwt/healthz` and
+> `https://synapse.m.localhost/.well-known/matrix/client`. This can be either
+> done by adding the minimum localhost CA
+> ([./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt)) to your web
+> browsers trusted certificates or by simply copying and pasting each URL into
+> your browser’s address bar and follow the prompts to add the exception.
 
 ### Playwright tests
 
