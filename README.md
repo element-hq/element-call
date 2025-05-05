@@ -212,8 +212,8 @@ whole stack of components which is required for a local development environment:
 - Minimum LiveKit SFU Setup using dev defaults for config
 - Redis db for completeness
 - Minimum `localhost` Certificate Authority (CA) for Transport Layer Security (TLS)
-  - Hostnames: `m.localhost`, `*.m.localhost` 
-  - Add [./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt) to your web browsers trusted 
+  - Hostnames: `m.localhost`, `*.m.localhost`
+  - Add [./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt) to your web browsers trusted
     certificates
 - Minimum TLS reverse proxy for
   - Synapse homeserver: `synapse.m.localhost`
