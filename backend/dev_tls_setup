@@ -31,7 +31,8 @@ extendedKeyUsage = serverAuth
 subjectAltName = @alt_names
 
 [alt_names]
-DNS.1 = m.localhost
-DNS.2 = *.m.localhost
+DNS.1 = localhost
+DNS.2 = m.localhost
+DNS.3 = *.m.localhost
 EOF
 )
