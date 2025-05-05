@@ -9,6 +9,7 @@ import {
   ConnectionState,
   type E2EEManagerOptions,
   ExternalE2EEKeyProvider,
+  LocalVideoTrack,
   Room,
   type RoomOptions,
   Track,
@@ -17,6 +18,8 @@ import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { useObservable, useObservableEagerState } from "observable-hooks";
+import { map } from "rxjs";
 
 import { defaultLiveKitOptions } from "./options";
 import { type SFUConfig } from "./openIDSFU";
@@ -33,6 +36,12 @@ import {
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 import { E2eeType } from "../e2ee/e2eeType";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  useTrackProcessor,
+  useTrackProcessorSync,
+} from "./TrackProcessorContext";
+import { useInitial } from "../useInitial";
+import { observeTrackReference$ } from "../state/MediaViewModel";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -82,12 +91,15 @@ export function useLiveKit(
   const devices = useMediaDevices();
   const initialDevices = useRef<MediaDevices>(devices);
 
+  const { processor } = useTrackProcessor();
+  const initialProcessor = useInitial(() => processor);
   const roomOptions = useMemo(
     (): RoomOptions => ({
       ...defaultLiveKitOptions,
       videoCaptureDefaults: {
         ...defaultLiveKitOptions.videoCaptureDefaults,
         deviceId: initialDevices.current.videoInput.selectedId,
+        processor: initialProcessor,
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
@@ -98,7 +110,7 @@ export function useLiveKit(
       },
       e2ee: e2eeOptions,
     }),
-    [e2eeOptions],
+    [e2eeOptions, initialProcessor],
   );
 
   // Store if audio/video are currently updating. If to prohibit unnecessary calls
@@ -122,6 +134,25 @@ export function useLiveKit(
     });
     return r;
   }, [roomOptions, e2eeSystem]);
+
+  // Sync the requested track processors with LiveKit
+  useTrackProcessorSync(
+    useObservableEagerState(
+      useObservable(
+        (room$) =>
+          observeTrackReference$(
+            room$.pipe(map(([room]) => room.localParticipant)),
+            Track.Source.Camera,
+          ).pipe(
+            map((trackRef) => {
+              const track = trackRef?.publication?.track;
+              return track instanceof LocalVideoTrack ? track : null;
+            }),
+          ),
+        [room],
+      ),
+    ),
+  );
 
   const connectionState = useECConnectionState(
     {
@@ -198,6 +229,7 @@ export function useLiveKit(
                 audioMuteUpdating.current = true;
                 trackPublication = await participant.setMicrophoneEnabled(
                   buttonEnabled.current.audio,
+                  room.options.audioCaptureDefaults,
                 );
                 audioMuteUpdating.current = false;
                 break;
@@ -205,6 +237,7 @@ export function useLiveKit(
                 videoMuteUpdating.current = true;
                 trackPublication = await participant.setCameraEnabled(
                   buttonEnabled.current.video,
+                  room.options.videoCaptureDefaults,
                 );
                 videoMuteUpdating.current = false;
                 break;
