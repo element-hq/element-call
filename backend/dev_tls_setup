@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Step 1: Create a Root CA key and cert
+openssl genrsa -out dev_tls_local-ca.key 2048
+openssl req -x509 -new -nodes \
+  -days 3650 \
+  -subj "/CN=Element Call Dev CA" \
+  -key dev_tls_local-ca.key \
+  -out dev_tls_local-ca.crt \
+  -sha256 -addext "basicConstraints=CA:TRUE"
+
+# Step 2: Create a private key and CSR for *.m.localhost
+openssl req -new -nodes -newkey rsa:2048 \
+  -keyout dev_tls_m.localhost.key \
+  -out dev_tls_m.localhost.csr \
+  -subj "/CN=*.m.localhost"
+
+# Step 3: Sign the CSR with your CA
+openssl x509 \
+  -req -in dev_tls_m.localhost.csr \
+  -CA dev_tls_local-ca.crt -CAkey dev_tls_local-ca.key \
+  -CAcreateserial \
+  -out dev_tls_m.localhost.crt \
+  -days 3650 \
+  -sha256 \
+  -extfile <( cat <<EOF
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = localhost
+DNS.2 = m.localhost
+DNS.3 = *.m.localhost
+EOF
+)
