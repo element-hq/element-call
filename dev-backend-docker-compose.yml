@@ -7,7 +7,7 @@ services:
     hostname: auth-server
     environment:
       - LK_JWT_PORT=8080
-      - LIVEKIT_URL=ws://matrix-rtc.localhost/livekit/sfu
+      - LIVEKIT_URL=wss://matrix-rtc.m.localhost/livekit/sfu
       - LIVEKIT_KEY=devkey
       - LIVEKIT_SECRET=secret
       # If the configured homeserver runs on localhost, it'll probably be using
@@ -83,7 +83,7 @@ services:
 
   nginx:
     #  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout tls_localhost_key.pem -out tls_localhost_cert.pem -subj "/C=GB/ST=London/L=London/O=Alros/OU=IT Department/CN=localhost"
-    hostname: synapse.localhost
+    hostname: synapse.m.localhost
     image: nginx:latest
     volumes:
       - ./backend/dev_nginx.conf:/etc/nginx/conf.d/default.conf:Z
