@@ -136,6 +136,11 @@ export class Initializer {
       lookup: () => getUrlParams().lang ?? undefined,
     });
 
+    // Synchronise the HTML lang attribute with the i18next language
+    i18n.on("languageChanged", (lng) => {
+      document.documentElement.lang = lng;
+    });
+
     await i18n
       .use(Backend)
       .use(languageDetector)
