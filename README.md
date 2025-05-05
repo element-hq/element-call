@@ -218,7 +218,7 @@ whole stack of components which is required for a local development environment:
 - Minimum TLS reverse proxy for
   - Synapse homeserver: `synapse.m.localhost`
   - MatrixRTC backend: `matrix-rtc.m.localhost`
-  - Local Element Call development `call.m.localhost`
+  - Local Element Call development `call.m.localhost` via `yarn dev --host `
   - Note certificates will expire on Thu, 03 May 2035 10:32:02 GMT
 
 These use a test 'secret' published in this repository, so this must be used
