@@ -5,7 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { BaseKeyProvider, createKeyMaterialFromBuffer, importKey, KeyProviderEvent } from "livekit-client";
+import {
+  BaseKeyProvider,
+  importKey,
+  KeyProviderEvent,
+  RatchetResult
+} from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type MatrixRTCSession,
@@ -15,22 +20,17 @@ import {
 export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
 
-  private readonly onKeyRatchetComplete: (material: ArrayBuffer, keyIndex?: number) => void;
+  private readonly onKeyRatchetComplete: (ratchetResult: RatchetResult, participantIdentity?: string,  keyIndex?: number) => void;
 
   public constructor() {
     super({ ratchetWindowSize: 10, keyringSize: 10 });
 
-    this.onKeyRatchetComplete = (material: ArrayBuffer, keyIndex?: number): void => {
-      logger.debug(`key ratcheted event received for index `, keyIndex );
-      this.rtcSession?.onOwnKeyRatcheted(material, keyIndex).catch((e) => {
-        logger.error(
-          `Failed to ratchet key for livekit room=${this.rtcSession?.room.roomId} keyIndex=${keyIndex}`,
-          e,
-        );
-      });
+    this.onKeyRatchetComplete = (ratchetResult: RatchetResult, participantIdentity?: string, keyIndex?: number): void => {
+      logger.debug(`key ratcheted event received for ${participantId} at index ${keyIndex}`);
+      this.rtcSession?.onKeyRatcheted(ratchetResult.chainKey, keyIndex);
     };
 
-    this.on(KeyProviderEvent.RatchetRequestCompleted, this.onKeyRatchetComplete);
+    this.on(KeyProviderEvent.KeyRatcheted, this.onKeyRatchetComplete);
   }
 
   public setRTCSession(rtcSession: MatrixRTCSession): void {
