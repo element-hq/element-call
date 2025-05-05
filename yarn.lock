@@ -7008,7 +7008,7 @@ __metadata:
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
     matrix-js-sdk: "github:matrix-org/matrix-js-sdk#7fa9195e398764749b0195f14d3cf0190ad10253"
-    matrix-widget-api: "npm:1.11.0"
+    matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
     pako: "npm:^2.0.4"
@@ -9633,13 +9633,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-widget-api@npm:1.11.0":
-  version: 1.11.0
-  resolution: "matrix-widget-api@npm:1.11.0"
+"matrix-widget-api@npm:^1.10.0, matrix-widget-api@npm:^1.13.0":
+  version: 1.13.1
+  resolution: "matrix-widget-api@npm:1.13.1"
   dependencies:
     "@types/events": "npm:^3.0.0"
     events: "npm:^3.2.0"
-  checksum: 10c0/ac35ed8fb2b5df6d186beb64b5faf907ec113d708ad8353bdd8f9196fb3da255561b8807e2e845f39d4cf7ae6af36f90b54c230a0a100556ac7ebd8f18bee848
+  checksum: 10c0/25ded744922755b3eb65f4e171cf6cff1a2e0fe43fc3fecbb13e565e41d8af066daa817dd2c3c7d921b996af399eec3b23df70ab7b682cf422d9cee7ca202512
   languageName: node
   linkType: hard
 
