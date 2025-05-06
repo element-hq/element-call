@@ -26,8 +26,8 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     super({ ratchetWindowSize: 10, keyringSize: 10 });
 
     this.onKeyRatchetComplete = (ratchetResult: RatchetResult, participantIdentity?: string, keyIndex?: number): void => {
-      logger.debug(`key ratcheted event received for ${participantId} at index ${keyIndex}`);
-      this.rtcSession?.onKeyRatcheted(ratchetResult.chainKey, keyIndex);
+      logger.debug(`key ratcheted event received for ${participantIdentity} at index ${keyIndex}`);
+      this.rtcSession?.onKeyRatcheted(ratchetResult.chainKey,participantIdentity, keyIndex);
     };
 
     this.on(KeyProviderEvent.KeyRatcheted, this.onKeyRatchetComplete);
