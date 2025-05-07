@@ -137,13 +137,16 @@ async function connectAndPublish(
   livekitRoom.once(RoomEvent.SignalConnected, tracker.cacheWsConnect);
 
   try {
+    logger.info(`[Lifecycle] Connecting to livekit room ${sfuConfig!.url} ...`);
     await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt, {
       // Due to stability issues on Firefox we are testing the effect of different
       // timeouts, and allow these values to be set through the console
       peerConnectionTimeout: window.peerConnectionTimeout ?? 45000,
       websocketTimeout: window.websocketTimeout ?? 45000,
     });
+    logger.info(`[Lifecycle] ... connected to livekit room`);
   } catch (e) {
+    logger.error("[Lifecycle] Failed to connect", e);
     // LiveKit uses 503 to indicate that the server has hit its track limits.
     // https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
     // It also errors with a status code of 200 (yes, really) for room
