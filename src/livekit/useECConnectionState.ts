@@ -59,7 +59,7 @@ async function doConnect(
   livekitRoom: Room,
   sfuConfig: SFUConfig,
   audioEnabled: boolean,
-  audioOptions: AudioCaptureOptions,
+  initialDeviceId: string | undefined,
 ): Promise<void> {
   // Always create an audio track manually.
   // livekit (by default) keeps the mic track open when you mute, but if you start muted,
@@ -82,7 +82,7 @@ async function doConnect(
   let preCreatedAudioTrack: LocalTrack | undefined;
   try {
     const audioTracks = await livekitRoom!.localParticipant.createTracks({
-      audio: audioOptions,
+      audio: { deviceId: initialDeviceId },
     });
     if (audioTracks.length < 1) {
       logger.info("Tried to pre-create local audio track but got no tracks");
@@ -187,7 +187,7 @@ async function connectAndPublish(
 }
 
 export function useECConnectionState(
-  initialAudioOptions: AudioCaptureOptions,
+  initialDeviceId: string | undefined,
   initialAudioEnabled: boolean,
   livekitRoom?: Room,
   sfuConfig?: SFUConfig,
@@ -280,7 +280,7 @@ export function useECConnectionState(
         livekitRoom!,
         sfuConfig!,
         initialAudioEnabled,
-        initialAudioOptions,
+        initialDeviceId,
       )
         .catch((e) => {
           if (e instanceof ElementCallError) {
@@ -296,7 +296,7 @@ export function useECConnectionState(
   }, [
     sfuConfig,
     livekitRoom,
-    initialAudioOptions,
+    initialDeviceId,
     initialAudioEnabled,
     doFocusSwitch,
   ]);

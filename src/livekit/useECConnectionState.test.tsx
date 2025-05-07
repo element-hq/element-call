@@ -57,7 +57,7 @@ test.each<[string, ConnectionError]>([
         () => setSfuConfig({ url: "URL", jwt: "JWT token" }),
         [],
       );
-      useECConnectionState({}, false, mockRoom, sfuConfig);
+      useECConnectionState("default", false, mockRoom, sfuConfig);
       return <button onClick={connect}>Connect</button>;
     };
 
