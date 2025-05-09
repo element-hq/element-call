@@ -4621,6 +4621,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/dom-mediacapture-transform@npm:^0.1.11":
+  version: 0.1.11
+  resolution: "@types/dom-mediacapture-transform@npm:0.1.11"
+  dependencies:
+    "@types/dom-webcodecs": "npm:*"
+  checksum: 10c0/19c76d54cf31aa2a925011fc5f973dff9a10bdecfdf2285e5e568e61850a0fa2b8c9f1807a1462cbefd57ec26d32eeaa9c359117aca9d9fe7f0d6f2fff33f51e
+  languageName: node
+  linkType: hard
+
+"@types/dom-webcodecs@npm:*":
+  version: 0.1.15
+  resolution: "@types/dom-webcodecs@npm:0.1.15"
+  checksum: 10c0/1407f0352156c99c9b4378fb4c0c799b061520d031903a7f359ad09a6f706cc1fd56bafb272bb1a3decffcb32e54a51d2f07442eb72622464a950cff7f9e8862
+  languageName: node
+  linkType: hard
+
 "@types/estree@npm:1.0.6, @types/estree@npm:^1.0.0":
   version: 1.0.6
   resolution: "@types/estree@npm:1.0.6"
@@ -6944,6 +6960,7 @@ __metadata:
     "@testing-library/react": "npm:^16.0.0"
     "@testing-library/user-event": "npm:^14.5.1"
     "@types/content-type": "npm:^1.1.5"
+    "@types/dom-mediacapture-transform": "npm:^0.1.11"
     "@types/grecaptcha": "npm:^3.0.9"
     "@types/jsdom": "npm:^21.1.7"
     "@types/lodash-es": "npm:^4.17.12"
