@@ -40,6 +40,10 @@ import {
   type ResolvedConfigOptions,
 } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
+import {
+  RoomAndToDeviceEvents,
+  RoomAndToDeviceEventsHandlerMap,
+} from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -269,8 +273,8 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
 }
 
 export class MockRTCSession extends TypedEventEmitter<
-  MatrixRTCSessionEvent,
-  MatrixRTCSessionEventHandlerMap
+  MatrixRTCSessionEvent | RoomAndToDeviceEvents,
+  MatrixRTCSessionEventHandlerMap & RoomAndToDeviceEventsHandlerMap
 > {
   public readonly statistics = {
     counters: {},
