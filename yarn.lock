@@ -6997,10 +6997,10 @@ __metadata:
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
     knip: "npm:^5.27.2"
-    livekit-client: "github:BillCarsonFr/client-sdk-js#4ac197085ee063f66b48d8ec24c88b2321fcbf9e"
+    livekit-client: "npm:^2.12.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#44d1a860a1c56a0d4193aa7dcd09e10822398a4d"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#f8c27727e34642ef08936d801ce12fa4ef2940c2"
     matrix-widget-api: "npm:1.11.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -9367,8 +9367,8 @@ __metadata:
   languageName: node
   linkType: hard
 
-"livekit-client@npm:^2.11.3":
-  version: 2.12.0
+"livekit-client@npm:^2.12.0":
+  version: 0.0.0-use.local
   resolution: "livekit-client@npm:2.12.0"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
@@ -9591,9 +9591,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@portal:/Users/valere/Documents/Dev/matrix/matrix-git-root/matrix-js-sdk::locator=element-call%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "matrix-js-sdk@portal:/Users/valere/Documents/Dev/matrix/matrix-git-root/matrix-js-sdk::locator=element-call%40workspace%3A."
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#f8c27727e34642ef08936d801ce12fa4ef2940c2":
+  version: 37.5.0
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=f8c27727e34642ef08936d801ce12fa4ef2940c2"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.0.1"
@@ -9610,8 +9610,9 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
+  checksum: 10c0/d05a7491545ff9b68299c763573f378ec09e05437cfd23677a9c97409d4a862ca4d9d73a1adbc624b92a999ba0ddb6d0a105f24cfe9cd669fd42a942a95f25ca
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "matrix-widget-api@npm:1.11.0":
   version: 1.11.0
