@@ -5,8 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { beforeEach, expect, it, type MockedFunction, test, vi } from "vitest";
-import { act, render, RenderResult } from "@testing-library/react";
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type MockedFunction,
+  vi,
+} from "vitest";
+import { act, render, type RenderResult } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
@@ -38,7 +45,6 @@ import { alice, local } from "../utils/test-fixtures";
 import { useExperimentalToDeviceTransportSetting } from "../settings/settings";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
-import { describe } from "node:test";
 
 // vi.hoisted(() => {
 //   localStorage = {} as unknown as Storage;
@@ -182,14 +188,14 @@ function createInCallView(): RenderResult & {
   };
 }
 
-void describe("InCallView", async () => {
-  await describe("rendering", () => {
+describe("InCallView", () => {
+  describe("rendering", () => {
     it("renders", () => {
       const { container } = createInCallView();
       expect(container).toMatchSnapshot();
     });
   });
-  await describe("toDevice label", () => {
+  describe("toDevice label", () => {
     it("is shown if setting activated and room encrypted", () => {
       useRoomEncryptionSystemMock.mockReturnValue({
         kind: E2eeType.PER_PARTICIPANT,

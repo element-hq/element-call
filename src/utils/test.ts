@@ -29,6 +29,10 @@ import {
   type Room as LivekitRoom,
 } from "livekit-client";
 import { randomUUID } from "crypto";
+import {
+  type RoomAndToDeviceEvents,
+  type RoomAndToDeviceEventsHandlerMap,
+} from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
 import {
   LocalUserMediaViewModel,
@@ -40,10 +44,6 @@ import {
   type ResolvedConfigOptions,
 } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
-import {
-  RoomAndToDeviceEvents,
-  RoomAndToDeviceEventsHandlerMap,
-} from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
