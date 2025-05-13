@@ -9,7 +9,7 @@ import {
   BaseKeyProvider,
   importKey,
   KeyProviderEvent,
-  type RatchetResult
+  type RatchetResult,
 } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
@@ -20,14 +20,28 @@ import {
 export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
 
-  private readonly onKeyRatchetComplete: (ratchetResult: RatchetResult, participantIdentity?: string,  keyIndex?: number) => void;
+  private readonly onKeyRatchetComplete: (
+    ratchetResult: RatchetResult,
+    participantIdentity?: string,
+    keyIndex?: number,
+  ) => void;
 
   public constructor() {
     super({ ratchetWindowSize: 10, keyringSize: 10 });
 
-    this.onKeyRatchetComplete = (ratchetResult: RatchetResult, participantIdentity?: string, keyIndex?: number): void => {
-      logger.debug(`key ratcheted event received for ${participantIdentity} at index ${keyIndex}`);
-      this.rtcSession?.onKeyRatcheted(ratchetResult.chainKey,participantIdentity, keyIndex);
+    this.onKeyRatchetComplete = (
+      ratchetResult: RatchetResult,
+      participantIdentity?: string,
+      keyIndex?: number,
+    ): void => {
+      logger.debug(
+        `key ratcheted event received for ${participantIdentity} at index ${keyIndex}`,
+      );
+      this.rtcSession?.onKeyRatcheted(
+        ratchetResult.chainKey,
+        participantIdentity,
+        keyIndex,
+      );
     };
 
     this.on(KeyProviderEvent.KeyRatcheted, this.onKeyRatchetComplete);
@@ -43,7 +57,6 @@ export class MatrixKeyProvider extends BaseKeyProvider {
         MatrixRTCSessionEvent.EncryptionKeyQueryRatchetStep,
         this.doRatchetKey,
       );
-
     }
 
     this.rtcSession = rtcSession;
@@ -58,22 +71,21 @@ export class MatrixKeyProvider extends BaseKeyProvider {
       this.doRatchetKey,
     );
 
-
     // The new session could be aware of keys of which the old session wasn't,
     // so emit key changed events
     this.rtcSession.reemitEncryptionKeys();
   }
 
-  private doRatchetKey = (participantId:string, keyIndex:number): void => {
-      this.ratchetKey(participantId, keyIndex);
-  }
+  private doRatchetKey = (participantId: string, keyIndex: number): void => {
+    this.ratchetKey(participantId, keyIndex);
+  };
 
   private onEncryptionKeyChanged = (
     encryptionKey: Uint8Array,
     encryptionKeyIndex: number,
     participantId: string,
   ): void => {
-    importKey(encryptionKey, "HKDF", 'derive').then(
+    importKey(encryptionKey, "HKDF", "derive").then(
       (keyMaterial) => {
         this.onSetEncryptionKey(keyMaterial, participantId, encryptionKeyIndex);
 
