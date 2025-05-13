@@ -47,6 +47,7 @@ interface Props<S extends string> {
    */
   sounds: PrefetchedSounds<S> | null;
   latencyHint: AudioContextLatencyCategory;
+  muted?: boolean;
 }
 
 interface UseAudioContext<S> {
@@ -112,7 +113,7 @@ export function useAudioContext<S extends string>(
   }, [audioContext, devices]);
 
   // Don't return a function until we're ready.
-  if (!audioContext || !audioBuffers) {
+  if (!audioContext || !audioBuffers || props.muted) {
     return null;
   }
   return {
