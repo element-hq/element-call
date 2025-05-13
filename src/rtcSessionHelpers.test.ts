@@ -113,6 +113,7 @@ test("It joins the correct Session", async () => {
       useLegacyMemberEvents: false,
       useNewMembershipManager: true,
       useExperimentalToDeviceTransport: false,
+      useKeyDelay: 5000,
     },
   );
 });
