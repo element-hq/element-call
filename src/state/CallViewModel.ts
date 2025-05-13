@@ -251,6 +251,7 @@ class UserMedia {
 
   public readonly speaker$: Observable<boolean>;
   public readonly presenter$: Observable<boolean>;
+
   public constructor(
     public readonly id: string,
     member: RoomMember | undefined,
@@ -487,7 +488,11 @@ export class CallViewModel extends ViewModel {
         const disambiguate = shouldDisambiguate(member, memberships, room);
         displaynameMap.set(
           matrixIdentifier,
-          calculateDisplayName(member, disambiguate),
+          this.showDeveloperModeDebugOptions
+            ? calculateDisplayName(member, disambiguate) +
+                " | " +
+                rtcMember.deviceId
+            : calculateDisplayName(member, disambiguate),
         );
       }
       return displaynameMap;
@@ -1344,6 +1349,7 @@ export class CallViewModel extends ViewModel {
     private readonly reactionsSubject$: Observable<
       Record<string, ReactionInfo>
     >,
+    private readonly showDeveloperModeDebugOptions: boolean,
   ) {
     super();
   }

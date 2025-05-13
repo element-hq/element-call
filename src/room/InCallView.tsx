@@ -96,6 +96,7 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
+  developerMode,
   useExperimentalToDeviceTransportSetting,
   useSetting,
 } from "../settings/settings";
@@ -134,6 +135,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const [showDeveloperModeDebugOptions] = useSetting(developerMode);
 
   useEffect(() => {
     if (livekitRoom !== undefined) {
@@ -145,6 +147,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         connStateObservable$,
         reactionsReader.raisedHands$,
         reactionsReader.reactions$,
+        showDeveloperModeDebugOptions,
       );
       setVm(vm);
       return (): void => {
@@ -152,7 +155,13 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         reactionsReader.destroy();
       };
     }
-  }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable$]);
+  }, [
+    props.rtcSession,
+    livekitRoom,
+    props.e2eeSystem,
+    connStateObservable$,
+    showDeveloperModeDebugOptions,
+  ]);
 
   if (livekitRoom === undefined || vm === null) return null;
 

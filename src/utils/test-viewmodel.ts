@@ -138,6 +138,7 @@ export function getBasicCallViewModelEnvironment(
     of(ConnectionState.Connected),
     handRaisedSubject$,
     reactionsSubject$,
+    false,
   );
   return {
     vm,

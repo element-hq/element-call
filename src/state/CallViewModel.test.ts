@@ -268,6 +268,7 @@ function withCallViewModel(
     connectionState$,
     raisedHands$,
     new BehaviorSubject({}),
+    false,
   );
 
   onTestFinished(() => {
