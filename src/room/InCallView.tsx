@@ -101,7 +101,7 @@ import {
   debugTileLayout as debugTileLayoutSetting,
   useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   muteAllAudio as muteAllAudioSetting,
-  developerMode as settingsDeveloperMode,
+  developerMode as developerModeSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
@@ -235,7 +235,7 @@ export const InCallView: FC<InCallViewProps> = ({
     (enabled) => setDidFallbackToRoomKey(enabled.room),
   );
 
-  const [developerMode] = useSetting(settingsDeveloperMode);
+  const [developerMode] = useSetting(developerModeSetting);
   const [useExperimentalToDeviceTransport] = useSetting(
     useExperimentalToDeviceTransportSetting,
   );
