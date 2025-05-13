@@ -233,17 +233,21 @@ export const InCallView: FC<InCallViewProps> = ({
     RoomAndToDeviceEvents.EnabledTransportsChanged,
     (enabled) => setDidFallbackToRoomKey(enabled.room),
   );
-  const [toDeviceEncryptionSetting] = useSetting(
+  const [useExperimentalToDeviceTransport] = useSetting(
     useExperimentalToDeviceTransportSetting,
   );
   const encryptionSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
 
   const showToDeviceEncryption = useMemo(
     () =>
-      toDeviceEncryptionSetting &&
+      useExperimentalToDeviceTransport &&
       encryptionSystem.kind === E2eeType.PER_PARTICIPANT &&
       !didFallbackToRoomKey,
-    [encryptionSystem.kind, didFallbackToRoomKey, toDeviceEncryptionSetting],
+    [
+      encryptionSystem.kind,
+      didFallbackToRoomKey,
+      useExperimentalToDeviceTransport,
+    ],
   );
 
   const toggleMicrophone = useCallback(

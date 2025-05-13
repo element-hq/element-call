@@ -110,7 +110,7 @@ export const playReactionsSound = new Setting<boolean>(
   true,
 );
 
-export const soundEffectVolumeSetting = new Setting<number>(
+export const soundEffectVolume = new Setting<number>(
   "sound-effect-volume",
   0.5,
 );

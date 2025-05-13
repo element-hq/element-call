@@ -42,7 +42,7 @@ import {
 import { E2eeType } from "../e2ee/e2eeType";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local } from "../utils/test-fixtures";
-import { useExperimentalToDeviceTransportSetting } from "../settings/settings";
+import { useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting } from "../settings/settings";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 
