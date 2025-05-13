@@ -42,7 +42,10 @@ import {
 import { E2eeType } from "../e2ee/e2eeType";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local } from "../utils/test-fixtures";
-import { useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting } from "../settings/settings";
+import {
+  developerMode as developerModeSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
+} from "../settings/settings";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 
@@ -201,6 +204,7 @@ describe("InCallView", () => {
         kind: E2eeType.PER_PARTICIPANT,
       });
       useExperimentalToDeviceTransportSetting.setValue(true);
+      developerModeSetting.setValue(true);
       const { getByText } = createInCallView();
       expect(getByText("using to Device key transport")).toBeInTheDocument();
     });
@@ -210,6 +214,7 @@ describe("InCallView", () => {
         kind: E2eeType.NONE,
       });
       useExperimentalToDeviceTransportSetting.setValue(true);
+      developerModeSetting.setValue(true);
       const { queryByText } = createInCallView();
       expect(
         queryByText("using to Device key transport"),
@@ -221,6 +226,7 @@ describe("InCallView", () => {
         kind: E2eeType.PER_PARTICIPANT,
       });
       useExperimentalToDeviceTransportSetting.setValue(true);
+      developerModeSetting.setValue(true);
       const { rtcSession, queryByText } = createInCallView();
       expect(queryByText("using to Device key transport")).toBeInTheDocument();
       expect(rtcSession).toBeDefined();
@@ -236,7 +242,18 @@ describe("InCallView", () => {
     });
     it("is not shown if setting is disabled", () => {
       useExperimentalToDeviceTransportSetting.setValue(false);
-
+      developerModeSetting.setValue(true);
+      useRoomEncryptionSystemMock.mockReturnValue({
+        kind: E2eeType.PER_PARTICIPANT,
+      });
+      const { queryByText } = createInCallView();
+      expect(
+        queryByText("using to Device key transport"),
+      ).not.toBeInTheDocument();
+    });
+    it("is not shown if developer mode is disabled", () => {
+      useExperimentalToDeviceTransportSetting.setValue(true);
+      developerModeSetting.setValue(false);
       useRoomEncryptionSystemMock.mockReturnValue({
         kind: E2eeType.PER_PARTICIPANT,
       });
