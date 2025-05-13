@@ -96,7 +96,8 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
-  useExperimentalToDeviceTransportSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
+  muteAllAudio as muteAllAudioSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
@@ -219,6 +220,8 @@ export const InCallView: FC<InCallViewProps> = ({
   const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
     room: livekitRoom,
   });
+
+  const [muteAllAudio] = useSetting(muteAllAudioSetting);
 
   const [toDeviceEncryptionSetting] = useSetting(
     useExperimentalToDeviceTransportSetting,
@@ -693,10 +696,10 @@ export const InCallView: FC<InCallViewProps> = ({
           </Text>
         )
       }
-      <RoomAudioRenderer />
+      <RoomAudioRenderer muted={muteAllAudio} />
       {renderContent()}
-      <CallEventAudioRenderer vm={vm} />
-      <ReactionsAudioRenderer vm={vm} />
+      <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
+      <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (
