@@ -56,7 +56,7 @@ import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { useLiveKit } from "../livekit/useLiveKit";
+import { useLivekit } from "../livekit/useLivekit.ts";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { type MuteStates } from "./MuteStates";
@@ -73,7 +73,10 @@ import {
 import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
-import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  useRoomEncryptionSystem,
+  type EncryptionSystem,
+} from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import {
@@ -115,7 +118,7 @@ export interface ActiveCallProps
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
-  const { livekitRoom, connState } = useLiveKit(
+  const { livekitRoom, connState } = useLivekit(
     props.rtcSession,
     props.muteStates,
     sfuConfig,
@@ -223,19 +226,28 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const [muteAllAudio] = useSetting(muteAllAudioSetting);
 
-  const [toDeviceEncryptionSetting] = useSetting(
-    useExperimentalToDeviceTransportSetting,
-  );
-  const [showToDeviceEncryption, setShowToDeviceEncryption] = useState(
-    () => toDeviceEncryptionSetting,
-  );
-  useEffect(() => {
-    setShowToDeviceEncryption(toDeviceEncryptionSetting);
-  }, [toDeviceEncryptionSetting]);
+  // This seems like it might be enough logic to use move it into the call view model?
+  const [didFallbackToRoomKey, setDidFallbackToRoomKey] = useState(false);
   useTypedEventEmitter(
     rtcSession,
     RoomAndToDeviceEvents.EnabledTransportsChanged,
-    (enabled) => setShowToDeviceEncryption(enabled.to_device),
+    (enabled) => setDidFallbackToRoomKey(enabled.room),
+  );
+  const [useExperimentalToDeviceTransport] = useSetting(
+    useExperimentalToDeviceTransportSetting,
+  );
+  const encryptionSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
+
+  const showToDeviceEncryption = useMemo(
+    () =>
+      useExperimentalToDeviceTransport &&
+      encryptionSystem.kind === E2eeType.PER_PARTICIPANT &&
+      !didFallbackToRoomKey,
+    [
+      encryptionSystem.kind,
+      didFallbackToRoomKey,
+      useExperimentalToDeviceTransport,
+    ],
   );
 
   const toggleMicrophone = useCallback(
