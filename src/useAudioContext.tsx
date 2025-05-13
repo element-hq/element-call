@@ -9,7 +9,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { useState, useEffect } from "react";
 
 import {
-  soundEffectVolumeSetting as effectSoundVolumeSetting,
+  soundEffectVolume as soundEffectVolumeSetting,
   useSetting,
 } from "./settings/settings";
 import { useMediaDevices } from "./livekit/MediaDevicesContext";
@@ -63,7 +63,7 @@ interface UseAudioContext<S> {
 export function useAudioContext<S extends string>(
   props: Props<S>,
 ): UseAudioContext<S> | null {
-  const [effectSoundVolume] = useSetting(effectSoundVolumeSetting);
+  const [effectSoundVolume] = useSetting(soundEffectVolumeSetting);
   const devices = useMediaDevices();
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
