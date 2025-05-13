@@ -9,7 +9,7 @@ import {
   BaseKeyProvider,
   importKey,
   KeyProviderEvent,
-  RatchetResult
+  type RatchetResult
 } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
