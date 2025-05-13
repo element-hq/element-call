@@ -1,0 +1,181 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`InCallView > rendering > renders 1`] = `
+<div>
+  <div
+    class="inRoom"
+  >
+    <div
+      class="header filler"
+    />
+    <div>
+      mocked: RoomAudioRenderer
+    </div>
+    <div
+      class="scrollingGrid grid"
+    >
+      <div
+        class="layer"
+      >
+        <div
+          class="container slot"
+          data-id="1"
+        >
+          <div
+            class="slot local slot"
+            data-block-alignment="start"
+            data-id="0"
+            data-inline-alignment="end"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="fixedGrid grid"
+    >
+      <div />
+    </div>
+    <div
+      class="container"
+    />
+    <div
+      class="footer"
+    >
+      <div
+        class="buttons"
+      >
+        <button
+          aria-disabled="false"
+          aria-labelledby=":r0:"
+          class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
+          data-kind="primary"
+          data-size="lg"
+          data-testid="incall_mute"
+          role="button"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M8 8v-.006l6.831 6.832-.002.002 1.414 1.415.003-.003 1.414 1.414-.003.003L20.5 20.5a1 1 0 0 1-1.414 1.414l-3.022-3.022A7.949 7.949 0 0 1 13 19.938V21a1 1 0 0 1-2 0v-1.062A8.001 8.001 0 0 1 4 12a1 1 0 1 1 2 0 6 6 0 0 0 8.587 5.415l-1.55-1.55A4.005 4.005 0 0 1 8 12v-1.172L2.086 4.914A1 1 0 0 1 3.5 3.5L8 8Zm9.417 6.583 1.478 1.477A7.963 7.963 0 0 0 20 12a1 1 0 0 0-2 0c0 .925-.21 1.8-.583 2.583ZM8.073 5.238l7.793 7.793c.087-.329.134-.674.134-1.031V6a4 4 0 0 0-7.927-.762Z"
+            />
+          </svg>
+        </button>
+        <button
+          aria-disabled="false"
+          aria-labelledby=":r5:"
+          class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
+          data-kind="primary"
+          data-size="lg"
+          data-testid="incall_videomute"
+          role="button"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2.747 2.753 4.35 4.355l.007-.003L18 17.994v.012l3.247 3.247a1 1 0 0 1-1.414 1.414l-2.898-2.898A1.992 1.992 0 0 1 16 20H6a4 4 0 0 1-4-4V8c0-.892.292-1.715.785-2.38L1.333 4.166a1 1 0 0 1 1.414-1.414ZM18 15.166 6.834 4H16a2 2 0 0 1 2 2v4.286l3.35-2.871a1 1 0 0 1 1.65.76v7.65a1 1 0 0 1-1.65.76L18 13.715v1.45Z"
+            />
+          </svg>
+        </button>
+        <button
+          aria-labelledby=":ra:"
+          class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
+          data-kind="secondary"
+          data-size="lg"
+          role="button"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12.731 2C13.432 2 14 2.568 14 3.269c0 .578.396 1.074.935 1.286.085.034.17.07.253.106.531.23 1.162.16 1.572-.25a1.269 1.269 0 0 1 1.794 0l1.034 1.035a1.269 1.269 0 0 1 0 1.794c-.41.41-.48 1.04-.248 1.572.036.084.07.168.105.253.212.539.708.935 1.286.935.701 0 1.269.568 1.269 1.269v1.462c0 .701-.568 1.269-1.269 1.269-.578 0-1.074.396-1.287.935-.033.085-.068.17-.104.253-.232.531-.161 1.162.248 1.572a1.269 1.269 0 0 1 0 1.794l-1.034 1.034a1.269 1.269 0 0 1-1.794 0c-.41-.41-1.04-.48-1.572-.248a7.935 7.935 0 0 1-.253.105c-.539.212-.935.708-.935 1.286 0 .701-.568 1.269-1.269 1.269H11.27c-.702 0-1.27-.568-1.27-1.269 0-.578-.396-1.074-.935-1.287a7.975 7.975 0 0 1-.253-.104c-.531-.232-1.162-.161-1.572.248a1.269 1.269 0 0 1-1.794 0l-1.034-1.034a1.269 1.269 0 0 1 0-1.794c.41-.41.48-1.04.249-1.572a7.89 7.89 0 0 1-.106-.253C4.343 14.396 3.847 14 3.27 14 2.568 14 2 13.432 2 12.731V11.27c0-.702.568-1.27 1.269-1.27.578 0 1.074-.396 1.286-.935.034-.085.07-.17.106-.253.23-.531.16-1.162-.25-1.572a1.269 1.269 0 0 1 0-1.794l1.035-1.034a1.269 1.269 0 0 1 1.794 0c.41.41 1.04.48 1.572.249a7.93 7.93 0 0 1 .253-.106c.539-.212.935-.708.935-1.286C10 2.568 10.568 2 11.269 2h1.462ZM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
+            />
+          </svg>
+        </button>
+        <button
+          aria-labelledby=":rf:"
+          class="_button_i91xf_17 endCall _has-icon_i91xf_66 _icon-only_i91xf_59 _destructive_i91xf_116"
+          data-kind="primary"
+          data-size="lg"
+          data-testid="incall_leave"
+          role="button"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m2.765 16.02-2.47-2.416A1.018 1.018 0 0 1 0 12.852c0-.304.098-.555.295-.751a15.64 15.64 0 0 1 5.316-3.786A15.89 15.89 0 0 1 12 7c2.237 0 4.367.443 6.39 1.329a15.977 15.977 0 0 1 5.315 3.772c.197.196.295.447.295.751 0 .305-.098.555-.295.752l-2.47 2.416a1.047 1.047 0 0 1-1.396.108l-3.114-2.363a1.067 1.067 0 0 1-.322-.376 1.066 1.066 0 0 1-.108-.483v-2.27a13.593 13.593 0 0 0-2.12-.524C13.459 9.996 12 9.937 12 9.937s-1.459.059-2.175.175c-.715.116-1.422.29-2.12.523v2.271c0 .179-.036.34-.108.483a1.066 1.066 0 0 1-.322.376l-3.114 2.363a1.047 1.047 0 0 1-1.396-.107Z"
+            />
+          </svg>
+        </button>
+      </div>
+      <div
+        class="toggle layout"
+      >
+        <input
+          aria-labelledby=":rk:"
+          name="layout"
+          type="radio"
+          value="spotlight"
+        />
+        <svg
+          aria-hidden="true"
+          fill="currentColor"
+          height="24"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5 5h14v8h-5a1 1 0 0 0-1 1v5H5V5Zm10 14v-4h4v4h-4ZM5 21h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2Z"
+          />
+        </svg>
+        <input
+          aria-labelledby=":rp:"
+          checked=""
+          name="layout"
+          type="radio"
+          value="grid"
+        />
+        <svg
+          aria-hidden="true"
+          fill="currentColor"
+          height="24"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M4 11a.967.967 0 0 1-.712-.287A.968.968 0 0 1 3 10V4c0-.283.096-.52.288-.712A.968.968 0 0 1 4 3h6a.97.97 0 0 1 .713.288A.968.968 0 0 1 11 4v6c0 .283-.096.52-.287.713A.968.968 0 0 1 10 11H4Zm5-2V5H5v4h4Zm5 12a.968.968 0 0 1-.713-.288A.968.968 0 0 1 13 20v-6c0-.283.096-.52.287-.713A.968.968 0 0 1 14 13h6a.97.97 0 0 1 .712.287c.192.192.288.43.288.713v6c0 .283-.096.52-.288.712A.968.968 0 0 1 20 21h-6Zm5-2v-4h-4v4h4ZM4 21a.967.967 0 0 1-.712-.288A.968.968 0 0 1 3 20v-6a.97.97 0 0 1 .288-.713A.967.967 0 0 1 4 13h6c.283 0 .52.096.713.287.191.192.287.43.287.713v6a.97.97 0 0 1-.287.712A.968.968 0 0 1 10 21H4Zm5-2v-4H5v4h4Zm5-8a.968.968 0 0 1-.713-.287A.968.968 0 0 1 13 10V4a.97.97 0 0 1 .287-.712A.968.968 0 0 1 14 3h6c.283 0 .52.096.712.288A.965.965 0 0 1 21 4v6a.97.97 0 0 1-.288.713A.968.968 0 0 1 20 11h-6Zm5-2V5h-4v4h4Z"
+          />
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+`;

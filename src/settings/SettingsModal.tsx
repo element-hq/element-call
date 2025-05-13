@@ -23,7 +23,7 @@ import {
 import { widget } from "../widget";
 import {
   useSetting,
-  soundEffectVolumeSetting,
+  soundEffectVolume as soundEffectVolumeSetting,
   backgroundBlur as backgroundBlurSetting,
   developerMode,
 } from "./settings";
