@@ -101,6 +101,7 @@ import {
   debugTileLayout as debugTileLayoutSetting,
   useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   muteAllAudio as muteAllAudioSetting,
+  developerMode as developerModeSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
@@ -233,6 +234,8 @@ export const InCallView: FC<InCallViewProps> = ({
     RoomAndToDeviceEvents.EnabledTransportsChanged,
     (enabled) => setDidFallbackToRoomKey(enabled.room),
   );
+
+  const [developerMode] = useSetting(developerModeSetting);
   const [useExperimentalToDeviceTransport] = useSetting(
     useExperimentalToDeviceTransportSetting,
   );
@@ -240,13 +243,15 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const showToDeviceEncryption = useMemo(
     () =>
+      developerMode &&
       useExperimentalToDeviceTransport &&
       encryptionSystem.kind === E2eeType.PER_PARTICIPANT &&
       !didFallbackToRoomKey,
     [
+      developerMode,
+      useExperimentalToDeviceTransport,
       encryptionSystem.kind,
       didFallbackToRoomKey,
-      useExperimentalToDeviceTransport,
     ],
   );
 
