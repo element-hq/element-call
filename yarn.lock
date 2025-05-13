@@ -2527,12 +2527,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/protocol@npm:1.36.1, @livekit/protocol@npm:^1.33.0":
-  version: 1.36.1
-  resolution: "@livekit/protocol@npm:1.36.1"
+"@livekit/protocol@npm:1.38.0, @livekit/protocol@npm:^1.38.0":
+  version: 1.38.0
+  resolution: "@livekit/protocol@npm:1.38.0"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/bb2e56785c542446bef3e2f2fd20b33d01db43b786be87ccb834feee8a664fd32c8231e249b4e1915d7a8eda13af0d59eea479fa710327079a1a370daf05c42e
+  checksum: 10c0/ca64d4f984853054ff60574730b08a761afcd3bdc084e5218663e54b0e7f395aa2022d9d15d982fa094bbc0179cb19ef6a96ec74b1aa3265d118a85d1a4fde33
   languageName: node
   linkType: hard
 
@@ -6937,7 +6937,7 @@ __metadata:
     "@formatjs/intl-segmenter": "npm:^11.7.3"
     "@livekit/components-core": "npm:^0.12.0"
     "@livekit/components-react": "npm:^2.0.0"
-    "@livekit/protocol": "npm:^1.33.0"
+    "@livekit/protocol": "npm:^1.38.0"
     "@livekit/track-processors": "npm:^0.5.5"
     "@mediapipe/tasks-vision": "npm:^0.10.18"
     "@opentelemetry/api": "npm:^1.4.0"
@@ -9368,11 +9368,11 @@ __metadata:
   linkType: hard
 
 "livekit-client@npm:^2.11.3":
-  version: 2.11.4
-  resolution: "livekit-client@npm:2.11.4"
+  version: 2.12.0
+  resolution: "livekit-client@npm:2.12.0"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
-    "@livekit/protocol": "npm:1.36.1"
+    "@livekit/protocol": "npm:1.38.0"
     events: "npm:^3.3.0"
     loglevel: "npm:^1.9.2"
     sdp-transform: "npm:^2.15.0"
@@ -9380,7 +9380,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typed-emitter: "npm:^2.1.0"
     webrtc-adapter: "npm:^9.0.1"
-  checksum: 10c0/e674c75ff2c9cd2115c11e40e009a6ca85b41ab20740a5df3b7fafb67ebe683d5214be49532a5aedd81cb85768df393caf4571c83b17584cd168118bce24d315
+  checksum: 10c0/8a4657aa6c0f0bc5d1fe77c2cd9603a3b07d4acefa634f1c5151190eed69711e7e599dd09c07915939a418dc8770d87e3529ecf1b029f2a9af7f2172d83acb1c
   languageName: node
   linkType: hard
 
