@@ -9368,8 +9368,8 @@ __metadata:
   linkType: hard
 
 "livekit-client@npm:^2.11.3":
-  version: 2.11.3
-  resolution: "livekit-client@npm:2.11.3"
+  version: 2.11.4
+  resolution: "livekit-client@npm:2.11.4"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
     "@livekit/protocol": "npm:1.36.1"
@@ -9380,7 +9380,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typed-emitter: "npm:^2.1.0"
     webrtc-adapter: "npm:^9.0.1"
-  checksum: 10c0/d56444f31c107b46ccd5532038ac77bd21038042910619008267c17894f1d3f054262ae2354d89df6fe0ba325aba01909b0612ad4c290906487c40d91641f6e4
+  checksum: 10c0/e674c75ff2c9cd2115c11e40e009a6ca85b41ab20740a5df3b7fafb67ebe683d5214be49532a5aedd81cb85768df393caf4571c83b17584cd168118bce24d315
   languageName: node
   linkType: hard
 
