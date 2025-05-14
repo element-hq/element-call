@@ -44,7 +44,6 @@ import {
 } from "../settings/settings";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
-// import { testAudioContext } from "../useAudioContext.test";
 import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer";
 
 // vi.hoisted(() => {
