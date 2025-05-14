@@ -40,8 +40,7 @@ export class MatrixKeyProvider extends BaseKeyProvider {
       keyIndex?: number,
     ): void => {
       tmpLogPrefix(
-        `key ratcheted event received for ${participantIdentity} at index ${keyIndex}`,
-        `key=${encodeBase64(new Uint8Array(ratchetResult.chainKey))}`,
+        `key ratcheted event received for ${participantIdentity} at index ${keyIndex} key=${encodeBase64(new Uint8Array(ratchetResult.chainKey))}`,
       );
       this.rtcSession?.onKeyRatcheted(
         ratchetResult.chainKey,
