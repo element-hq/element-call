@@ -12,7 +12,10 @@ import {
   soundEffectVolume as soundEffectVolumeSetting,
   useSetting,
 } from "./settings/settings";
-import { useMediaDevices } from "./livekit/MediaDevicesContext";
+import {
+  useEarpieceAudioConfig,
+  useMediaDevices,
+} from "./livekit/MediaDevicesContext";
 import { type PrefetchedSounds } from "./soundUtils";
 
 /**
@@ -28,12 +31,15 @@ async function playSound(
   ctx: AudioContext,
   buffer: AudioBuffer,
   volume: number,
+  stereoPan: number,
 ): Promise<void> {
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(volume, 0);
+  const pan = ctx.createStereoPanner();
+  pan.pan.setValueAtTime(stereoPan, 0);
   const src = ctx.createBufferSource();
   src.buffer = buffer;
-  src.connect(gain).connect(ctx.destination);
+  src.connect(gain).connect(pan).connect(ctx.destination);
   const p = new Promise<void>((r) => src.addEventListener("ended", () => r()));
   src.start();
   return p;
@@ -63,8 +69,9 @@ interface UseAudioContext<S> {
 export function useAudioContext<S extends string>(
   props: Props<S>,
 ): UseAudioContext<S> | null {
-  const [effectSoundVolume] = useSetting(soundEffectVolumeSetting);
-  const devices = useMediaDevices();
+  const [soundEffectVolume] = useSetting(soundEffectVolumeSetting);
+  const { audioOutput } = useMediaDevices();
+
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
 
@@ -106,23 +113,30 @@ export function useAudioContext<S extends string>(
     if (audioContext && "setSinkId" in audioContext) {
       // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/setSinkId
       // @ts-expect-error - setSinkId doesn't exist yet in types, maybe because it's not supported everywhere.
-      audioContext.setSinkId(devices.audioOutput.selectedId).catch((ex) => {
+      audioContext.setSinkId(audioOutput.selectedId).catch((ex) => {
         logger.warn("Unable to change sink for audio context", ex);
       });
     }
-  }, [audioContext, devices]);
+  }, [audioContext, audioOutput.selectedId]);
+  const { pan: earpiecePan, volume: earpieceVolume } = useEarpieceAudioConfig();
 
   // Don't return a function until we're ready.
   if (!audioContext || !audioBuffers || props.muted) {
     return null;
   }
+
   return {
     playSound: async (name): Promise<void> => {
       if (!audioBuffers[name]) {
         logger.debug(`Tried to play a sound that wasn't buffered (${name})`);
         return;
       }
-      return playSound(audioContext, audioBuffers[name], effectSoundVolume);
+      return playSound(
+        audioContext,
+        audioBuffers[name],
+        soundEffectVolume * earpieceVolume,
+        earpiecePan,
+      );
     },
   };
 }
