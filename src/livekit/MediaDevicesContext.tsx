@@ -29,7 +29,7 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   type Setting,
 } from "../settings/settings";
-import { type OutputDevice, setOutputDevices } from "../controls";
+import { type OutputDevice, setOutputDevices$ } from "../controls";
 
 export const EARPIECE_CONFIG_ID = "earpiece-id";
 
@@ -300,7 +300,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
 function useControlledOutput(): MediaDevice {
   const available = useObservableEagerState(
     useObservable(() =>
-      setOutputDevices.pipe(
+      setOutputDevices$.pipe(
         startWith<OutputDevice[]>([]),
         map(
           (devices) =>
