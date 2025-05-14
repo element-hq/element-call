@@ -34,7 +34,7 @@ afterEach(() => {
 
 vi.mock("@livekit/components-react", async (importOriginal) => {
   return {
-    ...(await importOriginal()), // this will only affect "foo" outside of the original module
+    ...(await importOriginal()),
     AudioTrack: (props: { trackRef: TrackReference }): ReactNode => {
       return (
         <audio data-testid={"audio"}>

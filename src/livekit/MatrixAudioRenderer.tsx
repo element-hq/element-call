@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { getTrackReferenceId } from "@livekit/components-core";
 import { type RemoteAudioTrack, Track } from "livekit-client";
-import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   useTracks,
   AudioTrack,
@@ -88,7 +88,8 @@ export function MatrixAudioRenderer({
     },
   ).filter((ref) => {
     const isValid = validIdentities?.has(ref.participant.identity);
-    if (!isValid) logInvalid(ref.participant.identity, validIdentities);
+    if (!isValid && !ref.participant.isLocal)
+      logInvalid(ref.participant.identity, validIdentities);
     return (
       !ref.participant.isLocal &&
       ref.publication.kind === Track.Kind.Audio &&
@@ -97,11 +98,11 @@ export function MatrixAudioRenderer({
   });
 
   // This component is also (in addition to the "only play audio for connected members" logic above)
-  // to mimic earpice audio on iphones.
-  // The safari audio devices enumeration does not expose an earpice audio device.
+  // responsible for mimicking earpiece audio on iPhones.
+  // The Safari audio devices enumeration does not expose an earpiece audio device.
   // We alternatively use the audioContext pan node to only use one of the stereo channels.
 
-  // This component does get additionally complicated because of a safari bug.
+  // This component does get additionally complicated because of a Safari bug.
   // (see: https://bugs.webkit.org/show_bug.cgi?id=251532
   // and the related issues: https://bugs.webkit.org/show_bug.cgi?id=237878
   // and https://bugs.webkit.org/show_bug.cgi?id=231105)
@@ -109,31 +110,38 @@ export function MatrixAudioRenderer({
   // AudioContext gets stopped if the webview gets moved into the background.
   // Once the phone is in standby audio playback will stop.
   // So we can only use the pan trick only works is the phone is not in standby.
-  // If earpice mode is not used we do not use audioContext to allow standby playback.
+  // If earpiece mode is not used we do not use audioContext to allow standby playback.
   // shouldUseAudioContext is set to false if stereoPan === 0 to allow standby bluetooth playback.
 
   const { pan: stereoPan, volume: volumeFactor } = useEarpieceAudioConfig();
   const shouldUseAudioContext = stereoPan !== 0;
 
   // initialize the potentially used audio context.
-  const audioContext = useMemo(() => new AudioContext(), []);
+  const [audioContext, setAudioContext] = useState<AudioContext | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    const ctx = new AudioContext();
+    setAudioContext(ctx);
+    return (): void => {
+      void ctx.close();
+    };
+  }, []);
   const audioNodes = useMemo(
     () => ({
-      gain: audioContext.createGain(),
-      pan: audioContext.createStereoPanner(),
+      gain: audioContext?.createGain(),
+      pan: audioContext?.createStereoPanner(),
     }),
     [audioContext],
   );
 
   // Simple effects to update the gain and pan node based on the props
   useEffect(() => {
-    audioNodes.pan.pan.value = stereoPan;
-  }, [audioNodes.pan.pan, stereoPan]);
+    if (audioNodes.pan) audioNodes.pan.pan.value = stereoPan;
+  }, [audioNodes.pan, stereoPan]);
   useEffect(() => {
-    // *4 to balance the transition from audio context to normal audio playback.
-    // probably needed due to gain behaving differently than el.volume
-    audioNodes.gain.gain.value = volumeFactor;
-  }, [audioNodes.gain.gain, volumeFactor]);
+    if (audioNodes.gain) audioNodes.gain.gain.value = volumeFactor;
+  }, [audioNodes.gain, volumeFactor]);
 
   return (
     // We add all audio elements into one <div> for the browser developer tool experience/tidyness.
@@ -155,8 +163,8 @@ interface StereoPanAudioTrackProps {
   muted?: boolean;
   audioContext?: AudioContext;
   audioNodes: {
-    gain: GainNode;
-    pan: StereoPannerNode;
+    gain?: GainNode;
+    pan?: StereoPannerNode;
   };
 }
 
@@ -182,15 +190,18 @@ function AudioTrackWithAudioNodes({
   // (adding the audio context when already mounted did not work outside strict mode)
   const [trackReady, setTrackReady] = useReactiveState(
     () => false,
-    [audioContext || audioNodes],
+    // We only want the track to reset once both (audioNodes and audioContext) are set.
+    // for unsetting the audioContext its enough if one of the the is undefined.
+    [audioContext && audioNodes],
   );
 
   useEffect(() => {
     if (!trackRef || trackReady) return;
     const track = trackRef.publication.track as RemoteAudioTrack;
-    track.setAudioContext(audioContext);
+    const useContext = audioContext && audioNodes.gain && audioNodes.pan;
+    track.setAudioContext(useContext ? audioContext : undefined);
     track.setWebAudioPlugins(
-      audioContext ? [audioNodes.gain, audioNodes.pan] : [],
+      useContext ? [audioNodes.gain!, audioNodes.pan!] : [],
     );
     setTrackReady(true);
   }, [audioContext, audioNodes, setTrackReady, trackReady, trackRef]);

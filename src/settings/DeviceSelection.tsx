@@ -49,7 +49,7 @@ export const DeviceSelection: FC<Props> = ({
   );
 
   // There is no need to show the menu if there is no choice that can be made.
-  if (device.available.size == 1) return null;
+  if (device.available.size <= 1) return null;
 
   return (
     <div className={styles.selection}>
