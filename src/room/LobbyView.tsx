@@ -5,7 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useCallback, useMemo, useState, type JSX } from "react";
+import {
+  type FC,
+  useCallback,
+  useMemo,
+  useState,
+  type JSX,
+  useEffect,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
 import { Button } from "@vector-im/compound-web";
@@ -72,6 +79,13 @@ export const LobbyView: FC<Props> = ({
   onShareClick,
   waitingForInvite,
 }) => {
+  useEffect(() => {
+    logger.info("[Lifecycle] GroupCallView Component mounted");
+    return (): void => {
+      logger.info("[Lifecycle] GroupCallView Component unmounted");
+    };
+  }, []);
+
   const { t } = useTranslation();
   usePageTitle(matrixInfo.roomName);
 
