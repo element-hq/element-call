@@ -18,6 +18,7 @@ import {
   useNewMembershipManager as useNewMembershipManagerSetting,
   useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   muteAllAudio as muteAllAudioSetting,
+  alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
 } from "./settings";
 import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
@@ -46,6 +47,9 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
     useNewMembershipManagerSetting,
   );
 
+  const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
+    alwaysShowIphoneEarpieceSetting,
+  );
   const [
     useExperimentalToDeviceTransport,
     setUseExperimentalToDeviceTransport,
@@ -192,6 +196,20 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
             [setMuteAllAudio],
           )}
         />
+      </FieldRow>{" "}
+      <FieldRow>
+        <InputField
+          id="alwaysShowIphoneEarpiece"
+          type="checkbox"
+          label={t("developer_mode.always_show_iphone_earpiece")}
+          checked={alwaysShowIphoneEarpiece}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setAlwaysShowIphoneEarpiece(event.target.checked);
+            },
+            [setAlwaysShowIphoneEarpiece],
+          )}
+        />{" "}
       </FieldRow>
       {livekitRoom ? (
         <>

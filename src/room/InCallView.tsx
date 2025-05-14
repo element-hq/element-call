@@ -5,11 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  RoomAudioRenderer,
-  RoomContext,
-  useLocalParticipant,
-} from "@livekit/components-react";
+import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import { Text } from "@vector-im/compound-web";
 import { ConnectionState, type Room } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk";
@@ -107,6 +103,7 @@ import {
 import { ReactionsReader } from "../reactions/ReactionsReader";
 import { ConnectionLostError } from "../utils/errors.ts";
 import { useTypedEventEmitter } from "../useEvents.ts";
+import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -713,7 +710,10 @@ export const InCallView: FC<InCallViewProps> = ({
           </Text>
         )
       }
-      <RoomAudioRenderer muted={muteAllAudio} />
+      <MatrixAudioRenderer
+        members={rtcSession.memberships}
+        muted={muteAllAudio}
+      />
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />

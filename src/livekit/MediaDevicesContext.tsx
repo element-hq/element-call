@@ -27,11 +27,15 @@ import {
   audioOutput as audioOutputSetting,
   videoInput as videoInputSetting,
   type Setting,
+  alwaysShowIphoneEarpieceSetting,
 } from "../settings/settings";
+
+export const EARPIECE_CONFIG_ID = "earpiece-id";
 
 export type DeviceLabel =
   | { type: "name"; name: string }
   | { type: "number"; number: number }
+  | { type: "earpiece" }
   | { type: "default"; name: string | null };
 
 export interface MediaDevice {
@@ -40,6 +44,11 @@ export interface MediaDevice {
    */
   available: Map<string, DeviceLabel>;
   selectedId: string | undefined;
+  /**
+   * An additional device configuration that makes us use only one channel of the
+   * output device and a reduced volume.
+   */
+  useAsEarpiece: boolean | undefined;
   /**
    * The group ID of the selected device.
    */
@@ -65,6 +74,7 @@ function useMediaDevice(
 ): MediaDevice {
   // Make sure we don't needlessly reset to a device observer without names,
   // once permissions are already given
+  const [alwaysShowIphoneEarpice] = useSetting(alwaysShowIphoneEarpieceSetting);
   const hasRequestedPermissions = useRef(false);
   const requestPermissions = usingNames || hasRequestedPermissions.current;
   hasRequestedPermissions.current ||= usingNames;
@@ -102,15 +112,26 @@ function useMediaDevice(
             // Create a virtual default audio output for browsers that don't have one.
             // Its device ID must be the empty string because that's what setSinkId
             // recognizes.
+            // We also create this if we do not have any available devices, so that
+            // we can use the default or the earpiece.
+            const showEarpiece =
+              navigator.userAgent.match("iPhone") || alwaysShowIphoneEarpice;
             if (
               kind === "audiooutput" &&
-              available.size &&
               !available.has("") &&
-              !available.has("default")
+              !available.has("default") &&
+              (available.size || showEarpiece)
             )
               available = new Map([
                 ["", { type: "default", name: availableRaw[0]?.label || null }],
                 ...available,
+              ]);
+            if (kind === "audiooutput" && showEarpiece)
+              // On IPhones we have to create a virtual earpiece device, because
+              // the earpiece is not available as a device ID.
+              available = new Map([
+                ...available,
+                [EARPIECE_CONFIG_ID, { type: "earpiece" }],
               ]);
             // Note: creating virtual default input devices would be another problem
             // entirely, because requesting a media stream from deviceId "" won't
@@ -118,11 +139,12 @@ function useMediaDevice(
             return available;
           }),
         ),
-      [kind, deviceObserver$],
+      [alwaysShowIphoneEarpice, deviceObserver$, kind],
     ),
   );
 
-  const [preferredId, select] = useSetting(setting);
+  const [preferredId, setPreferredId] = useSetting(setting);
+  const [asEarpice, setAsEarpiece] = useState(false);
   const selectedId = useMemo(() => {
     if (available.size) {
       // If the preferred device is available, use it. Or if every available
@@ -138,6 +160,7 @@ function useMediaDevice(
     }
     return undefined;
   }, [available, preferredId]);
+
   const selectedGroupId = useObservableEagerState(
     useMemo(
       () =>
@@ -151,14 +174,27 @@ function useMediaDevice(
     ),
   );
 
+  const select = useCallback(
+    (id: string) => {
+      if (id === EARPIECE_CONFIG_ID) {
+        setAsEarpiece(true);
+      } else {
+        setAsEarpiece(false);
+        setPreferredId(id);
+      }
+    },
+    [setPreferredId],
+  );
+
   return useMemo(
     () => ({
       available,
       selectedId,
+      useAsEarpiece: asEarpice,
       selectedGroupId,
       select,
     }),
-    [available, selectedId, selectedGroupId, select],
+    [available, selectedId, asEarpice, selectedGroupId, select],
   );
 }
 
@@ -167,6 +203,7 @@ export const deviceStub: MediaDevice = {
   selectedId: undefined,
   selectedGroupId: undefined,
   select: () => {},
+  useAsEarpiece: false,
 };
 export const devicesStub: MediaDevices = {
   audioInput: deviceStub,
@@ -255,3 +292,30 @@ export const useMediaDeviceNames = (
       return context.stopUsingDeviceNames;
     }
   }, [context, enabled]);
+
+/**
+ * A convenience hook to get the audio node configuration for the earpiece.
+ * It will check the `useAsEarpiece` of the `audioOutput` device and return
+ * the appropriate pan and volume values.
+ *
+ * @returns pan and volume values for the earpiece audio node configuration.
+ */
+export const useEarpieceAudioConfig = (): {
+  pan: number;
+  volume: number;
+} => {
+  const { audioOutput } = useMediaDevices();
+  // We use only the right speaker (pan = 1) for the earpiece.
+  // This mimics the behavior of the native earpiece speaker (only the top speaker on an iPhone)
+  const pan = useMemo(
+    () => (audioOutput.useAsEarpiece ? 1 : 0),
+    [audioOutput.useAsEarpiece],
+  );
+  // We also do lower the volume by a factor of 10 to optimize for the usecase where
+  // a user is holding the phone to their ear.
+  const volume = useMemo(
+    () => (audioOutput.useAsEarpiece ? 0.1 : 1),
+    [audioOutput.useAsEarpiece],
+  );
+  return { pan, volume };
+};

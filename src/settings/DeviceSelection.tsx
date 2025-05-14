@@ -22,17 +22,20 @@ import {
 } from "@vector-im/compound-web";
 import { Trans, useTranslation } from "react-i18next";
 
-import { type MediaDevice } from "../livekit/MediaDevicesContext";
+import {
+  EARPIECE_CONFIG_ID,
+  type MediaDevice,
+} from "../livekit/MediaDevicesContext";
 import styles from "./DeviceSelection.module.css";
 
 interface Props {
-  devices: MediaDevice;
+  device: MediaDevice;
   title: string;
   numberedLabel: (number: number) => string;
 }
 
 export const DeviceSelection: FC<Props> = ({
-  devices,
+  device,
   title,
   numberedLabel,
 }) => {
@@ -40,12 +43,13 @@ export const DeviceSelection: FC<Props> = ({
   const groupId = useId();
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      devices.select(e.target.value);
+      device.select(e.target.value);
     },
-    [devices],
+    [device],
   );
 
-  if (devices.available.size == 0) return null;
+  // There is no need to show the menu if there is no choice that can be made.
+  if (device.available.size == 1) return null;
 
   return (
     <div className={styles.selection}>
@@ -60,7 +64,7 @@ export const DeviceSelection: FC<Props> = ({
       </Heading>
       <Separator className={styles.separator} />
       <div className={styles.options}>
-        {[...devices.available].map(([id, label]) => {
+        {[...device.available].map(([id, label]) => {
           let labelText: ReactNode;
           switch (label.type) {
             case "name":
@@ -85,6 +89,16 @@ export const DeviceSelection: FC<Props> = ({
                   </Trans>
                 );
               break;
+            case "earpiece":
+              labelText = t("settings.devices.earpiece");
+              break;
+          }
+
+          let isSelected = false;
+          if (device.useAsEarpiece) {
+            isSelected = id === EARPIECE_CONFIG_ID;
+          } else {
+            isSelected = id === device.selectedId;
           }
 
           return (
@@ -93,7 +107,7 @@ export const DeviceSelection: FC<Props> = ({
               name={groupId}
               control={
                 <RadioControl
-                  checked={id === devices.selectedId}
+                  checked={isSelected}
                   onChange={onChange}
                   value={id}
                 />

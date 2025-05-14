@@ -98,7 +98,6 @@ export const SettingsModal: FC<Props> = ({
   useMediaDeviceNames(devices, open);
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
-
   const [showDeveloperSettingsTab] = useSetting(developerMode);
 
   const { available: isRageshakeAvailable } = useSubmitRageshake();
@@ -110,17 +109,18 @@ export const SettingsModal: FC<Props> = ({
       <>
         <Form>
           <DeviceSelection
-            devices={devices.audioInput}
+            device={devices.audioInput}
             title={t("settings.devices.microphone")}
             numberedLabel={(n) =>
               t("settings.devices.microphone_numbered", { n })
             }
           />
           <DeviceSelection
-            devices={devices.audioOutput}
+            device={devices.audioOutput}
             title={t("settings.devices.speaker")}
             numberedLabel={(n) => t("settings.devices.speaker_numbered", { n })}
           />
+
           <div className={styles.volumeSlider}>
             <label>{t("settings.audio_tab.effect_volume_label")}</label>
             <p>{t("settings.audio_tab.effect_volume_description")}</p>
@@ -146,7 +146,7 @@ export const SettingsModal: FC<Props> = ({
       <>
         <Form>
           <DeviceSelection
-            devices={devices.videoInput}
+            device={devices.videoInput}
             title={t("settings.devices.camera")}
             numberedLabel={(n) => t("settings.devices.camera_numbered", { n })}
           />
