@@ -110,19 +110,21 @@ export const playReactionsSound = new Setting<boolean>(
   true,
 );
 
-export const soundEffectVolumeSetting = new Setting<number>(
+export const soundEffectVolume = new Setting<number>(
   "sound-effect-volume",
   0.5,
 );
 
-export const useNewMembershipManagerSetting = new Setting<boolean>(
+export const useNewMembershipManager = new Setting<boolean>(
   "new-membership-manager",
   true,
 );
 
-export const useExperimentalToDeviceTransportSetting = new Setting<boolean>(
+export const useExperimentalToDeviceTransport = new Setting<boolean>(
   "experimental-to-device-transport",
   true,
 );
+
+export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);
 
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);

@@ -9,7 +9,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { useState, useEffect } from "react";
 
 import {
-  soundEffectVolumeSetting as effectSoundVolumeSetting,
+  soundEffectVolume as soundEffectVolumeSetting,
   useSetting,
 } from "./settings/settings";
 import { useMediaDevices } from "./livekit/MediaDevicesContext";
@@ -47,6 +47,7 @@ interface Props<S extends string> {
    */
   sounds: PrefetchedSounds<S> | null;
   latencyHint: AudioContextLatencyCategory;
+  muted?: boolean;
 }
 
 interface UseAudioContext<S> {
@@ -62,7 +63,7 @@ interface UseAudioContext<S> {
 export function useAudioContext<S extends string>(
   props: Props<S>,
 ): UseAudioContext<S> | null {
-  const [effectSoundVolume] = useSetting(effectSoundVolumeSetting);
+  const [effectSoundVolume] = useSetting(soundEffectVolumeSetting);
   const devices = useMediaDevices();
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
@@ -112,7 +113,7 @@ export function useAudioContext<S extends string>(
   }, [audioContext, devices]);
 
   // Don't return a function until we're ready.
-  if (!audioContext || !audioBuffers) {
+  if (!audioContext || !audioBuffers || props.muted) {
     return null;
   }
   return {

@@ -70,6 +70,7 @@
     "livekit_server_info": "LiveKit Server Info",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
+    "mute_all_audio": "Mute all audio (participants, reactions, join sounds)",
     "show_connection_stats": "Show connection statistics",
     "show_non_member_tiles": "Show tiles for non-member media",
     "url_params": "URL parameters",
