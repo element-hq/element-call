@@ -79,6 +79,7 @@ function mockDevices(available: Map<string, DeviceLabel>): MediaDevice {
     selectedId: "",
     selectedGroupId: "",
     select: (): void => {},
+    useAsEarpiece: false,
   };
 }
 

@@ -26,8 +26,8 @@ import {
   audioInput as audioInputSetting,
   audioOutput as audioOutputSetting,
   videoInput as videoInputSetting,
+  alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   type Setting,
-  alwaysShowIphoneEarpieceSetting,
 } from "../settings/settings";
 
 export const EARPIECE_CONFIG_ID = "earpiece-id";
