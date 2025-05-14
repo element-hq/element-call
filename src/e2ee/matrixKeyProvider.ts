@@ -44,7 +44,7 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     encryptionKeyIndex: number,
     participantId: string,
   ): void => {
-    createKeyMaterialFromBuffer(encryptionKey).then(
+    createKeyMaterialFromBuffer(encryptionKey.buffer as ArrayBuffer).then(
       (keyMaterial) => {
         this.onSetEncryptionKey(keyMaterial, participantId, encryptionKeyIndex);
 
