@@ -24,7 +24,7 @@ import {
   InsufficientCapacityError,
   UnknownCallError,
 } from "../utils/errors.ts";
-import { Cancellable } from "../utils/cancellable.ts";
+import { AbortHandle } from "../utils/abortHandle.ts";
 
 declare global {
   interface Window {
@@ -60,7 +60,7 @@ async function doConnect(
   sfuConfig: SFUConfig,
   audioEnabled: boolean,
   initialDeviceId: string | undefined,
-  cancellable: Cancellable,
+  cancellable: AbortHandle,
 ): Promise<void> {
   // Always create an audio track manually.
   // livekit (by default) keeps the mic track open when you mute, but if you start muted,
@@ -93,7 +93,7 @@ async function doConnect(
     }
     // There was a yield point previously (awaiting for the track to be created) so we need to check
     // if the operation was cancelled and stop connecting if needed.
-    if (cancellable.isCancelled()) {
+    if (cancellable.isAborted()) {
       logger.info(
         "[Lifecycle] Signal Aborted: Pre-created audio track but connection aborted",
       );
@@ -109,7 +109,7 @@ async function doConnect(
   if (!audioEnabled) {
     await preCreatedAudioTrack?.mute();
     // There was a yield point. Check if the operation was cancelled and stop connecting.
-    if (cancellable.isCancelled()) {
+    if (cancellable.isAborted()) {
       logger.info(
         "[Lifecycle] Signal Aborted: Pre-created audio track but connection aborted",
       );
@@ -132,7 +132,7 @@ async function doConnect(
   logger.info("[Lifecycle] Connecting & publishing");
   try {
     await connectAndPublish(livekitRoom, sfuConfig, preCreatedAudioTrack, []);
-    if (cancellable.isCancelled()) {
+    if (cancellable.isAborted()) {
       logger.info(
         "[Lifecycle] Signal Aborted: Connected but operation was cancelled. Force disconnect",
       );
@@ -284,15 +284,15 @@ export function useECConnectionState(
   // Protection against potential leaks, where the component to be unmounted and there is
   // still a pending doConnect promise. This would lead the user to still be in the call even
   // if the component is unmounted.
-  const cancelBag = useRef(new Set<Cancellable>());
+  const abortHandlesBag = useRef(new Set<AbortHandle>());
 
-  // This is a cleanup function that will be called when the component is unmounted.
-  // It will cancel all cancellables in the bag
+  // This is a cleanup function that will be called when the component is about to be unmounted.
+  // It will cancel all abortHandles in the bag
   useEffect(() => {
-    const bag = cancelBag.current;
+    const bag = abortHandlesBag.current;
     return (): void => {
       bag.forEach((cancellable) => {
-        cancellable.cancel();
+        cancellable.abort();
       });
     };
   }, []);
@@ -323,8 +323,8 @@ export function useECConnectionState(
       // always capturing audio: it helps keep bluetooth headsets in the right mode and
       // mobile browsers to know we're doing a call.
       setIsInDoConnect(true);
-      const cancellable = new Cancellable();
-      cancelBag.current.add(cancellable);
+      const cancellable = new AbortHandle();
+      abortHandlesBag.current.add(cancellable);
       doConnect(
         livekitRoom!,
         sfuConfig!,
@@ -340,7 +340,7 @@ export function useECConnectionState(
           } else logger.error("Failed to connect to SFU", e);
         })
         .finally(() => {
-          cancelBag.current.delete(cancellable);
+          abortHandlesBag.current.delete(cancellable);
           setIsInDoConnect(false);
         });
     }
