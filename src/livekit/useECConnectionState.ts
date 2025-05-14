@@ -60,7 +60,7 @@ async function doConnect(
   sfuConfig: SFUConfig,
   audioEnabled: boolean,
   initialDeviceId: string | undefined,
-  cancellable: AbortHandle,
+  abortHandle: AbortHandle,
 ): Promise<void> {
   // Always create an audio track manually.
   // livekit (by default) keeps the mic track open when you mute, but if you start muted,
@@ -93,7 +93,7 @@ async function doConnect(
     }
     // There was a yield point previously (awaiting for the track to be created) so we need to check
     // if the operation was cancelled and stop connecting if needed.
-    if (cancellable.isAborted()) {
+    if (abortHandle.isAborted()) {
       logger.info(
         "[Lifecycle] Signal Aborted: Pre-created audio track but connection aborted",
       );
@@ -109,7 +109,7 @@ async function doConnect(
   if (!audioEnabled) {
     await preCreatedAudioTrack?.mute();
     // There was a yield point. Check if the operation was cancelled and stop connecting.
-    if (cancellable.isAborted()) {
+    if (abortHandle.isAborted()) {
       logger.info(
         "[Lifecycle] Signal Aborted: Pre-created audio track but connection aborted",
       );
@@ -132,7 +132,7 @@ async function doConnect(
   logger.info("[Lifecycle] Connecting & publishing");
   try {
     await connectAndPublish(livekitRoom, sfuConfig, preCreatedAudioTrack, []);
-    if (cancellable.isAborted()) {
+    if (abortHandle.isAborted()) {
       logger.info(
         "[Lifecycle] Signal Aborted: Connected but operation was cancelled. Force disconnect",
       );
@@ -291,8 +291,8 @@ export function useECConnectionState(
   useEffect(() => {
     const bag = abortHandlesBag.current;
     return (): void => {
-      bag.forEach((cancellable) => {
-        cancellable.abort();
+      bag.forEach((handle) => {
+        handle.abort();
       });
     };
   }, []);
@@ -323,14 +323,14 @@ export function useECConnectionState(
       // always capturing audio: it helps keep bluetooth headsets in the right mode and
       // mobile browsers to know we're doing a call.
       setIsInDoConnect(true);
-      const cancellable = new AbortHandle();
-      abortHandlesBag.current.add(cancellable);
+      const abortHandle = new AbortHandle();
+      abortHandlesBag.current.add(abortHandle);
       doConnect(
         livekitRoom!,
         sfuConfig!,
         initialAudioEnabled,
         initialDeviceId,
-        cancellable,
+        abortHandle,
       )
         .catch((e) => {
           if (e instanceof ElementCallError) {
@@ -340,7 +340,7 @@ export function useECConnectionState(
           } else logger.error("Failed to connect to SFU", e);
         })
         .finally(() => {
-          abortHandlesBag.current.delete(cancellable);
+          abortHandlesBag.current.delete(abortHandle);
           setIsInDoConnect(false);
         });
     }
