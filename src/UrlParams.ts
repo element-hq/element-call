@@ -284,7 +284,8 @@ export const getUrlParams = (
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
-    controlledOutput: parser.getFlagParam("controlledMediaDevices"),
+    // TODO this should not default to true!
+    controlledOutput: parser.getFlagParam("controlledMediaDevices", true),
     skipLobby: parser.getFlagParam(
       "skipLobby",
       isWidget && intent === UserIntent.StartNewCall,
