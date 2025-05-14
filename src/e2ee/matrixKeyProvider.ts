@@ -16,6 +16,11 @@ import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { encodeBase64 } from "matrix-js-sdk";
+
+function tmpLogPrefix(msg: string): void {
+  logger.debug(`[RTCEncryption][MatrixKeyProvider] - ${msg}`);
+}
 
 export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
@@ -34,8 +39,9 @@ export class MatrixKeyProvider extends BaseKeyProvider {
       participantIdentity?: string,
       keyIndex?: number,
     ): void => {
-      logger.debug(
+      tmpLogPrefix(
         `key ratcheted event received for ${participantIdentity} at index ${keyIndex}`,
+        `key=${encodeBase64(new Uint8Array(ratchetResult.chainKey))}`,
       );
       this.rtcSession?.onKeyRatcheted(
         ratchetResult.chainKey,
@@ -70,13 +76,16 @@ export class MatrixKeyProvider extends BaseKeyProvider {
       MatrixRTCSessionEvent.EncryptionKeyQueryRatchetStep,
       this.doRatchetKey,
     );
-
+    tmpLogPrefix(`setRTCSession SESSION CHANGED`);
     // The new session could be aware of keys of which the old session wasn't,
     // so emit key changed events
     this.rtcSession.reemitEncryptionKeys();
   }
 
   private doRatchetKey = (participantId: string, keyIndex: number): void => {
+    tmpLogPrefix(
+      `doRatchetKey participantId=${participantId} keyIndex=${keyIndex}`,
+    );
     this.ratchetKey(participantId, keyIndex);
   };
 
@@ -85,11 +94,14 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     encryptionKeyIndex: number,
     participantId: string,
   ): void => {
+    tmpLogPrefix(
+      `onEncryptionKeyChanged participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex} key=${encodeBase64(encryptionKey)}`,
+    );
     importKey(encryptionKey, "HKDF", "derive").then(
       (keyMaterial) => {
         this.onSetEncryptionKey(keyMaterial, participantId, encryptionKeyIndex);
 
-        logger.debug(
+        tmpLogPrefix(
           `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
         );
       },
