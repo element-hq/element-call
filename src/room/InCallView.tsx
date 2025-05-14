@@ -104,6 +104,7 @@ import { ReactionsReader } from "../reactions/ReactionsReader";
 import { ConnectionLostError } from "../utils/errors.ts";
 import { useTypedEventEmitter } from "../useEvents.ts";
 import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
+import { setOutputEnabled$ } from "../controls.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -222,7 +223,9 @@ export const InCallView: FC<InCallViewProps> = ({
     room: livekitRoom,
   });
 
-  const [muteAllAudio] = useSetting(muteAllAudioSetting);
+  const muteAllAudioControlled = useObservableEagerState(setOutputEnabled$);
+  const [muteAllAudioFromSetting] = useSetting(muteAllAudioSetting);
+  const muteAllAudio = muteAllAudioControlled || muteAllAudioFromSetting;
 
   // This seems like it might be enough logic to use move it into the call view model?
   const [didFallbackToRoomKey, setDidFallbackToRoomKey] = useState(false);
