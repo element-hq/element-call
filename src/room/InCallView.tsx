@@ -56,7 +56,7 @@ import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { useLiveKit } from "../livekit/useLiveKit";
+import { useLivekit } from "../livekit/useLivekit.ts";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { type MuteStates } from "./MuteStates";
@@ -73,7 +73,10 @@ import {
 import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
-import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  useRoomEncryptionSystem,
+  type EncryptionSystem,
+} from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import {
@@ -96,8 +99,9 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
-  developerMode,
-  useExperimentalToDeviceTransportSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
+  muteAllAudio as muteAllAudioSetting,
+  developerMode as developerModeSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
@@ -115,7 +119,7 @@ export interface ActiveCallProps
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
-  const { livekitRoom, connState } = useLiveKit(
+  const { livekitRoom, connState } = useLivekit(
     props.rtcSession,
     props.muteStates,
     sfuConfig,
@@ -135,7 +139,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const [showDeveloperModeDebugOptions] = useSetting(developerMode);
+  const [showDeveloperModeDebugOptions] = useSetting(developerModeSetting);
 
   useEffect(() => {
     if (livekitRoom !== undefined) {
@@ -229,19 +233,34 @@ export const InCallView: FC<InCallViewProps> = ({
     room: livekitRoom,
   });
 
-  const [toDeviceEncryptionSetting] = useSetting(
-    useExperimentalToDeviceTransportSetting,
-  );
-  const [showToDeviceEncryption, setShowToDeviceEncryption] = useState(
-    () => toDeviceEncryptionSetting,
-  );
-  useEffect(() => {
-    setShowToDeviceEncryption(toDeviceEncryptionSetting);
-  }, [toDeviceEncryptionSetting]);
+  const [muteAllAudio] = useSetting(muteAllAudioSetting);
+
+  // This seems like it might be enough logic to use move it into the call view model?
+  const [didFallbackToRoomKey, setDidFallbackToRoomKey] = useState(false);
   useTypedEventEmitter(
     rtcSession,
     RoomAndToDeviceEvents.EnabledTransportsChanged,
-    (enabled) => setShowToDeviceEncryption(enabled.to_device),
+    (enabled) => setDidFallbackToRoomKey(enabled.room),
+  );
+
+  const [developerMode] = useSetting(developerModeSetting);
+  const [useExperimentalToDeviceTransport] = useSetting(
+    useExperimentalToDeviceTransportSetting,
+  );
+  const encryptionSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
+
+  const showToDeviceEncryption = useMemo(
+    () =>
+      developerMode &&
+      useExperimentalToDeviceTransport &&
+      encryptionSystem.kind === E2eeType.PER_PARTICIPANT &&
+      !didFallbackToRoomKey,
+    [
+      developerMode,
+      useExperimentalToDeviceTransport,
+      encryptionSystem.kind,
+      didFallbackToRoomKey,
+    ],
   );
 
   const toggleMicrophone = useCallback(
@@ -702,10 +721,10 @@ export const InCallView: FC<InCallViewProps> = ({
           </Text>
         )
       }
-      <RoomAudioRenderer />
+      <RoomAudioRenderer muted={muteAllAudio} />
       {renderContent()}
-      <CallEventAudioRenderer vm={vm} />
-      <ReactionsAudioRenderer vm={vm} />
+      <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
+      <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (

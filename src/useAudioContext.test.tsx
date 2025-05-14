@@ -12,7 +12,7 @@ import userEvent from "@testing-library/user-event";
 
 import { deviceStub, MediaDevicesContext } from "./livekit/MediaDevicesContext";
 import { useAudioContext } from "./useAudioContext";
-import { soundEffectVolumeSetting } from "./settings/settings";
+import { soundEffectVolume as soundEffectVolumeSetting } from "./settings/settings";
 
 const staticSounds = Promise.resolve({
   aSound: new ArrayBuffer(0),

@@ -62,8 +62,9 @@ import {
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
 import {
-  useExperimentalToDeviceTransportSetting,
-  useNewMembershipManagerSetting as useNewMembershipManagerSetting,
+  useNewMembershipManager as useNewMembershipManagerSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
+  muteAllAudio as muteAllAudioSetting,
   useSetting,
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
@@ -104,11 +105,13 @@ export const GroupCallView: FC<Props> = ({
     null,
   );
 
+  const [muteAllAudio] = useSetting(muteAllAudioSetting);
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const leaveSoundContext = useLatest(
     useAudioContext({
       sounds: callEventAudioSounds,
       latencyHint: "interactive",
+      muted: muteAllAudio,
     }),
   );
   // This should use `useEffectEvent` (only available in experimental versions)

@@ -29,6 +29,10 @@ import {
   type Room as LivekitRoom,
 } from "livekit-client";
 import { randomUUID } from "crypto";
+import {
+  type RoomAndToDeviceEvents,
+  type RoomAndToDeviceEventsHandlerMap,
+} from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
 import {
   LocalUserMediaViewModel,
@@ -269,8 +273,8 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
 }
 
 export class MockRTCSession extends TypedEventEmitter<
-  MatrixRTCSessionEvent,
-  MatrixRTCSessionEventHandlerMap
+  MatrixRTCSessionEvent | RoomAndToDeviceEvents,
+  MatrixRTCSessionEventHandlerMap & RoomAndToDeviceEventsHandlerMap
 > {
   public readonly statistics = {
     counters: {},
