@@ -21,11 +21,7 @@ import { ConnectionState, type LocalParticipant } from "livekit-client";
 import { of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
-import {
-  RoomAudioRenderer,
-  RoomContext,
-  useLocalParticipant,
-} from "@livekit/components-react";
+import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
 import { type MuteStates } from "./MuteStates";
@@ -48,6 +44,8 @@ import {
 } from "../settings/settings";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
+// import { testAudioContext } from "../useAudioContext.test";
+import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer";
 
 // vi.hoisted(() => {
 //   localStorage = {} as unknown as Storage;
@@ -65,6 +63,7 @@ vi.mock("../tile/GridTile");
 vi.mock("../tile/SpotlightTile");
 vi.mock("@livekit/components-react");
 vi.mock("../e2ee/sharedKeyManagement");
+vi.mock("../livekit/MatrixAudioRenderer");
 vi.mock("react-use-measure", () => ({
   default: (): [() => void, object] => [(): void => {}, {}],
 }));
@@ -81,13 +80,15 @@ const roomMembers = new Map([carol].map((p) => [p.userId, p]));
 
 const roomId = "!foo:bar";
 let useRoomEncryptionSystemMock: MockedFunction<typeof useRoomEncryptionSystem>;
+
 beforeEach(() => {
   vi.clearAllMocks();
-  // RoomAudioRenderer is tested separately.
+
+  // MatrixAudioRenderer is tested separately.
   (
-    RoomAudioRenderer as MockedFunction<typeof RoomAudioRenderer>
+    MatrixAudioRenderer as MockedFunction<typeof MatrixAudioRenderer>
   ).mockImplementation((_props) => {
-    return <div>mocked: RoomAudioRenderer</div>;
+    return <div>mocked: MatrixAudioRenderer</div>;
   });
   (
     useLocalParticipant as MockedFunction<typeof useLocalParticipant>
@@ -98,7 +99,6 @@ beforeEach(() => {
         localParticipant: localRtcMember as unknown as LocalParticipant,
       }) as unknown as ReturnType<typeof useLocalParticipant>,
   );
-
   useRoomEncryptionSystemMock =
     useRoomEncryptionSystem as typeof useRoomEncryptionSystemMock;
   useRoomEncryptionSystemMock.mockReturnValue({ kind: E2eeType.NONE });
