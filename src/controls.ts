@@ -19,6 +19,7 @@ export interface Controls {
 export interface OutputDevice {
   id: string;
   name: string;
+  forEarpiece?: boolean;
 }
 
 export const setPipEnabled$ = new Subject<boolean>();
