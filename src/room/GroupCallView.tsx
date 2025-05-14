@@ -122,6 +122,13 @@ export const GroupCallView: FC<Props> = ({
   }, []);
 
   useEffect(() => {
+    logger.info("[Lifecycle] GroupCallView Component mounted");
+    return (): void => {
+      logger.info("[Lifecycle] GroupCallView Component unmounted");
+    };
+  }, []);
+
+  useEffect(() => {
     window.rtcSession = rtcSession;
     return (): void => {
       delete window.rtcSession;

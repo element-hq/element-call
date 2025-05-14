@@ -132,10 +132,23 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const [vm, setVm] = useState<CallViewModel | null>(null);
 
   useEffect(() => {
+    logger.info(
+      `[Lifecycle] InCallView Component mounted, livekitroom state ${livekitRoom?.state}`,
+    );
     return (): void => {
-      livekitRoom?.disconnect().catch((e) => {
-        logger.error("Failed to disconnect from livekit room", e);
-      });
+      logger.info(
+        `[Lifecycle] InCallView Component unmounted, livekitroom state ${livekitRoom?.state}`,
+      );
+      livekitRoom
+        ?.disconnect()
+        .then(() => {
+          logger.info(
+            `[Lifecycle] Disconnected from livekite room, state:${livekitRoom?.state}`,
+          );
+        })
+        .catch((e) => {
+          logger.error("[Lifecycle] Failed to disconnect from livekit room", e);
+        });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
