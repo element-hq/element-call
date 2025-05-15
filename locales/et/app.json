@@ -70,10 +70,12 @@
     "livekit_server_info": "LiveKiti serveri teave",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrixi kasutajatunnus: {{id}}",
+    "mute_all_audio": "Summuta kõik helid (osalejad, regeerimised, liitumise helid)",
     "show_connection_stats": "Näita ühenduse statistikat",
     "show_non_member_tiles": "Näita ka mitteseotud meedia paane",
     "url_params": "Võrguaadressi parameetrid",
-    "use_new_membership_manager": "Kasuta kõne liikmelisuse halduri (MembershipManager) uut implementatsiooni"
+    "use_new_membership_manager": "Kasuta kõne liikmelisuse halduri (MembershipManager) uut implementatsiooni",
+    "use_to_device_key_transport": "Kasuta seadmepõhist krüptovõtmete vahetust. Kui jututoa liige peaks saatma jututoakohase krüptovõtme, siis kasuta jututoakohast võtmevahetust"
   },
   "disconnected_banner": "Võrguühendus serveriga on katkenud.",
   "error": {
@@ -163,6 +165,9 @@
       "effect_volume_description": "Häälesta helivaljust, mida kasutatakse käe tõstmisel ja regeerimisel",
       "effect_volume_label": "Efektide helivajlus"
     },
+    "background_blur_header": "Taust",
+    "background_blur_label": "Hägusta video taust",
+    "blur_not_supported_by_browser": "(Tausta hägustamine pole selles seadmes toetatud.)",
     "developer_tab_title": "Arendaja",
     "devices": {
       "camera": "Kaamera",

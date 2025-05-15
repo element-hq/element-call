@@ -4,15 +4,30 @@
   },
   "action": {
     "close": "Aizvērt",
+    "copy_link": "Kopēt saiti",
+    "edit": "Labot",
     "go": "Aiziet",
+    "invite": "Uzaicināt",
+    "lower_hand": "Nolaist roku",
     "no": "Nē",
+    "pick_reaction": "Reaģēt",
+    "raise_hand": "Pacelt roku",
     "register": "Reģistrēties",
     "remove": "Noņemt",
+    "show_less": "Rādīt mazāk",
+    "show_more": "Rādīt vairāk",
     "sign_in": "Pieteikties",
     "sign_out": "Atteikties",
-    "submit": "Iesniegt"
+    "submit": "Iesniegt",
+    "upload_file": "Augšupielādēt failu"
   },
-  "analytics_notice": "Piedalīšanās šajā beta apliecina piekrišanu anonīmu datu ievākšanai, ko mēs izmantojam, lai uzlabotu izstrādājumu. Vairāk informācijas par datiem, ko mēs ievācam, var atrast mūsu <2>privātuma nosacījumos</2> un <5>sīkdatņu nosacījumos</5>.",
+  "analytics_notice": "Piedaloties šajā beta versijā, jūs piekrītat anonīmu datu vākšanai, ko mēs izmantojam produkta uzlabošanai. Plašāku informāciju par to, kādus datus mēs izsekojam, varat atrast mūsu <2>konfidencialitātes politikā</2> un mūsu <6>sīkfailu politikā</6>.",
+  "app_selection_modal": {
+    "continue_in_browser": "Turpināt pārlūkprogrammā",
+    "open_in_app": "Atvērt lietotnē",
+    "text": "Gatavs pievienoties?",
+    "title": "Izvēlies lietotni"
+  },
   "call_ended_view": {
     "create_account_button": "Izveidot kontu",
     "create_account_prompt": "<0>Kādēļ nepabeigt ar paroles iestatīšanu, lai paturētu savu kontu?</0><1>Būs iespējams paturēt savu vārdu un iestatīt attēlu izmantošanai turpmākajos zvanos</1>",
@@ -23,31 +38,104 @@
     "reconnect_button": "Atkārtoti savienoties",
     "survey_prompt": "Kā Tev veicās?"
   },
+  "call_name": "Zvana nosaukums",
   "common": {
+    "analytics": "Analītika",
     "audio": "Skaņa",
     "avatar": "Attēls",
+    "back": "Atpakaļ",
     "display_name": "Attēlojamais vārds",
+    "encrypted": "Šifrēts",
     "home": "Sākums",
     "loading": "Lādējas…",
+    "next": "Nākamais",
+    "options": "Opcijas",
     "password": "Parole",
+    "preferences": "Iestatījumi",
     "profile": "Profils",
+    "reaction": "Reakcija",
+    "reactions": "Reakcijas",
     "settings": "Iestatījumi",
-    "username": "Lietotājvārds"
+    "unencrypted": "Nav šifrēts",
+    "username": "Lietotājvārds",
+    "video": "Video"
+  },
+  "developer_mode": {
+    "crypto_version": "Crypto versija: {{version}}",
+    "debug_tile_layout_label": "Vietu izkārtojuma atkļūdošana",
+    "device_id": "Ierīces ID: {{id}}",
+    "duplicate_tiles_label": "Papildu vietu kopiju skaits vienam dalībniekam",
+    "environment_variables": "Vides mainīgie",
+    "hostname": "Saimniekdatora nosaukums: {{hostname}}",
+    "livekit_server_info": "LiveKit Server informācija",
+    "livekit_sfu": "LiveKit SFU: {{url}}",
+    "matrix_id": "Matrix ID: {{id}}",
+    "show_connection_stats": "Rādīt savienojuma statistiku",
+    "show_non_member_tiles": "Rādīt vietu medijiem no ne-dalībniekiem",
+    "url_params": "URL parametri",
+    "use_new_membership_manager": "Izmantojiet jauno zvana MembershipManager versiju"
   },
   "disconnected_banner": "Ir zaudēts savienojums ar serveri.",
+  "error": {
+    "call_is_not_supported": "Zvans netiek atbalstīts",
+    "call_not_found": "Zvans nav atrasts",
+    "call_not_found_description": "<0>Šķiet, ka šī saite nepieder nevienam esošam zvaniem. Pārbaudiet, vai jums ir pareizā saite, vai <1> izveidojiet jaunu</1>. </0>",
+    "connection_lost": "Savienojums zaudēts",
+    "connection_lost_description": "Jūs tikāt atvienots no zvana.",
+    "e2ee_unsupported": "Nesaderīgs pārlūks",
+    "e2ee_unsupported_description": "Jūsu tīmekļa pārlūkprogramma neatbalsta encrypted zvanus. Atbalstītās pārlūkprogrammas ir Chrome, Safari un Firefox 117+.",
+    "generic": "Kaut kas nogāja greizi",
+    "generic_description": "Atkļūdošanas žurnālu iesniegšana palīdzēs mums izsekot problēmu.",
+    "insufficient_capacity": "Nepietiekama jauda",
+    "insufficient_capacity_description": "Serveris ir sasniedzis maksimālo ietilpību, un jūs šobrīd nevarat pievienoties zvanam. Mēģiniet vēlreiz vēlāk vai sazinieties ar servera administratoru, ja problēma joprojām pastāv.",
+    "matrix_rtc_focus_missing": "Serveris nav konfigurēts darbam ar{{brand}}. Lūdzu, sazinieties ar sava servera administratoru (Domēns: {{domain}}, Kļūdas kods: {{ errorCode }}).",
+    "open_elsewhere": "Atvērts citā cilnē",
+    "open_elsewhere_description": "{{brand}} ir atvērts citā cilnē. Ja tas neizklausās pareizi, mēģiniet atkārtoti ielādēt lapu.",
+    "unexpected_ec_error": "Negaidīta kļūda (<0>kļūdas kods: </0> <1> {{ errorCode }}</1>). Lūdzu, sazinieties ar servera administratoru."
+  },
+  "group_call_loader": {
+    "banned_body": "Jums ir liegta ieeja šajā istabā.",
+    "banned_heading": "Aizliegts",
+    "call_ended_body": "Jūs esat noņemts no zvana.",
+    "call_ended_heading": "Zvans beidzies",
+    "knock_reject_body": "Jūsu pieteikums pievienoties tika noraidīts.",
+    "knock_reject_heading": "Piekļuve liegta",
+    "reason": "Iemesls: {{reason}}"
+  },
+  "hangup_button_label": "Beigt zvanu",
   "header_label": "Element Call sākums",
+  "header_participants_label": "Dalībnieki",
+  "invite_modal": {
+    "link_copied_toast": "Saite nokopēta",
+    "title": "Uzaicināt uz šo zvanu"
+  },
   "join_existing_call_modal": {
     "join_button": "Jā, pievienoties zvanam",
     "text": "Šis zvans jau pastāv. Vai vēlies pievienoties?",
     "title": "Pievienoties esošam zvanam?"
   },
+  "layout_grid_label": "Režģis",
   "layout_spotlight_label": "Starmešu gaisma",
   "lobby": {
-    "join_button": "Pievienoties zvanam"
+    "ask_to_join": "Pieprasīt pievienoties zvanam",
+    "join_as_guest": "Pievienojies kā viesis",
+    "join_button": "Pievienoties zvanam",
+    "leave_button": "Atpakaļ uz jaunākajiem",
+    "waiting_for_invite": "Pieprasījums nosūtīts! Gaida atļauju pievienoties..."
   },
+  "log_in": "Pieslēgties",
   "logging_in": "Piesakās…",
   "login_auth_links": "<0>Izveidot kontu</0> vai <2>Piekļūt kā viesim</2>",
+  "login_auth_links_prompt": "Vēl neesi reģistrējies?",
+  "login_subheading": "Lai turpinātu uz Element",
   "login_title": "Pieteikties",
+  "microphone_off": "Mikrofons izslēgts",
+  "microphone_on": "Mikrofons ieslēgts",
+  "mute_microphone_button_label": "Izslēgt mikrofonu",
+  "participant_count_zero": "{{count, number}}",
+  "participant_count_one": "{{count, number}}",
+  "participant_count_other": "{{count, number}}",
+  "qr_code": "QR kods",
   "rageshake_button_error_caption": "Atkārtoti mēģināt žurnāla ierakstu nosūtīšanu",
   "rageshake_request_modal": {
     "body": "Citam lietotājam šajā zvanā ir sarežģījumi. Lai labāk atklātu šīs nepilnības, mēs gribētu iegūt atkļūdošanas žurnālu.",
@@ -59,28 +147,76 @@
   "rageshake_sent": "Paldies!",
   "recaptcha_dismissed": "ReCaptcha atmesta",
   "recaptcha_not_loaded": "ReCaptcha nav ielādēta",
+  "recaptcha_ssla_caption": "Šo vietni aizsargā ReCAPTCHA un tiek piemēroti Google <2>konfidencialitātes politika</2> un <6>Pakalpojuma noteikumi</6>.<9></9>Noklikšķinot uz \"Reģistrēties\", jūs piekrītat mūsu <12>Programmatūras un pakalpojumu licences līgumam (SSLA)</12>",
   "register": {
     "passwords_must_match": "Parolēm ir jāsakrīt",
     "registering": "Reģistrē…"
   },
   "register_auth_links": "<0>Jau ir konts?</0><1><0>Pieteikties</0> vai <2>Piekļūt kā viesim</2></1>",
   "register_confirm_password_label": "Apstiprināt paroli",
+  "register_heading": "Izveido kontu",
   "return_home_button": "Atgriezties sākuma ekrānā",
+  "room_auth_view_continue_button": "Turpināt",
+  "room_auth_view_ssla_caption": "Noklikšķinot uz “Pievienoties zvanam tūlīt”, jūs piekrītat mūsu <2> programmatūras un pakalpojumu licences līgumam (SSLA) </2>",
   "screenshare_button_label": "Kopīgot ekrānu",
   "settings": {
+    "audio_tab": {
+      "effect_volume_description": "Pielāgojiet skaļumu, kurā tiek atskaņotas reakcijas un paceltas rokas skaņas.",
+      "effect_volume_label": "Skaņas efektu skaļums"
+    },
     "developer_tab_title": "Izstrādātājs",
+    "devices": {
+      "camera": "Kamera",
+      "camera_numbered": "Kamera {{n}}",
+      "default": "Noklusējums",
+      "default_named": "Noklusējums <2> ({{name}} )</2>",
+      "microphone": "Mikrofons",
+      "microphone_numbered": "Mikrofons {{n}}",
+      "speaker": "Skaļrunis",
+      "speaker_numbered": "Skaļrunis {{n}}"
+    },
     "feedback_tab_body": "Ja tiek piedzīvoti sarežģījumi vai vienkārši ir vēlme sniegt kādu atsauksmi, lūgums zemāk nosūtīt mums īsu aprakstu.",
     "feedback_tab_description_label": "Tava atsauksme",
     "feedback_tab_h4": "Iesniegt atsauksmi",
     "feedback_tab_send_logs_label": "Iekļaut atkļūdošanas žurnāla ierakstus",
     "feedback_tab_thank_you": "Paldies, mēs saņēmām atsauksmi!",
     "feedback_tab_title": "Atsauksmes",
-    "opt_in_description": "<0></0><1></1>Savu piekrišanu var atsaukt ar atzīmes noņemšanu no šīs rūtiņas. Ja pašreiz atrodies zvanā, šis iestatījums stāsies spēkā zvana beigās."
+    "opt_in_description": "<0></0><1></1>Savu piekrišanu var atsaukt ar atzīmes noņemšanu no šīs rūtiņas. Ja pašreiz atrodies zvanā, šis iestatījums stāsies spēkā zvana beigās.",
+    "preferences_tab": {
+      "developer_mode_label": "Izstrādātāja režīms",
+      "developer_mode_label_description": "Iespējot izstrādātāja režīmu un rādīt cilni izstrādātāja iestatījumi.",
+      "introduction": "Šeit varat konfigurēt papildu opcijas, lai uzlabotu pieredzi.",
+      "reactions_play_sound_description": "Atskaņojiet skaņas efektu, kad kāds sūta reakciju uz zvanu.",
+      "reactions_play_sound_label": "Atskaņojiet reakcijas skaņas",
+      "reactions_show_description": "Rādīt animāciju, kad kāds nosūta reakciju.",
+      "reactions_show_label": "Rādīt reakcijas",
+      "show_hand_raised_timer_description": "Rādīt taimeri, kad dalībnieks paceļ roku",
+      "show_hand_raised_timer_label": "Rādīt rokas pacelšanas ilgumu"
+    }
   },
+  "star_rating_input_label_zero": "{{count}} zvaigznes",
   "star_rating_input_label_one": "{{count}} zvaigzne",
   "star_rating_input_label_other": "{{count}} zvaigznes",
+  "start_new_call": "Sākt jaunu zvanu",
+  "start_video_button_label": "Sākt video",
+  "stop_screenshare_button_label": "Kopīgo ekrānu",
+  "stop_video_button_label": "Apturēt video",
   "submitting": "Iesniedz…",
+  "switch_camera": "Pārslēgt kameru",
   "unauthenticated_view_body": "Vēl neesi reģistrējies? <2>Izveidot kontu</2>",
   "unauthenticated_view_login_button": "Pieteikties kontā",
-  "version": "Versija: {{version}}"
+  "unauthenticated_view_ssla_caption": "Noklikšķinot uz \"Aiziet\", jūs piekrītat mūsu <2>Programmatūras un pakalpojumu licences līgumam (SSLA)</2>",
+  "unmute_microphone_button_label": "Ieslēgt mikrofonu",
+  "version": "{{productName}} versija: {{version}}",
+  "video_tile": {
+    "always_show": "Vienmēr rādīt",
+    "camera_starting": "Video ielāde...",
+    "change_fit_contain": "Pielāgot rāmim",
+    "collapse": "Sakļaut",
+    "expand": "Izvērst",
+    "mute_for_me": "Klusums man",
+    "muted_for_me": "Man izslēgts",
+    "volume": "Skaļums",
+    "waiting_for_media": "Gaida medijus..."
+  }
 }

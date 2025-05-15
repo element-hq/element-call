@@ -21,7 +21,7 @@
     "submit": "Odoslať",
     "upload_file": "Nahrať súbor"
   },
-  "analytics_notice": "Účasťou v tejto beta verzii súhlasíte so zhromažďovaním anonymných údajov, ktoré použijeme na zlepšenie produktu. Viac informácií o tom, ktoré údaje sledujeme, nájdete v našich <2>Zásadách ochrany osobných údajov</2> a <5>Zásadách používania súborov cookie</5>.",
+  "analytics_notice": "Účasťou v tejto beta verzii súhlasíte so zhromažďovaním anonymných údajov, ktoré použijeme na zlepšenie produktu. Viac informácií o tom, ktoré údaje sledujeme, nájdete v našich <2>Zásadách ochrany osobných údajov</2> a <6>Zásadách používania súborov cookie</6>.",
   "app_selection_modal": {
     "continue_in_browser": "Pokračovať v prehliadači",
     "open_in_app": "Otvoriť v aplikácii",
@@ -65,13 +65,17 @@
     "debug_tile_layout_label": "Ladenie rozloženia dlaždíc",
     "device_id": "ID zariadenia: {{id}}",
     "duplicate_tiles_label": "Počet ďalších kópií dlaždíc na účastníka",
+    "environment_variables": "Premenné prostredia",
     "hostname": "Názov hostiteľa: {{hostname}}",
     "livekit_server_info": "Informácie o serveri LiveKit",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
+    "mute_all_audio": "Stlmiť všetky zvuky (účastníkov, reakcií, zvuky pripojenia)",
     "show_connection_stats": "Zobraziť štatistiky pripojenia",
     "show_non_member_tiles": "Zobraziť dlaždice pre nečlenské médiá",
-    "use_new_membership_manager": "Použiť novú implementáciu hovoru MembershipManager"
+    "url_params": "Parametre URL adresy",
+    "use_new_membership_manager": "Použiť novú implementáciu hovoru MembershipManager",
+    "use_to_device_key_transport": "Používa sa na prenos kľúča zariadenia. Toto sa vráti k prenosu kľúča miestnosti, keď iný účastník hovoru poslal kľúč od miestnosti"
   },
   "disconnected_banner": "Spojenie so serverom sa stratilo.",
   "error": {
@@ -145,6 +149,7 @@
   "rageshake_sent": "Ďakujeme!",
   "recaptcha_dismissed": "Recaptcha zamietnutá",
   "recaptcha_not_loaded": "Recaptcha sa nenačítala",
+  "recaptcha_ssla_caption": "Táto stránka je chránená reCAPTCHA a platia <2>Zásady ochrany osobných údajov</2> a <6>Podmienky služby</6> spoločnosti Google. <9></9>Kliknutím na tlačidlo „Registrovať“ súhlasíte s našou <12>Licenčnou zmluvou o softvéri a službách (SSLA)</12>",
   "register": {
     "passwords_must_match": "Heslá sa musia zhodovať",
     "registering": "Registrácia…"
@@ -154,12 +159,16 @@
   "register_heading": "Vytvorte si účet",
   "return_home_button": "Návrat na domovskú obrazovku",
   "room_auth_view_continue_button": "Pokračovať",
+  "room_auth_view_ssla_caption": "Kliknutím na „Pripojiť sa k hovoru teraz“ súhlasíte s našou <2>Licenčnou zmluvou o softvéri a službách (SSLA)</2>",
   "screenshare_button_label": "Zdieľať obrazovku",
   "settings": {
     "audio_tab": {
       "effect_volume_description": "Upraviť hlasitosť, pri ktorej sa prehrávajú reakcie a efekty zdvihnutia ruky.",
       "effect_volume_label": "Hlasitosť zvukového efektu"
     },
+    "background_blur_header": "Pozadie",
+    "background_blur_label": "Rozmazať pozadie videa",
+    "blur_not_supported_by_browser": "(Rozmazanie pozadia nie je podporované týmto zariadením.)",
     "developer_tab_title": "Vývojár",
     "devices": {
       "camera": "Kamera",
@@ -191,6 +200,7 @@
     }
   },
   "star_rating_input_label_one": "{{count}} hviezdička",
+  "star_rating_input_label_few": "{{count}} hviezdičky",
   "star_rating_input_label_other": "{{count}} hviezdičiek",
   "start_new_call": "Spustiť nový hovor",
   "start_video_button_label": "Spustiť video",
@@ -200,8 +210,9 @@
   "switch_camera": "Prepnúť fotoaparát",
   "unauthenticated_view_body": "Ešte nie ste zaregistrovaný? <2>Vytvorte si účet</2>",
   "unauthenticated_view_login_button": "Prihláste sa do svojho konta",
+  "unauthenticated_view_ssla_caption": "Kliknutím na tlačidlo „Prejsť“ súhlasítes našou <2>Licenčnou zmluvou o softvéri a službách (SSLA)</2>",
   "unmute_microphone_button_label": "Zrušiť stlmenie mikrofónu",
-  "version": "Verzia: {{version}}",
+  "version": "Verzia {{productName}}: {{version}}",
   "video_tile": {
     "always_show": "Vždy zobraziť",
     "camera_starting": "Načítavanie videa...",

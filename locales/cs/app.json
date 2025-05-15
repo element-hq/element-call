@@ -70,10 +70,12 @@
     "livekit_server_info": "Informace o serveru LiveKit",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
+    "mute_all_audio": "Ztlumit všechny zvuky (účastníci, reakce, zvuky připojení)",
     "show_connection_stats": "Zobrazit statistiky připojení",
     "show_non_member_tiles": "Zobrazit dlaždice pro nečlenská média",
     "url_params": "Parametry URL",
-    "use_new_membership_manager": "Použijte novou implementaci volání MembershipManager"
+    "use_new_membership_manager": "Použijte novou implementaci volání MembershipManager",
+    "use_to_device_key_transport": "Použít přenos klíčů do zařízení. Tím se vrátíte k přenosu klíčů do místnosti, když jiný účastník hovoru pošle klíč místnosti"
   },
   "disconnected_banner": "Připojení k serveru bylo ztraceno.",
   "error": {
@@ -164,6 +166,9 @@
       "effect_volume_description": "Upravit hlasitost přehrávání reakcí a efektů zvednutých rukou.",
       "effect_volume_label": "Hlasitost zvukového efektu"
     },
+    "background_blur_header": "Pozadí",
+    "background_blur_label": "Rozostřit pozadí videa",
+    "blur_not_supported_by_browser": "(Toto zařízení nepodporuje rozostření pozadí.)",
     "developer_tab_title": "Vývojář",
     "devices": {
       "camera": "Fotoaparát",
