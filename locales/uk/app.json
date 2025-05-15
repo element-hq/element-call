@@ -21,7 +21,7 @@
     "submit": "Надіслати",
     "upload_file": "Завантажити файл"
   },
-  "analytics_notice": "Користуючись дочасним доступом, ви даєте згоду на збір анонімних даних, які ми використовуємо для вдосконалення продукту. Ви можете знайти більше інформації про те, які дані ми відстежуємо в нашій <2>Політиці Приватності</2> і нашій <5>Політиці про куки</5>.",
+  "analytics_notice": "Користуючись дочасним доступом, ви даєте згоду на збір анонімних даних, які ми використовуємо для вдосконалення продукту. Ви можете знайти більше інформації про те, які дані ми відстежуємо в нашій <2>Політиці Приватності</2> і нашій <6>Політиці про файли cookie</6>.",
   "app_selection_modal": {
     "continue_in_browser": "Продовжити у браузері",
     "open_in_app": "Відкрити у застосунку",
@@ -194,8 +194,9 @@
       "show_hand_raised_timer_label": "Показувати тривалість підняття руки"
     }
   },
-  "star_rating_input_label_one": "{{count}} зірок",
-  "star_rating_input_label_other": "{{count}} зірок",
+  "star_rating_input_label_one": "{{count}} зірка",
+  "star_rating_input_label_few": "{{count}} зірки",
+  "star_rating_input_label_many": "{{count}} зірок",
   "start_new_call": "Розпочати новий виклик",
   "start_video_button_label": "Розпочати відео",
   "stop_screenshare_button_label": "Презентація екрана",
@@ -206,7 +207,7 @@
   "unauthenticated_view_login_button": "Увійдіть до свого облікового запису",
   "unauthenticated_view_ssla_caption": "Натискаючи \"Перейти\", ви погоджуєтеся з нашою <2>Ліцензійною угодою на програмне забезпечення та послуги (SSLA) </2>",
   "unmute_microphone_button_label": "Увімкнути мікрофон",
-  "version": "Версія: {{version}}",
+  "version": "{{productName}} версія: {{version}}",
   "video_tile": {
     "always_show": "Показувати завжди",
     "camera_starting": "Завантаження відео...",

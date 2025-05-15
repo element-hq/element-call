@@ -4,20 +4,20 @@
   },
   "action": {
     "close": "Închide",
-    "copy_link": "Copiază linkul",
+    "copy_link": "Copiaţi linkul",
     "edit": "Editare",
     "go": "Du-te",
     "invite": "Invită",
     "lower_hand": "Mâna inferioară",
-    "no": "No",
+    "no": "Nu",
     "pick_reaction": "Alegeți reacția",
     "raise_hand": "Ridicați mâna",
-    "register": "Inregistrare",
+    "register": "Creaţi un cont",
     "remove": "elimina",
     "show_less": "Arată mai puțin",
     "show_more": "Arată mai mult",
     "sign_in": "Autentificare",
-    "sign_out": "Sign out",
+    "sign_out": "Deconecta-ţi-vă",
     "submit": "Trimiteți",
     "upload_file": "Încărcați fișierul"
   },
@@ -26,27 +26,27 @@
     "continue_in_browser": "Continuați în browser",
     "open_in_app": "Deschideți în aplicație",
     "text": "Sunteți gata să vă alăturați?",
-    "title": "Selectați aplicația"
+    "title": "Selectați o aplicație"
   },
   "call_ended_view": {
-    "create_account_button": "Creează cont",
+    "create_account_button": "Creaţi un cont",
     "create_account_prompt": "<0>De ce să nu terminați prin configurarea unei parole pentru a vă păstra contul? </0><1>Veți putea să vă păstrați numele și să setați un avatar pentru a fi utilizat la apelurile viitoare </1>",
     "feedback_done": "<0>Vă mulțumim pentru feedback! </0>",
     "feedback_prompt": "<0>Ne-ar plăcea să auzim feedback-ul dvs., astfel încât să vă putem îmbunătăți experiența. </0>",
     "headline": "{{displayName}}, apelul tău s-a încheiat.",
-    "not_now_button": "Nu acum, reveniți la ecranul de pornire",
-    "reconnect_button": "Reconecta",
-    "survey_prompt": "Cum a mers?"
+    "not_now_button": "Nu acum, reveniți la ecranul principal",
+    "reconnect_button": "Reconectaţi-vă",
+    "survey_prompt": "Cum a fost?"
   },
   "call_name": "Numele apelului",
   "common": {
     "analytics": "Analiză",
     "audio": "Audio",
-    "avatar": "avatar",
+    "avatar": "Imaginea de profil",
     "back": "Înapoi",
     "display_name": "Nume afișat",
     "encrypted": "Criptat",
-    "home": "Acasa",
+    "home": "Acasă",
     "loading": "Se încarcă...",
     "next": "Urmator\n",
     "options": "Opțiuni",
@@ -55,19 +55,43 @@
     "profile": "Profil",
     "reaction": "Reacție",
     "reactions": "Reacții",
-    "settings": "Settings",
+    "settings": "Setări",
     "unencrypted": "Nu este criptat",
-    "username": "Nume utilizator",
-    "video": "Videoclip"
+    "username": "Numele utilizatorului",
+    "video": "Video"
   },
   "developer_mode": {
     "crypto_version": "Versiunea Crypto: {{version}}",
+    "debug_tile_layout_label": "Depanaţi aranjamentul cartonaşelor",
     "device_id": "ID-ul dispozitivului: {{id}}",
     "duplicate_tiles_label": "Numărul de exemplare suplimentare de cartonașe per participant",
+    "environment_variables": "Variabile de mediu",
     "hostname": "Numele gazdei: {{hostname}}",
-    "matrix_id": "ID-ul matricei: {{id}}"
+    "matrix_id": "ID-ul matricei: {{id}}",
+    "show_connection_stats": "Afişaţi informaţii cu privire la starea conexiunii",
+    "show_non_member_tiles": "Afişaţi pictograme pentru fluxul media care nu aparţine participanţilor apelului",
+    "url_params": "Parametrii linkului",
+    "use_new_membership_manager": "Folosiţi noua versiune de administrator pentru participanţi ai apelului",
+    "use_to_device_key_transport": "Folosiţi metoda de transport direct către dispozitiv. Aceasta va reveni la transportul prin intermediul evenimentelor din cameră doar dacă un alt participant la apel recurge la acel mod de transport mai întâi."
   },
-  "disconnected_banner": "Conectivitatea la server a fost pierdută.",
+  "disconnected_banner": "Conexiunea către server s-a încheiat abrupt",
+  "error": {
+    "call_is_not_supported": "Acest tip de apel nu este suportat",
+    "call_not_found": "Apelul nu a fost găsit",
+    "call_not_found_description": "<0>Acel link nu pare să aparţină unui apel existent. Verificaţi dacă aţi introdus linkul corect, sau <1>creaţi unul nou</1>.</0>",
+    "connection_lost": "Conexiunea s-a pierdut",
+    "connection_lost_description": "Aţi fost deconectat/ă de la apel",
+    "e2ee_unsupported": "Navigatorul dumneavoastră este incompatibil cu criptarea integrală",
+    "e2ee_unsupported_description": "Navigatorul/browserul dumneavoastră web nu suportă apeluri în conversaţii cu criptare integrală. Printre navigatoarele suportate, se numără Chrome, Safari şi Firefox 117+.",
+    "generic": "A apărut o eroare neaşteptată",
+    "generic_description": "Dacă ne trimiteţi jurnalele de depanare generate de aplicaţie, ne puteţi ajuta să rezolvăm problema.",
+    "insufficient_capacity": "Capacitate insuficientă",
+    "insufficient_capacity_description": "Serverul a ajuns la capacitatea maximă și nu vă puteți alătura apelului în acest moment. Încercați din nou in câteva minute, sau contactați administratorul serverului dumneavoastră dacă problema persistă.",
+    "matrix_rtc_focus_missing": "Serverul nu este configurat să funcționeze cu{{brand}}. Vă rugăm să contactați administratorul serverului dumneavoastră pentru a raporta o eroare în configurare. Detalii: Domeniu: {{domain}}. Cod de eroare: {{ errorCode }}.",
+    "open_elsewhere": "Aplicaţia este deschisă intr-o altă pagină",
+    "open_elsewhere_description": "{{brand}} a fost deschis într-o altă pagină. Dacă credeți că acest mesaj a fost emis in eroare, încercați să reîncărcați pagina.",
+    "unexpected_ec_error": "A apărut o eroare neașteptată (Cod de <0> eroare: </0> <1> {{ errorCode }}</1>). Vă rugăm să contactați administratorul serverului dumneavoastră."
+  },
   "group_call_loader": {
     "banned_body": "Ai fost interzis să ieși din cameră.",
     "banned_heading": "Interzis",
@@ -135,6 +159,10 @@
       "effect_volume_label": "Volumul efectului sonor"
     },
     "developer_tab_title": "dezvoltator",
+    "devices": {
+      "microphone": "Microfon",
+      "speaker": "Difuzor"
+    },
     "feedback_tab_body": "Dacă întâmpinați probleme sau pur și simplu doriți să oferiți feedback, vă rugăm să ne trimiteți o scurtă descriere mai jos.",
     "feedback_tab_description_label": "Feedback-ul tău",
     "feedback_tab_h4": "Trimiteți Feedback",
@@ -143,6 +171,8 @@
     "feedback_tab_title": "Feedback",
     "opt_in_description": "<0></0><1></1>Puteți retrage consimțământul debifând această casetă. Dacă sunteți în prezent la un apel, această setare va intra în vigoare la sfârșitul apelului.",
     "preferences_tab": {
+      "developer_mode_label": "Modul dezvoltator",
+      "developer_mode_label_description": "Activați modul dezvoltator și afișați pagina specifică setărilor pentru dezvoltatori",
       "introduction": "Aici puteți configura opțiuni suplimentare pentru o experiență îmbunătățită.",
       "reactions_play_sound_description": "Redați un efect sonor atunci când cineva trimite o reacție la un apel.",
       "reactions_play_sound_label": "Redați sunete de reacție",
@@ -164,11 +194,13 @@
   "version": "{{productName}}Versiune: {{version}}",
   "video_tile": {
     "always_show": "Arată întotdeauna",
+    "camera_starting": "Se încarcă fluxul video...",
     "change_fit_contain": "Se potrivește cadrului",
     "collapse": "colaps",
     "expand": "Extindeți",
     "mute_for_me": "Mute pentru mine",
     "muted_for_me": "Dezactivat pentru mine",
-    "volume": "VOLUM"
+    "volume": "VOLUM",
+    "waiting_for_media": "Flux multimedia în aşteptare"
   }
 }
