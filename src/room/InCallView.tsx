@@ -25,7 +25,7 @@ import {
 import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
-import { BehaviorSubject, map } from "rxjs";
+import { BehaviorSubject, map, startWith } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
@@ -223,7 +223,9 @@ export const InCallView: FC<InCallViewProps> = ({
     room: livekitRoom,
   });
 
-  const muteAllAudioControlled = useObservableEagerState(setOutputEnabled$);
+  const muteAllAudioControlled = useObservableEagerState(
+    setOutputEnabled$.pipe(startWith(false)),
+  );
   const [muteAllAudioFromSetting] = useSetting(muteAllAudioSetting);
   const muteAllAudio = muteAllAudioControlled || muteAllAudioFromSetting;
 

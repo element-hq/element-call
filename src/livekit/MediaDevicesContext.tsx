@@ -17,7 +17,7 @@ import {
   type JSX,
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
-import { map, startWith } from "rxjs";
+import { combineLatest, map, startWith } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -30,6 +30,7 @@ import {
   type Setting,
 } from "../settings/settings";
 import { type OutputDevice, setOutputDevices$ } from "../controls";
+import { useUrlParams } from "../UrlParams";
 
 export const EARPIECE_CONFIG_ID = "earpiece-id";
 
@@ -39,7 +40,7 @@ export type DeviceLabel =
   | { type: "earpiece" }
   | { type: "default"; name: string | null };
 
-export interface MediaDevice {
+export interface MediaDeviceHandle {
   /**
    * A map from available device IDs to labels.
    */
@@ -61,35 +62,33 @@ export interface MediaDevice {
 }
 
 interface InputDevices {
-  audioInput: MediaDevice;
-  videoInput: MediaDevice;
+  audioInput: MediaDeviceHandle;
+  videoInput: MediaDeviceHandle;
   startUsingDeviceNames: () => void;
   stopUsingDeviceNames: () => void;
   usingNames: boolean;
 }
 
 export interface MediaDevices extends Omit<InputDevices, "usingNames"> {
-  audioOutput: MediaDevice;
-}
-function useShowEarpiece(): boolean {
-  const [alwaysShowIphoneEarpice] = useSetting(alwaysShowIphoneEarpieceSetting);
-  const m = useMemo(
-    () =>
-      (navigator.userAgent.match("iPhone")?.length ?? 0) > 0 ||
-      alwaysShowIphoneEarpice,
-    [alwaysShowIphoneEarpice],
-  );
-  return m;
+  audioOutput: MediaDeviceHandle;
 }
 
-function useMediaDevice(
+/**
+ * Hook to get access to a mediaDevice handle for a kind. This allows to list
+ * the available devices, read and set the selected device.
+ * @param kind audio input, output or video output.
+ * @param setting The setting this handles selection should be synced with.
+ * @param usingNames If the hook should query device names for the associated
+ *  list.
+ * @returns A handle for the choosen kind.
+ */
+function useMediaDeviceHandle(
   kind: MediaDeviceKind,
   setting: Setting<string | undefined>,
   usingNames: boolean,
-): MediaDevice {
+): MediaDeviceHandle {
   // Make sure we don't needlessly reset to a device observer without names,
   // once permissions are already given
-  const showEarpiece = useShowEarpiece();
   const hasRequestedPermissions = useRef(false);
   const requestPermissions = usingNames || hasRequestedPermissions.current;
   hasRequestedPermissions.current ||= usingNames;
@@ -133,18 +132,11 @@ function useMediaDevice(
               kind === "audiooutput" &&
               !available.has("") &&
               !available.has("default") &&
-              (available.size || showEarpiece)
+              available.size
             )
               available = new Map([
                 ["", { type: "default", name: availableRaw[0]?.label || null }],
                 ...available,
-              ]);
-            if (kind === "audiooutput" && showEarpiece)
-              // On IPhones we have to create a virtual earpiece device, because
-              // the earpiece is not available as a device ID.
-              available = new Map([
-                ...available,
-                [EARPIECE_CONFIG_ID, { type: "earpiece" }],
               ]);
             // Note: creating virtual default input devices would be another problem
             // entirely, because requesting a media stream from deviceId "" won't
@@ -152,12 +144,11 @@ function useMediaDevice(
             return available;
           }),
         ),
-      [deviceObserver$, kind, showEarpiece],
+      [deviceObserver$, kind],
     ),
   );
 
-  const [preferredId, setPreferredId] = useSetting(setting);
-  const [asEarpice, setAsEarpiece] = useState(false);
+  const [preferredId, select] = useSetting(setting);
   const selectedId = useMemo(() => {
     if (available.size) {
       // If the preferred device is available, use it. Or if every available
@@ -187,37 +178,26 @@ function useMediaDevice(
     ),
   );
 
-  const select = useCallback(
-    (id: string) => {
-      if (id === EARPIECE_CONFIG_ID) {
-        setAsEarpiece(true);
-      } else {
-        setAsEarpiece(false);
-        setPreferredId(id);
-      }
-    },
-    [setPreferredId],
-  );
-
   return useMemo(
     () => ({
       available,
       selectedId,
-      useAsEarpiece: asEarpice,
+      useAsEarpiece: false,
       selectedGroupId,
       select,
     }),
-    [available, selectedId, asEarpice, selectedGroupId, select],
+    [available, selectedId, selectedGroupId, select],
   );
 }
 
-export const deviceStub: MediaDevice = {
+export const deviceStub: MediaDeviceHandle = {
   available: new Map(),
   selectedId: undefined,
   selectedGroupId: undefined,
   select: () => {},
   useAsEarpiece: false,
 };
+
 export const devicesStub: MediaDevices = {
   audioInput: deviceStub,
   audioOutput: deviceStub,
@@ -233,12 +213,12 @@ function useInputDevices(): InputDevices {
   const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
   const usingNames = numCallersUsingNames > 0;
 
-  const audioInput = useMediaDevice(
+  const audioInput = useMediaDeviceHandle(
     "audioinput",
     audioInputSetting,
     usingNames,
   );
-  const videoInput = useMediaDevice(
+  const videoInput = useMediaDeviceHandle(
     "videoinput",
     videoInputSetting,
     usingNames,
@@ -275,23 +255,30 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
     usingNames,
   } = useInputDevices();
 
-  const audioOutput = useMediaDevice(
+  const { controlledOutput } = useUrlParams();
+
+  const webViewAudioOutput = useMediaDeviceHandle(
     "audiooutput",
     audioOutputSetting,
     usingNames,
   );
+  const controlledAudioOutput = useControlledOutput();
 
   const context: MediaDevices = useMemo(
     () => ({
       audioInput,
-      audioOutput,
+      audioOutput: controlledOutput
+        ? controlledAudioOutput
+        : webViewAudioOutput,
       videoInput,
       startUsingDeviceNames,
       stopUsingDeviceNames,
     }),
     [
       audioInput,
-      audioOutput,
+      controlledOutput,
+      controlledAudioOutput,
+      webViewAudioOutput,
       videoInput,
       startUsingDeviceNames,
       stopUsingDeviceNames,
@@ -305,29 +292,36 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   );
 };
 
-function useControlledOutput(): MediaDevice {
-  const showEarpiece = useShowEarpiece();
-
-  const available = useObservableEagerState(
-    useObservable(() =>
-      setOutputDevices$.pipe(
+function useControlledOutput(): MediaDeviceHandle {
+  const { available, physicalDeviceForEarpiceMode } = useObservableEagerState(
+    useObservable(() => {
+      const showEarpice$ = alwaysShowIphoneEarpieceSetting.value$.pipe(
+        startWith(alwaysShowIphoneEarpieceSetting.getValue()),
+        map((v) => v || navigator.userAgent.includes("iPhone")),
+      );
+      const outputDeviceData$ = setOutputDevices$.pipe(
         startWith<OutputDevice[]>([]),
         map((devices) => {
-          const devicesMap = new Map<string, DeviceLabel>(
-            devices.map(({ id, name }) => [id, { type: "name", name }]),
+          const physicalDeviceForEarpiceMode = devices.find(
+            (d) => d.forEarpiece,
           );
-          if (showEarpiece)
-            devicesMap.set(EARPIECE_CONFIG_ID, { type: "earpiece" });
-          return devicesMap;
+          return {
+            devicesMap: new Map<string, DeviceLabel>(
+              devices.map(({ id, name }) => [id, { type: "name", name }]),
+            ),
+            physicalDeviceForEarpiceMode,
+          };
         }),
-      ),
-    ),
-  );
-  const earpiceDevice = useObservableEagerState(
-    setOutputDevices$.pipe(
-      startWith<OutputDevice[]>([]),
-      map((devices) => devices.find((d) => d.forEarpiece)),
-    ),
+      );
+
+      return combineLatest([outputDeviceData$, showEarpice$]).pipe(
+        map(([{ devicesMap, physicalDeviceForEarpiceMode }, showEarpiece]) => {
+          if (showEarpiece && !!physicalDeviceForEarpiceMode)
+            devicesMap.set(EARPIECE_CONFIG_ID, { type: "earpiece" });
+          return { available: devicesMap, physicalDeviceForEarpiceMode };
+        }),
+      );
+    }),
   );
 
   const [preferredId, setPreferredId] = useSetting(audioOutputSetting);
@@ -348,73 +342,31 @@ function useControlledOutput(): MediaDevice {
     return undefined;
   }, [available, preferredId]);
 
-  useEffect(() => {
-    if (selectedId === EARPIECE_CONFIG_ID)
-      if (selectedId !== undefined)
-        window.controls.onOutputDeviceSelect?.(selectedId);
-  }, [selectedId]);
-
   const [asEarpice, setAsEarpiece] = useState(false);
 
-  const select = useCallback(
-    (id: string) => {
-      if (id === EARPIECE_CONFIG_ID) {
-        setAsEarpiece(true);
-        if (earpiceDevice) setPreferredId(earpiceDevice.id);
-      } else {
-        setAsEarpiece(false);
-        setPreferredId(id);
-      }
-    },
-    [earpiceDevice, setPreferredId],
-  );
+  useEffect(() => {
+    let selectForController = selectedId;
+    const earpiece = selectedId === EARPIECE_CONFIG_ID;
+
+    setAsEarpiece(earpiece);
+    if (earpiece && physicalDeviceForEarpiceMode !== undefined)
+      selectForController = physicalDeviceForEarpiceMode.id;
+
+    if (selectForController)
+      window.controls.onOutputDeviceSelect?.(selectForController);
+  }, [physicalDeviceForEarpiceMode, selectedId]);
 
   return useMemo(
     () => ({
       available: available,
       selectedId,
       selectedGroupId: undefined,
-      select,
+      select: setPreferredId,
       useAsEarpiece: asEarpice,
     }),
-    [available, selectedId, select, asEarpice],
+    [available, selectedId, setPreferredId, asEarpice],
   );
 }
-
-export const ControlledOutputMediaDevicesProvider: FC<Props> = ({
-  children,
-}) => {
-  const {
-    audioInput,
-    videoInput,
-    startUsingDeviceNames,
-    stopUsingDeviceNames,
-  } = useInputDevices();
-  const audioOutput = useControlledOutput();
-
-  const context: MediaDevices = useMemo(
-    () => ({
-      audioInput,
-      audioOutput,
-      videoInput,
-      startUsingDeviceNames,
-      stopUsingDeviceNames,
-    }),
-    [
-      audioInput,
-      audioOutput,
-      videoInput,
-      startUsingDeviceNames,
-      stopUsingDeviceNames,
-    ],
-  );
-
-  return (
-    <MediaDevicesContext.Provider value={context}>
-      {children}
-    </MediaDevicesContext.Provider>
-  );
-};
 
 export const useMediaDevices = (): MediaDevices =>
   useContext(MediaDevicesContext);

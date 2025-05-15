@@ -25,6 +25,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { useNavigate } from "react-router-dom";
 import { useObservableEagerState } from "observable-hooks";
+import { startWith } from "rxjs";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -106,7 +107,9 @@ export const GroupCallView: FC<Props> = ({
   const [externalError, setExternalError] = useState<ElementCallError | null>(
     null,
   );
-  const muteAllAudioControlled = useObservableEagerState(setOutputEnabled$);
+  const muteAllAudioControlled = useObservableEagerState(
+    setOutputEnabled$.pipe(startWith(false)),
+  );
   const [muteAllAudioFromSetting] = useSetting(muteAllAudioSetting);
   const muteAllAudio = muteAllAudioControlled || muteAllAudioFromSetting;
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
