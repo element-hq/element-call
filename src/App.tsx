@@ -19,10 +19,7 @@ import { ClientProvider } from "./ClientContext";
 import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
-import {
-  ControlledOutputMediaDevicesProvider,
-  MediaDevicesProvider,
-} from "./livekit/MediaDevicesContext";
+import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
 import { ProcessorProvider } from "./livekit/TrackProcessorContext";
@@ -55,7 +52,6 @@ const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
 };
 
 export const App: FC = () => {
-  // const { controlledOutput } = useUrlParams();
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     Initializer.init()
@@ -66,20 +62,6 @@ export const App: FC = () => {
       })
       .catch(logger.error);
   });
-
-  const inner = (
-    <Sentry.ErrorBoundary
-      fallback={(error) => <ErrorPage error={error} widget={widget} />}
-    >
-      <DisconnectedBanner />
-      <Routes>
-        <SentryRoute path="/" element={<HomePage />} />
-        <SentryRoute path="/login" element={<LoginPage />} />
-        <SentryRoute path="/register" element={<RegisterPage />} />
-        <SentryRoute path="*" element={<RoomPage />} />
-      </Routes>
-    </Sentry.ErrorBoundary>
-  );
 
   return (
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -92,13 +74,24 @@ export const App: FC = () => {
               <Suspense fallback={null}>
                 <ClientProvider>
                   <ProcessorProvider>
-                    {true ? (
-                      <ControlledOutputMediaDevicesProvider>
-                        {inner}
-                      </ControlledOutputMediaDevicesProvider>
-                    ) : (
-                      <MediaDevicesProvider>{inner}</MediaDevicesProvider>
-                    )}
+                    <MediaDevicesProvider>
+                      <Sentry.ErrorBoundary
+                        fallback={(error) => (
+                          <ErrorPage error={error} widget={widget} />
+                        )}
+                      >
+                        <DisconnectedBanner />
+                        <Routes>
+                          <SentryRoute path="/" element={<HomePage />} />
+                          <SentryRoute path="/login" element={<LoginPage />} />
+                          <SentryRoute
+                            path="/register"
+                            element={<RegisterPage />}
+                          />
+                          <SentryRoute path="*" element={<RoomPage />} />
+                        </Routes>
+                      </Sentry.ErrorBoundary>
+                    </MediaDevicesProvider>
                   </ProcessorProvider>
                 </ClientProvider>
               </Suspense>
