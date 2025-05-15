@@ -29,7 +29,11 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   type Setting,
 } from "../settings/settings";
-import { type OutputDevice, setOutputDevices$ } from "../controls";
+import {
+  type OutputDevice,
+  setAvailableOutputDevices$,
+  setOutputDevice$,
+} from "../controls";
 import { useUrlParams } from "../UrlParams";
 
 export const EARPIECE_CONFIG_ID = "earpiece-id";
@@ -299,7 +303,7 @@ function useControlledOutput(): MediaDeviceHandle {
         startWith(alwaysShowIphoneEarpieceSetting.getValue()),
         map((v) => v || navigator.userAgent.includes("iPhone")),
       );
-      const outputDeviceData$ = setOutputDevices$.pipe(
+      const outputDeviceData$ = setAvailableOutputDevices$.pipe(
         startWith<OutputDevice[]>([]),
         map((devices) => {
           const physicalDeviceForEarpiceMode = devices.find(
@@ -316,15 +320,22 @@ function useControlledOutput(): MediaDeviceHandle {
 
       return combineLatest([outputDeviceData$, showEarpice$]).pipe(
         map(([{ devicesMap, physicalDeviceForEarpiceMode }, showEarpiece]) => {
-          if (showEarpiece && !!physicalDeviceForEarpiceMode)
-            devicesMap.set(EARPIECE_CONFIG_ID, { type: "earpiece" });
-          return { available: devicesMap, physicalDeviceForEarpiceMode };
+          let available = devicesMap;
+          if (showEarpiece && !!physicalDeviceForEarpiceMode) {
+            available = new Map([
+              ...devicesMap.entries(),
+              [EARPIECE_CONFIG_ID, { type: "earpiece" }],
+            ]);
+          }
+          return { available, physicalDeviceForEarpiceMode };
         }),
       );
     }),
   );
-
   const [preferredId, setPreferredId] = useSetting(audioOutputSetting);
+  useEffect(() => {
+    setOutputDevice$.subscribe((id) => setPreferredId(id));
+  }, [setPreferredId]);
 
   const selectedId = useMemo(() => {
     if (available.size) {
