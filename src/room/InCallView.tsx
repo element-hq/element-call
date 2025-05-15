@@ -104,7 +104,7 @@ import { ReactionsReader } from "../reactions/ReactionsReader";
 import { ConnectionLostError } from "../utils/errors.ts";
 import { useTypedEventEmitter } from "../useEvents.ts";
 import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
-import { setOutputEnabled$ } from "../controls.ts";
+import { setOutputDisabled$ } from "../controls.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -224,7 +224,7 @@ export const InCallView: FC<InCallViewProps> = ({
   });
 
   const muteAllAudioControlled = useObservableEagerState(
-    setOutputEnabled$.pipe(startWith(false)),
+    useObservable(() => setOutputDisabled$.pipe(startWith(false))),
   );
   const [muteAllAudioFromSetting] = useSetting(muteAllAudioSetting);
   const muteAllAudio = muteAllAudioControlled || muteAllAudioFromSetting;
