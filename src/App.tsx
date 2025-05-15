@@ -26,7 +26,7 @@ import {
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
 import { ProcessorProvider } from "./livekit/TrackProcessorContext";
-import { useUrlParams } from "./UrlParams";
+// import { useUrlParams } from "./UrlParams";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -55,7 +55,7 @@ const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
 };
 
 export const App: FC = () => {
-  const { controlledOutput } = useUrlParams();
+  // const { controlledOutput } = useUrlParams();
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     Initializer.init()
@@ -92,7 +92,7 @@ export const App: FC = () => {
               <Suspense fallback={null}>
                 <ClientProvider>
                   <ProcessorProvider>
-                    {controlledOutput ? (
+                    {true ? (
                       <ControlledOutputMediaDevicesProvider>
                         {inner}
                       </ControlledOutputMediaDevicesProvider>

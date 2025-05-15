@@ -325,6 +325,7 @@ function useControlledOutput(): MediaDevice {
   );
   const earpiceDevice = useObservableEagerState(
     setOutputDevices$.pipe(
+      startWith<OutputDevice[]>([]),
       map((devices) => devices.find((d) => d.forEarpiece)),
     ),
   );
