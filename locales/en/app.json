@@ -61,6 +61,7 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Show iPhone earpiece option on all platforms",
     "crypto_version": "Crypto version: {{version}}",
     "debug_tile_layout_label": "Debug tile layout",
     "device_id": "Device ID: {{id}}",
@@ -174,6 +175,7 @@
       "camera_numbered": "Camera {{n}}",
       "default": "Default",
       "default_named": "Default <2>({{name}})</2>",
+      "earpiece": "Earpiece",
       "microphone": "Microphone",
       "microphone_numbered": "Microphone {{n}}",
       "speaker": "Speaker",

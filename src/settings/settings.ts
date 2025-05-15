@@ -44,6 +44,9 @@ export class Setting<T> {
     this._value$.next(value);
     localStorage.setItem(this.key, JSON.stringify(value));
   };
+  public readonly getValue = (): T => {
+    return this._value$.getValue();
+  };
 }
 
 /**
@@ -128,3 +131,8 @@ export const useExperimentalToDeviceTransport = new Setting<boolean>(
 export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);
 
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
+
+export const alwaysShowIphoneEarpiece = new Setting<boolean>(
+  "always-show-iphone-earpice",
+  false,
+);

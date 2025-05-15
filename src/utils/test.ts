@@ -27,12 +27,14 @@ import {
   type RemoteParticipant,
   type RemoteTrackPublication,
   type Room as LivekitRoom,
+  Track,
 } from "livekit-client";
 import { randomUUID } from "crypto";
 import {
   type RoomAndToDeviceEvents,
   type RoomAndToDeviceEventsHandlerMap,
 } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
+import { type TrackReference } from "@livekit/components-core";
 
 import {
   LocalUserMediaViewModel,
@@ -309,3 +311,24 @@ export class MockRTCSession extends TypedEventEmitter<
     return this;
   }
 }
+
+export const mockTrack = (identity: string): TrackReference =>
+  ({
+    participant: {
+      identity,
+    },
+    publication: {
+      kind: Track.Kind.Audio,
+      source: "mic",
+      trackSid: "123",
+      track: {
+        attach: vi.fn(),
+        detach: vi.fn(),
+        setAudioContext: vi.fn(),
+        setWebAudioPlugins: vi.fn(),
+        setVolume: vi.fn(),
+      },
+    },
+    track: {},
+    source: {},
+  }) as unknown as TrackReference;

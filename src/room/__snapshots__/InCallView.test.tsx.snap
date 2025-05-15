@@ -9,7 +9,7 @@ exports[`InCallView > rendering > renders 1`] = `
       class="header filler"
     />
     <div>
-      mocked: RoomAudioRenderer
+      mocked: MatrixAudioRenderer
     </div>
     <div
       class="scrollingGrid grid"
