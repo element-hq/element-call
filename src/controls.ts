@@ -24,7 +24,7 @@ export interface OutputDevice {
   forEarpiece?: boolean;
   isEarpiece?: boolean;
   isSpeaker?: boolean;
-  isBluetooth?: boolean;
+  isExternalHeadset?: boolean;
 }
 
 export const setPipEnabled$ = new Subject<boolean>();
