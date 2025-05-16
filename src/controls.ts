@@ -26,7 +26,7 @@ export interface OutputDevice {
 export const setPipEnabled$ = new Subject<boolean>();
 export const setAvailableOutputDevices$ = new Subject<OutputDevice[]>();
 export const setOutputDevice$ = new Subject<string>();
-export const setOutputDisabled$ = new Subject<boolean>();
+export const setOutputEnabled$ = new Subject<boolean>();
 
 window.controls = {
   canEnterPip(): boolean {
@@ -51,8 +51,8 @@ window.controls = {
     setOutputDevice$.next(id);
   },
   setOutputEnabled(enabled: boolean): void {
-    if (!setOutputDisabled$.observed)
+    if (!setOutputEnabled$.observed)
       throw new Error("Output controls are disabled");
-    setOutputDisabled$.next(!enabled);
+    setOutputEnabled$.next(!enabled);
   },
 };

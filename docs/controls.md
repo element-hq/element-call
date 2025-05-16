@@ -13,7 +13,7 @@ A few aspects of Element Call's interface can be controlled through a global API
 These functions must be used in conjunction with the `controlledOutput` URL parameter in order to have any effect.
 
 - `controls.setAvailableOutputDevices(devices: { id: string, name: string, forEarpiece?: boolean }[]): void` Sets the list of available audio outputs. `forEarpiece` is used on ios only.
-  It flags the device that should be used if the user selects earpice mode. This should be the main (stereo loudspeaker) of the device.
+  It flags the device that should be used if the user selects earpiece mode. This should be the main stereo loudspeaker of the device.
 - `controls.onOutputDeviceSelect: ((id: string) => void) | undefined` Callback called whenever the user or application selects a new audio output.
 - `controls.setOutputDevice(id: string): void` Sets the selected audio device in EC menu. This should be used if the os decides to automatically switch to bluetooth.
 - `controls.setOutputEnabled(enabled: boolean)` Enables/disables all audio output from the application. This can be useful for temporarily pausing audio while the controlling application is switching output devices. Output is enabled by default.

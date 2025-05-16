@@ -140,7 +140,7 @@ test("will use the correct volume level", async () => {
   expect(testAudioContext.pan.pan.setValueAtTime).toHaveBeenCalledWith(0, 0);
 });
 
-test("will use the pan if earpice is selected", async () => {
+test("will use the pan if earpiece is selected", async () => {
   const { findByText } = render(
     <MediaDevicesContext.Provider
       value={{

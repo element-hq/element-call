@@ -77,6 +77,27 @@ export interface MediaDevices extends Omit<InputDevices, "usingNames"> {
   audioOutput: MediaDeviceHandle;
 }
 
+function useSelectedId(
+  available: Map<string, DeviceLabel>,
+  preferredId: string | undefined,
+): string | undefined {
+  return useMemo(() => {
+    if (available.size) {
+      // If the preferred device is available, use it. Or if every available
+      // device ID is falsy, the browser is probably just being paranoid about
+      // fingerprinting and we should still try using the preferred device.
+      // Worst case it is not available and the browser will gracefully fall
+      // back to some other device for us when requesting the media stream.
+      // Otherwise, select the first available device.
+      return (preferredId !== undefined && available.has(preferredId)) ||
+        (available.size === 1 && available.has(""))
+        ? preferredId
+        : available.keys().next().value;
+    }
+    return undefined;
+  }, [available, preferredId]);
+}
+
 /**
  * Hook to get access to a mediaDevice handle for a kind. This allows to list
  * the available devices, read and set the selected device.
@@ -84,17 +105,17 @@ export interface MediaDevices extends Omit<InputDevices, "usingNames"> {
  * @param setting The setting this handles selection should be synced with.
  * @param usingNames If the hook should query device names for the associated
  *  list.
- * @returns A handle for the choosen kind.
+ * @returns A handle for the chosen kind.
  */
 function useMediaDeviceHandle(
   kind: MediaDeviceKind,
   setting: Setting<string | undefined>,
   usingNames: boolean,
 ): MediaDeviceHandle {
-  // Make sure we don't needlessly reset to a device observer without names,
-  // once permissions are already given
   const hasRequestedPermissions = useRef(false);
   const requestPermissions = usingNames || hasRequestedPermissions.current;
+  // Make sure we don't needlessly reset to a device observer without names,
+  // once permissions are already given
   hasRequestedPermissions.current ||= usingNames;
 
   // We use a bare device observer here rather than one of the fancy device
@@ -153,22 +174,7 @@ function useMediaDeviceHandle(
   );
 
   const [preferredId, select] = useSetting(setting);
-  const selectedId = useMemo(() => {
-    if (available.size) {
-      // If the preferred device is available, use it. Or if every available
-      // device ID is falsy, the browser is probably just being paranoid about
-      // fingerprinting and we should still try using the preferred device.
-      // Worst case it is not available and the browser will gracefully fall
-      // back to some other device for us when requesting the media stream.
-      // Otherwise, select the first available device.
-      return (preferredId !== undefined && available.has(preferredId)) ||
-        (available.size === 1 && available.has(""))
-        ? preferredId
-        : available.keys().next().value;
-    }
-    return undefined;
-  }, [available, preferredId]);
-
+  const selectedId = useSelectedId(available, preferredId);
   const selectedGroupId = useObservableEagerState(
     useMemo(
       () =>
@@ -337,21 +343,7 @@ function useControlledOutput(): MediaDeviceHandle {
     setOutputDevice$.subscribe((id) => setPreferredId(id));
   }, [setPreferredId]);
 
-  const selectedId = useMemo(() => {
-    if (available.size) {
-      // If the preferred device is available, use it. Or if every available
-      // device ID is falsy, the browser is probably just being paranoid about
-      // fingerprinting and we should still try using the preferred device.
-      // Worst case it is not available and the browser will gracefully fall
-      // back to some other device for us when requesting the media stream.
-      // Otherwise, select the first available device.
-      return (preferredId !== undefined && available.has(preferredId)) ||
-        (available.size === 1 && available.has(""))
-        ? preferredId
-        : available.keys().next().value;
-    }
-    return undefined;
-  }, [available, preferredId]);
+  const selectedId = useSelectedId(available, preferredId);
 
   const [asEarpice, setAsEarpiece] = useState(false);
 
