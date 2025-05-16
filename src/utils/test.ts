@@ -46,6 +46,7 @@ import {
   type ResolvedConfigOptions,
 } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
+import { type MediaDevices } from "../state/MediaDevices";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -332,3 +333,18 @@ export const mockTrack = (identity: string): TrackReference =>
     track: {},
     source: {},
   }) as unknown as TrackReference;
+
+export const deviceStub = {
+  available$: of(new Map<never, never>()),
+  selected$: of(undefined),
+  select(): void {},
+};
+
+export function mockMediaDevices(data: Partial<MediaDevices>): MediaDevices {
+  return {
+    audioInput: deviceStub,
+    audioOutput: deviceStub,
+    videoInput: deviceStub,
+    ...data,
+  } as MediaDevices;
+}

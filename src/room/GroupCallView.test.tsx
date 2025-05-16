@@ -32,6 +32,7 @@ import {
   mockEmitter,
   mockMatrixRoom,
   mockMatrixRoomMember,
+  mockMediaDevices,
   mockRtcMembership,
   MockRTCSession,
 } from "../utils/test";
@@ -40,6 +41,7 @@ import { type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
 import { MatrixRTCFocusMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
+import { MediaDevicesContext } from "../MediaDevicesContext";
 
 vi.mock("../soundUtils");
 vi.mock("../useAudioContext");
@@ -147,20 +149,22 @@ function createGroupCallView(
   const { getByText } = render(
     <BrowserRouter>
       <TooltipProvider>
-        <ProcessorProvider>
-          <GroupCallView
-            client={client}
-            isPasswordlessUser={false}
-            confineToRoom={false}
-            preload={false}
-            skipLobby={false}
-            hideHeader={true}
-            rtcSession={rtcSession as unknown as MatrixRTCSession}
-            isJoined={joined}
-            muteStates={muteState}
-            widget={widget}
-          />
-        </ProcessorProvider>
+        <MediaDevicesContext.Provider value={mockMediaDevices({})}>
+          <ProcessorProvider>
+            <GroupCallView
+              client={client}
+              isPasswordlessUser={false}
+              confineToRoom={false}
+              preload={false}
+              skipLobby={false}
+              hideHeader={true}
+              rtcSession={rtcSession as unknown as MatrixRTCSession}
+              isJoined={joined}
+              muteStates={muteState}
+              widget={widget}
+            />
+          </ProcessorProvider>
+        </MediaDevicesContext.Provider>
       </TooltipProvider>
     </BrowserRouter>,
   );

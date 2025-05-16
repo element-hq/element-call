@@ -38,3 +38,18 @@ export function accumulate<State, Event>(
   return (events$: Observable<Event>): Observable<State> =>
     events$.pipe(scan(update, initial), startWith(initial));
 }
+
+/**
+ * Reads the current value of a state Observable without reacting to future
+ * changes.
+ *
+ * This function exists to help with certain cases of bridging Observables into
+ * React, where an initial value is needed. You should never use it to create an
+ * Observable derived from another Observable; use reactive operators instead.
+ */
+export function getValue<T>(state$: Observable<T>): T {
+  let value: T | typeof nothing = nothing;
+  state$.subscribe((x) => (value = x)).unsubscribe();
+  if (value === nothing) throw new Error("Not a state Observable");
+  return value;
+}

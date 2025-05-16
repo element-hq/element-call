@@ -40,7 +40,7 @@ import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
 import { ActiveCall } from "./InCallView";
 import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
-import { useMediaDevices } from "../livekit/MediaDevicesContext";
+import { useMediaDevices } from "../MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import {
@@ -197,8 +197,7 @@ export const GroupCallView: FC<Props> = ({
     [memberships],
   );
 
-  const deviceContext = useMediaDevices();
-  const latestDevices = useLatest(deviceContext);
+  const mediaDevices = useMediaDevices();
   const latestMuteStates = useLatest(muteStates);
 
   const enterRTCSessionOrError = useCallback(
@@ -250,7 +249,7 @@ export const GroupCallView: FC<Props> = ({
           logger.debug(
             `Found audio input ID ${deviceId} for name ${audioInput}`,
           );
-          latestDevices.current!.audioInput.select(deviceId);
+          mediaDevices.audioInput.select(deviceId);
         }
       }
 
@@ -264,7 +263,7 @@ export const GroupCallView: FC<Props> = ({
           logger.debug(
             `Found video input ID ${deviceId} for name ${videoInput}`,
           );
-          latestDevices.current!.videoInput.select(deviceId);
+          mediaDevices.videoInput.select(deviceId);
         }
       }
     };
@@ -306,7 +305,7 @@ export const GroupCallView: FC<Props> = ({
     preload,
     skipLobby,
     perParticipantE2EE,
-    latestDevices,
+    mediaDevices,
     latestMuteStates,
     enterRTCSessionOrError,
     useNewMembershipManager,

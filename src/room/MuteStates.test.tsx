@@ -5,20 +5,29 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest";
 import { type FC, useCallback, useState } from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
+import { createMediaDeviceObserver } from "@livekit/components-core";
+import { of } from "rxjs";
 
 import { useMuteStates } from "./MuteStates";
-import {
-  type DeviceLabel,
-  type MediaDeviceHandle,
-  type MediaDevices,
-  MediaDevicesContext,
-} from "../livekit/MediaDevicesContext";
+import { MediaDevicesContext } from "../MediaDevicesContext";
 import { mockConfig } from "../utils/test";
+import { MediaDevices } from "../state/MediaDevices";
+import { ObservableScope } from "../state/ObservableScope";
+
+vi.mock("@livekit/components-core");
 
 interface TestComponentProps {
   isJoined?: boolean;
@@ -73,16 +82,6 @@ const mockCamera: MediaDeviceInfo = {
   },
 };
 
-function mockDevices(available: Map<string, DeviceLabel>): MediaDeviceHandle {
-  return {
-    available,
-    selectedId: "",
-    selectedGroupId: "",
-    select: (): void => {},
-    useAsEarpiece: false,
-  };
-}
-
 function mockMediaDevices(
   {
     microphone,
@@ -94,21 +93,21 @@ function mockMediaDevices(
     camera?: boolean;
   } = { microphone: true, speaker: true, camera: true },
 ): MediaDevices {
-  return {
-    audioInput: mockDevices(
-      microphone
-        ? new Map([[mockMicrophone.deviceId, mockMicrophone]])
-        : new Map(),
-    ),
-    audioOutput: mockDevices(
-      speaker ? new Map([[mockSpeaker.deviceId, mockSpeaker]]) : new Map(),
-    ),
-    videoInput: mockDevices(
-      camera ? new Map([[mockCamera.deviceId, mockCamera]]) : new Map(),
-    ),
-    startUsingDeviceNames: (): void => {},
-    stopUsingDeviceNames: (): void => {},
-  };
+  vi.mocked(createMediaDeviceObserver).mockImplementation((kind) => {
+    switch (kind) {
+      case "audioinput":
+        return of(microphone ? [mockMicrophone] : []);
+      case "audiooutput":
+        return of(speaker ? [mockSpeaker] : []);
+      case "videoinput":
+        return of(camera ? [mockCamera] : []);
+      case undefined:
+        throw new Error("Unimplemented");
+    }
+  });
+  const scope = new ObservableScope();
+  onTestFinished(() => scope.end());
+  return new MediaDevices(scope);
 }
 
 describe("useMuteStates", () => {
@@ -206,7 +205,12 @@ describe("useMuteStates", () => {
     const user = userEvent.setup();
     mockConfig();
     const noDevices = mockMediaDevices({ microphone: false, camera: false });
+    // Warm up these Observables before making further changes to the
+    // createMediaDevicesObserver mock
+    noDevices.audioInput.available$.subscribe(() => {}).unsubscribe();
+    noDevices.videoInput.available$.subscribe(() => {}).unsubscribe();
     const someDevices = mockMediaDevices();
+
     const ReappearanceTest: FC = () => {
       const [devices, setDevices] = useState(someDevices);
       const onConnectDevicesClick = useCallback(
