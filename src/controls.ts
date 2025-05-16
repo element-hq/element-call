@@ -15,6 +15,7 @@ export interface Controls {
   setOutputDevice(id: string): void;
   onOutputDeviceSelect?: (id: string) => void;
   setOutputEnabled(enabled: boolean): void;
+  showNativeOutputDevicePicker?: () => void;
 }
 
 export interface OutputDevice {

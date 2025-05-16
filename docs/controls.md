@@ -17,3 +17,5 @@ These functions must be used in conjunction with the `controlledOutput` URL para
 - `controls.onOutputDeviceSelect: ((id: string) => void) | undefined` Callback called whenever the user or application selects a new audio output.
 - `controls.setOutputDevice(id: string): void` Sets the selected audio device in EC menu. This should be used if the os decides to automatically switch to bluetooth.
 - `controls.setOutputEnabled(enabled: boolean)` Enables/disables all audio output from the application. This can be useful for temporarily pausing audio while the controlling application is switching output devices. Output is enabled by default.
+- `showNativeOutputDevicePicker: () => void`. This callback will be code by the webview if the user presses the output button in the settings menu.
+  This button is only shown on ios. (`userAgent.includes("IPhone")`)

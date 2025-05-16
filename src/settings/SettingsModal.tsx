@@ -8,8 +8,9 @@ Please see LICENSE in the repository root for full details.
 import { type FC, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
-import { Root as Form, Separator } from "@vector-im/compound-web";
+import { Button, Root as Form, Separator } from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
+import { useObservableEagerState } from "observable-hooks";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -19,6 +20,7 @@ import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import {
   useMediaDevices,
   useMediaDeviceNames,
+  iosDeviceMenu$,
 } from "../livekit/MediaDevicesContext";
 import { widget } from "../widget";
 import {
@@ -101,6 +103,7 @@ export const SettingsModal: FC<Props> = ({
   const [showDeveloperSettingsTab] = useSetting(developerMode);
 
   const { available: isRageshakeAvailable } = useSubmitRageshake();
+  const iosDeviceMenu = useObservableEagerState(iosDeviceMenu$);
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
@@ -108,13 +111,25 @@ export const SettingsModal: FC<Props> = ({
     content: (
       <>
         <Form>
-          <DeviceSelection
-            device={devices.audioInput}
-            title={t("settings.devices.microphone")}
-            numberedLabel={(n) =>
-              t("settings.devices.microphone_numbered", { n })
-            }
-          />
+          {!iosDeviceMenu && (
+            <DeviceSelection
+              device={devices.audioInput}
+              title={t("settings.devices.microphone")}
+              numberedLabel={(n) =>
+                t("settings.devices.microphone_numbered", { n })
+              }
+            />
+          )}
+          {iosDeviceMenu && (
+            <Button
+              kind="secondary"
+              onClick={(): void => {
+                window.controls.showNativeOutputDevicePicker?.();
+              }}
+            >
+              {t("settings.devices.change_device_button")}
+            </Button>
+          )}
           <DeviceSelection
             device={devices.audioOutput}
             title={t("settings.devices.speaker")}
