@@ -175,6 +175,7 @@ function useMediaDeviceHandle(
 
   const [preferredId, select] = useSetting(setting);
   const selectedId = useSelectedId(available, preferredId);
+
   const selectedGroupId = useObservableEagerState(
     useMemo(
       () =>
