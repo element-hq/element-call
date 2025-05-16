@@ -77,6 +77,22 @@ export interface MediaDevices extends Omit<InputDevices, "usingNames"> {
   audioOutput: MediaDeviceHandle;
 }
 
+/**
+ * An observable that represents if we should display the devices menu for iOS.
+ * This implies the following
+ *  - hide any input devices (they do not work anyhow on ios)
+ *  - Show a button to show the native output picker instead.
+ *  - Only show the earpice toggle option if the earpiece is available:
+ *   `setAvailableOutputDevices$.includes((d)=>d.forEarpiece)`
+ */
+export const iosDeviceMenu$ = alwaysShowIphoneEarpieceSetting.value$.pipe(
+  startWith(
+    alwaysShowIphoneEarpieceSetting.getValue() ||
+      navigator.userAgent.includes("iPhone"),
+  ),
+  map((v) => v || navigator.userAgent.includes("iPhone")),
+);
+
 function useSelectedId(
   available: Map<string, DeviceLabel>,
   preferredId: string | undefined,
@@ -304,41 +320,36 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
 };
 
 function useControlledOutput(): MediaDeviceHandle {
-  const { available, physicalDeviceForEarpiceMode } = useObservableEagerState(
-    useObservable(() => {
-      const showEarpice$ = alwaysShowIphoneEarpieceSetting.value$.pipe(
-        startWith(alwaysShowIphoneEarpieceSetting.getValue()),
-        map((v) => v || navigator.userAgent.includes("iPhone")),
-      );
-      const outputDeviceData$ = setAvailableOutputDevices$.pipe(
-        startWith<OutputDevice[]>([]),
-        map((devices) => {
-          const physicalDeviceForEarpiceMode = devices.find(
-            (d) => d.forEarpiece,
-          );
-          return {
-            devicesMap: new Map<string, DeviceLabel>(
-              devices.map(({ id, name }) => [id, { type: "name", name }]),
-            ),
-            physicalDeviceForEarpiceMode,
-          };
-        }),
-      );
+  const { available, deviceForEarpiece: physicalDeviceForEarpiceMode } =
+    useObservableEagerState(
+      useObservable(() => {
+        const outputDeviceData$ = setAvailableOutputDevices$.pipe(
+          startWith<OutputDevice[]>([]),
+          map((devices) => {
+            const deviceForEarpiece = devices.find((d) => d.forEarpiece);
+            return {
+              devicesMap: new Map<string, DeviceLabel>(
+                devices.map(({ id, name }) => [id, { type: "name", name }]),
+              ),
+              deviceForEarpiece,
+            };
+          }),
+        );
 
-      return combineLatest([outputDeviceData$, showEarpice$]).pipe(
-        map(([{ devicesMap, physicalDeviceForEarpiceMode }, showEarpiece]) => {
-          let available = devicesMap;
-          if (showEarpiece && !!physicalDeviceForEarpiceMode) {
-            available = new Map([
-              ...devicesMap.entries(),
-              [EARPIECE_CONFIG_ID, { type: "earpiece" }],
-            ]);
-          }
-          return { available, physicalDeviceForEarpiceMode };
-        }),
-      );
-    }),
-  );
+        return combineLatest([outputDeviceData$, iosDeviceMenu$]).pipe(
+          map(([{ devicesMap, deviceForEarpiece }, iosShowEarpiece]) => {
+            let available = devicesMap;
+            if (iosShowEarpiece && !!deviceForEarpiece) {
+              available = new Map([
+                ...devicesMap.entries(),
+                [EARPIECE_CONFIG_ID, { type: "earpiece" }],
+              ]);
+            }
+            return { available, deviceForEarpiece };
+          }),
+        );
+      }),
+    );
   const [preferredId, setPreferredId] = useSetting(audioOutputSetting);
   useEffect(() => {
     setOutputDevice$.subscribe((id) => setPreferredId(id));
