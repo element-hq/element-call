@@ -327,10 +327,17 @@ function useControlledOutput(): MediaDeviceHandle {
           startWith<OutputDevice[]>([]),
           map((devices) => {
             const deviceForEarpiece = devices.find((d) => d.forEarpiece);
+            const deviceMapTuple: [string, DeviceLabel][] = devices.map(
+              ({ id, name, isEarpiece, isSpeaker /*,isBluetooth*/ }) => {
+                let deviceLabel: DeviceLabel = { type: "name", name };
+                // if (isBluetooth) // Do we want this?
+                if (isEarpiece) deviceLabel = { type: "earpiece" };
+                if (isSpeaker) deviceLabel = { type: "default", name };
+                return [id, deviceLabel];
+              },
+            );
             return {
-              devicesMap: new Map<string, DeviceLabel>(
-                devices.map(({ id, name }) => [id, { type: "name", name }]),
-              ),
+              devicesMap: new Map<string, DeviceLabel>(deviceMapTuple),
               deviceForEarpiece,
             };
           }),
