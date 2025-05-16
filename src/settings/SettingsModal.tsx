@@ -36,6 +36,7 @@ import { useTrackProcessor } from "../livekit/TrackProcessorContext";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
 import { FieldRow, InputField } from "../input/Input";
 import { useSubmitRageshake } from "./submit-rageshake";
+import { useUrlParams } from "../UrlParams";
 
 type SettingsTab =
   | "audio"
@@ -103,7 +104,10 @@ export const SettingsModal: FC<Props> = ({
   const [showDeveloperSettingsTab] = useSetting(developerMode);
 
   const { available: isRageshakeAvailable } = useSubmitRageshake();
+  // If we are on ios we will show a button to open the native picker.
   const iosDeviceMenu = useObservableEagerState(iosDeviceMenu$);
+  // In controlled devices we will not show the input section
+  const { controlledOutput } = useUrlParams();
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
@@ -111,7 +115,7 @@ export const SettingsModal: FC<Props> = ({
     content: (
       <>
         <Form>
-          {!iosDeviceMenu && (
+          {!controlledOutput && (
             <DeviceSelection
               device={devices.audioInput}
               title={t("settings.devices.microphone")}
