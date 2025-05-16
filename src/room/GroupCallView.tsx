@@ -24,8 +24,7 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { useNavigate } from "react-router-dom";
-import { useObservable, useObservableEagerState } from "observable-hooks";
-import { startWith } from "rxjs";
+import { useObservableEagerState } from "observable-hooks";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -66,11 +65,10 @@ import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
 import {
   useNewMembershipManager as useNewMembershipManagerSetting,
   useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
-  muteAllAudio as muteAllAudioSetting,
   useSetting,
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
-import { setOutputDisabled$ } from "../controls.ts";
+import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 
 declare global {
   interface Window {
@@ -107,12 +105,9 @@ export const GroupCallView: FC<Props> = ({
   const [externalError, setExternalError] = useState<ElementCallError | null>(
     null,
   );
-  const muteAllAudioControlled = useObservableEagerState(
-    useObservable(() => setOutputDisabled$.pipe(startWith(false))),
-  );
-  const [muteAllAudioFromSetting] = useSetting(muteAllAudioSetting);
-  const muteAllAudio = muteAllAudioControlled || muteAllAudioFromSetting;
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
+
+  const muteAllAudio = useObservableEagerState(muteAllAudio$);
   const leaveSoundContext = useLatest(
     useAudioContext({
       sounds: callEventAudioSounds,
