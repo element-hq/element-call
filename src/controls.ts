@@ -22,6 +22,9 @@ export interface OutputDevice {
   id: string;
   name: string;
   forEarpiece?: boolean;
+  isEarpiece?: boolean;
+  isSpeaker?: boolean;
+  isBluetooth?: boolean;
 }
 
 export const setPipEnabled$ = new Subject<boolean>();
