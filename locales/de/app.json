@@ -61,6 +61,7 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "iPhone-Ohrhörer-Option auf allen Plattformen anzeigen",
     "crypto_version": "Krypto-Version: {{version}}",
     "debug_tile_layout_label": "Kachel-Layout debuggen",
     "device_id": "Geräte-ID: {{id}}",
@@ -70,10 +71,12 @@
     "livekit_server_info": "LiveKit-Server Informationen",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix-ID: {{id}}",
+    "mute_all_audio": "Stummschalten aller Audiosignale (Teilnehmer, Reaktionen, Beitrittsgeräusche)",
     "show_connection_stats": "Verbindungsstatistiken anzeigen",
     "show_non_member_tiles": "Kacheln für Nicht-Mitgliedermedien anzeigen",
     "url_params": "URL-Parameter",
-    "use_new_membership_manager": "Neuen MembershipManager verwenden"
+    "use_new_membership_manager": "Neuen MembershipManager verwenden",
+    "use_to_device_key_transport": "To-Device media E2EE Schlüssel-Transport verwenden. Falls ein anderer Teilnehmer bereits den Raumschlüssel-Transport verwendet, wird automatisch auf Raumschlüssel-Transport zurückgegriffen."
   },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
   "error": {
@@ -163,12 +166,16 @@
       "effect_volume_description": "Lautstärke anpassen, mit der Reaktionen und Handmeldungen abgespielt werden.",
       "effect_volume_label": "Lautstärke der Soundeffekte"
     },
+    "background_blur_header": "Hintergrund",
+    "background_blur_label": "Unschärfeeffekt für den Hintergrund aktivieren",
+    "blur_not_supported_by_browser": "(Hintergrundunschärfe wird von diesem Gerät nicht unterstützt.)",
     "developer_tab_title": "Entwickler",
     "devices": {
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
       "default": "Standard",
       "default_named": "Standard<2> ({{name}} )</2>",
+      "earpiece": "Ohrhörer",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon{{n}}",
       "speaker": "Lautsprecher",

@@ -155,9 +155,7 @@ export function useLivekit(
   );
 
   const connectionState = useECConnectionState(
-    {
-      deviceId: initialDevices.current.audioInput.selectedId,
-    },
+    initialDevices.current.audioInput.selectedId,
     initialMuteStates.current.audio.enabled,
     room,
     sfuConfig,

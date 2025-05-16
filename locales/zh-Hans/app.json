@@ -4,7 +4,9 @@
   },
   "action": {
     "close": "关闭",
+    "copy_link": "复制链接",
     "go": "开始",
+    "invite": "邀请",
     "no": "否",
     "register": "注册",
     "remove": "移除",
@@ -31,12 +33,14 @@
   },
   "call_name": "通话名称",
   "common": {
+    "analytics": "分析",
     "audio": "音频",
     "avatar": "头像",
     "display_name": "显示名称",
     "encrypted": "已加密",
     "home": "主页",
     "loading": "加载中……",
+    "options": "选项",
     "password": "密码",
     "profile": "个人信息",
     "settings": "设置",
@@ -45,8 +49,20 @@
     "video": "视频"
   },
   "disconnected_banner": "与服务器的连接中断。",
+  "group_call_loader": {
+    "banned_body": "你已被房间封禁",
+    "banned_heading": "已被封禁",
+    "call_ended_body": "你已被移出通话",
+    "call_ended_heading": "通话结束",
+    "knock_reject_body": "房间成员拒绝了你的加入请求"
+  },
   "hangup_button_label": "通话结束",
   "header_label": "Element Call主页",
+  "header_participants_label": "参与者",
+  "invite_modal": {
+    "link_copied_toast": "链接已复制到剪贴板",
+    "title": "邀请参加此次通话"
+  },
   "join_existing_call_modal": {
     "join_button": "是，加入通话",
     "text": "该通话已存在，你想加入吗？",
@@ -58,12 +74,16 @@
     "join_button": "加入通话",
     "leave_button": "返回最近通话"
   },
+  "log_in": "登录",
   "logging_in": "登录中……",
   "login_auth_links": "<0>创建账户</0> Or <2>以访客身份继续</2>",
+  "login_auth_links_prompt": "还未注册？",
+  "login_subheading": "继续使用 Element",
   "login_title": "登录",
   "microphone_off": "麦克风关闭",
   "microphone_on": "麦克风开启",
   "mute_microphone_button_label": "静音麦克风",
+  "participant_count_other": "{{count, number}}",
   "rageshake_button_error_caption": "重传日志",
   "rageshake_request_modal": {
     "body": "这个通话中的另一个用户出现了问题。为了更好地诊断这些问题，我们想收集调试日志。",
@@ -81,6 +101,7 @@
   },
   "register_auth_links": "<0>已有账户？</0><1><0>登录</0> Or <2>以访客身份继续</2></1>",
   "register_confirm_password_label": "确认密码",
+  "register_heading": "创建您的账户",
   "return_home_button": "返回主页",
   "screenshare_button_label": "屏幕共享",
   "settings": {
@@ -103,5 +124,10 @@
   "unauthenticated_view_body": "还没有注册？ <2>创建账户<2>",
   "unauthenticated_view_login_button": "登录你的账户",
   "unmute_microphone_button_label": "取消麦克风静音",
-  "version": "版本：{{version}}"
+  "version": "版本：{{version}}",
+  "video_tile": {
+    "change_fit_contain": "贴合框架",
+    "mute_for_me": "为我静音",
+    "volume": "音量"
+  }
 }
