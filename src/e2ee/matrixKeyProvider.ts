@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { BaseKeyProvider, createKeyMaterialFromBuffer } from "livekit-client";
+import { BaseKeyProvider } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type MatrixRTCSession,
@@ -44,20 +44,29 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     encryptionKeyIndex: number,
     participantId: string,
   ): void => {
-    createKeyMaterialFromBuffer(encryptionKey).then(
-      (keyMaterial) => {
-        this.onSetEncryptionKey(keyMaterial, participantId, encryptionKeyIndex);
+    crypto.subtle
+      .importKey("raw", encryptionKey, "HKDF", false, [
+        "deriveBits",
+        "deriveKey",
+      ])
+      .then(
+        (keyMaterial) => {
+          this.onSetEncryptionKey(
+            keyMaterial,
+            participantId,
+            encryptionKeyIndex,
+          );
 
-        logger.debug(
-          `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
-        );
-      },
-      (e) => {
-        logger.error(
-          `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
-          e,
-        );
-      },
-    );
+          logger.debug(
+            `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
+          );
+        },
+        (e) => {
+          logger.error(
+            `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
+            e,
+          );
+        },
+      );
   };
 }

@@ -102,7 +102,7 @@
     "livekit-client": "^2.11.3",
     "lodash-es": "^4.17.21",
     "loglevel": "^1.9.1",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#19b1b901f575755d29d1fe03ca48cbf7c1cae05c",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#457a300c9594dc24ba2f05cc16180112b9e8d0ac",
     "matrix-widget-api": "1.11.0",
     "normalize.css": "^8.0.1",
     "observable-hooks": "^4.2.3",
