@@ -359,7 +359,9 @@ function useControlledOutput(): MediaDeviceHandle {
     );
   const [preferredId, setPreferredId] = useSetting(audioOutputSetting);
   useEffect(() => {
-    setOutputDevice$.subscribe((id) => setPreferredId(id));
+    setOutputDevice$.subscribe((id) => {
+      if (id) setPreferredId(id);
+    });
   }, [setPreferredId]);
 
   const selectedId = useSelectedId(available, preferredId);
