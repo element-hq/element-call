@@ -7007,7 +7007,7 @@ __metadata:
     livekit-client: "npm:^2.11.3"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#19b1b901f575755d29d1fe03ca48cbf7c1cae05c"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#457a300c9594dc24ba2f05cc16180112b9e8d0ac"
     matrix-widget-api: "npm:1.11.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -9610,9 +9610,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#19b1b901f575755d29d1fe03ca48cbf7c1cae05c":
-  version: 37.4.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=19b1b901f575755d29d1fe03ca48cbf7c1cae05c"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#457a300c9594dc24ba2f05cc16180112b9e8d0ac":
+  version: 37.5.0
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=457a300c9594dc24ba2f05cc16180112b9e8d0ac"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.0.1"
@@ -9629,7 +9629,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/68a30a113059ba052b2e66502abcd9805f9a18a1bfd1d209203d728b36508af257a57e6248fb237c7018c81bfbe1ec78fa17aea8968c8af0729ea935398dcf8b
+  checksum: 10c0/121ecbe4ab6c3ce3fe399ab468958211b0c1c565d6da718903ccc0abc4af7341c764ebee07a553a4222b338bd8665de9fa50bb34a247555b908c4c2b46a97deb
   languageName: node
   linkType: hard
 
