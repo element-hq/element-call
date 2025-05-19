@@ -17,6 +17,6 @@ export const muteAllAudio$ = combineLatest([
   setOutputEnabled$,
   muteAllAudioSetting.value$,
 ]).pipe(
-  startWith([false, muteAllAudioSetting.getValue()]),
-  map(([outputEndabled, settingsMute]) => !outputEndabled || settingsMute),
+  startWith([true, muteAllAudioSetting.getValue()]),
+  map(([outputEnabled, settingsMute]) => !outputEnabled || settingsMute),
 );
