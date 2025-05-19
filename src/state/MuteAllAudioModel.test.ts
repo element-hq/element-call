@@ -5,23 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { combineLatest, map, startWith } from "rxjs";
 import { test, vi } from "vitest";
 import { expect } from "vitest";
 
 import { setOutputEnabled$ } from "../controls";
 import { muteAllAudio as muteAllAudioSetting } from "../settings/settings";
+import { muteAllAudio$ } from "./MuteAllAudioModel";
 
-/**
- * This can transition into sth more complete: `GroupCallViewModel.ts`
- */
-export const muteAllAudio$ = combineLatest([
-  setOutputEnabled$,
-  muteAllAudioSetting.value$,
-]).pipe(
-  startWith([true, muteAllAudioSetting.getValue()]),
-  map(([outputEndabled, settingsMute]) => !outputEndabled || settingsMute),
-);
 test("muteAllAudio$", () => {
   const valueMock = vi.fn();
   const muteAllAudio = muteAllAudio$.subscribe((value) => {
