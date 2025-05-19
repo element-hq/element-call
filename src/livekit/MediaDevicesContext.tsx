@@ -36,6 +36,8 @@ import {
 } from "../controls";
 import { useUrlParams } from "../UrlParams";
 
+// This hardcoded id is used in EX ios! It can only be changed in coordination with
+// the ios swift team.
 export const EARPIECE_CONFIG_ID = "earpiece-id";
 
 export type DeviceLabel =
@@ -369,16 +371,12 @@ function useControlledOutput(): MediaDeviceHandle {
   const [asEarpice, setAsEarpiece] = useState(false);
 
   useEffect(() => {
-    let selectForController = selectedId;
-    const earpiece = selectedId === EARPIECE_CONFIG_ID;
-
-    setAsEarpiece(earpiece);
-    if (earpiece && physicalDeviceForEarpiceMode !== undefined)
-      selectForController = physicalDeviceForEarpiceMode.id;
-
-    if (selectForController)
-      window.controls.onOutputDeviceSelect?.(selectForController);
-  }, [physicalDeviceForEarpiceMode, selectedId]);
+    // In earpice mode we just sent the EARPIECE_CONFIG_ID to the native code
+    // This only happens on ios where we use the native picker.
+    // So this only is needed so that ios can know if the proximity sensor should be used or not.
+    if (selectedId) window.controls.onOutputDeviceSelect?.(selectedId);
+    setAsEarpiece(selectedId === EARPIECE_CONFIG_ID);
+  }, [selectedId]);
 
   return useMemo(
     () => ({
