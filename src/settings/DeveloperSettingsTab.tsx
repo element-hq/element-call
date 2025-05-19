@@ -16,7 +16,7 @@ import {
   showNonMemberTiles as showNonMemberTilesSetting,
   showConnectionStats as showConnectionStatsSetting,
   useNewMembershipManagerSetting,
-  useExperimentalToDeviceTransportSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
 } from "./settings";
 import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";

@@ -48,7 +48,7 @@ interface UseLivekitResult {
   connState: ECConnectionState;
 }
 
-export function useLiveKit(
+export function useLivekit(
   rtcSession: MatrixRTCSession,
   muteStates: MuteStates,
   sfuConfig: SFUConfig | undefined,

@@ -21,8 +21,8 @@ import { act, type ReactNode } from "react";
 
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import {
-  playReactionsSound,
-  soundEffectVolumeSetting,
+  playReactionsSound as playReactionsSoundSetting,
+  soundEffectVolume as soundEffectVolumeSetting,
 } from "../settings/settings";
 import { useAudioContext } from "../useAudioContext";
 import { GenericReaction, ReactionSet } from "../reactions";
@@ -50,7 +50,7 @@ vitest.mock("../soundUtils");
 
 afterEach(() => {
   vitest.resetAllMocks();
-  playReactionsSound.setValue(playReactionsSound.defaultValue);
+  playReactionsSoundSetting.setValue(playReactionsSoundSetting.defaultValue);
   soundEffectVolumeSetting.setValue(soundEffectVolumeSetting.defaultValue);
 });
 
@@ -74,7 +74,7 @@ beforeEach(() => {
 
 test("preloads all audio elements", () => {
   const { vm } = getBasicCallViewModelEnvironment([local, alice]);
-  playReactionsSound.setValue(true);
+  playReactionsSoundSetting.setValue(true);
   render(<TestComponent vm={vm} />);
   expect(prefetchSounds).toHaveBeenCalledOnce();
 });
@@ -84,7 +84,7 @@ test("will play an audio sound when there is a reaction", () => {
     local,
     alice,
   ]);
-  playReactionsSound.setValue(true);
+  playReactionsSoundSetting.setValue(true);
   render(<TestComponent vm={vm} />);
 
   // Find the first reaction with a sound effect
@@ -110,7 +110,7 @@ test("will play the generic audio sound when there is soundless reaction", () =>
     local,
     alice,
   ]);
-  playReactionsSound.setValue(true);
+  playReactionsSoundSetting.setValue(true);
   render(<TestComponent vm={vm} />);
 
   // Find the first reaction with a sound effect
@@ -136,7 +136,7 @@ test("will play multiple audio sounds when there are multiple different reaction
     local,
     alice,
   ]);
-  playReactionsSound.setValue(true);
+  playReactionsSoundSetting.setValue(true);
   render(<TestComponent vm={vm} />);
 
   // Find the first reaction with a sound effect

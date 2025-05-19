@@ -110,7 +110,7 @@ export const playReactionsSound = new Setting<boolean>(
   true,
 );
 
-export const soundEffectVolumeSetting = new Setting<number>(
+export const soundEffectVolume = new Setting<number>(
   "sound-effect-volume",
   0.5,
 );
@@ -120,7 +120,7 @@ export const useNewMembershipManagerSetting = new Setting<boolean>(
   true,
 );
 
-export const useExperimentalToDeviceTransportSetting = new Setting<boolean>(
+export const useExperimentalToDeviceTransport = new Setting<boolean>(
   "experimental-to-device-transport",
   true,
 );

@@ -62,7 +62,7 @@ import {
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
 import {
-  useExperimentalToDeviceTransportSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   useNewMembershipManagerSetting as useNewMembershipManagerSetting,
   useSetting,
 } from "../settings/settings";
