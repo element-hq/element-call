@@ -127,8 +127,8 @@ export const SettingsModal: FC<Props> = ({
           )}
           {iosDeviceMenu && (
             <button
-              onClick={(): void => {
-                logger.log("Open native device picker");
+              onClick={(e): void => {
+                e.preventDefault();
                 window.controls.showNativeOutputDevicePicker?.();
               }}
             >
