@@ -322,43 +322,42 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
 };
 
 function useControlledOutput(): MediaDeviceHandle {
-  const { available, deviceForEarpiece: physicalDeviceForEarpiceMode } =
-    useObservableEagerState(
-      useObservable(() => {
-        const outputDeviceData$ = setAvailableOutputDevices$.pipe(
-          startWith<OutputDevice[]>([]),
-          map((devices) => {
-            const deviceForEarpiece = devices.find((d) => d.forEarpiece);
-            const deviceMapTuple: [string, DeviceLabel][] = devices.map(
-              ({ id, name, isEarpiece, isSpeaker /*,isExternalHeadset*/ }) => {
-                let deviceLabel: DeviceLabel = { type: "name", name };
-                // if (isExternalHeadset) // Do we want this?
-                if (isEarpiece) deviceLabel = { type: "earpiece" };
-                if (isSpeaker) deviceLabel = { type: "default", name };
-                return [id, deviceLabel];
-              },
-            );
-            return {
-              devicesMap: new Map<string, DeviceLabel>(deviceMapTuple),
-              deviceForEarpiece,
-            };
-          }),
-        );
+  const { available } = useObservableEagerState(
+    useObservable(() => {
+      const outputDeviceData$ = setAvailableOutputDevices$.pipe(
+        startWith<OutputDevice[]>([]),
+        map((devices) => {
+          const deviceForEarpiece = devices.find((d) => d.forEarpiece);
+          const deviceMapTuple: [string, DeviceLabel][] = devices.map(
+            ({ id, name, isEarpiece, isSpeaker /*,isExternalHeadset*/ }) => {
+              let deviceLabel: DeviceLabel = { type: "name", name };
+              // if (isExternalHeadset) // Do we want this?
+              if (isEarpiece) deviceLabel = { type: "earpiece" };
+              if (isSpeaker) deviceLabel = { type: "default", name };
+              return [id, deviceLabel];
+            },
+          );
+          return {
+            devicesMap: new Map<string, DeviceLabel>(deviceMapTuple),
+            deviceForEarpiece,
+          };
+        }),
+      );
 
-        return combineLatest([outputDeviceData$, iosDeviceMenu$]).pipe(
-          map(([{ devicesMap, deviceForEarpiece }, iosShowEarpiece]) => {
-            let available = devicesMap;
-            if (iosShowEarpiece && !!deviceForEarpiece) {
-              available = new Map([
-                ...devicesMap.entries(),
-                [EARPIECE_CONFIG_ID, { type: "earpiece" }],
-              ]);
-            }
-            return { available, deviceForEarpiece };
-          }),
-        );
-      }),
-    );
+      return combineLatest([outputDeviceData$, iosDeviceMenu$]).pipe(
+        map(([{ devicesMap, deviceForEarpiece }, iosShowEarpiece]) => {
+          let available = devicesMap;
+          if (iosShowEarpiece && !!deviceForEarpiece) {
+            available = new Map([
+              ...devicesMap.entries(),
+              [EARPIECE_CONFIG_ID, { type: "earpiece" }],
+            ]);
+          }
+          return { available, deviceForEarpiece };
+        }),
+      );
+    }),
+  );
   const [preferredId, setPreferredId] = useSetting(audioOutputSetting);
   useEffect(() => {
     setOutputDevice$.subscribe((id) => {
