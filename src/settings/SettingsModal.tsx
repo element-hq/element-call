@@ -126,15 +126,14 @@ export const SettingsModal: FC<Props> = ({
             />
           )}
           {iosDeviceMenu && (
-            <Button
-              kind="secondary"
+            <button
               onClick={(): void => {
                 logger.log("Open native device picker");
                 window.controls.showNativeOutputDevicePicker?.();
               }}
             >
               Test
-            </Button>
+            </button>
           )}
           <DeviceSelection
             device={devices.audioOutput}
