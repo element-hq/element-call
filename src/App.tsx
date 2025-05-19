@@ -23,7 +23,6 @@ import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
 import { ProcessorProvider } from "./livekit/TrackProcessorContext";
-// import { useUrlParams } from "./UrlParams";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -73,8 +72,8 @@ export const App: FC = () => {
             {loaded ? (
               <Suspense fallback={null}>
                 <ClientProvider>
-                  <ProcessorProvider>
-                    <MediaDevicesProvider>
+                  <MediaDevicesProvider>
+                    <ProcessorProvider>
                       <Sentry.ErrorBoundary
                         fallback={(error) => (
                           <ErrorPage error={error} widget={widget} />
@@ -91,8 +90,8 @@ export const App: FC = () => {
                           <SentryRoute path="*" element={<RoomPage />} />
                         </Routes>
                       </Sentry.ErrorBoundary>
-                    </MediaDevicesProvider>
-                  </ProcessorProvider>
+                    </ProcessorProvider>
+                  </MediaDevicesProvider>
                 </ClientProvider>
               </Suspense>
             ) : (
