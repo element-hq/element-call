@@ -46,17 +46,17 @@ window.controls = {
   },
   setAvailableOutputDevices(devices: OutputDevice[]): void {
     if (!setAvailableOutputDevices$.observed)
-      throw new Error("Output controls are disabled");
+      throw new Error("Output controls are disabled. No setAvailableOutputDevices$ observer");
     setAvailableOutputDevices$.next(devices);
   },
   setOutputDevice(id: string): void {
     if (!setOutputDevice$.observed)
-      throw new Error("Output controls are disabled");
+      throw new Error("Output controls are disabled. No setOutputDevice$ observer");
     setOutputDevice$.next(id);
   },
   setOutputEnabled(enabled: boolean): void {
     if (!setOutputEnabled$.observed)
-      throw new Error("Output controls are disabled");
+      throw new Error("Output controls are disabled. No setOutputEnabled$ observer");
     setOutputEnabled$.next(!enabled);
   },
 };
