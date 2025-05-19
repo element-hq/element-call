@@ -73,11 +73,11 @@ services:
     image: ghcr.io/element-hq/element-web:develop
     pull_policy: always
     volumes:
-      - ./backend/ew.test.config.json:/app/config.json
+      - ./backend/ew.test.config.json:/app/config.json:Z
     environment:
-      ELEMENT_WEB_PORT: 81
+      ELEMENT_WEB_PORT: 8081
     ports:
-      - "8081:81"
+      - "8081:8081"
     networks:
       - ecbackend
 
@@ -91,7 +91,6 @@ services:
       - ./backend/dev_tls_m.localhost.crt:/root/ssl/cert.pem:Z
     ports:
       # HOST_PORT:CONTAINER_PORT
-      - "80:80"
       - "443:443"
       - "8008:80"
       - "4443:443"
