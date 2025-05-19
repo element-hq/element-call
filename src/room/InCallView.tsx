@@ -99,7 +99,7 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
-  useExperimentalToDeviceTransportSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";

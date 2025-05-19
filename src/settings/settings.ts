@@ -120,7 +120,7 @@ export const useNewMembershipManagerSetting = new Setting<boolean>(
   true,
 );
 
-export const useExperimentalToDeviceTransportSetting = new Setting<boolean>(
+export const useExperimentalToDeviceTransport = new Setting<boolean>(
   "experimental-to-device-transport",
   true,
 );
