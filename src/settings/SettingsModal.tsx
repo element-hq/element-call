@@ -11,7 +11,7 @@ import { type MatrixClient } from "matrix-js-sdk";
 import { Button, Root as Form, Separator } from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
 import { useObservableEagerState } from "observable-hooks";
-// import { logger } from "matrix-js-sdk/lib/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -128,12 +128,12 @@ export const SettingsModal: FC<Props> = ({
           {iosDeviceMenu && (
             <Button
               kind="secondary"
-              // onClick={(): void => {
-              //   logger.log("Open native device picker");
-              //   // window.controls.showNativeOutputDevicePicker?.();
-              // }}
+              onClick={(): void => {
+                logger.log("Open native device picker");
+                window.controls.showNativeOutputDevicePicker?.();
+              }}
             >
-              {t("settings.devices.change_device_button")}
+              Test
             </Button>
           )}
           <DeviceSelection
