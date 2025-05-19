@@ -132,7 +132,8 @@ export const SettingsModal: FC<Props> = ({
                 window.controls.showNativeOutputDevicePicker?.();
               }}
             >
-              {t("settings.devices.change_device_button")}
+              {/* {t("settings.devices.change_device_button")} */}
+              Test
             </Button>
           )}
           <DeviceSelection
