@@ -10,7 +10,7 @@ A few aspects of Element Call's interface can be controlled through a global API
 
 ## Audio output devices
 
-These functions must be used in conjunction with the `controlledOutput` URL parameter in order to have any effect.
+These functions must be used in conjunction with the `controlledMediaDevices` URL parameter in order to have any effect.
 
 - `controls.setAvailableOutputDevices(devices: { id: string, name: string, forEarpiece?: boolean, isEarpiece?: boolean isSpeaker?: boolean, isExternalHeadset?, boolean;}[]): void` Sets the list of available audio outputs. `forEarpiece` is used on ios only.
   It flags the device that should be used if the user selects earpiece mode. This should be the main stereo loudspeaker of the device.

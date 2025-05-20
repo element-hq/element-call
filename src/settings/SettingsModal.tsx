@@ -107,7 +107,7 @@ export const SettingsModal: FC<Props> = ({
   // If we are on ios we will show a button to open the native picker.
   const iosDeviceMenu = useObservableEagerState(iosDeviceMenu$);
   // In controlled devices we will not show the input section
-  const { controlledOutput } = useUrlParams();
+  const { controlledMediaDevices } = useUrlParams();
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
@@ -115,7 +115,7 @@ export const SettingsModal: FC<Props> = ({
     content: (
       <>
         <Form>
-          {!controlledOutput && (
+          {!controlledMediaDevices && (
             <DeviceSelection
               device={devices.audioInput}
               title={t("settings.devices.microphone")}
