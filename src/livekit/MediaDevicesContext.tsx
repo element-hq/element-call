@@ -80,7 +80,7 @@ export interface MediaDevices extends Omit<InputDevices, "usingNames"> {
  * This implies the following
  *  - hide any input devices (they do not work anyhow on ios)
  *  - Show a button to show the native output picker instead.
- *  - Only show the earpice toggle option if the earpiece is available:
+ *  - Only show the earpiece toggle option if the earpiece is available:
  *   `setAvailableOutputDevices$.includes((d)=>d.forEarpiece)`
  */
 export const iosDeviceMenu$ = alwaysShowIphoneEarpieceSetting.value$.pipe(
@@ -362,10 +362,10 @@ function useControlledOutput(): MediaDeviceHandle {
 
   const selectedId = useSelectedId(available, preferredId);
 
-  const [asEarpice, setAsEarpiece] = useState(false);
+  const [asEarpiece, setAsEarpiece] = useState(false);
 
   useEffect(() => {
-    // In earpice mode we just sent the EARPIECE_CONFIG_ID to the native code
+    // In earpiece mode we just sent the EARPIECE_CONFIG_ID to the native code
     // This only happens on ios where we use the native picker.
     // So this only is needed so that ios can know if the proximity sensor should be used or not.
     if (selectedId) window.controls.onOutputDeviceSelect?.(selectedId);
@@ -378,9 +378,9 @@ function useControlledOutput(): MediaDeviceHandle {
       selectedId,
       selectedGroupId: undefined,
       select: setPreferredId,
-      useAsEarpiece: asEarpice,
+      useAsEarpiece: asEarpiece,
     }),
-    [available, selectedId, setPreferredId, asEarpice],
+    [available, selectedId, setPreferredId, asEarpiece],
   );
 }
 
