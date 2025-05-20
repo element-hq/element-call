@@ -29,11 +29,7 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   type Setting,
 } from "../settings/settings";
-import {
-  type OutputDevice,
-  setAvailableOutputDevices$,
-  setOutputDevice$,
-} from "../controls";
+import { setAvailableOutputDevices$, setOutputDevice$ } from "../controls";
 import { useUrlParams } from "../UrlParams";
 
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
@@ -325,7 +321,6 @@ function useControlledOutput(): MediaDeviceHandle {
   const { available } = useObservableEagerState(
     useObservable(() => {
       const outputDeviceData$ = setAvailableOutputDevices$.pipe(
-        startWith<OutputDevice[]>([]),
         map((devices) => {
           const deviceForEarpiece = devices.find((d) => d.forEarpiece);
           const deviceMapTuple: [string, DeviceLabel][] = devices.map(
