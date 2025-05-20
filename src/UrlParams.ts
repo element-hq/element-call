@@ -162,20 +162,24 @@ export interface UrlParams {
    * creating a spa link.
    */
   homeserver: string | null;
+
   /**
    * The user's intent with respect to the call.
    * e.g. if they clicked a Start Call button, this would be `start_call`.
    * If it was a Join Call button, it would be `join_existing`.
    */
   intent: string | null;
+
   /**
    * The rageshake submit URL. This is only used in the embedded package of Element Call.
    */
   rageshakeSubmitUrl: string | null;
+
   /**
    * The Sentry DSN. This is only used in the embedded package of Element Call.
    */
   sentryDsn: string | null;
+
   /**
    * The Sentry environment. This is only used in the embedded package of Element Call.
    */
