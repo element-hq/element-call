@@ -132,7 +132,7 @@ export interface UrlParams {
    * allowing the list of output devices to be controlled by the app hosting
    * Element Call.
    */
-  controlledOutput: boolean;
+  controlledMediaDevices: boolean;
   /**
    * Setting this flag skips the lobby and brings you in the call directly.
    * In the widget this can be combined with preload to pass the device settings
@@ -288,7 +288,7 @@ export const getUrlParams = (
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
-    controlledOutput: parser.getFlagParam("controlledMediaDevices"),
+    controlledMediaDevices: parser.getFlagParam("controlledMediaDevices"),
     skipLobby: parser.getFlagParam(
       "skipLobby",
       isWidget && intent === UserIntent.StartNewCall,
