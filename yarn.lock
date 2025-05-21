@@ -7007,7 +7007,7 @@ __metadata:
     livekit-client: "npm:^2.11.3"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#7fa9195e398764749b0195f14d3cf0190ad10253"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=toger5/add-room-key-fallback-on-encryption-manager-not-supported"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -9610,7 +9610,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#7fa9195e398764749b0195f14d3cf0190ad10253":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/add-room-key-fallback-on-encryption-manager-not-supported":
   version: 37.6.0
   resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=7fa9195e398764749b0195f14d3cf0190ad10253"
   dependencies:
