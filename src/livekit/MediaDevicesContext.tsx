@@ -29,7 +29,7 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   type Setting,
 } from "../settings/settings";
-import { setAvailableOutputDevices$, setOutputDevice$ } from "../controls";
+import { outputDevice$, availableOutputDevices$ } from "../controls";
 import { useUrlParams } from "../UrlParams";
 
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
@@ -81,13 +81,9 @@ export interface MediaDevices extends Omit<InputDevices, "usingNames"> {
  *  - hide any input devices (they do not work anyhow on ios)
  *  - Show a button to show the native output picker instead.
  *  - Only show the earpiece toggle option if the earpiece is available:
- *   `setAvailableOutputDevices$.includes((d)=>d.forEarpiece)`
+ *   `availableOutputDevices$.includes((d)=>d.forEarpiece)`
  */
 export const iosDeviceMenu$ = alwaysShowIphoneEarpieceSetting.value$.pipe(
-  startWith(
-    alwaysShowIphoneEarpieceSetting.getValue() ||
-      navigator.userAgent.includes("iPhone"),
-  ),
   map((v) => v || navigator.userAgent.includes("iPhone")),
 );
 
@@ -115,8 +111,8 @@ function useSelectedId(
 /**
  * Hook to get access to a mediaDevice handle for a kind. This allows to list
  * the available devices, read and set the selected device.
- * @param kind audio input, output or video output.
- * @param setting The setting this handles selection should be synced with.
+ * @param kind Audio input, output or video output.
+ * @param setting The setting this handle's selection should be synced with.
  * @param usingNames If the hook should query device names for the associated
  *  list.
  * @returns A handle for the chosen kind.
@@ -320,7 +316,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
 function useControlledOutput(): MediaDeviceHandle {
   const { available } = useObservableEagerState(
     useObservable(() => {
-      const outputDeviceData$ = setAvailableOutputDevices$.pipe(
+      const outputDeviceData$ = availableOutputDevices$.pipe(
         map((devices) => {
           const deviceForEarpiece = devices.find((d) => d.forEarpiece);
           const deviceMapTuple: [string, DeviceLabel][] = devices.map(
@@ -339,8 +335,9 @@ function useControlledOutput(): MediaDeviceHandle {
         }),
       );
 
-      return combineLatest([outputDeviceData$, iosDeviceMenu$]).pipe(
-        map(([{ devicesMap, deviceForEarpiece }, iosShowEarpiece]) => {
+      return combineLatest(
+        [outputDeviceData$, iosDeviceMenu$],
+        ({ devicesMap, deviceForEarpiece }, iosShowEarpiece) => {
           let available = devicesMap;
           if (iosShowEarpiece && !!deviceForEarpiece) {
             available = new Map([
@@ -349,15 +346,16 @@ function useControlledOutput(): MediaDeviceHandle {
             ]);
           }
           return { available, deviceForEarpiece };
-        }),
+        },
       );
     }),
   );
   const [preferredId, setPreferredId] = useSetting(audioOutputSetting);
   useEffect(() => {
-    setOutputDevice$.subscribe((id) => {
+    const subscription = outputDevice$.subscribe((id) => {
       if (id) setPreferredId(id);
     });
+    return (): void => subscription.unsubscribe();
   }, [setPreferredId]);
 
   const selectedId = useSelectedId(available, preferredId);
@@ -365,9 +363,10 @@ function useControlledOutput(): MediaDeviceHandle {
   const [asEarpiece, setAsEarpiece] = useState(false);
 
   useEffect(() => {
-    // In earpiece mode we just sent the EARPIECE_CONFIG_ID to the native code
-    // This only happens on ios where we use the native picker.
-    // So this only is needed so that ios can know if the proximity sensor should be used or not.
+    // Let the hosting application know which output device has been selected.
+    // This information is probably only of interest if the earpiece mode has been
+    // selected - for example, Element X iOS listens to this to determine whether it
+    // should enable the proximity sensor.
     if (selectedId) window.controls.onOutputDeviceSelect?.(selectedId);
     setAsEarpiece(selectedId === EARPIECE_CONFIG_ID);
   }, [selectedId]);

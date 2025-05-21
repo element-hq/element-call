@@ -104,7 +104,7 @@ export const SettingsModal: FC<Props> = ({
   const [showDeveloperSettingsTab] = useSetting(developerMode);
 
   const { available: isRageshakeAvailable } = useSubmitRageshake();
-  // If we are on ios we will show a button to open the native picker.
+  // If we are on iOS we will show a button to open the native audio device picker.
   const iosDeviceMenu = useObservableEagerState(iosDeviceMenu$);
   // In controlled devices we will not show the input section
   const { controlledMediaDevices } = useUrlParams();
