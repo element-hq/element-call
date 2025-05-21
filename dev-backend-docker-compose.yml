@@ -6,7 +6,7 @@ services:
     image: ghcr.io/element-hq/lk-jwt-service:latest-ci
     hostname: auth-server
     environment:
-      - LK_JWT_PORT=8080
+      - LIVEKIT_JWT_PORT=8080
       - LIVEKIT_URL=wss://matrix-rtc.m.localhost/livekit/sfu
       - LIVEKIT_KEY=devkey
       - LIVEKIT_SECRET=secret
