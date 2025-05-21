@@ -32,17 +32,13 @@ export interface OutputDevice {
  */
 export const setPipEnabled$ = new Subject<boolean>();
 // BehaviorSubject since the client might set this before we have subscribed (GroupCallView still in "loading" state)
-// We want the that has been set during loading to be be available immediately once loaded.
-export const setAvailableOutputDevices$ = new BehaviorSubject<OutputDevice[]>(
-  [],
-);
+// We want the devices that have been set during loading to be available immediately once loaded.
+export const availableOutputDevices$ = new BehaviorSubject<OutputDevice[]>([]);
 // BehaviorSubject since the client might set this before we have subscribed (GroupCallView still in "loading" state)
-// We want the that has been set during loading to be be available immediately once loaded.
-export const setOutputDevice$ = new BehaviorSubject<string | undefined>(
-  undefined,
-);
+// We want the device that has been set during loading to be available immediately once loaded.
+export const outputDevice$ = new BehaviorSubject<string | undefined>(undefined);
 /**
- * This is currently unused. It might be possible to allow the os to mute the call this way if the user
+ * This allows the os to mute the call if the user
  * presses the volume down button when it is at the minimum volume.
  *
  * This should also be used to display a darkened overlay screen letting the user know that audio is muted.
@@ -62,16 +58,16 @@ window.controls = {
     setPipEnabled$.next(false);
   },
   setAvailableOutputDevices(devices: OutputDevice[]): void {
-    setAvailableOutputDevices$.next(devices);
+    availableOutputDevices$.next(devices);
   },
   setOutputDevice(id: string): void {
-    setOutputDevice$.next(id);
+    outputDevice$.next(id);
   },
   setOutputEnabled(enabled: boolean): void {
     if (!setOutputEnabled$.observed)
       throw new Error(
         "Output controls are disabled. No setOutputEnabled$ observer",
       );
-    setOutputEnabled$.next(!enabled);
+    setOutputEnabled$.next(enabled);
   },
 };
