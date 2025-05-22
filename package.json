@@ -102,7 +102,7 @@
     "livekit-client": "^2.13.0",
     "lodash-es": "^4.17.21",
     "loglevel": "^1.9.1",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#19b1b901f575755d29d1fe03ca48cbf7c1cae05c",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#head=toger5/add-room-key-fallback-on-encryption-manager-not-supported",
     "matrix-widget-api": "1.11.0",
     "normalize.css": "^8.0.1",
     "observable-hooks": "^4.2.3",
