@@ -367,7 +367,11 @@ function useControlledOutput(): MediaDeviceHandle {
     // This information is probably only of interest if the earpiece mode has been
     // selected - for example, Element X iOS listens to this to determine whether it
     // should enable the proximity sensor.
-    if (selectedId) window.controls.onOutputDeviceSelect?.(selectedId);
+    if (selectedId) {
+      window.controls.onAudioDeviceSelect?.(selectedId);
+      // Call deprecated method for backwards compatibility.
+      window.controls.onOutputDeviceSelect?.(selectedId);
+    }
     setAsEarpiece(selectedId === EARPIECE_CONFIG_ID);
   }, [selectedId]);
 

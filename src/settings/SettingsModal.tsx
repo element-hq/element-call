@@ -133,6 +133,8 @@ export const SettingsModal: FC<Props> = ({
             <Button
               onClick={(e): void => {
                 e.preventDefault();
+                window.controls.showNativeAudioDevicePicker?.();
+                // call deprecated method for backwards compatibility.
                 window.controls.showNativeOutputDevicePicker?.();
               }}
             >

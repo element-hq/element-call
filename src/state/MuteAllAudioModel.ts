@@ -7,13 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { combineLatest, startWith } from "rxjs";
 
-import { setOutputEnabled$ } from "../controls";
+import { setAudioEnabled$ } from "../controls";
 import { muteAllAudio as muteAllAudioSetting } from "../settings/settings";
 
 /**
  * This can transition into sth more complete: `GroupCallViewModel.ts`
  */
 export const muteAllAudio$ = combineLatest(
-  [setOutputEnabled$.pipe(startWith(true)), muteAllAudioSetting.value$],
+  [setAudioEnabled$.pipe(startWith(true)), muteAllAudioSetting.value$],
   (outputEnabled, settingsMute) => !outputEnabled || settingsMute,
 );
