@@ -104,10 +104,15 @@ export const SettingsModal: FC<Props> = ({
   const [showDeveloperSettingsTab] = useSetting(developerMode);
 
   const { available: isRageshakeAvailable } = useSubmitRageshake();
+
+  // For controlled devices, we will not show the input section:
+  // Controlled media devices are used on mobile platforms, where input and output are grouped into
+  // a single device. These are called "headset" or "speaker" (or similar) but contain both input and output.
+  // On EC, we decided that it is less confusing for the user if they see those options in the output section
+  // rather than the input section.
+  const { controlledMediaDevices } = useUrlParams();
   // If we are on iOS we will show a button to open the native audio device picker.
   const iosDeviceMenu = useObservableEagerState(iosDeviceMenu$);
-  // In controlled devices we will not show the input section
-  const { controlledMediaDevices } = useUrlParams();
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
