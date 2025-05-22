@@ -47,12 +47,15 @@ export const callEventAudioSounds = prefetchSounds({
 
 export function CallEventAudioRenderer({
   vm,
+  muted,
 }: {
   vm: CallViewModel;
+  muted?: boolean;
 }): ReactNode {
   const audioEngineCtx = useAudioContext({
     sounds: callEventAudioSounds,
     latencyHint: "interactive",
+    muted,
   });
   const audioEngineRef = useLatest(audioEngineCtx);
 

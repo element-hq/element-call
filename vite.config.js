@@ -11,8 +11,8 @@ import { createHtmlPlugin } from "vite-plugin-html";
 import { codecovVitePlugin } from "@codecov/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import react from "@vitejs/plugin-react";
-import basicSsl from "@vitejs/plugin-basic-ssl";
 import { realpathSync } from "fs";
+import * as fs from "node:fs";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, packageType }) => {
@@ -24,7 +24,6 @@ export default defineConfig(({ mode, packageType }) => {
   process.env.VITE_PACKAGE = packageType ?? "full";
   const plugins = [
     react(),
-    basicSsl(),
     svgrPlugin({
       svgrOptions: {
         // This enables ref forwarding on SVGR components, which is needed, for
@@ -84,6 +83,10 @@ export default defineConfig(({ mode, packageType }) => {
     server: {
       port: 3000,
       fs: { allow },
+      https: {
+        key: fs.readFileSync("./backend/dev_tls_m.localhost.key"),
+        cert: fs.readFileSync("./backend/dev_tls_m.localhost.crt"),
+      },
     },
     build: {
       sourcemap: true,

@@ -38,6 +38,7 @@ import { GroupCallView } from "./GroupCallView";
 import { type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
 import { MatrixRTCFocusMissingError } from "../utils/errors";
+import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 
 vi.mock("../soundUtils");
 vi.mock("../useAudioContext");
@@ -45,6 +46,13 @@ vi.mock("./InCallView");
 vi.mock("react-use-measure", () => ({
   default: (): [() => void, object] => [(): void => {}, {}],
 }));
+
+vi.hoisted(
+  () =>
+    (global.ImageData = class MockImageData {
+      public data: number[] = [];
+    } as unknown as typeof ImageData),
+);
 
 const enterRTCSession = vi.hoisted(() => vi.fn(async () => Promise.resolve()));
 const leaveRTCSession = vi.hoisted(() =>
@@ -137,18 +145,20 @@ function createGroupCallView(
   const { getByText } = render(
     <BrowserRouter>
       <TooltipProvider>
-        <GroupCallView
-          client={client}
-          isPasswordlessUser={false}
-          confineToRoom={false}
-          preload={false}
-          skipLobby={false}
-          hideHeader={true}
-          rtcSession={rtcSession as unknown as MatrixRTCSession}
-          isJoined={joined}
-          muteStates={muteState}
-          widget={widget}
-        />
+        <ProcessorProvider>
+          <GroupCallView
+            client={client}
+            isPasswordlessUser={false}
+            confineToRoom={false}
+            preload={false}
+            skipLobby={false}
+            hideHeader={true}
+            rtcSession={rtcSession as unknown as MatrixRTCSession}
+            isJoined={joined}
+            muteStates={muteState}
+            widget={widget}
+          />
+        </ProcessorProvider>
       </TooltipProvider>
     </BrowserRouter>,
   );

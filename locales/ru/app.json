@@ -21,7 +21,7 @@
     "submit": "Отправить",
     "upload_file": "Загрузить файл"
   },
-  "analytics_notice": "Участвуя в этой бета-версии, вы соглашаетесь на сбор анонимных данных, которые мы используем для улучшения продукта. Более подробную информацию о том, какие данные мы отслеживаем, вы можете найти в нашей <2> Политике конфиденциальности</2> и нашей <5> Политике использования файлов cookie</5>.",
+  "analytics_notice": "Участвуя в этой бета-версии, вы соглашаетесь на сбор анонимных данных, которые мы используем для улучшения продукта. Дополнительную информацию о том, какие данные мы отслеживаем, можно найти в нашей <2> Политике конфиденциальности </2> и Политике <6> использования файлов cookie</6>.",
   "app_selection_modal": {
     "continue_in_browser": "Продолжить в браузере",
     "open_in_app": "Открыть в приложении",
@@ -65,13 +65,16 @@
     "debug_tile_layout_label": "Отладка расположения плиток",
     "device_id": "Идентификатор устройства: {{id}}",
     "duplicate_tiles_label": "Количество дополнительных копий плиток на участника",
+    "environment_variables": "Переменные окружения",
     "hostname": "Имя хоста: {{hostname}}",
     "livekit_server_info": "Информация о сервере LiveKit",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
     "show_connection_stats": "Показать статистику подключений",
     "show_non_member_tiles": "Показать плитки для медиафайлов, не являющихся участниками",
-    "use_new_membership_manager": "Используйте новую реализацию вызова MembershipManager"
+    "url_params": "Параметры URL-адреса",
+    "use_new_membership_manager": "Используйте новую реализацию вызова MembershipManager",
+    "use_to_device_key_transport": "Используйте для передачи ключей устройства. Это позволит вернуться к передаче ключей комнаты, когда другой участник вызова отправит ключ комнаты"
   },
   "disconnected_banner": "Связь с сервером была потеряна.",
   "error": {
@@ -98,7 +101,7 @@
     "call_ended_heading": "Вызов завершен",
     "knock_reject_body": "Участники комнаты отклонили ваш запрос на присоединение.",
     "knock_reject_heading": "Не разрешено присоединиться",
-    "reason": "Причина"
+    "reason": "Причина: {{reason}}"
   },
   "hangup_button_label": "Завершить звонок",
   "header_label": "Главная Element Call",
@@ -145,6 +148,7 @@
   "rageshake_sent": "Спасибо!",
   "recaptcha_dismissed": "Проверка не пройдена",
   "recaptcha_not_loaded": "Невозможно начать проверку",
+  "recaptcha_ssla_caption": "Этот сайт защищен reCAPTCHA, и к нему применяются <2> Политика конфиденциальности </2> и <6> Условия обслуживания Google. </6> <9></9>Нажимая «Зарегистрироваться», вы соглашаетесь с нашим лицензионным соглашением на <12> программное обеспечение и услуги (SSLA) </12>",
   "register": {
     "passwords_must_match": "Пароли должны совпадать",
     "registering": "Регистрация…"
@@ -154,12 +158,16 @@
   "register_heading": "Создать учетную запись",
   "return_home_button": "Вернуться в Начало",
   "room_auth_view_continue_button": "Продолжить",
+  "room_auth_view_ssla_caption": "Нажимая кнопку \"Присоединиться к звонку\", вы соглашаетесь с нашим <2>Лицензионное соглашение на программное обеспечение и услуги (SSLA)</2>",
   "screenshare_button_label": "Поделиться экраном",
   "settings": {
     "audio_tab": {
       "effect_volume_description": "Отрегулируйте громкость воспроизведения реакций и эффектов поднятия руки.",
       "effect_volume_label": "Громкость звукового эффекта"
     },
+    "background_blur_header": "Фон",
+    "background_blur_label": "Размытие фона видео",
+    "blur_not_supported_by_browser": "(Размытие фона не поддерживается этим устройством.)",
     "developer_tab_title": "Разработчику",
     "devices": {
       "camera": "Камера",
@@ -190,8 +198,9 @@
       "show_hand_raised_timer_label": "Показать продолжительность поднятия руки"
     }
   },
-  "star_rating_input_label_one": "{{count}} отмечен",
-  "star_rating_input_label_other": "{{count}} отмеченных",
+  "star_rating_input_label_one": "{{count}} звезда",
+  "star_rating_input_label_few": "{{count}} звезды",
+  "star_rating_input_label_many": "{{count}} звезд",
   "start_new_call": "Начать новый звонок",
   "start_video_button_label": "Начать видео",
   "stop_screenshare_button_label": "Демонстрация экрана",
@@ -200,8 +209,9 @@
   "switch_camera": "Переключить камеру",
   "unauthenticated_view_body": "Ещё не зарегистрированы? <2>Создайте аккаунт</2>",
   "unauthenticated_view_login_button": "Войдите в свой аккаунт",
+  "unauthenticated_view_ssla_caption": "Нажимая «Перейти», вы соглашаетесь с нашим лицензионным соглашением на <2> программное обеспечение и услуги (SSLA) </2>",
   "unmute_microphone_button_label": "Включить микрофон",
-  "version": "Версия: {{version}}",
+  "version": "{{productName}} версия: {{version}}",
   "video_tile": {
     "always_show": "Показывать всегда",
     "camera_starting": "Загрузка видео...",

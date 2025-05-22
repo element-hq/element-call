@@ -73,7 +73,8 @@
     "show_connection_stats": "Visa anslutningsstatistik",
     "show_non_member_tiles": "Visa paneler för media som inte är medlemmar",
     "url_params": "URL-parametrar",
-    "use_new_membership_manager": "Använd den nya implementeringen av samtals-MembershipManager"
+    "use_new_membership_manager": "Använd den nya implementeringen av samtals-MembershipManager",
+    "use_to_device_key_transport": "Använd \"till enhet\"-nyckeltransport. Detta kommer att falla tillbaka till rumsnyckeltransport om en annan samtalsmedlem skickar en rumsnyckel."
   },
   "disconnected_banner": "Anslutningen till servern har brutits.",
   "error": {
