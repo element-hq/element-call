@@ -133,6 +133,6 @@ export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
 
 export const alwaysShowIphoneEarpiece = new Setting<boolean>(
-  "always-show-iphone-earpice",
+  "always-show-iphone-earpiece",
   false,
 );
