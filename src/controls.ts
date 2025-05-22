@@ -11,11 +11,21 @@ export interface Controls {
   canEnterPip(): boolean;
   enablePip(): void;
   disablePip(): void;
+  /** @deprecated use  setAvailableAudioDevices instead*/
   setAvailableOutputDevices(devices: OutputDevice[]): void;
+  setAvailableAudioDevices(devices: OutputDevice[]): void;
+  /** @deprecated use  setAudioDevice instead*/
   setOutputDevice(id: string): void;
+  setAudioDevice(id: string): void;
+  /** @deprecated use  onAudioDeviceSelect instead*/
   onOutputDeviceSelect?: (id: string) => void;
+  onAudioDeviceSelect?: (id: string) => void;
+  /** @deprecated use  setAudioEnabled instead*/
   setOutputEnabled(enabled: boolean): void;
+  setAudioEnabled(enabled: boolean): void;
+  /** @deprecated use  showNativeAudioDevicePicker instead*/
   showNativeOutputDevicePicker?: () => void;
+  showNativeAudioDevicePicker?: () => void;
 }
 
 export interface OutputDevice {
@@ -43,7 +53,7 @@ export const outputDevice$ = new BehaviorSubject<string | undefined>(undefined);
  *
  * This should also be used to display a darkened overlay screen letting the user know that audio is muted.
  */
-export const setOutputEnabled$ = new Subject<boolean>();
+export const setAudioEnabled$ = new Subject<boolean>();
 
 window.controls = {
   canEnterPip(): boolean {
@@ -57,17 +67,28 @@ window.controls = {
     if (!setPipEnabled$.observed) throw new Error("No call is running");
     setPipEnabled$.next(false);
   },
-  setAvailableOutputDevices(devices: OutputDevice[]): void {
+  setAvailableAudioDevices(devices: OutputDevice[]): void {
     availableOutputDevices$.next(devices);
   },
-  setOutputDevice(id: string): void {
+  setAudioDevice(id: string): void {
     outputDevice$.next(id);
   },
-  setOutputEnabled(enabled: boolean): void {
-    if (!setOutputEnabled$.observed)
+  setAudioEnabled(enabled: boolean): void {
+    if (!setAudioEnabled$.observed)
       throw new Error(
-        "Output controls are disabled. No setOutputEnabled$ observer",
+        "Output controls are disabled. No setAudioEnabled$ observer",
       );
-    setOutputEnabled$.next(enabled);
+    setAudioEnabled$.next(enabled);
+  },
+
+  // wrappers for the deprecated controls fields
+  setOutputEnabled(enabled: boolean): void {
+    this.setAudioEnabled(enabled);
+  },
+  setAvailableOutputDevices(devices: OutputDevice[]): void {
+    this.setAvailableAudioDevices(devices);
+  },
+  setOutputDevice(id: string): void {
+    this.setAudioDevice(id);
   },
 };
