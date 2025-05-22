@@ -25,7 +25,7 @@ import { defaultLiveKitOptions } from "./options";
 import { type SFUConfig } from "./openIDSFU";
 import { type MuteStates } from "../room/MuteStates";
 import {
-  type MediaDevice,
+  type MediaDeviceHandle,
   type MediaDevices,
   useMediaDevices,
 } from "./MediaDevicesContext";
@@ -304,7 +304,10 @@ export function useLivekit(
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
     if (room !== undefined && connectionState === ConnectionState.Connected) {
-      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice): void => {
+      const syncDevice = (
+        kind: MediaDeviceKind,
+        device: MediaDeviceHandle,
+      ): void => {
         const id = device.selectedId;
 
         // Detect if we're trying to use chrome's default device, in which case

@@ -24,12 +24,12 @@ import { Trans, useTranslation } from "react-i18next";
 
 import {
   EARPIECE_CONFIG_ID,
-  type MediaDevice,
+  type MediaDeviceHandle,
 } from "../livekit/MediaDevicesContext";
 import styles from "./DeviceSelection.module.css";
 
 interface Props {
-  device: MediaDevice;
+  device: MediaDeviceHandle;
   title: string;
   numberedLabel: (number: number) => string;
 }

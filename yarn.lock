@@ -7004,7 +7004,7 @@ __metadata:
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
     knip: "npm:^5.27.2"
-    livekit-client: "npm:^2.11.3"
+    livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
     matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=toger5/add-room-key-fallback-on-encryption-manager-not-supported"
@@ -9386,9 +9386,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"livekit-client@npm:^2.11.3":
-  version: 2.12.0
-  resolution: "livekit-client@npm:2.12.0"
+"livekit-client@npm:^2.13.0":
+  version: 2.13.0
+  resolution: "livekit-client@npm:2.13.0"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
     "@livekit/protocol": "npm:1.38.0"
@@ -9399,7 +9399,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typed-emitter: "npm:^2.1.0"
     webrtc-adapter: "npm:^9.0.1"
-  checksum: 10c0/8a4657aa6c0f0bc5d1fe77c2cd9603a3b07d4acefa634f1c5151190eed69711e7e599dd09c07915939a418dc8770d87e3529ecf1b029f2a9af7f2172d83acb1c
+  checksum: 10c0/b5b7b37eea56681e543d754ee5df63651e45a78462d1f0c26334f0aa525761fefc86d5ad85513e9345bbb4d6821fc95dded5f1d7c008da2b558a14905cbd9ac2
   languageName: node
   linkType: hard
 
@@ -9612,7 +9612,7 @@ __metadata:
 
 "matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/add-room-key-fallback-on-encryption-manager-not-supported":
   version: 37.6.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=7fa9195e398764749b0195f14d3cf0190ad10253"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=6b3cf9667f306a79d57bfe9688d3414c0a8552a8"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.0.1"
@@ -9629,7 +9629,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/f2c973cf7e4ac01b387a78af11c44735cc2895b28b571f9bbe8c18ed29c3d7383272116dc181057b69e55771dbafb3a4a1527593d54f3c37db705fb57b81616d
+  checksum: 10c0/be747a85458764c2e1fe970a3f7ea00de24c7e20d12a125d038f730a91e3dc49926290ad4dd840d063233c035f8b3ed19fe551185376f21e98cf782fe25690a3
   languageName: node
   linkType: hard
 
