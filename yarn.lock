@@ -2547,10 +2547,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/matrix-sdk-crypto-wasm@npm:^14.0.1":
-  version: 14.0.1
-  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:14.0.1"
-  checksum: 10c0/6e98abb61f8d6c43b26f04e83db92b39db74352861495eda9ac472b2f58411a45b2f150e4361c44c6800f98f99e89350d11941e87b9bf22204c9cab83ca93e27
+"@matrix-org/matrix-sdk-crypto-wasm@npm:^14.2.0":
+  version: 14.2.0
+  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:14.2.0"
+  checksum: 10c0/cc51417d71ffe506401dbb85ff4930bf89b33b6718c9052ba3cc1b2989e989e5e7e6fceea7c5fb58576d64e7a5c947c4cece89dbfa785083d293508c80e0713d
   languageName: node
   linkType: hard
 
@@ -7007,7 +7007,7 @@ __metadata:
     livekit-client: "npm:^2.11.3"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=toger5/add-room-key-fallback-on-encryption-manager-not-supported"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=develop"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -9610,12 +9610,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/add-room-key-fallback-on-encryption-manager-not-supported":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
   version: 37.6.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=7fa9195e398764749b0195f14d3cf0190ad10253"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=93982716951ce2583904bfc26b27d6a86ba17a87"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.0.1"
+    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.2.0"
     "@matrix-org/olm": "npm:3.2.15"
     another-json: "npm:^0.2.0"
     bs58: "npm:^6.0.0"
@@ -9629,7 +9629,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/f2c973cf7e4ac01b387a78af11c44735cc2895b28b571f9bbe8c18ed29c3d7383272116dc181057b69e55771dbafb3a4a1527593d54f3c37db705fb57b81616d
+  checksum: 10c0/22a28099d2deaf0ca7f609a5859fe00fbd20c314d3b607a95b4a623a8aa159e428310b1849c77ab7b9875a29fc2d924cddbb6fc83dc4e42a74c4713401dcb0be
   languageName: node
   linkType: hard
 
