@@ -16,6 +16,6 @@ On mobile platforms (iOS, Android), web views do not reliably support selecting 
   It flags the device that should be used if the user selects earpiece mode. This should be the main stereo loudspeaker of the device.
 - `controls.onAudioDeviceSelect: ((id: string) => void) | undefined` Callback called whenever the user or application selects a new audio output.
 - `controls.setAudioDevice(id: string): void` Sets the selected audio device in Element Call's menu. This should be used if the OS decides to automatically switch to Bluetooth, for example.
-- `controls.setAudioEnabled(enabled: boolean)` Enables/disables all audio output from the application. This can be useful for temporarily pausing audio while the controlling application is switching output devices. Output is enabled by default.
+- `controls.setAudioEnabled(enabled: boolean)` Enables/disables all audio output from the application. Output is enabled by default.
 - `showNativeAudioDevicePicker: (() => void) | undefined`. Callback called whenever the user presses the output button in the settings menu.
   This button is only shown on iOS. (`userAgent.includes("iPhone")`)
