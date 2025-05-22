@@ -8,8 +8,9 @@ Please see LICENSE in the repository root for full details.
 import { type FC, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
-import { Root as Form, Separator } from "@vector-im/compound-web";
+import { Button, Root as Form, Separator } from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
+import { useObservableEagerState } from "observable-hooks";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -19,6 +20,7 @@ import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import {
   useMediaDevices,
   useMediaDeviceNames,
+  iosDeviceMenu$,
 } from "../livekit/MediaDevicesContext";
 import { widget } from "../widget";
 import {
@@ -34,6 +36,7 @@ import { useTrackProcessor } from "../livekit/TrackProcessorContext";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
 import { FieldRow, InputField } from "../input/Input";
 import { useSubmitRageshake } from "./submit-rageshake";
+import { useUrlParams } from "../UrlParams";
 
 type SettingsTab =
   | "audio"
@@ -102,19 +105,42 @@ export const SettingsModal: FC<Props> = ({
 
   const { available: isRageshakeAvailable } = useSubmitRageshake();
 
+  // For controlled devices, we will not show the input section:
+  // Controlled media devices are used on mobile platforms, where input and output are grouped into
+  // a single device. These are called "headset" or "speaker" (or similar) but contain both input and output.
+  // On EC, we decided that it is less confusing for the user if they see those options in the output section
+  // rather than the input section.
+  const { controlledAudioDevices } = useUrlParams();
+  // If we are on iOS we will show a button to open the native audio device picker.
+  const iosDeviceMenu = useObservableEagerState(iosDeviceMenu$);
+
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
     name: t("common.audio"),
     content: (
       <>
         <Form>
-          <DeviceSelection
-            device={devices.audioInput}
-            title={t("settings.devices.microphone")}
-            numberedLabel={(n) =>
-              t("settings.devices.microphone_numbered", { n })
-            }
-          />
+          {!controlledAudioDevices && (
+            <DeviceSelection
+              device={devices.audioInput}
+              title={t("settings.devices.microphone")}
+              numberedLabel={(n) =>
+                t("settings.devices.microphone_numbered", { n })
+              }
+            />
+          )}
+          {iosDeviceMenu && (
+            <Button
+              onClick={(e): void => {
+                e.preventDefault();
+                window.controls.showNativeAudioDevicePicker?.();
+                // call deprecated method for backwards compatibility.
+                window.controls.showNativeOutputDevicePicker?.();
+              }}
+            >
+              {t("settings.devices.change_device_button")}
+            </Button>
+          )}
           <DeviceSelection
             device={devices.audioOutput}
             title={t("settings.devices.speaker")}

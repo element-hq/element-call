@@ -14,7 +14,7 @@ import userEvent from "@testing-library/user-event";
 import { useMuteStates } from "./MuteStates";
 import {
   type DeviceLabel,
-  type MediaDevice,
+  type MediaDeviceHandle,
   type MediaDevices,
   MediaDevicesContext,
 } from "../livekit/MediaDevicesContext";
@@ -73,7 +73,7 @@ const mockCamera: MediaDeviceInfo = {
   },
 };
 
-function mockDevices(available: Map<string, DeviceLabel>): MediaDevice {
+function mockDevices(available: Map<string, DeviceLabel>): MediaDeviceHandle {
   return {
     available,
     selectedId: "",
