@@ -276,7 +276,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
     usingNames,
   } = useInputDevices();
 
-  const { controlledMediaDevices } = useUrlParams();
+  const { controlledAudioDevices } = useUrlParams();
 
   const webViewAudioOutput = useMediaDeviceHandle(
     "audiooutput",
@@ -288,7 +288,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const context: MediaDevices = useMemo(
     () => ({
       audioInput,
-      audioOutput: controlledMediaDevices
+      audioOutput: controlledAudioDevices
         ? controlledAudioOutput
         : webViewAudioOutput,
       videoInput,
@@ -297,7 +297,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
     }),
     [
       audioInput,
-      controlledMediaDevices,
+      controlledAudioDevices,
       controlledAudioOutput,
       webViewAudioOutput,
       videoInput,

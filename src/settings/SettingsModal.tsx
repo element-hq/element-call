@@ -110,7 +110,7 @@ export const SettingsModal: FC<Props> = ({
   // a single device. These are called "headset" or "speaker" (or similar) but contain both input and output.
   // On EC, we decided that it is less confusing for the user if they see those options in the output section
   // rather than the input section.
-  const { controlledMediaDevices } = useUrlParams();
+  const { controlledAudioDevices } = useUrlParams();
   // If we are on iOS we will show a button to open the native audio device picker.
   const iosDeviceMenu = useObservableEagerState(iosDeviceMenu$);
 
@@ -120,7 +120,7 @@ export const SettingsModal: FC<Props> = ({
     content: (
       <>
         <Form>
-          {!controlledMediaDevices && (
+          {!controlledAudioDevices && (
             <DeviceSelection
               device={devices.audioInput}
               title={t("settings.devices.microphone")}

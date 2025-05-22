@@ -8,7 +8,7 @@ A few aspects of Element Call's interface can be controlled through a global API
 - `controls.enablePip(): void` Puts the call interface into picture-in-picture mode. Throws if not in a call.
 - `controls.disablePip(): void` Takes the call interface out of picture-in-picture mode, restoring it to its natural display mode. Throws if not in a call.
 
-## Audio output devices
+## Audio devices
 
 On mobile platforms (iOS, Android), web views do not reliably support selecting audio output devices such as the main speaker, earpiece, or headset. To address this limitation, the following functions allow the hosting application (e.g., Element Web, Element X) to manage audio devices via exposed JavaScript interfaces. These functions must be enabled using the URL parameter `controlledAudioDevices` to take effect.
 
