@@ -48,6 +48,8 @@ export interface MediaDeviceHandle {
    */
   available: Map<string, DeviceLabel>;
   selectedId: string | undefined;
+  selectedWebDeviceId: string | undefined;
+
   /**
    * An additional device configuration that makes us use only one channel of the
    * output device and a reduced volume.
@@ -202,6 +204,7 @@ function useMediaDeviceHandle(
   return useMemo(
     () => ({
       available,
+      selectedWebDeviceId: selectedId,
       selectedId,
       useAsEarpiece: false,
       selectedGroupId,
@@ -214,6 +217,7 @@ function useMediaDeviceHandle(
 export const deviceStub: MediaDeviceHandle = {
   available: new Map(),
   selectedId: undefined,
+  selectedWebDeviceId: undefined,
   selectedGroupId: undefined,
   select: () => {},
   useAsEarpiece: false,
@@ -379,6 +383,7 @@ function useControlledOutput(): MediaDeviceHandle {
     () => ({
       available: available,
       selectedId,
+      selectedWebDeviceId: undefined,
       selectedGroupId: undefined,
       select: setPreferredId,
       useAsEarpiece: asEarpiece,

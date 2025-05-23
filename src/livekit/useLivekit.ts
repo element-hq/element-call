@@ -308,7 +308,7 @@ export function useLivekit(
         kind: MediaDeviceKind,
         device: MediaDeviceHandle,
       ): void => {
-        const id = device.selectedId;
+        const id = device.selectedWebDeviceId;
 
         // Detect if we're trying to use chrome's default device, in which case
         // we need to to see if the default device has changed to a different device
@@ -348,14 +348,12 @@ export function useLivekit(
                 logger.error(`Failed to restart audio device track`, e);
               });
           }
-        } else {
-          if (id !== undefined && room.getActiveDevice(kind) !== id) {
-            room
-              .switchActiveDevice(kind, id)
-              .catch((e) =>
-                logger.error(`Failed to sync ${kind} device with LiveKit`, e),
-              );
-          }
+        } else if (id !== undefined && room.getActiveDevice(kind) !== id) {
+          room
+            .switchActiveDevice(kind, id)
+            .catch((e) =>
+              logger.error(`Failed to sync ${kind} device with LiveKit`, e),
+            );
         }
       };
 

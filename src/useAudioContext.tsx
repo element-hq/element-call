@@ -113,11 +113,11 @@ export function useAudioContext<S extends string>(
     if (audioContext && "setSinkId" in audioContext) {
       // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/setSinkId
       // @ts-expect-error - setSinkId doesn't exist yet in types, maybe because it's not supported everywhere.
-      audioContext.setSinkId(audioOutput.selectedId).catch((ex) => {
+      audioContext.setSinkId(audioOutput.selectedWebDeviceId).catch((ex) => {
         logger.warn("Unable to change sink for audio context", ex);
       });
     }
-  }, [audioContext, audioOutput.selectedId]);
+  }, [audioContext, audioOutput.selectedWebDeviceId]);
   const { pan: earpiecePan, volume: earpieceVolume } = useEarpieceAudioConfig();
 
   // Don't return a function until we're ready.
