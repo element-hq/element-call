@@ -110,7 +110,11 @@ export function useAudioContext<S extends string>(
 
   // Update the sink ID whenever we change devices.
   useEffect(() => {
-    if (audioContext && "setSinkId" in audioContext) {
+    if (
+      audioContext &&
+      "setSinkId" in audioContext &&
+      audioOutput.selectedWebDeviceId
+    ) {
       // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/setSinkId
       // @ts-expect-error - setSinkId doesn't exist yet in types, maybe because it's not supported everywhere.
       audioContext.setSinkId(audioOutput.selectedWebDeviceId).catch((ex) => {
