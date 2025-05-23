@@ -17,6 +17,7 @@ import {
   useMediaDevices,
 } from "./livekit/MediaDevicesContext";
 import { type PrefetchedSounds } from "./soundUtils";
+import { useUrlParams } from "./UrlParams";
 
 /**
  * Play a sound though a given AudioContext. Will take
@@ -71,7 +72,7 @@ export function useAudioContext<S extends string>(
 ): UseAudioContext<S> | null {
   const [soundEffectVolume] = useSetting(soundEffectVolumeSetting);
   const { audioOutput } = useMediaDevices();
-
+  const { controlledAudioDevices } = useUrlParams();
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
 
@@ -110,14 +111,18 @@ export function useAudioContext<S extends string>(
 
   // Update the sink ID whenever we change devices.
   useEffect(() => {
-    if (audioContext && "setSinkId" in audioContext) {
+    if (
+      audioContext &&
+      "setSinkId" in audioContext &&
+      !controlledAudioDevices
+    ) {
       // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/setSinkId
       // @ts-expect-error - setSinkId doesn't exist yet in types, maybe because it's not supported everywhere.
       audioContext.setSinkId(audioOutput.selectedId).catch((ex) => {
         logger.warn("Unable to change sink for audio context", ex);
       });
     }
-  }, [audioContext, audioOutput.selectedId]);
+  }, [audioContext, audioOutput.selectedId, controlledAudioDevices]);
   const { pan: earpiecePan, volume: earpieceVolume } = useEarpieceAudioConfig();
 
   // Don't return a function until we're ready.
