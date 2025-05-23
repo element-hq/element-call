@@ -7007,7 +7007,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=robin/embedded-no-update-state"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=develop"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -9610,9 +9610,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=robin/embedded-no-update-state":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
   version: 37.6.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=d805293c43640a7757804b0a976374e647bc1e40"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=bf6dc16ad32d47f2c6e167236f4c853ceef01d4f"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.2.0"
@@ -9629,7 +9629,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/1a7167f77adc75af5b92b2c36571ab6328910b14835557244b006611a99ada852c6fd80f5a02a0e6a417c60d3c31ff6119def27920e3a3aee3ce7ec943a7fa68
+  checksum: 10c0/2877e7c5b2779200b48f3152bb7b510e58899b1e779e7e6d2bc1a236ed178fa8858f0547b644a2029f48f55dc7cc3954f48e2598c8963d45293c8280ccc23039
   languageName: node
   linkType: hard
 
