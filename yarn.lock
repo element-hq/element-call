@@ -2547,10 +2547,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/matrix-sdk-crypto-wasm@npm:^14.0.1":
-  version: 14.0.1
-  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:14.0.1"
-  checksum: 10c0/6e98abb61f8d6c43b26f04e83db92b39db74352861495eda9ac472b2f58411a45b2f150e4361c44c6800f98f99e89350d11941e87b9bf22204c9cab83ca93e27
+"@matrix-org/matrix-sdk-crypto-wasm@npm:^14.2.0":
+  version: 14.2.0
+  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:14.2.0"
+  checksum: 10c0/cc51417d71ffe506401dbb85ff4930bf89b33b6718c9052ba3cc1b2989e989e5e7e6fceea7c5fb58576d64e7a5c947c4cece89dbfa785083d293508c80e0713d
   languageName: node
   linkType: hard
 
@@ -7004,10 +7004,10 @@ __metadata:
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
     knip: "npm:^5.27.2"
-    livekit-client: "npm:^2.11.3"
+    livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=toger5/add-room-key-fallback-on-encryption-manager-not-supported"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=develop"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -9386,9 +9386,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"livekit-client@npm:^2.11.3":
-  version: 2.12.0
-  resolution: "livekit-client@npm:2.12.0"
+"livekit-client@npm:^2.13.0":
+  version: 2.13.3
+  resolution: "livekit-client@npm:2.13.3"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
     "@livekit/protocol": "npm:1.38.0"
@@ -9399,7 +9399,9 @@ __metadata:
     tslib: "npm:2.8.1"
     typed-emitter: "npm:^2.1.0"
     webrtc-adapter: "npm:^9.0.1"
-  checksum: 10c0/8a4657aa6c0f0bc5d1fe77c2cd9603a3b07d4acefa634f1c5151190eed69711e7e599dd09c07915939a418dc8770d87e3529ecf1b029f2a9af7f2172d83acb1c
+  peerDependencies:
+    "@types/dom-mediacapture-record": ^1
+  checksum: 10c0/9eadb9835514551c8e834cebb607999e632bc4b3b3e5d5e206db90b66e2e5467b8a1f76a03c648e00cc96c87256b4eece58dbb2b92dfcafa84f4798bbb305060
   languageName: node
   linkType: hard
 
@@ -9610,12 +9612,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/add-room-key-fallback-on-encryption-manager-not-supported":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
   version: 37.6.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=7fa9195e398764749b0195f14d3cf0190ad10253"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=bf6dc16ad32d47f2c6e167236f4c853ceef01d4f"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.0.1"
+    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.2.0"
     "@matrix-org/olm": "npm:3.2.15"
     another-json: "npm:^0.2.0"
     bs58: "npm:^6.0.0"
@@ -9629,7 +9631,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/f2c973cf7e4ac01b387a78af11c44735cc2895b28b571f9bbe8c18ed29c3d7383272116dc181057b69e55771dbafb3a4a1527593d54f3c37db705fb57b81616d
+  checksum: 10c0/2877e7c5b2779200b48f3152bb7b510e58899b1e779e7e6d2bc1a236ed178fa8858f0547b644a2029f48f55dc7cc3954f48e2598c8963d45293c8280ccc23039
   languageName: node
   linkType: hard
 

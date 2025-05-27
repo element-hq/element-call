@@ -1,5 +1,5 @@
 /*
-Copyright 2023, 2024 New Vector Ltd.
+Copyright 2023-2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -17,8 +17,8 @@ import {
   type JSX,
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
-import { map, startWith } from "rxjs";
-import { useObservableEagerState } from "observable-hooks";
+import { combineLatest, map, startWith } from "rxjs";
+import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -29,7 +29,11 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   type Setting,
 } from "../settings/settings";
+import { outputDevice$, availableOutputDevices$ } from "../controls";
+import { useUrlParams } from "../UrlParams";
 
+// This hardcoded id is used in EX ios! It can only be changed in coordination with
+// the ios swift team.
 export const EARPIECE_CONFIG_ID = "earpiece-id";
 
 export type DeviceLabel =
@@ -38,7 +42,7 @@ export type DeviceLabel =
   | { type: "earpiece" }
   | { type: "default"; name: string | null };
 
-export interface MediaDevice {
+export interface MediaDeviceHandle {
   /**
    * A map from available device IDs to labels.
    */
@@ -59,24 +63,69 @@ export interface MediaDevice {
   select: (deviceId: string) => void;
 }
 
-export interface MediaDevices {
-  audioInput: MediaDevice;
-  audioOutput: MediaDevice;
-  videoInput: MediaDevice;
+interface InputDevices {
+  audioInput: MediaDeviceHandle;
+  videoInput: MediaDeviceHandle;
   startUsingDeviceNames: () => void;
   stopUsingDeviceNames: () => void;
+  usingNames: boolean;
 }
 
-function useMediaDevice(
+export interface MediaDevices extends Omit<InputDevices, "usingNames"> {
+  audioOutput: MediaDeviceHandle;
+}
+
+/**
+ * An observable that represents if we should display the devices menu for iOS.
+ * This implies the following
+ *  - hide any input devices (they do not work anyhow on ios)
+ *  - Show a button to show the native output picker instead.
+ *  - Only show the earpiece toggle option if the earpiece is available:
+ *   `availableOutputDevices$.includes((d)=>d.forEarpiece)`
+ */
+export const iosDeviceMenu$ = alwaysShowIphoneEarpieceSetting.value$.pipe(
+  map((v) => v || navigator.userAgent.includes("iPhone")),
+);
+
+function useSelectedId(
+  available: Map<string, DeviceLabel>,
+  preferredId: string | undefined,
+): string | undefined {
+  return useMemo(() => {
+    if (available.size) {
+      // If the preferred device is available, use it. Or if every available
+      // device ID is falsy, the browser is probably just being paranoid about
+      // fingerprinting and we should still try using the preferred device.
+      // Worst case it is not available and the browser will gracefully fall
+      // back to some other device for us when requesting the media stream.
+      // Otherwise, select the first available device.
+      return (preferredId !== undefined && available.has(preferredId)) ||
+        (available.size === 1 && available.has(""))
+        ? preferredId
+        : available.keys().next().value;
+    }
+    return undefined;
+  }, [available, preferredId]);
+}
+
+/**
+ * Hook to get access to a mediaDevice handle for a kind. This allows to list
+ * the available devices, read and set the selected device.
+ * @param kind Audio input, output or video output.
+ * @param setting The setting this handle's selection should be synced with.
+ * @param usingNames If the hook should query device names for the associated
+ *  list.
+ * @returns A handle for the chosen kind.
+ */
+function useMediaDeviceHandle(
   kind: MediaDeviceKind,
   setting: Setting<string | undefined>,
   usingNames: boolean,
-): MediaDevice {
-  // Make sure we don't needlessly reset to a device observer without names,
-  // once permissions are already given
-  const [alwaysShowIphoneEarpice] = useSetting(alwaysShowIphoneEarpieceSetting);
+): MediaDeviceHandle {
   const hasRequestedPermissions = useRef(false);
   const requestPermissions = usingNames || hasRequestedPermissions.current;
+  // Make sure we don't needlessly reset to a device observer without names,
+  // once permissions are already given
   hasRequestedPermissions.current ||= usingNames;
 
   // We use a bare device observer here rather than one of the fancy device
@@ -114,24 +163,15 @@ function useMediaDevice(
             // recognizes.
             // We also create this if we do not have any available devices, so that
             // we can use the default or the earpiece.
-            const showEarpiece =
-              navigator.userAgent.match("iPhone") || alwaysShowIphoneEarpice;
             if (
               kind === "audiooutput" &&
               !available.has("") &&
               !available.has("default") &&
-              (available.size || showEarpiece)
+              available.size
             )
               available = new Map([
                 ["", { type: "default", name: availableRaw[0]?.label || null }],
                 ...available,
-              ]);
-            if (kind === "audiooutput" && showEarpiece)
-              // On IPhones we have to create a virtual earpiece device, because
-              // the earpiece is not available as a device ID.
-              available = new Map([
-                ...available,
-                [EARPIECE_CONFIG_ID, { type: "earpiece" }],
               ]);
             // Note: creating virtual default input devices would be another problem
             // entirely, because requesting a media stream from deviceId "" won't
@@ -139,27 +179,12 @@ function useMediaDevice(
             return available;
           }),
         ),
-      [alwaysShowIphoneEarpice, deviceObserver$, kind],
+      [deviceObserver$, kind],
     ),
   );
 
-  const [preferredId, setPreferredId] = useSetting(setting);
-  const [asEarpice, setAsEarpiece] = useState(false);
-  const selectedId = useMemo(() => {
-    if (available.size) {
-      // If the preferred device is available, use it. Or if every available
-      // device ID is falsy, the browser is probably just being paranoid about
-      // fingerprinting and we should still try using the preferred device.
-      // Worst case it is not available and the browser will gracefully fall
-      // back to some other device for us when requesting the media stream.
-      // Otherwise, select the first available device.
-      return (preferredId !== undefined && available.has(preferredId)) ||
-        (available.size === 1 && available.has(""))
-        ? preferredId
-        : available.keys().next().value;
-    }
-    return undefined;
-  }, [available, preferredId]);
+  const [preferredId, select] = useSetting(setting);
+  const selectedId = useSelectedId(available, preferredId);
 
   const selectedGroupId = useObservableEagerState(
     useMemo(
@@ -174,37 +199,26 @@ function useMediaDevice(
     ),
   );
 
-  const select = useCallback(
-    (id: string) => {
-      if (id === EARPIECE_CONFIG_ID) {
-        setAsEarpiece(true);
-      } else {
-        setAsEarpiece(false);
-        setPreferredId(id);
-      }
-    },
-    [setPreferredId],
-  );
-
   return useMemo(
     () => ({
       available,
       selectedId,
-      useAsEarpiece: asEarpice,
+      useAsEarpiece: false,
       selectedGroupId,
       select,
     }),
-    [available, selectedId, asEarpice, selectedGroupId, select],
+    [available, selectedId, selectedGroupId, select],
   );
 }
 
-export const deviceStub: MediaDevice = {
+export const deviceStub: MediaDeviceHandle = {
   available: new Map(),
   selectedId: undefined,
   selectedGroupId: undefined,
   select: () => {},
   useAsEarpiece: false,
 };
+
 export const devicesStub: MediaDevices = {
   audioInput: deviceStub,
   audioOutput: deviceStub,
@@ -215,26 +229,17 @@ export const devicesStub: MediaDevices = {
 
 export const MediaDevicesContext = createContext<MediaDevices>(devicesStub);
 
-interface Props {
-  children: JSX.Element;
-}
-
-export const MediaDevicesProvider: FC<Props> = ({ children }) => {
+function useInputDevices(): InputDevices {
   // Counts the number of callers currently using device names.
   const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
   const usingNames = numCallersUsingNames > 0;
 
-  const audioInput = useMediaDevice(
+  const audioInput = useMediaDeviceHandle(
     "audioinput",
     audioInputSetting,
     usingNames,
   );
-  const audioOutput = useMediaDevice(
-    "audiooutput",
-    audioOutputSetting,
-    usingNames,
-  );
-  const videoInput = useMediaDevice(
+  const videoInput = useMediaDeviceHandle(
     "videoinput",
     videoInputSetting,
     usingNames,
@@ -249,17 +254,52 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
     [setNumCallersUsingNames],
   );
 
+  return {
+    audioInput,
+    videoInput,
+    startUsingDeviceNames,
+    stopUsingDeviceNames,
+    usingNames,
+  };
+}
+
+interface Props {
+  children: JSX.Element;
+}
+
+export const MediaDevicesProvider: FC<Props> = ({ children }) => {
+  const {
+    audioInput,
+    videoInput,
+    startUsingDeviceNames,
+    stopUsingDeviceNames,
+    usingNames,
+  } = useInputDevices();
+
+  const { controlledAudioDevices } = useUrlParams();
+
+  const webViewAudioOutput = useMediaDeviceHandle(
+    "audiooutput",
+    audioOutputSetting,
+    usingNames,
+  );
+  const controlledAudioOutput = useControlledOutput();
+
   const context: MediaDevices = useMemo(
     () => ({
       audioInput,
-      audioOutput,
+      audioOutput: controlledAudioDevices
+        ? controlledAudioOutput
+        : webViewAudioOutput,
       videoInput,
       startUsingDeviceNames,
       stopUsingDeviceNames,
     }),
     [
       audioInput,
-      audioOutput,
+      controlledAudioDevices,
+      controlledAudioOutput,
+      webViewAudioOutput,
       videoInput,
       startUsingDeviceNames,
       stopUsingDeviceNames,
@@ -272,6 +312,80 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
     </MediaDevicesContext.Provider>
   );
 };
+
+function useControlledOutput(): MediaDeviceHandle {
+  const { available } = useObservableEagerState(
+    useObservable(() => {
+      const outputDeviceData$ = availableOutputDevices$.pipe(
+        map((devices) => {
+          const deviceForEarpiece = devices.find((d) => d.forEarpiece);
+          const deviceMapTuple: [string, DeviceLabel][] = devices.map(
+            ({ id, name, isEarpiece, isSpeaker /*,isExternalHeadset*/ }) => {
+              let deviceLabel: DeviceLabel = { type: "name", name };
+              // if (isExternalHeadset) // Do we want this?
+              if (isEarpiece) deviceLabel = { type: "earpiece" };
+              if (isSpeaker) deviceLabel = { type: "default", name };
+              return [id, deviceLabel];
+            },
+          );
+          return {
+            devicesMap: new Map<string, DeviceLabel>(deviceMapTuple),
+            deviceForEarpiece,
+          };
+        }),
+      );
+
+      return combineLatest(
+        [outputDeviceData$, iosDeviceMenu$],
+        ({ devicesMap, deviceForEarpiece }, iosShowEarpiece) => {
+          let available = devicesMap;
+          if (iosShowEarpiece && !!deviceForEarpiece) {
+            available = new Map([
+              ...devicesMap.entries(),
+              [EARPIECE_CONFIG_ID, { type: "earpiece" }],
+            ]);
+          }
+          return { available, deviceForEarpiece };
+        },
+      );
+    }),
+  );
+  const [preferredId, setPreferredId] = useSetting(audioOutputSetting);
+  useEffect(() => {
+    const subscription = outputDevice$.subscribe((id) => {
+      if (id) setPreferredId(id);
+    });
+    return (): void => subscription.unsubscribe();
+  }, [setPreferredId]);
+
+  const selectedId = useSelectedId(available, preferredId);
+
+  const [asEarpiece, setAsEarpiece] = useState(false);
+
+  useEffect(() => {
+    // Let the hosting application know which output device has been selected.
+    // This information is probably only of interest if the earpiece mode has been
+    // selected - for example, Element X iOS listens to this to determine whether it
+    // should enable the proximity sensor.
+    if (selectedId) {
+      window.controls.onAudioDeviceSelect?.(selectedId);
+      // Call deprecated method for backwards compatibility.
+      window.controls.onOutputDeviceSelect?.(selectedId);
+    }
+    setAsEarpiece(selectedId === EARPIECE_CONFIG_ID);
+  }, [selectedId]);
+
+  return useMemo(
+    () => ({
+      available: available,
+      selectedId,
+      selectedGroupId: undefined,
+      select: setPreferredId,
+      useAsEarpiece: asEarpiece,
+    }),
+    [available, selectedId, setPreferredId, asEarpiece],
+  );
+}
 
 export const useMediaDevices = (): MediaDevices =>
   useContext(MediaDevicesContext);
