@@ -30,8 +30,8 @@ const PASSWORD = "foobarbaz1!";
 const CONFIG_JSON = {
   default_server_config: {
     "m.homeserver": {
-      base_url: "http://synapse.localhost:8008",
-      server_name: "synapse.localhost",
+      base_url: "https://synapse.m.localhost",
+      server_name: "synapse.m.localhost",
     },
   },
 
@@ -111,6 +111,13 @@ export const widgetTest = test.extend<MyFixtures>({
       .fill(PASSWORD);
     await ewPage1.getByRole("button", { name: "Register" }).click();
     await expect(
+      ewPage1.getByRole("button", { name: "Continue" }),
+    ).toBeVisible();
+    await ewPage1
+      .getByRole("textbox", { name: "Password", exact: true })
+      .fill(PASSWORD);
+    await ewPage1.getByRole("button", { name: "Continue" }).click();
+    await expect(
       ewPage1.getByRole("heading", { name: `Welcome ${userA}` }),
     ).toBeVisible();
     await setDevToolElementCallDevUrl(ewPage1);
@@ -138,6 +145,13 @@ export const widgetTest = test.extend<MyFixtures>({
       .getByRole("textbox", { name: "Confirm password" })
       .fill(PASSWORD);
     await ewPage2.getByRole("button", { name: "Register" }).click();
+    await expect(
+      ewPage2.getByRole("button", { name: "Continue" }),
+    ).toBeVisible();
+    await ewPage2
+      .getByRole("textbox", { name: "Password", exact: true })
+      .fill(PASSWORD);
+    await ewPage2.getByRole("button", { name: "Continue" }).click();
     await expect(
       ewPage2.getByRole("heading", { name: `Welcome ${userB}` }),
     ).toBeVisible();

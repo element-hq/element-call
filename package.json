@@ -22,6 +22,7 @@
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "backend": "docker-compose -f dev-backend-docker-compose.yml up",
+    "backend-playwright": "docker-compose -f playwright-backend-docker-compose.yml -f playwright-backend-docker-compose.override.yml up",
     "test:playwright": "playwright test",
     "test:playwright:open": "yarn test:playwright --ui",
     "links:enable": "mv .links.disabled.yaml .links.yaml & touch .links.yaml",
