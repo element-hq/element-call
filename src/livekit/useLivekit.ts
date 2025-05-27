@@ -25,7 +25,7 @@ import { defaultLiveKitOptions } from "./options";
 import { type SFUConfig } from "./openIDSFU";
 import { type MuteStates } from "../room/MuteStates";
 import {
-  type MediaDevice,
+  type MediaDeviceHandle,
   type MediaDevices,
   useMediaDevices,
 } from "./MediaDevicesContext";
@@ -42,6 +42,7 @@ import {
 } from "./TrackProcessorContext";
 import { useInitial } from "../useInitial";
 import { observeTrackReference$ } from "../state/MediaViewModel";
+import { useUrlParams } from "../UrlParams";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -54,6 +55,8 @@ export function useLivekit(
   sfuConfig: SFUConfig | undefined,
   e2eeSystem: EncryptionSystem,
 ): UseLivekitResult {
+  const { controlledAudioDevices } = useUrlParams();
+
   const e2eeOptions = useMemo((): E2EEManagerOptions | undefined => {
     if (e2eeSystem.kind === E2eeType.NONE) return undefined;
 
@@ -303,8 +306,15 @@ export function useLivekit(
 
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
-    if (room !== undefined && connectionState === ConnectionState.Connected) {
-      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice): void => {
+    if (
+      room !== undefined &&
+      connectionState === ConnectionState.Connected &&
+      !controlledAudioDevices
+    ) {
+      const syncDevice = (
+        kind: MediaDeviceKind,
+        device: MediaDeviceHandle,
+      ): void => {
         const id = device.selectedId;
 
         // Detect if we're trying to use chrome's default device, in which case
@@ -360,7 +370,7 @@ export function useLivekit(
       syncDevice("audiooutput", devices.audioOutput);
       syncDevice("videoinput", devices.videoInput);
     }
-  }, [room, devices, connectionState]);
+  }, [room, devices, connectionState, controlledAudioDevices]);
 
   return {
     connState: connectionState,
