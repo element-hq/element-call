@@ -30,8 +30,8 @@ const PASSWORD = "foobarbaz1!";
 const CONFIG_JSON = {
   default_server_config: {
     "m.homeserver": {
-      base_url: "http://synapse.localhost:8008",
-      server_name: "synapse.localhost",
+      base_url: "https://synapse.m.localhost",
+      server_name: "synapse.m.localhost",
     },
   },
 
