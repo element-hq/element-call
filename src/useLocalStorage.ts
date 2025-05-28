@@ -6,9 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import EventEmitter from "events";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 
 import { useLatest } from "./useLatest";
+import { useReactiveState } from "./useReactiveState";
 
 type LocalStorageItem = ReturnType<typeof localStorage.getItem>;
 
@@ -19,8 +20,9 @@ export const localStorageBus = new EventEmitter();
 export const useLocalStorage = (
   key: string,
 ): [LocalStorageItem, (value: string) => void] => {
-  const [value, setValue] = useState<LocalStorageItem>(() =>
-    localStorage.getItem(key),
+  const [value, setValue] = useReactiveState<LocalStorageItem>(
+    () => localStorage.getItem(key),
+    [key],
   );
   const latestValue = useLatest(value);
 
