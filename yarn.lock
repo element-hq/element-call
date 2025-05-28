@@ -7437,7 +7437,7 @@ __metadata:
     eslint-plugin-deprecate: "npm:^0.8.2"
     eslint-plugin-import: "npm:^2.26.0"
     eslint-plugin-jsx-a11y: "npm:^6.5.1"
-    eslint-plugin-matrix-org: "npm:^2.0.0"
+    eslint-plugin-matrix-org: "npm:2.1.0"
     eslint-plugin-react: "npm:^7.29.4"
     eslint-plugin-react-hooks: "npm:^5.0.0"
     eslint-plugin-rxjs: "npm:^5.0.3"
@@ -7947,9 +7947,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-matrix-org@npm:^2.0.0":
-  version: 2.2.1
-  resolution: "eslint-plugin-matrix-org@npm:2.2.1"
+"eslint-plugin-matrix-org@npm:2.1.0":
+  version: 2.1.0
+  resolution: "eslint-plugin-matrix-org@npm:2.1.0"
   peerDependencies:
     "@babel/core": "*"
     "@babel/eslint-parser": "*"
@@ -7966,10 +7966,10 @@ __metadata:
     eslint-plugin-jsx-a11y: "*"
     eslint-plugin-react: "*"
     eslint-plugin-react-hooks: "*"
-    eslint-plugin-unicorn: ">=57"
+    eslint-plugin-unicorn: "*"
     prettier: "*"
     typescript: "*"
-  checksum: 10c0/d09998a3e7359bd5bcb55faeca639d55f42a1cf709235fee93b63dd2e1ae604e7a55900855d6477d29ef91ead3b68e34155825b2f273cc2959f89d8d62df6c25
+  checksum: 10c0/ca3c727a12829bd58455ab32894118625fd0d208314aebc95b319aef9fa2881e53178853132327664fa1e62e0f9a0946295e195d21c3fa5235a240852f2a070a
   languageName: node
   linkType: hard
 
