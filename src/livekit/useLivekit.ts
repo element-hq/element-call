@@ -9,20 +9,23 @@ import {
   ConnectionState,
   type E2EEManagerOptions,
   ExternalE2EEKeyProvider,
+  LocalVideoTrack,
   Room,
   type RoomOptions,
   Track,
 } from "livekit-client";
 import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
-import { logger } from "matrix-js-sdk/src/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { useObservable, useObservableEagerState } from "observable-hooks";
+import { map } from "rxjs";
 
 import { defaultLiveKitOptions } from "./options";
 import { type SFUConfig } from "./openIDSFU";
 import { type MuteStates } from "../room/MuteStates";
 import {
-  type MediaDevice,
+  type MediaDeviceHandle,
   type MediaDevices,
   useMediaDevices,
 } from "./MediaDevicesContext";
@@ -33,27 +36,39 @@ import {
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 import { E2eeType } from "../e2ee/e2eeType";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  useTrackProcessor,
+  useTrackProcessorSync,
+} from "./TrackProcessorContext";
+import { useInitial } from "../useInitial";
+import { observeTrackReference$ } from "../state/MediaViewModel";
+import { useUrlParams } from "../UrlParams";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
   connState: ECConnectionState;
 }
 
-export function useLiveKit(
+export function useLivekit(
   rtcSession: MatrixRTCSession,
   muteStates: MuteStates,
   sfuConfig: SFUConfig | undefined,
   e2eeSystem: EncryptionSystem,
 ): UseLivekitResult {
+  const { controlledAudioDevices } = useUrlParams();
+
   const e2eeOptions = useMemo((): E2EEManagerOptions | undefined => {
     if (e2eeSystem.kind === E2eeType.NONE) return undefined;
 
     if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
+      logger.info("Created MatrixKeyProvider (per participant)");
       return {
         keyProvider: new MatrixKeyProvider(),
         worker: new E2EEWorker(),
       };
     } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
+      logger.info("Created ExternalE2EEKeyProvider (shared key)");
+
       return {
         keyProvider: new ExternalE2EEKeyProvider(),
         worker: new E2EEWorker(),
@@ -79,12 +94,15 @@ export function useLiveKit(
   const devices = useMediaDevices();
   const initialDevices = useRef<MediaDevices>(devices);
 
+  const { processor } = useTrackProcessor();
+  const initialProcessor = useInitial(() => processor);
   const roomOptions = useMemo(
     (): RoomOptions => ({
       ...defaultLiveKitOptions,
       videoCaptureDefaults: {
         ...defaultLiveKitOptions.videoCaptureDefaults,
         deviceId: initialDevices.current.videoInput.selectedId,
+        processor: initialProcessor,
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
@@ -95,7 +113,7 @@ export function useLiveKit(
       },
       e2ee: e2eeOptions,
     }),
-    [e2eeOptions],
+    [e2eeOptions, initialProcessor],
   );
 
   // Store if audio/video are currently updating. If to prohibit unnecessary calls
@@ -113,6 +131,7 @@ export function useLiveKit(
   // @livekit/components-react. JSON.stringify() is used in deps of a
   // useEffect() with an argument that references itself, if E2EE is enabled
   const room = useMemo(() => {
+    logger.info("[LivekitRooms] Create LiveKit room with options", roomOptions);
     const r = new Room(roomOptions);
     r.setE2EEEnabled(e2eeSystem.kind !== E2eeType.NONE).catch((e) => {
       logger.error("Failed to set E2EE enabled on room", e);
@@ -120,10 +139,27 @@ export function useLiveKit(
     return r;
   }, [roomOptions, e2eeSystem]);
 
+  // Sync the requested track processors with LiveKit
+  useTrackProcessorSync(
+    useObservableEagerState(
+      useObservable(
+        (room$) =>
+          observeTrackReference$(
+            room$.pipe(map(([room]) => room.localParticipant)),
+            Track.Source.Camera,
+          ).pipe(
+            map((trackRef) => {
+              const track = trackRef?.publication?.track;
+              return track instanceof LocalVideoTrack ? track : null;
+            }),
+          ),
+        [room],
+      ),
+    ),
+  );
+
   const connectionState = useECConnectionState(
-    {
-      deviceId: initialDevices.current.audioInput.selectedId,
-    },
+    initialDevices.current.audioInput.selectedId,
     initialMuteStates.current.audio.enabled,
     room,
     sfuConfig,
@@ -195,6 +231,7 @@ export function useLiveKit(
                 audioMuteUpdating.current = true;
                 trackPublication = await participant.setMicrophoneEnabled(
                   buttonEnabled.current.audio,
+                  room.options.audioCaptureDefaults,
                 );
                 audioMuteUpdating.current = false;
                 break;
@@ -202,6 +239,7 @@ export function useLiveKit(
                 videoMuteUpdating.current = true;
                 trackPublication = await participant.setCameraEnabled(
                   buttonEnabled.current.video,
+                  room.options.videoCaptureDefaults,
                 );
                 videoMuteUpdating.current = false;
                 break;
@@ -269,8 +307,15 @@ export function useLiveKit(
 
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
-    if (room !== undefined && connectionState === ConnectionState.Connected) {
-      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice): void => {
+    if (
+      room !== undefined &&
+      connectionState === ConnectionState.Connected &&
+      !controlledAudioDevices
+    ) {
+      const syncDevice = (
+        kind: MediaDeviceKind,
+        device: MediaDeviceHandle,
+      ): void => {
         const id = device.selectedId;
 
         // Detect if we're trying to use chrome's default device, in which case
@@ -326,7 +371,7 @@ export function useLiveKit(
       syncDevice("audiooutput", devices.audioOutput);
       syncDevice("videoinput", devices.videoInput);
     }
-  }, [room, devices, connectionState]);
+  }, [room, devices, connectionState, controlledAudioDevices]);
 
   return {
     connState: connectionState,

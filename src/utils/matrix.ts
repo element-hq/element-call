@@ -5,23 +5,21 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
-import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import {
+  ClientEvent,
   calculateRetryBackoff,
   createClient,
-  type ICreateClientOpts,
+  IndexedDBStore,
+  MemoryStore,
   Preset,
   Visibility,
-} from "matrix-js-sdk/src/matrix";
-import { ClientEvent } from "matrix-js-sdk/src/client";
-import { type ISyncStateData, type SyncState } from "matrix-js-sdk/src/sync";
-import { logger } from "matrix-js-sdk/src/logger";
-import { secureRandomBase64Url } from "matrix-js-sdk/src/randomstring";
-import { sleep } from "matrix-js-sdk/src/utils";
+} from "matrix-js-sdk";
+import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { secureRandomBase64Url } from "matrix-js-sdk/lib/randomstring";
+import { sleep } from "matrix-js-sdk/lib/utils";
 
-import type { MatrixClient } from "matrix-js-sdk/src/client";
-import type { Room } from "matrix-js-sdk/src/models/room";
+import type { ICreateClientOpts, MatrixClient, Room } from "matrix-js-sdk";
 import IndexedDBWorker from "../IndexedDBWorker?worker";
 import { generateUrlSearchParams, getUrlParams } from "../UrlParams";
 import { Config } from "../config/Config";
@@ -339,7 +337,7 @@ export function getRelativeRoomUrl(
 }
 
 /**
- * Perfom a network operation with retries on ConnectionError.
+ * Perform a network operation with retries on ConnectionError.
  * If the error is not retryable, or the max number of retries is reached, the error is rethrown.
  * Supports handling of matrix quotas.
  */

@@ -31,7 +31,7 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
       - name: Yarn cache
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           cache: "yarn"
           node-version-file: ".node-version"
@@ -60,7 +60,7 @@ jobs:
           VITE_APP_VERSION: ${{ inputs.vite_app_version }}
           NODE_OPTIONS: "--max-old-space-size=4096"
       - name: Upload Artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: build-output-${{ inputs.package }}
           path: dist

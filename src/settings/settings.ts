@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { BehaviorSubject, type Observable } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 
@@ -43,6 +43,9 @@ export class Setting<T> {
   public readonly setValue = (value: T): void => {
     this._value$.next(value);
     localStorage.setItem(this.key, JSON.stringify(value));
+  };
+  public readonly getValue = (): T => {
+    return this._value$.getValue();
   };
 }
 
@@ -96,6 +99,8 @@ export const videoInput = new Setting<string | undefined>(
   undefined,
 );
 
+export const backgroundBlur = new Setting<boolean>("background-blur", false);
+
 export const showHandRaisedTimer = new Setting<boolean>(
   "hand-raised-show-timer",
   false,
@@ -108,13 +113,26 @@ export const playReactionsSound = new Setting<boolean>(
   true,
 );
 
-export const soundEffectVolumeSetting = new Setting<number>(
+export const soundEffectVolume = new Setting<number>(
   "sound-effect-volume",
   0.5,
 );
 
-export const useNewMembershipManagerSetting = new Setting<boolean>(
+export const useNewMembershipManager = new Setting<boolean>(
   "new-membership-manager",
   true,
 );
+
+export const useExperimentalToDeviceTransport = new Setting<boolean>(
+  "experimental-to-device-transport",
+  true,
+);
+
+export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);
+
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
+
+export const alwaysShowIphoneEarpiece = new Setting<boolean>(
+  "always-show-iphone-earpiece",
+  false,
+);

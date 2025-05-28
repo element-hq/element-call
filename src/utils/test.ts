@@ -13,22 +13,28 @@ import {
   MatrixEvent,
   type Room,
   TypedEventEmitter,
-} from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk";
 import {
   CallMembership,
   type Focus,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
   type SessionMembershipData,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
 import {
   type LocalParticipant,
   type LocalTrackPublication,
   type RemoteParticipant,
   type RemoteTrackPublication,
   type Room as LivekitRoom,
+  Track,
 } from "livekit-client";
 import { randomUUID } from "crypto";
+import {
+  type RoomAndToDeviceEvents,
+  type RoomAndToDeviceEventsHandlerMap,
+} from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
+import { type TrackReference } from "@livekit/components-core";
 
 import {
   LocalUserMediaViewModel,
@@ -269,8 +275,8 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
 }
 
 export class MockRTCSession extends TypedEventEmitter<
-  MatrixRTCSessionEvent,
-  MatrixRTCSessionEventHandlerMap
+  MatrixRTCSessionEvent | RoomAndToDeviceEvents,
+  MatrixRTCSessionEventHandlerMap & RoomAndToDeviceEventsHandlerMap
 > {
   public readonly statistics = {
     counters: {},
@@ -305,3 +311,24 @@ export class MockRTCSession extends TypedEventEmitter<
     return this;
   }
 }
+
+export const mockTrack = (identity: string): TrackReference =>
+  ({
+    participant: {
+      identity,
+    },
+    publication: {
+      kind: Track.Kind.Audio,
+      source: "mic",
+      trackSid: "123",
+      track: {
+        attach: vi.fn(),
+        detach: vi.fn(),
+        setAudioContext: vi.fn(),
+        setWebAudioPlugins: vi.fn(),
+        setVolume: vi.fn(),
+      },
+    },
+    track: {},
+    source: {},
+  }) as unknown as TrackReference;

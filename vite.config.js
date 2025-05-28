@@ -5,13 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, searchForWorkspaceRoot } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
 import { createHtmlPlugin } from "vite-plugin-html";
 import { codecovVitePlugin } from "@codecov/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import react from "@vitejs/plugin-react";
-import basicSsl from "@vitejs/plugin-basic-ssl";
+import { realpathSync } from "fs";
+import * as fs from "node:fs";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, packageType }) => {
@@ -23,7 +24,6 @@ export default defineConfig(({ mode, packageType }) => {
   process.env.VITE_PACKAGE = packageType ?? "full";
   const plugins = [
     react(),
-    basicSsl(),
     svgrPlugin({
       svgrOptions: {
         // This enables ref forwarding on SVGR components, which is needed, for
@@ -64,9 +64,29 @@ export default defineConfig(({ mode, packageType }) => {
     );
   }
 
+  // The crypto WASM module is imported dynamically. Since it's common
+  // for developers to use a linked copy of matrix-js-sdk or Rust
+  // crypto (which could reside anywhere on their file system), Vite
+  // needs to be told to recognize it as a legitimate file access.
+  const allow = [searchForWorkspaceRoot(process.cwd())];
+  for (const path of [
+    "node_modules/matrix-js-sdk/node_modules/@matrix-org/matrix-sdk-crypto-wasm",
+    "node_modules/@matrix-org/matrix-sdk-crypto-wasm",
+  ]) {
+    try {
+      allow.push(realpathSync(path));
+    } catch {}
+  }
+  console.log("Allowed vite paths:", allow);
+
   return {
     server: {
       port: 3000,
+      fs: { allow },
+      https: {
+        key: fs.readFileSync("./backend/dev_tls_m.localhost.key"),
+        cert: fs.readFileSync("./backend/dev_tls_m.localhost.crt"),
+      },
     },
     build: {
       sourcemap: true,

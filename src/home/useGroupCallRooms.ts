@@ -5,14 +5,21 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixClient } from "matrix-js-sdk/src/client";
-import { type Room, RoomEvent } from "matrix-js-sdk/src/models/room";
-import { type RoomMember } from "matrix-js-sdk/src/models/room-member";
+import {
+  type MatrixClient,
+  type RoomMember,
+  type Room,
+  RoomEvent,
+  EventTimeline,
+  EventType,
+  JoinRule,
+  KnownMembership,
+} from "matrix-js-sdk";
 import { useState, useEffect } from "react";
-import { EventTimeline, EventType, JoinRule } from "matrix-js-sdk/src/matrix";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { MatrixRTCSessionManagerEvents } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSessionManager";
-import { KnownMembership } from "matrix-js-sdk/src/types";
+import {
+  MatrixRTCSessionManagerEvents,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 import { getKeyForRoom } from "../e2ee/sharedKeyManagement";
 

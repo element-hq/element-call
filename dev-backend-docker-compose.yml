@@ -6,8 +6,8 @@ services:
     image: ghcr.io/element-hq/lk-jwt-service:latest-ci
     hostname: auth-server
     environment:
-      - LK_JWT_PORT=8080
-      - LIVEKIT_URL=ws://localhost:7880
+      - LIVEKIT_JWT_PORT=8080
+      - LIVEKIT_URL=wss://matrix-rtc.m.localhost/livekit/sfu
       - LIVEKIT_KEY=devkey
       - LIVEKIT_SECRET=secret
       # If the configured homeserver runs on localhost, it'll probably be using
@@ -18,12 +18,13 @@ services:
         condition: on-failure
     ports:
       # HOST_PORT:CONTAINER_PORT
-      - 8009:8080
+      - 8080:8080
     networks:
       - ecbackend
 
   livekit:
     image: livekit/livekit-server:latest
+    hostname: livekit-sfu
     command: --dev --config /etc/livekit.yaml
     restart: unless-stopped
     # The SFU seems to work far more reliably when we let it share the host
@@ -68,18 +69,34 @@ services:
     networks:
       - ecbackend
 
+  element-web:
+    image: ghcr.io/element-hq/element-web:develop
+    pull_policy: always
+    volumes:
+      - ./backend/ew.test.config.json:/app/config.json:Z
+    environment:
+      ELEMENT_WEB_PORT: 8081
+    ports:
+      - "8081:8081"
+    networks:
+      - ecbackend
+
   nginx:
-    #  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout tls_localhost_key.pem -out tls_localhost_cert.pem -subj "/C=GB/ST=London/L=London/O=Alros/OU=IT Department/CN=localhost"
-    hostname: synapse.localhost
+    #  see backend/dev_tls_setup for how to generate the tls certs
+    hostname: synapse.m.localhost
     image: nginx:latest
     volumes:
-      - ./backend/tls_localhost_nginx.conf:/etc/nginx/conf.d/default.conf:Z
-      - ./backend/tls_localhost_key.pem:/root/ssl/key.pem:Z
-      - ./backend/tls_localhost_cert.pem:/root/ssl/cert.pem:Z
+      - ./backend/dev_nginx.conf:/etc/nginx/conf.d/default.conf:Z
+      - ./backend/dev_tls_m.localhost.key:/root/ssl/key.pem:Z
+      - ./backend/dev_tls_m.localhost.crt:/root/ssl/cert.pem:Z
     ports:
       # HOST_PORT:CONTAINER_PORT
+      - "443:443"
       - "8008:80"
       - "4443:443"
+      - "8448:8448"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - synapse
     networks:

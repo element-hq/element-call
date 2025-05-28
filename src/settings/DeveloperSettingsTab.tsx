@@ -15,11 +15,15 @@ import {
   debugTileLayout as debugTileLayoutSetting,
   showNonMemberTiles as showNonMemberTilesSetting,
   showConnectionStats as showConnectionStatsSetting,
-  useNewMembershipManagerSetting,
+  useNewMembershipManager as useNewMembershipManagerSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
+  muteAllAudio as muteAllAudioSetting,
+  alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
 } from "./settings";
-import type { MatrixClient } from "matrix-js-sdk/src/client";
+import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
+import { useUrlParams } from "../UrlParams";
 interface Props {
   client: MatrixClient;
   livekitRoom?: LivekitRoom;
@@ -42,6 +46,18 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
   const [useNewMembershipManager, setNewMembershipManager] = useSetting(
     useNewMembershipManagerSetting,
   );
+
+  const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
+    alwaysShowIphoneEarpieceSetting,
+  );
+  const [
+    useExperimentalToDeviceTransport,
+    setUseExperimentalToDeviceTransport,
+  ] = useSetting(useExperimentalToDeviceTransportSetting);
+
+  const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
+
+  const urlParams = useUrlParams();
 
   const sfuUrl = useMemo((): URL | null => {
     if (livekitRoom?.engine.client.ws?.url) {
@@ -153,6 +169,48 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
           )}
         />
       </FieldRow>
+      <FieldRow>
+        <InputField
+          id="useToDeviceKeyTransport"
+          type="checkbox"
+          label={t("developer_mode.use_to_device_key_transport")}
+          checked={!!useExperimentalToDeviceTransport}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setUseExperimentalToDeviceTransport(event.target.checked);
+            },
+            [setUseExperimentalToDeviceTransport],
+          )}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="muteAllAudio"
+          type="checkbox"
+          label={t("developer_mode.mute_all_audio")}
+          checked={muteAllAudio}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setMuteAllAudio(event.target.checked);
+            },
+            [setMuteAllAudio],
+          )}
+        />
+      </FieldRow>{" "}
+      <FieldRow>
+        <InputField
+          id="alwaysShowIphoneEarpiece"
+          type="checkbox"
+          label={t("developer_mode.always_show_iphone_earpiece")}
+          checked={alwaysShowIphoneEarpiece}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setAlwaysShowIphoneEarpiece(event.target.checked);
+            },
+            [setAlwaysShowIphoneEarpiece],
+          )}
+        />{" "}
+      </FieldRow>
       {livekitRoom ? (
         <>
           <p>
@@ -169,6 +227,10 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
           </pre>
         </>
       ) : null}
+      <p>{t("developer_mode.environment_variables")}</p>
+      <pre>{JSON.stringify(import.meta.env, null, 2)}</pre>
+      <p>{t("developer_mode.url_params")}</p>
+      <pre>{JSON.stringify(urlParams, null, 2)}</pre>
     </>
   );
 };

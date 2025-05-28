@@ -14,13 +14,12 @@ import {
   vi,
 } from "vitest";
 import { render, waitFor, screen } from "@testing-library/react";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { of } from "rxjs";
-import { JoinRule, type RoomState } from "matrix-js-sdk/src/matrix";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
-import { type RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
+import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
 
@@ -39,6 +38,7 @@ import { GroupCallView } from "./GroupCallView";
 import { type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
 import { MatrixRTCFocusMissingError } from "../utils/errors";
+import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 
 vi.mock("../soundUtils");
 vi.mock("../useAudioContext");
@@ -46,6 +46,13 @@ vi.mock("./InCallView");
 vi.mock("react-use-measure", () => ({
   default: (): [() => void, object] => [(): void => {}, {}],
 }));
+
+vi.hoisted(
+  () =>
+    (global.ImageData = class MockImageData {
+      public data: number[] = [];
+    } as unknown as typeof ImageData),
+);
 
 const enterRTCSession = vi.hoisted(() => vi.fn(async () => Promise.resolve()));
 const leaveRTCSession = vi.hoisted(() =>
@@ -138,18 +145,20 @@ function createGroupCallView(
   const { getByText } = render(
     <BrowserRouter>
       <TooltipProvider>
-        <GroupCallView
-          client={client}
-          isPasswordlessUser={false}
-          confineToRoom={false}
-          preload={false}
-          skipLobby={false}
-          hideHeader={true}
-          rtcSession={rtcSession as unknown as MatrixRTCSession}
-          isJoined={joined}
-          muteStates={muteState}
-          widget={widget}
-        />
+        <ProcessorProvider>
+          <GroupCallView
+            client={client}
+            isPasswordlessUser={false}
+            confineToRoom={false}
+            preload={false}
+            skipLobby={false}
+            hideHeader={true}
+            rtcSession={rtcSession as unknown as MatrixRTCSession}
+            isJoined={joined}
+            muteStates={muteState}
+            widget={widget}
+          />
+        </ProcessorProvider>
       </TooltipProvider>
     </BrowserRouter>,
   );

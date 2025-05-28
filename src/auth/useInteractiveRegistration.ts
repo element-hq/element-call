@@ -6,13 +6,13 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
+import { InteractiveAuth } from "matrix-js-sdk";
 import {
   createClient,
   type MatrixClient,
   type RegisterResponse,
-} from "matrix-js-sdk/src/matrix";
-import { logger } from "matrix-js-sdk/src/logger";
+} from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { initClient } from "../utils/matrix";
 import { type Session } from "../ClientContext";
