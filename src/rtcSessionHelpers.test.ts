@@ -5,9 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { expect, onTestFinished, test, vi } from "vitest";
-import { AutoDiscovery } from "matrix-js-sdk/src/autodiscovery";
+import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import EventEmitter from "events";
 
 import { enterRTCSession, leaveRTCSession } from "../src/rtcSessionHelpers";
@@ -112,6 +112,7 @@ test("It joins the correct Session", async () => {
       manageMediaKeys: false,
       useLegacyMemberEvents: false,
       useNewMembershipManager: true,
+      useExperimentalToDeviceTransport: false,
     },
   );
 });

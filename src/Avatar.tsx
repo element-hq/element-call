@@ -13,7 +13,7 @@ import {
   useEffect,
 } from "react";
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { useClientState } from "./ClientContext";
 

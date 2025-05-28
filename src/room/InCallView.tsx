@@ -5,13 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  RoomAudioRenderer,
-  RoomContext,
-  useLocalParticipant,
-} from "@livekit/components-react";
+import { RoomContext, useLocalParticipant } from "@livekit/components-react";
+import { Text } from "@vector-im/compound-web";
 import { ConnectionState, type Room } from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk";
 import {
   type FC,
   type PointerEvent,
@@ -26,11 +23,12 @@ import {
   type JSX,
 } from "react";
 import useMeasure from "react-use-measure";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -54,7 +52,7 @@ import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { useLiveKit } from "../livekit/useLiveKit";
+import { useLivekit } from "../livekit/useLivekit.ts";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { type MuteStates } from "./MuteStates";
@@ -71,7 +69,10 @@ import {
 import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
-import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  useRoomEncryptionSystem,
+  type EncryptionSystem,
+} from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import {
@@ -94,10 +95,15 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
+  developerMode as developerModeSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
 import { ConnectionLostError } from "../utils/errors.ts";
+import { useTypedEventEmitter } from "../useEvents.ts";
+import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
+import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -110,7 +116,7 @@ export interface ActiveCallProps
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
-  const { livekitRoom, connState } = useLiveKit(
+  const { livekitRoom, connState } = useLivekit(
     props.rtcSession,
     props.muteStates,
     sfuConfig,
@@ -123,10 +129,23 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const [vm, setVm] = useState<CallViewModel | null>(null);
 
   useEffect(() => {
+    logger.info(
+      `[Lifecycle] InCallView Component mounted, livekitroom state ${livekitRoom?.state}`,
+    );
     return (): void => {
-      livekitRoom?.disconnect().catch((e) => {
-        logger.error("Failed to disconnect from livekit room", e);
-      });
+      logger.info(
+        `[Lifecycle] InCallView Component unmounted, livekitroom state ${livekitRoom?.state}`,
+      );
+      livekitRoom
+        ?.disconnect()
+        .then(() => {
+          logger.info(
+            `[Lifecycle] Disconnected from livekite room, state:${livekitRoom?.state}`,
+          );
+        })
+        .catch((e) => {
+          logger.error("[Lifecycle] Failed to disconnect from livekit room", e);
+        });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -215,6 +234,36 @@ export const InCallView: FC<InCallViewProps> = ({
   const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
     room: livekitRoom,
   });
+
+  const muteAllAudio = useObservableEagerState(muteAllAudio$);
+
+  // This seems like it might be enough logic to use move it into the call view model?
+  const [didFallbackToRoomKey, setDidFallbackToRoomKey] = useState(false);
+  useTypedEventEmitter(
+    rtcSession,
+    RoomAndToDeviceEvents.EnabledTransportsChanged,
+    (enabled) => setDidFallbackToRoomKey(enabled.room),
+  );
+
+  const [developerMode] = useSetting(developerModeSetting);
+  const [useExperimentalToDeviceTransport] = useSetting(
+    useExperimentalToDeviceTransportSetting,
+  );
+  const encryptionSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
+
+  const showToDeviceEncryption = useMemo(
+    () =>
+      developerMode &&
+      useExperimentalToDeviceTransport &&
+      encryptionSystem.kind === E2eeType.PER_PARTICIPANT &&
+      !didFallbackToRoomKey,
+    [
+      developerMode,
+      useExperimentalToDeviceTransport,
+      encryptionSystem.kind,
+      didFallbackToRoomKey,
+    ],
+  );
 
   const toggleMicrophone = useCallback(
     () => muteStates.audio.setEnabled?.((e) => !e),
@@ -662,10 +711,25 @@ export const InCallView: FC<InCallViewProps> = ({
             </RightNav>
           </Header>
         ))}
-      <RoomAudioRenderer />
+      {
+        // TODO: remove this once we remove the developer flag gets removed and we have shipped to
+        // device transport as the default.
+        showToDeviceEncryption && (
+          <Text
+            style={{ height: 0, zIndex: 1, alignSelf: "center", margin: 0 }}
+            size="sm"
+          >
+            using to Device key transport
+          </Text>
+        )
+      }
+      <MatrixAudioRenderer
+        members={rtcSession.memberships}
+        muted={muteAllAudio}
+      />
       {renderContent()}
-      <CallEventAudioRenderer vm={vm} />
-      <ReactionsAudioRenderer vm={vm} />
+      <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
+      <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (

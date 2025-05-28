@@ -77,9 +77,9 @@ export interface ConfigOptions {
   };
 
   /**
-   * A link to the end-user license agreement (EULA)
+   * A link to the software and services license agreement (SSLA)
    */
-  eula?: string;
+  ssla?: string;
 
   media_devices?: {
     /**
@@ -134,7 +134,7 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       server_name: string;
     };
   };
-  eula: string;
+  ssla: string;
   media_devices: {
     enable_audio: boolean;
     enable_video: boolean;
@@ -152,7 +152,7 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
   features: {
     feature_use_device_session_member_events: true,
   },
-  eula: "https://static.element.io/legal/online-EULA.pdf",
+  ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
   media_devices: {
     enable_audio: true,
     enable_video: true,

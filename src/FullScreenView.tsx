@@ -9,7 +9,7 @@ import { type FC, type ReactElement, type ReactNode, useEffect } from "react";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { ErrorSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";

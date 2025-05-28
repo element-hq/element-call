@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, useCallback, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useClientLegacy } from "./ClientContext";
 import { useProfile } from "./profile/useProfile";

@@ -14,7 +14,7 @@ import i18n, {
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import * as Sentry from "@sentry/react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
 import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill";
 import {
@@ -134,6 +134,11 @@ export class Initializer {
       name: "urlFragment",
       // Look for a language code in the URL's fragment
       lookup: () => getUrlParams().lang ?? undefined,
+    });
+
+    // Synchronise the HTML lang attribute with the i18next language
+    i18n.on("languageChanged", (lng) => {
+      document.documentElement.lang = lng;
     });
 
     await i18n

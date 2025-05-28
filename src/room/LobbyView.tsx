@@ -5,14 +5,25 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useCallback, useMemo, useState, type JSX } from "react";
+import {
+  type FC,
+  useCallback,
+  useMemo,
+  useState,
+  type JSX,
+  useEffect,
+} from "react";
 import { useTranslation } from "react-i18next";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk";
 import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { usePreviewTracks } from "@livekit/components-react";
-import { type LocalVideoTrack, Track } from "livekit-client";
+import {
+  type CreateLocalTracksOptions,
+  type LocalVideoTrack,
+  Track,
+} from "livekit-client";
 import { useObservable } from "observable-hooks";
 import { map } from "rxjs";
 import { useNavigate } from "react-router-dom";
@@ -36,7 +47,11 @@ import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useInitial } from "../useInitial";
-import { useSwitchCamera } from "./useSwitchCamera";
+import { useSwitchCamera as useShowSwitchCamera } from "./useSwitchCamera";
+import {
+  useTrackProcessor,
+  useTrackProcessorSync,
+} from "../livekit/TrackProcessorContext";
 import { usePageTitle } from "../usePageTitle";
 
 interface Props {
@@ -64,6 +79,13 @@ export const LobbyView: FC<Props> = ({
   onShareClick,
   waitingForInvite,
 }) => {
+  useEffect(() => {
+    logger.info("[Lifecycle] GroupCallView Component mounted");
+    return (): void => {
+      logger.info("[Lifecycle] GroupCallView Component unmounted");
+    };
+  }, []);
+
   const { t } = useTranslation();
   usePageTitle(matrixInfo.roomName);
 
@@ -112,7 +134,10 @@ export const LobbyView: FC<Props> = ({
       muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
   );
 
-  const localTrackOptions = useMemo(
+  const { processor } = useTrackProcessor();
+
+  const initialProcessor = useInitial(() => processor);
+  const localTrackOptions = useMemo<CreateLocalTracksOptions>(
     () => ({
       // The only reason we request audio here is to get the audio permission
       // request over with at the same time. But changing the audio settings
@@ -123,12 +148,14 @@ export const LobbyView: FC<Props> = ({
       audio: Object.assign({}, initialAudioOptions),
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
+        processor: initialProcessor,
       },
     }),
     [
       initialAudioOptions,
-      devices.videoInput.selectedId,
       muteStates.video.enabled,
+      devices.videoInput.selectedId,
+      initialProcessor,
     ],
   );
 
@@ -149,8 +176,8 @@ export const LobbyView: FC<Props> = ({
         null) as LocalVideoTrack | null,
     [tracks],
   );
-
-  const switchCamera = useSwitchCamera(
+  useTrackProcessorSync(videoTrack);
+  const showSwitchCamera = useShowSwitchCamera(
     useObservable(
       (inputs$) => inputs$.pipe(map(([video]) => video)),
       [videoTrack],
@@ -212,7 +239,9 @@ export const LobbyView: FC<Props> = ({
               onClick={onVideoPress}
               disabled={muteStates.video.setEnabled === null}
             />
-            {switchCamera && <SwitchCameraButton onClick={switchCamera} />}
+            {showSwitchCamera && (
+              <SwitchCameraButton onClick={showSwitchCamera} />
+            )}
             <SettingsButton onClick={openSettings} />
             {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
           </div>

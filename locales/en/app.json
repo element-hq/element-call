@@ -61,17 +61,22 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Show iPhone earpiece option on all platforms",
     "crypto_version": "Crypto version: {{version}}",
     "debug_tile_layout_label": "Debug tile layout",
     "device_id": "Device ID: {{id}}",
     "duplicate_tiles_label": "Number of additional tile copies per participant",
+    "environment_variables": "Environment variables",
     "hostname": "Hostname: {{hostname}}",
     "livekit_server_info": "LiveKit Server Info",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
+    "mute_all_audio": "Mute all audio (participants, reactions, join sounds)",
     "show_connection_stats": "Show connection statistics",
     "show_non_member_tiles": "Show tiles for non-member media",
-    "use_new_membership_manager": "Use the new implementation of the call MembershipManager"
+    "url_params": "URL parameters",
+    "use_new_membership_manager": "Use the new implementation of the call MembershipManager",
+    "use_to_device_key_transport": "Use to device key transport. This will fallback to room key transport when another call member sent a room key"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "error": {
@@ -142,9 +147,9 @@
   "rageshake_sending": "Sending…",
   "rageshake_sending_logs": "Sending debug logs…",
   "rageshake_sent": "Thanks!",
-  "recaptcha_caption": "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>",
   "recaptcha_dismissed": "Recaptcha dismissed",
   "recaptcha_not_loaded": "Recaptcha not loaded",
+  "recaptcha_ssla_caption": "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>Software and Services License Agreement (SSLA)</12>",
   "register": {
     "passwords_must_match": "Passwords must match",
     "registering": "Registering…"
@@ -154,19 +159,24 @@
   "register_heading": "Create your account",
   "return_home_button": "Return to home screen",
   "room_auth_view_continue_button": "Continue",
-  "room_auth_view_eula_caption": "By clicking \"Continue\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
+  "room_auth_view_ssla_caption": "By clicking \"Join call now\", you agree to our <2>Software and Services License Agreement (SSLA)</2>",
   "screenshare_button_label": "Share screen",
   "settings": {
     "audio_tab": {
       "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play.",
       "effect_volume_label": "Sound effect volume"
     },
+    "background_blur_header": "Background",
+    "background_blur_label": "Blur the background of the video",
+    "blur_not_supported_by_browser": "(Background blur is not supported by this device.)",
     "developer_tab_title": "Developer",
     "devices": {
       "camera": "Camera",
       "camera_numbered": "Camera {{n}}",
+      "change_device_button": "Change audio device",
       "default": "Default",
       "default_named": "Default <2>({{name}})</2>",
+      "earpiece": "Earpiece",
       "microphone": "Microphone",
       "microphone_numbered": "Microphone {{n}}",
       "speaker": "Speaker",
@@ -200,8 +210,8 @@
   "submitting": "Submitting…",
   "switch_camera": "Switch camera",
   "unauthenticated_view_body": "Not registered yet? <2>Create an account</2>",
-  "unauthenticated_view_eula_caption": "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
   "unauthenticated_view_login_button": "Login to your account",
+  "unauthenticated_view_ssla_caption": "By clicking \"Go\", you agree to our <2>Software and Services License Agreement (SSLA)</2>",
   "unmute_microphone_button_label": "Unmute microphone",
   "version": "{{productName}} version: {{version}}",
   "video_tile": {

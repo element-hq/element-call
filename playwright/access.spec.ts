@@ -49,7 +49,7 @@ test("Sign up a new account, then login, then logout", async ({ browser }) => {
 
   // logout
   await returningUserPage.getByTestId("usermenu_open").click();
-  await returningUserPage.locator('[data-test-id="usermenu_logout"]').click();
+  await returningUserPage.locator('[data-testid="usermenu_logout"]').click();
 
   await expect(
     returningUserPage.getByRole("link", { name: "Log In" }),

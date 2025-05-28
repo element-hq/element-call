@@ -13,10 +13,10 @@ import {
   useMemo,
 } from "react";
 import { type IWidgetApiRequest } from "matrix-widget-api";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
-  type MediaDevice,
+  type MediaDeviceHandle,
   useMediaDevices,
 } from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
@@ -53,7 +53,7 @@ export interface MuteStates {
 }
 
 function useMuteState(
-  device: MediaDevice,
+  device: MediaDeviceHandle,
   enabledByDefault: () => boolean,
 ): MuteState {
   const [enabled, setEnabled] = useReactiveState<boolean | undefined>(

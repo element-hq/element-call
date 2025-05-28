@@ -9,12 +9,12 @@ Please see LICENSE in the repository root for full details.
 // function gets set. It needs to be not in the same file as we use
 // createClient, or the typescript transpiler gets confused about
 // dependency references.
-import "matrix-js-sdk/src/browser-index";
+import "matrix-js-sdk/lib/browser-index";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   setLogExtension as setLKLogExtension,
   setLogLevel as setLKLogLevel,
@@ -29,7 +29,7 @@ window.setLKLogLevel = setLKLogLevel;
 initRageshake().catch((e) => {
   logger.error("Failed to initialize rageshake", e);
 });
-setLKLogLevel("warn");
+setLKLogLevel("info");
 setLKLogExtension((level, msg, context) => {
   // we pass a synthetic logger name of "livekit" to the rageshake to make it easier to read
   global.mx_rage_logger.log(level, "livekit", msg, context);

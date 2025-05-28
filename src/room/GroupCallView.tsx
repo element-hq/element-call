@@ -13,18 +13,18 @@ import {
   useMemo,
   useState,
 } from "react";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient, JoinRule, type Room } from "matrix-js-sdk";
 import {
   Room as LivekitRoom,
   isE2EESupported as isE2EESupportedBrowser,
 } from "livekit-client";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   MatrixRTCSessionEvent,
   type MatrixRTCSession,
-} from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { JoinRule, type Room } from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk/lib/matrixrtc";
 import { useNavigate } from "react-router-dom";
+import { useObservableEagerState } from "observable-hooks";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -63,10 +63,12 @@ import {
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
 import {
-  useNewMembershipManagerSetting as useNewMembershipManagerSetting,
+  useNewMembershipManager as useNewMembershipManagerSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   useSetting,
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
+import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 
 declare global {
   interface Window {
@@ -103,12 +105,14 @@ export const GroupCallView: FC<Props> = ({
   const [externalError, setExternalError] = useState<ElementCallError | null>(
     null,
   );
-
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
+
+  const muteAllAudio = useObservableEagerState(muteAllAudio$);
   const leaveSoundContext = useLatest(
     useAudioContext({
       sounds: callEventAudioSounds,
       latencyHint: "interactive",
+      muted: muteAllAudio,
     }),
   );
   // This should use `useEffectEvent` (only available in experimental versions)
@@ -116,6 +120,13 @@ export const GroupCallView: FC<Props> = ({
     if (memberships.length >= MUTE_PARTICIPANT_COUNT)
       muteStates.audio.setEnabled?.(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    logger.info("[Lifecycle] GroupCallView Component mounted");
+    return (): void => {
+      logger.info("[Lifecycle] GroupCallView Component unmounted");
+    };
   }, []);
 
   useEffect(() => {
@@ -152,6 +163,9 @@ export const GroupCallView: FC<Props> = ({
   const { perParticipantE2EE, returnToLobby } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
   const [useNewMembershipManager] = useSetting(useNewMembershipManagerSetting);
+  const [useExperimentalToDeviceTransport] = useSetting(
+    useExperimentalToDeviceTransportSetting,
+  );
 
   usePageTitle(roomName);
 
@@ -179,16 +193,13 @@ export const GroupCallView: FC<Props> = ({
   const latestMuteStates = useLatest(muteStates);
 
   const enterRTCSessionOrError = useCallback(
-    async (
-      rtcSession: MatrixRTCSession,
-      perParticipantE2EE: boolean,
-      newMembershipManager: boolean,
-    ): Promise<void> => {
+    async (rtcSession: MatrixRTCSession): Promise<void> => {
       try {
         await enterRTCSession(
           rtcSession,
           perParticipantE2EE,
-          newMembershipManager,
+          useNewMembershipManager,
+          useExperimentalToDeviceTransport,
         );
       } catch (e) {
         if (e instanceof ElementCallError) {
@@ -202,7 +213,11 @@ export const GroupCallView: FC<Props> = ({
         }
       }
     },
-    [setExternalError],
+    [
+      perParticipantE2EE,
+      useExperimentalToDeviceTransport,
+      useNewMembershipManager,
+    ],
   );
 
   useEffect(() => {
@@ -254,11 +269,7 @@ export const GroupCallView: FC<Props> = ({
               await defaultDeviceSetup(
                 ev.detail.data as unknown as JoinCallData,
               );
-              await enterRTCSessionOrError(
-                rtcSession,
-                perParticipantE2EE,
-                useNewMembershipManager,
-              );
+              await enterRTCSessionOrError(rtcSession);
               widget.api.transport.reply(ev.detail, {});
             })().catch((e) => {
               logger.error("Error joining RTC session", e);
@@ -271,21 +282,13 @@ export const GroupCallView: FC<Props> = ({
         } else {
           // No lobby and no preload: we enter the rtc session right away
           (async (): Promise<void> => {
-            await enterRTCSessionOrError(
-              rtcSession,
-              perParticipantE2EE,
-              useNewMembershipManager,
-            );
+            await enterRTCSessionOrError(rtcSession);
           })().catch((e) => {
             logger.error("Error joining RTC session", e);
           });
         }
       } else {
-        void enterRTCSessionOrError(
-          rtcSession,
-          perParticipantE2EE,
-          useNewMembershipManager,
-        );
+        void enterRTCSessionOrError(rtcSession);
       }
     }
   }, [
@@ -408,13 +411,7 @@ export const GroupCallView: FC<Props> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={() =>
-          void enterRTCSessionOrError(
-            rtcSession,
-            perParticipantE2EE,
-            useNewMembershipManager,
-          )
-        }
+        onEnter={() => void enterRTCSessionOrError(rtcSession)}
         confineToRoom={confineToRoom}
         hideHeader={hideHeader}
         participantCount={participantCount}
@@ -492,11 +489,7 @@ export const GroupCallView: FC<Props> = ({
       recoveryActionHandler={(action) => {
         if (action == "reconnect") {
           setLeft(false);
-          enterRTCSessionOrError(
-            rtcSession,
-            perParticipantE2EE,
-            useNewMembershipManager,
-          ).catch((e) => {
+          enterRTCSessionOrError(rtcSession).catch((e) => {
             logger.error("Error re-entering RTC session", e);
           });
         }

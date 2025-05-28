@@ -10,7 +10,7 @@ import { test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { of } from "rxjs";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { GridTile } from "./GridTile";
 import { mockRtcMembership, withRemoteMedia } from "../utils/test";

@@ -6,13 +6,13 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ComponentProps, useCallback, useEffect, useState } from "react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   ClientEvent,
   type MatrixClient,
   type MatrixEvent,
-} from "matrix-js-sdk/src/matrix";
-import { type CryptoApi } from "matrix-js-sdk/src/crypto-api";
+} from "matrix-js-sdk";
+import { type CryptoApi } from "matrix-js-sdk/lib/crypto-api";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
@@ -131,11 +131,9 @@ export function getRageshakeSubmitUrl(): string | undefined {
   return undefined;
 }
 
-export function isRageshakeAvailable(): boolean {
-  return !!getRageshakeSubmitUrl();
-}
-
-export function useSubmitRageshake(): {
+export function useSubmitRageshake(
+  injectedGetRageshakeSubmitUrl = getRageshakeSubmitUrl,
+): {
   submitRageshake: (opts: RageShakeSubmitOptions) => Promise<void>;
   sending: boolean;
   sent: boolean;
@@ -158,7 +156,8 @@ export function useSubmitRageshake(): {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     async (opts) => {
-      if (!getRageshakeSubmitUrl()) {
+      const submitUrl = injectedGetRageshakeSubmitUrl();
+      if (!submitUrl) {
         throw new Error("No rageshake URL is configured");
       }
 
@@ -292,7 +291,7 @@ export function useSubmitRageshake(): {
           );
         }
 
-        const res = await fetch(Config.get().rageshake!.submit_url, {
+        const res = await fetch(submitUrl, {
           method: "POST",
           body,
         });
@@ -309,7 +308,7 @@ export function useSubmitRageshake(): {
         logger.error(error);
       }
     },
-    [client, sending],
+    [client, sending, injectedGetRageshakeSubmitUrl],
   );
 
   return {
@@ -317,7 +316,7 @@ export function useSubmitRageshake(): {
     sending,
     sent,
     error,
-    available: isRageshakeAvailable(),
+    available: !!injectedGetRageshakeSubmitUrl(),
   };
 }
 
