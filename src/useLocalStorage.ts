@@ -8,6 +8,8 @@ Please see LICENSE in the repository root for full details.
 import EventEmitter from "events";
 import { useCallback, useEffect, useState } from "react";
 
+import { useLatest } from "./useLatest";
+
 type LocalStorageItem = ReturnType<typeof localStorage.getItem>;
 
 // Bus to notify other useLocalStorage consumers when an item is changed
@@ -20,13 +22,22 @@ export const useLocalStorage = (
   const [value, setValue] = useState<LocalStorageItem>(() =>
     localStorage.getItem(key),
   );
+  const latestValue = useLatest(value);
 
   useEffect(() => {
+    // We're about to set up the bus listener that will enable us to react to
+    // any future updates to the localStorage item. However, it's possible that
+    // we already missed an update if there was an effect which modified the
+    // item in the time *between* the render phase of useLocalStorage and the
+    // execution of this effect. Let's update the state if that happened.
+    const stored = localStorage.getItem(key);
+    if (latestValue.current !== stored) setValue(stored);
+
     localStorageBus.on(key, setValue);
     return (): void => {
       localStorageBus.off(key, setValue);
     };
-  }, [key, setValue]);
+  }, [key, latestValue, setValue]);
 
   return [
     value,
