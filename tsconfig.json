@@ -22,6 +22,9 @@
       // These imports within @livekit/components-core and
       // @livekit/components-react are broken under the "bundler" module
       // resolution mode, so we need to resolve them manually
+      "livekit-client/dist/src/room/types": [
+        "./node_modules/livekit-client/dist/src/room/types.d.ts"
+      ],
       "livekit-client/dist/src/room/Room": [
         "./node_modules/livekit-client/dist/src/room/Room.d.ts"
       ],
