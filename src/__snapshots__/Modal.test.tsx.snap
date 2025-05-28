@@ -3,7 +3,7 @@
 exports[`the content is rendered when the modal is open 1`] = `
 <div
   aria-labelledby="radix-:r4:"
-  class="overlay animate modal dialog _glass_1x9g9_17"
+  class="overlay animate modal dialog _glass_sepwu_8"
   data-state="open"
   id="radix-:r3:"
   role="dialog"
@@ -17,7 +17,7 @@ exports[`the content is rendered when the modal is open 1`] = `
       class="header"
     >
       <h2
-        class="_typography_yh5dq_162 _font-heading-md-semibold_yh5dq_121"
+        class="_typography_6v6n8_153 _font-heading-md-semibold_6v6n8_112"
         id="radix-:r4:"
       >
         My modal

@@ -10,7 +10,7 @@ import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react";
 import { logger } from "matrix-js-sdk/src/logger";
-import { ErrorIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { ErrorSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import styles from "./FullScreenView.module.css";
@@ -67,7 +67,7 @@ export const ErrorPage = ({ error, widget }: ErrorPageProps): ReactElement => {
       ) : (
         <ErrorView
           widget={widget}
-          Icon={ErrorIcon}
+          Icon={ErrorSolidIcon}
           title={t("error.generic")}
           rageshake
           fatal
