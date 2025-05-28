@@ -131,6 +131,7 @@ export function useLivekit(
   // @livekit/components-react. JSON.stringify() is used in deps of a
   // useEffect() with an argument that references itself, if E2EE is enabled
   const room = useMemo(() => {
+    logger.info("[LivekitRooms] Create LiveKit room with options", roomOptions);
     const r = new Room(roomOptions);
     r.setE2EEEnabled(e2eeSystem.kind !== E2eeType.NONE).catch((e) => {
       logger.error("Failed to set E2EE enabled on room", e);
