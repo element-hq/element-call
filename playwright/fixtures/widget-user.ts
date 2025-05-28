@@ -154,8 +154,13 @@ export const widgetTest = test.extend<MyFixtures>({
       ewPage1.getByRole("heading", { name: "Invite to Welcome Room" }),
     ).toBeVisible();
 
-    await ewPage1.getByRole("textbox").fill(whistlerMxId);
-    await ewPage1.getByRole("textbox").click();
+    // To get the invite textbox we need to specifically select within the
+    // dialog, since there is another textbox in the background (the message
+    // composer). In theory the composer shouldn't be visible to Playwright at
+    // all because the invite dialog has trapped focus, but the focus trap
+    // doesn't quite work right on Firefox.
+    await ewPage1.getByRole("dialog").getByRole("textbox").fill(whistlerMxId);
+    await ewPage1.getByRole("dialog").getByRole("textbox").click();
     await ewPage1.getByRole("button", { name: "Invite" }).click();
 
     // Accept the invite

@@ -24,6 +24,7 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { useNavigate } from "react-router-dom";
+import { useObservableEagerState } from "observable-hooks";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -62,11 +63,12 @@ import {
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
 import {
-  useExperimentalToDeviceTransportSetting,
-  useNewMembershipManagerSetting as useNewMembershipManagerSetting,
+  useNewMembershipManager as useNewMembershipManagerSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   useSetting,
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
+import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 
 declare global {
   interface Window {
@@ -103,12 +105,14 @@ export const GroupCallView: FC<Props> = ({
   const [externalError, setExternalError] = useState<ElementCallError | null>(
     null,
   );
-
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
+
+  const muteAllAudio = useObservableEagerState(muteAllAudio$);
   const leaveSoundContext = useLatest(
     useAudioContext({
       sounds: callEventAudioSounds,
       latencyHint: "interactive",
+      muted: muteAllAudio,
     }),
   );
   // This should use `useEffectEvent` (only available in experimental versions)
@@ -116,6 +120,13 @@ export const GroupCallView: FC<Props> = ({
     if (memberships.length >= MUTE_PARTICIPANT_COUNT)
       muteStates.audio.setEnabled?.(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    logger.info("[Lifecycle] GroupCallView Component mounted");
+    return (): void => {
+      logger.info("[Lifecycle] GroupCallView Component unmounted");
+    };
   }, []);
 
   useEffect(() => {

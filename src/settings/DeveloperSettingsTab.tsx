@@ -15,8 +15,10 @@ import {
   debugTileLayout as debugTileLayoutSetting,
   showNonMemberTiles as showNonMemberTilesSetting,
   showConnectionStats as showConnectionStatsSetting,
-  useNewMembershipManagerSetting,
-  useExperimentalToDeviceTransportSetting,
+  useNewMembershipManager as useNewMembershipManagerSetting,
+  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
+  muteAllAudio as muteAllAudioSetting,
+  alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
 } from "./settings";
 import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
@@ -45,10 +47,16 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
     useNewMembershipManagerSetting,
   );
 
+  const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
+    alwaysShowIphoneEarpieceSetting,
+  );
   const [
     useExperimentalToDeviceTransport,
     setUseExperimentalToDeviceTransport,
   ] = useSetting(useExperimentalToDeviceTransportSetting);
+
+  const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
+
   const urlParams = useUrlParams();
 
   const sfuUrl = useMemo((): URL | null => {
@@ -174,6 +182,34 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
             [setUseExperimentalToDeviceTransport],
           )}
         />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="muteAllAudio"
+          type="checkbox"
+          label={t("developer_mode.mute_all_audio")}
+          checked={muteAllAudio}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setMuteAllAudio(event.target.checked);
+            },
+            [setMuteAllAudio],
+          )}
+        />
+      </FieldRow>{" "}
+      <FieldRow>
+        <InputField
+          id="alwaysShowIphoneEarpiece"
+          type="checkbox"
+          label={t("developer_mode.always_show_iphone_earpiece")}
+          checked={alwaysShowIphoneEarpiece}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setAlwaysShowIphoneEarpiece(event.target.checked);
+            },
+            [setAlwaysShowIphoneEarpiece],
+          )}
+        />{" "}
       </FieldRow>
       {livekitRoom ? (
         <>

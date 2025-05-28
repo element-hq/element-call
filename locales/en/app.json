@@ -61,6 +61,7 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Show iPhone earpiece option on all platforms",
     "crypto_version": "Crypto version: {{version}}",
     "debug_tile_layout_label": "Debug tile layout",
     "device_id": "Device ID: {{id}}",
@@ -70,6 +71,7 @@
     "livekit_server_info": "LiveKit Server Info",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
+    "mute_all_audio": "Mute all audio (participants, reactions, join sounds)",
     "show_connection_stats": "Show connection statistics",
     "show_non_member_tiles": "Show tiles for non-member media",
     "url_params": "URL parameters",
@@ -164,12 +166,17 @@
       "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play.",
       "effect_volume_label": "Sound effect volume"
     },
+    "background_blur_header": "Background",
+    "background_blur_label": "Blur the background of the video",
+    "blur_not_supported_by_browser": "(Background blur is not supported by this device.)",
     "developer_tab_title": "Developer",
     "devices": {
       "camera": "Camera",
       "camera_numbered": "Camera {{n}}",
+      "change_device_button": "Change audio device",
       "default": "Default",
       "default_named": "Default <2>({{name}})</2>",
+      "earpiece": "Earpiece",
       "microphone": "Microphone",
       "microphone_numbered": "Microphone {{n}}",
       "speaker": "Speaker",

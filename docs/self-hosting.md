@@ -63,6 +63,11 @@ rc_delayed_event_mgmt:
   burst_count: 20
 ```
 
+As a prerequisite for the
+[Matrix LiveKit JWT auth service](https://github.com/element-hq/lk-jwt-service)
+make sure that your Synapse server has either a `federation` or `openid`
+[listener configured](https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html#listeners).
+
 ### MatrixRTC Backend
 
 In order to **guarantee smooth operation** of Element Call MatrixRTC backend is
@@ -88,7 +93,7 @@ the example above, this results in:
 
 Using Nginx, you can achieve this by:
 
-```jsonc
+```nginx configuration file
 server {
     ...
     location ^~ /livekit/jwt/ {
@@ -198,7 +203,7 @@ Because Element Call uses client-side routing, your server must be able to route
 any requests to non-existing paths back to `/index.html`. For example, in Nginx
 you can achieve this with the `try_files` directive:
 
-```jsonc
+```nginx configuration file
 server {
     ...
     location / {

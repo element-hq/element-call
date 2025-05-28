@@ -5,14 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, test, vitest, afterEach } from "vitest";
+import { expect, vi, afterEach, beforeEach, test } from "vitest";
 import { type FC } from "react";
 import { render } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import userEvent, { type UserEvent } from "@testing-library/user-event";
+import { BrowserRouter } from "react-router-dom";
 
 import { deviceStub, MediaDevicesContext } from "./livekit/MediaDevicesContext";
 import { useAudioContext } from "./useAudioContext";
-import { soundEffectVolumeSetting } from "./settings/settings";
+import { soundEffectVolume as soundEffectVolumeSetting } from "./settings/settings";
 
 const staticSounds = Promise.resolve({
   aSound: new ArrayBuffer(0),
@@ -38,62 +39,81 @@ const TestComponent: FC = () => {
     </>
   );
 };
-
-class MockAudioContext {
-  public static testContext: MockAudioContext;
-
-  public constructor() {
-    MockAudioContext.testContext = this;
-  }
-
-  public gain = vitest.mocked(
-    {
-      connect: () => {},
-      gain: {
-        setValueAtTime: vitest.fn(),
-      },
-    },
-    true,
+const TestComponentWrapper: FC = () => {
+  return (
+    <BrowserRouter>
+      <TestComponent />
+    </BrowserRouter>
   );
+};
 
-  public setSinkId = vitest.fn().mockResolvedValue(undefined);
-  public decodeAudioData = vitest.fn().mockReturnValue(1);
-  public createBufferSource = vitest.fn().mockReturnValue(
-    vitest.mocked({
+const gainNode = vi.mocked(
+  {
+    connect: (node: AudioNode) => node,
+    gain: {
+      setValueAtTime: vi.fn(),
+      value: 1,
+    },
+  },
+  true,
+);
+const panNode = vi.mocked(
+  {
+    connect: (node: AudioNode) => node,
+    pan: {
+      setValueAtTime: vi.fn(),
+      value: 0,
+    },
+  },
+  true,
+);
+/**
+ * A shared audio context test instance.
+ * It can also be used to mock the `AudioContext` constructor in tests:
+ * `vi.stubGlobal("AudioContext", () => testAudioContext);`
+ */
+export const testAudioContext = {
+  gain: gainNode,
+  pan: panNode,
+  setSinkId: vi.fn().mockResolvedValue(undefined),
+  decodeAudioData: vi.fn().mockReturnValue(1),
+  createBufferSource: vi.fn().mockReturnValue(
+    vi.mocked({
       connect: (v: unknown) => v,
       start: () => {},
       addEventListener: (_name: string, cb: () => void) => cb(),
     }),
-  );
-  public createGain = vitest.fn().mockReturnValue(this.gain);
-  public close = vitest.fn().mockResolvedValue(undefined);
-}
+  ),
+  createGain: vi.fn().mockReturnValue(gainNode),
+  createStereoPanner: vi.fn().mockReturnValue(panNode),
+  close: vi.fn().mockResolvedValue(undefined),
+};
+export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
+
+let user: UserEvent;
+beforeEach(() => {
+  vi.stubGlobal("AudioContext", TestAudioContextConstructor);
+  user = userEvent.setup();
+});
 
 afterEach(() => {
-  vitest.unstubAllGlobals();
+  vi.unstubAllGlobals();
+  vi.clearAllMocks();
 });
 
 test("can play a single sound", async () => {
-  const user = userEvent.setup();
-  vitest.stubGlobal("AudioContext", MockAudioContext);
-  const { findByText } = render(<TestComponent />);
+  const { findByText } = render(<TestComponentWrapper />);
   await user.click(await findByText("Valid sound"));
-  expect(
-    MockAudioContext.testContext.createBufferSource,
-  ).toHaveBeenCalledOnce();
+  expect(testAudioContext.createBufferSource).toHaveBeenCalledOnce();
 });
+
 test("will ignore sounds that are not registered", async () => {
-  const user = userEvent.setup();
-  vitest.stubGlobal("AudioContext", MockAudioContext);
-  const { findByText } = render(<TestComponent />);
+  const { findByText } = render(<TestComponentWrapper />);
   await user.click(await findByText("Invalid sound"));
-  expect(
-    MockAudioContext.testContext.createBufferSource,
-  ).not.toHaveBeenCalled();
+  expect(testAudioContext.createBufferSource).not.toHaveBeenCalled();
 });
 
 test("will use the correct device", () => {
-  vitest.stubGlobal("AudioContext", MockAudioContext);
   render(
     <MediaDevicesContext.Provider
       value={{
@@ -103,30 +123,56 @@ test("will use the correct device", () => {
           selectedGroupId: "",
           available: new Map(),
           select: () => {},
+          useAsEarpiece: false,
         },
         videoInput: deviceStub,
         startUsingDeviceNames: () => {},
         stopUsingDeviceNames: () => {},
       }}
     >
-      <TestComponent />
+      <TestComponentWrapper />
     </MediaDevicesContext.Provider>,
   );
-  expect(
-    MockAudioContext.testContext.createBufferSource,
-  ).not.toHaveBeenCalled();
-  expect(MockAudioContext.testContext.setSinkId).toHaveBeenCalledWith(
-    "chosen-device",
-  );
+  expect(testAudioContext.createBufferSource).not.toHaveBeenCalled();
+  expect(testAudioContext.setSinkId).toHaveBeenCalledWith("chosen-device");
 });
 
 test("will use the correct volume level", async () => {
-  const user = userEvent.setup();
-  vitest.stubGlobal("AudioContext", MockAudioContext);
   soundEffectVolumeSetting.setValue(0.33);
-  const { findByText } = render(<TestComponent />);
+  const { findByText } = render(<TestComponentWrapper />);
   await user.click(await findByText("Valid sound"));
-  expect(
-    MockAudioContext.testContext.gain.gain.setValueAtTime,
-  ).toHaveBeenCalledWith(0.33, 0);
+  expect(testAudioContext.gain.gain.setValueAtTime).toHaveBeenCalledWith(
+    0.33,
+    0,
+  );
+  expect(testAudioContext.pan.pan.setValueAtTime).toHaveBeenCalledWith(0, 0);
+});
+
+test("will use the pan if earpiece is selected", async () => {
+  const { findByText } = render(
+    <MediaDevicesContext.Provider
+      value={{
+        audioInput: deviceStub,
+        audioOutput: {
+          selectedId: "chosen-device",
+          selectedGroupId: "",
+          available: new Map(),
+          select: () => {},
+          useAsEarpiece: true,
+        },
+        videoInput: deviceStub,
+        startUsingDeviceNames: () => {},
+        stopUsingDeviceNames: () => {},
+      }}
+    >
+      <TestComponentWrapper />
+    </MediaDevicesContext.Provider>,
+  );
+  await user.click(await findByText("Valid sound"));
+  expect(testAudioContext.pan.pan.setValueAtTime).toHaveBeenCalledWith(1, 0);
+
+  expect(testAudioContext.gain.gain.setValueAtTime).toHaveBeenCalledWith(
+    soundEffectVolumeSetting.getValue() * 0.1,
+    0,
+  );
 });
