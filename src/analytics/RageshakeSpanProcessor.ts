@@ -107,13 +107,13 @@ export class RageshakeSpanProcessor implements SpanProcessor {
             startTime,
             duration,
             references:
-              span.parentSpanId === undefined
+              span.parentSpanContext?.spanId === undefined
                 ? []
                 : [
                     {
                       refType: "CHILD_OF",
                       traceID: traceId,
-                      spanID: span.parentSpanId,
+                      spanID: span.parentSpanContext?.spanId,
                     },
                   ],
             tags: dumpAttributes(span.attributes),
