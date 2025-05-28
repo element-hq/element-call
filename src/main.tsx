@@ -29,7 +29,7 @@ window.setLKLogLevel = setLKLogLevel;
 initRageshake().catch((e) => {
   logger.error("Failed to initialize rageshake", e);
 });
-setLKLogLevel("warn");
+setLKLogLevel("info");
 setLKLogExtension((level, msg, context) => {
   // we pass a synthetic logger name of "livekit" to the rageshake to make it easier to read
   global.mx_rage_logger.log(level, "livekit", msg, context);
