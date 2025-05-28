@@ -12,7 +12,7 @@ exports[`Toast > renders 1`] = `
   type="button"
 >
   <h3
-    class="_typography_yh5dq_162 _font-body-sm-semibold_yh5dq_45"
+    class="_typography_6v6n8_153 _font-body-sm-semibold_6v6n8_36"
     id="radix-:r4:"
   >
     Hello world!

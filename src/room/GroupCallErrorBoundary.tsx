@@ -16,7 +16,7 @@ import {
 } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
-  ErrorIcon,
+  ErrorSolidIcon,
   HostIcon,
   OfflineIcon,
   WebBrowserIcon,
@@ -63,7 +63,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
       icon = WebBrowserIcon;
       break;
     default:
-      icon = ErrorIcon;
+      icon = ErrorSolidIcon;
   }
 
   const actions: { label: string; onClick: () => void }[] = [];
