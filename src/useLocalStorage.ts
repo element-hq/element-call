@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import EventEmitter from "events";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 type LocalStorageItem = ReturnType<typeof localStorage.getItem>;
 
@@ -18,32 +18,28 @@ export const localStorageBus = new EventEmitter();
  * This hook will not update when we write to localStorage.setItem(key, value) directly.
  * For the hook to react either use the returned setter or `setLocalStorageItemReactive`.
  */
-export const useLocalStorage = (
+export function useLocalStorage(
   key: string,
-): [LocalStorageItem, (value: string) => void] => {
-  const [value, setValue] = useState<LocalStorageItem>(() =>
-    localStorage.getItem(key),
+): [LocalStorageItem, (value: string) => void] {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      localStorageBus.on(key, onChange);
+      return (): void => {
+        localStorageBus.off(key, onChange);
+      };
+    },
+    [key],
+  );
+  const getValue = useCallback(() => localStorage.getItem(key), [key]);
+
+  const value = useSyncExternalStore(subscribe, getValue);
+  const setValue = useCallback(
+    (newValue: string) => setLocalStorageItemReactive(key, newValue),
+    [key],
   );
 
-  useEffect(() => {
-    localStorageBus.on(key, setValue);
-    return (): void => {
-      localStorageBus.off(key, setValue);
-    };
-  }, [key, setValue]);
-
-  return [
-    value,
-    useCallback(
-      (newValue: string) => {
-        setValue(newValue);
-        localStorage.setItem(key, newValue);
-        localStorageBus.emit(key, newValue);
-      },
-      [key, setValue],
-    ),
-  ];
-};
+  return [value, setValue];
+}
 
 export const setLocalStorageItemReactive = (
   key: string,
