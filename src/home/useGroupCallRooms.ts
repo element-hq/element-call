@@ -21,7 +21,7 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 
-import { getKeyForRoom } from "../e2ee/sharedKeyManagement";
+import { getKeyForRoom, saveKeyForRoom } from "../e2ee/sharedKeyManagement";
 
 export interface GroupCallRoom {
   roomAlias?: string;
@@ -81,11 +81,13 @@ function sortRooms(client: MatrixClient, rooms: Room[]): Room[] {
 }
 
 const roomIsJoinable = (room: Room): boolean => {
-  if (!room.hasEncryptionStateEvent() && !getKeyForRoom(room.roomId)) {
-    // if we have an non encrypted room (no encryption state event) we need a locally stored shared key.
+  const password = getKeyForRoom(room.roomId);
+  if (!room.hasEncryptionStateEvent() && !password) {
+    // if we have a non encrypted room (no encryption state event) we need a locally stored shared key.
     // in case this key also does not exists we cannot join the room.
     return false;
   }
+  if (password) saveKeyForRoom(room.roomId, password);
   // otherwise we can always join rooms because we will automatically decide if we want to use perParticipant or password
   switch (room.getJoinRule()) {
     case JoinRule.Public:
