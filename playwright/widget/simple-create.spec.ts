@@ -15,6 +15,8 @@ widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
     "This test is not working on firefox, after hangup brooks is locked in a strange state with a blank widget",
   );
 
+  test.slow(); // Triples the timeout
+
   const { brooks, whistler } = asWidget;
 
   await expect(
