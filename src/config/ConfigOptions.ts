@@ -14,6 +14,7 @@ export interface ConfigOptions {
     api_key: string;
     api_host: string;
   };
+
   /**
    * The Sentry endpoint to which crash data will be sent.
    * This is only used in the full package of Element Call.
@@ -22,6 +23,7 @@ export interface ConfigOptions {
     DSN: string;
     environment: string;
   };
+
   /**
    * The rageshake server to which feedback and debug logs will be sent.
    * This is only used in the full package of Element Call.
@@ -66,6 +68,7 @@ export interface ConfigOptions {
      * Allow to join group calls without audio and video.
      */
     feature_group_calls_without_video_and_audio?: boolean;
+
     /**
      * Send device-specific call session membership state events instead of
      * legacy user-specific call membership state events.
@@ -86,6 +89,7 @@ export interface ConfigOptions {
      * Defines whether participants should start with audio enabled by default.
      */
     enable_audio?: boolean;
+
     /**
      * Defines whether participants should start with video enabled by default.
      */
@@ -121,7 +125,14 @@ export interface ConfigOptions {
      * How long (in milliseconds) after the last keep-alive the server should expire the
      * MatrixRTC membership event.
      */
+    delayedLeaveEventDelayMs?: number;
+    /** @deprecated use delayedLeaveEventDelayMs instead */
     membership_server_side_expiry_timeout?: number;
+
+    /**
+     * The interval (in milliseconds) in which the client will send membership keep-alives to the server.
+     */
+    delayedLeaveEventRestartMs?: number;
   };
 }
 

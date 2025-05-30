@@ -121,7 +121,10 @@ export async function enterRTCSession(
       ...(useDeviceSessionMemberEvents !== undefined && {
         useLegacyMemberEvents: !useDeviceSessionMemberEvents,
       }),
+      delayedLeaveEventRestartMs:
+        matrixRtcSessionConfig?.delayedLeaveEventRestartMs,
       delayedLeaveEventDelayMs:
+        matrixRtcSessionConfig?.delayedLeaveEventDelayMs ??
         matrixRtcSessionConfig?.membership_server_side_expiry_timeout,
       networkErrorRetryMs: matrixRtcSessionConfig?.membership_keep_alive_period,
       makeKeyDelay: matrixRtcSessionConfig?.key_rotation_on_leave_delay,
