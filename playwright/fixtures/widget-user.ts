@@ -95,11 +95,14 @@ async function registerUser(
   await page.getByRole("textbox", { name: "Confirm password" }).fill(PASSWORD);
   await page.getByRole("button", { name: "Register" }).click();
   const continueButton = page.getByRole("button", { name: "Continue" });
-  if (await continueButton.isVisible().catch(() => false)) {
+  try {
+    await expect(continueButton).toBeVisible({ timeout: 5000 });
     await page
       .getByRole("textbox", { name: "Password", exact: true })
       .fill(PASSWORD);
     await continueButton.click();
+  } catch {
+    // continueButton not visible, continue as normal
   }
   await expect(
     page.getByRole("heading", { name: `Welcome ${username}` }),
