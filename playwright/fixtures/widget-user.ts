@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type Page, test, expect, type JSHandle } from "@playwright/test";
+import { type Browser, type Page, test, expect, type JSHandle } from "@playwright/test";
 
 import type { MatrixClient } from "matrix-js-sdk";
 
@@ -78,7 +78,7 @@ async function setDevToolElementCallDevUrl(page: Page): Promise<void> {
  * Registers a new user and returns page, clientHandle and mxId.
  */
 async function registerUser(
-  browser: (typeof test)["browser"],
+  browser: Browser,
   username: string,
 ): Promise<{ page: Page; clientHandle: JSHandle<MatrixClient>; mxId: string }> {
   const userContext = await browser.newContext({
@@ -113,7 +113,7 @@ async function registerUser(
     window.mxMatrixClientPeg.get(),
   );
   const mxId = (await clientHandle.evaluate(
-    (cli) => cli.getUserId(),
+    (cli: MatrixClient) => cli.getUserId(),
     clientHandle,
   ))!;
 
