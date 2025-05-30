@@ -5,7 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type Page, test, expect, type JSHandle } from "@playwright/test";
+import {
+  type Browser,
+  type Page,
+  test,
+  expect,
+  type JSHandle,
+} from "@playwright/test";
 
 import type { MatrixClient } from "matrix-js-sdk";
 
@@ -30,8 +36,8 @@ const PASSWORD = "foobarbaz1!";
 const CONFIG_JSON = {
   default_server_config: {
     "m.homeserver": {
-      base_url: "http://synapse.localhost:8008",
-      server_name: "synapse.localhost",
+      base_url: "https://synapse.m.localhost",
+      server_name: "synapse.m.localhost",
     },
   },
 
@@ -74,6 +80,52 @@ async function setDevToolElementCallDevUrl(page: Page): Promise<void> {
   });
 }
 
+/**
+ * Registers a new user and returns page, clientHandle and mxId.
+ */
+async function registerUser(
+  browser: Browser,
+  username: string,
+): Promise<{ page: Page; clientHandle: JSHandle<MatrixClient>; mxId: string }> {
+  const userContext = await browser.newContext({
+    reducedMotion: "reduce",
+  });
+  const page = await userContext.newPage();
+  await page.goto("http://localhost:8081/#/welcome");
+  await page.getByRole("link", { name: "Create Account" }).click();
+  await page.getByRole("textbox", { name: "Username" }).fill(username);
+  await page
+    .getByRole("textbox", { name: "Password", exact: true })
+    .fill(PASSWORD);
+  await page.getByRole("textbox", { name: "Confirm password" }).click();
+  await page.getByRole("textbox", { name: "Confirm password" }).fill(PASSWORD);
+  await page.getByRole("button", { name: "Register" }).click();
+  const continueButton = page.getByRole("button", { name: "Continue" });
+  try {
+    await expect(continueButton).toBeVisible({ timeout: 5000 });
+    await page
+      .getByRole("textbox", { name: "Password", exact: true })
+      .fill(PASSWORD);
+    await continueButton.click();
+  } catch {
+    // continueButton not visible, continue as normal
+  }
+  await expect(
+    page.getByRole("heading", { name: `Welcome ${username}` }),
+  ).toBeVisible();
+  await setDevToolElementCallDevUrl(page);
+
+  const clientHandle = await page.evaluateHandle(() =>
+    window.mxMatrixClientPeg.get(),
+  );
+  const mxId = (await clientHandle.evaluate(
+    (cli: MatrixClient) => cli.getUserId(),
+    clientHandle,
+  ))!;
+
+  return { page, clientHandle, mxId };
+}
+
 export const widgetTest = test.extend<MyFixtures>({
   asWidget: async ({ browser, context }, pUse) => {
     await context.route(`http://localhost:8081/config.json*`, async (route) => {
@@ -83,61 +135,17 @@ export const widgetTest = test.extend<MyFixtures>({
     const userA = `brooks_${Date.now()}`;
     const userB = `whistler_${Date.now()}`;
 
-    const user1Context = await browser.newContext({
-      reducedMotion: "reduce",
-    });
-    const ewPage1 = await user1Context.newPage();
-    // Register the first user
-    await ewPage1.goto("http://localhost:8081/#/welcome");
-    await ewPage1.getByRole("link", { name: "Create Account" }).click();
-    await ewPage1.getByRole("textbox", { name: "Username" }).fill(userA);
-    await ewPage1
-      .getByRole("textbox", { name: "Password", exact: true })
-      .fill(PASSWORD);
-    await ewPage1.getByRole("textbox", { name: "Confirm password" }).click();
-    await ewPage1
-      .getByRole("textbox", { name: "Confirm password" })
-      .fill(PASSWORD);
-    await ewPage1.getByRole("button", { name: "Register" }).click();
-    await expect(
-      ewPage1.getByRole("heading", { name: `Welcome ${userA}` }),
-    ).toBeVisible();
-    await setDevToolElementCallDevUrl(ewPage1);
-
-    const brooksClientHandle = await ewPage1.evaluateHandle(() =>
-      window.mxMatrixClientPeg.get(),
-    );
-    const brooksMxId = (await brooksClientHandle.evaluate((cli) => {
-      return cli.getUserId();
-    }, brooksClientHandle))!;
-
-    const user2Context = await browser.newContext({
-      reducedMotion: "reduce",
-    });
-    const ewPage2 = await user2Context.newPage();
-    // Register the second user
-    await ewPage2.goto("http://localhost:8081/#/welcome");
-    await ewPage2.getByRole("link", { name: "Create Account" }).click();
-    await ewPage2.getByRole("textbox", { name: "Username" }).fill(userB);
-    await ewPage2
-      .getByRole("textbox", { name: "Password", exact: true })
-      .fill(PASSWORD);
-    await ewPage2.getByRole("textbox", { name: "Confirm password" }).click();
-    await ewPage2
-      .getByRole("textbox", { name: "Confirm password" })
-      .fill(PASSWORD);
-    await ewPage2.getByRole("button", { name: "Register" }).click();
-    await expect(
-      ewPage2.getByRole("heading", { name: `Welcome ${userB}` }),
-    ).toBeVisible();
-    await setDevToolElementCallDevUrl(ewPage2);
-
-    const whistlerClientHandle = await ewPage2.evaluateHandle(() =>
-      window.mxMatrixClientPeg.get(),
-    );
-    const whistlerMxId = (await whistlerClientHandle.evaluate((cli) => {
-      return cli.getUserId();
-    }, whistlerClientHandle))!;
+    // Register users
+    const {
+      page: ewPage1,
+      clientHandle: brooksClientHandle,
+      mxId: brooksMxId,
+    } = await registerUser(browser, userA);
+    const {
+      page: ewPage2,
+      clientHandle: whistlerClientHandle,
+      mxId: whistlerMxId,
+    } = await registerUser(browser, userB);
 
     // Invite the second user
     await ewPage1.getByRole("button", { name: "Add room" }).click();
