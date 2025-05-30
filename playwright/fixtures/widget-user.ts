@@ -78,7 +78,7 @@ async function setDevToolElementCallDevUrl(page: Page): Promise<void> {
  * Registers a new user and returns page, clientHandle and mxId.
  */
 async function registerUser(
-  browser: typeof test["browser"],
+  browser: (typeof test)["browser"],
   username: string,
 ): Promise<{ page: Page; clientHandle: JSHandle<MatrixClient>; mxId: string }> {
   const userContext = await browser.newContext({
@@ -88,22 +88,31 @@ async function registerUser(
   await page.goto("http://localhost:8081/#/welcome");
   await page.getByRole("link", { name: "Create Account" }).click();
   await page.getByRole("textbox", { name: "Username" }).fill(username);
-  await page.getByRole("textbox", { name: "Password", exact: true }).fill(PASSWORD);
+  await page
+    .getByRole("textbox", { name: "Password", exact: true })
+    .fill(PASSWORD);
   await page.getByRole("textbox", { name: "Confirm password" }).click();
   await page.getByRole("textbox", { name: "Confirm password" }).fill(PASSWORD);
   await page.getByRole("button", { name: "Register" }).click();
   const continueButton = page.getByRole("button", { name: "Continue" });
   if (await continueButton.isVisible().catch(() => false)) {
-    await page.getByRole("textbox", { name: "Password", exact: true }).fill(PASSWORD);
+    await page
+      .getByRole("textbox", { name: "Password", exact: true })
+      .fill(PASSWORD);
     await continueButton.click();
   }
   await expect(
-    page.getByRole("heading", { name: `Welcome ${username}` })
+    page.getByRole("heading", { name: `Welcome ${username}` }),
   ).toBeVisible();
   await setDevToolElementCallDevUrl(page);
 
-  const clientHandle = await page.evaluateHandle(() => window.mxMatrixClientPeg.get());
-  const mxId = (await clientHandle.evaluate((cli) => cli.getUserId(), clientHandle))!;
+  const clientHandle = await page.evaluateHandle(() =>
+    window.mxMatrixClientPeg.get(),
+  );
+  const mxId = (await clientHandle.evaluate(
+    (cli) => cli.getUserId(),
+    clientHandle,
+  ))!;
 
   return { page, clientHandle, mxId };
 }
@@ -118,10 +127,16 @@ export const widgetTest = test.extend<MyFixtures>({
     const userB = `whistler_${Date.now()}`;
 
     // Register users
-    const { page: ewPage1, clientHandle: brooksClientHandle, mxId: brooksMxId } =
-    await registerUser(browser, userA);
-    const { page: ewPage2, clientHandle: whistlerClientHandle, mxId: whistlerMxId } =
-    await registerUser(browser, userB);
+    const {
+      page: ewPage1,
+      clientHandle: brooksClientHandle,
+      mxId: brooksMxId,
+    } = await registerUser(browser, userA);
+    const {
+      page: ewPage2,
+      clientHandle: whistlerClientHandle,
+      mxId: whistlerMxId,
+    } = await registerUser(browser, userB);
 
     // Invite the second user
     await ewPage1.getByRole("button", { name: "Add room" }).click();
