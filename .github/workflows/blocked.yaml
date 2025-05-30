@@ -1,7 +1,7 @@
 name: Prevent blocked
 on:
   pull_request_target:
-    types: [opened, labeled, unlabeled]
+    types: [opened, labeled, unlabeled, synchronize]
 jobs:
   prevent-blocked:
     name: Prevent blocked

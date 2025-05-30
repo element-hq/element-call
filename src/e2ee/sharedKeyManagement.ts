@@ -21,7 +21,7 @@ const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
 
 const useInternalRoomSharedKey = (roomId: string): string | null => {
   const key = getRoomSharedKeyLocalStorageKey(roomId);
-  const roomSharedKey = useLocalStorage(key)[0];
+  const [roomSharedKey] = useLocalStorage(key);
 
   return roomSharedKey;
 };

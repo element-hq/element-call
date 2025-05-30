@@ -42,6 +42,14 @@ export const useLocalStorage = (
 };
 
 export const setLocalStorageItem = (key: string, value: string): void => {
+  // Avoid unnecessary updates. Not avoiding them so can cause unexpected state updates across hooks.
+  // For instance:
+  // - In call view uses useRoomEncryptionSystem
+  // - This will set the key again.
+  // - All other instances of useRoomEncryptionSystem will now do a useMemo update of the e2eeSystem
+  //   - because the dependency `storedPassword = useInternalRoomSharedKey(roomId);` would change.
+  if (localStorage.getItem(key) === value) return;
+
   localStorage.setItem(key, value);
   localStorageBus.emit(key, value);
 };
