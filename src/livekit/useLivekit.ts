@@ -14,7 +14,7 @@ import {
   type RoomOptions,
   Track,
 } from "livekit-client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
@@ -24,11 +24,7 @@ import { map } from "rxjs";
 import { defaultLiveKitOptions } from "./options";
 import { type SFUConfig } from "./openIDSFU";
 import { type MuteStates } from "../room/MuteStates";
-import {
-  type MediaDeviceHandle,
-  type MediaDevices,
-  useMediaDevices,
-} from "./MediaDevicesContext";
+import { type MediaDeviceHandle, useMediaDevices } from "./MediaDevicesContext";
 import {
   type ECConnectionState,
   useECConnectionState,
@@ -42,6 +38,7 @@ import {
 } from "./TrackProcessorContext";
 import { observeTrackReference$ } from "../state/MediaViewModel";
 import { useUrlParams } from "../UrlParams";
+import { useInitial } from "../useInitial";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -56,9 +53,10 @@ export function useLivekit(
 ): UseLivekitResult {
   const { controlledAudioDevices } = useUrlParams();
 
-  const initialMuteStates = useRef<MuteStates>(muteStates);
+  const initialMuteStates = useInitial(() => muteStates);
+
   const devices = useMediaDevices();
-  const initialDevices = useRef<MediaDevices>(devices);
+  const initialDevices = useInitial(() => devices);
 
   // Store if audio/video are currently updating. If to prohibit unnecessary calls
   // to setMicrophoneEnabled/setCameraEnabled
@@ -67,63 +65,59 @@ export function useLivekit(
   // Store the current button mute state that gets passed to this hook via props.
   // We need to store it for awaited code that relies on the current value.
   const buttonEnabled = useRef({
-    audio: initialMuteStates.current.audio.enabled,
-    video: initialMuteStates.current.video.enabled,
+    audio: initialMuteStates.audio.enabled,
+    video: initialMuteStates.video.enabled,
   });
 
   const { processor } = useTrackProcessor();
 
-  const createRoom = (opt: RoomOptions, e2ee: EncryptionSystem): Room => {
-    logger.info("[LivekitRoom] Create LiveKit room with options", opt);
-    // We have to create the room manually here due to a bug inside
-    // @livekit/components-react. JSON.stringify() is used in deps of a
-    // useEffect() with an argument that references itself, if E2EE is enabled
-    let newE2eeOptions: E2EEManagerOptions | undefined;
-    if (e2ee.kind === E2eeType.PER_PARTICIPANT) {
+  // Only ever create the room once via useInitial.
+  const room = useInitial(() => {
+    logger.info("[LivekitRoom] Create LiveKit room");
+
+    let e2ee: E2EEManagerOptions | undefined;
+    if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
       logger.info("Created MatrixKeyProvider (per participant)");
-      newE2eeOptions = {
+      e2ee = {
         keyProvider: new MatrixKeyProvider(),
         worker: new E2EEWorker(),
       };
-    } else if (e2ee.kind === E2eeType.SHARED_KEY && e2ee.secret) {
+    } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
       logger.info("Created ExternalE2EEKeyProvider (shared key)");
-      newE2eeOptions = {
+      e2ee = {
         keyProvider: new ExternalE2EEKeyProvider(),
         worker: new E2EEWorker(),
       };
     }
-    const r = new Room({ ...opt, e2ee: newE2eeOptions });
-    r.setE2EEEnabled(e2ee.kind !== E2eeType.NONE).catch((e) => {
-      logger.error("Failed to set E2EE enabled on room", e);
-    });
 
-    return r;
-  };
-
-  // Track the current room options in case we need to recreate the room if the encryption system changes
-  // Only needed because we allow swapping the room in case the e2ee system changes.
-  // otherwise this could become part of: `createRoom`
-  const roomOptions = useMemo(
-    (): RoomOptions => ({
+    const roomOptions: RoomOptions = {
       ...defaultLiveKitOptions,
       videoCaptureDefaults: {
         ...defaultLiveKitOptions.videoCaptureDefaults,
-        deviceId: devices.videoInput.selectedId,
-        processor: processor,
+        deviceId: initialDevices.videoInput.selectedId,
+        processor,
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
-        deviceId: devices.audioInput.selectedId,
+        deviceId: initialDevices.audioInput.selectedId,
       },
       audioOutput: {
-        deviceId: devices.audioOutput.selectedId,
+        deviceId: initialDevices.audioOutput.selectedId,
       },
-    }),
-    [processor, devices],
-  );
-  const [room, setRoom] = useState(() => createRoom(roomOptions, e2eeSystem));
+      e2ee,
+    };
+    // We have to create the room manually here due to a bug inside
+    // @livekit/components-react. JSON.stringify() is used in deps of a
+    // useEffect() with an argument that references itself, if E2EE is enabled
+    const room = new Room(roomOptions);
+    room.setE2EEEnabled(e2eeSystem.kind !== E2eeType.NONE).catch((e) => {
+      logger.error("Failed to set E2EE enabled on room", e);
+    });
 
-  // Setup and update the already existing keyProvider
+    return room;
+  });
+
+  // Setup and update the keyProvider which was create by `createRoom`
   useEffect(() => {
     const e2eeOptions = room.options.e2ee;
     if (
@@ -142,41 +136,6 @@ export function useLivekit(
         });
     }
   }, [room.options.e2ee, e2eeSystem, rtcSession]);
-
-  // Do we really allow hot swapping the e2ee system?
-  // Will we ever reach this code?
-  useEffect(() => {
-    const e2eeOptions = room.options.e2ee;
-    // Only do sth if our e2eeSystem has changed.
-    if (
-      // from non to sth else.
-      (e2eeSystem.kind === E2eeType.NONE && e2eeOptions !== undefined) ||
-      // from MatrixKeyProvider to sth else
-      (e2eeSystem.kind === E2eeType.PER_PARTICIPANT &&
-        !(
-          e2eeOptions &&
-          "keyProvider" in e2eeOptions &&
-          e2eeOptions.keyProvider instanceof MatrixKeyProvider
-        )) ||
-      // from ExternalE2EEKeyProvider to sth else
-      (e2eeSystem.kind === E2eeType.SHARED_KEY &&
-        !(
-          e2eeOptions &&
-          "keyProvider" in e2eeOptions &&
-          e2eeOptions.keyProvider instanceof ExternalE2EEKeyProvider
-        ))
-    ) {
-      logger.warn(
-        "[LivekitRoom] we cannot change the key provider after the room has been created, disconnecting and creating a new room",
-      );
-      const resetRoom = async (): Promise<void> => {
-        await room.disconnect();
-        const newRoom = createRoom(roomOptions, e2eeSystem);
-        setRoom(newRoom);
-      };
-      void resetRoom();
-    }
-  }, [room, e2eeSystem, roomOptions, createRoom]);
 
   // Sync the requested track processors with LiveKit
   useTrackProcessorSync(
@@ -198,8 +157,8 @@ export function useLivekit(
   );
 
   const connectionState = useECConnectionState(
-    initialDevices.current.audioInput.selectedId,
-    initialMuteStates.current.audio.enabled,
+    initialDevices.audioInput.selectedId,
+    initialMuteStates.audio.enabled,
     room,
     sfuConfig,
   );
