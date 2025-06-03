@@ -358,6 +358,12 @@ export function useLivekit(
           }
         } else {
           if (id !== undefined && room.getActiveDevice(kind) !== id) {
+            logger.debug(
+              "DEBUG: Switching active device",
+              kind,
+              id,
+              room.getActiveDevice(kind),
+            );
             room
               .switchActiveDevice(kind, id)
               .catch((e) =>
