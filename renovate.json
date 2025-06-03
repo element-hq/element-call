@@ -59,7 +59,7 @@
     }
   ],
   "semanticCommits": "disabled",
-  "ignoreDeps": ["posthog-js"],
+  "ignoreDeps": ["posthog-js", "eslint-plugin-matrix-org"],
   "vulnerabilityAlerts": {
     "schedule": ["at any time"],
     "prHourlyLimit": 0,
