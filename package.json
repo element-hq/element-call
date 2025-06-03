@@ -7,7 +7,7 @@
     "dev:full": "vite",
     "dev:embedded": "vite --config vite-embedded.config.js",
     "build": "yarn build:full",
-    "build:full": "NODE_OPTIONS=--max-old-space-size=16384 vite build",
+    "build:full": "NODE_OPTIONS=--max-old-space-size=16384 vite build --mode development",
     "build:embedded": "yarn build:full --config vite-embedded.config.js",
     "serve": "vite preview",
     "prettier:check": "prettier -c .",
