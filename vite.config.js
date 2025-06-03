@@ -89,6 +89,7 @@ export default defineConfig(({ mode, packageType }) => {
       },
     },
     build: {
+      minify: 'none',
       sourcemap: true,
       rollupOptions: {
         output: {
