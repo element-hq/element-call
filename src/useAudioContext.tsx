@@ -19,6 +19,7 @@ import {
 import { type PrefetchedSounds } from "./soundUtils";
 import { useUrlParams } from "./UrlParams";
 import { useInitial } from "./useInitial";
+import * as controls from "./controls";
 
 /**
  * Play a sound though a given AudioContext. Will take
@@ -43,6 +44,7 @@ async function playSound(
   src.buffer = buffer;
   src.connect(gain).connect(pan).connect(ctx.destination);
   const p = new Promise<void>((r) => src.addEventListener("ended", () => r()));
+  controls.setPlaybackStarted();
   src.start();
   return p;
 }
