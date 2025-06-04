@@ -17,7 +17,7 @@ import {
   type JSX,
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
-import { combineLatest, map, startWith } from "rxjs";
+import { combineLatest, filter, map, pairwise, startWith } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -140,9 +140,32 @@ function useMediaDeviceHandle(
         kind,
         () => logger.error("Error creating MediaDeviceObserver"),
         requestPermissions,
-      ).pipe(startWith([])),
+      ).pipe(
+        startWith(undefined, []),
+        // Convert to a tuple of previous and next value.
+        pairwise(),
+        // Filter out consecutive updates that don't change the available devices.
+        // createMediaDeviceObserver can will emit each time, 'devicechange' is emitted.
+        // On safari this happens each time we call `getUserMedia`.
+        filter(([prev, n]) => {
+          // The only way to get undefined is with startWith for `prev`.
+          const next = n!;
+          if (prev === undefined) return true;
+          if (prev.length !== next.length) return true;
+          if (prev.length === 0) return false;
+          return !next.every(
+            (d, i) =>
+              d.deviceId === prev[i].deviceId && d.label === prev[i].label,
+          );
+        }),
+        // Convert back to non-pairwise observable
+        map(([, next]) => next!),
+        // Use startWith at the end to ensure that the observable
+        // always emits an initial value that does not get filtered out.
+      ),
     [kind, requestPermissions],
   );
+
   const available = useObservableEagerState(
     useMemo(
       () =>
@@ -173,6 +196,13 @@ function useMediaDeviceHandle(
                 ["", { type: "default", name: availableRaw[0]?.label || null }],
                 ...available,
               ]);
+            const availablePrint = Array.from(available.entries()).map(
+              ([id, label]) =>
+                `id:${id === "" ? '""' : id} label:${(label as any).name}\n`,
+            );
+            logger.info(
+              `Media devices changed.\nkind ${kind}\n(deviceObserver$ updated): ${availablePrint}`,
+            );
             // Note: creating virtual default input devices would be another problem
             // entirely, because requesting a media stream from deviceId "" won't
             // automatically track the default device.
