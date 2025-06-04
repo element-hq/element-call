@@ -19,7 +19,6 @@ import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import {
   useMediaDevices,
-  useMediaDeviceNames,
   iosDeviceMenu$,
 } from "../livekit/MediaDevicesContext";
 import { widget } from "../widget";
@@ -98,7 +97,6 @@ export const SettingsModal: FC<Props> = ({
   };
 
   const devices = useMediaDevices();
-  useMediaDeviceNames(devices, open);
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
   const [showDeveloperSettingsTab] = useSetting(developerMode);

@@ -66,9 +66,6 @@ export interface MediaDeviceHandle {
 interface InputDevices {
   audioInput: MediaDeviceHandle;
   videoInput: MediaDeviceHandle;
-  startUsingDeviceNames: () => void;
-  stopUsingDeviceNames: () => void;
-  usingNames: boolean;
 }
 
 export interface MediaDevices extends Omit<InputDevices, "usingNames"> {
@@ -120,14 +117,7 @@ function useSelectedId(
 function useMediaDeviceHandle(
   kind: MediaDeviceKind,
   setting: Setting<string | undefined>,
-  usingNames: boolean,
 ): MediaDeviceHandle {
-  const hasRequestedPermissions = useRef(false);
-  const requestPermissions = usingNames || hasRequestedPermissions.current;
-  // Make sure we don't needlessly reset to a device observer without names,
-  // once permissions are already given
-  hasRequestedPermissions.current ||= usingNames;
-
   // We use a bare device observer here rather than one of the fancy device
   // selection hooks from @livekit/components-react, because
   // useMediaDeviceSelect expects a room or track, which we don't have here, and
@@ -136,10 +126,8 @@ function useMediaDeviceHandle(
   // kind, which then results in multiple permissions requests.
   const deviceObserver$ = useMemo(
     () =>
-      createMediaDeviceObserver(
-        kind,
-        () => logger.error("Error creating MediaDeviceObserver"),
-        requestPermissions,
+      createMediaDeviceObserver(kind, () =>
+        logger.error("Error creating MediaDeviceObserver"),
       ).pipe(
         startWith(undefined, []),
         // Convert to a tuple of previous and next value.
@@ -163,7 +151,7 @@ function useMediaDeviceHandle(
         // Use startWith at the end to ensure that the observable
         // always emits an initial value that does not get filtered out.
       ),
-    [kind, requestPermissions],
+    [kind],
   );
 
   const available = useObservableEagerState(
@@ -253,43 +241,19 @@ export const devicesStub: MediaDevices = {
   audioInput: deviceStub,
   audioOutput: deviceStub,
   videoInput: deviceStub,
-  startUsingDeviceNames: () => {},
-  stopUsingDeviceNames: () => {},
 };
 
 export const MediaDevicesContext = createContext<MediaDevices>(devicesStub);
 
 function useInputDevices(): InputDevices {
   // Counts the number of callers currently using device names.
-  const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
-  const usingNames = numCallersUsingNames > 0;
 
-  const audioInput = useMediaDeviceHandle(
-    "audioinput",
-    audioInputSetting,
-    usingNames,
-  );
-  const videoInput = useMediaDeviceHandle(
-    "videoinput",
-    videoInputSetting,
-    usingNames,
-  );
-
-  const startUsingDeviceNames = useCallback(
-    () => setNumCallersUsingNames((n) => n + 1),
-    [setNumCallersUsingNames],
-  );
-  const stopUsingDeviceNames = useCallback(
-    () => setNumCallersUsingNames((n) => n - 1),
-    [setNumCallersUsingNames],
-  );
+  const audioInput = useMediaDeviceHandle("audioinput", audioInputSetting);
+  const videoInput = useMediaDeviceHandle("videoinput", videoInputSetting);
 
   return {
     audioInput,
     videoInput,
-    startUsingDeviceNames,
-    stopUsingDeviceNames,
-    usingNames,
   };
 }
 
@@ -298,20 +262,13 @@ interface Props {
 }
 
 export const MediaDevicesProvider: FC<Props> = ({ children }) => {
-  const {
-    audioInput,
-    videoInput,
-    startUsingDeviceNames,
-    stopUsingDeviceNames,
-    usingNames,
-  } = useInputDevices();
+  const { audioInput, videoInput } = useInputDevices();
 
   const { controlledAudioDevices } = useUrlParams();
 
   const webViewAudioOutput = useMediaDeviceHandle(
     "audiooutput",
     audioOutputSetting,
-    usingNames,
   );
   const controlledAudioOutput = useControlledOutput();
 
@@ -322,8 +279,6 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
         ? controlledAudioOutput
         : webViewAudioOutput,
       videoInput,
-      startUsingDeviceNames,
-      stopUsingDeviceNames,
     }),
     [
       audioInput,
@@ -331,8 +286,6 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
       controlledAudioOutput,
       webViewAudioOutput,
       videoInput,
-      startUsingDeviceNames,
-      stopUsingDeviceNames,
     ],
   );
 
@@ -426,17 +379,6 @@ export const useMediaDevices = (): MediaDevices =>
  * default because it may involve requesting additional permissions from the
  * user.
  */
-export const useMediaDeviceNames = (
-  context: MediaDevices,
-  enabled = true,
-): void =>
-  useEffect(() => {
-    // if (enabled) {
-    //   context.startUsingDeviceNames();
-    //   return context.stopUsingDeviceNames;
-    // }
-  }, [context, enabled]);
-
 /**
  * A convenience hook to get the audio node configuration for the earpiece.
  * It will check the `useAsEarpiece` of the `audioOutput` device and return
