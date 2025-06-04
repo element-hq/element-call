@@ -10,12 +10,15 @@ import { render, screen } from "@testing-library/react";
 import { type FC, useEffect, useState } from "react";
 import userEvent from "@testing-library/user-event";
 
-import { setLocalStorageItem, useLocalStorage } from "./useLocalStorage";
+import {
+  setLocalStorageItemReactive,
+  useLocalStorage,
+} from "./useLocalStorage";
 
 test("useLocalStorage reacts to changes made by an effect mounted on the same render", () => {
   localStorage.clear();
   const Test: FC = () => {
-    useEffect(() => setLocalStorageItem("my-value", "Hello!"), []);
+    useEffect(() => setLocalStorageItemReactive("my-value", "Hello!"), []);
     const [myValue] = useLocalStorage("my-value");
     return myValue;
   };
