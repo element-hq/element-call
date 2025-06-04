@@ -9,4 +9,4 @@ android_gradle_plugin = { module = "com.android.tools.build:gradle", version.ref
 
 [plugins]
 android_library = { id = "com.android.library", version.ref = "android_gradle_plugin" }
-maven_publish = { id = "com.vanniktech.maven.publish", version = "0.31.0" }
+maven_publish = { id = "com.vanniktech.maven.publish", version = "0.32.0" }
