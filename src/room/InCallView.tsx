@@ -104,6 +104,7 @@ import { ConnectionLostError } from "../utils/errors.ts";
 import { useTypedEventEmitter } from "../useEvents.ts";
 import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
+import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -249,6 +250,7 @@ export const InCallView: FC<InCallViewProps> = ({
     useExperimentalToDeviceTransportSetting,
   );
   const encryptionSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
+  const memberships = useMatrixRTCSessionMemberships(rtcSession);
 
   const showToDeviceEncryption = useMemo(
     () =>
@@ -722,10 +724,7 @@ export const InCallView: FC<InCallViewProps> = ({
           </Text>
         )
       }
-      <MatrixAudioRenderer
-        members={rtcSession.memberships}
-        muted={muteAllAudio}
-      />
+      <MatrixAudioRenderer members={memberships} muted={muteAllAudio} />
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
