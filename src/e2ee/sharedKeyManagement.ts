@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useEffect, useMemo } from "react";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   setLocalStorageItemReactive,
@@ -14,7 +15,6 @@ import {
 import { getUrlParams } from "../UrlParams";
 import { E2eeType } from "./e2eeType";
 import { useClient } from "../ClientContext";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 /**
  * This setter will update the state for all `useRoomSharedKey` hooks

@@ -148,7 +148,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [livekitRoom]);
 
   useEffect(() => {
     if (livekitRoom !== undefined) {
