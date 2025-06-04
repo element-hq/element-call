@@ -21,7 +21,7 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 
-import { getKeyForRoom, saveKeyForRoom } from "../e2ee/sharedKeyManagement";
+import { getKeyForRoom } from "../e2ee/sharedKeyManagement";
 
 export interface GroupCallRoom {
   roomAlias?: string;
@@ -87,7 +87,6 @@ const roomIsJoinable = (room: Room): boolean => {
     // in case this key also does not exists we cannot join the room.
     return false;
   }
-  if (password) saveKeyForRoom(room.roomId, password);
   // otherwise we can always join rooms because we will automatically decide if we want to use perParticipant or password
   switch (room.getJoinRule()) {
     case JoinRule.Public:

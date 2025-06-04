@@ -7,16 +7,27 @@ Please see LICENSE in the repository root for full details.
 
 import { useEffect, useMemo } from "react";
 
-import { setLocalStorageItem, useLocalStorage } from "../useLocalStorage";
+import {
+  setLocalStorageItemReactive,
+  useLocalStorage,
+} from "../useLocalStorage";
 import { getUrlParams } from "../UrlParams";
 import { E2eeType } from "./e2eeType";
 import { useClient } from "../ClientContext";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 /**
  * This setter will update the state for all `useRoomSharedKey` hooks
+ * if the password is different from the one in local storage or if its not yet in the local storage.
  */
 export function saveKeyForRoom(roomId: string, password: string): void {
-  setLocalStorageItem(getRoomSharedKeyLocalStorageKey(roomId), password);
+  if (
+    localStorage.getItem(getRoomSharedKeyLocalStorageKey(roomId)) !== password
+  )
+    setLocalStorageItemReactive(
+      getRoomSharedKeyLocalStorageKey(roomId),
+      password,
+    );
 }
 
 const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
@@ -48,7 +59,12 @@ const useRoomSharedKey = (
 
 export function getKeyForRoom(roomId: string): string | null {
   const { roomId: urlRoomId, password } = getUrlParams();
-  if (roomId !== urlRoomId) return null;
+  if (roomId !== urlRoomId)
+    logger.warn(
+      "requested key for a roomId which is not the current call room id (from the URL)",
+      roomId,
+      urlRoomId,
+    );
   return (
     password ?? localStorage.getItem(getRoomSharedKeyLocalStorageKey(roomId))
   );

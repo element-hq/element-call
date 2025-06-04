@@ -15,8 +15,8 @@ export const localStorageBus = new EventEmitter();
 
 /**
  * Like useState, but reads from and persists the value to localStorage
- * this hook will not update when we write to localStorage.setItem(key, value) directly.
- * For the hook to react either use the returned setter or `saveKeyForRoom`.
+ * This hook will not update when we write to localStorage.setItem(key, value) directly.
+ * For the hook to react either use the returned setter or `setLocalStorageItemReactive`.
  */
 export const useLocalStorage = (
   key: string,
@@ -45,7 +45,10 @@ export const useLocalStorage = (
   ];
 };
 
-export const setLocalStorageItem = (key: string, value: string): void => {
+export const setLocalStorageItemReactive = (
+  key: string,
+  value: string,
+): void => {
   localStorage.setItem(key, value);
   localStorageBus.emit(key, value);
 };
