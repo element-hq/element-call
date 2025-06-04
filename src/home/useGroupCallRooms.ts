@@ -81,8 +81,9 @@ function sortRooms(client: MatrixClient, rooms: Room[]): Room[] {
 }
 
 const roomIsJoinable = (room: Room): boolean => {
-  if (!room.hasEncryptionStateEvent() && !getKeyForRoom(room.roomId)) {
-    // if we have an non encrypted room (no encryption state event) we need a locally stored shared key.
+  const password = getKeyForRoom(room.roomId);
+  if (!room.hasEncryptionStateEvent() && !password) {
+    // if we have a non encrypted room (no encryption state event) we need a locally stored shared key.
     // in case this key also does not exists we cannot join the room.
     return false;
   }

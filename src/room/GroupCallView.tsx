@@ -43,7 +43,10 @@ import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
-import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  saveKeyForRoom,
+  useRoomEncryptionSystem,
+} from "../e2ee/sharedKeyManagement";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
@@ -166,6 +169,12 @@ export const GroupCallView: FC<Props> = ({
   const [useExperimentalToDeviceTransport] = useSetting(
     useExperimentalToDeviceTransportSetting,
   );
+
+  // Save the password once we start the groupCallView
+  const { password: passwordFromUrl } = useUrlParams();
+  useEffect(() => {
+    if (passwordFromUrl) saveKeyForRoom(room.roomId, passwordFromUrl);
+  }, [passwordFromUrl, room.roomId]);
 
   usePageTitle(roomName);
 

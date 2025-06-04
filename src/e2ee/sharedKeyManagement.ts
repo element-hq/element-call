@@ -6,57 +6,69 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useEffect, useMemo } from "react";
+import { logger } from "matrix-js-sdk/lib/logger";
 
-import { setLocalStorageItem, useLocalStorage } from "../useLocalStorage";
-import { type UrlParams, getUrlParams, useUrlParams } from "../UrlParams";
+import {
+  setLocalStorageItemReactive,
+  useLocalStorage,
+} from "../useLocalStorage";
+import { getUrlParams } from "../UrlParams";
 import { E2eeType } from "./e2eeType";
 import { useClient } from "../ClientContext";
 
+/**
+ * This setter will update the state for all `useRoomSharedKey` hooks
+ * if the password is different from the one in local storage or if its not yet in the local storage.
+ */
 export function saveKeyForRoom(roomId: string, password: string): void {
-  setLocalStorageItem(getRoomSharedKeyLocalStorageKey(roomId), password);
+  if (
+    localStorage.getItem(getRoomSharedKeyLocalStorageKey(roomId)) !== password
+  )
+    setLocalStorageItemReactive(
+      getRoomSharedKeyLocalStorageKey(roomId),
+      password,
+    );
 }
 
 const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
-const useInternalRoomSharedKey = (roomId: string): string | null => {
-  const key = getRoomSharedKeyLocalStorageKey(roomId);
-  const [roomSharedKey] = useLocalStorage(key);
+/**
+ * An upto-date shared key for the room. Either from local storage or the value from `setInitialValue`.
+ * @param roomId
+ * @param setInitialValue The value we get from the URL. The hook will overwrite the local storage value with this.
+ * @returns [roomSharedKey, setRoomSharedKey] like a react useState hook.
+ */
+const useRoomSharedKey = (
+  roomId: string,
+  setInitialValue?: string,
+): [string | null, setKey: (key: string) => void] => {
+  const [roomSharedKey, setRoomSharedKey] = useLocalStorage(
+    getRoomSharedKeyLocalStorageKey(roomId),
+  );
+  useEffect(() => {
+    // If setInitialValue is available, update the local storage (usually the password from the url).
+    // This will update roomSharedKey but wont update the returned value since
+    // that already defaults to setInitialValue.
+    if (setInitialValue) setRoomSharedKey(setInitialValue);
+  }, [setInitialValue, setRoomSharedKey]);
 
-  return roomSharedKey;
+  // make sure we never return the initial null value from `useLocalStorage`
+  return [setInitialValue ?? roomSharedKey, setRoomSharedKey];
 };
 
 export function getKeyForRoom(roomId: string): string | null {
-  saveKeyFromUrlParams(getUrlParams());
-  const key = getRoomSharedKeyLocalStorageKey(roomId);
-  return localStorage.getItem(key);
+  const { roomId: urlRoomId, password } = getUrlParams();
+  if (roomId !== urlRoomId)
+    logger.warn(
+      "requested key for a roomId which is not the current call room id (from the URL)",
+      roomId,
+      urlRoomId,
+    );
+  return (
+    password ?? localStorage.getItem(getRoomSharedKeyLocalStorageKey(roomId))
+  );
 }
-
-function saveKeyFromUrlParams(urlParams: UrlParams): void {
-  if (!urlParams.password || !urlParams.roomId) return;
-
-  // Take the key from the URL and save it.
-  // It's important to always use the room ID specified in the URL
-  // when saving keys rather than whatever the current room ID might be,
-  // in case we've moved to a different room but the URL hasn't changed.
-  saveKeyForRoom(urlParams.roomId, urlParams.password);
-}
-
-/**
- * Extracts the room password from the URL if one is present, saving it in localstorage
- * and returning it in a tuple with the corresponding room ID from the URL.
- * @returns A tuple of the roomId and password from the URL if the URL has both,
- *          otherwise [undefined, undefined]
- */
-const useKeyFromUrl = (): [string, string] | [undefined, undefined] => {
-  const urlParams = useUrlParams();
-
-  useEffect(() => saveKeyFromUrlParams(urlParams), [urlParams]);
-
-  return urlParams.roomId && urlParams.password
-    ? [urlParams.roomId, urlParams.password]
-    : [undefined, undefined];
-};
 
 export type Unencrypted = { kind: E2eeType.NONE };
 export type SharedSecret = { kind: E2eeType.SHARED_KEY; secret: string };
@@ -66,12 +78,11 @@ export type EncryptionSystem = Unencrypted | SharedSecret | PerParticipantE2EE;
 export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
   const { client } = useClient();
 
-  // make sure we've extracted the key from the URL first
-  // (and we still need to take the value it returns because
-  // the effect won't run in time for it to save to localstorage in
-  // time for us to read it out again).
-  const [urlRoomId, passwordFromUrl] = useKeyFromUrl();
-  const storedPassword = useInternalRoomSharedKey(roomId);
+  const [storedPassword] = useRoomSharedKey(
+    getRoomSharedKeyLocalStorageKey(roomId),
+    getKeyForRoom(roomId) ?? undefined,
+  );
+
   const room = client?.getRoom(roomId);
   const e2eeSystem = <EncryptionSystem>useMemo(() => {
     if (!room) return { kind: E2eeType.NONE };
@@ -80,15 +91,10 @@ export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
         kind: E2eeType.SHARED_KEY,
         secret: storedPassword,
       };
-    if (urlRoomId === roomId)
-      return {
-        kind: E2eeType.SHARED_KEY,
-        secret: passwordFromUrl,
-      };
     if (room.hasEncryptionStateEvent()) {
       return { kind: E2eeType.PER_PARTICIPANT };
     }
     return { kind: E2eeType.NONE };
-  }, [passwordFromUrl, room, roomId, storedPassword, urlRoomId]);
+  }, [room, storedPassword]);
   return e2eeSystem;
 }
