@@ -5,13 +5,18 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import EventEmitter from "events";
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback } from "react";
+import { TypedEventEmitter } from "matrix-js-sdk";
+
+import { useTypedEventEmitterState } from "./useEvents";
 
 type LocalStorageItem = ReturnType<typeof localStorage.getItem>;
 
 // Bus to notify other useLocalStorage consumers when an item is changed
-export const localStorageBus = new EventEmitter();
+export const localStorageBus = new TypedEventEmitter<
+  string,
+  { [key: string]: () => void }
+>();
 
 /**
  * Like useState, but reads from and persists the value to localStorage
@@ -21,18 +26,11 @@ export const localStorageBus = new EventEmitter();
 export function useLocalStorage(
   key: string,
 ): [LocalStorageItem, (value: string) => void] {
-  const subscribe = useCallback(
-    (onChange: () => void) => {
-      localStorageBus.on(key, onChange);
-      return (): void => {
-        localStorageBus.off(key, onChange);
-      };
-    },
-    [key],
+  const value = useTypedEventEmitterState(
+    localStorageBus,
+    key,
+    useCallback(() => localStorage.getItem(key), [key]),
   );
-  const getValue = useCallback(() => localStorage.getItem(key), [key]);
-
-  const value = useSyncExternalStore(subscribe, getValue);
   const setValue = useCallback(
     (newValue: string) => setLocalStorageItemReactive(key, newValue),
     [key],
@@ -46,5 +44,5 @@ export const setLocalStorageItemReactive = (
   value: string,
 ): void => {
   localStorage.setItem(key, value);
-  localStorageBus.emit(key, value);
+  localStorageBus.emit(key);
 };
