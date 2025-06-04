@@ -26,11 +26,11 @@ import {
   type RemoteParticipant,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
-import { isEqual } from "lodash-es";
 import {
   type CallMembership,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { CallViewModel, type Layout } from "./CallViewModel";
 import {
@@ -200,7 +200,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
     // care about the most recent value for each time step, so discard these
     // extra values.
     debounceTime(0),
-    distinctUntilChanged(isEqual),
+    distinctUntilChanged(deepCompare),
   );
 }
 
