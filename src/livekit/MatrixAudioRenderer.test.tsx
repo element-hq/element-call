@@ -60,16 +60,6 @@ it("should render for member", () => {
 });
 
 it("should not render without member", () => {
-  const { container, queryAllByTestId } = render(
-    <MatrixAudioRenderer
-      members={[{ sender: "othermember", deviceId: "123" }] as CallMembership[]}
-    />,
-  );
-  expect(container).toBeTruthy();
-  expect(queryAllByTestId("audio")).toHaveLength(0);
-});
-
-it("should not render without member", () => {
   const memberships = [
     { sender: "othermember", deviceId: "123" },
   ] as CallMembership[];
@@ -78,7 +68,6 @@ it("should not render without member", () => {
   );
   expect(container).toBeTruthy();
   expect(queryAllByTestId("audio")).toHaveLength(0);
-  
 });
 
 it("should not setup audioContext gain and pan if there is no need to.", () => {
