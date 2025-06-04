@@ -53,6 +53,7 @@ import {
   useTrackProcessorSync,
 } from "../livekit/TrackProcessorContext";
 import { usePageTitle } from "../usePageTitle";
+import { useLatest } from "../useLatest";
 
 interface Props {
   client: MatrixClient;
@@ -159,13 +160,14 @@ export const LobbyView: FC<Props> = ({
     ],
   );
 
+  const latestMuteStates = useLatest(muteStates);
   const onError = useCallback(
     (error: Error) => {
       logger.error("Error while creating preview Tracks:", error);
-      muteStates.audio.setEnabled?.(false);
-      muteStates.video.setEnabled?.(false);
+      latestMuteStates.current.audio.setEnabled?.(false);
+      latestMuteStates.current.video.setEnabled?.(false);
     },
-    [muteStates.audio, muteStates.video],
+    [latestMuteStates],
   );
 
   const tracks = usePreviewTracks(localTrackOptions, onError);
