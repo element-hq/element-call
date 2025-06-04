@@ -60,7 +60,7 @@ function useMuteState(
     // Determine the default value once devices are actually connected
     (prev) =>
       prev ?? (device.available.size > 0 ? enabledByDefault() : undefined),
-    [device],
+    [device.available.size],
   );
   return useMemo(
     () =>
@@ -70,7 +70,7 @@ function useMuteState(
             enabled: enabled ?? false,
             setEnabled: setEnabled as Dispatch<SetStateAction<boolean>>,
           },
-    [device, enabled, setEnabled],
+    [device.available.size, enabled, setEnabled],
   );
 }
 
