@@ -57,7 +57,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
 
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const optInDescription = (
-    <Text size="sm">
+    <Text size="sm" as="span">
       <Trans i18nKey="settings.opt_in_description">
         <AnalyticsNotice />
         <br />
