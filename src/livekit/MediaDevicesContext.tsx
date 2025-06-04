@@ -401,10 +401,10 @@ export const useMediaDeviceNames = (
   enabled = true,
 ): void =>
   useEffect(() => {
-    if (enabled) {
-      context.startUsingDeviceNames();
-      return context.stopUsingDeviceNames;
-    }
+    // if (enabled) {
+    //   context.startUsingDeviceNames();
+    //   return context.stopUsingDeviceNames;
+    // }
   }, [context, enabled]);
 
 /**
