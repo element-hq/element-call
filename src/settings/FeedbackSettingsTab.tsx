@@ -57,14 +57,12 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
 
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const optInDescription = (
-    <Text size="sm">
-      <Trans i18nKey="settings.opt_in_description">
-        <AnalyticsNotice />
-        <br />
-        You may withdraw consent by unchecking this box. If you are currently in
-        a call, this setting will take effect at the end of the call.
-      </Trans>
-    </Text>
+    <Trans i18nKey="settings.opt_in_description">
+      <AnalyticsNotice />
+      <br />
+      You may withdraw consent by unchecking this box. If you are currently in a
+      call, this setting will take effect at the end of the call.
+    </Trans>
   );
 
   // in the embedded package the widget host is responsible for analytics consent
