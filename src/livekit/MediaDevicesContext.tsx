@@ -20,7 +20,7 @@ import { createMediaDeviceObserver } from "@livekit/components-core";
 import { combineLatest, distinctUntilChanged, map, startWith } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { isEqual } from "lodash-es";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import {
   useSetting,
@@ -141,13 +141,16 @@ function useMediaDeviceHandle(
         kind,
         () => logger.error("Error creating MediaDeviceObserver"),
         requestPermissions,
+      ).pipe(
+        startWith([]),
         // This Observable emits new values whenever the browser fires a
         // MediaDevices 'devicechange' event. One would think, innocently, that
         // a 'devicechange' event means the devices have changed. But as of the
         // time of writing, we are seeing mobile Safari firing spurious
         // 'devicechange' events (where no change has actually occurred) when
         // we call MediaDevices.getUserMedia. So, filter by deep equality.
-      ).pipe(startWith([]), distinctUntilChanged<MediaDeviceInfo[]>(isEqual)),
+        distinctUntilChanged<MediaDeviceInfo[]>(deepCompare),
+      ),
     [kind, requestPermissions],
   );
   const available = useObservableEagerState(
