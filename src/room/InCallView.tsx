@@ -147,8 +147,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
           logger.error("[Lifecycle] Failed to disconnect from livekit room", e);
         });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [livekitRoom]);
 
   useEffect(() => {
     if (livekitRoom !== undefined) {

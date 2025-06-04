@@ -13,7 +13,11 @@ type LocalStorageItem = ReturnType<typeof localStorage.getItem>;
 // Bus to notify other useLocalStorage consumers when an item is changed
 export const localStorageBus = new EventEmitter();
 
-// Like useState, but reads from and persists the value to localStorage
+/**
+ * Like useState, but reads from and persists the value to localStorage
+ * This hook will not update when we write to localStorage.setItem(key, value) directly.
+ * For the hook to react either use the returned setter or `setLocalStorageItemReactive`.
+ */
 export const useLocalStorage = (
   key: string,
 ): [LocalStorageItem, (value: string) => void] => {
@@ -41,15 +45,10 @@ export const useLocalStorage = (
   ];
 };
 
-export const setLocalStorageItem = (key: string, value: string): void => {
-  // Avoid unnecessary updates. Not avoiding them so can cause unexpected state updates across hooks.
-  // For instance:
-  // - In call view uses useRoomEncryptionSystem
-  // - This will set the key again.
-  // - All other instances of useRoomEncryptionSystem will now do a useMemo update of the e2eeSystem
-  //   - because the dependency `storedPassword = useInternalRoomSharedKey(roomId);` would change.
-  if (localStorage.getItem(key) === value) return;
-
+export const setLocalStorageItemReactive = (
+  key: string,
+  value: string,
+): void => {
   localStorage.setItem(key, value);
   localStorageBus.emit(key, value);
 };
