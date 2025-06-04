@@ -8,11 +8,9 @@ Please see LICENSE in the repository root for full details.
 import {
   type FC,
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type JSX,
 } from "react";
@@ -186,7 +184,7 @@ function useMediaDeviceHandle(
               ]);
             const availablePrint = Array.from(available.entries()).map(
               ([id, label]) =>
-                `id:${id === "" ? '""' : id} label:${(label as any).name}\n`,
+                `id:${id === "" ? '""' : id} label:${(label as { name?: string }).name}\n`,
             );
             logger.info(
               `Media devices changed.\nkind ${kind}\n(deviceObserver$ updated): ${availablePrint}`,

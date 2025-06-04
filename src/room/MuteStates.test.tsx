@@ -106,8 +106,6 @@ function mockMediaDevices(
     videoInput: mockDevices(
       camera ? new Map([[mockCamera.deviceId, mockCamera]]) : new Map(),
     ),
-    startUsingDeviceNames: (): void => {},
-    stopUsingDeviceNames: (): void => {},
   };
 }
 

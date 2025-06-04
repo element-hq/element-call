@@ -126,8 +126,6 @@ test("will use the correct device", () => {
           useAsEarpiece: false,
         },
         videoInput: deviceStub,
-        startUsingDeviceNames: () => {},
-        stopUsingDeviceNames: () => {},
       }}
     >
       <TestComponentWrapper />
@@ -161,8 +159,6 @@ test("will use the pan if earpiece is selected", async () => {
           useAsEarpiece: true,
         },
         videoInput: deviceStub,
-        startUsingDeviceNames: () => {},
-        stopUsingDeviceNames: () => {},
       }}
     >
       <TestComponentWrapper />
