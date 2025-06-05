@@ -124,7 +124,7 @@ function useMediaDeviceHandle(
   usingNames: boolean,
 ): MediaDeviceHandle {
   const hasRequestedPermissions = useRef(false);
-  const requestPermissions = usingNames || hasRequestedPermissions.current;
+  // const requestPermissions = usingNames || hasRequestedPermissions.current;
   // Make sure we don't needlessly reset to a device observer without names,
   // once permissions are already given
   hasRequestedPermissions.current ||= usingNames;
@@ -140,7 +140,7 @@ function useMediaDeviceHandle(
       createMediaDeviceObserver(
         kind,
         () => logger.error("Error creating MediaDeviceObserver"),
-        requestPermissions,
+        true,
       ).pipe(
         startWith([]),
         // This Observable emits new values whenever the browser fires a
@@ -151,7 +151,7 @@ function useMediaDeviceHandle(
         // we call MediaDevices.getUserMedia. So, filter by deep equality.
         distinctUntilChanged<MediaDeviceInfo[]>(deepCompare),
       ),
-    [kind, requestPermissions],
+    [kind],
   );
   const available = useObservableEagerState(
     useMemo(
@@ -399,23 +399,6 @@ function useControlledOutput(): MediaDeviceHandle {
 
 export const useMediaDevices = (): MediaDevices =>
   useContext(MediaDevicesContext);
-
-/**
- * React hook that requests for the media devices context to be populated with
- * real device names while this component is mounted. This is not done by
- * default because it may involve requesting additional permissions from the
- * user.
- */
-export const useMediaDeviceNames = (
-  context: MediaDevices,
-  enabled = true,
-): void =>
-  useEffect(() => {
-    if (enabled) {
-      context.startUsingDeviceNames();
-      return context.stopUsingDeviceNames;
-    }
-  }, [context, enabled]);
 
 /**
  * A convenience hook to get the audio node configuration for the earpiece.
