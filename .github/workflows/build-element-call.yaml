@@ -9,6 +9,11 @@ on:
         type: string # This would ideally be a `choice` type, but that isn't supported yet
         description: The package type to be built. Must be one of 'full' or 'embedded'
         required: true
+      build_mode:
+        type: string # This would ideally be a `choice` type, but that isn't supported yet
+        description: The build mode for vite. Must be either 'development' or 'production'
+        required: true
+        default: production
     secrets:
       SENTRY_ORG:
         required: true
@@ -39,7 +44,7 @@ jobs:
         run: "yarn install --immutable"
       - name: Build full version
         if: ${{ inputs.package == 'full' }}
-        run: "yarn run build:full"
+        run: ${{ format('yarn run build:full:{0}', inputs.build_mode) }}
         env:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -50,7 +55,7 @@ jobs:
           NODE_OPTIONS: "--max-old-space-size=4096"
       - name: Build embedded
         if: ${{ inputs.package == 'embedded' }}
-        run: "yarn run build:embedded"
+        run: ${{ format('yarn run build:embedded:{0}', inputs.build_mode) }}
         env:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
