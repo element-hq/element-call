@@ -9,10 +9,12 @@ import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type LivekitFocus, isLivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
+
+import { useTypedEventEmitterState } from "../useEvents";
 
 /**
  * Gets the currently active (livekit) focus for a MatrixRTC session
@@ -22,38 +24,27 @@ import { type LivekitFocus, isLivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
 export function useActiveLivekitFocus(
   rtcSession: MatrixRTCSession,
 ): LivekitFocus | undefined {
-  const [activeFocus, setActiveFocus] = useState(() => {
-    const f = rtcSession.getActiveFocus();
-    // Only handle foci with type="livekit" for now.
-    return !!f && isLivekitFocus(f) ? f : undefined;
-  });
+  const activeFocus = useTypedEventEmitterState(
+    rtcSession,
+    MatrixRTCSessionEvent.MembershipsChanged,
+    useCallback(() => {
+      const f = rtcSession.getActiveFocus();
+      // Only handle foci with type="livekit" for now.
+      return !!f && isLivekitFocus(f) ? f : undefined;
+    }, [rtcSession]),
+  );
 
-  const onMembershipsChanged = useCallback(() => {
-    const newActiveFocus = rtcSession.getActiveFocus();
-    if (!!newActiveFocus && !isLivekitFocus(newActiveFocus)) return;
-    if (!deepCompare(activeFocus, newActiveFocus)) {
+  const prevActiveFocus = useRef(activeFocus);
+  useEffect(() => {
+    if (!deepCompare(activeFocus, prevActiveFocus.current)) {
       const oldestMembership = rtcSession.getOldestMembership();
       logger.warn(
         `Got new active focus from membership: ${oldestMembership?.sender}/${oldestMembership?.deviceId}.
-        Updating focus (focus switch) from ${JSON.stringify(activeFocus)} to ${JSON.stringify(newActiveFocus)}`,
+        Updated focus (focus switch) from ${JSON.stringify(prevActiveFocus.current)} to ${JSON.stringify(activeFocus)}`,
       );
-      setActiveFocus(newActiveFocus);
+      prevActiveFocus.current = activeFocus;
     }
   }, [activeFocus, rtcSession]);
-
-  useEffect(() => {
-    rtcSession.on(
-      MatrixRTCSessionEvent.MembershipsChanged,
-      onMembershipsChanged,
-    );
-
-    return (): void => {
-      rtcSession.off(
-        MatrixRTCSessionEvent.MembershipsChanged,
-        onMembershipsChanged,
-      );
-    };
-  });
 
   return activeFocus;
 }
