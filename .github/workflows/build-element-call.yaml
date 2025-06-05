@@ -12,7 +12,7 @@ on:
       build_mode:
         type: string # This would ideally be a `choice` type, but that isn't supported yet
         description: The build mode for vite. Must be either 'development' or 'production'
-        required: true
+        required: false
         default: production
     secrets:
       SENTRY_ORG:
