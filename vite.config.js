@@ -89,7 +89,7 @@ export default defineConfig(({ mode, packageType }) => {
       },
     },
     build: {
-      minify: mode === 'production' ? true : false,
+      minify: mode === "production" ? true : false,
       sourcemap: true,
       rollupOptions: {
         output: {
