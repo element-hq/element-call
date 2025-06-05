@@ -14,6 +14,7 @@ jobs:
     with:
       package: full
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
+      build_mode: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'development build') && 'development' || 'production' }}
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
