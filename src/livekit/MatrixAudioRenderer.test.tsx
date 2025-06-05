@@ -16,15 +16,18 @@ import { type RemoteAudioTrack } from "livekit-client";
 import { type ReactNode } from "react";
 import { useTracks } from "@livekit/components-react";
 
-import { testAudioContext } from "../useAudioContext.test";
+import {
+  TestAudioConstructor,
+  testAudioContext,
+  TestAudioContextConstructor,
+} from "../useAudioContext.test";
 import * as MediaDevicesContext from "./MediaDevicesContext";
 import { MatrixAudioRenderer } from "./MatrixAudioRenderer";
 import { mockTrack } from "../utils/test";
 
-export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
-
 beforeEach(() => {
   vi.stubGlobal("AudioContext", TestAudioContextConstructor);
+  vi.stubGlobal("Audio", TestAudioConstructor);
 });
 
 afterEach(() => {
