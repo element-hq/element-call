@@ -108,7 +108,7 @@ interface EmitterMock<T> {
   removeListener: () => T;
 }
 
-function mockEmitter<T>(): EmitterMock<T> {
+export function mockEmitter<T>(): EmitterMock<T> {
   return {
     on(): T {
       return this as T;
