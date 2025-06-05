@@ -11,7 +11,7 @@
     "build:full:production": "yarn build:full",
     "build:full:development": "NODE_OPTIONS=--max-old-space-size=16384 NODE_ENV=development vite build --mode development",
     "build:embedded": "yarn build:full --config vite-embedded.config.js",
-    "build:embedded:production": "build:embedded",
+    "build:embedded:production": "yarn build:embedded",
     "build:embedded:development": "NODE_ENV=development yarn build:full --config vite-embedded.config.js --mode development",
     "serve": "vite preview",
     "prettier:check": "prettier -c .",
