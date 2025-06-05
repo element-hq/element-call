@@ -18,6 +18,7 @@ import {
 } from "./livekit/MediaDevicesContext";
 import { type PrefetchedSounds } from "./soundUtils";
 import { useUrlParams } from "./UrlParams";
+import { useInitial } from "./useInitial";
 
 /**
  * Play a sound though a given AudioContext. Will take
@@ -59,7 +60,6 @@ interface Props<S extends string> {
 
 interface UseAudioContext<S> {
   playSound(soundName: S): Promise<void>;
-  htmlAudioElement: HTMLAudioElement;
 }
 
 /**
@@ -77,7 +77,7 @@ export function useAudioContext<S extends string>(
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
 
-  const [htmlAudioElement] = useState((): HTMLAudioElement => new Audio());
+  const htmlAudioElement = useInitial((): HTMLAudioElement => new Audio());
 
   useEffect(() => {
     const sounds = props.sounds;
@@ -141,6 +141,5 @@ export function useAudioContext<S extends string>(
         earpiecePan,
       );
     },
-    htmlAudioElement,
   };
 }
