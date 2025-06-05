@@ -87,6 +87,7 @@ export const testAudioContext = {
   createGain: vi.fn().mockReturnValue(gainNode),
   createStereoPanner: vi.fn().mockReturnValue(panNode),
   close: vi.fn().mockResolvedValue(undefined),
+  createMediaStreamDestination: vi.fn(),
 };
 export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
 
