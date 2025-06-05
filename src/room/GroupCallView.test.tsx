@@ -29,6 +29,7 @@ import { useAudioContext } from "../useAudioContext";
 import { ActiveCall } from "./InCallView";
 import {
   flushPromises,
+  mockEmitter,
   mockMatrixRoom,
   mockMatrixRoomMember,
   mockRtcMembership,
@@ -129,6 +130,7 @@ function createGroupCallView(
     getMxcAvatarUrl: () => null,
     getCanonicalAlias: () => null,
     currentState: {
+      ...mockEmitter(),
       getJoinRule: () => JoinRule.Invite,
     } as Partial<RoomState> as RoomState,
   });
