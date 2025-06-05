@@ -7,13 +7,19 @@ Please see LICENSE in the repository root for full details.
 
 import { useEffect, useMemo } from "react";
 
-import { setLocalStorageItem, useLocalStorage } from "../useLocalStorage";
+import {
+  setLocalStorageItemReactive,
+  useLocalStorage,
+} from "../useLocalStorage";
 import { type UrlParams, getUrlParams, useUrlParams } from "../UrlParams";
 import { E2eeType } from "./e2eeType";
 import { useClient } from "../ClientContext";
 
 export function saveKeyForRoom(roomId: string, password: string): void {
-  setLocalStorageItem(getRoomSharedKeyLocalStorageKey(roomId), password);
+  setLocalStorageItemReactive(
+    getRoomSharedKeyLocalStorageKey(roomId),
+    password,
+  );
 }
 
 const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
