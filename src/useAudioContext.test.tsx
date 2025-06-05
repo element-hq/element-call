@@ -87,13 +87,19 @@ export const testAudioContext = {
   createGain: vi.fn().mockReturnValue(gainNode),
   createStereoPanner: vi.fn().mockReturnValue(panNode),
   close: vi.fn().mockResolvedValue(undefined),
-  createMediaStreamDestination: vi.fn(),
+  createMediaStreamDestination: vi.fn().mockReturnValue({ stream: undefined }),
 };
 export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
+export const testAudioElement = {
+  setSinkId: vi.fn().mockResolvedValue(null),
+};
+export const TestAudioConstructor = vi.fn(() => testAudioElement);
 
 let user: UserEvent;
 beforeEach(() => {
   vi.stubGlobal("AudioContext", TestAudioContextConstructor);
+  vi.stubGlobal("Audio", TestAudioConstructor);
+
   user = userEvent.setup();
 });
 
@@ -115,6 +121,7 @@ test("will ignore sounds that are not registered", async () => {
 });
 
 test("will use the correct device", () => {
+  testAudioElement.setSinkId.mockClear();
   render(
     <MediaDevicesContext.Provider
       value={{
@@ -135,7 +142,7 @@ test("will use the correct device", () => {
     </MediaDevicesContext.Provider>,
   );
   expect(testAudioContext.createBufferSource).not.toHaveBeenCalled();
-  expect(testAudioContext.setSinkId).toHaveBeenCalledWith("chosen-device");
+  expect(testAudioElement.setSinkId).toHaveBeenCalledWith("chosen-device");
 });
 
 test("will use the correct volume level", async () => {

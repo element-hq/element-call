@@ -59,6 +59,7 @@ interface Props<S extends string> {
 
 interface UseAudioContext<S> {
   playSound(soundName: S): Promise<void>;
+  htmlAudioElement: HTMLAudioElement;
 }
 
 /**
@@ -140,5 +141,6 @@ export function useAudioContext<S extends string>(
         earpiecePan,
       );
     },
+    htmlAudioElement,
   };
 }
