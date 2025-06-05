@@ -20,7 +20,6 @@ import { createMediaDeviceObserver } from "@livekit/components-core";
 import { combineLatest, distinctUntilChanged, map, startWith } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import {
   useSetting,
@@ -149,7 +148,14 @@ function useMediaDeviceHandle(
         // time of writing, we are seeing mobile Safari firing spurious
         // 'devicechange' events (where no change has actually occurred) when
         // we call MediaDevices.getUserMedia. So, filter by deep equality.
-        distinctUntilChanged<MediaDeviceInfo[]>(deepCompare),
+        distinctUntilChanged<MediaDeviceInfo[]>((prev, current) => {
+          if (prev.length !== current.length) return true;
+          if (prev.length === 0) return false;
+          return !current.every(
+            (d, i) =>
+              d.deviceId === prev[i].deviceId && d.label === prev[i].label,
+          );
+        }),
       ),
     [kind, requestPermissions],
   );
