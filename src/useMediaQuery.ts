@@ -1,13 +1,11 @@
 /*
-Copyright 2023, 2024 New Vector Ltd.
+Copyright 2023-2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useCallback, useMemo, useState } from "react";
-
-import { useEventTarget } from "./useEvents";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 /**
  * React hook that tracks whether the given media query matches.
@@ -15,14 +13,13 @@ import { useEventTarget } from "./useEvents";
 export function useMediaQuery(query: string): boolean {
   const mediaQuery = useMemo(() => window.matchMedia(query), [query]);
 
-  const [numChanges, setNumChanges] = useState(0);
-  useEventTarget(
-    mediaQuery,
-    "change",
-    useCallback(() => setNumChanges((n) => n + 1), [setNumChanges]),
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      mediaQuery.addEventListener("change", onChange);
+      return (): void => mediaQuery.removeEventListener("change", onChange);
+    },
+    [mediaQuery],
   );
-
-  // We want any change to the update counter to trigger an update here
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => mediaQuery.matches, [mediaQuery, numChanges]);
+  const getState = useCallback(() => mediaQuery.matches, [mediaQuery]);
+  return useSyncExternalStore(subscribe, getState);
 }

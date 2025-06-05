@@ -10,33 +10,31 @@ import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { useEffect, useState } from "react";
+import { TypedEventEmitter } from "matrix-js-sdk";
+import { useCallback, useEffect } from "react";
+
+import { useTypedEventEmitterState } from "./useEvents";
+
+const dummySession = new TypedEventEmitter();
 
 export function useMatrixRTCSessionJoinState(
   rtcSession: MatrixRTCSession | undefined,
 ): boolean {
-  const [, setNumUpdates] = useState(0);
+  // React doesn't allow you to run a hook conditionally, so we have to plug in
+  // a dummy event emitter in case there is no rtcSession yet
+  const isJoined = useTypedEventEmitterState(
+    rtcSession ?? dummySession,
+    MatrixRTCSessionEvent.JoinStateChanged,
+    useCallback(() => rtcSession?.isJoined() ?? false, [rtcSession]),
+  );
 
   useEffect(() => {
-    if (rtcSession !== undefined) {
-      const onJoinStateChanged = (isJoined: boolean): void => {
-        logger.info(
-          `Session in room ${rtcSession.room.roomId} changed to ${
-            isJoined ? "joined" : "left"
-          }`,
-        );
-        setNumUpdates((n) => n + 1); // Force an update
-      };
-      rtcSession.on(MatrixRTCSessionEvent.JoinStateChanged, onJoinStateChanged);
+    logger.info(
+      `Session in room ${rtcSession?.room.roomId} changed to ${
+        isJoined ? "joined" : "left"
+      }`,
+    );
+  }, [rtcSession, isJoined]);
 
-      return (): void => {
-        rtcSession.off(
-          MatrixRTCSessionEvent.JoinStateChanged,
-          onJoinStateChanged,
-        );
-      };
-    }
-  }, [rtcSession]);
-
-  return rtcSession?.isJoined() ?? false;
+  return isJoined;
 }
