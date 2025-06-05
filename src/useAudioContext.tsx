@@ -76,15 +76,18 @@ export function useAudioContext<S extends string>(
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
 
+  const [htmlAudioElement] = useState((): HTMLAudioElement => new Audio());
+
   useEffect(() => {
     const sounds = props.sounds;
-    if (!sounds) {
+    if (!sounds || !htmlAudioElement) {
       return;
     }
     const ctx = new AudioContext({
       // We want low latency for these effects.
       latencyHint: props.latencyHint,
     });
+    htmlAudioElement.srcObject = ctx.createMediaStreamDestination().stream;
 
     // We want to clone the content of our preloaded
     // sound buffers into this context. The context may
@@ -107,22 +110,16 @@ export function useAudioContext<S extends string>(
       });
       setAudioContext(undefined);
     };
-  }, [props.sounds, props.latencyHint]);
+  }, [props.sounds, props.latencyHint, htmlAudioElement]);
 
   // Update the sink ID whenever we change devices.
   useEffect(() => {
-    if (
-      audioContext &&
-      "setSinkId" in audioContext &&
-      !controlledAudioDevices
-    ) {
-      // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/setSinkId
-      // @ts-expect-error - setSinkId doesn't exist yet in types, maybe because it's not supported everywhere.
-      audioContext.setSinkId(audioOutput.selectedId).catch((ex) => {
+    if (!controlledAudioDevices && audioOutput.selectedId) {
+      htmlAudioElement.setSinkId(audioOutput.selectedId).catch((ex) => {
         logger.warn("Unable to change sink for audio context", ex);
       });
     }
-  }, [audioContext, audioOutput.selectedId, controlledAudioDevices]);
+  }, [audioOutput.selectedId, controlledAudioDevices, htmlAudioElement]);
   const { pan: earpiecePan, volume: earpieceVolume } = useEarpieceAudioConfig();
 
   // Don't return a function until we're ready.
