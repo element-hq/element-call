@@ -69,16 +69,27 @@ const CONFIG_JSON = {
  * Set the Element Call URL in the dev tool settings using `window.mxSettingsStore` via `page.evaluate`.
  * @param page
  */
-async function setDevToolElementCallDevUrl(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    window.mxSettingsStore.setValue(
-      "Developer.elementCallUrl",
-      null,
-      "device",
-      "https://localhost:3000/room",
-    );
-  });
-}
+const setDevToolElementCallDevUrl = process.env.USE_DOCKER
+  ? async (page: Page): Promise<void> => {
+      await page.evaluate(() => {
+        window.mxSettingsStore.setValue(
+          "Developer.elementCallUrl",
+          null,
+          "device",
+          "http://localhost:8080/room",
+        );
+      });
+    }
+  : async (page: Page): Promise<void> => {
+      await page.evaluate(() => {
+        window.mxSettingsStore.setValue(
+          "Developer.elementCallUrl",
+          null,
+          "device",
+          "https://localhost:3000/room",
+        );
+      });
+    };
 
 /**
  * Registers a new user and returns page, clientHandle and mxId.
