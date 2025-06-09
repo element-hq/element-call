@@ -2,10 +2,10 @@
 
 exports[`the content is rendered when the modal is open 1`] = `
 <div
-  aria-labelledby="radix-:r4:"
+  aria-labelledby="radix-«r4»"
   class="overlay animate modal dialog _glass_sepwu_8"
   data-state="open"
-  id="radix-:r3:"
+  id="radix-«r3»"
   role="dialog"
   style="pointer-events: auto;"
   tabindex="-1"
@@ -18,7 +18,7 @@ exports[`the content is rendered when the modal is open 1`] = `
     >
       <h2
         class="_typography_6v6n8_153 _font-heading-md-semibold_6v6n8_112"
-        id="radix-:r4:"
+        id="radix-«r4»"
       >
         My modal
       </h2>
@@ -36,7 +36,7 @@ exports[`the content is rendered when the modal is open 1`] = `
 
 exports[`the modal renders as a drawer in mobile viewports 1`] = `
 <div
-  aria-labelledby="radix-:ra:"
+  aria-labelledby="radix-«ra»"
   class="overlay modal drawer"
   data-state="open"
   data-vaul-animate="true"
@@ -45,7 +45,7 @@ exports[`the modal renders as a drawer in mobile viewports 1`] = `
   data-vaul-drawer=""
   data-vaul-drawer-direction="bottom"
   data-vaul-snap-points="false"
-  id="radix-:r9:"
+  id="radix-«r9»"
   role="dialog"
   style="pointer-events: auto;"
   tabindex="-1"
@@ -60,7 +60,7 @@ exports[`the modal renders as a drawer in mobile viewports 1`] = `
         class="handle"
       />
       <h2
-        id="radix-:ra:"
+        id="radix-«ra»"
         style="position: absolute; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; word-wrap: normal;"
       >
         My modal
