@@ -6883,7 +6883,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"copy-to-clipboard@npm:^3.3.1":
+"copy-to-clipboard@npm:^3.3.3":
   version: 3.3.3
   resolution: "copy-to-clipboard@npm:3.3.3"
   dependencies:
@@ -7502,6 +7502,7 @@ __metadata:
     "@vitest/coverage-v8": "npm:^3.0.0"
     babel-plugin-transform-vite-meta-env: "npm:^1.0.3"
     classnames: "npm:^2.3.1"
+    copy-to-clipboard: "npm:^3.3.3"
     eslint: "npm:^8.14.0"
     eslint-config-google: "npm:^0.14.0"
     eslint-config-prettier: "npm:^10.0.0"
@@ -7536,7 +7537,6 @@ __metadata:
     react-dom: "npm:19"
     react-i18next: "npm:^15.0.0"
     react-router-dom: "npm:^7.0.0"
-    react-use-clipboard: "npm:^1.0.7"
     react-use-measure: "npm:^2.1.1"
     rxjs: "npm:^7.8.1"
     sass: "npm:^1.42.1"
@@ -11741,18 +11741,6 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/841938ff16d16a6b76895f4cb2e1fea957e5fe3b30febbf03a54892dae1c9153f2383e231dea0b3ba41192ad2f2849448fa859caccd288943bce32639e971bee
-  languageName: node
-  linkType: hard
-
-"react-use-clipboard@npm:^1.0.7":
-  version: 1.0.9
-  resolution: "react-use-clipboard@npm:1.0.9"
-  dependencies:
-    copy-to-clipboard: "npm:^3.3.1"
-  peerDependencies:
-    react: ^16.8.0 || ^17 || ^18
-    react-dom: ^16.8.0 || ^17 || ^18
-  checksum: 10c0/f75ba85b885ae45d0c99a09a0652a2f64c1d9d6d015293bf01b2e6a9f50ff2a6b1830f6e60c1f639b9ae33fa434bb31adbf43f613df2402438204ea7456cf86a
   languageName: node
   linkType: hard
 
