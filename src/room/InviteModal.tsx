@@ -19,7 +19,7 @@ import {
   LinkIcon,
   CheckIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
-import useClipboard from "react-use-clipboard";
+import copy from "copy-to-clipboard";
 
 import { Modal } from "../Modal";
 import { getAbsoluteRoomUrl } from "../utils/matrix";
@@ -42,18 +42,17 @@ export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
     () => getAbsoluteRoomUrl(room.roomId, e2eeSystem, room.name),
     [e2eeSystem, room.name, room.roomId],
   );
-  const [, setCopied] = useClipboard(url);
   const [toastOpen, setToastOpen] = useState(false);
   const onToastDismiss = useCallback(() => setToastOpen(false), [setToastOpen]);
 
   const onButtonClick = useCallback(
     (e: MouseEvent) => {
       e.stopPropagation();
-      setCopied();
+      copy(url);
       onDismiss();
       setToastOpen(true);
     },
-    [setCopied, onDismiss],
+    [url, onDismiss],
   );
 
   return (
