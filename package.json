@@ -54,7 +54,7 @@
     "@radix-ui/react-dialog": "^1.0.4",
     "@radix-ui/react-slider": "^1.1.2",
     "@radix-ui/react-visually-hidden": "^1.0.3",
-    "@react-spring/web": "^9.4.4",
+    "@react-spring/web": "^10.0.0",
     "@sentry/react": "^8.0.0",
     "@sentry/vite-plugin": "^3.0.0",
     "@stylistic/eslint-plugin": "^3.0.0",
