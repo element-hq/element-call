@@ -10,7 +10,14 @@ import {
   supportsBackgroundProcessors,
   type BackgroundOptions,
 } from "@livekit/track-processors";
-import { createContext, type FC, useContext, useEffect, useMemo } from "react";
+import {
+  createContext,
+  type FC,
+  type JSX,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
 import { type LocalVideoTrack } from "livekit-client";
 
 import {

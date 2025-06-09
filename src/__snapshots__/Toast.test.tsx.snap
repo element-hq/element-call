@@ -2,10 +2,10 @@
 
 exports[`Toast > renders 1`] = `
 <button
-  aria-labelledby="radix-:r4:"
+  aria-labelledby="radix-«r4»"
   class="overlay animate toast"
   data-state="open"
-  id="radix-:r3:"
+  id="radix-«r3»"
   role="dialog"
   style="pointer-events: auto;"
   tabindex="-1"
@@ -13,7 +13,7 @@ exports[`Toast > renders 1`] = `
 >
   <h3
     class="_typography_6v6n8_153 _font-body-sm-semibold_6v6n8_36"
-    id="radix-:r4:"
+    id="radix-«r4»"
   >
     Hello world!
   </h3>

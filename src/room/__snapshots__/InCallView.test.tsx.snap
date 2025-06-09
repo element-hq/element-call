@@ -46,7 +46,7 @@ exports[`InCallView > rendering > renders 1`] = `
       >
         <button
           aria-disabled="false"
-          aria-labelledby=":r0:"
+          aria-labelledby="«r0»"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="primary"
           data-size="lg"
@@ -69,7 +69,7 @@ exports[`InCallView > rendering > renders 1`] = `
         </button>
         <button
           aria-disabled="false"
-          aria-labelledby=":r5:"
+          aria-labelledby="«r5»"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="primary"
           data-size="lg"
@@ -91,7 +91,7 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-labelledby=":ra:"
+          aria-labelledby="«ra»"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="secondary"
           data-size="lg"
@@ -112,7 +112,7 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-labelledby=":rf:"
+          aria-labelledby="«rf»"
           class="_button_vczzf_8 endCall _has-icon_vczzf_57 _icon-only_vczzf_50 _destructive_vczzf_107"
           data-kind="primary"
           data-size="lg"
@@ -138,7 +138,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="toggle layout"
       >
         <input
-          aria-labelledby=":rk:"
+          aria-labelledby="«rk»"
           name="layout"
           type="radio"
           value="spotlight"
@@ -156,7 +156,7 @@ exports[`InCallView > rendering > renders 1`] = `
           />
         </svg>
         <input
-          aria-labelledby=":rp:"
+          aria-labelledby="«rp»"
           checked=""
           name="layout"
           type="radio"
