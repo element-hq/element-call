@@ -264,7 +264,6 @@ self-hosters and developers working with Element Call.
 
 ## 🛠️ Tools
 
-
 - [A Matrix server sanity tester including tests for proper MatrixRTC setup](https://codeberg.org/spaetz/testmatrix)
 
 ## 🤝 Want to Contribute?
