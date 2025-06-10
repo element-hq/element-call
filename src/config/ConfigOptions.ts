@@ -113,13 +113,9 @@ export interface ConfigOptions {
      * How long (in milliseconds) to wait before rotating end-to-end media encryption keys
      * when someone leaves a call.
      */
+    wait_for_key_rotation_ms?: number;
+    /** @deprecated use delay_new_key_sending_ms instead */
     key_rotation_on_leave_delay?: number;
-
-    /**
-     * How often (in milliseconds) keep-alive messages should be sent to the server for
-     * the MatrixRTC membership event.
-     */
-    membership_keep_alive_period?: number;
 
     /**
      * How long (in milliseconds) after the last keep-alive the server should expire the
@@ -133,6 +129,21 @@ export interface ConfigOptions {
      * The interval (in milliseconds) in which the client will send membership keep-alives to the server.
      */
     delayed_leave_event_restart_ms?: number;
+    /** @deprecated use delayed_leave_event_restart_ms instead */
+    membership_keep_alive_period?: number;
+
+    /**
+     * How long we wait before retrying after a network error on any of the requests.
+     */
+    network_error_retry_ms?: number;
+
+    /**
+     * The timeout (in milliseconds) after we joined the call, that our membership should expire
+     * unless we have explicitly updated it.
+     *
+     * This is what goes into the m.rtc.member event expiry field and is typically set to a number of hours.
+     */
+    membership_event_expiry_ms?: number;
   };
 }
 
