@@ -114,7 +114,7 @@ export interface ConfigOptions {
      * when someone leaves a call.
      */
     wait_for_key_rotation_ms?: number;
-    /** @deprecated use delay_new_key_sending_ms instead */
+    /** @deprecated use wait_for_key_rotation_ms instead */
     key_rotation_on_leave_delay?: number;
 
     /**
