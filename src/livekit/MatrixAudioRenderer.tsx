@@ -18,7 +18,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useEarpieceAudioConfig } from "./MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
-
+import * as controls from "../controls";
 export interface MatrixAudioRendererProps {
   /**
    * The list of participants to render audio for.
@@ -204,6 +204,7 @@ function AudioTrackWithAudioNodes({
       useContext ? [audioNodes.gain!, audioNodes.pan!] : [],
     );
     setTrackReady(true);
+    controls.setPlaybackStarted();
   }, [audioContext, audioNodes, setTrackReady, trackReady, trackRef]);
 
   return (

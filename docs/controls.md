@@ -19,3 +19,7 @@ On mobile platforms (iOS, Android), web views do not reliably support selecting 
 - `controls.setAudioEnabled(enabled: boolean)` Enables/disables all audio output from the application. Output is enabled by default.
 - `showNativeAudioDevicePicker: (() => void) | undefined`. Callback called whenever the user presses the output button in the settings menu.
   This button is only shown on iOS. (`userAgent.includes("iPhone")`)
+- `controls.onAudioPlaybackStarted: ((id: string) => void) | undefined`: This will be called the first time we start
+  playing audio in the webview. It can be helpful to do device setup on the native app when the webviews audio is ready.
+  In particular android is using it to setup the output channel so that the call volume can
+  be controlled by the hardware volume rocker.
