@@ -255,12 +255,16 @@ self-hosters and developers working with Element Call.
 
 - [How to resolve stuck MatrixRTC calls](https://sspaeth.de/2025/02/how-to-resolve-stuck-matrixrtc-calls/)
 
-## 🛠️ How-Tos & Tutorials
+## 📝 How-Tos & Tutorials
 
 - [MatrixRTC aka Element-call setup (Geek warning)](https://sspaeth.de/2024/11/sfu/)
 - [MatrixRTC with Synology Container Manager (Docker)](https://ztfr.de/matrixrtc-with-synology-container-manager-docker/)
 - [Encrypted & Scalable Video Calls: How to deploy an Element Call backend with Synapse Using Docker-Compose](https://willlewis.co.uk/blog/posts/deploy-element-call-backend-with-synapse-and-docker-compose/)
 - [Element Call einrichten: Verschlüsselte Videoanrufe mit Element X und Matrix Synapse](https://www.cleveradmin.de/blog/2025/04/matrixrtc-element-call-backend-einrichten/)
+
+## 🛠️ Tools
+
+- [A Matrix server sanity tester including tests for proper MatrixRTC setup](https://codeberg.org/spaetz/testmatrix)
 
 ## 🤝 Want to Contribute?
 
