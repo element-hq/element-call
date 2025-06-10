@@ -18,9 +18,9 @@ export default defineConfig((env) =>
             output: "./config.json",
             data: {
               matrix_rtc_session: {
-                key_rotation_on_leave_delay: 15000,
-                membership_keep_alive_period: 5000,
-                membership_server_side_expiry_timeout: 15000,
+                wait_for_key_rotation_ms: 5000,
+                delayed_leave_event_restart_ms: 4000,
+                delayed_leave_event_delay_ms: 18000,
               },
             },
           },

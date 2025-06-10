@@ -14,6 +14,7 @@ export interface ConfigOptions {
     api_key: string;
     api_host: string;
   };
+
   /**
    * The Sentry endpoint to which crash data will be sent.
    * This is only used in the full package of Element Call.
@@ -22,6 +23,7 @@ export interface ConfigOptions {
     DSN: string;
     environment: string;
   };
+
   /**
    * The rageshake server to which feedback and debug logs will be sent.
    * This is only used in the full package of Element Call.
@@ -66,6 +68,7 @@ export interface ConfigOptions {
      * Allow to join group calls without audio and video.
      */
     feature_group_calls_without_video_and_audio?: boolean;
+
     /**
      * Send device-specific call session membership state events instead of
      * legacy user-specific call membership state events.
@@ -86,6 +89,7 @@ export interface ConfigOptions {
      * Defines whether participants should start with audio enabled by default.
      */
     enable_audio?: boolean;
+
     /**
      * Defines whether participants should start with video enabled by default.
      */
@@ -109,19 +113,38 @@ export interface ConfigOptions {
      * How long (in milliseconds) to wait before rotating end-to-end media encryption keys
      * when someone leaves a call.
      */
+    wait_for_key_rotation_ms?: number;
+    /** @deprecated use wait_for_key_rotation_ms instead */
     key_rotation_on_leave_delay?: number;
 
     /**
-     * How often (in milliseconds) keep-alive messages should be sent to the server for
-     * the MatrixRTC membership event.
+     * The duration (in milliseconds) after the most recent keep-alive (delayed leave event restart)
+     * that the server waits before sending the leave MatrixRTC membership event.
      */
+    delayed_leave_event_delay_ms?: number;
+    /** @deprecated use delayed_leave_event_delay_ms instead */
+    membership_server_side_expiry_timeout?: number;
+
+    /**
+     * The time interval (in milliseconds) at which the client sends membership keep-alive
+     * messages to the server by restarting the timer for the delayed leave event.
+     */
+    delayed_leave_event_restart_ms?: number;
+    /** @deprecated use delayed_leave_event_restart_ms instead */
     membership_keep_alive_period?: number;
 
     /**
-     * How long (in milliseconds) after the last keep-alive the server should expire the
-     * MatrixRTC membership event.
+     * How long we wait before retrying after a network error on any of the requests.
      */
-    membership_server_side_expiry_timeout?: number;
+    network_error_retry_ms?: number;
+
+    /**
+     * The timeout (in milliseconds) after we joined the call, that our membership should expire
+     * unless we have explicitly updated it.
+     *
+     * This is what goes into the m.rtc.member event expiry field and is typically set to a number of hours.
+     */
+    membership_event_expiry_ms?: number;
   };
 }
 
