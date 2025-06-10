@@ -118,15 +118,16 @@ export interface ConfigOptions {
     key_rotation_on_leave_delay?: number;
 
     /**
-     * How long (in milliseconds) after the last keep-alive the server should expire the
-     * MatrixRTC membership event.
+     * The duration (in milliseconds) after the most recent keep-alive (delayed leave event restart)
+     * that the server waits before sending the leave MatrixRTC membership event.
      */
     delayed_leave_event_delay_ms?: number;
     /** @deprecated use delayed_leave_event_delay_ms instead */
     membership_server_side_expiry_timeout?: number;
 
     /**
-     * The interval (in milliseconds) in which the client will send membership keep-alives to the server.
+     * The time interval (in milliseconds) at which the client sends membership keep-alive
+     * messages to the server by restarting the timer for the delayed leave event.
      */
     delayed_leave_event_restart_ms?: number;
     /** @deprecated use delayed_leave_event_restart_ms instead */
