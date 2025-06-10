@@ -14,11 +14,13 @@ import {
   type AudioTrackProps,
 } from "@livekit/components-react";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { useEarpieceAudioConfig } from "./MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import * as controls from "../controls";
+
+const logger = rootLogger.getChild("[MatrixAudioRenderer]");
 export interface MatrixAudioRendererProps {
   /**
    * The list of participants to render audio for.
@@ -59,6 +61,7 @@ export function MatrixAudioRenderer({
   );
 
   const loggedInvalidIdentities = useRef(new Set<string>());
+
   /**
    * Log an invalid livekit track identity.
    * A invalid identity is one that does not match any of the matrix rtc members.
@@ -96,6 +99,14 @@ export function MatrixAudioRenderer({
       isValid
     );
   });
+  useEffect(() => {
+    if (!tracks.some((t) => !validIdentities.has(t.participant.identity))) {
+      logger.debug(
+        `All audio tracks have a matching matrix call member identity.`,
+      );
+      loggedInvalidIdentities.current.clear();
+    }
+  }, [tracks, validIdentities]);
 
   // This component is also (in addition to the "only play audio for connected members" logic above)
   // responsible for mimicking earpiece audio on iPhones.
