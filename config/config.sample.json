@@ -16,6 +16,7 @@
     "wait_for_key_rotation_ms": 3000,
     "membership_event_expiry_ms": 6000000,
     "delayed_leave_event_delay_ms": 18000,
-    "delayed_leave_event_restart_ms": 4000
+    "delayed_leave_event_restart_ms": 4000,
+    "network_error_retry_ms": 4000
   }
 }
