@@ -18,7 +18,11 @@ import {
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
 import { combineLatest, distinctUntilChanged, map, startWith } from "rxjs";
-import { useObservable, useObservableEagerState } from "observable-hooks";
+import {
+  useObservable,
+  useObservableEagerState,
+  useSubscription,
+} from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
@@ -135,7 +139,7 @@ function useMediaDeviceHandle(
   // useMediaDevices provides no way to request device names.
   // Tragically, the only way to get device names out of LiveKit is to specify a
   // kind, which then results in multiple permissions requests.
-  const deviceObserver$ = useMemo(
+  const deviceObserver$ = useObservable(
     () =>
       createMediaDeviceObserver(
         kind,
@@ -153,8 +157,9 @@ function useMediaDeviceHandle(
       ),
     [kind, requestPermissions],
   );
+
   const available = useObservableEagerState(
-    useMemo(
+    useObservable(
       () =>
         deviceObserver$.pipe(
           map((availableRaw) => {
@@ -197,7 +202,7 @@ function useMediaDeviceHandle(
   const selectedId = useSelectedId(available, preferredId);
 
   const selectedGroupId = useObservableEagerState(
-    useMemo(
+    useObservable(
       () =>
         deviceObserver$.pipe(
           map(
@@ -360,13 +365,12 @@ function useControlledOutput(): MediaDeviceHandle {
       );
     }),
   );
+
   const [preferredId, setPreferredId] = useSetting(audioOutputSetting);
-  useEffect(() => {
-    const subscription = outputDevice$.subscribe((id) => {
-      if (id) setPreferredId(id);
-    });
-    return (): void => subscription.unsubscribe();
-  }, [setPreferredId]);
+
+  useSubscription(outputDevice$, (id) => {
+    if (id) setPreferredId(id);
+  });
 
   const selectedId = useSelectedId(available, preferredId);
 
