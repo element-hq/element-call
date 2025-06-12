@@ -44,7 +44,6 @@ import {
   ShareScreenButton,
   SettingsButton,
   ReactionToggleButton,
-  SwitchCameraButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { type HeaderStyle, useUrlParams } from "../UrlParams";
@@ -94,7 +93,6 @@ import {
   useReactionsSender,
 } from "../reactions/useReactionsSender";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
-import { useSwitchCamera } from "./useSwitchCamera";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
@@ -311,7 +309,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const showFooter = useObservableEagerState(vm.showFooter$);
   const earpieceMode = useObservableEagerState(vm.earpieceMode$);
   const audioOutputSwitcher = useObservableEagerState(vm.audioOutputSwitcher$);
-  const switchCamera = useSwitchCamera(vm.localVideo$);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
@@ -672,15 +669,6 @@ export const InCallView: FC<InCallViewProps> = ({
       data-testid="incall_videomute"
     />,
   );
-  if (switchCamera !== null)
-    buttons.push(
-      <SwitchCameraButton
-        key="switch_camera"
-        className={styles.switchCamera}
-        onClick={switchCamera}
-        onTouchEnd={onControlsTouchEnd}
-      />,
-    );
   if (canScreenshare && !hideScreensharing) {
     buttons.push(
       <ShareScreenButton
