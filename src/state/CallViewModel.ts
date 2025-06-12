@@ -13,10 +13,8 @@ import {
 import {
   type Room as LivekitRoom,
   type LocalParticipant,
-  LocalVideoTrack,
   ParticipantEvent,
   type RemoteParticipant,
-  Track,
 } from "livekit-client";
 import { RoomStateEvent, type Room, type RoomMember } from "matrix-js-sdk";
 import {
@@ -60,7 +58,6 @@ import {
 import {
   LocalUserMediaViewModel,
   type MediaViewModel,
-  observeTrackReference$,
   RemoteUserMediaViewModel,
   ScreenShareViewModel,
   type UserMediaViewModel,
@@ -382,17 +379,6 @@ function getRoomMemberFromRtcMember(
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
 export class CallViewModel extends ViewModel {
-  public readonly localVideo$: Observable<LocalVideoTrack | null> =
-    observeTrackReference$(
-      of(this.livekitRoom.localParticipant),
-      Track.Source.Camera,
-    ).pipe(
-      map((trackRef) => {
-        const track = trackRef?.publication?.track;
-        return track instanceof LocalVideoTrack ? track : null;
-      }),
-    );
-
   /**
    * The raw list of RemoteParticipants as reported by LiveKit
    */

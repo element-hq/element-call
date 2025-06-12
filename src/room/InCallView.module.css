@@ -115,7 +115,6 @@ Please see LICENSE in the repository root for full details.
 
 @media (max-width: 340px) {
   .invite,
-  .switchCamera,
   .shareScreen {
     display: none;
   }
