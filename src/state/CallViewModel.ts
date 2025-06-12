@@ -255,6 +255,7 @@ class UserMedia {
     participant: LocalParticipant | RemoteParticipant | undefined,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    mediaDevices: MediaDevices,
     displayname$: Observable<string>,
     handRaised$: Observable<Date | null>,
     reaction$: Observable<ReactionOption | null>,
@@ -268,6 +269,7 @@ class UserMedia {
         this.participant$.asObservable() as Observable<LocalParticipant>,
         encryptionSystem,
         livekitRoom,
+        mediaDevices,
         displayname$,
         handRaised$,
         reaction$,
@@ -565,6 +567,7 @@ export class CallViewModel extends ViewModel {
                       participant,
                       this.encryptionSystem,
                       this.livekitRoom,
+                      this.mediaDevices,
                       this.memberDisplaynames$.pipe(
                         map((m) => m.get(matrixIdentifier) ?? "[👻]"),
                       ),
@@ -629,6 +632,7 @@ export class CallViewModel extends ViewModel {
                             participant,
                             this.encryptionSystem,
                             this.livekitRoom,
+                            this.mediaDevices,
                             this.memberDisplaynames$.pipe(
                               map((m) => m.get(participant.identity) ?? "[👻]"),
                             ),
