@@ -4,6 +4,7 @@ networks:
 services:
   auth-service:
     image: ghcr.io/element-hq/lk-jwt-service:latest-ci
+    pull_policy: always
     hostname: auth-server
     environment:
       - LIVEKIT_JWT_PORT=6080
