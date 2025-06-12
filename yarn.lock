@@ -2780,13 +2780,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/olm@npm:3.2.15":
-  version: 3.2.15
-  resolution: "@matrix-org/olm@npm:3.2.15"
-  checksum: 10c0/82a40d6e4e632a90670d4f15e8962272e302f4b9deed4fc78455c5ca78422c13bde6b53ebfc406630336926c9574386c9d9069c9c023db1c3d143117985c1e50
-  languageName: node
-  linkType: hard
-
 "@mediapipe/tasks-vision@npm:^0.10.18":
   version: 0.10.21
   resolution: "@mediapipe/tasks-vision@npm:0.10.21"
@@ -10140,12 +10133,11 @@ __metadata:
   linkType: hard
 
 "matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
-  version: 37.6.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=bf6dc16ad32d47f2c6e167236f4c853ceef01d4f"
+  version: 37.8.0
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=adaf92162377414df620e004d8c58c67118490ca"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.2.0"
-    "@matrix-org/olm": "npm:3.2.15"
     another-json: "npm:^0.2.0"
     bs58: "npm:^6.0.0"
     content-type: "npm:^1.0.4"
@@ -10158,7 +10150,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/2877e7c5b2779200b48f3152bb7b510e58899b1e779e7e6d2bc1a236ed178fa8858f0547b644a2029f48f55dc7cc3954f48e2598c8963d45293c8280ccc23039
+  checksum: 10c0/8e842056ff926c615d53a4a333c9e54d0fbe7f88b97b55629464e67850cc512606accde6a8724dd48ac82714483f685515913b5556e9824c4d63c443317be1ef
   languageName: node
   linkType: hard
 
