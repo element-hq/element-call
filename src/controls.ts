@@ -44,10 +44,14 @@ export interface OutputDevice {
 export const setPipEnabled$ = new Subject<boolean>();
 // BehaviorSubject since the client might set this before we have subscribed (GroupCallView still in "loading" state)
 // We want the devices that have been set during loading to be available immediately once loaded.
-export const availableOutputDevices$ = new BehaviorSubject<OutputDevice[]>([]);
+export const controlledAvailableOutputDevices$ = new BehaviorSubject<
+  OutputDevice[]
+>([]);
 // BehaviorSubject since the client might set this before we have subscribed (GroupCallView still in "loading" state)
 // We want the device that has been set during loading to be available immediately once loaded.
-export const outputDevice$ = new BehaviorSubject<string | undefined>(undefined);
+export const controlledAudioDevice$ = new BehaviorSubject<string | undefined>(
+  undefined,
+);
 /**
  * This allows the os to mute the call if the user
  * presses the volume down button when it is at the minimum volume.
@@ -75,10 +79,10 @@ window.controls = {
     setPipEnabled$.next(false);
   },
   setAvailableAudioDevices(devices: OutputDevice[]): void {
-    availableOutputDevices$.next(devices);
+    controlledAvailableOutputDevices$.next(devices);
   },
   setAudioDevice(id: string): void {
-    outputDevice$.next(id);
+    controlledAudioDevice$.next(id);
   },
   setAudioEnabled(enabled: boolean): void {
     if (!setAudioEnabled$.observed)

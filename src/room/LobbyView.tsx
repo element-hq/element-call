@@ -54,6 +54,7 @@ import {
 } from "../livekit/TrackProcessorContext";
 import { usePageTitle } from "../usePageTitle";
 import { useLatest } from "../useLatest";
+import { useUrlParams } from "../UrlParams";
 
 interface Props {
   client: MatrixClient;
@@ -99,6 +100,7 @@ export const LobbyView: FC<Props> = ({
     [muteStates],
   );
 
+  const { controlledAudioDevices } = useUrlParams();
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
 
@@ -132,7 +134,11 @@ export const LobbyView: FC<Props> = ({
   // re-open the devices when they change (see below).
   const initialAudioOptions = useInitial(
     () =>
-      muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
+      muteStates.audio.enabled && {
+        deviceId: controlledAudioDevices
+          ? undefined
+          : devices.audioInput.selectedId,
+      },
   );
 
   const { processor } = useTrackProcessor();
@@ -148,13 +154,16 @@ export const LobbyView: FC<Props> = ({
       // which would cause the devices to be re-opened on the next render.
       audio: Object.assign({}, initialAudioOptions),
       video: muteStates.video.enabled && {
-        deviceId: devices.videoInput.selectedId,
+        deviceId: controlledAudioDevices
+          ? undefined
+          : devices.videoInput.selectedId,
         processor: initialProcessor,
       },
     }),
     [
       initialAudioOptions,
       muteStates.video.enabled,
+      controlledAudioDevices,
       devices.videoInput.selectedId,
       initialProcessor,
     ],

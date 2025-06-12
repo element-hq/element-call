@@ -99,10 +99,14 @@ export function useLivekit(
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
-        deviceId: initialDevices.audioInput.selectedId,
+        deviceId: controlledAudioDevices
+          ? undefined
+          : initialDevices.audioInput.selectedId,
       },
       audioOutput: {
-        deviceId: initialDevices.audioOutput.selectedId,
+        deviceId: controlledAudioDevices
+          ? undefined
+          : initialDevices.audioOutput.selectedId,
       },
       e2ee,
     };
@@ -157,7 +161,7 @@ export function useLivekit(
   );
 
   const connectionState = useECConnectionState(
-    initialDevices.audioInput.selectedId,
+    controlledAudioDevices ? undefined : initialDevices.audioInput.selectedId,
     initialMuteStates.audio.enabled,
     room,
     sfuConfig,

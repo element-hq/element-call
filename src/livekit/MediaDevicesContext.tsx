@@ -34,7 +34,10 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   type Setting,
 } from "../settings/settings";
-import { outputDevice$, availableOutputDevices$ } from "../controls";
+import {
+  controlledAudioDevice$,
+  controlledAvailableOutputDevices$,
+} from "../controls";
 import { useUrlParams } from "../UrlParams";
 
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
@@ -331,9 +334,9 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
 function useControlledOutput(): MediaDeviceHandle {
   const { available } = useObservableEagerState(
     useObservable(() => {
-      const outputDeviceData$ = availableOutputDevices$.pipe(
+      const outputDeviceData$ = controlledAvailableOutputDevices$.pipe(
         map((devices) => {
-          const deviceForEarpiece = devices.find((d) => d.forEarpiece);
+          const hasDeviceForEarpiece = devices.find((d) => d.forEarpiece);
           const deviceMapTuple: [string, DeviceLabel][] = devices.map(
             ({ id, name, isEarpiece, isSpeaker /*,isExternalHeadset*/ }) => {
               let deviceLabel: DeviceLabel = { type: "name", name };
@@ -345,22 +348,22 @@ function useControlledOutput(): MediaDeviceHandle {
           );
           return {
             devicesMap: new Map<string, DeviceLabel>(deviceMapTuple),
-            deviceForEarpiece,
+            hasDeviceForEarpiece,
           };
         }),
       );
 
       return combineLatest(
         [outputDeviceData$, iosDeviceMenu$],
-        ({ devicesMap, deviceForEarpiece }, iosShowEarpiece) => {
+        ({ devicesMap, hasDeviceForEarpiece }, iosShowEarpiece) => {
           let available = devicesMap;
-          if (iosShowEarpiece && !!deviceForEarpiece) {
+          if (iosShowEarpiece && !!hasDeviceForEarpiece) {
             available = new Map([
               ...devicesMap.entries(),
               [EARPIECE_CONFIG_ID, { type: "earpiece" }],
             ]);
           }
-          return { available, deviceForEarpiece };
+          return { available, deviceForEarpiece: hasDeviceForEarpiece };
         },
       );
     }),
@@ -368,11 +371,11 @@ function useControlledOutput(): MediaDeviceHandle {
 
   const [preferredId, setPreferredId] = useSetting(audioOutputSetting);
 
-  useSubscription(outputDevice$, (id) => {
+  useSubscription(controlledAudioDevice$, (id) => {
     if (id) setPreferredId(id);
   });
 
-  const selectedId = useSelectedId(available, preferredId);
+  // const selectedId = useSelectedId(available, preferredId);
 
   const [asEarpiece, setAsEarpiece] = useState(false);
 
@@ -381,23 +384,23 @@ function useControlledOutput(): MediaDeviceHandle {
     // This information is probably only of interest if the earpiece mode has been
     // selected - for example, Element X iOS listens to this to determine whether it
     // should enable the proximity sensor.
-    if (selectedId) {
-      window.controls.onAudioDeviceSelect?.(selectedId);
+    if (preferredId) {
+      window.controls.onAudioDeviceSelect?.(preferredId);
       // Call deprecated method for backwards compatibility.
-      window.controls.onOutputDeviceSelect?.(selectedId);
+      window.controls.onOutputDeviceSelect?.(preferredId);
     }
-    setAsEarpiece(selectedId === EARPIECE_CONFIG_ID);
-  }, [selectedId]);
+    setAsEarpiece(preferredId === EARPIECE_CONFIG_ID);
+  }, [preferredId]);
 
   return useMemo(
     () => ({
       available: available,
-      selectedId,
+      selectedId: preferredId,
       selectedGroupId: undefined,
       select: setPreferredId,
       useAsEarpiece: asEarpiece,
     }),
-    [available, selectedId, setPreferredId, asEarpiece],
+    [available, preferredId, setPreferredId, asEarpiece],
   );
 }
 
