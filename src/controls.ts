@@ -61,6 +61,8 @@ export const outputDevice$ = new Subject<string | undefined>();
  */
 export const setAudioEnabled$ = new Subject<boolean>();
 
+export const earpieceModeToggle$ = new Subject<void>();
+
 let playbackStartedEmitted = false;
 export const setPlaybackStarted = (): void => {
   if (!playbackStartedEmitted) {
