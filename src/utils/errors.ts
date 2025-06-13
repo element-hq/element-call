@@ -99,7 +99,7 @@ export class UnknownCallError extends ElementCallError {
       t("error.generic"),
       ErrorCode.UNKNOWN_ERROR,
       ErrorCategory.UNKNOWN,
-      error.message,
+      undefined,
       // Properly set it as a cause for a better reporting on sentry
       error,
     );
