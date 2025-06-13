@@ -385,6 +385,10 @@ function useControlledOutput(): MediaDeviceHandle {
     // selected - for example, Element X iOS listens to this to determine whether it
     // should enable the proximity sensor.
     if (preferredId) {
+      logger.info(
+        "[controlled-media] setAudioDeviceSelect called:",
+        preferredId,
+      );
       window.controls.onAudioDeviceSelect?.(preferredId);
       // Call deprecated method for backwards compatibility.
       window.controls.onOutputDeviceSelect?.(preferredId);

@@ -73,8 +73,6 @@ export function useLivekit(
 
   // Only ever create the room once via useInitial.
   const room = useInitial(() => {
-    logger.info("[LivekitRoom] Create LiveKit room");
-
     let e2ee: E2EEManagerOptions | undefined;
     if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
       logger.info("Created MatrixKeyProvider (per participant)");
@@ -110,6 +108,7 @@ export function useLivekit(
       },
       e2ee,
     };
+    logger.info("[LivekitRoom] Create LiveKit room with options", roomOptions);
     // We have to create the room manually here due to a bug inside
     // @livekit/components-react. JSON.stringify() is used in deps of a
     // useEffect() with an argument that references itself, if E2EE is enabled
