@@ -93,6 +93,7 @@ import {
 import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
 import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
+import { type MediaDevices } from "./MediaDevices";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -1246,6 +1247,11 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
+  /**
+   * Whether audio is currently being output through the earpiece.
+   */
+  public readonly earpieceMode$ = this.mediaDevices.earpieceMode$;
+
   public readonly reactions$ = this.reactionsSubject$.pipe(
     map((v) =>
       Object.fromEntries(
@@ -1336,6 +1342,7 @@ export class CallViewModel extends ViewModel {
     // A call is permanently tied to a single Matrix room and LiveKit room
     private readonly matrixRTCSession: MatrixRTCSession,
     private readonly livekitRoom: LivekitRoom,
+    private readonly mediaDevices: MediaDevices,
     private readonly encryptionSystem: EncryptionSystem,
     private readonly connectionState$: Observable<ECConnectionState>,
     private readonly handsRaisedSubject$: Observable<

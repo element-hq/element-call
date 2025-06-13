@@ -79,6 +79,10 @@
     "use_to_device_key_transport": "Use to device key transport. This will fallback to room key transport when another call member sent a room key"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
+  "earpiece": {
+    "overlay_title": "Earpiece only mode",
+    "overlay_description": "Only works while using app"
+  },
   "error": {
     "call_is_not_supported": "Call is not supported",
     "call_not_found": "Call not found",

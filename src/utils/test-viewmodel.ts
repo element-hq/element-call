@@ -26,6 +26,7 @@ import {
   localRtcMember,
 } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
+import { type MediaDevices } from "../state/MediaDevices";
 
 export function getBasicRTCSession(
   members: RoomMember[],
@@ -132,6 +133,7 @@ export function getBasicCallViewModelEnvironment(
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     liveKitRoom,
+    { earpieceMode$: of(false) } as unknown as MediaDevices,
     {
       kind: E2eeType.PER_PARTICIPANT,
     },

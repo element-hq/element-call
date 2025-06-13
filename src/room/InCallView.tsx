@@ -105,6 +105,8 @@ import { useTypedEventEmitter } from "../useEvents.ts";
 import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships.ts";
+import { useMediaDevices } from "../MediaDevicesContext.ts";
+import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -116,6 +118,7 @@ export interface ActiveCallProps
 }
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
+  const mediaDevices = useMediaDevices();
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
   const { livekitRoom, connState } = useLivekit(
     props.rtcSession,
@@ -156,6 +159,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       const vm = new CallViewModel(
         props.rtcSession,
         livekitRoom,
+        mediaDevices,
         props.e2eeSystem,
         connStateObservable$,
         reactionsReader.raisedHands$,
@@ -167,7 +171,13 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         reactionsReader.destroy();
       };
     }
-  }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable$]);
+  }, [
+    props.rtcSession,
+    livekitRoom,
+    mediaDevices,
+    props.e2eeSystem,
+    connStateObservable$,
+  ]);
 
   if (livekitRoom === undefined || vm === null) return null;
 
@@ -293,6 +303,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const gridMode = useObservableEagerState(vm.gridMode$);
   const showHeader = useObservableEagerState(vm.showHeader$);
   const showFooter = useObservableEagerState(vm.showFooter$);
+  const earpieceMode = useObservableEagerState(vm.earpieceMode$);
   const switchCamera = useSwitchCamera(vm.localVideo$);
 
   // Ideally we could detect taps by listening for click events and checking
@@ -728,6 +739,7 @@ export const InCallView: FC<InCallViewProps> = ({
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
+      <EarpieceOverlay show={earpieceMode} />
       <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (
