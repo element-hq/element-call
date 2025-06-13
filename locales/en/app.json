@@ -82,7 +82,7 @@
   "error": {
     "call_is_not_supported": "Call is not supported",
     "call_not_found": "Call not found",
-    "call_not_found_description": "<0>That link doesn't appear to belong to any existing call. Check that you have the right link, or <1>create a new one</1>.</0>",
+    "call_not_found_description": "<0>That link doesn't appear to belong to any existing call. Check that you have the right link, or <2>create a new one</2>.</0>",
     "connection_lost": "Connection lost",
     "connection_lost_description": "You were disconnected from the call.",
     "e2ee_unsupported": "Incompatible browser",
