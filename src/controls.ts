@@ -18,6 +18,7 @@ export interface Controls {
   onAudioPlaybackStarted?: () => void;
   setAudioEnabled(enabled: boolean): void;
   showNativeAudioDevicePicker?: () => void;
+  toggleEarpieceMode(): void;
 
   /** @deprecated use  setAvailableAudioDevices instead*/
   setAvailableOutputDevices(devices: OutputDevice[]): void;
@@ -57,6 +58,8 @@ export const outputDevice$ = new Subject<string | undefined>();
  */
 export const setAudioEnabled$ = new Subject<boolean>();
 
+export const earpieceModeToggle$ = new Subject<void>();
+
 let playbackStartedEmitted = false;
 export const setPlaybackStarted = (): void => {
   if (!playbackStartedEmitted) {
@@ -90,6 +93,9 @@ window.controls = {
         "Output controls are disabled. No setAudioEnabled$ observer",
       );
     setAudioEnabled$.next(enabled);
+  },
+  toggleEarpieceMode(): void {
+    earpieceModeToggle$.next();
   },
 
   // wrappers for the deprecated controls fields

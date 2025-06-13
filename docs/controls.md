@@ -23,3 +23,4 @@ On mobile platforms (iOS, Android), web views do not reliably support selecting 
   playing audio in the webview. It can be helpful to do device setup on the native app when the webviews audio is ready.
   In particular android is using it to setup the output channel so that the call volume can
   be controlled by the hardware volume rocker.
+- `controls.toggleEarpieceMode(): void` Switches audio between the earpiece device and an arbitrary non-earpiece device.

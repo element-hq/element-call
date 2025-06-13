@@ -15,6 +15,7 @@ import {
   startWith,
   Subject,
   switchMap,
+  withLatestFrom,
   type Observable,
 } from "rxjs";
 import { createMediaDeviceObserver } from "@livekit/components-core";
@@ -30,6 +31,7 @@ import { type ObservableScope } from "./ObservableScope";
 import {
   outputDevice$ as externalDeviceSelection$,
   availableOutputDevices$,
+  earpieceModeToggle$,
 } from "../controls";
 import { getUrlParams } from "../UrlParams";
 
@@ -365,5 +367,31 @@ export class MediaDevices {
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
     new VideoInput(this.usingNames$, this.scope);
 
-  public constructor(private readonly scope: ObservableScope) {}
+  /**
+   * Whether audio is currently being output through the earpiece.
+   */
+  public readonly earpieceMode$: Observable<boolean> = combineLatest(
+    [this.audioOutput.available$, this.audioOutput.selected$],
+    (available, selected) =>
+      selected !== undefined && available.get(selected.id)?.type === "earpiece",
+  ).pipe(this.scope.state());
+
+  public constructor(private readonly scope: ObservableScope) {
+    earpieceModeToggle$
+      .pipe(
+        withLatestFrom(
+          this.audioOutput.available$,
+          this.earpieceMode$,
+          (_toggle, available, earpieceMode) =>
+            // Determine the new device ID to switch to
+            [...available].find(
+              ([, d]) => (d.type === "earpiece") !== earpieceMode,
+            )?.[0],
+        ),
+        this.scope.bind(),
+      )
+      .subscribe((newSelection) => {
+        if (newSelection !== undefined) this.audioOutput.select(newSelection);
+      });
+  }
 }
