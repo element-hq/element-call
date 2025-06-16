@@ -99,7 +99,7 @@ export const ErrorView: FC<Props> = ({
   return (
     <div className={styles.error}>
       <BigIcon className={styles.icon}>
-        <Icon />
+        <Icon aria-hidden />
       </BigIcon>
       <Heading as="h1" weight="semibold" size="md">
         {title}
