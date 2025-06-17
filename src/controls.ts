@@ -6,6 +6,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { Subject } from "rxjs";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+
+const logger = rootLogger.getChild("[controlled-output]");
 
 export interface Controls {
   canEnterPip(): boolean;
@@ -74,12 +77,15 @@ window.controls = {
     setPipEnabled$.next(false);
   },
   setAvailableAudioDevices(devices: OutputDevice[]): void {
+    logger.info("setAvailableAudioDevices called from native:", devices);
     availableOutputDevices$.next(devices);
   },
   setAudioDevice(id: string): void {
+    logger.info("setAudioDevice called from native", id);
     outputDevice$.next(id);
   },
   setAudioEnabled(enabled: boolean): void {
+    logger.info("setAudioEnabled called from native:", enabled);
     if (!setAudioEnabled$.observed)
       throw new Error(
         "Output controls are disabled. No setAudioEnabled$ observer",

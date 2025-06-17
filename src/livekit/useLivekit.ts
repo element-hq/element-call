@@ -64,7 +64,7 @@ export function useLivekit(
   const initialMuteStates = useInitial(() => muteStates);
 
   const devices = useMediaDevices();
-  const initialAudioInput = useInitial(
+  const initialAudioInputId = useInitial(
     () => getValue(devices.audioInput.selected$)?.id,
   );
 
@@ -109,10 +109,15 @@ export function useLivekit(
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
-        deviceId: initialAudioInput,
+        deviceId: initialAudioInputId,
       },
       audioOutput: {
-        deviceId: getValue(devices.audioOutput.selected$)?.id,
+        // When using controlled audio devices, we don't want to set the
+        // deviceId here, because it will be set by the native app.
+        // (also the id does not need to match a browser device id)
+        deviceId: controlledAudioDevices
+          ? undefined
+          : getValue(devices.audioOutput.selected$)?.id,
       },
       e2ee,
     };
@@ -167,7 +172,7 @@ export function useLivekit(
   );
 
   const connectionState = useECConnectionState(
-    initialAudioInput,
+    initialAudioInputId,
     initialMuteStates.audio.enabled,
     room,
     sfuConfig,
