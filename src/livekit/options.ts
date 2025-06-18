@@ -11,9 +11,16 @@ import {
   type RoomOptions,
   ScreenSharePresets,
   type TrackPublishDefaults,
-  type VideoPreset,
+  VideoPreset,
   VideoPresets,
 } from "livekit-client";
+
+const VideoPresetsH264 = {
+  h144: new VideoPreset(256, 144, 120_000, 20),
+  h176: new VideoPreset(320, 176, 160_000, 20),
+  h288: new VideoPreset(512, 288, 180_000, 20),
+  h360: VideoPresets.h360,
+} as const;
 
 const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   audioPreset: AudioPresets.music,
@@ -23,7 +30,10 @@ const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   red: false,
   forceStereo: false,
   simulcast: true,
-  videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360] as VideoPreset[],
+  videoSimulcastLayers: [
+    VideoPresetsH264.h176,
+    VideoPresetsH264.h360,
+  ] as VideoPreset[],
   screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
   stopMicTrackOnMute: false,
   videoCodec: "h264",
