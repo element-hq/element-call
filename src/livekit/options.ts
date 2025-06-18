@@ -21,8 +21,8 @@ const VideoPresetsH264 = {
   h176: new VideoPreset(320, 176, 160_000, 20),
   h288: new VideoPreset(382, 288, 180_000, 20),
 //  h360: VideoPresets.h360,
-  h360: new VideoPreset(640, 360, 160_000, 20),
-  h540: new VideoPreset(960, 540, 450_000, 20),
+  h360: new VideoPreset(640, 360, 450_000, 20),
+  h540: new VideoPreset(960, 540, 800_000, 20),
 } as const;
 
 const defaultLiveKitPublishOptions: TrackPublishDefaults = {
