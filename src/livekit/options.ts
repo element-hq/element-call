@@ -35,7 +35,6 @@ const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   simulcast: true,
   videoSimulcastLayers: [
     VideoPresetsH264.h360,
-    VideoPresetsH264.h540,
   ] as VideoPreset[],
   screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
   stopMicTrackOnMute: false,
