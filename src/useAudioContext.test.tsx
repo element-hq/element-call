@@ -10,12 +10,12 @@ import { type FC } from "react";
 import { render } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
-import { of } from "rxjs";
 
 import { MediaDevicesContext } from "./MediaDevicesContext";
 import { useAudioContext } from "./useAudioContext";
 import { soundEffectVolume as soundEffectVolumeSetting } from "./settings/settings";
 import { mockMediaDevices } from "./utils/test";
+import { constant } from "./state/Behavior";
 
 const staticSounds = Promise.resolve({
   aSound: new ArrayBuffer(0),
@@ -128,8 +128,8 @@ test("will use the correct device", () => {
     <MediaDevicesContext
       value={mockMediaDevices({
         audioOutput: {
-          available$: of(new Map<never, never>()),
-          selected$: of({ id: "chosen-device", virtualEarpiece: false }),
+          available$: constant(new Map<never, never>()),
+          selected$: constant({ id: "chosen-device", virtualEarpiece: false }),
           select: () => {},
         },
       })}
@@ -161,8 +161,8 @@ test("will use the pan if earpiece is selected", async () => {
     <MediaDevicesContext
       value={mockMediaDevices({
         audioOutput: {
-          available$: of(new Map<never, never>()),
-          selected$: of({ id: "chosen-device", virtualEarpiece: true }),
+          available$: constant(new Map<never, never>()),
+          selected$: constant({ id: "chosen-device", virtualEarpiece: true }),
           select: () => {},
         },
       })}

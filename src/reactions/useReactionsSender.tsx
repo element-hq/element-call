@@ -16,12 +16,12 @@ import {
 } from "react";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { useObservableEagerState } from "observable-hooks";
 
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { useClientState } from "../ClientContext";
 import { ElementCallReactionEventType, type ReactionOption } from ".";
 import { type CallViewModel } from "../state/CallViewModel";
+import { useBehavior } from "../useBehavior";
 
 interface ReactionsSenderContextType {
   supportsReactions: boolean;
@@ -70,7 +70,7 @@ export const ReactionsSenderProvider = ({
     [memberships, myUserId, myDeviceId],
   );
 
-  const reactions = useObservableEagerState(vm.reactions$);
+  const reactions = useBehavior(vm.reactions$);
   const myReaction = useMemo(
     () =>
       myMembershipIdentifier !== undefined
@@ -79,7 +79,7 @@ export const ReactionsSenderProvider = ({
     [myMembershipIdentifier, reactions],
   );
 
-  const handsRaised = useObservableEagerState(vm.handsRaised$);
+  const handsRaised = useBehavior(vm.handsRaised$);
   const myRaisedHand = useMemo(
     () =>
       myMembershipIdentifier !== undefined

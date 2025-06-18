@@ -339,7 +339,7 @@ class ScreenShare {
     participant: LocalParticipant | RemoteParticipant,
     encryptionSystem: EncryptionSystem,
     liveKitRoom: LivekitRoom,
-    displayname$: Observable<string>,
+    displayName$: Observable<string>,
   ) {
     this.participant$ = new BehaviorSubject(participant);
 
@@ -349,7 +349,7 @@ class ScreenShare {
       this.participant$.asObservable(),
       encryptionSystem,
       liveKitRoom,
-      displayname$.behavior(this.scope),
+      displayName$.behavior(this.scope),
       participant.isLocal,
     );
   }
@@ -1271,14 +1271,14 @@ export class CallViewModel extends ViewModel {
   /**
    * Whether audio is currently being output through the earpiece.
    */
-  public readonly earpieceMode$: Observable<boolean> = combineLatest(
+  public readonly earpieceMode$: Behavior<boolean> = combineLatest(
     [
       this.mediaDevices.audioOutput.available$,
       this.mediaDevices.audioOutput.selected$,
     ],
     (available, selected) =>
       selected !== undefined && available.get(selected.id)?.type === "earpiece",
-  ).pipe(this.scope.state());
+  ).behavior(this.scope);
 
   /**
    * Callback to toggle between the earpiece and the loudspeaker.
@@ -1286,7 +1286,7 @@ export class CallViewModel extends ViewModel {
    * This will be `null` in case the target does not exist in the list
    * of available audio outputs.
    */
-  public readonly audioOutputSwitcher$: Observable<{
+  public readonly audioOutputSwitcher$: Behavior<{
     targetOutput: "earpiece" | "speaker";
     switch: () => void;
   } | null> = combineLatest(
@@ -1298,7 +1298,7 @@ export class CallViewModel extends ViewModel {
       const selectionType = selected && available.get(selected.id)?.type;
 
       // If we are in any output mode other than spaeker switch to speaker.
-      const newSelectionType =
+      const newSelectionType: "earpiece" | "speaker" =
         selectionType === "speaker" ? "earpiece" : "speaker";
       const newSelection = [...available].find(
         ([, d]) => d.type === newSelectionType,
@@ -1311,7 +1311,7 @@ export class CallViewModel extends ViewModel {
         switch: () => this.mediaDevices.audioOutput.select(id),
       };
     },
-  );
+  ).behavior(this.scope);
 
   public readonly reactions$ = this.reactionsSubject$
     .pipe(

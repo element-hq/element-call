@@ -217,7 +217,7 @@ export async function withLocalMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({ localParticipant }),
-    of(roomMember.rawDisplayName ?? "nodisplayname"),
+    constant(roomMember.rawDisplayName ?? "nodisplayname"),
     constant(null),
     constant(null),
   );
@@ -256,7 +256,7 @@ export async function withRemoteMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
-    of(roomMember.rawDisplayName ?? "nodisplayname"),
+    constant(roomMember.rawDisplayName ?? "nodisplayname"),
     constant(null),
     constant(null),
   );

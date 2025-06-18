@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { BehaviorSubject, Observable } from "rxjs";
+import { BehaviorSubject, distinctUntilChanged, Observable } from "rxjs";
 
 import { type ObservableScope } from "./ObservableScope";
 
@@ -45,7 +45,7 @@ Observable.prototype.behavior = function <T>(
 ): Behavior<T> {
   const subject$ = new BehaviorSubject<T | typeof nothing>(nothing);
   // Push values from the Observable into the BehaviorSubject
-  this.pipe(scope.bind()).subscribe(subject$);
+  this.pipe(scope.bind(), distinctUntilChanged()).subscribe(subject$);
   if (subject$.value === nothing)
     throw new Error("Behavior failed to synchronously emit an initial value");
   return subject$ as Behavior<T>;
