@@ -9,6 +9,8 @@ import { combineLatest, startWith } from "rxjs";
 
 import { setAudioEnabled$ } from "../controls";
 import { muteAllAudio as muteAllAudioSetting } from "../settings/settings";
+import { globalScope } from "./ObservableScope";
+import "../state/Behavior"; // Patches in the Observable.behavior method
 
 /**
  * This can transition into sth more complete: `GroupCallViewModel.ts`
@@ -16,4 +18,4 @@ import { muteAllAudio as muteAllAudioSetting } from "../settings/settings";
 export const muteAllAudio$ = combineLatest(
   [setAudioEnabled$.pipe(startWith(true)), muteAllAudioSetting.value$],
   (outputEnabled, settingsMute) => !outputEnabled || settingsMute,
-);
+).behavior(globalScope);

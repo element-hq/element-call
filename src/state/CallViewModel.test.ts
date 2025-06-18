@@ -75,6 +75,7 @@ import {
 import { ObservableScope } from "./ObservableScope";
 import { MediaDevices } from "./MediaDevices";
 import { getValue } from "../utils/observable";
+import { constant } from "./Behavior";
 
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("../UrlParams", () => ({ getUrlParams }));
@@ -157,9 +158,10 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
         case "grid":
           return combineLatest(
             [
-              l.spotlight?.media$ ?? of(undefined),
+              l.spotlight?.media$ ?? constant(undefined),
               ...l.grid.map((vm) => vm.media$),
             ],
+            // eslint-disable-next-line rxjs/finnish -- false positive
             (spotlight, ...grid) => ({
               type: l.type,
               spotlight: spotlight?.map((vm) => vm.id),
@@ -178,7 +180,8 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "spotlight-expanded":
           return combineLatest(
-            [l.spotlight.media$, l.pip?.media$ ?? of(undefined)],
+            [l.spotlight.media$, l.pip?.media$ ?? constant(undefined)],
+            // eslint-disable-next-line rxjs/finnish -- false positive
             (spotlight, pip) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),

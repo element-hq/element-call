@@ -24,16 +24,16 @@ import {
   createContext,
   memo,
   use,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import useMeasure from "react-use-measure";
 import classNames from "classnames";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { useObservableEagerState } from "observable-hooks";
-import { fromEvent, map, startWith } from "rxjs";
 
 import styles from "./Grid.module.css";
 import { useMergedRefs } from "../useMergedRefs";
@@ -155,11 +155,6 @@ export function useVisibleTiles(callback: VisibleTilesCallback): void {
   );
 }
 
-const windowHeightObservable$ = fromEvent(window, "resize").pipe(
-  startWith(null),
-  map(() => window.innerHeight),
-);
-
 export interface LayoutProps<LayoutModel, TileModel, R extends HTMLElement> {
   ref?: Ref<R>;
   model: LayoutModel;
@@ -261,7 +256,13 @@ export function Grid<
   const [gridRoot, gridRef2] = useState<HTMLElement | null>(null);
   const gridRef = useMergedRefs<HTMLElement>(gridRef1, gridRef2);
 
-  const windowHeight = useObservableEagerState(windowHeightObservable$);
+  const windowHeight = useSyncExternalStore(
+    useCallback((onChange) => {
+      window.addEventListener("resize", onChange);
+      return (): void => window.removeEventListener("resize", onChange);
+    }, []),
+    useCallback(() => window.innerHeight, []),
+  );
   const [layoutRoot, setLayoutRoot] = useState<HTMLElement | null>(null);
   const [generation, setGeneration] = useState<number | null>(null);
   const [visibleTilesCallback, setVisibleTilesCallback] =

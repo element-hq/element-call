@@ -258,7 +258,7 @@ abstract class BaseMediaViewModel extends ViewModel {
     audioSource: AudioSource,
     videoSource: VideoSource,
     livekitRoom: LivekitRoom,
-    public readonly displayname$: Observable<string>,
+    public readonly displayName$: Behavior<string>,
   ) {
     super();
     const audio$ = observeTrackReference$(participant$, audioSource).behavior(
@@ -390,7 +390,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    displayname$: Observable<string>,
+    displayName$: Behavior<string>,
     public readonly handRaised$: Behavior<Date | null>,
     public readonly reaction$: Behavior<ReactionOption | null>,
   ) {
@@ -402,7 +402,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       Track.Source.Microphone,
       Track.Source.Camera,
       livekitRoom,
-      displayname$,
+      displayName$,
     );
 
     const media$ = participant$
@@ -469,7 +469,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    displayname$: Observable<string>,
+    displayName$: Behavior<string>,
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
   ) {
@@ -479,7 +479,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
       participant$,
       encryptionSystem,
       livekitRoom,
-      displayname$,
+      displayName$,
       handRaised$,
       reaction$,
     );
@@ -562,7 +562,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    displayname$: Observable<string>,
+    displayname$: Behavior<string>,
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
   ) {
@@ -627,7 +627,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
     participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    displayname$: Observable<string>,
+    displayname$: Behavior<string>,
     public readonly local: boolean,
   ) {
     super(

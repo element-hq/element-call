@@ -33,3 +33,8 @@ export class ObservableScope {
     this.ended$.complete();
   }
 }
+
+/**
+ * The global scope, a scope which never ends.
+ */
+export const globalScope = new ObservableScope();
