@@ -47,6 +47,7 @@ import {
 } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
 import { type MediaDevices } from "../state/MediaDevices";
+import { constant } from "../state/Behavior";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -217,8 +218,8 @@ export async function withLocalMedia(
     },
     mockLivekitRoom({ localParticipant }),
     of(roomMember.rawDisplayName ?? "nodisplayname"),
-    of(null),
-    of(null),
+    constant(null),
+    constant(null),
   );
   try {
     await continuation(vm);
@@ -256,8 +257,8 @@ export async function withRemoteMedia(
     },
     mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
     of(roomMember.rawDisplayName ?? "nodisplayname"),
-    of(null),
-    of(null),
+    constant(null),
+    constant(null),
   );
   try {
     await continuation(vm);

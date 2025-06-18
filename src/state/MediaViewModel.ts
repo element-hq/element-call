@@ -51,6 +51,7 @@ import { accumulate } from "../utils/observable";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { type ReactionOption } from "../reactions";
+import { type Behavior } from "./Behavior";
 
 export function observeTrackReference$(
   participant$: Observable<Participant | undefined>,
@@ -223,13 +224,13 @@ abstract class BaseMediaViewModel extends ViewModel {
   /**
    * The LiveKit video track for this media.
    */
-  public readonly video$: Observable<TrackReferenceOrPlaceholder | undefined>;
+  public readonly video$: Behavior<TrackReferenceOrPlaceholder | undefined>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
-  public readonly unencryptedWarning$: Observable<boolean>;
+  public readonly unencryptedWarning$: Behavior<boolean>;
 
-  public readonly encryptionStatus$: Observable<EncryptionStatus>;
+  public readonly encryptionStatus$: Behavior<EncryptionStatus>;
 
   /**
    * Whether this media corresponds to the local participant.
@@ -260,11 +261,11 @@ abstract class BaseMediaViewModel extends ViewModel {
     public readonly displayname$: Observable<string>,
   ) {
     super();
-    const audio$ = observeTrackReference$(participant$, audioSource).pipe(
-      this.scope.state(),
+    const audio$ = observeTrackReference$(participant$, audioSource).behavior(
+      this.scope,
     );
-    this.video$ = observeTrackReference$(participant$, videoSource).pipe(
-      this.scope.state(),
+    this.video$ = observeTrackReference$(participant$, videoSource).behavior(
+      this.scope,
     );
     this.unencryptedWarning$ = combineLatest(
       [audio$, this.video$],
@@ -272,70 +273,71 @@ abstract class BaseMediaViewModel extends ViewModel {
         encryptionSystem.kind !== E2eeType.NONE &&
         (a?.publication?.isEncrypted === false ||
           v?.publication?.isEncrypted === false),
-    ).pipe(this.scope.state());
+    ).behavior(this.scope);
 
-    this.encryptionStatus$ = this.participant$.pipe(
-      switchMap((participant): Observable<EncryptionStatus> => {
-        if (!participant) {
-          return of(EncryptionStatus.Connecting);
-        } else if (
-          participant.isLocal ||
-          encryptionSystem.kind === E2eeType.NONE
-        ) {
-          return of(EncryptionStatus.Okay);
-        } else if (encryptionSystem.kind === E2eeType.PER_PARTICIPANT) {
-          return combineLatest([
-            encryptionErrorObservable$(
-              livekitRoom,
-              participant,
-              encryptionSystem,
-              "MissingKey",
-            ),
-            encryptionErrorObservable$(
-              livekitRoom,
-              participant,
-              encryptionSystem,
-              "InvalidKey",
-            ),
-            observeRemoteTrackReceivingOkay$(participant, audioSource),
-            observeRemoteTrackReceivingOkay$(participant, videoSource),
-          ]).pipe(
-            map(([keyMissing, keyInvalid, audioOkay, videoOkay]) => {
-              if (keyMissing) return EncryptionStatus.KeyMissing;
-              if (keyInvalid) return EncryptionStatus.KeyInvalid;
-              if (audioOkay || videoOkay) return EncryptionStatus.Okay;
-              return undefined; // no change
-            }),
-            filter((x) => !!x),
-            startWith(EncryptionStatus.Connecting),
-          );
-        } else {
-          return combineLatest([
-            encryptionErrorObservable$(
-              livekitRoom,
-              participant,
-              encryptionSystem,
-              "InvalidKey",
-            ),
-            observeRemoteTrackReceivingOkay$(participant, audioSource),
-            observeRemoteTrackReceivingOkay$(participant, videoSource),
-          ]).pipe(
-            map(
-              ([keyInvalid, audioOkay, videoOkay]):
-                | EncryptionStatus
-                | undefined => {
-                if (keyInvalid) return EncryptionStatus.PasswordInvalid;
+    this.encryptionStatus$ = this.participant$
+      .pipe(
+        switchMap((participant): Observable<EncryptionStatus> => {
+          if (!participant) {
+            return of(EncryptionStatus.Connecting);
+          } else if (
+            participant.isLocal ||
+            encryptionSystem.kind === E2eeType.NONE
+          ) {
+            return of(EncryptionStatus.Okay);
+          } else if (encryptionSystem.kind === E2eeType.PER_PARTICIPANT) {
+            return combineLatest([
+              encryptionErrorObservable$(
+                livekitRoom,
+                participant,
+                encryptionSystem,
+                "MissingKey",
+              ),
+              encryptionErrorObservable$(
+                livekitRoom,
+                participant,
+                encryptionSystem,
+                "InvalidKey",
+              ),
+              observeRemoteTrackReceivingOkay$(participant, audioSource),
+              observeRemoteTrackReceivingOkay$(participant, videoSource),
+            ]).pipe(
+              map(([keyMissing, keyInvalid, audioOkay, videoOkay]) => {
+                if (keyMissing) return EncryptionStatus.KeyMissing;
+                if (keyInvalid) return EncryptionStatus.KeyInvalid;
                 if (audioOkay || videoOkay) return EncryptionStatus.Okay;
                 return undefined; // no change
-              },
-            ),
-            filter((x) => !!x),
-            startWith(EncryptionStatus.Connecting),
-          );
-        }
-      }),
-      this.scope.state(),
-    );
+              }),
+              filter((x) => !!x),
+              startWith(EncryptionStatus.Connecting),
+            );
+          } else {
+            return combineLatest([
+              encryptionErrorObservable$(
+                livekitRoom,
+                participant,
+                encryptionSystem,
+                "InvalidKey",
+              ),
+              observeRemoteTrackReceivingOkay$(participant, audioSource),
+              observeRemoteTrackReceivingOkay$(participant, videoSource),
+            ]).pipe(
+              map(
+                ([keyInvalid, audioOkay, videoOkay]):
+                  | EncryptionStatus
+                  | undefined => {
+                  if (keyInvalid) return EncryptionStatus.PasswordInvalid;
+                  if (audioOkay || videoOkay) return EncryptionStatus.Okay;
+                  return undefined; // no change
+                },
+              ),
+              filter((x) => !!x),
+              startWith(EncryptionStatus.Connecting),
+            );
+          }
+        }),
+      )
+      .behavior(this.scope);
   }
 }
 
@@ -354,31 +356,33 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   /**
    * Whether the participant is speaking.
    */
-  public readonly speaking$ = this.participant$.pipe(
-    switchMap((p) =>
-      p
-        ? observeParticipantEvents(p, ParticipantEvent.IsSpeakingChanged).pipe(
-            map((p) => p.isSpeaking),
-          )
-        : of(false),
-    ),
-    this.scope.state(),
-  );
+  public readonly speaking$ = this.participant$
+    .pipe(
+      switchMap((p) =>
+        p
+          ? observeParticipantEvents(
+              p,
+              ParticipantEvent.IsSpeakingChanged,
+            ).pipe(map((p) => p.isSpeaking))
+          : of(false),
+      ),
+    )
+    .behavior(this.scope);
 
   /**
    * Whether this participant is sending audio (i.e. is unmuted on their side).
    */
-  public readonly audioEnabled$: Observable<boolean>;
+  public readonly audioEnabled$: Behavior<boolean>;
   /**
    * Whether this participant is sending video.
    */
-  public readonly videoEnabled$: Observable<boolean>;
+  public readonly videoEnabled$: Behavior<boolean>;
 
   private readonly _cropVideo$ = new BehaviorSubject(true);
   /**
    * Whether the tile video should be contained inside the tile or be cropped to fit.
    */
-  public readonly cropVideo$: Observable<boolean> = this._cropVideo$;
+  public readonly cropVideo$: Behavior<boolean> = this._cropVideo$;
 
   public constructor(
     id: string,
@@ -387,8 +391,8 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     displayname$: Observable<string>,
-    public readonly handRaised$: Observable<Date | null>,
-    public readonly reaction$: Observable<ReactionOption | null>,
+    public readonly handRaised$: Behavior<Date | null>,
+    public readonly reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
       id,
@@ -401,16 +405,17 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       displayname$,
     );
 
-    const media$ = participant$.pipe(
-      switchMap((p) => (p && observeParticipantMedia(p)) ?? of(undefined)),
-      this.scope.state(),
-    );
-    this.audioEnabled$ = media$.pipe(
-      map((m) => m?.microphoneTrack?.isMuted === false),
-    );
-    this.videoEnabled$ = media$.pipe(
-      map((m) => m?.cameraTrack?.isMuted === false),
-    );
+    const media$ = participant$
+      .pipe(
+        switchMap((p) => (p && observeParticipantMedia(p)) ?? of(undefined)),
+      )
+      .behavior(this.scope);
+    this.audioEnabled$ = media$
+      .pipe(map((m) => m?.microphoneTrack?.isMuted === false))
+      .behavior(this.scope);
+    this.videoEnabled$ = media$
+      .pipe(map((m) => m?.cameraTrack?.isMuted === false))
+      .behavior(this.scope);
   }
 
   public toggleFitContain(): void {
@@ -436,19 +441,20 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   /**
    * Whether the video should be mirrored.
    */
-  public readonly mirror$ = this.video$.pipe(
-    switchMap((v) => {
-      const track = v?.publication?.track;
-      if (!(track instanceof LocalTrack)) return of(false);
-      // Watch for track restarts, because they indicate a camera switch
-      return fromEvent(track, TrackEvent.Restarted).pipe(
-        startWith(null),
-        // Mirror only front-facing cameras (those that face the user)
-        map(() => facingModeFromLocalTrack(track).facingMode === "user"),
-      );
-    }),
-    this.scope.state(),
-  );
+  public readonly mirror$ = this.video$
+    .pipe(
+      switchMap((v) => {
+        const track = v?.publication?.track;
+        if (!(track instanceof LocalTrack)) return of(false);
+        // Watch for track restarts, because they indicate a camera switch
+        return fromEvent(track, TrackEvent.Restarted).pipe(
+          startWith(null),
+          // Mirror only front-facing cameras (those that face the user)
+          map(() => facingModeFromLocalTrack(track).facingMode === "user"),
+        );
+      }),
+    )
+    .behavior(this.scope);
 
   /**
    * Whether to show this tile in a highly visible location near the start of
@@ -464,8 +470,8 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     displayname$: Observable<string>,
-    handRaised$: Observable<Date | null>,
-    reaction$: Observable<ReactionOption | null>,
+    handRaised$: Behavior<Date | null>,
+    reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
       id,
@@ -512,43 +518,43 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
    * The volume to which this participant's audio is set, as a scalar
    * multiplier.
    */
-  public readonly localVolume$: Observable<number> = merge(
+  public readonly localVolume$: Behavior<number> = merge(
     this.locallyMutedToggle$.pipe(map(() => "toggle mute" as const)),
     this.localVolumeAdjustment$,
     this.localVolumeCommit$.pipe(map(() => "commit" as const)),
-  ).pipe(
-    accumulate({ volume: 1, committedVolume: 1 }, (state, event) => {
-      switch (event) {
-        case "toggle mute":
-          return {
-            ...state,
-            volume: state.volume === 0 ? state.committedVolume : 0,
-          };
-        case "commit":
-          // Dragging the slider to zero should have the same effect as
-          // muting: keep the original committed volume, as if it were never
-          // dragged
-          return {
-            ...state,
-            committedVolume:
-              state.volume === 0 ? state.committedVolume : state.volume,
-          };
-        default:
-          // Volume adjustment
-          return { ...state, volume: event };
-      }
-    }),
-    map(({ volume }) => volume),
-    this.scope.state(),
-  );
+  )
+    .pipe(
+      accumulate({ volume: 1, committedVolume: 1 }, (state, event) => {
+        switch (event) {
+          case "toggle mute":
+            return {
+              ...state,
+              volume: state.volume === 0 ? state.committedVolume : 0,
+            };
+          case "commit":
+            // Dragging the slider to zero should have the same effect as
+            // muting: keep the original committed volume, as if it were never
+            // dragged
+            return {
+              ...state,
+              committedVolume:
+                state.volume === 0 ? state.committedVolume : state.volume,
+            };
+          default:
+            // Volume adjustment
+            return { ...state, volume: event };
+        }
+      }),
+      map(({ volume }) => volume),
+    )
+    .behavior(this.scope);
 
   /**
    * Whether this participant's audio is disabled.
    */
-  public readonly locallyMuted$: Observable<boolean> = this.localVolume$.pipe(
-    map((volume) => volume === 0),
-    this.scope.state(),
-  );
+  public readonly locallyMuted$: Behavior<boolean> = this.localVolume$
+    .pipe(map((volume) => volume === 0))
+    .behavior(this.scope);
 
   public constructor(
     id: string,
@@ -557,8 +563,8 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     displayname$: Observable<string>,
-    handRaised$: Observable<Date | null>,
-    reaction$: Observable<ReactionOption | null>,
+    handRaised$: Behavior<Date | null>,
+    reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
       id,
