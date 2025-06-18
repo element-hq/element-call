@@ -71,11 +71,6 @@ export function useAudioContext<S extends string>(
   props: Props<S>,
 ): UseAudioContext<S> | null {
   const [soundEffectVolume] = useSetting(soundEffectVolumeSetting);
-  const devices = useMediaDevices();
-  const audioOutputId = useObservableEagerState(
-    devices.audioOutput.selected$,
-  )?.id;
-  const { controlledAudioDevices } = useUrlParams();
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
 
@@ -111,6 +106,11 @@ export function useAudioContext<S extends string>(
       setAudioContext(undefined);
     };
   }, [props.sounds, props.latencyHint]);
+
+  const audioOutputId = useObservableEagerState(
+    useMediaDevices().audioOutput.selected$,
+  )?.id;
+  const { controlledAudioDevices } = useUrlParams();
 
   // Update the sink ID whenever we change devices.
   useEffect(() => {
