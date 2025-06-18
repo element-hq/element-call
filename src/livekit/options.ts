@@ -20,7 +20,9 @@ const VideoPresetsH264 = {
   h240: new VideoPreset(320, 240, 160_000, 20),
   h176: new VideoPreset(320, 176, 160_000, 20),
   h288: new VideoPreset(382, 288, 180_000, 20),
-  h360: VideoPresets.h360,
+//  h360: VideoPresets.h360,
+  h360: new VideoPreset(640, 360, 160_000, 20),
+  h540: new VideoPreset(960, 540, 450_000, 20),
 } as const;
 
 const defaultLiveKitPublishOptions: TrackPublishDefaults = {
@@ -32,8 +34,8 @@ const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   forceStereo: false,
   simulcast: true,
   videoSimulcastLayers: [
-    VideoPresetsH264.h240,
     VideoPresetsH264.h360,
+    VideoPresetsH264.h540,
   ] as VideoPreset[],
   screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
   stopMicTrackOnMute: false,
