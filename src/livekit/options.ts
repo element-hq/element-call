@@ -16,8 +16,8 @@ import {
 } from "livekit-client";
 
 const VideoPresetsH264 = {
-  h144: new VideoPreset(176, 144, 155_000, 20),
-  h240: new VideoPreset(320, 240, 160_000, 20),
+  h144: new VideoPreset(256, 144, 155_000, 20),
+  h240: new VideoPreset(480, 234, 160_000, 20),
   h176: new VideoPreset(320, 176, 160_000, 20),
   h288: new VideoPreset(382, 288, 180_000, 20),
 //  h360: VideoPresets.h360,
@@ -34,7 +34,7 @@ const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   forceStereo: false,
   simulcast: true,
   videoSimulcastLayers: [
-    VideoPresetsH264.h240,
+    VideoPresetsH264.h144,
     VideoPresets.h360,
   ] as VideoPreset[],
   screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
