@@ -23,6 +23,14 @@ export function useMediaDevices(): MediaDevices {
   return mediaDevices;
 }
 
+export const useIsEarpiece = (): boolean => {
+  const devices = useMediaDevices();
+  const audioOutput = useObservableEagerState(devices.audioOutput.selected$);
+  const available = useObservableEagerState(devices.audioOutput.available$);
+  if (!audioOutput?.id) return false;
+  return available.get(audioOutput.id)?.type === "earpiece";
+};
+
 /**
  * A convenience hook to get the audio node configuration for the earpiece.
  * It will check the `useAsEarpiece` of the `audioOutput` device and return
@@ -36,17 +44,13 @@ export const useEarpieceAudioConfig = (): {
 } => {
   const devices = useMediaDevices();
   const audioOutput = useObservableEagerState(devices.audioOutput.selected$);
-  // We use only the right speaker (pan = 1) for the earpiece.
-  // This mimics the behavior of the native earpiece speaker (only the top speaker on an iPhone)
-  const pan = useMemo(
-    () => (audioOutput?.virtualEarpiece ? 1 : 0),
-    [audioOutput?.virtualEarpiece],
-  );
-  // We also do lower the volume by a factor of 10 to optimize for the usecase where
-  // a user is holding the phone to their ear.
-  const volume = useMemo(
-    () => (audioOutput?.virtualEarpiece ? 0.1 : 1),
-    [audioOutput?.virtualEarpiece],
-  );
-  return { pan, volume };
+  const isVirtualEarpiece = audioOutput?.virtualEarpiece ?? false;
+  return {
+    // We use only the right speaker (pan = 1) for the earpiece.
+    // This mimics the behavior of the native earpiece speaker (only the top speaker on an iPhone)
+    pan: useMemo(() => (isVirtualEarpiece ? 1 : 0), [isVirtualEarpiece]),
+    // We also do lower the volume by a factor of 10 to optimize for the usecase where
+    // a user is holding the phone to their ear.
+    volume: useMemo(() => (isVirtualEarpiece ? 0.1 : 1), [isVirtualEarpiece]),
+  };
 };

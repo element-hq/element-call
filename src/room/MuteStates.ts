@@ -21,7 +21,7 @@ import {
   type SelectedDevice,
   type MediaDevice,
 } from "../state/MediaDevices";
-import { useMediaDevices } from "../MediaDevicesContext";
+import { useIsEarpiece, useMediaDevices } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import { ElementWidgetActions, widget } from "../widget";
 import { Config } from "../config/Config";
@@ -58,6 +58,7 @@ export interface MuteStates {
 function useMuteState(
   device: MediaDevice<DeviceLabel, SelectedDevice>,
   enabledByDefault: () => boolean,
+  forceUnavailable: boolean = false,
 ): MuteState {
   const available = useObservableEagerState(device.available$);
   const [enabled, setEnabled] = useReactiveState<boolean | undefined>(
@@ -67,13 +68,13 @@ function useMuteState(
   );
   return useMemo(
     () =>
-      available.size === 0
+      available.size === 0 || forceUnavailable
         ? deviceUnavailable
         : {
             enabled: enabled ?? false,
             setEnabled: setEnabled as Dispatch<SetStateAction<boolean>>,
           },
-    [available.size, enabled, setEnabled],
+    [available.size, enabled, forceUnavailable, setEnabled],
   );
 }
 
@@ -85,9 +86,11 @@ export function useMuteStates(isJoined: boolean): MuteStates {
   const audio = useMuteState(devices.audioInput, () => {
     return Config.get().media_devices.enable_audio && !skipLobby && !isJoined;
   });
+  const isEarpiece = useIsEarpiece();
   const video = useMuteState(
     devices.videoInput,
     () => Config.get().media_devices.enable_video && !skipLobby && !isJoined,
+    isEarpiece, // Force video to be unavailable if using earpiece
   );
 
   useEffect(() => {
