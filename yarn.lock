@@ -2717,8 +2717,8 @@ __metadata:
   linkType: hard
 
 "@livekit/components-react@npm:^2.0.0":
-  version: 2.9.9
-  resolution: "@livekit/components-react@npm:2.9.9"
+  version: 2.9.10
+  resolution: "@livekit/components-react@npm:2.9.10"
   dependencies:
     "@livekit/components-core": "npm:0.12.7"
     clsx: "npm:2.1.1"
@@ -2732,7 +2732,7 @@ __metadata:
   peerDependenciesMeta:
     "@livekit/krisp-noise-filter":
       optional: true
-  checksum: 10c0/7b3dad637b0bfd91c5636b1bb2c72ecde6136a4222d552690a3b3088c6fe4a28fbc30d2e8fec643c7e90316d8419393e7636001d5d192f5f1c9254df1307df0d
+  checksum: 10c0/86fc78d7b2d97540c43592435a65ac38b43fca9923af000aa90d884bd35794e18d202b7d915f44b63087abea5c94c37d6980772ed722226904262b2cddbec107
   languageName: node
   linkType: hard
 
