@@ -2743,12 +2743,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/protocol@npm:1.38.0":
-  version: 1.38.0
-  resolution: "@livekit/protocol@npm:1.38.0"
+"@livekit/protocol@npm:1.39.2":
+  version: 1.39.2
+  resolution: "@livekit/protocol@npm:1.39.2"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/ca64d4f984853054ff60574730b08a761afcd3bdc084e5218663e54b0e7f395aa2022d9d15d982fa094bbc0179cb19ef6a96ec74b1aa3265d118a85d1a4fde33
+  checksum: 10c0/ce5f3ee3ab10ea1578fb40c1d16224879e48143a1bbbfb5e36a080fa5468892eaccfe21aad1166b5443f67e2aa54236facafd4b3235e41b331e91ca405379368
   languageName: node
   linkType: hard
 
@@ -2777,13 +2777,6 @@ __metadata:
   version: 14.2.0
   resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:14.2.0"
   checksum: 10c0/cc51417d71ffe506401dbb85ff4930bf89b33b6718c9052ba3cc1b2989e989e5e7e6fceea7c5fb58576d64e7a5c947c4cece89dbfa785083d293508c80e0713d
-  languageName: node
-  linkType: hard
-
-"@matrix-org/olm@npm:3.2.15":
-  version: 3.2.15
-  resolution: "@matrix-org/olm@npm:3.2.15"
-  checksum: 10c0/82a40d6e4e632a90670d4f15e8962272e302f4b9deed4fc78455c5ca78422c13bde6b53ebfc406630336926c9574386c9d9069c9c023db1c3d143117985c1e50
   languageName: node
   linkType: hard
 
@@ -5603,8 +5596,8 @@ __metadata:
   linkType: hard
 
 "@vector-im/compound-design-tokens@npm:^4.0.0":
-  version: 4.0.3
-  resolution: "@vector-im/compound-design-tokens@npm:4.0.3"
+  version: 4.0.4
+  resolution: "@vector-im/compound-design-tokens@npm:4.0.4"
   peerDependencies:
     "@types/react": "*"
     react: ^17 || ^18 || ^19.0.0
@@ -5613,7 +5606,7 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/4e32e46b4f0afef463ab7827c7bd1e0369bf83bab2cf86f182a5052b409c8b64e6fea84f818eee4d3f10e51be996e550d2b2dc664d7444f6685502f517d9a754
+  checksum: 10c0/e6ff6a956082f4a288237e7c7e60044319d7195cad0d5175dad7115270119f80c43252520db8f1a514b762f92dd5b7059c1217d7ccbe81daf71c426cbfeaf3dd
   languageName: node
   linkType: hard
 
@@ -9914,11 +9907,11 @@ __metadata:
   linkType: hard
 
 "livekit-client@npm:^2.13.0":
-  version: 2.13.3
-  resolution: "livekit-client@npm:2.13.3"
+  version: 2.13.6
+  resolution: "livekit-client@npm:2.13.6"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
-    "@livekit/protocol": "npm:1.38.0"
+    "@livekit/protocol": "npm:1.39.2"
     events: "npm:^3.3.0"
     loglevel: "npm:^1.9.2"
     sdp-transform: "npm:^2.15.0"
@@ -9928,7 +9921,7 @@ __metadata:
     webrtc-adapter: "npm:^9.0.1"
   peerDependencies:
     "@types/dom-mediacapture-record": ^1
-  checksum: 10c0/9eadb9835514551c8e834cebb607999e632bc4b3b3e5d5e206db90b66e2e5467b8a1f76a03c648e00cc96c87256b4eece58dbb2b92dfcafa84f4798bbb305060
+  checksum: 10c0/3023e65c15e6b757885f1ca7607833fdcca4c4f49d6c109ae45629f318d08b953b2f5c4b32d1381f057cf2f51f4def5f4c312e0ff4f3c67ee4584274cd62f4c8
   languageName: node
   linkType: hard
 
@@ -10140,12 +10133,11 @@ __metadata:
   linkType: hard
 
 "matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
-  version: 37.6.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=bf6dc16ad32d47f2c6e167236f4c853ceef01d4f"
+  version: 37.8.0
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=adaf92162377414df620e004d8c58c67118490ca"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^14.2.0"
-    "@matrix-org/olm": "npm:3.2.15"
     another-json: "npm:^0.2.0"
     bs58: "npm:^6.0.0"
     content-type: "npm:^1.0.4"
@@ -10158,7 +10150,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/2877e7c5b2779200b48f3152bb7b510e58899b1e779e7e6d2bc1a236ed178fa8858f0547b644a2029f48f55dc7cc3954f48e2598c8963d45293c8280ccc23039
+  checksum: 10c0/8e842056ff926c615d53a4a333c9e54d0fbe7f88b97b55629464e67850cc512606accde6a8724dd48ac82714483f685515913b5556e9824c4d63c443317be1ef
   languageName: node
   linkType: hard
 

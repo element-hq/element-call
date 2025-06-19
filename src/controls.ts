@@ -20,6 +20,7 @@ export interface Controls {
   /** @deprecated use  onAudioDeviceSelect instead*/
   onOutputDeviceSelect?: (id: string) => void;
   onAudioDeviceSelect?: (id: string) => void;
+  onAudioPlaybackStarted?: () => void;
   /** @deprecated use  setAudioEnabled instead*/
   setOutputEnabled(enabled: boolean): void;
   setAudioEnabled(enabled: boolean): void;
@@ -54,7 +55,13 @@ export const outputDevice$ = new BehaviorSubject<string | undefined>(undefined);
  * This should also be used to display a darkened overlay screen letting the user know that audio is muted.
  */
 export const setAudioEnabled$ = new Subject<boolean>();
-
+let playbackStartedEmitted = false;
+export const setPlaybackStarted = (): void => {
+  if (!playbackStartedEmitted) {
+    playbackStartedEmitted = true;
+    window.controls.onAudioPlaybackStarted?.();
+  }
+};
 window.controls = {
   canEnterPip(): boolean {
     return setPipEnabled$.observed;

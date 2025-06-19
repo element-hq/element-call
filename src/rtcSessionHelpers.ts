@@ -121,10 +121,18 @@ export async function enterRTCSession(
       ...(useDeviceSessionMemberEvents !== undefined && {
         useLegacyMemberEvents: !useDeviceSessionMemberEvents,
       }),
+      delayedLeaveEventRestartMs:
+        matrixRtcSessionConfig?.delayed_leave_event_restart_ms ??
+        matrixRtcSessionConfig?.membership_keep_alive_period,
       delayedLeaveEventDelayMs:
+        matrixRtcSessionConfig?.delayed_leave_event_delay_ms ??
         matrixRtcSessionConfig?.membership_server_side_expiry_timeout,
-      networkErrorRetryMs: matrixRtcSessionConfig?.membership_keep_alive_period,
-      makeKeyDelay: matrixRtcSessionConfig?.key_rotation_on_leave_delay,
+      networkErrorRetryMs: matrixRtcSessionConfig?.network_error_retry_ms,
+      makeKeyDelay:
+        matrixRtcSessionConfig?.wait_for_key_rotation_ms ??
+        matrixRtcSessionConfig?.key_rotation_on_leave_delay,
+      membershipEventExpiryMs:
+        matrixRtcSessionConfig?.membership_event_expiry_ms,
       useExperimentalToDeviceTransport,
     },
   );

@@ -58,11 +58,13 @@ it("should render for member", () => {
   expect(container).toBeTruthy();
   expect(queryAllByTestId("audio")).toHaveLength(1);
 });
+
 it("should not render without member", () => {
+  const memberships = [
+    { sender: "othermember", deviceId: "123" },
+  ] as CallMembership[];
   const { container, queryAllByTestId } = render(
-    <MatrixAudioRenderer
-      members={[{ sender: "othermember", deviceId: "123" }] as CallMembership[]}
-    />,
+    <MatrixAudioRenderer members={memberships} />,
   );
   expect(container).toBeTruthy();
   expect(queryAllByTestId("audio")).toHaveLength(0);
@@ -84,6 +86,7 @@ it("should not setup audioContext gain and pan if there is no need to.", () => {
   expect(testAudioContext.gain.gain.value).toEqual(1);
   expect(testAudioContext.pan.pan.value).toEqual(0);
 });
+
 it("should setup audioContext gain and pan", () => {
   vi.spyOn(MediaDevicesContext, "useEarpieceAudioConfig").mockReturnValue({
     pan: 1,
