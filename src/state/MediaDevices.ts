@@ -28,8 +28,8 @@ import {
 } from "../settings/settings";
 import { type ObservableScope } from "./ObservableScope";
 import {
-  outputDevice$ as externalDeviceSelection$,
-  availableOutputDevices$,
+  outputDevice$ as controlledOutputSelection$,
+  availableOutputDevices$ as controlledAvailableOutputDevices$,
 } from "../controls";
 import { getUrlParams } from "../UrlParams";
 
@@ -239,7 +239,7 @@ class ControlledAudioOutput
   implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
 {
   public readonly available$ = combineLatest(
-    [availableOutputDevices$.pipe(startWith([])), iosDeviceMenu$],
+    [controlledAvailableOutputDevices$.pipe(startWith([])), iosDeviceMenu$],
     (availableRaw, iosDeviceMenu) => {
       const available = new Map<string, AudioOutputDeviceLabel>(
         availableRaw.map(
@@ -269,15 +269,11 @@ class ControlledAudioOutput
     this.deviceSelection$.next(id);
   }
 
-  private readonly preferredDevice$ = merge(
+  public readonly selected$ = merge(
     this.deviceSelection$,
-    externalDeviceSelection$,
-  ).pipe(startWith<string | undefined>(undefined), this.scope.state());
-
-  public readonly selected$ = selectDevice$(
-    this.available$,
-    this.preferredDevice$,
+    controlledOutputSelection$,
   ).pipe(
+    startWith<string | undefined>(undefined),
     map((id) =>
       id === undefined
         ? undefined
@@ -293,6 +289,7 @@ class ControlledAudioOutput
       // been selected - for example, Element X iOS listens to this to determine
       // whether it should enable the proximity sensor.
       if (device !== undefined) {
+        logger.info("[controlled-output] setAudioDeviceSelect called:", device);
         window.controls.onAudioDeviceSelect?.(device.id);
         // Also invoke the deprecated callback for backward compatibility
         window.controls.onOutputDeviceSelect?.(device.id);
