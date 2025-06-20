@@ -22,7 +22,7 @@ import {
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { useMediaDevices } from "../livekit/MediaDevicesContext";
+import { useMediaDevices } from "../MediaDevicesContext";
 import { platform } from "../Platform";
 import { useLatest } from "../useLatest";
 

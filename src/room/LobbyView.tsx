@@ -24,7 +24,7 @@ import {
   type LocalVideoTrack,
   Track,
 } from "livekit-client";
-import { useObservable } from "observable-hooks";
+import { useObservable, useObservableEagerState } from "observable-hooks";
 import { map } from "rxjs";
 import { useNavigate } from "react-router-dom";
 
@@ -45,7 +45,7 @@ import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useMediaQuery } from "../useMediaQuery";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
-import { useMediaDevices } from "../livekit/MediaDevicesContext";
+import { useMediaDevices } from "../MediaDevicesContext";
 import { useInitial } from "../useInitial";
 import { useSwitchCamera as useShowSwitchCamera } from "./useSwitchCamera";
 import {
@@ -54,6 +54,7 @@ import {
 } from "../livekit/TrackProcessorContext";
 import { usePageTitle } from "../usePageTitle";
 import { useLatest } from "../useLatest";
+import { getValue } from "../utils/observable";
 
 interface Props {
   client: MatrixClient;
@@ -126,13 +127,18 @@ export const LobbyView: FC<Props> = ({
   );
 
   const devices = useMediaDevices();
+  const videoInputId = useObservableEagerState(
+    devices.videoInput.selected$,
+  )?.id;
 
   // Capture the audio options as they were when we first mounted, because
   // we're not doing anything with the audio anyway so we don't need to
   // re-open the devices when they change (see below).
   const initialAudioOptions = useInitial(
     () =>
-      muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
+      muteStates.audio.enabled && {
+        deviceId: getValue(devices.audioInput.selected$)?.id,
+      },
   );
 
   const { processor } = useTrackProcessor();
@@ -148,14 +154,14 @@ export const LobbyView: FC<Props> = ({
       // which would cause the devices to be re-opened on the next render.
       audio: Object.assign({}, initialAudioOptions),
       video: muteStates.video.enabled && {
-        deviceId: devices.videoInput.selectedId,
+        deviceId: videoInputId,
         processor: initialProcessor,
       },
     }),
     [
       initialAudioOptions,
       muteStates.video.enabled,
-      devices.videoInput.selectedId,
+      videoInputId,
       initialProcessor,
     ],
   );

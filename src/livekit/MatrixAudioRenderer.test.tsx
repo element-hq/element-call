@@ -17,11 +17,13 @@ import { type ReactNode } from "react";
 import { useTracks } from "@livekit/components-react";
 
 import { testAudioContext } from "../useAudioContext.test";
-import * as MediaDevicesContext from "./MediaDevicesContext";
+import * as MediaDevicesContext from "../MediaDevicesContext";
 import { MatrixAudioRenderer } from "./MatrixAudioRenderer";
-import { mockTrack } from "../utils/test";
+import { mockMediaDevices, mockTrack } from "../utils/test";
 
 export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
+
+const MediaDevicesProvider = MediaDevicesContext.MediaDevicesContext.Provider;
 
 beforeEach(() => {
   vi.stubGlobal("AudioContext", TestAudioContextConstructor);
@@ -51,9 +53,11 @@ vi.mocked(useTracks).mockReturnValue(tracks);
 
 it("should render for member", () => {
   const { container, queryAllByTestId } = render(
-    <MatrixAudioRenderer
-      members={[{ sender: "test", deviceId: "123" }] as CallMembership[]}
-    />,
+    <MediaDevicesProvider value={mockMediaDevices({})}>
+      <MatrixAudioRenderer
+        members={[{ sender: "test", deviceId: "123" }] as CallMembership[]}
+      />
+    </MediaDevicesProvider>,
   );
   expect(container).toBeTruthy();
   expect(queryAllByTestId("audio")).toHaveLength(1);
@@ -64,7 +68,9 @@ it("should not render without member", () => {
     { sender: "othermember", deviceId: "123" },
   ] as CallMembership[];
   const { container, queryAllByTestId } = render(
-    <MatrixAudioRenderer members={memberships} />,
+    <MediaDevicesProvider value={mockMediaDevices({})}>
+      <MatrixAudioRenderer members={memberships} />
+    </MediaDevicesProvider>,
   );
   expect(container).toBeTruthy();
   expect(queryAllByTestId("audio")).toHaveLength(0);
@@ -72,9 +78,11 @@ it("should not render without member", () => {
 
 it("should not setup audioContext gain and pan if there is no need to.", () => {
   render(
-    <MatrixAudioRenderer
-      members={[{ sender: "test", deviceId: "123" }] as CallMembership[]}
-    />,
+    <MediaDevicesProvider value={mockMediaDevices({})}>
+      <MatrixAudioRenderer
+        members={[{ sender: "test", deviceId: "123" }] as CallMembership[]}
+      />
+    </MediaDevicesProvider>,
   );
   const audioTrack = tracks[0].publication.track! as RemoteAudioTrack;
 
@@ -93,9 +101,11 @@ it("should setup audioContext gain and pan", () => {
     volume: 0.1,
   });
   render(
-    <MatrixAudioRenderer
-      members={[{ sender: "test", deviceId: "123" }] as CallMembership[]}
-    />,
+    <MediaDevicesProvider value={mockMediaDevices({})}>
+      <MatrixAudioRenderer
+        members={[{ sender: "test", deviceId: "123" }] as CallMembership[]}
+      />
+    </MediaDevicesProvider>,
   );
 
   const audioTrack = tracks[0].publication.track! as RemoteAudioTrack;

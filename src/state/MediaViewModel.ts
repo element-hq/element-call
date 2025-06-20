@@ -430,8 +430,6 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
 }
 
 /**
-        },
-        },
  * The local participant's user media.
  */
 export class LocalUserMediaViewModel extends BaseUserMediaViewModel {

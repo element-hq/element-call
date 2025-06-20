@@ -31,6 +31,7 @@ import {
   mockLocalParticipant,
   mockMatrixRoom,
   mockMatrixRoomMember,
+  mockMediaDevices,
   mockRemoteParticipant,
   mockRtcMembership,
   type MockRTCSession,
@@ -45,6 +46,7 @@ import {
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer";
+import { MediaDevicesContext } from "../MediaDevicesContext";
 
 // vi.hoisted(() => {
 //   localStorage = {} as unknown as Storage;
@@ -147,41 +149,43 @@ function createInCallView(): RenderResult & {
   rtcSession.joined = true;
   const renderResult = render(
     <BrowserRouter>
-      <ReactionsSenderProvider
-        vm={vm}
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-      >
-        <TooltipProvider>
-          <RoomContext.Provider value={livekitRoom}>
-            <InCallView
-              client={client}
-              hideHeader={true}
-              rtcSession={rtcSession as unknown as MatrixRTCSession}
-              muteStates={muteState}
-              vm={vm}
-              matrixInfo={{
-                userId: "",
-                displayName: "",
-                avatarUrl: "",
-                roomId: "",
-                roomName: "",
-                roomAlias: null,
-                roomAvatar: null,
-                e2eeSystem: {
-                  kind: E2eeType.NONE,
-                },
-              }}
-              livekitRoom={livekitRoom}
-              participantCount={0}
-              onLeave={function (): void {
-                throw new Error("Function not implemented.");
-              }}
-              connState={ConnectionState.Connected}
-              onShareClick={null}
-            />
-          </RoomContext.Provider>
-        </TooltipProvider>
-      </ReactionsSenderProvider>
+      <MediaDevicesContext.Provider value={mockMediaDevices({})}>
+        <ReactionsSenderProvider
+          vm={vm}
+          rtcSession={rtcSession as unknown as MatrixRTCSession}
+        >
+          <TooltipProvider>
+            <RoomContext.Provider value={livekitRoom}>
+              <InCallView
+                client={client}
+                hideHeader={true}
+                rtcSession={rtcSession as unknown as MatrixRTCSession}
+                muteStates={muteState}
+                vm={vm}
+                matrixInfo={{
+                  userId: "",
+                  displayName: "",
+                  avatarUrl: "",
+                  roomId: "",
+                  roomName: "",
+                  roomAlias: null,
+                  roomAvatar: null,
+                  e2eeSystem: {
+                    kind: E2eeType.NONE,
+                  },
+                }}
+                livekitRoom={livekitRoom}
+                participantCount={0}
+                onLeave={function (): void {
+                  throw new Error("Function not implemented.");
+                }}
+                connState={ConnectionState.Connected}
+                onShareClick={null}
+              />
+            </RoomContext.Provider>
+          </TooltipProvider>
+        </ReactionsSenderProvider>
+      </MediaDevicesContext.Provider>
     </BrowserRouter>,
   );
   return {

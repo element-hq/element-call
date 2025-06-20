@@ -19,12 +19,18 @@ import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { useObservable, useObservableEagerState } from "observable-hooks";
-import { map } from "rxjs";
+import {
+  map,
+  NEVER,
+  type Observable,
+  type Subscription,
+  switchMap,
+} from "rxjs";
 
 import { defaultLiveKitOptions } from "./options";
 import { type SFUConfig } from "./openIDSFU";
 import { type MuteStates } from "../room/MuteStates";
-import { type MediaDeviceHandle, useMediaDevices } from "./MediaDevicesContext";
+import { useMediaDevices } from "../MediaDevicesContext";
 import {
   type ECConnectionState,
   useECConnectionState,
@@ -39,6 +45,8 @@ import {
 import { observeTrackReference$ } from "../state/MediaViewModel";
 import { useUrlParams } from "../UrlParams";
 import { useInitial } from "../useInitial";
+import { getValue } from "../utils/observable";
+import { type SelectedDevice } from "../state/MediaDevices";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -56,7 +64,9 @@ export function useLivekit(
   const initialMuteStates = useInitial(() => muteStates);
 
   const devices = useMediaDevices();
-  const initialDevices = useInitial(() => devices);
+  const initialAudioInputId = useInitial(
+    () => getValue(devices.audioInput.selected$)?.id,
+  );
 
   // Store if audio/video are currently updating. If to prohibit unnecessary calls
   // to setMicrophoneEnabled/setCameraEnabled
@@ -94,15 +104,20 @@ export function useLivekit(
       ...defaultLiveKitOptions,
       videoCaptureDefaults: {
         ...defaultLiveKitOptions.videoCaptureDefaults,
-        deviceId: initialDevices.videoInput.selectedId,
+        deviceId: getValue(devices.videoInput.selected$)?.id,
         processor,
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
-        deviceId: initialDevices.audioInput.selectedId,
+        deviceId: initialAudioInputId,
       },
       audioOutput: {
-        deviceId: initialDevices.audioOutput.selectedId,
+        // When using controlled audio devices, we don't want to set the
+        // deviceId here, because it will be set by the native app.
+        // (also the id does not need to match a browser device id)
+        deviceId: controlledAudioDevices
+          ? undefined
+          : getValue(devices.audioOutput.selected$)?.id,
       },
       e2ee,
     };
@@ -157,7 +172,7 @@ export function useLivekit(
   );
 
   const connectionState = useECConnectionState(
-    initialDevices.audioInput.selectedId,
+    initialAudioInputId,
     initialMuteStates.audio.enabled,
     room,
     sfuConfig,
@@ -312,62 +327,65 @@ export function useLivekit(
     ) {
       const syncDevice = (
         kind: MediaDeviceKind,
-        device: MediaDeviceHandle,
-      ): void => {
-        const id = device.selectedId;
-
-        // Detect if we're trying to use chrome's default device, in which case
-        // we need to to see if the default device has changed to a different device
-        // by comparing the group ID of the device we're using against the group ID
-        // of what the default device is *now*.
-        // This is special-cased for only audio inputs because we need to dig around
-        // in the LocalParticipant object for the track object and there's not a nice
-        // way to do that generically. There is usually no OS-level default video capture
-        // device anyway, and audio outputs work differently.
-        if (
-          id === "default" &&
-          kind === "audioinput" &&
-          room.options.audioCaptureDefaults?.deviceId === "default"
-        ) {
-          const activeMicTrack = Array.from(
-            room.localParticipant.audioTrackPublications.values(),
-          ).find((d) => d.source === Track.Source.Microphone)?.track;
-
+        selected$: Observable<SelectedDevice | undefined>,
+      ): Subscription =>
+        selected$.subscribe((device) => {
           if (
-            activeMicTrack &&
-            // only restart if the stream is still running: LiveKit will detect
-            // when a track stops & restart appropriately, so this is not our job.
-            // Plus, we need to avoid restarting again if the track is already in
-            // the process of being restarted.
-            activeMicTrack.mediaStreamTrack.readyState !== "ended" &&
-            device.selectedGroupId !==
-              activeMicTrack.mediaStreamTrack.getSettings().groupId
+            device !== undefined &&
+            room.getActiveDevice(kind) !== device.id
           ) {
-            // It's different, so restart the track, ie. cause Livekit to do another
-            // getUserMedia() call with deviceId: default to get the *new* default device.
-            // Note that room.switchActiveDevice() won't work: Livekit will ignore it because
-            // the deviceId hasn't changed (was & still is default).
-            room.localParticipant
-              .getTrackPublication(Track.Source.Microphone)
-              ?.audioTrack?.restartTrack()
-              .catch((e) => {
-                logger.error(`Failed to restart audio device track`, e);
-              });
-          }
-        } else {
-          if (id !== undefined && room.getActiveDevice(kind) !== id) {
             room
-              .switchActiveDevice(kind, id)
+              .switchActiveDevice(kind, device.id)
               .catch((e) =>
                 logger.error(`Failed to sync ${kind} device with LiveKit`, e),
               );
           }
-        }
-      };
+        });
 
-      syncDevice("audioinput", devices.audioInput);
-      syncDevice("audiooutput", devices.audioOutput);
-      syncDevice("videoinput", devices.videoInput);
+      const subscriptions = [
+        syncDevice("audioinput", devices.audioInput.selected$),
+        syncDevice("audiooutput", devices.audioOutput.selected$),
+        syncDevice("videoinput", devices.videoInput.selected$),
+        // Restart the audio input track whenever we detect that the active media
+        // device has changed to refer to a different hardware device. We do this
+        // for the sake of Chrome, which provides a "default" device that is meant
+        // to match the system's default audio input, whatever that may be.
+        // This is special-cased for only audio inputs because we need to dig around
+        // in the LocalParticipant object for the track object and there's not a nice
+        // way to do that generically. There is usually no OS-level default video capture
+        // device anyway, and audio outputs work differently.
+        devices.audioInput.selected$
+          .pipe(switchMap((device) => device?.hardwareDeviceChange$ ?? NEVER))
+          .subscribe(() => {
+            const activeMicTrack = Array.from(
+              room.localParticipant.audioTrackPublications.values(),
+            ).find((d) => d.source === Track.Source.Microphone)?.track;
+
+            if (
+              activeMicTrack &&
+              // only restart if the stream is still running: LiveKit will detect
+              // when a track stops & restart appropriately, so this is not our job.
+              // Plus, we need to avoid restarting again if the track is already in
+              // the process of being restarted.
+              activeMicTrack.mediaStreamTrack.readyState !== "ended"
+            ) {
+              // Restart the track, which will cause Livekit to do another
+              // getUserMedia() call with deviceId: default to get the *new* default device.
+              // Note that room.switchActiveDevice() won't work: Livekit will ignore it because
+              // the deviceId hasn't changed (was & still is default).
+              room.localParticipant
+                .getTrackPublication(Track.Source.Microphone)
+                ?.audioTrack?.restartTrack()
+                .catch((e) => {
+                  logger.error(`Failed to restart audio device track`, e);
+                });
+            }
+          }),
+      ];
+
+      return (): void => {
+        for (const s of subscriptions) s.unsubscribe();
+      };
     }
   }, [room, devices, connectionState, controlledAudioDevices]);
 

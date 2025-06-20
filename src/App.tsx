@@ -19,10 +19,11 @@ import { ClientProvider } from "./ClientContext";
 import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
-import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
 import { ProcessorProvider } from "./livekit/TrackProcessorContext";
+import { type AppViewModel } from "./state/AppViewModel";
+import { MediaDevicesContext } from "./MediaDevicesContext";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -50,7 +51,11 @@ const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
   return children;
 };
 
-export const App: FC = () => {
+interface Props {
+  vm: AppViewModel;
+}
+
+export const App: FC<Props> = ({ vm }) => {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     Initializer.init()
@@ -72,7 +77,7 @@ export const App: FC = () => {
             {loaded ? (
               <Suspense fallback={null}>
                 <ClientProvider>
-                  <MediaDevicesProvider>
+                  <MediaDevicesContext.Provider value={vm.mediaDevices}>
                     <ProcessorProvider>
                       <Sentry.ErrorBoundary
                         fallback={(error) => (
@@ -91,7 +96,7 @@ export const App: FC = () => {
                         </Routes>
                       </Sentry.ErrorBoundary>
                     </ProcessorProvider>
-                  </MediaDevicesProvider>
+                  </MediaDevicesContext.Provider>
                 </ClientProvider>
               </Suspense>
             ) : (
