@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import {
   combineLatest,
   filter,
+  identity,
   map,
   merge,
   of,
@@ -18,7 +19,7 @@ import {
   type Observable,
 } from "rxjs";
 import { createMediaDeviceObserver } from "@livekit/components-core";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import {
   audioInput as audioInputSetting,
@@ -37,6 +38,7 @@ import { platform } from "../Platform";
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
 // the ios swift team.
 const EARPIECE_CONFIG_ID = "earpiece-id";
+const logger = rootLogger.getChild("[MediaDevices]");
 
 export type DeviceLabel =
   | { type: "name"; name: string }
@@ -93,15 +95,15 @@ export const iosDeviceMenu$ =
 
 function availableRawDevices$(
   kind: MediaDeviceKind,
-  usingNames$: Observable<boolean>,
+  recomputeDevicesWithPermissions$: Observable<boolean>,
   scope: ObservableScope,
 ): Observable<MediaDeviceInfo[]> {
-  return usingNames$.pipe(
-    switchMap((usingNames) =>
+  return recomputeDevicesWithPermissions$.pipe(
+    switchMap((recomputeDevicesWithPermissions) =>
       createMediaDeviceObserver(
         kind,
         (e) => logger.error("Error creating MediaDeviceObserver", e),
-        usingNames,
+        recomputeDevicesWithPermissions,
       ),
     ),
     startWith([]),
@@ -145,7 +147,11 @@ function selectDevice$<Label>(
 
 class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   private readonly availableRaw$: Observable<MediaDeviceInfo[]> =
-    availableRawDevices$("audioinput", this.usingNames$, this.scope);
+    availableRawDevices$(
+      "audioinput",
+      this.recomputeDevicesWithPermissions$,
+      this.scope,
+    );
 
   public readonly available$ = this.availableRaw$.pipe(
     map(buildDeviceMap),
@@ -179,9 +185,13 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   }
 
   public constructor(
-    private readonly usingNames$: Observable<boolean>,
+    private readonly recomputeDevicesWithPermissions$: Observable<boolean>,
     private readonly scope: ObservableScope,
-  ) {}
+  ) {
+    this.available$.subscribe((available) => {
+      logger.info("[audio-input] available devices:", available);
+    });
+  }
 }
 
 class AudioOutput
@@ -189,7 +199,7 @@ class AudioOutput
 {
   public readonly available$ = availableRawDevices$(
     "audiooutput",
-    this.usingNames$,
+    this.recomputeDevicesWithPermissions$,
     this.scope,
   ).pipe(
     map((availableRaw) => {
@@ -230,9 +240,13 @@ class AudioOutput
   }
 
   public constructor(
-    private readonly usingNames$: Observable<boolean>,
+    private readonly recomputeDevicesWithPermissions$: Observable<boolean>,
     private readonly scope: ObservableScope,
-  ) {}
+  ) {
+    this.available$.subscribe((available) => {
+      logger.info("[audio-output] available devices:", available);
+    });
+  }
 }
 
 class ControlledAudioOutput
@@ -298,13 +312,16 @@ class ControlledAudioOutput
         window.controls.onOutputDeviceSelect?.(device.id);
       }
     });
+    this.available$.subscribe((available) => {
+      logger.info("[controlled-output] available devices:", available);
+    });
   }
 }
 
 class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
   public readonly available$ = availableRawDevices$(
     "videoinput",
-    this.usingNames$,
+    this.recomputeDevicesWithPermissions$,
     this.scope,
   ).pipe(map(buildDeviceMap));
 
@@ -321,13 +338,18 @@ class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
   }
 
   public constructor(
-    private readonly usingNames$: Observable<boolean>,
+    private readonly recomputeDevicesWithPermissions$: Observable<boolean>,
     private readonly scope: ObservableScope,
-  ) {}
+  ) {
+    // This also has the purpose of subscribing to the available devices
+    this.available$.subscribe((available) => {
+      logger.info("[video-input] available devices:", available);
+    });
+  }
 }
 
 export class MediaDevices {
-  private readonly deviceNamesRequest$ = new Subject<void>();
+  private readonly requests$ = new Subject<boolean>();
   /**
    * Requests that the media devices be populated with the names of each
    * available device, rather than numbered identifiers. This may invoke a
@@ -335,7 +357,9 @@ export class MediaDevices {
    * intent to view the device list.
    */
   public requestDeviceNames(): void {
-    this.deviceNamesRequest$.next();
+    void navigator.mediaDevices.enumerateDevices().then((result) => {
+      this.requests$.next(!result.some((device) => device.label));
+    });
   }
 
   // Start using device names as soon as requested. This will cause LiveKit to
@@ -344,26 +368,33 @@ export class MediaDevices {
   // you to do to receive device names in lieu of a more explicit permissions
   // API. This flag never resets to false, because once permissions are granted
   // the first time, the user won't be prompted again until reload of the page.
-  private readonly usingNames$ = this.deviceNamesRequest$.pipe(
-    map(() => true),
+  private readonly recomputeDevicesWithPermissions$ = this.requests$.pipe(
     startWith(false),
-    this.scope.state(),
+    identity,
+    this.scope.stateNonDistinct(),
   );
 
   public readonly audioInput: MediaDevice<
     DeviceLabel,
     SelectedAudioInputDevice
-  > = new AudioInput(this.usingNames$, this.scope);
+  > = new AudioInput(this.recomputeDevicesWithPermissions$, this.scope);
 
   public readonly audioOutput: MediaDevice<
     AudioOutputDeviceLabel,
     SelectedAudioOutputDevice
   > = getUrlParams().controlledAudioDevices
     ? new ControlledAudioOutput(this.scope)
-    : new AudioOutput(this.usingNames$, this.scope);
+    : new AudioOutput(this.recomputeDevicesWithPermissions$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
-    new VideoInput(this.usingNames$, this.scope);
+    new VideoInput(this.recomputeDevicesWithPermissions$, this.scope);
 
-  public constructor(private readonly scope: ObservableScope) {}
+  public constructor(private readonly scope: ObservableScope) {
+    this.recomputeDevicesWithPermissions$.subscribe((recompute) => {
+      logger.info(
+        "[MediaDevices] recomputeDevicesWithPermissions$ changed:",
+        recompute,
+      );
+    });
+  }
 }
