@@ -21,15 +21,18 @@ import {
   Separator,
 } from "@vector-im/compound-web";
 import { Trans, useTranslation } from "react-i18next";
+import { useObservableEagerState } from "observable-hooks";
 
 import {
-  EARPIECE_CONFIG_ID,
-  type MediaDeviceHandle,
-} from "../livekit/MediaDevicesContext";
+  type AudioOutputDeviceLabel,
+  type DeviceLabel,
+  type SelectedDevice,
+  type MediaDevice,
+} from "../state/MediaDevices";
 import styles from "./DeviceSelection.module.css";
 
 interface Props {
-  device: MediaDeviceHandle;
+  device: MediaDevice<DeviceLabel | AudioOutputDeviceLabel, SelectedDevice>;
   title: string;
   numberedLabel: (number: number) => string;
 }
@@ -41,6 +44,8 @@ export const DeviceSelection: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const groupId = useId();
+  const available = useObservableEagerState(device.available$);
+  const selectedId = useObservableEagerState(device.selected$)?.id;
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       device.select(e.target.value);
@@ -49,7 +54,7 @@ export const DeviceSelection: FC<Props> = ({
   );
 
   // There is no need to show the menu if there is no choice that can be made.
-  if (device.available.size <= 1) return null;
+  if (available.size <= 1) return null;
 
   return (
     <div className={styles.selection}>
@@ -64,7 +69,7 @@ export const DeviceSelection: FC<Props> = ({
       </Heading>
       <Separator className={styles.separator} />
       <div className={styles.options}>
-        {[...device.available].map(([id, label]) => {
+        {[...available].map(([id, label]) => {
           let labelText: ReactNode;
           switch (label.type) {
             case "name":
@@ -94,20 +99,13 @@ export const DeviceSelection: FC<Props> = ({
               break;
           }
 
-          let isSelected = false;
-          if (device.useAsEarpiece) {
-            isSelected = id === EARPIECE_CONFIG_ID;
-          } else {
-            isSelected = id === device.selectedId;
-          }
-
           return (
             <InlineField
               key={id}
               name={groupId}
               control={
                 <RadioControl
-                  checked={isSelected}
+                  checked={id === selectedId}
                   onChange={onChange}
                   value={id}
                 />

@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactNode, useState } from "react";
+import { type FC, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
 import { Button, Root as Form, Separator } from "@vector-im/compound-web";
@@ -17,11 +17,8 @@ import styles from "./SettingsModal.module.css";
 import { type Tab, TabContainer } from "../tabs/Tabs";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
-import {
-  useMediaDevices,
-  useMediaDeviceNames,
-  iosDeviceMenu$,
-} from "../livekit/MediaDevicesContext";
+import { iosDeviceMenu$ } from "../state/MediaDevices";
+import { useMediaDevices } from "../MediaDevicesContext";
 import { widget } from "../widget";
 import {
   useSetting,
@@ -98,7 +95,10 @@ export const SettingsModal: FC<Props> = ({
   };
 
   const devices = useMediaDevices();
-  useMediaDeviceNames(devices, open);
+  useEffect(() => {
+    if (open) devices.requestDeviceNames();
+  }, [open, devices]);
+
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
   const [showDeveloperSettingsTab] = useSetting(developerMode);

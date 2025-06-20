@@ -5,7 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { BehaviorSubject, Subject } from "rxjs";
+import { Subject } from "rxjs";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+
+const logger = rootLogger.getChild("[controlled-output]");
 
 export interface Controls {
   canEnterPip(): boolean;
@@ -42,12 +45,11 @@ export interface OutputDevice {
  * If pipMode is enabled, EC will render a adapted call view layout.
  */
 export const setPipEnabled$ = new Subject<boolean>();
-// BehaviorSubject since the client might set this before we have subscribed (GroupCallView still in "loading" state)
-// We want the devices that have been set during loading to be available immediately once loaded.
-export const availableOutputDevices$ = new BehaviorSubject<OutputDevice[]>([]);
-// BehaviorSubject since the client might set this before we have subscribed (GroupCallView still in "loading" state)
-// We want the device that has been set during loading to be available immediately once loaded.
-export const outputDevice$ = new BehaviorSubject<string | undefined>(undefined);
+
+export const availableOutputDevices$ = new Subject<OutputDevice[]>();
+
+export const outputDevice$ = new Subject<string | undefined>();
+
 /**
  * This allows the os to mute the call if the user
  * presses the volume down button when it is at the minimum volume.
@@ -75,12 +77,15 @@ window.controls = {
     setPipEnabled$.next(false);
   },
   setAvailableAudioDevices(devices: OutputDevice[]): void {
+    logger.info("setAvailableAudioDevices called from native:", devices);
     availableOutputDevices$.next(devices);
   },
   setAudioDevice(id: string): void {
+    logger.info("setAudioDevice called from native", id);
     outputDevice$.next(id);
   },
   setAudioEnabled(enabled: boolean): void {
+    logger.info("setAudioEnabled called from native:", enabled);
     if (!setAudioEnabled$.observed)
       throw new Error(
         "Output controls are disabled. No setAudioEnabled$ observer",
