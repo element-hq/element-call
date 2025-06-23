@@ -401,7 +401,9 @@ export class CallViewModel extends ViewModel {
    * The raw list of RemoteParticipants as reported by LiveKit
    */
   private readonly rawRemoteParticipants$: Observable<RemoteParticipant[]> =
-    connectedParticipantsObserver(this.livekitRoom).behavior(this.scope);
+    connectedParticipantsObserver(this.livekitRoom)
+      .pipe(startWith([]))
+      .behavior(this.scope);
 
   /**
    * Lists of RemoteParticipants to "hold" on display, even if LiveKit claims that
@@ -504,6 +506,21 @@ export class CallViewModel extends ViewModel {
       // It turns out that doing the disambiguation above is rather expensive on Safari (10x slower
       // than on Chrome/Firefox). This means it is important that we multicast the result so that we
       // don't do this work more times than we need to. This is achieved by converting to a behavior:
+    )
+    .behavior(this.scope);
+
+  public readonly handsRaised$ = this.handsRaisedSubject$.behavior(this.scope);
+
+  public readonly reactions$ = this.reactionsSubject$
+    .pipe(
+      map((v) =>
+        Object.fromEntries(
+          Object.entries(v).map(([a, { reactionOption }]) => [
+            a,
+            reactionOption,
+          ]),
+        ),
+      ),
     )
     .behavior(this.scope);
 
@@ -1312,21 +1329,6 @@ export class CallViewModel extends ViewModel {
       };
     },
   ).behavior(this.scope);
-
-  public readonly reactions$ = this.reactionsSubject$
-    .pipe(
-      map((v) =>
-        Object.fromEntries(
-          Object.entries(v).map(([a, { reactionOption }]) => [
-            a,
-            reactionOption,
-          ]),
-        ),
-      ),
-    )
-    .behavior(this.scope);
-
-  public readonly handsRaised$ = this.handsRaisedSubject$.behavior(this.scope);
 
   /**
    * Emits an array of reactions that should be visible on the screen.
