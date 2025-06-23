@@ -355,6 +355,9 @@ export class MediaDevices {
    * available device, rather than numbered identifiers. This may invoke a
    * permissions pop-up, so it should only be called when there is a clear user
    * intent to view the device list.
+   *
+   * This always updates the `available$` devices for each media type with the current value
+   * of `enumerateDevices`.
    */
   public requestDeviceNames(): void {
     void navigator.mediaDevices.enumerateDevices().then((result) => {
