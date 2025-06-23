@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import {
   combineLatest,
   filter,
-  identity,
   map,
   merge,
   of,
@@ -95,15 +94,16 @@ export const iosDeviceMenu$ =
 
 function availableRawDevices$(
   kind: MediaDeviceKind,
-  recomputeDevicesWithPermissions$: Observable<boolean>,
+  updateAvailableDeviceRequests$: Observable<boolean>,
   scope: ObservableScope,
 ): Observable<MediaDeviceInfo[]> {
-  return recomputeDevicesWithPermissions$.pipe(
-    switchMap((recomputeDevicesWithPermissions) =>
+  return updateAvailableDeviceRequests$.pipe(
+    startWith(false),
+    switchMap((withPermissions) =>
       createMediaDeviceObserver(
         kind,
         (e) => logger.error("Error creating MediaDeviceObserver", e),
-        recomputeDevicesWithPermissions,
+        withPermissions,
       ),
     ),
     startWith([]),
@@ -149,7 +149,7 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   private readonly availableRaw$: Observable<MediaDeviceInfo[]> =
     availableRawDevices$(
       "audioinput",
-      this.recomputeDevicesWithPermissions$,
+      this.updateAvailableDeviceRequests$,
       this.scope,
     );
 
@@ -185,7 +185,7 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   }
 
   public constructor(
-    private readonly recomputeDevicesWithPermissions$: Observable<boolean>,
+    private readonly updateAvailableDeviceRequests$: Observable<boolean>,
     private readonly scope: ObservableScope,
   ) {
     this.available$.subscribe((available) => {
@@ -199,7 +199,7 @@ class AudioOutput
 {
   public readonly available$ = availableRawDevices$(
     "audiooutput",
-    this.recomputeDevicesWithPermissions$,
+    this.updateAvailableDeviceRequests$,
     this.scope,
   ).pipe(
     map((availableRaw) => {
@@ -240,7 +240,7 @@ class AudioOutput
   }
 
   public constructor(
-    private readonly recomputeDevicesWithPermissions$: Observable<boolean>,
+    private readonly updateAvailableDeviceRequests$: Observable<boolean>,
     private readonly scope: ObservableScope,
   ) {
     this.available$.subscribe((available) => {
@@ -321,7 +321,7 @@ class ControlledAudioOutput
 class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
   public readonly available$ = availableRawDevices$(
     "videoinput",
-    this.recomputeDevicesWithPermissions$,
+    this.updateAvailableDeviceRequests$,
     this.scope,
   ).pipe(map(buildDeviceMap));
 
@@ -338,7 +338,7 @@ class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
   }
 
   public constructor(
-    private readonly recomputeDevicesWithPermissions$: Observable<boolean>,
+    private readonly updateAvailableDeviceRequests$: Observable<boolean>,
     private readonly scope: ObservableScope,
   ) {
     // This also has the purpose of subscribing to the available devices
@@ -349,7 +349,7 @@ class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
 }
 
 export class MediaDevices {
-  private readonly requests$ = new Subject<boolean>();
+  private readonly updateAvailableDeviceRequests$ = new Subject<boolean>();
   /**
    * Requests that the media devices be populated with the names of each
    * available device, rather than numbered identifiers. This may invoke a
@@ -364,41 +364,31 @@ export class MediaDevices {
       // we only actually update the requests$ subject if there are no
       // devices with a label, because otherwise we already have the permission
       // to access the devices.
-      this.requests$.next(!result.some((device) => device.label));
+      this.updateAvailableDeviceRequests$.next(
+        !result.some((device) => device.label),
+      );
     });
   }
-
-  // Start using device names as soon as requested. This will cause LiveKit to
-  // briefly request device permissions and acquire media streams for each
-  // device type while calling `enumerateDevices`, which is what browsers want
-  // you to do to receive device names in lieu of a more explicit permissions
-  // API. This flag never resets to false, because once permissions are granted
-  // the first time, the user won't be prompted again until reload of the page.
-  private readonly recomputeDevicesWithPermissions$ = this.requests$.pipe(
-    startWith(false),
-    identity,
-    this.scope.stateNonDistinct(),
-  );
 
   public readonly audioInput: MediaDevice<
     DeviceLabel,
     SelectedAudioInputDevice
-  > = new AudioInput(this.recomputeDevicesWithPermissions$, this.scope);
+  > = new AudioInput(this.updateAvailableDeviceRequests$, this.scope);
 
   public readonly audioOutput: MediaDevice<
     AudioOutputDeviceLabel,
     SelectedAudioOutputDevice
   > = getUrlParams().controlledAudioDevices
     ? new ControlledAudioOutput(this.scope)
-    : new AudioOutput(this.recomputeDevicesWithPermissions$, this.scope);
+    : new AudioOutput(this.updateAvailableDeviceRequests$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
-    new VideoInput(this.recomputeDevicesWithPermissions$, this.scope);
+    new VideoInput(this.updateAvailableDeviceRequests$, this.scope);
 
   public constructor(private readonly scope: ObservableScope) {
-    this.recomputeDevicesWithPermissions$.subscribe((recompute) => {
+    this.updateAvailableDeviceRequests$.subscribe((recompute) => {
       logger.info(
-        "[MediaDevices] recomputeDevicesWithPermissions$ changed:",
+        "[MediaDevices] updateAvailableDeviceRequests$ changed:",
         recompute,
       );
     });
