@@ -5610,9 +5610,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vector-im/compound-web@npm:^7.12.0":
-  version: 7.12.0
-  resolution: "@vector-im/compound-web@npm:7.12.0"
+"@vector-im/compound-web@npm:^8.0.0":
+  version: 8.1.2
+  resolution: "@vector-im/compound-web@npm:8.1.2"
   dependencies:
     "@floating-ui/react": "npm:^0.27.0"
     "@radix-ui/react-context-menu": "npm:^2.2.1"
@@ -5632,7 +5632,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/e5546a5b8ca1a5e718f31acf9a515af4b76877d5526f2b7f5d8fb1fa9382a9a375fc0dd7fc6d3f6e9fc2e2bb0109ca99fc2a63552fc5c33bfa86e33f96204931
+  checksum: 10c0/4d16794f20b5577bb32442a8261ccad87d83ef91d9212e4ff12af90c4423790859b9a712764211c751079d384bf4dc88522961e008a9bd9f46653fdd75cdc195
   languageName: node
   linkType: hard
 
@@ -7466,7 +7466,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^8.31.0"
     "@use-gesture/react": "npm:^10.2.11"
     "@vector-im/compound-design-tokens": "npm:^4.0.0"
-    "@vector-im/compound-web": "npm:^7.12.0"
+    "@vector-im/compound-web": "npm:^8.0.0"
     "@vitejs/plugin-react": "npm:^4.0.1"
     "@vitest/coverage-v8": "npm:^3.0.0"
     babel-plugin-transform-vite-meta-env: "npm:^1.0.3"
