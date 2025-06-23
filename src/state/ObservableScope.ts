@@ -38,9 +38,6 @@ export class ObservableScope {
       shareReplay({ bufferSize: 1, refCount: false }),
     );
 
-  private readonly stateNonDistinctImpl: MonoTypeOperator = (o$) =>
-    o$.pipe(this.bind(), shareReplay({ bufferSize: 1, refCount: false }));
-
   /**
    * Transforms an Observable into a hot state Observable which replays its
    * latest value upon subscription, skips updates with identical values, and
@@ -48,15 +45,6 @@ export class ObservableScope {
    */
   public state(): MonoTypeOperator {
     return this.stateImpl;
-  }
-
-  /**
-   * Transforms an Observable into a hot state Observable which replays its
-   * latest value upon subscription, skips updates with identical values, and
-   * is bound to this scope.
-   */
-  public stateNonDistinct(): MonoTypeOperator {
-    return this.stateNonDistinctImpl;
   }
 
   /**
