@@ -30,6 +30,8 @@ export interface Controls {
   /** @deprecated use  showNativeAudioDevicePicker instead*/
   showNativeOutputDevicePicker?: () => void;
   showNativeAudioDevicePicker?: () => void;
+
+  onBackButtonPressed?: () => void;
 }
 
 export interface OutputDevice {
