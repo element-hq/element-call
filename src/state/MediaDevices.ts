@@ -358,6 +358,9 @@ export class MediaDevices {
    */
   public requestDeviceNames(): void {
     void navigator.mediaDevices.enumerateDevices().then((result) => {
+      // we only actually update the requests$ subject if there are no
+      // devices with a label, because otherwise we already have the permission
+      // to access the devices.
       this.requests$.next(!result.some((device) => device.label));
     });
   }
