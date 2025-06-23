@@ -184,6 +184,16 @@ export const LobbyView: FC<Props> = ({
         null) as LocalVideoTrack | null,
     [tracks],
   );
+
+  useEffect(() => {
+    if (videoTrack && videoInputId === undefined) {
+      // If we have a video track but no videoInputId,
+      // we have to update the available devices. So that we select the first
+      // available video input device as the default instead of the `""` id.
+      devices.requestDeviceNames();
+    }
+  }, [devices, videoInputId, videoTrack]);
+
   useTrackProcessorSync(videoTrack);
   const showSwitchCamera = useShowSwitchCamera(
     useObservable(
