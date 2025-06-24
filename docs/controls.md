@@ -28,4 +28,4 @@ Callbacks for buttons in EC that are handled by the native application
 
 - `showNativeAudioDevicePicker: (() => void) | undefined`. Callback called whenever the user presses the output button in the settings menu.
   This button is only shown on iOS. (`userAgent.includes("iPhone")`)
-- `onBackButtonPressed: (()=>void) | undefined`. Callback when the webview detects a tab on the headers back button.
+- `onBackButtonPressed: (() => void) | undefined`. Callback when the webview detects a tab on the header's back button.
