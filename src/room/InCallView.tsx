@@ -12,15 +12,14 @@ import { type MatrixClient } from "matrix-js-sdk";
 import {
   type FC,
   type PointerEvent,
-  type PropsWithoutRef,
   type TouchEvent,
-  forwardRef,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   type JSX,
+  type ReactNode,
 } from "react";
 import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
@@ -437,13 +436,14 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const Tile = useMemo(
     () =>
-      forwardRef<
-        HTMLDivElement,
-        PropsWithoutRef<TileProps<TileViewModel, HTMLDivElement>>
-      >(function Tile(
-        { className, style, targetWidth, targetHeight, model },
+      function Tile({
         ref,
-      ) {
+        className,
+        style,
+        targetWidth,
+        targetHeight,
+        model,
+      }: TileProps<TileViewModel, HTMLDivElement>): ReactNode {
         const spotlightExpanded = useObservableEagerState(
           vm.spotlightExpanded$,
         );
@@ -481,7 +481,7 @@ export const InCallView: FC<InCallViewProps> = ({
             style={style}
           />
         );
-      }),
+      },
     [vm, openProfile],
   );
 

@@ -7,8 +7,9 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type ComponentProps,
+  type FC,
+  type Ref,
   type RefAttributes,
-  forwardRef,
   useCallback,
   useEffect,
   useRef,
@@ -44,6 +45,7 @@ import { useLatest } from "../useLatest";
 import { type SpotlightTileViewModel } from "../state/TileViewModel";
 
 interface SpotlightItemBaseProps {
+  ref?: Ref<HTMLDivElement>;
   className?: string;
   "data-id": string;
   targetWidth: number;
@@ -67,13 +69,13 @@ interface SpotlightLocalUserMediaItemProps
   vm: LocalUserMediaViewModel;
 }
 
-const SpotlightLocalUserMediaItem = forwardRef<
-  HTMLDivElement,
-  SpotlightLocalUserMediaItemProps
->(({ vm, ...props }, ref) => {
+const SpotlightLocalUserMediaItem: FC<SpotlightLocalUserMediaItemProps> = ({
+  vm,
+  ...props
+}) => {
   const mirror = useObservableEagerState(vm.mirror$);
-  return <MediaView ref={ref} mirror={mirror} {...props} />;
-});
+  return <MediaView mirror={mirror} {...props} />;
+};
 
 SpotlightLocalUserMediaItem.displayName = "SpotlightLocalUserMediaItem";
 
@@ -81,16 +83,15 @@ interface SpotlightUserMediaItemProps extends SpotlightItemBaseProps {
   vm: UserMediaViewModel;
 }
 
-const SpotlightUserMediaItem = forwardRef<
-  HTMLDivElement,
-  SpotlightUserMediaItemProps
->(({ vm, ...props }, ref) => {
+const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
+  vm,
+  ...props
+}) => {
   const videoEnabled = useObservableEagerState(vm.videoEnabled$);
   const cropVideo = useObservableEagerState(vm.cropVideo$);
 
   const baseProps: SpotlightUserMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
-    ref,
     videoEnabled,
     videoFit: cropVideo ? "cover" : "contain",
     ...props,
@@ -101,11 +102,12 @@ const SpotlightUserMediaItem = forwardRef<
   ) : (
     <MediaView mirror={false} {...baseProps} />
   );
-});
+};
 
 SpotlightUserMediaItem.displayName = "SpotlightUserMediaItem";
 
 interface SpotlightItemProps {
+  ref?: Ref<HTMLDivElement>;
   vm: MediaViewModel;
   targetWidth: number;
   targetHeight: number;
@@ -117,71 +119,63 @@ interface SpotlightItemProps {
   "aria-hidden"?: boolean;
 }
 
-const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
-  (
-    {
-      vm,
-      targetWidth,
-      targetHeight,
-      intersectionObserver$,
-      snap,
-      "aria-hidden": ariaHidden,
-    },
-    theirRef,
-  ) => {
-    const ourRef = useRef<HTMLDivElement | null>(null);
-    const ref = useMergedRefs(ourRef, theirRef);
-    const displayName = useObservableEagerState(vm.displayname$);
-    const video = useObservableEagerState(vm.video$);
-    const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
-    const encryptionStatus = useObservableEagerState(vm.encryptionStatus$);
+const SpotlightItem: FC<SpotlightItemProps> = ({
+  ref: theirRef,
+  vm,
+  targetWidth,
+  targetHeight,
+  intersectionObserver$,
+  snap,
+  "aria-hidden": ariaHidden,
+}) => {
+  const ourRef = useRef<HTMLDivElement | null>(null);
+  const ref = useMergedRefs(ourRef, theirRef);
+  const displayName = useObservableEagerState(vm.displayname$);
+  const video = useObservableEagerState(vm.video$);
+  const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
+  const encryptionStatus = useObservableEagerState(vm.encryptionStatus$);
 
-    // Hook this item up to the intersection observer
-    useEffect(() => {
-      const element = ourRef.current!;
-      let prevIo: IntersectionObserver | null = null;
-      const subscription = intersectionObserver$.subscribe((io) => {
-        prevIo?.unobserve(element);
-        io.observe(element);
-        prevIo = io;
-      });
-      return (): void => {
-        subscription.unsubscribe();
-        prevIo?.unobserve(element);
-      };
-    }, [intersectionObserver$]);
-
-    const baseProps: SpotlightItemBaseProps & RefAttributes<HTMLDivElement> = {
-      ref,
-      "data-id": vm.id,
-      className: classNames(styles.item, { [styles.snap]: snap }),
-      targetWidth,
-      targetHeight,
-      video,
-      member: vm.member,
-      unencryptedWarning,
-      displayName,
-      encryptionStatus,
-      "aria-hidden": ariaHidden,
-      localParticipant: vm.local,
+  // Hook this item up to the intersection observer
+  useEffect(() => {
+    const element = ourRef.current!;
+    let prevIo: IntersectionObserver | null = null;
+    const subscription = intersectionObserver$.subscribe((io) => {
+      prevIo?.unobserve(element);
+      io.observe(element);
+      prevIo = io;
+    });
+    return (): void => {
+      subscription.unsubscribe();
+      prevIo?.unobserve(element);
     };
+  }, [intersectionObserver$]);
 
-    return vm instanceof ScreenShareViewModel ? (
-      <MediaView
-        videoEnabled
-        videoFit="contain"
-        mirror={false}
-        {...baseProps}
-      />
-    ) : (
-      <SpotlightUserMediaItem vm={vm} {...baseProps} />
-    );
-  },
-);
+  const baseProps: SpotlightItemBaseProps & RefAttributes<HTMLDivElement> = {
+    ref,
+    "data-id": vm.id,
+    className: classNames(styles.item, { [styles.snap]: snap }),
+    targetWidth,
+    targetHeight,
+    video,
+    member: vm.member,
+    unencryptedWarning,
+    displayName,
+    encryptionStatus,
+    "aria-hidden": ariaHidden,
+    localParticipant: vm.local,
+  };
+
+  return vm instanceof ScreenShareViewModel ? (
+    <MediaView videoEnabled videoFit="contain" mirror={false} {...baseProps} />
+  ) : (
+    <SpotlightUserMediaItem vm={vm} {...baseProps} />
+  );
+};
 
 SpotlightItem.displayName = "SpotlightItem";
 
 interface Props {
+  ref?: Ref<HTMLDivElement>;
   vm: SpotlightTileViewModel;
   expanded: boolean;
   onToggleExpanded: (() => void) | null;
@@ -192,156 +186,148 @@ interface Props {
   style?: ComponentProps<typeof animated.div>["style"];
 }
 
-export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
-  (
-    {
-      vm,
-      expanded,
-      onToggleExpanded,
-      targetWidth,
-      targetHeight,
-      showIndicators,
-      className,
-      style,
-    },
-    theirRef,
-  ) => {
-    const { t } = useTranslation();
-    const [ourRef, root$] = useObservableRef<HTMLDivElement | null>(null);
-    const ref = useMergedRefs(ourRef, theirRef);
-    const maximised = useObservableEagerState(vm.maximised$);
-    const media = useObservableEagerState(vm.media$);
-    const [visibleId, setVisibleId] = useState<string | undefined>(
-      media[0]?.id,
-    );
-    const latestMedia = useLatest(media);
-    const latestVisibleId = useLatest(visibleId);
-    const visibleIndex = media.findIndex((vm) => vm.id === visibleId);
-    const canGoBack = visibleIndex > 0;
-    const canGoToNext = visibleIndex !== -1 && visibleIndex < media.length - 1;
+export const SpotlightTile: FC<Props> = ({
+  ref: theirRef,
+  vm,
+  expanded,
+  onToggleExpanded,
+  targetWidth,
+  targetHeight,
+  showIndicators,
+  className,
+  style,
+}) => {
+  const { t } = useTranslation();
+  const [ourRef, root$] = useObservableRef<HTMLDivElement | null>(null);
+  const ref = useMergedRefs(ourRef, theirRef);
+  const maximised = useObservableEagerState(vm.maximised$);
+  const media = useObservableEagerState(vm.media$);
+  const [visibleId, setVisibleId] = useState<string | undefined>(media[0]?.id);
+  const latestMedia = useLatest(media);
+  const latestVisibleId = useLatest(visibleId);
+  const visibleIndex = media.findIndex((vm) => vm.id === visibleId);
+  const canGoBack = visibleIndex > 0;
+  const canGoToNext = visibleIndex !== -1 && visibleIndex < media.length - 1;
 
-    // To keep track of which item is visible, we need an intersection observer
-    // hooked up to the root element and the items. Because the items will run
-    // their effects before their parent does, we need to do this dance with an
-    // Observable to actually give them the intersection observer.
-    const intersectionObserver$ = useInitial<Observable<IntersectionObserver>>(
-      () =>
-        root$.pipe(
-          map(
-            (r) =>
-              new IntersectionObserver(
-                (entries) => {
-                  const visible = entries.find((e) => e.isIntersecting);
-                  if (visible !== undefined)
-                    setVisibleId(visible.target.getAttribute("data-id")!);
-                },
-                { root: r, threshold: 0.5 },
-              ),
-          ),
+  // To keep track of which item is visible, we need an intersection observer
+  // hooked up to the root element and the items. Because the items will run
+  // their effects before their parent does, we need to do this dance with an
+  // Observable to actually give them the intersection observer.
+  const intersectionObserver$ = useInitial<Observable<IntersectionObserver>>(
+    () =>
+      root$.pipe(
+        map(
+          (r) =>
+            new IntersectionObserver(
+              (entries) => {
+                const visible = entries.find((e) => e.isIntersecting);
+                if (visible !== undefined)
+                  setVisibleId(visible.target.getAttribute("data-id")!);
+              },
+              { root: r, threshold: 0.5 },
+            ),
         ),
+      ),
+  );
+
+  const [scrollToId, setScrollToId] = useReactiveState<string | null>(
+    (prev) =>
+      prev == null || prev === visibleId || media.every((vm) => vm.id !== prev)
+        ? null
+        : prev,
+    [visibleId],
+  );
+
+  const onBackClick = useCallback(() => {
+    const media = latestMedia.current;
+    const visibleIndex = media.findIndex(
+      (vm) => vm.id === latestVisibleId.current,
     );
+    if (visibleIndex > 0) setScrollToId(media[visibleIndex - 1].id);
+  }, [latestVisibleId, latestMedia, setScrollToId]);
 
-    const [scrollToId, setScrollToId] = useReactiveState<string | null>(
-      (prev) =>
-        prev == null ||
-        prev === visibleId ||
-        media.every((vm) => vm.id !== prev)
-          ? null
-          : prev,
-      [visibleId],
+  const onNextClick = useCallback(() => {
+    const media = latestMedia.current;
+    const visibleIndex = media.findIndex(
+      (vm) => vm.id === latestVisibleId.current,
     );
+    if (visibleIndex !== -1 && visibleIndex !== media.length - 1)
+      setScrollToId(media[visibleIndex + 1].id);
+  }, [latestVisibleId, latestMedia, setScrollToId]);
 
-    const onBackClick = useCallback(() => {
-      const media = latestMedia.current;
-      const visibleIndex = media.findIndex(
-        (vm) => vm.id === latestVisibleId.current,
-      );
-      if (visibleIndex > 0) setScrollToId(media[visibleIndex - 1].id);
-    }, [latestVisibleId, latestMedia, setScrollToId]);
+  const ToggleExpandIcon = expanded ? CollapseIcon : ExpandIcon;
 
-    const onNextClick = useCallback(() => {
-      const media = latestMedia.current;
-      const visibleIndex = media.findIndex(
-        (vm) => vm.id === latestVisibleId.current,
-      );
-      if (visibleIndex !== -1 && visibleIndex !== media.length - 1)
-        setScrollToId(media[visibleIndex + 1].id);
-    }, [latestVisibleId, latestMedia, setScrollToId]);
-
-    const ToggleExpandIcon = expanded ? CollapseIcon : ExpandIcon;
-
-    return (
-      <animated.div
-        ref={ref}
-        className={classNames(className, styles.tile, {
-          [styles.maximised]: maximised,
-        })}
-        style={style}
-      >
-        {canGoBack && (
-          <button
-            className={classNames(styles.advance, styles.back)}
-            aria-label={t("common.back")}
-            onClick={onBackClick}
-          >
-            <ChevronLeftIcon aria-hidden width={24} height={24} />
-          </button>
-        )}
-        <div className={styles.contents}>
+  return (
+    <animated.div
+      ref={ref}
+      className={classNames(className, styles.tile, {
+        [styles.maximised]: maximised,
+      })}
+      style={style}
+    >
+      {canGoBack && (
+        <button
+          className={classNames(styles.advance, styles.back)}
+          aria-label={t("common.back")}
+          onClick={onBackClick}
+        >
+          <ChevronLeftIcon aria-hidden width={24} height={24} />
+        </button>
+      )}
+      <div className={styles.contents}>
+        {media.map((vm) => (
+          <SpotlightItem
+            key={vm.id}
+            vm={vm}
+            targetWidth={targetWidth}
+            targetHeight={targetHeight}
+            intersectionObserver$={intersectionObserver$}
+            // This is how we get the container to scroll to the right media
+            // when the previous/next buttons are clicked: we temporarily
+            // remove all scroll snap points except for just the one media
+            // that we want to bring into view
+            snap={scrollToId === null || scrollToId === vm.id}
+            aria-hidden={(scrollToId ?? visibleId) !== vm.id}
+          />
+        ))}
+      </div>
+      {onToggleExpanded && (
+        <button
+          className={classNames(styles.expand)}
+          aria-label={
+            expanded ? t("video_tile.collapse") : t("video_tile.expand")
+          }
+          onClick={onToggleExpanded}
+        >
+          <ToggleExpandIcon aria-hidden width={20} height={20} />
+        </button>
+      )}
+      {canGoToNext && (
+        <button
+          className={classNames(styles.advance, styles.next)}
+          aria-label={t("common.next")}
+          onClick={onNextClick}
+        >
+          <ChevronRightIcon aria-hidden width={24} height={24} />
+        </button>
+      )}
+      {!expanded && (
+        <div
+          className={classNames(styles.indicators, {
+            [styles.show]: showIndicators && media.length > 1,
+          })}
+        >
           {media.map((vm) => (
-            <SpotlightItem
+            <div
               key={vm.id}
-              vm={vm}
-              targetWidth={targetWidth}
-              targetHeight={targetHeight}
-              intersectionObserver$={intersectionObserver$}
-              // This is how we get the container to scroll to the right media
-              // when the previous/next buttons are clicked: we temporarily
-              // remove all scroll snap points except for just the one media
-              // that we want to bring into view
-              snap={scrollToId === null || scrollToId === vm.id}
-              aria-hidden={(scrollToId ?? visibleId) !== vm.id}
+              className={styles.item}
+              data-visible={vm.id === visibleId}
             />
           ))}
         </div>
-        {onToggleExpanded && (
-          <button
-            className={classNames(styles.expand)}
-            aria-label={
-              expanded ? t("video_tile.collapse") : t("video_tile.expand")
-            }
-            onClick={onToggleExpanded}
-          >
-            <ToggleExpandIcon aria-hidden width={20} height={20} />
-          </button>
-        )}
-        {canGoToNext && (
-          <button
-            className={classNames(styles.advance, styles.next)}
-            aria-label={t("common.next")}
-            onClick={onNextClick}
-          >
-            <ChevronRightIcon aria-hidden width={24} height={24} />
-          </button>
-        )}
-        {!expanded && (
-          <div
-            className={classNames(styles.indicators, {
-              [styles.show]: showIndicators && media.length > 1,
-            })}
-          >
-            {media.map((vm) => (
-              <div
-                key={vm.id}
-                className={styles.item}
-                data-visible={vm.id === visibleId}
-              />
-            ))}
-          </div>
-        )}
-      </animated.div>
-    );
-  },
-);
+      )}
+    </animated.div>
+  );
+};
 
 SpotlightTile.displayName = "SpotlightTile";

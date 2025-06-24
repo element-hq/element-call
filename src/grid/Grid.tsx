@@ -18,11 +18,10 @@ import {
   type ComponentType,
   type Dispatch,
   type FC,
-  type LegacyRef,
   type ReactNode,
+  type Ref,
   type SetStateAction,
   createContext,
-  forwardRef,
   memo,
   use,
   useEffect,
@@ -162,7 +161,7 @@ const windowHeightObservable$ = fromEvent(window, "resize").pipe(
 );
 
 export interface LayoutProps<LayoutModel, TileModel, R extends HTMLElement> {
-  ref: LegacyRef<R>;
+  ref?: Ref<R>;
   model: LayoutModel;
   /**
    * Component creating an invisible "slot" for a tile to go in.
@@ -171,7 +170,7 @@ export interface LayoutProps<LayoutModel, TileModel, R extends HTMLElement> {
 }
 
 export interface TileProps<Model, R extends HTMLElement> {
-  ref: LegacyRef<R>;
+  ref?: Ref<R>;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   /**
@@ -297,14 +296,13 @@ export function Grid<
   // render of Grid causes a re-render of Layout, which in turn re-renders Grid
   const LayoutMemo = useMemo(
     () =>
-      memo(
-        forwardRef<
-          LayoutRef,
-          LayoutMemoProps<LayoutModel, TileModel, LayoutRef>
-        >(function LayoutMemo({ Layout, ...props }, ref): ReactNode {
-          return <Layout {...props} ref={ref} />;
-        }),
-      ),
+      memo(function LayoutMemo({
+        ref,
+        Layout,
+        ...props
+      }: LayoutMemoProps<LayoutModel, TileModel, LayoutRef>): ReactNode {
+        return <Layout {...props} ref={ref} />;
+      }),
     [],
   );
 
