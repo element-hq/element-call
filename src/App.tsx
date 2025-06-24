@@ -31,7 +31,7 @@ import { useTheme } from "./useTheme";
 import { ProcessorProvider } from "./livekit/TrackProcessorContext";
 import { type AppViewModel } from "./state/AppViewModel";
 import { MediaDevicesContext } from "./MediaDevicesContext";
-import { getUrlParams } from "./UrlParams";
+import { getUrlParams, HeaderStyle } from "./UrlParams";
 import { AppBar } from "./AppBar";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
@@ -107,7 +107,11 @@ export const App: FC<Props> = ({ vm }) => {
         <ThemeProvider>
           <TooltipProvider>
             <Suspense fallback={null}>
-              {header === "app_bar" ? <AppBar>{content}</AppBar> : content}
+              {header === HeaderStyle.AppBar ? (
+                <AppBar>{content}</AppBar>
+              ) : (
+                content
+              )}
             </Suspense>
           </TooltipProvider>
         </ThemeProvider>

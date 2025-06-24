@@ -114,7 +114,7 @@ export const RoomPage: FC = () => {
             confineToRoom={confineToRoom}
             preload={preload}
             skipLobby={skipLobby || wasInWaitForInviteState.current}
-            hideHeader={header !== "standard"}
+            header={header}
             muteStates={muteStates}
           />
         );

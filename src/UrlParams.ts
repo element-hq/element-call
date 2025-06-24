@@ -25,6 +25,12 @@ export enum UserIntent {
   Unknown = "unknown",
 }
 
+export enum HeaderStyle {
+  None = "none",
+  Standard = "standard",
+  AppBar = "app_bar",
+}
+
 // If you need to add a new flag to this interface, prefer a name that describes
 // a specific behavior (such as 'confineToRoom'), rather than one that describes
 // the situations that call for this behavior ('isEmbedded'). This makes it
@@ -64,7 +70,7 @@ export interface UrlParams {
    * button like you might see in mobile apps. The callback for the back button
    * is window.controls.onBackButtonPressed.
    */
-  header: "none" | "standard" | "app_bar";
+  header: HeaderStyle;
   /**
    * Whether the controls should be shown. For screen recording no controls can be desired.
    */
@@ -263,9 +269,10 @@ export const getUrlParams = (
 
   // Check hideHeader for backwards compatibility
   let header = parser.getFlagParam("hideHeader")
-    ? "none"
+    ? HeaderStyle.None
     : parser.getParam("header");
-  if (header !== "none" && header !== "app_bar") header = "standard";
+  if (header !== HeaderStyle.None && header !== HeaderStyle.AppBar)
+    header = HeaderStyle.Standard;
 
   const widgetId = parser.getParam("widgetId");
   const parentUrl = parser.getParam("parentUrl");
@@ -285,7 +292,7 @@ export const getUrlParams = (
       parser.getFlagParam("confineToRoom") || parser.getFlagParam("embed"),
     appPrompt: parser.getFlagParam("appPrompt", true),
     preload: isWidget ? parser.getFlagParam("preload") : false,
-    header: header as "none" | "standard" | "app_bar",
+    header: header as HeaderStyle,
     showControls: parser.getFlagParam("showControls", true),
     hideScreensharing: parser.getFlagParam("hideScreensharing"),
     e2eEnabled: parser.getFlagParam("enableE2EE", true),

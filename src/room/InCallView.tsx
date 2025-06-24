@@ -34,6 +34,7 @@ import {
   EarpieceIcon,
   VolumeOnSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { useTranslation } from "react-i18next";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -48,7 +49,7 @@ import {
   SwitchCameraButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { useUrlParams } from "../UrlParams";
+import { type HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
@@ -113,7 +114,6 @@ import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMembership
 import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
 import { useAppBarSecondaryButton } from "../AppBar.tsx";
-import { useTranslation } from "react-i18next";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -212,7 +212,7 @@ export interface InCallViewProps {
   participantCount: number;
   /** Function to call when the user explicitly ends the call */
   onLeave: () => void;
-  header: "none" | "standard" | "app_bar";
+  header: HeaderStyle;
   otelGroupCallMembership?: OTelGroupCallMembership;
   connState: ECConnectionState;
   onShareClick: (() => void) | null;
