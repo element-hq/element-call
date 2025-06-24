@@ -32,6 +32,7 @@ import {
   availableOutputDevices$ as controlledAvailableOutputDevices$,
 } from "../controls";
 import { getUrlParams } from "../UrlParams";
+import { platform } from "../Platform";
 
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
 // the ios swift team.
@@ -87,9 +88,8 @@ export interface MediaDevice<Label, Selected> {
  *  - Only show the earpiece toggle option if the earpiece is available:
  *   `availableOutputDevices$.includes((d)=>d.forEarpiece)`
  */
-export const iosDeviceMenu$ = navigator.userAgent.includes("iPhone")
-  ? of(true)
-  : alwaysShowIphoneEarpieceSetting.value$;
+export const iosDeviceMenu$ =
+  platform === "ios" ? of(true) : alwaysShowIphoneEarpieceSetting.value$;
 
 function availableRawDevices$(
   kind: MediaDeviceKind,
