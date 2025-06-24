@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
 import { type RoomMember } from "matrix-js-sdk";
-import { type ComponentProps, type ReactNode, forwardRef } from "react";
+import { type FC, type ComponentProps, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -47,97 +47,94 @@ interface Props extends ComponentProps<typeof animated.div> {
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
 }
 
-export const MediaView = forwardRef<HTMLDivElement, Props>(
-  (
-    {
-      className,
-      style,
-      targetWidth,
-      targetHeight,
-      video,
-      videoFit,
-      mirror,
-      member,
-      videoEnabled,
-      unencryptedWarning,
-      nameTagLeadingIcon,
-      displayName,
-      primaryButton,
-      encryptionStatus,
-      raisedHandTime,
-      currentReaction,
-      raisedHandOnClick,
-      localParticipant,
-      audioStreamStats,
-      videoStreamStats,
-      ...props
-    },
-    ref,
-  ) => {
-    const { t } = useTranslation();
-    const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
+export const MediaView: FC<Props> = ({
+  ref,
+  className,
+  style,
+  targetWidth,
+  targetHeight,
+  video,
+  videoFit,
+  mirror,
+  member,
+  videoEnabled,
+  unencryptedWarning,
+  nameTagLeadingIcon,
+  displayName,
+  primaryButton,
+  encryptionStatus,
+  raisedHandTime,
+  currentReaction,
+  raisedHandOnClick,
+  localParticipant,
+  audioStreamStats,
+  videoStreamStats,
+  ...props
+}) => {
+  const { t } = useTranslation();
+  const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
 
-    const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
+  const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
 
-    return (
-      <animated.div
-        className={classNames(styles.media, className, {
-          [styles.mirror]: mirror,
-        })}
-        style={style}
-        ref={ref}
-        data-testid="videoTile"
-        data-video-fit={videoFit}
-        {...props}
-      >
-        <div className={styles.bg}>
-          <Avatar
-            id={member?.userId ?? displayName}
-            name={displayName}
-            size={avatarSize}
-            src={member?.getMxcAvatarUrl()}
-            className={styles.avatar}
-            style={{ display: video && videoEnabled ? "none" : "initial" }}
+  return (
+    <animated.div
+      className={classNames(styles.media, className, {
+        [styles.mirror]: mirror,
+      })}
+      style={style}
+      ref={ref}
+      data-testid="videoTile"
+      data-video-fit={videoFit}
+      {...props}
+    >
+      <div className={styles.bg}>
+        <Avatar
+          id={member?.userId ?? displayName}
+          name={displayName}
+          size={avatarSize}
+          src={member?.getMxcAvatarUrl()}
+          className={styles.avatar}
+          style={{ display: video && videoEnabled ? "none" : "initial" }}
+        />
+        {video?.publication !== undefined && (
+          <VideoTrack
+            trackRef={video}
+            // There's no reason for this to be focusable
+            tabIndex={-1}
+            disablePictureInPicture
+            style={{ display: video && videoEnabled ? "block" : "none" }}
+            data-testid="video"
           />
-          {video?.publication !== undefined && (
-            <VideoTrack
-              trackRef={video}
-              // There's no reason for this to be focusable
-              tabIndex={-1}
-              disablePictureInPicture
-              style={{ display: video && videoEnabled ? "block" : "none" }}
-              data-testid="video"
+        )}
+      </div>
+      <div className={styles.fg}>
+        <div className={styles.reactions}>
+          <RaisedHandIndicator
+            raisedHandTime={raisedHandTime}
+            miniature={avatarSize < 96}
+            showTimer={handRaiseTimerVisible}
+            onClick={raisedHandOnClick}
+          />
+          {currentReaction && (
+            <ReactionIndicator
+              miniature={avatarSize < 96}
+              emoji={currentReaction.emoji}
             />
           )}
         </div>
-        <div className={styles.fg}>
-          <div className={styles.reactions}>
-            <RaisedHandIndicator
-              raisedHandTime={raisedHandTime}
-              miniature={avatarSize < 96}
-              showTimer={handRaiseTimerVisible}
-              onClick={raisedHandOnClick}
-            />
-            {currentReaction && (
-              <ReactionIndicator
-                miniature={avatarSize < 96}
-                emoji={currentReaction.emoji}
-              />
-            )}
+        {!video && !localParticipant && (
+          <div className={styles.status}>
+            {t("video_tile.waiting_for_media")}
           </div>
-          {!video && !localParticipant && (
-            <div className={styles.status}>
-              {t("video_tile.waiting_for_media")}
-            </div>
-          )}
-          {(audioStreamStats || videoStreamStats) && (
-            <RTCConnectionStats
-              audio={audioStreamStats}
-              video={videoStreamStats}
-            />
-          )}
-          {/* TODO: Bring this back once encryption status is less broken */}
-          {/*encryptionStatus !== EncryptionStatus.Okay && (
+        )}
+        {(audioStreamStats || videoStreamStats) && (
+          <RTCConnectionStats
+            audio={audioStreamStats}
+            video={videoStreamStats}
+          />
+        )}
+        {/* TODO: Bring this back once encryption status is less broken */}
+        {/*encryptionStatus !== EncryptionStatus.Okay && (
             <div className={styles.status}>
               <Text as="span" size="sm" weight="medium" className={styles.name}>
                 {encryptionStatus === EncryptionStatus.Connecting &&
@@ -151,38 +148,37 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
               </Text>
             </div>
           )*/}
-          <div className={styles.nameTag}>
-            {nameTagLeadingIcon}
-            <Text
-              as="span"
-              size="sm"
-              weight="medium"
-              className={styles.name}
-              data-testid="name_tag"
+        <div className={styles.nameTag}>
+          {nameTagLeadingIcon}
+          <Text
+            as="span"
+            size="sm"
+            weight="medium"
+            className={styles.name}
+            data-testid="name_tag"
+          >
+            {displayName}
+          </Text>
+          {unencryptedWarning && (
+            <Tooltip
+              label={t("common.unencrypted")}
+              placement="bottom"
+              isTriggerInteractive={false}
             >
-              {displayName}
-            </Text>
-            {unencryptedWarning && (
-              <Tooltip
-                label={t("common.unencrypted")}
-                placement="bottom"
-                isTriggerInteractive={false}
-              >
-                <ErrorSolidIcon
-                  width={20}
-                  height={20}
-                  className={styles.errorIcon}
-                  role="img"
-                  aria-label={t("common.unencrypted")}
-                />
-              </Tooltip>
-            )}
-          </div>
-          {primaryButton}
+              <ErrorSolidIcon
+                width={20}
+                height={20}
+                className={styles.errorIcon}
+                role="img"
+                aria-label={t("common.unencrypted")}
+              />
+            </Tooltip>
+          )}
         </div>
-      </animated.div>
-    );
-  },
-);
+        {primaryButton}
+      </div>
+    </animated.div>
+  );
+};
 
 MediaView.displayName = "MediaView";

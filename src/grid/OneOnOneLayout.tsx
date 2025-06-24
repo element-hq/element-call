@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { forwardRef, useCallback, useMemo } from "react";
+import { type ReactNode, useCallback, useMemo } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
@@ -24,12 +24,12 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
 }) => ({
   scrollingOnTop: false,
 
-  fixed: forwardRef(function OneOnOneLayoutFixed(_props, ref) {
+  fixed: function OneOnOneLayoutFixed({ ref }): ReactNode {
     useUpdateLayout();
     return <div ref={ref} />;
-  }),
+  },
 
-  scrolling: forwardRef(function OneOnOneLayoutScrolling({ model, Slot }, ref) {
+  scrolling: function OneOnOneLayoutScrolling({ ref, model, Slot }): ReactNode {
     useUpdateLayout();
     const { width, height } = useObservableEagerState(minBounds$);
     const pipAlignmentValue = useObservableEagerState(pipAlignment$);
@@ -66,5 +66,5 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
         </Slot>
       </div>
     );
-  }),
+  },
 });
