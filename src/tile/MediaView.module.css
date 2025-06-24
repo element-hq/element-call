@@ -10,7 +10,7 @@ Please see LICENSE in the repository root for full details.
   container-type: size;
   border-radius: var(--media-view-border-radius);
   /*Add spacing for the hover boarder. Otherwise it might get clipped.*/
-  margin: var(--cpd-space-1x);
+  margin: var(--hover-space-margin);
 }
 
 .media video {

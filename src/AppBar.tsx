@@ -22,6 +22,7 @@ import {
   CollapseIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
+import classNames from "classnames";
 
 import { Header, LeftNav, RightNav } from "./Header";
 import { platform } from "./Platform";
@@ -59,7 +60,12 @@ export const AppBar: FC<Props> = ({ children }) => {
 
   return (
     <>
-      <div className={styles.bar}>
+      <div
+        className={classNames(
+          styles.bar,
+          platform === "android" && styles.overlay,
+        )}
+      >
         <Header>
           <LeftNav>
             <Tooltip label={t("common.back")}>

@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 .tile {
   --media-view-border-radius: var(--cpd-space-4x);
+  --hover-space-margin: var(--cpd-space-1x);
   transition: outline-color ease 0.15s;
   outline: var(--cpd-border-width-2) solid rgb(0 0 0 / 0);
 }
