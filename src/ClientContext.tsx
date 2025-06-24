@@ -11,7 +11,7 @@ import {
   useEffect,
   useState,
   createContext,
-  useContext,
+  use,
   useRef,
   useMemo,
   type JSX,
@@ -69,8 +69,7 @@ const ClientContext = createContext<ClientState | undefined>(undefined);
 
 export const ClientContextProvider = ClientContext.Provider;
 
-export const useClientState = (): ClientState | undefined =>
-  useContext(ClientContext);
+export const useClientState = (): ClientState | undefined => use(ClientContext);
 
 export function useClient(): {
   client?: MatrixClient;

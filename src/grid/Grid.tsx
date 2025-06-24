@@ -24,7 +24,7 @@ import {
   createContext,
   forwardRef,
   memo,
-  useContext,
+  use,
   useEffect,
   useMemo,
   useRef,
@@ -124,7 +124,7 @@ interface LayoutContext {
 const LayoutContext = createContext<LayoutContext | null>(null);
 
 function useLayoutContext(): LayoutContext {
-  const context = useContext(LayoutContext);
+  const context = use(LayoutContext);
   if (context === null)
     throw new Error("useUpdateLayout called outside a Grid layout context");
   return context;
