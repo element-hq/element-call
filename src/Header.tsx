@@ -6,12 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import classNames from "classnames";
-import {
-  type FC,
-  type HTMLAttributes,
-  type ReactNode,
-  forwardRef,
-} from "react";
+import { type Ref, type FC, type HTMLAttributes, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";
@@ -24,23 +19,27 @@ import { EncryptionLock } from "./room/EncryptionLock";
 import { useMediaQuery } from "./useMediaQuery";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
+  ref?: Ref<HTMLElement>;
   children: ReactNode;
   className?: string;
 }
 
-export const Header = forwardRef<HTMLElement, HeaderProps>(
-  ({ children, className, ...rest }, ref) => {
-    return (
-      <header
-        ref={ref}
-        className={classNames(styles.header, className)}
-        {...rest}
-      >
-        {children}
-      </header>
-    );
-  },
-);
+export const Header: FC<HeaderProps> = ({
+  ref,
+  children,
+  className,
+  ...rest
+}) => {
+  return (
+    <header
+      ref={ref}
+      className={classNames(styles.header, className)}
+      {...rest}
+    >
+      {children}
+    </header>
+  );
+};
 
 Header.displayName = "Header";
 

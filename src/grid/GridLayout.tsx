@@ -5,7 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type CSSProperties, forwardRef, useCallback, useMemo } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useCallback,
+  useMemo,
+} from "react";
 import { distinctUntilChanged } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 
@@ -33,7 +38,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
 
   // The "fixed" (non-scrolling) part of the layout is where the spotlight tile
   // lives
-  fixed: forwardRef(function GridLayoutFixed({ model, Slot }, ref) {
+  fixed: function GridLayoutFixed({ ref, model, Slot }): ReactNode {
     useUpdateLayout();
     const alignment = useObservableEagerState(
       useInitial(() =>
@@ -68,10 +73,10 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
         )}
       </div>
     );
-  }),
+  },
 
   // The scrolling part of the layout is where all the grid tiles live
-  scrolling: forwardRef(function GridLayout({ model, Slot }, ref) {
+  scrolling: function GridLayout({ ref, model, Slot }): ReactNode {
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
     const { width, height: minHeight } = useObservableEagerState(minBounds$);
@@ -98,5 +103,5 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
         ))}
       </div>
     );
-  }),
+  },
 });
