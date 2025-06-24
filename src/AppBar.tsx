@@ -31,6 +31,7 @@ import styles from "./AppBar.module.css";
 interface AppBarContext {
   setTitle: (value: string) => void;
   setSecondaryButton: (value: ReactNode) => void;
+  setHidden: (value: boolean) => void;
 }
 
 const AppBarContext = createContext<AppBarContext | null>(null);
@@ -52,15 +53,17 @@ export const AppBar: FC<Props> = ({ children }) => {
   }, []);
 
   const [title, setTitle] = useState<string>("");
+  const [hidden, setHidden] = useState<boolean>(false);
   const [secondaryButton, setSecondaryButton] = useState<ReactNode>(null);
   const context = useMemo(
-    () => ({ setTitle, setSecondaryButton }),
-    [setTitle, setSecondaryButton],
+    () => ({ setTitle, setSecondaryButton, setHidden }),
+    [setTitle, setHidden, setSecondaryButton],
   );
 
   return (
     <>
       <div
+        style={{ display: hidden ? "none" : "block" }}
         className={classNames(
           styles.bar,
           platform === "android" && styles.overlay,
@@ -105,6 +108,20 @@ export function useAppBarTitle(title: string): void {
       return (): void => setTitle("");
     }
   }, [title, setTitle]);
+}
+
+/**
+ * React hook which sets the title to be shown in the app bar, if present. It is
+ * an error to call this hook from multiple sites in the same component tree.
+ */
+export function useAppBarHidden(hidden: boolean): void {
+  const setHidden = useContext(AppBarContext)?.setHidden;
+  useEffect(() => {
+    if (setHidden !== undefined) {
+      setHidden(hidden);
+      return (): void => setHidden(false);
+    }
+  }, [setHidden, hidden]);
 }
 
 /**

@@ -113,7 +113,7 @@ import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
-import { useAppBarSecondaryButton } from "../AppBar.tsx";
+import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -479,6 +479,8 @@ export const InCallView: FC<InCallViewProps> = ({
       );
     }, [t, earpieceMode, toggleEarpieceMode]),
   );
+
+  useAppBarHidden(!showHeader);
 
   let header: ReactNode = null;
   if (showHeader) {
