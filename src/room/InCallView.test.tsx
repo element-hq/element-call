@@ -149,13 +149,13 @@ function createInCallView(): RenderResult & {
   rtcSession.joined = true;
   const renderResult = render(
     <BrowserRouter>
-      <MediaDevicesContext.Provider value={mockMediaDevices({})}>
+      <MediaDevicesContext value={mockMediaDevices({})}>
         <ReactionsSenderProvider
           vm={vm}
           rtcSession={rtcSession as unknown as MatrixRTCSession}
         >
           <TooltipProvider>
-            <RoomContext.Provider value={livekitRoom}>
+            <RoomContext value={livekitRoom}>
               <InCallView
                 client={client}
                 hideHeader={true}
@@ -182,10 +182,10 @@ function createInCallView(): RenderResult & {
                 connState={ConnectionState.Connected}
                 onShareClick={null}
               />
-            </RoomContext.Provider>
+            </RoomContext>
           </TooltipProvider>
         </ReactionsSenderProvider>
-      </MediaDevicesContext.Provider>
+      </MediaDevicesContext>
     </BrowserRouter>,
   );
   return {

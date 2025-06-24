@@ -83,9 +83,5 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
     [supported, blurActivated, blur],
   );
 
-  return (
-    <ProcessorContext.Provider value={processorState}>
-      {children}
-    </ProcessorContext.Provider>
-  );
+  return <ProcessorContext value={processorState}>{children}</ProcessorContext>;
 };

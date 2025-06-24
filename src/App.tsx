@@ -77,7 +77,7 @@ export const App: FC<Props> = ({ vm }) => {
             {loaded ? (
               <Suspense fallback={null}>
                 <ClientProvider>
-                  <MediaDevicesContext.Provider value={vm.mediaDevices}>
+                  <MediaDevicesContext value={vm.mediaDevices}>
                     <ProcessorProvider>
                       <Sentry.ErrorBoundary
                         fallback={(error) => (
@@ -96,7 +96,7 @@ export const App: FC<Props> = ({ vm }) => {
                         </Routes>
                       </Sentry.ErrorBoundary>
                     </ProcessorProvider>
-                  </MediaDevicesContext.Provider>
+                  </MediaDevicesContext>
                 </ClientProvider>
               </Suspense>
             ) : (

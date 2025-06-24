@@ -532,14 +532,14 @@ export function Grid<
       className={classNames(className, styles.grid)}
       style={style}
     >
-      <LayoutContext.Provider value={context}>
+      <LayoutContext value={context}>
         <LayoutMemo
           ref={setLayoutRoot}
           Layout={Layout}
           model={model}
           Slot={Slot}
         />
-      </LayoutContext.Provider>
+      </LayoutContext>
       {tileTransitions((spring, { id, model, onDrag, width, height }) => (
         <TileWrapper
           key={id}

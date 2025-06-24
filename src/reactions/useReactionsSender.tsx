@@ -157,7 +157,7 @@ export const ReactionsSenderProvider = ({
   );
 
   return (
-    <ReactionsSenderContext.Provider
+    <ReactionsSenderContext
       value={{
         supportsReactions,
         toggleRaisedHand,
@@ -165,6 +165,6 @@ export const ReactionsSenderProvider = ({
       }}
     >
       {children}
-    </ReactionsSenderContext.Provider>
+    </ReactionsSenderContext>
   );
 };

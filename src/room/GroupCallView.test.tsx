@@ -149,7 +149,7 @@ function createGroupCallView(
   const { getByText } = render(
     <BrowserRouter>
       <TooltipProvider>
-        <MediaDevicesContext.Provider value={mockMediaDevices({})}>
+        <MediaDevicesContext value={mockMediaDevices({})}>
           <ProcessorProvider>
             <GroupCallView
               client={client}
@@ -164,7 +164,7 @@ function createGroupCallView(
               widget={widget}
             />
           </ProcessorProvider>
-        </MediaDevicesContext.Provider>
+        </MediaDevicesContext>
       </TooltipProvider>
     </BrowserRouter>,
   );

@@ -349,9 +349,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     return <ErrorPage widget={widget} error={alreadyOpenedErr} />;
   }
 
-  return (
-    <ClientContext.Provider value={state}>{children}</ClientContext.Provider>
-  );
+  return <ClientContext value={state}>{children}</ClientContext>;
 };
 
 export type InitResult = {
