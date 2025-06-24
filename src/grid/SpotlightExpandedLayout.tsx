@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { forwardRef, useCallback } from "react";
+import { type ReactNode, useCallback } from "react";
 import { useObservableEagerState } from "observable-hooks";
 
 import { type SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/CallViewModel";
@@ -22,10 +22,11 @@ export const makeSpotlightExpandedLayout: CallLayout<
 > = ({ pipAlignment$ }) => ({
   scrollingOnTop: true,
 
-  fixed: forwardRef(function SpotlightExpandedLayoutFixed(
-    { model, Slot },
+  fixed: function SpotlightExpandedLayoutFixed({
     ref,
-  ) {
+    model,
+    Slot,
+  }): ReactNode {
     useUpdateLayout();
 
     return (
@@ -37,12 +38,13 @@ export const makeSpotlightExpandedLayout: CallLayout<
         />
       </div>
     );
-  }),
+  },
 
-  scrolling: forwardRef(function SpotlightExpandedLayoutScrolling(
-    { model, Slot },
+  scrolling: function SpotlightExpandedLayoutScrolling({
     ref,
-  ) {
+    model,
+    Slot,
+  }): ReactNode {
     useUpdateLayout();
     const pipAlignmentValue = useObservableEagerState(pipAlignment$);
 
@@ -69,5 +71,5 @@ export const makeSpotlightExpandedLayout: CallLayout<
         )}
       </div>
     );
-  }),
+  },
 });
