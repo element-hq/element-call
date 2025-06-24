@@ -27,5 +27,5 @@ On mobile platforms (iOS, Android), web views do not reliably support selecting 
 Callbacks for buttons in EC that are handled by the native application
 
 - `showNativeAudioDevicePicker: (() => void) | undefined`. Callback called whenever the user presses the output button in the settings menu.
-  This button is only shown on iOS. (`userAgent.includes("iPhone")`)
+  This button is only shown on iOS. (`/iPad|iPhone|iPod|Mac/.test(navigator.userAgent)`)
 - `onBackButtonPressed: (() => void) | undefined`. Callback when the webview detects a tab on the header's back button.
