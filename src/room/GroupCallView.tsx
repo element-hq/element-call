@@ -72,6 +72,7 @@ import {
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
+import { useAppBarTitle } from "../AppBar.tsx";
 
 declare global {
   interface Window {
@@ -177,6 +178,7 @@ export const GroupCallView: FC<Props> = ({
   }, [passwordFromUrl, room.roomId]);
 
   usePageTitle(roomName);
+  useAppBarTitle(roomName);
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -473,6 +475,7 @@ export const GroupCallView: FC<Props> = ({
           endedCallId={rtcSession.room.roomId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
+          hideHeader={hideHeader}
           confineToRoom={confineToRoom}
         />
       );

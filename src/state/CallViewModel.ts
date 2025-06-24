@@ -1250,7 +1250,40 @@ export class CallViewModel extends ViewModel {
   /**
    * Whether audio is currently being output through the earpiece.
    */
-  public readonly earpieceMode$ = this.mediaDevices.earpieceMode$;
+  public readonly earpieceMode$: Observable<boolean> = combineLatest(
+    [
+      this.mediaDevices.audioOutput.available$,
+      this.mediaDevices.audioOutput.selected$,
+    ],
+    (available, selected) =>
+      selected !== undefined && available.get(selected.id)?.type === "earpiece",
+  ).pipe(this.scope.state());
+
+  /**
+   * Callback to toggle between the earpiece and the loudspeaker.
+   */
+  public readonly toggleEarpieceMode$: Observable<(() => void) | null> =
+    combineLatest(
+      [
+        this.mediaDevices.audioOutput.available$,
+        this.mediaDevices.audioOutput.selected$,
+      ],
+      (available, selected) => {
+        const selectionType = selected && available.get(selected.id)?.type;
+        if (!(selectionType === "speaker" || selectionType === "earpiece"))
+          return null;
+
+        const newSelectionType =
+          selectionType === "speaker" ? "earpiece" : "speaker";
+        const newSelection = [...available].find(
+          ([, d]) => d.type === newSelectionType,
+        );
+        if (newSelection === undefined) return null;
+
+        const [id] = newSelection;
+        return () => this.mediaDevices.audioOutput.select(id);
+      },
+    );
 
   public readonly reactions$ = this.reactionsSubject$.pipe(
     map((v) =>

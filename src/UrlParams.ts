@@ -59,9 +59,12 @@ export interface UrlParams {
    */
   preload: boolean;
   /**
-   * Whether to hide the room header when in a call.
+   * The style of headers to show. "standard" is the default arrangement, "none"
+   * hides the header entirely, and "app_bar" produces a header with a back
+   * button like you might see in mobile apps. The callback for the back button
+   * is window.controls.onBackButtonPressed.
    */
-  hideHeader: boolean;
+  header: "none" | "standard" | "app_bar";
   /**
    * Whether the controls should be shown. For screen recording no controls can be desired.
    */
@@ -257,6 +260,13 @@ export const getUrlParams = (
   if (!intent || !Object.values(UserIntent).includes(intent as UserIntent)) {
     intent = UserIntent.Unknown;
   }
+
+  // Check hideHeader for backwards compatibility
+  let header = parser.getFlagParam("hideHeader")
+    ? "none"
+    : parser.getParam("header");
+  if (header !== "none" && header !== "app_bar") header = "standard";
+
   const widgetId = parser.getParam("widgetId");
   const parentUrl = parser.getParam("parentUrl");
   const isWidget = !!widgetId && !!parentUrl;
@@ -275,7 +285,7 @@ export const getUrlParams = (
       parser.getFlagParam("confineToRoom") || parser.getFlagParam("embed"),
     appPrompt: parser.getFlagParam("appPrompt", true),
     preload: isWidget ? parser.getFlagParam("preload") : false,
-    hideHeader: parser.getFlagParam("hideHeader"),
+    header: header as "none" | "standard" | "app_bar",
     showControls: parser.getFlagParam("showControls", true),
     hideScreensharing: parser.getFlagParam("hideScreensharing"),
     e2eEnabled: parser.getFlagParam("enableE2EE", true),

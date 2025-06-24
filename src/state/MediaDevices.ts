@@ -15,7 +15,6 @@ import {
   startWith,
   Subject,
   switchMap,
-  withLatestFrom,
   type Observable,
 } from "rxjs";
 import { createMediaDeviceObserver } from "@livekit/components-core";
@@ -31,7 +30,6 @@ import { type ObservableScope } from "./ObservableScope";
 import {
   outputDevice$ as controlledOutputSelection$,
   availableOutputDevices$ as controlledAvailableOutputDevices$,
-  earpieceModeToggle$,
 } from "../controls";
 import { getUrlParams } from "../UrlParams";
 
@@ -41,10 +39,13 @@ const EARPIECE_CONFIG_ID = "earpiece-id";
 
 export type DeviceLabel =
   | { type: "name"; name: string }
-  | { type: "number"; number: number }
-  | { type: "default"; name: string | null };
+  | { type: "number"; number: number };
 
-export type AudioOutputDeviceLabel = DeviceLabel | { type: "earpiece" };
+export type AudioOutputDeviceLabel =
+  | DeviceLabel
+  | { type: "speaker" }
+  | { type: "earpiece" }
+  | { type: "default"; name: string | null };
 
 export interface SelectedDevice {
   id: string;
@@ -195,7 +196,8 @@ class AudioOutput
     this.scope,
   ).pipe(
     map((availableRaw) => {
-      const available = buildDeviceMap(availableRaw);
+      const available: Map<string, AudioOutputDeviceLabel> =
+        buildDeviceMap(availableRaw);
       // Create a virtual default audio output for browsers that don't have one.
       // Its device ID must be the empty string because that's what setSinkId
       // recognizes.
@@ -249,7 +251,7 @@ class ControlledAudioOutput
             let deviceLabel: AudioOutputDeviceLabel;
             // if (isExternalHeadset) // Do we want this?
             if (isEarpiece) deviceLabel = { type: "earpiece" };
-            else if (isSpeaker) deviceLabel = { type: "default", name };
+            else if (isSpeaker) deviceLabel = { type: "speaker" };
             else deviceLabel = { type: "name", name };
             return [id, deviceLabel];
           },
@@ -364,31 +366,5 @@ export class MediaDevices {
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
     new VideoInput(this.usingNames$, this.scope);
 
-  /**
-   * Whether audio is currently being output through the earpiece.
-   */
-  public readonly earpieceMode$: Observable<boolean> = combineLatest(
-    [this.audioOutput.available$, this.audioOutput.selected$],
-    (available, selected) =>
-      selected !== undefined && available.get(selected.id)?.type === "earpiece",
-  ).pipe(this.scope.state());
-
-  public constructor(private readonly scope: ObservableScope) {
-    earpieceModeToggle$
-      .pipe(
-        withLatestFrom(
-          this.audioOutput.available$,
-          this.earpieceMode$,
-          (_toggle, available, earpieceMode) =>
-            // Determine the new device ID to switch to
-            [...available].find(
-              ([, d]) => (d.type === "earpiece") !== earpieceMode,
-            )?.[0],
-        ),
-        this.scope.bind(),
-      )
-      .subscribe((newSelection) => {
-        if (newSelection !== undefined) this.audioOutput.select(newSelection);
-      });
-  }
+  public constructor(private readonly scope: ObservableScope) {}
 }

@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
-import { Text } from "@vector-im/compound-web";
+import { IconButton, Text, Tooltip } from "@vector-im/compound-web";
 import { ConnectionState, type Room } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk";
 import {
@@ -21,6 +21,7 @@ import {
   useRef,
   useState,
   type JSX,
+  type ReactNode,
 } from "react";
 import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
@@ -29,6 +30,10 @@ import { BehaviorSubject, map } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
+import {
+  EarpieceIcon,
+  VolumeOnSolidIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -107,6 +112,8 @@ import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
+import { useAppBarSecondaryButton } from "../AppBar.tsx";
+import { useTranslation } from "react-i18next";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -205,7 +212,7 @@ export interface InCallViewProps {
   participantCount: number;
   /** Function to call when the user explicitly ends the call */
   onLeave: () => void;
-  hideHeader: boolean;
+  header: "none" | "standard" | "app_bar";
   otelGroupCallMembership?: OTelGroupCallMembership;
   connState: ECConnectionState;
   onShareClick: (() => void) | null;
@@ -220,10 +227,11 @@ export const InCallView: FC<InCallViewProps> = ({
   muteStates,
   participantCount,
   onLeave,
-  hideHeader,
+  header: headerStyle,
   connState,
   onShareClick,
 }) => {
+  const { t } = useTranslation();
   const { supportsReactions, sendReaction, toggleRaisedHand } =
     useReactionsSender();
 
@@ -304,6 +312,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const showHeader = useObservableEagerState(vm.showHeader$);
   const showFooter = useObservableEagerState(vm.showFooter$);
   const earpieceMode = useObservableEagerState(vm.earpieceMode$);
+  const toggleEarpieceMode = useObservableEagerState(vm.toggleEarpieceMode$);
   const switchCamera = useSwitchCamera(vm.localVideo$);
 
   // Ideally we could detect taps by listening for click events and checking
@@ -446,6 +455,69 @@ export const InCallView: FC<InCallViewProps> = ({
     }
   }, [setGridMode]);
 
+  useAppBarSecondaryButton(
+    useMemo(() => {
+      if (toggleEarpieceMode === null) return null;
+      const Icon = earpieceMode ? EarpieceIcon : VolumeOnSolidIcon;
+      return (
+        <Tooltip
+          label={
+            earpieceMode
+              ? t("settings.devices.earpiece")
+              : t("settings.devices.loudspeaker")
+          }
+        >
+          <IconButton
+            onClick={(e) => {
+              e.preventDefault();
+              toggleEarpieceMode();
+            }}
+          >
+            <Icon />
+          </IconButton>
+        </Tooltip>
+      );
+    }, [t, earpieceMode, toggleEarpieceMode]),
+  );
+
+  let header: ReactNode = null;
+  if (showHeader) {
+    switch (headerStyle) {
+      case "none":
+        // Cosmetic header to fill out space while still affecting the bounds of
+        // the grid
+        header = (
+          <div
+            className={classNames(styles.header, styles.filler)}
+            ref={headerRef}
+          />
+        );
+        break;
+      case "standard":
+        header = (
+          <Header className={styles.header} ref={headerRef}>
+            <LeftNav>
+              <RoomHeaderInfo
+                id={matrixInfo.roomId}
+                name={matrixInfo.roomName}
+                avatarUrl={matrixInfo.roomAvatar}
+                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
+                participantCount={participantCount}
+              />
+            </LeftNav>
+            <RightNav>
+              {showControls && onShareClick !== null && (
+                <InviteButton
+                  className={styles.invite}
+                  onClick={onShareClick}
+                />
+              )}
+            </RightNav>
+          </Header>
+        );
+    }
+  }
+
   const Tile = useMemo(
     () =>
       forwardRef<
@@ -532,7 +604,8 @@ export const InCallView: FC<InCallViewProps> = ({
         key="fixed"
         className={styles.fixedGrid}
         style={{
-          insetBlockStart: headerBounds.bottom,
+          insetBlockStart:
+            headerBounds.height > 0 ? headerBounds.bottom : bounds.top,
           height: gridBounds.height,
         }}
         model={layout}
@@ -655,10 +728,11 @@ export const InCallView: FC<InCallViewProps> = ({
       ref={footerRef}
       className={classNames(styles.footer, {
         [styles.overlay]: windowMode === "flat",
-        [styles.hidden]: !showFooter || (!showControls && hideHeader),
+        [styles.hidden]:
+          !showFooter || (!showControls && headerStyle === "none"),
       })}
     >
-      {!hideHeader && (
+      {headerStyle !== "none" && (
         <div className={styles.logo}>
           <LogoMark width={24} height={24} aria-hidden />
           <LogoType
@@ -694,35 +768,7 @@ export const InCallView: FC<InCallViewProps> = ({
       onPointerMove={onPointerMove}
       onPointerOut={onPointerOut}
     >
-      {showHeader &&
-        (hideHeader ? (
-          // Cosmetic header to fill out space while still affecting the bounds
-          // of the grid
-          <div
-            className={classNames(styles.header, styles.filler)}
-            ref={headerRef}
-          />
-        ) : (
-          <Header className={styles.header} ref={headerRef}>
-            <LeftNav>
-              <RoomHeaderInfo
-                id={matrixInfo.roomId}
-                name={matrixInfo.roomName}
-                avatarUrl={matrixInfo.roomAvatar}
-                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
-                participantCount={participantCount}
-              />
-            </LeftNav>
-            <RightNav>
-              {showControls && onShareClick !== null && (
-                <InviteButton
-                  className={styles.invite}
-                  onClick={onShareClick}
-                />
-              )}
-            </RightNav>
-          </Header>
-        ))}
+      {header}
       {
         // TODO: remove this once we remove the developer flag gets removed and we have shipped to
         // device transport as the default.

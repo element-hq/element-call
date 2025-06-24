@@ -12,15 +12,13 @@ Please see LICENSE in the repository root for full details.
   width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  --overlay-layer: 1;
-  --header-footer-layer: 2;
 }
 
 .header {
   position: sticky;
   flex-shrink: 0;
   inset-block-start: 0;
-  z-index: var(--header-footer-layer);
+  z-index: var(--call-view-header-footer-layer);
   background: linear-gradient(
     0deg,
     rgba(0, 0, 0, 0) 0%,
@@ -36,7 +34,7 @@ Please see LICENSE in the repository root for full details.
 .footer {
   position: sticky;
   inset-block-end: 0;
-  z-index: var(--header-footer-layer);
+  z-index: var(--call-view-header-footer-layer);
   display: grid;
   grid-template-columns:
     minmax(0, var(--inline-content-inset))

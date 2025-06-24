@@ -181,6 +181,7 @@
       "default": "Default",
       "default_named": "Default <2>({{name}})</2>",
       "earpiece": "Earpiece",
+      "loudspeaker": "Loudspeaker",
       "microphone": "Microphone",
       "microphone_numbered": "Microphone {{n}}",
       "speaker": "Speaker",

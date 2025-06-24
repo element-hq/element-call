@@ -1,6 +1,6 @@
 .overlay {
   position: fixed;
-  z-index: var(--overlay-layer);
+  z-index: var(--call-view-overlay-layer);
   inset: 0;
   display: flex;
   flex-direction: column;
