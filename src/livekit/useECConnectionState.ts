@@ -304,9 +304,10 @@ export function useECConnectionState(
       sfuConfigValid(sfuConfig) &&
       sfuConfigValid(currentSFUConfig.current) &&
       !sfuConfigEquals(currentSFUConfig.current, sfuConfig)
+      // (currentSFUConfig.current.url != sfuConfig?.url)
     ) {
       logger.info(
-        `SFU config changed! URL was ${currentSFUConfig.current?.url} now ${sfuConfig?.url}`,
+        `SFU config changed! URL was ${currentSFUConfig.current?.url}/${currentSFUConfig.current?.jwt} now ${sfuConfig?.url}/${sfuConfig?.jwt}`,
       );
 
       doFocusSwitch().catch((e) => {
