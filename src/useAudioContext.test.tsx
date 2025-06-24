@@ -105,9 +105,9 @@ afterEach(() => {
 
 test("can play a single sound", async () => {
   const { findByText } = render(
-    <MediaDevicesContext.Provider value={mockMediaDevices({})}>
+    <MediaDevicesContext value={mockMediaDevices({})}>
       <TestComponentWrapper />
-    </MediaDevicesContext.Provider>,
+    </MediaDevicesContext>,
   );
   await user.click(await findByText("Valid sound"));
   expect(testAudioContext.createBufferSource).toHaveBeenCalledOnce();
@@ -115,9 +115,9 @@ test("can play a single sound", async () => {
 
 test("will ignore sounds that are not registered", async () => {
   const { findByText } = render(
-    <MediaDevicesContext.Provider value={mockMediaDevices({})}>
+    <MediaDevicesContext value={mockMediaDevices({})}>
       <TestComponentWrapper />
-    </MediaDevicesContext.Provider>,
+    </MediaDevicesContext>,
   );
   await user.click(await findByText("Invalid sound"));
   expect(testAudioContext.createBufferSource).not.toHaveBeenCalled();
@@ -125,7 +125,7 @@ test("will ignore sounds that are not registered", async () => {
 
 test("will use the correct device", () => {
   render(
-    <MediaDevicesContext.Provider
+    <MediaDevicesContext
       value={mockMediaDevices({
         audioOutput: {
           available$: of(new Map<never, never>()),
@@ -135,7 +135,7 @@ test("will use the correct device", () => {
       })}
     >
       <TestComponentWrapper />
-    </MediaDevicesContext.Provider>,
+    </MediaDevicesContext>,
   );
   expect(testAudioContext.createBufferSource).not.toHaveBeenCalled();
   expect(testAudioContext.setSinkId).toHaveBeenCalledWith("chosen-device");
@@ -144,9 +144,9 @@ test("will use the correct device", () => {
 test("will use the correct volume level", async () => {
   soundEffectVolumeSetting.setValue(0.33);
   const { findByText } = render(
-    <MediaDevicesContext.Provider value={mockMediaDevices({})}>
+    <MediaDevicesContext value={mockMediaDevices({})}>
       <TestComponentWrapper />
-    </MediaDevicesContext.Provider>,
+    </MediaDevicesContext>,
   );
   await user.click(await findByText("Valid sound"));
   expect(testAudioContext.gain.gain.setValueAtTime).toHaveBeenCalledWith(
@@ -158,7 +158,7 @@ test("will use the correct volume level", async () => {
 
 test("will use the pan if earpiece is selected", async () => {
   const { findByText } = render(
-    <MediaDevicesContext.Provider
+    <MediaDevicesContext
       value={mockMediaDevices({
         audioOutput: {
           available$: of(new Map<never, never>()),
@@ -168,7 +168,7 @@ test("will use the pan if earpiece is selected", async () => {
       })}
     >
       <TestComponentWrapper />
-    </MediaDevicesContext.Provider>,
+    </MediaDevicesContext>,
   );
   await user.click(await findByText("Valid sound"));
   expect(testAudioContext.pan.pan.setValueAtTime).toHaveBeenCalledWith(1, 0);

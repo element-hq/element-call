@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { EventType, RelationType } from "matrix-js-sdk";
 import {
   createContext,
-  useContext,
+  use,
   type ReactNode,
   useCallback,
   useMemo,
@@ -34,7 +34,7 @@ const ReactionsSenderContext = createContext<
 >(undefined);
 
 export const useReactionsSender = (): ReactionsSenderContextType => {
-  const context = useContext(ReactionsSenderContext);
+  const context = use(ReactionsSenderContext);
   if (!context) {
     throw new Error("useReactions must be used within a ReactionsProvider");
   }
@@ -157,7 +157,7 @@ export const ReactionsSenderProvider = ({
   );
 
   return (
-    <ReactionsSenderContext.Provider
+    <ReactionsSenderContext
       value={{
         supportsReactions,
         toggleRaisedHand,
@@ -165,6 +165,6 @@ export const ReactionsSenderProvider = ({
       }}
     >
       {children}
-    </ReactionsSenderContext.Provider>
+    </ReactionsSenderContext>
   );
 };

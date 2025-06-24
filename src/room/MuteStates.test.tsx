@@ -124,14 +124,14 @@ describe("useMuteStates", () => {
 
     render(
       <MemoryRouter>
-        <MediaDevicesContext.Provider
+        <MediaDevicesContext
           value={mockMediaDevices({
             microphone: false,
             camera: false,
           })}
         >
           <TestComponent />
-        </MediaDevicesContext.Provider>
+        </MediaDevicesContext>
       </MemoryRouter>,
     );
     expect(screen.getByTestId("audio-enabled").textContent).toBe("false");
@@ -143,9 +143,9 @@ describe("useMuteStates", () => {
 
     render(
       <MemoryRouter>
-        <MediaDevicesContext.Provider value={mockMediaDevices()}>
+        <MediaDevicesContext value={mockMediaDevices()}>
           <TestComponent />
-        </MediaDevicesContext.Provider>
+        </MediaDevicesContext>
       </MemoryRouter>,
     );
     expect(screen.getByTestId("audio-enabled").textContent).toBe("true");
@@ -159,9 +159,9 @@ describe("useMuteStates", () => {
 
     render(
       <MemoryRouter>
-        <MediaDevicesContext.Provider value={mockMediaDevices()}>
+        <MediaDevicesContext value={mockMediaDevices()}>
           <TestComponent isJoined />
-        </MediaDevicesContext.Provider>
+        </MediaDevicesContext>
       </MemoryRouter>,
     );
     expect(screen.getByTestId("audio-enabled").textContent).toBe("false");
@@ -178,9 +178,9 @@ describe("useMuteStates", () => {
 
     render(
       <MemoryRouter>
-        <MediaDevicesContext.Provider value={mockMediaDevices()}>
+        <MediaDevicesContext value={mockMediaDevices()}>
           <TestComponent />
-        </MediaDevicesContext.Provider>
+        </MediaDevicesContext>
       </MemoryRouter>,
     );
     expect(screen.getByTestId("audio-enabled").textContent).toBe("false");
@@ -192,9 +192,9 @@ describe("useMuteStates", () => {
 
     render(
       <MemoryRouter initialEntries={["/room/?skipLobby=true"]}>
-        <MediaDevicesContext.Provider value={mockMediaDevices()}>
+        <MediaDevicesContext value={mockMediaDevices()}>
           <TestComponent />
-        </MediaDevicesContext.Provider>
+        </MediaDevicesContext>
       </MemoryRouter>,
     );
     expect(screen.getByTestId("audio-enabled").textContent).toBe("false");
@@ -224,13 +224,13 @@ describe("useMuteStates", () => {
 
       return (
         <MemoryRouter>
-          <MediaDevicesContext.Provider value={devices}>
+          <MediaDevicesContext value={devices}>
             <TestComponent />
             <button onClick={onConnectDevicesClick}>Connect devices</button>
             <button onClick={onDisconnectDevicesClick}>
               Disconnect devices
             </button>
-          </MediaDevicesContext.Provider>
+          </MediaDevicesContext>
         </MemoryRouter>
       );
     };

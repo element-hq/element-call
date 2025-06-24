@@ -24,7 +24,7 @@ import {
   createContext,
   forwardRef,
   memo,
-  useContext,
+  use,
   useEffect,
   useMemo,
   useRef,
@@ -124,7 +124,7 @@ interface LayoutContext {
 const LayoutContext = createContext<LayoutContext | null>(null);
 
 function useLayoutContext(): LayoutContext {
-  const context = useContext(LayoutContext);
+  const context = use(LayoutContext);
   if (context === null)
     throw new Error("useUpdateLayout called outside a Grid layout context");
   return context;
@@ -532,14 +532,14 @@ export function Grid<
       className={classNames(className, styles.grid)}
       style={style}
     >
-      <LayoutContext.Provider value={context}>
+      <LayoutContext value={context}>
         <LayoutMemo
           ref={setLayoutRoot}
           Layout={Layout}
           model={model}
           Slot={Slot}
         />
-      </LayoutContext.Provider>
+      </LayoutContext>
       {tileTransitions((spring, { id, model, onDrag, width, height }) => (
         <TileWrapper
           key={id}
