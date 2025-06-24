@@ -17,9 +17,15 @@ On mobile platforms (iOS, Android), web views do not reliably support selecting 
 - `controls.onAudioDeviceSelect: ((id: string) => void) | undefined` Callback called whenever the user or application selects a new audio output.
 - `controls.setAudioDevice(id: string): void` Sets the selected audio device in Element Call's menu. This should be used if the OS decides to automatically switch to Bluetooth, for example.
 - `controls.setAudioEnabled(enabled: boolean)` Enables/disables all audio output from the application. Output is enabled by default.
-- `showNativeAudioDevicePicker: (() => void) | undefined`. Callback called whenever the user presses the output button in the settings menu.
-  This button is only shown on iOS. (`userAgent.includes("iPhone")`)
 - `controls.onAudioPlaybackStarted: ((id: string) => void) | undefined`: This will be called the first time we start
   playing audio in the webview. It can be helpful to do device setup on the native app when the webviews audio is ready.
   In particular android is using it to setup the output channel so that the call volume can
   be controlled by the hardware volume rocker.
+
+## Element Call button delegation
+
+Callbacks for buttons in EC that are handled by the native application
+
+- `showNativeAudioDevicePicker: (() => void) | undefined`. Callback called whenever the user presses the output button in the settings menu.
+  This button is only shown on iOS. (`userAgent.includes("iPhone")`)
+- `onBackButtonPressed: (() => void) | undefined`. Callback when the webview detects a tab on the header's back button.
