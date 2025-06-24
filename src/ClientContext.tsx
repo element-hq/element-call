@@ -11,7 +11,7 @@ import {
   useEffect,
   useState,
   createContext,
-  useContext,
+  use,
   useRef,
   useMemo,
   type JSX,
@@ -69,8 +69,7 @@ const ClientContext = createContext<ClientState | undefined>(undefined);
 
 export const ClientContextProvider = ClientContext.Provider;
 
-export const useClientState = (): ClientState | undefined =>
-  useContext(ClientContext);
+export const useClientState = (): ClientState | undefined => use(ClientContext);
 
 export function useClient(): {
   client?: MatrixClient;
@@ -350,9 +349,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     return <ErrorPage widget={widget} error={alreadyOpenedErr} />;
   }
 
-  return (
-    <ClientContext.Provider value={state}>{children}</ClientContext.Provider>
-  );
+  return <ClientContext value={state}>{children}</ClientContext>;
 };
 
 export type InitResult = {

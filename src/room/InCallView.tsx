@@ -172,7 +172,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   if (livekitRoom === undefined || vm === null) return null;
 
   return (
-    <RoomContext.Provider value={livekitRoom}>
+    <RoomContext value={livekitRoom}>
       <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
         <InCallView
           {...props}
@@ -181,7 +181,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
           connState={connState}
         />
       </ReactionsSenderProvider>
-    </RoomContext.Provider>
+    </RoomContext>
   );
 };
 
