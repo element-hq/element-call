@@ -71,6 +71,13 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* This prohibits the view to scroll for pages smaller than 122px in width
+we use this for mobile pip webviews */
+.no-scroll-body {
+  position: fixed;
+  width: 100%;
+}
+
 /* We use this to not render the page at all until we know the theme.*/
 .no-theme {
   opacity: 0;
