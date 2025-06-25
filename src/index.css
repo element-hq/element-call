@@ -69,6 +69,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* This prohibits the view to scroll for pages smaller than 122px in width
+we use this for mobile pip webviews */
+.no-scroll-body {
   position: fixed;
   width: 100%;
 }
