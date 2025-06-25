@@ -18,7 +18,7 @@ import {
   type Observable,
 } from "rxjs";
 import { createMediaDeviceObserver } from "@livekit/components-core";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import {
   audioInput as audioInputSetting,
@@ -33,10 +33,12 @@ import {
 } from "../controls";
 import { getUrlParams } from "../UrlParams";
 import { platform } from "../Platform";
+import { switchWhen } from "../utils/observable";
 
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
 // the ios swift team.
 const EARPIECE_CONFIG_ID = "earpiece-id";
+const logger = rootLogger.getChild("[MediaDevices]");
 
 export type DeviceLabel =
   | { type: "name"; name: string }
@@ -96,13 +98,25 @@ function availableRawDevices$(
   usingNames$: Observable<boolean>,
   scope: ObservableScope,
 ): Observable<MediaDeviceInfo[]> {
+  const logError = (e: Error): void =>
+    logger.error("Error creating MediaDeviceObserver", e);
+  const devices$ = createMediaDeviceObserver(kind, logError, false);
+  const devicesWithNames$ = createMediaDeviceObserver(kind, logError, true);
+
   return usingNames$.pipe(
-    switchMap((usingNames) =>
-      createMediaDeviceObserver(
-        kind,
-        (e) => logger.error("Error creating MediaDeviceObserver", e),
-        usingNames,
-      ),
+    switchMap((withNames) =>
+      withNames
+        ? // It might be that there is already a media stream running somewhere,
+          // and so we can do without requesting a second one. Only switch to the
+          // device observer that explicitly requests the names if we see that
+          // names are in fact missing from the initial device enumeration.
+          devices$.pipe(
+            switchWhen(
+              (devices, i) => i === 0 && devices.every((d) => !d.label),
+              devicesWithNames$,
+            ),
+          )
+        : devices$,
     ),
     startWith([]),
     scope.state(),
@@ -181,7 +195,11 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   public constructor(
     private readonly usingNames$: Observable<boolean>,
     private readonly scope: ObservableScope,
-  ) {}
+  ) {
+    this.available$.subscribe((available) => {
+      logger.info("[audio-input] available devices:", available);
+    });
+  }
 }
 
 class AudioOutput
@@ -232,7 +250,11 @@ class AudioOutput
   public constructor(
     private readonly usingNames$: Observable<boolean>,
     private readonly scope: ObservableScope,
-  ) {}
+  ) {
+    this.available$.subscribe((available) => {
+      logger.info("[audio-output] available devices:", available);
+    });
+  }
 }
 
 class ControlledAudioOutput
@@ -298,6 +320,9 @@ class ControlledAudioOutput
         window.controls.onOutputDeviceSelect?.(device.id);
       }
     });
+    this.available$.subscribe((available) => {
+      logger.info("[controlled-output] available devices:", available);
+    });
   }
 }
 
@@ -323,7 +348,12 @@ class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
   public constructor(
     private readonly usingNames$: Observable<boolean>,
     private readonly scope: ObservableScope,
-  ) {}
+  ) {
+    // This also has the purpose of subscribing to the available devices
+    this.available$.subscribe((available) => {
+      logger.info("[video-input] available devices:", available);
+    });
+  }
 }
 
 export class MediaDevices {
