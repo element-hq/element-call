@@ -72,6 +72,12 @@ import {
   localId,
   localRtcMember,
 } from "../utils/test-fixtures";
+import { ObservableScope } from "./ObservableScope";
+import { MediaDevices } from "./MediaDevices";
+import { getValue } from "../utils/observable";
+
+const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
+vi.mock("../UrlParams", () => ({ getUrlParams }));
 
 vi.mock("@livekit/components-core");
 
@@ -210,6 +216,7 @@ function withCallViewModel(
   rtcMembers$: Observable<Partial<CallMembership>[]>,
   connectionState$: Observable<ECConnectionState>,
   speaking: Map<Participant, Observable<boolean>>,
+  mediaDevices: MediaDevices,
   continuation: (
     vm: CallViewModel,
     subjects: { raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>> },
@@ -263,7 +270,7 @@ function withCallViewModel(
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     liveKitRoom,
-    mockMediaDevices({}),
+    mediaDevices,
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
@@ -303,6 +310,7 @@ test("participants are retained during a focus switch", () => {
         s: ECAddonConnectionState.ECSwitchingFocus,
       }),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
@@ -342,6 +350,7 @@ test("screen sharing activates spotlight layout", () => {
       of([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         schedule(modeInputMarbles, {
           s: () => vm.setGridMode("spotlight"),
@@ -425,6 +434,7 @@ test("participants stay in the same order unless to appear/disappear", () => {
         [bobParticipant, hot(bSpeakingInputMarbles, { y: true, n: false })],
         [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
       ]),
+      mockMediaDevices({}),
       (vm) => {
         schedule(visibilityInputMarbles, {
           a: () => {
@@ -481,6 +491,7 @@ test("participants adjust order when space becomes constrained", () => {
         [bobParticipant, hot(bSpeakingInputMarbles, { y: true, n: false })],
         [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
       ]),
+      mockMediaDevices({}),
       (vm) => {
         let setVisibleTiles: ((value: number) => void) | null = null;
         vm.layout$.subscribe((layout) => {
@@ -534,6 +545,7 @@ test("spotlight speakers swap places", () => {
         [bobParticipant, hot(bSpeakingInputMarbles, { y: true, n: false })],
         [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
       ]),
+      mockMediaDevices({}),
       (vm) => {
         schedule(modeInputMarbles, { s: () => vm.setGridMode("spotlight") });
 
@@ -579,6 +591,7 @@ test("layout enters picture-in-picture mode when requested", () => {
       of([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         schedule(pipControlInputMarbles, {
           e: () => window.controls.enablePip(),
@@ -620,6 +633,7 @@ test("spotlight remembers whether it's expanded", () => {
       of([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         schedule(modeInputMarbles, {
           s: () => vm.setGridMode("spotlight"),
@@ -688,6 +702,7 @@ test("participants must have a MatrixRTCSession to be visible", () => {
       }),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         vm.setGridMode("grid");
         expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -732,6 +747,7 @@ test("shows participants without MatrixRTCSession when enabled in settings", () 
         of([]), // No one joins the MatrixRTC session
         of(ConnectionState.Connected),
         new Map(),
+        mockMediaDevices({}),
         (vm) => {
           vm.setGridMode("grid");
           expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -779,6 +795,7 @@ it("should show at least one tile per MatrixRTCSession", () => {
       }),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         vm.setGridMode("grid");
         expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -827,6 +844,7 @@ test("should disambiguate users with the same displayname", () => {
       }),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         // Skip the null state.
         expectObservable(vm.memberDisplaynames$.pipe(skip(1))).toBe(
@@ -877,6 +895,7 @@ test("should disambiguate users with invisible characters", () => {
       }),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         // Skip the null state.
         expectObservable(vm.memberDisplaynames$.pipe(skip(1))).toBe(
@@ -913,6 +932,7 @@ test("should strip RTL characters from displayname", () => {
       }),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         // Skip the null state.
         expectObservable(vm.memberDisplaynames$.pipe(skip(1))).toBe(
@@ -945,6 +965,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
       of([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm, { raisedHands$ }) => {
         schedule("ab", {
           a: () => {
@@ -989,6 +1010,50 @@ it("should rank raised hands above video feeds and below speakers and presenters
             },
           },
         );
+      },
+    );
+  });
+});
+
+test("audio output changes when toggling earpiece mode", () => {
+  withTestScheduler(({ schedule, expectObservable }) => {
+    getUrlParams.mockReturnValue({ controlledAudioDevices: true });
+    vi.mocked(ComponentsCore.createMediaDeviceObserver).mockReturnValue(of([]));
+
+    const scope = new ObservableScope();
+    onTestFinished(() => scope.end());
+    const devices = new MediaDevices(scope);
+
+    window.controls.setAvailableAudioDevices([
+      { id: "speaker", name: "Speaker", isSpeaker: true },
+      { id: "earpiece", name: "Earpiece", isEarpiece: true },
+      { id: "headphones", name: "Headphones" },
+    ]);
+    window.controls.setAudioDevice("headphones");
+
+    const toggleInputMarbles = "         -aaa";
+    const expectedEarpieceModeMarbles = "n-yn";
+    const expectedTargetStateMarbles = " sese";
+
+    withCallViewModel(
+      of([]),
+      of([]),
+      of(ConnectionState.Connected),
+      new Map(),
+      devices,
+      (vm) => {
+        schedule(toggleInputMarbles, {
+          a: () => getValue(vm.audioOutputSwitcher$)?.switch(),
+        });
+        expectObservable(vm.earpieceMode$).toBe(expectedEarpieceModeMarbles, {
+          n: false,
+          y: true,
+        });
+        expectObservable(
+          vm.audioOutputSwitcher$.pipe(
+            map((switcher) => switcher?.targetOutput),
+          ),
+        ).toBe(expectedTargetStateMarbles, { s: "speaker", e: "earpiece" });
       },
     );
   });
