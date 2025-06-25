@@ -14,10 +14,10 @@ import styles from "./EarpieceOverlay.module.css";
 
 interface Props {
   show: boolean;
-  onBackButtonPressed?: (() => void) | null;
+  onBackToVideoPressed?: (() => void) | null;
 }
 
-export const EarpieceOverlay: FC<Props> = ({ show }) => {
+export const EarpieceOverlay: FC<Props> = ({ show, onBackToVideoPressed }) => {
   const { t } = useTranslation();
   return (
     <div className={styles.overlay} data-show={show}>
@@ -28,7 +28,13 @@ export const EarpieceOverlay: FC<Props> = ({ show }) => {
         {t("earpiece.overlay_title")}
       </Heading>
       <Text>{t("earpiece.overlay_description")}</Text>
-      <Button kind="primary" size="sm">
+      <Button
+        kind="primary"
+        size="sm"
+        onClick={() => {
+          onBackToVideoPressed?.();
+        }}
+      >
         {t("earpiece.overlay_back_button")}
       </Button>
     </div>

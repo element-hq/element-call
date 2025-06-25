@@ -789,7 +789,7 @@ export const InCallView: FC<InCallViewProps> = ({
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
       <EarpieceOverlay
         show={earpieceMode}
-        onBackButtonPressed={toggleEarpieceMode}
+        onBackToVideoPressed={toggleEarpieceMode}
       />
       <ReactionsOverlay vm={vm} />
       {footer}
