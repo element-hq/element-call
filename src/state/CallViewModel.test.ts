@@ -42,6 +42,7 @@ import {
   withTestScheduler,
   mockRtcMembership,
   MockRTCSession,
+  mockMediaDevices,
 } from "../utils/test";
 import {
   ECAddonConnectionState,
@@ -71,7 +72,6 @@ import {
   localId,
   localRtcMember,
 } from "../utils/test-fixtures";
-import { type MediaDevices } from "./MediaDevices";
 
 vi.mock("@livekit/components-core");
 
@@ -263,7 +263,7 @@ function withCallViewModel(
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     liveKitRoom,
-    {} as unknown as MediaDevices,
+    mockMediaDevices({}),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },

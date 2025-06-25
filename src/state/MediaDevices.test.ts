@@ -12,6 +12,7 @@ import { map, of } from "rxjs";
 import { withTestScheduler } from "../utils/test";
 import { MediaDevices } from "./MediaDevices";
 import { ObservableScope } from "./ObservableScope";
+import { getValue } from "../utils/observable";
 
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("../UrlParams", () => ({ getUrlParams }));
@@ -37,9 +38,16 @@ test("audio output changes when toggling earpiece mode", () => {
     const expectedSelectedOutputMarbles = "ses";
 
     schedule(toggleInputMarbles, {
-      a: () => window.controls.toggleEarpieceMode(),
+      a: () =>
+        devices.audioOutput.select(
+          getValue(devices.audioOutput.selected$)?.id === "earpiece"
+            ? "speaker"
+            : "earpiece",
+        ),
     });
-    expectObservable(devices.earpieceMode$).toBe(expectedEarpieceModeMarbles, {
+    expectObservable(
+      devices.audioOutput.selected$.pipe(map((s) => s?.id === "earpiece")),
+    ).toBe(expectedEarpieceModeMarbles, {
       n: false,
       y: true,
     });

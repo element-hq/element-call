@@ -18,7 +18,12 @@ import EventEmitter from "events";
 import type { RoomMember, MatrixClient } from "matrix-js-sdk";
 import { E2eeType } from "../e2ee/e2eeType";
 import { CallViewModel } from "../state/CallViewModel";
-import { mockLivekitRoom, mockMatrixRoom, MockRTCSession } from "./test";
+import {
+  mockLivekitRoom,
+  mockMatrixRoom,
+  mockMediaDevices,
+  MockRTCSession,
+} from "./test";
 import {
   aliceRtcMember,
   aliceParticipant,
@@ -26,7 +31,6 @@ import {
   localRtcMember,
 } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
-import { type MediaDevices } from "../state/MediaDevices";
 
 export function getBasicRTCSession(
   members: RoomMember[],
@@ -133,7 +137,7 @@ export function getBasicCallViewModelEnvironment(
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     liveKitRoom,
-    { earpieceMode$: of(false) } as unknown as MediaDevices,
+    mockMediaDevices({}),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
