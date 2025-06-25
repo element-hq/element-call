@@ -64,10 +64,7 @@ export const AppBar: FC<Props> = ({ children }) => {
     <>
       <div
         style={{ display: hidden ? "none" : "block" }}
-        className={classNames(
-          styles.bar,
-          platform === "android" && styles.overlay,
-        )}
+        className={styles.bar}
       >
         <Header>
           <LeftNav>

@@ -2,10 +2,7 @@
   block-size: 64px;
   flex-shrink: 0;
 }
-/*show the header bar as an overlay over the video. (android)*/
-.overlay {
-  block-size: 0px;
-}
+
 .bar > header {
   position: absolute;
   inset-inline: 0;
