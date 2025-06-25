@@ -39,7 +39,7 @@
 }
 
 .overlay::before {
-  content: '';
+  content: "";
   position: absolute;
   z-index: -1;
   inset: 0;
