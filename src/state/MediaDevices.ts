@@ -33,6 +33,7 @@ import {
 } from "../controls";
 import { getUrlParams } from "../UrlParams";
 import { platform } from "../Platform";
+import { switchWhen } from "../utils/observable";
 
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
 // the ios swift team.
@@ -94,17 +95,28 @@ export const iosDeviceMenu$ =
 
 function availableRawDevices$(
   kind: MediaDeviceKind,
-  updateAvailableDeviceRequests$: Observable<boolean>,
+  usingNames$: Observable<boolean>,
   scope: ObservableScope,
 ): Observable<MediaDeviceInfo[]> {
-  return updateAvailableDeviceRequests$.pipe(
-    startWith(false),
-    switchMap((withPermissions) =>
-      createMediaDeviceObserver(
-        kind,
-        (e) => logger.error("Error creating MediaDeviceObserver", e),
-        withPermissions,
-      ),
+  const logError = (e: Error): void =>
+    logger.error("Error creating MediaDeviceObserver", e);
+  const devices$ = createMediaDeviceObserver(kind, logError, false);
+  const devicesWithNames$ = createMediaDeviceObserver(kind, logError, true);
+
+  return usingNames$.pipe(
+    switchMap((withNames) =>
+      withNames
+        ? // It might be that there is already a media stream running somewhere,
+          // and so we can do without requesting a second one. Only switch to the
+          // device observer that explicitly requests the names if we see that
+          // names are in fact missing from the initial device enumeration.
+          devices$.pipe(
+            switchWhen(
+              (devices, i) => i === 0 && devices.every((d) => !d.label),
+              devicesWithNames$,
+            ),
+          )
+        : devices$,
     ),
     startWith([]),
     scope.state(),
@@ -147,11 +159,7 @@ function selectDevice$<Label>(
 
 class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   private readonly availableRaw$: Observable<MediaDeviceInfo[]> =
-    availableRawDevices$(
-      "audioinput",
-      this.updateAvailableDeviceRequests$,
-      this.scope,
-    );
+    availableRawDevices$("audioinput", this.usingNames$, this.scope);
 
   public readonly available$ = this.availableRaw$.pipe(
     map(buildDeviceMap),
@@ -185,7 +193,7 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   }
 
   public constructor(
-    private readonly updateAvailableDeviceRequests$: Observable<boolean>,
+    private readonly usingNames$: Observable<boolean>,
     private readonly scope: ObservableScope,
   ) {
     this.available$.subscribe((available) => {
@@ -199,7 +207,7 @@ class AudioOutput
 {
   public readonly available$ = availableRawDevices$(
     "audiooutput",
-    this.updateAvailableDeviceRequests$,
+    this.usingNames$,
     this.scope,
   ).pipe(
     map((availableRaw) => {
@@ -240,7 +248,7 @@ class AudioOutput
   }
 
   public constructor(
-    private readonly updateAvailableDeviceRequests$: Observable<boolean>,
+    private readonly usingNames$: Observable<boolean>,
     private readonly scope: ObservableScope,
   ) {
     this.available$.subscribe((available) => {
@@ -321,7 +329,7 @@ class ControlledAudioOutput
 class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
   public readonly available$ = availableRawDevices$(
     "videoinput",
-    this.updateAvailableDeviceRequests$,
+    this.usingNames$,
     this.scope,
   ).pipe(map(buildDeviceMap));
 
@@ -338,7 +346,7 @@ class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
   }
 
   public constructor(
-    private readonly updateAvailableDeviceRequests$: Observable<boolean>,
+    private readonly usingNames$: Observable<boolean>,
     private readonly scope: ObservableScope,
   ) {
     // This also has the purpose of subscribing to the available devices
@@ -349,48 +357,43 @@ class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
 }
 
 export class MediaDevices {
-  private readonly updateAvailableDeviceRequests$ = new Subject<boolean>();
+  private readonly deviceNamesRequest$ = new Subject<void>();
   /**
    * Requests that the media devices be populated with the names of each
    * available device, rather than numbered identifiers. This may invoke a
    * permissions pop-up, so it should only be called when there is a clear user
    * intent to view the device list.
-   *
-   * This always updates the `available$` devices for each media type with the current value
-   * of `enumerateDevices`.
    */
   public requestDeviceNames(): void {
-    void navigator.mediaDevices.enumerateDevices().then((result) => {
-      // we only actually update the requests$ subject if there are no
-      // devices with a label, because otherwise we already have the permission
-      // to access the devices.
-      this.updateAvailableDeviceRequests$.next(
-        !result.some((device) => device.label),
-      );
-    });
+    this.deviceNamesRequest$.next();
   }
+
+  // Start using device names as soon as requested. This will cause LiveKit to
+  // briefly request device permissions and acquire media streams for each
+  // device type while calling `enumerateDevices`, which is what browsers want
+  // you to do to receive device names in lieu of a more explicit permissions
+  // API. This flag never resets to false, because once permissions are granted
+  // the first time, the user won't be prompted again until reload of the page.
+  private readonly usingNames$ = this.deviceNamesRequest$.pipe(
+    map(() => true),
+    startWith(false),
+    this.scope.state(),
+  );
 
   public readonly audioInput: MediaDevice<
     DeviceLabel,
     SelectedAudioInputDevice
-  > = new AudioInput(this.updateAvailableDeviceRequests$, this.scope);
+  > = new AudioInput(this.usingNames$, this.scope);
 
   public readonly audioOutput: MediaDevice<
     AudioOutputDeviceLabel,
     SelectedAudioOutputDevice
   > = getUrlParams().controlledAudioDevices
     ? new ControlledAudioOutput(this.scope)
-    : new AudioOutput(this.updateAvailableDeviceRequests$, this.scope);
+    : new AudioOutput(this.usingNames$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
-    new VideoInput(this.updateAvailableDeviceRequests$, this.scope);
+    new VideoInput(this.usingNames$, this.scope);
 
-  public constructor(private readonly scope: ObservableScope) {
-    this.updateAvailableDeviceRequests$.subscribe((recompute) => {
-      logger.info(
-        "[MediaDevices] updateAvailableDeviceRequests$ changed:",
-        recompute,
-      );
-    });
-  }
+  public constructor(private readonly scope: ObservableScope) {}
 }
