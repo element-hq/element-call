@@ -269,21 +269,21 @@ class ControlledAudioOutput
     this.deviceSelection$.next(id);
   }
 
-  public readonly selected$ = combineLatest([
-    this.available$,
-    merge(
-      controlledOutputSelection$.pipe(startWith(undefined)),
-      this.deviceSelection$,
-    ),
-  ]).pipe(
-    map(([available, selectId]) => {
+  public readonly selected$ = combineLatest(
+    [
+      this.available$,
+      merge(
+        controlledOutputSelection$.pipe(startWith(undefined)),
+        this.deviceSelection$,
+      ),
+    ],
+    (available, selectId) => {
       const id = selectId ?? available.keys().next().value;
       return id
         ? { id, virtualEarpiece: id === EARPIECE_CONFIG_ID }
         : undefined;
-    }),
-    this.scope.state(),
-  );
+    },
+  ).pipe(this.scope.state());
 
   public constructor(private readonly scope: ObservableScope) {
     this.selected$.subscribe((device) => {
