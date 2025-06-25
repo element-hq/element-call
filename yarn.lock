@@ -2702,37 +2702,37 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/components-core@npm:0.12.7, @livekit/components-core@npm:^0.12.0":
-  version: 0.12.7
-  resolution: "@livekit/components-core@npm:0.12.7"
+"@livekit/components-core@npm:0.12.8, @livekit/components-core@npm:^0.12.0":
+  version: 0.12.8
+  resolution: "@livekit/components-core@npm:0.12.8"
   dependencies:
     "@floating-ui/dom": "npm:1.6.13"
     loglevel: "npm:1.9.1"
     rxjs: "npm:7.8.2"
   peerDependencies:
-    livekit-client: ^2.13.1
+    livekit-client: ^2.13.3
     tslib: ^2.6.2
-  checksum: 10c0/11024e120f2b1b81688d507dc8441f663730956d4c79f66014a9f19a3723fcdee9517a09239f21d501067cc299bf97659655404048c415314c39bf6af5d8ab9d
+  checksum: 10c0/68c471b2f1319fbbfff05138b55442cc2ba575bc8506b3e71bb222fdf7026041f88c38e832227bbcc37edd4d3936f997c1b54ce7b27d1971f960794f049c9684
   languageName: node
   linkType: hard
 
 "@livekit/components-react@npm:^2.0.0":
-  version: 2.9.10
-  resolution: "@livekit/components-react@npm:2.9.10"
+  version: 2.9.12
+  resolution: "@livekit/components-react@npm:2.9.12"
   dependencies:
-    "@livekit/components-core": "npm:0.12.7"
+    "@livekit/components-core": "npm:0.12.8"
     clsx: "npm:2.1.1"
     usehooks-ts: "npm:3.1.1"
   peerDependencies:
     "@livekit/krisp-noise-filter": ^0.2.12
-    livekit-client: ^2.13.1
+    livekit-client: ^2.13.3
     react: ">=18"
     react-dom: ">=18"
     tslib: ^2.6.2
   peerDependenciesMeta:
     "@livekit/krisp-noise-filter":
       optional: true
-  checksum: 10c0/86fc78d7b2d97540c43592435a65ac38b43fca9923af000aa90d884bd35794e18d202b7d915f44b63087abea5c94c37d6980772ed722226904262b2cddbec107
+  checksum: 10c0/445099ff7d335f8b9908e814e327d43477ea19fb93c428fadb0bf2aa56e323171af10fcc9493f686ad5060fb75e0d5c66632e55cd648a76fafe146827c53bd87
   languageName: node
   linkType: hard
 
