@@ -50,7 +50,7 @@ export const setPipEnabled$ = new Subject<boolean>();
 
 export const availableOutputDevices$ = new Subject<OutputDevice[]>();
 
-export const outputDevice$ = new Subject<string | undefined>();
+export const outputDevice$ = new Subject<string>();
 
 /**
  * This allows the os to mute the call if the user

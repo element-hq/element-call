@@ -269,16 +269,19 @@ class ControlledAudioOutput
     this.deviceSelection$.next(id);
   }
 
-  public readonly selected$ = merge(
-    this.deviceSelection$,
-    controlledOutputSelection$,
-  ).pipe(
-    startWith<string | undefined>(undefined),
-    map((id) =>
-      id === undefined
-        ? undefined
-        : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID },
+  public readonly selected$ = combineLatest([
+    this.available$,
+    merge(
+      controlledOutputSelection$.pipe(startWith(undefined)),
+      this.deviceSelection$,
     ),
+  ]).pipe(
+    map(([available, selectId]) => {
+      const id = selectId ?? available.keys().next().value;
+      return id
+        ? { id, virtualEarpiece: id === EARPIECE_CONFIG_ID }
+        : undefined;
+    }),
     this.scope.state(),
   );
 
