@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { type IOpenIDToken, type MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { type LivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
 
 import { useActiveLivekitFocus } from "../room/useActiveFocus";
@@ -41,18 +41,12 @@ export function useOpenIDSFU(
   const [sfuConfig, setSFUConfig] = useState<SFUConfig | undefined>(undefined);
 
   const activeFocus = useActiveLivekitFocus(rtcSession);
-
-  // TODO: this is an ugly workaround to avoid re-requesting a new jwt token when there is no change in the active focus.
-  // We have a problem with the hooks here. The root problem should be fixed.
-  const currentFocus = useRef(Object.assign({}, activeFocus));
-
   const { showErrorBoundary } = useErrorBoundary();
 
   useEffect(() => {
-    if (activeFocus && !liveKitFocusEquals(activeFocus, currentFocus.current)) {
+    if (activeFocus) {
       getSFUConfigWithOpenID(client, activeFocus).then(
         (sfuConfig) => {
-          currentFocus.current = Object.assign({}, activeFocus);
           setSFUConfig(sfuConfig);
         },
         (e) => {
@@ -61,26 +55,11 @@ export function useOpenIDSFU(
         },
       );
     } else {
-      currentFocus.current = {} as LivekitFocus;
       setSFUConfig(undefined);
     }
   }, [client, activeFocus, showErrorBoundary]);
 
   return sfuConfig;
-}
-
-export function liveKitFocusEquals(
-  a?: LivekitFocus,
-  b?: LivekitFocus,
-): boolean {
-  if (a === undefined && b === undefined) return true;
-  if (a === undefined || b === undefined) return false;
-
-  return (
-    a.type === b.type &&
-    a.livekit_service_url === b.livekit_service_url &&
-    a.livekit_alias === b.livekit_alias
-  );
 }
 
 export async function getSFUConfigWithOpenID(
