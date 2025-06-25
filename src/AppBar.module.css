@@ -11,8 +11,8 @@
   z-index: var(--call-view-header-footer-layer);
 }
 
-.bar svg {
-  color: var(--cpd-color-icon-primary);
+.bar svg path {
+  fill: var(--cpd-color-icon-primary);
 }
 
 .bar > header > h1 {

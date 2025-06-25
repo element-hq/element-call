@@ -458,7 +458,7 @@ export const InCallView: FC<InCallViewProps> = ({
   useAppBarSecondaryButton(
     useMemo(() => {
       if (toggleEarpieceMode === null) return null;
-      const Icon = earpieceMode ? EarpieceIcon : VolumeOnSolidIcon;
+      const Icon = earpieceMode ? VolumeOnSolidIcon : EarpieceIcon;
       return (
         <Tooltip
           label={
