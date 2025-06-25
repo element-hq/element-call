@@ -10,8 +10,8 @@ import {
   type FC,
   type MouseEvent,
   type ReactNode,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -22,7 +22,6 @@ import {
   CollapseIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
-import classNames from "classnames";
 
 import { Header, LeftNav, RightNav } from "./Header";
 import { platform } from "./Platform";
@@ -86,9 +85,7 @@ export const AppBar: FC<Props> = ({ children }) => {
           <RightNav>{secondaryButton}</RightNav>
         </Header>
       </div>
-      <AppBarContext.Provider value={context}>
-        {children}
-      </AppBarContext.Provider>
+      <AppBarContext value={context}>{children}</AppBarContext>
     </>
   );
 };
@@ -98,7 +95,7 @@ export const AppBar: FC<Props> = ({ children }) => {
  * an error to call this hook from multiple sites in the same component tree.
  */
 export function useAppBarTitle(title: string): void {
-  const setTitle = useContext(AppBarContext)?.setTitle;
+  const setTitle = use(AppBarContext)?.setTitle;
   useEffect(() => {
     if (setTitle !== undefined) {
       setTitle(title);
@@ -112,7 +109,7 @@ export function useAppBarTitle(title: string): void {
  * an error to call this hook from multiple sites in the same component tree.
  */
 export function useAppBarHidden(hidden: boolean): void {
-  const setHidden = useContext(AppBarContext)?.setHidden;
+  const setHidden = use(AppBarContext)?.setHidden;
   useEffect(() => {
     if (setHidden !== undefined) {
       setHidden(hidden);
@@ -127,7 +124,7 @@ export function useAppBarHidden(hidden: boolean): void {
  * component tree.
  */
 export function useAppBarSecondaryButton(button: ReactNode): void {
-  const setSecondaryButton = useContext(AppBarContext)?.setSecondaryButton;
+  const setSecondaryButton = use(AppBarContext)?.setSecondaryButton;
   useEffect(() => {
     if (setSecondaryButton !== undefined) {
       setSecondaryButton(button);
