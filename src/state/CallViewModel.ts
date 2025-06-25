@@ -1261,29 +1261,36 @@ export class CallViewModel extends ViewModel {
 
   /**
    * Callback to toggle between the earpiece and the loudspeaker.
+   *
+   * This will be `null` in case the target does not exist in the list
+   * of available audio outputs.
    */
-  public readonly toggleEarpieceMode$: Observable<(() => void) | null> =
-    combineLatest(
-      [
-        this.mediaDevices.audioOutput.available$,
-        this.mediaDevices.audioOutput.selected$,
-      ],
-      (available, selected) => {
-        const selectionType = selected && available.get(selected.id)?.type;
-        if (!(selectionType === "speaker" || selectionType === "earpiece"))
-          return null;
+  public readonly audioOutputSwitcher$: Observable<{
+    targetOutput: "earpiece" | "speaker";
+    switch: () => void;
+  } | null> = combineLatest(
+    [
+      this.mediaDevices.audioOutput.available$,
+      this.mediaDevices.audioOutput.selected$,
+    ],
+    (available, selected) => {
+      const selectionType = selected && available.get(selected.id)?.type;
 
-        const newSelectionType =
-          selectionType === "speaker" ? "earpiece" : "speaker";
-        const newSelection = [...available].find(
-          ([, d]) => d.type === newSelectionType,
-        );
-        if (newSelection === undefined) return null;
+      // If we are in any output mode other than spaeker switch to speaker.
+      const newSelectionType =
+        selectionType === "speaker" ? "earpiece" : "speaker";
+      const newSelection = [...available].find(
+        ([, d]) => d.type === newSelectionType,
+      );
+      if (newSelection === undefined) return null;
 
-        const [id] = newSelection;
-        return () => this.mediaDevices.audioOutput.select(id);
-      },
-    );
+      const [id] = newSelection;
+      return {
+        targetOutput: newSelectionType,
+        switch: () => this.mediaDevices.audioOutput.select(id),
+      };
+    },
+  );
 
   public readonly reactions$ = this.reactionsSubject$.pipe(
     map((v) =>

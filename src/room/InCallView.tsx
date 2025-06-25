@@ -312,7 +312,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const showHeader = useObservableEagerState(vm.showHeader$);
   const showFooter = useObservableEagerState(vm.showFooter$);
   const earpieceMode = useObservableEagerState(vm.earpieceMode$);
-  const toggleEarpieceMode = useObservableEagerState(vm.toggleEarpieceMode$);
+  const audioOutputSwitcher = useObservableEagerState(vm.audioOutputSwitcher$);
   const switchCamera = useSwitchCamera(vm.localVideo$);
 
   // Ideally we could detect taps by listening for click events and checking
@@ -457,27 +457,26 @@ export const InCallView: FC<InCallViewProps> = ({
 
   useAppBarSecondaryButton(
     useMemo(() => {
-      if (toggleEarpieceMode === null) return null;
-      const Icon = earpieceMode ? VolumeOnSolidIcon : EarpieceIcon;
+      if (audioOutputSwitcher === null) return null;
+      const isEarpieceTarget = audioOutputSwitcher.targetOutput === "earpiece";
+      const Icon = isEarpieceTarget ? EarpieceIcon : VolumeOnSolidIcon;
+      const label = isEarpieceTarget
+        ? t("settings.devices.earpiece")
+        : t("settings.devices.loudspeaker");
+
       return (
-        <Tooltip
-          label={
-            earpieceMode
-              ? t("settings.devices.earpiece")
-              : t("settings.devices.loudspeaker")
-          }
-        >
+        <Tooltip label={label}>
           <IconButton
             onClick={(e) => {
               e.preventDefault();
-              toggleEarpieceMode();
+              audioOutputSwitcher.switch();
             }}
           >
             <Icon />
           </IconButton>
         </Tooltip>
       );
-    }, [t, earpieceMode, toggleEarpieceMode]),
+    }, [t, audioOutputSwitcher]),
   );
 
   useAppBarHidden(!showHeader);
@@ -789,7 +788,7 @@ export const InCallView: FC<InCallViewProps> = ({
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
       <EarpieceOverlay
         show={earpieceMode}
-        onBackToVideoPressed={toggleEarpieceMode}
+        onBackToVideoPressed={audioOutputSwitcher?.switch}
       />
       <ReactionsOverlay vm={vm} />
       {footer}
