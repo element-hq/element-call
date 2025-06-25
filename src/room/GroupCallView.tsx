@@ -132,6 +132,16 @@ export const GroupCallView: FC<Props> = ({
     };
   }, []);
 
+  // This CSS is the only way we could find to not make element call scroll for
+  // viewport sizes smaller than 122px width. (It is actually this exact number: 122px
+  // tested on different devices...)
+  useEffect(() => {
+    document.body.classList.add("no-scroll-body");
+    return (): void => {
+      document.body.classList.remove("no-scroll-body");
+    };
+  }, []);
+
   useEffect(() => {
     window.rtcSession = rtcSession;
     return (): void => {
