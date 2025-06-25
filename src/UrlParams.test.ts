@@ -243,4 +243,16 @@ describe("UrlParams", () => {
       expect(getUrlParams("?intent=join_existing").skipLobby).toBe(false);
     });
   });
+  describe("header", () => {
+    it("uses header if provided", () => {
+      expect(getUrlParams("?header=app_bar&hideHeader=true").header).toBe(
+        "app_bar",
+      );
+      expect(getUrlParams("?header=none&hideHeader=false").header).toBe("none");
+    });
+    it("converts hideHeader to the correct header value", () => {
+      expect(getUrlParams("?hideHeader=true").header).toBe("none");
+      expect(getUrlParams("?hideHeader=false").header).toBe("standard");
+    });
+  });
 });

@@ -267,12 +267,13 @@ export const getUrlParams = (
     intent = UserIntent.Unknown;
   }
 
-  // Check hideHeader for backwards compatibility
-  let header = parser.getFlagParam("hideHeader")
-    ? HeaderStyle.None
-    : parser.getParam("header");
-  if (header !== HeaderStyle.None && header !== HeaderStyle.AppBar)
-    header = HeaderStyle.Standard;
+  // Check hideHeader for backwards compatibility. If header is set, hideHeader
+  // is ignored.
+  const header =
+    parser.getParam("header") ??
+    (parser.getFlagParam("hideHeader")
+      ? HeaderStyle.None
+      : HeaderStyle.Standard);
 
   const widgetId = parser.getParam("widgetId");
   const parentUrl = parser.getParam("parentUrl");
