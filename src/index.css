@@ -69,6 +69,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+  position: fixed;
+  width: 100%;
 }
 
 /* We use this to not render the page at all until we know the theme.*/
