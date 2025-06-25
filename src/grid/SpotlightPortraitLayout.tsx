@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type CSSProperties, forwardRef } from "react";
+import { type ReactNode, type CSSProperties } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
@@ -30,10 +30,11 @@ export const makeSpotlightPortraitLayout: CallLayout<
 > = ({ minBounds$ }) => ({
   scrollingOnTop: false,
 
-  fixed: forwardRef(function SpotlightPortraitLayoutFixed(
-    { model, Slot },
+  fixed: function SpotlightPortraitLayoutFixed({
     ref,
-  ) {
+    model,
+    Slot,
+  }): ReactNode {
     useUpdateLayout();
 
     return (
@@ -47,12 +48,13 @@ export const makeSpotlightPortraitLayout: CallLayout<
         </div>
       </div>
     );
-  }),
+  },
 
-  scrolling: forwardRef(function SpotlightPortraitLayoutScrolling(
-    { model, Slot },
+  scrolling: function SpotlightPortraitLayoutScrolling({
     ref,
-  ) {
+    model,
+    Slot,
+  }): ReactNode {
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
     const { width } = useObservableEagerState(minBounds$);
@@ -90,5 +92,5 @@ export const makeSpotlightPortraitLayout: CallLayout<
         </div>
       </div>
     );
-  }),
+  },
 });

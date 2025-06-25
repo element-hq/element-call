@@ -32,6 +32,7 @@ import {
   availableOutputDevices$ as controlledAvailableOutputDevices$,
 } from "../controls";
 import { getUrlParams } from "../UrlParams";
+import { platform } from "../Platform";
 
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
 // the ios swift team.
@@ -90,9 +91,8 @@ export interface MediaDevice<Label, Selected> {
  *  - Only show the earpiece toggle option if the earpiece is available:
  *   `availableOutputDevices$.includes((d)=>d.forEarpiece)`
  */
-export const iosDeviceMenu$ = navigator.userAgent.includes("iPhone")
-  ? of(true)
-  : alwaysShowIphoneEarpieceSetting.value$;
+export const iosDeviceMenu$ =
+  platform === "ios" ? of(true) : alwaysShowIphoneEarpieceSetting.value$;
 
 function availableRawDevices$(
   kind: MediaDeviceKind,
@@ -273,21 +273,21 @@ class ControlledAudioOutput
     this.deviceSelection$.next(id);
   }
 
-  public readonly selected$ = combineLatest([
-    this.available$,
-    merge(
-      controlledOutputSelection$.pipe(startWith(undefined)),
-      this.deviceSelection$,
-    ),
-  ]).pipe(
-    map(([available, selectId]) => {
-      const id = selectId ?? available.keys().next().value;
-      return id
-        ? { id, virtualEarpiece: id === EARPIECE_CONFIG_ID }
-        : undefined;
-    }),
-    this.scope.state(),
-  );
+  public readonly selected$ = combineLatest(
+    [
+      this.available$,
+      merge(
+        controlledOutputSelection$.pipe(startWith(undefined)),
+        this.deviceSelection$,
+      ),
+    ],
+    (available, preferredId) => {
+      const id = preferredId ?? available.keys().next().value;
+      return id === undefined
+        ? undefined
+        : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID };
+    },
+  ).pipe(this.scope.state());
 
   public constructor(private readonly scope: ObservableScope) {
     this.selected$.subscribe((device) => {
