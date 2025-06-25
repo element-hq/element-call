@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC } from "react";
-import { BigIcon, Heading, Text } from "@vector-im/compound-web";
+import { BigIcon, Button, Heading, Text } from "@vector-im/compound-web";
 import { EarpieceIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 
@@ -14,6 +14,7 @@ import styles from "./EarpieceOverlay.module.css";
 
 interface Props {
   show: boolean;
+  onBackButtonPressed?: (() => void) | null;
 }
 
 export const EarpieceOverlay: FC<Props> = ({ show }) => {
@@ -27,6 +28,9 @@ export const EarpieceOverlay: FC<Props> = ({ show }) => {
         {t("earpiece.overlay_title")}
       </Heading>
       <Text>{t("earpiece.overlay_description")}</Text>
+      <Button kind="primary" size="sm">
+        {t("earpiece.overlay_back_button")}
+      </Button>
     </div>
   );
 };

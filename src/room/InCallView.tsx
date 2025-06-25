@@ -787,7 +787,10 @@ export const InCallView: FC<InCallViewProps> = ({
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
-      <EarpieceOverlay show={earpieceMode} />
+      <EarpieceOverlay
+        show={earpieceMode}
+        onBackButtonPressed={toggleEarpieceMode}
+      />
       <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (
