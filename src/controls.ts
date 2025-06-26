@@ -1,5 +1,5 @@
 /*
-Copyright 2024 New Vector Ltd.
+Copyright 2024-2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -14,24 +14,25 @@ export interface Controls {
   canEnterPip(): boolean;
   enablePip(): void;
   disablePip(): void;
-  /** @deprecated use  setAvailableAudioDevices instead*/
-  setAvailableOutputDevices(devices: OutputDevice[]): void;
+
   setAvailableAudioDevices(devices: OutputDevice[]): void;
-  /** @deprecated use  setAudioDevice instead*/
-  setOutputDevice(id: string): void;
   setAudioDevice(id: string): void;
-  /** @deprecated use  onAudioDeviceSelect instead*/
-  onOutputDeviceSelect?: (id: string) => void;
   onAudioDeviceSelect?: (id: string) => void;
   onAudioPlaybackStarted?: () => void;
+  setAudioEnabled(enabled: boolean): void;
+  showNativeAudioDevicePicker?: () => void;
+  onBackButtonPressed?: () => void;
+
+  /** @deprecated use  setAvailableAudioDevices instead*/
+  setAvailableOutputDevices(devices: OutputDevice[]): void;
+  /** @deprecated use  setAudioDevice instead*/
+  setOutputDevice(id: string): void;
+  /** @deprecated use  onAudioDeviceSelect instead*/
+  onOutputDeviceSelect?: (id: string) => void;
   /** @deprecated use  setAudioEnabled instead*/
   setOutputEnabled(enabled: boolean): void;
-  setAudioEnabled(enabled: boolean): void;
   /** @deprecated use  showNativeAudioDevicePicker instead*/
   showNativeOutputDevicePicker?: () => void;
-  showNativeAudioDevicePicker?: () => void;
-
-  onBackButtonPressed?: () => void;
 }
 
 export interface OutputDevice {
@@ -59,6 +60,7 @@ export const outputDevice$ = new Subject<string>();
  * This should also be used to display a darkened overlay screen letting the user know that audio is muted.
  */
 export const setAudioEnabled$ = new Subject<boolean>();
+
 let playbackStartedEmitted = false;
 export const setPlaybackStarted = (): void => {
   if (!playbackStartedEmitted) {
@@ -66,6 +68,7 @@ export const setPlaybackStarted = (): void => {
     window.controls.onAudioPlaybackStarted?.();
   }
 };
+
 window.controls = {
   canEnterPip(): boolean {
     return setPipEnabled$.observed;
@@ -78,6 +81,7 @@ window.controls = {
     if (!setPipEnabled$.observed) throw new Error("No call is running");
     setPipEnabled$.next(false);
   },
+
   setAvailableAudioDevices(devices: OutputDevice[]): void {
     logger.info("setAvailableAudioDevices called from native:", devices);
     availableOutputDevices$.next(devices);

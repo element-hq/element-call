@@ -47,6 +47,7 @@ import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
+import { HeaderStyle } from "../UrlParams";
 
 // vi.hoisted(() => {
 //   localStorage = {} as unknown as Storage;
@@ -158,7 +159,7 @@ function createInCallView(): RenderResult & {
             <RoomContext value={livekitRoom}>
               <InCallView
                 client={client}
-                hideHeader={true}
+                header={HeaderStyle.Standard}
                 rtcSession={rtcSession as unknown as MatrixRTCSession}
                 muteStates={muteState}
                 vm={vm}
@@ -243,6 +244,7 @@ describe("InCallView", () => {
         queryByText("using to Device key transport"),
       ).not.toBeInTheDocument();
     });
+
     it("is not shown if setting is disabled", () => {
       useExperimentalToDeviceTransportSetting.setValue(false);
       developerModeSetting.setValue(true);
@@ -254,6 +256,7 @@ describe("InCallView", () => {
         queryByText("using to Device key transport"),
       ).not.toBeInTheDocument();
     });
+
     it("is not shown if developer mode is disabled", () => {
       useExperimentalToDeviceTransportSetting.setValue(true);
       developerModeSetting.setValue(false);

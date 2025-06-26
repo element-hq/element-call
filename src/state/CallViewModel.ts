@@ -93,6 +93,7 @@ import {
 import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
 import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
+import { type MediaDevices } from "./MediaDevices";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -1246,6 +1247,51 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
+  /**
+   * Whether audio is currently being output through the earpiece.
+   */
+  public readonly earpieceMode$: Observable<boolean> = combineLatest(
+    [
+      this.mediaDevices.audioOutput.available$,
+      this.mediaDevices.audioOutput.selected$,
+    ],
+    (available, selected) =>
+      selected !== undefined && available.get(selected.id)?.type === "earpiece",
+  ).pipe(this.scope.state());
+
+  /**
+   * Callback to toggle between the earpiece and the loudspeaker.
+   *
+   * This will be `null` in case the target does not exist in the list
+   * of available audio outputs.
+   */
+  public readonly audioOutputSwitcher$: Observable<{
+    targetOutput: "earpiece" | "speaker";
+    switch: () => void;
+  } | null> = combineLatest(
+    [
+      this.mediaDevices.audioOutput.available$,
+      this.mediaDevices.audioOutput.selected$,
+    ],
+    (available, selected) => {
+      const selectionType = selected && available.get(selected.id)?.type;
+
+      // If we are in any output mode other than spaeker switch to speaker.
+      const newSelectionType =
+        selectionType === "speaker" ? "earpiece" : "speaker";
+      const newSelection = [...available].find(
+        ([, d]) => d.type === newSelectionType,
+      );
+      if (newSelection === undefined) return null;
+
+      const [id] = newSelection;
+      return {
+        targetOutput: newSelectionType,
+        switch: () => this.mediaDevices.audioOutput.select(id),
+      };
+    },
+  );
+
   public readonly reactions$ = this.reactionsSubject$.pipe(
     map((v) =>
       Object.fromEntries(
@@ -1336,6 +1382,7 @@ export class CallViewModel extends ViewModel {
     // A call is permanently tied to a single Matrix room and LiveKit room
     private readonly matrixRTCSession: MatrixRTCSession,
     private readonly livekitRoom: LivekitRoom,
+    private readonly mediaDevices: MediaDevices,
     private readonly encryptionSystem: EncryptionSystem,
     private readonly connectionState$: Observable<ECConnectionState>,
     private readonly handsRaisedSubject$: Observable<

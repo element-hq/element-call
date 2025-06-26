@@ -42,6 +42,7 @@ import { LazyEventEmitter } from "../LazyEventEmitter";
 import { MatrixRTCFocusMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
+import { HeaderStyle } from "../UrlParams";
 
 vi.mock("../soundUtils");
 vi.mock("../useAudioContext");
@@ -157,7 +158,7 @@ function createGroupCallView(
               confineToRoom={false}
               preload={false}
               skipLobby={false}
-              hideHeader={true}
+              header={HeaderStyle.Standard}
               rtcSession={rtcSession as unknown as MatrixRTCSession}
               isJoined={joined}
               muteStates={muteState}

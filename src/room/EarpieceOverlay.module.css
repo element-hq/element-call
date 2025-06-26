@@ -1,0 +1,63 @@
+.overlay {
+  position: fixed;
+  z-index: var(--call-view-overlay-layer);
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cpd-space-2x);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.overlay[data-show="true"] {
+  animation: fade-in 200ms;
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    display: none;
+  }
+}
+
+.overlay[data-show="false"] {
+  animation: fade-out 130ms forwards;
+  content-visibility: hidden;
+  pointer-events: none;
+}
+
+.overlay::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: var(--cpd-color-bg-canvas-default);
+  opacity: 0.75;
+}
+
+.icon {
+  margin-block-end: var(--cpd-space-4x);
+  background: var(--cpd-color-alpha-gray-600);
+  color: var(--cpd-color-icon-primary);
+}
+
+.overlay > h2 {
+  text-align: center;
+  margin: 0;
+}
+
+.overlay > p {
+  text-align: center;
+}

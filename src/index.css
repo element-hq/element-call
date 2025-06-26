@@ -45,6 +45,9 @@ layer(compound);
   --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
   --subtle-drop-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
   --background-gradient: url("graphics/backgroundGradient.svg");
+
+  --call-view-overlay-layer: 1;
+  --call-view-header-footer-layer: 2;
 }
 
 :root,
