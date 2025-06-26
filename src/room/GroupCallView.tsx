@@ -58,10 +58,9 @@ import { callEventAudioSounds } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import {
+  ConnectionLostError,
   E2EENotSupportedError,
   ElementCallError,
-  ErrorCode,
-  RTCSessionError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
@@ -153,14 +152,7 @@ export const GroupCallView: FC<Props> = ({
   useTypedEventEmitter(
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
-    (error) => {
-      setExternalError(
-        new RTCSessionError(
-          ErrorCode.MEMBERSHIP_MANAGER_UNRECOVERABLE,
-          error.message ?? error,
-        ),
-      );
-    },
+    (error) => setExternalError(new ConnectionLostError()),
   );
   useEffect(() => {
     // Sanity check the room object
