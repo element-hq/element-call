@@ -61,6 +61,7 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Näita iPhone'i kuulari valikut kõikidel platvormidel",
     "crypto_version": "Krüptoteekide versioon: {{version}}",
     "debug_tile_layout_label": "Meediapaanide paigutus",
     "device_id": "Seadme tunnus: {{id}}",
@@ -78,10 +79,15 @@
     "use_to_device_key_transport": "Kasuta seadmepõhist krüptovõtmete vahetust. Kui jututoa liige peaks saatma jututoakohase krüptovõtme, siis kasuta jututoakohast võtmevahetust"
   },
   "disconnected_banner": "Võrguühendus serveriga on katkenud.",
+  "earpiece": {
+    "overlay_back_button": "Tagasi videovaatesse",
+    "overlay_description": "Toimib vaid rakenduse kasutamise ajal",
+    "overlay_title": "Toimib vaid kuularitega"
+  },
   "error": {
     "call_is_not_supported": "Kõne pole toetatud",
     "call_not_found": "Kõnet ei leidu",
-    "call_not_found_description": "<0>See link ei tundu olema seotud ühegi olemasoleva kõnega. Kontrolli, et sul on õige link või <1>loo uus</1>.</0>",
+    "call_not_found_description": "<0>See link ei tundu olema seotud ühegi olemasoleva kõnega. Kontrolli, et sul on õige link või <2>loo uus</2>.</0>",
     "connection_lost": "Ühendus on katkenud",
     "connection_lost_description": "Sinu ühendus selle kõnega on katkenud.",
     "e2ee_unsupported": "Mitteühilduv brauser",
@@ -172,8 +178,11 @@
     "devices": {
       "camera": "Kaamera",
       "camera_numbered": "Kaamera {{n}}",
+      "change_device_button": "Muuda heliseadet",
       "default": "Vaikimisi",
       "default_named": "Vaikimisi <2>({{name}})</2>",
+      "earpiece": "Kuular",
+      "loudspeaker": "Valjuhääldi",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon {{n}}",
       "speaker": "Kõlar",

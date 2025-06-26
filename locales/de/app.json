@@ -79,10 +79,15 @@
     "use_to_device_key_transport": "To-Device media E2EE Schlüssel-Transport verwenden. Falls ein anderer Teilnehmer bereits den Raumschlüssel-Transport verwendet, wird automatisch auf Raumschlüssel-Transport zurückgegriffen."
   },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
+  "earpiece": {
+    "overlay_back_button": "Zurück zum Lautsprechermodus",
+    "overlay_description": "Nur bei App im Vordergrund nutzbar",
+    "overlay_title": "Ohrhörer Modus"
+  },
   "error": {
     "call_is_not_supported": "Anrufe werden nicht unterstützt",
     "call_not_found": "Anruf nicht gefunden",
-    "call_not_found_description": "<0>Dieser Link scheint zu keinem bestehenden Anruf zu gehören. Vergewissern Sie sich, dass Sie den richtigen Link haben, oder <1> erstellen Sie einen neuen</1>. </0>",
+    "call_not_found_description": "<0>Dieser Link scheint zu keinem bestehenden Anruf zu gehören. Vergewissern Sie sich, dass Sie den richtigen Link haben, oder <2> erstellen Sie einen neuen</2>. </0>",
     "connection_lost": "Verbindung verloren",
     "connection_lost_description": "Ihre Verbindung zum Anruf wurde unterbrochen.",
     "e2ee_unsupported": "Inkompatibler Browser",
@@ -173,9 +178,11 @@
     "devices": {
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
+      "change_device_button": "Audiogerät wechseln",
       "default": "Standard",
       "default_named": "Standard<2> ({{name}} )</2>",
       "earpiece": "Ohrhörer",
+      "loudspeaker": "Lautsprecher",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon{{n}}",
       "speaker": "Lautsprecher",
