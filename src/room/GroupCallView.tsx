@@ -51,7 +51,7 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { useUrlParams } from "../UrlParams";
+import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
 import { callEventAudioSounds } from "./CallEventAudioRenderer";
@@ -72,6 +72,7 @@ import {
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
+import { useAppBarTitle } from "../AppBar.tsx";
 
 declare global {
   interface Window {
@@ -85,7 +86,7 @@ interface Props {
   confineToRoom: boolean;
   preload: boolean;
   skipLobby: boolean;
-  hideHeader: boolean;
+  header: HeaderStyle;
   rtcSession: MatrixRTCSession;
   isJoined: boolean;
   muteStates: MuteStates;
@@ -98,7 +99,7 @@ export const GroupCallView: FC<Props> = ({
   confineToRoom,
   preload,
   skipLobby,
-  hideHeader,
+  header,
   rtcSession,
   isJoined,
   muteStates,
@@ -187,6 +188,7 @@ export const GroupCallView: FC<Props> = ({
   }, [passwordFromUrl, room.roomId]);
 
   usePageTitle(roomName);
+  useAppBarTitle(roomName);
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -431,7 +433,7 @@ export const GroupCallView: FC<Props> = ({
         muteStates={muteStates}
         onEnter={() => void enterRTCSessionOrError(rtcSession)}
         confineToRoom={confineToRoom}
-        hideHeader={hideHeader}
+        hideHeader={header === HeaderStyle.None}
         participantCount={participantCount}
         onShareClick={onShareClick}
       />
@@ -457,7 +459,7 @@ export const GroupCallView: FC<Props> = ({
           rtcSession={rtcSession as MatrixRTCSession}
           participantCount={participantCount}
           onLeave={onLeave}
-          hideHeader={hideHeader}
+          header={header}
           muteStates={muteStates}
           e2eeSystem={e2eeSystem}
           //otelGroupCallMembership={otelGroupCallMembership}
@@ -483,6 +485,7 @@ export const GroupCallView: FC<Props> = ({
           endedCallId={rtcSession.room.roomId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
+          hideHeader={header === HeaderStyle.None}
           confineToRoom={confineToRoom}
         />
       );

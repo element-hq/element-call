@@ -25,6 +25,12 @@ export enum UserIntent {
   Unknown = "unknown",
 }
 
+export enum HeaderStyle {
+  None = "none",
+  Standard = "standard",
+  AppBar = "app_bar",
+}
+
 // If you need to add a new flag to this interface, prefer a name that describes
 // a specific behavior (such as 'confineToRoom'), rather than one that describes
 // the situations that call for this behavior ('isEmbedded'). This makes it
@@ -59,9 +65,12 @@ export interface UrlParams {
    */
   preload: boolean;
   /**
-   * Whether to hide the room header when in a call.
+   * The style of headers to show. "standard" is the default arrangement, "none"
+   * hides the header entirely, and "app_bar" produces a header with a back
+   * button like you might see in mobile apps. The callback for the back button
+   * is window.controls.onBackButtonPressed.
    */
-  hideHeader: boolean;
+  header: HeaderStyle;
   /**
    * Whether the controls should be shown. For screen recording no controls can be desired.
    */
@@ -257,6 +266,15 @@ export const getUrlParams = (
   if (!intent || !Object.values(UserIntent).includes(intent as UserIntent)) {
     intent = UserIntent.Unknown;
   }
+
+  // Check hideHeader for backwards compatibility. If header is set, hideHeader
+  // is ignored.
+  const header =
+    parser.getParam("header") ??
+    (parser.getFlagParam("hideHeader")
+      ? HeaderStyle.None
+      : HeaderStyle.Standard);
+
   const widgetId = parser.getParam("widgetId");
   const parentUrl = parser.getParam("parentUrl");
   const isWidget = !!widgetId && !!parentUrl;
@@ -275,7 +293,7 @@ export const getUrlParams = (
       parser.getFlagParam("confineToRoom") || parser.getFlagParam("embed"),
     appPrompt: parser.getFlagParam("appPrompt", true),
     preload: isWidget ? parser.getFlagParam("preload") : false,
-    hideHeader: parser.getFlagParam("hideHeader"),
+    header: header as HeaderStyle,
     showControls: parser.getFlagParam("showControls", true),
     hideScreensharing: parser.getFlagParam("hideScreensharing"),
     e2eEnabled: parser.getFlagParam("enableE2EE", true),

@@ -42,10 +42,13 @@ const logger = rootLogger.getChild("[MediaDevices]");
 
 export type DeviceLabel =
   | { type: "name"; name: string }
-  | { type: "number"; number: number }
-  | { type: "default"; name: string | null };
+  | { type: "number"; number: number };
 
-export type AudioOutputDeviceLabel = DeviceLabel | { type: "earpiece" };
+export type AudioOutputDeviceLabel =
+  | DeviceLabel
+  | { type: "speaker" }
+  | { type: "earpiece" }
+  | { type: "default"; name: string | null };
 
 export interface SelectedDevice {
   id: string;
@@ -211,7 +214,8 @@ class AudioOutput
     this.scope,
   ).pipe(
     map((availableRaw) => {
-      const available = buildDeviceMap(availableRaw);
+      const available: Map<string, AudioOutputDeviceLabel> =
+        buildDeviceMap(availableRaw);
       // Create a virtual default audio output for browsers that don't have one.
       // Its device ID must be the empty string because that's what setSinkId
       // recognizes.
@@ -269,7 +273,7 @@ class ControlledAudioOutput
             let deviceLabel: AudioOutputDeviceLabel;
             // if (isExternalHeadset) // Do we want this?
             if (isEarpiece) deviceLabel = { type: "earpiece" };
-            else if (isSpeaker) deviceLabel = { type: "default", name };
+            else if (isSpeaker) deviceLabel = { type: "speaker" };
             else deviceLabel = { type: "name", name };
             return [id, deviceLabel];
           },

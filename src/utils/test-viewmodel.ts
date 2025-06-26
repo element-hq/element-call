@@ -18,7 +18,12 @@ import EventEmitter from "events";
 import type { RoomMember, MatrixClient } from "matrix-js-sdk";
 import { E2eeType } from "../e2ee/e2eeType";
 import { CallViewModel } from "../state/CallViewModel";
-import { mockLivekitRoom, mockMatrixRoom, MockRTCSession } from "./test";
+import {
+  mockLivekitRoom,
+  mockMatrixRoom,
+  mockMediaDevices,
+  MockRTCSession,
+} from "./test";
 import {
   aliceRtcMember,
   aliceParticipant,
@@ -132,6 +137,7 @@ export function getBasicCallViewModelEnvironment(
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     liveKitRoom,
+    mockMediaDevices({}),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },

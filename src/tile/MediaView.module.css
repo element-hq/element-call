@@ -9,6 +9,8 @@ Please see LICENSE in the repository root for full details.
   container-name: mediaView;
   container-type: size;
   border-radius: var(--media-view-border-radius);
+  /*Add spacing for the hover boarder. Otherwise it might get clipped.*/
+  margin: var(--hover-space-margin);
 }
 
 .media video {

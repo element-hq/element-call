@@ -94,6 +94,9 @@ export const DeviceSelection: FC<Props> = ({
                   </Trans>
                 );
               break;
+            case "speaker":
+              labelText = t("settings.devices.loudspeaker");
+              break;
             case "earpiece":
               labelText = t("settings.devices.earpiece");
               break;

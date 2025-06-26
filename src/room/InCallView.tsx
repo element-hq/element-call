@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
-import { Text } from "@vector-im/compound-web";
+import { IconButton, Text, Tooltip } from "@vector-im/compound-web";
 import { ConnectionState, type Room } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk";
 import {
@@ -28,6 +28,11 @@ import { BehaviorSubject, map } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
+import {
+  EarpieceIcon,
+  VolumeOnSolidIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
+import { useTranslation } from "react-i18next";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -42,7 +47,7 @@ import {
   SwitchCameraButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { useUrlParams } from "../UrlParams";
+import { type HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
@@ -104,6 +109,9 @@ import { useTypedEventEmitter } from "../useEvents.ts";
 import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships.ts";
+import { useMediaDevices } from "../MediaDevicesContext.ts";
+import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
+import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -115,6 +123,7 @@ export interface ActiveCallProps
 }
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
+  const mediaDevices = useMediaDevices();
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
   const { livekitRoom, connState } = useLivekit(
     props.rtcSession,
@@ -155,6 +164,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       const vm = new CallViewModel(
         props.rtcSession,
         livekitRoom,
+        mediaDevices,
         props.e2eeSystem,
         connStateObservable$,
         reactionsReader.raisedHands$,
@@ -166,7 +176,13 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         reactionsReader.destroy();
       };
     }
-  }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable$]);
+  }, [
+    props.rtcSession,
+    livekitRoom,
+    mediaDevices,
+    props.e2eeSystem,
+    connStateObservable$,
+  ]);
 
   if (livekitRoom === undefined || vm === null) return null;
 
@@ -194,7 +210,7 @@ export interface InCallViewProps {
   participantCount: number;
   /** Function to call when the user explicitly ends the call */
   onLeave: () => void;
-  hideHeader: boolean;
+  header: HeaderStyle;
   otelGroupCallMembership?: OTelGroupCallMembership;
   connState: ECConnectionState;
   onShareClick: (() => void) | null;
@@ -209,10 +225,11 @@ export const InCallView: FC<InCallViewProps> = ({
   muteStates,
   participantCount,
   onLeave,
-  hideHeader,
+  header: headerStyle,
   connState,
   onShareClick,
 }) => {
+  const { t } = useTranslation();
   const { supportsReactions, sendReaction, toggleRaisedHand } =
     useReactionsSender();
 
@@ -292,6 +309,8 @@ export const InCallView: FC<InCallViewProps> = ({
   const gridMode = useObservableEagerState(vm.gridMode$);
   const showHeader = useObservableEagerState(vm.showHeader$);
   const showFooter = useObservableEagerState(vm.showFooter$);
+  const earpieceMode = useObservableEagerState(vm.earpieceMode$);
+  const audioOutputSwitcher = useObservableEagerState(vm.audioOutputSwitcher$);
   const switchCamera = useSwitchCamera(vm.localVideo$);
 
   // Ideally we could detect taps by listening for click events and checking
@@ -434,6 +453,70 @@ export const InCallView: FC<InCallViewProps> = ({
     }
   }, [setGridMode]);
 
+  useAppBarSecondaryButton(
+    useMemo(() => {
+      if (audioOutputSwitcher === null) return null;
+      const isEarpieceTarget = audioOutputSwitcher.targetOutput === "earpiece";
+      const Icon = isEarpieceTarget ? EarpieceIcon : VolumeOnSolidIcon;
+      const label = isEarpieceTarget
+        ? t("settings.devices.earpiece")
+        : t("settings.devices.loudspeaker");
+
+      return (
+        <Tooltip label={label}>
+          <IconButton
+            onClick={(e) => {
+              e.preventDefault();
+              audioOutputSwitcher.switch();
+            }}
+          >
+            <Icon />
+          </IconButton>
+        </Tooltip>
+      );
+    }, [t, audioOutputSwitcher]),
+  );
+
+  useAppBarHidden(!showHeader);
+
+  let header: ReactNode = null;
+  if (showHeader) {
+    switch (headerStyle) {
+      case "none":
+        // Cosmetic header to fill out space while still affecting the bounds of
+        // the grid
+        header = (
+          <div
+            className={classNames(styles.header, styles.filler)}
+            ref={headerRef}
+          />
+        );
+        break;
+      case "standard":
+        header = (
+          <Header className={styles.header} ref={headerRef}>
+            <LeftNav>
+              <RoomHeaderInfo
+                id={matrixInfo.roomId}
+                name={matrixInfo.roomName}
+                avatarUrl={matrixInfo.roomAvatar}
+                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
+                participantCount={participantCount}
+              />
+            </LeftNav>
+            <RightNav>
+              {showControls && onShareClick !== null && (
+                <InviteButton
+                  className={styles.invite}
+                  onClick={onShareClick}
+                />
+              )}
+            </RightNav>
+          </Header>
+        );
+    }
+  }
+
   const Tile = useMemo(
     () =>
       function Tile({
@@ -521,7 +604,8 @@ export const InCallView: FC<InCallViewProps> = ({
         key="fixed"
         className={styles.fixedGrid}
         style={{
-          insetBlockStart: headerBounds.bottom,
+          insetBlockStart:
+            headerBounds.height > 0 ? headerBounds.bottom : bounds.top,
           height: gridBounds.height,
         }}
         model={layout}
@@ -644,10 +728,11 @@ export const InCallView: FC<InCallViewProps> = ({
       ref={footerRef}
       className={classNames(styles.footer, {
         [styles.overlay]: windowMode === "flat",
-        [styles.hidden]: !showFooter || (!showControls && hideHeader),
+        [styles.hidden]:
+          !showFooter || (!showControls && headerStyle === "none"),
       })}
     >
-      {!hideHeader && (
+      {headerStyle !== "none" && (
         <div className={styles.logo}>
           <LogoMark width={24} height={24} aria-hidden />
           <LogoType
@@ -683,35 +768,7 @@ export const InCallView: FC<InCallViewProps> = ({
       onPointerMove={onPointerMove}
       onPointerOut={onPointerOut}
     >
-      {showHeader &&
-        (hideHeader ? (
-          // Cosmetic header to fill out space while still affecting the bounds
-          // of the grid
-          <div
-            className={classNames(styles.header, styles.filler)}
-            ref={headerRef}
-          />
-        ) : (
-          <Header className={styles.header} ref={headerRef}>
-            <LeftNav>
-              <RoomHeaderInfo
-                id={matrixInfo.roomId}
-                name={matrixInfo.roomName}
-                avatarUrl={matrixInfo.roomAvatar}
-                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
-                participantCount={participantCount}
-              />
-            </LeftNav>
-            <RightNav>
-              {showControls && onShareClick !== null && (
-                <InviteButton
-                  className={styles.invite}
-                  onClick={onShareClick}
-                />
-              )}
-            </RightNav>
-          </Header>
-        ))}
+      {header}
       {
         // TODO: remove this once we remove the developer flag gets removed and we have shipped to
         // device transport as the default.
@@ -728,6 +785,10 @@ export const InCallView: FC<InCallViewProps> = ({
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
+      <EarpieceOverlay
+        show={earpieceMode}
+        onBackToVideoPressed={audioOutputSwitcher?.switch}
+      />
       <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (

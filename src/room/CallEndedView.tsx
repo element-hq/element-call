@@ -25,6 +25,7 @@ import { LinkButton } from "../button";
 interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
+  hideHeader: boolean;
   confineToRoom: boolean;
   endedCallId: string;
 }
@@ -32,6 +33,7 @@ interface Props {
 export const CallEndedView: FC<Props> = ({
   client,
   isPasswordlessUser,
+  hideHeader,
   confineToRoom,
   endedCallId,
 }) => {
@@ -133,10 +135,12 @@ export const CallEndedView: FC<Props> = ({
 
   return (
     <>
-      <Header>
-        <LeftNav>{!confineToRoom && <HeaderLogo />}</LeftNav>
-        <RightNav />
-      </Header>
+      {!hideHeader && (
+        <Header>
+          <LeftNav>{!confineToRoom && <HeaderLogo />}</LeftNav>
+          <RightNav />
+        </Header>
+      )}
       <div className={styles.container}>
         <main className={styles.main}>
           <Heading size="xl" weight="semibold" className={styles.headline}>
