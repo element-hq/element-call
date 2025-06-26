@@ -112,6 +112,7 @@ exports[`ConnectionLostError: Action handling should reset error state 1`] = `
             data-size="large"
           >
             <svg
+              aria-hidden="true"
               fill="currentColor"
               height="1em"
               viewBox="0 0 24 24"
@@ -262,6 +263,7 @@ exports[`should have a close button in widget mode 1`] = `
             data-size="large"
           >
             <svg
+              aria-hidden="true"
               fill="currentColor"
               height="1em"
               viewBox="0 0 24 24"
@@ -414,6 +416,7 @@ exports[`should render the error page with link back to home 1`] = `
             data-size="large"
           >
             <svg
+              aria-hidden="true"
               fill="currentColor"
               height="1em"
               viewBox="0 0 24 24"
@@ -566,6 +569,7 @@ exports[`should report correct error for 'Call is not supported' 1`] = `
             data-size="large"
           >
             <svg
+              aria-hidden="true"
               fill="currentColor"
               height="1em"
               viewBox="0 0 24 24"
@@ -718,6 +722,7 @@ exports[`should report correct error for 'Connection lost' 1`] = `
             data-size="large"
           >
             <svg
+              aria-hidden="true"
               fill="currentColor"
               height="1em"
               viewBox="0 0 24 24"
@@ -868,6 +873,7 @@ exports[`should report correct error for 'Incompatible browser' 1`] = `
             data-size="large"
           >
             <svg
+              aria-hidden="true"
               fill="currentColor"
               height="1em"
               viewBox="0 0 24 24"
@@ -1015,6 +1021,7 @@ exports[`should report correct error for 'Insufficient capacity' 1`] = `
             data-size="large"
           >
             <svg
+              aria-hidden="true"
               fill="currentColor"
               height="1em"
               viewBox="0 0 24 24"
