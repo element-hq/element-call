@@ -83,7 +83,11 @@ async function doConnect(
   let preCreatedAudioTrack: LocalTrack | undefined;
   try {
     const audioTracks = await livekitRoom!.localParticipant.createTracks({
-      audio: { deviceId: initialDeviceId },
+      audio: {
+        deviceId: initialDeviceId,
+        autoGainControl: false,
+        noiseSuppression: false,
+      },
     });
 
     if (audioTracks.length < 1) {

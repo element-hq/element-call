@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  AudioPresets,
   ConnectionState,
   type E2EEManagerOptions,
   ExternalE2EEKeyProvider,
@@ -106,6 +107,10 @@ export function useLivekit(
         ...defaultLiveKitOptions.videoCaptureDefaults,
         deviceId: getValue(devices.videoInput.selected$)?.id,
         processor,
+      },
+      publishDefaults: {
+        ...defaultLiveKitOptions.publishDefaults,
+        audioPreset: AudioPresets.musicHighQuality,
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
