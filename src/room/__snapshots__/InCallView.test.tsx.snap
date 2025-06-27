@@ -109,7 +109,7 @@ exports[`InCallView > rendering > renders 1`] = `
       <h2
         class="_typography_6v6n8_153 _font-heading-md-semibold_6v6n8_112"
       >
-        Earpiece only mode
+        Earpiece Mode
       </h2>
       <p
         class="_typography_6v6n8_153 _font-body-md-regular_6v6n8_50"
@@ -123,7 +123,7 @@ exports[`InCallView > rendering > renders 1`] = `
         role="button"
         tabindex="0"
       >
-        Back to video
+        Back to Speaker Mode
       </button>
     </div>
     <div
