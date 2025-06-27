@@ -282,7 +282,7 @@ function withCallViewModel(
     liveKitRoom,
     mediaDevices,
     {
-      kind: E2eeType.PER_PARTICIPANT,
+      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     },
     connectionState$,
     raisedHands$,
