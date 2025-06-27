@@ -80,9 +80,9 @@
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "earpiece": {
-    "overlay_back_button": "Back to video",
+    "overlay_back_button": "Back to Speaker Mode",
     "overlay_description": "Only works while using app",
-    "overlay_title": "Earpiece only mode"
+    "overlay_title": "Earpiece Mode"
   },
   "error": {
     "call_is_not_supported": "Call is not supported",
