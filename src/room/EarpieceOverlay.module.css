@@ -44,7 +44,7 @@
   z-index: -1;
   inset: 0;
   background: var(--cpd-color-bg-canvas-default);
-  opacity: 0.75;
+  opacity: 0.94;
 }
 
 .icon {
