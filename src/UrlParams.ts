@@ -215,7 +215,7 @@ export interface UrlConfiguration {
    * is no one left in the call.
    * This is one part to make the call matrixRTC session behave like a telephone call.
    */
-  telephoneAutoLeave: boolean;
+  autoLeaveWhenOthersLeft: boolean;
 }
 
 // If you need to add a new flag to this interface, prefer a name that describes
@@ -390,7 +390,7 @@ export const getUrlParams = (
         skipLobby: false,
         returnToLobby: false,
         sendNotificationType: undefined,
-        telephoneAutoLeave: false,
+        autoLeaveWhenOthersLeft: false,
       };
   }
 
@@ -442,7 +442,7 @@ export const getUrlParams = (
       "ring",
       "notification",
     ]),
-    telephoneAutoLeave: parser.getFlag("telephoneAutoLeave"),
+    autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
   };
 
   return {

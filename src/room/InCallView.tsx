@@ -163,7 +163,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     };
   }, [livekitRoom]);
 
-  const { telephoneAutoLeave } = useUrlParams();
+  const { autoLeaveWhenOthersLeft } = useUrlParams();
 
   useEffect(() => {
     if (livekitRoom !== undefined) {
@@ -174,7 +174,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         mediaDevices,
         {
           encryptionSystem: props.e2eeSystem,
-          autoLeaveWhenOthersLeft: telephoneAutoLeave,
+          autoLeaveWhenOthersLeft,
         },
         connStateObservable$,
         reactionsReader.raisedHands$,
@@ -192,7 +192,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     mediaDevices,
     props.e2eeSystem,
     connStateObservable$,
-    telephoneAutoLeave,
+    autoLeaveWhenOthersLeft,
   ]);
 
   if (livekitRoom === undefined || vm === null) return null;
