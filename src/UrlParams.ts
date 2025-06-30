@@ -399,28 +399,17 @@ export const getUrlParams = (
   };
 
   const configuration: Partial<UrlConfiguration> = {
-    // This flag has 'embed' as an alias for historical reasons
-    confineToRoom: parser.getFlag("confineToRoom") ?? parser.getFlag("embed"),
+    confineToRoom: parser.getFlag("confineToRoom"),
     appPrompt: parser.getFlag("appPrompt"),
     preload: isWidget ? parser.getFlag("preload") : undefined,
     // Check hideHeader for backwards compatibility. If header is set, hideHeader
     // is ignored.
-    header:
-      (parser.getParam("header") as HeaderStyle) ??
-      (parser.getFlag("hideHeader") !== undefined
-        ? parser.getFlagParam("hideHeader")
-          ? HeaderStyle.None
-          : HeaderStyle.Standard
-        : undefined),
+    header: parser.getEnumParam("header", HeaderStyle),
     showControls: parser.getFlag("showControls"),
     hideScreensharing: parser.getFlag("hideScreensharing"),
     allowIceFallback: parser.getFlag("allowIceFallback"),
     perParticipantE2EE: parser.getFlag("perParticipantE2EE"),
-    controlledAudioDevices:
-      parser.getFlag(
-        "controlledAudioDevices",
-        // the deprecated property name
-      ) ?? parser.getFlag("controlledMediaDevices"),
+    controlledAudioDevices: parser.getFlag("controlledAudioDevices"),
     skipLobby: isWidget ? parser.getFlag("skipLobby") : false,
     // In SPA mode the user should always exit to the home screen when hanging
     // up, rather than being sent back to the lobby

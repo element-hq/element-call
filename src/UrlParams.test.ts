@@ -260,9 +260,5 @@ describe("UrlParams", () => {
       );
       expect(getUrlParams("?header=none&hideHeader=false").header).toBe("none");
     });
-    it("converts hideHeader to the correct header value", () => {
-      expect(getUrlParams("?hideHeader=true").header).toBe("none");
-      expect(getUrlParams("?hideHeader=false").header).toBe("standard");
-    });
   });
 });
