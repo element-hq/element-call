@@ -257,6 +257,17 @@ class ParamParser {
     return this.fragmentParams.get(name) ?? this.queryParams.get(name);
   }
 
+  public getEnumParam<T extends string>(
+    name: string,
+    type: { [s: string]: T } | ArrayLike<T>,
+  ): T | undefined {
+    const value = this.getParam(name);
+    if (value && Object.values(type).includes(value as T)) {
+      return value as T;
+    }
+    return undefined;
+  }
+
   public getAllParams(name: string): string[] {
     return [
       ...this.fragmentParams.getAll(name),
@@ -299,11 +310,9 @@ export const getUrlParams = (
    * In short: either provide url query parameters of UrlConfiguration or set the intent
    * (or the global defaults will be used).
    */
-  let intent = parser.getParam("intent") as UserIntent | null;
+  const intent =
+    parser.getEnumParam("intent", UserIntent) ?? UserIntent.Unknown;
 
-  if (!intent || !Object.values(UserIntent).includes(intent as UserIntent)) {
-    intent = UserIntent.Unknown;
-  }
   // Here we only use constants and `platform` to determine the intent preset.
   let intentPreset: UrlConfiguration;
   switch (intent) {
