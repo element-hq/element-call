@@ -23,6 +23,7 @@ interface RoomIdentifier {
 }
 
 export enum UserIntent {
+  // TODO: add DM vs room call
   StartNewCall = "start_call",
   JoinExistingCall = "join_existing",
   Unknown = "unknown",
@@ -299,6 +300,10 @@ export const getUrlParams = (
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
 
+  const widgetId = parser.getParam("widgetId");
+  const parentUrl = parser.getParam("parentUrl");
+  const isWidget = !!widgetId && !!parentUrl;
+
   /**
    * The user's intent with respect to the call.
    * e.g. if they clicked a Start Call button, this would be `start_call`.
@@ -310,9 +315,9 @@ export const getUrlParams = (
    * In short: either provide url query parameters of UrlConfiguration or set the intent
    * (or the global defaults will be used).
    */
-  const intent =
-    parser.getEnumParam("intent", UserIntent) ?? UserIntent.Unknown;
-
+  const intent = !isWidget
+    ? UserIntent.Unknown
+    : (parser.getEnumParam("intent", UserIntent) ?? UserIntent.Unknown);
   // Here we only use constants and `platform` to determine the intent preset.
   let intentPreset: UrlConfiguration;
   switch (intent) {
@@ -329,6 +334,7 @@ export const getUrlParams = (
         controlledAudioDevices: platform === "desktop" ? false : true,
         skipLobby: true,
         returnToLobby: false,
+        sendNotificationType: "notification",
       };
       break;
     case UserIntent.JoinExistingCall:
@@ -344,8 +350,10 @@ export const getUrlParams = (
         controlledAudioDevices: platform === "desktop" ? false : true,
         skipLobby: false,
         returnToLobby: false,
+        sendNotificationType: undefined,
       };
       break;
+    // Non widget usecase defaults
     default:
       intentPreset = {
         confineToRoom: false,
@@ -359,17 +367,10 @@ export const getUrlParams = (
         controlledAudioDevices: false,
         skipLobby: false,
         returnToLobby: false,
+        sendNotificationType: undefined,
       };
   }
 
-  const sendNotificationType = ["ring", "notification"].includes(
-    parser.getParam("sendNotificationType") ?? "",
-  )
-    ? (parser.getParam("sendNotificationType") as RTCNotificationType)
-    : undefined;
-  const widgetId = parser.getParam("widgetId");
-  const parentUrl = parser.getParam("parentUrl");
-  const isWidget = !!widgetId && !!parentUrl;
   const properties: UrlProperties = {
     widgetId,
     parentUrl,
@@ -414,7 +415,10 @@ export const getUrlParams = (
     // In SPA mode the user should always exit to the home screen when hanging
     // up, rather than being sent back to the lobby
     returnToLobby: isWidget ? parser.getFlag("returnToLobby") : false,
-    sendNotificationType,
+    sendNotificationType: parser.getEnumParam("sendNotificationType", [
+      "ring",
+      "notification",
+    ]),
   };
 
   return {
