@@ -96,7 +96,7 @@ import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 import { type MediaDevices } from "./MediaDevices";
 import { type Behavior } from "./Behavior";
 
-interface CallViewModelOptions {
+export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
   autoLeaveWhenOthersLeft?: boolean;
 }
@@ -741,7 +741,10 @@ export class CallViewModel extends ViewModel {
   );
 
   public readonly allOthersLeft$ = this.memberChanges$.pipe(
-    map(({ ids, left }) => ids.length === 0 && left.length > 0),
+    map(
+      ({ ids, left }) =>
+        ids.length === 1 && ids.includes("local:0") && left.length > 0,
+    ),
     startWith(false),
     distinctUntilChanged(),
   );

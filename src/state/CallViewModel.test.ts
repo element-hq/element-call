@@ -32,7 +32,11 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
-import { CallViewModel, type Layout } from "./CallViewModel";
+import {
+  CallViewModel,
+  type CallViewModelOptions,
+  type Layout,
+} from "./CallViewModel";
 import {
   mockLivekitRoom,
   mockLocalParticipant,
@@ -231,6 +235,10 @@ function withCallViewModel(
     vm: CallViewModel,
     subjects: { raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>> },
   ) => void,
+  options: CallViewModelOptions = {
+    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+    autoLeaveWhenOthersLeft: false,
+  },
 ): void {
   const room = mockMatrixRoom({
     client: {
@@ -281,9 +289,7 @@ function withCallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     liveKitRoom,
     mediaDevices,
-    {
-      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    },
+    options,
     connectionState$,
     raisedHands$,
     new BehaviorSubject({}),
@@ -1032,6 +1038,137 @@ it("should rank raised hands above video feeds and below speakers and presenters
             },
           },
         );
+      },
+    );
+  });
+});
+
+function nooneEverThere$<T>(
+  hot: (marbles: string, values: Record<string, T[]>) => Observable<T[]>,
+): Observable<T[]> {
+  return hot("a-b-c-d", {
+    a: [], // Start empty
+    b: [], // Alice joins
+    c: [], // Alice still there
+    d: [], // Alice leaves
+  });
+}
+
+function participantJoinLeave$(
+  hot: (
+    marbles: string,
+    values: Record<string, RemoteParticipant[]>,
+  ) => Observable<RemoteParticipant[]>,
+): Observable<RemoteParticipant[]> {
+  return hot("a-b-c-d", {
+    a: [], // Start empty
+    b: [aliceParticipant], // Alice joins
+    c: [aliceParticipant], // Alice still there
+    d: [], // Alice leaves
+  });
+}
+
+function rtcMemberJoinLeave$(
+  hot: (
+    marbles: string,
+    values: Record<string, CallMembership[]>,
+  ) => Observable<CallMembership[]>,
+): Observable<CallMembership[]> {
+  return hot("a-b-c-d", {
+    a: [], // Start empty
+    b: [aliceRtcMember], // Alice joins
+    c: [aliceRtcMember], // Alice still there
+    d: [], // Alice leaves
+  });
+}
+
+test("allOthersLeft$ emits only when someone joined and then all others left", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    // Test scenario 1: No one ever joins - should only emit initial false and never emit again
+    withCallViewModel(
+      nooneEverThere$(hot),
+      nooneEverThere$(hot),
+      of(ConnectionState.Connected),
+      new Map(),
+      mockMediaDevices({}),
+      (vm) => {
+        expectObservable(vm.allOthersLeft$).toBe("n------", { n: false });
+      },
+    );
+  });
+});
+
+test("allOthersLeft$ emits true when someone joined and then all others left", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    withCallViewModel(
+      participantJoinLeave$(hot),
+      rtcMemberJoinLeave$(hot),
+      of(ConnectionState.Connected),
+      new Map(),
+      mockMediaDevices({}),
+      (vm) => {
+        expectObservable(vm.allOthersLeft$).toBe(
+          "n-----u", // false initially, then at frame 6: true then false emissions in same frame
+          { n: false, u: true }, // map(() => {})
+        );
+      },
+    );
+  });
+});
+
+test("autoLeaveWhenOthersLeft$ emits only when autoLeaveWhenOthersLeft option is enabled", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    withCallViewModel(
+      participantJoinLeave$(hot),
+      rtcMemberJoinLeave$(hot),
+      of(ConnectionState.Connected),
+      new Map(),
+      mockMediaDevices({}),
+      (vm) => {
+        expectObservable(vm.autoLeaveWhenOthersLeft$).toBe(
+          "------e", // false initially, then at frame 6: true then false emissions in same frame
+          { e: undefined },
+        );
+      },
+      {
+        autoLeaveWhenOthersLeft: true,
+        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      },
+    );
+  });
+});
+
+test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is enabled but noone is there", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    withCallViewModel(
+      nooneEverThere$(hot),
+      nooneEverThere$(hot),
+      of(ConnectionState.Connected),
+      new Map(),
+      mockMediaDevices({}),
+      (vm) => {
+        expectObservable(vm.autoLeaveWhenOthersLeft$).toBe(
+          "-------", // false initially, then at frame 6: true then false emissions in same frame
+        );
+      },
+      {
+        autoLeaveWhenOthersLeft: true,
+        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      },
+    );
+  });
+});
+
+test("autoLeaveWhenOthersLeft$ emits when autoLeaveWhenOthersLeft option is enabled and all others left", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    withCallViewModel(
+      participantJoinLeave$(hot),
+      rtcMemberJoinLeave$(hot),
+      of(ConnectionState.Connected),
+      new Map(),
+      mockMediaDevices({}),
+      (vm) => {
+        expectObservable(vm.autoLeaveWhenOthersLeft$).toBe("-------");
       },
     );
   });
