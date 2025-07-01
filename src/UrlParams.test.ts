@@ -220,15 +220,17 @@ describe("UrlParams", () => {
     });
 
     it("accepts start_call", () => {
-      expect(getUrlParams("?intent=start_call").intent).toBe(
-        UserIntent.StartNewCall,
-      );
+      expect(
+        getUrlParams("?intent=start_call&widgetId=1234&parentUrl=parent.org")
+          .intent,
+      ).toBe(UserIntent.StartNewCall);
     });
 
     it("accepts join_existing", () => {
-      expect(getUrlParams("?intent=join_existing").intent).toBe(
-        UserIntent.JoinExistingCall,
-      );
+      expect(
+        getUrlParams("?intent=join_existing&widgetId=1234&parentUrl=parent.org")
+          .intent,
+      ).toBe(UserIntent.JoinExistingCall);
     });
   });
 
