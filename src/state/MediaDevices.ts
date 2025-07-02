@@ -317,8 +317,8 @@ class ControlledAudioOutput
       // This information is probably only of interest if the earpiece mode has
       // been selected - for example, Element X iOS listens to this to determine
       // whether it should enable the proximity sensor.
-      if (device !== undefined) {
-        logger.info("[controlled-output] setAudioDeviceSelect called:", device);
+      if (device !== undefined && platform !== "ios") {
+        logger.info("[controlled-output] onAudioDeviceSelect called:", device);
         window.controls.onAudioDeviceSelect?.(device.id);
         // Also invoke the deprecated callback for backward compatibility
         window.controls.onOutputDeviceSelect?.(device.id);
