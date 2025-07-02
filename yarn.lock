@@ -2740,12 +2740,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/protocol@npm:1.39.2":
-  version: 1.39.2
-  resolution: "@livekit/protocol@npm:1.39.2"
+"@livekit/protocol@npm:1.38.0":
+  version: 1.38.0
+  resolution: "@livekit/protocol@npm:1.38.0"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/ce5f3ee3ab10ea1578fb40c1d16224879e48143a1bbbfb5e36a080fa5468892eaccfe21aad1166b5443f67e2aa54236facafd4b3235e41b331e91ca405379368
+  checksum: 10c0/ca64d4f984853054ff60574730b08a761afcd3bdc084e5218663e54b0e7f395aa2022d9d15d982fa094bbc0179cb19ef6a96ec74b1aa3265d118a85d1a4fde33
   languageName: node
   linkType: hard
 
@@ -7510,7 +7510,7 @@ __metadata:
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
     knip: "npm:^5.27.2"
-    livekit-client: "npm:^2.13.0"
+    livekit-client: "npm:2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
     matrix-js-sdk: "github:matrix-org/matrix-js-sdk#13ff35d3747ad7829732c09e9b9276f5a17e3e0e"
@@ -10021,12 +10021,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"livekit-client@npm:^2.13.0":
-  version: 2.14.0
-  resolution: "livekit-client@npm:2.14.0"
+"livekit-client@npm:2.13.0":
+  version: 2.13.0
+  resolution: "livekit-client@npm:2.13.0"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
-    "@livekit/protocol": "npm:1.39.2"
+    "@livekit/protocol": "npm:1.38.0"
     events: "npm:^3.3.0"
     loglevel: "npm:^1.9.2"
     sdp-transform: "npm:^2.15.0"
@@ -10034,9 +10034,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typed-emitter: "npm:^2.1.0"
     webrtc-adapter: "npm:^9.0.1"
-  peerDependencies:
-    "@types/dom-mediacapture-record": ^1
-  checksum: 10c0/2c3a134c5463fb06f7b5b191329530546cf28309c919f0cfc1fb1b334daa92e8d1ad23dba570d55ee12ad68592871ab18fcab02e784ed340773c84b19619a9ca
+  checksum: 10c0/b5b7b37eea56681e543d754ee5df63651e45a78462d1f0c26334f0aa525761fefc86d5ad85513e9345bbb4d6821fc95dded5f1d7c008da2b558a14905cbd9ac2
   languageName: node
   linkType: hard
 
