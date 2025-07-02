@@ -7513,7 +7513,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#ac4caa4c6af35444178af3122f9868aab2056e2a"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#13ff35d3747ad7829732c09e9b9276f5a17e3e0e"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -10254,9 +10254,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#ac4caa4c6af35444178af3122f9868aab2056e2a":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#13ff35d3747ad7829732c09e9b9276f5a17e3e0e":
   version: 37.10.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=ac4caa4c6af35444178af3122f9868aab2056e2a"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=13ff35d3747ad7829732c09e9b9276f5a17e3e0e"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.0.0"
@@ -10272,7 +10272,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/be78b49f5ea3bd5c77dd863ca4d5a74cd9da06e9a84453a5455c45be95e899a5f3a7870201b9b3aa271d0f4a45397e91630a56c44eee79b0ff9cc8243da489fe
+  checksum: 10c0/0977773d5ddfb77ec3508b8f57b7c7a0ad26f2c325742efef2bc19d44d6069f3b4d92e3f05389aec4e4bfd5b358005a11b0db44acb2f31d6aeed0498bea1f35c
   languageName: node
   linkType: hard
 
