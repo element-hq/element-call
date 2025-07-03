@@ -392,9 +392,10 @@ export class MediaDevices {
   public readonly audioOutput: MediaDevice<
     AudioOutputDeviceLabel,
     SelectedAudioOutputDevice
-  > = getUrlParams().controlledAudioDevices
-    ? new ControlledAudioOutput(this.scope)
-    : new AudioOutput(this.usingNames$, this.scope);
+  > =
+    getUrlParams().controlledAudioDevices && platform !== "ios"
+      ? new ControlledAudioOutput(this.scope)
+      : new AudioOutput(this.usingNames$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
     new VideoInput(this.usingNames$, this.scope);
