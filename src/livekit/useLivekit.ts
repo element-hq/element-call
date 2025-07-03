@@ -47,7 +47,6 @@ import { useUrlParams } from "../UrlParams";
 import { useInitial } from "../useInitial";
 import { getValue } from "../utils/observable";
 import { type SelectedDevice } from "../state/MediaDevices";
-import { platform } from "../Platform";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
