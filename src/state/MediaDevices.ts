@@ -337,10 +337,7 @@ class ControlledAudioOutput
       }
     });
     this.available$.subscribe((available) => {
-      logger.info(
-        "[controlled-output] available controlled devices:",
-        available,
-      );
+      logger.info("[controlled-output] available devices:", available);
     });
     this.availableRaw$.subscribe((availableRaw) => {
       logger.info("[controlled-output] available raw devices:", availableRaw);

@@ -362,9 +362,6 @@ export function useLivekit(
         devices.audioInput.selected$
           .pipe(switchMap((device) => device?.hardwareDeviceChange$ ?? NEVER))
           .subscribe(() => {
-            // if (platform === "ios") {
-            //   return;
-            // }
             const activeMicTrack = Array.from(
               room.localParticipant.audioTrackPublications.values(),
             ).find((d) => d.source === Track.Source.Microphone)?.track;
