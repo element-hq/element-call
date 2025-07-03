@@ -114,6 +114,13 @@ export function useAudioContext<S extends string>(
 
   // Update the sink ID whenever we change devices.
   useEffect(() => {
+    logger.info(
+      "setSinkId hook:",
+      `"setSinkId" in audioContext`,
+      audioContext && "setSinkId" in audioContext,
+      `!controlledAudioDevices`,
+      !controlledAudioDevices,
+    );
     if (
       audioContext &&
       "setSinkId" in audioContext &&
