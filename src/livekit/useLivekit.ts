@@ -245,7 +245,9 @@ export function useLivekit(
                 audioMuteUpdating.current = true;
                 trackPublication = await participant.setMicrophoneEnabled(
                   buttonEnabled.current.audio,
-                  room.options.audioCaptureDefaults,
+                  // platform === "ios"
+                  //   ? undefined
+                  //   : room.options.audioCaptureDefaults,
                 );
                 audioMuteUpdating.current = false;
                 break;
