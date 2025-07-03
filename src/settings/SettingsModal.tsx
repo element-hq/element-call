@@ -129,7 +129,7 @@ export const SettingsModal: FC<Props> = ({
               }
             />
           )}
-          {iosDeviceMenu && controlledAudioDevices && (
+          {iosDeviceMenu && (
             <Button
               onClick={(e): void => {
                 e.preventDefault();
