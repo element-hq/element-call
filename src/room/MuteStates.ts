@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import {
   type Dispatch,
   type SetStateAction,
+  use,
   useCallback,
   useEffect,
   useMemo,
@@ -86,6 +87,13 @@ export function useMuteStates(isJoined: boolean): MuteStates {
   const audio = useMuteState(devices.audioInput, () => {
     return Config.get().media_devices.enable_audio && !skipLobby && !isJoined;
   });
+  useEffect(() => {
+    // If audio is enabled, we need to request the device names again,
+    // because iOS will not be able to switch to the correct device after un-muting.
+    if (audio.enabled) {
+      devices.requestDeviceNames();
+    }
+  }, [audio.enabled, devices]);
   const isEarpiece = useIsEarpiece();
   const video = useMuteState(
     devices.videoInput,
@@ -131,11 +139,8 @@ export function useMuteStates(isJoined: boolean): MuteStates {
       // This allows to also use this action to just get the unaltered current state
       // by using a fromWidget request with: `ev.detail.data = {}`
       widget!.api.transport.reply(ev.detail, newState);
-      // We need to request the device names again, because otherwise iOS will
-      // not be able to switch to the correct device after un-muting
-      devices.requestDeviceNames();
     },
-    [audio, devices, video],
+    [audio, video],
   );
   useEffect(() => {
     // We setup a event listener for the widget action ElementWidgetActions.DeviceMute.
