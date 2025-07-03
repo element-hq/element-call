@@ -117,7 +117,7 @@ export function useLivekit(
         // deviceId here, because it will be set by the native app.
         // (also the id does not need to match a browser device id)
         deviceId: controlledAudioDevices
-          ? undefined
+          ? ""
           : getValue(devices.audioOutput.selected$)?.id,
       },
       e2ee,
@@ -333,13 +333,23 @@ export function useLivekit(
         selected$: Observable<SelectedDevice | undefined>,
       ): Subscription =>
         selected$.subscribe((device) => {
+          let d = device;
+          if (controlledAudioDevices && kind === "audiooutput") {
+            d = { id: "" };
+          }
+          logger.info(
+            "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
+            room.getActiveDevice(kind),
+            " !== ",
+            d?.id,
+          );
           if (
             !(kind === "audioinput" && platform === "ios") &&
-            device !== undefined &&
-            room.getActiveDevice(kind) !== device.id
+            d !== undefined &&
+            room.getActiveDevice(kind) !== d.id
           ) {
             room
-              .switchActiveDevice(kind, device.id)
+              .switchActiveDevice(kind, d.id)
               .catch((e) =>
                 logger.error(`Failed to sync ${kind} device with LiveKit`, e),
               );
