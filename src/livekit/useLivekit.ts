@@ -245,6 +245,7 @@ export function useLivekit(
                 audioMuteUpdating.current = true;
                 trackPublication = await participant.setMicrophoneEnabled(
                   buttonEnabled.current.audio,
+                  room.options.audioCaptureDefaults,
                 );
                 audioMuteUpdating.current = false;
                 break;
@@ -252,6 +253,7 @@ export function useLivekit(
                 videoMuteUpdating.current = true;
                 trackPublication = await participant.setCameraEnabled(
                   buttonEnabled.current.video,
+                  room.options.videoCaptureDefaults,
                 );
                 videoMuteUpdating.current = false;
                 break;
@@ -315,13 +317,7 @@ export function useLivekit(
         logger.error("Failed to sync video mute state with LiveKit", e);
       });
     }
-  }, [
-    room,
-    muteStates,
-    connectionState,
-    devices.audioInput.selected$,
-    devices.videoInput.selected$,
-  ]);
+  }, [room, muteStates, connectionState]);
 
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
@@ -331,14 +327,13 @@ export function useLivekit(
         selected$: Observable<SelectedDevice | undefined>,
       ): Subscription =>
         selected$.subscribe((device) => {
-          logger.warn(
+          logger.info(
             "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
             room.getActiveDevice(kind),
             " !== ",
             device?.id,
           );
           if (
-            !(kind === "audioinput" && platform === "ios") &&
             device !== undefined &&
             room.getActiveDevice(kind) !== device.id
           ) {
