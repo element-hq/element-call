@@ -245,9 +245,7 @@ export function useLivekit(
                 audioMuteUpdating.current = true;
                 trackPublication = await participant.setMicrophoneEnabled(
                   buttonEnabled.current.audio,
-                  // platform === "ios"
-                  //   ? undefined
-                  //   : room.options.audioCaptureDefaults,
+                  room.options.audioCaptureDefaults,
                 );
                 audioMuteUpdating.current = false;
                 break;
@@ -329,10 +327,6 @@ export function useLivekit(
         selected$: Observable<SelectedDevice | undefined>,
       ): Subscription =>
         selected$.subscribe((device) => {
-          // let d = device;
-          // if (controlledAudioDevices && kind === "audiooutput") {
-          //   d = { id: "default" };
-          // }
           logger.warn(
             "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
             room.getActiveDevice(kind),
