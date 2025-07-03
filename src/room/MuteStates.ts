@@ -90,6 +90,7 @@ export function useMuteStates(isJoined: boolean): MuteStates {
   useEffect(() => {
     // If audio is enabled, we need to request the device names again,
     // because iOS will not be able to switch to the correct device after un-muting.
+    // This is one of the main changes that makes iOS work bluetooth audio devices.
     if (audio.enabled) {
       devices.requestDeviceNames();
     }
