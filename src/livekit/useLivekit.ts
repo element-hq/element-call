@@ -327,9 +327,9 @@ export function useLivekit(
       ): Subscription =>
         selected$.subscribe((device) => {
           logger.info(
-            "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
+            "[LivekitRoom] syncDevice we compare the current active device (room.getActiveDevice):",
             room.getActiveDevice(kind),
-            " !== ",
+            " and the selected device (device.id):",
             device?.id,
           );
           if (
