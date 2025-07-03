@@ -117,7 +117,7 @@ export function useLivekit(
         // deviceId here, because it will be set by the native app.
         // (also the id does not need to match a browser device id)
         deviceId: controlledAudioDevices
-          ? "default"
+          ? undefined
           : getValue(devices.audioOutput.selected$)?.id,
       },
       e2ee,
@@ -329,23 +329,23 @@ export function useLivekit(
         selected$: Observable<SelectedDevice | undefined>,
       ): Subscription =>
         selected$.subscribe((device) => {
-          let d = device;
-          if (controlledAudioDevices && kind === "audiooutput") {
-            d = { id: "default" };
-          }
+          // let d = device;
+          // if (controlledAudioDevices && kind === "audiooutput") {
+          //   d = { id: "default" };
+          // }
           logger.warn(
             "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
             room.getActiveDevice(kind),
             " !== ",
-            d?.id,
+            device?.id,
           );
           if (
             !(kind === "audioinput" && platform === "ios") &&
-            d !== undefined &&
-            room.getActiveDevice(kind) !== d.id
+            device !== undefined &&
+            room.getActiveDevice(kind) !== device.id
           ) {
             room
-              .switchActiveDevice(kind, d.id)
+              .switchActiveDevice(kind, device.id)
               .catch((e) =>
                 logger.error(`Failed to sync ${kind} device with LiveKit`, e),
               );
@@ -354,7 +354,9 @@ export function useLivekit(
 
       const subscriptions = [
         syncDevice("audioinput", devices.audioInput.selected$),
-        syncDevice("audiooutput", devices.audioOutput.selected$),
+        !controlledAudioDevices
+          ? syncDevice("audiooutput", devices.audioOutput.selected$)
+          : undefined,
         syncDevice("videoinput", devices.videoInput.selected$),
         // Restart the audio input track whenever we detect that the active media
         // device has changed to refer to a different hardware device. We do this
@@ -397,7 +399,7 @@ export function useLivekit(
       ];
 
       return (): void => {
-        for (const s of subscriptions) s.unsubscribe();
+        for (const s of subscriptions) s?.unsubscribe();
       };
     }
   }, [room, devices, connectionState, controlledAudioDevices]);
