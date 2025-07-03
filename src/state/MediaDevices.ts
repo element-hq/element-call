@@ -264,6 +264,30 @@ class AudioOutput
 class ControlledAudioOutput
   implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
 {
+  public readonly availableRaw$ = availableRawDevices$(
+    "audiooutput",
+    this.usingNames$,
+    this.scope,
+  ).pipe(
+    map((availableRaw) => {
+      const available: Map<string, AudioOutputDeviceLabel> =
+        buildDeviceMap(availableRaw);
+      // Create a virtual default audio output for browsers that don't have one.
+      // Its device ID must be the empty string because that's what setSinkId
+      // recognizes.
+      if (available.size && !available.has("") && !available.has("default"))
+        available.set("", {
+          type: "default",
+          name: availableRaw[0]?.label || null,
+        });
+      // Note: creating virtual default input devices would be another problem
+      // entirely, because requesting a media stream from deviceId "" won't
+      // automatically track the default device.
+      return available;
+    }),
+    this.scope.state(),
+  );
+
   public readonly available$ = combineLatest(
     [controlledAvailableOutputDevices$.pipe(startWith([])), iosDeviceMenu$],
     (availableRaw, iosDeviceMenu) => {
@@ -311,7 +335,10 @@ class ControlledAudioOutput
     },
   ).pipe(this.scope.state());
 
-  public constructor(private readonly scope: ObservableScope) {
+  public constructor(
+    private readonly usingNames$: Observable<boolean>,
+    private readonly scope: ObservableScope,
+  ) {
     this.selected$.subscribe((device) => {
       // Let the hosting application know which output device has been selected.
       // This information is probably only of interest if the earpiece mode has
@@ -326,6 +353,9 @@ class ControlledAudioOutput
     });
     this.available$.subscribe((available) => {
       logger.info("[controlled-output] available devices:", available);
+    });
+    this.availableRaw$.subscribe((availableRaw) => {
+      logger.info("[controlled-output] available raw devices:", availableRaw);
     });
   }
 }
@@ -393,7 +423,7 @@ export class MediaDevices {
     AudioOutputDeviceLabel,
     SelectedAudioOutputDevice
   > = getUrlParams().controlledAudioDevices
-    ? new ControlledAudioOutput(this.scope)
+    ? new ControlledAudioOutput(this.usingNames$, this.scope)
     : new AudioOutput(this.usingNames$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
