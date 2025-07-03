@@ -323,11 +323,7 @@ export function useLivekit(
 
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
-    if (
-      room !== undefined &&
-      connectionState === ConnectionState.Connected &&
-      !controlledAudioDevices
-    ) {
+    if (room !== undefined && connectionState === ConnectionState.Connected) {
       const syncDevice = (
         kind: MediaDeviceKind,
         selected$: Observable<SelectedDevice | undefined>,
