@@ -337,7 +337,7 @@ export function useLivekit(
           if (controlledAudioDevices && kind === "audiooutput") {
             d = { id: "" };
           }
-          logger.info(
+          logger.warn(
             "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
             room.getActiveDevice(kind),
             " !== ",
