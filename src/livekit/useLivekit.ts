@@ -245,10 +245,7 @@ export function useLivekit(
                 audioMuteUpdating.current = true;
                 trackPublication = await participant.setMicrophoneEnabled(
                   buttonEnabled.current.audio,
-                  {
-                    ...room.options.audioCaptureDefaults,
-                    deviceId: getValue(devices.audioInput.selected$)?.id,
-                  },
+                  room.options.audioCaptureDefaults,
                 );
                 audioMuteUpdating.current = false;
                 break;
@@ -256,10 +253,7 @@ export function useLivekit(
                 videoMuteUpdating.current = true;
                 trackPublication = await participant.setCameraEnabled(
                   buttonEnabled.current.video,
-                  {
-                    ...room.options.videoCaptureDefaults,
-                    deviceId: getValue(devices.videoInput.selected$)?.id,
-                  },
+                  room.options.videoCaptureDefaults,
                 );
                 videoMuteUpdating.current = false;
                 break;
