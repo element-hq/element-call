@@ -131,8 +131,11 @@ export function useMuteStates(isJoined: boolean): MuteStates {
       // This allows to also use this action to just get the unaltered current state
       // by using a fromWidget request with: `ev.detail.data = {}`
       widget!.api.transport.reply(ev.detail, newState);
+      // We need to request the device names again, because otherwise iOS will
+      // not be able to switch to the correct device after un-muting
+      devices.requestDeviceNames();
     },
-    [audio, video],
+    [audio, devices, video],
   );
   useEffect(() => {
     // We setup a event listener for the widget action ElementWidgetActions.DeviceMute.
