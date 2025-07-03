@@ -47,6 +47,7 @@ import { useUrlParams } from "../UrlParams";
 import { useInitial } from "../useInitial";
 import { getValue } from "../utils/observable";
 import { type SelectedDevice } from "../state/MediaDevices";
+import { platform } from "../Platform";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -331,6 +332,7 @@ export function useLivekit(
       ): Subscription =>
         selected$.subscribe((device) => {
           if (
+            // !(kind === "audioinput" && platform === "ios") &&
             device !== undefined &&
             room.getActiveDevice(kind) !== device.id
           ) {
@@ -357,6 +359,9 @@ export function useLivekit(
         devices.audioInput.selected$
           .pipe(switchMap((device) => device?.hardwareDeviceChange$ ?? NEVER))
           .subscribe(() => {
+            if (platform === "ios") {
+              return;
+            }
             const activeMicTrack = Array.from(
               room.localParticipant.audioTrackPublications.values(),
             ).find((d) => d.source === Track.Source.Microphone)?.track;
