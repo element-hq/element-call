@@ -332,7 +332,7 @@ export function useLivekit(
       ): Subscription =>
         selected$.subscribe((device) => {
           if (
-            // !(kind === "audioinput" && platform === "ios") &&
+            !(kind === "audioinput" && platform === "ios") &&
             device !== undefined &&
             room.getActiveDevice(kind) !== device.id
           ) {
