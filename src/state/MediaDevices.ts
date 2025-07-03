@@ -264,28 +264,13 @@ class AudioOutput
 class ControlledAudioOutput
   implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
 {
+  // We need to subscribe to the raw devices so that the OS does update the input
+  // back to what it was before. otherwise we will switch back to the default
+  // whenever we allocate a new stream.
   public readonly availableRaw$ = availableRawDevices$(
     "audiooutput",
     this.usingNames$,
     this.scope,
-  ).pipe(
-    map((availableRaw) => {
-      const available: Map<string, AudioOutputDeviceLabel> =
-        buildDeviceMap(availableRaw);
-      // Create a virtual default audio output for browsers that don't have one.
-      // Its device ID must be the empty string because that's what setSinkId
-      // recognizes.
-      if (available.size && !available.has("") && !available.has("default"))
-        available.set("", {
-          type: "default",
-          name: availableRaw[0]?.label || null,
-        });
-      // Note: creating virtual default input devices would be another problem
-      // entirely, because requesting a media stream from deviceId "" won't
-      // automatically track the default device.
-      return available;
-    }),
-    this.scope.state(),
   );
 
   public readonly available$ = combineLatest(
@@ -330,7 +315,7 @@ class ControlledAudioOutput
     (available, preferredId) => {
       const id = preferredId ?? available.keys().next().value;
       return id === undefined
-        ? { id: "default", virtualEarpiece: false }
+        ? undefined
         : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID };
     },
   ).pipe(this.scope.state());
@@ -344,7 +329,7 @@ class ControlledAudioOutput
       // This information is probably only of interest if the earpiece mode has
       // been selected - for example, Element X iOS listens to this to determine
       // whether it should enable the proximity sensor.
-      if (device !== undefined && platform !== "ios") {
+      if (device !== undefined) {
         logger.info("[controlled-output] onAudioDeviceSelect called:", device);
         window.controls.onAudioDeviceSelect?.(device.id);
         // Also invoke the deprecated callback for backward compatibility
@@ -352,7 +337,10 @@ class ControlledAudioOutput
       }
     });
     this.available$.subscribe((available) => {
-      logger.info("[controlled-output] available devices:", available);
+      logger.info(
+        "[controlled-output] available controlled devices:",
+        available,
+      );
     });
     this.availableRaw$.subscribe((availableRaw) => {
       logger.info("[controlled-output] available raw devices:", availableRaw);
