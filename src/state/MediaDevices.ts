@@ -306,7 +306,7 @@ class ControlledAudioOutput
     (available, preferredId) => {
       const id = preferredId ?? available.keys().next().value;
       return id === undefined
-        ? undefined
+        ? { id: "default", virtualEarpiece: false }
         : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID };
     },
   ).pipe(this.scope.state());

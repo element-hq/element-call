@@ -117,7 +117,7 @@ export function useLivekit(
         // deviceId here, because it will be set by the native app.
         // (also the id does not need to match a browser device id)
         deviceId: controlledAudioDevices
-          ? ""
+          ? "default"
           : getValue(devices.audioOutput.selected$)?.id,
       },
       e2ee,
@@ -331,7 +331,7 @@ export function useLivekit(
         selected$.subscribe((device) => {
           let d = device;
           if (controlledAudioDevices && kind === "audiooutput") {
-            d = { id: "" };
+            d = { id: "default" };
           }
           logger.warn(
             "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
