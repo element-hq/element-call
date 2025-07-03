@@ -323,7 +323,13 @@ export function useLivekit(
         logger.error("Failed to sync video mute state with LiveKit", e);
       });
     }
-  }, [room, muteStates, connectionState]);
+  }, [
+    room,
+    muteStates,
+    connectionState,
+    devices.audioInput.selected$,
+    devices.videoInput.selected$,
+  ]);
 
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
@@ -369,9 +375,9 @@ export function useLivekit(
         devices.audioInput.selected$
           .pipe(switchMap((device) => device?.hardwareDeviceChange$ ?? NEVER))
           .subscribe(() => {
-            if (platform === "ios") {
-              return;
-            }
+            // if (platform === "ios") {
+            //   return;
+            // }
             const activeMicTrack = Array.from(
               room.localParticipant.audioTrackPublications.values(),
             ).find((d) => d.source === Track.Source.Microphone)?.track;
