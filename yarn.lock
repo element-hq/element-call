@@ -5604,8 +5604,8 @@ __metadata:
   linkType: hard
 
 "@vector-im/compound-design-tokens@npm:^4.0.0":
-  version: 4.0.4
-  resolution: "@vector-im/compound-design-tokens@npm:4.0.4"
+  version: 4.0.5
+  resolution: "@vector-im/compound-design-tokens@npm:4.0.5"
   peerDependencies:
     "@types/react": "*"
     react: ^17 || ^18 || ^19.0.0
@@ -5614,7 +5614,7 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/e6ff6a956082f4a288237e7c7e60044319d7195cad0d5175dad7115270119f80c43252520db8f1a514b762f92dd5b7059c1217d7ccbe81daf71c426cbfeaf3dd
+  checksum: 10c0/ae84195a5c854ac54e64b615729cb5f669da1b798b961be4370e1baf257a57e871f53c6df555702513a99fcc5576bff50033a2ed676b36c7344f1d470826f10f
   languageName: node
   linkType: hard
 
