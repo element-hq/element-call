@@ -2740,16 +2740,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/protocol@npm:1.39.2":
-  version: 1.39.2
-  resolution: "@livekit/protocol@npm:1.39.2"
-  dependencies:
-    "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/ce5f3ee3ab10ea1578fb40c1d16224879e48143a1bbbfb5e36a080fa5468892eaccfe21aad1166b5443f67e2aa54236facafd4b3235e41b331e91ca405379368
-  languageName: node
-  linkType: hard
-
-"@livekit/protocol@npm:^1.38.0":
+"@livekit/protocol@npm:1.39.3, @livekit/protocol@npm:^1.38.0":
   version: 1.39.3
   resolution: "@livekit/protocol@npm:1.39.3"
   dependencies:
@@ -10022,11 +10013,11 @@ __metadata:
   linkType: hard
 
 "livekit-client@npm:^2.13.0":
-  version: 2.14.0
-  resolution: "livekit-client@npm:2.14.0"
+  version: 2.15.2
+  resolution: "livekit-client@npm:2.15.2"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
-    "@livekit/protocol": "npm:1.39.2"
+    "@livekit/protocol": "npm:1.39.3"
     events: "npm:^3.3.0"
     loglevel: "npm:^1.9.2"
     sdp-transform: "npm:^2.15.0"
@@ -10036,7 +10027,7 @@ __metadata:
     webrtc-adapter: "npm:^9.0.1"
   peerDependencies:
     "@types/dom-mediacapture-record": ^1
-  checksum: 10c0/2c3a134c5463fb06f7b5b191329530546cf28309c919f0cfc1fb1b334daa92e8d1ad23dba570d55ee12ad68592871ab18fcab02e784ed340773c84b19619a9ca
+  checksum: 10c0/94ddd88518c06e756cc11bb32794828607bdfe69a5dc3905364c173901a8cc8a6443cd44b7ff3236798fbaba6ff7e3ebe9dd709679b10030903c2689ca842078
   languageName: node
   linkType: hard
 
