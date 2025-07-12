@@ -54,24 +54,16 @@ import { type ReactionOption } from "../reactions";
 import { type Behavior } from "./Behavior";
 
 export function observeTrackReference$(
-  participant$: Observable<Participant | undefined>,
+  participant: Participant,
   source: Track.Source,
-): Observable<TrackReferenceOrPlaceholder | undefined> {
-  return participant$.pipe(
-    switchMap((p) => {
-      if (p) {
-        return observeParticipantMedia(p).pipe(
-          map(() => ({
-            participant: p,
-            publication: p.getTrackPublication(source),
-            source,
-          })),
-          distinctUntilKeyChanged("publication"),
-        );
-      } else {
-        return of(undefined);
-      }
-    }),
+): Observable<TrackReferenceOrPlaceholder> {
+  return observeParticipantMedia(participant).pipe(
+    map(() => ({
+      participant: participant,
+      publication: participant.getTrackPublication(source),
+      source,
+    })),
+    distinctUntilKeyChanged("publication"),
   );
 }
 
@@ -83,7 +75,7 @@ export function observeRtpStreamStats$(
   RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
 > {
   return combineLatest([
-    observeTrackReference$(of(participant), source),
+    observeTrackReference$(participant, source),
     interval(1000).pipe(startWith(0)),
   ]).pipe(
     switchMap(async ([trackReference]) => {
@@ -237,6 +229,18 @@ abstract class BaseMediaViewModel extends ViewModel {
    */
   public abstract readonly local: boolean;
 
+  private observeTrackReference$(
+    source: Track.Source,
+  ): Behavior<TrackReferenceOrPlaceholder | undefined> {
+    return this.participant$
+      .pipe(
+        switchMap((p) =>
+          p === undefined ? of(undefined) : observeTrackReference$(p, source),
+        ),
+      )
+      .behavior(this.scope);
+  }
+
   public constructor(
     /**
      * An opaque identifier for this media.
@@ -261,12 +265,10 @@ abstract class BaseMediaViewModel extends ViewModel {
     public readonly displayName$: Behavior<string>,
   ) {
     super();
-    const audio$ = observeTrackReference$(participant$, audioSource).behavior(
-      this.scope,
-    );
-    this.video$ = observeTrackReference$(participant$, videoSource).behavior(
-      this.scope,
-    );
+
+    const audio$ = this.observeTrackReference$(audioSource);
+    this.video$ = this.observeTrackReference$(videoSource);
+
     this.unencryptedWarning$ = combineLatest(
       [audio$, this.video$],
       (a, v) =>
@@ -466,7 +468,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   public constructor(
     id: string,
     member: RoomMember | undefined,
-    participant$: Observable<LocalParticipant | undefined>,
+    participant$: Behavior<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     displayName$: Behavior<string>,
