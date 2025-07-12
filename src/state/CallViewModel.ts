@@ -272,9 +272,9 @@ class UserMedia {
         this.participant$ as Behavior<LocalParticipant>,
         encryptionSystem,
         livekitRoom,
-        displayname$.behavior(this.scope),
-        handRaised$.behavior(this.scope),
-        reaction$.behavior(this.scope),
+        this.scope.behavior(displayname$),
+        this.scope.behavior(handRaised$),
+        this.scope.behavior(reaction$),
       );
     } else {
       this.vm = new RemoteUserMediaViewModel(
@@ -285,16 +285,16 @@ class UserMedia {
         >,
         encryptionSystem,
         livekitRoom,
-        displayname$.behavior(this.scope),
-        handRaised$.behavior(this.scope),
-        reaction$.behavior(this.scope),
+        this.scope.behavior(displayname$),
+        this.scope.behavior(handRaised$),
+        this.scope.behavior(reaction$),
       );
     }
 
-    this.speaker$ = observeSpeaker$(this.vm.speaking$).behavior(this.scope);
+    this.speaker$ = this.scope.behavior(observeSpeaker$(this.vm.speaking$));
 
-    this.presenter$ = this.participant$
-      .pipe(
+    this.presenter$ = this.scope.behavior(
+      this.participant$.pipe(
         switchMap(
           (p) =>
             (p &&
@@ -307,8 +307,8 @@ class UserMedia {
               ).pipe(map((p) => p.isScreenShareEnabled))) ??
             of(false),
         ),
-      )
-      .behavior(this.scope);
+      ),
+    );
   }
 
   public updateParticipant(
@@ -349,7 +349,7 @@ class ScreenShare {
       this.participant$.asObservable(),
       encryptionSystem,
       liveKitRoom,
-      displayName$.behavior(this.scope),
+      this.scope.behavior(displayName$),
       participant.isLocal,
     );
   }
@@ -386,71 +386,72 @@ function getRoomMemberFromRtcMember(
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
 export class CallViewModel extends ViewModel {
-  public readonly localVideo$: Behavior<LocalVideoTrack | null> =
+  public readonly localVideo$ = this.scope.behavior<LocalVideoTrack | null>(
     observeTrackReference$(
       this.livekitRoom.localParticipant,
       Track.Source.Camera,
-    )
-      .pipe(
-        map((trackRef) => {
-          const track = trackRef?.publication?.track;
-          return track instanceof LocalVideoTrack ? track : null;
-        }),
-      )
-      .behavior(this.scope);
+    ).pipe(
+      map((trackRef) => {
+        const track = trackRef?.publication?.track;
+        return track instanceof LocalVideoTrack ? track : null;
+      }),
+    ),
+  );
 
   /**
    * The raw list of RemoteParticipants as reported by LiveKit
    */
-  private readonly rawRemoteParticipants$: Behavior<RemoteParticipant[]> =
-    connectedParticipantsObserver(this.livekitRoom)
-      .pipe(startWith([]))
-      .behavior(this.scope);
+  private readonly rawRemoteParticipants$ = this.scope.behavior<
+    RemoteParticipant[]
+  >(connectedParticipantsObserver(this.livekitRoom).pipe(startWith([])));
 
   /**
    * Lists of RemoteParticipants to "hold" on display, even if LiveKit claims that
    * they've left
    */
-  private readonly remoteParticipantHolds$: Behavior<RemoteParticipant[][]> =
-    this.connectionState$
-      .pipe(
-        withLatestFrom(this.rawRemoteParticipants$),
-        mergeMap(([s, ps]) => {
-          // Whenever we switch focuses, we should retain all the previous
-          // participants for at least POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS ms to
-          // give their clients time to switch over and avoid jarring layout shifts
-          if (s === ECAddonConnectionState.ECSwitchingFocus) {
-            return concat(
-              // Hold these participants
-              of({ hold: ps }),
-              // Wait for time to pass and the connection state to have changed
-              forkJoin([
-                timer(POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
-                this.connectionState$.pipe(
-                  filter((s) => s !== ECAddonConnectionState.ECSwitchingFocus),
-                  take(1),
-                ),
-                // Then unhold them
-              ]).pipe(map(() => ({ unhold: ps }))),
-            );
-          } else {
-            return EMPTY;
-          }
-        }),
-        // Accumulate the hold instructions into a single list showing which
-        // participants are being held
-        accumulate([] as RemoteParticipant[][], (holds, instruction) =>
-          "hold" in instruction
-            ? [instruction.hold, ...holds]
-            : holds.filter((h) => h !== instruction.unhold),
-        ),
-      )
-      .behavior(this.scope);
+  private readonly remoteParticipantHolds$ = this.scope.behavior<
+    RemoteParticipant[][]
+  >(
+    this.connectionState$.pipe(
+      withLatestFrom(this.rawRemoteParticipants$),
+      mergeMap(([s, ps]) => {
+        // Whenever we switch focuses, we should retain all the previous
+        // participants for at least POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS ms to
+        // give their clients time to switch over and avoid jarring layout shifts
+        if (s === ECAddonConnectionState.ECSwitchingFocus) {
+          return concat(
+            // Hold these participants
+            of({ hold: ps }),
+            // Wait for time to pass and the connection state to have changed
+            forkJoin([
+              timer(POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
+              this.connectionState$.pipe(
+                filter((s) => s !== ECAddonConnectionState.ECSwitchingFocus),
+                take(1),
+              ),
+              // Then unhold them
+            ]).pipe(map(() => ({ unhold: ps }))),
+          );
+        } else {
+          return EMPTY;
+        }
+      }),
+      // Accumulate the hold instructions into a single list showing which
+      // participants are being held
+      accumulate([] as RemoteParticipant[][], (holds, instruction) =>
+        "hold" in instruction
+          ? [instruction.hold, ...holds]
+          : holds.filter((h) => h !== instruction.unhold),
+      ),
+    ),
+  );
 
   /**
    * The RemoteParticipants including those that are being "held" on the screen
    */
-  private readonly remoteParticipants$: Behavior<RemoteParticipant[]> =
+  private readonly remoteParticipants$ = this.scope.behavior<
+    RemoteParticipant[]
+  >(
     combineLatest(
       [this.rawRemoteParticipants$, this.remoteParticipantHolds$],
       (raw, holds) => {
@@ -469,20 +470,24 @@ export class CallViewModel extends ViewModel {
 
         return result;
       },
-    ).behavior(this.scope);
+    ),
+  );
 
   /**
    * Displaynames for each member of the call. This will disambiguate
    * any displaynames that clashes with another member. Only members
    * joined to the call are considered here.
    */
-  public readonly memberDisplaynames$ = merge(
-    // Handle call membership changes.
-    fromEvent(this.matrixRTCSession, MatrixRTCSessionEvent.MembershipsChanged),
-    // Handle room membership changes (and displayname updates)
-    fromEvent(this.matrixRTCSession.room, RoomStateEvent.Members),
-  )
-    .pipe(
+  public readonly memberDisplaynames$ = this.scope.behavior(
+    merge(
+      // Handle call membership changes.
+      fromEvent(
+        this.matrixRTCSession,
+        MatrixRTCSessionEvent.MembershipsChanged,
+      ),
+      // Handle room membership changes (and displayname updates)
+      fromEvent(this.matrixRTCSession.room, RoomStateEvent.Members),
+    ).pipe(
       startWith(null),
       map(() => {
         const displaynameMap = new Map<string, string>();
@@ -510,13 +515,13 @@ export class CallViewModel extends ViewModel {
       // It turns out that doing the disambiguation above is rather expensive on Safari (10x slower
       // than on Chrome/Firefox). This means it is important that we multicast the result so that we
       // don't do this work more times than we need to. This is achieved by converting to a behavior:
-    )
-    .behavior(this.scope);
+    ),
+  );
 
-  public readonly handsRaised$ = this.handsRaisedSubject$.behavior(this.scope);
+  public readonly handsRaised$ = this.scope.behavior(this.handsRaisedSubject$);
 
-  public readonly reactions$ = this.reactionsSubject$
-    .pipe(
+  public readonly reactions$ = this.scope.behavior(
+    this.reactionsSubject$.pipe(
       map((v) =>
         Object.fromEntries(
           Object.entries(v).map(([a, { reactionOption }]) => [
@@ -525,26 +530,26 @@ export class CallViewModel extends ViewModel {
           ]),
         ),
       ),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   /**
    * List of MediaItems that we want to display
    */
-  private readonly mediaItems$: Behavior<MediaItem[]> = combineLatest([
-    this.remoteParticipants$,
-    observeParticipantMedia(this.livekitRoom.localParticipant),
-    duplicateTiles.value$,
-    // Also react to changes in the MatrixRTC session list.
-    // The session list will also be update if a room membership changes.
-    // No additional RoomState event listener needs to be set up.
-    fromEvent(
-      this.matrixRTCSession,
-      MatrixRTCSessionEvent.MembershipsChanged,
-    ).pipe(startWith(null)),
-    showNonMemberTiles.value$,
-  ])
-    .pipe(
+  private readonly mediaItems$ = this.scope.behavior<MediaItem[]>(
+    combineLatest([
+      this.remoteParticipants$,
+      observeParticipantMedia(this.livekitRoom.localParticipant),
+      duplicateTiles.value$,
+      // Also react to changes in the MatrixRTC session list.
+      // The session list will also be update if a room membership changes.
+      // No additional RoomState event listener needs to be set up.
+      fromEvent(
+        this.matrixRTCSession,
+        MatrixRTCSessionEvent.MembershipsChanged,
+      ).pipe(startWith(null)),
+      showNonMemberTiles.value$,
+    ]).pipe(
       scan(
         (
           prevItems,
@@ -707,19 +712,19 @@ export class CallViewModel extends ViewModel {
       finalizeValue((ts) => {
         for (const t of ts) t.destroy();
       }),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   /**
    * List of MediaItems that we want to display, that are of type UserMedia
    */
-  private readonly userMedia$: Behavior<UserMedia[]> = this.mediaItems$
-    .pipe(
+  private readonly userMedia$ = this.scope.behavior<UserMedia[]>(
+    this.mediaItems$.pipe(
       map((mediaItems) =>
         mediaItems.filter((m): m is UserMedia => m instanceof UserMedia),
       ),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   public readonly memberChanges$ = this.userMedia$
     .pipe(map((mediaItems) => mediaItems.map((m) => m.id)))
@@ -737,17 +742,17 @@ export class CallViewModel extends ViewModel {
   /**
    * List of MediaItems that we want to display, that are of type ScreenShare
    */
-  private readonly screenShares$: Behavior<ScreenShare[]> = this.mediaItems$
-    .pipe(
+  private readonly screenShares$ = this.scope.behavior<ScreenShare[]>(
+    this.mediaItems$.pipe(
       map((mediaItems) =>
         mediaItems.filter((m): m is ScreenShare => m instanceof ScreenShare),
       ),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
-  private readonly spotlightSpeaker$: Behavior<UserMediaViewModel | null> =
-    this.userMedia$
-      .pipe(
+  private readonly spotlightSpeaker$ =
+    this.scope.behavior<UserMediaViewModel | null>(
+      this.userMedia$.pipe(
         switchMap((mediaItems) =>
           mediaItems.length === 0
             ? of([])
@@ -779,11 +784,11 @@ export class CallViewModel extends ViewModel {
           null,
         ),
         map((speaker) => speaker?.vm ?? null),
-      )
-      .behavior(this.scope);
+      ),
+    );
 
-  private readonly grid$: Behavior<UserMediaViewModel[]> = this.userMedia$
-    .pipe(
+  private readonly grid$ = this.scope.behavior<UserMediaViewModel[]>(
+    this.userMedia$.pipe(
       switchMap((mediaItems) => {
         const bins = mediaItems.map((m) =>
           combineLatest(
@@ -820,11 +825,11 @@ export class CallViewModel extends ViewModel {
             );
       }),
       distinctUntilChanged(shallowEquals),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
-  private readonly spotlight$: Behavior<MediaViewModel[]> = this.screenShares$
-    .pipe(
+  private readonly spotlight$ = this.scope.behavior<MediaViewModel[]>(
+    this.screenShares$.pipe(
       switchMap((screenShares) => {
         if (screenShares.length > 0) {
           return of(screenShares.map((m) => m.vm));
@@ -835,15 +840,15 @@ export class CallViewModel extends ViewModel {
         );
       }),
       distinctUntilChanged(shallowEquals),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
-  private readonly pip$: Behavior<UserMediaViewModel | null> = combineLatest([
-    this.screenShares$,
-    this.spotlightSpeaker$,
-    this.mediaItems$,
-  ])
-    .pipe(
+  private readonly pip$ = this.scope.behavior<UserMediaViewModel | null>(
+    combineLatest([
+      this.screenShares$,
+      this.spotlightSpeaker$,
+      this.mediaItems$,
+    ]).pipe(
       switchMap(([screenShares, spotlight, mediaItems]) => {
         if (screenShares.length > 0) {
           return this.spotlightSpeaker$;
@@ -873,8 +878,8 @@ export class CallViewModel extends ViewModel {
           }),
         );
       }),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   private readonly hasRemoteScreenShares$: Observable<boolean> =
     this.spotlight$.pipe(
@@ -888,11 +893,8 @@ export class CallViewModel extends ViewModel {
     startWith(false),
   );
 
-  private readonly naturalWindowMode$: Behavior<WindowMode> = fromEvent(
-    window,
-    "resize",
-  )
-    .pipe(
+  private readonly naturalWindowMode$ = this.scope.behavior<WindowMode>(
+    fromEvent(window, "resize").pipe(
       startWith(null),
       map(() => {
         const height = window.innerHeight;
@@ -905,35 +907,36 @@ export class CallViewModel extends ViewModel {
         if (width <= 600) return "narrow";
         return "normal";
       }),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   /**
    * The general shape of the window.
    */
-  public readonly windowMode$: Behavior<WindowMode> = this.pipEnabled$
-    .pipe(
+  public readonly windowMode$ = this.scope.behavior<WindowMode>(
+    this.pipEnabled$.pipe(
       switchMap((pip) =>
         pip ? of<WindowMode>("pip") : this.naturalWindowMode$,
       ),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   private readonly spotlightExpandedToggle$ = new Subject<void>();
-  public readonly spotlightExpanded$: Behavior<boolean> =
-    this.spotlightExpandedToggle$
-      .pipe(accumulate(false, (expanded) => !expanded))
-      .behavior(this.scope);
+  public readonly spotlightExpanded$ = this.scope.behavior<boolean>(
+    this.spotlightExpandedToggle$.pipe(
+      accumulate(false, (expanded) => !expanded),
+    ),
+  );
 
   private readonly gridModeUserSelection$ = new Subject<GridMode>();
   /**
    * The layout mode of the media tile grid.
    */
-  public readonly gridMode$: Behavior<GridMode> =
+  public readonly gridMode$ =
     // If the user hasn't selected spotlight and somebody starts screen sharing,
     // automatically switch to spotlight mode and reset when screen sharing ends
-    this.gridModeUserSelection$
-      .pipe(
+    this.scope.behavior<GridMode>(
+      this.gridModeUserSelection$.pipe(
         startWith(null),
         switchMap((userSelection) =>
           (userSelection === "spotlight"
@@ -952,8 +955,8 @@ export class CallViewModel extends ViewModel {
               )
           ).pipe(startWith(userSelection ?? "grid")),
         ),
-      )
-      .behavior(this.scope);
+      ),
+    );
 
   public setGridMode(value: GridMode): void {
     this.gridModeUserSelection$.next(value);
@@ -1014,8 +1017,8 @@ export class CallViewModel extends ViewModel {
   /**
    * The media to be used to produce a layout.
    */
-  private readonly layoutMedia$: Behavior<LayoutMedia> = this.windowMode$
-    .pipe(
+  private readonly layoutMedia$ = this.scope.behavior<LayoutMedia>(
+    this.windowMode$.pipe(
       switchMap((windowMode) => {
         switch (windowMode) {
           case "normal":
@@ -1077,8 +1080,8 @@ export class CallViewModel extends ViewModel {
             return this.pipLayoutMedia$;
         }
       }),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   // There is a cyclical dependency here: the layout algorithms want to know
   // which tiles are on screen, but to know which tiles are on screen we have to
@@ -1088,13 +1091,13 @@ export class CallViewModel extends ViewModel {
   private readonly setVisibleTiles = (value: number): void =>
     this.visibleTiles$.next(value);
 
-  private readonly layoutInternals$: Behavior<
+  private readonly layoutInternals$ = this.scope.behavior<
     LayoutScanState & { layout: Layout }
-  > = combineLatest([
-    this.layoutMedia$,
-    this.visibleTiles$.pipe(startWith(0), distinctUntilChanged()),
-  ])
-    .pipe(
+  >(
+    combineLatest([
+      this.layoutMedia$,
+      this.visibleTiles$.pipe(startWith(0), distinctUntilChanged()),
+    ]).pipe(
       scan<
         [LayoutMedia, number],
         LayoutScanState & { layout: Layout },
@@ -1129,29 +1132,29 @@ export class CallViewModel extends ViewModel {
         },
         { layout: null, tiles: TileStore.empty() },
       ),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   /**
    * The layout of tiles in the call interface.
    */
-  public readonly layout$: Behavior<Layout> = this.layoutInternals$
-    .pipe(map(({ layout }) => layout))
-    .behavior(this.scope);
+  public readonly layout$ = this.scope.behavior<Layout>(
+    this.layoutInternals$.pipe(map(({ layout }) => layout)),
+  );
 
   /**
    * The current generation of the tile store, exposed for debugging purposes.
    */
-  public readonly tileStoreGeneration$: Behavior<number> = this.layoutInternals$
-    .pipe(map(({ tiles }) => tiles.generation))
-    .behavior(this.scope);
+  public readonly tileStoreGeneration$ = this.scope.behavior<number>(
+    this.layoutInternals$.pipe(map(({ tiles }) => tiles.generation)),
+  );
 
-  public showSpotlightIndicators$: Behavior<boolean> = this.layout$
-    .pipe(map((l) => l.type !== "grid"))
-    .behavior(this.scope);
+  public showSpotlightIndicators$ = this.scope.behavior<boolean>(
+    this.layout$.pipe(map((l) => l.type !== "grid")),
+  );
 
-  public showSpeakingIndicators$: Behavior<boolean> = this.layout$
-    .pipe(
+  public showSpeakingIndicators$ = this.scope.behavior<boolean>(
+    this.layout$.pipe(
       switchMap((l) => {
         switch (l.type) {
           case "spotlight-landscape":
@@ -1175,29 +1178,30 @@ export class CallViewModel extends ViewModel {
             return of(true);
         }
       }),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
-  public readonly toggleSpotlightExpanded$: Behavior<(() => void) | null> =
-    this.windowMode$
-      .pipe(
-        switchMap((mode) =>
-          mode === "normal"
-            ? this.layout$.pipe(
-                map(
-                  (l) =>
-                    l.type === "spotlight-landscape" ||
-                    l.type === "spotlight-expanded",
-                ),
-              )
-            : of(false),
-        ),
-        distinctUntilChanged(),
-        map((enabled) =>
-          enabled ? (): void => this.spotlightExpandedToggle$.next() : null,
-        ),
-      )
-      .behavior(this.scope);
+  public readonly toggleSpotlightExpanded$ = this.scope.behavior<
+    (() => void) | null
+  >(
+    this.windowMode$.pipe(
+      switchMap((mode) =>
+        mode === "normal"
+          ? this.layout$.pipe(
+              map(
+                (l) =>
+                  l.type === "spotlight-landscape" ||
+                  l.type === "spotlight-expanded",
+              ),
+            )
+          : of(false),
+      ),
+      distinctUntilChanged(),
+      map((enabled) =>
+        enabled ? (): void => this.spotlightExpandedToggle$.next() : null,
+      ),
+    ),
+  );
 
   private readonly screenTap$ = new Subject<void>();
   private readonly controlsTap$ = new Subject<void>();
@@ -1232,12 +1236,12 @@ export class CallViewModel extends ViewModel {
     this.screenUnhover$.next();
   }
 
-  public readonly showHeader$: Behavior<boolean> = this.windowMode$
-    .pipe(map((mode) => mode !== "pip" && mode !== "flat"))
-    .behavior(this.scope);
+  public readonly showHeader$ = this.scope.behavior<boolean>(
+    this.windowMode$.pipe(map((mode) => mode !== "pip" && mode !== "flat")),
+  );
 
-  public readonly showFooter$: Behavior<boolean> = this.windowMode$
-    .pipe(
+  public readonly showFooter$ = this.scope.behavior<boolean>(
+    this.windowMode$.pipe(
       switchMap((mode) => {
         switch (mode) {
           case "pip":
@@ -1288,20 +1292,23 @@ export class CallViewModel extends ViewModel {
             );
         }
       }),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   /**
    * Whether audio is currently being output through the earpiece.
    */
-  public readonly earpieceMode$: Behavior<boolean> = combineLatest(
-    [
-      this.mediaDevices.audioOutput.available$,
-      this.mediaDevices.audioOutput.selected$,
-    ],
-    (available, selected) =>
-      selected !== undefined && available.get(selected.id)?.type === "earpiece",
-  ).behavior(this.scope);
+  public readonly earpieceMode$ = this.scope.behavior<boolean>(
+    combineLatest(
+      [
+        this.mediaDevices.audioOutput.available$,
+        this.mediaDevices.audioOutput.selected$,
+      ],
+      (available, selected) =>
+        selected !== undefined &&
+        available.get(selected.id)?.type === "earpiece",
+    ),
+  );
 
   /**
    * Callback to toggle between the earpiece and the loudspeaker.
@@ -1309,38 +1316,40 @@ export class CallViewModel extends ViewModel {
    * This will be `null` in case the target does not exist in the list
    * of available audio outputs.
    */
-  public readonly audioOutputSwitcher$: Behavior<{
+  public readonly audioOutputSwitcher$ = this.scope.behavior<{
     targetOutput: "earpiece" | "speaker";
     switch: () => void;
-  } | null> = combineLatest(
-    [
-      this.mediaDevices.audioOutput.available$,
-      this.mediaDevices.audioOutput.selected$,
-    ],
-    (available, selected) => {
-      const selectionType = selected && available.get(selected.id)?.type;
+  } | null>(
+    combineLatest(
+      [
+        this.mediaDevices.audioOutput.available$,
+        this.mediaDevices.audioOutput.selected$,
+      ],
+      (available, selected) => {
+        const selectionType = selected && available.get(selected.id)?.type;
 
-      // If we are in any output mode other than spaeker switch to speaker.
-      const newSelectionType: "earpiece" | "speaker" =
-        selectionType === "speaker" ? "earpiece" : "speaker";
-      const newSelection = [...available].find(
-        ([, d]) => d.type === newSelectionType,
-      );
-      if (newSelection === undefined) return null;
+        // If we are in any output mode other than spaeker switch to speaker.
+        const newSelectionType: "earpiece" | "speaker" =
+          selectionType === "speaker" ? "earpiece" : "speaker";
+        const newSelection = [...available].find(
+          ([, d]) => d.type === newSelectionType,
+        );
+        if (newSelection === undefined) return null;
 
-      const [id] = newSelection;
-      return {
-        targetOutput: newSelectionType,
-        switch: () => this.mediaDevices.audioOutput.select(id),
-      };
-    },
-  ).behavior(this.scope);
+        const [id] = newSelection;
+        return {
+          targetOutput: newSelectionType,
+          switch: (): void => this.mediaDevices.audioOutput.select(id),
+        };
+      },
+    ),
+  );
 
   /**
    * Emits an array of reactions that should be visible on the screen.
    */
-  public readonly visibleReactions$ = showReactions.value$
-    .pipe(
+  public readonly visibleReactions$ = this.scope.behavior(
+    showReactions.value$.pipe(
       switchMap((show) => (show ? this.reactions$ : of({}))),
       scan<
         Record<string, ReactionOption>,
@@ -1355,8 +1364,8 @@ export class CallViewModel extends ViewModel {
         }
         return newSet;
       }, []),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   /**
    * Emits an array of reactions that should be played.

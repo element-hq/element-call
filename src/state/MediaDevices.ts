@@ -106,8 +106,8 @@ function availableRawDevices$(
   const devices$ = createMediaDeviceObserver(kind, logError, false);
   const devicesWithNames$ = createMediaDeviceObserver(kind, logError, true);
 
-  return usingNames$
-    .pipe(
+  return scope.behavior(
+    usingNames$.pipe(
       switchMap((withNames) =>
         withNames
           ? // It might be that there is already a media stream running somewhere,
@@ -123,8 +123,8 @@ function availableRawDevices$(
           : devices$,
       ),
       startWith([]),
-    )
-    .behavior(scope);
+    ),
+  );
 }
 
 function buildDeviceMap(
@@ -165,15 +165,12 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   private readonly availableRaw$: Behavior<MediaDeviceInfo[]> =
     availableRawDevices$("audioinput", this.usingNames$, this.scope);
 
-  public readonly available$ = this.availableRaw$
-    .pipe(map(buildDeviceMap))
-    .behavior(this.scope);
+  public readonly available$ = this.scope.behavior(
+    this.availableRaw$.pipe(map(buildDeviceMap)),
+  );
 
-  public readonly selected$ = selectDevice$(
-    this.available$,
-    audioInputSetting.value$,
-  )
-    .pipe(
+  public readonly selected$ = this.scope.behavior(
+    selectDevice$(this.available$, audioInputSetting.value$).pipe(
       map((id) =>
         id === undefined
           ? undefined
@@ -191,8 +188,8 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
               ),
             },
       ),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   public select(id: string): void {
     audioInputSetting.setValue(id);
@@ -211,12 +208,8 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
 class AudioOutput
   implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
 {
-  public readonly available$ = availableRawDevices$(
-    "audiooutput",
-    this.usingNames$,
-    this.scope,
-  )
-    .pipe(
+  public readonly available$ = this.scope.behavior(
+    availableRawDevices$("audiooutput", this.usingNames$, this.scope).pipe(
       map((availableRaw) => {
         const available: Map<string, AudioOutputDeviceLabel> =
           buildDeviceMap(availableRaw);
@@ -233,14 +226,11 @@ class AudioOutput
         // automatically track the default device.
         return available;
       }),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
-  public readonly selected$ = selectDevice$(
-    this.available$,
-    audioOutputSetting.value$,
-  )
-    .pipe(
+  public readonly selected$ = this.scope.behavior(
+    selectDevice$(this.available$, audioOutputSetting.value$).pipe(
       map((id) =>
         id === undefined
           ? undefined
@@ -249,8 +239,8 @@ class AudioOutput
               virtualEarpiece: false,
             },
       ),
-    )
-    .behavior(this.scope);
+    ),
+  );
   public select(id: string): void {
     audioOutputSetting.setValue(id);
   }
@@ -268,30 +258,32 @@ class AudioOutput
 class ControlledAudioOutput
   implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
 {
-  public readonly available$ = combineLatest(
-    [controlledAvailableOutputDevices$.pipe(startWith([])), iosDeviceMenu$],
-    (availableRaw, iosDeviceMenu) => {
-      const available = new Map<string, AudioOutputDeviceLabel>(
-        availableRaw.map(
-          ({ id, name, isEarpiece, isSpeaker /*,isExternalHeadset*/ }) => {
-            let deviceLabel: AudioOutputDeviceLabel;
-            // if (isExternalHeadset) // Do we want this?
-            if (isEarpiece) deviceLabel = { type: "earpiece" };
-            else if (isSpeaker) deviceLabel = { type: "speaker" };
-            else deviceLabel = { type: "name", name };
-            return [id, deviceLabel];
-          },
-        ),
-      );
+  public readonly available$ = this.scope.behavior(
+    combineLatest(
+      [controlledAvailableOutputDevices$.pipe(startWith([])), iosDeviceMenu$],
+      (availableRaw, iosDeviceMenu) => {
+        const available = new Map<string, AudioOutputDeviceLabel>(
+          availableRaw.map(
+            ({ id, name, isEarpiece, isSpeaker /*,isExternalHeadset*/ }) => {
+              let deviceLabel: AudioOutputDeviceLabel;
+              // if (isExternalHeadset) // Do we want this?
+              if (isEarpiece) deviceLabel = { type: "earpiece" };
+              else if (isSpeaker) deviceLabel = { type: "speaker" };
+              else deviceLabel = { type: "name", name };
+              return [id, deviceLabel];
+            },
+          ),
+        );
 
-      // Create a virtual earpiece device in case a non-earpiece device is
-      // designated for this purpose
-      if (iosDeviceMenu && availableRaw.some((d) => d.forEarpiece))
-        available.set(EARPIECE_CONFIG_ID, { type: "earpiece" });
+        // Create a virtual earpiece device in case a non-earpiece device is
+        // designated for this purpose
+        if (iosDeviceMenu && availableRaw.some((d) => d.forEarpiece))
+          available.set(EARPIECE_CONFIG_ID, { type: "earpiece" });
 
-      return available;
-    },
-  ).behavior(this.scope);
+        return available;
+      },
+    ),
+  );
 
   private readonly deviceSelection$ = new Subject<string>();
 
@@ -299,21 +291,23 @@ class ControlledAudioOutput
     this.deviceSelection$.next(id);
   }
 
-  public readonly selected$ = combineLatest(
-    [
-      this.available$,
-      merge(
-        controlledOutputSelection$.pipe(startWith(undefined)),
-        this.deviceSelection$,
-      ),
-    ],
-    (available, preferredId) => {
-      const id = preferredId ?? available.keys().next().value;
-      return id === undefined
-        ? undefined
-        : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID };
-    },
-  ).behavior(this.scope);
+  public readonly selected$ = this.scope.behavior(
+    combineLatest(
+      [
+        this.available$,
+        merge(
+          controlledOutputSelection$.pipe(startWith(undefined)),
+          this.deviceSelection$,
+        ),
+      ],
+      (available, preferredId) => {
+        const id = preferredId ?? available.keys().next().value;
+        return id === undefined
+          ? undefined
+          : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID };
+      },
+    ),
+  );
 
   public constructor(private readonly scope: ObservableScope) {
     this.selected$.subscribe((device) => {
@@ -335,19 +329,16 @@ class ControlledAudioOutput
 }
 
 class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
-  public readonly available$ = availableRawDevices$(
-    "videoinput",
-    this.usingNames$,
-    this.scope,
-  )
-    .pipe(map(buildDeviceMap))
-    .behavior(this.scope);
-  public readonly selected$ = selectDevice$(
-    this.available$,
-    videoInputSetting.value$,
-  )
-    .pipe(map((id) => (id === undefined ? undefined : { id })))
-    .behavior(this.scope);
+  public readonly available$ = this.scope.behavior(
+    availableRawDevices$("videoinput", this.usingNames$, this.scope).pipe(
+      map(buildDeviceMap),
+    ),
+  );
+  public readonly selected$ = this.scope.behavior(
+    selectDevice$(this.available$, videoInputSetting.value$).pipe(
+      map((id) => (id === undefined ? undefined : { id })),
+    ),
+  );
   public select(id: string): void {
     videoInputSetting.setValue(id);
   }
@@ -381,12 +372,12 @@ export class MediaDevices {
   // you to do to receive device names in lieu of a more explicit permissions
   // API. This flag never resets to false, because once permissions are granted
   // the first time, the user won't be prompted again until reload of the page.
-  private readonly usingNames$ = this.deviceNamesRequest$
-    .pipe(
+  private readonly usingNames$ = this.scope.behavior(
+    this.deviceNamesRequest$.pipe(
       map(() => true),
       startWith(false),
-    )
-    .behavior(this.scope);
+    ),
+  );
   public readonly audioInput: MediaDevice<
     DeviceLabel,
     SelectedAudioInputDevice

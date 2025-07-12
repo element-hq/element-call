@@ -232,13 +232,13 @@ abstract class BaseMediaViewModel extends ViewModel {
   private observeTrackReference$(
     source: Track.Source,
   ): Behavior<TrackReferenceOrPlaceholder | undefined> {
-    return this.participant$
-      .pipe(
+    return this.scope.behavior(
+      this.participant$.pipe(
         switchMap((p) =>
           p === undefined ? of(undefined) : observeTrackReference$(p, source),
         ),
-      )
-      .behavior(this.scope);
+      ),
+    );
   }
 
   public constructor(
@@ -269,16 +269,18 @@ abstract class BaseMediaViewModel extends ViewModel {
     const audio$ = this.observeTrackReference$(audioSource);
     this.video$ = this.observeTrackReference$(videoSource);
 
-    this.unencryptedWarning$ = combineLatest(
-      [audio$, this.video$],
-      (a, v) =>
-        encryptionSystem.kind !== E2eeType.NONE &&
-        (a?.publication?.isEncrypted === false ||
-          v?.publication?.isEncrypted === false),
-    ).behavior(this.scope);
+    this.unencryptedWarning$ = this.scope.behavior(
+      combineLatest(
+        [audio$, this.video$],
+        (a, v) =>
+          encryptionSystem.kind !== E2eeType.NONE &&
+          (a?.publication?.isEncrypted === false ||
+            v?.publication?.isEncrypted === false),
+      ),
+    );
 
-    this.encryptionStatus$ = this.participant$
-      .pipe(
+    this.encryptionStatus$ = this.scope.behavior(
+      this.participant$.pipe(
         switchMap((participant): Observable<EncryptionStatus> => {
           if (!participant) {
             return of(EncryptionStatus.Connecting);
@@ -338,8 +340,8 @@ abstract class BaseMediaViewModel extends ViewModel {
             );
           }
         }),
-      )
-      .behavior(this.scope);
+      ),
+    );
   }
 }
 
@@ -358,8 +360,8 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   /**
    * Whether the participant is speaking.
    */
-  public readonly speaking$ = this.participant$
-    .pipe(
+  public readonly speaking$ = this.scope.behavior(
+    this.participant$.pipe(
       switchMap((p) =>
         p
           ? observeParticipantEvents(
@@ -368,8 +370,8 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
             ).pipe(map((p) => p.isSpeaking))
           : of(false),
       ),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   /**
    * Whether this participant is sending audio (i.e. is unmuted on their side).
@@ -407,17 +409,17 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       displayName$,
     );
 
-    const media$ = participant$
-      .pipe(
+    const media$ = this.scope.behavior(
+      participant$.pipe(
         switchMap((p) => (p && observeParticipantMedia(p)) ?? of(undefined)),
-      )
-      .behavior(this.scope);
-    this.audioEnabled$ = media$
-      .pipe(map((m) => m?.microphoneTrack?.isMuted === false))
-      .behavior(this.scope);
-    this.videoEnabled$ = media$
-      .pipe(map((m) => m?.cameraTrack?.isMuted === false))
-      .behavior(this.scope);
+      ),
+    );
+    this.audioEnabled$ = this.scope.behavior(
+      media$.pipe(map((m) => m?.microphoneTrack?.isMuted === false)),
+    );
+    this.videoEnabled$ = this.scope.behavior(
+      media$.pipe(map((m) => m?.cameraTrack?.isMuted === false)),
+    );
   }
 
   public toggleFitContain(): void {
@@ -443,8 +445,8 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   /**
    * Whether the video should be mirrored.
    */
-  public readonly mirror$ = this.video$
-    .pipe(
+  public readonly mirror$ = this.scope.behavior(
+    this.video$.pipe(
       switchMap((v) => {
         const track = v?.publication?.track;
         if (!(track instanceof LocalTrack)) return of(false);
@@ -455,8 +457,8 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
           map(() => facingModeFromLocalTrack(track).facingMode === "user"),
         );
       }),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   /**
    * Whether to show this tile in a highly visible location near the start of
@@ -520,12 +522,12 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
    * The volume to which this participant's audio is set, as a scalar
    * multiplier.
    */
-  public readonly localVolume$: Behavior<number> = merge(
-    this.locallyMutedToggle$.pipe(map(() => "toggle mute" as const)),
-    this.localVolumeAdjustment$,
-    this.localVolumeCommit$.pipe(map(() => "commit" as const)),
-  )
-    .pipe(
+  public readonly localVolume$ = this.scope.behavior<number>(
+    merge(
+      this.locallyMutedToggle$.pipe(map(() => "toggle mute" as const)),
+      this.localVolumeAdjustment$,
+      this.localVolumeCommit$.pipe(map(() => "commit" as const)),
+    ).pipe(
       accumulate({ volume: 1, committedVolume: 1 }, (state, event) => {
         switch (event) {
           case "toggle mute":
@@ -548,15 +550,15 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
         }
       }),
       map(({ volume }) => volume),
-    )
-    .behavior(this.scope);
+    ),
+  );
 
   /**
    * Whether this participant's audio is disabled.
    */
-  public readonly locallyMuted$: Behavior<boolean> = this.localVolume$
-    .pipe(map((volume) => volume === 0))
-    .behavior(this.scope);
+  public readonly locallyMuted$ = this.scope.behavior<boolean>(
+    this.localVolume$.pipe(map((volume) => volume === 0)),
+  );
 
   public constructor(
     id: string,
