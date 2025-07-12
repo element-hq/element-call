@@ -44,8 +44,19 @@ Observable.prototype.behavior = function <T>(
   scope: ObservableScope,
 ): Behavior<T> {
   const subject$ = new BehaviorSubject<T | typeof nothing>(nothing);
-  // Push values from the Observable into the BehaviorSubject
-  this.pipe(scope.bind(), distinctUntilChanged()).subscribe(subject$);
+  // Push values from the Observable into the BehaviorSubject.
+  // BehaviorSubjects have an undesirable feature where if you call 'complete',
+  // they will no longer re-emit their current value upon subscription. We want
+  // to support Observables that complete (for example `of({})`), so we have to
+  // take care to not propagate the completion event.
+  this.pipe(scope.bind(), distinctUntilChanged()).subscribe({
+    next(value) {
+      subject$.next(value);
+    },
+    error(err) {
+      subject$.error(err);
+    },
+  });
   if (subject$.value === nothing)
     throw new Error("Behavior failed to synchronously emit an initial value");
   return subject$ as Behavior<T>;
