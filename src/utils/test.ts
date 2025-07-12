@@ -4,7 +4,7 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
-import { map, type Observable, of, type SchedulerLike } from "rxjs";
+import { map, type Observable, of, type SchedulerLike, startWith } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, vi, vitest } from "vitest";
 import {
@@ -47,7 +47,8 @@ import {
 } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
 import { type MediaDevices } from "../state/MediaDevices";
-import { constant } from "../state/Behavior";
+import { type Behavior, constant } from "../state/Behavior";
+import { ObservableScope } from "../state/ObservableScope";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -68,6 +69,11 @@ export interface OurRunHelpers extends RunHelpers {
    * diagram.
    */
   schedule: (marbles: string, actions: Record<string, () => void>) => void;
+  behavior<T = string>(
+    marbles: string,
+    values?: { [marble: string]: T },
+    error?: unknown,
+  ): Behavior<T>;
 }
 
 interface TestRunnerGlobal {
@@ -83,6 +89,7 @@ export function withTestScheduler(
   const scheduler = new TestScheduler((actual, expected) => {
     expect(actual).deep.equals(expected);
   });
+  const scope = new ObservableScope();
   // we set the test scheduler as a global so that you can watch it in a debugger
   // and get the frame number. e.g. `rxjsTestScheduler?.now()`
   (global as unknown as TestRunnerGlobal).rxjsTestScheduler = scheduler;
@@ -99,8 +106,32 @@ export function withTestScheduler(
         // Run the actions and verify that none of them error
         helpers.expectObservable(actionsObservable$).toBe(marbles, results);
       },
+      behavior<T>(
+        marbles: string,
+        values?: { [marble: string]: T },
+        error?: unknown,
+      ) {
+        // Generate a hot Observable with helpers.hot and use it as a Behavior.
+        // To do this, we need to ensure that the initial value emits
+        // synchronously upon subscription. The issue is that helpers.hot emits
+        // frame 0 of the marble diagram *asynchronously*, only once we return
+        // from the continuation, so we need to splice out the initial marble
+        // and turn it into a proper initial value.
+        const initialMarbleIndex = marbles.search(/[^ ]/);
+        if (initialMarbleIndex === -1)
+          throw new Error("Behavior must have an initial value");
+        const initialMarble = marbles[initialMarbleIndex];
+        const initialValue =
+          values === undefined ? (initialMarble as T) : values[initialMarble];
+        // The remainder of the marble diagram should start on frame 1
+        return helpers
+          .hot(`-${marbles.slice(initialMarbleIndex + 1)}`, values, error)
+          .pipe(startWith(initialValue))
+          .behavior(scope);
+      },
     }),
   );
+  scope.end();
 }
 
 interface EmitterMock<T> {
