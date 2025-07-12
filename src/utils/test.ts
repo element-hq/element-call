@@ -243,7 +243,7 @@ export async function withLocalMedia(
   const vm = new LocalUserMediaViewModel(
     "local",
     mockMatrixRoomMember(localRtcMember, roomMember),
-    of(localParticipant),
+    constant(localParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
@@ -331,7 +331,7 @@ export class MockRTCSession extends TypedEventEmitter<
   }
 
   public withMemberships(
-    rtcMembers$: Observable<Partial<CallMembership>[]>,
+    rtcMembers$: Behavior<Partial<CallMembership>[]>,
   ): MockRTCSession {
     rtcMembers$.subscribe((m) => {
       const old = this.memberships;

@@ -251,8 +251,8 @@ class UserMedia {
     LocalParticipant | RemoteParticipant | undefined
   >;
 
-  public readonly speaker$: Observable<boolean>;
-  public readonly presenter$: Observable<boolean>;
+  public readonly speaker$: Behavior<boolean>;
+  public readonly presenter$: Behavior<boolean>;
   public constructor(
     public readonly id: string,
     member: RoomMember | undefined,
@@ -269,7 +269,7 @@ class UserMedia {
       this.vm = new LocalUserMediaViewModel(
         this.id,
         member,
-        this.participant$.asObservable() as Observable<LocalParticipant>,
+        this.participant$ as Behavior<LocalParticipant>,
         encryptionSystem,
         livekitRoom,
         displayname$.behavior(this.scope),
@@ -386,21 +386,23 @@ function getRoomMemberFromRtcMember(
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
 export class CallViewModel extends ViewModel {
-  public readonly localVideo$: Observable<LocalVideoTrack | null> =
+  public readonly localVideo$: Behavior<LocalVideoTrack | null> =
     observeTrackReference$(
-      of(this.livekitRoom.localParticipant),
+      this.livekitRoom.localParticipant,
       Track.Source.Camera,
-    ).pipe(
-      map((trackRef) => {
-        const track = trackRef?.publication?.track;
-        return track instanceof LocalVideoTrack ? track : null;
-      }),
-    );
+    )
+      .pipe(
+        map((trackRef) => {
+          const track = trackRef?.publication?.track;
+          return track instanceof LocalVideoTrack ? track : null;
+        }),
+      )
+      .behavior(this.scope);
 
   /**
    * The raw list of RemoteParticipants as reported by LiveKit
    */
-  private readonly rawRemoteParticipants$: Observable<RemoteParticipant[]> =
+  private readonly rawRemoteParticipants$: Behavior<RemoteParticipant[]> =
     connectedParticipantsObserver(this.livekitRoom)
       .pipe(startWith([]))
       .behavior(this.scope);
@@ -409,44 +411,46 @@ export class CallViewModel extends ViewModel {
    * Lists of RemoteParticipants to "hold" on display, even if LiveKit claims that
    * they've left
    */
-  private readonly remoteParticipantHolds$: Observable<RemoteParticipant[][]> =
-    this.connectionState$.pipe(
-      withLatestFrom(this.rawRemoteParticipants$),
-      mergeMap(([s, ps]) => {
-        // Whenever we switch focuses, we should retain all the previous
-        // participants for at least POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS ms to
-        // give their clients time to switch over and avoid jarring layout shifts
-        if (s === ECAddonConnectionState.ECSwitchingFocus) {
-          return concat(
-            // Hold these participants
-            of({ hold: ps }),
-            // Wait for time to pass and the connection state to have changed
-            forkJoin([
-              timer(POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
-              this.connectionState$.pipe(
-                filter((s) => s !== ECAddonConnectionState.ECSwitchingFocus),
-                take(1),
-              ),
-              // Then unhold them
-            ]).pipe(map(() => ({ unhold: ps }))),
-          );
-        } else {
-          return EMPTY;
-        }
-      }),
-      // Accumulate the hold instructions into a single list showing which
-      // participants are being held
-      accumulate([] as RemoteParticipant[][], (holds, instruction) =>
-        "hold" in instruction
-          ? [instruction.hold, ...holds]
-          : holds.filter((h) => h !== instruction.unhold),
-      ),
-    );
+  private readonly remoteParticipantHolds$: Behavior<RemoteParticipant[][]> =
+    this.connectionState$
+      .pipe(
+        withLatestFrom(this.rawRemoteParticipants$),
+        mergeMap(([s, ps]) => {
+          // Whenever we switch focuses, we should retain all the previous
+          // participants for at least POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS ms to
+          // give their clients time to switch over and avoid jarring layout shifts
+          if (s === ECAddonConnectionState.ECSwitchingFocus) {
+            return concat(
+              // Hold these participants
+              of({ hold: ps }),
+              // Wait for time to pass and the connection state to have changed
+              forkJoin([
+                timer(POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
+                this.connectionState$.pipe(
+                  filter((s) => s !== ECAddonConnectionState.ECSwitchingFocus),
+                  take(1),
+                ),
+                // Then unhold them
+              ]).pipe(map(() => ({ unhold: ps }))),
+            );
+          } else {
+            return EMPTY;
+          }
+        }),
+        // Accumulate the hold instructions into a single list showing which
+        // participants are being held
+        accumulate([] as RemoteParticipant[][], (holds, instruction) =>
+          "hold" in instruction
+            ? [instruction.hold, ...holds]
+            : holds.filter((h) => h !== instruction.unhold),
+        ),
+      )
+      .behavior(this.scope);
 
   /**
    * The RemoteParticipants including those that are being "held" on the screen
    */
-  private readonly remoteParticipants$: Observable<RemoteParticipant[]> =
+  private readonly remoteParticipants$: Behavior<RemoteParticipant[]> =
     combineLatest(
       [this.rawRemoteParticipants$, this.remoteParticipantHolds$],
       (raw, holds) => {
@@ -465,7 +469,7 @@ export class CallViewModel extends ViewModel {
 
         return result;
       },
-    );
+    ).behavior(this.scope);
 
   /**
    * Displaynames for each member of the call. This will disambiguate
@@ -709,11 +713,13 @@ export class CallViewModel extends ViewModel {
   /**
    * List of MediaItems that we want to display, that are of type UserMedia
    */
-  private readonly userMedia$: Observable<UserMedia[]> = this.mediaItems$.pipe(
-    map((mediaItems) =>
-      mediaItems.filter((m): m is UserMedia => m instanceof UserMedia),
-    ),
-  );
+  private readonly userMedia$: Behavior<UserMedia[]> = this.mediaItems$
+    .pipe(
+      map((mediaItems) =>
+        mediaItems.filter((m): m is UserMedia => m instanceof UserMedia),
+      ),
+    )
+    .behavior(this.scope);
 
   public readonly memberChanges$ = this.userMedia$
     .pipe(map((mediaItems) => mediaItems.map((m) => m.id)))

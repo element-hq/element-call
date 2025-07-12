@@ -157,10 +157,13 @@ export function useLivekit(
     useObservableEagerState(
       useObservable(
         (room$) =>
-          observeTrackReference$(
-            room$.pipe(map(([room]) => room.localParticipant)),
-            Track.Source.Camera,
-          ).pipe(
+          room$.pipe(
+            switchMap(([room]) =>
+              observeTrackReference$(
+                room.localParticipant,
+                Track.Source.Camera,
+              ),
+            ),
             map((trackRef) => {
               const track = trackRef?.publication?.track;
               return track instanceof LocalVideoTrack ? track : null;
