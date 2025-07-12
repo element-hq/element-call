@@ -124,10 +124,11 @@ export function withTestScheduler(
         const initialValue =
           values === undefined ? (initialMarble as T) : values[initialMarble];
         // The remainder of the marble diagram should start on frame 1
-        return helpers
-          .hot(`-${marbles.slice(initialMarbleIndex + 1)}`, values, error)
-          .pipe(startWith(initialValue))
-          .behavior(scope);
+        return scope.behavior(
+          helpers
+            .hot(`-${marbles.slice(initialMarbleIndex + 1)}`, values, error)
+            .pipe(startWith(initialValue)),
+        );
       },
     }),
   );
