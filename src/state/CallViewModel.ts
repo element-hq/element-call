@@ -403,7 +403,7 @@ export class CallViewModel extends ViewModel {
    */
   private readonly rawRemoteParticipants$ = this.scope.behavior<
     RemoteParticipant[]
-  >(connectedParticipantsObserver(this.livekitRoom).pipe(startWith([])));
+  >(connectedParticipantsObserver(this.livekitRoom), []);
 
   /**
    * Lists of RemoteParticipants to "hold" on display, even if LiveKit claims that
@@ -889,9 +889,7 @@ export class CallViewModel extends ViewModel {
       distinctUntilChanged(),
     );
 
-  private readonly pipEnabled$: Observable<boolean> = setPipEnabled$.pipe(
-    startWith(false),
-  );
+  private readonly pipEnabled$ = this.scope.behavior(setPipEnabled$, false);
 
   private readonly naturalWindowMode$ = this.scope.behavior<WindowMode>(
     fromEvent(window, "resize").pipe(
