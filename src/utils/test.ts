@@ -4,7 +4,7 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
-import { map, type Observable, of, type SchedulerLike, startWith } from "rxjs";
+import { map, type Observable, of, type SchedulerLike } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, vi, vitest } from "vitest";
 import {
@@ -125,9 +125,12 @@ export function withTestScheduler(
           values === undefined ? (initialMarble as T) : values[initialMarble];
         // The remainder of the marble diagram should start on frame 1
         return scope.behavior(
-          helpers
-            .hot(`-${marbles.slice(initialMarbleIndex + 1)}`, values, error)
-            .pipe(startWith(initialValue)),
+          helpers.hot(
+            `-${marbles.slice(initialMarbleIndex + 1)}`,
+            values,
+            error,
+          ),
+          initialValue,
         );
       },
     }),

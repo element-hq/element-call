@@ -122,8 +122,8 @@ function availableRawDevices$(
             )
           : devices$,
       ),
-      startWith([]),
     ),
+    [],
   );
 }
 
@@ -373,10 +373,8 @@ export class MediaDevices {
   // API. This flag never resets to false, because once permissions are granted
   // the first time, the user won't be prompted again until reload of the page.
   private readonly usingNames$ = this.scope.behavior(
-    this.deviceNamesRequest$.pipe(
-      map(() => true),
-      startWith(false),
-    ),
+    this.deviceNamesRequest$.pipe(map(() => true)),
+    false,
   );
   public readonly audioInput: MediaDevice<
     DeviceLabel,
