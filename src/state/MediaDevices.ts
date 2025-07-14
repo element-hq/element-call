@@ -258,6 +258,15 @@ class AudioOutput
 class ControlledAudioOutput
   implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
 {
+  // We need to subscribe to the raw devices so that the OS does update the input
+  // back to what it was before. otherwise we will switch back to the default
+  // whenever we allocate a new stream.
+  public readonly availableRaw$ = availableRawDevices$(
+    "audiooutput",
+    this.usingNames$,
+    this.scope,
+  );
+
   public readonly available$ = this.scope.behavior(
     combineLatest(
       [controlledAvailableOutputDevices$.pipe(startWith([])), iosDeviceMenu$],
@@ -309,14 +318,17 @@ class ControlledAudioOutput
     ),
   );
 
-  public constructor(private readonly scope: ObservableScope) {
+  public constructor(
+    private readonly usingNames$: Behavior<boolean>,
+    private readonly scope: ObservableScope,
+  ) {
     this.selected$.subscribe((device) => {
       // Let the hosting application know which output device has been selected.
       // This information is probably only of interest if the earpiece mode has
       // been selected - for example, Element X iOS listens to this to determine
       // whether it should enable the proximity sensor.
       if (device !== undefined) {
-        logger.info("[controlled-output] setAudioDeviceSelect called:", device);
+        logger.info("[controlled-output] onAudioDeviceSelect called:", device);
         window.controls.onAudioDeviceSelect?.(device.id);
         // Also invoke the deprecated callback for backward compatibility
         window.controls.onOutputDeviceSelect?.(device.id);
@@ -324,6 +336,9 @@ class ControlledAudioOutput
     });
     this.available$.subscribe((available) => {
       logger.info("[controlled-output] available devices:", available);
+    });
+    this.availableRaw$.subscribe((availableRaw) => {
+      logger.info("[controlled-output] available raw devices:", availableRaw);
     });
   }
 }
@@ -385,7 +400,7 @@ export class MediaDevices {
     AudioOutputDeviceLabel,
     SelectedAudioOutputDevice
   > = getUrlParams().controlledAudioDevices
-    ? new ControlledAudioOutput(this.scope)
+    ? new ControlledAudioOutput(this.usingNames$, this.scope)
     : new AudioOutput(this.usingNames$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
