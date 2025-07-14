@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC } from "react";
 import { BigIcon, Button, Heading, Text } from "@vector-im/compound-web";
-import { EarpieceIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { VoiceCallIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 
 import styles from "./EarpieceOverlay.module.css";
@@ -22,7 +22,7 @@ export const EarpieceOverlay: FC<Props> = ({ show, onBackToVideoPressed }) => {
   return (
     <div className={styles.overlay} data-show={show}>
       <BigIcon className={styles.icon}>
-        <EarpieceIcon aria-hidden />
+        <VoiceCallIcon aria-hidden />
       </BigIcon>
       <Heading as="h2" weight="semibold" size="md">
         {t("handset.overlay_title")}
