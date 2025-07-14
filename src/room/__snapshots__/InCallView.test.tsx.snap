@@ -109,7 +109,7 @@ exports[`InCallView > rendering > renders 1`] = `
       <h2
         class="_typography_6v6n8_153 _font-heading-md-semibold_6v6n8_112"
       >
-        Earpiece Mode
+        Handset Mode
       </h2>
       <p
         class="_typography_6v6n8_153 _font-body-md-regular_6v6n8_50"

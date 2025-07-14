@@ -175,7 +175,7 @@
       "camera_numbered": "Kamera {{n}}",
       "default": "Standard",
       "default_named": "Standard<2> ({{name}} )</2>",
-      "earpiece": "Ohrhörer",
+      "handset": "Ohrhörer",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon{{n}}",
       "speaker": "Lautsprecher",

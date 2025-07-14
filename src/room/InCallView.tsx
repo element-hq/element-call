@@ -459,7 +459,7 @@ export const InCallView: FC<InCallViewProps> = ({
       const isEarpieceTarget = audioOutputSwitcher.targetOutput === "earpiece";
       const Icon = isEarpieceTarget ? EarpieceIcon : VolumeOnSolidIcon;
       const label = isEarpieceTarget
-        ? t("settings.devices.earpiece")
+        ? t("settings.devices.handset")
         : t("settings.devices.loudspeaker");
 
       return (

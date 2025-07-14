@@ -25,9 +25,9 @@ export const EarpieceOverlay: FC<Props> = ({ show, onBackToVideoPressed }) => {
         <EarpieceIcon aria-hidden />
       </BigIcon>
       <Heading as="h2" weight="semibold" size="md">
-        {t("earpiece.overlay_title")}
+        {t("handset.overlay_title")}
       </Heading>
-      <Text>{t("earpiece.overlay_description")}</Text>
+      <Text>{t("handset.overlay_description")}</Text>
       <Button
         kind="primary"
         size="sm"
@@ -35,7 +35,7 @@ export const EarpieceOverlay: FC<Props> = ({ show, onBackToVideoPressed }) => {
           onBackToVideoPressed?.();
         }}
       >
-        {t("earpiece.overlay_back_button")}
+        {t("handset.overlay_back_button")}
       </Button>
     </div>
   );
