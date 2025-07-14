@@ -1276,7 +1276,7 @@ export class CallViewModel extends ViewModel {
     (available, selected) => {
       const selectionType = selected && available.get(selected.id)?.type;
 
-      // If we are in any output mode other than spaeker switch to speaker.
+      // If we are in any output mode other than speaker switch to speaker.
       const newSelectionType =
         selectionType === "speaker" ? "earpiece" : "speaker";
       const newSelection = [...available].find(
