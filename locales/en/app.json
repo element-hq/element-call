@@ -79,11 +79,6 @@
     "use_to_device_key_transport": "Use to device key transport. This will fallback to room key transport when another call member sent a room key"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
-  "handset": {
-    "overlay_back_button": "Back to Speaker Mode",
-    "overlay_description": "Only works while using app",
-    "overlay_title": "Handset Mode"
-  },
   "error": {
     "call_is_not_supported": "Call is not supported",
     "call_not_found": "Call not found",
@@ -109,6 +104,11 @@
     "knock_reject_body": "Your request to join was declined.",
     "knock_reject_heading": "Access denied",
     "reason": "Reason: {{reason}}"
+  },
+  "handset": {
+    "overlay_back_button": "Back to Speaker Mode",
+    "overlay_description": "Only works while using app",
+    "overlay_title": "Handset Mode"
   },
   "hangup_button_label": "End call",
   "header_label": "Element Call Home",
