@@ -131,6 +131,9 @@ export async function enterRTCSession(
       makeKeyDelay:
         matrixRtcSessionConfig?.wait_for_key_rotation_ms ??
         matrixRtcSessionConfig?.key_rotation_on_leave_delay,
+      // Do not expose the `delayedEventRestartLocalTimeoutMs` property to the config.
+      // This might be too involved and just decrease the experience of configuring EC.
+      delayedEventRestartLocalTimeoutMs: 2300,
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
       useExperimentalToDeviceTransport,
