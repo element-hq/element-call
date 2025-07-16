@@ -37,6 +37,8 @@ export const EarpieceOverlay: FC<Props> = ({ show, onBackToVideoPressed }) => {
       >
         {t("handset.overlay_back_button")}
       </Button>
+      {/* This spacer is used to give the overlay an offset to the top. */}
+      <div className={styles.spacer} />
     </div>
   );
 };
