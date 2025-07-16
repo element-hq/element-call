@@ -137,6 +137,9 @@ exports[`InCallView > rendering > renders 1`] = `
       >
         Back to Speaker Mode
       </button>
+      <div
+        class="spacer"
+      />
     </div>
     <div
       class="container"
