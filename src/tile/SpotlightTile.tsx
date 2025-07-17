@@ -23,7 +23,7 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
 import { type Observable, map } from "rxjs";
-import { useObservableEagerState, useObservableRef } from "observable-hooks";
+import { useObservableRef } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
@@ -43,6 +43,7 @@ import { useMergedRefs } from "../useMergedRefs";
 import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
 import { type SpotlightTileViewModel } from "../state/TileViewModel";
+import { useBehavior } from "../useBehavior";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
@@ -73,7 +74,7 @@ const SpotlightLocalUserMediaItem: FC<SpotlightLocalUserMediaItemProps> = ({
   vm,
   ...props
 }) => {
-  const mirror = useObservableEagerState(vm.mirror$);
+  const mirror = useBehavior(vm.mirror$);
   return <MediaView mirror={mirror} {...props} />;
 };
 
@@ -87,8 +88,8 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
   vm,
   ...props
 }) => {
-  const videoEnabled = useObservableEagerState(vm.videoEnabled$);
-  const cropVideo = useObservableEagerState(vm.cropVideo$);
+  const videoEnabled = useBehavior(vm.videoEnabled$);
+  const cropVideo = useBehavior(vm.cropVideo$);
 
   const baseProps: SpotlightUserMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
@@ -130,10 +131,10 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
-  const displayName = useObservableEagerState(vm.displayname$);
-  const video = useObservableEagerState(vm.video$);
-  const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
-  const encryptionStatus = useObservableEagerState(vm.encryptionStatus$);
+  const displayName = useBehavior(vm.displayName$);
+  const video = useBehavior(vm.video$);
+  const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
+  const encryptionStatus = useBehavior(vm.encryptionStatus$);
 
   // Hook this item up to the intersection observer
   useEffect(() => {
@@ -200,8 +201,8 @@ export const SpotlightTile: FC<Props> = ({
   const { t } = useTranslation();
   const [ourRef, root$] = useObservableRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
-  const maximised = useObservableEagerState(vm.maximised$);
-  const media = useObservableEagerState(vm.media$);
+  const maximised = useBehavior(vm.maximised$);
+  const media = useBehavior(vm.media$);
   const [visibleId, setVisibleId] = useState<string | undefined>(media[0]?.id);
   const latestMedia = useLatest(media);
   const latestVisibleId = useLatest(visibleId);

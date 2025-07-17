@@ -6,12 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ReactNode, useCallback } from "react";
-import { useObservableEagerState } from "observable-hooks";
 
 import { type SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/CallViewModel";
 import { type CallLayout } from "./CallLayout";
 import { type DragCallback, useUpdateLayout } from "./Grid";
 import styles from "./SpotlightExpandedLayout.module.css";
+import { useBehavior } from "../useBehavior";
 
 /**
  * An implementation of the "expanded spotlight" layout, in which the spotlight
@@ -46,7 +46,7 @@ export const makeSpotlightExpandedLayout: CallLayout<
     Slot,
   }): ReactNode {
     useUpdateLayout();
-    const pipAlignmentValue = useObservableEagerState(pipAlignment$);
+    const pipAlignmentValue = useBehavior(pipAlignment$);
 
     const onDragPip: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>

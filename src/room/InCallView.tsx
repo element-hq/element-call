@@ -25,7 +25,7 @@ import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
-import { useObservable, useObservableEagerState } from "observable-hooks";
+import { useObservable } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import {
@@ -112,6 +112,7 @@ import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMembership
 import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
 import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
+import { useBehavior } from "../useBehavior.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -251,7 +252,7 @@ export const InCallView: FC<InCallViewProps> = ({
     room: livekitRoom,
   });
 
-  const muteAllAudio = useObservableEagerState(muteAllAudio$);
+  const muteAllAudio = useBehavior(muteAllAudio$);
 
   // This seems like it might be enough logic to use move it into the call view model?
   const [didFallbackToRoomKey, setDidFallbackToRoomKey] = useState(false);
@@ -302,15 +303,15 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
-  const windowMode = useObservableEagerState(vm.windowMode$);
-  const layout = useObservableEagerState(vm.layout$);
-  const tileStoreGeneration = useObservableEagerState(vm.tileStoreGeneration$);
+  const windowMode = useBehavior(vm.windowMode$);
+  const layout = useBehavior(vm.layout$);
+  const tileStoreGeneration = useBehavior(vm.tileStoreGeneration$);
   const [debugTileLayout] = useSetting(debugTileLayoutSetting);
-  const gridMode = useObservableEagerState(vm.gridMode$);
-  const showHeader = useObservableEagerState(vm.showHeader$);
-  const showFooter = useObservableEagerState(vm.showFooter$);
-  const earpieceMode = useObservableEagerState(vm.earpieceMode$);
-  const audioOutputSwitcher = useObservableEagerState(vm.audioOutputSwitcher$);
+  const gridMode = useBehavior(vm.gridMode$);
+  const showHeader = useBehavior(vm.showHeader$);
+  const showFooter = useBehavior(vm.showFooter$);
+  const earpieceMode = useBehavior(vm.earpieceMode$);
+  const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const switchCamera = useSwitchCamera(vm.localVideo$);
 
   // Ideally we could detect taps by listening for click events and checking
@@ -527,16 +528,12 @@ export const InCallView: FC<InCallViewProps> = ({
         targetHeight,
         model,
       }: TileProps<TileViewModel, HTMLDivElement>): ReactNode {
-        const spotlightExpanded = useObservableEagerState(
-          vm.spotlightExpanded$,
-        );
-        const onToggleExpanded = useObservableEagerState(
-          vm.toggleSpotlightExpanded$,
-        );
-        const showSpeakingIndicatorsValue = useObservableEagerState(
+        const spotlightExpanded = useBehavior(vm.spotlightExpanded$);
+        const onToggleExpanded = useBehavior(vm.toggleSpotlightExpanded$);
+        const showSpeakingIndicatorsValue = useBehavior(
           vm.showSpeakingIndicators$,
         );
-        const showSpotlightIndicatorsValue = useObservableEagerState(
+        const showSpotlightIndicatorsValue = useBehavior(
           vm.showSpotlightIndicators$,
         );
 
