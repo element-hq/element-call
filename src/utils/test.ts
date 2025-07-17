@@ -47,6 +47,8 @@ import {
 } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
 import { type MediaDevices } from "../state/MediaDevices";
+import { type Behavior, constant } from "../state/Behavior";
+import { ObservableScope } from "../state/ObservableScope";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -67,6 +69,11 @@ export interface OurRunHelpers extends RunHelpers {
    * diagram.
    */
   schedule: (marbles: string, actions: Record<string, () => void>) => void;
+  behavior<T = string>(
+    marbles: string,
+    values?: { [marble: string]: T },
+    error?: unknown,
+  ): Behavior<T>;
 }
 
 interface TestRunnerGlobal {
@@ -82,6 +89,7 @@ export function withTestScheduler(
   const scheduler = new TestScheduler((actual, expected) => {
     expect(actual).deep.equals(expected);
   });
+  const scope = new ObservableScope();
   // we set the test scheduler as a global so that you can watch it in a debugger
   // and get the frame number. e.g. `rxjsTestScheduler?.now()`
   (global as unknown as TestRunnerGlobal).rxjsTestScheduler = scheduler;
@@ -98,8 +106,36 @@ export function withTestScheduler(
         // Run the actions and verify that none of them error
         helpers.expectObservable(actionsObservable$).toBe(marbles, results);
       },
+      behavior<T>(
+        marbles: string,
+        values?: { [marble: string]: T },
+        error?: unknown,
+      ) {
+        // Generate a hot Observable with helpers.hot and use it as a Behavior.
+        // To do this, we need to ensure that the initial value emits
+        // synchronously upon subscription. The issue is that helpers.hot emits
+        // frame 0 of the marble diagram *asynchronously*, only once we return
+        // from the continuation, so we need to splice out the initial marble
+        // and turn it into a proper initial value.
+        const initialMarbleIndex = marbles.search(/[^ ]/);
+        if (initialMarbleIndex === -1)
+          throw new Error("Behavior must have an initial value");
+        const initialMarble = marbles[initialMarbleIndex];
+        const initialValue =
+          values === undefined ? (initialMarble as T) : values[initialMarble];
+        // The remainder of the marble diagram should start on frame 1
+        return scope.behavior(
+          helpers.hot(
+            `-${marbles.slice(initialMarbleIndex + 1)}`,
+            values,
+            error,
+          ),
+          initialValue,
+        );
+      },
     }),
   );
+  scope.end();
 }
 
 interface EmitterMock<T> {
@@ -211,14 +247,14 @@ export async function withLocalMedia(
   const vm = new LocalUserMediaViewModel(
     "local",
     mockMatrixRoomMember(localRtcMember, roomMember),
-    of(localParticipant),
+    constant(localParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({ localParticipant }),
-    of(roomMember.rawDisplayName ?? "nodisplayname"),
-    of(null),
-    of(null),
+    constant(roomMember.rawDisplayName ?? "nodisplayname"),
+    constant(null),
+    constant(null),
   );
   try {
     await continuation(vm);
@@ -255,9 +291,9 @@ export async function withRemoteMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
-    of(roomMember.rawDisplayName ?? "nodisplayname"),
-    of(null),
-    of(null),
+    constant(roomMember.rawDisplayName ?? "nodisplayname"),
+    constant(null),
+    constant(null),
   );
   try {
     await continuation(vm);
@@ -299,7 +335,7 @@ export class MockRTCSession extends TypedEventEmitter<
   }
 
   public withMemberships(
-    rtcMembers$: Observable<Partial<CallMembership>[]>,
+    rtcMembers$: Behavior<Partial<CallMembership>[]>,
   ): MockRTCSession {
     rtcMembers$.subscribe((m) => {
       const old = this.memberships;

@@ -13,6 +13,7 @@ import { type CallLayout, arrangeTiles } from "./CallLayout";
 import { type SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightPortraitLayout.module.css";
 import { useUpdateLayout, useVisibleTiles } from "./Grid";
+import { useBehavior } from "../useBehavior";
 
 interface GridCSSProperties extends CSSProperties {
   "--grid-gap": string;
@@ -65,8 +66,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
       width,
       model.grid.length,
     );
-    const withIndicators =
-      useObservableEagerState(model.spotlight.media$).length > 1;
+    const withIndicators = useBehavior(model.spotlight.media$).length > 1;
 
     return (
       <div

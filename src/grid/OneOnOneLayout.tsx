@@ -13,6 +13,7 @@ import { type OneOnOneLayout as OneOnOneLayoutModel } from "../state/CallViewMod
 import { type CallLayout, arrangeTiles } from "./CallLayout";
 import styles from "./OneOnOneLayout.module.css";
 import { type DragCallback, useUpdateLayout } from "./Grid";
+import { useBehavior } from "../useBehavior";
 
 /**
  * An implementation of the "one-on-one" layout, in which the remote participant
@@ -32,7 +33,7 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
   scrolling: function OneOnOneLayoutScrolling({ ref, model, Slot }): ReactNode {
     useUpdateLayout();
     const { width, height } = useObservableEagerState(minBounds$);
-    const pipAlignmentValue = useObservableEagerState(pipAlignment$);
+    const pipAlignmentValue = useBehavior(pipAlignment$);
     const { tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, height, 1),
       [width, height],
