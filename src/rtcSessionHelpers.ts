@@ -5,9 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type MatrixRTCSession,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   isLivekitFocus,
