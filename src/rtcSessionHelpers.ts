@@ -18,8 +18,8 @@ import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
-import { MatrixRTCFocusMissingError } from "./utils/errors.ts";
-import { getUrlParams } from "./UrlParams.ts";
+import { MatrixRTCFocusMissingError } from "./utils/errors";
+import { getUrlParams } from "./UrlParams";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -116,6 +116,7 @@ export async function enterRTCSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
     {
+      notificationType: getUrlParams().sendNotificationType,
       useNewMembershipManager,
       manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {
