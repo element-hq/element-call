@@ -1048,7 +1048,7 @@ test("audio output changes when toggling earpiece mode", () => {
 
     window.controls.setAvailableAudioDevices([
       { id: "speaker", name: "Speaker", isSpeaker: true },
-      { id: "earpiece", name: "Earpiece", isEarpiece: true },
+      { id: "earpiece", name: "Handset", isEarpiece: true },
       { id: "headphones", name: "Headphones" },
     ]);
     window.controls.setAudioDevice("headphones");

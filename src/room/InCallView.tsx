@@ -29,7 +29,7 @@ import { useObservable } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import {
-  EarpieceIcon,
+  VoiceCallSolidIcon,
   VolumeOnSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
@@ -458,9 +458,9 @@ export const InCallView: FC<InCallViewProps> = ({
     useMemo(() => {
       if (audioOutputSwitcher === null) return null;
       const isEarpieceTarget = audioOutputSwitcher.targetOutput === "earpiece";
-      const Icon = isEarpieceTarget ? EarpieceIcon : VolumeOnSolidIcon;
+      const Icon = isEarpieceTarget ? VoiceCallSolidIcon : VolumeOnSolidIcon;
       const label = isEarpieceTarget
-        ? t("settings.devices.earpiece")
+        ? t("settings.devices.handset")
         : t("settings.devices.loudspeaker");
 
       return (
