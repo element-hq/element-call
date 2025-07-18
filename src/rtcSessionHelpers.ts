@@ -5,7 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  type RTCNotificationType,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   isLivekitFocus,
@@ -14,6 +17,7 @@ import {
   type LivekitFocusActive,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
+import { type Room } from "matrix-js-sdk";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
@@ -95,10 +99,12 @@ async function makePreferredLivekitFoci(
   // if (focusOtherMembers) preferredFoci.push(focusOtherMembers);
 }
 
-function getNotifyType(room: Room): CallNotifyType | undefined {
+function getRTCNotificationType(
+  room: Room,
+): Exclude<RTCNotificationType, "decline"> | undefined {
   if (room.isCallRoom()) return undefined;
   if (getJoinedNonFunctionalMembers(room).length === 2) return "ring";
-  return "notify";
+  return "notification";
 }
 
 export async function enterRTCSession(
@@ -123,7 +129,7 @@ export async function enterRTCSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
     {
-      notifyType: getNotifyType(rtcSession.room),
+      notificationType: getRTCNotificationType(rtcSession.room),
       useNewMembershipManager,
       manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {
