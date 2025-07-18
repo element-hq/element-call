@@ -193,6 +193,14 @@ export interface UrlParams {
    * The Sentry environment. This is only used in the embedded package of Element Call.
    */
   sentryEnvironment: string | null;
+  /**
+   * Whether to send a notification when the user joins the call.
+   * This does all the necessary logic to check if it is actually appropriate to send the notification,
+   *  - is it the first joiner
+   *  - it it a 1:1 room
+   *  - ...
+   */
+  sendNotification: boolean;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -329,6 +337,7 @@ export const getUrlParams = (
     rageshakeSubmitUrl: parser.getParam("rageshakeSubmitUrl"),
     sentryDsn: parser.getParam("sentryDsn"),
     sentryEnvironment: parser.getParam("sentryEnvironment"),
+    sendNotification: parser.getFlagParam("sendNotification"),
   };
 };
 
