@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type RTCNotificationType,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -17,14 +16,12 @@ import {
   type LivekitFocusActive,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
-import { type Room } from "matrix-js-sdk";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
 import { MatrixRTCFocusMissingError } from "./utils/errors";
 import { getUrlParams } from "./UrlParams";
-import { getJoinedNonFunctionalMembers } from "./utils/matrix";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -99,12 +96,6 @@ async function makePreferredLivekitFoci(
   // if (focusOtherMembers) preferredFoci.push(focusOtherMembers);
 }
 
-function getRTCNotificationType(room: Room): RTCNotificationType | undefined {
-  if (room.isCallRoom()) return undefined;
-  if (getJoinedNonFunctionalMembers(room).length === 2) return "ring";
-  return "notification";
-}
-
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   encryptMedia: boolean,
@@ -127,7 +118,7 @@ export async function enterRTCSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
     {
-      notificationType: getRTCNotificationType(rtcSession.room),
+      notificationType: getUrlParams().sendNotificationType,
       useNewMembershipManager,
       manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {
