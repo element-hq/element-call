@@ -61,3 +61,7 @@
 .overlay > p {
   text-align: center;
 }
+
+.spacer {
+  min-height: var(--cpd-space-32x);
+}

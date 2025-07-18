@@ -9,6 +9,7 @@ dist-ssr
 public/config.json
 backend/synapse_tmp/*
 /coverage
+config.json
 
 # Yarn
 yarn-error.log

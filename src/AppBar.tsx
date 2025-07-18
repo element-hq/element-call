@@ -17,10 +17,7 @@ import {
   useState,
 } from "react";
 import { Heading, IconButton, Tooltip } from "@vector-im/compound-web";
-import {
-  ArrowLeftIcon,
-  CollapseIcon,
-} from "@vector-im/compound-design-tokens/assets/web/icons";
+import { CollapseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 
 import { Header, LeftNav, RightNav } from "./Header";
@@ -45,7 +42,6 @@ interface Props {
  */
 export const AppBar: FC<Props> = ({ children }) => {
   const { t } = useTranslation();
-  const BackIcon = platform === "ios" ? CollapseIcon : ArrowLeftIcon;
   const onBackClick = useCallback((e: MouseEvent) => {
     e.preventDefault();
     window.controls.onBackButtonPressed?.();
@@ -69,7 +65,7 @@ export const AppBar: FC<Props> = ({ children }) => {
           <LeftNav>
             <Tooltip label={t("common.back")}>
               <IconButton onClick={onBackClick}>
-                <BackIcon />
+                <CollapseIcon />
               </IconButton>
             </Tooltip>
           </LeftNav>
