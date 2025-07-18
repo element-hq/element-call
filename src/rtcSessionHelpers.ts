@@ -99,9 +99,7 @@ async function makePreferredLivekitFoci(
   // if (focusOtherMembers) preferredFoci.push(focusOtherMembers);
 }
 
-function getRTCNotificationType(
-  room: Room,
-): Exclude<RTCNotificationType, "decline"> | undefined {
+function getRTCNotificationType(room: Room): RTCNotificationType | undefined {
   if (room.isCallRoom()) return undefined;
   if (getJoinedNonFunctionalMembers(room).length === 2) return "ring";
   return "notification";
