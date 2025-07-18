@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { type RTCNotificationType } from "matrix-js-sdk/lib/matrixrtc";
 
 import { Config } from "./config/Config";
 import { type EncryptionSystem } from "./e2ee/sharedKeyManagement";
@@ -193,6 +194,10 @@ export interface UrlParams {
    * The Sentry environment. This is only used in the embedded package of Element Call.
    */
   sentryEnvironment: string | null;
+  /**
+   * Whether and what type of notification EC should send, when the user joins the call.
+   */
+  sendNotificationType?: RTCNotificationType;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -275,6 +280,11 @@ export const getUrlParams = (
       ? HeaderStyle.None
       : HeaderStyle.Standard);
 
+  const sendNotificationType = ["ring", "notification"].includes(
+    parser.getParam("sendNotificationType") ?? "",
+  )
+    ? (parser.getParam("sendNotificationType") as RTCNotificationType)
+    : undefined;
   const widgetId = parser.getParam("widgetId");
   const parentUrl = parser.getParam("parentUrl");
   const isWidget = !!widgetId && !!parentUrl;
@@ -329,6 +339,7 @@ export const getUrlParams = (
     rageshakeSubmitUrl: parser.getParam("rageshakeSubmitUrl"),
     sentryDsn: parser.getParam("sentryDsn"),
     sentryEnvironment: parser.getParam("sentryEnvironment"),
+    sendNotificationType,
   };
 };
 
