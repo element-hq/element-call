@@ -81,7 +81,7 @@
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@typescript-eslint/parser": "^8.31.0",
     "@use-gesture/react": "^10.2.11",
-    "@vector-im/compound-design-tokens": "^4.0.0",
+    "@vector-im/compound-design-tokens": "^5.0.0",
     "@vector-im/compound-web": "^8.0.0",
     "@vitejs/plugin-react": "^4.0.1",
     "@vitest/coverage-v8": "^3.0.0",
