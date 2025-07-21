@@ -387,10 +387,14 @@ export function getRoomIdentifierFromUrl(
 
   // Make sure roomId is valid
   let roomId: string | null = parser.getParam("roomId");
-  if (!roomId?.startsWith("!")) {
-    roomId = null;
-  } else if (!roomId.includes("")) {
-    roomId = null;
+  if (roomId !== null) {
+    // Replace any non-printable characters that another client may have inserted.
+    roomId = roomId.replaceAll(/^[^ -~]+|[^ -~]+$/g, "");
+    if (!roomId.startsWith("!")) {
+      roomId = null;
+    } else if (!roomId.includes("")) {
+      roomId = null;
+    }
   }
 
   return {

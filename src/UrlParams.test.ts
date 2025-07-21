@@ -82,6 +82,16 @@ describe("UrlParams", () => {
         getRoomIdentifierFromUrl("", `?roomId=${ROOM_ID}`, "").roomId,
       ).toBe(ROOM_ID);
     });
+    it("(roomId with unprintable chatacters)", () => {
+      const invisibleChar = "⁦";
+      expect(
+        getRoomIdentifierFromUrl(
+          "",
+          `?roomId=${invisibleChar}${ROOM_ID}${invisibleChar}`,
+          "",
+        ).roomId,
+      ).toBe(ROOM_ID);
+    });
   });
 
   it("ignores room alias", () => {
