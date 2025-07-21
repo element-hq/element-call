@@ -83,7 +83,7 @@ describe("UrlParams", () => {
       ).toBe(ROOM_ID);
     });
     it("(roomId with unprintable chatacters)", () => {
-      const invisibleChar = "⁦";
+      const invisibleChar = "\u2066";
       expect(
         getRoomIdentifierFromUrl(
           "",
