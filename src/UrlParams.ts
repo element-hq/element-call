@@ -220,6 +220,8 @@ class ParamParser {
   private queryParams: URLSearchParams;
 
   public constructor(search: string, hash: string) {
+    // Replace any non-printable characters that another client may have inserted.
+    search = search.replaceAll(/^[^ -~]+|[^ -~]+$/g, "");
     this.queryParams = new URLSearchParams(search);
 
     const fragmentQueryStart = hash.indexOf("?");
@@ -258,6 +260,8 @@ export const getUrlParams = (
   search = window.location.search,
   hash = window.location.hash,
 ): UrlParams => {
+  // Replace any non-printable characters that another client may have inserted.
+  search = search.replaceAll(/^[^ -~]+|[^ -~]+$/g, "");
   const parser = new ParamParser(search, hash);
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
@@ -387,14 +391,10 @@ export function getRoomIdentifierFromUrl(
 
   // Make sure roomId is valid
   let roomId: string | null = parser.getParam("roomId");
-  if (roomId !== null) {
-    // Replace any non-printable characters that another client may have inserted.
-    roomId = roomId.replaceAll(/^[^ -~]+|[^ -~]+$/g, "");
-    if (!roomId.startsWith("!")) {
-      roomId = null;
-    } else if (!roomId.includes("")) {
-      roomId = null;
-    }
+  if (!roomId?.startsWith("!")) {
+    roomId = null;
+  } else if (!roomId.includes("")) {
+    roomId = null;
   }
 
   return {
