@@ -10247,7 +10247,7 @@ __metadata:
 
 "matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
   version: 37.11.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=0ce944f3daa2c8926c673af33ae24e89b1e6796a"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=11c9e39e5a1e56ea347dbd16ca7c75059127f7d5"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.0.0"
@@ -10263,7 +10263,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/9cfdff1221d55943e25a56027cccd077b7e74ce5b8c6fb12f54477319d179c8463e1f81e88e89bf77538b1207540455704fdcc89d9517b4b24648f185bd24842
+  checksum: 10c0/31018452c9578948c47f82648a58d4000b657103b20a38cb1672035bc530e0aaa68ac03bc600f4bfaad9f72f36842490be963251a02d2926dcfe697ff6e459b3
   languageName: node
   linkType: hard
 
