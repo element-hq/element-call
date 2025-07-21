@@ -82,11 +82,14 @@ describe("UrlParams", () => {
         getRoomIdentifierFromUrl("", `?roomId=${ROOM_ID}`, "").roomId,
       ).toBe(ROOM_ID);
     });
-    it("handles params with unprintable characters", () => {
+    it("(roomId with unprintable characters)", () => {
       const invisibleChar = "\u2066";
       expect(
-        getRoomIdentifierFromUrl("", `?roomId=${ROOM_ID}${invisibleChar}`, "")
-          .roomId,
+        getRoomIdentifierFromUrl(
+          "",
+          `?roomId=${invisibleChar}${ROOM_ID}${invisibleChar}`,
+          "",
+        ).roomId,
       ).toBe(ROOM_ID);
     });
   });
