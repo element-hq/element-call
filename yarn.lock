@@ -5610,8 +5610,8 @@ __metadata:
   linkType: hard
 
 "@vector-im/compound-web@npm:^8.0.0":
-  version: 8.1.2
-  resolution: "@vector-im/compound-web@npm:8.1.2"
+  version: 8.2.0
+  resolution: "@vector-im/compound-web@npm:8.2.0"
   dependencies:
     "@floating-ui/react": "npm:^0.27.0"
     "@radix-ui/react-context-menu": "npm:^2.2.1"
@@ -5626,12 +5626,12 @@ __metadata:
     "@fontsource/inconsolata": ^5
     "@fontsource/inter": ^5
     "@types/react": "*"
-    "@vector-im/compound-design-tokens": ">=1.6.1 <5.0.0"
+    "@vector-im/compound-design-tokens": ">=1.6.1 <6.0.0"
     react: ^18 || ^19.0.0
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/4d16794f20b5577bb32442a8261ccad87d83ef91d9212e4ff12af90c4423790859b9a712764211c751079d384bf4dc88522961e008a9bd9f46653fdd75cdc195
+  checksum: 10c0/4ac4074dcf9611bdff7de4bf66763397c926d6312f31758bcabe3e7bf704cb76bc2ce1023fe5f2cf0d05e97c9c540fef8b63edea7a521a2f7b4b7fbcb883fb17
   languageName: node
   linkType: hard
 
