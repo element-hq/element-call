@@ -5594,9 +5594,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vector-im/compound-design-tokens@npm:^4.0.0":
-  version: 4.0.5
-  resolution: "@vector-im/compound-design-tokens@npm:4.0.5"
+"@vector-im/compound-design-tokens@npm:^5.0.0":
+  version: 5.0.2
+  resolution: "@vector-im/compound-design-tokens@npm:5.0.2"
   peerDependencies:
     "@types/react": "*"
     react: ^17 || ^18 || ^19.0.0
@@ -5605,7 +5605,7 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/ae84195a5c854ac54e64b615729cb5f669da1b798b961be4370e1baf257a57e871f53c6df555702513a99fcc5576bff50033a2ed676b36c7344f1d470826f10f
+  checksum: 10c0/4337ef74c269602a7801fe5361ee95aa453529e2eac2fa80620e6c8d089551c3e77061d4690755023487aae2281be0a5df959a355ce3fb13e151e40822b74e03
   languageName: node
   linkType: hard
 
@@ -7477,7 +7477,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^8.31.0"
     "@typescript-eslint/parser": "npm:^8.31.0"
     "@use-gesture/react": "npm:^10.2.11"
-    "@vector-im/compound-design-tokens": "npm:^4.0.0"
+    "@vector-im/compound-design-tokens": "npm:^5.0.0"
     "@vector-im/compound-web": "npm:^8.0.0"
     "@vitejs/plugin-react": "npm:^4.0.1"
     "@vitest/coverage-v8": "npm:^3.0.0"
