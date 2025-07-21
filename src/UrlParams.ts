@@ -389,6 +389,8 @@ export function getRoomIdentifierFromUrl(
   let roomId: string | null = parser.getParam("roomId");
   if (roomId !== null) {
     // Replace any non-printable characters that another client may have inserted.
+    // For instance on iOS, some copied links end up with zero width characters on the end which get encoded into the URL.
+    // This isn't valid for a roomId, so we can freely strip the content.
     roomId = roomId.replaceAll(/^[^ -~]+|[^ -~]+$/g, "");
     if (!roomId.startsWith("!")) {
       roomId = null;
