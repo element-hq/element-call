@@ -114,16 +114,12 @@ export interface ConfigOptions {
      * when someone leaves a call.
      */
     wait_for_key_rotation_ms?: number;
-    /** @deprecated use wait_for_key_rotation_ms instead */
-    key_rotation_on_leave_delay?: number;
 
     /**
      * The duration (in milliseconds) after the most recent keep-alive (delayed leave event restart)
      * that the server waits before sending the leave MatrixRTC membership event.
      */
     delayed_leave_event_delay_ms?: number;
-    /** @deprecated use delayed_leave_event_delay_ms instead */
-    membership_server_side_expiry_timeout?: number;
 
     /**
      * The time (in milliseconds) after which a we consider a delayed event restart http request to have failed.
@@ -141,8 +137,6 @@ export interface ConfigOptions {
      * messages to the server by restarting the timer for the delayed leave event.
      */
     delayed_leave_event_restart_ms?: number;
-    /** @deprecated use delayed_leave_event_restart_ms instead */
-    membership_keep_alive_period?: number;
 
     /**
      * How long we wait before retrying after a network error on any of the requests.
