@@ -5,13 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   getRoomIdentifierFromUrl,
   getUrlParams,
+  HeaderStyle,
   UserIntent,
 } from "../src/UrlParams";
+import { platform } from "os";
 
 const ROOM_NAME = "roomNameHere";
 const ROOM_ID = "!d45f138fsd";
@@ -211,26 +213,68 @@ describe("UrlParams", () => {
   });
 
   describe("intent", () => {
-    it("defaults to unknown", () => {
-      expect(getUrlParams().intent).toBe(UserIntent.Unknown);
+    const noIntentDefaults = {
+      confineToRoom: false,
+      appPrompt: true,
+      preload: false,
+      header: HeaderStyle.Standard,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: false,
+      perParticipantE2EE: false,
+      controlledAudioDevices: false,
+      skipLobby: false,
+      returnToLobby: false,
+      sendNotificationType: undefined,
+    };
+    const startNewCallDefaults = (platform: string): object => ({
+      confineToRoom: true,
+      appPrompt: false,
+      preload: true,
+      header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: true,
+      perParticipantE2EE: true,
+      controlledAudioDevices: platform === "desktop" ? false : true,
+      skipLobby: true,
+      returnToLobby: false,
+      sendNotificationType: "notification",
+    });
+    const joinExistingCallDefaults = (platform: string): object => ({
+      confineToRoom: true,
+      appPrompt: false,
+      preload: true,
+      header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: true,
+      perParticipantE2EE: true,
+      controlledAudioDevices: platform === "desktop" ? false : true,
+      skipLobby: false,
+      returnToLobby: false,
+      sendNotificationType: undefined,
+    });
+    it("use no-intent-defaults with unknown intent", () => {
+      expect(getUrlParams()).toMatchObject(noIntentDefaults);
     });
 
     it("ignores intent if it is not a valid value", () => {
-      expect(getUrlParams("?intent=foo").intent).toBe(UserIntent.Unknown);
+      expect(getUrlParams("?intent=foo")).toMatchObject(noIntentDefaults);
     });
 
     it("accepts start_call", () => {
       expect(
-        getUrlParams("?intent=start_call&widgetId=1234&parentUrl=parent.org")
-          .intent,
-      ).toBe(UserIntent.StartNewCall);
+        getUrlParams("?intent=start_call&widgetId=1234&parentUrl=parent.org"),
+      ).toMatchObject(startNewCallDefaults("desktop"));
     });
 
     it("accepts join_existing", () => {
       expect(
-        getUrlParams("?intent=join_existing&widgetId=1234&parentUrl=parent.org")
-          .intent,
-      ).toBe(UserIntent.JoinExistingCall);
+        getUrlParams(
+          "?intent=join_existing&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject(joinExistingCallDefaults("desktop"));
     });
   });
 
