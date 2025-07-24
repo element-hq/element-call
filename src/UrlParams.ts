@@ -263,7 +263,7 @@ class ParamParser {
     type: { [s: string]: T } | ArrayLike<T>,
   ): T | undefined {
     const value = this.getParam(name);
-    if (value && Object.values(type).includes(value as T)) {
+    if (value !== null && Object.values(type).includes(value as T)) {
       return value as T;
     }
     return undefined;
