@@ -251,7 +251,7 @@ describe("UrlParams", () => {
       controlledAudioDevices: platform === "desktop" ? false : true,
       skipLobby: false,
       returnToLobby: false,
-      sendNotificationType: undefined,
+      sendNotificationType: "notification",
     });
     it("use no-intent-defaults with unknown intent", () => {
       expect(getUrlParams()).toMatchObject(noIntentDefaults);
