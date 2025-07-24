@@ -320,37 +320,31 @@ export const getUrlParams = (
     : (parser.getEnumParam("intent", UserIntent) ?? UserIntent.Unknown);
   // Here we only use constants and `platform` to determine the intent preset.
   let intentPreset: UrlConfiguration;
+  const inAppDefault = {
+    confineToRoom: true,
+    appPrompt: false,
+    preload: true,
+    header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+    showControls: true,
+    hideScreensharing: false,
+    allowIceFallback: true,
+    perParticipantE2EE: true,
+    controlledAudioDevices: platform === "desktop" ? false : true,
+    skipLobby: true,
+    returnToLobby: false,
+    sendNotificationType: "notification" as RTCNotificationType,
+  };
   switch (intent) {
     case UserIntent.StartNewCall:
       intentPreset = {
-        confineToRoom: true,
-        appPrompt: false,
-        preload: true,
-        header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
-        showControls: true,
-        hideScreensharing: false,
-        allowIceFallback: true,
-        perParticipantE2EE: true,
-        controlledAudioDevices: platform === "desktop" ? false : true,
+        ...inAppDefault,
         skipLobby: true,
-        returnToLobby: false,
-        sendNotificationType: "notification",
       };
       break;
     case UserIntent.JoinExistingCall:
       intentPreset = {
-        confineToRoom: true,
-        appPrompt: false,
-        preload: true,
-        header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
-        showControls: true,
-        hideScreensharing: false,
-        allowIceFallback: true,
-        perParticipantE2EE: true,
-        controlledAudioDevices: platform === "desktop" ? false : true,
+        ...inAppDefault,
         skipLobby: false,
-        returnToLobby: false,
-        sendNotificationType: undefined,
       };
       break;
     // Non widget usecase defaults
