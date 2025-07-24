@@ -138,10 +138,10 @@ export interface UrlProperties {
 }
 
 /**
- * The configuration for the app. It can be set via URL parameters.
- * Those parameters are different to the UrlProperties, since they are all optional
- * and configure the behavior of the app. There value is the same if EC is used in
- * the same context but different accoutns/users.
+ * The configuration for the app, which can be set via URL parameters.
+ * Those property are different to the UrlProperties, since they are all optional
+ * and configure the behavior of the app. Their value is the same if EC is used in
+ * the same context but with different accounts/users.
  *
  * Their defaults can be controlled by the `intent` property.
  */
