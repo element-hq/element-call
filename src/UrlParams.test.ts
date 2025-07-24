@@ -5,15 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   getRoomIdentifierFromUrl,
   getUrlParams,
   HeaderStyle,
-  UserIntent,
 } from "../src/UrlParams";
-import { platform } from "os";
 
 const ROOM_NAME = "roomNameHere";
 const ROOM_ID = "!d45f138fsd";
