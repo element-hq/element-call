@@ -191,7 +191,11 @@ describe("useMuteStates", () => {
     mockConfig();
 
     render(
-      <MemoryRouter initialEntries={["/room/?skipLobby=true"]}>
+      <MemoryRouter
+        initialEntries={[
+          "/room/?skipLobby=true&widgetId=1234&parentUrl=www.parent.org",
+        ]}
+      >
         <MediaDevicesContext value={mockMediaDevices()}>
           <TestComponent />
         </MediaDevicesContext>

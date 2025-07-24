@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   getRoomIdentifierFromUrl,
   getUrlParams,
-  UserIntent,
+  HeaderStyle,
 } from "../src/UrlParams";
 
 const ROOM_NAME = "roomNameHere";
@@ -211,24 +211,68 @@ describe("UrlParams", () => {
   });
 
   describe("intent", () => {
-    it("defaults to unknown", () => {
-      expect(getUrlParams().intent).toBe(UserIntent.Unknown);
+    const noIntentDefaults = {
+      confineToRoom: false,
+      appPrompt: true,
+      preload: false,
+      header: HeaderStyle.Standard,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: false,
+      perParticipantE2EE: false,
+      controlledAudioDevices: false,
+      skipLobby: false,
+      returnToLobby: false,
+      sendNotificationType: undefined,
+    };
+    const startNewCallDefaults = (platform: string): object => ({
+      confineToRoom: true,
+      appPrompt: false,
+      preload: true,
+      header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: true,
+      perParticipantE2EE: true,
+      controlledAudioDevices: platform === "desktop" ? false : true,
+      skipLobby: true,
+      returnToLobby: false,
+      sendNotificationType: "notification",
+    });
+    const joinExistingCallDefaults = (platform: string): object => ({
+      confineToRoom: true,
+      appPrompt: false,
+      preload: true,
+      header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: true,
+      perParticipantE2EE: true,
+      controlledAudioDevices: platform === "desktop" ? false : true,
+      skipLobby: false,
+      returnToLobby: false,
+      sendNotificationType: "notification",
+    });
+    it("use no-intent-defaults with unknown intent", () => {
+      expect(getUrlParams()).toMatchObject(noIntentDefaults);
     });
 
     it("ignores intent if it is not a valid value", () => {
-      expect(getUrlParams("?intent=foo").intent).toBe(UserIntent.Unknown);
+      expect(getUrlParams("?intent=foo")).toMatchObject(noIntentDefaults);
     });
 
     it("accepts start_call", () => {
-      expect(getUrlParams("?intent=start_call").intent).toBe(
-        UserIntent.StartNewCall,
-      );
+      expect(
+        getUrlParams("?intent=start_call&widgetId=1234&parentUrl=parent.org"),
+      ).toMatchObject(startNewCallDefaults("desktop"));
     });
 
     it("accepts join_existing", () => {
-      expect(getUrlParams("?intent=join_existing").intent).toBe(
-        UserIntent.JoinExistingCall,
-      );
+      expect(
+        getUrlParams(
+          "?intent=join_existing&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject(joinExistingCallDefaults("desktop"));
     });
   });
 
@@ -259,10 +303,6 @@ describe("UrlParams", () => {
         "app_bar",
       );
       expect(getUrlParams("?header=none&hideHeader=false").header).toBe("none");
-    });
-    it("converts hideHeader to the correct header value", () => {
-      expect(getUrlParams("?hideHeader=true").header).toBe("none");
-      expect(getUrlParams("?hideHeader=false").header).toBe("standard");
     });
   });
 });
