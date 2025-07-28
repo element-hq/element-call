@@ -2761,10 +2761,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/matrix-sdk-crypto-wasm@npm:^15.0.0":
-  version: 15.0.0
-  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:15.0.0"
-  checksum: 10c0/4db5dc78a0fd4850d95bcc18ba5c6436bf80f7a64cf66569d349687529d44aed4319659c988a106f9446e6aca9af982b59412bb674f151ef52d8ecee7ead6dd4
+"@matrix-org/matrix-sdk-crypto-wasm@npm:^15.1.0":
+  version: 15.1.0
+  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:15.1.0"
+  checksum: 10c0/19edc6d0045ff49fad8d77b6e561cee994f7513f8c18a7176ae2d3f0116c1a91980e02d10300b09c2b72dea4da4a8c3392f2bf1752057f2d6b53030a056d76d8
   languageName: node
   linkType: hard
 
@@ -10247,10 +10247,10 @@ __metadata:
 
 "matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
   version: 37.11.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=11c9e39e5a1e56ea347dbd16ca7c75059127f7d5"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=c57c47319e6e31216034e654ef0b092c73c90ad0"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.0.0"
+    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.1.0"
     another-json: "npm:^0.2.0"
     bs58: "npm:^6.0.0"
     content-type: "npm:^1.0.4"
@@ -10263,7 +10263,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/31018452c9578948c47f82648a58d4000b657103b20a38cb1672035bc530e0aaa68ac03bc600f4bfaad9f72f36842490be963251a02d2926dcfe697ff6e459b3
+  checksum: 10c0/2e99ef541163cc33b327bab77eb54badbf6dd47e3eadc1b10a1b001ae1c42632cfb7041adf234a2468bf260bf3aade02a0b624dabac00618d053b55172284f8c
   languageName: node
   linkType: hard
 
