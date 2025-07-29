@@ -150,7 +150,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         ?.disconnect()
         .then(() => {
           logger.info(
-            `[Lifecycle] Disconnected from livekite room, state:${livekitRoom?.state}`,
+            `[Lifecycle] Disconnected from livekit room, state:${livekitRoom?.state}`,
           );
         })
         .catch((e) => {
