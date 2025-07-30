@@ -126,6 +126,17 @@ export interface ConfigOptions {
     membership_server_side_expiry_timeout?: number;
 
     /**
+     * The time (in milliseconds) after which a we consider a delayed event restart http request to have failed.
+     * Setting this to a lower value will result in more frequent retries but also a higher chance of failiour.
+     *
+     * In the presence of network packet loss (hurting TCP connections), the custom delayedEventRestartLocalTimeoutMs
+     * helps by keeping more delayed event reset candidates in flight,
+     * improving the chances of a successful reset. (its is equivalent to the js-sdk `localTimeout` configuration,
+     * but only applies to calls to the `_unstable_updateDelayedEvent` endpoint with a body of `{action:"restart"}`.)
+     */
+    delayed_leave_event_restart_local_timeout_ms?: number;
+
+    /**
      * The time interval (in milliseconds) at which the client sends membership keep-alive
      * messages to the server by restarting the timer for the delayed leave event.
      */
