@@ -3,7 +3,7 @@ networks:
 
 services:
   auth-service:
-    image: ghcr.io/element-hq/lk-jwt-service:latest-ci
+    image: ghcr.io/element-hq/lk-jwt-service:0.2.3
     pull_policy: always
     hostname: auth-server
     environment:
