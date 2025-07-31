@@ -14,12 +14,15 @@ services:
       # If the configured homeserver runs on localhost, it'll probably be using
       # a self-signed certificate
       - LIVEKIT_INSECURE_SKIP_VERIFY_TLS=YES_I_KNOW_WHAT_I_AM_DOING
+      - LIVEKIT_FULL_ACCESS_HOMESERVERS=*
     deploy:
       restart_policy:
         condition: on-failure
     ports:
       # HOST_PORT:CONTAINER_PORT
       - 6080:6080
+    extra_hosts:
+      - "matrix-rtc.m.localhost:host-gateway"
     networks:
       - ecbackend
 
