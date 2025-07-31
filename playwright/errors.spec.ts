@@ -90,7 +90,6 @@ test("Should show error screen if call creation is restricted", async ({
     "**/livekit/sfu/rtc/validate?*",
     async (route) =>
       await route.fulfill({
-        // 418 is a non retryable error, so test will fail immediately
         status: 404,
         contentType: "text/plain",
         body: "requested room does not exist",
