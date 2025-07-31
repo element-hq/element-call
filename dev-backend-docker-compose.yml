@@ -21,8 +21,6 @@ services:
     ports:
       # HOST_PORT:CONTAINER_PORT
       - 6080:6080
-    extra_hosts:
-      - "matrix-rtc.m.localhost:host-gateway"
     networks:
       - ecbackend
 
@@ -104,4 +102,6 @@ services:
     depends_on:
       - synapse
     networks:
-      - ecbackend
+      ecbackend:
+        aliases:
+          - matrix-rtc.m.localhost
