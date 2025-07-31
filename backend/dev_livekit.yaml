@@ -21,3 +21,5 @@ turn:
   external_tls: true
 keys:
   devkey: secret
+room:
+  auto_create: false
