@@ -27,13 +27,6 @@ import {
 } from "../utils/errors.ts";
 import { AbortHandle } from "../utils/abortHandle.ts";
 
-declare global {
-  interface Window {
-    peerConnectionTimeout?: number;
-    websocketTimeout?: number;
-  }
-}
-
 /*
  * Additional values for states that a call can be in, beyond what livekit
  * provides in ConnectionState. Also reconnects the call if the SFU Config
@@ -170,12 +163,7 @@ async function connectAndPublish(
 
   try {
     logger.info(`[Lifecycle] Connecting to livekit room ${sfuConfig!.url} ...`);
-    await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt, {
-      // Due to stability issues on Firefox we are testing the effect of different
-      // timeouts, and allow these values to be set through the console
-      peerConnectionTimeout: window.peerConnectionTimeout ?? 45000,
-      websocketTimeout: window.websocketTimeout ?? 45000,
-    });
+    await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt);
     logger.info(`[Lifecycle] ... connected to livekit room`);
   } catch (e) {
     logger.error("[Lifecycle] Failed to connect", e);
