@@ -17,7 +17,7 @@ import {
   type Observable,
 } from "rxjs";
 import { createMediaDeviceObserver } from "@livekit/components-core";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import {
   audioInput as audioInputSetting,
@@ -38,7 +38,6 @@ import { type Behavior, constant } from "./Behavior";
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
 // the ios swift team.
 const EARPIECE_CONFIG_ID = "earpiece-id";
-const logger = rootLogger.getChild("[MediaDevices]");
 
 export type DeviceLabel =
   | { type: "name"; name: string }
@@ -100,6 +99,7 @@ function availableRawDevices$(
   kind: MediaDeviceKind,
   usingNames$: Behavior<boolean>,
   scope: ObservableScope,
+  logger: Logger,
 ): Behavior<MediaDeviceInfo[]> {
   const logError = (e: Error): void =>
     logger.error("Error creating MediaDeviceObserver", e);
@@ -162,8 +162,15 @@ function selectDevice$<Label>(
 }
 
 class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
+  private logger = rootLogger.getChild("[MediaDevices AudioInput]");
+
   private readonly availableRaw$: Behavior<MediaDeviceInfo[]> =
-    availableRawDevices$("audioinput", this.usingNames$, this.scope);
+    availableRawDevices$(
+      "audioinput",
+      this.usingNames$,
+      this.scope,
+      this.logger,
+    );
 
   public readonly available$ = this.scope.behavior(
     this.availableRaw$.pipe(map(buildDeviceMap)),
@@ -200,7 +207,7 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
     private readonly scope: ObservableScope,
   ) {
     this.available$.subscribe((available) => {
-      logger.info("[audio-input] available devices:", available);
+      this.logger.info("[audio-input] available devices:", available);
     });
   }
 }
@@ -208,8 +215,14 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
 class AudioOutput
   implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
 {
+  private logger = rootLogger.getChild("[MediaDevices AudioOutput]");
   public readonly available$ = this.scope.behavior(
-    availableRawDevices$("audiooutput", this.usingNames$, this.scope).pipe(
+    availableRawDevices$(
+      "audiooutput",
+      this.usingNames$,
+      this.scope,
+      this.logger,
+    ).pipe(
       map((availableRaw) => {
         const available: Map<string, AudioOutputDeviceLabel> =
           buildDeviceMap(availableRaw);
@@ -250,7 +263,7 @@ class AudioOutput
     private readonly scope: ObservableScope,
   ) {
     this.available$.subscribe((available) => {
-      logger.info("[audio-output] available devices:", available);
+      this.logger.info("[audio-output] available devices:", available);
     });
   }
 }
@@ -258,6 +271,7 @@ class AudioOutput
 class ControlledAudioOutput
   implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
 {
+  private logger = rootLogger.getChild("[MediaDevices ControlledAudioOutput]");
   // We need to subscribe to the raw devices so that the OS does update the input
   // back to what it was before. otherwise we will switch back to the default
   // whenever we allocate a new stream.
@@ -265,6 +279,7 @@ class ControlledAudioOutput
     "audiooutput",
     this.usingNames$,
     this.scope,
+    this.logger,
   );
 
   public readonly available$ = this.scope.behavior(
@@ -328,26 +343,37 @@ class ControlledAudioOutput
       // been selected - for example, Element X iOS listens to this to determine
       // whether it should enable the proximity sensor.
       if (device !== undefined) {
-        logger.info("[controlled-output] onAudioDeviceSelect called:", device);
+        this.logger.info(
+          "[controlled-output] onAudioDeviceSelect called:",
+          device,
+        );
         window.controls.onAudioDeviceSelect?.(device.id);
         // Also invoke the deprecated callback for backward compatibility
         window.controls.onOutputDeviceSelect?.(device.id);
       }
     });
     this.available$.subscribe((available) => {
-      logger.info("[controlled-output] available devices:", available);
+      this.logger.info("[controlled-output] available devices:", available);
     });
     this.availableRaw$.subscribe((availableRaw) => {
-      logger.info("[controlled-output] available raw devices:", availableRaw);
+      this.logger.info(
+        "[controlled-output] available raw devices:",
+        availableRaw,
+      );
     });
   }
 }
 
 class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
+  private logger = rootLogger.getChild("[MediaDevices VideoInput]");
+
   public readonly available$ = this.scope.behavior(
-    availableRawDevices$("videoinput", this.usingNames$, this.scope).pipe(
-      map(buildDeviceMap),
-    ),
+    availableRawDevices$(
+      "videoinput",
+      this.usingNames$,
+      this.scope,
+      this.logger,
+    ).pipe(map(buildDeviceMap)),
   );
   public readonly selected$ = this.scope.behavior(
     selectDevice$(this.available$, videoInputSetting.value$).pipe(
@@ -364,7 +390,7 @@ class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
   ) {
     // This also has the purpose of subscribing to the available devices
     this.available$.subscribe((available) => {
-      logger.info("[video-input] available devices:", available);
+      this.logger.info("[video-input] available devices:", available);
     });
   }
 }
