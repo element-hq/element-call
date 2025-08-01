@@ -145,10 +145,6 @@ server {
     {
         "type": "livekit",
         "livekit_service_url": "https://matrix-rtc-2.example.com/livekit/jwt"
-    },
-    {
-        "type": "nextgen_new_foci_type",
-        "props_for_nextgen_foci": "val"
     }
 ]
 ```
