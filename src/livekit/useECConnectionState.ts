@@ -22,6 +22,7 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import {
   ElementCallError,
   InsufficientCapacityError,
+  SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { AbortHandle } from "../utils/abortHandle.ts";
@@ -184,11 +185,19 @@ async function connectAndPublish(
     // participant limits.
     // LiveKit Cloud uses 429 for connection limits.
     // Either way, all these errors can be explained as "insufficient capacity".
-    if (
-      e instanceof ConnectionError &&
-      (e.status === 503 || e.status === 200 || e.status === 429)
-    )
-      throw new InsufficientCapacityError();
+    if (e instanceof ConnectionError) {
+      if (e.status === 503 || e.status === 200 || e.status === 429) {
+        throw new InsufficientCapacityError();
+      }
+      if (e.status === 404) {
+        // error msg is "Could not establish signal connection: requested room does not exist"
+        // The room does not exist. There are two different modes of operation for the SFU:
+        // - the room is created on the fly when connecting (livekit `auto_create` option)
+        // - Only authorized users can create rooms, so the room must exist before connecting (done by the auth jwt service)
+        // In the first case there will not be a 404, so we are in the second case.
+        throw new SFURoomCreationRestrictedError();
+      }
+    }
     throw e;
   }
 
