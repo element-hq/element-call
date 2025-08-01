@@ -221,7 +221,9 @@ class AudioOutput
             type: "default",
             name: availableRaw[0]?.label || null,
           });
-        if (navigator.userAgent.includes("Safari")) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const isSafari = !!(window as any).GestureEvent; // non standard api only found on Safari. https://developer.mozilla.org/en-US/docs/Web/API/GestureEvent#browser_compatibility
+        if (isSafari) {
           // set to empty map if we are on Safari, because it does not support setSinkId
           available = new Map();
         }
