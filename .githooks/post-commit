@@ -1,0 +1,11 @@
+#!/usr/bin/sh
+
+FILE=.links.temp-disabled.yaml
+if test -f "$FILE"; then
+  # Only do the post-commit hook if the file was temp-disabled by the pre-commit hook.
+  # Otherwise linking was actively (`yarn links:disable`) disabled and this hook should noop.
+  mv .links.temp-disabled.yaml .links.yaml
+  yarnLog=$(yarn)
+  echo "[yarn-linker] The post-commit hook has re-enabled .links.yaml."
+  exit 1
+fi

@@ -1,7 +1,7 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -13,7 +13,7 @@ import {
   useEffect,
 } from "react";
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { useClientState } from "./ClientContext";
 

@@ -1,29 +1,40 @@
 /*
 Copyright 2021-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, Suspense, useEffect, useState } from "react";
+import {
+  type FC,
+  type JSX,
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { BrowserRouter, Route, useLocation, Routes } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
 import { ClientProvider } from "./ClientContext";
-import { CrashView, LoadingView } from "./FullScreenView";
+import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
-import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
+import { ProcessorProvider } from "./livekit/TrackProcessorContext";
+import { type AppViewModel } from "./state/AppViewModel";
+import { MediaDevicesContext } from "./MediaDevicesContext";
+import { getUrlParams, HeaderStyle } from "./UrlParams";
+import { AppBar } from "./AppBar";
 
-const SentryRoute = Sentry.withSentryReactRouterV6Routing(Route);
+const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
 interface SimpleProviderProps {
   children: JSX.Element;
@@ -49,7 +60,11 @@ const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
   return children;
 };
 
-export const App: FC = () => {
+interface Props {
+  vm: AppViewModel;
+}
+
+export const App: FC<Props> = ({ vm }) => {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     Initializer.init()
@@ -61,37 +76,43 @@ export const App: FC = () => {
       .catch(logger.error);
   });
 
-  const errorPage = <CrashView />;
+  // Since we are outside the router component, we cannot use useUrlParams here
+  const { header } = useMemo(getUrlParams, []);
+
+  const content = loaded ? (
+    <ClientProvider>
+      <MediaDevicesContext value={vm.mediaDevices}>
+        <ProcessorProvider>
+          <Sentry.ErrorBoundary
+            fallback={(error) => <ErrorPage error={error} widget={widget} />}
+          >
+            <DisconnectedBanner />
+            <Routes>
+              <SentryRoute path="/" element={<HomePage />} />
+              <SentryRoute path="/login" element={<LoginPage />} />
+              <SentryRoute path="/register" element={<RegisterPage />} />
+              <SentryRoute path="*" element={<RoomPage />} />
+            </Routes>
+          </Sentry.ErrorBoundary>
+        </ProcessorProvider>
+      </MediaDevicesContext>
+    </ClientProvider>
+  ) : (
+    <LoadingPage />
+  );
 
   return (
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     <BrowserRouter>
       <BackgroundProvider>
         <ThemeProvider>
           <TooltipProvider>
-            {loaded ? (
-              <Suspense fallback={null}>
-                <ClientProvider>
-                  <MediaDevicesProvider>
-                    <Sentry.ErrorBoundary fallback={errorPage}>
-                      <DisconnectedBanner />
-                      <Routes>
-                        <SentryRoute path="/" element={<HomePage />} />
-                        <SentryRoute path="/login" element={<LoginPage />} />
-                        <SentryRoute
-                          path="/register"
-                          element={<RegisterPage />}
-                        />
-                        <SentryRoute path="*" element={<RoomPage />} />
-                      </Routes>
-                    </Sentry.ErrorBoundary>
-                  </MediaDevicesProvider>
-                </ClientProvider>
-              </Suspense>
-            ) : (
-              <LoadingView />
-            )}
+            <Suspense fallback={null}>
+              {header === HeaderStyle.AppBar ? (
+                <AppBar>{content}</AppBar>
+              ) : (
+                content
+              )}
+            </Suspense>
           </TooltipProvider>
         </ThemeProvider>
       </BackgroundProvider>

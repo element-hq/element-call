@@ -1,0 +1,11 @@
+#!/usr/bin/sh
+
+FILE=".links.yaml"
+if test -f "$FILE"; then
+  mv .links.yaml .links.temp-disabled.yaml
+  # echo "running yarn"
+  x=$(yarn)
+  y=$(git add yarn.lock)
+  echo "[yarn-linker] The pre-commit hook has disabled .links.yaml and MODIFIED the yarn.lock file. Review the staged changes (the hook added yarn.lock, was this desired?) and run \`git commit \` again if they look okay. The post-commit hook will re-enable your links."
+  exit 1
+fi

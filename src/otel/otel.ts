@@ -1,21 +1,25 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import {
+  SimpleSpanProcessor,
+  type SpanProcessor,
+} from "@opentelemetry/sdk-trace-base";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
 import opentelemetry, { type Tracer } from "@opentelemetry/api";
-import { Resource } from "@opentelemetry/resources";
-import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
-import { logger } from "matrix-js-sdk/src/logger";
+import { resourceFromAttributes } from "@opentelemetry/resources";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { PosthogSpanProcessor } from "../analytics/PosthogSpanProcessor";
 import { Config } from "../config/Config";
 import { RageshakeSpanProcessor } from "../analytics/RageshakeSpanProcessor";
+import { getRageshakeSubmitUrl } from "../settings/submit-rageshake";
 
 const SERVICE_NAME = "element-call";
 
@@ -28,20 +32,24 @@ export class ElementCallOpenTelemetry {
   public readonly rageshakeProcessor?: RageshakeSpanProcessor;
 
   public static globalInit(): void {
-    const config = Config.get();
+    // this is only supported in the full package as the is currently no support for passing in the collector URL from the widget host
+    const collectorUrl =
+      import.meta.env.VITE_PACKAGE === "full"
+        ? Config.get().opentelemetry?.collector_url
+        : undefined;
     // we always enable opentelemetry in general. We only enable the OTLP
     // collector if a URL is defined (and in future if another setting is defined)
     // Posthog reporting is enabled or disabled
     // within the posthog code.
-    const shouldEnableOtlp = Boolean(config.opentelemetry?.collector_url);
+    const shouldEnableOtlp = Boolean(collectorUrl);
 
     if (!sharedInstance || sharedInstance.isOtlpEnabled !== shouldEnableOtlp) {
       logger.info("(Re)starting OpenTelemetry debug reporting");
       sharedInstance?.dispose();
 
       sharedInstance = new ElementCallOpenTelemetry(
-        config.opentelemetry?.collector_url,
-        config.rageshake?.submit_url,
+        collectorUrl,
+        getRageshakeSubmitUrl(),
       );
     }
   }
@@ -54,34 +62,34 @@ export class ElementCallOpenTelemetry {
     collectorUrl: string | undefined,
     rageshakeUrl: string | undefined,
   ) {
-    // This is how we can make Jaeger show a reasonable service in the dropdown on the left.
-    const providerConfig = {
-      resource: new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: SERVICE_NAME,
-      }),
-    };
-    this._provider = new WebTracerProvider(providerConfig);
+    const spanProcessors: SpanProcessor[] = [];
 
     if (collectorUrl) {
       logger.info("Enabling OTLP collector with URL " + collectorUrl);
       this.otlpExporter = new OTLPTraceExporter({
         url: collectorUrl,
       });
-      this._provider.addSpanProcessor(
-        new SimpleSpanProcessor(this.otlpExporter),
-      );
+      spanProcessors.push(new SimpleSpanProcessor(this.otlpExporter));
     } else {
       logger.info("OTLP collector disabled");
     }
 
     if (rageshakeUrl) {
       this.rageshakeProcessor = new RageshakeSpanProcessor();
-      this._provider.addSpanProcessor(this.rageshakeProcessor);
+      spanProcessors.push(this.rageshakeProcessor);
     }
 
-    this._provider.addSpanProcessor(new PosthogSpanProcessor());
-    opentelemetry.trace.setGlobalTracerProvider(this._provider);
+    spanProcessors.push(new PosthogSpanProcessor());
 
+    this._provider = new WebTracerProvider({
+      resource: resourceFromAttributes({
+        // This is how we can make Jaeger show a reasonable service in the dropdown on the left.
+        [ATTR_SERVICE_NAME]: SERVICE_NAME,
+      }),
+      spanProcessors,
+    });
+
+    opentelemetry.trace.setGlobalTracerProvider(this._provider);
     this._tracer = opentelemetry.trace.getTracer(
       // This is not the serviceName shown in jaeger
       "my-element-call-otl-tracer",

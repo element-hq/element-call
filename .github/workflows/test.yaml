@@ -1,28 +1,61 @@
-name: Run unit tests
+name: Test
 on:
   pull_request: {}
   push:
     branches: [livekit, full-mesh]
 jobs:
   vitest:
-    name: Run vitest tests
+    name: Run unit tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Enable Corepack
+        run: corepack enable
       - name: Yarn cache
-        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           cache: "yarn"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "yarn install"
+        run: "yarn install --immutable"
       - name: Vitest
         run: "yarn run test:coverage"
       - name: Upload to codecov
-        uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303 # v5
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           flags: unittests
           fail_ci_if_error: true
+  playwright:
+    name: Run end-to-end tests
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Enable Corepack
+        run: corepack enable
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          cache: "yarn"
+          node-version-file: ".node-version"
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Install Playwright Browsers
+        run: yarn playwright install --with-deps
+      - name: Run backend components
+        run: |
+          docker compose -f playwright-backend-docker-compose.yml -f playwright-backend-docker-compose.override.yml pull
+          docker compose -f playwright-backend-docker-compose.yml -f playwright-backend-docker-compose.override.yml up -d
+          docker ps
+      - name: Run Playwright tests
+        env:
+          USE_DOCKER: 1
+        run: yarn playwright test
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 3

@@ -1,15 +1,16 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { logger } from "matrix-js-sdk/src/logger";
-import { BehaviorSubject, type Observable } from "rxjs";
-import { useObservableEagerState } from "observable-hooks";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { BehaviorSubject } from "rxjs";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import { type Behavior } from "../state/Behavior";
+import { useBehavior } from "../useBehavior";
 
 export class Setting<T> {
   public constructor(
@@ -38,11 +39,14 @@ export class Setting<T> {
   private readonly key: string;
 
   private readonly _value$: BehaviorSubject<T>;
-  public readonly value$: Observable<T>;
+  public readonly value$: Behavior<T>;
 
   public readonly setValue = (value: T): void => {
     this._value$.next(value);
     localStorage.setItem(this.key, JSON.stringify(value));
+  };
+  public readonly getValue = (): T => {
+    return this._value$.getValue();
   };
 }
 
@@ -50,7 +54,7 @@ export class Setting<T> {
  * React hook that returns a settings's current value and a setter.
  */
 export function useSetting<T>(setting: Setting<T>): [T, (value: T) => void] {
-  return [useObservableEagerState(setting.value$), setting.setValue];
+  return [useBehavior(setting.value$), setting.setValue];
 }
 
 // null = undecided
@@ -96,6 +100,8 @@ export const videoInput = new Setting<string | undefined>(
   undefined,
 );
 
+export const backgroundBlur = new Setting<boolean>("background-blur", false);
+
 export const showHandRaisedTimer = new Setting<boolean>(
   "hand-raised-show-timer",
   false,
@@ -108,9 +114,26 @@ export const playReactionsSound = new Setting<boolean>(
   true,
 );
 
-export const soundEffectVolumeSetting = new Setting<number>(
+export const soundEffectVolume = new Setting<number>(
   "sound-effect-volume",
   0.5,
 );
 
+export const useNewMembershipManager = new Setting<boolean>(
+  "new-membership-manager",
+  true,
+);
+
+export const useExperimentalToDeviceTransport = new Setting<boolean>(
+  "experimental-to-device-transport",
+  true,
+);
+
+export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);
+
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
+
+export const alwaysShowIphoneEarpiece = new Setting<boolean>(
+  "always-show-iphone-earpiece",
+  false,
+);

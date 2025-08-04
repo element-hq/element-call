@@ -1,26 +1,27 @@
 /*
 Copyright 2024 Milton Moura <miltonmoura@gmail.com>
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { EventType, RelationType } from "matrix-js-sdk/src/matrix";
+import { EventType, RelationType } from "matrix-js-sdk";
 import {
   createContext,
-  useContext,
+  use,
   type ReactNode,
   useCallback,
   useMemo,
+  type JSX,
 } from "react";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { logger } from "matrix-js-sdk/src/logger";
-import { useObservableEagerState } from "observable-hooks";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { useClientState } from "../ClientContext";
 import { ElementCallReactionEventType, type ReactionOption } from ".";
 import { type CallViewModel } from "../state/CallViewModel";
+import { useBehavior } from "../useBehavior";
 
 interface ReactionsSenderContextType {
   supportsReactions: boolean;
@@ -33,7 +34,7 @@ const ReactionsSenderContext = createContext<
 >(undefined);
 
 export const useReactionsSender = (): ReactionsSenderContextType => {
-  const context = useContext(ReactionsSenderContext);
+  const context = use(ReactionsSenderContext);
   if (!context) {
     throw new Error("useReactions must be used within a ReactionsProvider");
   }
@@ -59,6 +60,7 @@ export const ReactionsSenderProvider = ({
   const room = rtcSession.room;
   const myUserId = room.client.getUserId();
   const myDeviceId = room.client.getDeviceId();
+  const myMembershipIdentifier = `${myUserId}:${myDeviceId}`;
 
   const myMembershipEvent = useMemo(
     () =>
@@ -67,14 +69,8 @@ export const ReactionsSenderProvider = ({
       )?.eventId,
     [memberships, myUserId, myDeviceId],
   );
-  const myMembershipIdentifier = useMemo(() => {
-    const membership = memberships.find((m) => m.sender === myUserId);
-    return membership
-      ? `${membership.sender}:${membership.deviceId}`
-      : undefined;
-  }, [memberships, myUserId]);
 
-  const reactions = useObservableEagerState(vm.reactions$);
+  const reactions = useBehavior(vm.reactions$);
   const myReaction = useMemo(
     () =>
       myMembershipIdentifier !== undefined
@@ -83,7 +79,7 @@ export const ReactionsSenderProvider = ({
     [myMembershipIdentifier, reactions],
   );
 
-  const handsRaised = useObservableEagerState(vm.handsRaised$);
+  const handsRaised = useBehavior(vm.handsRaised$);
   const myRaisedHand = useMemo(
     () =>
       myMembershipIdentifier !== undefined
@@ -161,7 +157,7 @@ export const ReactionsSenderProvider = ({
   );
 
   return (
-    <ReactionsSenderContext.Provider
+    <ReactionsSenderContext
       value={{
         supportsReactions,
         toggleRaisedHand,
@@ -169,6 +165,6 @@ export const ReactionsSenderProvider = ({
       }}
     >
       {children}
-    </ReactionsSenderContext.Provider>
+    </ReactionsSenderContext>
   );
 };

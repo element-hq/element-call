@@ -1,7 +1,7 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -9,9 +9,10 @@ import {
   type ChangeEvent,
   type FC,
   type ForwardedRef,
-  forwardRef,
   type ReactNode,
   useId,
+  type JSX,
+  type Ref,
 } from "react";
 import classNames from "classnames";
 
@@ -53,6 +54,7 @@ function Field({ children, className }: FieldProps): JSX.Element {
 }
 
 interface InputFieldProps {
+  ref?: Ref<HTMLInputElement | HTMLTextAreaElement>;
   label?: string;
   type: string;
   prefix?: string;
@@ -77,88 +79,81 @@ interface InputFieldProps {
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export const InputField = forwardRef<
-  HTMLInputElement | HTMLTextAreaElement,
-  InputFieldProps
->(
-  (
-    {
-      id,
-      label,
-      className,
-      type,
-      checked,
-      prefix,
-      suffix,
-      description,
-      disabled,
-      min,
-      ...rest
-    },
-    ref,
-  ) => {
-    const descriptionId = useId();
+export const InputField: FC<InputFieldProps> = ({
+  ref,
+  id,
+  label,
+  className,
+  type,
+  checked,
+  prefix,
+  suffix,
+  description,
+  disabled,
+  min,
+  ...rest
+}) => {
+  const descriptionId = useId();
 
-    return (
-      <Field
-        className={classNames(
-          type === "checkbox" ? styles.checkboxField : styles.inputField,
-          {
-            [styles.prefix]: !!prefix,
-            [styles.disabled]: disabled,
-          },
-          className,
-        )}
-      >
-        {prefix && <span>{prefix}</span>}
-        {type === "textarea" ? (
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          <textarea
-            id={id}
-            ref={ref as ForwardedRef<HTMLTextAreaElement>}
-            disabled={disabled}
-            aria-describedby={descriptionId}
-            {...rest}
-          />
-        ) : (
-          <input
-            id={id}
-            ref={ref as ForwardedRef<HTMLInputElement>}
-            type={type}
-            checked={checked}
-            disabled={disabled}
-            aria-describedby={descriptionId}
-            min={min}
-            {...rest}
-          />
-        )}
+  return (
+    <Field
+      className={classNames(
+        type === "checkbox" ? styles.checkboxField : styles.inputField,
+        {
+          [styles.prefix]: !!prefix,
+          [styles.disabled]: disabled,
+        },
+        className,
+      )}
+    >
+      {prefix && <span>{prefix}</span>}
+      {type === "textarea" ? (
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        <textarea
+          id={id}
+          ref={ref as ForwardedRef<HTMLTextAreaElement>}
+          disabled={disabled}
+          aria-describedby={descriptionId}
+          {...rest}
+        />
+      ) : (
+        <input
+          id={id}
+          ref={ref as ForwardedRef<HTMLInputElement>}
+          type={type}
+          checked={checked}
+          disabled={disabled}
+          aria-describedby={descriptionId}
+          min={min}
+          {...rest}
+        />
+      )}
 
-        <label htmlFor={id}>
-          {type === "checkbox" && (
-            <div className={styles.checkbox}>
-              <CheckIcon />
-            </div>
-          )}
-          {label}
-        </label>
-        {suffix && <span>{suffix}</span>}
-        {description && (
-          <p
-            id={descriptionId}
-            className={
-              label
-                ? styles.description
-                : classNames(styles.description, styles.noLabel)
-            }
-          >
-            {description}
-          </p>
+      <label htmlFor={id}>
+        {type === "checkbox" && (
+          <div className={styles.checkbox}>
+            <CheckIcon />
+          </div>
         )}
-      </Field>
-    );
-  },
-);
+        {label}
+      </label>
+      {suffix && <span>{suffix}</span>}
+      {description && (
+        <p
+          id={descriptionId}
+          className={
+            label
+              ? styles.description
+              : classNames(styles.description, styles.noLabel)
+          }
+        >
+          {description}
+        </p>
+      )}
+    </Field>
+  );
+};
 
 InputField.displayName = "InputField";
 

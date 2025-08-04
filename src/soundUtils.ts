@@ -1,11 +1,13 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
+
+import { isFailure } from "./utils/fetch";
 
 type SoundDefinition = { mp3?: string; ogg: string };
 
@@ -49,7 +51,7 @@ export async function prefetchSounds<S extends string>(
       const response = await fetch(
         preferredFormat === "ogg" ? ogg : (mp3 ?? ogg),
       );
-      if (!response.ok) {
+      if (isFailure(response)) {
         // If the sound doesn't load, it's not the end of the world. We won't play
         // the sound when requested, but it's better than failing the whole application.
         logger.warn(`Could not load sound ${name}, response was not okay`);

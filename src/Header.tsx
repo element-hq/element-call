@@ -1,17 +1,12 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import classNames from "classnames";
-import {
-  type FC,
-  type HTMLAttributes,
-  type ReactNode,
-  forwardRef,
-} from "react";
+import { type Ref, type FC, type HTMLAttributes, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";
@@ -24,23 +19,27 @@ import { EncryptionLock } from "./room/EncryptionLock";
 import { useMediaQuery } from "./useMediaQuery";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
+  ref?: Ref<HTMLElement>;
   children: ReactNode;
   className?: string;
 }
 
-export const Header = forwardRef<HTMLElement, HeaderProps>(
-  ({ children, className, ...rest }, ref) => {
-    return (
-      <header
-        ref={ref}
-        className={classNames(styles.header, className)}
-        {...rest}
-      >
-        {children}
-      </header>
-    );
-  },
-);
+export const Header: FC<HeaderProps> = ({
+  ref,
+  children,
+  className,
+  ...rest
+}) => {
+  return (
+    <header
+      ref={ref}
+      className={classNames(styles.header, className)}
+      {...rest}
+    >
+      {children}
+    </header>
+  );
+};
 
 Header.displayName = "Header";
 
@@ -161,7 +160,12 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
             height={20}
             aria-label={t("header_participants_label")}
           />
-          <Text as="span" size="sm" weight="medium">
+          <Text
+            as="span"
+            size="sm"
+            weight="medium"
+            data-testid="roomHeader_participants_count"
+          >
             {t("participant_count", { count: participantCount ?? 0 })}
           </Text>
         </div>

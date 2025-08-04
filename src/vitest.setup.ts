@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -14,7 +14,7 @@ import { initReactI18next } from "react-i18next";
 import { afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "vitest-axe/extend-expect";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import "@testing-library/jest-dom/vitest";
 
 import EN from "../locales/en/app.json";
@@ -30,7 +30,7 @@ i18n
     // We embed the translations, so that it never needs to fetch
     resources: {
       en: {
-        app: EN,
+        translation: EN,
       },
     },
     interpolation: {

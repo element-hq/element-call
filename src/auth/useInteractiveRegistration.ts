@@ -1,18 +1,18 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
+import { InteractiveAuth } from "matrix-js-sdk";
 import {
   createClient,
   type MatrixClient,
   type RegisterResponse,
-} from "matrix-js-sdk/src/matrix";
-import { logger } from "matrix-js-sdk/src/logger";
+} from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { initClient } from "../utils/matrix";
 import { type Session } from "../ClientContext";
@@ -39,7 +39,7 @@ export const useInteractiveRegistration = (
     undefined,
   );
 
-  const authClient = useRef<MatrixClient>();
+  const authClient = useRef<MatrixClient | undefined>(undefined);
   if (!authClient.current) {
     authClient.current = createClient({
       baseUrl: Config.defaultHomeserverUrl()!,

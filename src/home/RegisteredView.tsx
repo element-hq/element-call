@@ -1,7 +1,7 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -12,10 +12,10 @@ import {
   type FormEventHandler,
   type FC,
 } from "react";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { Button } from "@vector-im/compound-web";
 import { useNavigate } from "react-router-dom";
 
@@ -37,12 +37,14 @@ import { Form } from "../form/Form";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useOptInAnalytics } from "../settings/settings";
+import { useUrlParams } from "../UrlParams";
 
 interface Props {
   client: MatrixClient;
 }
 
 export const RegisteredView: FC<Props> = ({ client }) => {
+  const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
@@ -114,14 +116,16 @@ export const RegisteredView: FC<Props> = ({ client }) => {
   return (
     <>
       <div className={commonStyles.container}>
-        <Header>
-          <LeftNav>
-            <HeaderLogo />
-          </LeftNav>
-          <RightNav>
-            <UserMenuContainer />
-          </RightNav>
-        </Header>
+        {header === "standard" && (
+          <Header>
+            <LeftNav>
+              <HeaderLogo />
+            </LeftNav>
+            <RightNav>
+              <UserMenuContainer />
+            </RightNav>
+          </Header>
+        )}
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
           <Heading size="lg" weight="semibold">

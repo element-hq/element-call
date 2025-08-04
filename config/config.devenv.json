@@ -1,15 +1,19 @@
 {
   "default_server_config": {
     "m.homeserver": {
-      "base_url": "http://synapse.localhost:8008",
-      "server_name": "synapse.localhost"
+      "base_url": "https://synapse.m.localhost",
+      "server_name": "synapse.m.localhost"
     }
-  },
-  "livekit": {
-    "livekit_service_url": "http://localhost:8009"
   },
   "features": {
     "feature_use_device_session_member_events": true
   },
-  "eula": "https://static.element.io/legal/online-EULA.pdf"
+  "ssla": "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
+  "matrix_rtc_session": {
+    "wait_for_key_rotation_ms": 3000,
+    "membership_event_expiry_ms": 180000000,
+    "delayed_leave_event_delay_ms": 18000,
+    "delayed_leave_event_restart_ms": 4000,
+    "network_error_retry_ms": 100
+  }
 }

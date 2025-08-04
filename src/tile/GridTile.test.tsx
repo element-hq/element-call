@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -9,14 +9,14 @@ import { type RemoteTrackPublication } from "livekit-client";
 import { test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
-import { of } from "rxjs";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { GridTile } from "./GridTile";
 import { mockRtcMembership, withRemoteMedia } from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import type { CallViewModel } from "../state/CallViewModel";
+import { constant } from "../state/Behavior";
 
 global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
@@ -53,13 +53,13 @@ test("GridTile is accessible", async () => {
         memberships: [],
       } as unknown as MatrixRTCSession;
       const cVm = {
-        reactions$: of({}),
-        handsRaised$: of({}),
+        reactions$: constant({}),
+        handsRaised$: constant({}),
       } as Partial<CallViewModel> as CallViewModel;
       const { container } = render(
         <ReactionsSenderProvider vm={cVm} rtcSession={fakeRtcSession}>
           <GridTile
-            vm={new GridTileViewModel(of(vm))}
+            vm={new GridTileViewModel(constant(vm))}
             onOpenProfile={() => {}}
             targetWidth={300}
             targetHeight={200}

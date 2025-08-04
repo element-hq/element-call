@@ -1,0 +1,22 @@
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cpd-space-2x);
+  max-inline-size: 480px;
+}
+
+.icon {
+  margin-block-end: var(--cpd-space-4x);
+}
+
+.error > h1 {
+  margin: 0;
+  text-align: center;
+}
+
+.error > p {
+  font: var(--cpd-font-body-lg-regular);
+  color: var(--cpd-color-text-secondary);
+  text-align: center;
+}

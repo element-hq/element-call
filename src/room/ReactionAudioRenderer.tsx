@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -24,8 +24,10 @@ const soundMap = Object.fromEntries([
 
 export function ReactionsAudioRenderer({
   vm,
+  muted,
 }: {
   vm: CallViewModel;
+  muted?: boolean;
 }): ReactNode {
   const [shouldPlay] = useSetting(playReactionsSound);
   const [soundCache, setSoundCache] = useState<ReturnType<
@@ -34,6 +36,7 @@ export function ReactionsAudioRenderer({
   const audioEngineCtx = useAudioContext({
     sounds: soundCache,
     latencyHint: "interactive",
+    muted,
   });
   const audioEngineRef = useLatest(audioEngineCtx);
 

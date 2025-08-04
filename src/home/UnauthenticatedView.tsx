@@ -1,15 +1,15 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useState, type FormEventHandler } from "react";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk/lib/randomstring";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { useNavigate } from "react-router-dom";
 
 import { useClient } from "../ClientContext";
@@ -34,9 +34,11 @@ import { Config } from "../config/Config";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useOptInAnalytics } from "../settings/settings";
 import { ExternalLink, Link } from "../button/Link";
+import { useUrlParams } from "../UrlParams";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
+  const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
@@ -67,7 +69,7 @@ export const UnauthenticatedView: FC = () => {
         const userName = generateRandomName();
         const [client, session] = await register(
           userName,
-          randomString(16),
+          secureRandomString(16),
           displayName,
           recaptchaResponse,
           true,
@@ -89,7 +91,7 @@ export const UnauthenticatedView: FC = () => {
           // @ts-ignore
           if (error.errcode === "M_ROOM_IN_USE") {
             setOnFinished(() => {
-              setClient({ client, session });
+              setClient(client, session);
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
               navigate(`/${aliasLocalpart}`)?.catch((error) => {
                 logger.error("Failed to navigate to alias localpart", error);
@@ -111,7 +113,7 @@ export const UnauthenticatedView: FC = () => {
         if (!createRoomResult.password)
           throw new Error("Failed to create room with shared secret");
 
-        setClient({ client, session });
+        setClient(client, session);
         await navigate(
           getRelativeRoomUrl(
             createRoomResult.roomId,
@@ -141,14 +143,16 @@ export const UnauthenticatedView: FC = () => {
   return (
     <>
       <div className={commonStyles.container}>
-        <Header>
-          <LeftNav>
-            <HeaderLogo />
-          </LeftNav>
-          <RightNav hideMobile>
-            <UserMenuContainer />
-          </RightNav>
-        </Header>
+        {header === "standard" && (
+          <Header>
+            <LeftNav>
+              <HeaderLogo />
+            </LeftNav>
+            <RightNav hideMobile>
+              <UserMenuContainer />
+            </RightNav>
+          </Header>
+        )}
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
           <Heading size="lg" weight="semibold">
@@ -185,10 +189,10 @@ export const UnauthenticatedView: FC = () => {
               </Text>
             )}
             <Text size="sm" className={styles.notice}>
-              <Trans i18nKey="unauthenticated_view_eula_caption">
+              <Trans i18nKey="unauthenticated_view_ssla_caption">
                 By clicking "Go", you agree to our{" "}
-                <ExternalLink href={Config.get().eula}>
-                  End User Licensing Agreement (EULA)
+                <ExternalLink href={Config.get().ssla}>
+                  Software and Services License Agreement (SSLA)
                 </ExternalLink>
               </Trans>
             </Text>

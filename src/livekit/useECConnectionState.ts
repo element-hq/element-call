@@ -1,12 +1,12 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type AudioCaptureOptions,
+  ConnectionError,
   ConnectionState,
   type LocalTrack,
   type Room,
@@ -14,18 +14,18 @@ import {
   Track,
 } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import * as Sentry from "@sentry/react";
 
 import { type SFUConfig, sfuConfigEquals } from "./openIDSFU";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
-
-declare global {
-  interface Window {
-    peerConnectionTimeout?: number;
-    websocketTimeout?: number;
-  }
-}
+import {
+  ElementCallError,
+  InsufficientCapacityError,
+  SFURoomCreationRestrictedError,
+  UnknownCallError,
+} from "../utils/errors.ts";
+import { AbortHandle } from "../utils/abortHandle.ts";
 
 /*
  * Additional values for states that a call can be in, beyond what livekit
@@ -53,7 +53,8 @@ async function doConnect(
   livekitRoom: Room,
   sfuConfig: SFUConfig,
   audioEnabled: boolean,
-  audioOptions: AudioCaptureOptions,
+  initialDeviceId: string | undefined,
+  abortHandle: AbortHandle,
 ): Promise<void> {
   // Always create an audio track manually.
   // livekit (by default) keeps the mic track open when you mute, but if you start muted,
@@ -76,19 +77,40 @@ async function doConnect(
   let preCreatedAudioTrack: LocalTrack | undefined;
   try {
     const audioTracks = await livekitRoom!.localParticipant.createTracks({
-      audio: audioOptions,
+      audio: { deviceId: initialDeviceId },
     });
+
     if (audioTracks.length < 1) {
       logger.info("Tried to pre-create local audio track but got no tracks");
     } else {
       preCreatedAudioTrack = audioTracks[0];
     }
+    // There was a yield point previously (awaiting for the track to be created) so we need to check
+    // if the operation was cancelled and stop connecting if needed.
+    if (abortHandle.isAborted()) {
+      logger.info(
+        "[Lifecycle] Signal Aborted: Pre-created audio track but connection aborted",
+      );
+      preCreatedAudioTrack?.stop();
+      return;
+    }
+
     logger.info("Pre-created microphone track");
   } catch (e) {
     logger.error("Failed to pre-create microphone track", e);
   }
 
-  if (!audioEnabled) await preCreatedAudioTrack?.mute();
+  if (!audioEnabled) {
+    await preCreatedAudioTrack?.mute();
+    // There was a yield point. Check if the operation was cancelled and stop connecting.
+    if (abortHandle.isAborted()) {
+      logger.info(
+        "[Lifecycle] Signal Aborted: Pre-created audio track but connection aborted",
+      );
+      preCreatedAudioTrack?.stop();
+      return;
+    }
+  }
 
   // check again having awaited for the track to create
   if (
@@ -101,12 +123,22 @@ async function doConnect(
     return;
   }
 
-  logger.info("Connecting & publishing");
+  logger.info("[Lifecycle] Connecting & publishing");
   try {
     await connectAndPublish(livekitRoom, sfuConfig, preCreatedAudioTrack, []);
+    if (abortHandle.isAborted()) {
+      logger.info(
+        "[Lifecycle] Signal Aborted: Connected but operation was cancelled. Force disconnect",
+      );
+      livekitRoom?.disconnect().catch((err) => {
+        logger.error("Failed to disconnect from SFU", err);
+      });
+      return;
+    }
   } catch (e) {
     preCreatedAudioTrack?.stop();
-    logger.warn("Stopped precreated audio tracks.", e);
+    logger.debug("Stopped precreated audio tracks.");
+    throw e;
   }
 }
 
@@ -129,12 +161,33 @@ async function connectAndPublish(
   tracker.cacheConnectStart();
   livekitRoom.once(RoomEvent.SignalConnected, tracker.cacheWsConnect);
 
-  await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt, {
-    // Due to stability issues on Firefox we are testing the effect of different
-    // timeouts, and allow these values to be set through the console
-    peerConnectionTimeout: window.peerConnectionTimeout ?? 45000,
-    websocketTimeout: window.websocketTimeout ?? 45000,
-  });
+  try {
+    logger.info(`[Lifecycle] Connecting to livekit room ${sfuConfig!.url} ...`);
+    await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt);
+    logger.info(`[Lifecycle] ... connected to livekit room`);
+  } catch (e) {
+    logger.error("[Lifecycle] Failed to connect", e);
+    // LiveKit uses 503 to indicate that the server has hit its track limits.
+    // https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
+    // It also errors with a status code of 200 (yes, really) for room
+    // participant limits.
+    // LiveKit Cloud uses 429 for connection limits.
+    // Either way, all these errors can be explained as "insufficient capacity".
+    if (e instanceof ConnectionError) {
+      if (e.status === 503 || e.status === 200 || e.status === 429) {
+        throw new InsufficientCapacityError();
+      }
+      if (e.status === 404) {
+        // error msg is "Could not establish signal connection: requested room does not exist"
+        // The room does not exist. There are two different modes of operation for the SFU:
+        // - the room is created on the fly when connecting (livekit `auto_create` option)
+        // - Only authorized users can create rooms, so the room must exist before connecting (done by the auth jwt service)
+        // In the first case there will not be a 404, so we are in the second case.
+        throw new SFURoomCreationRestrictedError();
+      }
+    }
+    throw e;
+  }
 
   // remove listener in case the connect promise rejects before `SignalConnected` is emitted.
   livekitRoom.off(RoomEvent.SignalConnected, tracker.cacheWsConnect);
@@ -162,7 +215,7 @@ async function connectAndPublish(
 }
 
 export function useECConnectionState(
-  initialAudioOptions: AudioCaptureOptions,
+  initialDeviceId: string | undefined,
   initialAudioEnabled: boolean,
   livekitRoom?: Room,
   sfuConfig?: SFUConfig,
@@ -175,6 +228,8 @@ export function useECConnectionState(
 
   const [isSwitchingFocus, setSwitchingFocus] = useState(false);
   const [isInDoConnect, setIsInDoConnect] = useState(false);
+  const [error, setError] = useState<ElementCallError | null>(null);
+  if (error !== null) throw error;
 
   const onConnStateChanged = useCallback((state: ConnectionState) => {
     if (state == ConnectionState.Connected) setSwitchingFocus(false);
@@ -223,6 +278,22 @@ export function useECConnectionState(
 
   const currentSFUConfig = useRef(Object.assign({}, sfuConfig));
 
+  // Protection against potential leaks, where the component to be unmounted and there is
+  // still a pending doConnect promise. This would lead the user to still be in the call even
+  // if the component is unmounted.
+  const abortHandlesBag = useRef(new Set<AbortHandle>());
+
+  // This is a cleanup function that will be called when the component is about to be unmounted.
+  // It will cancel all abortHandles in the bag
+  useEffect(() => {
+    const bag = abortHandlesBag.current;
+    return (): void => {
+      bag.forEach((handle) => {
+        handle.abort();
+      });
+    };
+  }, []);
+
   // Id we are transitioning from a valid config to another valid one, we need
   // to explicitly switch focus
   useEffect(() => {
@@ -249,23 +320,33 @@ export function useECConnectionState(
       // always capturing audio: it helps keep bluetooth headsets in the right mode and
       // mobile browsers to know we're doing a call.
       setIsInDoConnect(true);
+      const abortHandle = new AbortHandle();
+      abortHandlesBag.current.add(abortHandle);
       doConnect(
         livekitRoom!,
         sfuConfig!,
         initialAudioEnabled,
-        initialAudioOptions,
+        initialDeviceId,
+        abortHandle,
       )
         .catch((e) => {
-          logger.error("Failed to connect to SFU", e);
+          if (e instanceof ElementCallError) {
+            setError(e); // Bubble up any error screens to React
+          } else if (e instanceof Error) {
+            setError(new UnknownCallError(e));
+          } else logger.error("Failed to connect to SFU", e);
         })
-        .finally(() => setIsInDoConnect(false));
+        .finally(() => {
+          abortHandlesBag.current.delete(abortHandle);
+          setIsInDoConnect(false);
+        });
     }
 
     currentSFUConfig.current = Object.assign({}, sfuConfig);
   }, [
     sfuConfig,
     livekitRoom,
-    initialAudioOptions,
+    initialDeviceId,
     initialAudioEnabled,
     doFocusSwitch,
   ]);

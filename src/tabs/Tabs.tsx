@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -36,6 +36,7 @@ export function TabContainer<K extends Key>({
       <NavBar role="tablist" aria-label={label} className={styles.tabList}>
         {tabs.map(({ key, name }) => (
           <NavItem
+            key={key}
             aria-controls={`${idPrefix}[${key}]`}
             onClick={() => onTabChange(key)}
             active={key === tab}
@@ -46,6 +47,7 @@ export function TabContainer<K extends Key>({
       </NavBar>
       {tabs.map(({ key, content }) => (
         <div
+          key={key}
           id={`${idPrefix}[${key}]`}
           style={{ display: key === tab ? undefined : "none" }}
         >

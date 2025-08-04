@@ -1,7 +1,7 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -13,13 +13,13 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { type Room } from "matrix-js-sdk/src/matrix";
+import { type Room } from "matrix-js-sdk";
 import { Button, Text } from "@vector-im/compound-web";
 import {
   LinkIcon,
   CheckIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
-import useClipboard from "react-use-clipboard";
+import copy from "copy-to-clipboard";
 
 import { Modal } from "../Modal";
 import { getAbsoluteRoomUrl } from "../utils/matrix";
@@ -42,18 +42,17 @@ export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
     () => getAbsoluteRoomUrl(room.roomId, e2eeSystem, room.name),
     [e2eeSystem, room.name, room.roomId],
   );
-  const [, setCopied] = useClipboard(url);
   const [toastOpen, setToastOpen] = useState(false);
   const onToastDismiss = useCallback(() => setToastOpen(false), [setToastOpen]);
 
   const onButtonClick = useCallback(
     (e: MouseEvent) => {
       e.stopPropagation();
-      setCopied();
+      copy(url);
       onDismiss();
       setToastOpen(true);
     },
-    [setCopied, onDismiss],
+    [url, onDismiss],
   );
 
   return (

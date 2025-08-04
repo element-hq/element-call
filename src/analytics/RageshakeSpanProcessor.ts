@@ -1,7 +1,7 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -107,13 +107,13 @@ export class RageshakeSpanProcessor implements SpanProcessor {
             startTime,
             duration,
             references:
-              span.parentSpanId === undefined
+              span.parentSpanContext?.spanId === undefined
                 ? []
                 : [
                     {
                       refType: "CHILD_OF",
                       traceID: traceId,
-                      spanID: span.parentSpanId,
+                      spanID: span.parentSpanContext?.spanId,
                     },
                   ],
             tags: dumpAttributes(span.attributes),

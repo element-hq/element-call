@@ -1,11 +1,12 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import "matrix-js-sdk/src/@types/global";
+import { type setLogLevel as setLKLogLevel } from "livekit-client";
+
 import type { DurationFormat as PolyfillDurationFormat } from "@formatjs/intl-durationformat";
 import { type Controls } from "../controls";
 
@@ -18,6 +19,7 @@ declare global {
 
   interface Window {
     controls: Controls;
+    setLKLogLevel: typeof setLKLogLevel;
   }
 
   interface HTMLElement {

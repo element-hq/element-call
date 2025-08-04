@@ -1,19 +1,30 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useCallback, useMemo, useState } from "react";
+import {
+  type FC,
+  useCallback,
+  useMemo,
+  useState,
+  type JSX,
+  useEffect,
+} from "react";
 import { useTranslation } from "react-i18next";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk";
 import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { usePreviewTracks } from "@livekit/components-react";
-import { type LocalVideoTrack, Track } from "livekit-client";
-import { useObservable } from "observable-hooks";
+import {
+  type CreateLocalTracksOptions,
+  type LocalVideoTrack,
+  Track,
+} from "livekit-client";
+import { useObservable, useObservableEagerState } from "observable-hooks";
 import { map } from "rxjs";
 import { useNavigate } from "react-router-dom";
 
@@ -34,10 +45,16 @@ import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useMediaQuery } from "../useMediaQuery";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
-import { useMediaDevices } from "../livekit/MediaDevicesContext";
+import { useMediaDevices } from "../MediaDevicesContext";
 import { useInitial } from "../useInitial";
-import { useSwitchCamera } from "./useSwitchCamera";
+import { useSwitchCamera as useShowSwitchCamera } from "./useSwitchCamera";
+import {
+  useTrackProcessor,
+  useTrackProcessorSync,
+} from "../livekit/TrackProcessorContext";
 import { usePageTitle } from "../usePageTitle";
+import { useLatest } from "../useLatest";
+import { getValue } from "../utils/observable";
 
 interface Props {
   client: MatrixClient;
@@ -64,6 +81,13 @@ export const LobbyView: FC<Props> = ({
   onShareClick,
   waitingForInvite,
 }) => {
+  useEffect(() => {
+    logger.info("[Lifecycle] GroupCallView Component mounted");
+    return (): void => {
+      logger.info("[Lifecycle] GroupCallView Component unmounted");
+    };
+  }, []);
+
   const { t } = useTranslation();
   usePageTitle(matrixInfo.roomName);
 
@@ -103,16 +127,24 @@ export const LobbyView: FC<Props> = ({
   );
 
   const devices = useMediaDevices();
+  const videoInputId = useObservableEagerState(
+    devices.videoInput.selected$,
+  )?.id;
 
   // Capture the audio options as they were when we first mounted, because
   // we're not doing anything with the audio anyway so we don't need to
   // re-open the devices when they change (see below).
   const initialAudioOptions = useInitial(
     () =>
-      muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
+      muteStates.audio.enabled && {
+        deviceId: getValue(devices.audioInput.selected$)?.id,
+      },
   );
 
-  const localTrackOptions = useMemo(
+  const { processor } = useTrackProcessor();
+
+  const initialProcessor = useInitial(() => processor);
+  const localTrackOptions = useMemo<CreateLocalTracksOptions>(
     () => ({
       // The only reason we request audio here is to get the audio permission
       // request over with at the same time. But changing the audio settings
@@ -122,23 +154,26 @@ export const LobbyView: FC<Props> = ({
       // which would cause the devices to be re-opened on the next render.
       audio: Object.assign({}, initialAudioOptions),
       video: muteStates.video.enabled && {
-        deviceId: devices.videoInput.selectedId,
+        deviceId: videoInputId,
+        processor: initialProcessor,
       },
     }),
     [
       initialAudioOptions,
-      devices.videoInput.selectedId,
       muteStates.video.enabled,
+      videoInputId,
+      initialProcessor,
     ],
   );
 
+  const latestMuteStates = useLatest(muteStates);
   const onError = useCallback(
     (error: Error) => {
       logger.error("Error while creating preview Tracks:", error);
-      muteStates.audio.setEnabled?.(false);
-      muteStates.video.setEnabled?.(false);
+      latestMuteStates.current.audio.setEnabled?.(false);
+      latestMuteStates.current.video.setEnabled?.(false);
     },
-    [muteStates.audio, muteStates.video],
+    [latestMuteStates],
   );
 
   const tracks = usePreviewTracks(localTrackOptions, onError);
@@ -150,7 +185,17 @@ export const LobbyView: FC<Props> = ({
     [tracks],
   );
 
-  const switchCamera = useSwitchCamera(
+  useEffect(() => {
+    if (videoTrack && videoInputId === undefined) {
+      // If we have a video track but no videoInputId,
+      // we have to update the available devices. So that we select the first
+      // available video input device as the default instead of the `""` id.
+      devices.requestDeviceNames();
+    }
+  }, [devices, videoInputId, videoTrack]);
+
+  useTrackProcessorSync(videoTrack);
+  const showSwitchCamera = useShowSwitchCamera(
     useObservable(
       (inputs$) => inputs$.pipe(map(([video]) => video)),
       [videoTrack],
@@ -212,7 +257,9 @@ export const LobbyView: FC<Props> = ({
               onClick={onVideoPress}
               disabled={muteStates.video.setEnabled === null}
             />
-            {switchCamera && <SwitchCameraButton onClick={switchCamera} />}
+            {showSwitchCamera && (
+              <SwitchCameraButton onClick={showSwitchCamera} />
+            )}
             <SettingsButton onClick={openSettings} />
             {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
           </div>

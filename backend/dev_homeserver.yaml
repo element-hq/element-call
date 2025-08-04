@@ -1,5 +1,5 @@
-server_name: "synapse.localhost"
-public_baseurl: http://synapse.localhost:8008/
+server_name: "synapse.m.localhost"
+public_baseurl: https://synapse.m.localhost/
 
 pid_file: /data/homeserver.pid
 

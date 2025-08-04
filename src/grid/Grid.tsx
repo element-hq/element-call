@@ -1,7 +1,7 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -18,23 +18,22 @@ import {
   type ComponentType,
   type Dispatch,
   type FC,
-  type LegacyRef,
   type ReactNode,
+  type Ref,
   type SetStateAction,
   createContext,
-  forwardRef,
   memo,
-  useContext,
+  use,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import useMeasure from "react-use-measure";
 import classNames from "classnames";
-import { logger } from "matrix-js-sdk/src/logger";
-import { useObservableEagerState } from "observable-hooks";
-import { fromEvent, map, startWith } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import styles from "./Grid.module.css";
 import { useMergedRefs } from "../useMergedRefs";
@@ -124,7 +123,7 @@ interface LayoutContext {
 const LayoutContext = createContext<LayoutContext | null>(null);
 
 function useLayoutContext(): LayoutContext {
-  const context = useContext(LayoutContext);
+  const context = use(LayoutContext);
   if (context === null)
     throw new Error("useUpdateLayout called outside a Grid layout context");
   return context;
@@ -156,13 +155,8 @@ export function useVisibleTiles(callback: VisibleTilesCallback): void {
   );
 }
 
-const windowHeightObservable$ = fromEvent(window, "resize").pipe(
-  startWith(null),
-  map(() => window.innerHeight),
-);
-
 export interface LayoutProps<LayoutModel, TileModel, R extends HTMLElement> {
-  ref: LegacyRef<R>;
+  ref?: Ref<R>;
   model: LayoutModel;
   /**
    * Component creating an invisible "slot" for a tile to go in.
@@ -171,7 +165,7 @@ export interface LayoutProps<LayoutModel, TileModel, R extends HTMLElement> {
 }
 
 export interface TileProps<Model, R extends HTMLElement> {
-  ref: LegacyRef<R>;
+  ref?: Ref<R>;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   /**
@@ -262,7 +256,13 @@ export function Grid<
   const [gridRoot, gridRef2] = useState<HTMLElement | null>(null);
   const gridRef = useMergedRefs<HTMLElement>(gridRef1, gridRef2);
 
-  const windowHeight = useObservableEagerState(windowHeightObservable$);
+  const windowHeight = useSyncExternalStore(
+    useCallback((onChange) => {
+      window.addEventListener("resize", onChange);
+      return (): void => window.removeEventListener("resize", onChange);
+    }, []),
+    useCallback(() => window.innerHeight, []),
+  );
   const [layoutRoot, setLayoutRoot] = useState<HTMLElement | null>(null);
   const [generation, setGeneration] = useState<number | null>(null);
   const [visibleTilesCallback, setVisibleTilesCallback] =
@@ -297,14 +297,13 @@ export function Grid<
   // render of Grid causes a re-render of Layout, which in turn re-renders Grid
   const LayoutMemo = useMemo(
     () =>
-      memo(
-        forwardRef<
-          LayoutRef,
-          LayoutMemoProps<LayoutModel, TileModel, LayoutRef>
-        >(function LayoutMemo({ Layout, ...props }, ref): ReactNode {
-          return <Layout {...props} ref={ref} />;
-        }),
-      ),
+      memo(function LayoutMemo({
+        ref,
+        Layout,
+        ...props
+      }: LayoutMemoProps<LayoutModel, TileModel, LayoutRef>): ReactNode {
+        return <Layout {...props} ref={ref} />;
+      }),
     [],
   );
 
@@ -532,14 +531,14 @@ export function Grid<
       className={classNames(className, styles.grid)}
       style={style}
     >
-      <LayoutContext.Provider value={context}>
+      <LayoutContext value={context}>
         <LayoutMemo
           ref={setLayoutRoot}
           Layout={Layout}
           model={model}
           Slot={Slot}
         />
-      </LayoutContext.Provider>
+      </LayoutContext>
       {tileTransitions((spring, { id, model, onDrag, width, height }) => (
         <TileWrapper
           key={id}

@@ -1,7 +1,7 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 import { map, type Observable, of, type SchedulerLike } from "rxjs";
@@ -13,22 +13,28 @@ import {
   MatrixEvent,
   type Room,
   TypedEventEmitter,
-} from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk";
 import {
   CallMembership,
   type Focus,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
   type SessionMembershipData,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
 import {
   type LocalParticipant,
   type LocalTrackPublication,
   type RemoteParticipant,
   type RemoteTrackPublication,
   type Room as LivekitRoom,
+  Track,
 } from "livekit-client";
 import { randomUUID } from "crypto";
+import {
+  type RoomAndToDeviceEvents,
+  type RoomAndToDeviceEventsHandlerMap,
+} from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
+import { type TrackReference } from "@livekit/components-core";
 
 import {
   LocalUserMediaViewModel,
@@ -40,6 +46,9 @@ import {
   type ResolvedConfigOptions,
 } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
+import { type MediaDevices } from "../state/MediaDevices";
+import { type Behavior, constant } from "../state/Behavior";
+import { ObservableScope } from "../state/ObservableScope";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -50,12 +59,21 @@ export function withFakeTimers(continuation: () => void): void {
   }
 }
 
+export async function flushPromises(): Promise<void> {
+  await new Promise<void>((resolve) => window.setTimeout(resolve));
+}
+
 export interface OurRunHelpers extends RunHelpers {
   /**
    * Schedules a sequence of actions to happen, as described by a marble
    * diagram.
    */
   schedule: (marbles: string, actions: Record<string, () => void>) => void;
+  behavior<T = string>(
+    marbles: string,
+    values?: { [marble: string]: T },
+    error?: unknown,
+  ): Behavior<T>;
 }
 
 interface TestRunnerGlobal {
@@ -71,6 +89,7 @@ export function withTestScheduler(
   const scheduler = new TestScheduler((actual, expected) => {
     expect(actual).deep.equals(expected);
   });
+  const scope = new ObservableScope();
   // we set the test scheduler as a global so that you can watch it in a debugger
   // and get the frame number. e.g. `rxjsTestScheduler?.now()`
   (global as unknown as TestRunnerGlobal).rxjsTestScheduler = scheduler;
@@ -87,8 +106,36 @@ export function withTestScheduler(
         // Run the actions and verify that none of them error
         helpers.expectObservable(actionsObservable$).toBe(marbles, results);
       },
+      behavior<T>(
+        marbles: string,
+        values?: { [marble: string]: T },
+        error?: unknown,
+      ) {
+        // Generate a hot Observable with helpers.hot and use it as a Behavior.
+        // To do this, we need to ensure that the initial value emits
+        // synchronously upon subscription. The issue is that helpers.hot emits
+        // frame 0 of the marble diagram *asynchronously*, only once we return
+        // from the continuation, so we need to splice out the initial marble
+        // and turn it into a proper initial value.
+        const initialMarbleIndex = marbles.search(/[^ ]/);
+        if (initialMarbleIndex === -1)
+          throw new Error("Behavior must have an initial value");
+        const initialMarble = marbles[initialMarbleIndex];
+        const initialValue =
+          values === undefined ? (initialMarble as T) : values[initialMarble];
+        // The remainder of the marble diagram should start on frame 1
+        return scope.behavior(
+          helpers.hot(
+            `-${marbles.slice(initialMarbleIndex + 1)}`,
+            values,
+            error,
+          ),
+          initialValue,
+        );
+      },
     }),
   );
+  scope.end();
 }
 
 interface EmitterMock<T> {
@@ -98,7 +145,7 @@ interface EmitterMock<T> {
   removeListener: () => T;
 }
 
-function mockEmitter<T>(): EmitterMock<T> {
+export function mockEmitter<T>(): EmitterMock<T> {
   return {
     on(): T {
       return this as T;
@@ -200,13 +247,14 @@ export async function withLocalMedia(
   const vm = new LocalUserMediaViewModel(
     "local",
     mockMatrixRoomMember(localRtcMember, roomMember),
-    of(localParticipant),
+    constant(localParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({ localParticipant }),
-    of(null),
-    of(null),
+    constant(roomMember.rawDisplayName ?? "nodisplayname"),
+    constant(null),
+    constant(null),
   );
   try {
     await continuation(vm);
@@ -243,8 +291,9 @@ export async function withRemoteMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
-    of(null),
-    of(null),
+    constant(roomMember.rawDisplayName ?? "nodisplayname"),
+    constant(null),
+    constant(null),
   );
   try {
     await continuation(vm);
@@ -258,11 +307,13 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
     ...DEFAULT_CONFIG,
     ...config,
   });
+  // simulate loading the config
+  vi.spyOn(Config, "init").mockResolvedValue(void 0);
 }
 
 export class MockRTCSession extends TypedEventEmitter<
-  MatrixRTCSessionEvent,
-  MatrixRTCSessionEventHandlerMap
+  MatrixRTCSessionEvent | RoomAndToDeviceEvents,
+  MatrixRTCSessionEventHandlerMap & RoomAndToDeviceEventsHandlerMap
 > {
   public readonly statistics = {
     counters: {},
@@ -278,12 +329,13 @@ export class MockRTCSession extends TypedEventEmitter<
     super();
   }
 
-  public isJoined(): true {
-    return true;
+  public joined = true;
+  public isJoined(): boolean {
+    return this.joined;
   }
 
   public withMemberships(
-    rtcMembers$: Observable<Partial<CallMembership>[]>,
+    rtcMembers$: Behavior<Partial<CallMembership>[]>,
   ): MockRTCSession {
     rtcMembers$.subscribe((m) => {
       const old = this.memberships;
@@ -295,4 +347,40 @@ export class MockRTCSession extends TypedEventEmitter<
 
     return this;
   }
+}
+
+export const mockTrack = (identity: string): TrackReference =>
+  ({
+    participant: {
+      identity,
+    },
+    publication: {
+      kind: Track.Kind.Audio,
+      source: "mic",
+      trackSid: "123",
+      track: {
+        attach: vi.fn(),
+        detach: vi.fn(),
+        setAudioContext: vi.fn(),
+        setWebAudioPlugins: vi.fn(),
+        setVolume: vi.fn(),
+      },
+    },
+    track: {},
+    source: {},
+  }) as unknown as TrackReference;
+
+export const deviceStub = {
+  available$: of(new Map<never, never>()),
+  selected$: of(undefined),
+  select(): void {},
+};
+
+export function mockMediaDevices(data: Partial<MediaDevices>): MediaDevices {
+  return {
+    audioInput: deviceStub,
+    audioOutput: deviceStub,
+    videoInput: deviceStub,
+    ...data,
+  } as MediaDevices;
 }

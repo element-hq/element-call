@@ -1,14 +1,14 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { Button, Heading, Text } from "@vector-im/compound-web";
 
 import styles from "./RoomAuthView.module.css";
@@ -19,8 +19,10 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { Config } from "../config/Config";
 import { ExternalLink, Link } from "../button/Link";
+import { useUrlParams } from "../UrlParams";
 
 export const RoomAuthView: FC = () => {
+  const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
 
@@ -53,14 +55,16 @@ export const RoomAuthView: FC = () => {
 
   return (
     <>
-      <Header>
-        <LeftNav>
-          <HeaderLogo />
-        </LeftNav>
-        <RightNav>
-          <UserMenuContainer preventNavigation />
-        </RightNav>
-      </Header>
+      {header === "standard" && (
+        <Header>
+          <LeftNav>
+            <HeaderLogo />
+          </LeftNav>
+          <RightNav>
+            <UserMenuContainer preventNavigation />
+          </RightNav>
+        </Header>
+      )}
       <div className={styles.container}>
         <main className={styles.main}>
           <Heading size="xl" weight="semibold" className={styles.headline}>
@@ -80,10 +84,10 @@ export const RoomAuthView: FC = () => {
               />
             </FieldRow>
             <Text size="sm">
-              <Trans i18nKey="room_auth_view_eula_caption">
+              <Trans i18nKey="room_auth_view_ssla_caption">
                 By clicking "Join call now", you agree to our{" "}
-                <ExternalLink href={Config.get().eula}>
-                  End User Licensing Agreement (EULA)
+                <ExternalLink href={Config.get().ssla}>
+                  Software and Services License Agreement (SSLA)
                 </ExternalLink>
               </Trans>
             </Text>

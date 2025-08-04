@@ -1,12 +1,13 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 .tile {
   --media-view-border-radius: var(--cpd-space-4x);
+  --hover-space-margin: var(--cpd-space-1x);
   transition: outline-color ease 0.15s;
   outline: var(--cpd-border-width-2) solid rgb(0 0 0 / 0);
 }
@@ -30,7 +31,8 @@ borders don't support gradients */
 }
 
 .tile.speaking::before {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       119deg,
       rgba(13, 92, 189, 0.7) 0%,
       rgba(13, 189, 168, 0.7) 100%
@@ -49,7 +51,8 @@ borders don't support gradients */
 }
 
 .tile.handRaised::before {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       119deg,
       var(--cpd-color-yellow-1200) 0%,
       var(--cpd-color-yellow-900) 100%

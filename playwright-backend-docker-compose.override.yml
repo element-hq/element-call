@@ -1,0 +1,4 @@
+services:
+  synapse:
+    volumes:
+      - ./backend/playwright_homeserver.yaml:/data/cfg/homeserver.yaml:Z

@@ -1,18 +1,19 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { useCallback } from "react";
 import {
   type RoomState,
   RoomStateEvent,
-} from "matrix-js-sdk/src/models/room-state";
-import { useCallback, useMemo, useState } from "react";
+  type Room,
+  RoomEvent,
+} from "matrix-js-sdk";
 
-import type { Room } from "matrix-js-sdk/src/models/room";
-import { useTypedEventEmitter } from "../useEvents";
+import { useTypedEventEmitterState } from "../useEvents";
 
 /**
  * A React hook for values computed from room state.
@@ -20,14 +21,17 @@ import { useTypedEventEmitter } from "../useEvents";
  * @param f A mapping from the current room state to the computed value.
  * @returns The computed value.
  */
-export const useRoomState = <T>(room: Room, f: (state: RoomState) => T): T => {
-  const [numUpdates, setNumUpdates] = useState(0);
-  useTypedEventEmitter(
+export function useRoomState<T>(room: Room, f: (state: RoomState) => T): T {
+  // TODO: matrix-js-sdk says that Room.currentState is deprecated, but it's not
+  // clear how to reactively track the current state of the room without it
+  const currentState = useTypedEventEmitterState(
     room,
-    RoomStateEvent.Update,
-    useCallback(() => setNumUpdates((n) => n + 1), [setNumUpdates]),
+    RoomEvent.CurrentStateUpdated,
+    useCallback(() => room.currentState, [room]),
   );
-  // We want any change to the update counter to trigger an update here
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => f(room.currentState), [room, f, numUpdates]);
-};
+  return useTypedEventEmitterState(
+    currentState,
+    RoomStateEvent.Update,
+    useCallback(() => f(currentState), [f, currentState]),
+  );
+}

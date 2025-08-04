@@ -1,7 +1,7 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -12,11 +12,12 @@ import {
   debounceTime,
   distinctUntilChanged,
   map,
+  NEVER,
   type Observable,
   of,
   switchMap,
 } from "rxjs";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk";
 import {
   ConnectionState,
   type LocalParticipant,
@@ -25,11 +26,11 @@ import {
   type RemoteParticipant,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
-import { isEqual } from "lodash-es";
 import {
   type CallMembership,
   type MatrixRTCSession,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { CallViewModel, type Layout } from "./CallViewModel";
 import {
@@ -41,6 +42,7 @@ import {
   withTestScheduler,
   mockRtcMembership,
   MockRTCSession,
+  mockMediaDevices,
 } from "../utils/test";
 import {
   ECAddonConnectionState,
@@ -49,25 +51,53 @@ import {
 import { E2eeType } from "../e2ee/e2eeType";
 import type { RaisedHandInfo } from "../reactions";
 import { showNonMemberTiles } from "../settings/settings";
+import {
+  alice,
+  aliceDoppelganger,
+  aliceDoppelgangerId,
+  aliceDoppelgangerRtcMember,
+  aliceId,
+  aliceParticipant,
+  aliceRtcMember,
+  bob,
+  bobId,
+  bobRtcMember,
+  bobZeroWidthSpace,
+  bobZeroWidthSpaceId,
+  bobZeroWidthSpaceRtcMember,
+  daveRTL,
+  daveRTLId,
+  daveRTLRtcMember,
+  local,
+  localId,
+  localRtcMember,
+} from "../utils/test-fixtures";
+import { ObservableScope } from "./ObservableScope";
+import { MediaDevices } from "./MediaDevices";
+import { getValue } from "../utils/observable";
+import { type Behavior, constant } from "./Behavior";
+
+const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
+vi.mock("../UrlParams", () => ({ getUrlParams }));
+
+vi.mock("rxjs", async (importOriginal) => ({
+  ...(await importOriginal()),
+  // Disable interval Observables for the following tests since the test
+  // scheduler will loop on them forever and never call the test 'done'
+  interval: (): Observable<number> => NEVER,
+}));
 
 vi.mock("@livekit/components-core");
 
-const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
-const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
-const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
 const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
-const alice = mockMatrixRoomMember(aliceRtcMember);
-const bob = mockMatrixRoomMember(bobRtcMember);
-const carol = mockMatrixRoomMember(localRtcMember);
-const dave = mockMatrixRoomMember(daveRtcMember);
+const carol = local;
+const carolId = localId;
+const dave = mockMatrixRoomMember(daveRtcMember, { rawDisplayName: "Dave" });
 
-const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
-const bobId = `${bob.userId}:${bobRtcMember.deviceId}`;
 const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
 const localParticipant = mockLocalParticipant({ identity: "" });
-const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
 const aliceSharingScreen = mockRemoteParticipant({
   identity: aliceId,
   isScreenShareEnabled: true,
@@ -80,7 +110,9 @@ const bobSharingScreen = mockRemoteParticipant({
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
 
 const roomMembers = new Map(
-  [alice, bob, carol, dave].map((p) => [p.userId, p]),
+  [alice, aliceDoppelganger, bob, bobZeroWidthSpace, carol, dave, daveRTL].map(
+    (p) => [p.userId, p],
+  ),
 );
 
 export interface GridLayoutSummary {
@@ -133,9 +165,10 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
         case "grid":
           return combineLatest(
             [
-              l.spotlight?.media$ ?? of(undefined),
+              l.spotlight?.media$ ?? constant(undefined),
               ...l.grid.map((vm) => vm.media$),
             ],
+            // eslint-disable-next-line rxjs/finnish -- false positive
             (spotlight, ...grid) => ({
               type: l.type,
               spotlight: spotlight?.map((vm) => vm.id),
@@ -154,7 +187,8 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "spotlight-expanded":
           return combineLatest(
-            [l.spotlight.media$, l.pip?.media$ ?? of(undefined)],
+            [l.spotlight.media$, l.pip?.media$ ?? constant(undefined)],
+            // eslint-disable-next-line rxjs/finnish -- false positive
             (spotlight, pip) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -183,15 +217,16 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
     // care about the most recent value for each time step, so discard these
     // extra values.
     debounceTime(0),
-    distinctUntilChanged(isEqual),
+    distinctUntilChanged(deepCompare),
   );
 }
 
 function withCallViewModel(
-  remoteParticipants$: Observable<RemoteParticipant[]>,
-  rtcMembers$: Observable<Partial<CallMembership>[]>,
+  remoteParticipants$: Behavior<RemoteParticipant[]>,
+  rtcMembers$: Behavior<Partial<CallMembership>[]>,
   connectionState$: Observable<ECConnectionState>,
   speaking: Map<Participant, Observable<boolean>>,
+  mediaDevices: MediaDevices,
   continuation: (
     vm: CallViewModel,
     subjects: { raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>> },
@@ -245,6 +280,7 @@ function withCallViewModel(
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     liveKitRoom,
+    mediaDevices,
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
@@ -265,7 +301,7 @@ function withCallViewModel(
 }
 
 test("participants are retained during a focus switch", () => {
-  withTestScheduler(({ hot, expectObservable }) => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     // Participants disappear on frame 2 and come back on frame 3
     const participantInputMarbles = "a-ba";
     // Start switching focus on frame 1 and reconnect on frame 3
@@ -274,16 +310,17 @@ test("participants are retained during a focus switch", () => {
     const expectedLayoutMarbles = "  a";
 
     withCallViewModel(
-      hot(participantInputMarbles, {
+      behavior(participantInputMarbles, {
         a: [aliceParticipant, bobParticipant],
         b: [],
       }),
-      of([aliceRtcMember, bobRtcMember]),
-      hot(connectionInputMarbles, {
+      constant([aliceRtcMember, bobRtcMember]),
+      behavior(connectionInputMarbles, {
         c: ConnectionState.Connected,
         s: ECAddonConnectionState.ECSwitchingFocus,
       }),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
@@ -301,7 +338,7 @@ test("participants are retained during a focus switch", () => {
 });
 
 test("screen sharing activates spotlight layout", () => {
-  withTestScheduler(({ hot, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, schedule, expectObservable }) => {
     // Start with no screen shares, then have Alice and Bob share their screens,
     // then return to no screen shares, then have just Alice share for a bit
     const participantInputMarbles = "    abcda-ba";
@@ -314,15 +351,16 @@ test("screen sharing activates spotlight layout", () => {
     const expectedLayoutMarbles = "      abcdaefeg";
     const expectedShowSpeakingMarbles = "y----nyny";
     withCallViewModel(
-      hot(participantInputMarbles, {
+      behavior(participantInputMarbles, {
         a: [aliceParticipant, bobParticipant],
         b: [aliceSharingScreen, bobParticipant],
         c: [aliceSharingScreen, bobSharingScreen],
         d: [aliceParticipant, bobSharingScreen],
       }),
-      of([aliceRtcMember, bobRtcMember]),
+      constant([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         schedule(modeInputMarbles, {
           s: () => vm.setGridMode("spotlight"),
@@ -385,7 +423,7 @@ test("screen sharing activates spotlight layout", () => {
 });
 
 test("participants stay in the same order unless to appear/disappear", () => {
-  withTestScheduler(({ hot, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, schedule, expectObservable }) => {
     const visibilityInputMarbles = "a";
     // First Bob speaks, then Dave, then Alice
     const aSpeakingInputMarbles = " n- 1998ms - 1999ms y";
@@ -398,14 +436,24 @@ test("participants stay in the same order unless to appear/disappear", () => {
     const expectedLayoutMarbles = " a  1999ms b 1999ms a 57999ms c 1999ms a";
 
     withCallViewModel(
-      of([aliceParticipant, bobParticipant, daveParticipant]),
-      of([aliceRtcMember, bobRtcMember, daveRtcMember]),
+      constant([aliceParticipant, bobParticipant, daveParticipant]),
+      constant([aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
-        [aliceParticipant, hot(aSpeakingInputMarbles, { y: true, n: false })],
-        [bobParticipant, hot(bSpeakingInputMarbles, { y: true, n: false })],
-        [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
+        [
+          aliceParticipant,
+          behavior(aSpeakingInputMarbles, { y: true, n: false }),
+        ],
+        [
+          bobParticipant,
+          behavior(bSpeakingInputMarbles, { y: true, n: false }),
+        ],
+        [
+          daveParticipant,
+          behavior(dSpeakingInputMarbles, { y: true, n: false }),
+        ],
       ]),
+      mockMediaDevices({}),
       (vm) => {
         schedule(visibilityInputMarbles, {
           a: () => {
@@ -443,7 +491,7 @@ test("participants stay in the same order unless to appear/disappear", () => {
 });
 
 test("participants adjust order when space becomes constrained", () => {
-  withTestScheduler(({ hot, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, schedule, expectObservable }) => {
     // Start with all tiles on screen then shrink to 3
     const visibilityInputMarbles = "a-b";
     // Bob and Dave speak
@@ -455,13 +503,20 @@ test("participants adjust order when space becomes constrained", () => {
     const expectedLayoutMarbles = " a-b";
 
     withCallViewModel(
-      of([aliceParticipant, bobParticipant, daveParticipant]),
-      of([aliceRtcMember, bobRtcMember, daveRtcMember]),
+      constant([aliceParticipant, bobParticipant, daveParticipant]),
+      constant([aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
-        [bobParticipant, hot(bSpeakingInputMarbles, { y: true, n: false })],
-        [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
+        [
+          bobParticipant,
+          behavior(bSpeakingInputMarbles, { y: true, n: false }),
+        ],
+        [
+          daveParticipant,
+          behavior(dSpeakingInputMarbles, { y: true, n: false }),
+        ],
       ]),
+      mockMediaDevices({}),
       (vm) => {
         let setVisibleTiles: ((value: number) => void) | null = null;
         vm.layout$.subscribe((layout) => {
@@ -493,7 +548,7 @@ test("participants adjust order when space becomes constrained", () => {
 });
 
 test("spotlight speakers swap places", () => {
-  withTestScheduler(({ hot, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, schedule, expectObservable }) => {
     // Go immediately into spotlight mode for the test
     const modeInputMarbles = "     s";
     // First Bob speaks, then Dave, then Alice
@@ -507,14 +562,24 @@ test("spotlight speakers swap places", () => {
     const expectedLayoutMarbles = "abcd";
 
     withCallViewModel(
-      of([aliceParticipant, bobParticipant, daveParticipant]),
-      of([aliceRtcMember, bobRtcMember, daveRtcMember]),
+      constant([aliceParticipant, bobParticipant, daveParticipant]),
+      constant([aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
-        [aliceParticipant, hot(aSpeakingInputMarbles, { y: true, n: false })],
-        [bobParticipant, hot(bSpeakingInputMarbles, { y: true, n: false })],
-        [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
+        [
+          aliceParticipant,
+          behavior(aSpeakingInputMarbles, { y: true, n: false }),
+        ],
+        [
+          bobParticipant,
+          behavior(bSpeakingInputMarbles, { y: true, n: false }),
+        ],
+        [
+          daveParticipant,
+          behavior(dSpeakingInputMarbles, { y: true, n: false }),
+        ],
       ]),
+      mockMediaDevices({}),
       (vm) => {
         schedule(modeInputMarbles, { s: () => vm.setGridMode("spotlight") });
 
@@ -556,10 +621,11 @@ test("layout enters picture-in-picture mode when requested", () => {
     const expectedLayoutMarbles = " aba";
 
     withCallViewModel(
-      of([aliceParticipant, bobParticipant]),
-      of([aliceRtcMember, bobRtcMember]),
+      constant([aliceParticipant, bobParticipant]),
+      constant([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         schedule(pipControlInputMarbles, {
           e: () => window.controls.enablePip(),
@@ -597,10 +663,11 @@ test("spotlight remembers whether it's expanded", () => {
     const expectedLayoutMarbles = "abcbada";
 
     withCallViewModel(
-      of([aliceParticipant, bobParticipant]),
-      of([aliceRtcMember, bobRtcMember]),
+      constant([aliceParticipant, bobParticipant]),
+      constant([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         schedule(modeInputMarbles, {
           s: () => vm.setGridMode("spotlight"),
@@ -645,7 +712,7 @@ test("spotlight remembers whether it's expanded", () => {
 });
 
 test("participants must have a MatrixRTCSession to be visible", () => {
-  withTestScheduler(({ hot, expectObservable }) => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     // iterate through a number of combinations of participants and MatrixRTC memberships
     // Bob never has an MatrixRTC membership
     const scenarioInputMarbles = " abcdec";
@@ -653,14 +720,14 @@ test("participants must have a MatrixRTCSession to be visible", () => {
     const expectedLayoutMarbles = "a-bc-b";
 
     withCallViewModel(
-      hot(scenarioInputMarbles, {
+      behavior(scenarioInputMarbles, {
         a: [],
         b: [bobParticipant],
         c: [aliceParticipant, bobParticipant],
         d: [aliceParticipant, daveParticipant, bobParticipant],
         e: [aliceParticipant, daveParticipant, bobSharingScreen],
       }),
-      hot(scenarioInputMarbles, {
+      behavior(scenarioInputMarbles, {
         a: [],
         b: [],
         c: [aliceRtcMember],
@@ -669,6 +736,7 @@ test("participants must have a MatrixRTCSession to be visible", () => {
       }),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         vm.setGridMode("grid");
         expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -700,19 +768,20 @@ test("shows participants without MatrixRTCSession when enabled in settings", () 
   try {
     // enable the setting:
     showNonMemberTiles.setValue(true);
-    withTestScheduler(({ hot, expectObservable }) => {
+    withTestScheduler(({ behavior, expectObservable }) => {
       const scenarioInputMarbles = " abc";
       const expectedLayoutMarbles = "abc";
 
       withCallViewModel(
-        hot(scenarioInputMarbles, {
+        behavior(scenarioInputMarbles, {
           a: [],
           b: [aliceParticipant],
           c: [aliceParticipant, bobParticipant],
         }),
-        of([]), // No one joins the MatrixRTC session
+        constant([]), // No one joins the MatrixRTC session
         of(ConnectionState.Connected),
         new Map(),
+        mockMediaDevices({}),
         (vm) => {
           vm.setGridMode("grid");
           expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -744,15 +813,15 @@ test("shows participants without MatrixRTCSession when enabled in settings", () 
 });
 
 it("should show at least one tile per MatrixRTCSession", () => {
-  withTestScheduler(({ hot, expectObservable }) => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     // iterate through some combinations of MatrixRTC memberships
     const scenarioInputMarbles = " abcd";
     // There should always be one tile for each MatrixRTCSession
     const expectedLayoutMarbles = "abcd";
 
     withCallViewModel(
-      of([]),
-      hot(scenarioInputMarbles, {
+      constant([]),
+      behavior(scenarioInputMarbles, {
         a: [],
         b: [aliceRtcMember],
         c: [aliceRtcMember, daveRtcMember],
@@ -760,6 +829,7 @@ it("should show at least one tile per MatrixRTCSession", () => {
       }),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm) => {
         vm.setGridMode("grid");
         expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -792,16 +862,132 @@ it("should show at least one tile per MatrixRTCSession", () => {
   });
 });
 
+test("should disambiguate users with the same displayname", () => {
+  withTestScheduler(({ behavior, expectObservable }) => {
+    const scenarioInputMarbles = "abcde";
+    const expectedLayoutMarbles = "abcde";
+
+    withCallViewModel(
+      constant([]),
+      behavior(scenarioInputMarbles, {
+        a: [],
+        b: [aliceRtcMember],
+        c: [aliceRtcMember, aliceDoppelgangerRtcMember],
+        d: [aliceRtcMember, aliceDoppelgangerRtcMember, bobRtcMember],
+        e: [aliceDoppelgangerRtcMember, bobRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      mockMediaDevices({}),
+      (vm) => {
+        expectObservable(vm.memberDisplaynames$).toBe(expectedLayoutMarbles, {
+          // Carol has no displayname - So userId is used.
+          a: new Map([[carolId, carol.userId]]),
+          b: new Map([
+            [carolId, carol.userId],
+            [aliceId, alice.rawDisplayName],
+          ]),
+          // The second alice joins.
+          c: new Map([
+            [carolId, carol.userId],
+            [aliceId, "Alice (@alice:example.org)"],
+            [aliceDoppelgangerId, "Alice (@alice2:example.org)"],
+          ]),
+          // Bob also joins
+          d: new Map([
+            [carolId, carol.userId],
+            [aliceId, "Alice (@alice:example.org)"],
+            [aliceDoppelgangerId, "Alice (@alice2:example.org)"],
+            [bobId, bob.rawDisplayName],
+          ]),
+          // Alice leaves, and the displayname should reset.
+          e: new Map([
+            [carolId, carol.userId],
+            [aliceDoppelgangerId, "Alice"],
+            [bobId, bob.rawDisplayName],
+          ]),
+        });
+      },
+    );
+  });
+});
+
+test("should disambiguate users with invisible characters", () => {
+  withTestScheduler(({ behavior, expectObservable }) => {
+    const scenarioInputMarbles = "ab";
+    const expectedLayoutMarbles = "ab";
+
+    withCallViewModel(
+      constant([]),
+      behavior(scenarioInputMarbles, {
+        a: [],
+        b: [bobRtcMember, bobZeroWidthSpaceRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      mockMediaDevices({}),
+      (vm) => {
+        expectObservable(vm.memberDisplaynames$).toBe(expectedLayoutMarbles, {
+          // Carol has no displayname - So userId is used.
+          a: new Map([[carolId, carol.userId]]),
+          // Both Bobs join, and should handle zero width hacks.
+          b: new Map([
+            [carolId, carol.userId],
+            [bobId, `Bob (${bob.userId})`],
+            [
+              bobZeroWidthSpaceId,
+              `${bobZeroWidthSpace.rawDisplayName} (${bobZeroWidthSpace.userId})`,
+            ],
+          ]),
+        });
+      },
+    );
+  });
+});
+
+test("should strip RTL characters from displayname", () => {
+  withTestScheduler(({ behavior, expectObservable }) => {
+    const scenarioInputMarbles = "ab";
+    const expectedLayoutMarbles = "ab";
+
+    withCallViewModel(
+      constant([]),
+      behavior(scenarioInputMarbles, {
+        a: [],
+        b: [daveRtcMember, daveRTLRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      mockMediaDevices({}),
+      (vm) => {
+        expectObservable(vm.memberDisplaynames$).toBe(expectedLayoutMarbles, {
+          // Carol has no displayname - So userId is used.
+          a: new Map([[carolId, carol.userId]]),
+          // Both Dave's join. Since after stripping
+          b: new Map([
+            [carolId, carol.userId],
+            // Not disambiguated
+            [daveId, "Dave"],
+            // This one is, since it's using RTL.
+            [daveRTLId, `evaD (${daveRTL.userId})`],
+          ]),
+        });
+      },
+    );
+  });
+});
+
 it("should rank raised hands above video feeds and below speakers and presenters", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     // There should always be one tile for each MatrixRTCSession
     const expectedLayoutMarbles = "ab";
 
     withCallViewModel(
-      of([aliceParticipant, bobParticipant]),
-      of([aliceRtcMember, bobRtcMember]),
+      constant([aliceParticipant, bobParticipant]),
+      constant([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
+      mockMediaDevices({}),
       (vm, { raisedHands$ }) => {
         schedule("ab", {
           a: () => {
@@ -846,6 +1032,50 @@ it("should rank raised hands above video feeds and below speakers and presenters
             },
           },
         );
+      },
+    );
+  });
+});
+
+test("audio output changes when toggling earpiece mode", () => {
+  withTestScheduler(({ schedule, expectObservable }) => {
+    getUrlParams.mockReturnValue({ controlledAudioDevices: true });
+    vi.mocked(ComponentsCore.createMediaDeviceObserver).mockReturnValue(of([]));
+
+    const scope = new ObservableScope();
+    onTestFinished(() => scope.end());
+    const devices = new MediaDevices(scope);
+
+    window.controls.setAvailableAudioDevices([
+      { id: "speaker", name: "Speaker", isSpeaker: true },
+      { id: "earpiece", name: "Handset", isEarpiece: true },
+      { id: "headphones", name: "Headphones" },
+    ]);
+    window.controls.setAudioDevice("headphones");
+
+    const toggleInputMarbles = "         -aaa";
+    const expectedEarpieceModeMarbles = "n-yn";
+    const expectedTargetStateMarbles = " sese";
+
+    withCallViewModel(
+      constant([]),
+      constant([]),
+      of(ConnectionState.Connected),
+      new Map(),
+      devices,
+      (vm) => {
+        schedule(toggleInputMarbles, {
+          a: () => getValue(vm.audioOutputSwitcher$)?.switch(),
+        });
+        expectObservable(vm.earpieceMode$).toBe(expectedEarpieceModeMarbles, {
+          n: false,
+          y: true,
+        });
+        expectObservable(
+          vm.audioOutputSwitcher$.pipe(
+            map((switcher) => switcher?.targetOutput),
+          ),
+        ).toBe(expectedTargetStateMarbles, { s: "speaker", e: "earpiece" });
       },
     );
   });

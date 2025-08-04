@@ -1,7 +1,7 @@
 /*
 Copyright 2021-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -16,9 +16,9 @@ import {
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { captureException } from "@sentry/react";
-import { sleep } from "matrix-js-sdk/src/utils";
+import { sleep } from "matrix-js-sdk/lib/utils";
 import { Trans, useTranslation } from "react-i18next";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { Button, Text } from "@vector-im/compound-web";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
@@ -26,7 +26,7 @@ import { useClientLegacy } from "../ClientContext";
 import { useInteractiveRegistration } from "./useInteractiveRegistration";
 import styles from "./LoginPage.module.css";
 import Logo from "../icons/LogoLarge.svg?react";
-import { LoadingView } from "../FullScreenView";
+import { LoadingPage } from "../FullScreenView";
 import { useRecaptcha } from "./useRecaptcha";
 import { usePageTitle } from "../usePageTitle";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
@@ -95,7 +95,7 @@ export const RegisterPage: FC = () => {
           }
         }
 
-        setClient?.({ client: newClient, session });
+        setClient?.(newClient, session);
         PosthogAnalytics.instance.eventSignup.cacheSignupEnd(new Date());
       };
 
@@ -148,7 +148,7 @@ export const RegisterPage: FC = () => {
   }, [loading, navigate, authenticated, passwordlessUser, registering]);
 
   if (loading) {
-    return <LoadingView />;
+    return <LoadingPage />;
   } else {
     PosthogAnalytics.instance.eventSignup.cacheSignupStart(new Date());
   }
@@ -204,7 +204,7 @@ export const RegisterPage: FC = () => {
                 />
               </FieldRow>
               <Text size="sm">
-                <Trans i18nKey="recaptcha_caption">
+                <Trans i18nKey="recaptcha_ssla_caption">
                   This site is protected by ReCAPTCHA and the Google{" "}
                   <ExternalLink href="https://www.google.com/policies/privacy/">
                     Privacy Policy
@@ -216,8 +216,8 @@ export const RegisterPage: FC = () => {
                   apply.
                   <br />
                   By clicking "Register", you agree to our{" "}
-                  <ExternalLink href={Config.get().eula}>
-                    End User Licensing Agreement (EULA)
+                  <ExternalLink href={Config.get().ssla}>
+                    Software and Services License Agreement (SSLA)
                   </ExternalLink>
                 </Trans>
               </Text>

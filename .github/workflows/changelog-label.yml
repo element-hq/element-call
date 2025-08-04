@@ -1,0 +1,14 @@
+name: PR changelog label
+
+on:
+  pull_request_target:
+    types: [labeled, unlabeled, opened]
+jobs:
+  pr-changelog-label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: yogevbd/enforce-label-action@a3c219da6b8fa73f6ba62b68ff09c469b3a1c024 # 2.2.2
+        with:
+          REQUIRED_LABELS_ANY: "PR-Bug-Fix,PR-Documentation,PR-Task,PR-Feature,PR-Improvement,PR-Developer-Experience,dependencies,PR-Breaking-Change"
+          REQUIRED_LABELS_ANY_DESCRIPTION: "Select at least one 'PR-' label"
+          BANNED_LABELS: "banned"

@@ -1,7 +1,7 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   getRoomIdentifierFromUrl,
   getUrlParams,
-  UserIntent,
+  HeaderStyle,
 } from "../src/UrlParams";
 
 const ROOM_NAME = "roomNameHere";
@@ -82,6 +82,16 @@ describe("UrlParams", () => {
         getRoomIdentifierFromUrl("", `?roomId=${ROOM_ID}`, "").roomId,
       ).toBe(ROOM_ID);
     });
+    it("(roomId with unprintable characters)", () => {
+      const invisibleChar = "\u2066";
+      expect(
+        getRoomIdentifierFromUrl(
+          "",
+          `?roomId=${invisibleChar}${ROOM_ID}${invisibleChar}`,
+          "",
+        ).roomId,
+      ).toBe(ROOM_ID);
+    });
   });
 
   it("ignores room alias", () => {
@@ -110,8 +120,8 @@ describe("UrlParams", () => {
   });
 
   describe("returnToLobby", () => {
-    it("is true in SPA mode", () => {
-      expect(getUrlParams("?returnToLobby=false").returnToLobby).toBe(true);
+    it("is false in SPA mode", () => {
+      expect(getUrlParams("?returnToLobby=true").returnToLobby).toBe(false);
     });
 
     it("defaults to false in widget mode", () => {
@@ -201,24 +211,68 @@ describe("UrlParams", () => {
   });
 
   describe("intent", () => {
-    it("defaults to unknown", () => {
-      expect(getUrlParams().intent).toBe(UserIntent.Unknown);
+    const noIntentDefaults = {
+      confineToRoom: false,
+      appPrompt: true,
+      preload: false,
+      header: HeaderStyle.Standard,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: false,
+      perParticipantE2EE: false,
+      controlledAudioDevices: false,
+      skipLobby: false,
+      returnToLobby: false,
+      sendNotificationType: undefined,
+    };
+    const startNewCallDefaults = (platform: string): object => ({
+      confineToRoom: true,
+      appPrompt: false,
+      preload: true,
+      header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: true,
+      perParticipantE2EE: true,
+      controlledAudioDevices: platform === "desktop" ? false : true,
+      skipLobby: true,
+      returnToLobby: false,
+      sendNotificationType: "notification",
+    });
+    const joinExistingCallDefaults = (platform: string): object => ({
+      confineToRoom: true,
+      appPrompt: false,
+      preload: true,
+      header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: true,
+      perParticipantE2EE: true,
+      controlledAudioDevices: platform === "desktop" ? false : true,
+      skipLobby: false,
+      returnToLobby: false,
+      sendNotificationType: "notification",
+    });
+    it("use no-intent-defaults with unknown intent", () => {
+      expect(getUrlParams()).toMatchObject(noIntentDefaults);
     });
 
     it("ignores intent if it is not a valid value", () => {
-      expect(getUrlParams("?intent=foo").intent).toBe(UserIntent.Unknown);
+      expect(getUrlParams("?intent=foo")).toMatchObject(noIntentDefaults);
     });
 
     it("accepts start_call", () => {
-      expect(getUrlParams("?intent=start_call").intent).toBe(
-        UserIntent.StartNewCall,
-      );
+      expect(
+        getUrlParams("?intent=start_call&widgetId=1234&parentUrl=parent.org"),
+      ).toMatchObject(startNewCallDefaults("desktop"));
     });
 
     it("accepts join_existing", () => {
-      expect(getUrlParams("?intent=join_existing").intent).toBe(
-        UserIntent.JoinExistingCall,
-      );
+      expect(
+        getUrlParams(
+          "?intent=join_existing&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject(joinExistingCallDefaults("desktop"));
     });
   });
 
@@ -241,6 +295,14 @@ describe("UrlParams", () => {
 
     it("default to false if intent is join_existing", () => {
       expect(getUrlParams("?intent=join_existing").skipLobby).toBe(false);
+    });
+  });
+  describe("header", () => {
+    it("uses header if provided", () => {
+      expect(getUrlParams("?header=app_bar&hideHeader=true").header).toBe(
+        "app_bar",
+      );
+      expect(getUrlParams("?header=none&hideHeader=false").header).toBe("none");
     });
   });
 });

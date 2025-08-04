@@ -1,30 +1,30 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { logger } from "matrix-js-sdk/src/logger";
-import { EventType } from "matrix-js-sdk/src/@types/event";
-import { createRoomWidgetClient } from "matrix-js-sdk/src/matrix";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { EventType, createRoomWidgetClient } from "matrix-js-sdk";
 import {
   WidgetApi,
   MatrixCapabilities,
   WidgetApiToWidgetAction,
 } from "matrix-widget-api";
 
-import type { MatrixClient } from "matrix-js-sdk/src/client";
+import type { MatrixClient } from "matrix-js-sdk";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { ElementCallReactionEventType } from "./reactions";
 
-// Subset of the actions in matrix-react-sdk
+// Subset of the actions in element-web
 export enum ElementWidgetActions {
   JoinCall = "io.element.join",
   HangupCall = "im.vector.hangup",
+  Close = "io.element.close",
   TileLayout = "io.element.tile_layout",
   SpotlightLayout = "io.element.spotlight_layout",
   // This can be sent as from or to widget
@@ -106,6 +106,10 @@ export const widget = ((): WidgetHelpers | null => {
       if (!baseUrl) throw new Error("Base URL must be supplied");
 
       // These are all the event types the app uses
+      const sendEvent = [
+        EventType.CallNotify, // Sent as a deprecated fallback
+        EventType.RTCNotification,
+      ];
       const sendRecvEvent = [
         "org.matrix.rageshake_request",
         EventType.CallEncryptionKeysPrefix,
@@ -124,10 +128,12 @@ export const widget = ((): WidgetHelpers | null => {
       }));
       const receiveState = [
         { eventType: EventType.RoomCreate },
+        { eventType: EventType.RoomName },
         { eventType: EventType.RoomMember },
         { eventType: EventType.RoomEncryption },
         { eventType: EventType.GroupCallMemberPrefix },
       ];
+
       const sendRecvToDevice = [
         EventType.CallInvite,
         EventType.CallCandidates,
@@ -139,12 +145,13 @@ export const widget = ((): WidgetHelpers | null => {
         EventType.CallSDPStreamMetadataChanged,
         EventType.CallSDPStreamMetadataChangedPrefix,
         EventType.CallReplaces,
+        EventType.CallEncryptionKeysPrefix,
       ];
 
       const client = createRoomWidgetClient(
         api,
         {
-          sendEvent: sendRecvEvent,
+          sendEvent: [...sendEvent, ...sendRecvEvent],
           receiveEvent: sendRecvEvent,
           sendState,
           receiveState,

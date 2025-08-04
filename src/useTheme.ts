@@ -1,13 +1,13 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { WidgetApiToWidgetAction } from "matrix-widget-api";
-import { type IThemeChangeActionRequest } from "matrix-widget-api/lib/interfaces/ThemeChangeAction";
+import { type IThemeChangeActionRequest } from "matrix-widget-api";
 
 import { getUrlParams } from "./UrlParams";
 import { widget } from "./widget";

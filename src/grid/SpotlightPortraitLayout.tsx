@@ -1,11 +1,11 @@
 /*
 Copyright 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type CSSProperties, forwardRef } from "react";
+import { type ReactNode, type CSSProperties } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
@@ -13,6 +13,7 @@ import { type CallLayout, arrangeTiles } from "./CallLayout";
 import { type SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightPortraitLayout.module.css";
 import { useUpdateLayout, useVisibleTiles } from "./Grid";
+import { useBehavior } from "../useBehavior";
 
 interface GridCSSProperties extends CSSProperties {
   "--grid-gap": string;
@@ -30,10 +31,11 @@ export const makeSpotlightPortraitLayout: CallLayout<
 > = ({ minBounds$ }) => ({
   scrollingOnTop: false,
 
-  fixed: forwardRef(function SpotlightPortraitLayoutFixed(
-    { model, Slot },
+  fixed: function SpotlightPortraitLayoutFixed({
     ref,
-  ) {
+    model,
+    Slot,
+  }): ReactNode {
     useUpdateLayout();
 
     return (
@@ -47,12 +49,13 @@ export const makeSpotlightPortraitLayout: CallLayout<
         </div>
       </div>
     );
-  }),
+  },
 
-  scrolling: forwardRef(function SpotlightPortraitLayoutScrolling(
-    { model, Slot },
+  scrolling: function SpotlightPortraitLayoutScrolling({
     ref,
-  ) {
+    model,
+    Slot,
+  }): ReactNode {
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
     const { width } = useObservableEagerState(minBounds$);
@@ -63,8 +66,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
       width,
       model.grid.length,
     );
-    const withIndicators =
-      useObservableEagerState(model.spotlight.media$).length > 1;
+    const withIndicators = useBehavior(model.spotlight.media$).length > 1;
 
     return (
       <div
@@ -90,5 +92,5 @@ export const makeSpotlightPortraitLayout: CallLayout<
         </div>
       </div>
     );
-  }),
+  },
 });

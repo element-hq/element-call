@@ -1,43 +1,25 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { logger } from "matrix-js-sdk/src/logger";
-import { type CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership";
 import {
+  type CallMembership,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-} from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { useCallback, useEffect, useState } from "react";
+} from "matrix-js-sdk/lib/matrixrtc";
+import { useCallback } from "react";
+
+import { useTypedEventEmitterState } from "./useEvents";
 
 export function useMatrixRTCSessionMemberships(
   rtcSession: MatrixRTCSession,
 ): CallMembership[] {
-  const [memberships, setMemberships] = useState(rtcSession.memberships);
-
-  const onMembershipsChanged = useCallback(() => {
-    logger.info(
-      `Memberships changed for call in room ${rtcSession.room.roomId} (${rtcSession.memberships.length} members)`,
-    );
-    setMemberships(rtcSession.memberships);
-  }, [rtcSession]);
-
-  useEffect(() => {
-    rtcSession.on(
-      MatrixRTCSessionEvent.MembershipsChanged,
-      onMembershipsChanged,
-    );
-
-    return (): void => {
-      rtcSession.off(
-        MatrixRTCSessionEvent.MembershipsChanged,
-        onMembershipsChanged,
-      );
-    };
-  }, [rtcSession, onMembershipsChanged]);
-
-  return memberships;
+  return useTypedEventEmitterState(
+    rtcSession,
+    MatrixRTCSessionEvent.MembershipsChanged,
+    useCallback(() => rtcSession.memberships, [rtcSession]),
+  );
 }
