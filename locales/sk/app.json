@@ -61,6 +61,7 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Zobraziť možnosť slúchadla iPhone na všetkých platformách",
     "crypto_version": "Krypto verzia: {{version}}",
     "debug_tile_layout_label": "Ladenie rozloženia dlaždíc",
     "device_id": "ID zariadenia: {{id}}",
@@ -81,7 +82,7 @@
   "error": {
     "call_is_not_supported": "Hovor nie je podporovaný",
     "call_not_found": "Hovor nebol nájdený",
-    "call_not_found_description": "<0>Zdá sa, že tento odkaz nepatrí k žiadnemu existujúcemu hovoru. Skontrolujte, či máte správny odkaz, alebo <1> vytvorte nový</1>. </0>",
+    "call_not_found_description": "<0>Zdá sa, že tento odkaz nepatrí k žiadnemu existujúcemu hovoru. Skontrolujte, či máte správny odkaz, alebo <2>vytvorte nový</2>.</0>",
     "connection_lost": "Strata spojenia",
     "connection_lost_description": "Boli ste odpojení od hovoru.",
     "e2ee_unsupported": "Nekompatibilný prehliadač",
@@ -173,8 +174,10 @@
     "devices": {
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
+      "change_device_button": "Zmeniť zvukové zariadenie",
       "default": "Predvolené",
       "default_named": "Predvolené <2>({{name}})</2>",
+      "loudspeaker": "Reproduktor",
       "microphone": "Mikrofón",
       "microphone_numbered": "Mikrofón {{n}}",
       "speaker": "Reproduktor",
