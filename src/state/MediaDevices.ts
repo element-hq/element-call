@@ -224,7 +224,7 @@ class AudioOutput
       this.logger,
     ).pipe(
       map((availableRaw) => {
-        const available: Map<string, AudioOutputDeviceLabel> =
+        let available: Map<string, AudioOutputDeviceLabel> =
           buildDeviceMap(availableRaw);
         // Create a virtual default audio output for browsers that don't have one.
         // Its device ID must be the empty string because that's what setSinkId
@@ -234,6 +234,12 @@ class AudioOutput
             type: "default",
             name: availableRaw[0]?.label || null,
           });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const isSafari = !!(window as any).GestureEvent; // non standard api only found on Safari. https://developer.mozilla.org/en-US/docs/Web/API/GestureEvent#browser_compatibility
+        if (isSafari) {
+          // set to empty map if we are on Safari, because it does not support setSinkId
+          available = new Map();
+        }
         // Note: creating virtual default input devices would be another problem
         // entirely, because requesting a media stream from deviceId "" won't
         // automatically track the default device.
