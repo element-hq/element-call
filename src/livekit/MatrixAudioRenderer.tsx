@@ -14,13 +14,12 @@ import {
   type AudioTrackProps,
 } from "@livekit/components-react";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import * as controls from "../controls";
 
-const logger = rootLogger.getChild("[MatrixAudioRenderer]");
 export interface MatrixAudioRendererProps {
   /**
    * The list of participants to render audio for.
@@ -72,7 +71,7 @@ export function MatrixAudioRenderer({
   const logInvalid = (identity: string, validIdentities: Set<string>): void => {
     if (loggedInvalidIdentities.current.has(identity)) return;
     logger.warn(
-      `Audio track ${identity} has no matching matrix call member`,
+      `[MatrixAudioRenderer] Audio track ${identity} has no matching matrix call member`,
       `current members: ${Array.from(validIdentities.values())}`,
       `track will not get rendered`,
     );
@@ -102,7 +101,7 @@ export function MatrixAudioRenderer({
   useEffect(() => {
     if (!tracks.some((t) => !validIdentities.has(t.participant.identity))) {
       logger.debug(
-        `All audio tracks have a matching matrix call member identity.`,
+        `[MatrixAudioRenderer] All audio tracks have a matching matrix call member identity.`,
       );
       loggedInvalidIdentities.current.clear();
     }
