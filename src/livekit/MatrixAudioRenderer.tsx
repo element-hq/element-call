@@ -181,7 +181,7 @@ interface StereoPanAudioTrackProps {
 /**
  * This wraps `livekit.AudioTrack` to allow adding audio nodes to a track.
  * It main purpose is to remount the AudioTrack component when switching from
- * audiooContext to normal audio playback.
+ * audioContext to normal audio playback.
  * As of now the AudioTrack component does not support adding audio nodes while being mounted.
  * @param param0
  * @returns
@@ -201,7 +201,7 @@ function AudioTrackWithAudioNodes({
   const [trackReady, setTrackReady] = useReactiveState(
     () => false,
     // We only want the track to reset once both (audioNodes and audioContext) are set.
-    // for unsetting the audioContext its enough if one of the the is undefined.
+    // for unsetting the audioContext its enough if one of the two is undefined.
     [audioContext && audioNodes],
   );
 
