@@ -82,7 +82,7 @@
   "error": {
     "call_is_not_supported": "Anrufe werden nicht unterstützt",
     "call_not_found": "Anruf nicht gefunden",
-    "call_not_found_description": "<0>Dieser Link scheint zu keinem bestehenden Anruf zu gehören. Vergewissern Sie sich, dass Sie den richtigen Link haben, oder <1> erstellen Sie einen neuen</1>. </0>",
+    "call_not_found_description": "<0>Dieser Link scheint zu keinem bestehenden Anruf zu gehören. Es sollte geprüft werden, ob der Link korrekt ist, oder <2>ein neuer erstellt werden</2>.</0>",
     "connection_lost": "Verbindung verloren",
     "connection_lost_description": "Ihre Verbindung zum Anruf wurde unterbrochen.",
     "e2ee_unsupported": "Inkompatibler Browser",
@@ -94,6 +94,8 @@
     "matrix_rtc_focus_missing": "Der Server ist nicht für die Verwendung mit {{brand}} konfiguriert. Bitte den Serveradministrator kontaktieren (Domain: {{domain}}, Fehlercode: {{ errorCode }}).",
     "open_elsewhere": "In einem anderen Tab geöffnet",
     "open_elsewhere_description": "{{brand}} wurde in einem anderen Tab geöffnet. Wenn das nicht richtig klingt, versuchen Sie, die Seite neu zu laden.",
+    "room_creation_restricted": "Anruf konnte nicht erstellt werden",
+    "room_creation_restricted_description": "Das Erstellen von Anrufen ist nur für autorisierte Nutzer möglich. Versuche es später erneut oder kontaktiere deinen Serveradministrator, falls das Problem weiterhin besteht.",
     "unexpected_ec_error": "Ein unerwarteter Fehler ist aufgetreten (<0>Fehlercode: </0> <1>{{ errorCode }}</1>). Bitte den Serveradministrator kontaktieren."
   },
   "group_call_loader": {
@@ -104,6 +106,11 @@
     "knock_reject_body": "Die Teilnahmeanfrage wurde abgelehnt.",
     "knock_reject_heading": "Zugriff verweigert",
     "reason": "Grund: {{reason}}"
+  },
+  "handset": {
+    "overlay_back_button": "Zurück zum Lautsprechermodus",
+    "overlay_description": "Nur wenn App im Vordergrund nutzbar",
+    "overlay_title": "Ohrhörer Modus"
   },
   "hangup_button_label": "Anruf beenden",
   "header_label": "Element Call-Startseite",
@@ -173,9 +180,11 @@
     "devices": {
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
+      "change_device_button": "Audiogerät wechseln",
       "default": "Standard",
       "default_named": "Standard<2> ({{name}} )</2>",
       "handset": "Ohrhörer",
+      "loudspeaker": "Lautsprecher",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon{{n}}",
       "speaker": "Lautsprecher",
