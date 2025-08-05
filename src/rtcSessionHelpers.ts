@@ -141,7 +141,10 @@ export async function getMyPreferredLivekitFoci(
 // This is needed to ensure that the livekit room is created before we try to join the rtc session.
 // This is because the livekit room creation is done by the auth service and this can be restricted to
 // only specific users, so we need to ensure that the room is created before we try to join it.
-async function preWarmSFU(rtcSession: MatrixRTCSession, livekitAlias: string) {
+async function preWarmSFU(
+  rtcSession: MatrixRTCSession,
+  livekitAlias: string,
+): Promise<void> {
   const client = rtcSession.room.client;
   // We need to make sure that the livekit room is created before sending the membership event
   // because other joiners might not be able to join the call if the room does not exist yet.
