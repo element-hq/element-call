@@ -1,32 +1,36 @@
 /*
-Copyright 2024 New Vector Ltd.
+Copyright 2024-2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { BehaviorSubject, Subject } from "rxjs";
+import { Subject } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 export interface Controls {
   canEnterPip(): boolean;
   enablePip(): void;
   disablePip(): void;
-  /** @deprecated use  setAvailableAudioDevices instead*/
-  setAvailableOutputDevices(devices: OutputDevice[]): void;
+
   setAvailableAudioDevices(devices: OutputDevice[]): void;
-  /** @deprecated use  setAudioDevice instead*/
-  setOutputDevice(id: string): void;
   setAudioDevice(id: string): void;
-  /** @deprecated use  onAudioDeviceSelect instead*/
-  onOutputDeviceSelect?: (id: string) => void;
   onAudioDeviceSelect?: (id: string) => void;
   onAudioPlaybackStarted?: () => void;
+  setAudioEnabled(enabled: boolean): void;
+  showNativeAudioDevicePicker?: () => void;
+  onBackButtonPressed?: () => void;
+
+  /** @deprecated use  setAvailableAudioDevices instead*/
+  setAvailableOutputDevices(devices: OutputDevice[]): void;
+  /** @deprecated use  setAudioDevice instead*/
+  setOutputDevice(id: string): void;
+  /** @deprecated use  onAudioDeviceSelect instead*/
+  onOutputDeviceSelect?: (id: string) => void;
   /** @deprecated use  setAudioEnabled instead*/
   setOutputEnabled(enabled: boolean): void;
-  setAudioEnabled(enabled: boolean): void;
   /** @deprecated use  showNativeAudioDevicePicker instead*/
   showNativeOutputDevicePicker?: () => void;
-  showNativeAudioDevicePicker?: () => void;
 }
 
 export interface OutputDevice {
@@ -42,12 +46,11 @@ export interface OutputDevice {
  * If pipMode is enabled, EC will render a adapted call view layout.
  */
 export const setPipEnabled$ = new Subject<boolean>();
-// BehaviorSubject since the client might set this before we have subscribed (GroupCallView still in "loading" state)
-// We want the devices that have been set during loading to be available immediately once loaded.
-export const availableOutputDevices$ = new BehaviorSubject<OutputDevice[]>([]);
-// BehaviorSubject since the client might set this before we have subscribed (GroupCallView still in "loading" state)
-// We want the device that has been set during loading to be available immediately once loaded.
-export const outputDevice$ = new BehaviorSubject<string | undefined>(undefined);
+
+export const availableOutputDevices$ = new Subject<OutputDevice[]>();
+
+export const outputDevice$ = new Subject<string>();
+
 /**
  * This allows the os to mute the call if the user
  * presses the volume down button when it is at the minimum volume.
@@ -55,6 +58,7 @@ export const outputDevice$ = new BehaviorSubject<string | undefined>(undefined);
  * This should also be used to display a darkened overlay screen letting the user know that audio is muted.
  */
 export const setAudioEnabled$ = new Subject<boolean>();
+
 let playbackStartedEmitted = false;
 export const setPlaybackStarted = (): void => {
   if (!playbackStartedEmitted) {
@@ -62,6 +66,7 @@ export const setPlaybackStarted = (): void => {
     window.controls.onAudioPlaybackStarted?.();
   }
 };
+
 window.controls = {
   canEnterPip(): boolean {
     return setPipEnabled$.observed;
@@ -74,13 +79,17 @@ window.controls = {
     if (!setPipEnabled$.observed) throw new Error("No call is running");
     setPipEnabled$.next(false);
   },
+
   setAvailableAudioDevices(devices: OutputDevice[]): void {
+    logger.info("setAvailableAudioDevices called from native:", devices);
     availableOutputDevices$.next(devices);
   },
   setAudioDevice(id: string): void {
+    logger.info("setAudioDevice called from native", id);
     outputDevice$.next(id);
   },
   setAudioEnabled(enabled: boolean): void {
+    logger.info("setAudioEnabled called from native:", enabled);
     if (!setAudioEnabled$.observed)
       throw new Error(
         "Output controls are disabled. No setAudioEnabled$ observer",

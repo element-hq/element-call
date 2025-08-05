@@ -14,7 +14,7 @@ import {
   createContext,
   type FC,
   type JSX,
-  useContext,
+  use,
   useEffect,
   useMemo,
 } from "react";
@@ -34,7 +34,7 @@ type ProcessorState = {
 const ProcessorContext = createContext<ProcessorState | undefined>(undefined);
 
 export function useTrackProcessor(): ProcessorState {
-  const state = useContext(ProcessorContext);
+  const state = use(ProcessorContext);
   if (state === undefined)
     throw new Error(
       "useTrackProcessor must be used within a ProcessorProvider",
@@ -83,9 +83,5 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
     [supported, blurActivated, blur],
   );
 
-  return (
-    <ProcessorContext.Provider value={processorState}>
-      {children}
-    </ProcessorContext.Provider>
-  );
+  return <ProcessorContext value={processorState}>{children}</ProcessorContext>;
 };

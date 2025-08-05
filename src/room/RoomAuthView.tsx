@@ -19,8 +19,10 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { Config } from "../config/Config";
 import { ExternalLink, Link } from "../button/Link";
+import { useUrlParams } from "../UrlParams";
 
 export const RoomAuthView: FC = () => {
+  const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
 
@@ -53,14 +55,16 @@ export const RoomAuthView: FC = () => {
 
   return (
     <>
-      <Header>
-        <LeftNav>
-          <HeaderLogo />
-        </LeftNav>
-        <RightNav>
-          <UserMenuContainer preventNavigation />
-        </RightNav>
-      </Header>
+      {header === "standard" && (
+        <Header>
+          <LeftNav>
+            <HeaderLogo />
+          </LeftNav>
+          <RightNav>
+            <UserMenuContainer preventNavigation />
+          </RightNav>
+        </Header>
+      )}
       <div className={styles.container}>
         <main className={styles.main}>
           <Heading size="xl" weight="semibold" className={styles.headline}>

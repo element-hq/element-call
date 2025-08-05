@@ -28,10 +28,10 @@ export const FullScreenView: FC<FullScreenViewProps> = ({
   className,
   children,
 }) => {
-  const { hideHeader } = useUrlParams();
+  const { header } = useUrlParams();
   return (
     <div className={classNames(styles.page, className)}>
-      {!hideHeader && (
+      {header === "standard" && (
         <Header>
           <LeftNav>
             <HeaderLogo />

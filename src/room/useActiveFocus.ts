@@ -9,7 +9,7 @@ import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type LivekitFocus, isLivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
@@ -24,27 +24,22 @@ import { useTypedEventEmitterState } from "../useEvents";
 export function useActiveLivekitFocus(
   rtcSession: MatrixRTCSession,
 ): LivekitFocus | undefined {
-  const activeFocus = useTypedEventEmitterState(
+  const prevActiveFocus = useRef<LivekitFocus | undefined>(undefined);
+  return useTypedEventEmitterState(
     rtcSession,
     MatrixRTCSessionEvent.MembershipsChanged,
     useCallback(() => {
       const f = rtcSession.getActiveFocus();
       // Only handle foci with type="livekit" for now.
-      return !!f && isLivekitFocus(f) ? f : undefined;
+      if (f && isLivekitFocus(f) && !deepCompare(f, prevActiveFocus.current)) {
+        const oldestMembership = rtcSession.getOldestMembership();
+        logger.info(
+          `Got new active focus from membership: ${oldestMembership?.sender}/${oldestMembership?.deviceId}.
+          Updated focus (focus switch) from ${JSON.stringify(prevActiveFocus.current)} to ${JSON.stringify(f)}`,
+        );
+        prevActiveFocus.current = f;
+      }
+      return prevActiveFocus.current;
     }, [rtcSession]),
   );
-
-  const prevActiveFocus = useRef(activeFocus);
-  useEffect(() => {
-    if (!deepCompare(activeFocus, prevActiveFocus.current)) {
-      const oldestMembership = rtcSession.getOldestMembership();
-      logger.warn(
-        `Got new active focus from membership: ${oldestMembership?.sender}/${oldestMembership?.deviceId}.
-        Updated focus (focus switch) from ${JSON.stringify(prevActiveFocus.current)} to ${JSON.stringify(activeFocus)}`,
-      );
-      prevActiveFocus.current = activeFocus;
-    }
-  }, [activeFocus, rtcSession]);
-
-  return activeFocus;
 }

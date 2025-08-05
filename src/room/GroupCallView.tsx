@@ -24,7 +24,6 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { useNavigate } from "react-router-dom";
-import { useObservableEagerState } from "observable-hooks";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -40,7 +39,7 @@ import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
 import { ActiveCall } from "./InCallView";
 import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
-import { useMediaDevices } from "../livekit/MediaDevicesContext";
+import { useMediaDevices } from "../MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import {
@@ -51,17 +50,16 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { useUrlParams } from "../UrlParams";
+import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
 import { callEventAudioSounds } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import {
+  ConnectionLostError,
   E2EENotSupportedError,
   ElementCallError,
-  ErrorCode,
-  RTCSessionError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
@@ -72,6 +70,8 @@ import {
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
+import { useAppBarTitle } from "../AppBar.tsx";
+import { useBehavior } from "../useBehavior.ts";
 
 declare global {
   interface Window {
@@ -85,7 +85,7 @@ interface Props {
   confineToRoom: boolean;
   preload: boolean;
   skipLobby: boolean;
-  hideHeader: boolean;
+  header: HeaderStyle;
   rtcSession: MatrixRTCSession;
   isJoined: boolean;
   muteStates: MuteStates;
@@ -98,7 +98,7 @@ export const GroupCallView: FC<Props> = ({
   confineToRoom,
   preload,
   skipLobby,
-  hideHeader,
+  header,
   rtcSession,
   isJoined,
   muteStates,
@@ -110,7 +110,7 @@ export const GroupCallView: FC<Props> = ({
   );
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
 
-  const muteAllAudio = useObservableEagerState(muteAllAudio$);
+  const muteAllAudio = useBehavior(muteAllAudio$);
   const leaveSoundContext = useLatest(
     useAudioContext({
       sounds: callEventAudioSounds,
@@ -132,6 +132,16 @@ export const GroupCallView: FC<Props> = ({
     };
   }, []);
 
+  // This CSS is the only way we could find to not make element call scroll for
+  // viewport sizes smaller than 122px width. (It is actually this exact number: 122px
+  // tested on different devices...)
+  useEffect(() => {
+    document.body.classList.add("no-scroll-body");
+    return (): void => {
+      document.body.classList.remove("no-scroll-body");
+    };
+  }, []);
+
   useEffect(() => {
     window.rtcSession = rtcSession;
     return (): void => {
@@ -142,14 +152,7 @@ export const GroupCallView: FC<Props> = ({
   useTypedEventEmitter(
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
-    (error) => {
-      setExternalError(
-        new RTCSessionError(
-          ErrorCode.MEMBERSHIP_MANAGER_UNRECOVERABLE,
-          error.message ?? error,
-        ),
-      );
-    },
+    (error) => setExternalError(new ConnectionLostError()),
   );
   useEffect(() => {
     // Sanity check the room object
@@ -177,6 +180,7 @@ export const GroupCallView: FC<Props> = ({
   }, [passwordFromUrl, room.roomId]);
 
   usePageTitle(roomName);
+  useAppBarTitle(roomName);
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -197,8 +201,7 @@ export const GroupCallView: FC<Props> = ({
     [memberships],
   );
 
-  const deviceContext = useMediaDevices();
-  const latestDevices = useLatest(deviceContext);
+  const mediaDevices = useMediaDevices();
   const latestMuteStates = useLatest(muteStates);
 
   const enterRTCSessionOrError = useCallback(
@@ -250,7 +253,7 @@ export const GroupCallView: FC<Props> = ({
           logger.debug(
             `Found audio input ID ${deviceId} for name ${audioInput}`,
           );
-          latestDevices.current!.audioInput.select(deviceId);
+          mediaDevices.audioInput.select(deviceId);
         }
       }
 
@@ -264,7 +267,7 @@ export const GroupCallView: FC<Props> = ({
           logger.debug(
             `Found video input ID ${deviceId} for name ${videoInput}`,
           );
-          latestDevices.current!.videoInput.select(deviceId);
+          mediaDevices.videoInput.select(deviceId);
         }
       }
     };
@@ -306,7 +309,7 @@ export const GroupCallView: FC<Props> = ({
     preload,
     skipLobby,
     perParticipantE2EE,
-    latestDevices,
+    mediaDevices,
     latestMuteStates,
     enterRTCSessionOrError,
     useNewMembershipManager,
@@ -422,7 +425,7 @@ export const GroupCallView: FC<Props> = ({
         muteStates={muteStates}
         onEnter={() => void enterRTCSessionOrError(rtcSession)}
         confineToRoom={confineToRoom}
-        hideHeader={hideHeader}
+        hideHeader={header === HeaderStyle.None}
         participantCount={participantCount}
         onShareClick={onShareClick}
       />
@@ -448,7 +451,7 @@ export const GroupCallView: FC<Props> = ({
           rtcSession={rtcSession as MatrixRTCSession}
           participantCount={participantCount}
           onLeave={onLeave}
-          hideHeader={hideHeader}
+          header={header}
           muteStates={muteStates}
           e2eeSystem={e2eeSystem}
           //otelGroupCallMembership={otelGroupCallMembership}
@@ -474,6 +477,7 @@ export const GroupCallView: FC<Props> = ({
           endedCallId={rtcSession.room.roomId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
+          hideHeader={header === HeaderStyle.None}
           confineToRoom={confineToRoom}
         />
       );

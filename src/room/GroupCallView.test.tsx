@@ -16,7 +16,6 @@ import {
 import { render, waitFor, screen } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
-import { of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
@@ -32,6 +31,7 @@ import {
   mockEmitter,
   mockMatrixRoom,
   mockMatrixRoomMember,
+  mockMediaDevices,
   mockRtcMembership,
   MockRTCSession,
 } from "../utils/test";
@@ -40,6 +40,9 @@ import { type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
 import { MatrixRTCFocusMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
+import { MediaDevicesContext } from "../MediaDevicesContext";
+import { HeaderStyle } from "../UrlParams";
+import { constant } from "../state/Behavior";
 
 vi.mock("../soundUtils");
 vi.mock("../useAudioContext");
@@ -138,7 +141,7 @@ function createGroupCallView(
     room,
     localRtcMember,
     [],
-  ).withMemberships(of([]));
+  ).withMemberships(constant([]));
   rtcSession.joined = joined;
   const muteState = {
     audio: { enabled: false },
@@ -147,20 +150,22 @@ function createGroupCallView(
   const { getByText } = render(
     <BrowserRouter>
       <TooltipProvider>
-        <ProcessorProvider>
-          <GroupCallView
-            client={client}
-            isPasswordlessUser={false}
-            confineToRoom={false}
-            preload={false}
-            skipLobby={false}
-            hideHeader={true}
-            rtcSession={rtcSession as unknown as MatrixRTCSession}
-            isJoined={joined}
-            muteStates={muteState}
-            widget={widget}
-          />
-        </ProcessorProvider>
+        <MediaDevicesContext value={mockMediaDevices({})}>
+          <ProcessorProvider>
+            <GroupCallView
+              client={client}
+              isPasswordlessUser={false}
+              confineToRoom={false}
+              preload={false}
+              skipLobby={false}
+              header={HeaderStyle.Standard}
+              rtcSession={rtcSession as unknown as MatrixRTCSession}
+              isJoined={joined}
+              muteStates={muteState}
+              widget={widget}
+            />
+          </ProcessorProvider>
+        </MediaDevicesContext>
       </TooltipProvider>
     </BrowserRouter>,
   );

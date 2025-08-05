@@ -18,8 +18,8 @@ import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
-import { MatrixRTCFocusMissingError } from "./utils/errors.ts";
-import { getUrlParams } from "./UrlParams.ts";
+import { MatrixRTCFocusMissingError } from "./utils/errors";
+import { getUrlParams } from "./UrlParams";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -116,21 +116,20 @@ export async function enterRTCSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
     {
+      notificationType: getUrlParams().sendNotificationType,
       useNewMembershipManager,
       manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {
         useLegacyMemberEvents: !useDeviceSessionMemberEvents,
       }),
       delayedLeaveEventRestartMs:
-        matrixRtcSessionConfig?.delayed_leave_event_restart_ms ??
-        matrixRtcSessionConfig?.membership_keep_alive_period,
+        matrixRtcSessionConfig?.delayed_leave_event_restart_ms,
       delayedLeaveEventDelayMs:
-        matrixRtcSessionConfig?.delayed_leave_event_delay_ms ??
-        matrixRtcSessionConfig?.membership_server_side_expiry_timeout,
+        matrixRtcSessionConfig?.delayed_leave_event_delay_ms,
+      delayedLeaveEventRestartLocalTimeoutMs:
+        matrixRtcSessionConfig?.delayed_leave_event_restart_local_timeout_ms,
       networkErrorRetryMs: matrixRtcSessionConfig?.network_error_retry_ms,
-      makeKeyDelay:
-        matrixRtcSessionConfig?.wait_for_key_rotation_ms ??
-        matrixRtcSessionConfig?.key_rotation_on_leave_delay,
+      makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
       useExperimentalToDeviceTransport,

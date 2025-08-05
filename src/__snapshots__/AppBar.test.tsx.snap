@@ -1,0 +1,50 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AppBar > renders 1`] = `
+<div>
+  <div
+    class="bar"
+    style="display: block;"
+  >
+    <header
+      class="header"
+    >
+      <div
+        class="nav leftNav"
+      >
+        <button
+          aria-labelledby="«r0»"
+          class="_icon-button_1pz9o_8"
+          data-kind="primary"
+          role="button"
+          style="--cpd-icon-button-size: 32px;"
+          tabindex="0"
+        >
+          <div
+            class="_indicator-icon_zr2a0_17"
+            style="--cpd-icon-button-size: 100%;"
+          >
+            <svg
+              fill="currentColor"
+              height="1em"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 11.034a1 1 0 0 0 .29.702l.005.005c.18.18.43.29.705.29h8a1 1 0 0 0 0-2h-5.586L22 3.445a1 1 0 0 0-1.414-1.414L14 8.617V3.031a1 1 0 1 0-2 0zm0 1.963a1 1 0 0 0-.29-.702l-.005-.004A1 1 0 0 0 11 12H3a1 1 0 1 0 0 2h5.586L2 20.586A1 1 0 1 0 3.414 22L10 15.414V21a1 1 0 0 0 2 0z"
+              />
+            </svg>
+          </div>
+        </button>
+      </div>
+      <div
+        class="nav rightNav"
+      />
+    </header>
+  </div>
+  <p>
+    This is the content.
+  </p>
+</div>
+`;

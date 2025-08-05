@@ -13,11 +13,11 @@ export enum ErrorCode {
    */
   MISSING_MATRIX_RTC_FOCUS = "MISSING_MATRIX_RTC_FOCUS",
   CONNECTION_LOST_ERROR = "CONNECTION_LOST_ERROR",
-  MEMBERSHIP_MANAGER_UNRECOVERABLE = "MEMBERSHIP_MANAGER_UNRECOVERABLE",
   /** LiveKit indicates that the server has hit its track limits */
   INSUFFICIENT_CAPACITY_ERROR = "INSUFFICIENT_CAPACITY_ERROR",
   E2EE_NOT_SUPPORTED = "E2EE_NOT_SUPPORTED",
   OPEN_ID_ERROR = "OPEN_ID_ERROR",
+  SFU_ERROR = "SFU_ERROR",
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
@@ -25,7 +25,6 @@ export enum ErrorCategory {
   /** Calling is not supported, server misconfigured (JWT service missing, no MSC support ...)*/
   CONFIGURATION_ISSUE = "CONFIGURATION_ISSUE",
   NETWORK_CONNECTIVITY = "NETWORK_CONNECTIVITY",
-  RTC_SESSION_FAILURE = "RTC_SESSION_FAILURE",
   CLIENT_CONFIGURATION = "CLIENT_CONFIGURATION",
   UNKNOWN = "UNKNOWN",
   // SYSTEM_FAILURE / FEDERATION_FAILURE ..
@@ -84,11 +83,6 @@ export class ConnectionLostError extends ElementCallError {
   }
 }
 
-export class RTCSessionError extends ElementCallError {
-  public constructor(code: ErrorCode, message: string) {
-    super("RTCSession Error", code, ErrorCategory.RTC_SESSION_FAILURE, message);
-  }
-}
 export class E2EENotSupportedError extends ElementCallError {
   public constructor() {
     super(
@@ -106,7 +100,7 @@ export class UnknownCallError extends ElementCallError {
       t("error.generic"),
       ErrorCode.UNKNOWN_ERROR,
       ErrorCategory.UNKNOWN,
-      error.message,
+      undefined,
       // Properly set it as a cause for a better reporting on sentry
       error,
     );
@@ -133,6 +127,17 @@ export class InsufficientCapacityError extends ElementCallError {
       ErrorCode.INSUFFICIENT_CAPACITY_ERROR,
       ErrorCategory.UNKNOWN,
       t("error.insufficient_capacity_description"),
+    );
+  }
+}
+
+export class SFURoomCreationRestrictedError extends ElementCallError {
+  public constructor() {
+    super(
+      t("error.room_creation_restricted"),
+      ErrorCode.SFU_ERROR,
+      ErrorCategory.CONFIGURATION_ISSUE,
+      t("error.room_creation_restricted_description"),
     );
   }
 }

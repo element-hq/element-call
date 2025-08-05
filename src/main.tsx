@@ -23,6 +23,7 @@ import {
 import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
+import { AppViewModel } from "./state/AppViewModel";
 
 window.setLKLogLevel = setLKLogLevel;
 
@@ -60,7 +61,7 @@ Initializer.initBeforeReact()
   .then(() => {
     root.render(
       <StrictMode>
-        <App />
+        <App vm={new AppViewModel()} />
       </StrictMode>,
     );
   })

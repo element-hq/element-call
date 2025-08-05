@@ -45,6 +45,9 @@ layer(compound);
   --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
   --subtle-drop-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
   --background-gradient: url("graphics/backgroundGradient.svg");
+
+  --call-view-overlay-layer: 1;
+  --call-view-header-footer-layer: 2;
 }
 
 :root,
@@ -69,6 +72,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* This prohibits the view to scroll for pages smaller than 122px in width
+we use this for mobile pip webviews */
+.no-scroll-body {
+  position: fixed;
+  width: 100%;
 }
 
 /* We use this to not render the page at all until we know the theme.*/

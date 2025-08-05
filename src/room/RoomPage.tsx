@@ -43,14 +43,8 @@ import { ErrorView } from "../ErrorView";
 import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
 
 export const RoomPage: FC = () => {
-  const {
-    confineToRoom,
-    appPrompt,
-    preload,
-    hideHeader,
-    displayName,
-    skipLobby,
-  } = useUrlParams();
+  const { confineToRoom, appPrompt, preload, header, displayName, skipLobby } =
+    useUrlParams();
   const { t } = useTranslation();
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
 
@@ -120,7 +114,7 @@ export const RoomPage: FC = () => {
             confineToRoom={confineToRoom}
             preload={preload}
             skipLobby={skipLobby || wasInWaitForInviteState.current}
-            hideHeader={hideHeader}
+            header={header}
             muteStates={muteStates}
           />
         );
@@ -161,7 +155,7 @@ export const RoomPage: FC = () => {
             enterLabel={label}
             waitingForInvite={groupCallState.kind === "waitForInvite"}
             confineToRoom={confineToRoom}
-            hideHeader={hideHeader}
+            hideHeader={header !== "standard"}
             participantCount={null}
             muteStates={muteStates}
             onShareClick={null}

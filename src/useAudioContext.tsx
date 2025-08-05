@@ -7,15 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { logger } from "matrix-js-sdk/lib/logger";
 import { useState, useEffect } from "react";
+import { useObservableEagerState } from "observable-hooks";
 
 import {
   soundEffectVolume as soundEffectVolumeSetting,
   useSetting,
 } from "./settings/settings";
-import {
-  useEarpieceAudioConfig,
-  useMediaDevices,
-} from "./livekit/MediaDevicesContext";
+import { useEarpieceAudioConfig, useMediaDevices } from "./MediaDevicesContext";
 import { type PrefetchedSounds } from "./soundUtils";
 import { useUrlParams } from "./UrlParams";
 import * as controls from "./controls";
@@ -73,8 +71,6 @@ export function useAudioContext<S extends string>(
   props: Props<S>,
 ): UseAudioContext<S> | null {
   const [soundEffectVolume] = useSetting(soundEffectVolumeSetting);
-  const { audioOutput } = useMediaDevices();
-  const { controlledAudioDevices } = useUrlParams();
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
 
@@ -111,6 +107,11 @@ export function useAudioContext<S extends string>(
     };
   }, [props.sounds, props.latencyHint]);
 
+  const audioOutputId = useObservableEagerState(
+    useMediaDevices().audioOutput.selected$,
+  )?.id;
+  const { controlledAudioDevices } = useUrlParams();
+
   // Update the sink ID whenever we change devices.
   useEffect(() => {
     if (
@@ -120,11 +121,11 @@ export function useAudioContext<S extends string>(
     ) {
       // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/setSinkId
       // @ts-expect-error - setSinkId doesn't exist yet in types, maybe because it's not supported everywhere.
-      audioContext.setSinkId(audioOutput.selectedId).catch((ex) => {
+      audioContext.setSinkId(audioOutputId).catch((ex) => {
         logger.warn("Unable to change sink for audio context", ex);
       });
     }
-  }, [audioContext, audioOutput.selectedId, controlledAudioDevices]);
+  }, [audioContext, audioOutputId, controlledAudioDevices]);
   const { pan: earpiecePan, volume: earpieceVolume } = useEarpieceAudioConfig();
 
   // Don't return a function until we're ready.

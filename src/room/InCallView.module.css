@@ -18,7 +18,7 @@ Please see LICENSE in the repository root for full details.
   position: sticky;
   flex-shrink: 0;
   inset-block-start: 0;
-  z-index: 1;
+  z-index: var(--call-view-header-footer-layer);
   background: linear-gradient(
     0deg,
     rgba(0, 0, 0, 0) 0%,
@@ -34,7 +34,7 @@ Please see LICENSE in the repository root for full details.
 .footer {
   position: sticky;
   inset-block-end: 0;
-  z-index: 1;
+  z-index: var(--call-view-header-footer-layer);
   display: grid;
   grid-template-columns:
     minmax(0, var(--inline-content-inset))
