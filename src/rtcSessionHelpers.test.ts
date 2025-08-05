@@ -70,6 +70,12 @@ test("It joins the correct Session", async () => {
       roomId: "roomId",
       client: {
         getDomain: vi.fn().mockReturnValue("example.org"),
+        getOpenIdToken: vi.fn().mockResolvedValue({
+          access_token: "ACCCESS_TOKEN",
+          token_type: "Bearer",
+          matrix_server_name: "localhost",
+          expires_in: 10000,
+        }),
       },
     },
     memberships: [],
@@ -195,6 +201,12 @@ test("It should not fail with configuration error if homeserver config has livek
       roomId: "roomId",
       client: {
         getDomain: vi.fn().mockReturnValue("example.org"),
+        getOpenIdToken: vi.fn().mockResolvedValue({
+          access_token: "ACCCESS_TOKEN",
+          token_type: "Bearer",
+          matrix_server_name: "localhost",
+          expires_in: 10000,
+        }),
       },
     },
     memberships: [],

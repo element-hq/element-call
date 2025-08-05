@@ -147,7 +147,7 @@ async function preWarmSFU(rtcSession: MatrixRTCSession, livekitAlias: string) {
   // because other joiners might not be able to join the call if the room does not exist yet.
   const fociToWarmup = await getMyPreferredLivekitFoci(
     client.getDomain(),
-    livekitAlias
+    livekitAlias,
   );
 
   // Request a token in advance to warm up the livekit room.
