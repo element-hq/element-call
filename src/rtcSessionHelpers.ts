@@ -47,11 +47,8 @@ async function makePreferredLivekitFoci(
     preferredFoci.push(focusInUse);
   }
 
-  // Stop-gap solution for pre-warming the SFU.
-  // This is needed to ensure that the livekit room is created before we try to join the rtc session.
-  // This is because the livekit room creation is done by the auth service and this can be restricted to
-  // only specific users, so we need to ensure that the room is created before we try to send state events.
-  let shouldWarmup = true;
+  // Warm up the first focus we owned, to ensure livekit room is created before any state event sent.
+  let toWarmUp: LivekitFocus | undefined;
 
   // Prioritize the .well-known/matrix/client, if available, over the configured SFU
   const domain = rtcSession.room.client.getDomain();
@@ -70,10 +67,7 @@ async function makePreferredLivekitFoci(
           return { ...wellKnownFocus, livekit_alias: livekitAlias };
         });
       if (validWellKnownFoci.length > 0) {
-        const toWarmup = validWellKnownFoci[0];
-        // this will call the jwt/sfu/get endpoint to pre create the livekit room.
-        await getSFUConfigWithOpenID(rtcSession.room.client, toWarmup);
-        shouldWarmup = false;
+        toWarmUp = validWellKnownFoci[0];
       }
       preferredFoci.push(...validWellKnownFoci);
     }
@@ -86,14 +80,17 @@ async function makePreferredLivekitFoci(
       livekit_service_url: urlFromConf,
       livekit_alias: livekitAlias,
     };
-    if (shouldWarmup) {
-      // this will call the jwt/sfu/get endpoint to pre create the livekit room.
-      await getSFUConfigWithOpenID(rtcSession.room.client, focusFormConf);
+    if (!toWarmUp) {
+      toWarmUp = focusFormConf;
     }
     logger.log("Adding livekit focus from config: ", focusFormConf);
     preferredFoci.push(focusFormConf);
   }
 
+  if (toWarmUp) {
+    // this will call the jwt/sfu/get endpoint to pre create the livekit room.
+    await getSFUConfigWithOpenID(rtcSession.room.client, toWarmUp);
+  }
   if (preferredFoci.length === 0)
     throw new MatrixRTCFocusMissingError(domain ?? "");
   return Promise.resolve(preferredFoci);
