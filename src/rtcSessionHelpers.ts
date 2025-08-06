@@ -71,6 +71,7 @@ async function makePreferredLivekitFoci(
         });
       if (validWellKnownFoci.length > 0) {
         const toWarmup = validWellKnownFoci[0];
+        // this will call the jwt/sfu/get endpoint to pre create the livekit room.
         await getSFUConfigWithOpenID(rtcSession.room.client, toWarmup);
         shouldWarmup = false;
       }
@@ -86,6 +87,7 @@ async function makePreferredLivekitFoci(
       livekit_alias: livekitAlias,
     };
     if (shouldWarmup) {
+      // this will call the jwt/sfu/get endpoint to pre create the livekit room.
       await getSFUConfigWithOpenID(rtcSession.room.client, focusFormConf);
     }
     logger.log("Adding livekit focus from config: ", focusFormConf);
