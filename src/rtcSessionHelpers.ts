@@ -5,14 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
-import { logger } from "matrix-js-sdk/lib/logger";
 import {
   isLivekitFocus,
   isLivekitFocusConfig,
   type LivekitFocus,
   type LivekitFocusActive,
+  type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
@@ -20,6 +20,7 @@ import { Config } from "./config/Config";
 import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
 import { MatrixRTCFocusMissingError } from "./utils/errors";
 import { getUrlParams } from "./UrlParams";
+import { getSFUConfigWithOpenID } from "./livekit/openIDSFU.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -46,6 +47,9 @@ async function makePreferredLivekitFoci(
     preferredFoci.push(focusInUse);
   }
 
+  // Warm up the first focus we owned, to ensure livekit room is created before any state event sent.
+  let toWarmUp: LivekitFocus | undefined;
+
   // Prioritize the .well-known/matrix/client, if available, over the configured SFU
   const domain = rtcSession.room.client.getDomain();
   if (domain) {
@@ -55,18 +59,17 @@ async function makePreferredLivekitFoci(
       FOCI_WK_KEY
     ];
     if (Array.isArray(wellKnownFoci)) {
-      preferredFoci.push(
-        ...wellKnownFoci
-          .filter((f) => !!f)
-          .filter(isLivekitFocusConfig)
-          .map((wellKnownFocus) => {
-            logger.log(
-              "Adding livekit focus from well known: ",
-              wellKnownFocus,
-            );
-            return { ...wellKnownFocus, livekit_alias: livekitAlias };
-          }),
-      );
+      const validWellKnownFoci = wellKnownFoci
+        .filter((f) => !!f)
+        .filter(isLivekitFocusConfig)
+        .map((wellKnownFocus) => {
+          logger.log("Adding livekit focus from well known: ", wellKnownFocus);
+          return { ...wellKnownFocus, livekit_alias: livekitAlias };
+        });
+      if (validWellKnownFoci.length > 0) {
+        toWarmUp = validWellKnownFoci[0];
+      }
+      preferredFoci.push(...validWellKnownFoci);
     }
   }
 
@@ -77,10 +80,15 @@ async function makePreferredLivekitFoci(
       livekit_service_url: urlFromConf,
       livekit_alias: livekitAlias,
     };
+    toWarmUp = toWarmUp ?? focusFormConf;
     logger.log("Adding livekit focus from config: ", focusFormConf);
     preferredFoci.push(focusFormConf);
   }
 
+  if (toWarmUp) {
+    // this will call the jwt/sfu/get endpoint to pre create the livekit room.
+    await getSFUConfigWithOpenID(rtcSession.room.client, toWarmUp);
+  }
   if (preferredFoci.length === 0)
     throw new MatrixRTCFocusMissingError(domain ?? "");
   return Promise.resolve(preferredFoci);
