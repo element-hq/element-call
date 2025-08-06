@@ -984,7 +984,7 @@ test("should strip RTL characters from displayname", () => {
 });
 
 it("should rank raised hands above video feeds and below speakers and presenters", () => {
-  withTestScheduler(({ schedule, expectObservable }) => {
+  withTestScheduler(({ schedule, expectObservable, behavior }) => {
     // There should always be one tile for each MatrixRTCSession
     const expectedLayoutMarbles = "ab";
 
@@ -1083,11 +1083,11 @@ function rtcMemberJoinLeave$(
 }
 
 test("allOthersLeft$ emits only when someone joined and then all others left", () => {
-  withTestScheduler(({ hot, expectObservable }) => {
+  withTestScheduler(({ hot, expectObservable, scope }) => {
     // Test scenario 1: No one ever joins - should only emit initial false and never emit again
     withCallViewModel(
-      nooneEverThere$(hot),
-      nooneEverThere$(hot),
+      scope.behavior(nooneEverThere$(hot), []),
+      scope.behavior(nooneEverThere$(hot), []),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
@@ -1099,10 +1099,10 @@ test("allOthersLeft$ emits only when someone joined and then all others left", (
 });
 
 test("allOthersLeft$ emits true when someone joined and then all others left", () => {
-  withTestScheduler(({ hot, expectObservable }) => {
+  withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
-      participantJoinLeave$(hot),
-      rtcMemberJoinLeave$(hot),
+      scope.behavior(participantJoinLeave$(hot), []),
+      scope.behavior(rtcMemberJoinLeave$(hot), []),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
@@ -1117,10 +1117,10 @@ test("allOthersLeft$ emits true when someone joined and then all others left", (
 });
 
 test("autoLeaveWhenOthersLeft$ emits only when autoLeaveWhenOthersLeft option is enabled", () => {
-  withTestScheduler(({ hot, expectObservable }) => {
+  withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
-      participantJoinLeave$(hot),
-      rtcMemberJoinLeave$(hot),
+      scope.behavior(participantJoinLeave$(hot), []),
+      scope.behavior(rtcMemberJoinLeave$(hot), []),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
@@ -1139,10 +1139,10 @@ test("autoLeaveWhenOthersLeft$ emits only when autoLeaveWhenOthersLeft option is
 });
 
 test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is enabled but noone is there", () => {
-  withTestScheduler(({ hot, expectObservable }) => {
+  withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
-      nooneEverThere$(hot),
-      nooneEverThere$(hot),
+      scope.behavior(nooneEverThere$(hot), []),
+      scope.behavior(nooneEverThere$(hot), []),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
@@ -1160,10 +1160,10 @@ test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is ena
 });
 
 test("autoLeaveWhenOthersLeft$ emits when autoLeaveWhenOthersLeft option is enabled and all others left", () => {
-  withTestScheduler(({ hot, expectObservable }) => {
+  withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
-      participantJoinLeave$(hot),
-      rtcMemberJoinLeave$(hot),
+      scope.behavior(participantJoinLeave$(hot), []),
+      scope.behavior(rtcMemberJoinLeave$(hot), []),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
