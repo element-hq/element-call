@@ -25,11 +25,7 @@ import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
-import {
-  useObservable,
-  useObservableEagerState,
-  useSubscription,
-} from "observable-hooks";
+import { useObservable, useSubscription } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import {

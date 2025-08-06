@@ -346,7 +346,7 @@ export const getUrlParams = (
     skipLobby: true,
     returnToLobby: false,
     sendNotificationType: "notification" as RTCNotificationType,
-    telephoneAutoLeave: false,
+    autoLeaveWhenOthersLeft: false,
   };
   switch (intent) {
     case UserIntent.StartNewCall:
