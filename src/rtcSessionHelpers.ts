@@ -80,9 +80,7 @@ async function makePreferredLivekitFoci(
       livekit_service_url: urlFromConf,
       livekit_alias: livekitAlias,
     };
-    if (!toWarmUp) {
-      toWarmUp = focusFormConf;
-    }
+    toWarmUp = toWarmUp ?? focusFormConf;
     logger.log("Adding livekit focus from config: ", focusFormConf);
     preferredFoci.push(focusFormConf);
   }
