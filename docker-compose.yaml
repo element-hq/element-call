@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile_inline: |
-        FROM node as builder
+        FROM node AS builder
         WORKDIR /app
 
         RUN git clone https://github.com/element-hq/element-call.git .
@@ -12,14 +12,13 @@ services:
         RUN yarn build
 
         FROM nginx:alpine
-        COPY --from=builder /app/dist /usr/share/nginx/html
-        RUN mkdir -p /usr/share/nginx/html/public
-        EXPOSE 80
-
-        CMD ["nginx", "-g", "daemon off;"]
+        COPY --from=builder /app/dist /app
+        COPY --from=builder /app/config/nginx.conf /etc/nginx/conf.d/default.conf
+        EXPOSE 8080
     ports:
-      - "3000:80"
-    command: ["sh", "-c", "echo \"$$CONFIG_JSON\" > /usr/share/nginx/html/config.json && exec nginx -g 'daemon off;'"]   
+      - "8080:8080"
+    command: >
+      sh -c "echo \"$$CONFIG_JSON\" > /app/config.json && exec nginx -g 'daemon off;'"
     environment:
       CONFIG_JSON: |
         {
