@@ -23,9 +23,10 @@ interface RoomIdentifier {
 }
 
 export enum UserIntent {
-  // TODO: add DM vs room call
   StartNewCall = "start_call",
   JoinExistingCall = "join_existing",
+  StartNewCallDM = "start_call_dm",
+  JoinExistingCallDM = "join_existing_dm",
   Unknown = "unknown",
 }
 
@@ -345,6 +346,20 @@ export const getUrlParams = (
       intentPreset = {
         ...inAppDefault,
         skipLobby: false,
+      };
+      break;
+    case UserIntent.StartNewCallDM:
+      intentPreset = {
+        ...inAppDefault,
+        skipLobby: true,
+        // autoLeaveWhenOthersLeft: true, // TODO: add this once available
+      };
+      break;
+    case UserIntent.JoinExistingCallDM:
+      intentPreset = {
+        ...inAppDefault,
+        skipLobby: true,
+        // autoLeaveWhenOthersLeft: true, // TODO: add this once available
       };
       break;
     // Non widget usecase defaults
