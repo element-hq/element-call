@@ -1,0 +1,44 @@
+services:
+  element-call:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM node as builder
+        WORKDIR /app
+
+        RUN git clone https://github.com/element-hq/element-call.git .
+        RUN corepack enable
+        RUN yarn install
+        RUN yarn build
+
+        FROM nginx:alpine
+        COPY --from=builder /app/dist /usr/share/nginx/html
+        RUN mkdir -p /usr/share/nginx/html/public
+        EXPOSE 80
+
+        CMD ["nginx", "-g", "daemon off;"]
+    ports:
+      - "3000:80"
+    command: ["sh", "-c", "echo \"$$CONFIG_JSON\" > /usr/share/nginx/html/config.json && exec nginx -g 'daemon off;'"]   
+    environment:
+      CONFIG_JSON: |
+        {
+          "default_server_config": {
+            "m.homeserver": {
+              "base_url": "https://mydomain.com",
+              "server_name": "mydomain.com"
+            }
+          },
+          "features": {
+            "feature_use_device_session_member_events": true
+          },
+          "ssla": "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
+          "matrix_rtc_session": {
+            "wait_for_key_rotation_ms": 3000,
+            "membership_event_expiry_ms": 180000000,
+            "delayed_leave_event_delay_ms": 18000,
+            "delayed_leave_event_restart_ms": 4000,
+            "network_error_retry_ms": 100
+          }
+        }
+    restart: unless-stopped
