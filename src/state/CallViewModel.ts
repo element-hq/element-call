@@ -728,7 +728,14 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  public readonly memberChanges$ = this.userMedia$.pipe(
+  /**
+   * This observable tracks the currently connected participants.
+   *
+   *  - Each participant has one livekit connection
+   *  - Each participant has a corresponding MatrixRTC membership state event
+   *  - There can be multiple participants for one matrix user.
+   */
+  public readonly participantChanges$ = this.userMedia$.pipe(
     map((mediaItems) => mediaItems.map((m) => m.id)),
     scan<string[], { ids: string[]; joined: string[]; left: string[] }>(
       (prev, ids) => {
@@ -740,11 +747,49 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  public readonly allOthersLeft$ = this.memberChanges$.pipe(
+  /**
+   * This observable tracks the matrix users that are currently in the call.
+   * There can be just one matrix user with multiple participants (see also participantChanges$)
+   */
+  public readonly matrixUserChanges$ = this.userMedia$.pipe(
     map(
-      ({ ids, left }) =>
-        ids.length === 1 && ids.includes("local:0") && left.length > 0,
+      (mediaItems) =>
+        new Set(
+          mediaItems
+            .map((m) => m.vm.member?.userId)
+            .filter((id) => id !== undefined),
+        ),
     ),
+    scan<
+      Set<string>,
+      {
+        userIds: Set<string>;
+        joinedUserIds: Set<string>;
+        leftUserIds: Set<string>;
+      }
+    >(
+      (prevState, userIds) => {
+        const left = new Set(
+          [...prevState.userIds].filter((id) => !userIds.has(id)),
+        );
+        const joined = new Set(
+          [...userIds].filter((id) => !prevState.userIds.has(id)),
+        );
+        return { userIds: userIds, joinedUserIds: joined, leftUserIds: left };
+      },
+      { userIds: new Set(), joinedUserIds: new Set(), leftUserIds: new Set() },
+    ),
+  );
+
+  public readonly allOthersLeft$ = this.matrixUserChanges$.pipe(
+    map(({ userIds, leftUserIds }) => {
+      const userId = this.matrixRTCSession.room.client.getUserId();
+      if (!userId) {
+        logger.warn("Could access client.getUserId to compute allOthersLeft");
+        return false;
+      }
+      return userIds.size === 1 && userIds.has(userId) && leftUserIds.size > 0;
+    }),
     startWith(false),
     distinctUntilChanged(),
   );
