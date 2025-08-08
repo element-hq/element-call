@@ -25,7 +25,7 @@ import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
-import { useObservable } from "observable-hooks";
+import { useObservable, useSubscription } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import {
@@ -140,11 +140,11 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   useEffect(() => {
     logger.info(
-      `[Lifecycle] InCallView Component mounted, livekitroom state ${livekitRoom?.state}`,
+      `[Lifecycle] InCallView Component mounted, livekit room state ${livekitRoom?.state}`,
     );
     return (): void => {
       logger.info(
-        `[Lifecycle] InCallView Component unmounted, livekitroom state ${livekitRoom?.state}`,
+        `[Lifecycle] InCallView Component unmounted, livekit room state ${livekitRoom?.state}`,
       );
       livekitRoom
         ?.disconnect()
@@ -159,6 +159,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     };
   }, [livekitRoom]);
 
+  const { autoLeaveWhenOthersLeft } = useUrlParams();
+
   useEffect(() => {
     if (livekitRoom !== undefined) {
       const reactionsReader = new ReactionsReader(props.rtcSession);
@@ -166,7 +168,10 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         props.rtcSession,
         livekitRoom,
         mediaDevices,
-        props.e2eeSystem,
+        {
+          encryptionSystem: props.e2eeSystem,
+          autoLeaveWhenOthersLeft,
+        },
         connStateObservable$,
         reactionsReader.raisedHands$,
         reactionsReader.reactions$,
@@ -183,6 +188,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     mediaDevices,
     props.e2eeSystem,
     connStateObservable$,
+    autoLeaveWhenOthersLeft,
   ]);
 
   if (livekitRoom === undefined || vm === null) return null;
@@ -313,6 +319,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const switchCamera = useSwitchCamera(vm.localVideo$);
+  useSubscription(vm.autoLeaveWhenOthersLeft$, onLeave);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
