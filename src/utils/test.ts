@@ -74,6 +74,7 @@ export interface OurRunHelpers extends RunHelpers {
     values?: { [marble: string]: T },
     error?: unknown,
   ): Behavior<T>;
+  scope: ObservableScope;
 }
 
 interface TestRunnerGlobal {
@@ -96,6 +97,7 @@ export function withTestScheduler(
   scheduler.run((helpers) =>
     continuation({
       ...helpers,
+      scope,
       schedule(marbles, actions) {
         const actionsObservable$ = helpers
           .cold(marbles)

@@ -139,7 +139,7 @@ export function getBasicCallViewModelEnvironment(
     liveKitRoom,
     mockMediaDevices({}),
     {
-      kind: E2eeType.PER_PARTICIPANT,
+      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     },
     of(ConnectionState.Connected),
     handRaisedSubject$,
