@@ -365,14 +365,14 @@ export const getUrlParams = (
       intentPreset = {
         ...inAppDefault,
         skipLobby: true,
-        // autoLeaveWhenOthersLeft: true, // TODO: add this once available
+        autoLeaveWhenOthersLeft: true,
       };
       break;
     case UserIntent.JoinExistingCallDM:
       intentPreset = {
         ...inAppDefault,
         skipLobby: true,
-        // autoLeaveWhenOthersLeft: true, // TODO: add this once available
+        autoLeaveWhenOthersLeft: true,
       };
       break;
     // Non widget usecase defaults
