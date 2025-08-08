@@ -75,6 +75,7 @@ import {
   local,
   localId,
   localRtcMember,
+  localRtcMemberDevice2,
 } from "../utils/test-fixtures";
 import { ObservableScope } from "./ObservableScope";
 import { MediaDevices } from "./MediaDevices";
@@ -1138,7 +1139,7 @@ test("autoLeaveWhenOthersLeft$ emits only when autoLeaveWhenOthersLeft option is
   });
 });
 
-test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is enabled but noone is there", () => {
+test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is enabled but no-one is there", () => {
   withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
       scope.behavior(nooneEverThere$(hot), []),
@@ -1147,9 +1148,7 @@ test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is ena
       new Map(),
       mockMediaDevices({}),
       (vm) => {
-        expectObservable(vm.autoLeaveWhenOthersLeft$).toBe(
-          "-------", // false initially, then at frame 6: true then false emissions in same frame
-        );
+        expectObservable(vm.autoLeaveWhenOthersLeft$).toBe("-------");
       },
       {
         autoLeaveWhenOthersLeft: true,
@@ -1159,7 +1158,7 @@ test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is ena
   });
 });
 
-test("autoLeaveWhenOthersLeft$ emits when autoLeaveWhenOthersLeft option is enabled and all others left", () => {
+test("autoLeaveWhenOthersLeft$ doesn't emit when autoLeaveWhenOthersLeft option is disabled and all others left", () => {
   withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
       scope.behavior(participantJoinLeave$(hot), []),
@@ -1169,6 +1168,47 @@ test("autoLeaveWhenOthersLeft$ emits when autoLeaveWhenOthersLeft option is enab
       mockMediaDevices({}),
       (vm) => {
         expectObservable(vm.autoLeaveWhenOthersLeft$).toBe("-------");
+      },
+      {
+        autoLeaveWhenOthersLeft: false,
+        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      },
+    );
+  });
+});
+
+test("autoLeaveWhenOthersLeft$ doesn't emits when autoLeaveWhenOthersLeft option is enabled and all others left", () => {
+  withTestScheduler(({ hot, expectObservable, scope }) => {
+    withCallViewModel(
+      scope.behavior(
+        hot("a-b-c-d", {
+          a: [], // Alone
+          b: [aliceParticipant], // Alice joins
+          c: [aliceParticipant],
+          d: [], // Local joins with a second device
+        }),
+        [], //Alice leaves
+      ),
+      scope.behavior(
+        hot("a-b-c-d", {
+          a: [localRtcMember], // Start empty
+          b: [localRtcMember, aliceRtcMember], // Alice joins
+          c: [localRtcMember, aliceRtcMember, localRtcMemberDevice2], // Alice still there
+          d: [localRtcMember, localRtcMemberDevice2], // The second Alice leaves
+        }),
+        [],
+      ),
+      of(ConnectionState.Connected),
+      new Map(),
+      mockMediaDevices({}),
+      (vm) => {
+        expectObservable(vm.autoLeaveWhenOthersLeft$).toBe("------e", {
+          e: undefined,
+        });
+      },
+      {
+        autoLeaveWhenOthersLeft: true,
+        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       },
     );
   });
