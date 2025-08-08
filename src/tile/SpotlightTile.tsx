@@ -213,7 +213,7 @@ export const SpotlightTile: FC<Props> = ({
   const canGoToNext = visibleIndex !== -1 && visibleIndex < media.length - 1;
 
   const isFullscreen = useCallback((): boolean => {
-    const rootElement = document.getElementById("root");
+    const rootElement = document.body;
     if (rootElement && document.fullscreenElement) return true;
     return false;
   }, []);
@@ -223,7 +223,7 @@ export const SpotlightTile: FC<Props> = ({
     : FullScreenMaximiseIcon;
 
   const onToggleFullscreen = useCallback(() => {
-    const rootElement = document.getElementById("root");
+    const rootElement = document.body;
     if (!rootElement) return;
     if (isFullscreen()) {
       void document?.exitFullscreen();
