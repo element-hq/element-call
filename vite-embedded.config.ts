@@ -1,6 +1,14 @@
+/*
+Copyright 2025 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
 import { defineConfig, mergeConfig } from "vite";
-import fullConfig from "./vite.config";
 import generateFile from "vite-plugin-generate-file";
+
+import fullConfig from "./vite.config";
 
 const base = "./";
 

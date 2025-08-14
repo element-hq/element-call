@@ -5,7 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { defineConfig, loadEnv, searchForWorkspaceRoot } from "vite";
+import {
+  loadEnv,
+  searchForWorkspaceRoot,
+  type ConfigEnv,
+  type UserConfig,
+} from "vite";
 import svgrPlugin from "vite-plugin-svgr";
 import { createHtmlPlugin } from "vite-plugin-html";
 import { codecovVitePlugin } from "@codecov/vite-plugin";
@@ -15,10 +20,14 @@ import { realpathSync } from "fs";
 import * as fs from "node:fs";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode, packageType }) => {
+// Modified type helper from defineConfig to allow for packageType (see defineConfig from vite)
+export default ({
+  mode,
+  packageType,
+}: ConfigEnv & { packageType?: "full" | "embedded" }): UserConfig => {
   const env = loadEnv(mode, process.cwd());
   // Environment variables with the VITE_ prefix are accessible at runtime.
-  // So, we set this to allow for build/package specific behaviour.
+  // So, we set this to allow for build/package specific behavior.
   // In future we might be able to do what is needed via code splitting at
   // build time.
   process.env.VITE_PACKAGE = packageType ?? "full";
@@ -93,7 +102,7 @@ export default defineConfig(({ mode, packageType }) => {
       sourcemap: true,
       rollupOptions: {
         output: {
-          assetFileNames: ({ originalFileNames }) => {
+          assetFileNames: ({ originalFileNames }): string => {
             if (originalFileNames) {
               for (const name of originalFileNames) {
                 // Custom asset name for locales to include the locale code in the filename
@@ -143,4 +152,4 @@ export default defineConfig(({ mode, packageType }) => {
       exclude: ["@matrix-org/matrix-sdk-crypto-wasm"],
     },
   };
-});
+};

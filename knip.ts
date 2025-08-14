@@ -1,8 +1,15 @@
-import { KnipConfig } from "knip";
+/*
+Copyright 2025 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import { type KnipConfig } from "knip";
 
 export default {
   vite: {
-    config: ["vite.config.js", "vite-embedded.config.js"],
+    config: ["vite.config.ts", "vite-embedded.config.ts"],
   },
   entry: ["src/main.tsx", "i18next-parser.config.ts"],
   ignoreBinaries: [
