@@ -29,6 +29,8 @@ import classNames from "classnames";
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { type RoomMember } from "matrix-js-sdk";
 
+import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
+import FullScreenMinimiseIcon from "../icons/FullScreenMinimise.svg?react";
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
 import {
@@ -210,6 +212,26 @@ export const SpotlightTile: FC<Props> = ({
   const canGoBack = visibleIndex > 0;
   const canGoToNext = visibleIndex !== -1 && visibleIndex < media.length - 1;
 
+  const isFullscreen = useCallback((): boolean => {
+    const rootElement = document.body;
+    if (rootElement && document.fullscreenElement) return true;
+    return false;
+  }, []);
+
+  const FullScreenIcon = isFullscreen()
+    ? FullScreenMinimiseIcon
+    : FullScreenMaximiseIcon;
+
+  const onToggleFullscreen = useCallback(() => {
+    const rootElement = document.body;
+    if (!rootElement) return;
+    if (isFullscreen()) {
+      void document?.exitFullscreen();
+    } else {
+      void rootElement.requestFullscreen();
+    }
+  }, [isFullscreen]);
+
   // To keep track of which item is visible, we need an intersection observer
   // hooked up to the root element and the items. Because the items will run
   // their effects before their parent does, we need to do this dance with an
@@ -292,17 +314,28 @@ export const SpotlightTile: FC<Props> = ({
           />
         ))}
       </div>
-      {onToggleExpanded && (
+      <div className={styles.bottomRightButtons}>
         <button
           className={classNames(styles.expand)}
-          aria-label={
-            expanded ? t("video_tile.collapse") : t("video_tile.expand")
-          }
-          onClick={onToggleExpanded}
+          aria-label={"maximise"}
+          onClick={onToggleFullscreen}
         >
-          <ToggleExpandIcon aria-hidden width={20} height={20} />
+          <FullScreenIcon aria-hidden width={20} height={20} />
         </button>
-      )}
+
+        {onToggleExpanded && (
+          <button
+            className={classNames(styles.expand)}
+            aria-label={
+              expanded ? t("video_tile.collapse") : t("video_tile.expand")
+            }
+            onClick={onToggleExpanded}
+          >
+            <ToggleExpandIcon aria-hidden width={20} height={20} />
+          </button>
+        )}
+      </div>
+
       {canGoToNext && (
         <button
           className={classNames(styles.advance, styles.next)}

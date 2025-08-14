@@ -23,9 +23,10 @@ interface RoomIdentifier {
 }
 
 export enum UserIntent {
-  // TODO: add DM vs room call
   StartNewCall = "start_call",
   JoinExistingCall = "join_existing",
+  StartNewCallDM = "start_call_dm",
+  JoinExistingCallDM = "join_existing_dm",
   Unknown = "unknown",
 }
 
@@ -209,6 +210,12 @@ export interface UrlConfiguration {
    * Whether and what type of notification EC should send, when the user joins the call.
    */
   sendNotificationType?: RTCNotificationType;
+  /**
+   * Whether the app should automatically leave the call when there
+   * is no one left in the call.
+   * This is one part to make the call matrixRTC session behave like a telephone call.
+   */
+  autoLeaveWhenOthersLeft: boolean;
 }
 
 // If you need to add a new flag to this interface, prefer a name that describes
@@ -276,10 +283,16 @@ class ParamParser {
     ];
   }
 
+  /**
+   * Returns true if the flag exists and is not "false".
+   */
   public getFlagParam(name: string, defaultValue = false): boolean {
     const param = this.getParam(name);
     return param === null ? defaultValue : param !== "false";
   }
+  /**
+   * Returns the value of the flag if it exists, or undefined if it does not.
+   */
   public getFlag(name: string): boolean | undefined {
     const param = this.getParam(name);
     return param !== null ? param !== "false" : undefined;
@@ -333,6 +346,7 @@ export const getUrlParams = (
     skipLobby: true,
     returnToLobby: false,
     sendNotificationType: "notification" as RTCNotificationType,
+    autoLeaveWhenOthersLeft: false,
   };
   switch (intent) {
     case UserIntent.StartNewCall:
@@ -345,6 +359,20 @@ export const getUrlParams = (
       intentPreset = {
         ...inAppDefault,
         skipLobby: false,
+      };
+      break;
+    case UserIntent.StartNewCallDM:
+      intentPreset = {
+        ...inAppDefault,
+        skipLobby: true,
+        autoLeaveWhenOthersLeft: true,
+      };
+      break;
+    case UserIntent.JoinExistingCallDM:
+      intentPreset = {
+        ...inAppDefault,
+        skipLobby: true,
+        autoLeaveWhenOthersLeft: true,
       };
       break;
     // Non widget usecase defaults
@@ -362,6 +390,7 @@ export const getUrlParams = (
         skipLobby: false,
         returnToLobby: false,
         sendNotificationType: undefined,
+        autoLeaveWhenOthersLeft: false,
       };
   }
 
@@ -413,12 +442,13 @@ export const getUrlParams = (
       "ring",
       "notification",
     ]),
+    autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
   };
 
   return {
     ...properties,
     ...intentPreset,
-    ...pickBy(configuration, (v) => v !== undefined),
+    ...pickBy(configuration, (v?: unknown) => v !== undefined),
   };
 };
 

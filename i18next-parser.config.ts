@@ -1,4 +1,6 @@
-export default {
+import type { UserConfig } from "i18next-parser";
+
+const config: UserConfig = {
   keySeparator: ".",
   namespaceSeparator: false,
   contextSeparator: "|",
@@ -26,3 +28,5 @@ export default {
   input: ["src/**/*.{ts,tsx}"],
   sort: true,
 };
+
+export default config;
