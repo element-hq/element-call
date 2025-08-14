@@ -18,7 +18,7 @@ import { sentryVitePlugin } from "@sentry/vite-plugin";
 import react from "@vitejs/plugin-react";
 import { realpathSync } from "fs";
 import * as fs from "node:fs";
-import { logger } from "matrix-js-sdk/lib/logger";
+
 // https://vitejs.dev/config/
 // Modified type helper from defineConfig to allow for packageType (see defineConfig from vite)
 export default ({
@@ -86,7 +86,7 @@ export default ({
       allow.push(realpathSync(path));
     } catch {}
   }
-  logger.log("Allowed vite paths:", allow);
+  console.log("Allowed vite paths:", allow);
 
   return {
     server: {
