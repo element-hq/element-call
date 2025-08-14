@@ -6,10 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-import { BehaviorSubject, type Observable } from "rxjs";
-import { useObservableEagerState } from "observable-hooks";
+import { BehaviorSubject } from "rxjs";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import { type Behavior } from "../state/Behavior";
+import { useBehavior } from "../useBehavior";
 
 export class Setting<T> {
   public constructor(
@@ -38,7 +39,7 @@ export class Setting<T> {
   private readonly key: string;
 
   private readonly _value$: BehaviorSubject<T>;
-  public readonly value$: Observable<T>;
+  public readonly value$: Behavior<T>;
 
   public readonly setValue = (value: T): void => {
     this._value$.next(value);
@@ -53,7 +54,7 @@ export class Setting<T> {
  * React hook that returns a settings's current value and a setter.
  */
 export function useSetting<T>(setting: Setting<T>): [T, (value: T) => void] {
-  return [useObservableEagerState(setting.value$), setting.setValue];
+  return [useBehavior(setting.value$), setting.setValue];
 }
 
 // null = undecided

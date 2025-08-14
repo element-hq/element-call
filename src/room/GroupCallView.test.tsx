@@ -16,7 +16,6 @@ import {
 import { render, waitFor, screen } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
-import { of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
@@ -43,6 +42,7 @@ import { MatrixRTCFocusMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
+import { constant } from "../state/Behavior";
 
 vi.mock("../soundUtils");
 vi.mock("../useAudioContext");
@@ -141,7 +141,7 @@ function createGroupCallView(
     room,
     localRtcMember,
     [],
-  ).withMemberships(of([]));
+  ).withMemberships(constant([]));
   rtcSession.joined = joined;
   const muteState = {
     audio: { enabled: false },

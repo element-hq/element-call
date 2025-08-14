@@ -100,5 +100,5 @@ test("When creator left, avoid reconnect to the same SFU", async ({
   // https://github.com/element-hq/element-call/issues/3344
   // The app used to request a new jwt token then to reconnect to the SFU
   expect(wsConnectionCount).toBe(1);
-  expect(sfuGetCallCount).toBe(1);
+  expect(sfuGetCallCount).toBe(2 /* the first one is for the warmup */);
 });

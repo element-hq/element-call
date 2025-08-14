@@ -86,6 +86,14 @@ export function useMuteStates(isJoined: boolean): MuteStates {
   const audio = useMuteState(devices.audioInput, () => {
     return Config.get().media_devices.enable_audio && !skipLobby && !isJoined;
   });
+  useEffect(() => {
+    // If audio is enabled, we need to request the device names again,
+    // because iOS will not be able to switch to the correct device after un-muting.
+    // This is one of the main changes that makes iOS work with bluetooth audio devices.
+    if (audio.enabled) {
+      devices.requestDeviceNames();
+    }
+  }, [audio.enabled, devices]);
   const isEarpiece = useIsEarpiece();
   const video = useMuteState(
     devices.videoInput,

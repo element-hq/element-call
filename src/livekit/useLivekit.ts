@@ -157,10 +157,13 @@ export function useLivekit(
     useObservableEagerState(
       useObservable(
         (room$) =>
-          observeTrackReference$(
-            room$.pipe(map(([room]) => room.localParticipant)),
-            Track.Source.Camera,
-          ).pipe(
+          room$.pipe(
+            switchMap(([room]) =>
+              observeTrackReference$(
+                room.localParticipant,
+                Track.Source.Camera,
+              ),
+            ),
             map((trackRef) => {
               const track = trackRef?.publication?.track;
               return track instanceof LocalVideoTrack ? track : null;
@@ -320,16 +323,18 @@ export function useLivekit(
 
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
-    if (
-      room !== undefined &&
-      connectionState === ConnectionState.Connected &&
-      !controlledAudioDevices
-    ) {
+    if (room !== undefined && connectionState === ConnectionState.Connected) {
       const syncDevice = (
         kind: MediaDeviceKind,
         selected$: Observable<SelectedDevice | undefined>,
       ): Subscription =>
         selected$.subscribe((device) => {
+          logger.info(
+            "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
+            room.getActiveDevice(kind),
+            " !== ",
+            device?.id,
+          );
           if (
             device !== undefined &&
             room.getActiveDevice(kind) !== device.id
@@ -344,7 +349,9 @@ export function useLivekit(
 
       const subscriptions = [
         syncDevice("audioinput", devices.audioInput.selected$),
-        syncDevice("audiooutput", devices.audioOutput.selected$),
+        !controlledAudioDevices
+          ? syncDevice("audiooutput", devices.audioOutput.selected$)
+          : undefined,
         syncDevice("videoinput", devices.videoInput.selected$),
         // Restart the audio input track whenever we detect that the active media
         // device has changed to refer to a different hardware device. We do this
@@ -384,7 +391,7 @@ export function useLivekit(
       ];
 
       return (): void => {
-        for (const s of subscriptions) s.unsubscribe();
+        for (const s of subscriptions) s?.unsubscribe();
       };
     }
   }, [room, devices, connectionState, controlledAudioDevices]);

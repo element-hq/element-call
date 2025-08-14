@@ -26,11 +26,9 @@ test("muteAllAudio$", () => {
 
   muteAllAudio.unsubscribe();
 
-  expect(valueMock).toHaveBeenCalledTimes(6);
+  expect(valueMock).toHaveBeenCalledTimes(4);
   expect(valueMock).toHaveBeenNthCalledWith(1, false); // startWith([false, muteAllAudioSetting.getValue()]);
   expect(valueMock).toHaveBeenNthCalledWith(2, true); // setAudioEnabled$.next(false);
   expect(valueMock).toHaveBeenNthCalledWith(3, false); // setAudioEnabled$.next(true);
-  expect(valueMock).toHaveBeenNthCalledWith(4, false); // muteAllAudioSetting.setValue(false);
-  expect(valueMock).toHaveBeenNthCalledWith(5, true); // muteAllAudioSetting.setValue(true);
-  expect(valueMock).toHaveBeenNthCalledWith(6, true); // setAudioEnabled$.next(false);
+  expect(valueMock).toHaveBeenNthCalledWith(4, true); // muteAllAudioSetting.setValue(true);
 });
