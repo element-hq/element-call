@@ -61,6 +61,7 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Visa iPhone-hörsnäckealternativ på alla plattformar",
     "crypto_version": "Kryptoversion: {{version}}",
     "debug_tile_layout_label": "Felsök panelarrangemang",
     "device_id": "Enhets-ID: {{id}}",
@@ -70,6 +71,7 @@
     "livekit_server_info": "LiveKit-serverinfo",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix-ID: {{id}}",
+    "mute_all_audio": "Tysta allt ljud (deltagare, reaktioner, anslutningsljud)",
     "show_connection_stats": "Visa anslutningsstatistik",
     "show_non_member_tiles": "Visa paneler för media som inte är medlemmar",
     "url_params": "URL-parametrar",
@@ -164,10 +166,14 @@
       "effect_volume_description": "Justera volymen vid vilken reaktioner och handuppräckningseffekter spelas",
       "effect_volume_label": "Ljudeffektsvolym"
     },
+    "background_blur_header": "Bakgrund",
+    "background_blur_label": "Gör bakgrunden i videon suddig",
+    "blur_not_supported_by_browser": "(Bakgrundssuddighet stöds inte av den här enheten.)",
     "developer_tab_title": "Utvecklare",
     "devices": {
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
+      "change_device_button": "Byt ljudenhet",
       "default": "Förval",
       "default_named": "Förval <2>({{name}})</2>",
       "microphone": "Mikrofon",

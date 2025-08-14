@@ -10,7 +10,6 @@ import {
   filter,
   map,
   merge,
-  of,
   pairwise,
   startWith,
   Subject,
@@ -18,7 +17,7 @@ import {
   type Observable,
 } from "rxjs";
 import { createMediaDeviceObserver } from "@livekit/components-core";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import {
   audioInput as audioInputSetting,
@@ -34,11 +33,11 @@ import {
 import { getUrlParams } from "../UrlParams";
 import { platform } from "../Platform";
 import { switchWhen } from "../utils/observable";
+import { type Behavior, constant } from "./Behavior";
 
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
 // the ios swift team.
 const EARPIECE_CONFIG_ID = "earpiece-id";
-const logger = rootLogger.getChild("[MediaDevices]");
 
 export type DeviceLabel =
   | { type: "name"; name: string }
@@ -74,11 +73,11 @@ export interface MediaDevice<Label, Selected> {
   /**
    * A map from available device IDs to labels.
    */
-  available$: Observable<Map<string, Label>>;
+  available$: Behavior<Map<string, Label>>;
   /**
    * The selected device.
    */
-  selected$: Observable<Selected | undefined>;
+  selected$: Behavior<Selected | undefined>;
   /**
    * Selects a new device.
    */
@@ -94,35 +93,37 @@ export interface MediaDevice<Label, Selected> {
  *   `availableOutputDevices$.includes((d)=>d.forEarpiece)`
  */
 export const iosDeviceMenu$ =
-  platform === "ios" ? of(true) : alwaysShowIphoneEarpieceSetting.value$;
+  platform === "ios" ? constant(true) : alwaysShowIphoneEarpieceSetting.value$;
 
 function availableRawDevices$(
   kind: MediaDeviceKind,
-  usingNames$: Observable<boolean>,
+  usingNames$: Behavior<boolean>,
   scope: ObservableScope,
-): Observable<MediaDeviceInfo[]> {
+  logger: Logger,
+): Behavior<MediaDeviceInfo[]> {
   const logError = (e: Error): void =>
     logger.error("Error creating MediaDeviceObserver", e);
   const devices$ = createMediaDeviceObserver(kind, logError, false);
   const devicesWithNames$ = createMediaDeviceObserver(kind, logError, true);
 
-  return usingNames$.pipe(
-    switchMap((withNames) =>
-      withNames
-        ? // It might be that there is already a media stream running somewhere,
-          // and so we can do without requesting a second one. Only switch to the
-          // device observer that explicitly requests the names if we see that
-          // names are in fact missing from the initial device enumeration.
-          devices$.pipe(
-            switchWhen(
-              (devices, i) => i === 0 && devices.every((d) => !d.label),
-              devicesWithNames$,
-            ),
-          )
-        : devices$,
+  return scope.behavior(
+    usingNames$.pipe(
+      switchMap((withNames) =>
+        withNames
+          ? // It might be that there is already a media stream running somewhere,
+            // and so we can do without requesting a second one. Only switch to the
+            // device observer that explicitly requests the names if we see that
+            // names are in fact missing from the initial device enumeration.
+            devices$.pipe(
+              switchWhen(
+                (devices, i) => i === 0 && devices.every((d) => !d.label),
+                devicesWithNames$,
+              ),
+            )
+          : devices$,
+      ),
     ),
-    startWith([]),
-    scope.state(),
+    [],
   );
 }
 
@@ -161,34 +162,40 @@ function selectDevice$<Label>(
 }
 
 class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
-  private readonly availableRaw$: Observable<MediaDeviceInfo[]> =
-    availableRawDevices$("audioinput", this.usingNames$, this.scope);
+  private logger = rootLogger.getChild("[MediaDevices AudioInput]");
 
-  public readonly available$ = this.availableRaw$.pipe(
-    map(buildDeviceMap),
-    this.scope.state(),
+  private readonly availableRaw$: Behavior<MediaDeviceInfo[]> =
+    availableRawDevices$(
+      "audioinput",
+      this.usingNames$,
+      this.scope,
+      this.logger,
+    );
+
+  public readonly available$ = this.scope.behavior(
+    this.availableRaw$.pipe(map(buildDeviceMap)),
   );
 
-  public readonly selected$ = selectDevice$(
-    this.available$,
-    audioInputSetting.value$,
-  ).pipe(
-    map((id) =>
-      id === undefined
-        ? undefined
-        : {
-            id,
-            // We can identify when the hardware device has changed by watching for
-            // changes in the group ID
-            hardwareDeviceChange$: this.availableRaw$.pipe(
-              map((devices) => devices.find((d) => d.deviceId === id)?.groupId),
-              pairwise(),
-              filter(([before, after]) => before !== after),
-              map(() => undefined),
-            ),
-          },
+  public readonly selected$ = this.scope.behavior(
+    selectDevice$(this.available$, audioInputSetting.value$).pipe(
+      map((id) =>
+        id === undefined
+          ? undefined
+          : {
+              id,
+              // We can identify when the hardware device has changed by watching for
+              // changes in the group ID
+              hardwareDeviceChange$: this.availableRaw$.pipe(
+                map(
+                  (devices) => devices.find((d) => d.deviceId === id)?.groupId,
+                ),
+                pairwise(),
+                filter(([before, after]) => before !== after),
+                map(() => undefined),
+              ),
+            },
+      ),
     ),
-    this.scope.state(),
   );
 
   public select(id: string): void {
@@ -196,11 +203,11 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   }
 
   public constructor(
-    private readonly usingNames$: Observable<boolean>,
+    private readonly usingNames$: Behavior<boolean>,
     private readonly scope: ObservableScope,
   ) {
     this.available$.subscribe((available) => {
-      logger.info("[audio-input] available devices:", available);
+      this.logger.info("[audio-input] available devices:", available);
     });
   }
 }
@@ -208,55 +215,61 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
 class AudioOutput
   implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
 {
-  public readonly available$ = availableRawDevices$(
-    "audiooutput",
-    this.usingNames$,
-    this.scope,
-  ).pipe(
-    map((availableRaw) => {
-      const available: Map<string, AudioOutputDeviceLabel> =
-        buildDeviceMap(availableRaw);
-      // Create a virtual default audio output for browsers that don't have one.
-      // Its device ID must be the empty string because that's what setSinkId
-      // recognizes.
-      if (available.size && !available.has("") && !available.has("default"))
-        available.set("", {
-          type: "default",
-          name: availableRaw[0]?.label || null,
-        });
-      // Note: creating virtual default input devices would be another problem
-      // entirely, because requesting a media stream from deviceId "" won't
-      // automatically track the default device.
-      return available;
-    }),
-    this.scope.state(),
-  );
-
-  public readonly selected$ = selectDevice$(
-    this.available$,
-    audioOutputSetting.value$,
-  ).pipe(
-    map((id) =>
-      id === undefined
-        ? undefined
-        : {
-            id,
-            virtualEarpiece: false,
-          },
+  private logger = rootLogger.getChild("[MediaDevices AudioOutput]");
+  public readonly available$ = this.scope.behavior(
+    availableRawDevices$(
+      "audiooutput",
+      this.usingNames$,
+      this.scope,
+      this.logger,
+    ).pipe(
+      map((availableRaw) => {
+        let available: Map<string, AudioOutputDeviceLabel> =
+          buildDeviceMap(availableRaw);
+        // Create a virtual default audio output for browsers that don't have one.
+        // Its device ID must be the empty string because that's what setSinkId
+        // recognizes.
+        if (available.size && !available.has("") && !available.has("default"))
+          available.set("", {
+            type: "default",
+            name: availableRaw[0]?.label || null,
+          });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const isSafari = !!(window as any).GestureEvent; // non standard api only found on Safari. https://developer.mozilla.org/en-US/docs/Web/API/GestureEvent#browser_compatibility
+        if (isSafari) {
+          // set to empty map if we are on Safari, because it does not support setSinkId
+          available = new Map();
+        }
+        // Note: creating virtual default input devices would be another problem
+        // entirely, because requesting a media stream from deviceId "" won't
+        // automatically track the default device.
+        return available;
+      }),
     ),
-    this.scope.state(),
   );
 
+  public readonly selected$ = this.scope.behavior(
+    selectDevice$(this.available$, audioOutputSetting.value$).pipe(
+      map((id) =>
+        id === undefined
+          ? undefined
+          : {
+              id,
+              virtualEarpiece: false,
+            },
+      ),
+    ),
+  );
   public select(id: string): void {
     audioOutputSetting.setValue(id);
   }
 
   public constructor(
-    private readonly usingNames$: Observable<boolean>,
+    private readonly usingNames$: Behavior<boolean>,
     private readonly scope: ObservableScope,
   ) {
     this.available$.subscribe((available) => {
-      logger.info("[audio-output] available devices:", available);
+      this.logger.info("[audio-output] available devices:", available);
     });
   }
 }
@@ -264,30 +277,43 @@ class AudioOutput
 class ControlledAudioOutput
   implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
 {
-  public readonly available$ = combineLatest(
-    [controlledAvailableOutputDevices$.pipe(startWith([])), iosDeviceMenu$],
-    (availableRaw, iosDeviceMenu) => {
-      const available = new Map<string, AudioOutputDeviceLabel>(
-        availableRaw.map(
-          ({ id, name, isEarpiece, isSpeaker /*,isExternalHeadset*/ }) => {
-            let deviceLabel: AudioOutputDeviceLabel;
-            // if (isExternalHeadset) // Do we want this?
-            if (isEarpiece) deviceLabel = { type: "earpiece" };
-            else if (isSpeaker) deviceLabel = { type: "speaker" };
-            else deviceLabel = { type: "name", name };
-            return [id, deviceLabel];
-          },
-        ),
-      );
+  private logger = rootLogger.getChild("[MediaDevices ControlledAudioOutput]");
+  // We need to subscribe to the raw devices so that the OS does update the input
+  // back to what it was before. otherwise we will switch back to the default
+  // whenever we allocate a new stream.
+  public readonly availableRaw$ = availableRawDevices$(
+    "audiooutput",
+    this.usingNames$,
+    this.scope,
+    this.logger,
+  );
 
-      // Create a virtual earpiece device in case a non-earpiece device is
-      // designated for this purpose
-      if (iosDeviceMenu && availableRaw.some((d) => d.forEarpiece))
-        available.set(EARPIECE_CONFIG_ID, { type: "earpiece" });
+  public readonly available$ = this.scope.behavior(
+    combineLatest(
+      [controlledAvailableOutputDevices$.pipe(startWith([])), iosDeviceMenu$],
+      (availableRaw, iosDeviceMenu) => {
+        const available = new Map<string, AudioOutputDeviceLabel>(
+          availableRaw.map(
+            ({ id, name, isEarpiece, isSpeaker /*,isExternalHeadset*/ }) => {
+              let deviceLabel: AudioOutputDeviceLabel;
+              // if (isExternalHeadset) // Do we want this?
+              if (isEarpiece) deviceLabel = { type: "earpiece" };
+              else if (isSpeaker) deviceLabel = { type: "speaker" };
+              else deviceLabel = { type: "name", name };
+              return [id, deviceLabel];
+            },
+          ),
+        );
 
-      return available;
-    },
-  ).pipe(this.scope.state());
+        // Create a virtual earpiece device in case a non-earpiece device is
+        // designated for this purpose
+        if (iosDeviceMenu && availableRaw.some((d) => d.forEarpiece))
+          available.set(EARPIECE_CONFIG_ID, { type: "earpiece" });
+
+        return available;
+      },
+    ),
+  );
 
   private readonly deviceSelection$ = new Subject<string>();
 
@@ -295,67 +321,82 @@ class ControlledAudioOutput
     this.deviceSelection$.next(id);
   }
 
-  public readonly selected$ = combineLatest(
-    [
-      this.available$,
-      merge(
-        controlledOutputSelection$.pipe(startWith(undefined)),
-        this.deviceSelection$,
-      ),
-    ],
-    (available, preferredId) => {
-      const id = preferredId ?? available.keys().next().value;
-      return id === undefined
-        ? undefined
-        : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID };
-    },
-  ).pipe(this.scope.state());
+  public readonly selected$ = this.scope.behavior(
+    combineLatest(
+      [
+        this.available$,
+        merge(
+          controlledOutputSelection$.pipe(startWith(undefined)),
+          this.deviceSelection$,
+        ),
+      ],
+      (available, preferredId) => {
+        const id = preferredId ?? available.keys().next().value;
+        return id === undefined
+          ? undefined
+          : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID };
+      },
+    ),
+  );
 
-  public constructor(private readonly scope: ObservableScope) {
+  public constructor(
+    private readonly usingNames$: Behavior<boolean>,
+    private readonly scope: ObservableScope,
+  ) {
     this.selected$.subscribe((device) => {
       // Let the hosting application know which output device has been selected.
       // This information is probably only of interest if the earpiece mode has
       // been selected - for example, Element X iOS listens to this to determine
       // whether it should enable the proximity sensor.
       if (device !== undefined) {
-        logger.info("[controlled-output] setAudioDeviceSelect called:", device);
+        this.logger.info(
+          "[controlled-output] onAudioDeviceSelect called:",
+          device,
+        );
         window.controls.onAudioDeviceSelect?.(device.id);
         // Also invoke the deprecated callback for backward compatibility
         window.controls.onOutputDeviceSelect?.(device.id);
       }
     });
     this.available$.subscribe((available) => {
-      logger.info("[controlled-output] available devices:", available);
+      this.logger.info("[controlled-output] available devices:", available);
+    });
+    this.availableRaw$.subscribe((availableRaw) => {
+      this.logger.info(
+        "[controlled-output] available raw devices:",
+        availableRaw,
+      );
     });
   }
 }
 
 class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
-  public readonly available$ = availableRawDevices$(
-    "videoinput",
-    this.usingNames$,
-    this.scope,
-  ).pipe(map(buildDeviceMap));
+  private logger = rootLogger.getChild("[MediaDevices VideoInput]");
 
-  public readonly selected$ = selectDevice$(
-    this.available$,
-    videoInputSetting.value$,
-  ).pipe(
-    map((id) => (id === undefined ? undefined : { id })),
-    this.scope.state(),
+  public readonly available$ = this.scope.behavior(
+    availableRawDevices$(
+      "videoinput",
+      this.usingNames$,
+      this.scope,
+      this.logger,
+    ).pipe(map(buildDeviceMap)),
   );
-
+  public readonly selected$ = this.scope.behavior(
+    selectDevice$(this.available$, videoInputSetting.value$).pipe(
+      map((id) => (id === undefined ? undefined : { id })),
+    ),
+  );
   public select(id: string): void {
     videoInputSetting.setValue(id);
   }
 
   public constructor(
-    private readonly usingNames$: Observable<boolean>,
+    private readonly usingNames$: Behavior<boolean>,
     private readonly scope: ObservableScope,
   ) {
     // This also has the purpose of subscribing to the available devices
     this.available$.subscribe((available) => {
-      logger.info("[video-input] available devices:", available);
+      this.logger.info("[video-input] available devices:", available);
     });
   }
 }
@@ -378,12 +419,10 @@ export class MediaDevices {
   // you to do to receive device names in lieu of a more explicit permissions
   // API. This flag never resets to false, because once permissions are granted
   // the first time, the user won't be prompted again until reload of the page.
-  private readonly usingNames$ = this.deviceNamesRequest$.pipe(
-    map(() => true),
-    startWith(false),
-    this.scope.state(),
+  private readonly usingNames$ = this.scope.behavior(
+    this.deviceNamesRequest$.pipe(map(() => true)),
+    false,
   );
-
   public readonly audioInput: MediaDevice<
     DeviceLabel,
     SelectedAudioInputDevice
@@ -393,7 +432,7 @@ export class MediaDevices {
     AudioOutputDeviceLabel,
     SelectedAudioOutputDevice
   > = getUrlParams().controlledAudioDevices
-    ? new ControlledAudioOutput(this.scope)
+    ? new ControlledAudioOutput(this.usingNames$, this.scope)
     : new AudioOutput(this.usingNames$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =

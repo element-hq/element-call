@@ -21,6 +21,7 @@ import {
   OfflineIcon,
   WebBrowserIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { Button } from "@vector-im/compound-web";
 
 import {
   ConnectionLostError,
@@ -93,9 +94,13 @@ const ErrorPage: FC<ErrorPageProps> = ({
         </p>
         {actions &&
           actions.map((action, index) => (
-            <button onClick={action.onClick} key={`action${index}`}>
+            <Button
+              kind="secondary"
+              onClick={action.onClick}
+              key={`action${index}`}
+            >
               {action.label}
-            </button>
+            </Button>
           ))}
       </ErrorView>
     </FullScreenView>

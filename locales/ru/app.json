@@ -61,6 +61,7 @@
     "video": "Видео"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Показать опцию наушников для iPhone на всех платформах",
     "crypto_version": "Версия криптографии: {{version}}",
     "debug_tile_layout_label": "Отладка расположения плиток",
     "device_id": "Идентификатор устройства: {{id}}",
@@ -70,6 +71,7 @@
     "livekit_server_info": "Информация о сервере LiveKit",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
+    "mute_all_audio": "Отключить все звуки (участников, реакции, звуки присоединения)",
     "show_connection_stats": "Показать статистику подключений",
     "show_non_member_tiles": "Показать плитки для медиафайлов, не являющихся участниками",
     "url_params": "Параметры URL-адреса",
@@ -172,6 +174,7 @@
     "devices": {
       "camera": "Камера",
       "camera_numbered": "Камера {{n}}",
+      "change_device_button": "Изменить аудиоустройство",
       "default": "По умолчанию",
       "default_named": "По умолчанию <2>({{name}})</2>",
       "microphone": "Микрофон",

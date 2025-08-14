@@ -8,10 +8,13 @@ Please see LICENSE in the repository root for full details.
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { type RTCNotificationType } from "matrix-js-sdk/lib/matrixrtc";
+import { pickBy } from "lodash-es";
 
 import { Config } from "./config/Config";
 import { type EncryptionSystem } from "./e2ee/sharedKeyManagement";
 import { E2eeType } from "./e2ee/e2eeType";
+import { platform } from "./Platform";
 
 interface RoomIdentifier {
   roomAlias: string | null;
@@ -22,6 +25,8 @@ interface RoomIdentifier {
 export enum UserIntent {
   StartNewCall = "start_call",
   JoinExistingCall = "join_existing",
+  StartNewCallDM = "start_call_dm",
+  JoinExistingCallDM = "join_existing_dm",
   Unknown = "unknown",
 }
 
@@ -31,12 +36,12 @@ export enum HeaderStyle {
   AppBar = "app_bar",
 }
 
-// If you need to add a new flag to this interface, prefer a name that describes
-// a specific behavior (such as 'confineToRoom'), rather than one that describes
-// the situations that call for this behavior ('isEmbedded'). This makes it
-// clearer what each flag means, and helps us avoid coupling Element Call's
-// behavior to the needs of specific consumers.
-export interface UrlParams {
+/**
+ * The UrlProperties are used to pass required data to the widget.
+ * Those are different in different rooms, users, devices. They do not configure the behavior of the
+ * widget but provide the required data to the widget.
+ */
+export interface UrlProperties {
   // Widget api related params
   widgetId: string | null;
   parentUrl: string | null;
@@ -49,44 +54,10 @@ export interface UrlParams {
    */
   roomId: string | null;
   /**
-   * Whether the app should keep the user confined to the current call/room.
-   */
-  confineToRoom: boolean;
-  /**
-   * Whether upon entering a room, the user should be prompted to launch the
-   * native mobile app. (Affects only Android and iOS.)
-   *
-   * The app prompt must also be enabled in the config for this to take effect.
-   */
-  appPrompt: boolean;
-  /**
-   * Whether the app should pause before joining the call until it sees an
-   * io.element.join widget action, allowing it to be preloaded.
-   */
-  preload: boolean;
-  /**
-   * The style of headers to show. "standard" is the default arrangement, "none"
-   * hides the header entirely, and "app_bar" produces a header with a back
-   * button like you might see in mobile apps. The callback for the back button
-   * is window.controls.onBackButtonPressed.
-   */
-  header: HeaderStyle;
-  /**
-   * Whether the controls should be shown. For screen recording no controls can be desired.
-   */
-  showControls: boolean;
-  /**
-   * Whether to hide the screen-sharing button.
-   */
-  hideScreensharing: boolean;
-  /**
-   * Whether to use end-to-end encryption.
-   */
-  e2eEnabled: boolean;
-  /**
    * The user's ID (only used in matryoshka mode).
    */
   userId: string | null;
+
   /**
    * The display name to use for auto-registration.
    */
@@ -124,14 +95,96 @@ export interface UrlParams {
    */
   posthogApiKey: string | null;
   /**
-   * Whether the app is allowed to use fallback STUN servers for ICE in case the
-   * user's homeserver doesn't provide any.
+   * Whether to use end-to-end encryption.
    */
-  allowIceFallback: boolean;
+  e2eEnabled: boolean;
   /**
    * E2EE password
    */
   password: string | null;
+  /** This defines the homeserver that is going to be used when joining a room.
+   * It has to be set to a non default value for links to rooms
+   * that are not on the default homeserver,
+   * that is in use for the current user.
+   */
+  viaServers: string | null;
+
+  /**
+   * This defines the homeserver that is going to be used when registering
+   * a new (guest) user.
+   * This can be user to configure a non default guest user server when
+   * creating a spa link.
+   */
+  homeserver: string | null;
+
+  /**
+   * The rageshake submit URL. This is only used in the embedded package of Element Call.
+   */
+  rageshakeSubmitUrl: string | null;
+
+  /**
+   * The Sentry DSN. This is only used in the embedded package of Element Call.
+   */
+  sentryDsn: string | null;
+
+  /**
+   * The Sentry environment. This is only used in the embedded package of Element Call.
+   */
+  sentryEnvironment: string | null;
+  /**
+   * The theme to use for element call.
+   * can be "light", "dark", "light-high-contrast" or "dark-high-contrast".
+   */
+  theme: string | null;
+}
+
+/**
+ * The configuration for the app, which can be set via URL parameters.
+ * Those property are different to the UrlProperties, since they are all optional
+ * and configure the behavior of the app. Their value is the same if EC is used in
+ * the same context but with different accounts/users.
+ *
+ * Their defaults can be controlled by the `intent` property.
+ */
+export interface UrlConfiguration {
+  /**
+   * Whether the app should keep the user confined to the current call/room.
+   */
+  confineToRoom: boolean;
+  /**
+   * Whether upon entering a room, the user should be prompted to launch the
+   * native mobile app. (Affects only Android and iOS.)
+   *
+   * The app prompt must also be enabled in the config for this to take effect.
+   */
+  appPrompt: boolean;
+  /**
+   * Whether the app should pause before joining the call until it sees an
+   * io.element.join widget action, allowing it to be preloaded.
+   */
+  preload: boolean;
+  /**
+   * The style of headers to show. "standard" is the default arrangement, "none"
+   * hides the header entirely, and "app_bar" produces a header with a back
+   * button like you might see in mobile apps. The callback for the back button
+   * is window.controls.onBackButtonPressed.
+   */
+  header: HeaderStyle;
+  /**
+   * Whether the controls should be shown. For screen recording no controls can be desired.
+   */
+  showControls: boolean;
+  /**
+   * Whether to hide the screen-sharing button.
+   */
+  hideScreensharing: boolean;
+
+  /**
+   * Whether the app is allowed to use fallback STUN servers for ICE in case the
+   * user's homeserver doesn't provide any.
+   */
+  allowIceFallback: boolean;
+
   /**
    * Whether the app should use per participant keys for E2EE.
    */
@@ -154,46 +207,23 @@ export interface UrlParams {
    */
   returnToLobby: boolean;
   /**
-   * The theme to use for element call.
-   * can be "light", "dark", "light-high-contrast" or "dark-high-contrast".
+   * Whether and what type of notification EC should send, when the user joins the call.
    */
-  theme: string | null;
-  /** This defines the homeserver that is going to be used when joining a room.
-   * It has to be set to a non default value for links to rooms
-   * that are not on the default homeserver,
-   * that is in use for the current user.
-   */
-  viaServers: string | null;
+  sendNotificationType?: RTCNotificationType;
   /**
-   * This defines the homeserver that is going to be used when registering
-   * a new (guest) user.
-   * This can be user to configure a non default guest user server when
-   * creating a spa link.
+   * Whether the app should automatically leave the call when there
+   * is no one left in the call.
+   * This is one part to make the call matrixRTC session behave like a telephone call.
    */
-  homeserver: string | null;
-
-  /**
-   * The user's intent with respect to the call.
-   * e.g. if they clicked a Start Call button, this would be `start_call`.
-   * If it was a Join Call button, it would be `join_existing`.
-   */
-  intent: string | null;
-
-  /**
-   * The rageshake submit URL. This is only used in the embedded package of Element Call.
-   */
-  rageshakeSubmitUrl: string | null;
-
-  /**
-   * The Sentry DSN. This is only used in the embedded package of Element Call.
-   */
-  sentryDsn: string | null;
-
-  /**
-   * The Sentry environment. This is only used in the embedded package of Element Call.
-   */
-  sentryEnvironment: string | null;
+  autoLeaveWhenOthersLeft: boolean;
 }
+
+// If you need to add a new flag to this interface, prefer a name that describes
+// a specific behavior (such as 'confineToRoom'), rather than one that describes
+// the situations that call for this behavior ('isEmbedded'). This makes it
+// clearer what each flag means, and helps us avoid coupling Element Call's
+// behavior to the needs of specific consumers.
+export interface UrlParams extends UrlProperties, UrlConfiguration {}
 
 // This is here as a stopgap, but what would be far nicer is a function that
 // takes a UrlParams and returns a query string. That would enable us to
@@ -235,6 +265,17 @@ class ParamParser {
     return this.fragmentParams.get(name) ?? this.queryParams.get(name);
   }
 
+  public getEnumParam<T extends string>(
+    name: string,
+    type: { [s: string]: T } | ArrayLike<T>,
+  ): T | undefined {
+    const value = this.getParam(name);
+    if (value !== null && Object.values(type).includes(value as T)) {
+      return value as T;
+    }
+    return undefined;
+  }
+
   public getAllParams(name: string): string[] {
     return [
       ...this.fragmentParams.getAll(name),
@@ -242,9 +283,19 @@ class ParamParser {
     ];
   }
 
+  /**
+   * Returns true if the flag exists and is not "false".
+   */
   public getFlagParam(name: string, defaultValue = false): boolean {
     const param = this.getParam(name);
     return param === null ? defaultValue : param !== "false";
+  }
+  /**
+   * Returns the value of the flag if it exists, or undefined if it does not.
+   */
+  public getFlag(name: string): boolean | undefined {
+    const param = this.getParam(name);
+    return param !== null ? param !== "false" : undefined;
   }
 }
 
@@ -262,41 +313,95 @@ export const getUrlParams = (
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
 
-  let intent = parser.getParam("intent");
-  if (!intent || !Object.values(UserIntent).includes(intent as UserIntent)) {
-    intent = UserIntent.Unknown;
-  }
-
-  // Check hideHeader for backwards compatibility. If header is set, hideHeader
-  // is ignored.
-  const header =
-    parser.getParam("header") ??
-    (parser.getFlagParam("hideHeader")
-      ? HeaderStyle.None
-      : HeaderStyle.Standard);
-
   const widgetId = parser.getParam("widgetId");
   const parentUrl = parser.getParam("parentUrl");
   const isWidget = !!widgetId && !!parentUrl;
 
-  return {
+  /**
+   * The user's intent with respect to the call.
+   * e.g. if they clicked a Start Call button, this would be `start_call`.
+   * If it was a Join Call button, it would be `join_existing`.
+   * This is a platform specific default set of parameters, that allows to minize the configuration
+   * needed to start a call. And empowers the EC codebase to control the platform/intent behavior in
+   * a central place.
+   *
+   * In short: either provide url query parameters of UrlConfiguration or set the intent
+   * (or the global defaults will be used).
+   */
+  const intent = !isWidget
+    ? UserIntent.Unknown
+    : (parser.getEnumParam("intent", UserIntent) ?? UserIntent.Unknown);
+  // Here we only use constants and `platform` to determine the intent preset.
+  let intentPreset: UrlConfiguration;
+  const inAppDefault = {
+    confineToRoom: true,
+    appPrompt: false,
+    preload: true,
+    header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+    showControls: true,
+    hideScreensharing: false,
+    allowIceFallback: true,
+    perParticipantE2EE: true,
+    controlledAudioDevices: platform === "desktop" ? false : true,
+    skipLobby: true,
+    returnToLobby: false,
+    sendNotificationType: "notification" as RTCNotificationType,
+    autoLeaveWhenOthersLeft: false,
+  };
+  switch (intent) {
+    case UserIntent.StartNewCall:
+      intentPreset = {
+        ...inAppDefault,
+        skipLobby: true,
+      };
+      break;
+    case UserIntent.JoinExistingCall:
+      intentPreset = {
+        ...inAppDefault,
+        skipLobby: false,
+      };
+      break;
+    case UserIntent.StartNewCallDM:
+      intentPreset = {
+        ...inAppDefault,
+        skipLobby: true,
+        autoLeaveWhenOthersLeft: true,
+      };
+      break;
+    case UserIntent.JoinExistingCallDM:
+      intentPreset = {
+        ...inAppDefault,
+        skipLobby: true,
+        autoLeaveWhenOthersLeft: true,
+      };
+      break;
+    // Non widget usecase defaults
+    default:
+      intentPreset = {
+        confineToRoom: false,
+        appPrompt: true,
+        preload: false,
+        header: HeaderStyle.Standard,
+        showControls: true,
+        hideScreensharing: false,
+        allowIceFallback: false,
+        perParticipantE2EE: false,
+        controlledAudioDevices: false,
+        skipLobby: false,
+        returnToLobby: false,
+        sendNotificationType: undefined,
+        autoLeaveWhenOthersLeft: false,
+      };
+  }
+
+  const properties: UrlProperties = {
     widgetId,
     parentUrl,
-
     // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
     // what would we do if it were invalid? If the widget API says that's what
     // the room ID is, then that's what it is.
     roomId: parser.getParam("roomId"),
     password: parser.getParam("password"),
-    // This flag has 'embed' as an alias for historical reasons
-    confineToRoom:
-      parser.getFlagParam("confineToRoom") || parser.getFlagParam("embed"),
-    appPrompt: parser.getFlagParam("appPrompt", true),
-    preload: isWidget ? parser.getFlagParam("preload") : false,
-    header: header as HeaderStyle,
-    showControls: parser.getFlagParam("showControls", true),
-    hideScreensharing: parser.getFlagParam("hideScreensharing"),
-    e2eEnabled: parser.getFlagParam("enableE2EE", true),
     userId: isWidget ? parser.getParam("userId") : null,
     displayName: parser.getParam("displayName"),
     deviceId: isWidget ? parser.getParam("deviceId") : null,
@@ -304,24 +409,9 @@ export const getUrlParams = (
     lang: parser.getParam("lang"),
     fonts: parser.getAllParams("font"),
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
-    allowIceFallback: parser.getFlagParam("allowIceFallback"),
-    perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
-    controlledAudioDevices: parser.getFlagParam(
-      "controlledAudioDevices",
-      // the deprecated property name
-      parser.getFlagParam("controlledMediaDevices"),
-    ),
-    skipLobby: parser.getFlagParam(
-      "skipLobby",
-      isWidget && intent === UserIntent.StartNewCall,
-    ),
-    // In SPA mode the user should always exit to the home screen when hanging
-    // up, rather than being sent back to the lobby
-    returnToLobby: isWidget ? parser.getFlagParam("returnToLobby") : false,
     theme: parser.getParam("theme"),
     viaServers: !isWidget ? parser.getParam("viaServers") : null,
     homeserver: !isWidget ? parser.getParam("homeserver") : null,
-    intent,
     posthogApiHost: parser.getParam("posthogApiHost"),
     posthogApiKey: parser.getParam("posthogApiKey"),
     posthogUserId:
@@ -329,6 +419,36 @@ export const getUrlParams = (
     rageshakeSubmitUrl: parser.getParam("rageshakeSubmitUrl"),
     sentryDsn: parser.getParam("sentryDsn"),
     sentryEnvironment: parser.getParam("sentryEnvironment"),
+    e2eEnabled: parser.getFlagParam("enableE2EE", true),
+  };
+
+  const configuration: Partial<UrlConfiguration> = {
+    confineToRoom: parser.getFlag("confineToRoom"),
+    appPrompt: parser.getFlag("appPrompt"),
+    preload: isWidget ? parser.getFlag("preload") : undefined,
+    // Check hideHeader for backwards compatibility. If header is set, hideHeader
+    // is ignored.
+    header: parser.getEnumParam("header", HeaderStyle),
+    showControls: parser.getFlag("showControls"),
+    hideScreensharing: parser.getFlag("hideScreensharing"),
+    allowIceFallback: parser.getFlag("allowIceFallback"),
+    perParticipantE2EE: parser.getFlag("perParticipantE2EE"),
+    controlledAudioDevices: parser.getFlag("controlledAudioDevices"),
+    skipLobby: isWidget ? parser.getFlag("skipLobby") : false,
+    // In SPA mode the user should always exit to the home screen when hanging
+    // up, rather than being sent back to the lobby
+    returnToLobby: isWidget ? parser.getFlag("returnToLobby") : false,
+    sendNotificationType: parser.getEnumParam("sendNotificationType", [
+      "ring",
+      "notification",
+    ]),
+    autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
+  };
+
+  return {
+    ...properties,
+    ...intentPreset,
+    ...pickBy(configuration, (v?: unknown) => v !== undefined),
   };
 };
 
@@ -387,10 +507,16 @@ export function getRoomIdentifierFromUrl(
 
   // Make sure roomId is valid
   let roomId: string | null = parser.getParam("roomId");
-  if (!roomId?.startsWith("!")) {
-    roomId = null;
-  } else if (!roomId.includes("")) {
-    roomId = null;
+  if (roomId !== null) {
+    // Replace any non-printable characters that another client may have inserted.
+    // For instance on iOS, some copied links end up with zero width characters on the end which get encoded into the URL.
+    // This isn't valid for a roomId, so we can freely strip the content.
+    roomId = roomId.replaceAll(/^[^ -~]+|[^ -~]+$/g, "");
+    if (!roomId.startsWith("!")) {
+      roomId = null;
+    } else if (!roomId.includes("")) {
+      roomId = null;
+    }
   }
 
   return {

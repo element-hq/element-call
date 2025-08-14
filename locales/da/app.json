@@ -61,6 +61,7 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Vis mulighed for iPhone-høretelefon på alle platforme",
     "crypto_version": "Krypto-version: {{version}}",
     "debug_tile_layout_label": "Fejlfinding af fliselayout",
     "device_id": "Enheds-id: {{id}}",
@@ -70,6 +71,7 @@
     "livekit_server_info": "LiveKit Serverinfo",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
+    "mute_all_audio": "Slå al lyd fra (deltagere, reaktioner, deltagelseslyde)",
     "show_connection_stats": "Vis forbindelsesstatistik",
     "show_non_member_tiles": "Vis fliser for medier fra ikke-medlemmer",
     "url_params": "URL-parametre",
@@ -80,7 +82,7 @@
   "error": {
     "call_is_not_supported": "Opkald er ikke understøttet",
     "call_not_found": "Opkald ikke fundet",
-    "call_not_found_description": "<0>Det link ser ikke ud til at høre til et eksisterende opkald. Tjek at du har det rigtige link, eller<1> opret et nyt</1>.</0>",
+    "call_not_found_description": "<0>Det link ser ikke ud til at høre til et eksisterende opkald. Tjek at du har det rigtige link, eller <2> opret et nyt</2>.</0>",
     "connection_lost": "Forbindelsen gik tabt",
     "connection_lost_description": "Du blev afbrudt fra opkaldet.",
     "e2ee_unsupported": "Inkompatibel browser",
@@ -164,12 +166,17 @@
       "effect_volume_description": "Juster den lydstyrke som reaktioner og håndsoprækninger afspilles med.",
       "effect_volume_label": "Lydstyrke for lydeffekter"
     },
+    "background_blur_header": "Baggrund",
+    "background_blur_label": "Gør videoens baggrund sløret",
+    "blur_not_supported_by_browser": "(Baggrundssløring understøttes ikke af denne enhed.)",
     "developer_tab_title": "Udvikler",
     "devices": {
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
+      "change_device_button": "Skift lydenhed",
       "default": "Standard",
       "default_named": "Standard <2>({{name}})</2>",
+      "loudspeaker": "Højttaler",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon {{n}}",
       "speaker": "Højttaler",

@@ -10,7 +10,6 @@ import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
 import { Button, Root as Form, Separator } from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
-import { useObservableEagerState } from "observable-hooks";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -34,6 +33,7 @@ import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
 import { FieldRow, InputField } from "../input/Input";
 import { useSubmitRageshake } from "./submit-rageshake";
 import { useUrlParams } from "../UrlParams";
+import { useBehavior } from "../useBehavior";
 
 type SettingsTab =
   | "audio"
@@ -112,7 +112,7 @@ export const SettingsModal: FC<Props> = ({
   // rather than the input section.
   const { controlledAudioDevices } = useUrlParams();
   // If we are on iOS we will show a button to open the native audio device picker.
-  const iosDeviceMenu = useObservableEagerState(iosDeviceMenu$);
+  const iosDeviceMenu = useBehavior(iosDeviceMenu$);
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
