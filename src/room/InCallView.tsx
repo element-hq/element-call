@@ -25,11 +25,11 @@ import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
-import { useObservable, useObservableEagerState } from "observable-hooks";
+import { useObservable, useSubscription } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import {
-  EarpieceIcon,
+  VoiceCallSolidIcon,
   VolumeOnSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
@@ -110,6 +110,7 @@ import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMembership
 import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
 import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
+import { useBehavior } from "../useBehavior.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -137,17 +138,17 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   useEffect(() => {
     logger.info(
-      `[Lifecycle] InCallView Component mounted, livekitroom state ${livekitRoom?.state}`,
+      `[Lifecycle] InCallView Component mounted, livekit room state ${livekitRoom?.state}`,
     );
     return (): void => {
       logger.info(
-        `[Lifecycle] InCallView Component unmounted, livekitroom state ${livekitRoom?.state}`,
+        `[Lifecycle] InCallView Component unmounted, livekit room state ${livekitRoom?.state}`,
       );
       livekitRoom
         ?.disconnect()
         .then(() => {
           logger.info(
-            `[Lifecycle] Disconnected from livekite room, state:${livekitRoom?.state}`,
+            `[Lifecycle] Disconnected from livekit room, state:${livekitRoom?.state}`,
           );
         })
         .catch((e) => {
@@ -156,6 +157,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     };
   }, [livekitRoom]);
 
+  const { autoLeaveWhenOthersLeft } = useUrlParams();
+
   useEffect(() => {
     if (livekitRoom !== undefined) {
       const reactionsReader = new ReactionsReader(props.rtcSession);
@@ -163,7 +166,10 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         props.rtcSession,
         livekitRoom,
         mediaDevices,
-        props.e2eeSystem,
+        {
+          encryptionSystem: props.e2eeSystem,
+          autoLeaveWhenOthersLeft,
+        },
         connStateObservable$,
         reactionsReader.raisedHands$,
         reactionsReader.reactions$,
@@ -180,6 +186,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     mediaDevices,
     props.e2eeSystem,
     connStateObservable$,
+    autoLeaveWhenOthersLeft,
   ]);
 
   if (livekitRoom === undefined || vm === null) return null;
@@ -249,7 +256,7 @@ export const InCallView: FC<InCallViewProps> = ({
     room: livekitRoom,
   });
 
-  const muteAllAudio = useObservableEagerState(muteAllAudio$);
+  const muteAllAudio = useBehavior(muteAllAudio$);
 
   // This seems like it might be enough logic to use move it into the call view model?
   const [didFallbackToRoomKey, setDidFallbackToRoomKey] = useState(false);
@@ -300,15 +307,16 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
-  const windowMode = useObservableEagerState(vm.windowMode$);
-  const layout = useObservableEagerState(vm.layout$);
-  const tileStoreGeneration = useObservableEagerState(vm.tileStoreGeneration$);
+  const windowMode = useBehavior(vm.windowMode$);
+  const layout = useBehavior(vm.layout$);
+  const tileStoreGeneration = useBehavior(vm.tileStoreGeneration$);
   const [debugTileLayout] = useSetting(debugTileLayoutSetting);
-  const gridMode = useObservableEagerState(vm.gridMode$);
-  const showHeader = useObservableEagerState(vm.showHeader$);
-  const showFooter = useObservableEagerState(vm.showFooter$);
-  const earpieceMode = useObservableEagerState(vm.earpieceMode$);
-  const audioOutputSwitcher = useObservableEagerState(vm.audioOutputSwitcher$);
+  const gridMode = useBehavior(vm.gridMode$);
+  const showHeader = useBehavior(vm.showHeader$);
+  const showFooter = useBehavior(vm.showFooter$);
+  const earpieceMode = useBehavior(vm.earpieceMode$);
+  const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
+  useSubscription(vm.autoLeaveWhenOthersLeft$, onLeave);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
@@ -454,9 +462,9 @@ export const InCallView: FC<InCallViewProps> = ({
     useMemo(() => {
       if (audioOutputSwitcher === null) return null;
       const isEarpieceTarget = audioOutputSwitcher.targetOutput === "earpiece";
-      const Icon = isEarpieceTarget ? EarpieceIcon : VolumeOnSolidIcon;
+      const Icon = isEarpieceTarget ? VoiceCallSolidIcon : VolumeOnSolidIcon;
       const label = isEarpieceTarget
-        ? t("settings.devices.earpiece")
+        ? t("settings.devices.handset")
         : t("settings.devices.loudspeaker");
 
       return (
@@ -524,16 +532,12 @@ export const InCallView: FC<InCallViewProps> = ({
         targetHeight,
         model,
       }: TileProps<TileViewModel, HTMLDivElement>): ReactNode {
-        const spotlightExpanded = useObservableEagerState(
-          vm.spotlightExpanded$,
-        );
-        const onToggleExpanded = useObservableEagerState(
-          vm.toggleSpotlightExpanded$,
-        );
-        const showSpeakingIndicatorsValue = useObservableEagerState(
+        const spotlightExpanded = useBehavior(vm.spotlightExpanded$);
+        const onToggleExpanded = useBehavior(vm.toggleSpotlightExpanded$);
+        const showSpeakingIndicatorsValue = useBehavior(
           vm.showSpeakingIndicators$,
         );
-        const showSpotlightIndicatorsValue = useObservableEagerState(
+        const showSpotlightIndicatorsValue = useBehavior(
           vm.showSpotlightIndicators$,
         );
 

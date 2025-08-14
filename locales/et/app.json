@@ -61,6 +61,7 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Näita iPhone'i kuulari valikut kõikidel platvormidel",
     "crypto_version": "Krüptoteekide versioon: {{version}}",
     "debug_tile_layout_label": "Meediapaanide paigutus",
     "device_id": "Seadme tunnus: {{id}}",
@@ -81,7 +82,7 @@
   "error": {
     "call_is_not_supported": "Kõne pole toetatud",
     "call_not_found": "Kõnet ei leidu",
-    "call_not_found_description": "<0>See link ei tundu olema seotud ühegi olemasoleva kõnega. Kontrolli, et sul on õige link või <1>loo uus</1>.</0>",
+    "call_not_found_description": "<0>See link ei tundu olema seotud ühegi olemasoleva kõnega. Kontrolli, et sul on õige link või <2>loo uus</2>.</0>",
     "connection_lost": "Ühendus on katkenud",
     "connection_lost_description": "Sinu ühendus selle kõnega on katkenud.",
     "e2ee_unsupported": "Mitteühilduv brauser",
@@ -93,6 +94,8 @@
     "matrix_rtc_focus_missing": "See server pole seadistatud töötama rakendusega {{brand}}. Palun võta ühendust serveri halduriga (domeen: {{domain}}, veakood: {{ errorCode }}).",
     "open_elsewhere": "Avatud teisel vahekaardil",
     "open_elsewhere_description": "{{brand}} on avatud teisel vahekaardil. Kui see ei tundu olema õige, proovi selle lehe uuesti laadimist.",
+    "room_creation_restricted": "Kõne loomine ei õnnestunud",
+    "room_creation_restricted_description": "Kõne loomine võib olla lubatud ainult volitatud kasutajatele. Proovi hiljem uuesti või probleemi püsimisel võta ühendust oma serveri haldajaga.",
     "unexpected_ec_error": "Tekkis ootamatu viga (<0>Veakood:</0> <1>{{ errorCode }}</1>). Palun võta ühendust serveri haldajaga."
   },
   "group_call_loader": {
@@ -103,6 +106,10 @@
     "knock_reject_body": "Jututoa liikmed ei nõustunud sinu liitumispalvega.",
     "knock_reject_heading": "Liitumine pole lubatud",
     "reason": "Põhjus"
+  },
+  "handset": {
+    "overlay_back_button": "Tagasi esineja vaatesse",
+    "overlay_description": "See toimib vaid rakenduse kasutamise ajal"
   },
   "hangup_button_label": "Lõpeta kõne",
   "header_label": "Avaleht: Element Call",
@@ -172,8 +179,10 @@
     "devices": {
       "camera": "Kaamera",
       "camera_numbered": "Kaamera {{n}}",
+      "change_device_button": "Muuda heliseadet",
       "default": "Vaikimisi",
       "default_named": "Vaikimisi <2>({{name}})</2>",
+      "loudspeaker": "Valjuhääldi",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon {{n}}",
       "speaker": "Kõlar",

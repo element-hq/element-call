@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { expect, onTestFinished, test, vi } from "vitest";
-import { of } from "rxjs";
 import {
   type LocalTrackPublication,
   LocalVideoTrack,
@@ -23,6 +22,7 @@ import {
   withTestScheduler,
 } from "../utils/test";
 import { getValue } from "../utils/observable";
+import { constant } from "./Behavior";
 
 global.MediaStreamTrack = class {} as unknown as {
   new (): MediaStreamTrack;
@@ -174,8 +174,8 @@ test("switch cameras", async () => {
     }),
     mockMediaDevices({
       videoInput: {
-        available$: of(new Map()),
-        selected$: of(undefined),
+        available$: constant(new Map()),
+        selected$: constant(undefined),
         select: selectVideoInput,
       },
     }),

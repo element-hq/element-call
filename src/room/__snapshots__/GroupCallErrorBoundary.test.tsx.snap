@@ -132,7 +132,13 @@ exports[`ConnectionLostError: Action handling should reset error state 1`] = `
           <p>
             You were disconnected from the call.
           </p>
-          <button>
+          <button
+            class="_button_vczzf_8"
+            data-kind="secondary"
+            data-size="lg"
+            role="button"
+            tabindex="0"
+          >
             Reconnect
           </button>
           <button
@@ -742,7 +748,13 @@ exports[`should report correct error for 'Connection lost' 1`] = `
           <p>
             You were disconnected from the call.
           </p>
-          <button>
+          <button
+            class="_button_vczzf_8"
+            data-kind="secondary"
+            data-size="lg"
+            role="button"
+            tabindex="0"
+          >
             Reconnect
           </button>
           <button

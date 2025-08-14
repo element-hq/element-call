@@ -17,6 +17,7 @@ export enum ErrorCode {
   INSUFFICIENT_CAPACITY_ERROR = "INSUFFICIENT_CAPACITY_ERROR",
   E2EE_NOT_SUPPORTED = "E2EE_NOT_SUPPORTED",
   OPEN_ID_ERROR = "OPEN_ID_ERROR",
+  SFU_ERROR = "SFU_ERROR",
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
@@ -126,6 +127,17 @@ export class InsufficientCapacityError extends ElementCallError {
       ErrorCode.INSUFFICIENT_CAPACITY_ERROR,
       ErrorCategory.UNKNOWN,
       t("error.insufficient_capacity_description"),
+    );
+  }
+}
+
+export class SFURoomCreationRestrictedError extends ElementCallError {
+  public constructor() {
+    super(
+      t("error.room_creation_restricted"),
+      ErrorCode.SFU_ERROR,
+      ErrorCategory.CONFIGURATION_ISSUE,
+      t("error.room_creation_restricted_description"),
     );
   }
 }

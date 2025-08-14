@@ -98,7 +98,7 @@ export const DeviceSelection: FC<Props> = ({
               labelText = t("settings.devices.loudspeaker");
               break;
             case "earpiece":
-              labelText = t("settings.devices.earpiece");
+              labelText = t("settings.devices.handset");
               break;
           }
 

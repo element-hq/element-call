@@ -88,40 +88,48 @@ Please see LICENSE in the repository root for full details.
   padding: var(--cpd-space-2x);
   border: none;
   border-radius: var(--cpd-radius-pill-effect);
-  background: var(--cpd-color-alpha-gray-1400);
+  background: rgba(from var(--cpd-color-gray-100) r g b / 0.6);
   box-shadow: var(--small-drop-shadow);
   transition:
     opacity 0.15s,
     background-color 0.1s;
-  position: absolute;
   z-index: 1;
   --inset: 6px;
   inset-block-end: var(--inset);
   inset-inline-end: var(--inset);
 }
 
+.bottomRightButtons {
+  display: flex;
+  gap: var(--cpd-space-2x);
+  position: absolute;
+  inset-block-end: var(--cpd-space-1x);
+  inset-inline-end: var(--cpd-space-1x);
+  z-index: 1;
+}
+
 .expand > svg {
   display: block;
-  color: var(--cpd-color-icon-on-solid-primary);
+  color: var(--cpd-color-icon-primary);
 }
 
 @media (hover) {
   .expand:hover {
-    background: var(--cpd-color-bg-action-primary-hovered);
+    background: var(--cpd-color-gray-400);
   }
 }
 
 .expand:active {
-  background: var(--cpd-color-bg-action-primary-pressed);
+  background: var(--cpd-color-gray-100);
 }
 
 @media (hover) {
-  .tile:hover > button {
+  .tile:hover > div > button {
     opacity: 1;
   }
 }
 
-.tile:has(:focus-visible) > button {
+.tile:has(:focus-visible) > div > button {
   opacity: 1;
 }
 
