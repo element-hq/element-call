@@ -14,13 +14,12 @@ import {
   type AudioTrackProps,
 } from "@livekit/components-react";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import * as controls from "../controls";
 
-const logger = rootLogger.getChild("[MatrixAudioRenderer]");
 export interface MatrixAudioRendererProps {
   /**
    * The list of participants to render audio for.
@@ -72,7 +71,7 @@ export function MatrixAudioRenderer({
   const logInvalid = (identity: string, validIdentities: Set<string>): void => {
     if (loggedInvalidIdentities.current.has(identity)) return;
     logger.warn(
-      `Audio track ${identity} has no matching matrix call member`,
+      `[MatrixAudioRenderer] Audio track ${identity} has no matching matrix call member`,
       `current members: ${Array.from(validIdentities.values())}`,
       `track will not get rendered`,
     );
@@ -102,7 +101,7 @@ export function MatrixAudioRenderer({
   useEffect(() => {
     if (!tracks.some((t) => !validIdentities.has(t.participant.identity))) {
       logger.debug(
-        `All audio tracks have a matching matrix call member identity.`,
+        `[MatrixAudioRenderer] All audio tracks have a matching matrix call member identity.`,
       );
       loggedInvalidIdentities.current.clear();
     }
@@ -182,7 +181,7 @@ interface StereoPanAudioTrackProps {
 /**
  * This wraps `livekit.AudioTrack` to allow adding audio nodes to a track.
  * It main purpose is to remount the AudioTrack component when switching from
- * audiooContext to normal audio playback.
+ * audioContext to normal audio playback.
  * As of now the AudioTrack component does not support adding audio nodes while being mounted.
  * @param param0
  * @returns
@@ -202,7 +201,7 @@ function AudioTrackWithAudioNodes({
   const [trackReady, setTrackReady] = useReactiveState(
     () => false,
     // We only want the track to reset once both (audioNodes and audioContext) are set.
-    // for unsetting the audioContext its enough if one of the the is undefined.
+    // for unsetting the audioContext its enough if one of the two is undefined.
     [audioContext && audioNodes],
   );
 

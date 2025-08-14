@@ -6,9 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { Subject } from "rxjs";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-
-const logger = rootLogger.getChild("[controlled-output]");
+import { logger } from "matrix-js-sdk/lib/logger";
 
 export interface Controls {
   canEnterPip(): boolean;

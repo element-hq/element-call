@@ -36,7 +36,7 @@ import {
   ToggleMenuItem,
   Menu,
 } from "@vector-im/compound-web";
-import { useObservableEagerState, useObservableState } from "observable-hooks";
+import { useObservableEagerState } from "observable-hooks";
 
 import styles from "./GridTile.module.css";
 import {
@@ -50,6 +50,7 @@ import { useLatest } from "../useLatest";
 import { type GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactionsSender } from "../reactions/useReactionsSender";
+import { useBehavior } from "../useBehavior";
 
 interface TileProps {
   ref?: Ref<HTMLDivElement>;
@@ -84,19 +85,19 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
 }) => {
   const { toggleRaisedHand } = useReactionsSender();
   const { t } = useTranslation();
-  const video = useObservableEagerState(vm.video$);
-  const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
-  const encryptionStatus = useObservableEagerState(vm.encryptionStatus$);
+  const video = useBehavior(vm.video$);
+  const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
+  const encryptionStatus = useBehavior(vm.encryptionStatus$);
   const audioStreamStats = useObservableEagerState<
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >(vm.audioStreamStats$);
   const videoStreamStats = useObservableEagerState<
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >(vm.videoStreamStats$);
-  const audioEnabled = useObservableEagerState(vm.audioEnabled$);
-  const videoEnabled = useObservableEagerState(vm.videoEnabled$);
-  const speaking = useObservableEagerState(vm.speaking$);
-  const cropVideo = useObservableEagerState(vm.cropVideo$);
+  const audioEnabled = useBehavior(vm.audioEnabled$);
+  const videoEnabled = useBehavior(vm.videoEnabled$);
+  const speaking = useBehavior(vm.speaking$);
+  const cropVideo = useBehavior(vm.cropVideo$);
   const onSelectFitContain = useCallback(
     (e: Event) => {
       e.preventDefault();
@@ -104,8 +105,8 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
     },
     [vm],
   );
-  const handRaised = useObservableState(vm.handRaised$);
-  const reaction = useObservableState(vm.reaction$);
+  const handRaised = useBehavior(vm.handRaised$);
+  const reaction = useBehavior(vm.reaction$);
 
   const AudioIcon = locallyMuted
     ? VolumeOffSolidIcon
@@ -210,9 +211,9 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
   ...props
 }) => {
   const { t } = useTranslation();
-  const mirror = useObservableEagerState(vm.mirror$);
-  const alwaysShow = useObservableEagerState(vm.alwaysShow$);
-  const switchCamera = useObservableEagerState(vm.switchCamera$);
+  const mirror = useBehavior(vm.mirror$);
+  const alwaysShow = useBehavior(vm.alwaysShow$);
+  const switchCamera = useBehavior(vm.switchCamera$);
 
   const latestAlwaysShow = useLatest(alwaysShow);
   const onSelectAlwaysShow = useCallback(
@@ -274,8 +275,8 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
   ...props
 }) => {
   const { t } = useTranslation();
-  const locallyMuted = useObservableEagerState(vm.locallyMuted$);
-  const localVolume = useObservableEagerState(vm.localVolume$);
+  const locallyMuted = useBehavior(vm.locallyMuted$);
+  const localVolume = useBehavior(vm.localVolume$);
   const onSelectMute = useCallback(
     (e: Event) => {
       e.preventDefault();
@@ -346,8 +347,8 @@ export const GridTile: FC<GridTileProps> = ({
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
-  const media = useObservableEagerState(vm.media$);
-  const displayName = useObservableEagerState(media.displayname$);
+  const media = useBehavior(vm.media$);
+  const displayName = useBehavior(media.displayName$);
 
   if (media instanceof LocalUserMediaViewModel) {
     return (

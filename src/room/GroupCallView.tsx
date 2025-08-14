@@ -24,7 +24,6 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { useNavigate } from "react-router-dom";
-import { useObservableEagerState } from "observable-hooks";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -72,6 +71,7 @@ import {
 import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useAppBarTitle } from "../AppBar.tsx";
+import { useBehavior } from "../useBehavior.ts";
 
 declare global {
   interface Window {
@@ -110,7 +110,7 @@ export const GroupCallView: FC<Props> = ({
   );
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
 
-  const muteAllAudio = useObservableEagerState(muteAllAudio$);
+  const muteAllAudio = useBehavior(muteAllAudio$);
   const leaveSoundContext = useLatest(
     useAudioContext({
       sounds: callEventAudioSounds,
@@ -166,7 +166,11 @@ export const GroupCallView: FC<Props> = ({
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(room);
   const roomAvatar = useRoomAvatar(room);
-  const { perParticipantE2EE, returnToLobby } = useUrlParams();
+  const {
+    perParticipantE2EE,
+    returnToLobby,
+    password: passwordFromUrl,
+  } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
   const [useNewMembershipManager] = useSetting(useNewMembershipManagerSetting);
   const [useExperimentalToDeviceTransport] = useSetting(
@@ -174,7 +178,6 @@ export const GroupCallView: FC<Props> = ({
   );
 
   // Save the password once we start the groupCallView
-  const { password: passwordFromUrl } = useUrlParams();
   useEffect(() => {
     if (passwordFromUrl) saveKeyForRoom(room.roomId, passwordFromUrl);
   }, [passwordFromUrl, room.roomId]);

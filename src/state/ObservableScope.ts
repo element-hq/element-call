@@ -6,14 +6,18 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  BehaviorSubject,
   distinctUntilChanged,
   type Observable,
-  shareReplay,
   Subject,
   takeUntil,
 } from "rxjs";
 
+import { type Behavior } from "./Behavior";
+
 type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
+
+const nothing = Symbol("nothing");
 
 /**
  * A scope which limits the execution lifetime of its bound Observables.
@@ -31,20 +35,31 @@ export class ObservableScope {
     return this.bindImpl;
   }
 
-  private readonly stateImpl: MonoTypeOperator = (o$) =>
-    o$.pipe(
-      this.bind(),
-      distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: false }),
-    );
-
   /**
-   * Transforms an Observable into a hot state Observable which replays its
-   * latest value upon subscription, skips updates with identical values, and
-   * is bound to this scope.
+   * Converts an Observable to a Behavior. If no initial value is specified, the
+   * Observable must synchronously emit an initial value.
    */
-  public state(): MonoTypeOperator {
-    return this.stateImpl;
+  public behavior<T>(
+    setValue$: Observable<T>,
+    initialValue: T | typeof nothing = nothing,
+  ): Behavior<T> {
+    const subject$ = new BehaviorSubject(initialValue);
+    // Push values from the Observable into the BehaviorSubject.
+    // BehaviorSubjects have an undesirable feature where if you call 'complete',
+    // they will no longer re-emit their current value upon subscription. We want
+    // to support Observables that complete (for example `of({})`), so we have to
+    // take care to not propagate the completion event.
+    setValue$.pipe(this.bind(), distinctUntilChanged()).subscribe({
+      next(value) {
+        subject$.next(value);
+      },
+      error(err: unknown) {
+        subject$.error(err);
+      },
+    });
+    if (subject$.value === nothing)
+      throw new Error("Behavior failed to synchronously emit an initial value");
+    return subject$ as Behavior<T>;
   }
 
   /**
@@ -55,3 +70,8 @@ export class ObservableScope {
     this.ended$.complete();
   }
 }
+
+/**
+ * The global scope, a scope which never ends.
+ */
+export const globalScope = new ObservableScope();

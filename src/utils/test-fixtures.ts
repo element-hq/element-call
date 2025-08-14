@@ -12,7 +12,11 @@ import {
   mockLocalParticipant,
 } from "./test";
 
-export const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
+export const localRtcMember = mockRtcMembership("@carol:example.org", "1111");
+export const localRtcMemberDevice2 = mockRtcMembership(
+  "@carol:example.org",
+  "2222",
+);
 export const local = mockMatrixRoomMember(localRtcMember);
 export const localParticipant = mockLocalParticipant({ identity: "" });
 export const localId = `${local.userId}:${localRtcMember.deviceId}`;

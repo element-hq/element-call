@@ -14,6 +14,7 @@ services:
       # If the configured homeserver runs on localhost, it'll probably be using
       # a self-signed certificate
       - LIVEKIT_INSECURE_SKIP_VERIFY_TLS=YES_I_KNOW_WHAT_I_AM_DOING
+      - LIVEKIT_FULL_ACCESS_HOMESERVERS=*
     deploy:
       restart_policy:
         condition: on-failure
@@ -101,4 +102,6 @@ services:
     depends_on:
       - synapse
     networks:
-      - ecbackend
+      ecbackend:
+        aliases:
+          - matrix-rtc.m.localhost

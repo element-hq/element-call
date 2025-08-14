@@ -61,6 +61,7 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Zobrazit možnost sluchátek pro iPhone na všech platformách",
     "crypto_version": "Kryptografická verze: {{version}}",
     "debug_tile_layout_label": "Ladění rozložení dlaždic",
     "device_id": "ID zařízení: {{id}}",
@@ -173,6 +174,7 @@
     "devices": {
       "camera": "Fotoaparát",
       "camera_numbered": "Fotoaparát {{n}}",
+      "change_device_button": "Změnit zvukové zařízení",
       "default": "Výchozí",
       "default_named": "Výchozí <2> ({{name}}) </2>",
       "microphone": "Mikrofon",
