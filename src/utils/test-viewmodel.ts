@@ -34,11 +34,11 @@ import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 
 export function getBasicRTCSession(
   members: RoomMember[],
-  initialRemoteRtcMemberships: CallMembership[] = [aliceRtcMember],
+  initialRtcMemberships: CallMembership[] = [localRtcMember, aliceRtcMember],
 ): {
   rtcSession: MockRTCSession;
   matrixRoom: Room;
-  remoteRtcMemberships$: BehaviorSubject<CallMembership[]>;
+  rtcMemberships$: BehaviorSubject<CallMembership[]>;
 } {
   const matrixRoomId = "!myRoomId:example.com";
   const matrixRoomMembers = new Map(members.map((p) => [p.userId, p]));
@@ -92,41 +92,40 @@ export function getBasicRTCSession(
       ),
   });
 
-  const remoteRtcMemberships$ = new BehaviorSubject<CallMembership[]>(
-    initialRemoteRtcMemberships,
+  const rtcMemberships$ = new BehaviorSubject<CallMembership[]>(
+    initialRtcMemberships,
   );
 
-  const rtcSession = new MockRTCSession(
-    matrixRoom,
-    localRtcMember,
-  ).withMemberships(remoteRtcMemberships$);
+  const rtcSession = new MockRTCSession(matrixRoom).withMemberships(
+    rtcMemberships$,
+  );
 
   return {
     rtcSession,
     matrixRoom,
-    remoteRtcMemberships$,
+    rtcMemberships$,
   };
 }
 
 /**
  * Construct a basic CallViewModel to test components that make use of it.
  * @param members
- * @param initialRemoteRtcMemberships
+ * @param initialRtcMemberships
  * @returns
  */
 export function getBasicCallViewModelEnvironment(
   members: RoomMember[],
-  initialRemoteRtcMemberships: CallMembership[] = [aliceRtcMember],
+  initialRtcMemberships: CallMembership[] = [localRtcMember, aliceRtcMember],
 ): {
   vm: CallViewModel;
-  remoteRtcMemberships$: BehaviorSubject<CallMembership[]>;
+  rtcMemberships$: BehaviorSubject<CallMembership[]>;
   rtcSession: MockRTCSession;
   handRaisedSubject$: BehaviorSubject<Record<string, RaisedHandInfo>>;
   reactionsSubject$: BehaviorSubject<Record<string, ReactionInfo>>;
 } {
-  const { rtcSession, matrixRoom, remoteRtcMemberships$ } = getBasicRTCSession(
+  const { rtcSession, matrixRoom, rtcMemberships$ } = getBasicRTCSession(
     members,
-    initialRemoteRtcMemberships,
+    initialRtcMemberships,
   );
   const handRaisedSubject$ = new BehaviorSubject({});
   const reactionsSubject$ = new BehaviorSubject({});
@@ -150,7 +149,7 @@ export function getBasicCallViewModelEnvironment(
   );
   return {
     vm,
-    remoteRtcMemberships$,
+    rtcMemberships$,
     rtcSession,
     handRaisedSubject$: handRaisedSubject$,
     reactionsSubject$: reactionsSubject$,

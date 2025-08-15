@@ -248,11 +248,7 @@ function withCallViewModel(
     } as Partial<MatrixClient> as MatrixClient,
     getMember: (userId) => roomMembers.get(userId) ?? null,
   });
-  const rtcSession = new MockRTCSession(
-    room,
-    localRtcMember,
-    [],
-  ).withMemberships(rtcMembers$);
+  const rtcSession = new MockRTCSession(room, []).withMemberships(rtcMembers$);
   const participantsSpy = vi
     .spyOn(ComponentsCore, "connectedParticipantsObserver")
     .mockReturnValue(remoteParticipants$);
@@ -322,7 +318,7 @@ test("participants are retained during a focus switch", () => {
         a: [aliceParticipant, bobParticipant],
         b: [],
       }),
-      constant([aliceRtcMember, bobRtcMember]),
+      constant([localRtcMember, aliceRtcMember, bobRtcMember]),
       behavior(connectionInputMarbles, {
         c: ConnectionState.Connected,
         s: ECAddonConnectionState.ECSwitchingFocus,
@@ -365,7 +361,7 @@ test("screen sharing activates spotlight layout", () => {
         c: [aliceSharingScreen, bobSharingScreen],
         d: [aliceParticipant, bobSharingScreen],
       }),
-      constant([aliceRtcMember, bobRtcMember]),
+      constant([localRtcMember, aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
@@ -445,7 +441,7 @@ test("participants stay in the same order unless to appear/disappear", () => {
 
     withCallViewModel(
       constant([aliceParticipant, bobParticipant, daveParticipant]),
-      constant([aliceRtcMember, bobRtcMember, daveRtcMember]),
+      constant([localRtcMember, aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
         [
@@ -512,7 +508,7 @@ test("participants adjust order when space becomes constrained", () => {
 
     withCallViewModel(
       constant([aliceParticipant, bobParticipant, daveParticipant]),
-      constant([aliceRtcMember, bobRtcMember, daveRtcMember]),
+      constant([localRtcMember, aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
         [
@@ -571,7 +567,7 @@ test("spotlight speakers swap places", () => {
 
     withCallViewModel(
       constant([aliceParticipant, bobParticipant, daveParticipant]),
-      constant([aliceRtcMember, bobRtcMember, daveRtcMember]),
+      constant([localRtcMember, aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
         [
@@ -630,7 +626,7 @@ test("layout enters picture-in-picture mode when requested", () => {
 
     withCallViewModel(
       constant([aliceParticipant, bobParticipant]),
-      constant([aliceRtcMember, bobRtcMember]),
+      constant([localRtcMember, aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
@@ -672,7 +668,7 @@ test("spotlight remembers whether it's expanded", () => {
 
     withCallViewModel(
       constant([aliceParticipant, bobParticipant]),
-      constant([aliceRtcMember, bobRtcMember]),
+      constant([localRtcMember, aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
@@ -736,11 +732,11 @@ test("participants must have a MatrixRTCSession to be visible", () => {
         e: [aliceParticipant, daveParticipant, bobSharingScreen],
       }),
       behavior(scenarioInputMarbles, {
-        a: [],
-        b: [],
-        c: [aliceRtcMember],
-        d: [aliceRtcMember, daveRtcMember],
-        e: [aliceRtcMember, daveRtcMember],
+        a: [localRtcMember],
+        b: [localRtcMember],
+        c: [localRtcMember, aliceRtcMember],
+        d: [localRtcMember, aliceRtcMember, daveRtcMember],
+        e: [localRtcMember, aliceRtcMember, daveRtcMember],
       }),
       of(ConnectionState.Connected),
       new Map(),
@@ -786,7 +782,7 @@ test("shows participants without MatrixRTCSession when enabled in settings", () 
           b: [aliceParticipant],
           c: [aliceParticipant, bobParticipant],
         }),
-        constant([]), // No one joins the MatrixRTC session
+        constant([localRtcMember]), // No one else joins the MatrixRTC session
         of(ConnectionState.Connected),
         new Map(),
         mockMediaDevices({}),
@@ -830,10 +826,10 @@ it("should show at least one tile per MatrixRTCSession", () => {
     withCallViewModel(
       constant([]),
       behavior(scenarioInputMarbles, {
-        a: [],
-        b: [aliceRtcMember],
-        c: [aliceRtcMember, daveRtcMember],
-        d: [daveRtcMember],
+        a: [localRtcMember],
+        b: [localRtcMember, aliceRtcMember],
+        c: [localRtcMember, aliceRtcMember, daveRtcMember],
+        d: [localRtcMember, daveRtcMember],
       }),
       of(ConnectionState.Connected),
       new Map(),
@@ -878,11 +874,16 @@ test("should disambiguate users with the same displayname", () => {
     withCallViewModel(
       constant([]),
       behavior(scenarioInputMarbles, {
-        a: [],
-        b: [aliceRtcMember],
-        c: [aliceRtcMember, aliceDoppelgangerRtcMember],
-        d: [aliceRtcMember, aliceDoppelgangerRtcMember, bobRtcMember],
-        e: [aliceDoppelgangerRtcMember, bobRtcMember],
+        a: [localRtcMember],
+        b: [localRtcMember, aliceRtcMember],
+        c: [localRtcMember, aliceRtcMember, aliceDoppelgangerRtcMember],
+        d: [
+          localRtcMember,
+          aliceRtcMember,
+          aliceDoppelgangerRtcMember,
+          bobRtcMember,
+        ],
+        e: [localRtcMember, aliceDoppelgangerRtcMember, bobRtcMember],
       }),
       of(ConnectionState.Connected),
       new Map(),
@@ -928,8 +929,8 @@ test("should disambiguate users with invisible characters", () => {
     withCallViewModel(
       constant([]),
       behavior(scenarioInputMarbles, {
-        a: [],
-        b: [bobRtcMember, bobZeroWidthSpaceRtcMember],
+        a: [localRtcMember],
+        b: [localRtcMember, bobRtcMember, bobZeroWidthSpaceRtcMember],
       }),
       of(ConnectionState.Connected),
       new Map(),
@@ -961,8 +962,8 @@ test("should strip RTL characters from displayname", () => {
     withCallViewModel(
       constant([]),
       behavior(scenarioInputMarbles, {
-        a: [],
-        b: [daveRtcMember, daveRTLRtcMember],
+        a: [localRtcMember],
+        b: [localRtcMember, daveRtcMember, daveRTLRtcMember],
       }),
       of(ConnectionState.Connected),
       new Map(),
@@ -992,7 +993,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
 
     withCallViewModel(
       constant([aliceParticipant, bobParticipant]),
-      constant([aliceRtcMember, bobRtcMember]),
+      constant([localRtcMember, aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
@@ -1077,10 +1078,10 @@ function rtcMemberJoinLeave$(
   ) => Observable<CallMembership[]>,
 ): Observable<CallMembership[]> {
   return hot("a-b-c-d", {
-    a: [], // Start empty
-    b: [aliceRtcMember], // Alice joins
-    c: [aliceRtcMember], // Alice still there
-    d: [], // Alice leaves
+    a: [localRtcMember], // Start empty
+    b: [localRtcMember, aliceRtcMember], // Alice joins
+    c: [localRtcMember, aliceRtcMember], // Alice still there
+    d: [localRtcMember], // Alice leaves
   });
 }
 
@@ -1089,7 +1090,7 @@ test("allOthersLeft$ emits only when someone joined and then all others left", (
     // Test scenario 1: No one ever joins - should only emit initial false and never emit again
     withCallViewModel(
       scope.behavior(nooneEverThere$(hot), []),
-      scope.behavior(nooneEverThere$(hot), []),
+      constant([localRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
@@ -1237,7 +1238,7 @@ test("audio output changes when toggling earpiece mode", () => {
 
     withCallViewModel(
       constant([]),
-      constant([]),
+      constant([localRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
       devices,
