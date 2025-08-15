@@ -113,6 +113,7 @@ import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
 import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
+import { Toast } from "../Toast.tsx";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -313,6 +314,7 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
+  const reconnecting = useBehavior(vm.reconnecting$);
   const windowMode = useBehavior(vm.windowMode$);
   const layout = useBehavior(vm.layout$);
   const tileStoreGeneration = useBehavior(vm.tileStoreGeneration$);
@@ -766,6 +768,9 @@ export const InCallView: FC<InCallViewProps> = ({
     </div>
   );
 
+  // The reconnecting toast cannot be dismissed
+  const onDismissReconnectingToast = useCallback(() => {}, []);
+
   return (
     <div
       className={styles.inRoom}
@@ -793,8 +798,15 @@ export const InCallView: FC<InCallViewProps> = ({
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
+      <Toast
+        onDismiss={onDismissReconnectingToast}
+        open={reconnecting}
+        portal={false}
+      >
+        {t("common.reconnecting")}
+      </Toast>
       <EarpieceOverlay
-        show={earpieceMode}
+        show={earpieceMode && !reconnecting}
         onBackToVideoPressed={audioOutputSwitcher?.switch}
       />
       <ReactionsOverlay vm={vm} />
