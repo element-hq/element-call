@@ -21,6 +21,7 @@ import { type MatrixClient } from "matrix-js-sdk";
 import {
   ConnectionState,
   type LocalParticipant,
+  type LocalTrackPublication,
   type Participant,
   ParticipantEvent,
   type RemoteParticipant,
@@ -1233,6 +1234,58 @@ test("audio output changes when toggling earpiece mode", () => {
             map((switcher) => switcher?.targetOutput),
           ),
         ).toBe(expectedTargetStateMarbles, { s: "speaker", e: "earpiece" });
+      },
+    );
+  });
+});
+
+test("media tracks are paused while reconnecting to MatrixRTC", () => {
+  withTestScheduler(({ behavior, schedule, expectObservable }) => {
+    const trackRunning$ = new BehaviorSubject(true);
+    const originalPublications = localParticipant.trackPublications;
+    localParticipant.trackPublications = new Map([
+      [
+        "video",
+        {
+          track: new (class {
+            public get isUpstreamPaused(): boolean {
+              return !trackRunning$.value;
+            }
+            public async pauseUpstream(): Promise<void> {
+              trackRunning$.next(false);
+              return Promise.resolve();
+            }
+            public async resumeUpstream(): Promise<void> {
+              trackRunning$.next(true);
+              return Promise.resolve();
+            }
+          })(),
+        } as unknown as LocalTrackPublication,
+      ],
+    ]);
+    onTestFinished(() => {
+      localParticipant.trackPublications = originalPublications;
+    });
+
+    const rtcMemberMarbles = "           aba";
+    const expectedReconnectingMarbles = "nyn";
+    const expectedTrackRunningMarbles = "yny";
+
+    withCallViewModel(
+      constant([]),
+      behavior(rtcMemberMarbles, { a: [localRtcMember], b: [] }),
+      of(ConnectionState.Connected),
+      new Map(),
+      mockMediaDevices({}),
+      (vm) => {
+        expectObservable(vm.reconnecting$).toBe(
+          expectedReconnectingMarbles,
+          yesNo,
+        );
+        expectObservable(trackRunning$).toBe(
+          expectedTrackRunningMarbles,
+          yesNo,
+        );
       },
     );
   });
