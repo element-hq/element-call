@@ -137,11 +137,9 @@ function createGroupCallView(
       getJoinRule: () => JoinRule.Invite,
     } as Partial<RoomState> as RoomState,
   });
-  const rtcSession = new MockRTCSession(
-    room,
-    localRtcMember,
-    [],
-  ).withMemberships(constant([]));
+  const rtcSession = new MockRTCSession(room, []).withMemberships(
+    constant([localRtcMember]),
+  );
   rtcSession.joined = joined;
   const muteState = {
     audio: { enabled: false },

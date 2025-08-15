@@ -326,7 +326,6 @@ export class MockRTCSession extends TypedEventEmitter<
 
   public constructor(
     public readonly room: Room,
-    private localMembership: CallMembership,
     public memberships: CallMembership[] = [],
   ) {
     super();
@@ -342,10 +341,12 @@ export class MockRTCSession extends TypedEventEmitter<
   ): MockRTCSession {
     rtcMembers$.subscribe((m) => {
       const old = this.memberships;
-      // always prepend the local participant
-      const updated = [this.localMembership, ...(m as CallMembership[])];
-      this.memberships = updated;
-      this.emit(MatrixRTCSessionEvent.MembershipsChanged, old, updated);
+      this.memberships = m as CallMembership[];
+      this.emit(
+        MatrixRTCSessionEvent.MembershipsChanged,
+        old,
+        this.memberships,
+      );
     });
 
     return this;
