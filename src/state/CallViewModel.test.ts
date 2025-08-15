@@ -279,7 +279,7 @@ function withCallViewModel(
     .spyOn(ComponentsCore, "roomEventSelector")
     .mockImplementation((room, eventType) => of());
 
-  const liveKitRoom = mockLivekitRoom(
+  const livekitRoom = mockLivekitRoom(
     { localParticipant },
     { remoteParticipants$ },
   );
@@ -288,7 +288,8 @@ function withCallViewModel(
 
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
-    liveKitRoom,
+    room,
+    livekitRoom,
     mediaDevices,
     options,
     connectionState$,

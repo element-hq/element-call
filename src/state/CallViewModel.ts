@@ -18,7 +18,11 @@ import {
   type RemoteParticipant,
   Track,
 } from "livekit-client";
-import { RoomStateEvent, type Room, type RoomMember } from "matrix-js-sdk";
+import {
+  RoomStateEvent,
+  type Room as MatrixRoom,
+  type RoomMember,
+} from "matrix-js-sdk";
 import {
   BehaviorSubject,
   EMPTY,
@@ -368,7 +372,7 @@ type MediaItem = UserMedia | ScreenShare;
 
 function getRoomMemberFromRtcMember(
   rtcMember: CallMembership,
-  room: Room,
+  room: MatrixRoom,
 ): { id: string; member: RoomMember | undefined } {
   // WARN! This is not exactly the sender but the user defined in the state key.
   // This will be available once we change to the new "member as object" format in the MatrixRTC object.
@@ -481,7 +485,7 @@ export class CallViewModel extends ViewModel {
     // Handle call membership changes.
     fromEvent(this.matrixRTCSession, MatrixRTCSessionEvent.MembershipsChanged),
     // Handle room membership changes (and displayname updates)
-    fromEvent(this.matrixRTCSession.room, RoomStateEvent.Members),
+    fromEvent(this.matrixRoom, RoomStateEvent.Members),
   ).pipe(
     startWith(this.matrixRTCSession.memberships),
     map(() => {
@@ -497,7 +501,7 @@ export class CallViewModel extends ViewModel {
   public readonly memberDisplaynames$ = this.memberships$.pipe(
     map((memberships) => {
       const displaynameMap = new Map<string, string>();
-      const { room } = this.matrixRTCSession;
+      const room = this.matrixRoom;
 
       // We only consider RTC members for disambiguation as they are the only visible members.
       for (const rtcMember of memberships) {
@@ -565,7 +569,7 @@ export class CallViewModel extends ViewModel {
         ) => {
           const newItems = new Map(
             function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-              const room = this.matrixRTCSession.room;
+              const room = this.matrixRoom;
               // m.rtc.members are the basis for calculating what is visible in the call
               for (const rtcMember of this.matrixRTCSession.memberships) {
                 const { member, id: livekitParticipantId } =
@@ -783,7 +787,7 @@ export class CallViewModel extends ViewModel {
 
   public readonly allOthersLeft$ = this.matrixUserChanges$.pipe(
     map(({ userIds, leftUserIds }) => {
-      const userId = this.matrixRTCSession.room.client.getUserId();
+      const userId = this.matrixRoom.client.getUserId();
       if (!userId) {
         logger.warn("Could access client.getUserId to compute allOthersLeft");
         return false;
@@ -1485,6 +1489,7 @@ export class CallViewModel extends ViewModel {
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
     private readonly matrixRTCSession: MatrixRTCSession,
+    private readonly matrixRoom: MatrixRoom,
     private readonly livekitRoom: LivekitRoom,
     private readonly mediaDevices: MediaDevices,
     private readonly options: CallViewModelOptions,

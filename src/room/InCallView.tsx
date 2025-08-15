@@ -7,8 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import { IconButton, Text, Tooltip } from "@vector-im/compound-web";
-import { ConnectionState, type Room } from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk";
+import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
+import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
   type PointerEvent,
@@ -166,6 +166,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       const reactionsReader = new ReactionsReader(props.rtcSession);
       const vm = new CallViewModel(
         props.rtcSession,
+        props.matrixRoom,
         livekitRoom,
         mediaDevices,
         {
@@ -184,6 +185,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     }
   }, [
     props.rtcSession,
+    props.matrixRoom,
     livekitRoom,
     mediaDevices,
     props.e2eeSystem,
@@ -212,7 +214,8 @@ export interface InCallViewProps {
   vm: CallViewModel;
   matrixInfo: MatrixInfo;
   rtcSession: MatrixRTCSession;
-  livekitRoom: Room;
+  matrixRoom: MatrixRoom;
+  livekitRoom: LivekitRoom;
   muteStates: MuteStates;
   participantCount: number;
   /** Function to call when the user explicitly ends the call */
@@ -228,6 +231,7 @@ export const InCallView: FC<InCallViewProps> = ({
   vm,
   matrixInfo,
   rtcSession,
+  matrixRoom,
   livekitRoom,
   muteStates,
   participantCount,
@@ -272,7 +276,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const [useExperimentalToDeviceTransport] = useSetting(
     useExperimentalToDeviceTransportSetting,
   );
-  const encryptionSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
+  const encryptionSystem = useRoomEncryptionSystem(matrixRoom.roomId);
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
 
   const showToDeviceEncryption = useMemo(
@@ -642,7 +646,7 @@ export const InCallView: FC<InCallViewProps> = ({
   };
 
   const rageshakeRequestModalProps = useRageshakeRequestModal(
-    rtcSession.room.roomId,
+    matrixRoom.roomId,
   );
 
   const toggleScreensharing = useCallback(() => {
@@ -800,7 +804,7 @@ export const InCallView: FC<InCallViewProps> = ({
           <RageshakeRequestModal {...rageshakeRequestModalProps} />
           <SettingsModal
             client={client}
-            roomId={rtcSession.room.roomId}
+            roomId={matrixRoom.roomId}
             open={settingsModalOpen}
             onDismiss={closeSettings}
             tab={settingsTab}
