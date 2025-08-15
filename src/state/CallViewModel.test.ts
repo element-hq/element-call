@@ -94,6 +94,11 @@ vi.mock("rxjs", async (importOriginal) => ({
 
 vi.mock("@livekit/components-core");
 
+const yesNo = {
+  y: true,
+  n: false,
+};
+
 const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
 const carol = local;
@@ -416,10 +421,7 @@ test("screen sharing activates spotlight layout", () => {
         );
         expectObservable(vm.showSpeakingIndicators$).toBe(
           expectedShowSpeakingMarbles,
-          {
-            y: true,
-            n: false,
-          },
+          yesNo,
         );
       },
     );
@@ -444,18 +446,9 @@ test("participants stay in the same order unless to appear/disappear", () => {
       constant([localRtcMember, aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
-        [
-          aliceParticipant,
-          behavior(aSpeakingInputMarbles, { y: true, n: false }),
-        ],
-        [
-          bobParticipant,
-          behavior(bSpeakingInputMarbles, { y: true, n: false }),
-        ],
-        [
-          daveParticipant,
-          behavior(dSpeakingInputMarbles, { y: true, n: false }),
-        ],
+        [aliceParticipant, behavior(aSpeakingInputMarbles, yesNo)],
+        [bobParticipant, behavior(bSpeakingInputMarbles, yesNo)],
+        [daveParticipant, behavior(dSpeakingInputMarbles, yesNo)],
       ]),
       mockMediaDevices({}),
       (vm) => {
@@ -511,14 +504,8 @@ test("participants adjust order when space becomes constrained", () => {
       constant([localRtcMember, aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
-        [
-          bobParticipant,
-          behavior(bSpeakingInputMarbles, { y: true, n: false }),
-        ],
-        [
-          daveParticipant,
-          behavior(dSpeakingInputMarbles, { y: true, n: false }),
-        ],
+        [bobParticipant, behavior(bSpeakingInputMarbles, yesNo)],
+        [daveParticipant, behavior(dSpeakingInputMarbles, yesNo)],
       ]),
       mockMediaDevices({}),
       (vm) => {
@@ -570,18 +557,9 @@ test("spotlight speakers swap places", () => {
       constant([localRtcMember, aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
-        [
-          aliceParticipant,
-          behavior(aSpeakingInputMarbles, { y: true, n: false }),
-        ],
-        [
-          bobParticipant,
-          behavior(bSpeakingInputMarbles, { y: true, n: false }),
-        ],
-        [
-          daveParticipant,
-          behavior(dSpeakingInputMarbles, { y: true, n: false }),
-        ],
+        [aliceParticipant, behavior(aSpeakingInputMarbles, yesNo)],
+        [bobParticipant, behavior(bSpeakingInputMarbles, yesNo)],
+        [daveParticipant, behavior(dSpeakingInputMarbles, yesNo)],
       ]),
       mockMediaDevices({}),
       (vm) => {
@@ -1246,10 +1224,10 @@ test("audio output changes when toggling earpiece mode", () => {
         schedule(toggleInputMarbles, {
           a: () => getValue(vm.audioOutputSwitcher$)?.switch(),
         });
-        expectObservable(vm.earpieceMode$).toBe(expectedEarpieceModeMarbles, {
-          n: false,
-          y: true,
-        });
+        expectObservable(vm.earpieceMode$).toBe(
+          expectedEarpieceModeMarbles,
+          yesNo,
+        );
         expectObservable(
           vm.audioOutputSwitcher$.pipe(
             map((switcher) => switcher?.targetOutput),
