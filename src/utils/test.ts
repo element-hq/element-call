@@ -233,6 +233,7 @@ export function mockLocalParticipant(
 ): LocalParticipant {
   return {
     isLocal: true,
+    trackPublications: new Map(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
     ...mockEmitter(),

@@ -394,6 +394,9 @@ function getRoomMemberFromRtcMember(
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
 export class CallViewModel extends ViewModel {
+  private readonly userId = this.matrixRoom.client.getUserId();
+  private readonly deviceId = this.matrixRoom.client.getDeviceId();
+
   public readonly localVideo$ = this.scope.behavior<LocalVideoTrack | null>(
     observeTrackReference$(
       this.livekitRoom.localParticipant,
@@ -487,10 +490,33 @@ export class CallViewModel extends ViewModel {
     // Handle room membership changes (and displayname updates)
     fromEvent(this.matrixRoom, RoomStateEvent.Members),
   ).pipe(
-    startWith(this.matrixRTCSession.memberships),
-    map(() => {
-      return this.matrixRTCSession.memberships;
-    }),
+    startWith(null),
+    map(() => this.matrixRTCSession.memberships),
+  );
+
+  private readonly matrixRTCConnected$ = this.scope.behavior(
+    this.memberships$.pipe(
+      map((ms) =>
+        ms.some(
+          (m) => m.sender === this.userId && m.deviceId === this.deviceId,
+        ),
+      ),
+    ),
+  );
+
+  public readonly reconnecting$ = this.scope.behavior(
+    this.matrixRTCConnected$.pipe(
+      // We are reconnecting if we previously had some successful initial
+      // connection but are now disconnected
+      scan(
+        ({ connectedPreviously, reconnecting }, connectedNow) => ({
+          connectedPreviously: connectedPreviously || connectedNow,
+          reconnecting: connectedPreviously && !connectedNow,
+        }),
+        { connectedPreviously: false, reconnecting: false },
+      ),
+      map(({ reconnecting }) => reconnecting),
+    ),
   );
 
   /**
@@ -787,12 +813,13 @@ export class CallViewModel extends ViewModel {
 
   public readonly allOthersLeft$ = this.matrixUserChanges$.pipe(
     map(({ userIds, leftUserIds }) => {
-      const userId = this.matrixRoom.client.getUserId();
-      if (!userId) {
-        logger.warn("Could access client.getUserId to compute allOthersLeft");
+      if (!this.userId) {
+        logger.warn("Could not access user ID to compute allOthersLeft");
         return false;
       }
-      return userIds.size === 1 && userIds.has(userId) && leftUserIds.size > 0;
+      return (
+        userIds.size === 1 && userIds.has(this.userId) && leftUserIds.size > 0
+      );
     }),
     startWith(false),
     distinctUntilChanged(),
@@ -1502,5 +1529,44 @@ export class CallViewModel extends ViewModel {
     >,
   ) {
     super();
+
+    // Pause all media tracks when we're disconnected from MatrixRTC, because it
+    // can be an unpleasant surprise for the app to say 'reconnecting' and yet
+    // still be transmitting your media to others.
+    this.matrixRTCConnected$.pipe(this.scope.bind()).subscribe((connected) => {
+      const publications =
+        this.livekitRoom.localParticipant.trackPublications.values();
+      if (connected) {
+        for (const p of publications) {
+          if (p.track?.isUpstreamPaused === true) {
+            const kind = p.track.kind;
+            logger.log(`Reconnected to MatrixRTC; resuming ${kind} track`);
+            p.track
+              .resumeUpstream()
+              .catch((e) =>
+                logger.error(
+                  `Failed to resume ${kind} track after MatrixRTC reconnection`,
+                  e,
+                ),
+              );
+          }
+        }
+      } else {
+        for (const p of publications) {
+          if (p.track?.isUpstreamPaused === false) {
+            const kind = p.track.kind;
+            logger.log(`Lost connection to MatrixRTC; pausing ${kind} track`);
+            p.track
+              .pauseUpstream()
+              .catch((e) =>
+                logger.error(
+                  `Failed to pause ${kind} track after MatrixRTC connection loss`,
+                  e,
+                ),
+              );
+          }
+        }
+      }
+    });
   }
 }
