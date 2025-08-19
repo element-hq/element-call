@@ -41,7 +41,7 @@ const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   stopMicTrackOnMute: false,
   videoCodec: "h264",
   videoEncoding: VideoPresets.h720.encoding,
-  backupCodec: { codec: "vp8", encoding: VideoPresets.h720.encoding },
+  backupCodec: { codec: "h264", encoding: VideoPresets.h720.encoding },
 } as const;
 
 export const defaultLiveKitOptions: RoomOptions = {
