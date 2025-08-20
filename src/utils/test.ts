@@ -243,9 +243,10 @@ export function mockLocalParticipant(
 export async function withLocalMedia(
   localRtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
+  localParticipant: LocalParticipant,
+  mediaDevices: MediaDevices,
   continuation: (vm: LocalUserMediaViewModel) => void | Promise<void>,
 ): Promise<void> {
-  const localParticipant = mockLocalParticipant({});
   const vm = new LocalUserMediaViewModel(
     "local",
     mockMatrixRoomMember(localRtcMember, roomMember),
@@ -254,6 +255,7 @@ export async function withLocalMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({ localParticipant }),
+    mediaDevices,
     constant(roomMember.rawDisplayName ?? "nodisplayname"),
     constant(null),
     constant(null),

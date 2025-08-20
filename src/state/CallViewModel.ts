@@ -13,10 +13,8 @@ import {
 import {
   type Room as LivekitRoom,
   type LocalParticipant,
-  LocalVideoTrack,
   ParticipantEvent,
   type RemoteParticipant,
-  Track,
 } from "livekit-client";
 import { RoomStateEvent, type Room, type RoomMember } from "matrix-js-sdk";
 import {
@@ -60,7 +58,6 @@ import {
 import {
   LocalUserMediaViewModel,
   type MediaViewModel,
-  observeTrackReference$,
   RemoteUserMediaViewModel,
   ScreenShareViewModel,
   type UserMediaViewModel,
@@ -263,6 +260,7 @@ class UserMedia {
     participant: LocalParticipant | RemoteParticipant | undefined,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    mediaDevices: MediaDevices,
     displayname$: Observable<string>,
     handRaised$: Observable<Date | null>,
     reaction$: Observable<ReactionOption | null>,
@@ -276,6 +274,7 @@ class UserMedia {
         this.participant$ as Behavior<LocalParticipant>,
         encryptionSystem,
         livekitRoom,
+        mediaDevices,
         this.scope.behavior(displayname$),
         this.scope.behavior(handRaised$),
         this.scope.behavior(reaction$),
@@ -390,18 +389,6 @@ function getRoomMemberFromRtcMember(
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
 export class CallViewModel extends ViewModel {
-  public readonly localVideo$ = this.scope.behavior<LocalVideoTrack | null>(
-    observeTrackReference$(
-      this.livekitRoom.localParticipant,
-      Track.Source.Camera,
-    ).pipe(
-      map((trackRef) => {
-        const track = trackRef?.publication?.track;
-        return track instanceof LocalVideoTrack ? track : null;
-      }),
-    ),
-  );
-
   /**
    * The raw list of RemoteParticipants as reported by LiveKit
    */
@@ -616,6 +603,7 @@ export class CallViewModel extends ViewModel {
                         participant,
                         this.options.encryptionSystem,
                         this.livekitRoom,
+                        this.mediaDevices,
                         this.memberDisplaynames$.pipe(
                           map((m) => m.get(matrixIdentifier) ?? "[👻]"),
                         ),
@@ -680,6 +668,7 @@ export class CallViewModel extends ViewModel {
                               participant,
                               this.options.encryptionSystem,
                               this.livekitRoom,
+                              this.mediaDevices,
                               this.memberDisplaynames$.pipe(
                                 map(
                                   (m) => m.get(participant.identity) ?? "[👻]",

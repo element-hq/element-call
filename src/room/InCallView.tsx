@@ -44,7 +44,6 @@ import {
   ShareScreenButton,
   SettingsButton,
   ReactionToggleButton,
-  SwitchCameraButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { type HeaderStyle, useUrlParams } from "../UrlParams";
@@ -94,7 +93,6 @@ import {
   useReactionsSender,
 } from "../reactions/useReactionsSender";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
-import { useSwitchCamera } from "./useSwitchCamera";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
@@ -318,7 +316,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const showFooter = useBehavior(vm.showFooter$);
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
-  const switchCamera = useSwitchCamera(vm.localVideo$);
   useSubscription(vm.autoLeaveWhenOthersLeft$, onLeave);
 
   // Ideally we could detect taps by listening for click events and checking
@@ -676,15 +673,6 @@ export const InCallView: FC<InCallViewProps> = ({
       data-testid="incall_videomute"
     />,
   );
-  if (switchCamera !== null)
-    buttons.push(
-      <SwitchCameraButton
-        key="switch_camera"
-        className={styles.switchCamera}
-        onClick={switchCamera}
-        onTouchEnd={onControlsTouchEnd}
-      />,
-    );
   if (canScreenshare && !hideScreensharing) {
     buttons.push(
       <ShareScreenButton
