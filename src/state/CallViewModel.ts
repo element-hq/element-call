@@ -11,6 +11,7 @@ import {
   observeParticipantMedia,
 } from "@livekit/components-core";
 import {
+  ConnectionState,
   type Room as LivekitRoom,
   type LocalParticipant,
   LocalVideoTrack,
@@ -425,7 +426,7 @@ export class CallViewModel extends ViewModel {
   private readonly remoteParticipantHolds$ = this.scope.behavior<
     RemoteParticipant[][]
   >(
-    this.connectionState$.pipe(
+    this.livekitConnectionState$.pipe(
       withLatestFrom(this.rawRemoteParticipants$),
       mergeMap(([s, ps]) => {
         // Whenever we switch focuses, we should retain all the previous
@@ -438,7 +439,7 @@ export class CallViewModel extends ViewModel {
             // Wait for time to pass and the connection state to have changed
             forkJoin([
               timer(POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
-              this.connectionState$.pipe(
+              this.livekitConnectionState$.pipe(
                 filter((s) => s !== ECAddonConnectionState.ECSwitchingFocus),
                 take(1),
               ),
@@ -519,8 +520,14 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  // TODO: Account for LiveKit connection state too
-  private readonly connected$ = this.matrixConnected$;
+  private readonly connected$ = this.scope.behavior(
+    and$(
+      this.matrixConnected$,
+      this.livekitConnectionState$.pipe(
+        map((state) => state === ConnectionState.Connected),
+      ),
+    ),
+  );
 
   /**
    * Whether we should tell the user that we're reconnecting to the call.
@@ -1541,7 +1548,7 @@ export class CallViewModel extends ViewModel {
     private readonly livekitRoom: LivekitRoom,
     private readonly mediaDevices: MediaDevices,
     private readonly options: CallViewModelOptions,
-    private readonly connectionState$: Observable<ECConnectionState>,
+    private readonly livekitConnectionState$: Observable<ECConnectionState>,
     private readonly handsRaisedSubject$: Observable<
       Record<string, RaisedHandInfo>
     >,
