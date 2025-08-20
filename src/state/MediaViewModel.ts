@@ -16,6 +16,7 @@ import {
 import {
   type LocalParticipant,
   LocalTrack,
+  LocalVideoTrack,
   type Participant,
   ParticipantEvent,
   type RemoteParticipant,
@@ -27,6 +28,7 @@ import {
   RemoteTrack,
 } from "livekit-client";
 import { type RoomMember } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   BehaviorSubject,
   type Observable,
@@ -51,6 +53,8 @@ import { accumulate } from "../utils/observable";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { type ReactionOption } from "../reactions";
+import { platform } from "../Platform";
+import { type MediaDevices } from "./MediaDevices";
 import { type Behavior } from "./Behavior";
 
 export function observeTrackReference$(
@@ -443,20 +447,38 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
  */
 export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   /**
-   * Whether the video should be mirrored.
+   * The local video track as an observable that emits whenever the track
+   * changes, the camera is switched, or the track is muted.
    */
-  public readonly mirror$ = this.scope.behavior(
+  private readonly videoTrack$: Observable<LocalVideoTrack | null> =
     this.video$.pipe(
       switchMap((v) => {
         const track = v?.publication?.track;
-        if (!(track instanceof LocalTrack)) return of(false);
-        // Watch for track restarts, because they indicate a camera switch
-        return fromEvent(track, TrackEvent.Restarted).pipe(
-          startWith(null),
-          // Mirror only front-facing cameras (those that face the user)
-          map(() => facingModeFromLocalTrack(track).facingMode === "user"),
+        if (!(track instanceof LocalVideoTrack)) return of(null);
+        return merge(
+          // Watch for track restarts because they indicate a camera switch.
+          // This event is also emitted when unmuting the track object.
+          fromEvent(track, TrackEvent.Restarted).pipe(
+            startWith(null),
+            map(() => track),
+          ),
+          // When the track object is muted, reset it to null.
+          fromEvent(track, TrackEvent.Muted).pipe(map(() => null)),
         );
       }),
+    );
+
+  /**
+   * Whether the video should be mirrored.
+   */
+  public readonly mirror$ = this.scope.behavior(
+    this.videoTrack$.pipe(
+      // Mirror only front-facing cameras (those that face the user)
+      map(
+        (track) =>
+          track !== null &&
+          facingModeFromLocalTrack(track).facingMode === "user",
+      ),
     ),
   );
 
@@ -467,12 +489,48 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   public readonly alwaysShow$ = alwaysShowSelf.value$;
   public readonly setAlwaysShow = alwaysShowSelf.setValue;
 
+  /**
+   * Callback for switching between the front and back cameras.
+   */
+  public readonly switchCamera$: Behavior<(() => void) | null> =
+    this.scope.behavior(
+      platform === "desktop"
+        ? of(null)
+        : this.videoTrack$.pipe(
+            map((track) => {
+              if (track === null) return null;
+              const facingMode = facingModeFromLocalTrack(track).facingMode;
+              // If the camera isn't front or back-facing, don't provide a switch
+              // camera shortcut at all
+              if (facingMode !== "user" && facingMode !== "environment")
+                return null;
+              // Restart the track with a camera facing the opposite direction
+              return (): void =>
+                void track
+                  .restartTrack({
+                    facingMode: facingMode === "user" ? "environment" : "user",
+                  })
+                  .then(() => {
+                    // Inform the MediaDevices which camera was chosen
+                    const deviceId =
+                      track.mediaStreamTrack.getSettings().deviceId;
+                    if (deviceId !== undefined)
+                      this.mediaDevices.videoInput.select(deviceId);
+                  })
+                  .catch((e) =>
+                    logger.error("Failed to switch camera", facingMode, e),
+                  );
+            }),
+          ),
+    );
+
   public constructor(
     id: string,
     member: RoomMember | undefined,
     participant$: Behavior<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    private readonly mediaDevices: MediaDevices,
     displayName$: Behavior<string>,
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
