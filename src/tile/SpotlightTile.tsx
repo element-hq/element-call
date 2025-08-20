@@ -54,6 +54,7 @@ interface SpotlightItemBaseProps {
   targetWidth: number;
   targetHeight: number;
   video: TrackReferenceOrPlaceholder | undefined;
+  videoEnabled: boolean;
   member: RoomMember | undefined;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
@@ -63,7 +64,6 @@ interface SpotlightItemBaseProps {
 }
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
-  videoEnabled: boolean;
   videoFit: "contain" | "cover";
 }
 
@@ -90,12 +90,10 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
   vm,
   ...props
 }) => {
-  const videoEnabled = useBehavior(vm.videoEnabled$);
   const cropVideo = useBehavior(vm.cropVideo$);
 
   const baseProps: SpotlightUserMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
-    videoEnabled,
     videoFit: cropVideo ? "cover" : "contain",
     ...props,
   };
@@ -135,6 +133,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   const ref = useMergedRefs(ourRef, theirRef);
   const displayName = useBehavior(vm.displayName$);
   const video = useBehavior(vm.video$);
+  const videoEnabled = useBehavior(vm.videoEnabled$);
   const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
   const encryptionStatus = useBehavior(vm.encryptionStatus$);
 
@@ -160,6 +159,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     targetWidth,
     targetHeight,
     video,
+    videoEnabled,
     member: vm.member,
     unencryptedWarning,
     displayName,
@@ -169,7 +169,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   };
 
   return vm instanceof ScreenShareViewModel ? (
-    <MediaView videoEnabled videoFit="contain" mirror={false} {...baseProps} />
+    <MediaView videoFit="contain" mirror={false} {...baseProps} />
   ) : (
     <SpotlightUserMediaItem vm={vm} {...baseProps} />
   );
