@@ -456,11 +456,13 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
         const track = v?.publication?.track;
         if (!(track instanceof LocalVideoTrack)) return of(null);
         return merge(
-          // Watch for track restarts because they indicate a camera switch
+          // Watch for track restarts because they indicate a camera switch.
+          // This event is also emitted when unmuting the track object.
           fromEvent(track, TrackEvent.Restarted).pipe(
             startWith(null),
             map(() => track),
           ),
+          // When the track object is muted, reset it to null.
           fromEvent(track, TrackEvent.Muted).pipe(map(() => null)),
         );
       }),
