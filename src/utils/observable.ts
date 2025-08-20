@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type Observable,
+  combineLatest,
   concat,
   defer,
   finalize,
@@ -85,4 +86,12 @@ export function getValue<T>(state$: Observable<T>): T {
   state$.subscribe((x) => (value = x)).unsubscribe();
   if (value === nothing) throw new Error("Not a state Observable");
   return value;
+}
+
+/**
+ * Creates an Observable that has a value of true whenever all its inputs are
+ * true.
+ */
+export function and$(...inputs: Observable<boolean>[]): Observable<boolean> {
+  return combineLatest(inputs, (...flags) => flags.every((flag) => flag));
 }

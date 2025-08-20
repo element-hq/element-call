@@ -24,7 +24,6 @@ import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
 import { ClientProvider } from "./ClientContext";
 import { ErrorPage, LoadingPage } from "./FullScreenView";
-import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
@@ -86,7 +85,6 @@ export const App: FC<Props> = ({ vm }) => {
           <Sentry.ErrorBoundary
             fallback={(error) => <ErrorPage error={error} widget={widget} />}
           >
-            <DisconnectedBanner />
             <Routes>
               <SentryRoute path="/" element={<HomePage />} />
               <SentryRoute path="/login" element={<LoginPage />} />
