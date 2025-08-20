@@ -508,7 +508,11 @@ export const InCallView: FC<InCallViewProps> = ({
         break;
       case "standard":
         header = (
-          <Header className={styles.header} ref={headerRef}>
+          <Header
+            className={styles.header}
+            ref={headerRef}
+            disconnectedBanner={false} // This screen has its own 'reconnecting' toast
+          >
             <LeftNav>
               <RoomHeaderInfo
                 id={matrixInfo.roomId}
