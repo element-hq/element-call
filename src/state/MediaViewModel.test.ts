@@ -182,8 +182,9 @@ test("switch cameras", async () => {
     async (vm) => {
       // Switch to back camera
       getValue(vm.switchCamera$)!();
-      expect(restartTrack).toHaveBeenCalledTimes(1);
-      expect(restartTrack).toHaveBeenCalledWith({ facingMode: "environment" });
+      expect(restartTrack).toHaveBeenCalledExactlyOnceWith({
+        facingMode: "environment",
+      });
       await waitFor(() => {
         expect(selectVideoInput).toHaveBeenCalledTimes(1);
         expect(selectVideoInput).toHaveBeenCalledWith("back camera");
