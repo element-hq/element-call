@@ -7,8 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import { IconButton, Text, Tooltip } from "@vector-im/compound-web";
-import { ConnectionState, type Room } from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk";
+import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
+import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
   type PointerEvent,
@@ -111,6 +111,7 @@ import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
 import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
+import { Toast } from "../Toast.tsx";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -164,6 +165,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       const reactionsReader = new ReactionsReader(props.rtcSession);
       const vm = new CallViewModel(
         props.rtcSession,
+        props.matrixRoom,
         livekitRoom,
         mediaDevices,
         {
@@ -182,6 +184,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     }
   }, [
     props.rtcSession,
+    props.matrixRoom,
     livekitRoom,
     mediaDevices,
     props.e2eeSystem,
@@ -210,7 +213,8 @@ export interface InCallViewProps {
   vm: CallViewModel;
   matrixInfo: MatrixInfo;
   rtcSession: MatrixRTCSession;
-  livekitRoom: Room;
+  matrixRoom: MatrixRoom;
+  livekitRoom: LivekitRoom;
   muteStates: MuteStates;
   participantCount: number;
   /** Function to call when the user explicitly ends the call */
@@ -226,6 +230,7 @@ export const InCallView: FC<InCallViewProps> = ({
   vm,
   matrixInfo,
   rtcSession,
+  matrixRoom,
   livekitRoom,
   muteStates,
   participantCount,
@@ -270,7 +275,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const [useExperimentalToDeviceTransport] = useSetting(
     useExperimentalToDeviceTransportSetting,
   );
-  const encryptionSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
+  const encryptionSystem = useRoomEncryptionSystem(matrixRoom.roomId);
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
 
   const showToDeviceEncryption = useMemo(
@@ -307,6 +312,7 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
+  const reconnecting = useBehavior(vm.reconnecting$);
   const windowMode = useBehavior(vm.windowMode$);
   const layout = useBehavior(vm.layout$);
   const tileStoreGeneration = useBehavior(vm.tileStoreGeneration$);
@@ -499,7 +505,11 @@ export const InCallView: FC<InCallViewProps> = ({
         break;
       case "standard":
         header = (
-          <Header className={styles.header} ref={headerRef}>
+          <Header
+            className={styles.header}
+            ref={headerRef}
+            disconnectedBanner={false} // This screen has its own 'reconnecting' toast
+          >
             <LeftNav>
               <RoomHeaderInfo
                 id={matrixInfo.roomId}
@@ -639,7 +649,7 @@ export const InCallView: FC<InCallViewProps> = ({
   };
 
   const rageshakeRequestModalProps = useRageshakeRequestModal(
-    rtcSession.room.roomId,
+    matrixRoom.roomId,
   );
 
   const toggleScreensharing = useCallback(() => {
@@ -750,6 +760,9 @@ export const InCallView: FC<InCallViewProps> = ({
     </div>
   );
 
+  // The reconnecting toast cannot be dismissed
+  const onDismissReconnectingToast = useCallback(() => {}, []);
+
   return (
     <div
       className={styles.inRoom}
@@ -777,8 +790,15 @@ export const InCallView: FC<InCallViewProps> = ({
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
+      <Toast
+        onDismiss={onDismissReconnectingToast}
+        open={reconnecting}
+        portal={false}
+      >
+        {t("common.reconnecting")}
+      </Toast>
       <EarpieceOverlay
-        show={earpieceMode}
+        show={earpieceMode && !reconnecting}
         onBackToVideoPressed={audioOutputSwitcher?.switch}
       />
       <ReactionsOverlay vm={vm} />
@@ -788,7 +808,7 @@ export const InCallView: FC<InCallViewProps> = ({
           <RageshakeRequestModal {...rageshakeRequestModalProps} />
           <SettingsModal
             client={client}
-            roomId={rtcSession.room.roomId}
+            roomId={matrixRoom.roomId}
             open={settingsModalOpen}
             onDismiss={closeSettings}
             tab={settingsTab}
