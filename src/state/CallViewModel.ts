@@ -57,6 +57,7 @@ import {
   type CallMembership,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
+  MembershipManagerEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
@@ -516,6 +517,19 @@ export class CallViewModel extends ViewModel {
             (m) => m.sender === this.userId && m.deviceId === this.deviceId,
           ),
         ),
+      ),
+      // Also watch out for warnings that we've likely hit a timeout and our
+      // delayed leave event is being sent (this condition is here because it
+      // provides an earlier warning than the sync loop timeout, and we wouldn't
+      // see the actual leave event until we reconnect to the sync loop)
+      (
+        fromEvent(
+          this.matrixRTCSession,
+          MembershipManagerEvent.ProbablyLeft,
+        ) as Observable<[SyncState]>
+      ).pipe(
+        startWith([false]),
+        map(([probablyLeft]) => !probablyLeft),
       ),
     ),
   );
