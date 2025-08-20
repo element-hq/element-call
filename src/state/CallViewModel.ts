@@ -56,6 +56,7 @@ import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   MembershipManagerEvent,
+  Status,
 } from "matrix-js-sdk/lib/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
@@ -407,17 +408,6 @@ function getRoomMemberFromRtcMember(
 // TODO: Move wayyyy more business logic from the call and lobby views into here
 export class CallViewModel extends ViewModel {
   private readonly userId = this.matrixRoom.client.getUserId();
-  private readonly deviceId = this.matrixRoom.client.getDeviceId();
-
-  private readonly memberships$: Observable<CallMembership[]> = merge(
-    // Handle call membership changes.
-    fromEvent(this.matrixRTCSession, MatrixRTCSessionEvent.MembershipsChanged),
-    // Handle room membership changes (and displayname updates)
-    fromEvent(this.matrixRoom, RoomStateEvent.Members),
-  ).pipe(
-    startWith(null),
-    map(() => this.matrixRTCSession.memberships),
-  );
 
   private readonly matrixConnected$ = this.scope.behavior(
     // To consider ourselves connected to MatrixRTC, we check the following:
@@ -431,26 +421,24 @@ export class CallViewModel extends ViewModel {
         startWith([this.matrixRoom.client.getSyncState()]),
         map(([state]) => state === SyncState.Syncing),
       ),
-      // We can see our own call membership
-      this.memberships$.pipe(
-        map((ms) =>
-          ms.some(
-            (m) => m.sender === this.userId && m.deviceId === this.deviceId,
-          ),
-        ),
+      // Room state observed by session says we're connected
+      fromEvent(
+        this.matrixRTCSession,
+        MembershipManagerEvent.StatusChanged,
+      ).pipe(
+        startWith(null),
+        map(() => this.matrixRTCSession.membershipStatus === Status.Connected),
       ),
       // Also watch out for warnings that we've likely hit a timeout and our
       // delayed leave event is being sent (this condition is here because it
       // provides an earlier warning than the sync loop timeout, and we wouldn't
       // see the actual leave event until we reconnect to the sync loop)
-      (
-        fromEvent(
-          this.matrixRTCSession,
-          MembershipManagerEvent.ProbablyLeft,
-        ) as Observable<[SyncState]>
+      fromEvent(
+        this.matrixRTCSession,
+        MembershipManagerEvent.ProbablyLeft,
       ).pipe(
-        startWith([false]),
-        map(([probablyLeft]) => !probablyLeft),
+        startWith(null),
+        map(() => this.matrixRTCSession.probablyLeft !== true),
       ),
     ),
   );
@@ -576,8 +564,18 @@ export class CallViewModel extends ViewModel {
   // than on Chrome/Firefox). This means it is important that we multicast the result so that we
   // don't do this work more times than we need to. This is achieved by converting to a behavior:
   public readonly memberDisplaynames$ = this.scope.behavior(
-    this.memberships$.pipe(
-      map((memberships) => {
+    merge(
+      // Handle call membership changes.
+      fromEvent(
+        this.matrixRTCSession,
+        MatrixRTCSessionEvent.MembershipsChanged,
+      ),
+      // Handle room membership changes (and displayname updates)
+      fromEvent(this.matrixRoom, RoomStateEvent.Members),
+    ).pipe(
+      startWith(null),
+      map(() => {
+        const memberships = this.matrixRTCSession.memberships;
         const displaynameMap = new Map<string, string>();
         const room = this.matrixRoom;
 
@@ -1592,9 +1590,12 @@ export class CallViewModel extends ViewModel {
   ) {
     super();
 
-    // Pause all media tracks when we're disconnected from MatrixRTC, because it
-    // can be an unpleasant surprise for the app to say 'reconnecting' and yet
-    // still be transmitting your media to others.
+    // Pause upstream of all local media tracks when we're disconnected from
+    // MatrixRTC, because it can be an unpleasant surprise for the app to say
+    // 'reconnecting' and yet still be transmitting your media to others.
+    // We use matrixConnected$ rather than reconnecting$ because we want to
+    // pause tracks during the initial joining sequence too until we're sure
+    // that our own media is displayed on screen.
     this.matrixConnected$.pipe(this.scope.bind()).subscribe((connected) => {
       const publications =
         this.livekitRoom.localParticipant.trackPublications.values();
@@ -1602,7 +1603,9 @@ export class CallViewModel extends ViewModel {
         for (const p of publications) {
           if (p.track?.isUpstreamPaused === true) {
             const kind = p.track.kind;
-            logger.log(`Reconnected to MatrixRTC; resuming ${kind} track`);
+            logger.log(
+              `Resumming ${kind} track (MatrixRTC connection present)`,
+            );
             p.track
               .resumeUpstream()
               .catch((e) =>
@@ -1617,7 +1620,7 @@ export class CallViewModel extends ViewModel {
         for (const p of publications) {
           if (p.track?.isUpstreamPaused === false) {
             const kind = p.track.kind;
-            logger.log(`Lost connection to MatrixRTC; pausing ${kind} track`);
+            logger.log(`Pausing ${kind} track (no MatrixRTC connection)`);
             p.track
               .pauseUpstream()
               .catch((e) =>

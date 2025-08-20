@@ -19,8 +19,11 @@ import {
   type Focus,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
+  MembershipManagerEvent,
   type SessionMembershipData,
+  Status,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import {
   type LocalParticipant,
   type LocalTrackPublication,
@@ -318,8 +321,10 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
 }
 
 export class MockRTCSession extends TypedEventEmitter<
-  MatrixRTCSessionEvent | RoomAndToDeviceEvents,
-  MatrixRTCSessionEventHandlerMap & RoomAndToDeviceEventsHandlerMap
+  MatrixRTCSessionEvent | RoomAndToDeviceEvents | MembershipManagerEvent,
+  MatrixRTCSessionEventHandlerMap &
+    RoomAndToDeviceEventsHandlerMap &
+    MembershipManagerEventHandlerMap
 > {
   public readonly statistics = {
     counters: {},
@@ -353,6 +358,17 @@ export class MockRTCSession extends TypedEventEmitter<
     });
 
     return this;
+  }
+
+  public readonly membershipStatus = Status.Connected;
+
+  private _probablyLeft = false;
+  public get probablyLeft(): boolean {
+    return this._probablyLeft;
+  }
+  public set probablyLeft(value: boolean) {
+    this._probablyLeft = value;
+    this.emit(MembershipManagerEvent.ProbablyLeft, value);
   }
 }
 
