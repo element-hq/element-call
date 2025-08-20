@@ -64,7 +64,7 @@ rc_delayed_event_mgmt:
 ```
 
 As a prerequisite for the
-[Matrix LiveKit JWT auth service](https://github.com/element-hq/lk-jwt-service)
+[MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service)
 make sure that your Synapse server has either a `federation` or `openid`
 [listener configured](https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html#listeners).
 
@@ -77,7 +77,7 @@ required for each site deployment.
 
 As depicted above in the `example.com` site deployment, Element Call requires a
 [Livekit SFU](https://github.com/livekit/livekit) alongside a
-[Matrix Livekit JWT auth service](https://github.com/element-hq/lk-jwt-service)
+[MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service)
 to implement
 [MSC4195: MatrixRTC using LiveKit backend](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md).
 
@@ -89,7 +89,7 @@ the example above, this results in:
 | Service | Endpoint | Example |
 | -------- | ------- | ------- |
 | [Livekit SFU](https://github.com/livekit/livekit) WebSocket signalling connection | `/livekit/sfu` | `matrix-rtc.example.com/livekit/sfu` |
-| [Matrix Livekit JWT auth service](https://github.com/element-hq/lk-jwt-service) | `/livekit/jwt` | `matrix-rtc.example.com/livekit/jwt` |
+| [MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service) | `/livekit/jwt` | `matrix-rtc.example.com/livekit/jwt` |
 
 Using Nginx, you can achieve this by:
 
@@ -102,7 +102,7 @@ server {
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto $scheme;
 
-      # JWT Service running at port 8080
+      # MatrixRTC Authorization Service running at port 8080
       proxy_pass http://localhost:8080/;
     }
 
