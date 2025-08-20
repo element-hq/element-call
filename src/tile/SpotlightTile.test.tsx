@@ -12,6 +12,8 @@ import userEvent from "@testing-library/user-event";
 
 import { SpotlightTile } from "./SpotlightTile";
 import {
+  mockLocalParticipant,
+  mockMediaDevices,
   mockRtcMembership,
   withLocalMedia,
   withRemoteMedia,
@@ -39,6 +41,8 @@ test("SpotlightTile is accessible", async () => {
           rawDisplayName: "Bob",
           getMxcAvatarUrl: () => "mxc://dlskf",
         },
+        mockLocalParticipant({}),
+        mockMediaDevices({}),
         async (vm2) => {
           const user = userEvent.setup();
           const toggleExpanded = vi.fn();

@@ -24,8 +24,7 @@ import {
   type LocalVideoTrack,
   Track,
 } from "livekit-client";
-import { useObservable, useObservableEagerState } from "observable-hooks";
-import { map } from "rxjs";
+import { useObservableEagerState } from "observable-hooks";
 import { useNavigate } from "react-router-dom";
 
 import inCallStyles from "./InCallView.module.css";
@@ -38,7 +37,6 @@ import {
   EndCallButton,
   MicButton,
   SettingsButton,
-  SwitchCameraButton,
   VideoButton,
 } from "../button/Button";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
@@ -47,7 +45,6 @@ import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { useInitial } from "../useInitial";
-import { useSwitchCamera as useShowSwitchCamera } from "./useSwitchCamera";
 import {
   useTrackProcessor,
   useTrackProcessorSync,
@@ -195,12 +192,6 @@ export const LobbyView: FC<Props> = ({
   }, [devices, videoInputId, videoTrack]);
 
   useTrackProcessorSync(videoTrack);
-  const showSwitchCamera = useShowSwitchCamera(
-    useObservable(
-      (inputs$) => inputs$.pipe(map(([video]) => video)),
-      [videoTrack],
-    ),
-  );
 
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
@@ -257,9 +248,6 @@ export const LobbyView: FC<Props> = ({
               onClick={onVideoPress}
               disabled={muteStates.video.setEnabled === null}
             />
-            {showSwitchCamera && (
-              <SwitchCameraButton onClick={showSwitchCamera} />
-            )}
             <SettingsButton onClick={openSettings} />
             {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
           </div>
