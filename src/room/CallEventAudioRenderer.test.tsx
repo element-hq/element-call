@@ -122,6 +122,8 @@ test("plays no sound when the participant list is more than the maximum size", (
 
   render(<CallEventAudioRenderer vm={vm} />);
   expect(playSound).not.toBeCalled();
+  // Remove the last membership in the array to test the leaving sound
+  // (The array has length MAX_PARTICIPANT_COUNT_FOR_SOUND + 1)
   act(() => {
     rtcMemberships$.next(
       mockRtcMemberships.slice(0, MAX_PARTICIPANT_COUNT_FOR_SOUND),

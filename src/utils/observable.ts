@@ -21,7 +21,8 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs";
-import { Behavior } from "../state/Behavior";
+
+import { type Behavior } from "../state/Behavior";
 
 const nothing = Symbol("nothing");
 

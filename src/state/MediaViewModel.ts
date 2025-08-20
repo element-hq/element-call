@@ -626,17 +626,6 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     ),
   );
 
-  /**
-   * The local volume, taking into account whether we're supposed to pretend
-   * that the audio stream is disconnected (since we don't necessarily want that
-   * to modify the UI state).
-   */
-  private readonly actualLocalVolume$ = this.scope.behavior(
-    this.pretendToBeDisconnected$.pipe(
-      switchMap((disconnected) => (disconnected ? of(0) : this.localVolume$)),
-    ),
-  );
-
   // This private field is used to override the value from the superclass
   private __videoEnabled$: Behavior<boolean>;
   public get videoEnabled$(): Behavior<boolean> {
@@ -691,7 +680,13 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     // Sync the local volume with LiveKit
     combineLatest([
       participant$,
-      this.actualLocalVolume$.pipe(this.scope.bind()),
+      // The local volume, taking into account whether we're supposed to pretend
+      // that the audio stream is disconnected (since we don't necessarily want
+      // that to modify the UI state).
+      this.pretendToBeDisconnected$.pipe(
+        switchMap((disconnected) => (disconnected ? of(0) : this.localVolume$)),
+        this.scope.bind(),
+      ),
     ]).subscribe(([p, volume]) => p?.setVolume(volume));
   }
 

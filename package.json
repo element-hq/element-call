@@ -108,7 +108,7 @@
     "livekit-client": "^2.13.0",
     "lodash-es": "^4.17.21",
     "loglevel": "^1.9.1",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#head=toger5/membership-manager-likely-disconnected",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#head=develop",
     "matrix-widget-api": "^1.13.0",
     "normalize.css": "^8.0.1",
     "observable-hooks": "^4.2.3",

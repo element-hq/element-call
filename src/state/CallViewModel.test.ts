@@ -17,7 +17,7 @@ import {
   of,
   switchMap,
 } from "rxjs";
-import { type MatrixClient } from "matrix-js-sdk";
+import { SyncState, type MatrixClient } from "matrix-js-sdk";
 import {
   ConnectionState,
   type LocalParticipant,
@@ -48,6 +48,7 @@ import {
   mockRtcMembership,
   MockRTCSession,
   mockMediaDevices,
+  mockEmitter,
 } from "../utils/test";
 import {
   ECAddonConnectionState,
@@ -240,6 +241,7 @@ function withCallViewModel(
   mediaDevices: MediaDevices,
   continuation: (
     vm: CallViewModel,
+    rtcSession: MockRTCSession,
     subjects: { raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>> },
   ) => void,
   options: CallViewModelOptions = {
@@ -249,8 +251,10 @@ function withCallViewModel(
 ): void {
   const room = mockMatrixRoom({
     client: {
+      ...mockEmitter(),
       getUserId: () => localRtcMember.sender,
       getDeviceId: () => localRtcMember.deviceId,
+      getSyncState: () => SyncState.Syncing,
     } as Partial<MatrixClient> as MatrixClient,
     getMember: (userId) => roomMembers.get(userId) ?? null,
   });
@@ -307,7 +311,7 @@ function withCallViewModel(
     roomEventSelectorSpy!.mockRestore();
   });
 
-  continuation(vm, { raisedHands$: raisedHands$ });
+  continuation(vm, rtcSession, { raisedHands$: raisedHands$ });
 }
 
 test("participants are retained during a focus switch", () => {
@@ -976,7 +980,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
-      (vm, { raisedHands$ }) => {
+      (vm, _rtcSession, { raisedHands$ }) => {
         schedule("ab", {
           a: () => {
             // We imagine that only two tiles (the first two) will be visible on screen at a time
@@ -1240,7 +1244,7 @@ test("audio output changes when toggling earpiece mode", () => {
 });
 
 test("media tracks are paused while reconnecting to MatrixRTC", () => {
-  withTestScheduler(({ behavior, schedule, expectObservable }) => {
+  withTestScheduler(({ schedule, expectObservable }) => {
     const trackRunning$ = new BehaviorSubject(true);
     const originalPublications = localParticipant.trackPublications;
     localParticipant.trackPublications = new Map([
@@ -1267,17 +1271,26 @@ test("media tracks are paused while reconnecting to MatrixRTC", () => {
       localParticipant.trackPublications = originalPublications;
     });
 
-    const rtcMemberMarbles = "           aba";
+    // TODO: Add marbles for sync state and membership status as well
+    const connectedMarbles = "           yny";
     const expectedReconnectingMarbles = "nyn";
     const expectedTrackRunningMarbles = "yny";
 
     withCallViewModel(
       constant([]),
-      behavior(rtcMemberMarbles, { a: [localRtcMember], b: [] }),
+      constant([localRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
       mockMediaDevices({}),
-      (vm) => {
+      (vm, rtcSession) => {
+        schedule(connectedMarbles, {
+          y: () => {
+            rtcSession.probablyLeft = false;
+          },
+          n: () => {
+            rtcSession.probablyLeft = true;
+          },
+        });
         expectObservable(vm.reconnecting$).toBe(
           expectedReconnectingMarbles,
           yesNo,
