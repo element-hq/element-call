@@ -70,7 +70,12 @@ import {
   ScreenShareViewModel,
   type UserMediaViewModel,
 } from "./MediaViewModel";
-import { accumulate, and$, finalizeValue } from "../utils/observable";
+import {
+  accumulate,
+  and$,
+  finalizeValue,
+  pauseWhen,
+} from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
 import {
   duplicateTiles,
@@ -269,6 +274,7 @@ class UserMedia {
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     mediaDevices: MediaDevices,
+    pretendToBeDisconnected$: Behavior<boolean>,
     displayname$: Observable<string>,
     handRaised$: Observable<Date | null>,
     reaction$: Observable<ReactionOption | null>,
@@ -296,6 +302,7 @@ class UserMedia {
         >,
         encryptionSystem,
         livekitRoom,
+        pretendToBeDisconnected$,
         this.scope.behavior(displayname$),
         this.scope.behavior(handRaised$),
         this.scope.behavior(reaction$),
@@ -349,7 +356,8 @@ class ScreenShare {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     encryptionSystem: EncryptionSystem,
-    liveKitRoom: LivekitRoom,
+    livekitRoom: LivekitRoom,
+    pretendToBeDisconnected$: Behavior<boolean>,
     displayName$: Observable<string>,
   ) {
     this.participant$ = new BehaviorSubject(participant);
@@ -359,7 +367,8 @@ class ScreenShare {
       member,
       this.participant$.asObservable(),
       encryptionSystem,
-      liveKitRoom,
+      livekitRoom,
+      pretendToBeDisconnected$,
       this.scope.behavior(displayName$),
       participant.isLocal,
     );
@@ -399,81 +408,6 @@ function getRoomMemberFromRtcMember(
 export class CallViewModel extends ViewModel {
   private readonly userId = this.matrixRoom.client.getUserId();
   private readonly deviceId = this.matrixRoom.client.getDeviceId();
-
-  /**
-   * The raw list of RemoteParticipants as reported by LiveKit
-   */
-  private readonly rawRemoteParticipants$ = this.scope.behavior<
-    RemoteParticipant[]
-  >(connectedParticipantsObserver(this.livekitRoom), []);
-
-  /**
-   * Lists of RemoteParticipants to "hold" on display, even if LiveKit claims that
-   * they've left
-   */
-  private readonly remoteParticipantHolds$ = this.scope.behavior<
-    RemoteParticipant[][]
-  >(
-    this.livekitConnectionState$.pipe(
-      withLatestFrom(this.rawRemoteParticipants$),
-      mergeMap(([s, ps]) => {
-        // Whenever we switch focuses, we should retain all the previous
-        // participants for at least POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS ms to
-        // give their clients time to switch over and avoid jarring layout shifts
-        if (s === ECAddonConnectionState.ECSwitchingFocus) {
-          return concat(
-            // Hold these participants
-            of({ hold: ps }),
-            // Wait for time to pass and the connection state to have changed
-            forkJoin([
-              timer(POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
-              this.livekitConnectionState$.pipe(
-                filter((s) => s !== ECAddonConnectionState.ECSwitchingFocus),
-                take(1),
-              ),
-              // Then unhold them
-            ]).pipe(map(() => ({ unhold: ps }))),
-          );
-        } else {
-          return EMPTY;
-        }
-      }),
-      // Accumulate the hold instructions into a single list showing which
-      // participants are being held
-      accumulate([] as RemoteParticipant[][], (holds, instruction) =>
-        "hold" in instruction
-          ? [instruction.hold, ...holds]
-          : holds.filter((h) => h !== instruction.unhold),
-      ),
-    ),
-  );
-
-  /**
-   * The RemoteParticipants including those that are being "held" on the screen
-   */
-  private readonly remoteParticipants$ = this.scope.behavior<
-    RemoteParticipant[]
-  >(
-    combineLatest(
-      [this.rawRemoteParticipants$, this.remoteParticipantHolds$],
-      (raw, holds) => {
-        const result = [...raw];
-        const resultIds = new Set(result.map((p) => p.identity));
-
-        // Incorporate the held participants into the list
-        for (const hold of holds) {
-          for (const p of hold) {
-            if (!resultIds.has(p.identity)) {
-              result.push(p);
-              resultIds.add(p.identity);
-            }
-          }
-        }
-
-        return result;
-      },
-    ),
-  );
 
   private readonly memberships$: Observable<CallMembership[]> = merge(
     // Handle call membership changes.
@@ -549,34 +483,125 @@ export class CallViewModel extends ViewModel {
   );
 
   /**
+   * Whether various media/event sources should pretend to be disconnected from
+   * all network input, even if their connection still technically works.
+   */
+  // We do this when the app is in the 'reconnecting' state, because it might be
+  // that the LiveKit connection is still functional while the homeserver is
+  // down, for example, and we want to avoid making people worry that the app is
+  // in a split-brained state.
+  private readonly pretendToBeDisconnected$ = this.reconnecting$;
+
+  /**
+   * The raw list of RemoteParticipants as reported by LiveKit
+   */
+  private readonly rawRemoteParticipants$ = this.scope.behavior<
+    RemoteParticipant[]
+  >(connectedParticipantsObserver(this.livekitRoom), []);
+
+  /**
+   * Lists of RemoteParticipants to "hold" on display, even if LiveKit claims that
+   * they've left
+   */
+  private readonly remoteParticipantHolds$ = this.scope.behavior<
+    RemoteParticipant[][]
+  >(
+    this.livekitConnectionState$.pipe(
+      withLatestFrom(this.rawRemoteParticipants$),
+      mergeMap(([s, ps]) => {
+        // Whenever we switch focuses, we should retain all the previous
+        // participants for at least POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS ms to
+        // give their clients time to switch over and avoid jarring layout shifts
+        if (s === ECAddonConnectionState.ECSwitchingFocus) {
+          return concat(
+            // Hold these participants
+            of({ hold: ps }),
+            // Wait for time to pass and the connection state to have changed
+            forkJoin([
+              timer(POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
+              this.livekitConnectionState$.pipe(
+                filter((s) => s !== ECAddonConnectionState.ECSwitchingFocus),
+                take(1),
+              ),
+              // Then unhold them
+            ]).pipe(map(() => ({ unhold: ps }))),
+          );
+        } else {
+          return EMPTY;
+        }
+      }),
+      // Accumulate the hold instructions into a single list showing which
+      // participants are being held
+      accumulate([] as RemoteParticipant[][], (holds, instruction) =>
+        "hold" in instruction
+          ? [instruction.hold, ...holds]
+          : holds.filter((h) => h !== instruction.unhold),
+      ),
+    ),
+  );
+
+  /**
+   * The RemoteParticipants including those that are being "held" on the screen
+   */
+  private readonly remoteParticipants$ = this.scope
+    .behavior<RemoteParticipant[]>(
+      combineLatest(
+        [this.rawRemoteParticipants$, this.remoteParticipantHolds$],
+        (raw, holds) => {
+          const result = [...raw];
+          const resultIds = new Set(result.map((p) => p.identity));
+
+          // Incorporate the held participants into the list
+          for (const hold of holds) {
+            for (const p of hold) {
+              if (!resultIds.has(p.identity)) {
+                result.push(p);
+                resultIds.add(p.identity);
+              }
+            }
+          }
+
+          return result;
+        },
+      ),
+    )
+    .pipe(pauseWhen(this.pretendToBeDisconnected$));
+
+  /**
    * Displaynames for each member of the call. This will disambiguate
    * any displaynames that clashes with another member. Only members
    * joined to the call are considered here.
    */
-  public readonly memberDisplaynames$ = this.memberships$.pipe(
-    map((memberships) => {
-      const displaynameMap = new Map<string, string>();
-      const room = this.matrixRoom;
+  // It turns out that doing the disambiguation above is rather expensive on Safari (10x slower
+  // than on Chrome/Firefox). This means it is important that we multicast the result so that we
+  // don't do this work more times than we need to. This is achieved by converting to a behavior:
+  public readonly memberDisplaynames$ = this.scope.behavior(
+    this.memberships$.pipe(
+      map((memberships) => {
+        const displaynameMap = new Map<string, string>();
+        const room = this.matrixRoom;
 
-      // We only consider RTC members for disambiguation as they are the only visible members.
-      for (const rtcMember of memberships) {
-        const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
-        const { member } = getRoomMemberFromRtcMember(rtcMember, room);
-        if (!member) {
-          logger.error("Could not find member for media id:", matrixIdentifier);
-          continue;
+        // We only consider RTC members for disambiguation as they are the only visible members.
+        for (const rtcMember of memberships) {
+          const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
+          const { member } = getRoomMemberFromRtcMember(rtcMember, room);
+          if (!member) {
+            logger.error(
+              "Could not find member for media id:",
+              matrixIdentifier,
+            );
+            continue;
+          }
+          const disambiguate = shouldDisambiguate(member, memberships, room);
+          displaynameMap.set(
+            matrixIdentifier,
+            calculateDisplayName(member, disambiguate),
+          );
         }
-        const disambiguate = shouldDisambiguate(member, memberships, room);
-        displaynameMap.set(
-          matrixIdentifier,
-          calculateDisplayName(member, disambiguate),
-        );
-      }
-      return displaynameMap;
-    }),
-    // It turns out that doing the disambiguation above is rather expensive on Safari (10x slower
-    // than on Chrome/Firefox). This means it is important that we multicast the result so that we
-    // don't do this work more times than we need to. This is achieved by converting to a behavior:
+        return displaynameMap;
+      }),
+      pauseWhen(this.pretendToBeDisconnected$),
+    ),
   );
 
   public readonly handsRaised$ = this.scope.behavior(this.handsRaisedSubject$);
@@ -591,6 +616,7 @@ export class CallViewModel extends ViewModel {
           ]),
         ),
       ),
+      pauseWhen(this.pretendToBeDisconnected$),
     ),
   );
 
@@ -608,7 +634,7 @@ export class CallViewModel extends ViewModel {
       fromEvent(
         this.matrixRTCSession,
         MatrixRTCSessionEvent.MembershipsChanged,
-      ).pipe(startWith(null)),
+      ).pipe(startWith(null), pauseWhen(this.pretendToBeDisconnected$)),
       showNonMemberTiles.value$,
     ]).pipe(
       scan(
@@ -676,6 +702,7 @@ export class CallViewModel extends ViewModel {
                         this.options.encryptionSystem,
                         this.livekitRoom,
                         this.mediaDevices,
+                        this.pretendToBeDisconnected$,
                         this.memberDisplaynames$.pipe(
                           map((m) => m.get(matrixIdentifier) ?? "[👻]"),
                         ),
@@ -699,6 +726,7 @@ export class CallViewModel extends ViewModel {
                           participant,
                           this.options.encryptionSystem,
                           this.livekitRoom,
+                          this.pretendToBeDisconnected$,
                           this.memberDisplaynames$.pipe(
                             map((m) => m.get(matrixIdentifier) ?? "[👻]"),
                           ),
@@ -741,6 +769,7 @@ export class CallViewModel extends ViewModel {
                               this.options.encryptionSystem,
                               this.livekitRoom,
                               this.mediaDevices,
+                              this.pretendToBeDisconnected$,
                               this.memberDisplaynames$.pipe(
                                 map(
                                   (m) => m.get(participant.identity) ?? "[👻]",
@@ -962,7 +991,7 @@ export class CallViewModel extends ViewModel {
           map((speaker) => (speaker ? [speaker] : [])),
         );
       }),
-      distinctUntilChanged(shallowEquals),
+      distinctUntilChanged<MediaViewModel[]>(shallowEquals),
     ),
   );
 

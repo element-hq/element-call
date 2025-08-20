@@ -296,6 +296,7 @@ export async function withRemoteMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
+    constant(false),
     constant(roomMember.rawDisplayName ?? "nodisplayname"),
     constant(null),
     constant(null),
