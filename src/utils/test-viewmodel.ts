@@ -14,13 +14,13 @@ import { BehaviorSubject, of } from "rxjs";
 import { vitest } from "vitest";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import EventEmitter from "events";
-
 import {
   type RoomMember,
   type MatrixClient,
   type Room,
   SyncState,
 } from "matrix-js-sdk";
+
 import { E2eeType } from "../e2ee/e2eeType";
 import { CallViewModel } from "../state/CallViewModel";
 import {
