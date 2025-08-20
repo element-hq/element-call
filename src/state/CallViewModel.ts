@@ -604,7 +604,9 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  public readonly handsRaised$ = this.scope.behavior(this.handsRaisedSubject$);
+  public readonly handsRaised$ = this.scope.behavior(
+    this.handsRaisedSubject$.pipe(pauseWhen(this.pretendToBeDisconnected$)),
+  );
 
   public readonly reactions$ = this.scope.behavior(
     this.reactionsSubject$.pipe(
