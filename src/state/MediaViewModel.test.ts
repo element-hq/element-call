@@ -5,14 +5,40 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, test, vi } from "vitest";
+import { expect, onTestFinished, test, vi } from "vitest";
+import {
+  type LocalTrackPublication,
+  LocalVideoTrack,
+  TrackEvent,
+} from "livekit-client";
+import { waitFor } from "@testing-library/dom";
 
 import {
+  mockLocalParticipant,
+  mockMediaDevices,
   mockRtcMembership,
   withLocalMedia,
   withRemoteMedia,
   withTestScheduler,
 } from "../utils/test";
+import { getValue } from "../utils/observable";
+import { constant } from "./Behavior";
+
+global.MediaStreamTrack = class {} as unknown as {
+  new (): MediaStreamTrack;
+  prototype: MediaStreamTrack;
+};
+global.MediaStream = class {} as unknown as {
+  new (): MediaStream;
+  prototype: MediaStream;
+};
+
+const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
+vi.mock("../Platform", () => ({
+  get platform(): string {
+    return platformMock();
+  },
+}));
 
 const rtcMembership = mockRtcMembership("@alice:example.org", "AAAA");
 
@@ -79,21 +105,101 @@ test("toggle fit/contain for a participant's video", async () => {
 });
 
 test("local media remembers whether it should always be shown", async () => {
-  await withLocalMedia(rtcMembership, {}, (vm) =>
-    withTestScheduler(({ expectObservable, schedule }) => {
-      schedule("-a|", { a: () => vm.setAlwaysShow(false) });
-      expectObservable(vm.alwaysShow$).toBe("ab", { a: true, b: false });
-    }),
+  await withLocalMedia(
+    rtcMembership,
+    {},
+    mockLocalParticipant({}),
+    mockMediaDevices({}),
+    (vm) =>
+      withTestScheduler(({ expectObservable, schedule }) => {
+        schedule("-a|", { a: () => vm.setAlwaysShow(false) });
+        expectObservable(vm.alwaysShow$).toBe("ab", { a: true, b: false });
+      }),
   );
   // Next local media should start out *not* always shown
   await withLocalMedia(
     rtcMembership,
-
     {},
+    mockLocalParticipant({}),
+    mockMediaDevices({}),
     (vm) =>
       withTestScheduler(({ expectObservable, schedule }) => {
         schedule("-a|", { a: () => vm.setAlwaysShow(true) });
         expectObservable(vm.alwaysShow$).toBe("ab", { a: false, b: true });
       }),
+  );
+});
+
+test("switch cameras", async () => {
+  // Camera switching is only available on mobile
+  platformMock.mockReturnValue("android");
+  onTestFinished(() => void platformMock.mockReset());
+
+  // Construct a mock video track which knows how to be restarted
+  const track = new LocalVideoTrack({
+    getConstraints() {},
+    addEventListener() {},
+    removeEventListener() {},
+  } as unknown as MediaStreamTrack);
+
+  let deviceId = "front camera";
+  const restartTrack = vi.fn(async ({ facingMode }) => {
+    deviceId = facingMode === "user" ? "front camera" : "back camera";
+    track.emit(TrackEvent.Restarted);
+    return Promise.resolve();
+  });
+  track.restartTrack = restartTrack;
+
+  Object.defineProperty(track, "mediaStreamTrack", {
+    get() {
+      return {
+        label: "Video",
+        getSettings: (): object => ({
+          deviceId,
+          facingMode: deviceId === "front camera" ? "user" : "environment",
+        }),
+      };
+    },
+  });
+
+  const selectVideoInput = vi.fn();
+
+  await withLocalMedia(
+    rtcMembership,
+    {},
+    mockLocalParticipant({
+      getTrackPublication() {
+        return { track } as unknown as LocalTrackPublication;
+      },
+    }),
+    mockMediaDevices({
+      videoInput: {
+        available$: constant(new Map()),
+        selected$: constant(undefined),
+        select: selectVideoInput,
+      },
+    }),
+    async (vm) => {
+      // Switch to back camera
+      getValue(vm.switchCamera$)!();
+      expect(restartTrack).toHaveBeenCalledExactlyOnceWith({
+        facingMode: "environment",
+      });
+      await waitFor(() => {
+        expect(selectVideoInput).toHaveBeenCalledTimes(1);
+        expect(selectVideoInput).toHaveBeenCalledWith("back camera");
+      });
+      expect(deviceId).toBe("back camera");
+
+      // Switch to front camera
+      getValue(vm.switchCamera$)!();
+      expect(restartTrack).toHaveBeenCalledTimes(2);
+      expect(restartTrack).toHaveBeenLastCalledWith({ facingMode: "user" });
+      await waitFor(() => {
+        expect(selectVideoInput).toHaveBeenCalledTimes(2);
+        expect(selectVideoInput).toHaveBeenLastCalledWith("front camera");
+      });
+      expect(deviceId).toBe("front camera");
+    },
   );
 });

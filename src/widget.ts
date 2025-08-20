@@ -120,8 +120,8 @@ export const widget = ((): WidgetHelpers | null => {
 
       const sendState = [
         userId, // Legacy call membership events
-        `_${userId}_${deviceId}`, // Session membership events
-        `${userId}_${deviceId}`, // The above with no leading underscore, for room versions whose auth rules allow it
+        `_${userId}_${deviceId}_m.call`, // Session membership events
+        `${userId}_${deviceId}_m.call`, // The above with no leading underscore, for room versions whose auth rules allow it
       ].map((stateKey) => ({
         eventType: EventType.GroupCallMemberPrefix,
         stateKey,
