@@ -7537,7 +7537,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=develop"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=toger5/membership-manager-likely-disconnected"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -10278,9 +10278,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
-  version: 37.12.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=c4e1e0723e3674725f8ed9cda5be7a7efe304e29"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/membership-manager-likely-disconnected":
+  version: 37.13.0
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=3f71ea8547c7765ea94710406f34834e7d6df82a"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.1.0"
@@ -10296,7 +10296,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/e8f97b90ded9e46bdd803dde9861e178c76741999c224cbc869ad38695f300702405e5c365e270663b90e2a317b646bbf2b9e9bd7d51ffce36e6d2ca3ab29ed9
+  checksum: 10c0/90238daaa5cad519b799a8ec53f768cbe295c6f5f4f7b82018dfee1f6311d6adbbc6fe71e86d4153fa3d2f711b67281f8202ad27dc0b1052c5a63621e96e05a2
   languageName: node
   linkType: hard
 
