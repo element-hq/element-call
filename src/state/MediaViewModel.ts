@@ -361,10 +361,7 @@ export type UserMediaViewModel =
  * Some participant's user media.
  */
 abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
-  /**
-   * Whether the participant is speaking.
-   */
-  public readonly speaking$ = this.scope.behavior(
+  private readonly _speaking$ = this.scope.behavior(
     this.participant$.pipe(
       switchMap((p) =>
         p
@@ -376,15 +373,27 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       ),
     ),
   );
+  /**
+   * Whether the participant is speaking.
+   */
+  // Getter backed by a private field so that subclasses can override it
+  public get speaking$(): Behavior<boolean> {
+    return this._speaking$;
+  }
 
   /**
    * Whether this participant is sending audio (i.e. is unmuted on their side).
    */
   public readonly audioEnabled$: Behavior<boolean>;
+
+  private readonly _videoEnabled$: Behavior<boolean>;
   /**
    * Whether this participant is sending video.
    */
-  public readonly videoEnabled$: Behavior<boolean>;
+  // Getter backed by a private field so that subclasses can override it
+  public get videoEnabled$(): Behavior<boolean> {
+    return this._videoEnabled$;
+  }
 
   private readonly _cropVideo$ = new BehaviorSubject(true);
   /**
@@ -421,7 +430,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     this.audioEnabled$ = this.scope.behavior(
       media$.pipe(map((m) => m?.microphoneTrack?.isMuted === false)),
     );
-    this.videoEnabled$ = this.scope.behavior(
+    this._videoEnabled$ = this.scope.behavior(
       media$.pipe(map((m) => m?.cameraTrack?.isMuted === false)),
     );
   }
@@ -572,6 +581,12 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
  * A remote participant's user media.
  */
 export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
+  // This private field is used to override the value from the superclass
+  private __speaking$: Behavior<boolean>;
+  public get speaking$(): Behavior<boolean> {
+    return this.__speaking$;
+  }
+
   private readonly locallyMutedToggle$ = new Subject<void>();
   private readonly localVolumeAdjustment$ = new Subject<number>();
   private readonly localVolumeCommit$ = new Subject<void>();
@@ -611,6 +626,12 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     ),
   );
 
+  // This private field is used to override the value from the superclass
+  private __videoEnabled$: Behavior<boolean>;
+  public get videoEnabled$(): Behavior<boolean> {
+    return this.__videoEnabled$;
+  }
+
   /**
    * Whether this participant's audio is disabled.
    */
@@ -624,6 +645,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    private readonly pretendToBeDisconnected$: Behavior<boolean>,
     displayname$: Behavior<string>,
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
@@ -639,11 +661,33 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
       reaction$,
     );
 
+    this.__speaking$ = this.scope.behavior(
+      pretendToBeDisconnected$.pipe(
+        switchMap((disconnected) =>
+          disconnected ? of(false) : super.speaking$,
+        ),
+      ),
+    );
+
+    this.__videoEnabled$ = this.scope.behavior(
+      pretendToBeDisconnected$.pipe(
+        switchMap((disconnected) =>
+          disconnected ? of(false) : super.videoEnabled$,
+        ),
+      ),
+    );
+
     // Sync the local volume with LiveKit
     combineLatest([
       participant$,
-      this.localVolume$.pipe(this.scope.bind()),
-    ]).subscribe(([p, volume]) => p && p.setVolume(volume));
+      // The local volume, taking into account whether we're supposed to pretend
+      // that the audio stream is disconnected (since we don't necessarily want
+      // that to modify the UI state).
+      this.pretendToBeDisconnected$.pipe(
+        switchMap((disconnected) => (disconnected ? of(0) : this.localVolume$)),
+        this.scope.bind(),
+      ),
+    ]).subscribe(([p, volume]) => p?.setVolume(volume));
   }
 
   public toggleLocallyMuted(): void {
@@ -683,12 +727,20 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
  * Some participant's screen share media.
  */
 export class ScreenShareViewModel extends BaseMediaViewModel {
+  /**
+   * Whether this screen share's video should be displayed.
+   */
+  public readonly videoEnabled$ = this.scope.behavior(
+    this.pretendToBeDisconnected$.pipe(map((disconnected) => !disconnected)),
+  );
+
   public constructor(
     id: string,
     member: RoomMember | undefined,
     participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    private readonly pretendToBeDisconnected$: Behavior<boolean>,
     displayname$: Behavior<string>,
     public readonly local: boolean,
   ) {

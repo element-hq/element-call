@@ -11,12 +11,19 @@ import {
   observeParticipantMedia,
 } from "@livekit/components-core";
 import {
+  ConnectionState,
   type Room as LivekitRoom,
   type LocalParticipant,
   ParticipantEvent,
   type RemoteParticipant,
 } from "livekit-client";
-import { RoomStateEvent, type Room, type RoomMember } from "matrix-js-sdk";
+import {
+  ClientEvent,
+  RoomStateEvent,
+  SyncState,
+  type Room as MatrixRoom,
+  type RoomMember,
+} from "matrix-js-sdk";
 import {
   BehaviorSubject,
   EMPTY,
@@ -48,6 +55,8 @@ import {
   type CallMembership,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
+  MembershipManagerEvent,
+  Status,
 } from "matrix-js-sdk/lib/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
@@ -62,7 +71,12 @@ import {
   ScreenShareViewModel,
   type UserMediaViewModel,
 } from "./MediaViewModel";
-import { accumulate, finalizeValue } from "../utils/observable";
+import {
+  accumulate,
+  and$,
+  finalizeValue,
+  pauseWhen,
+} from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
 import {
   duplicateTiles,
@@ -261,6 +275,7 @@ class UserMedia {
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     mediaDevices: MediaDevices,
+    pretendToBeDisconnected$: Behavior<boolean>,
     displayname$: Observable<string>,
     handRaised$: Observable<Date | null>,
     reaction$: Observable<ReactionOption | null>,
@@ -288,6 +303,7 @@ class UserMedia {
         >,
         encryptionSystem,
         livekitRoom,
+        pretendToBeDisconnected$,
         this.scope.behavior(displayname$),
         this.scope.behavior(handRaised$),
         this.scope.behavior(reaction$),
@@ -341,7 +357,8 @@ class ScreenShare {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     encryptionSystem: EncryptionSystem,
-    liveKitRoom: LivekitRoom,
+    livekitRoom: LivekitRoom,
+    pretendToBeDisconnected$: Behavior<boolean>,
     displayName$: Observable<string>,
   ) {
     this.participant$ = new BehaviorSubject(participant);
@@ -351,7 +368,8 @@ class ScreenShare {
       member,
       this.participant$.asObservable(),
       encryptionSystem,
-      liveKitRoom,
+      livekitRoom,
+      pretendToBeDisconnected$,
       this.scope.behavior(displayName$),
       participant.isLocal,
     );
@@ -367,7 +385,7 @@ type MediaItem = UserMedia | ScreenShare;
 
 function getRoomMemberFromRtcMember(
   rtcMember: CallMembership,
-  room: Room,
+  room: MatrixRoom,
 ): { id: string; member: RoomMember | undefined } {
   // WARN! This is not exactly the sender but the user defined in the state key.
   // This will be available once we change to the new "member as object" format in the MatrixRTC object.
@@ -389,6 +407,79 @@ function getRoomMemberFromRtcMember(
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
 export class CallViewModel extends ViewModel {
+  private readonly userId = this.matrixRoom.client.getUserId();
+
+  private readonly matrixConnected$ = this.scope.behavior(
+    // To consider ourselves connected to MatrixRTC, we check the following:
+    and$(
+      // The client is connected to the sync loop
+      (
+        fromEvent(this.matrixRoom.client, ClientEvent.Sync) as Observable<
+          [SyncState]
+        >
+      ).pipe(
+        startWith([this.matrixRoom.client.getSyncState()]),
+        map(([state]) => state === SyncState.Syncing),
+      ),
+      // Room state observed by session says we're connected
+      fromEvent(
+        this.matrixRTCSession,
+        MembershipManagerEvent.StatusChanged,
+      ).pipe(
+        startWith(null),
+        map(() => this.matrixRTCSession.membershipStatus === Status.Connected),
+      ),
+      // Also watch out for warnings that we've likely hit a timeout and our
+      // delayed leave event is being sent (this condition is here because it
+      // provides an earlier warning than the sync loop timeout, and we wouldn't
+      // see the actual leave event until we reconnect to the sync loop)
+      fromEvent(
+        this.matrixRTCSession,
+        MembershipManagerEvent.ProbablyLeft,
+      ).pipe(
+        startWith(null),
+        map(() => this.matrixRTCSession.probablyLeft !== true),
+      ),
+    ),
+  );
+
+  private readonly connected$ = this.scope.behavior(
+    and$(
+      this.matrixConnected$,
+      this.livekitConnectionState$.pipe(
+        map((state) => state === ConnectionState.Connected),
+      ),
+    ),
+  );
+
+  /**
+   * Whether we should tell the user that we're reconnecting to the call.
+   */
+  public readonly reconnecting$ = this.scope.behavior(
+    this.connected$.pipe(
+      // We are reconnecting if we previously had some successful initial
+      // connection but are now disconnected
+      scan(
+        ({ connectedPreviously, reconnecting }, connectedNow) => ({
+          connectedPreviously: connectedPreviously || connectedNow,
+          reconnecting: connectedPreviously && !connectedNow,
+        }),
+        { connectedPreviously: false, reconnecting: false },
+      ),
+      map(({ reconnecting }) => reconnecting),
+    ),
+  );
+
+  /**
+   * Whether various media/event sources should pretend to be disconnected from
+   * all network input, even if their connection still technically works.
+   */
+  // We do this when the app is in the 'reconnecting' state, because it might be
+  // that the LiveKit connection is still functional while the homeserver is
+  // down, for example, and we want to avoid making people worry that the app is
+  // in a split-brained state.
+  private readonly pretendToBeDisconnected$ = this.reconnecting$;
+
   /**
    * The raw list of RemoteParticipants as reported by LiveKit
    */
@@ -403,7 +494,7 @@ export class CallViewModel extends ViewModel {
   private readonly remoteParticipantHolds$ = this.scope.behavior<
     RemoteParticipant[][]
   >(
-    this.connectionState$.pipe(
+    this.livekitConnectionState$.pipe(
       withLatestFrom(this.rawRemoteParticipants$),
       mergeMap(([s, ps]) => {
         // Whenever we switch focuses, we should retain all the previous
@@ -416,7 +507,7 @@ export class CallViewModel extends ViewModel {
             // Wait for time to pass and the connection state to have changed
             forkJoin([
               timer(POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
-              this.connectionState$.pipe(
+              this.livekitConnectionState$.pipe(
                 filter((s) => s !== ECAddonConnectionState.ECSwitchingFocus),
                 take(1),
               ),
@@ -440,74 +531,80 @@ export class CallViewModel extends ViewModel {
   /**
    * The RemoteParticipants including those that are being "held" on the screen
    */
-  private readonly remoteParticipants$ = this.scope.behavior<
-    RemoteParticipant[]
-  >(
-    combineLatest(
-      [this.rawRemoteParticipants$, this.remoteParticipantHolds$],
-      (raw, holds) => {
-        const result = [...raw];
-        const resultIds = new Set(result.map((p) => p.identity));
+  private readonly remoteParticipants$ = this.scope
+    .behavior<RemoteParticipant[]>(
+      combineLatest(
+        [this.rawRemoteParticipants$, this.remoteParticipantHolds$],
+        (raw, holds) => {
+          const result = [...raw];
+          const resultIds = new Set(result.map((p) => p.identity));
 
-        // Incorporate the held participants into the list
-        for (const hold of holds) {
-          for (const p of hold) {
-            if (!resultIds.has(p.identity)) {
-              result.push(p);
-              resultIds.add(p.identity);
+          // Incorporate the held participants into the list
+          for (const hold of holds) {
+            for (const p of hold) {
+              if (!resultIds.has(p.identity)) {
+                result.push(p);
+                resultIds.add(p.identity);
+              }
             }
           }
-        }
 
-        return result;
-      },
-    ),
-  );
-
-  private readonly memberships$: Observable<CallMembership[]> = merge(
-    // Handle call membership changes.
-    fromEvent(this.matrixRTCSession, MatrixRTCSessionEvent.MembershipsChanged),
-    // Handle room membership changes (and displayname updates)
-    fromEvent(this.matrixRTCSession.room, RoomStateEvent.Members),
-  ).pipe(
-    startWith(this.matrixRTCSession.memberships),
-    map(() => {
-      return this.matrixRTCSession.memberships;
-    }),
-  );
+          return result;
+        },
+      ),
+    )
+    .pipe(pauseWhen(this.pretendToBeDisconnected$));
 
   /**
    * Displaynames for each member of the call. This will disambiguate
    * any displaynames that clashes with another member. Only members
    * joined to the call are considered here.
    */
-  public readonly memberDisplaynames$ = this.memberships$.pipe(
-    map((memberships) => {
-      const displaynameMap = new Map<string, string>();
-      const { room } = this.matrixRTCSession;
+  // It turns out that doing the disambiguation above is rather expensive on Safari (10x slower
+  // than on Chrome/Firefox). This means it is important that we multicast the result so that we
+  // don't do this work more times than we need to. This is achieved by converting to a behavior:
+  public readonly memberDisplaynames$ = this.scope.behavior(
+    merge(
+      // Handle call membership changes.
+      fromEvent(
+        this.matrixRTCSession,
+        MatrixRTCSessionEvent.MembershipsChanged,
+      ),
+      // Handle room membership changes (and displayname updates)
+      fromEvent(this.matrixRoom, RoomStateEvent.Members),
+    ).pipe(
+      startWith(null),
+      map(() => {
+        const memberships = this.matrixRTCSession.memberships;
+        const displaynameMap = new Map<string, string>();
+        const room = this.matrixRoom;
 
-      // We only consider RTC members for disambiguation as they are the only visible members.
-      for (const rtcMember of memberships) {
-        const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
-        const { member } = getRoomMemberFromRtcMember(rtcMember, room);
-        if (!member) {
-          logger.error("Could not find member for media id:", matrixIdentifier);
-          continue;
+        // We only consider RTC members for disambiguation as they are the only visible members.
+        for (const rtcMember of memberships) {
+          const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
+          const { member } = getRoomMemberFromRtcMember(rtcMember, room);
+          if (!member) {
+            logger.error(
+              "Could not find member for media id:",
+              matrixIdentifier,
+            );
+            continue;
+          }
+          const disambiguate = shouldDisambiguate(member, memberships, room);
+          displaynameMap.set(
+            matrixIdentifier,
+            calculateDisplayName(member, disambiguate),
+          );
         }
-        const disambiguate = shouldDisambiguate(member, memberships, room);
-        displaynameMap.set(
-          matrixIdentifier,
-          calculateDisplayName(member, disambiguate),
-        );
-      }
-      return displaynameMap;
-    }),
-    // It turns out that doing the disambiguation above is rather expensive on Safari (10x slower
-    // than on Chrome/Firefox). This means it is important that we multicast the result so that we
-    // don't do this work more times than we need to. This is achieved by converting to a behavior:
+        return displaynameMap;
+      }),
+      pauseWhen(this.pretendToBeDisconnected$),
+    ),
   );
 
-  public readonly handsRaised$ = this.scope.behavior(this.handsRaisedSubject$);
+  public readonly handsRaised$ = this.scope.behavior(
+    this.handsRaisedSubject$.pipe(pauseWhen(this.pretendToBeDisconnected$)),
+  );
 
   public readonly reactions$ = this.scope.behavior(
     this.reactionsSubject$.pipe(
@@ -519,6 +616,7 @@ export class CallViewModel extends ViewModel {
           ]),
         ),
       ),
+      pauseWhen(this.pretendToBeDisconnected$),
     ),
   );
 
@@ -536,7 +634,7 @@ export class CallViewModel extends ViewModel {
       fromEvent(
         this.matrixRTCSession,
         MatrixRTCSessionEvent.MembershipsChanged,
-      ).pipe(startWith(null)),
+      ).pipe(startWith(null), pauseWhen(this.pretendToBeDisconnected$)),
       showNonMemberTiles.value$,
     ]).pipe(
       scan(
@@ -552,7 +650,7 @@ export class CallViewModel extends ViewModel {
         ) => {
           const newItems = new Map(
             function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-              const room = this.matrixRTCSession.room;
+              const room = this.matrixRoom;
               // m.rtc.members are the basis for calculating what is visible in the call
               for (const rtcMember of this.matrixRTCSession.memberships) {
                 const { member, id: livekitParticipantId } =
@@ -604,6 +702,7 @@ export class CallViewModel extends ViewModel {
                         this.options.encryptionSystem,
                         this.livekitRoom,
                         this.mediaDevices,
+                        this.pretendToBeDisconnected$,
                         this.memberDisplaynames$.pipe(
                           map((m) => m.get(matrixIdentifier) ?? "[👻]"),
                         ),
@@ -627,6 +726,7 @@ export class CallViewModel extends ViewModel {
                           participant,
                           this.options.encryptionSystem,
                           this.livekitRoom,
+                          this.pretendToBeDisconnected$,
                           this.memberDisplaynames$.pipe(
                             map((m) => m.get(matrixIdentifier) ?? "[👻]"),
                           ),
@@ -669,6 +769,7 @@ export class CallViewModel extends ViewModel {
                               this.options.encryptionSystem,
                               this.livekitRoom,
                               this.mediaDevices,
+                              this.pretendToBeDisconnected$,
                               this.memberDisplaynames$.pipe(
                                 map(
                                   (m) => m.get(participant.identity) ?? "[👻]",
@@ -772,12 +873,13 @@ export class CallViewModel extends ViewModel {
 
   public readonly allOthersLeft$ = this.matrixUserChanges$.pipe(
     map(({ userIds, leftUserIds }) => {
-      const userId = this.matrixRTCSession.room.client.getUserId();
-      if (!userId) {
-        logger.warn("Could access client.getUserId to compute allOthersLeft");
+      if (!this.userId) {
+        logger.warn("Could not access user ID to compute allOthersLeft");
         return false;
       }
-      return userIds.size === 1 && userIds.has(userId) && leftUserIds.size > 0;
+      return (
+        userIds.size === 1 && userIds.has(this.userId) && leftUserIds.size > 0
+      );
     }),
     startWith(false),
     distinctUntilChanged(),
@@ -889,7 +991,7 @@ export class CallViewModel extends ViewModel {
           map((speaker) => (speaker ? [speaker] : [])),
         );
       }),
-      distinctUntilChanged(shallowEquals),
+      distinctUntilChanged<MediaViewModel[]>(shallowEquals),
     ),
   );
 
@@ -1474,10 +1576,11 @@ export class CallViewModel extends ViewModel {
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
     private readonly matrixRTCSession: MatrixRTCSession,
+    private readonly matrixRoom: MatrixRoom,
     private readonly livekitRoom: LivekitRoom,
     private readonly mediaDevices: MediaDevices,
     private readonly options: CallViewModelOptions,
-    private readonly connectionState$: Observable<ECConnectionState>,
+    private readonly livekitConnectionState$: Observable<ECConnectionState>,
     private readonly handsRaisedSubject$: Observable<
       Record<string, RaisedHandInfo>
     >,
@@ -1486,5 +1589,49 @@ export class CallViewModel extends ViewModel {
     >,
   ) {
     super();
+
+    // Pause upstream of all local media tracks when we're disconnected from
+    // MatrixRTC, because it can be an unpleasant surprise for the app to say
+    // 'reconnecting' and yet still be transmitting your media to others.
+    // We use matrixConnected$ rather than reconnecting$ because we want to
+    // pause tracks during the initial joining sequence too until we're sure
+    // that our own media is displayed on screen.
+    this.matrixConnected$.pipe(this.scope.bind()).subscribe((connected) => {
+      const publications =
+        this.livekitRoom.localParticipant.trackPublications.values();
+      if (connected) {
+        for (const p of publications) {
+          if (p.track?.isUpstreamPaused === true) {
+            const kind = p.track.kind;
+            logger.log(
+              `Resumming ${kind} track (MatrixRTC connection present)`,
+            );
+            p.track
+              .resumeUpstream()
+              .catch((e) =>
+                logger.error(
+                  `Failed to resume ${kind} track after MatrixRTC reconnection`,
+                  e,
+                ),
+              );
+          }
+        }
+      } else {
+        for (const p of publications) {
+          if (p.track?.isUpstreamPaused === false) {
+            const kind = p.track.kind;
+            logger.log(`Pausing ${kind} track (no MatrixRTC connection)`);
+            p.track
+              .pauseUpstream()
+              .catch((e) =>
+                logger.error(
+                  `Failed to pause ${kind} track after MatrixRTC connection loss`,
+                  e,
+                ),
+              );
+          }
+        }
+      }
+    });
   }
 }

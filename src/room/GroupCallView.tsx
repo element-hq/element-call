@@ -452,6 +452,7 @@ export const GroupCallView: FC<Props> = ({
           client={client}
           matrixInfo={matrixInfo}
           rtcSession={rtcSession as MatrixRTCSession}
+          matrixRoom={room}
           participantCount={participantCount}
           onLeave={onLeave}
           header={header}

@@ -19,8 +19,11 @@ import {
   type Focus,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
+  MembershipManagerEvent,
   type SessionMembershipData,
+  Status,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import {
   type LocalParticipant,
   type LocalTrackPublication,
@@ -233,6 +236,7 @@ export function mockLocalParticipant(
 ): LocalParticipant {
   return {
     isLocal: true,
+    trackPublications: new Map(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
     ...mockEmitter(),
@@ -295,6 +299,7 @@ export async function withRemoteMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
+    constant(false),
     constant(roomMember.rawDisplayName ?? "nodisplayname"),
     constant(null),
     constant(null),
@@ -316,8 +321,10 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
 }
 
 export class MockRTCSession extends TypedEventEmitter<
-  MatrixRTCSessionEvent | RoomAndToDeviceEvents,
-  MatrixRTCSessionEventHandlerMap & RoomAndToDeviceEventsHandlerMap
+  MatrixRTCSessionEvent | RoomAndToDeviceEvents | MembershipManagerEvent,
+  MatrixRTCSessionEventHandlerMap &
+    RoomAndToDeviceEventsHandlerMap &
+    MembershipManagerEventHandlerMap
 > {
   public readonly statistics = {
     counters: {},
@@ -327,7 +334,6 @@ export class MockRTCSession extends TypedEventEmitter<
 
   public constructor(
     public readonly room: Room,
-    private localMembership: CallMembership,
     public memberships: CallMembership[] = [],
   ) {
     super();
@@ -343,13 +349,26 @@ export class MockRTCSession extends TypedEventEmitter<
   ): MockRTCSession {
     rtcMembers$.subscribe((m) => {
       const old = this.memberships;
-      // always prepend the local participant
-      const updated = [this.localMembership, ...(m as CallMembership[])];
-      this.memberships = updated;
-      this.emit(MatrixRTCSessionEvent.MembershipsChanged, old, updated);
+      this.memberships = m as CallMembership[];
+      this.emit(
+        MatrixRTCSessionEvent.MembershipsChanged,
+        old,
+        this.memberships,
+      );
     });
 
     return this;
+  }
+
+  public readonly membershipStatus = Status.Connected;
+
+  private _probablyLeft = false;
+  public get probablyLeft(): boolean {
+    return this._probablyLeft;
+  }
+  public set probablyLeft(value: boolean) {
+    this._probablyLeft = value;
+    this.emit(MembershipManagerEvent.ProbablyLeft, value);
   }
 }
 
