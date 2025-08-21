@@ -82,7 +82,7 @@
   "error": {
     "call_is_not_supported": "Call stöds inte",
     "call_not_found": "Samtal hittades inte",
-    "call_not_found_description": "<0>Den länken verkar inte tillhöra något befintligt samtal. Kontrollera att du har rätt länk, eller <1>skapa en ny</1>.</0>",
+    "call_not_found_description": "<0>Den länken verkar inte tillhöra något befintligt samtal. Kontrollera att du har rätt länk, eller <2>skapa en ny</2>.</0>",
     "connection_lost": "Anslutning förlorad",
     "connection_lost_description": "Du kopplades bort från samtalet.",
     "e2ee_unsupported": "Inkompatibel webbläsare",
@@ -94,6 +94,8 @@
     "matrix_rtc_focus_missing": "Servern är inte konfigurerad för att fungera med {{brand}}. Vänligen kontakta serveradministratören (Domän: {{domain}}, Felkod: {{ errorCode }}).",
     "open_elsewhere": "Öppnades i en annan flik",
     "open_elsewhere_description": "{{brand}} har öppnats i en annan flik. Om det inte låter rätt, pröva att ladda om sidan.",
+    "room_creation_restricted": "Misslyckades att skapa samtal",
+    "room_creation_restricted_description": "Samtalsskapande kan vara begränsat till endast behöriga användare. Försök igen senare eller kontakta serveradministratören om problemet kvarstår.",
     "unexpected_ec_error": "Ett oväntat fel inträffade (<0>Felkod:</0> <1>{{ errorCode }}</1>). Kontakta din serveradministratör."
   },
   "group_call_loader": {
@@ -104,6 +106,11 @@
     "knock_reject_body": "Rumsmedlemmarna avslog din begäran om att gå med.",
     "knock_reject_heading": "Inte tillåten att gå med",
     "reason": "Anledning"
+  },
+  "handset": {
+    "overlay_back_button": "Tillbaka till högtalarläge",
+    "overlay_description": "Fungerar bara när appen används",
+    "overlay_title": "Telefonläge"
   },
   "hangup_button_label": "Avsluta samtal",
   "header_label": "Element Call Hem",
@@ -176,6 +183,8 @@
       "change_device_button": "Byt ljudenhet",
       "default": "Förval",
       "default_named": "Förval <2>({{name}})</2>",
+      "handset": "Telefonlur",
+      "loudspeaker": "Högtalare",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon {{n}}",
       "speaker": "Högtalare",
