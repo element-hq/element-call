@@ -1620,12 +1620,14 @@ export class CallViewModel extends ViewModel {
         for (const p of publications) {
           if (p.track?.isUpstreamPaused === false) {
             const kind = p.track.kind;
-            logger.log(`Pausing ${kind} track (no MatrixRTC connection)`);
+            logger.log(
+              `Pausing ${kind} track (uncertain MatrixRTC connection)`,
+            );
             p.track
               .pauseUpstream()
               .catch((e) =>
                 logger.error(
-                  `Failed to pause ${kind} track after MatrixRTC connection loss`,
+                  `Failed to pause ${kind} track after entering uncertain MatrixRTC connection`,
                   e,
                 ),
               );
