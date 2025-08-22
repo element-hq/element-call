@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, vi, onTestFinished, it } from "vitest";
+import EventEmitter from "events";
 import {
   BehaviorSubject,
   combineLatest,
@@ -17,7 +18,7 @@ import {
   of,
   switchMap,
 } from "rxjs";
-import { SyncState, type MatrixClient } from "matrix-js-sdk";
+import { ClientEvent, SyncState, type MatrixClient } from "matrix-js-sdk";
 import {
   ConnectionState,
   type LocalParticipant,
@@ -28,6 +29,7 @@ import {
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
 import {
+  Status,
   type CallMembership,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -48,7 +50,6 @@ import {
   mockRtcMembership,
   MockRTCSession,
   mockMediaDevices,
-  mockEmitter,
 } from "../utils/test";
 import {
   ECAddonConnectionState,
@@ -239,6 +240,7 @@ interface CallViewModelInputs {
   connectionState$: Observable<ECConnectionState>;
   speaking: Map<Participant, Observable<boolean>>;
   mediaDevices: MediaDevices;
+  initialSyncState: SyncState;
 }
 
 function withCallViewModel(
@@ -248,24 +250,37 @@ function withCallViewModel(
     connectionState$ = of(ConnectionState.Connected),
     speaking = new Map(),
     mediaDevices = mockMediaDevices({}),
+    initialSyncState = SyncState.Syncing,
   }: Partial<CallViewModelInputs>,
   continuation: (
     vm: CallViewModel,
     rtcSession: MockRTCSession,
     subjects: { raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>> },
+    setSyncState: (value: SyncState) => void,
   ) => void,
   options: CallViewModelOptions = {
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     autoLeaveWhenOthersLeft: false,
   },
 ): void {
+  let syncState = initialSyncState;
+  const setSyncState = (value: SyncState): void => {
+    const prev = syncState;
+    syncState = value;
+    room.client.emit(ClientEvent.Sync, value, prev);
+  };
   const room = mockMatrixRoom({
-    client: {
-      ...mockEmitter(),
-      getUserId: () => localRtcMember.sender,
-      getDeviceId: () => localRtcMember.deviceId,
-      getSyncState: () => SyncState.Syncing,
-    } as Partial<MatrixClient> as MatrixClient,
+    client: new (class extends EventEmitter {
+      public getUserId(): string | undefined {
+        return localRtcMember.sender;
+      }
+      public getDeviceId(): string {
+        return localRtcMember.deviceId;
+      }
+      public getSyncState(): SyncState {
+        return syncState;
+      }
+    })() as Partial<MatrixClient> as MatrixClient,
     getMember: (userId) => roomMembers.get(userId) ?? null,
   });
   const rtcSession = new MockRTCSession(room, []).withMemberships(rtcMembers$);
@@ -321,7 +336,7 @@ function withCallViewModel(
     roomEventSelectorSpy!.mockRestore();
   });
 
-  continuation(vm, rtcSession, { raisedHands$: raisedHands$ });
+  continuation(vm, rtcSession, { raisedHands$: raisedHands$ }, setSyncState);
 }
 
 test("participants are retained during a focus switch", () => {
@@ -1276,25 +1291,49 @@ test("media tracks are paused while reconnecting to MatrixRTC", () => {
       localParticipant.trackPublications = originalPublications;
     });
 
-    // TODO: Add marbles for sync state and membership status as well
-    const connectedMarbles = "           yny";
-    const expectedReconnectingMarbles = "nyn";
-    const expectedTrackRunningMarbles = "yny";
+    // There are three indicators that the client might be disconnected from
+    // MatrixRTC: whether the sync loop is connected, whether the membership is
+    // present in local room state, and whether the membership manager thinks
+    // we've hit the timeout for the delayed leave event. Let's test all
+    // combinations of these conditions.
+    const syncingMarbles = "             nyny----n--y";
+    const membershipStatusMarbles = "    y---ny-n-yn-y";
+    const probablyLeftMarbles = "        n-----y-ny---n";
+    const expectedReconnectingMarbles = "n-ynyny------n";
+    const expectedTrackRunningMarbles = "nynynyn------y";
 
-    withCallViewModel({}, (vm, rtcSession) => {
-      schedule(connectedMarbles, {
-        y: () => {
-          rtcSession.probablyLeft = false;
-        },
-        n: () => {
-          rtcSession.probablyLeft = true;
-        },
-      });
-      expectObservable(vm.reconnecting$).toBe(
-        expectedReconnectingMarbles,
-        yesNo,
-      );
-      expectObservable(trackRunning$).toBe(expectedTrackRunningMarbles, yesNo);
-    });
+    withCallViewModel(
+      { initialSyncState: SyncState.Reconnecting },
+      (vm, rtcSession, _subjects, setSyncState) => {
+        schedule(syncingMarbles, {
+          y: () => setSyncState(SyncState.Syncing),
+          n: () => setSyncState(SyncState.Reconnecting),
+        });
+        schedule(membershipStatusMarbles, {
+          y: () => {
+            rtcSession.membershipStatus = Status.Connected;
+          },
+          n: () => {
+            rtcSession.membershipStatus = Status.Reconnecting;
+          },
+        });
+        schedule(probablyLeftMarbles, {
+          y: () => {
+            rtcSession.probablyLeft = true;
+          },
+          n: () => {
+            rtcSession.probablyLeft = false;
+          },
+        });
+        expectObservable(vm.reconnecting$).toBe(
+          expectedReconnectingMarbles,
+          yesNo,
+        );
+        expectObservable(trackRunning$).toBe(
+          expectedTrackRunningMarbles,
+          yesNo,
+        );
+      },
+    );
   });
 });

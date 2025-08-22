@@ -360,15 +360,25 @@ export class MockRTCSession extends TypedEventEmitter<
     return this;
   }
 
-  public readonly membershipStatus = Status.Connected;
+  private _membershipStatus = Status.Connected;
+  public get membershipStatus(): Status {
+    return this._membershipStatus;
+  }
+  public set membershipStatus(value: Status) {
+    const prev = this._membershipStatus;
+    this._membershipStatus = value;
+    if (value !== prev)
+      this.emit(MembershipManagerEvent.StatusChanged, prev, value);
+  }
 
   private _probablyLeft = false;
   public get probablyLeft(): boolean {
     return this._probablyLeft;
   }
   public set probablyLeft(value: boolean) {
+    const prev = this._probablyLeft;
     this._probablyLeft = value;
-    this.emit(MembershipManagerEvent.ProbablyLeft, value);
+    if (value !== prev) this.emit(MembershipManagerEvent.ProbablyLeft, value);
   }
 }
 
