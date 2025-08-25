@@ -19,6 +19,8 @@ import {
 } from "livekit-client";
 import {
   ClientEvent,
+  EventTimelineSetHandlerMap,
+  RoomEvent,
   RoomStateEvent,
   SyncState,
   type Room as MatrixRoom,
@@ -57,6 +59,7 @@ import {
   type IRTCNotificationContent,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
+  MatrixRTCSessionEventHandlerMap,
   MembershipManagerEvent,
   Status,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -935,26 +938,35 @@ export class CallViewModel extends ViewModel {
    * "ringing": The notification event was sent.
    * "ringEnded": The notification events lifetime has timed out -> ringing stopped on all receiving clients.
    */
-  private readonly notificationEventIsRingingOthers$: Observable<
-    "unknown" | "ringing" | "ringEnded" | null
-  > = fromEvent<[IRTCNotificationContent, ICallNotifyContent]>(
-    this.matrixRTCSession,
-    MatrixRTCSessionEvent.DidSendCallNotification,
-  ).pipe(
+  private readonly rtcNotificationEventState$: Observable<
+    { state: "unknown" | "ringEnded" } | { state: "ringing"; event_id: string }
+  > = fromEvent<
+    Parameters<
+      MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
+    >
+  >(this.matrixRTCSession, MatrixRTCSessionEvent.DidSendCallNotification).pipe(
     switchMap(([notificationEvent]) => {
       // event.lifetime is expected to be in ms
       const lifetime = notificationEvent?.lifetime ?? 0;
       if (lifetime > 0) {
         // Emit true immediately, then false after lifetime ms
         return concat(
-          of<"ringing" | null>("ringing"),
-          timer(lifetime).pipe(map((): "ringEnded" | null => "ringEnded")),
+          of({
+            state: "ringing",
+            event_id: notificationEvent.event_id,
+          } as {
+            state: "ringing";
+            event_id: string;
+          }),
+          timer(lifetime).pipe(
+            map(() => ({ state: "ringEnded" }) as { state: "ringEnded" }),
+          ),
         );
       }
-      // If no lifetime, just emit true once
-      return of(null);
+      // If no lifetime, the notify event is basically invalid and we just stay in unknown state.
+      return of({ state: "unknown" } as { state: "unknown" });
     }),
-    startWith("unknown" as "unknown" | null),
+    startWith({ state: "unknown" } as { state: "unknown" }),
   );
 
   /**
@@ -980,28 +992,50 @@ export class CallViewModel extends ViewModel {
    *  - null: EC is configured to never show any waiting for answer state.
    */
   public readonly callPickupState$: Behavior<
-    "unknown" | "ringing" | "timeout" | "success" | null
+    "unknown" | "ringing" | "timeout" | "success" | "decline" | null
   > = this.scope.behavior(
     combineLatest([
-      this.notificationEventIsRingingOthers$,
+      this.rtcNotificationEventState$,
       this.someoneElseJoined$,
+      fromEvent<Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>>(
+        this.matrixRoom,
+        RoomEvent.Timeline,
+      ).pipe(
+        map(([event]) => {
+          // TODO use correct decline event type enum.
+          if (event.getType() === "m.rtc.decline") return event;
+          else return null;
+        }),
+        startWith(null),
+      ),
     ]).pipe(
-      map(([isRingingOthers, someoneJoined]) => {
+      map(([notificationEventState, someoneJoined, declineEvent]) => {
         // Never enter waiting for answer state if the app is not configured with waitingForAnswer.
         if (!this.options.shouldWaitForCallPickup) return null;
         // As soon as someone joins, we can consider the call "wait for answer" successful
         if (someoneJoined) return "success";
 
-        switch (isRingingOthers) {
+        switch (notificationEventState?.state) {
           case "unknown":
             return "unknown";
           case "ringing":
+            // Check if the decline event corresponds to the current notification event
+            if (declineEvent?.getId() === notificationEventState.event_id) {
+              return "decline";
+            }
             return "ringing";
           case "ringEnded":
             return "timeout";
           default:
             return "timeout";
         }
+      }),
+      // Once we reach a terminal state, keep it
+      scan((prev, next) => {
+        if (prev === "decline" || prev === "timeout" || prev === "success") {
+          return prev;
+        }
+        return next;
       }),
       distinctUntilChanged(),
     ),

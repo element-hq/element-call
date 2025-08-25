@@ -18,7 +18,14 @@ import {
   of,
   switchMap,
 } from "rxjs";
-import { ClientEvent, SyncState, type MatrixClient } from "matrix-js-sdk";
+import {
+  ClientEvent,
+  SyncState,
+  type MatrixClient,
+  RoomEvent as MatrixRoomEvent,
+  MatrixEvent,
+  type IRoomTimelineData,
+} from "matrix-js-sdk";
 import {
   ConnectionState,
   type LocalParticipant,
@@ -1249,10 +1256,12 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 30 } as unknown as {
+                { event_id: "$notif1", lifetime: 30 } as unknown as {
                   event_id: string;
                 } & IRTCNotificationContent,
-                {} as unknown as { event_id: string } & ICallNotifyContent,
+                { event_id: "$notif1" } as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
               );
             },
           });
@@ -1300,10 +1309,10 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 100 } as unknown as {
+                { event_id: "$notif2", lifetime: 100 } as unknown as {
                   event_id: string;
                 } & IRTCNotificationContent,
-                {} as unknown as {
+                { event_id: "$notif2" } as unknown as {
                   event_id: string;
                 } & ICallNotifyContent,
               );
@@ -1351,10 +1360,10 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 50 } as unknown as {
+                { event_id: "$notif3", lifetime: 50 } as unknown as {
                   event_id: string;
                 } & IRTCNotificationContent,
-                {} as unknown as {
+                { event_id: "$notif3" } as unknown as {
                   event_id: string;
                 } & ICallNotifyContent,
               );
@@ -1388,10 +1397,10 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 0 } as unknown as {
+                { event_id: "$notif4", lifetime: 0 } as unknown as {
                   event_id: string;
                 } & IRTCNotificationContent, // no lifetime
-                {} as unknown as {
+                { event_id: "$notif4" } as unknown as {
                   event_id: string;
                 } & ICallNotifyContent,
               );
@@ -1437,10 +1446,10 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 30 } as unknown as {
+                { event_id: "$notif5", lifetime: 30 } as unknown as {
                   event_id: string;
                 } & IRTCNotificationContent,
-                {} as unknown as {
+                { event_id: "$notif5" } as unknown as {
                   event_id: string;
                 } & ICallNotifyContent,
               );
@@ -1452,6 +1461,149 @@ describe("shouldWaitForCallPickup$", () => {
         },
         {
           shouldWaitForCallPickup: false,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("decline before timeout window ends -> decline", () => {
+    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: scope.behavior(hot("a", { a: [] }), []),
+          rtcMembers$: scope.behavior(hot("a", { a: [localRtcMember] }), []),
+          connectionState$: of(ConnectionState.Connected),
+        },
+        (vm, rtcSession) => {
+          // Notify at 10ms with 50ms lifetime, decline at 40ms with matching id
+          schedule("          10ms r 29ms d", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { event_id: "$decl1", lifetime: 50 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                { event_id: "$decl1" } as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
+              );
+            },
+            d: () => {
+              // Emit decline timeline event with id matching the notification
+              rtcSession.room.emit(
+                MatrixRoomEvent.Timeline,
+                new MatrixEvent({ event_id: "$decl1", type: "m.rtc.decline" }),
+                rtcSession.room,
+                undefined,
+                false,
+                {} as IRoomTimelineData,
+              );
+            },
+          });
+          expectObservable(vm.callPickupState$).toBe("a 9ms b 29ms e", {
+            a: "unknown",
+            b: "ringing",
+            e: "decline",
+          });
+        },
+        {
+          shouldWaitForCallPickup: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("decline after timeout window ends -> stays timeout", () => {
+    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: scope.behavior(hot("a", { a: [] }), []),
+          rtcMembers$: scope.behavior(hot("a", { a: [localRtcMember] }), []),
+          connectionState$: of(ConnectionState.Connected),
+        },
+        (vm, rtcSession) => {
+          // Notify at 10ms with 20ms lifetime (timeout at 30ms), decline at 40ms
+          schedule("          10ms r 20ms t 10ms d", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { event_id: "$decl2", lifetime: 20 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                { event_id: "$decl2" } as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
+              );
+            },
+            t: () => {},
+            d: () => {
+              rtcSession.room.emit(
+                MatrixRoomEvent.Timeline,
+                new MatrixEvent({ event_id: "$decl2", type: "m.rtc.decline" }),
+                rtcSession.room,
+                undefined,
+                false,
+                {} as IRoomTimelineData,
+              );
+            },
+          });
+          expectObservable(vm.callPickupState$).toBe("a 9ms b 19ms c", {
+            a: "unknown",
+            b: "ringing",
+            c: "timeout",
+          });
+        },
+        {
+          shouldWaitForCallPickup: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("decline with wrong id is ignored (stays ringing)", () => {
+    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: scope.behavior(hot("a", { a: [] }), []),
+          rtcMembers$: scope.behavior(hot("a", { a: [localRtcMember] }), []),
+          connectionState$: of(ConnectionState.Connected),
+        },
+        (vm, rtcSession) => {
+          // Notify at 10ms with id A, decline arrives at 20ms with id B
+          schedule("          10ms r 10ms d", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { event_id: "$right", lifetime: 50 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                { event_id: "$right" } as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
+              );
+            },
+            d: () => {
+              rtcSession.room.emit(
+                MatrixRoomEvent.Timeline,
+                new MatrixEvent({ event_id: "$wrong", type: "m.rtc.decline" }),
+                rtcSession.room,
+                undefined,
+                false,
+                {} as IRoomTimelineData,
+              );
+            },
+          });
+          // We assert up to 21ms to see the ringing at 10ms and no change at 20ms
+          expectObservable(vm.callPickupState$, "21ms !").toBe("a 9ms b", {
+            a: "unknown",
+            b: "ringing",
+          });
+        },
+        {
+          shouldWaitForCallPickup: true,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
