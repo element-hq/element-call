@@ -216,6 +216,17 @@ export interface UrlConfiguration {
    * This is one part to make the call matrixRTC session behave like a telephone call.
    */
   autoLeaveWhenOthersLeft: boolean;
+
+  /**
+   * If the client should show behave like it is awaiting an answer if a notification was sent.
+   * This is a no-op if not combined with sendNotificationType.
+   *
+   * This entails:
+   *  - show ui that it is awaiting an answer
+   *  - play a sound that indicates that it is awaiting an answer
+   *  - auto-dismiss the call widget once the notification lifetime expires on the receivers side.
+   */
+  awaitingAnswer: boolean;
 }
 
 // If you need to add a new flag to this interface, prefer a name that describes
@@ -442,6 +453,7 @@ export const getUrlParams = (
       "ring",
       "notification",
     ]),
+    awaitingAnswer: parser.getFlag("showAwaitingAnswerFeedback"),
     autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
   };
 

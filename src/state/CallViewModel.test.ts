@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, onTestFinished, it } from "vitest";
+import { test, vi, onTestFinished, it, describe } from "vitest";
 import EventEmitter from "events";
 import {
   BehaviorSubject,
@@ -32,6 +32,9 @@ import {
   Status,
   type CallMembership,
   type MatrixRTCSession,
+  type IRTCNotificationContent,
+  type ICallNotifyContent,
+  MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
@@ -1225,6 +1228,215 @@ test("autoLeaveWhenOthersLeft$ doesn't emits when autoLeaveWhenOthersLeft option
         encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       },
     );
+  });
+});
+
+describe("waitForNotificationAnswer$", () => {
+  test("unknown -> ringing -> timeout when notified and nobody joins", () => {
+    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+      // No one ever joins (only local user)
+      withCallViewModel(
+        {
+          remoteParticipants$: scope.behavior(hot("a", { a: [] }), []),
+          rtcMembers$: scope.behavior(hot("a", { a: [localRtcMember] }), []),
+          connectionState$: of(ConnectionState.Connected),
+          speaking: new Map(),
+          mediaDevices: mockMediaDevices({}),
+        },
+        (vm, rtcSession) => {
+          // Fire a call notification at 10ms with lifetime 30ms
+          schedule("          10ms r", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { lifetime: 30 } as unknown as IRTCNotificationContent,
+                {} as unknown as ICallNotifyContent,
+              );
+            },
+          });
+
+          expectObservable(vm.waitForNotificationAnswer$).toBe(
+            "a 9ms b 29ms c",
+            { a: "unknown", b: "ringing", c: "timeout" },
+          );
+        },
+        {
+          waitForNotificationAnswer: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("ringing -> success if someone joins before timeout", () => {
+    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+      // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
+      const remote$ = scope.behavior(
+        hot("a--b", { a: [], b: [aliceParticipant] }),
+        [],
+      );
+      const rtc$ = scope.behavior(
+        hot("a--b", {
+          a: [localRtcMember],
+          b: [localRtcMember, aliceRtcMember],
+        }),
+        [],
+      );
+
+      withCallViewModel(
+        {
+          remoteParticipants$: remote$,
+          rtcMembers$: rtc$,
+          connectionState$: of(ConnectionState.Connected),
+          speaking: new Map(),
+          mediaDevices: mockMediaDevices({}),
+        },
+        (vm, rtcSession) => {
+          // Notify at 5ms so we enter ringing, then success at 20ms
+          schedule("          5ms r", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { lifetime: 100 } as unknown as IRTCNotificationContent,
+                {} as unknown as ICallNotifyContent,
+              );
+            },
+          });
+
+          expectObservable(vm.waitForNotificationAnswer$).toBe("a 2ms c", {
+            a: "unknown",
+            c: "success",
+          });
+        },
+        {
+          waitForNotificationAnswer: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("success when someone joins before we notify", () => {
+    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+      // Join at 10ms, notify later at 20ms (state should stay success)
+      const remote$ = scope.behavior(
+        hot("a-b", { a: [], b: [aliceParticipant] }),
+        [],
+      );
+      const rtc$ = scope.behavior(
+        hot("a-b", {
+          a: [localRtcMember],
+          b: [localRtcMember, aliceRtcMember],
+        }),
+        [],
+      );
+
+      withCallViewModel(
+        {
+          remoteParticipants$: remote$,
+          rtcMembers$: rtc$,
+          connectionState$: of(ConnectionState.Connected),
+          speaking: new Map(),
+          mediaDevices: mockMediaDevices({}),
+        },
+        (vm, rtcSession) => {
+          schedule("          20ms r", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { lifetime: 50 } as unknown as IRTCNotificationContent,
+                {} as unknown as ICallNotifyContent,
+              );
+            },
+          });
+          expectObservable(vm.waitForNotificationAnswer$).toBe("a 1ms b", {
+            a: "unknown",
+            b: "success",
+          });
+        },
+        {
+          waitForNotificationAnswer: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("notify without lifetime -> immediate timeout", () => {
+    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: scope.behavior(hot("a", { a: [] }), []),
+          rtcMembers$: scope.behavior(hot("a", { a: [localRtcMember] }), []),
+          connectionState$: of(ConnectionState.Connected),
+          speaking: new Map(),
+          mediaDevices: mockMediaDevices({}),
+        },
+        (vm, rtcSession) => {
+          schedule("          10ms r", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { lifetime: 0 } as unknown as IRTCNotificationContent, // no lifetime
+                {} as unknown as ICallNotifyContent,
+              );
+            },
+          });
+          expectObservable(vm.waitForNotificationAnswer$).toBe("a 9ms b", {
+            a: "unknown",
+            b: "timeout",
+          });
+        },
+        {
+          waitForNotificationAnswer: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("stays null when waitForNotificationAnswer=false", () => {
+    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+      const remote$ = scope.behavior(
+        hot("a--b", { a: [], b: [aliceParticipant] }),
+        [],
+      );
+      const rtc$ = scope.behavior(
+        hot("a--b", {
+          a: [localRtcMember],
+          b: [localRtcMember, aliceRtcMember],
+        }),
+        [],
+      );
+
+      withCallViewModel(
+        {
+          remoteParticipants$: remote$,
+          rtcMembers$: rtc$,
+          connectionState$: of(ConnectionState.Connected),
+          speaking: new Map(),
+          mediaDevices: mockMediaDevices({}),
+        },
+        (vm, rtcSession) => {
+          schedule("          5ms r", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { lifetime: 30 } as unknown as IRTCNotificationContent,
+                {} as unknown as ICallNotifyContent,
+              );
+            },
+          });
+          expectObservable(vm.waitForNotificationAnswer$).toBe("(n)", {
+            n: null,
+          });
+        },
+        {
+          waitForNotificationAnswer: false,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
   });
 });
 

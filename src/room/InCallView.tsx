@@ -216,7 +216,6 @@ export interface InCallViewProps {
   matrixRoom: MatrixRoom;
   livekitRoom: LivekitRoom;
   muteStates: MuteStates;
-  participantCount: number;
   /** Function to call when the user explicitly ends the call */
   onLeave: () => void;
   header: HeaderStyle;
@@ -233,7 +232,6 @@ export const InCallView: FC<InCallViewProps> = ({
   matrixRoom,
   livekitRoom,
   muteStates,
-  participantCount,
   onLeave,
   header: headerStyle,
   connState,
@@ -312,6 +310,7 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
+  const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
   const windowMode = useBehavior(vm.windowMode$);
   const layout = useBehavior(vm.layout$);
