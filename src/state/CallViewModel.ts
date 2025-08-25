@@ -116,7 +116,7 @@ export interface CallViewModelOptions {
    * If the call is started in a way where we want it to behave like a telephone usecase
    * If we sent a notification event, we want the ui to show a ringing state
    */
-  waitForNotificationAnswer?: boolean;
+  shouldWaitForCallPickup?: boolean;
 }
 
 // How long we wait after a focus switch before showing the real participant
@@ -970,7 +970,7 @@ export class CallViewModel extends ViewModel {
   );
 
   /**
-   * The current waiting for answer state of the call.
+   * The current call pickup state of the call.
    *  - "ringing": The call is ringing on other devices in this room (This client should give audiovisual feedback that this is happening).
    *  - "unknown": The client has not yet sent the notification event. We don't know if it will because it first needs to send its own membership.
    *     Then we can conclude if we were the first one to join or not.
@@ -979,7 +979,7 @@ export class CallViewModel extends ViewModel {
    *  - "success": Someone else joined. The call is in a normal state. Stop audiovisual feedback.
    *  - null: EC is configured to never show any waiting for answer state.
    */
-  public readonly waitForNotificationAnswer$: Behavior<
+  public readonly callPickupState$: Behavior<
     "unknown" | "ringing" | "timeout" | "success" | null
   > = this.scope.behavior(
     combineLatest([
@@ -988,7 +988,7 @@ export class CallViewModel extends ViewModel {
     ]).pipe(
       map(([isRingingOthers, someoneJoined]) => {
         // Never enter waiting for answer state if the app is not configured with waitingForAnswer.
-        if (!this.options.waitForNotificationAnswer) return null;
+        if (!this.options.shouldWaitForCallPickup) return null;
         // As soon as someone joins, we can consider the call "wait for answer" successful
         if (someoneJoined) return "success";
 
