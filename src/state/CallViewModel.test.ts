@@ -1231,7 +1231,7 @@ test("autoLeaveWhenOthersLeft$ doesn't emits when autoLeaveWhenOthersLeft option
   });
 });
 
-describe("waitForNotificationAnswer$", () => {
+describe("shouldWaitForCallPickup$", () => {
   test("unknown -> ringing -> timeout when notified and nobody joins", () => {
     withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
       // No one ever joins (only local user)
@@ -1255,13 +1255,14 @@ describe("waitForNotificationAnswer$", () => {
             },
           });
 
-          expectObservable(vm.waitForNotificationAnswer$).toBe(
-            "a 9ms b 29ms c",
-            { a: "unknown", b: "ringing", c: "timeout" },
-          );
+          expectObservable(vm.callPickupState$).toBe("a 9ms b 29ms c", {
+            a: "unknown",
+            b: "ringing",
+            c: "timeout",
+          });
         },
         {
-          waitForNotificationAnswer: true,
+          shouldWaitForCallPickup: true,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
@@ -1303,13 +1304,13 @@ describe("waitForNotificationAnswer$", () => {
             },
           });
 
-          expectObservable(vm.waitForNotificationAnswer$).toBe("a 2ms c", {
+          expectObservable(vm.callPickupState$).toBe("a 2ms c", {
             a: "unknown",
             c: "success",
           });
         },
         {
-          waitForNotificationAnswer: true,
+          shouldWaitForCallPickup: true,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
@@ -1349,13 +1350,13 @@ describe("waitForNotificationAnswer$", () => {
               );
             },
           });
-          expectObservable(vm.waitForNotificationAnswer$).toBe("a 1ms b", {
+          expectObservable(vm.callPickupState$).toBe("a 1ms b", {
             a: "unknown",
             b: "success",
           });
         },
         {
-          waitForNotificationAnswer: true,
+          shouldWaitForCallPickup: true,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
@@ -1382,20 +1383,20 @@ describe("waitForNotificationAnswer$", () => {
               );
             },
           });
-          expectObservable(vm.waitForNotificationAnswer$).toBe("a 9ms b", {
+          expectObservable(vm.callPickupState$).toBe("a 9ms b", {
             a: "unknown",
             b: "timeout",
           });
         },
         {
-          waitForNotificationAnswer: true,
+          shouldWaitForCallPickup: true,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
     });
   });
 
-  test("stays null when waitForNotificationAnswer=false", () => {
+  test("stays null when shouldWaitForCallPickup=false", () => {
     withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
       const remote$ = scope.behavior(
         hot("a--b", { a: [], b: [aliceParticipant] }),
@@ -1427,12 +1428,12 @@ describe("waitForNotificationAnswer$", () => {
               );
             },
           });
-          expectObservable(vm.waitForNotificationAnswer$).toBe("(n)", {
+          expectObservable(vm.callPickupState$).toBe("(n)", {
             n: null,
           });
         },
         {
-          waitForNotificationAnswer: false,
+          shouldWaitForCallPickup: false,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
