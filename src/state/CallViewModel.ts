@@ -53,6 +53,8 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
+  type ICallNotifyContent,
+  type IRTCNotificationContent,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   MembershipManagerEvent,
@@ -110,7 +112,13 @@ import { type Behavior } from "./Behavior";
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
   autoLeaveWhenOthersLeft?: boolean;
+  /**
+   * If the call is started in a way where we want it to behave like a telephone usecase
+   * If we sent a notification event, we want the ui to show a ringing state
+   */
+  waitForNotificationAnswer?: boolean;
 }
+
 // How long we wait after a focus switch before showing the real participant
 // list again
 const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
@@ -427,7 +435,14 @@ export class CallViewModel extends ViewModel {
         MembershipManagerEvent.StatusChanged,
       ).pipe(
         startWith(null),
-        map(() => this.matrixRTCSession.membershipStatus === Status.Connected),
+        map(
+          () =>
+            (
+              this.matrixRTCSession as unknown as {
+                membershipStatus?: Status;
+              }
+            ).membershipStatus === Status.Connected,
+        ),
       ),
       // Also watch out for warnings that we've likely hit a timeout and our
       // delayed leave event is being sent (this condition is here because it
@@ -438,7 +453,11 @@ export class CallViewModel extends ViewModel {
         MembershipManagerEvent.ProbablyLeft,
       ).pipe(
         startWith(null),
-        map(() => this.matrixRTCSession.probablyLeft !== true),
+        map(
+          () =>
+            (this.matrixRTCSession as unknown as { probablyLeft?: boolean })
+              .probablyLeft !== true,
+        ),
       ),
     ),
   );
@@ -825,49 +844,68 @@ export class CallViewModel extends ViewModel {
    *  - Each participant has a corresponding MatrixRTC membership state event
    *  - There can be multiple participants for one matrix user.
    */
-  public readonly participantChanges$ = this.userMedia$.pipe(
-    map((mediaItems) => mediaItems.map((m) => m.id)),
-    scan<string[], { ids: string[]; joined: string[]; left: string[] }>(
-      (prev, ids) => {
-        const left = prev.ids.filter((id) => !ids.includes(id));
-        const joined = ids.filter((id) => !prev.ids.includes(id));
-        return { ids, joined, left };
-      },
-      { ids: [], joined: [], left: [] },
+  public readonly participantChanges$ = this.scope.behavior(
+    this.userMedia$.pipe(
+      map((mediaItems) => mediaItems.map((m) => m.id)),
+      scan<string[], { ids: string[]; joined: string[]; left: string[] }>(
+        (prev, ids) => {
+          const left = prev.ids.filter((id) => !ids.includes(id));
+          const joined = ids.filter((id) => !prev.ids.includes(id));
+          return { ids, joined, left };
+        },
+        { ids: [], joined: [], left: [] },
+      ),
     ),
+  );
+
+  /**
+   * The number of participants currently in the call.
+   *
+   *  - Each participant has one livekit connection
+   *  - Each participant has a corresponding MatrixRTC membership state event
+   *  - There can be multiple participants for one matrix user.
+   */
+  public readonly participantCount$ = this.scope.behavior(
+    this.participantChanges$.pipe(map(({ ids }) => ids.length)),
   );
 
   /**
    * This observable tracks the matrix users that are currently in the call.
    * There can be just one matrix user with multiple participants (see also participantChanges$)
    */
-  public readonly matrixUserChanges$ = this.userMedia$.pipe(
-    map(
-      (mediaItems) =>
-        new Set(
-          mediaItems
-            .map((m) => m.vm.member?.userId)
-            .filter((id) => id !== undefined),
-        ),
-    ),
-    scan<
-      Set<string>,
-      {
-        userIds: Set<string>;
-        joinedUserIds: Set<string>;
-        leftUserIds: Set<string>;
-      }
-    >(
-      (prevState, userIds) => {
-        const left = new Set(
-          [...prevState.userIds].filter((id) => !userIds.has(id)),
-        );
-        const joined = new Set(
-          [...userIds].filter((id) => !prevState.userIds.has(id)),
-        );
-        return { userIds: userIds, joinedUserIds: joined, leftUserIds: left };
-      },
-      { userIds: new Set(), joinedUserIds: new Set(), leftUserIds: new Set() },
+  public readonly matrixUserChanges$ = this.scope.behavior(
+    this.userMedia$.pipe(
+      map(
+        (mediaItems) =>
+          new Set(
+            mediaItems
+              .map((m) => m.vm.member?.userId)
+              .filter((id) => id !== undefined),
+          ),
+      ),
+      scan<
+        Set<string>,
+        {
+          userIds: Set<string>;
+          joinedUserIds: Set<string>;
+          leftUserIds: Set<string>;
+        }
+      >(
+        (prevState, userIds) => {
+          const left = new Set(
+            [...prevState.userIds].filter((id) => !userIds.has(id)),
+          );
+          const joined = new Set(
+            [...userIds].filter((id) => !prevState.userIds.has(id)),
+          );
+          return { userIds: userIds, joinedUserIds: joined, leftUserIds: left };
+        },
+        {
+          userIds: new Set(),
+          joinedUserIds: new Set(),
+          leftUserIds: new Set(),
+        },
+      ),
     ),
   );
 
@@ -889,6 +927,84 @@ export class CallViewModel extends ViewModel {
     distinctUntilChanged(),
     filter((leave) => (leave && this.options.autoLeaveWhenOthersLeft) ?? false),
     map(() => {}),
+  );
+
+  /**
+   * "unknown": We don't know if the RTC session decides to send a notify event yet.
+   *   It will only be known once we sent our own membership and know we were the first one to join.
+   * "ringing": The notification event was sent.
+   * "ringEnded": The notification events lifetime has timed out -> ringing stopped on all receiving clients.
+   */
+  private readonly notificationEventIsRingingOthers$: Observable<
+    "unknown" | "ringing" | "ringEnded" | null
+  > = fromEvent<[IRTCNotificationContent, ICallNotifyContent]>(
+    this.matrixRTCSession,
+    MatrixRTCSessionEvent.DidSendCallNotification,
+  ).pipe(
+    switchMap(([notificationEvent]) => {
+      // event.lifetime is expected to be in ms
+      const lifetime = notificationEvent?.lifetime ?? 0;
+      if (lifetime > 0) {
+        // Emit true immediately, then false after lifetime ms
+        return concat(
+          of<"ringing" | null>("ringing"),
+          timer(lifetime).pipe(map((): "ringEnded" | null => "ringEnded")),
+        );
+      }
+      // If no lifetime, just emit true once
+      return of(null);
+    }),
+    startWith("unknown" as "unknown" | null),
+  );
+
+  /**
+   * If some other matrix user has joined the call. It can start with true if there are already multiple matrix users.
+   */
+  private readonly someoneElseJoined$ = this.matrixUserChanges$.pipe(
+    scan(
+      (someoneJoined, { joinedUserIds }) =>
+        someoneJoined || [...joinedUserIds].some((id) => id !== this.userId),
+      false,
+    ),
+    startWith(this.matrixUserChanges$.value.userIds.size > 1),
+  );
+
+  /**
+   * The current waiting for answer state of the call.
+   *  - "ringing": The call is ringing on other devices in this room (This client should give audiovisual feedback that this is happening).
+   *  - "unknown": The client has not yet sent the notification event. We don't know if it will because it first needs to send its own membership.
+   *     Then we can conclude if we were the first one to join or not.
+   *  - "timeout": No-one picked up in the defined time this call should be ringing on others devices.
+   *     The call failed. If desired this can be used as a trigger to exit the call.
+   *  - "success": Someone else joined. The call is in a normal state. Stop audiovisual feedback.
+   *  - null: EC is configured to never show any waiting for answer state.
+   */
+  public readonly waitForNotificationAnswer$: Behavior<
+    "unknown" | "ringing" | "timeout" | "success" | null
+  > = this.scope.behavior(
+    combineLatest([
+      this.notificationEventIsRingingOthers$,
+      this.someoneElseJoined$,
+    ]).pipe(
+      map(([isRingingOthers, someoneJoined]) => {
+        // Never enter waiting for answer state if the app is not configured with waitingForAnswer.
+        if (!this.options.waitForNotificationAnswer) return null;
+        // As soon as someone joins, we can consider the call "wait for answer" successful
+        if (someoneJoined) return "success";
+
+        switch (isRingingOthers) {
+          case "unknown":
+            return "unknown";
+          case "ringing":
+            return "ringing";
+          case "ringEnded":
+            return "timeout";
+          default:
+            return "timeout";
+        }
+      }),
+      distinctUntilChanged(),
+    ),
   );
 
   /**
