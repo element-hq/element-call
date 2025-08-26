@@ -1249,8 +1249,10 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 30 } as unknown as IRTCNotificationContent,
-                {} as unknown as ICallNotifyContent,
+                { lifetime: 30 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                {} as unknown as { event_id: string } & ICallNotifyContent,
               );
             },
           });
