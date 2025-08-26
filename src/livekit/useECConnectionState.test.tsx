@@ -15,7 +15,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { defer, sleep } from "matrix-js-sdk/lib/utils";
+import { sleep } from "matrix-js-sdk/lib/utils";
 
 import { useECConnectionState } from "./useECConnectionState";
 import { type SFUConfig } from "./openIDSFU";
