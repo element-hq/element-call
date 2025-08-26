@@ -93,8 +93,8 @@ describe("Leaking connection prevention", () => {
 
   test("Should cancel pending connections when the component is unmounted", async () => {
     const connectCall = vi.fn();
-    const pendingConnection = defer<void>();
-    // let pendingDisconnection = defer<void>()
+    const pendingConnection = Promise.withResolvers<void>();
+    // let pendingDisconnection = Promise.withResolvers<void>()
     const disconnectMock = vi.fn();
 
     const mockRoom = {
@@ -141,8 +141,8 @@ describe("Leaking connection prevention", () => {
 
   test("Should cancel about to open but not yet opened connection", async () => {
     const createTracksCall = vi.fn();
-    const pendingCreateTrack = defer<void>();
-    // let pendingDisconnection = defer<void>()
+    const pendingCreateTrack = Promise.withResolvers<void>();
+    // let pendingDisconnection = Promise.withResolvers<void>()
     const disconnectMock = vi.fn();
     const connectMock = vi.fn();
 
