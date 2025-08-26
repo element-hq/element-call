@@ -19,7 +19,7 @@ import {
 } from "livekit-client";
 import {
   ClientEvent,
-  EventTimelineSetHandlerMap,
+  type EventTimelineSetHandlerMap,
   EventType,
   RoomEvent,
   RoomStateEvent,
@@ -58,7 +58,7 @@ import {
   type CallMembership,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-  MatrixRTCSessionEventHandlerMap,
+  type MatrixRTCSessionEventHandlerMap,
   MembershipManagerEvent,
   Status,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -962,8 +962,8 @@ export class CallViewModel extends ViewModel {
           ),
         );
       }
-      // If no lifetime, the notify event is basically invalid and we just stay in unknown state.
-      return of({ state: "unknown" } as { state: "unknown" });
+      // If no lifetime, the notify event is basically invalid and we enter ringEnded immediately.
+      return of({ state: "ringEnded" } as { state: "ringEnded" });
     }),
     startWith({ state: "unknown" } as { state: "unknown" }),
   );
