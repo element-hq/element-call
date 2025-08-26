@@ -14,8 +14,13 @@ import { BehaviorSubject, of } from "rxjs";
 import { vitest } from "vitest";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import EventEmitter from "events";
+import {
+  type RoomMember,
+  type MatrixClient,
+  type Room,
+  SyncState,
+} from "matrix-js-sdk";
 
-import type { RoomMember, MatrixClient } from "matrix-js-sdk";
 import { E2eeType } from "../e2ee/e2eeType";
 import { CallViewModel } from "../state/CallViewModel";
 import {
@@ -34,10 +39,11 @@ import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 
 export function getBasicRTCSession(
   members: RoomMember[],
-  initialRemoteRtcMemberships: CallMembership[] = [aliceRtcMember],
+  initialRtcMemberships: CallMembership[] = [localRtcMember, aliceRtcMember],
 ): {
   rtcSession: MockRTCSession;
-  remoteRtcMemberships$: BehaviorSubject<CallMembership[]>;
+  matrixRoom: Room;
+  rtcMemberships$: BehaviorSubject<CallMembership[]>;
 } {
   const matrixRoomId = "!myRoomId:example.com";
   const matrixRoomMembers = new Map(members.map((p) => [p.userId, p]));
@@ -51,6 +57,7 @@ export function getBasicRTCSession(
     client: {
       getUserId: () => localRtcMember.sender,
       getDeviceId: () => localRtcMember.deviceId,
+      getSyncState: () => SyncState.Syncing,
       sendEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
       redactEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
       decryptEventIfNeeded: vitest.fn().mockResolvedValue(undefined),
@@ -91,52 +98,53 @@ export function getBasicRTCSession(
       ),
   });
 
-  const remoteRtcMemberships$ = new BehaviorSubject<CallMembership[]>(
-    initialRemoteRtcMemberships,
+  const rtcMemberships$ = new BehaviorSubject<CallMembership[]>(
+    initialRtcMemberships,
   );
 
-  const rtcSession = new MockRTCSession(
-    matrixRoom,
-    localRtcMember,
-  ).withMemberships(remoteRtcMemberships$);
+  const rtcSession = new MockRTCSession(matrixRoom).withMemberships(
+    rtcMemberships$,
+  );
 
   return {
     rtcSession,
-    remoteRtcMemberships$,
+    matrixRoom,
+    rtcMemberships$,
   };
 }
 
 /**
  * Construct a basic CallViewModel to test components that make use of it.
  * @param members
- * @param initialRemoteRtcMemberships
+ * @param initialRtcMemberships
  * @returns
  */
 export function getBasicCallViewModelEnvironment(
   members: RoomMember[],
-  initialRemoteRtcMemberships: CallMembership[] = [aliceRtcMember],
+  initialRtcMemberships: CallMembership[] = [localRtcMember, aliceRtcMember],
 ): {
   vm: CallViewModel;
-  remoteRtcMemberships$: BehaviorSubject<CallMembership[]>;
+  rtcMemberships$: BehaviorSubject<CallMembership[]>;
   rtcSession: MockRTCSession;
   handRaisedSubject$: BehaviorSubject<Record<string, RaisedHandInfo>>;
   reactionsSubject$: BehaviorSubject<Record<string, ReactionInfo>>;
 } {
-  const { rtcSession, remoteRtcMemberships$ } = getBasicRTCSession(
+  const { rtcSession, matrixRoom, rtcMemberships$ } = getBasicRTCSession(
     members,
-    initialRemoteRtcMemberships,
+    initialRtcMemberships,
   );
   const handRaisedSubject$ = new BehaviorSubject({});
   const reactionsSubject$ = new BehaviorSubject({});
 
   const remoteParticipants$ = of([aliceParticipant]);
-  const liveKitRoom = mockLivekitRoom(
+  const livekitRoom = mockLivekitRoom(
     { localParticipant },
     { remoteParticipants$ },
   );
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
-    liveKitRoom,
+    matrixRoom,
+    livekitRoom,
     mockMediaDevices({}),
     {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
@@ -147,7 +155,7 @@ export function getBasicCallViewModelEnvironment(
   );
   return {
     vm,
-    remoteRtcMemberships$,
+    rtcMemberships$,
     rtcSession,
     handRaisedSubject$: handRaisedSubject$,
     reactionsSubject$: reactionsSubject$,

@@ -61,7 +61,11 @@ export const AppBar: FC<Props> = ({ children }) => {
         style={{ display: hidden ? "none" : "block" }}
         className={styles.bar}
       >
-        <Header>
+        <Header
+          // App bar is mainly seen in the call view, which has its own
+          // 'reconnecting' toast
+          disconnectedBanner={false}
+        >
           <LeftNav>
             <Tooltip label={t("common.back")}>
               <IconButton onClick={onBackClick}>

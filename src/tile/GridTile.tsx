@@ -28,6 +28,7 @@ import {
   UserProfileIcon,
   ExpandIcon,
   VolumeOffSolidIcon,
+  SwitchCameraSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
   ContextMenu,
@@ -65,6 +66,7 @@ interface UserMediaTileProps extends TileProps {
   vm: UserMediaViewModel;
   mirror: boolean;
   locallyMuted: boolean;
+  primaryButton?: ReactNode;
   menuStart?: ReactNode;
   menuEnd?: ReactNode;
 }
@@ -74,6 +76,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   vm,
   showSpeakingIndicators,
   locallyMuted,
+  primaryButton,
   menuStart,
   menuEnd,
   className,
@@ -160,20 +163,22 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       }
       displayName={displayName}
       primaryButton={
-        <Menu
-          open={menuOpen}
-          onOpenChange={setMenuOpen}
-          title={displayName}
-          trigger={
-            <button aria-label={t("common.options")}>
-              <OverflowHorizontalIcon aria-hidden width={20} height={20} />
-            </button>
-          }
-          side="left"
-          align="start"
-        >
-          {menu}
-        </Menu>
+        primaryButton ?? (
+          <Menu
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            title={displayName}
+            trigger={
+              <button aria-label={t("common.options")}>
+                <OverflowHorizontalIcon aria-hidden width={20} height={20} />
+              </button>
+            }
+            side="left"
+            align="start"
+          >
+            {menu}
+          </Menu>
+        )
       }
       raisedHandTime={handRaised ?? undefined}
       currentReaction={reaction ?? undefined}
@@ -208,6 +213,8 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
   const { t } = useTranslation();
   const mirror = useBehavior(vm.mirror$);
   const alwaysShow = useBehavior(vm.alwaysShow$);
+  const switchCamera = useBehavior(vm.switchCamera$);
+
   const latestAlwaysShow = useLatest(alwaysShow);
   const onSelectAlwaysShow = useCallback(
     (e: Event) => {
@@ -223,6 +230,17 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
       vm={vm}
       locallyMuted={false}
       mirror={mirror}
+      primaryButton={
+        switchCamera === null ? undefined : (
+          <button
+            className={styles.switchCamera}
+            aria-label={t("switch_camera")}
+            onClick={switchCamera}
+          >
+            <SwitchCameraSolidIcon aria-hidden width={20} height={20} />
+          </button>
+        )
+      }
       menuStart={
         <ToggleMenuItem
           Icon={VisibilityOnIcon}

@@ -17,27 +17,38 @@ import Logo from "./icons/Logo.svg?react";
 import { Avatar, Size } from "./Avatar";
 import { EncryptionLock } from "./room/EncryptionLock";
 import { useMediaQuery } from "./useMediaQuery";
+import { DisconnectedBanner } from "./DisconnectedBanner";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
   ref?: Ref<HTMLElement>;
   children: ReactNode;
   className?: string;
+  /**
+   * Whether the header should display an informational banner whenever the
+   * client is disconnected from the homeserver.
+   * @default true
+   */
+  disconnectedBanner?: boolean;
 }
 
 export const Header: FC<HeaderProps> = ({
   ref,
   children,
   className,
+  disconnectedBanner = true,
   ...rest
 }) => {
   return (
-    <header
-      ref={ref}
-      className={classNames(styles.header, className)}
-      {...rest}
-    >
-      {children}
-    </header>
+    <>
+      <header
+        ref={ref}
+        className={classNames(styles.header, className)}
+        {...rest}
+      >
+        {children}
+      </header>
+      {disconnectedBanner && <DisconnectedBanner />}
+    </>
   );
 };
 

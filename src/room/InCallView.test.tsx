@@ -175,6 +175,7 @@ function createInCallView(): RenderResult & {
                     kind: E2eeType.NONE,
                   },
                 }}
+                matrixRoom={room}
                 livekitRoom={livekitRoom}
                 participantCount={0}
                 onLeave={function (): void {

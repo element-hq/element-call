@@ -31,6 +31,7 @@ import {
   aliceRtcMember,
   bobRtcMember,
   local,
+  localRtcMember,
 } from "../utils/test-fixtures";
 
 vitest.mock("../useAudioContext");
@@ -66,7 +67,7 @@ beforeEach(() => {
  * a noise every time.
  */
 test("plays one sound when entering a call", () => {
-  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment([
+  const { vm, rtcMemberships$ } = getBasicCallViewModelEnvironment([
     local,
     alice,
   ]);
@@ -74,56 +75,58 @@ test("plays one sound when entering a call", () => {
 
   // Joining a call usually means remote participants are added later.
   act(() => {
-    remoteRtcMemberships$.next([aliceRtcMember, bobRtcMember]);
+    rtcMemberships$.next([localRtcMember, aliceRtcMember, bobRtcMember]);
   });
   expect(playSound).toHaveBeenCalledOnce();
 });
 
 test("plays a sound when a user joins", () => {
-  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment([
+  const { vm, rtcMemberships$ } = getBasicCallViewModelEnvironment([
     local,
     alice,
   ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
-    remoteRtcMemberships$.next([aliceRtcMember, bobRtcMember]);
+    rtcMemberships$.next([localRtcMember, aliceRtcMember, bobRtcMember]);
   });
   // Play a sound when joining a call.
   expect(playSound).toBeCalledWith("join");
 });
 
 test("plays a sound when a user leaves", () => {
-  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment([
+  const { vm, rtcMemberships$ } = getBasicCallViewModelEnvironment([
     local,
     alice,
   ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
-    remoteRtcMemberships$.next([]);
+    rtcMemberships$.next([localRtcMember]);
   });
   expect(playSound).toBeCalledWith("left");
 });
 
 test("plays no sound when the participant list is more than the maximum size", () => {
-  const mockRtcMemberships: CallMembership[] = [];
+  const mockRtcMemberships: CallMembership[] = [localRtcMember];
   for (let i = 0; i < MAX_PARTICIPANT_COUNT_FOR_SOUND; i++) {
     mockRtcMemberships.push(
       mockRtcMembership(`@user${i}:example.org`, `DEVICE${i}`),
     );
   }
 
-  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment(
+  const { vm, rtcMemberships$ } = getBasicCallViewModelEnvironment(
     [local, alice],
     mockRtcMemberships,
   );
 
   render(<CallEventAudioRenderer vm={vm} />);
   expect(playSound).not.toBeCalled();
+  // Remove the last membership in the array to test the leaving sound
+  // (The array has length MAX_PARTICIPANT_COUNT_FOR_SOUND + 1)
   act(() => {
-    remoteRtcMemberships$.next(
-      mockRtcMemberships.slice(0, MAX_PARTICIPANT_COUNT_FOR_SOUND - 1),
+    rtcMemberships$.next(
+      mockRtcMemberships.slice(0, MAX_PARTICIPANT_COUNT_FOR_SOUND),
     );
   });
   expect(playSound).toBeCalledWith("left");

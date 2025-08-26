@@ -85,6 +85,7 @@ unconditionally select the container so we can use cqmin units */
 
 .nameTag {
   grid-area: nameTag;
+  place-self: end start;
   padding: var(--cpd-space-1x);
   padding-block: var(--cpd-space-1x);
   color: var(--cpd-color-text-primary);
@@ -173,7 +174,7 @@ unconditionally select the container so we can use cqmin units */
 }
 
 .fg > button:active {
-  background: var(--cpd-color-bg-action-primary-pressed) !important;
+  background: var(--cpd-color-bg-action-primary-pressed);
 }
 
 .fg > button[data-state="open"] {

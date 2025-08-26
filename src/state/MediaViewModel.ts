@@ -16,6 +16,7 @@ import {
 import {
   type LocalParticipant,
   LocalTrack,
+  LocalVideoTrack,
   type Participant,
   ParticipantEvent,
   type RemoteParticipant,
@@ -27,6 +28,7 @@ import {
   RemoteTrack,
 } from "livekit-client";
 import { type RoomMember } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   BehaviorSubject,
   type Observable,
@@ -51,6 +53,8 @@ import { accumulate } from "../utils/observable";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { type ReactionOption } from "../reactions";
+import { platform } from "../Platform";
+import { type MediaDevices } from "./MediaDevices";
 import { type Behavior } from "./Behavior";
 
 export function observeTrackReference$(
@@ -357,10 +361,7 @@ export type UserMediaViewModel =
  * Some participant's user media.
  */
 abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
-  /**
-   * Whether the participant is speaking.
-   */
-  public readonly speaking$ = this.scope.behavior(
+  private readonly _speaking$ = this.scope.behavior(
     this.participant$.pipe(
       switchMap((p) =>
         p
@@ -372,15 +373,27 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       ),
     ),
   );
+  /**
+   * Whether the participant is speaking.
+   */
+  // Getter backed by a private field so that subclasses can override it
+  public get speaking$(): Behavior<boolean> {
+    return this._speaking$;
+  }
 
   /**
    * Whether this participant is sending audio (i.e. is unmuted on their side).
    */
   public readonly audioEnabled$: Behavior<boolean>;
+
+  private readonly _videoEnabled$: Behavior<boolean>;
   /**
    * Whether this participant is sending video.
    */
-  public readonly videoEnabled$: Behavior<boolean>;
+  // Getter backed by a private field so that subclasses can override it
+  public get videoEnabled$(): Behavior<boolean> {
+    return this._videoEnabled$;
+  }
 
   private readonly _cropVideo$ = new BehaviorSubject(true);
   /**
@@ -417,7 +430,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     this.audioEnabled$ = this.scope.behavior(
       media$.pipe(map((m) => m?.microphoneTrack?.isMuted === false)),
     );
-    this.videoEnabled$ = this.scope.behavior(
+    this._videoEnabled$ = this.scope.behavior(
       media$.pipe(map((m) => m?.cameraTrack?.isMuted === false)),
     );
   }
@@ -443,20 +456,38 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
  */
 export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   /**
-   * Whether the video should be mirrored.
+   * The local video track as an observable that emits whenever the track
+   * changes, the camera is switched, or the track is muted.
    */
-  public readonly mirror$ = this.scope.behavior(
+  private readonly videoTrack$: Observable<LocalVideoTrack | null> =
     this.video$.pipe(
       switchMap((v) => {
         const track = v?.publication?.track;
-        if (!(track instanceof LocalTrack)) return of(false);
-        // Watch for track restarts, because they indicate a camera switch
-        return fromEvent(track, TrackEvent.Restarted).pipe(
-          startWith(null),
-          // Mirror only front-facing cameras (those that face the user)
-          map(() => facingModeFromLocalTrack(track).facingMode === "user"),
+        if (!(track instanceof LocalVideoTrack)) return of(null);
+        return merge(
+          // Watch for track restarts because they indicate a camera switch.
+          // This event is also emitted when unmuting the track object.
+          fromEvent(track, TrackEvent.Restarted).pipe(
+            startWith(null),
+            map(() => track),
+          ),
+          // When the track object is muted, reset it to null.
+          fromEvent(track, TrackEvent.Muted).pipe(map(() => null)),
         );
       }),
+    );
+
+  /**
+   * Whether the video should be mirrored.
+   */
+  public readonly mirror$ = this.scope.behavior(
+    this.videoTrack$.pipe(
+      // Mirror only front-facing cameras (those that face the user)
+      map(
+        (track) =>
+          track !== null &&
+          facingModeFromLocalTrack(track).facingMode === "user",
+      ),
     ),
   );
 
@@ -467,12 +498,48 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   public readonly alwaysShow$ = alwaysShowSelf.value$;
   public readonly setAlwaysShow = alwaysShowSelf.setValue;
 
+  /**
+   * Callback for switching between the front and back cameras.
+   */
+  public readonly switchCamera$: Behavior<(() => void) | null> =
+    this.scope.behavior(
+      platform === "desktop"
+        ? of(null)
+        : this.videoTrack$.pipe(
+            map((track) => {
+              if (track === null) return null;
+              const facingMode = facingModeFromLocalTrack(track).facingMode;
+              // If the camera isn't front or back-facing, don't provide a switch
+              // camera shortcut at all
+              if (facingMode !== "user" && facingMode !== "environment")
+                return null;
+              // Restart the track with a camera facing the opposite direction
+              return (): void =>
+                void track
+                  .restartTrack({
+                    facingMode: facingMode === "user" ? "environment" : "user",
+                  })
+                  .then(() => {
+                    // Inform the MediaDevices which camera was chosen
+                    const deviceId =
+                      track.mediaStreamTrack.getSettings().deviceId;
+                    if (deviceId !== undefined)
+                      this.mediaDevices.videoInput.select(deviceId);
+                  })
+                  .catch((e) =>
+                    logger.error("Failed to switch camera", facingMode, e),
+                  );
+            }),
+          ),
+    );
+
   public constructor(
     id: string,
     member: RoomMember | undefined,
     participant$: Behavior<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    private readonly mediaDevices: MediaDevices,
     displayName$: Behavior<string>,
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
@@ -514,6 +581,12 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
  * A remote participant's user media.
  */
 export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
+  // This private field is used to override the value from the superclass
+  private __speaking$: Behavior<boolean>;
+  public get speaking$(): Behavior<boolean> {
+    return this.__speaking$;
+  }
+
   private readonly locallyMutedToggle$ = new Subject<void>();
   private readonly localVolumeAdjustment$ = new Subject<number>();
   private readonly localVolumeCommit$ = new Subject<void>();
@@ -553,6 +626,12 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     ),
   );
 
+  // This private field is used to override the value from the superclass
+  private __videoEnabled$: Behavior<boolean>;
+  public get videoEnabled$(): Behavior<boolean> {
+    return this.__videoEnabled$;
+  }
+
   /**
    * Whether this participant's audio is disabled.
    */
@@ -566,6 +645,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    private readonly pretendToBeDisconnected$: Behavior<boolean>,
     displayname$: Behavior<string>,
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
@@ -581,11 +661,33 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
       reaction$,
     );
 
+    this.__speaking$ = this.scope.behavior(
+      pretendToBeDisconnected$.pipe(
+        switchMap((disconnected) =>
+          disconnected ? of(false) : super.speaking$,
+        ),
+      ),
+    );
+
+    this.__videoEnabled$ = this.scope.behavior(
+      pretendToBeDisconnected$.pipe(
+        switchMap((disconnected) =>
+          disconnected ? of(false) : super.videoEnabled$,
+        ),
+      ),
+    );
+
     // Sync the local volume with LiveKit
     combineLatest([
       participant$,
-      this.localVolume$.pipe(this.scope.bind()),
-    ]).subscribe(([p, volume]) => p && p.setVolume(volume));
+      // The local volume, taking into account whether we're supposed to pretend
+      // that the audio stream is disconnected (since we don't necessarily want
+      // that to modify the UI state).
+      this.pretendToBeDisconnected$.pipe(
+        switchMap((disconnected) => (disconnected ? of(0) : this.localVolume$)),
+        this.scope.bind(),
+      ),
+    ]).subscribe(([p, volume]) => p?.setVolume(volume));
   }
 
   public toggleLocallyMuted(): void {
@@ -625,12 +727,20 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
  * Some participant's screen share media.
  */
 export class ScreenShareViewModel extends BaseMediaViewModel {
+  /**
+   * Whether this screen share's video should be displayed.
+   */
+  public readonly videoEnabled$ = this.scope.behavior(
+    this.pretendToBeDisconnected$.pipe(map((disconnected) => !disconnected)),
+  );
+
   public constructor(
     id: string,
     member: RoomMember | undefined,
     participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    private readonly pretendToBeDisconnected$: Behavior<boolean>,
     displayname$: Behavior<string>,
     public readonly local: boolean,
   ) {

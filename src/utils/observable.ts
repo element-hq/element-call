@@ -7,15 +7,22 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type Observable,
+  audit,
+  combineLatest,
   concat,
   defer,
+  filter,
   finalize,
   map,
+  of,
   scan,
   startWith,
   takeWhile,
   tap,
+  withLatestFrom,
 } from "rxjs";
+
+import { type Behavior } from "../state/Behavior";
 
 const nothing = Symbol("nothing");
 
@@ -85,4 +92,28 @@ export function getValue<T>(state$: Observable<T>): T {
   state$.subscribe((x) => (value = x)).unsubscribe();
   if (value === nothing) throw new Error("Not a state Observable");
   return value;
+}
+
+/**
+ * Creates an Observable that has a value of true whenever all its inputs are
+ * true.
+ */
+export function and$(...inputs: Observable<boolean>[]): Observable<boolean> {
+  return combineLatest(inputs, (...flags) => flags.every((flag) => flag));
+}
+
+/**
+ * RxJS operator that pauses all changes in the input value whenever a Behavior
+ * is true. When the Behavior returns to being false, the most recently
+ * suppressed change is emitted as the most recent value.
+ */
+export function pauseWhen<T>(pause$: Behavior<boolean>) {
+  return (value$: Observable<T>): Observable<T> =>
+    value$.pipe(
+      withLatestFrom(pause$),
+      audit(([, pause]) =>
+        pause ? pause$.pipe(filter((pause) => !pause)) : of(null),
+      ),
+      map(([value]) => value),
+    );
 }

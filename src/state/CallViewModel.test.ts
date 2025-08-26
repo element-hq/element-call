@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, vi, onTestFinished, it } from "vitest";
+import EventEmitter from "events";
 import {
   BehaviorSubject,
   combineLatest,
@@ -17,16 +18,18 @@ import {
   of,
   switchMap,
 } from "rxjs";
-import { type MatrixClient } from "matrix-js-sdk";
+import { ClientEvent, SyncState, type MatrixClient } from "matrix-js-sdk";
 import {
   ConnectionState,
   type LocalParticipant,
+  type LocalTrackPublication,
   type Participant,
   ParticipantEvent,
   type RemoteParticipant,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
 import {
+  Status,
   type CallMembership,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -93,6 +96,11 @@ vi.mock("rxjs", async (importOriginal) => ({
 }));
 
 vi.mock("@livekit/components-core");
+
+const yesNo = {
+  y: true,
+  n: false,
+};
 
 const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
@@ -226,33 +234,56 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
   );
 }
 
+interface CallViewModelInputs {
+  remoteParticipants$: Behavior<RemoteParticipant[]>;
+  rtcMembers$: Behavior<Partial<CallMembership>[]>;
+  connectionState$: Observable<ECConnectionState>;
+  speaking: Map<Participant, Observable<boolean>>;
+  mediaDevices: MediaDevices;
+  initialSyncState: SyncState;
+}
+
 function withCallViewModel(
-  remoteParticipants$: Behavior<RemoteParticipant[]>,
-  rtcMembers$: Behavior<Partial<CallMembership>[]>,
-  connectionState$: Observable<ECConnectionState>,
-  speaking: Map<Participant, Observable<boolean>>,
-  mediaDevices: MediaDevices,
+  {
+    remoteParticipants$ = constant([]),
+    rtcMembers$ = constant([localRtcMember]),
+    connectionState$ = of(ConnectionState.Connected),
+    speaking = new Map(),
+    mediaDevices = mockMediaDevices({}),
+    initialSyncState = SyncState.Syncing,
+  }: Partial<CallViewModelInputs>,
   continuation: (
     vm: CallViewModel,
+    rtcSession: MockRTCSession,
     subjects: { raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>> },
+    setSyncState: (value: SyncState) => void,
   ) => void,
   options: CallViewModelOptions = {
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     autoLeaveWhenOthersLeft: false,
   },
 ): void {
+  let syncState = initialSyncState;
+  const setSyncState = (value: SyncState): void => {
+    const prev = syncState;
+    syncState = value;
+    room.client.emit(ClientEvent.Sync, value, prev);
+  };
   const room = mockMatrixRoom({
-    client: {
-      getUserId: () => localRtcMember.sender,
-      getDeviceId: () => localRtcMember.deviceId,
-    } as Partial<MatrixClient> as MatrixClient,
+    client: new (class extends EventEmitter {
+      public getUserId(): string | undefined {
+        return localRtcMember.sender;
+      }
+      public getDeviceId(): string {
+        return localRtcMember.deviceId;
+      }
+      public getSyncState(): SyncState {
+        return syncState;
+      }
+    })() as Partial<MatrixClient> as MatrixClient,
     getMember: (userId) => roomMembers.get(userId) ?? null,
   });
-  const rtcSession = new MockRTCSession(
-    room,
-    localRtcMember,
-    [],
-  ).withMemberships(rtcMembers$);
+  const rtcSession = new MockRTCSession(room, []).withMemberships(rtcMembers$);
   const participantsSpy = vi
     .spyOn(ComponentsCore, "connectedParticipantsObserver")
     .mockReturnValue(remoteParticipants$);
@@ -279,7 +310,7 @@ function withCallViewModel(
     .spyOn(ComponentsCore, "roomEventSelector")
     .mockImplementation((room, eventType) => of());
 
-  const liveKitRoom = mockLivekitRoom(
+  const livekitRoom = mockLivekitRoom(
     { localParticipant },
     { remoteParticipants$ },
   );
@@ -288,7 +319,8 @@ function withCallViewModel(
 
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
-    liveKitRoom,
+    room,
+    livekitRoom,
     mediaDevices,
     options,
     connectionState$,
@@ -304,7 +336,7 @@ function withCallViewModel(
     roomEventSelectorSpy!.mockRestore();
   });
 
-  continuation(vm, { raisedHands$: raisedHands$ });
+  continuation(vm, rtcSession, { raisedHands$: raisedHands$ }, setSyncState);
 }
 
 test("participants are retained during a focus switch", () => {
@@ -317,17 +349,17 @@ test("participants are retained during a focus switch", () => {
     const expectedLayoutMarbles = "  a";
 
     withCallViewModel(
-      behavior(participantInputMarbles, {
-        a: [aliceParticipant, bobParticipant],
-        b: [],
-      }),
-      constant([aliceRtcMember, bobRtcMember]),
-      behavior(connectionInputMarbles, {
-        c: ConnectionState.Connected,
-        s: ECAddonConnectionState.ECSwitchingFocus,
-      }),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        remoteParticipants$: behavior(participantInputMarbles, {
+          a: [aliceParticipant, bobParticipant],
+          b: [],
+        }),
+        rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
+        connectionState$: behavior(connectionInputMarbles, {
+          c: ConnectionState.Connected,
+          s: ECAddonConnectionState.ECSwitchingFocus,
+        }),
+      },
       (vm) => {
         expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
@@ -358,16 +390,15 @@ test("screen sharing activates spotlight layout", () => {
     const expectedLayoutMarbles = "      abcdaefeg";
     const expectedShowSpeakingMarbles = "y----nyny";
     withCallViewModel(
-      behavior(participantInputMarbles, {
-        a: [aliceParticipant, bobParticipant],
-        b: [aliceSharingScreen, bobParticipant],
-        c: [aliceSharingScreen, bobSharingScreen],
-        d: [aliceParticipant, bobSharingScreen],
-      }),
-      constant([aliceRtcMember, bobRtcMember]),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        remoteParticipants$: behavior(participantInputMarbles, {
+          a: [aliceParticipant, bobParticipant],
+          b: [aliceSharingScreen, bobParticipant],
+          c: [aliceSharingScreen, bobSharingScreen],
+          d: [aliceParticipant, bobSharingScreen],
+        }),
+        rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
+      },
       (vm) => {
         schedule(modeInputMarbles, {
           s: () => vm.setGridMode("spotlight"),
@@ -419,10 +450,7 @@ test("screen sharing activates spotlight layout", () => {
         );
         expectObservable(vm.showSpeakingIndicators$).toBe(
           expectedShowSpeakingMarbles,
-          {
-            y: true,
-            n: false,
-          },
+          yesNo,
         );
       },
     );
@@ -443,24 +471,24 @@ test("participants stay in the same order unless to appear/disappear", () => {
     const expectedLayoutMarbles = " a  1999ms b 1999ms a 57999ms c 1999ms a";
 
     withCallViewModel(
-      constant([aliceParticipant, bobParticipant, daveParticipant]),
-      constant([aliceRtcMember, bobRtcMember, daveRtcMember]),
-      of(ConnectionState.Connected),
-      new Map([
-        [
+      {
+        remoteParticipants$: constant([
           aliceParticipant,
-          behavior(aSpeakingInputMarbles, { y: true, n: false }),
-        ],
-        [
           bobParticipant,
-          behavior(bSpeakingInputMarbles, { y: true, n: false }),
-        ],
-        [
           daveParticipant,
-          behavior(dSpeakingInputMarbles, { y: true, n: false }),
-        ],
-      ]),
-      mockMediaDevices({}),
+        ]),
+        rtcMembers$: constant([
+          localRtcMember,
+          aliceRtcMember,
+          bobRtcMember,
+          daveRtcMember,
+        ]),
+        speaking: new Map([
+          [aliceParticipant, behavior(aSpeakingInputMarbles, yesNo)],
+          [bobParticipant, behavior(bSpeakingInputMarbles, yesNo)],
+          [daveParticipant, behavior(dSpeakingInputMarbles, yesNo)],
+        ]),
+      },
       (vm) => {
         schedule(visibilityInputMarbles, {
           a: () => {
@@ -510,20 +538,23 @@ test("participants adjust order when space becomes constrained", () => {
     const expectedLayoutMarbles = " a-b";
 
     withCallViewModel(
-      constant([aliceParticipant, bobParticipant, daveParticipant]),
-      constant([aliceRtcMember, bobRtcMember, daveRtcMember]),
-      of(ConnectionState.Connected),
-      new Map([
-        [
+      {
+        remoteParticipants$: constant([
+          aliceParticipant,
           bobParticipant,
-          behavior(bSpeakingInputMarbles, { y: true, n: false }),
-        ],
-        [
           daveParticipant,
-          behavior(dSpeakingInputMarbles, { y: true, n: false }),
-        ],
-      ]),
-      mockMediaDevices({}),
+        ]),
+        rtcMembers$: constant([
+          localRtcMember,
+          aliceRtcMember,
+          bobRtcMember,
+          daveRtcMember,
+        ]),
+        speaking: new Map([
+          [bobParticipant, behavior(bSpeakingInputMarbles, yesNo)],
+          [daveParticipant, behavior(dSpeakingInputMarbles, yesNo)],
+        ]),
+      },
       (vm) => {
         let setVisibleTiles: ((value: number) => void) | null = null;
         vm.layout$.subscribe((layout) => {
@@ -569,24 +600,24 @@ test("spotlight speakers swap places", () => {
     const expectedLayoutMarbles = "abcd";
 
     withCallViewModel(
-      constant([aliceParticipant, bobParticipant, daveParticipant]),
-      constant([aliceRtcMember, bobRtcMember, daveRtcMember]),
-      of(ConnectionState.Connected),
-      new Map([
-        [
+      {
+        remoteParticipants$: constant([
           aliceParticipant,
-          behavior(aSpeakingInputMarbles, { y: true, n: false }),
-        ],
-        [
           bobParticipant,
-          behavior(bSpeakingInputMarbles, { y: true, n: false }),
-        ],
-        [
           daveParticipant,
-          behavior(dSpeakingInputMarbles, { y: true, n: false }),
-        ],
-      ]),
-      mockMediaDevices({}),
+        ]),
+        rtcMembers$: constant([
+          localRtcMember,
+          aliceRtcMember,
+          bobRtcMember,
+          daveRtcMember,
+        ]),
+        speaking: new Map([
+          [aliceParticipant, behavior(aSpeakingInputMarbles, yesNo)],
+          [bobParticipant, behavior(bSpeakingInputMarbles, yesNo)],
+          [daveParticipant, behavior(dSpeakingInputMarbles, yesNo)],
+        ]),
+      },
       (vm) => {
         schedule(modeInputMarbles, { s: () => vm.setGridMode("spotlight") });
 
@@ -628,11 +659,10 @@ test("layout enters picture-in-picture mode when requested", () => {
     const expectedLayoutMarbles = " aba";
 
     withCallViewModel(
-      constant([aliceParticipant, bobParticipant]),
-      constant([aliceRtcMember, bobRtcMember]),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        remoteParticipants$: constant([aliceParticipant, bobParticipant]),
+        rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
+      },
       (vm) => {
         schedule(pipControlInputMarbles, {
           e: () => window.controls.enablePip(),
@@ -670,11 +700,10 @@ test("spotlight remembers whether it's expanded", () => {
     const expectedLayoutMarbles = "abcbada";
 
     withCallViewModel(
-      constant([aliceParticipant, bobParticipant]),
-      constant([aliceRtcMember, bobRtcMember]),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        remoteParticipants$: constant([aliceParticipant, bobParticipant]),
+        rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
+      },
       (vm) => {
         schedule(modeInputMarbles, {
           s: () => vm.setGridMode("spotlight"),
@@ -727,23 +756,22 @@ test("participants must have a MatrixRTCSession to be visible", () => {
     const expectedLayoutMarbles = "a-bc-b";
 
     withCallViewModel(
-      behavior(scenarioInputMarbles, {
-        a: [],
-        b: [bobParticipant],
-        c: [aliceParticipant, bobParticipant],
-        d: [aliceParticipant, daveParticipant, bobParticipant],
-        e: [aliceParticipant, daveParticipant, bobSharingScreen],
-      }),
-      behavior(scenarioInputMarbles, {
-        a: [],
-        b: [],
-        c: [aliceRtcMember],
-        d: [aliceRtcMember, daveRtcMember],
-        e: [aliceRtcMember, daveRtcMember],
-      }),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        remoteParticipants$: behavior(scenarioInputMarbles, {
+          a: [],
+          b: [bobParticipant],
+          c: [aliceParticipant, bobParticipant],
+          d: [aliceParticipant, daveParticipant, bobParticipant],
+          e: [aliceParticipant, daveParticipant, bobSharingScreen],
+        }),
+        rtcMembers$: behavior(scenarioInputMarbles, {
+          a: [localRtcMember],
+          b: [localRtcMember],
+          c: [localRtcMember, aliceRtcMember],
+          d: [localRtcMember, aliceRtcMember, daveRtcMember],
+          e: [localRtcMember, aliceRtcMember, daveRtcMember],
+        }),
+      },
       (vm) => {
         vm.setGridMode("grid");
         expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -780,15 +808,14 @@ test("shows participants without MatrixRTCSession when enabled in settings", () 
       const expectedLayoutMarbles = "abc";
 
       withCallViewModel(
-        behavior(scenarioInputMarbles, {
-          a: [],
-          b: [aliceParticipant],
-          c: [aliceParticipant, bobParticipant],
-        }),
-        constant([]), // No one joins the MatrixRTC session
-        of(ConnectionState.Connected),
-        new Map(),
-        mockMediaDevices({}),
+        {
+          remoteParticipants$: behavior(scenarioInputMarbles, {
+            a: [],
+            b: [aliceParticipant],
+            c: [aliceParticipant, bobParticipant],
+          }),
+          rtcMembers$: constant([localRtcMember]), // No one else joins the MatrixRTC session
+        },
         (vm) => {
           vm.setGridMode("grid");
           expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -827,16 +854,14 @@ it("should show at least one tile per MatrixRTCSession", () => {
     const expectedLayoutMarbles = "abcd";
 
     withCallViewModel(
-      constant([]),
-      behavior(scenarioInputMarbles, {
-        a: [],
-        b: [aliceRtcMember],
-        c: [aliceRtcMember, daveRtcMember],
-        d: [daveRtcMember],
-      }),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        rtcMembers$: behavior(scenarioInputMarbles, {
+          a: [localRtcMember],
+          b: [localRtcMember, aliceRtcMember],
+          c: [localRtcMember, aliceRtcMember, daveRtcMember],
+          d: [localRtcMember, daveRtcMember],
+        }),
+      },
       (vm) => {
         vm.setGridMode("grid");
         expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -875,17 +900,20 @@ test("should disambiguate users with the same displayname", () => {
     const expectedLayoutMarbles = "abcde";
 
     withCallViewModel(
-      constant([]),
-      behavior(scenarioInputMarbles, {
-        a: [],
-        b: [aliceRtcMember],
-        c: [aliceRtcMember, aliceDoppelgangerRtcMember],
-        d: [aliceRtcMember, aliceDoppelgangerRtcMember, bobRtcMember],
-        e: [aliceDoppelgangerRtcMember, bobRtcMember],
-      }),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        rtcMembers$: behavior(scenarioInputMarbles, {
+          a: [localRtcMember],
+          b: [localRtcMember, aliceRtcMember],
+          c: [localRtcMember, aliceRtcMember, aliceDoppelgangerRtcMember],
+          d: [
+            localRtcMember,
+            aliceRtcMember,
+            aliceDoppelgangerRtcMember,
+            bobRtcMember,
+          ],
+          e: [localRtcMember, aliceDoppelgangerRtcMember, bobRtcMember],
+        }),
+      },
       (vm) => {
         expectObservable(vm.memberDisplaynames$).toBe(expectedLayoutMarbles, {
           // Carol has no displayname - So userId is used.
@@ -925,14 +953,12 @@ test("should disambiguate users with invisible characters", () => {
     const expectedLayoutMarbles = "ab";
 
     withCallViewModel(
-      constant([]),
-      behavior(scenarioInputMarbles, {
-        a: [],
-        b: [bobRtcMember, bobZeroWidthSpaceRtcMember],
-      }),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        rtcMembers$: behavior(scenarioInputMarbles, {
+          a: [localRtcMember],
+          b: [localRtcMember, bobRtcMember, bobZeroWidthSpaceRtcMember],
+        }),
+      },
       (vm) => {
         expectObservable(vm.memberDisplaynames$).toBe(expectedLayoutMarbles, {
           // Carol has no displayname - So userId is used.
@@ -958,14 +984,12 @@ test("should strip RTL characters from displayname", () => {
     const expectedLayoutMarbles = "ab";
 
     withCallViewModel(
-      constant([]),
-      behavior(scenarioInputMarbles, {
-        a: [],
-        b: [daveRtcMember, daveRTLRtcMember],
-      }),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        rtcMembers$: behavior(scenarioInputMarbles, {
+          a: [localRtcMember],
+          b: [localRtcMember, daveRtcMember, daveRTLRtcMember],
+        }),
+      },
       (vm) => {
         expectObservable(vm.memberDisplaynames$).toBe(expectedLayoutMarbles, {
           // Carol has no displayname - So userId is used.
@@ -985,17 +1009,16 @@ test("should strip RTL characters from displayname", () => {
 });
 
 it("should rank raised hands above video feeds and below speakers and presenters", () => {
-  withTestScheduler(({ schedule, expectObservable, behavior }) => {
+  withTestScheduler(({ schedule, expectObservable }) => {
     // There should always be one tile for each MatrixRTCSession
     const expectedLayoutMarbles = "ab";
 
     withCallViewModel(
-      constant([aliceParticipant, bobParticipant]),
-      constant([aliceRtcMember, bobRtcMember]),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
-      (vm, { raisedHands$ }) => {
+      {
+        remoteParticipants$: constant([aliceParticipant, bobParticipant]),
+        rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
+      },
+      (vm, _rtcSession, { raisedHands$ }) => {
         schedule("ab", {
           a: () => {
             // We imagine that only two tiles (the first two) will be visible on screen at a time
@@ -1076,10 +1099,10 @@ function rtcMemberJoinLeave$(
   ) => Observable<CallMembership[]>,
 ): Observable<CallMembership[]> {
   return hot("a-b-c-d", {
-    a: [], // Start empty
-    b: [aliceRtcMember], // Alice joins
-    c: [aliceRtcMember], // Alice still there
-    d: [], // Alice leaves
+    a: [localRtcMember], // Start empty
+    b: [localRtcMember, aliceRtcMember], // Alice joins
+    c: [localRtcMember, aliceRtcMember], // Alice still there
+    d: [localRtcMember], // Alice leaves
   });
 }
 
@@ -1087,11 +1110,7 @@ test("allOthersLeft$ emits only when someone joined and then all others left", (
   withTestScheduler(({ hot, expectObservable, scope }) => {
     // Test scenario 1: No one ever joins - should only emit initial false and never emit again
     withCallViewModel(
-      scope.behavior(nooneEverThere$(hot), []),
-      scope.behavior(nooneEverThere$(hot), []),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      { remoteParticipants$: scope.behavior(nooneEverThere$(hot), []) },
       (vm) => {
         expectObservable(vm.allOthersLeft$).toBe("n------", { n: false });
       },
@@ -1102,11 +1121,10 @@ test("allOthersLeft$ emits only when someone joined and then all others left", (
 test("allOthersLeft$ emits true when someone joined and then all others left", () => {
   withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
-      scope.behavior(participantJoinLeave$(hot), []),
-      scope.behavior(rtcMemberJoinLeave$(hot), []),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        remoteParticipants$: scope.behavior(participantJoinLeave$(hot), []),
+        rtcMembers$: scope.behavior(rtcMemberJoinLeave$(hot), []),
+      },
       (vm) => {
         expectObservable(vm.allOthersLeft$).toBe(
           "n-----u", // false initially, then at frame 6: true then false emissions in same frame
@@ -1120,11 +1138,10 @@ test("allOthersLeft$ emits true when someone joined and then all others left", (
 test("autoLeaveWhenOthersLeft$ emits only when autoLeaveWhenOthersLeft option is enabled", () => {
   withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
-      scope.behavior(participantJoinLeave$(hot), []),
-      scope.behavior(rtcMemberJoinLeave$(hot), []),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        remoteParticipants$: scope.behavior(participantJoinLeave$(hot), []),
+        rtcMembers$: scope.behavior(rtcMemberJoinLeave$(hot), []),
+      },
       (vm) => {
         expectObservable(vm.autoLeaveWhenOthersLeft$).toBe(
           "------e", // false initially, then at frame 6: true then false emissions in same frame
@@ -1142,11 +1159,10 @@ test("autoLeaveWhenOthersLeft$ emits only when autoLeaveWhenOthersLeft option is
 test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is enabled but no-one is there", () => {
   withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
-      scope.behavior(nooneEverThere$(hot), []),
-      scope.behavior(nooneEverThere$(hot), []),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        remoteParticipants$: scope.behavior(nooneEverThere$(hot), []),
+        rtcMembers$: scope.behavior(nooneEverThere$(hot), []),
+      },
       (vm) => {
         expectObservable(vm.autoLeaveWhenOthersLeft$).toBe("-------");
       },
@@ -1161,11 +1177,10 @@ test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is ena
 test("autoLeaveWhenOthersLeft$ doesn't emit when autoLeaveWhenOthersLeft option is disabled and all others left", () => {
   withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
-      scope.behavior(participantJoinLeave$(hot), []),
-      scope.behavior(rtcMemberJoinLeave$(hot), []),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        remoteParticipants$: scope.behavior(participantJoinLeave$(hot), []),
+        rtcMembers$: scope.behavior(rtcMemberJoinLeave$(hot), []),
+      },
       (vm) => {
         expectObservable(vm.autoLeaveWhenOthersLeft$).toBe("-------");
       },
@@ -1180,27 +1195,26 @@ test("autoLeaveWhenOthersLeft$ doesn't emit when autoLeaveWhenOthersLeft option 
 test("autoLeaveWhenOthersLeft$ doesn't emits when autoLeaveWhenOthersLeft option is enabled and all others left", () => {
   withTestScheduler(({ hot, expectObservable, scope }) => {
     withCallViewModel(
-      scope.behavior(
-        hot("a-b-c-d", {
-          a: [], // Alone
-          b: [aliceParticipant], // Alice joins
-          c: [aliceParticipant],
-          d: [], // Local joins with a second device
-        }),
-        [], //Alice leaves
-      ),
-      scope.behavior(
-        hot("a-b-c-d", {
-          a: [localRtcMember], // Start empty
-          b: [localRtcMember, aliceRtcMember], // Alice joins
-          c: [localRtcMember, aliceRtcMember, localRtcMemberDevice2], // Alice still there
-          d: [localRtcMember, localRtcMemberDevice2], // The second Alice leaves
-        }),
-        [],
-      ),
-      of(ConnectionState.Connected),
-      new Map(),
-      mockMediaDevices({}),
+      {
+        remoteParticipants$: scope.behavior(
+          hot("a-b-c-d", {
+            a: [], // Alone
+            b: [aliceParticipant], // Alice joins
+            c: [aliceParticipant],
+            d: [], // Local joins with a second device
+          }),
+          [], //Alice leaves
+        ),
+        rtcMembers$: scope.behavior(
+          hot("a-b-c-d", {
+            a: [localRtcMember], // Start empty
+            b: [localRtcMember, aliceRtcMember], // Alice joins
+            c: [localRtcMember, aliceRtcMember, localRtcMemberDevice2], // Alice still there
+            d: [localRtcMember, localRtcMemberDevice2], // The second Alice leaves
+          }),
+          [],
+        ),
+      },
       (vm) => {
         expectObservable(vm.autoLeaveWhenOthersLeft$).toBe("------e", {
           e: undefined,
@@ -1234,25 +1248,91 @@ test("audio output changes when toggling earpiece mode", () => {
     const expectedEarpieceModeMarbles = "n-yn";
     const expectedTargetStateMarbles = " sese";
 
+    withCallViewModel({ mediaDevices: devices }, (vm) => {
+      schedule(toggleInputMarbles, {
+        a: () => getValue(vm.audioOutputSwitcher$)?.switch(),
+      });
+      expectObservable(vm.earpieceMode$).toBe(
+        expectedEarpieceModeMarbles,
+        yesNo,
+      );
+      expectObservable(
+        vm.audioOutputSwitcher$.pipe(map((switcher) => switcher?.targetOutput)),
+      ).toBe(expectedTargetStateMarbles, { s: "speaker", e: "earpiece" });
+    });
+  });
+});
+
+test("media tracks are paused while reconnecting to MatrixRTC", () => {
+  withTestScheduler(({ schedule, expectObservable }) => {
+    const trackRunning$ = new BehaviorSubject(true);
+    const originalPublications = localParticipant.trackPublications;
+    localParticipant.trackPublications = new Map([
+      [
+        "video",
+        {
+          track: new (class {
+            public get isUpstreamPaused(): boolean {
+              return !trackRunning$.value;
+            }
+            public async pauseUpstream(): Promise<void> {
+              trackRunning$.next(false);
+              return Promise.resolve();
+            }
+            public async resumeUpstream(): Promise<void> {
+              trackRunning$.next(true);
+              return Promise.resolve();
+            }
+          })(),
+        } as unknown as LocalTrackPublication,
+      ],
+    ]);
+    onTestFinished(() => {
+      localParticipant.trackPublications = originalPublications;
+    });
+
+    // There are three indicators that the client might be disconnected from
+    // MatrixRTC: whether the sync loop is connected, whether the membership is
+    // present in local room state, and whether the membership manager thinks
+    // we've hit the timeout for the delayed leave event. Let's test all
+    // combinations of these conditions.
+    const syncingMarbles = "             nyny----n--y";
+    const membershipStatusMarbles = "    y---ny-n-yn-y";
+    const probablyLeftMarbles = "        n-----y-ny---n";
+    const expectedReconnectingMarbles = "n-ynyny------n";
+    const expectedTrackRunningMarbles = "nynynyn------y";
+
     withCallViewModel(
-      constant([]),
-      constant([]),
-      of(ConnectionState.Connected),
-      new Map(),
-      devices,
-      (vm) => {
-        schedule(toggleInputMarbles, {
-          a: () => getValue(vm.audioOutputSwitcher$)?.switch(),
+      { initialSyncState: SyncState.Reconnecting },
+      (vm, rtcSession, _subjects, setSyncState) => {
+        schedule(syncingMarbles, {
+          y: () => setSyncState(SyncState.Syncing),
+          n: () => setSyncState(SyncState.Reconnecting),
         });
-        expectObservable(vm.earpieceMode$).toBe(expectedEarpieceModeMarbles, {
-          n: false,
-          y: true,
+        schedule(membershipStatusMarbles, {
+          y: () => {
+            rtcSession.membershipStatus = Status.Connected;
+          },
+          n: () => {
+            rtcSession.membershipStatus = Status.Reconnecting;
+          },
         });
-        expectObservable(
-          vm.audioOutputSwitcher$.pipe(
-            map((switcher) => switcher?.targetOutput),
-          ),
-        ).toBe(expectedTargetStateMarbles, { s: "speaker", e: "earpiece" });
+        schedule(probablyLeftMarbles, {
+          y: () => {
+            rtcSession.probablyLeft = true;
+          },
+          n: () => {
+            rtcSession.probablyLeft = false;
+          },
+        });
+        expectObservable(vm.reconnecting$).toBe(
+          expectedReconnectingMarbles,
+          yesNo,
+        );
+        expectObservable(trackRunning$).toBe(
+          expectedTrackRunningMarbles,
+          yesNo,
+        );
       },
     );
   });

@@ -45,6 +45,12 @@ interface Props {
    * A supporting icon to display within the toast.
    */
   Icon?: ComponentType<SVGAttributes<SVGElement>>;
+  /**
+   * Whether the toast should be portaled into the root of the document (rather
+   * than rendered in-place within the component tree).
+   * @default true
+   */
+  portal?: boolean;
 }
 
 /**
@@ -56,6 +62,7 @@ export const Toast: FC<Props> = ({
   autoDismiss,
   children,
   Icon,
+  portal = true,
 }) => {
   const onOpenChange = useCallback(
     (open: boolean) => {
@@ -71,29 +78,33 @@ export const Toast: FC<Props> = ({
     }
   }, [open, autoDismiss, onDismiss]);
 
+  const content = (
+    <>
+      <DialogOverlay
+        className={classNames(overlayStyles.bg, overlayStyles.animate)}
+      />
+      <DialogContent aria-describedby={undefined} asChild>
+        <DialogClose
+          className={classNames(
+            overlayStyles.overlay,
+            overlayStyles.animate,
+            styles.toast,
+          )}
+        >
+          <DialogTitle asChild>
+            <Text as="h3" size="sm" weight="semibold">
+              {children}
+            </Text>
+          </DialogTitle>
+          {Icon && <Icon width={20} height={20} aria-hidden />}
+        </DialogClose>
+      </DialogContent>
+    </>
+  );
+
   return (
     <DialogRoot open={open} onOpenChange={onOpenChange}>
-      <DialogPortal>
-        <DialogOverlay
-          className={classNames(overlayStyles.bg, overlayStyles.animate)}
-        />
-        <DialogContent aria-describedby={undefined} asChild>
-          <DialogClose
-            className={classNames(
-              overlayStyles.overlay,
-              overlayStyles.animate,
-              styles.toast,
-            )}
-          >
-            <DialogTitle asChild>
-              <Text as="h3" size="sm" weight="semibold">
-                {children}
-              </Text>
-            </DialogTitle>
-            {Icon && <Icon width={20} height={20} aria-hidden />}
-          </DialogClose>
-        </DialogContent>
-      </DialogPortal>
+      {portal ? <DialogPortal>{content}</DialogPortal> : content}
     </DialogRoot>
   );
 };
