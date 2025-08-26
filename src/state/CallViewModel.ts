@@ -55,8 +55,6 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
-  type ICallNotifyContent,
-  type IRTCNotificationContent,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   MatrixRTCSessionEventHandlerMap,

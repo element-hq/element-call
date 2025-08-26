@@ -1300,8 +1300,6 @@ describe("shouldWaitForCallPickup$", () => {
           remoteParticipants$: remote$,
           rtcMembers$: rtc$,
           connectionState$: of(ConnectionState.Connected),
-          speaking: new Map(),
-          mediaDevices: mockMediaDevices({}),
         },
         (vm, rtcSession) => {
           // Notify at 5ms so we enter ringing, then success at 20ms
@@ -1309,12 +1307,15 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { event_id: "$notif2", lifetime: 100 } as unknown as {
+                {
+                  event_id: "$notif2",
+                  lifetime: 100,
+                } as unknown as IRTCNotificationContent & {
                   event_id: string;
-                } & IRTCNotificationContent,
-                { event_id: "$notif2" } as unknown as {
+                },
+                { event_id: "$notif2" } as unknown as ICallNotifyContent & {
                   event_id: string;
-                } & ICallNotifyContent,
+                },
               );
             },
           });
