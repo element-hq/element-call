@@ -1300,8 +1300,12 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 100 } as unknown as IRTCNotificationContent,
-                {} as unknown as ICallNotifyContent,
+                { lifetime: 100 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                {} as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
               );
             },
           });
@@ -1347,8 +1351,12 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 50 } as unknown as IRTCNotificationContent,
-                {} as unknown as ICallNotifyContent,
+                { lifetime: 50 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                {} as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
               );
             },
           });
@@ -1380,8 +1388,12 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 0 } as unknown as IRTCNotificationContent, // no lifetime
-                {} as unknown as ICallNotifyContent,
+                { lifetime: 0 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent, // no lifetime
+                {} as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
               );
             },
           });
@@ -1425,8 +1437,12 @@ describe("shouldWaitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 30 } as unknown as IRTCNotificationContent,
-                {} as unknown as ICallNotifyContent,
+                { lifetime: 30 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                {} as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
               );
             },
           });
