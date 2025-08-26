@@ -20,6 +20,7 @@ import {
 import {
   ClientEvent,
   EventTimelineSetHandlerMap,
+  EventType,
   RoomEvent,
   RoomStateEvent,
   SyncState,
@@ -1000,8 +1001,7 @@ export class CallViewModel extends ViewModel {
         RoomEvent.Timeline,
       ).pipe(
         map(([event]) => {
-          // TODO use correct decline event type enum.
-          if (event.getType() === "m.rtc.decline") return event;
+          if (event.getType() === EventType.RTCDecline) return event;
           else return null;
         }),
         startWith(null),

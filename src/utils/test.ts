@@ -144,7 +144,6 @@ export function withTestScheduler(
   scope.end();
 }
 
-
 interface EmitterMock<T> {
   on: (...args: unknown[]) => T;
   off: (...args: unknown[]) => T;
