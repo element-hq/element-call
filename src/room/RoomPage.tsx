@@ -61,10 +61,8 @@ export const RoomPage: FC = () => {
   const { avatarUrl, displayName: userDisplayName } = useProfile(client);
 
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
-  const isJoined = useMatrixRTCSessionJoinState(
-    groupCallState.kind === "loaded" ? groupCallState.rtcSession : undefined,
-  );
-  const muteStates = useMuteStates(isJoined);
+  const [joined, setJoined] = useState(false);
+  const muteStates = useMuteStates(joined);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
@@ -109,7 +107,8 @@ export const RoomPage: FC = () => {
             widget={widget}
             client={client!}
             rtcSession={groupCallState.rtcSession}
-            isJoined={isJoined}
+            joined={joined}
+            setJoined={setJoined}
             isPasswordlessUser={passwordlessUser}
             confineToRoom={confineToRoom}
             preload={preload}
