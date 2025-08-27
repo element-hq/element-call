@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import {
   isLivekitFocus,
   isLivekitFocusConfig,
+  LivekitFocusConfig,
   type LivekitFocus,
   type LivekitFocusActive,
   type MatrixRTCSession,
@@ -31,24 +32,16 @@ export function makeActiveFocus(): LivekitFocusActive {
   };
 }
 
-async function makePreferredLivekitFoci(
+export function getLivekitAlias(rtcSession: MatrixRTCSession): string {
+  // For now we assume everything is a room-scoped call
+  return rtcSession.room.roomId;
+}
+
+async function makeFocusInternal(
   rtcSession: MatrixRTCSession,
-  livekitAlias: string,
-): Promise<LivekitFocus[]> {
-  logger.log("Start building foci_preferred list: ", rtcSession.room.roomId);
-
-  const preferredFoci: LivekitFocus[] = [];
-
-  // Make the Focus from the running rtc session the highest priority one
-  // This minimizes how often we need to switch foci during a call.
-  const focusInUse = rtcSession.getFocusInUse();
-  if (focusInUse && isLivekitFocus(focusInUse)) {
-    logger.log("Adding livekit focus from oldest member: ", focusInUse);
-    preferredFoci.push(focusInUse);
-  }
-
-  // Warm up the first focus we owned, to ensure livekit room is created before any state event sent.
-  let toWarmUp: LivekitFocus | undefined;
+): Promise<LivekitFocus> {
+  logger.log("Searching for a preferred focus");
+  const livekitAlias = getLivekitAlias(rtcSession);
 
   // Prioritize the .well-known/matrix/client, if available, over the configured SFU
   const domain = rtcSession.room.client.getDomain();
@@ -59,51 +52,42 @@ async function makePreferredLivekitFoci(
       FOCI_WK_KEY
     ];
     if (Array.isArray(wellKnownFoci)) {
-      const validWellKnownFoci = wellKnownFoci
-        .filter((f) => !!f)
-        .filter(isLivekitFocusConfig)
-        .map((wellKnownFocus) => {
-          logger.log("Adding livekit focus from well known: ", wellKnownFocus);
-          return { ...wellKnownFocus, livekit_alias: livekitAlias };
-        });
-      if (validWellKnownFoci.length > 0) {
-        toWarmUp = validWellKnownFoci[0];
+      const focus: LivekitFocusConfig | undefined = wellKnownFoci.find(
+        (f) => f && isLivekitFocusConfig(f),
+      );
+      if (focus !== undefined) {
+        logger.log("Using LiveKit focus from .well-known: ", focus);
+        return { ...focus, livekit_alias: livekitAlias };
       }
-      preferredFoci.push(...validWellKnownFoci);
     }
   }
 
   const urlFromConf = Config.get().livekit?.livekit_service_url;
   if (urlFromConf) {
-    const focusFormConf: LivekitFocus = {
+    const focusFromConf: LivekitFocus = {
       type: "livekit",
       livekit_service_url: urlFromConf,
       livekit_alias: livekitAlias,
     };
-    toWarmUp = toWarmUp ?? focusFormConf;
-    logger.log("Adding livekit focus from config: ", focusFormConf);
-    preferredFoci.push(focusFormConf);
+    logger.log("Using LiveKit focus from config: ", focusFromConf);
+    return focusFromConf;
   }
 
-  if (toWarmUp) {
-    // this will call the jwt/sfu/get endpoint to pre create the livekit room.
-    await getSFUConfigWithOpenID(rtcSession.room.client, toWarmUp);
-  }
-  if (preferredFoci.length === 0)
-    throw new MatrixRTCFocusMissingError(domain ?? "");
-  return Promise.resolve(preferredFoci);
+  throw new MatrixRTCFocusMissingError(domain ?? "");
+}
 
-  // TODO: we want to do something like this:
-  //
-  // const focusOtherMembers = await focusFromOtherMembers(
-  //   rtcSession,
-  //   livekitAlias,
-  // );
-  // if (focusOtherMembers) preferredFoci.push(focusOtherMembers);
+export async function makeFocus(
+  rtcSession: MatrixRTCSession,
+): Promise<LivekitFocus> {
+  const focus = await makeFocusInternal(rtcSession);
+  // this will call the jwt/sfu/get endpoint to pre create the livekit room.
+  await getSFUConfigWithOpenID(rtcSession.room.client, focus);
+  return focus;
 }
 
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
+  focus: LivekitFocus,
   encryptMedia: boolean,
   useNewMembershipManager = true,
   useExperimentalToDeviceTransport = false,
@@ -115,34 +99,27 @@ export async function enterRTCSession(
   // have started tracking by the time calls start getting created.
   // groupCallOTelMembership?.onJoinCall();
 
-  // right now we assume everything is a room-scoped call
-  const livekitAlias = rtcSession.room.roomId;
   const { features, matrix_rtc_session: matrixRtcSessionConfig } = Config.get();
   const useDeviceSessionMemberEvents =
     features?.feature_use_device_session_member_events;
-  rtcSession.joinRoomSession(
-    await makePreferredLivekitFoci(rtcSession, livekitAlias),
-    makeActiveFocus(),
-    {
-      notificationType: getUrlParams().sendNotificationType,
-      useNewMembershipManager,
-      manageMediaKeys: encryptMedia,
-      ...(useDeviceSessionMemberEvents !== undefined && {
-        useLegacyMemberEvents: !useDeviceSessionMemberEvents,
-      }),
-      delayedLeaveEventRestartMs:
-        matrixRtcSessionConfig?.delayed_leave_event_restart_ms,
-      delayedLeaveEventDelayMs:
-        matrixRtcSessionConfig?.delayed_leave_event_delay_ms,
-      delayedLeaveEventRestartLocalTimeoutMs:
-        matrixRtcSessionConfig?.delayed_leave_event_restart_local_timeout_ms,
-      networkErrorRetryMs: matrixRtcSessionConfig?.network_error_retry_ms,
-      makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
-      membershipEventExpiryMs:
-        matrixRtcSessionConfig?.membership_event_expiry_ms,
-      useExperimentalToDeviceTransport,
-    },
-  );
+  rtcSession.joinRoomSession([focus], focus, {
+    notificationType: getUrlParams().sendNotificationType,
+    useNewMembershipManager,
+    manageMediaKeys: encryptMedia,
+    ...(useDeviceSessionMemberEvents !== undefined && {
+      useLegacyMemberEvents: !useDeviceSessionMemberEvents,
+    }),
+    delayedLeaveEventRestartMs:
+      matrixRtcSessionConfig?.delayed_leave_event_restart_ms,
+    delayedLeaveEventDelayMs:
+      matrixRtcSessionConfig?.delayed_leave_event_delay_ms,
+    delayedLeaveEventRestartLocalTimeoutMs:
+      matrixRtcSessionConfig?.delayed_leave_event_restart_local_timeout_ms,
+    networkErrorRetryMs: matrixRtcSessionConfig?.network_error_retry_ms,
+    makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
+    membershipEventExpiryMs: matrixRtcSessionConfig?.membership_event_expiry_ms,
+    useExperimentalToDeviceTransport,
+  });
   if (widget) {
     try {
       await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
