@@ -531,7 +531,10 @@ export class CallViewModel extends ViewModel {
   private readonly memberships$ = fromEvent(
     this.matrixRTCSession,
     MatrixRTCSessionEvent.MembershipsChanged,
-  ).pipe(map(() => this.matrixRTCSession.memberships));
+  ).pipe(
+    startWith(null),
+    map(() => this.matrixRTCSession.memberships),
+  );
 
   private readonly foci$ = this.memberships$.pipe(
     map(
@@ -1873,5 +1876,8 @@ export class CallViewModel extends ViewModel {
         }
       }
     });
+
+    // Join automatically
+    this.join(); // TODO-MULTI-SFU: Use this view model for the lobby as well, and only call this once 'join' is clicked?
   }
 }
