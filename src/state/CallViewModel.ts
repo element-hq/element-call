@@ -42,6 +42,7 @@ import {
   distinctUntilChanged,
   endWith,
   filter,
+  from,
   fromEvent,
   ignoreElements,
   map,
@@ -367,6 +368,7 @@ class UserMedia {
 
   public destroy(): void {
     this.scope.end();
+
     this.vm.destroy();
   }
 }
@@ -473,12 +475,17 @@ class Connection {
   public async startPublishing(): Promise<void> {
     this.stopped = false;
     const { url, jwt } = await this.sfuConfig;
-    if (!this.stopped)
-      // TODO-MULTI-SFU this should not create a track?
-      await this.livekitRoom.localParticipant.createTracks({
-        audio: { deviceId: "default" },
-      });
     if (!this.stopped) await this.livekitRoom.connect(url, jwt);
+    if (!this.stopped) {
+      const tracks = await this.livekitRoom.localParticipant.createTracks({
+        audio: { deviceId: "default" },
+        video: true,
+      });
+      for (const track of tracks) {
+        await this.livekitRoom.localParticipant.publishTrack(track);
+      }
+      // await this.livekitRoom.localParticipant.enableCameraAndMicrophone();
+    }
   }
 
   private stopped = false;
@@ -1814,7 +1821,17 @@ export class CallViewModel extends ViewModel {
   ) {
     super();
 
-    void this.localConnection.then((c) => void c.startPublishing());
+    void from(this.localConnection)
+      .pipe(this.scope.bind())
+      .subscribe(
+        (c) =>
+          void c
+            .startPublishing()
+            // eslint-disable-next-line no-console
+            .then(() => console.log("successfully started publishing"))
+            // eslint-disable-next-line no-console
+            .catch((e) => console.error("failed to start publishing", e)),
+      );
     this.connectionInstructions$
       .pipe(this.scope.bind())
       .subscribe(({ start, stop }) => {
