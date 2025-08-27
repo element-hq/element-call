@@ -470,6 +470,10 @@ class Connection {
     this.stopped = false;
     const { url, jwt } = await this.sfuConfig;
     if (!this.stopped) await this.livekitRoom.connect(url, jwt);
+    const tracks = await this.livekitRoom.localParticipant.createTracks({
+      audio: { deviceId: "default" },
+    });
+    await this.livekitRoom.localParticipant.publishTrack(tracks[0]);
   }
 
   public async startPublishing(): Promise<void> {
