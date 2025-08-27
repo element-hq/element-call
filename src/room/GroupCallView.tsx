@@ -41,7 +41,7 @@ import { ActiveCall } from "./InCallView";
 import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
-import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
+import { leaveRTCSession } from "../rtcSessionHelpers";
 import {
   saveKeyForRoom,
   useRoomEncryptionSystem,
@@ -90,7 +90,8 @@ interface Props {
   skipLobby: UrlParams["skipLobby"];
   header: HeaderStyle;
   rtcSession: MatrixRTCSession;
-  isJoined: boolean;
+  joined: boolean;
+  setJoined: (value: boolean) => void;
   muteStates: MuteStates;
   widget: WidgetHelpers | null;
 }
@@ -103,7 +104,8 @@ export const GroupCallView: FC<Props> = ({
   skipLobby,
   header,
   rtcSession,
-  isJoined,
+  joined,
+  setJoined,
   muteStates,
   widget,
 }) => {
@@ -213,12 +215,14 @@ export const GroupCallView: FC<Props> = ({
   const enterRTCSessionOrError = useCallback(
     async (rtcSession: MatrixRTCSession): Promise<void> => {
       try {
-        await enterRTCSession(
-          rtcSession,
-          perParticipantE2EE,
-          useNewMembershipManager,
-          useExperimentalToDeviceTransport,
-        );
+        setJoined(true);
+        // TODO-MULTI-SFU what to do with error handling now that we don't use this function?
+        // await enterRTCSession(
+        //   rtcSession,
+        //   perParticipantE2EE,
+        //   useNewMembershipManager,
+        //   useExperimentalToDeviceTransport,
+        // );
       } catch (e) {
         if (e instanceof ElementCallError) {
           setExternalError(e);
@@ -230,12 +234,9 @@ export const GroupCallView: FC<Props> = ({
           setExternalError(error);
         }
       }
+      return Promise.resolve();
     },
-    [
-      perParticipantE2EE,
-      useExperimentalToDeviceTransport,
-      useNewMembershipManager,
-    ],
+    [setJoined],
   );
 
   useEffect(() => {
@@ -284,7 +285,7 @@ export const GroupCallView: FC<Props> = ({
         const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
           (async (): Promise<void> => {
             await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
-            await enterRTCSessionOrError(rtcSession);
+            setJoined(true);
             widget.api.transport.reply(ev.detail, {});
           })().catch((e) => {
             logger.error("Error joining RTC session on preload", e);
@@ -296,11 +297,7 @@ export const GroupCallView: FC<Props> = ({
         };
       } else {
         // No lobby and no preload: we enter the rtc session right away
-        (async (): Promise<void> => {
-          await enterRTCSessionOrError(rtcSession);
-        })().catch((e) => {
-          logger.error("Error joining RTC session immediately", e);
-        });
+        setJoined(true);
       }
     }
   }, [
@@ -311,7 +308,7 @@ export const GroupCallView: FC<Props> = ({
     perParticipantE2EE,
     mediaDevices,
     latestMuteStates,
-    enterRTCSessionOrError,
+    setJoined,
     useNewMembershipManager,
   ]);
 
@@ -373,7 +370,7 @@ export const GroupCallView: FC<Props> = ({
   );
 
   useEffect(() => {
-    if (widget && isJoined) {
+    if (widget && joined) {
       // set widget to sticky once joined.
       widget.api.setAlwaysOnScreen(true).catch((e) => {
         logger.error("Error calling setAlwaysOnScreen(true)", e);
@@ -391,7 +388,7 @@ export const GroupCallView: FC<Props> = ({
         widget.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
       };
     }
-  }, [widget, isJoined, rtcSession]);
+  }, [widget, joined, rtcSession]);
 
   const joinRule = useJoinRule(room);
 
@@ -426,7 +423,7 @@ export const GroupCallView: FC<Props> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={() => void enterRTCSessionOrError(rtcSession)}
+        onEnter={() => setJoined(true)}
         confineToRoom={confineToRoom}
         hideHeader={header === HeaderStyle.None}
         participantCount={participantCount}
@@ -444,7 +441,7 @@ export const GroupCallView: FC<Props> = ({
       throw externalError;
     };
     body = <ErrorComponent />;
-  } else if (isJoined) {
+  } else if (joined) {
     body = (
       <>
         {shareModal}
