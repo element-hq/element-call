@@ -100,7 +100,6 @@ import { ReactionsReader } from "../reactions/ReactionsReader";
 import { useTypedEventEmitter } from "../useEvents.ts";
 import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
-import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
 import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
@@ -212,7 +211,6 @@ export const InCallView: FC<InCallViewProps> = ({
     useExperimentalToDeviceTransportSetting,
   );
   const encryptionSystem = useRoomEncryptionSystem(matrixRoom.roomId);
-  const memberships = useMatrixRTCSessionMemberships(rtcSession);
 
   const showToDeviceEncryption = useMemo(
     () =>
