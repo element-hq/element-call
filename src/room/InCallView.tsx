@@ -5,9 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import { IconButton, Text, Tooltip } from "@vector-im/compound-web";
-import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
 import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
@@ -55,15 +53,12 @@ import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { useLivekit } from "../livekit/useLivekit.ts";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { type MuteStates } from "./MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
-import { type ECConnectionState } from "../livekit/useECConnectionState";
-import { useOpenIDSFU } from "../livekit/openIDSFU";
 import {
   CallViewModel,
   type GridMode,
@@ -102,7 +97,6 @@ import {
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
-import { ConnectionLostError } from "../utils/errors.ts";
 import { useTypedEventEmitter } from "../useEvents.ts";
 import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
@@ -124,87 +118,42 @@ export interface ActiveCallProps
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const mediaDevices = useMediaDevices();
-  const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
-  const { livekitRoom, connState } = useLivekit(
-    props.rtcSession,
-    props.muteStates,
-    sfuConfig,
-    props.e2eeSystem,
-  );
-  const connStateObservable$ = useObservable(
-    (inputs$) => inputs$.pipe(map(([connState]) => connState)),
-    [connState],
-  );
   const [vm, setVm] = useState<CallViewModel | null>(null);
-
-  useEffect(() => {
-    logger.info(
-      `[Lifecycle] InCallView Component mounted, livekit room state ${livekitRoom?.state}`,
-    );
-    return (): void => {
-      logger.info(
-        `[Lifecycle] InCallView Component unmounted, livekit room state ${livekitRoom?.state}`,
-      );
-      livekitRoom
-        ?.disconnect()
-        .then(() => {
-          logger.info(
-            `[Lifecycle] Disconnected from livekit room, state:${livekitRoom?.state}`,
-          );
-        })
-        .catch((e) => {
-          logger.error("[Lifecycle] Failed to disconnect from livekit room", e);
-        });
-    };
-  }, [livekitRoom]);
 
   const { autoLeaveWhenOthersLeft } = useUrlParams();
 
   useEffect(() => {
-    if (livekitRoom !== undefined) {
-      const reactionsReader = new ReactionsReader(props.rtcSession);
-      const vm = new CallViewModel(
-        props.rtcSession,
-        props.matrixRoom,
-        livekitRoom,
-        mediaDevices,
-        {
-          encryptionSystem: props.e2eeSystem,
-          autoLeaveWhenOthersLeft,
-        },
-        connStateObservable$,
-        reactionsReader.raisedHands$,
-        reactionsReader.reactions$,
-      );
-      setVm(vm);
-      return (): void => {
-        vm.destroy();
-        reactionsReader.destroy();
-      };
-    }
+    const reactionsReader = new ReactionsReader(props.rtcSession);
+    const vm = new CallViewModel(
+      props.rtcSession,
+      props.matrixRoom,
+      mediaDevices,
+      {
+        encryptionSystem: props.e2eeSystem,
+        autoLeaveWhenOthersLeft,
+      },
+      reactionsReader.raisedHands$,
+      reactionsReader.reactions$,
+    );
+    setVm(vm);
+    return (): void => {
+      vm.destroy();
+      reactionsReader.destroy();
+    };
   }, [
     props.rtcSession,
     props.matrixRoom,
-    livekitRoom,
     mediaDevices,
     props.e2eeSystem,
-    connStateObservable$,
     autoLeaveWhenOthersLeft,
   ]);
 
-  if (livekitRoom === undefined || vm === null) return null;
+  if (vm === null) return null;
 
   return (
-    <RoomContext value={livekitRoom}>
-      <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
-        <InCallView
-          {...props}
-          vm={vm}
-          livekitRoom={livekitRoom}
-          connState={connState}
-        />
-      </ReactionsSenderProvider>
-    </RoomContext>
+    <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
+      <InCallView {...props} vm={vm} />
+    </ReactionsSenderProvider>
   );
 };
 
@@ -214,14 +163,12 @@ export interface InCallViewProps {
   matrixInfo: MatrixInfo;
   rtcSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
-  livekitRoom: LivekitRoom;
   muteStates: MuteStates;
   participantCount: number;
   /** Function to call when the user explicitly ends the call */
   onLeave: () => void;
   header: HeaderStyle;
   otelGroupCallMembership?: OTelGroupCallMembership;
-  connState: ECConnectionState;
   onShareClick: (() => void) | null;
 }
 
@@ -231,12 +178,10 @@ export const InCallView: FC<InCallViewProps> = ({
   matrixInfo,
   rtcSession,
   matrixRoom,
-  livekitRoom,
   muteStates,
   participantCount,
   onLeave,
   header: headerStyle,
-  connState,
   onShareClick,
 }) => {
   const { t } = useTranslation();
@@ -245,21 +190,12 @@ export const InCallView: FC<InCallViewProps> = ({
 
   useWakeLock();
 
-  // annoyingly we don't get the disconnection reason this way,
-  // only by listening for the emitted event
-  if (connState === ConnectionState.Disconnected)
-    throw new ConnectionLostError();
-
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure();
   // Merge the refs so they can attach to the same element
   const containerRef = useMergedRefs(containerRef1, containerRef2);
 
   const { hideScreensharing, showControls } = useUrlParams();
-
-  const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
-    room: livekitRoom,
-  });
 
   const muteAllAudio = useBehavior(muteAllAudio$);
 
@@ -653,15 +589,16 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const toggleScreensharing = useCallback(() => {
-    localParticipant
-      .setScreenShareEnabled(!isScreenShareEnabled, {
-        audio: true,
-        selfBrowserSurface: "include",
-        surfaceSwitching: "include",
-        systemAudio: "include",
-      })
-      .catch(logger.error);
-  }, [localParticipant, isScreenShareEnabled]);
+    throw new Error("TODO-MULTI-SFU");
+    // localParticipant
+    //   .setScreenShareEnabled(!isScreenShareEnabled, {
+    //     audio: true,
+    //     selfBrowserSurface: "include",
+    //     surfaceSwitching: "include",
+    //     systemAudio: "include",
+    //   })
+    //   .catch(logger.error);
+  }, []);
 
   const buttons: JSX.Element[] = [];
 
@@ -688,7 +625,7 @@ export const InCallView: FC<InCallViewProps> = ({
       <ShareScreenButton
         key="share_screen"
         className={styles.shareScreen}
-        enabled={isScreenShareEnabled}
+        enabled={false} // TODO-MULTI-SFU
         onClick={toggleScreensharing}
         onTouchEnd={onControlsTouchEnd}
         data-testid="incall_screenshare"
@@ -786,7 +723,7 @@ export const InCallView: FC<InCallViewProps> = ({
           </Text>
         )
       }
-      <MatrixAudioRenderer members={memberships} muted={muteAllAudio} />
+      {/* TODO-MULTI-SFU: <MatrixAudioRenderer members={memberships} muted={muteAllAudio} /> */}
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
@@ -813,7 +750,7 @@ export const InCallView: FC<InCallViewProps> = ({
             onDismiss={closeSettings}
             tab={settingsTab}
             onTabChange={setSettingsTab}
-            livekitRoom={livekitRoom}
+            livekitRoom={undefined} // TODO-MULTI-SFU
           />
         </>
       )}
