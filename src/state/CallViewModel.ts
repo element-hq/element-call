@@ -11,17 +11,17 @@ import {
   observeParticipantMedia,
 } from "@livekit/components-core";
 import {
-  ConnectionState,
-  E2EEOptions,
+  type E2EEOptions,
   ExternalE2EEKeyProvider,
   Room as LivekitRoom,
   type LocalParticipant,
   ParticipantEvent,
   type RemoteParticipant,
 } from "livekit-client";
+import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import {
   ClientEvent,
-  MatrixClient,
+  type MatrixClient,
   RoomStateEvent,
   SyncState,
   type Room as MatrixRoom,
@@ -33,14 +33,11 @@ import {
   type Observable,
   Subject,
   combineLatest,
-  concat,
   distinctUntilChanged,
   filter,
-  forkJoin,
   fromEvent,
   map,
   merge,
-  mergeMap,
   of,
   pairwise,
   race,
@@ -52,7 +49,6 @@ import {
   switchScan,
   take,
   timer,
-  withLatestFrom,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
@@ -65,10 +61,6 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
-import {
-  ECAddonConnectionState,
-  type ECConnectionState,
-} from "../livekit/useECConnectionState";
 import {
   LocalUserMediaViewModel,
   type MediaViewModel,
@@ -125,9 +117,6 @@ export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
   autoLeaveWhenOthersLeft?: boolean;
 }
-// How long we wait after a focus switch before showing the real participant
-// list again
-const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 
 // This is the number of participants that we think constitutes a "small" call
 // on mobile. No spotlight tile should be shown below this threshold.
@@ -476,9 +465,9 @@ class Connection {
     this.stopped = true;
   }
 
-  public readonly participants$ = connectedParticipantsObserver(
+  public readonly participants$ = this.scope.behavior(connectedParticipantsObserver(
     this.livekitRoom,
-  ).pipe(this.scope.state());
+  ), []);
 
   public constructor(
     private readonly livekitRoom: LivekitRoom,
@@ -628,9 +617,10 @@ export class CallViewModel extends ViewModel {
   private readonly connected$ = this.scope.behavior(
     and$(
       this.matrixConnected$,
-      this.livekitConnectionState$.pipe(
-        map((state) => state === ConnectionState.Connected),
-      ),
+      // TODO-MULTI-SFU
+      // this.livekitConnectionState$.pipe(
+      //   map((state) => state === ConnectionState.Connected),
+      // ),
     ),
   );
 
@@ -1705,17 +1695,17 @@ export class CallViewModel extends ViewModel {
   ) {
     super();
 
-    void this.localConnection.then((c) => c.startPublishing());
+    void this.localConnection.then((c) => void c.startPublishing());
     this.connectionInstructions$
       .pipe(this.scope.bind())
       .subscribe(({ start, stop }) => {
-        for (const connection of start) connection.startSubscribing();
+        for (const connection of start) void connection.startSubscribing();
         for (const connection of stop) connection.stop();
       });
     combineLatest([this.localFocus, this.joined$])
       .pipe(this.scope.bind())
       .subscribe(([localFocus]) => {
-        enterRTCSession(
+        void enterRTCSession(
           this.matrixRTCSession,
           localFocus,
           this.encryptionSystem.kind !== E2eeType.PER_PARTICIPANT,
