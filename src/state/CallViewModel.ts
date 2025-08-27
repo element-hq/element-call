@@ -465,9 +465,10 @@ class Connection {
     this.stopped = true;
   }
 
-  public readonly participants$ = this.scope.behavior(connectedParticipantsObserver(
-    this.livekitRoom,
-  ), []);
+  public readonly participants$ = this.scope.behavior(
+    connectedParticipantsObserver(this.livekitRoom),
+    [],
+  );
 
   public constructor(
     private readonly livekitRoom: LivekitRoom,
@@ -480,7 +481,7 @@ class Connection {
 
 export class CallViewModel extends ViewModel {
   private readonly e2eeOptions = getE2eeOptions(
-    this.encryptionSystem,
+    this.options.encryptionSystem,
     this.matrixRTCSession,
   );
 
@@ -1691,7 +1692,6 @@ export class CallViewModel extends ViewModel {
     private readonly reactionsSubject$: Observable<
       Record<string, ReactionInfo>
     >,
-    private readonly encryptionSystem: EncryptionSystem,
   ) {
     super();
 
@@ -1708,7 +1708,7 @@ export class CallViewModel extends ViewModel {
         void enterRTCSession(
           this.matrixRTCSession,
           localFocus,
-          this.encryptionSystem.kind !== E2eeType.PER_PARTICIPANT,
+          this.options.encryptionSystem.kind !== E2eeType.PER_PARTICIPANT,
         );
       });
 
