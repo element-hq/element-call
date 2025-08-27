@@ -50,11 +50,12 @@ import { getValue } from "../utils/observable";
 import { type SelectedDevice } from "../state/MediaDevices";
 
 interface UseLivekitResult {
-  livekitRoom?: Room;
+  livekitPublicationRoom?: Room;
   connState: ECConnectionState;
 }
 
-export function useLivekit(
+// TODO-MULTI-SFU This is not used anymore but the device syncing logic needs to be moved into the connection object.
+export function useLivekitPublicationRoom(
   rtcSession: MatrixRTCSession,
   muteStates: MuteStates,
   sfuConfig: SFUConfig | undefined,
@@ -83,7 +84,9 @@ export function useLivekit(
   const { processor } = useTrackProcessor();
 
   // Only ever create the room once via useInitial.
-  const room = useInitial(() => {
+  // The call can end up with multiple livekit rooms. This is the particular room in
+  // which this participant publishes their media.
+  const publicationRoom = useInitial(() => {
     logger.info("[LivekitRoom] Create LiveKit room");
 
     let e2ee: E2EEManagerOptions | undefined;
@@ -135,7 +138,7 @@ export function useLivekit(
 
   // Setup and update the keyProvider which was create by `createRoom`
   useEffect(() => {
-    const e2eeOptions = room.options.e2ee;
+    const e2eeOptions = publicationRoom.options.e2ee;
     if (
       e2eeSystem.kind === E2eeType.NONE ||
       !(e2eeOptions && "keyProvider" in e2eeOptions)
@@ -151,7 +154,7 @@ export function useLivekit(
           logger.error("Failed to set shared key for E2EE", e);
         });
     }
-  }, [room.options.e2ee, e2eeSystem, rtcSession]);
+  }, [publicationRoom.options.e2ee, e2eeSystem, rtcSession]);
 
   // Sync the requested track processors with LiveKit
   useTrackProcessorSync(
@@ -170,7 +173,7 @@ export function useLivekit(
               return track instanceof LocalVideoTrack ? track : null;
             }),
           ),
-        [room],
+        [publicationRoom],
       ),
     ),
   );
@@ -178,7 +181,7 @@ export function useLivekit(
   const connectionState = useECConnectionState(
     initialAudioInputId,
     initialMuteStates.audio.enabled,
-    room,
+    publicationRoom,
     sfuConfig,
   );
 
@@ -216,8 +219,11 @@ export function useLivekit(
     // It's important that we only do this in the connected state, because
     // LiveKit's internal mute states aren't consistent during connection setup,
     // and setting tracks to be enabled during this time causes errors.
-    if (room !== undefined && connectionState === ConnectionState.Connected) {
-      const participant = room.localParticipant;
+    if (
+      publicationRoom !== undefined &&
+      connectionState === ConnectionState.Connected
+    ) {
+      const participant = publicationRoom.localParticipant;
       // Always update the muteButtonState Ref so that we can read the current
       // state in awaited blocks.
       buttonEnabled.current = {
@@ -275,7 +281,7 @@ export function useLivekit(
                 audioMuteUpdating.current = true;
                 trackPublication = await participant.setMicrophoneEnabled(
                   buttonEnabled.current.audio,
-                  room.options.audioCaptureDefaults,
+                  publicationRoom.options.audioCaptureDefaults,
                 );
                 audioMuteUpdating.current = false;
                 break;
@@ -283,7 +289,7 @@ export function useLivekit(
                 videoMuteUpdating.current = true;
                 trackPublication = await participant.setCameraEnabled(
                   buttonEnabled.current.video,
-                  room.options.videoCaptureDefaults,
+                  publicationRoom.options.videoCaptureDefaults,
                 );
                 videoMuteUpdating.current = false;
                 break;
@@ -347,11 +353,14 @@ export function useLivekit(
         logger.error("Failed to sync video mute state with LiveKit", e);
       });
     }
-  }, [room, muteStates, connectionState]);
+  }, [publicationRoom, muteStates, connectionState]);
 
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
-    if (room !== undefined && connectionState === ConnectionState.Connected) {
+    if (
+      publicationRoom !== undefined &&
+      connectionState === ConnectionState.Connected
+    ) {
       const syncDevice = (
         kind: MediaDeviceKind,
         selected$: Observable<SelectedDevice | undefined>,
@@ -359,15 +368,15 @@ export function useLivekit(
         selected$.subscribe((device) => {
           logger.info(
             "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
-            room.getActiveDevice(kind),
+            publicationRoom.getActiveDevice(kind),
             " !== ",
             device?.id,
           );
           if (
             device !== undefined &&
-            room.getActiveDevice(kind) !== device.id
+            publicationRoom.getActiveDevice(kind) !== device.id
           ) {
-            room
+            publicationRoom
               .switchActiveDevice(kind, device.id)
               .catch((e) =>
                 logger.error(`Failed to sync ${kind} device with LiveKit`, e),
@@ -393,7 +402,7 @@ export function useLivekit(
           .pipe(switchMap((device) => device?.hardwareDeviceChange$ ?? NEVER))
           .subscribe(() => {
             const activeMicTrack = Array.from(
-              room.localParticipant.audioTrackPublications.values(),
+              publicationRoom.localParticipant.audioTrackPublications.values(),
             ).find((d) => d.source === Track.Source.Microphone)?.track;
 
             if (
@@ -408,7 +417,7 @@ export function useLivekit(
               // getUserMedia() call with deviceId: default to get the *new* default device.
               // Note that room.switchActiveDevice() won't work: Livekit will ignore it because
               // the deviceId hasn't changed (was & still is default).
-              room.localParticipant
+              publicationRoom.localParticipant
                 .getTrackPublication(Track.Source.Microphone)
                 ?.audioTrack?.restartTrack()
                 .catch((e) => {
@@ -422,10 +431,10 @@ export function useLivekit(
         for (const s of subscriptions) s?.unsubscribe();
       };
     }
-  }, [room, devices, connectionState, controlledAudioDevices]);
+  }, [publicationRoom, devices, connectionState, controlledAudioDevices]);
 
   return {
     connState: connectionState,
-    livekitRoom: room,
+    livekitPublicationRoom: publicationRoom,
   };
 }

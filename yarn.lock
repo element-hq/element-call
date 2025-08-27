@@ -10317,7 +10317,7 @@ __metadata:
     uuid: "npm:11"
   checksum: 10c0/ecd019c677c272c5598617dcde407dbe4b1b11460863b2a577e33f3fd8732c9d9073ec0221b471ec1eb24e2839eec20728db7f92c9348be83126547286e50805
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "matrix-widget-api@npm:^1.10.0, matrix-widget-api@npm:^1.13.0":
   version: 1.13.1

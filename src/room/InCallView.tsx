@@ -5,9 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import { IconButton, Text, Tooltip } from "@vector-im/compound-web";
-import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
 import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
@@ -37,6 +35,7 @@ import {
   VolumeOnSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
+import { ConnectionState } from "livekit-client";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -59,14 +58,12 @@ import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { useLivekit } from "../livekit/useLivekit.ts";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { type MuteStates } from "./MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
-import { useOpenIDSFU } from "../livekit/openIDSFU";
 import {
   CallViewModel,
   type GridMode,
@@ -108,9 +105,7 @@ import {
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
-import { ConnectionLostError } from "../utils/errors.ts";
 import { useTypedEventEmitter } from "../useEvents.ts";
-import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
@@ -125,7 +120,7 @@ import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 import ringtoneMp3 from "../sound/ringtone.mp3?url";
 import ringtoneOgg from "../sound/ringtone.ogg?url";
-import { ObservableScope } from "../state/ObservableScope.ts";
+import { ConnectionLostError } from "../utils/errors.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -138,92 +133,47 @@ export interface ActiveCallProps
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const mediaDevices = useMediaDevices();
-  const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
-  const { livekitRoom, connState } = useLivekit(
-    props.rtcSession,
-    props.muteStates,
-    sfuConfig,
-    props.e2eeSystem,
-  );
-  const observableScope = useInitial(() => new ObservableScope());
-  const connStateBehavior$ = useObservable(
-    (inputs$) =>
-      observableScope.behavior(
-        inputs$.pipe(map(([connState]) => connState)),
-        connState,
-      ),
-    [connState],
-  );
   const [vm, setVm] = useState<CallViewModel | null>(null);
 
-  useEffect(() => {
-    logger.info(
-      `[Lifecycle] InCallView Component mounted, livekit room state ${livekitRoom?.state}`,
-    );
-    return (): void => {
-      logger.info(
-        `[Lifecycle] InCallView Component unmounted, livekit room state ${livekitRoom?.state}`,
-      );
-      livekitRoom
-        ?.disconnect()
-        .then(() => {
-          logger.info(
-            `[Lifecycle] Disconnected from livekit room, state:${livekitRoom?.state}`,
-          );
-        })
-        .catch((e) => {
-          logger.error("[Lifecycle] Failed to disconnect from livekit room", e);
-        });
-    };
-  }, [livekitRoom]);
-
-  const { autoLeaveWhenOthersLeft, sendNotificationType, waitForCallPickup } =
+  const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
     useUrlParams();
 
   useEffect(() => {
-    if (livekitRoom !== undefined) {
-      const reactionsReader = new ReactionsReader(props.rtcSession);
-      const vm = new CallViewModel(
-        props.rtcSession,
-        props.matrixRoom,
-        livekitRoom,
-        mediaDevices,
-        {
-          encryptionSystem: props.e2eeSystem,
-          autoLeaveWhenOthersLeft,
-          waitForCallPickup:
-            waitForCallPickup && sendNotificationType === "ring",
-        },
-        connStateBehavior$,
-        reactionsReader.raisedHands$,
-        reactionsReader.reactions$,
-      );
-      setVm(vm);
-      return (): void => {
-        vm.destroy();
-        reactionsReader.destroy();
-      };
-    }
+    const reactionsReader = new ReactionsReader(props.rtcSession);
+    const vm = new CallViewModel(
+      props.rtcSession,
+      props.matrixRoom,
+      mediaDevices,
+      {
+        encryptionSystem: props.e2eeSystem,
+        autoLeaveWhenOthersLeft,
+        waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
+      },
+      reactionsReader.raisedHands$,
+      reactionsReader.reactions$,
+      props.e2eeSystem,
+    );
+    setVm(vm);
+    return (): void => {
+      vm.destroy();
+      reactionsReader.destroy();
+    };
   }, [
     props.rtcSession,
     props.matrixRoom,
-    livekitRoom,
     mediaDevices,
     props.e2eeSystem,
-    connStateBehavior$,
     autoLeaveWhenOthersLeft,
     sendNotificationType,
     waitForCallPickup,
   ]);
 
-  if (livekitRoom === undefined || vm === null) return null;
+  if (vm === null) return null;
 
   return (
-    <RoomContext value={livekitRoom}>
-      <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
-        <InCallView {...props} vm={vm} livekitRoom={livekitRoom} />
-      </ReactionsSenderProvider>
-    </RoomContext>
+    <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
+      <InCallView {...props} vm={vm} />
+    </ReactionsSenderProvider>
   );
 };
 
@@ -233,7 +183,6 @@ export interface InCallViewProps {
   matrixInfo: MatrixInfo;
   rtcSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
-  livekitRoom: LivekitRoom;
   muteStates: MuteStates;
   /** Function to call when the user explicitly ends the call */
   onLeave: (cause: "user", soundFile?: CallEventSounds) => void;
@@ -248,7 +197,6 @@ export const InCallView: FC<InCallViewProps> = ({
   matrixInfo,
   rtcSession,
   matrixRoom,
-  livekitRoom,
   muteStates,
   onLeave,
   header: headerStyle,
@@ -272,10 +220,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const containerRef = useMergedRefs(containerRef1, containerRef2);
 
   const { hideScreensharing, showControls } = useUrlParams();
-
-  const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
-    room: livekitRoom,
-  });
 
   const muteAllAudio = useBehavior(muteAllAudio$);
   // Call pickup state and display names are needed for waiting overlay/sounds
@@ -806,15 +750,16 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const toggleScreensharing = useCallback(() => {
-    localParticipant
-      .setScreenShareEnabled(!isScreenShareEnabled, {
-        audio: true,
-        selfBrowserSurface: "include",
-        surfaceSwitching: "include",
-        systemAudio: "include",
-      })
-      .catch(logger.error);
-  }, [localParticipant, isScreenShareEnabled]);
+    throw new Error("TODO-MULTI-SFU");
+    // localParticipant
+    //   .setScreenShareEnabled(!isScreenShareEnabled, {
+    //     audio: true,
+    //     selfBrowserSurface: "include",
+    //     surfaceSwitching: "include",
+    //     systemAudio: "include",
+    //   })
+    //   .catch(logger.error);
+  }, []);
 
   const buttons: JSX.Element[] = [];
 
@@ -841,7 +786,7 @@ export const InCallView: FC<InCallViewProps> = ({
       <ShareScreenButton
         key="share_screen"
         className={styles.shareScreen}
-        enabled={isScreenShareEnabled}
+        enabled={false} // TODO-MULTI-SFU
         onClick={toggleScreensharing}
         onTouchEnd={onControlsTouchEnd}
         data-testid="incall_screenshare"
@@ -936,7 +881,7 @@ export const InCallView: FC<InCallViewProps> = ({
           </Text>
         )
       }
-      <MatrixAudioRenderer members={memberships} muted={muteAllAudio} />
+      {/* TODO-MULTI-SFU: <MatrixAudioRenderer members={memberships} muted={muteAllAudio} /> */}
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
@@ -955,7 +900,7 @@ export const InCallView: FC<InCallViewProps> = ({
             onDismiss={closeSettings}
             tab={settingsTab}
             onTabChange={setSettingsTab}
-            livekitRoom={livekitRoom}
+            livekitRoom={undefined} // TODO-MULTI-SFU
           />
         </>
       )}
