@@ -470,6 +470,8 @@ class Connection {
     this.stopped = false;
     const { url, jwt } = await this.sfuConfig;
     if (!this.stopped) await this.livekitRoom.connect(url, jwt);
+    // TODO-MULTI-SFU in this livekit room we really do not want to publish any tracks.
+    // this is only for testing purposes
     const tracks = await this.livekitRoom.localParticipant.createTracks({
       audio: { deviceId: "default" },
     });
