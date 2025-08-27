@@ -12,19 +12,20 @@ import {
 } from "@livekit/components-core";
 import {
   ConnectionState,
-  E2EEOptions,
+  type E2EEOptions,
   ExternalE2EEKeyProvider,
   Room as LivekitRoom,
   type LocalParticipant,
   ParticipantEvent,
   type RemoteParticipant,
 } from "livekit-client";
+import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import {
   ClientEvent,
   type EventTimelineSetHandlerMap,
   EventType,
   RoomEvent,
-  MatrixClient,
+  type MatrixClient,
   RoomStateEvent,
   SyncState,
   type Room as MatrixRoom,
@@ -41,12 +42,10 @@ import {
   distinctUntilChanged,
   endWith,
   filter,
-  forkJoin,
   fromEvent,
   ignoreElements,
   map,
   merge,
-  mergeMap,
   of,
   pairwise,
   race,
@@ -61,7 +60,6 @@ import {
   takeUntil,
   throttleTime,
   timer,
-  withLatestFrom,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
@@ -75,10 +73,6 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
-import {
-  ECAddonConnectionState,
-  type ECConnectionState,
-} from "../livekit/useECConnectionState";
 import {
   LocalUserMediaViewModel,
   type MediaViewModel,
@@ -120,7 +114,7 @@ import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
 import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 import { type MediaDevices } from "./MediaDevices";
-import { type Behavior } from "./Behavior";
+import { constant, type Behavior } from "./Behavior";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 import { defaultLiveKitOptions } from "../livekit/options";
 import {
@@ -130,6 +124,7 @@ import {
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
+import { ECConnectionState } from "../livekit/useECConnectionState";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -140,10 +135,6 @@ export interface CallViewModelOptions {
    */
   waitForCallPickup?: boolean;
 }
-
-// How long we wait after a focus switch before showing the real participant
-// list again
-const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 
 // Do not play any sounds if the participant count has exceeded this
 // number.
@@ -497,9 +488,10 @@ class Connection {
     this.stopped = true;
   }
 
-  public readonly participants$ = connectedParticipantsObserver(
-    this.livekitRoom,
-  ).pipe(this.scope.state());
+  public readonly participants$ = this.scope.behavior(
+    connectedParticipantsObserver(this.livekitRoom),
+    [],
+  );
 
   public constructor(
     private readonly livekitRoom: LivekitRoom,
@@ -649,9 +641,10 @@ export class CallViewModel extends ViewModel {
   private readonly connected$ = this.scope.behavior(
     and$(
       this.matrixConnected$,
-      this.livekitConnectionState$.pipe(
-        map((state) => state === ConnectionState.Connected),
-      ),
+      // TODO-MULTI-SFU
+      // this.livekitConnectionState$.pipe(
+      //   map((state) => state === ConnectionState.Connected),
+      // ),
     ),
   );
 
@@ -1819,17 +1812,17 @@ export class CallViewModel extends ViewModel {
   ) {
     super();
 
-    void this.localConnection.then((c) => c.startPublishing());
+    void this.localConnection.then((c) => void c.startPublishing());
     this.connectionInstructions$
       .pipe(this.scope.bind())
       .subscribe(({ start, stop }) => {
-        for (const connection of start) connection.startSubscribing();
+        for (const connection of start) void connection.startSubscribing();
         for (const connection of stop) connection.stop();
       });
     combineLatest([this.localFocus, this.joined$])
       .pipe(this.scope.bind())
       .subscribe(([localFocus]) => {
-        enterRTCSession(
+        void enterRTCSession(
           this.matrixRTCSession,
           localFocus,
           this.encryptionSystem.kind !== E2eeType.PER_PARTICIPANT,
