@@ -6,11 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  isLivekitFocus,
   isLivekitFocusConfig,
-  LivekitFocusConfig,
+  type LivekitFocusConfig,
   type LivekitFocus,
-  type LivekitFocusActive,
+  type LivekitFocusSelection,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -25,7 +24,7 @@ import { getSFUConfigWithOpenID } from "./livekit/openIDSFU.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
-export function makeActiveFocus(): LivekitFocusActive {
+export function makeActiveFocus(): LivekitFocusSelection {
   return {
     type: "livekit",
     focus_selection: "oldest_membership",
@@ -81,7 +80,11 @@ export async function makeFocus(
 ): Promise<LivekitFocus> {
   const focus = await makeFocusInternal(rtcSession);
   // this will call the jwt/sfu/get endpoint to pre create the livekit room.
-  await getSFUConfigWithOpenID(rtcSession.room.client, focus);
+  await getSFUConfigWithOpenID(
+    rtcSession.room.client,
+    focus.livekit_service_url,
+    focus.livekit_alias,
+  );
   return focus;
 }
 
