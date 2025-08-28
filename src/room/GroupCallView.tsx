@@ -38,7 +38,7 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
 import { ActiveCall } from "./InCallView";
-import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
+import { type MuteStates } from "../state/MuteStates";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { leaveRTCSession } from "../rtcSessionHelpers";
@@ -75,6 +75,12 @@ import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useAppBarTitle } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
+
+/**
+ * If there already are this many participants in the call, we automatically mute
+ * the user.
+ */
+export const MUTE_PARTICIPANT_COUNT = 8;
 
 declare global {
   interface Window {
