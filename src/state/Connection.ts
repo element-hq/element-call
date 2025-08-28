@@ -13,20 +13,19 @@ import {
 } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk";
 import {
+  type LivekitFocus,
   type CallMembership,
-  type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, map, type Observable } from "rxjs";
 
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 import { type Behavior } from "./Behavior";
-import { membershipsFocusUrl } from "./CallViewModel";
 import { type ObservableScope } from "./ObservableScope";
 
 export class Connection {
   protected readonly sfuConfig = getSFUConfigWithOpenID(
     this.client,
-    this.serviceUrl,
+    this.focus.livekit_service_url,
     this.livekitAlias,
   );
 
@@ -48,42 +47,41 @@ export class Connection {
     [],
   );
 
-  public readonly publishingParticipants$ = (
-    memberships$: Behavior<CallMembership[]>,
-  ): Observable<RemoteParticipant[]> =>
+  public readonly publishingParticipants$: Observable<RemoteParticipant[]> =
     this.scope.behavior(
       combineLatest([
         connectedParticipantsObserver(this.livekitRoom),
-        memberships$,
+        this.membershipsFocusMap$,
       ]).pipe(
-        map(([participants, memberships]) => {
-          const publishingMembers = membershipsFocusUrl(
-            memberships,
-            this.matrixRTCSession,
-          )
-            .filter((f) => f.livekit_service_url === this.serviceUrl)
-            .map((f) => f.membership);
-
-          const publishingP = publishingMembers
-            .map((m) => {
-              return participants.find((p) => {
-                return p.identity === `${m.sender}:${m.deviceId}`;
-              });
-            })
-            .filter((p): p is RemoteParticipant => !!p);
-          return publishingP;
-        }),
+        map(([participants, membershipsFocusMap]) =>
+          membershipsFocusMap
+            // Find all members that claim to publish on this connection
+            .flatMap(({ membership, focus }) =>
+              focus.livekit_service_url === this.focus.livekit_service_url
+                ? [membership]
+                : [],
+            )
+            // Find all associated publishing livekit participant objects
+            .flatMap(({ sender, deviceId }) => {
+              const participant = participants.find(
+                (p) => p.identity === `${sender}:${deviceId}`,
+              );
+              return participant ? [participant] : [];
+            }),
+        ),
       ),
       [],
     );
 
   public constructor(
     protected readonly livekitRoom: LivekitRoom,
-    protected readonly serviceUrl: string,
+    protected readonly focus: LivekitFocus,
     protected readonly livekitAlias: string,
     protected readonly client: MatrixClient,
     protected readonly scope: ObservableScope,
-    protected readonly matrixRTCSession: MatrixRTCSession,
+    protected readonly membershipsFocusMap$: Behavior<
+      { membership: CallMembership; focus: LivekitFocus }[]
+    >,
   ) {}
 }
 
