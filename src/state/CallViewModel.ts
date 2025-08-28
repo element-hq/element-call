@@ -471,11 +471,6 @@ class Connection {
     this.stopped = false;
     const { url, jwt } = await this.sfuConfig;
     if (!this.stopped) await this.livekitRoom.connect(url, jwt);
-    // TODO-MULTI-SFU in this livekit room we really do not want to publish any tracks.
-    // this is only for testing purposes
-    const tracks = await this.livekitRoom.localParticipant.createTracks({
-      audio: { deviceId: "default" },
-    });
     await this.livekitRoom.localParticipant.publishTrack(tracks[0]);
   }
 
@@ -483,9 +478,10 @@ class Connection {
     this.stopped = false;
     const { url, jwt } = await this.sfuConfig;
     if (!this.stopped) await this.livekitRoom.connect(url, jwt);
+
     if (!this.stopped) {
       const tracks = await this.livekitRoom.localParticipant.createTracks({
-        audio: { deviceId: "default" },
+        audio: true,
         video: true,
       });
       for (const track of tracks) {
@@ -524,30 +520,11 @@ class Connection {
 
           const publishingP = publishingMembers
             .map((m) => {
-              logger.log(
-                "Publishing participants: all participants at: ",
-                this.livekitAlias,
-                this.serviceUrl,
-                participants,
-              );
               return participants.find((p) => {
-                logger.log(
-                  "Publishing participants: compare",
-                  p.identity,
-                  "===",
-                  `${m.sender}:${m.deviceId}`,
-                );
                 return p.identity === `${m.sender}:${m.deviceId}`;
               });
             })
             .filter((p): p is RemoteParticipant => !!p);
-          logger.log(
-            "Publishing participants: find participants for url ",
-            this.serviceUrl,
-            publishingMembers,
-            "Publishing participants: ",
-            publishingP,
-          );
           return publishingP;
         }),
       ),
@@ -612,21 +589,22 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  private readonly remoteConnections$ = combineLatest([
-    this.localFocus,
-    this.foci$,
-  ]).pipe(
-    accumulate(new Map<string, Connection>(), (prev, [localFocus, foci]) => {
-      const stopped = new Map(prev);
-      const next = new Map<string, Connection>();
+  private readonly remoteConnections$ = this.scope.behavior(
+    combineLatest([this.localFocus, this.foci$]).pipe(
+      accumulate(new Map<string, Connection>(), (prev, [localFocus, foci]) => {
+        const stopped = new Map(prev);
+        const next = new Map<string, Connection>();
+        for (const focus of foci) {
+          if (focus !== localFocus.livekit_service_url) {
+            stopped.delete(focus);
 
-      for (const focus of foci) {
-        if (focus !== localFocus.livekit_service_url) {
-          stopped.delete(focus);
-          next.set(
-            focus,
-            prev.get(focus) ??
-              new Connection(
+            let nextConnection = prev.get(focus);
+            if (!nextConnection) {
+              logger.log(
+                "SFU remoteConnections$ construct new connection: ",
+                focus,
+              );
+              nextConnection = new Connection(
                 new LivekitRoom({
                   ...defaultLiveKitOptions,
                   e2ee: this.e2eeOptions,
@@ -636,14 +614,18 @@ export class CallViewModel extends ViewModel {
                 this.matrixRTCSession.room.client,
                 this.scope,
                 this.matrixRTCSession,
-              ),
-          );
+              );
+            } else {
+              logger.log("SFU remoteConnections$ use prev connection: ", focus);
+            }
+            next.set(focus, nextConnection);
+          }
         }
-      }
 
-      for (const connection of stopped.values()) connection.stop();
-      return next;
-    }),
+        for (const connection of stopped.values()) connection.stop();
+        return next;
+      }),
+    ),
   );
 
   private readonly joined$ = new Subject<void>();
