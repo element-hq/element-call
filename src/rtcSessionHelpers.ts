@@ -42,6 +42,17 @@ async function makeFocusInternal(
   logger.log("Searching for a preferred focus");
   const livekitAlias = getLivekitAlias(rtcSession);
 
+  const urlFromStorage = localStorage.getItem("robin-matrixrtc-auth");
+  if (urlFromStorage !== null) {
+    const focusFromStorage: LivekitFocus = {
+      type: "livekit",
+      livekit_service_url: urlFromStorage,
+      livekit_alias: livekitAlias,
+    };
+    logger.log("Using LiveKit focus from local storage: ", focusFromStorage);
+    return focusFromStorage;
+  }
+
   // Prioritize the .well-known/matrix/client, if available, over the configured SFU
   const domain = rtcSession.room.client.getDomain();
   if (localStorage.getItem("timo-focus-url")) {
