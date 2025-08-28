@@ -66,7 +66,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
   isLivekitFocusConfig,
-  LivekitFocusConfig,
+  type LivekitFocusConfig,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
@@ -501,7 +501,7 @@ class Connection {
     this.stopped = true;
   }
 
-  public readonly participantsIncludingJustSubscribers$ = this.scope.behavior(
+  public readonly participantsIncludingSubscribers$ = this.scope.behavior(
     connectedParticipantsObserver(this.livekitRoom),
     [],
   );
@@ -570,12 +570,14 @@ export class CallViewModel extends ViewModel {
       ),
   );
 
-  private readonly memberships$ = fromEvent(
-    this.matrixRTCSession,
-    MatrixRTCSessionEvent.MembershipsChanged,
-  ).pipe(
-    startWith(null),
-    map(() => this.matrixRTCSession.memberships),
+  private readonly memberships$ = this.scope.behavior(
+    fromEvent(
+      this.matrixRTCSession,
+      MatrixRTCSessionEvent.MembershipsChanged,
+    ).pipe(
+      startWith(null),
+      map(() => this.matrixRTCSession.memberships),
+    ),
   );
 
   private readonly foci$ = this.memberships$.pipe(
@@ -725,9 +727,24 @@ export class CallViewModel extends ViewModel {
    * The RemoteParticipants including those that are being "held" on the screen
    */
   private readonly remoteParticipants$ = this.scope
-    .behavior<
-      RemoteParticipant[]
-    >(combineLatest([this.localConnection, this.remoteConnections$], (localConnection, remoteConnections) => combineLatest([localConnection.participantsIncludingJustSubscribers$, ...[...remoteConnections.values()].map((c) => c.participantsIncludingJustSubscribers$)], (...ps) => ps.flat(1))).pipe(switchAll(), startWith([])))
+    .behavior<RemoteParticipant[]>(
+      combineLatest(
+        [this.localConnection, this.remoteConnections$],
+        (localConnection, remoteConnections) => {
+          const remoteConnectionsParticipants = [
+            ...remoteConnections.values(),
+          ].map((c) => c.publishingParticipants$(this.memberships$));
+
+          return combineLatest(
+            [
+              localConnection.publishingParticipants$(this.memberships$),
+              ...remoteConnectionsParticipants,
+            ],
+            (...ps) => ps.flat(1),
+          );
+        },
+      ).pipe(switchAll(), startWith([])),
+    )
     .pipe(pauseWhen(this.pretendToBeDisconnected$));
 
   private readonly memberships$ = this.scope.behavior(
