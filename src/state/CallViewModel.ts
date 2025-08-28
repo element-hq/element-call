@@ -436,8 +436,8 @@ function getRoomMemberFromRtcMember(
   return { id, member };
 }
 
+// TODO-MULTI-SFU Add all device syncing logic from useLivekit
 class Connection {
-  // TODO-MULTI-SFU Add all device syncing logic from useLivekit
   private readonly sfuConfig = getSFUConfigWithOpenID(
     this.client,
     this.serviceUrl,
@@ -448,11 +448,6 @@ class Connection {
     this.stopped = false;
     const { url, jwt } = await this.sfuConfig;
     if (!this.stopped) await this.livekitRoom.connect(url, jwt);
-    // TODO-MULTI-SFU in this livekit room we really do not want to publish any tracks.
-    // this is only for testing purposes
-    const tracks = await this.livekitRoom.localParticipant.createTracks({
-      audio: { deviceId: "default" },
-    });
     await this.livekitRoom.localParticipant.publishTrack(tracks[0]);
   }
 
@@ -460,9 +455,10 @@ class Connection {
     this.stopped = false;
     const { url, jwt } = await this.sfuConfig;
     if (!this.stopped) await this.livekitRoom.connect(url, jwt);
+
     if (!this.stopped) {
       const tracks = await this.livekitRoom.localParticipant.createTracks({
-        audio: { deviceId: "default" },
+        audio: true,
         video: true,
       });
       for (const track of tracks) {
@@ -498,13 +494,15 @@ class Connection {
           )
             .filter((f) => f.livekit_service_url === this.serviceUrl)
             .map((f) => f.membership);
-          return publishingMembers
-            .map((m) =>
-              participants.find(
-                (p) => p.identity === `${m.sender}:${m.deviceId}`,
-              ),
-            )
+
+          const publishingP = publishingMembers
+            .map((m) => {
+              return participants.find((p) => {
+                return p.identity === `${m.sender}:${m.deviceId}`;
+              });
+            })
             .filter((p): p is RemoteParticipant => !!p);
+          return publishingP;
         }),
       ),
       [],
@@ -568,21 +566,22 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  private readonly remoteConnections$ = combineLatest([
-    this.localFocus,
-    this.foci$,
-  ]).pipe(
-    accumulate(new Map<string, Connection>(), (prev, [localFocus, foci]) => {
-      const stopped = new Map(prev);
-      const next = new Map<string, Connection>();
+  private readonly remoteConnections$ = this.scope.behavior(
+    combineLatest([this.localFocus, this.foci$]).pipe(
+      accumulate(new Map<string, Connection>(), (prev, [localFocus, foci]) => {
+        const stopped = new Map(prev);
+        const next = new Map<string, Connection>();
+        for (const focus of foci) {
+          if (focus !== localFocus.livekit_service_url) {
+            stopped.delete(focus);
 
-      for (const focus of foci) {
-        if (focus !== localFocus.livekit_service_url) {
-          stopped.delete(focus);
-          next.set(
-            focus,
-            prev.get(focus) ??
-              new Connection(
+            let nextConnection = prev.get(focus);
+            if (!nextConnection) {
+              logger.log(
+                "SFU remoteConnections$ construct new connection: ",
+                focus,
+              );
+              nextConnection = new Connection(
                 new LivekitRoom({
                   ...defaultLiveKitOptions,
                   e2ee: this.e2eeOptions,
@@ -592,14 +591,18 @@ export class CallViewModel extends ViewModel {
                 this.matrixRTCSession.room.client,
                 this.scope,
                 this.matrixRTCSession,
-              ),
-          );
+              );
+            } else {
+              logger.log("SFU remoteConnections$ use prev connection: ", focus);
+            }
+            next.set(focus, nextConnection);
+          }
         }
-      }
 
-      for (const connection of stopped.values()) connection.stop();
-      return next;
-    }),
+        for (const connection of stopped.values()) connection.stop();
+        return next;
+      }),
+    ),
   );
 
   private readonly joined$ = new Subject<void>();
