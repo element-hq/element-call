@@ -45,7 +45,7 @@ async function makeFocusInternal(
   // Prioritize the .well-known/matrix/client, if available, over the configured SFU
   const domain = rtcSession.room.client.getDomain();
   if (localStorage.getItem("timo-focus-url")) {
-    const timoFocusUrl = JSON.parse(localStorage.getItem("timo-focus-url")!);
+    const timoFocusUrl = localStorage.getItem("timo-focus-url")!;
     const focusFromUrl: LivekitFocus = {
       type: "livekit",
       livekit_service_url: timoFocusUrl,

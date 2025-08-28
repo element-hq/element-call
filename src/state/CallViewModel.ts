@@ -459,8 +459,8 @@ function getRoomMemberFromRtcMember(
   return { id, member };
 }
 
+// TODO-MULTI-SFU Add all device syncing logic from useLivekit
 class Connection {
-  // TODO-MULTI-SFU Add all device syncing logic from useLivekit
   private readonly sfuConfig = getSFUConfigWithOpenID(
     this.client,
     this.serviceUrl,
@@ -521,13 +521,34 @@ class Connection {
           )
             .filter((f) => f.livekit_service_url === this.serviceUrl)
             .map((f) => f.membership);
-          return publishingMembers
-            .map((m) =>
-              participants.find(
-                (p) => p.identity === `${m.sender}:${m.deviceId}`,
-              ),
-            )
+
+          const publishingP = publishingMembers
+            .map((m) => {
+              logger.log(
+                "Publishing participants: all participants at: ",
+                this.livekitAlias,
+                this.serviceUrl,
+                participants,
+              );
+              return participants.find((p) => {
+                logger.log(
+                  "Publishing participants: compare",
+                  p.identity,
+                  "===",
+                  `${m.sender}:${m.deviceId}`,
+                );
+                return p.identity === `${m.sender}:${m.deviceId}`;
+              });
+            })
             .filter((p): p is RemoteParticipant => !!p);
+          logger.log(
+            "Publishing participants: find participants for url ",
+            this.serviceUrl,
+            publishingMembers,
+            "Publishing participants: ",
+            publishingP,
+          );
+          return publishingP;
         }),
       ),
       [],
