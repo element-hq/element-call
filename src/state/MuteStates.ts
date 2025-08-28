@@ -26,6 +26,7 @@ import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
 import { type ObservableScope } from "./ObservableScope";
 import { accumulate } from "../utils/observable";
+import { type Behavior } from "./Behavior";
 
 interface MuteStateData {
   enabled$: Observable<boolean>;
@@ -33,13 +34,13 @@ interface MuteStateData {
   toggle: (() => void) | null;
 }
 
-class MuteState {
+class MuteState<Label, Selected> {
   private readonly enabledByDefault$ =
     this.enabledByConfig && !getUrlParams().skipLobby
-      ? this.isJoined$.pipe(map((isJoined) => !isJoined))
+      ? this.joined$.pipe(map((isJoined) => !isJoined))
       : of(false);
 
-  private readonly data$: Observable<MuteStateData> =
+  private readonly data$ = this.scope.behavior<MuteStateData>(
     this.device.available$.pipe(
       map((available) => available.size > 0),
       distinctUntilChanged(),
@@ -52,8 +53,8 @@ class MuteState {
           const set$ = new Subject<boolean>();
           const toggle$ = new Subject<void>();
           return {
-            set: (enabled: boolean) => set$.next(enabled),
-            toggle: () => toggle$.next(),
+            set: (enabled: boolean): void => set$.next(enabled),
+            toggle: (): void => toggle$.next(),
             // Assume the default value only once devices are actually connected
             enabled$: merge(
               set$,
@@ -66,24 +67,24 @@ class MuteState {
           };
         },
       ),
-      this.scope.state(),
-    );
-
-  public readonly enabled$: Observable<boolean> = this.data$.pipe(
-    switchMap(({ enabled$ }) => enabled$),
+    ),
   );
 
-  public readonly setEnabled$: Observable<((enabled: boolean) => void) | null> =
-    this.data$.pipe(map(({ set }) => set));
+  public readonly enabled$: Behavior<boolean> = this.scope.behavior(
+    this.data$.pipe(switchMap(({ enabled$ }) => enabled$)),
+  );
 
-  public readonly toggle$: Observable<(() => void) | null> = this.data$.pipe(
-    map(({ toggle }) => toggle),
+  public readonly setEnabled$: Behavior<((enabled: boolean) => void) | null> =
+    this.scope.behavior(this.data$.pipe(map(({ set }) => set)));
+
+  public readonly toggle$: Behavior<(() => void) | null> = this.scope.behavior(
+    this.data$.pipe(map(({ toggle }) => toggle)),
   );
 
   public constructor(
     private readonly scope: ObservableScope,
-    private readonly device: MediaDevice,
-    private readonly isJoined$: Observable<boolean>,
+    private readonly device: MediaDevice<Label, Selected>,
+    private readonly joined$: Observable<boolean>,
     private readonly enabledByConfig: boolean,
   ) {}
 }
@@ -92,20 +93,20 @@ export class MuteStates {
   public readonly audio = new MuteState(
     this.scope,
     this.mediaDevices.audioInput,
-    this.isJoined$,
+    this.joined$,
     Config.get().media_devices.enable_video,
   );
   public readonly video = new MuteState(
     this.scope,
     this.mediaDevices.videoInput,
-    this.isJoined$,
+    this.joined$,
     Config.get().media_devices.enable_video,
   );
 
   public constructor(
     private readonly scope: ObservableScope,
     private readonly mediaDevices: MediaDevices,
-    private readonly isJoined$: Observable<boolean>,
+    private readonly joined$: Observable<boolean>,
   ) {
     if (widget !== null) {
       // Sync our mute states with the hosting client

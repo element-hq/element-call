@@ -18,13 +18,13 @@ import {
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import {
   ClientEvent,
-  type EventTimelineSetHandlerMap,
-  EventType,
-  RoomEvent,
   type RoomMember,
   RoomStateEvent,
   SyncState,
   type Room as MatrixRoom,
+  type EventTimelineSetHandlerMap,
+  EventType,
+  RoomEvent,
 } from "matrix-js-sdk";
 import {
   BehaviorSubject,
@@ -61,8 +61,6 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
   isLivekitFocus,
-  isLivekitFocusConfig,
-  type LivekitFocusConfig,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
@@ -112,11 +110,11 @@ import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
 import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 import { type MediaDevices } from "./MediaDevices";
-import { constant, type Behavior } from "./Behavior";
-
+import { type Behavior } from "./Behavior";
 import {
   enterRTCSession,
   getLivekitAlias,
+  leaveRTCSession,
   makeFocus,
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -453,16 +451,6 @@ export class CallViewModel extends ViewModel {
       ),
   );
 
-  private readonly memberships$ = this.scope.behavior(
-    fromEvent(
-      this.matrixRTCSession,
-      MatrixRTCSessionEvent.MembershipsChanged,
-    ).pipe(
-      startWith(null),
-      map(() => this.matrixRTCSession.memberships),
-    ),
-  );
-
   private readonly membershipsAndFocusMap$ = this.scope.behavior(
     this.memberships$.pipe(
       map((memberships) =>
@@ -524,17 +512,19 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  private readonly joined$ = new Subject<void>();
+  private readonly join$ = new Subject<void>();
 
   public join(): void {
-    this.joined$.next();
+    this.join$.next();
   }
+
+  private readonly leave$ = new Subject<void>();
 
   public leave(): void {
-    // TODO
+    this.leave$.next();
   }
 
-  private readonly connectionInstructions$ = this.joined$.pipe(
+  private readonly connectionInstructions$ = this.join$.pipe(
     switchMap(() => this.remoteConnections$),
     startWith(new Map<string, Connection>()),
     pairwise(),
@@ -622,6 +612,17 @@ export class CallViewModel extends ViewModel {
   // in a split-brained state.
   private readonly pretendToBeDisconnected$ = this.reconnecting$;
 
+  private readonly memberships$ = this.scope.behavior(
+    fromEvent(
+      this.matrixRTCSession,
+      MatrixRTCSessionEvent.MembershipsChanged,
+    ).pipe(
+      startWith(null),
+      pauseWhen(this.pretendToBeDisconnected$),
+      map(() => this.matrixRTCSession.memberships),
+    ),
+  );
+
   private readonly participants$ = this.scope
     .behavior<
       {
@@ -670,17 +671,6 @@ export class CallViewModel extends ViewModel {
       ),
     )
     .pipe(startWith([]), pauseWhen(this.pretendToBeDisconnected$));
-
-  private readonly memberships$ = this.scope.behavior(
-    fromEvent(
-      this.matrixRTCSession,
-      MatrixRTCSessionEvent.MembershipsChanged,
-    ).pipe(
-      startWith(null),
-      pauseWhen(this.pretendToBeDisconnected$),
-      map(() => this.matrixRTCSession.memberships),
-    ),
-  );
 
   /**
    * Displaynames for each member of the call. This will disambiguate
@@ -1790,7 +1780,7 @@ export class CallViewModel extends ViewModel {
         for (const connection of start) void connection.start();
         for (const connection of stop) connection.stop();
       });
-    combineLatest([this.localFocus, this.joined$])
+    combineLatest([this.localFocus, this.join$])
       .pipe(this.scope.bind())
       .subscribe(([localFocus]) => {
         void enterRTCSession(
@@ -1799,6 +1789,17 @@ export class CallViewModel extends ViewModel {
           this.options.encryptionSystem.kind !== E2eeType.PER_PARTICIPANT,
         );
       });
+    this.join$.pipe(this.scope.bind()).subscribe(() => {
+      leaveRTCSession(
+        this.matrixRTCSession,
+        "user", // TODO-MULTI-SFU ?
+        // Wait for the sound in widget mode (it's not long)
+        Promise.resolve(), // TODO-MULTI-SFU
+        //Promise.all([audioPromise, posthogRequest]),
+      ).catch((e) => {
+        logger.error("Error leaving RTC session", e);
+      });
+    });
 
     // Pause upstream of all local media tracks when we're disconnected from
     // MatrixRTC, because it can be an unpleasant surprise for the app to say
