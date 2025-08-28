@@ -5,14 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  observeParticipantEvents,
-  observeParticipantMedia,
-} from "@livekit/components-core";
+import { observeParticipantEvents } from "@livekit/components-core";
 import {
   type E2EEOptions,
   ExternalE2EEKeyProvider,
-  Room as LivekitRoom,
+  type Room as LivekitRoom,
   type LocalParticipant,
   ParticipantEvent,
   type RemoteParticipant,
@@ -20,7 +17,7 @@ import {
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import {
   ClientEvent,
-  RoomMember,
+  type RoomMember,
   RoomStateEvent,
   SyncState,
   type Room as MatrixRoom,
@@ -53,8 +50,6 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
   isLivekitFocus,
-  isLivekitFocusConfig,
-  type LivekitFocusConfig,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   MembershipManagerEvent,
@@ -104,10 +99,10 @@ import { shallowEquals } from "../utils/array";
 import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 import { type MediaDevices } from "./MediaDevices";
 import { type Behavior } from "./Behavior";
-
 import {
   enterRTCSession,
   getLivekitAlias,
+  leaveRTCSession,
   makeFocus,
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -504,17 +499,19 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  private readonly joined$ = new Subject<void>();
+  private readonly join$ = new Subject<void>();
 
   public join(): void {
-    this.joined$.next();
+    this.join$.next();
   }
+
+  private readonly leave$ = new Subject<void>();
 
   public leave(): void {
-    // TODO
+    this.leave$.next();
   }
 
-  private readonly connectionInstructions$ = this.joined$.pipe(
+  private readonly connectionInstructions$ = this.join$.pipe(
     switchMap(() => this.remoteConnections$),
     startWith(new Map<string, Connection>()),
     pairwise(),
@@ -1682,7 +1679,7 @@ export class CallViewModel extends ViewModel {
         for (const connection of start) void connection.start();
         for (const connection of stop) connection.stop();
       });
-    combineLatest([this.localFocus, this.joined$])
+    combineLatest([this.localFocus, this.join$])
       .pipe(this.scope.bind())
       .subscribe(([localFocus]) => {
         void enterRTCSession(
@@ -1691,6 +1688,17 @@ export class CallViewModel extends ViewModel {
           this.options.encryptionSystem.kind !== E2eeType.PER_PARTICIPANT,
         );
       });
+    this.join$.pipe(this.scope.bind()).subscribe(() => {
+      leaveRTCSession(
+        this.matrixRTCSession,
+        "user", // TODO-MULTI-SFU ?
+        // Wait for the sound in widget mode (it's not long)
+        Promise.resolve(), // TODO-MULTI-SFU
+        //Promise.all([audioPromise, posthogRequest]),
+      ).catch((e) => {
+        logger.error("Error leaving RTC session", e);
+      });
+    });
 
     // Pause upstream of all local media tracks when we're disconnected from
     // MatrixRTC, because it can be an unpleasant surprise for the app to say

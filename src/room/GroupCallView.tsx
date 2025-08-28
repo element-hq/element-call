@@ -129,7 +129,7 @@ export const GroupCallView: FC<Props> = ({
   // This should use `useEffectEvent` (only available in experimental versions)
   useEffect(() => {
     if (memberships.length >= MUTE_PARTICIPANT_COUNT)
-      muteStates.audio.setEnabled?.(false);
+      muteStates.audio.setEnabled$.value?.(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -258,7 +258,7 @@ export const GroupCallView: FC<Props> = ({
         if (!deviceId) {
           logger.warn("Unknown audio input: " + audioInput);
           // override the default mute state
-          latestMuteStates.current!.audio.setEnabled?.(false);
+          latestMuteStates.current!.audio.setEnabled$.value?.(false);
         } else {
           logger.debug(
             `Found audio input ID ${deviceId} for name ${audioInput}`,
@@ -272,7 +272,7 @@ export const GroupCallView: FC<Props> = ({
         if (!deviceId) {
           logger.warn("Unknown video input: " + videoInput);
           // override the default mute state
-          latestMuteStates.current!.video.setEnabled?.(false);
+          latestMuteStates.current!.video.setEnabled$.value?.(false);
         } else {
           logger.debug(
             `Found video input ID ${deviceId} for name ${videoInput}`,
