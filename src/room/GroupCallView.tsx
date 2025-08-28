@@ -41,7 +41,7 @@ import { ActiveCall } from "./InCallView";
 import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
-import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
+import { leaveRTCSession } from "../rtcSessionHelpers";
 import {
   saveKeyForRoom,
   useRoomEncryptionSystem,
