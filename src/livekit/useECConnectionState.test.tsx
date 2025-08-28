@@ -15,7 +15,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { defer, sleep } from "matrix-js-sdk/lib/utils";
+import { sleep } from "matrix-js-sdk/lib/utils";
 
 import { useECConnectionState } from "./useECConnectionState";
 import { type SFUConfig } from "./openIDSFU";
@@ -93,7 +93,7 @@ describe("Leaking connection prevention", () => {
 
   test("Should cancel pending connections when the component is unmounted", async () => {
     const connectCall = vi.fn();
-    const pendingConnection = defer<void>();
+    const pendingConnection = Promise.withResolvers<void>();
     // let pendingDisconnection = defer<void>()
     const disconnectMock = vi.fn();
 
@@ -141,7 +141,7 @@ describe("Leaking connection prevention", () => {
 
   test("Should cancel about to open but not yet opened connection", async () => {
     const createTracksCall = vi.fn();
-    const pendingCreateTrack = defer<void>();
+    const pendingCreateTrack = Promise.withResolvers<void>();
     // let pendingDisconnection = defer<void>()
     const disconnectMock = vi.fn();
     const connectMock = vi.fn();
