@@ -28,6 +28,7 @@ import {
   type Observable,
   Subject,
   combineLatest,
+  concatMap,
   distinctUntilChanged,
   filter,
   from,
@@ -108,6 +109,7 @@ import {
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 import { Connection, PublishConnection } from "./Connection";
+import { type MuteStates } from "./MuteStates";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -424,6 +426,7 @@ export class CallViewModel extends ViewModel {
         this.scope,
         this.membershipsAndFocusMap$,
         this.mediaDevices,
+        this.muteStates,
         this.livekitE2EERoomOptions,
       ),
   );
@@ -523,6 +526,14 @@ export class CallViewModel extends ViewModel {
 
       return { start, stop };
     }),
+    this.scope.share,
+  );
+
+  private readonly startConnection$ = this.connectionInstructions$.pipe(
+    concatMap(({ start }) => start),
+  );
+  private readonly stopConnection$ = this.connectionInstructions$.pipe(
+    concatMap(({ stop }) => stop),
   );
 
   private readonly userId = this.matrixRoom.client.getUserId();
@@ -599,15 +610,15 @@ export class CallViewModel extends ViewModel {
   // in a split-brained state.
   private readonly pretendToBeDisconnected$ = this.reconnecting$;
 
-  private readonly participants$ = this.scope
-    .behavior<
-      {
-        participant: LocalParticipant | RemoteParticipant;
-        member: RoomMember;
-        livekitRoom: LivekitRoom;
-      }[]
-    >(
-      from(this.localConnection).pipe(
+  private readonly participants$ = this.scope.behavior<
+    {
+      participant: LocalParticipant | RemoteParticipant;
+      member: RoomMember;
+      livekitRoom: LivekitRoom;
+    }[]
+  >(
+    from(this.localConnection)
+      .pipe(
         switchMap((localConnection) => {
           const memberError = (): never => {
             throw new Error("No room member for call membership");
@@ -621,7 +632,7 @@ export class CallViewModel extends ViewModel {
           return this.remoteConnections$.pipe(
             switchMap((connections) =>
               combineLatest(
-                [...connections.values()].map((c) =>
+                [localConnection, ...connections.values()].map((c) =>
                   c.publishingParticipants$.pipe(
                     map((ps) =>
                       ps.map(({ participant, membership }) => ({
@@ -639,14 +650,14 @@ export class CallViewModel extends ViewModel {
               ),
             ),
             map((remoteParticipants) => [
-              ...remoteParticipants.flat(1),
               localParticipant,
+              ...remoteParticipants.flat(1),
             ]),
           );
         }),
-      ),
-    )
-    .pipe(startWith([]), pauseWhen(this.pretendToBeDisconnected$));
+      )
+      .pipe(startWith([]), pauseWhen(this.pretendToBeDisconnected$)),
+  );
 
   /**
    * Displaynames for each member of the call. This will disambiguate
@@ -669,7 +680,9 @@ export class CallViewModel extends ViewModel {
       startWith(null),
       map(() => {
         const memberships = this.matrixRTCSession.memberships;
-        const displaynameMap = new Map<string, string>();
+        const displaynameMap = new Map<string, string>([
+          ["local", this.matrixRoom.getMember(this.userId!)!.rawDisplayName],
+        ]);
         const room = this.matrixRoom;
 
         // We only consider RTC members for disambiguation as they are the only visible members.
@@ -1652,6 +1665,7 @@ export class CallViewModel extends ViewModel {
     private readonly matrixRTCSession: MatrixRTCSession,
     private readonly matrixRoom: MatrixRoom,
     private readonly mediaDevices: MediaDevices,
+    private readonly muteStates: MuteStates,
     private readonly options: CallViewModelOptions,
     private readonly handsRaisedSubject$: Observable<
       Record<string, RaisedHandInfo>
@@ -1673,12 +1687,12 @@ export class CallViewModel extends ViewModel {
             // eslint-disable-next-line no-console
             .catch((e) => console.error("failed to start publishing", e)),
       );
-    this.connectionInstructions$
+
+    this.startConnection$
       .pipe(this.scope.bind())
-      .subscribe(({ start, stop }) => {
-        for (const connection of start) void connection.start();
-        for (const connection of stop) connection.stop();
-      });
+      .subscribe((c) => void c.start());
+    this.stopConnection$.pipe(this.scope.bind()).subscribe((c) => c.stop());
+
     combineLatest([this.localFocus, this.join$])
       .pipe(this.scope.bind())
       .subscribe(([localFocus]) => {
@@ -1688,6 +1702,7 @@ export class CallViewModel extends ViewModel {
           this.options.encryptionSystem.kind !== E2eeType.PER_PARTICIPANT,
         );
       });
+
     this.join$.pipe(this.scope.bind()).subscribe(() => {
       leaveRTCSession(
         this.matrixRTCSession,
@@ -1760,6 +1775,7 @@ function getE2eeOptions(
   e2eeSystem: EncryptionSystem,
   rtcSession: MatrixRTCSession,
 ): E2EEOptions | undefined {
+  return undefined;
   if (e2eeSystem.kind === E2eeType.NONE) return undefined;
 
   if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {

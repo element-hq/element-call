@@ -6,13 +6,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { connectedParticipantsObserver } from "@livekit/components-core";
+import {
+  connectedParticipantsObserver,
+  connectionStateObserver,
+} from "@livekit/components-core";
 import {
   ConnectionState,
   Room as LivekitRoom,
-  type RoomOptions,
   type E2EEOptions,
-  RoomEvent,
   Track,
 } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk";
@@ -21,10 +22,7 @@ import {
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
-  BehaviorSubject,
   combineLatest,
-  filter,
-  fromEvent,
   map,
   NEVER,
   type Observable,
@@ -35,12 +33,12 @@ import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type SelectedDevice, type MediaDevices } from "./MediaDevices";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
-import { constant, type Behavior } from "./Behavior";
+import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import { defaultLiveKitOptions } from "../livekit/options";
 import { getValue } from "../utils/observable";
 import { getUrlParams } from "../UrlParams";
-import { type MuteStates } from "../room/MuteStates";
+import { type MuteStates } from "./MuteStates";
 
 export class Connection {
   protected stopped = false;
@@ -64,7 +62,7 @@ export class Connection {
 
   public readonly participantsIncludingSubscribers$;
   public readonly publishingParticipants$;
-  public livekitRoom: LivekitRoom;
+  public readonly livekitRoom: LivekitRoom;
 
   public connectionState$: Behavior<ConnectionState>;
   public constructor(
@@ -76,11 +74,14 @@ export class Connection {
       { membership: CallMembership; focus: LivekitFocus }[]
     >,
     e2eeLivekitOptions: E2EEOptions | undefined,
+    livekitRoom: LivekitRoom | undefined = undefined,
   ) {
-    this.livekitRoom = new LivekitRoom({
-      ...defaultLiveKitOptions,
-      e2ee: e2eeLivekitOptions,
-    });
+    this.livekitRoom =
+      livekitRoom ??
+      new LivekitRoom({
+        ...defaultLiveKitOptions,
+        e2ee: e2eeLivekitOptions,
+      });
     this.participantsIncludingSubscribers$ = this.scope.behavior(
       connectedParticipantsObserver(this.livekitRoom),
       [],
@@ -112,10 +113,7 @@ export class Connection {
       [],
     );
     this.connectionState$ = this.scope.behavior<ConnectionState>(
-      fromEvent<ConnectionState>(
-        this.livekitRoom,
-        RoomEvent.ConnectionStateChanged,
-      ),
+      connectionStateObserver(this.livekitRoom),
     );
   }
 }
@@ -128,8 +126,8 @@ export class PublishConnection extends Connection {
 
     if (!this.stopped) {
       const tracks = await this.livekitRoom.localParticipant.createTracks({
-        audio: true,
-        video: true,
+        audio: this.muteStates.audio.enabled$.value,
+        video: this.muteStates.video.enabled$.value,
       });
       for (const track of tracks) {
         await this.livekitRoom.localParticipant.publishTrack(track);
@@ -142,53 +140,32 @@ export class PublishConnection extends Connection {
     this.stopped = true;
   }
 
-  public readonly participantsIncludingSubscribers$ = this.scope.behavior(
-    connectedParticipantsObserver(this.livekitRoom),
-    [],
-  );
-  private readonly muteStates$: Behavior<MuteStates>;
-  private updatingMuteStates$ = new BehaviorSubject(false);
-
   public constructor(
-    protected readonly focus: LivekitFocus,
-    protected readonly livekitAlias: string,
-    protected readonly client: MatrixClient,
-    protected readonly scope: ObservableScope,
-    protected readonly membershipsFocusMap$: Behavior<
+    focus: LivekitFocus,
+    livekitAlias: string,
+    client: MatrixClient,
+    scope: ObservableScope,
+    membershipsFocusMap$: Behavior<
       { membership: CallMembership; focus: LivekitFocus }[]
     >,
-    protected readonly devices: MediaDevices,
+    devices: MediaDevices,
+    private readonly muteStates: MuteStates,
     e2eeLivekitOptions: E2EEOptions | undefined,
   ) {
-    super(
-      focus,
-      livekitAlias,
-      client,
-      scope,
-      membershipsFocusMap$,
-      e2eeLivekitOptions,
-    );
-
-    // TODO-MULTI-SFU use actual mute states
-    this.muteStates$ = constant({
-      audio: { enabled: true, setEnabled: (enabled) => {} },
-      video: { enabled: true, setEnabled: (enabled) => {} },
-    });
-
     logger.info("[LivekitRoom] Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
 
-    const roomOptions: RoomOptions = {
+    const room = new LivekitRoom({
       ...defaultLiveKitOptions,
       videoCaptureDefaults: {
         ...defaultLiveKitOptions.videoCaptureDefaults,
-        deviceId: getValue(this.devices.videoInput.selected$)?.id,
+        deviceId: devices.videoInput.selected$.value?.id,
         // TODO-MULTI-SFU add processor support back
         // processor,
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
-        deviceId: getValue(devices.audioInput.selected$)?.id,
+        deviceId: devices.audioInput.selected$.value?.id,
       },
       audioOutput: {
         // When using controlled audio devices, we don't want to set the
@@ -199,150 +176,38 @@ export class PublishConnection extends Connection {
           : getValue(devices.audioOutput.selected$)?.id,
       },
       e2ee: e2eeLivekitOptions,
-    };
-    // We have to create the room manually here due to a bug inside
-    // @livekit/components-react. JSON.stringify() is used in deps of a
-    // useEffect() with an argument that references itself, if E2EE is enabled
-    const room = new LivekitRoom(roomOptions);
+    });
     room.setE2EEEnabled(e2eeLivekitOptions !== undefined).catch((e) => {
       logger.error("Failed to set E2EE enabled on room", e);
     });
-    this.livekitRoom = room;
 
-    // sync mute states TODO-MULTI_SFU This possibly can be simplified quite a bit.
-    combineLatest([
-      this.connectionState$,
-      this.muteStates$,
-      this.updatingMuteStates$,
-    ])
-      .pipe(
-        filter(([_c, _m, updating]) => !updating),
-        this.scope.bind(),
-      )
-      .subscribe(([connectionState, muteStates, _]) => {
-        // Sync the requested mute states with LiveKit's mute states. We do it this
-        // way around rather than using LiveKit as the source of truth, so that the
-        // states can be consistent throughout the lobby and loading screens.
-        // It's important that we only do this in the connected state, because
-        // LiveKit's internal mute states aren't consistent during connection setup,
-        // and setting tracks to be enabled during this time causes errors.
-        if (
-          this.livekitRoom !== undefined &&
-          connectionState === ConnectionState.Connected
-        ) {
-          const participant = this.livekitRoom.localParticipant;
+    super(
+      focus,
+      livekitAlias,
+      client,
+      scope,
+      membershipsFocusMap$,
+      e2eeLivekitOptions,
+      room,
+    );
 
-          enum MuteDevice {
-            Microphone,
-            Camera,
-          }
-
-          const syncMuteState = async (
-            iterCount: number,
-            type: MuteDevice,
-          ): Promise<void> => {
-            // The approach for muting is to always bring the actual livekit state in sync with the button
-            // This allows for a very predictable and reactive behavior for the user.
-            // (the new state is the old state when pressing the button n times (where n is even))
-            // (the new state is different to the old state when pressing the button n times (where n is uneven))
-            // In case there are issues with the device there might be situations where setMicrophoneEnabled/setCameraEnabled
-            // return immediately. This should be caught with the Error("track with new mute state could not be published").
-            // For now we are still using an iterCount to limit the recursion loop to 10.
-            // This could happen if the device just really does not want to turn on (hardware based issue)
-            // but the mute button is in unmute state.
-            // For now our fail mode is to just stay in this state.
-            // TODO: decide for a UX on how that fail mode should be treated (disable button, hide button, sync button back to muted without user input)
-
-            if (iterCount > 10) {
-              logger.error(
-                "Stop trying to sync the input device with current mute state after 10 failed tries",
-              );
-              return;
-            }
-            let devEnabled;
-            let btnEnabled;
-            switch (type) {
-              case MuteDevice.Microphone:
-                devEnabled = participant.isMicrophoneEnabled;
-                btnEnabled = muteStates.audio.enabled;
-                break;
-              case MuteDevice.Camera:
-                devEnabled = participant.isCameraEnabled;
-                btnEnabled = muteStates.video.enabled;
-                break;
-            }
-            if (devEnabled !== btnEnabled && !this.updatingMuteStates$.value) {
-              this.updatingMuteStates$.next(true);
-
-              try {
-                let trackPublication;
-                switch (type) {
-                  case MuteDevice.Microphone:
-                    trackPublication = await participant.setMicrophoneEnabled(
-                      btnEnabled,
-                      this.livekitRoom.options.audioCaptureDefaults,
-                    );
-                    break;
-                  case MuteDevice.Camera:
-                    trackPublication = await participant.setCameraEnabled(
-                      btnEnabled,
-                      this.livekitRoom.options.videoCaptureDefaults,
-                    );
-                    break;
-                }
-
-                if (trackPublication) {
-                  // await participant.setMicrophoneEnabled can return immediately in some instances,
-                  // so that participant.isMicrophoneEnabled !== buttonEnabled.current.audio still holds true.
-                  // This happens if the device is still in a pending state
-                  // "sleeping" here makes sure we let react do its thing so that participant.isMicrophoneEnabled is updated,
-                  // so we do not end up in a recursion loop.
-                  await new Promise((r) => setTimeout(r, 100));
-
-                  // track got successfully changed to mute/unmute
-                  // Run the check again after the change is done. Because the user
-                  // can update the state (presses mute button) while the device is enabling
-                  // itself we need might need to update the mute state right away.
-                  // This async recursion makes sure that setCamera/MicrophoneEnabled is
-                  // called as little times as possible.
-                  await syncMuteState(iterCount + 1, type);
-                } else {
-                  throw new Error(
-                    "track with new mute state could not be published",
-                  );
-                }
-              } catch (e) {
-                if ((e as DOMException).name === "NotAllowedError") {
-                  logger.error(
-                    "Fatal error while syncing mute state: resetting",
-                    e,
-                  );
-                  if (type === MuteDevice.Microphone) {
-                    muteStates.audio.setEnabled?.(false);
-                  } else {
-                    muteStates.video.setEnabled?.(false);
-                  }
-                } else {
-                  logger.error(
-                    "Failed to sync audio mute state with LiveKit (will retry to sync in 1s):",
-                    e,
-                  );
-                  setTimeout(() => {
-                    this.updatingMuteStates$.next(false);
-                  }, 1000);
-                }
-              }
-            }
-          };
-
-          syncMuteState(0, MuteDevice.Microphone).catch((e) => {
-            logger.error("Failed to sync audio mute state with LiveKit", e);
-          });
-          syncMuteState(0, MuteDevice.Camera).catch((e) => {
-            logger.error("Failed to sync video mute state with LiveKit", e);
-          });
-        }
-      });
+    this.muteStates.audio.setHandler(async (desired) => {
+      try {
+        await this.livekitRoom.localParticipant.setMicrophoneEnabled(desired);
+      } catch (e) {
+        logger.error("Failed to update LiveKit audio input mute state", e);
+      }
+      return this.livekitRoom.localParticipant.isMicrophoneEnabled;
+    });
+    this.muteStates.video.setHandler(async (desired) => {
+      try {
+        await this.livekitRoom.localParticipant.setCameraEnabled(desired);
+      } catch (e) {
+        logger.error("Failed to update LiveKit video input mute state", e);
+      }
+      return this.livekitRoom.localParticipant.isCameraEnabled;
+    });
+    // TODO-MULTI-SFU: Unset mute state handlers on destroy
 
     const syncDevice = (
       kind: MediaDeviceKind,

@@ -239,7 +239,7 @@ export const GroupCallView: FC<Props> = ({
       }
       return Promise.resolve();
     },
-    [],
+    [setJoined],
   );
 
   useEffect(() => {
@@ -305,6 +305,7 @@ export const GroupCallView: FC<Props> = ({
           // No lobby and no preload: we enter the rtc session right away
           (async (): Promise<void> => {
             setJoined(true);
+            return Promise.resolve();
           })().catch((e) => {
             logger.error("Error joining RTC session", e);
           });
