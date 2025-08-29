@@ -8,12 +8,14 @@ Please see LICENSE in the repository root for full details.
 import { type IWidgetApiRequest } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
+  BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
+  firstValueFrom,
   fromEvent,
   map,
   merge,
-  type Observable,
+  Observable,
   of,
   Subject,
   switchMap,
@@ -25,7 +27,6 @@ import { ElementWidgetActions, widget } from "../widget";
 import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
 import { type ObservableScope } from "./ObservableScope";
-import { accumulate } from "../utils/observable";
 import { type Behavior } from "./Behavior";
 
 interface MuteStateData {
@@ -34,11 +35,24 @@ interface MuteStateData {
   toggle: (() => void) | null;
 }
 
+export type Handler = (desired: boolean) => Promise<boolean>;
+const defaultHandler: Handler = async (desired) => Promise.resolve(desired);
+
 class MuteState<Label, Selected> {
   private readonly enabledByDefault$ =
     this.enabledByConfig && !getUrlParams().skipLobby
       ? this.joined$.pipe(map((isJoined) => !isJoined))
       : of(false);
+
+  private readonly handler$ = new BehaviorSubject(defaultHandler);
+  public setHandler(handler: Handler): void {
+    if (this.handler$.value !== defaultHandler)
+      throw new Error("Multiple mute state handlers are not supported");
+    this.handler$.next(handler);
+  }
+  public unsetHandler(): void {
+    this.handler$.next(defaultHandler);
+  }
 
   private readonly data$ = this.scope.behavior<MuteStateData>(
     this.device.available$.pipe(
@@ -50,20 +64,49 @@ class MuteState<Label, Selected> {
           if (!devicesConnected)
             return { enabled$: of(false), set: null, toggle: null };
 
+          // Assume the default value only once devices are actually connected
+          let enabled = enabledByDefault;
           const set$ = new Subject<boolean>();
           const toggle$ = new Subject<void>();
+          const desired$ = merge(set$, toggle$.pipe(map(() => !enabled)));
+          const enabled$ = new Observable<boolean>((subscriber) => {
+            subscriber.next(enabled);
+            let latestDesired = enabledByDefault;
+            let syncing = false;
+
+            const sync = async (): Promise<void> => {
+              if (enabled === latestDesired) syncing = false;
+              else {
+                const previouslyEnabled = enabled;
+                enabled = await firstValueFrom(
+                  this.handler$.pipe(
+                    switchMap(async (handler) => handler(latestDesired)),
+                  ),
+                );
+                if (enabled === previouslyEnabled) {
+                  syncing = false;
+                } else {
+                  subscriber.next(enabled);
+                  syncing = true;
+                  sync();
+                }
+              }
+            };
+
+            const s = desired$.subscribe((desired) => {
+              latestDesired = desired;
+              if (syncing === false) {
+                syncing = true;
+                sync();
+              }
+            });
+            return (): void => s.unsubscribe();
+          });
+
           return {
             set: (enabled: boolean): void => set$.next(enabled),
             toggle: (): void => toggle$.next(),
-            // Assume the default value only once devices are actually connected
-            enabled$: merge(
-              set$,
-              toggle$.pipe(map(() => "toggle" as const)),
-            ).pipe(
-              accumulate(enabledByDefault, (prev, update) =>
-                update === "toggle" ? !prev : update,
-              ),
-            ),
+            enabled$,
           };
         },
       ),
