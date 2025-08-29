@@ -1,5 +1,5 @@
 /*
-Copyright 2022-2024 New Vector Ltd.
+Copyright 2022-2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -151,6 +151,25 @@ export interface ConfigOptions {
      */
     membership_event_expiry_ms?: number;
   };
+
+  /**
+   * Configuration for OIDC issuers where a static client_id has been issued for the app.
+   * Otherwise dynamic client registration is attempted.
+   */
+  oidc_static_clients?: {
+    [issuer: string]: { client_id: string };
+  };
+
+  oidc_metadata?: {
+    client_name?: string;
+    client_uri?: string;
+    redirect_uris?: string[];
+    logo_uri?: string;
+    application_type?: string;
+    tos_uri?: string;
+    policy_uri?: string;
+    contacts?: string[];
+  }
 }
 
 // Overrides members from ConfigOptions that are always provided by the

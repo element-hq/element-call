@@ -1,5 +1,5 @@
 /*
-Copyright 2021-2024 New Vector Ltd.
+Copyright 2021-2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -19,7 +19,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
-import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
+import { ClientEvent, type OidcClientConfig, type MatrixClient } from "matrix-js-sdk";
 
 import type { WidgetApi } from "matrix-widget-api";
 import { ErrorPage } from "./FullScreenView";
@@ -29,6 +29,7 @@ import {
   RegistrationType,
 } from "./analytics/PosthogAnalytics";
 import { useEventTarget } from "./useEvents";
+import { getAuthMetadata } from "./utils/oidc/discovery";
 import { OpenElsewhereError } from "./RichError";
 
 declare global {
@@ -42,6 +43,7 @@ export type ClientState = ValidClientState | ErrorState;
 
 export type ValidClientState = {
   state: "valid";
+  oidcClientConfig: OidcClientConfig | null,
   authenticated?: AuthenticatedClient;
   // 'Disconnected' rather than 'connected' because it tracks specifically
   // whether the client is supposed to be connected but is not
@@ -74,17 +76,20 @@ export const useClientState = (): ClientState | undefined => use(ClientContext);
 export function useClient(): {
   client?: MatrixClient;
   setClient?: (client: MatrixClient, session: Session) => void;
+  oidcClientConfig: OidcClientConfig | null | undefined;
 } {
   let client;
   let setClient;
+  let oidcClientConfig;
 
   const clientState = useClientState();
   if (clientState?.state === "valid") {
     client = clientState.authenticated?.client;
     setClient = clientState.setClient;
+    oidcClientConfig = clientState.oidcClientConfig;
   }
 
-  return { client, setClient };
+  return { client, setClient, oidcClientConfig };
 }
 
 // Plain representation of the `ClientContext` as a helper for old components that expected an object with multiple fields.
@@ -140,6 +145,12 @@ interface Props {
 export const ClientProvider: FC<Props> = ({ children }) => {
   const navigate = useNavigate();
 
+  // null = no OIDC config, undefined = loading
+  const [oidcClientConfig, setOidcClientConfig] = useState<
+    OidcClientConfig | null | undefined
+  >(undefined);
+  const [oidcErr, setOidcErr] = useState<Error | undefined>(undefined);
+
   // null = signed out, undefined = loading
   const [initClientState, setInitClientState] = useState<
     InitResult | null | undefined
@@ -152,6 +163,11 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     // the client.
     if (initializing.current) return;
     initializing.current = true;
+
+    if (!widget) {
+      // TODO: spec says this may change over time & should be refreshed upon cache expiry
+      getAuthMetadata().then(setOidcClientConfig, setOidcErr);
+    }
 
     loadClient()
       .then((initResult) => {
@@ -251,12 +267,18 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   const [supportsReactions, setSupportsReactions] = useState(false);
   const [supportsThumbnails, setSupportsThumbnails] = useState(false);
 
-  const state: ClientState | undefined = useMemo(() => {
-    if (alreadyOpenedErr) {
-      return { state: "error", error: alreadyOpenedErr };
+  const state = useMemo((): ClientState | undefined => {
+    const error = alreadyOpenedErr || oidcErr;
+    if (error) {
+      return { state: "error", error };
     }
 
-    if (initClientState === undefined) return undefined;
+    if (
+      initClientState === undefined ||
+      oidcClientConfig === undefined
+    ) {
+      return undefined;
+    }
 
     const authenticated =
       initClientState === null
@@ -270,6 +292,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
     return {
       state: "valid",
+      oidcClientConfig,
       authenticated,
       setClient,
       disconnected: isDisconnected,
@@ -280,6 +303,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     };
   }, [
     alreadyOpenedErr,
+    oidcErr,
+    oidcClientConfig,
     changePassword,
     initClientState,
     logout,
@@ -345,8 +370,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     };
   }, [initClientState, onSync]);
 
-  if (alreadyOpenedErr) {
-    return <ErrorPage widget={widget} error={alreadyOpenedErr} />;
+  const error = alreadyOpenedErr || oidcErr;
+  if (error) {
+    return <ErrorPage widget={widget} error={error} />;
   }
 
   return <ClientContext value={state}>{children}</ClientContext>;

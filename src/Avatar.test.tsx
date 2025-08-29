@@ -21,6 +21,7 @@ const TestComponent: FC<
     <ClientContextProvider
       value={{
         state: "valid",
+        oidcClientConfig: null,
         disconnected: false,
         supportedFeatures: {
           reactions: true,

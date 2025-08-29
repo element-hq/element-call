@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useTranslation } from "react-i18next";
-import { PopOutIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { ErrorIcon, PopOutIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import type { FC, ReactNode } from "react";
 import { ErrorView } from "./ErrorView";
@@ -49,5 +49,31 @@ const OpenElsewhere: FC = () => {
 export class OpenElsewhereError extends RichError {
   public constructor() {
     super("App opened in another tab", <OpenElsewhere />);
+  }
+}
+
+const HomeserverMisconfig: FC<{message?: string}> = (props) => {
+  const { t } = useTranslation();
+
+  // TODO: don't want to show "Return to home screen" button for an error as fatal as this
+  return (
+    <ErrorView
+      widget={widget}
+      Icon={ErrorIcon}
+      title={t("error.homeserver_misconfig")}
+      fatal={true}
+    >
+      {props.message && (
+        <p>
+          {props.message}
+        </p>
+      )}
+    </ErrorView>
+  );
+};
+
+export class HomeserverMisconfigError extends RichError {
+  public constructor(message?: string) {
+    super(message || "Unknown error", <HomeserverMisconfig message={message} />);
   }
 }

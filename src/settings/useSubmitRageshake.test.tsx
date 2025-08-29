@@ -75,6 +75,7 @@ function renderWithMockClient(
     <ClientContextProvider
       value={{
         state: "valid",
+        oidcClientConfig: null,
         disconnected: false,
         supportedFeatures: {
           reactions: true,

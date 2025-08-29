@@ -20,6 +20,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
+import { OidcRedirectPage } from "./auth/OidcRedirectPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
 import { ClientProvider } from "./ClientContext";
@@ -88,6 +89,7 @@ export const App: FC<Props> = ({ vm }) => {
             <Routes>
               <SentryRoute path="/" element={<HomePage />} />
               <SentryRoute path="/login" element={<LoginPage />} />
+              <SentryRoute path="/after_login" element={<OidcRedirectPage />} />
               <SentryRoute path="/register" element={<RegisterPage />} />
               <SentryRoute path="*" element={<RoomPage />} />
             </Routes>
