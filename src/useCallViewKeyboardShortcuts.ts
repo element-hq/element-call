@@ -29,9 +29,9 @@ const KeyToReactionMap: Record<string, ReactionOption> = Object.fromEntries(
 
 export function useCallViewKeyboardShortcuts(
   focusElement: RefObject<HTMLElement | null>,
-  toggleMicrophoneMuted: () => void,
-  toggleLocalVideoMuted: () => void,
-  setMicrophoneMuted: (muted: boolean) => void,
+  toggleAudio: (() => void) | null,
+  toggleVideo: (() => void) | null,
+  setAudioEnabled: ((enabled: boolean) => void) | null,
   sendReaction: (reaction: ReactionOption) => void,
   toggleHandRaised: () => void,
 ): void {
@@ -52,15 +52,15 @@ export function useCallViewKeyboardShortcuts(
 
         if (event.key === "m") {
           event.preventDefault();
-          toggleMicrophoneMuted();
-        } else if (event.key == "v") {
+          toggleAudio?.();
+        } else if (event.key === "v") {
           event.preventDefault();
-          toggleLocalVideoMuted();
+          toggleVideo?.();
         } else if (event.key === " ") {
           event.preventDefault();
           if (!spacebarHeld.current) {
             spacebarHeld.current = true;
-            setMicrophoneMuted(false);
+            setAudioEnabled?.(true);
           }
         } else if (event.key === "h") {
           event.preventDefault();
@@ -72,9 +72,9 @@ export function useCallViewKeyboardShortcuts(
       },
       [
         focusElement,
-        toggleLocalVideoMuted,
-        toggleMicrophoneMuted,
-        setMicrophoneMuted,
+        toggleVideo,
+        toggleAudio,
+        setAudioEnabled,
         sendReaction,
         toggleHandRaised,
       ],
@@ -95,10 +95,10 @@ export function useCallViewKeyboardShortcuts(
 
         if (event.key === " ") {
           spacebarHeld.current = false;
-          setMicrophoneMuted(true);
+          setAudioEnabled?.(false);
         }
       },
-      [focusElement, setMicrophoneMuted],
+      [focusElement, setAudioEnabled],
     ),
   );
 
@@ -108,8 +108,8 @@ export function useCallViewKeyboardShortcuts(
     useCallback(() => {
       if (spacebarHeld.current) {
         spacebarHeld.current = false;
-        setMicrophoneMuted(true);
+        setAudioEnabled?.(true);
       }
-    }, [setMicrophoneMuted, spacebarHeld]),
+    }, [setAudioEnabled, spacebarHeld]),
   );
 }

@@ -9,6 +9,7 @@ import {
   BehaviorSubject,
   distinctUntilChanged,
   type Observable,
+  share,
   Subject,
   takeUntil,
 } from "rxjs";
@@ -34,6 +35,12 @@ export class ObservableScope {
   public bind(): MonoTypeOperator {
     return this.bindImpl;
   }
+
+  private readonly shareImpl: MonoTypeOperator = share({ resetOnError: false, resetOnComplete: false, resetOnRefCountZero: false })
+  /**
+   * Shares (multicasts) the Observable as a hot Observable.
+   */
+  public readonly share: MonoTypeOperator = (input$) => input$.pipe(this.bindImpl, this.shareImpl)
 
   /**
    * Converts an Observable to a Behavior. If no initial value is specified, the

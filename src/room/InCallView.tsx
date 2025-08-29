@@ -60,7 +60,7 @@ import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
-import { type MuteStates } from "./MuteStates";
+import { type MuteStates } from "../state/MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
@@ -143,6 +143,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       props.rtcSession,
       props.matrixRoom,
       mediaDevices,
+      props.muteStates,
       {
         encryptionSystem: props.e2eeSystem,
         autoLeaveWhenOthersLeft,
@@ -161,6 +162,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     props.rtcSession,
     props.matrixRoom,
     mediaDevices,
+    props.muteStates,
     props.e2eeSystem,
     autoLeaveWhenOthersLeft,
     sendNotificationType,
@@ -265,22 +267,19 @@ export const InCallView: FC<InCallViewProps> = ({
     ],
   );
 
-  const toggleMicrophone = useCallback(
-    () => muteStates.audio.setEnabled?.((e) => !e),
-    [muteStates],
-  );
-  const toggleCamera = useCallback(
-    () => muteStates.video.setEnabled?.((e) => !e),
-    [muteStates],
-  );
+  const audioEnabled = useBehavior(muteStates.audio.enabled$);
+  const videoEnabled = useBehavior(muteStates.video.enabled$);
+  const toggleAudio = useBehavior(muteStates.audio.toggle$);
+  const toggleVideo = useBehavior(muteStates.video.toggle$);
+  const setAudioEnabled = useBehavior(muteStates.audio.setEnabled$);
 
   // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
   // TODO: Make sure that this module is resilient when it comes to camera/microphone availability!
   useCallViewKeyboardShortcuts(
     containerRef1,
-    toggleMicrophone,
-    toggleCamera,
-    (muted) => muteStates.audio.setEnabled?.(!muted),
+    toggleAudio,
+    toggleVideo,
+    setAudioEnabled,
     (reaction) => void sendReaction(reaction),
     () => void toggleRaisedHand(),
   );
@@ -764,18 +763,18 @@ export const InCallView: FC<InCallViewProps> = ({
   buttons.push(
     <MicButton
       key="audio"
-      muted={!muteStates.audio.enabled}
-      onClick={toggleMicrophone}
+      muted={!audioEnabled}
+      onClick={toggleAudio ?? undefined}
       onTouchEnd={onControlsTouchEnd}
-      disabled={muteStates.audio.setEnabled === null}
+      disabled={toggleAudio === null}
       data-testid="incall_mute"
     />,
     <VideoButton
       key="video"
-      muted={!muteStates.video.enabled}
-      onClick={toggleCamera}
+      muted={!videoEnabled}
+      onClick={toggleVideo ?? undefined}
       onTouchEnd={onControlsTouchEnd}
-      disabled={muteStates.video.setEnabled === null}
+      disabled={toggleVideo === null}
       data-testid="incall_videomute"
     />,
   );
