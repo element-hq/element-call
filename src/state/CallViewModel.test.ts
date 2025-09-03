@@ -1193,7 +1193,7 @@ test("autoLeave$ emits when autoLeaveWhenOthersLeft option is enabled and all ot
   });
 });
 
-describe("shouldWaitForCallPickup$", () => {
+describe("waitForCallPickup$", () => {
   test("unknown -> ringing -> timeout when notified and nobody joins", () => {
     withTestScheduler(({ schedule, expectObservable }) => {
       // No one ever joins (only local user)
@@ -1220,7 +1220,7 @@ describe("shouldWaitForCallPickup$", () => {
           });
         },
         {
-          shouldWaitForCallPickup: true,
+          waitForCallPickup: true,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
@@ -1264,7 +1264,7 @@ describe("shouldWaitForCallPickup$", () => {
           });
         },
         {
-          shouldWaitForCallPickup: true,
+          waitForCallPickup: true,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
@@ -1305,7 +1305,7 @@ describe("shouldWaitForCallPickup$", () => {
           });
         },
         {
-          shouldWaitForCallPickup: true,
+          waitForCallPickup: true,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
@@ -1336,14 +1336,14 @@ describe("shouldWaitForCallPickup$", () => {
           });
         },
         {
-          shouldWaitForCallPickup: true,
+          waitForCallPickup: true,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
     });
   });
 
-  test("stays null when shouldWaitForCallPickup=false", () => {
+  test("stays null when waitForCallPickup=false", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       withCallViewModel(
         {
@@ -1375,7 +1375,7 @@ describe("shouldWaitForCallPickup$", () => {
           });
         },
         {
-          shouldWaitForCallPickup: false,
+          waitForCallPickup: false,
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );

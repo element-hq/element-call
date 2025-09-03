@@ -120,7 +120,7 @@ export interface CallViewModelOptions {
    * If the call is started in a way where we want it to behave like a telephone usecase
    * If we sent a notification event, we want the ui to show a ringing state
    */
-  shouldWaitForCallPickup?: boolean;
+  waitForCallPickup?: boolean;
 }
 
 // How long we wait after a focus switch before showing the real participant
@@ -916,7 +916,7 @@ export class CallViewModel extends ViewModel {
    *  - "success": Someone else joined. The call is in a normal state. No audiovisual feedback.
    *  - null: EC is configured to never show any waiting for answer state.
    */
-  public readonly callPickupState$ = this.options.shouldWaitForCallPickup
+  public readonly callPickupState$ = this.options.waitForCallPickup
     ? this.scope.behavior<"unknown" | "ringing" | "timeout" | "success">(
         concat(
           concat(
