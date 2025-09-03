@@ -1195,16 +1195,10 @@ test("autoLeave$ emits when autoLeaveWhenOthersLeft option is enabled and all ot
 
 describe("shouldWaitForCallPickup$", () => {
   test("unknown -> ringing -> timeout when notified and nobody joins", () => {
-    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+    withTestScheduler(({ schedule, expectObservable }) => {
       // No one ever joins (only local user)
       withCallViewModel(
-        {
-          remoteParticipants$: scope.behavior(hot("a", { a: [] }), []),
-          rtcMembers$: scope.behavior(hot("a", { a: [localRtcMember] }), []),
-          connectionState$: of(ConnectionState.Connected),
-          speaking: new Map(),
-          mediaDevices: mockMediaDevices({}),
-        },
+        { remoteParticipants$: constant([]) },
         (vm, rtcSession) => {
           // Fire a call notification at 10ms with lifetime 30ms
           schedule("          10ms r", {
@@ -1234,27 +1228,18 @@ describe("shouldWaitForCallPickup$", () => {
   });
 
   test("ringing -> success if someone joins before timeout", () => {
-    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
-      const remote$ = scope.behavior(
-        hot("a--b", { a: [], b: [aliceParticipant] }),
-        [],
-      );
-      const rtc$ = scope.behavior(
-        hot("a--b", {
-          a: [localRtcMember],
-          b: [localRtcMember, aliceRtcMember],
-        }),
-        [],
-      );
-
       withCallViewModel(
         {
-          remoteParticipants$: remote$,
-          rtcMembers$: rtc$,
-          connectionState$: of(ConnectionState.Connected),
-          speaking: new Map(),
-          mediaDevices: mockMediaDevices({}),
+          remoteParticipants$: behavior("a 19ms b", {
+            a: [],
+            b: [aliceParticipant],
+          }),
+          rtcMembers$: behavior("a 19ms b", {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
         },
         (vm, rtcSession) => {
           // Notify at 5ms so we enter ringing, then success at 20ms
@@ -1272,8 +1257,9 @@ describe("shouldWaitForCallPickup$", () => {
             },
           });
 
-          expectObservable(vm.callPickupState$).toBe("a 2ms c", {
+          expectObservable(vm.callPickupState$).toBe("a 4ms b 14ms c", {
             a: "unknown",
+            b: "ringing",
             c: "success",
           });
         },
@@ -1286,27 +1272,18 @@ describe("shouldWaitForCallPickup$", () => {
   });
 
   test("success when someone joins before we notify", () => {
-    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Join at 10ms, notify later at 20ms (state should stay success)
-      const remote$ = scope.behavior(
-        hot("a-b", { a: [], b: [aliceParticipant] }),
-        [],
-      );
-      const rtc$ = scope.behavior(
-        hot("a-b", {
-          a: [localRtcMember],
-          b: [localRtcMember, aliceRtcMember],
-        }),
-        [],
-      );
-
       withCallViewModel(
         {
-          remoteParticipants$: remote$,
-          rtcMembers$: rtc$,
-          connectionState$: of(ConnectionState.Connected),
-          speaking: new Map(),
-          mediaDevices: mockMediaDevices({}),
+          remoteParticipants$: behavior("a 9ms b", {
+            a: [],
+            b: [aliceParticipant],
+          }),
+          rtcMembers$: behavior("a 9ms b", {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
         },
         (vm, rtcSession) => {
           schedule("          20ms r", {
@@ -1322,7 +1299,7 @@ describe("shouldWaitForCallPickup$", () => {
               );
             },
           });
-          expectObservable(vm.callPickupState$).toBe("a 1ms b", {
+          expectObservable(vm.callPickupState$).toBe("a 9ms b", {
             a: "unknown",
             b: "success",
           });
@@ -1336,21 +1313,15 @@ describe("shouldWaitForCallPickup$", () => {
   });
 
   test("notify without lifetime -> immediate timeout", () => {
-    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+    withTestScheduler(({ schedule, expectObservable }) => {
       withCallViewModel(
-        {
-          remoteParticipants$: scope.behavior(hot("a", { a: [] }), []),
-          rtcMembers$: scope.behavior(hot("a", { a: [localRtcMember] }), []),
-          connectionState$: of(ConnectionState.Connected),
-          speaking: new Map(),
-          mediaDevices: mockMediaDevices({}),
-        },
+        {},
         (vm, rtcSession) => {
           schedule("          10ms r", {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { lifetime: 0 } as unknown as {
+                {} as unknown as {
                   event_id: string;
                 } & IRTCNotificationContent, // no lifetime
                 {} as unknown as {
@@ -1373,26 +1344,17 @@ describe("shouldWaitForCallPickup$", () => {
   });
 
   test("stays null when shouldWaitForCallPickup=false", () => {
-    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
-      const remote$ = scope.behavior(
-        hot("a--b", { a: [], b: [aliceParticipant] }),
-        [],
-      );
-      const rtc$ = scope.behavior(
-        hot("a--b", {
-          a: [localRtcMember],
-          b: [localRtcMember, aliceRtcMember],
-        }),
-        [],
-      );
-
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
       withCallViewModel(
         {
-          remoteParticipants$: remote$,
-          rtcMembers$: rtc$,
-          connectionState$: of(ConnectionState.Connected),
-          speaking: new Map(),
-          mediaDevices: mockMediaDevices({}),
+          remoteParticipants$: behavior("a--b", {
+            a: [],
+            b: [aliceParticipant],
+          }),
+          rtcMembers$: behavior("a--b", {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
         },
         (vm, rtcSession) => {
           schedule("          5ms r", {
