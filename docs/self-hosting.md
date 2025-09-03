@@ -126,6 +126,32 @@ server {
 }
 ```
 
+Or Using Caddy, you can achieve this by:
+
+```caddy configuration file
+# Route for lk-jwt-service with livekit/jwt prefix
+@jwt_service path /livekit/jwt/sfu/get /livekit/jwt/healthz
+handle @jwt_service {
+  uri strip_prefix /livekit/jwt
+  reverse_proxy http://[::1]:8080 {
+    header_up Host {host}
+    header_up X-Forwarded-Server {host}
+    header_up X-Real-IP {remote_addr}
+    header_up X-Forwarded-For {remote_addr}
+  }
+}
+
+# Default route for livekit
+handle {
+  reverse_proxy http://localhost:7880 {
+    header_up Host {host}
+    header_up X-Forwarded-Server {host}
+    header_up X-Real-IP {remote_addr}
+    header_up X-Forwarded-For {remote_addr}
+  }
+}
+```
+
 #### MatrixRTC backend announcement
 
 > [!IMPORTANT]
@@ -214,7 +240,7 @@ server {
 There are currently two different config files. `.env` holds variables that are
 used at build time, while `public/config.json` holds variables that are used at
 runtime. Documentation and default values for `public/config.json` can be found
-in [ConfigOptions.ts](src/config/ConfigOptions.ts).
+in [ConfigOptions.ts](../src/config/ConfigOptions.ts).
 
 > [!CAUTION]
 > Please note configuring MatrixRTC backend via `config.json` of
