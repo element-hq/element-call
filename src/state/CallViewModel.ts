@@ -30,18 +30,22 @@ import {
 import {
   BehaviorSubject,
   EMPTY,
+  NEVER,
   type Observable,
   Subject,
   combineLatest,
   concat,
   distinctUntilChanged,
+  endWith,
   filter,
   forkJoin,
   fromEvent,
+  ignoreElements,
   map,
   merge,
   mergeMap,
   of,
+  pairwise,
   race,
   scan,
   skip,
@@ -50,6 +54,8 @@ import {
   switchMap,
   switchScan,
   take,
+  takeUntil,
+  throttleTime,
   timer,
   withLatestFrom,
 } from "rxjs";
@@ -109,7 +115,7 @@ import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
 import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 import { type MediaDevices } from "./MediaDevices";
-import { type Behavior } from "./Behavior";
+import { constant, type Behavior } from "./Behavior";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -118,12 +124,17 @@ export interface CallViewModelOptions {
    * If the call is started in a way where we want it to behave like a telephone usecase
    * If we sent a notification event, we want the ui to show a ringing state
    */
-  shouldWaitForCallPickup?: boolean;
+  waitForCallPickup?: boolean;
 }
 
 // How long we wait after a focus switch before showing the real participant
 // list again
 const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
+
+// Do not play any sounds if the participant count has exceeded this
+// number.
+export const MAX_PARTICIPANT_COUNT_FOR_SOUND = 8;
+export const THROTTLE_SOUND_EFFECT_MS = 500;
 
 // This is the number of participants that we think constitutes a "small" call
 // on mobile. No spotlight tile should be shown below this threshold.
@@ -437,14 +448,7 @@ export class CallViewModel extends ViewModel {
         MembershipManagerEvent.StatusChanged,
       ).pipe(
         startWith(null),
-        map(
-          () =>
-            (
-              this.matrixRTCSession as unknown as {
-                membershipStatus?: Status;
-              }
-            ).membershipStatus === Status.Connected,
-        ),
+        map(() => this.matrixRTCSession.membershipStatus === Status.Connected),
       ),
       // Also watch out for warnings that we've likely hit a timeout and our
       // delayed leave event is being sent (this condition is here because it
@@ -455,11 +459,7 @@ export class CallViewModel extends ViewModel {
         MembershipManagerEvent.ProbablyLeft,
       ).pipe(
         startWith(null),
-        map(
-          () =>
-            (this.matrixRTCSession as unknown as { probablyLeft?: boolean })
-              .probablyLeft !== true,
-        ),
+        map(() => this.matrixRTCSession.probablyLeft !== true),
       ),
     ),
   );
@@ -576,6 +576,17 @@ export class CallViewModel extends ViewModel {
     )
     .pipe(pauseWhen(this.pretendToBeDisconnected$));
 
+  private readonly memberships$ = this.scope.behavior(
+    fromEvent(
+      this.matrixRTCSession,
+      MatrixRTCSessionEvent.MembershipsChanged,
+    ).pipe(
+      startWith(null),
+      pauseWhen(this.pretendToBeDisconnected$),
+      map(() => this.matrixRTCSession.memberships),
+    ),
+  );
+
   /**
    * Displaynames for each member of the call. This will disambiguate
    * any displaynames that clashes with another member. Only members
@@ -585,18 +596,17 @@ export class CallViewModel extends ViewModel {
   // than on Chrome/Firefox). This means it is important that we multicast the result so that we
   // don't do this work more times than we need to. This is achieved by converting to a behavior:
   public readonly memberDisplaynames$ = this.scope.behavior(
-    merge(
-      // Handle call membership changes.
-      fromEvent(
-        this.matrixRTCSession,
-        MatrixRTCSessionEvent.MembershipsChanged,
-      ),
-      // Handle room membership changes (and displayname updates)
-      fromEvent(this.matrixRoom, RoomStateEvent.Members),
-    ).pipe(
-      startWith(null),
-      map(() => {
-        const memberships = this.matrixRTCSession.memberships;
+    // React to call memberships and also display name updates
+    // (calculateDisplayName implicitly depends on the room member data)
+    combineLatest(
+      [
+        this.memberships$,
+        fromEvent(this.matrixRoom, RoomStateEvent.Members).pipe(
+          startWith(null),
+          pauseWhen(this.pretendToBeDisconnected$),
+        ),
+      ],
+      (memberships, _members) => {
         const displaynameMap = new Map<string, string>();
         const room = this.matrixRoom;
 
@@ -618,8 +628,7 @@ export class CallViewModel extends ViewModel {
           );
         }
         return displaynameMap;
-      }),
-      pauseWhen(this.pretendToBeDisconnected$),
+      },
     ),
   );
 
@@ -649,13 +658,7 @@ export class CallViewModel extends ViewModel {
       this.remoteParticipants$,
       observeParticipantMedia(this.livekitRoom.localParticipant),
       duplicateTiles.value$,
-      // Also react to changes in the MatrixRTC session list.
-      // The session list will also be update if a room membership changes.
-      // No additional RoomState event listener needs to be set up.
-      fromEvent(
-        this.matrixRTCSession,
-        MatrixRTCSessionEvent.MembershipsChanged,
-      ).pipe(startWith(null), pauseWhen(this.pretendToBeDisconnected$)),
+      this.memberships$,
       showNonMemberTiles.value$,
     ]).pipe(
       scan(
@@ -665,7 +668,7 @@ export class CallViewModel extends ViewModel {
             remoteParticipants,
             { participant: localParticipant },
             duplicateTiles,
-            _membershipsChanged,
+            memberships,
             showNonMemberTiles,
           ],
         ) => {
@@ -673,7 +676,7 @@ export class CallViewModel extends ViewModel {
             function* (this: CallViewModel): Iterable<[string, MediaItem]> {
               const room = this.matrixRoom;
               // m.rtc.members are the basis for calculating what is visible in the call
-              for (const rtcMember of this.matrixRTCSession.memberships) {
+              for (const rtcMember of memberships) {
                 const { member, id: livekitParticipantId } =
                   getRoomMemberFromRtcMember(rtcMember, room);
                 const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
@@ -839,205 +842,143 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  /**
-   * This observable tracks the currently connected participants.
-   *
-   *  - Each participant has one livekit connection
-   *  - Each participant has a corresponding MatrixRTC membership state event
-   *  - There can be multiple participants for one matrix user.
-   */
-  public readonly participantChanges$ = this.scope.behavior(
-    this.userMedia$.pipe(
-      map((mediaItems) => mediaItems.map((m) => m.id)),
-      scan<string[], { ids: string[]; joined: string[]; left: string[] }>(
-        (prev, ids) => {
-          const left = prev.ids.filter((id) => !ids.includes(id));
-          const joined = ids.filter((id) => !prev.ids.includes(id));
-          return { ids, joined, left };
-        },
-        { ids: [], joined: [], left: [] },
-      ),
+  public readonly joinSoundEffect$ = this.userMedia$.pipe(
+    pairwise(),
+    filter(
+      ([prev, current]) =>
+        current.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND &&
+        current.length > prev.length,
     ),
+    map(() => {}),
+    throttleTime(THROTTLE_SOUND_EFFECT_MS),
+  );
+
+  public readonly leaveSoundEffect$ = this.userMedia$.pipe(
+    pairwise(),
+    filter(
+      ([prev, current]) =>
+        current.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND &&
+        current.length < prev.length,
+    ),
+    map(() => {}),
+    throttleTime(THROTTLE_SOUND_EFFECT_MS),
   );
 
   /**
    * The number of participants currently in the call.
    *
-   *  - Each participant has one livekit connection
    *  - Each participant has a corresponding MatrixRTC membership state event
-   *  - There can be multiple participants for one matrix user.
+   *  - There can be multiple participants for one Matrix user if they join from
+   *    multiple devices.
    */
   public readonly participantCount$ = this.scope.behavior(
-    this.participantChanges$.pipe(map(({ ids }) => ids.length)),
+    this.memberships$.pipe(map((ms) => ms.length)),
   );
 
-  /**
-   * This observable tracks the matrix users that are currently in the call.
-   * There can be just one matrix user with multiple participants (see also participantChanges$)
-   */
-  public readonly matrixUserChanges$ = this.scope.behavior(
-    this.userMedia$.pipe(
-      map(
-        (mediaItems) =>
-          new Set(
-            mediaItems
-              .map((m) => m.vm.member?.userId)
-              .filter((id) => id !== undefined),
-          ),
-      ),
-      scan<
-        Set<string>,
-        {
-          userIds: Set<string>;
-          joinedUserIds: Set<string>;
-          leftUserIds: Set<string>;
-        }
-      >(
-        (prevState, userIds) => {
-          const left = new Set(
-            [...prevState.userIds].filter((id) => !userIds.has(id)),
-          );
-          const joined = new Set(
-            [...userIds].filter((id) => !prevState.userIds.has(id)),
-          );
-          return { userIds: userIds, joinedUserIds: joined, leftUserIds: left };
-        },
-        {
-          userIds: new Set(),
-          joinedUserIds: new Set(),
-          leftUserIds: new Set(),
-        },
-      ),
+  private readonly allOthersLeft$ = this.memberships$.pipe(
+    pairwise(),
+    filter(
+      ([prev, current]) =>
+        current.every((m) => m.sender === this.userId) &&
+        prev.some((m) => m.sender !== this.userId),
     ),
-  );
-
-  public readonly allOthersLeft$ = this.matrixUserChanges$.pipe(
-    map(({ userIds, leftUserIds }) => {
-      if (!this.userId) {
-        logger.warn("Could not access user ID to compute allOthersLeft");
-        return false;
-      }
-      return (
-        userIds.size === 1 && userIds.has(this.userId) && leftUserIds.size > 0
-      );
-    }),
-    startWith(false),
-    distinctUntilChanged(),
-  );
-
-  public readonly autoLeaveWhenOthersLeft$ = this.allOthersLeft$.pipe(
-    distinctUntilChanged(),
-    filter((leave) => (leave && this.options.autoLeaveWhenOthersLeft) ?? false),
     map(() => {}),
+    take(1),
   );
+
+  public readonly autoLeave$ = this.options.autoLeaveWhenOthersLeft
+    ? this.allOthersLeft$
+    : NEVER;
 
   /**
-   * "unknown": We don't know if the RTC session decides to send a notify event yet.
-   *   It will only be known once we sent our own membership and know we were the first one to join.
-   * "ringing": The notification event was sent.
-   * "ringEnded": The notification events lifetime has timed out -> ringing stopped on all receiving clients.
+   * Whenever the RTC session tells us that it intends to ring the remote
+   * participant's devices, this emits an Observable tracking the current state of
+   * that ringing process.
    */
-  private readonly rtcNotificationEventState$: Observable<
-    { state: "unknown" | "ringEnded" } | { state: "ringing"; event_id: string }
-  > = fromEvent<
-    Parameters<
-      MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
+  private readonly ring$: Observable<
+    Observable<"ringing" | "timeout" | "decline">
+  > = (
+    fromEvent(
+      this.matrixRTCSession,
+      MatrixRTCSessionEvent.DidSendCallNotification,
+    ) as Observable<
+      Parameters<
+        MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
+      >
     >
-  >(this.matrixRTCSession, MatrixRTCSessionEvent.DidSendCallNotification).pipe(
-    switchMap(([notificationEvent]) => {
+  ).pipe(
+    map(([notificationEvent]) => {
       // event.lifetime is expected to be in ms
       const lifetime = notificationEvent?.lifetime ?? 0;
-      if (lifetime > 0) {
-        // Emit true immediately, then false after lifetime ms
-        return concat(
-          of({
-            state: "ringing",
-            event_id: notificationEvent.event_id,
-          } as {
-            state: "ringing";
-            event_id: string;
-          }),
-          timer(lifetime).pipe(
-            map(() => ({ state: "ringEnded" }) as { state: "ringEnded" }),
+      return concat(
+        lifetime === 0
+          ? // If no lifetime, skip the ring state
+            EMPTY
+          : // Ring until lifetime ms have passed
+            timer(lifetime).pipe(
+              ignoreElements(),
+              startWith("ringing" as const),
+            ),
+        // The notification lifetime has timed out, meaning ringing has likely
+        // stopped on all receiving clients.
+        of("timeout" as const),
+        NEVER,
+      ).pipe(
+        takeUntil(
+          (
+            fromEvent(this.matrixRoom, RoomEvent.Timeline) as Observable<
+              Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
+            >
+          ).pipe(
+            filter(
+              ([event]) =>
+                event.getType() === EventType.RTCDecline &&
+                event.getRelation()?.rel_type === "m.reference" &&
+                event.getRelation()?.event_id === notificationEvent.event_id,
+            ),
           ),
-        );
-      }
-      // If no lifetime, the notify event is basically invalid and we enter ringEnded immediately.
-      return of({ state: "ringEnded" } as { state: "ringEnded" });
+        ),
+        endWith("decline" as const),
+      );
     }),
-    startWith({ state: "unknown" } as { state: "unknown" }),
   );
 
   /**
-   * If some other matrix user has joined the call. It can start with true if there are already multiple matrix users.
+   * Whether some Matrix user other than ourself is joined to the call.
    */
-  private readonly someoneElseJoined$ = this.matrixUserChanges$.pipe(
-    scan(
-      (someoneJoined, { joinedUserIds }) =>
-        someoneJoined || [...joinedUserIds].some((id) => id !== this.userId),
-      false,
-    ),
-    startWith(this.matrixUserChanges$.value.userIds.size > 1),
+  private readonly someoneElseJoined$ = this.memberships$.pipe(
+    map((ms) => ms.some((m) => m.sender !== this.userId)),
   );
 
   /**
    * The current call pickup state of the call.
-   *  - "ringing": The call is ringing on other devices in this room (This client should give audiovisual feedback that this is happening).
    *  - "unknown": The client has not yet sent the notification event. We don't know if it will because it first needs to send its own membership.
    *     Then we can conclude if we were the first one to join or not.
+   *  - "ringing": The call is ringing on other devices in this room (This client should give audiovisual feedback that this is happening).
    *  - "timeout": No-one picked up in the defined time this call should be ringing on others devices.
    *     The call failed. If desired this can be used as a trigger to exit the call.
-   *  - "success": Someone else joined. The call is in a normal state. Stop audiovisual feedback.
+   *  - "success": Someone else joined. The call is in a normal state. No audiovisual feedback.
    *  - null: EC is configured to never show any waiting for answer state.
    */
-  public readonly callPickupState$: Behavior<
-    "unknown" | "ringing" | "timeout" | "success" | "decline" | null
-  > = this.scope.behavior(
-    combineLatest([
-      this.rtcNotificationEventState$,
-      this.someoneElseJoined$,
-      fromEvent<Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>>(
-        this.matrixRoom,
-        RoomEvent.Timeline,
-      ).pipe(
-        map(([event]) => {
-          if (event.getType() === EventType.RTCDecline) return event;
-          else return null;
-        }),
-        startWith(null),
-      ),
-    ]).pipe(
-      map(([notificationEventState, someoneJoined, declineEvent]) => {
-        // Never enter waiting for answer state if the app is not configured with waitingForAnswer.
-        if (!this.options.shouldWaitForCallPickup) return null;
-        // As soon as someone joins, we can consider the call "wait for answer" successful
-        if (someoneJoined) return "success";
-
-        switch (notificationEventState?.state) {
-          case "unknown":
-            return "unknown";
-          case "ringing":
-            // Check if the decline event corresponds to the current notification event
-            if (declineEvent?.getId() === notificationEventState.event_id) {
-              return "decline";
-            }
-            return "ringing";
-          case "ringEnded":
-            return "timeout";
-          default:
-            return "timeout";
-        }
-      }),
-      // Once we reach a terminal state, keep it
-      scan((prev, next) => {
-        if (prev === "decline" || prev === "timeout" || prev === "success") {
-          return prev;
-        }
-        return next;
-      }),
-      distinctUntilChanged(),
-    ),
-  );
+  public readonly callPickupState$ = this.options.waitForCallPickup
+    ? this.scope.behavior<
+        "unknown" | "ringing" | "timeout" | "decline" | "success"
+      >(
+        this.someoneElseJoined$.pipe(
+          switchMap((someoneElseJoined) =>
+            someoneElseJoined
+              ? of("success" as const)
+              : // Show the ringing state of the most recent ringing attempt.
+                this.ring$.pipe(switchAll()),
+          ),
+          // The state starts as 'unknown' because we don't know if the RTC
+          // session will actually send a notify event yet. It will only be
+          // known once we send our own membership and see that we were the
+          // first one to join.
+          startWith("unknown" as const),
+        ),
+      )
+    : constant(null);
 
   /**
    * List of MediaItems that we want to display, that are of type ScreenShare

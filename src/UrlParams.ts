@@ -226,7 +226,7 @@ export interface UrlConfiguration {
    *  - play a sound that indicates that it is awaiting an answer
    *  - auto-dismiss the call widget once the notification lifetime expires on the receivers side.
    */
-  shouldWaitForCallPickup: boolean;
+  waitForCallPickup: boolean;
 }
 
 // If you need to add a new flag to this interface, prefer a name that describes
@@ -358,7 +358,7 @@ export const getUrlParams = (
     returnToLobby: false,
     sendNotificationType: "notification" as RTCNotificationType,
     autoLeaveWhenOthersLeft: false,
-    shouldWaitForCallPickup: false,
+    waitForCallPickup: false,
   };
   switch (intent) {
     case UserIntent.StartNewCall:
@@ -378,7 +378,7 @@ export const getUrlParams = (
         ...inAppDefault,
         skipLobby: true,
         autoLeaveWhenOthersLeft: true,
-        shouldWaitForCallPickup: true,
+        waitForCallPickup: true,
       };
       break;
     case UserIntent.JoinExistingCallDM:
@@ -404,7 +404,7 @@ export const getUrlParams = (
         returnToLobby: false,
         sendNotificationType: undefined,
         autoLeaveWhenOthersLeft: false,
-        shouldWaitForCallPickup: false,
+        waitForCallPickup: false,
       };
   }
 
@@ -456,7 +456,7 @@ export const getUrlParams = (
       "ring",
       "notification",
     ]),
-    shouldWaitForCallPickup: parser.getFlag("shouldWaitForCallPickup"),
+    waitForCallPickup: parser.getFlag("waitForCallPickup"),
     autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
   };
 
