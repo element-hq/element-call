@@ -10,5 +10,5 @@ Please see LICENSE in the repository root for full details.
  */
 export function getOidcCallbackUrl(): URL {
   // TODO: save the path somewhere
-  return new URL("after_login", window.location.origin);
+  return new URL("after-login", window.location.origin);
 }

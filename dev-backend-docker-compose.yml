@@ -68,6 +68,31 @@ services:
     volumes:
       - ./backend/synapse_tmp:/data:Z
       - ./backend/dev_homeserver.yaml:/data/cfg/homeserver.yaml:Z
+    depends_on:
+      - mas
+    networks:
+      - ecbackend
+
+  mas:
+    # To add users, see `docker exec element-call-mas-1 mas-cli manage register-user -h`
+    image: ghcr.io/element-hq/matrix-authentication-service:latest
+    pull_policy: always
+    hostname: mas
+    volumes:
+      - ./backend/dev_mas.yaml:/config.yaml:ro,Z
+    depends_on:
+      - mas-db
+    networks:
+      - ecbackend
+
+  mas-db:
+    image: docker.io/postgres:16-alpine
+    hostname: mas-db
+    restart: always
+    shm_size: 128mb
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=mas
     networks:
       - ecbackend
 
@@ -101,7 +126,9 @@ services:
       - "host.docker.internal:host-gateway"
     depends_on:
       - synapse
+      - mas
     networks:
       ecbackend:
         aliases:
+          - mas.m.localhost
           - matrix-rtc.m.localhost

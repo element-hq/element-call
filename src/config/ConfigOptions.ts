@@ -163,9 +163,7 @@ export interface ConfigOptions {
   oidc_metadata?: {
     client_name?: string;
     client_uri?: string;
-    redirect_uris?: string[];
     logo_uri?: string;
-    application_type?: string;
     tos_uri?: string;
     policy_uri?: string;
     contacts?: string[];

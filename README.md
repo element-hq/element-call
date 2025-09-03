@@ -209,6 +209,7 @@ A docker compose file `dev-backend-docker-compose.yml` is provided to start the
 whole stack of components which is required for a local development environment:
 
 - Minimum Synapse Setup (servername: `synapse.m.localhost`)
+- Matrix Authentication Service Setup (issuer: `mas.m.localhost`)
 - MatrixRTC Authorization Service (Note requires Federation API and hence a TLS reverse proxy)
 - Minimum LiveKit SFU Setup using dev defaults for config
 - Redis db for completeness
@@ -218,6 +219,7 @@ whole stack of components which is required for a local development environment:
     certificates
 - Minimum TLS reverse proxy for
   - Synapse homeserver: `synapse.m.localhost`
+  - Matrix Authentication Service: `mas.m.localhost`
   - MatrixRTC backend: `matrix-rtc.m.localhost`
   - Local Element Call development `call.m.localhost` via `yarn dev --host `
   - Element Web `app.m.localhost`

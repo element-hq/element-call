@@ -12,6 +12,11 @@ listeners:
       - names: [client, federation, openid]
         compress: false
 
+matrix_authentication_service:
+  enabled: true
+  secret: "mas-matrix-secret"
+  endpoint: http://mas:8080
+
 database:
   name: sqlite3
   args:
@@ -45,10 +50,6 @@ rc_message:
   # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2s
   per_second: 0.5
   burst_count: 30
-
-# Required for Element Call in Single Page Mode due to on-the-fly user registration
-enable_registration: true
-enable_registration_without_verification: true
 
 report_stats: false
 serve_server_wellknown: true

@@ -51,6 +51,7 @@ export async function getOidcClientId(
     {
       clientName: config.oidc_metadata?.client_name ?? "Element Call",
       clientUri: config.oidc_metadata?.client_uri ?? window.location.origin,
+      logoUri: config.oidc_metadata?.logo_uri,
       redirectUris: [getOidcCallbackUrl().href],
       applicationType: "web",
       contacts: config.oidc_metadata?.contacts,

@@ -1,0 +1,96 @@
+http:
+  listeners:
+  - name: web
+    resources:
+    - name: discovery
+    - name: human
+    - name: oauth
+    - name: assets
+    - name: adminapi
+    binds:
+    - address: '[::]:8080'
+    proxy_protocol: false
+  trusted_proxies:
+  - 192.168.0.0/16
+  - 172.16.0.0/12
+  - 10.0.0.0/10
+  - 127.0.0.1/8
+  - fd00::/8
+  - ::1/128
+  public_base: https://mas.m.localhost/
+database:
+  uri: postgres://postgres@mas-db/mas
+  max_connections: 10
+  min_connections: 0
+  connect_timeout: 30
+  idle_timeout: 600
+  max_lifetime: 1800
+email:
+  from: '"Authentication Service" <root@localhost>'
+  reply_to: '"Authentication Service" <root@localhost>'
+  transport: blackhole
+secrets:
+  encryption: 91c9eda308d874d1b8ba51c0fe3b7cbb868638c8fbb82d7eec0e6912586bdabd
+  keys:
+  - kid: H30QE7M5eX
+    key: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEogIBAAKCAQEA3+t9XjM8LhYMpagIKXnpTXVWxIo5zwM/R8wYRPg0MPGCrOUB
+      i/L/Vof4yK7lIMWtCT724e989PLR4YmG2pXBpB8P7SZ3feggLoUMi8+QNzyKsGD+
+      lYmZd0D/2aVmxBxK83JP3LLodmoHduva2qSBF9YdZ6Greg/IcEdG2UY3iGYeojsQ
+      1Wx7V2+WPeUCtaIONBPk/rwOgWmzAhqGyCXONbvGazElNEuM0fwI278qveP5kNoh
+      aL6HvlaYQbMSGAg1tf06AKOjsJG0CRsvsMdFxuG9GEwd4pJr9+v+OqwnaFJHJ70z
+      kQFC3s/w+xCk4NnO+jSopBptu8ycwjZYMuq2kQIDAQABAoIBAHbDqFL2Sc0H1N1o
+      KiwVhTCYM9U6mz65Mi8aiSTLoKL09aJONGvODrAOnl2SpeSj9AsbYkajh1tEDx3Y
+      m7YECBjMgN3/sREOtUL3PphJFuy1J7o1N9KIkOU3jHwbxk3t07MbxlAAdFuaESt6
+      HTIqXm4OGrqEfTbYeC9VHrbPD1VAFj/OGHsYDurJzhfIlFSlZWZqHNjdNh2HAOJM
+      FElqJWqqR9fj2pYYdpo+oaheI/iIAuWpAgcZOJzaZ4iui4R9i4od+qqQ3EVECPvS
+      /QnezvDpiobShG6WOmrRj3WBtheiPLdNlNB0sVW9h3dHcrkE/l2n5pfArVbHB+wg
+      4e5FEAECgYEA4XjB6hpN1iX66ADf27L5mHymu1hTojZLoQdy76OcjgG+4ZoQl71U
+      OAww4ek9I6Alz+aQqTAnRtLHBKH+xSuO2VoxQfimk71mUmByCr25vIU8mGtXRIJO
+      rtWEVE4HQPhK2LODLm5zbp3I1GsrfNgMCsuA/yse5MIczC8bRFyf+DECgYEA/jzx
+      ddl1asjArcFcQyKFJxdobNqYJ4P+rbDLIOmC9IQ8n/v+ETERCzj/y93yaXXqCBlR
+      uHDzo72F/+SYDDWGYanpRmN2cUv1A0XTUs+dWYjfrscFJUEx8CZh0GeoLE4H3uru
+      GlwqPnc9sMPee98mj4yDMyrNqLx/VaXV+wnpbGECgYAh4JoKSa9+SLCdYVxBT2/v
+      OHN43LmcOto8NLlRRl0EfUCn9xUdJ4Za8YH6v6e/DZYA2dzMfv63xn2+tXRpPbU1
+      9TZHekvVEPUp1XHtKTqaF87V+/LdyVJ3NH+whxTR7zyXuMkyFchkS3Lcb8nV9URB
+      7vfP3zPCHWRkTYOkTuJ+UQKBgFCrj8ZgMOSoPJMlppvayTtFLypTFjJ7rIT6cwnH
+      bnkduIrfD5fu5MSV2nyauT+DXbYiKo8GsBhFm849f41oMnKs0ks2Zi++9UiLkGlX
+      XUs6phc0KUrP7AOSejkBmxgrzk2KZ/DPS8w0U8vR6reNcBPedwb2Tvl6jkDj9QjJ
+      9VohAoGAISjlufqw3y8F/0on1AhqyROlJghTBsQ+xDEBZ9txx/HcKVghqMhBCbFj
+      LRf8B4vH9QXtlZVtPFj0wE3INxsYtilsbD8wbwkxsLeGUFdPDucPacfBSyX+wLRh
+      S1/twrPS9KVhkU5d0TbyfOlEB1OSXZTWZ1n9NaqOZUPf6FAwm78=
+      -----END RSA PRIVATE KEY-----
+  - kid: VrRd3Y2OeF
+    key: |
+      -----BEGIN EC PRIVATE KEY-----
+      MHcCAQEEIB3zBxhuh275A3piMMDZ2BEM6vsoxswNLrTJRiaY+m80oAoGCCqGSM49
+      AwEHoUQDQgAECqFotDpyEYNrWf2UZaUB0CZz6KiptQL2wi8oRNkKlarjgDDNCBzR
+      dgCokx9C8bLpfqhTJE/6aSe6T19qkaPHIg==
+      -----END EC PRIVATE KEY-----
+  - kid: SHaCwxflXU
+    key: |
+      -----BEGIN EC PRIVATE KEY-----
+      MIGkAgEBBDCdchyP7aFxQce7vA+QMPkMkOaYKbmNoN1fnlKviKsJK1riq+1eKSEe
+      UeUF5BOczfugBwYFK4EEACKhZANiAAR1pIE4xN9xkULiCgMd/uztt4Lnu8FhvEZD
+      3BhUfy5kdBVbYyk1khgKy3k+dQvXaTVkzsHkQN8K78WxlUDlF5zKXLjgkeEiqgz7
+      HU0rr2e8geUiaEE2AkzWhvmIikvhuMo=
+      -----END EC PRIVATE KEY-----
+  - kid: ngjUaMfCuT
+    key: |
+      -----BEGIN EC PRIVATE KEY-----
+      MHQCAQEEIE11jnxjUvPk93ylMuIcwcayJsFUhsSH2EqAn97CiHf8oAcGBSuBBAAK
+      oUQDQgAE1XySwFNBUkzZ946MBf2/3ecXVptrauZEQ8d8zqUdBS7wOe5pZwZ15Jx4
+      aZhlusZ3BPl0KiTlWwOlaRDMrw9EGA==
+      -----END EC PRIVATE KEY-----
+passwords:
+  enabled: true
+  schemes:
+  - version: 1
+    algorithm: argon2id
+  minimum_complexity: 0
+matrix:
+  kind: synapse
+  homeserver: synapse.m.localhost
+  secret: "mas-matrix-secret"
+  endpoint: http://homeserver:8008/

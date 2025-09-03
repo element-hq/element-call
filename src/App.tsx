@@ -89,7 +89,7 @@ export const App: FC<Props> = ({ vm }) => {
             <Routes>
               <SentryRoute path="/" element={<HomePage />} />
               <SentryRoute path="/login" element={<LoginPage />} />
-              <SentryRoute path="/after_login" element={<OidcRedirectPage />} />
+              <SentryRoute path="/after-login" element={<OidcRedirectPage />} />
               <SentryRoute path="/register" element={<RegisterPage />} />
               <SentryRoute path="*" element={<RoomPage />} />
             </Routes>
