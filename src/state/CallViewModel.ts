@@ -435,14 +435,7 @@ export class CallViewModel extends ViewModel {
         MembershipManagerEvent.StatusChanged,
       ).pipe(
         startWith(null),
-        map(
-          () =>
-            (
-              this.matrixRTCSession as unknown as {
-                membershipStatus?: Status;
-              }
-            ).membershipStatus === Status.Connected,
-        ),
+        map(() => this.matrixRTCSession.membershipStatus === Status.Connected),
       ),
       // Also watch out for warnings that we've likely hit a timeout and our
       // delayed leave event is being sent (this condition is here because it
@@ -453,11 +446,7 @@ export class CallViewModel extends ViewModel {
         MembershipManagerEvent.ProbablyLeft,
       ).pipe(
         startWith(null),
-        map(
-          () =>
-            (this.matrixRTCSession as unknown as { probablyLeft?: boolean })
-              .probablyLeft !== true,
-        ),
+        map(() => this.matrixRTCSession.probablyLeft !== true),
       ),
     ),
   );
