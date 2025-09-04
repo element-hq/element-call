@@ -26,6 +26,7 @@ services:
 
   livekit:
     image: livekit/livekit-server:latest
+    pull_policy: always
     hostname: livekit-sfu
     command: --dev --config /etc/livekit.yaml
     restart: unless-stopped
@@ -45,6 +46,7 @@ services:
 
   redis:
     image: redis:6-alpine
+    pull_policy: always
     command: redis-server /etc/redis.conf
     ports:
       # HOST_PORT:CONTAINER_PORT
@@ -57,6 +59,7 @@ services:
   synapse:
     hostname: homeserver
     image: docker.io/matrixdotorg/synapse:latest
+    pull_policy: always
     environment:
       - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml
       # Needed for rootless podman-compose such that the uid/gid mapping does
@@ -87,6 +90,7 @@ services:
     #  see backend/dev_tls_setup for how to generate the tls certs
     hostname: synapse.m.localhost
     image: nginx:latest
+    pull_policy: always
     volumes:
       - ./backend/dev_nginx.conf:/etc/nginx/conf.d/default.conf:Z
       - ./backend/dev_tls_m.localhost.key:/root/ssl/key.pem:Z
