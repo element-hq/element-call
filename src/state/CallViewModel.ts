@@ -936,7 +936,8 @@ export class CallViewModel extends ViewModel {
               ([event]) =>
                 event.getType() === EventType.RTCDecline &&
                 event.getRelation()?.rel_type === "m.reference" &&
-                event.getRelation()?.event_id === notificationEvent.event_id,
+                event.getRelation()?.event_id === notificationEvent.event_id &&
+                event.getSender() !== this.userId,
             ),
           ),
         ),
