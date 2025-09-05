@@ -26,6 +26,7 @@ import {
   MatrixEvent,
   type IRoomTimelineData,
   EventType,
+  type IEvent,
 } from "matrix-js-sdk";
 import {
   ConnectionState,
@@ -248,12 +249,14 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
 function mockRingEvent(
   eventId: string,
   lifetimeMs: number | undefined,
+  sender = local.userId,
 ): { event_id: string } & IRTCNotificationContent {
   return {
     event_id: eventId,
     ...(lifetimeMs === undefined ? {} : { lifetime: lifetimeMs }),
     notification_type: "ring",
-  } as { event_id: string } & IRTCNotificationContent;
+    sender,
+  } as unknown as { event_id: string } & IRTCNotificationContent;
 }
 
 // The app doesn't really care about the content of these legacy events, we just
@@ -1436,7 +1439,7 @@ describe("waitForCallPickup$", () => {
   });
 
   test("decline after timeout window ends -> stays timeout", () => {
-    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+    withTestScheduler(({ schedule, expectObservable }) => {
       withCallViewModel(
         {},
         (vm, rtcSession) => {
@@ -1475,8 +1478,8 @@ describe("waitForCallPickup$", () => {
     });
   });
 
-  test("decline with wrong id is ignored (stays ringing)", () => {
-    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+  function testStaysRinging(declineEvent: Partial<IEvent>): void {
+    withTestScheduler(({ schedule, expectObservable }) => {
       withCallViewModel(
         {},
         (vm, rtcSession) => {
@@ -1492,7 +1495,7 @@ describe("waitForCallPickup$", () => {
             d: () => {
               rtcSession.room.emit(
                 MatrixRoomEvent.Timeline,
-                new MatrixEvent({ event_id: "$wrong", type: "m.rtc.decline" }),
+                new MatrixEvent(declineEvent),
                 rtcSession.room,
                 undefined,
                 false,
@@ -1511,6 +1514,22 @@ describe("waitForCallPickup$", () => {
           encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
+    });
+  }
+
+  test("decline with wrong id is ignored (stays ringing)", () => {
+    testStaysRinging({
+      event_id: "$wrong",
+      type: "m.rtc.decline",
+      sender: local.userId,
+    });
+  });
+
+  test("decline with sender being the local user is ignored (stays ringing)", () => {
+    testStaysRinging({
+      event_id: "$right",
+      type: "m.rtc.decline",
+      sender: alice.userId,
     });
   });
 });
