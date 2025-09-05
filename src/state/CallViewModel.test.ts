@@ -245,6 +245,21 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
   );
 }
 
+function mockRingEvent(
+  eventId: string,
+  lifetimeMs: number | undefined,
+): { event_id: string } & IRTCNotificationContent {
+  return {
+    event_id: eventId,
+    ...(lifetimeMs === undefined ? {} : { lifetime: lifetimeMs }),
+    notification_type: "ring",
+  } as { event_id: string } & IRTCNotificationContent;
+}
+
+// The app doesn't really care about the content of these legacy events, we just
+// need a value to fill in for them when emitting notifications
+const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
+
 interface CallViewModelInputs {
   remoteParticipants$: Behavior<RemoteParticipant[]>;
   rtcMembers$: Behavior<Partial<CallMembership>[]>;
@@ -1213,12 +1228,8 @@ describe("waitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { event_id: "$notif1", lifetime: 30 } as unknown as {
-                  event_id: string;
-                } & IRTCNotificationContent,
-                { event_id: "$notif1" } as unknown as {
-                  event_id: string;
-                } & ICallNotifyContent,
+                mockRingEvent("$notif1", 30),
+                mockLegacyRingEvent,
               );
             },
           });
@@ -1257,15 +1268,8 @@ describe("waitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                {
-                  event_id: "$notif2",
-                  lifetime: 100,
-                } as unknown as IRTCNotificationContent & {
-                  event_id: string;
-                },
-                { event_id: "$notif2" } as unknown as ICallNotifyContent & {
-                  event_id: string;
-                },
+                mockRingEvent("$notif2", 100),
+                mockLegacyRingEvent,
               );
             },
           });
@@ -1303,12 +1307,8 @@ describe("waitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { event_id: "$notif3", lifetime: 50 } as unknown as {
-                  event_id: string;
-                } & IRTCNotificationContent,
-                { event_id: "$notif3" } as unknown as {
-                  event_id: string;
-                } & ICallNotifyContent,
+                mockRingEvent("$notif3", 50),
+                mockLegacyRingEvent,
               );
             },
           });
@@ -1334,12 +1334,8 @@ describe("waitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { event_id: "$notif4" } as unknown as {
-                  event_id: string;
-                } & IRTCNotificationContent, // no lifetime
-                { event_id: "$notif4" } as unknown as {
-                  event_id: string;
-                } & ICallNotifyContent,
+                mockRingEvent("$notif4", undefined),
+                mockLegacyRingEvent,
               );
             },
           });
@@ -1374,12 +1370,8 @@ describe("waitForCallPickup$", () => {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { event_id: "$notif5", lifetime: 30 } as unknown as {
-                  event_id: string;
-                } & IRTCNotificationContent,
-                { event_id: "$notif5" } as unknown as {
-                  event_id: string;
-                } & ICallNotifyContent,
+                mockRingEvent("$notif5", 30),
+                mockLegacyRingEvent,
               );
             },
           });
@@ -1396,25 +1388,17 @@ describe("waitForCallPickup$", () => {
   });
 
   test("decline before timeout window ends -> decline", () => {
-    withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
+    withTestScheduler(({ schedule, expectObservable }) => {
       withCallViewModel(
-        {
-          remoteParticipants$: scope.behavior(hot("a", { a: [] }), []),
-          rtcMembers$: scope.behavior(hot("a", { a: [localRtcMember] }), []),
-          connectionState$: of(ConnectionState.Connected),
-        },
+        {},
         (vm, rtcSession) => {
           // Notify at 10ms with 50ms lifetime, decline at 40ms with matching id
           schedule("          10ms r 29ms d", {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { event_id: "$decl1", lifetime: 50 } as unknown as {
-                  event_id: string;
-                } & IRTCNotificationContent,
-                { event_id: "$decl1" } as unknown as {
-                  event_id: string;
-                } & ICallNotifyContent,
+                mockRingEvent("$decl1", 50),
+                mockLegacyRingEvent,
               );
             },
             d: () => {
@@ -1454,23 +1438,15 @@ describe("waitForCallPickup$", () => {
   test("decline after timeout window ends -> stays timeout", () => {
     withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
       withCallViewModel(
-        {
-          remoteParticipants$: scope.behavior(hot("a", { a: [] }), []),
-          rtcMembers$: scope.behavior(hot("a", { a: [localRtcMember] }), []),
-          connectionState$: of(ConnectionState.Connected),
-        },
+        {},
         (vm, rtcSession) => {
           // Notify at 10ms with 20ms lifetime (timeout at 30ms), decline at 40ms
           schedule("          10ms r 20ms t 10ms d", {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { event_id: "$decl2", lifetime: 20 } as unknown as {
-                  event_id: string;
-                } & IRTCNotificationContent,
-                { event_id: "$decl2" } as unknown as {
-                  event_id: string;
-                } & ICallNotifyContent,
+                mockRingEvent("$decl2", 20),
+                mockLegacyRingEvent,
               );
             },
             t: () => {},
@@ -1502,23 +1478,15 @@ describe("waitForCallPickup$", () => {
   test("decline with wrong id is ignored (stays ringing)", () => {
     withTestScheduler(({ hot, schedule, expectObservable, scope }) => {
       withCallViewModel(
-        {
-          remoteParticipants$: scope.behavior(hot("a", { a: [] }), []),
-          rtcMembers$: scope.behavior(hot("a", { a: [localRtcMember] }), []),
-          connectionState$: of(ConnectionState.Connected),
-        },
+        {},
         (vm, rtcSession) => {
           // Notify at 10ms with id A, decline arrives at 20ms with id B
           schedule("          10ms r 10ms d", {
             r: () => {
               rtcSession.emit(
                 MatrixRTCSessionEvent.DidSendCallNotification,
-                { event_id: "$right", lifetime: 50 } as unknown as {
-                  event_id: string;
-                } & IRTCNotificationContent,
-                { event_id: "$right" } as unknown as {
-                  event_id: string;
-                } & ICallNotifyContent,
+                mockRingEvent("$right", 50),
+                mockLegacyRingEvent,
               );
             },
             d: () => {
