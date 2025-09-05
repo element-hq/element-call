@@ -158,7 +158,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     };
   }, [livekitRoom]);
 
-  const { autoLeaveWhenOthersLeft } = useUrlParams();
+  const { autoLeaveWhenOthersLeft, sendNotificationType, waitForCallPickup } =
+    useUrlParams();
 
   useEffect(() => {
     if (livekitRoom !== undefined) {
@@ -171,6 +172,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         {
           encryptionSystem: props.e2eeSystem,
           autoLeaveWhenOthersLeft,
+          waitForCallPickup:
+            waitForCallPickup && sendNotificationType === "ring",
         },
         connStateObservable$,
         reactionsReader.raisedHands$,
@@ -190,6 +193,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     props.e2eeSystem,
     connStateObservable$,
     autoLeaveWhenOthersLeft,
+    sendNotificationType,
+    waitForCallPickup,
   ]);
 
   if (livekitRoom === undefined || vm === null) return null;
