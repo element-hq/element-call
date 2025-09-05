@@ -156,6 +156,7 @@ test("should not play a sound when a hand raise is retracted", () => {
   ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
+  playSound.mockClear();
   act(() => {
     handRaisedSubject$.next({
       ["foo"]: {
@@ -170,7 +171,7 @@ test("should not play a sound when a hand raise is retracted", () => {
       },
     });
   });
-  expect(playSound).toHaveBeenCalledTimes(1);
+  expect(playSound).toHaveBeenCalledExactlyOnceWith("raiseHand");
   act(() => {
     handRaisedSubject$.next({
       ["foo"]: {
@@ -180,5 +181,5 @@ test("should not play a sound when a hand raise is retracted", () => {
       },
     });
   });
-  expect(playSound).toHaveBeenCalledTimes(1);
+  expect(playSound).toHaveBeenCalledExactlyOnceWith("raiseHand");
 });
