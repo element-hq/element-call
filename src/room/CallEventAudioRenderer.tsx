@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ReactNode, useEffect } from "react";
-import { filter, interval, throttle } from "rxjs";
 
 import { type CallViewModel } from "../state/CallViewModel";
 import joinCallSoundMp3 from "../sound/join_call.mp3";
@@ -20,11 +19,6 @@ import screenShareStartedMp3 from "../sound/screen_share_started.mp3";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
 import { useLatest } from "../useLatest";
-
-// Do not play any sounds if the participant count has exceeded this
-// number.
-export const MAX_PARTICIPANT_COUNT_FOR_SOUND = 8;
-export const THROTTLE_SOUND_EFFECT_MS = 500;
 
 export const callEventAudioSounds = prefetchSounds({
   join: {
@@ -60,37 +54,18 @@ export function CallEventAudioRenderer({
   const audioEngineRef = useLatest(audioEngineCtx);
 
   useEffect(() => {
-    const joinSub = vm.participantChanges$
-      .pipe(
-        filter(
-          ({ joined, ids }) =>
-            ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && joined.length > 0,
-        ),
-        throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
-      )
-      .subscribe(() => {
-        void audioEngineRef.current?.playSound("join");
-      });
-
-    const leftSub = vm.participantChanges$
-      .pipe(
-        filter(
-          ({ ids, left }) =>
-            ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && left.length > 0,
-        ),
-        throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
-      )
-      .subscribe(() => {
-        void audioEngineRef.current?.playSound("left");
-      });
-
-    const handRaisedSub = vm.newHandRaised$.subscribe(() => {
-      void audioEngineRef.current?.playSound("raiseHand");
-    });
-
-    const screenshareSub = vm.newScreenShare$.subscribe(() => {
-      void audioEngineRef.current?.playSound("screenshareStarted");
-    });
+    const joinSub = vm.joinSoundEffect$.subscribe(
+      () => void audioEngineRef.current?.playSound("join"),
+    );
+    const leftSub = vm.leaveSoundEffect$.subscribe(
+      () => void audioEngineRef.current?.playSound("left"),
+    );
+    const handRaisedSub = vm.newHandRaised$.subscribe(
+      () => void audioEngineRef.current?.playSound("raiseHand"),
+    );
+    const screenshareSub = vm.newScreenShare$.subscribe(
+      () => void audioEngineRef.current?.playSound("screenshareStarted"),
+    );
 
     return (): void => {
       joinSub.unsubscribe();
