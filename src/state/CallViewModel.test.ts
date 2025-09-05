@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, onTestFinished, it } from "vitest";
+import { test, vi, onTestFinished, it, describe } from "vitest";
 import EventEmitter from "events";
 import {
   BehaviorSubject,
@@ -32,6 +32,9 @@ import {
   Status,
   type CallMembership,
   type MatrixRTCSession,
+  type IRTCNotificationContent,
+  type ICallNotifyContent,
+  MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
@@ -308,7 +311,7 @@ function withCallViewModel(
 
   const roomEventSelectorSpy = vi
     .spyOn(ComponentsCore, "roomEventSelector")
-    .mockImplementation((room, eventType) => of());
+    .mockImplementation((_room, _eventType) => of());
 
   const livekitRoom = mockLivekitRoom(
     { localParticipant },
@@ -1068,9 +1071,9 @@ it("should rank raised hands above video feeds and below speakers and presenters
 });
 
 function nooneEverThere$<T>(
-  hot: (marbles: string, values: Record<string, T[]>) => Observable<T[]>,
-): Observable<T[]> {
-  return hot("a-b-c-d", {
+  behavior: (marbles: string, values: Record<string, T[]>) => Behavior<T[]>,
+): Behavior<T[]> {
+  return behavior("a-b-c-d", {
     a: [], // Start empty
     b: [], // Alice joins
     c: [], // Alice still there
@@ -1079,12 +1082,12 @@ function nooneEverThere$<T>(
 }
 
 function participantJoinLeave$(
-  hot: (
+  behavior: (
     marbles: string,
     values: Record<string, RemoteParticipant[]>,
-  ) => Observable<RemoteParticipant[]>,
-): Observable<RemoteParticipant[]> {
-  return hot("a-b-c-d", {
+  ) => Behavior<RemoteParticipant[]>,
+): Behavior<RemoteParticipant[]> {
+  return behavior("a-b-c-d", {
     a: [], // Start empty
     b: [aliceParticipant], // Alice joins
     c: [aliceParticipant], // Alice still there
@@ -1093,12 +1096,12 @@ function participantJoinLeave$(
 }
 
 function rtcMemberJoinLeave$(
-  hot: (
+  behavior: (
     marbles: string,
     values: Record<string, CallMembership[]>,
-  ) => Observable<CallMembership[]>,
-): Observable<CallMembership[]> {
-  return hot("a-b-c-d", {
+  ) => Behavior<CallMembership[]>,
+): Behavior<CallMembership[]> {
+  return behavior("a-b-c-d", {
     a: [localRtcMember], // Start empty
     b: [localRtcMember, aliceRtcMember], // Alice joins
     c: [localRtcMember, aliceRtcMember], // Alice still there
@@ -1106,47 +1109,15 @@ function rtcMemberJoinLeave$(
   });
 }
 
-test("allOthersLeft$ emits only when someone joined and then all others left", () => {
-  withTestScheduler(({ hot, expectObservable, scope }) => {
-    // Test scenario 1: No one ever joins - should only emit initial false and never emit again
-    withCallViewModel(
-      { remoteParticipants$: scope.behavior(nooneEverThere$(hot), []) },
-      (vm) => {
-        expectObservable(vm.allOthersLeft$).toBe("n------", { n: false });
-      },
-    );
-  });
-});
-
-test("allOthersLeft$ emits true when someone joined and then all others left", () => {
-  withTestScheduler(({ hot, expectObservable, scope }) => {
+test("autoLeave$ emits only when autoLeaveWhenOthersLeft option is enabled", () => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     withCallViewModel(
       {
-        remoteParticipants$: scope.behavior(participantJoinLeave$(hot), []),
-        rtcMembers$: scope.behavior(rtcMemberJoinLeave$(hot), []),
+        remoteParticipants$: participantJoinLeave$(behavior),
+        rtcMembers$: rtcMemberJoinLeave$(behavior),
       },
       (vm) => {
-        expectObservable(vm.allOthersLeft$).toBe(
-          "n-----u", // false initially, then at frame 6: true then false emissions in same frame
-          { n: false, u: true }, // map(() => {})
-        );
-      },
-    );
-  });
-});
-
-test("autoLeaveWhenOthersLeft$ emits only when autoLeaveWhenOthersLeft option is enabled", () => {
-  withTestScheduler(({ hot, expectObservable, scope }) => {
-    withCallViewModel(
-      {
-        remoteParticipants$: scope.behavior(participantJoinLeave$(hot), []),
-        rtcMembers$: scope.behavior(rtcMemberJoinLeave$(hot), []),
-      },
-      (vm) => {
-        expectObservable(vm.autoLeaveWhenOthersLeft$).toBe(
-          "------e", // false initially, then at frame 6: true then false emissions in same frame
-          { e: undefined },
-        );
+        expectObservable(vm.autoLeave$).toBe("------(e|)", { e: undefined });
       },
       {
         autoLeaveWhenOthersLeft: true,
@@ -1156,15 +1127,15 @@ test("autoLeaveWhenOthersLeft$ emits only when autoLeaveWhenOthersLeft option is
   });
 });
 
-test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is enabled but no-one is there", () => {
-  withTestScheduler(({ hot, expectObservable, scope }) => {
+test("autoLeave$ never emits autoLeaveWhenOthersLeft option is enabled but no-one is there", () => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     withCallViewModel(
       {
-        remoteParticipants$: scope.behavior(nooneEverThere$(hot), []),
-        rtcMembers$: scope.behavior(nooneEverThere$(hot), []),
+        remoteParticipants$: nooneEverThere$(behavior),
+        rtcMembers$: nooneEverThere$(behavior),
       },
       (vm) => {
-        expectObservable(vm.autoLeaveWhenOthersLeft$).toBe("-------");
+        expectObservable(vm.autoLeave$).toBe("-");
       },
       {
         autoLeaveWhenOthersLeft: true,
@@ -1174,15 +1145,15 @@ test("autoLeaveWhenOthersLeft$ never emits autoLeaveWhenOthersLeft option is ena
   });
 });
 
-test("autoLeaveWhenOthersLeft$ doesn't emit when autoLeaveWhenOthersLeft option is disabled and all others left", () => {
-  withTestScheduler(({ hot, expectObservable, scope }) => {
+test("autoLeave$ doesn't emit when autoLeaveWhenOthersLeft option is disabled and all others left", () => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     withCallViewModel(
       {
-        remoteParticipants$: scope.behavior(participantJoinLeave$(hot), []),
-        rtcMembers$: scope.behavior(rtcMemberJoinLeave$(hot), []),
+        remoteParticipants$: participantJoinLeave$(behavior),
+        rtcMembers$: rtcMemberJoinLeave$(behavior),
       },
       (vm) => {
-        expectObservable(vm.autoLeaveWhenOthersLeft$).toBe("-------");
+        expectObservable(vm.autoLeave$).toBe("-");
       },
       {
         autoLeaveWhenOthersLeft: false,
@@ -1192,31 +1163,25 @@ test("autoLeaveWhenOthersLeft$ doesn't emit when autoLeaveWhenOthersLeft option 
   });
 });
 
-test("autoLeaveWhenOthersLeft$ doesn't emits when autoLeaveWhenOthersLeft option is enabled and all others left", () => {
-  withTestScheduler(({ hot, expectObservable, scope }) => {
+test("autoLeave$ emits when autoLeaveWhenOthersLeft option is enabled and all others left", () => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     withCallViewModel(
       {
-        remoteParticipants$: scope.behavior(
-          hot("a-b-c-d", {
-            a: [], // Alone
-            b: [aliceParticipant], // Alice joins
-            c: [aliceParticipant],
-            d: [], // Local joins with a second device
-          }),
-          [], //Alice leaves
-        ),
-        rtcMembers$: scope.behavior(
-          hot("a-b-c-d", {
-            a: [localRtcMember], // Start empty
-            b: [localRtcMember, aliceRtcMember], // Alice joins
-            c: [localRtcMember, aliceRtcMember, localRtcMemberDevice2], // Alice still there
-            d: [localRtcMember, localRtcMemberDevice2], // The second Alice leaves
-          }),
-          [],
-        ),
+        remoteParticipants$: behavior("a-b-c-d", {
+          a: [], // Alone
+          b: [aliceParticipant], // Alice joins
+          c: [aliceParticipant],
+          d: [], // Local joins with a second device
+        }),
+        rtcMembers$: behavior("a-b-c-d", {
+          a: [localRtcMember], // Start empty
+          b: [localRtcMember, aliceRtcMember], // Alice joins
+          c: [localRtcMember, aliceRtcMember, localRtcMemberDevice2], // Alice still there
+          d: [localRtcMember, localRtcMemberDevice2], // The second Alice leaves
+        }),
       },
       (vm) => {
-        expectObservable(vm.autoLeaveWhenOthersLeft$).toBe("------e", {
+        expectObservable(vm.autoLeave$).toBe("------(e|)", {
           e: undefined,
         });
       },
@@ -1225,6 +1190,196 @@ test("autoLeaveWhenOthersLeft$ doesn't emits when autoLeaveWhenOthersLeft option
         encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       },
     );
+  });
+});
+
+describe("waitForCallPickup$", () => {
+  test("unknown -> ringing -> timeout when notified and nobody joins", () => {
+    withTestScheduler(({ schedule, expectObservable }) => {
+      // No one ever joins (only local user)
+      withCallViewModel(
+        { remoteParticipants$: constant([]) },
+        (vm, rtcSession) => {
+          // Fire a call notification at 10ms with lifetime 30ms
+          schedule("          10ms r", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { lifetime: 30 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                {} as unknown as { event_id: string } & ICallNotifyContent,
+              );
+            },
+          });
+
+          expectObservable(vm.callPickupState$).toBe("a 9ms b 29ms c", {
+            a: "unknown",
+            b: "ringing",
+            c: "timeout",
+          });
+        },
+        {
+          waitForCallPickup: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("ringing -> success if someone joins before timeout", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
+      withCallViewModel(
+        {
+          remoteParticipants$: behavior("a 19ms b", {
+            a: [],
+            b: [aliceParticipant],
+          }),
+          rtcMembers$: behavior("a 19ms b", {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
+        },
+        (vm, rtcSession) => {
+          // Notify at 5ms so we enter ringing, then success at 20ms
+          schedule("          5ms r", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { lifetime: 100 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                {} as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
+              );
+            },
+          });
+
+          expectObservable(vm.callPickupState$).toBe("a 4ms b 14ms c", {
+            a: "unknown",
+            b: "ringing",
+            c: "success",
+          });
+        },
+        {
+          waitForCallPickup: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("success when someone joins before we notify", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      // Join at 10ms, notify later at 20ms (state should stay success)
+      withCallViewModel(
+        {
+          remoteParticipants$: behavior("a 9ms b", {
+            a: [],
+            b: [aliceParticipant],
+          }),
+          rtcMembers$: behavior("a 9ms b", {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
+        },
+        (vm, rtcSession) => {
+          schedule("          20ms r", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { lifetime: 50 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                {} as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
+              );
+            },
+          });
+          expectObservable(vm.callPickupState$).toBe("a 9ms b", {
+            a: "unknown",
+            b: "success",
+          });
+        },
+        {
+          waitForCallPickup: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("notify without lifetime -> immediate timeout", () => {
+    withTestScheduler(({ schedule, expectObservable }) => {
+      withCallViewModel(
+        {},
+        (vm, rtcSession) => {
+          schedule("          10ms r", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                {} as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent, // no lifetime
+                {} as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
+              );
+            },
+          });
+          expectObservable(vm.callPickupState$).toBe("a 9ms b", {
+            a: "unknown",
+            b: "timeout",
+          });
+        },
+        {
+          waitForCallPickup: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
+  test("stays null when waitForCallPickup=false", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: behavior("a--b", {
+            a: [],
+            b: [aliceParticipant],
+          }),
+          rtcMembers$: behavior("a--b", {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
+        },
+        (vm, rtcSession) => {
+          schedule("          5ms r", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                { lifetime: 30 } as unknown as {
+                  event_id: string;
+                } & IRTCNotificationContent,
+                {} as unknown as {
+                  event_id: string;
+                } & ICallNotifyContent,
+              );
+            },
+          });
+          expectObservable(vm.callPickupState$).toBe("(n)", {
+            n: null,
+          });
+        },
+        {
+          waitForCallPickup: false,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
   });
 });
 

@@ -19,10 +19,7 @@ import { act } from "react";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 
 import { mockRtcMembership } from "../utils/test";
-import {
-  CallEventAudioRenderer,
-  MAX_PARTICIPANT_COUNT_FOR_SOUND,
-} from "./CallEventAudioRenderer";
+import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
@@ -33,6 +30,7 @@ import {
   local,
   localRtcMember,
 } from "../utils/test-fixtures";
+import { MAX_PARTICIPANT_COUNT_FOR_SOUND } from "../state/CallViewModel";
 
 vitest.mock("../useAudioContext");
 vitest.mock("../soundUtils");
@@ -158,6 +156,7 @@ test("should not play a sound when a hand raise is retracted", () => {
   ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
+  playSound.mockClear();
   act(() => {
     handRaisedSubject$.next({
       ["foo"]: {
@@ -172,7 +171,7 @@ test("should not play a sound when a hand raise is retracted", () => {
       },
     });
   });
-  expect(playSound).toHaveBeenCalledTimes(2);
+  expect(playSound).toHaveBeenCalledExactlyOnceWith("raiseHand");
   act(() => {
     handRaisedSubject$.next({
       ["foo"]: {
@@ -182,5 +181,5 @@ test("should not play a sound when a hand raise is retracted", () => {
       },
     });
   });
-  expect(playSound).toHaveBeenCalledTimes(2);
+  expect(playSound).toHaveBeenCalledExactlyOnceWith("raiseHand");
 });
