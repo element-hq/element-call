@@ -907,15 +907,17 @@ export class CallViewModel extends ViewModel {
       >
     >
   ).pipe(
+    filter(
+      ([notificationEvent]) => notificationEvent.notification_type === "ring",
+    ),
     map(([notificationEvent]) => {
-      // event.lifetime is expected to be in ms
-      const lifetime = notificationEvent?.lifetime ?? 0;
+      const lifetimeMs = notificationEvent?.lifetime ?? 0;
       return concat(
-        lifetime === 0
+        lifetimeMs === 0
           ? // If no lifetime, skip the ring state
             EMPTY
           : // Ring until lifetime ms have passed
-            timer(lifetime).pipe(
+            timer(lifetimeMs).pipe(
               ignoreElements(),
               startWith("ringing" as const),
             ),
