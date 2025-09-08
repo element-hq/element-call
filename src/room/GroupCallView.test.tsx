@@ -15,11 +15,14 @@ import {
 } from "vitest";
 import { render, waitFor, screen } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  MatrixRTCSessionEvent,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
-import { useState } from "react";
+import { act, useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
 
 import { type MuteStates } from "./MuteStates";
@@ -257,4 +260,14 @@ test("GroupCallView shows errors that occur during joining", async () => {
   createGroupCallView(null, false);
   await user.click(screen.getByRole("button", { name: "Join call" }));
   screen.getByText("Call is not supported");
+});
+
+test("user can reconnect after a membership manager error", async () => {
+  const user = userEvent.setup();
+  const { rtcSession } = createGroupCallView(null, true);
+  await act(() =>
+    rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, undefined),
+  );
+  await user.click(screen.getByRole("button", { name: "Reconnect" }));
+  await waitFor(() => screen.getByRole("button", { name: "Leave" }));
 });
