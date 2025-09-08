@@ -269,5 +269,8 @@ test("user can reconnect after a membership manager error", async () => {
     rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, undefined),
   );
   await user.click(screen.getByRole("button", { name: "Reconnect" }));
-  await waitFor(() => screen.getByRole("button", { name: "Leave" }));
+  // In-call controls should be visible again
+  await waitFor(() => screen.getByRole("button", { name: "Leave" }), {
+    timeout: 3000,
+  });
 });
