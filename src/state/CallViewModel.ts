@@ -19,6 +19,9 @@ import {
 } from "livekit-client";
 import {
   ClientEvent,
+  type EventTimelineSetHandlerMap,
+  EventType,
+  RoomEvent,
   RoomStateEvent,
   SyncState,
   type Room as MatrixRoom,
@@ -33,6 +36,7 @@ import {
   combineLatest,
   concat,
   distinctUntilChanged,
+  endWith,
   filter,
   forkJoin,
   fromEvent,
@@ -58,9 +62,9 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
-  type IRTCNotificationContent,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
+  type MatrixRTCSessionEventHandlerMap,
   MembershipManagerEvent,
   Status,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -887,17 +891,60 @@ export class CallViewModel extends ViewModel {
     : NEVER;
 
   /**
-   * Emits whenever the RTC session tells us that it intends to ring for a given
-   * duration.
+   * Whenever the RTC session tells us that it intends to ring the remote
+   * participant's devices, this emits an Observable tracking the current state of
+   * that ringing process.
    */
-  private readonly beginRingingForMs$ = (
+  private readonly ring$: Observable<
+    Observable<"ringing" | "timeout" | "decline">
+  > = (
     fromEvent(
       this.matrixRTCSession,
       MatrixRTCSessionEvent.DidSendCallNotification,
-    ) as Observable<[IRTCNotificationContent]>
-  )
-    // event.lifetime is expected to be in ms
-    .pipe(map(([notificationEvent]) => notificationEvent?.lifetime ?? 0));
+    ) as Observable<
+      Parameters<
+        MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
+      >
+    >
+  ).pipe(
+    filter(
+      ([notificationEvent]) => notificationEvent.notification_type === "ring",
+    ),
+    map(([notificationEvent]) => {
+      const lifetimeMs = notificationEvent?.lifetime ?? 0;
+      return concat(
+        lifetimeMs === 0
+          ? // If no lifetime, skip the ring state
+            EMPTY
+          : // Ring until lifetime ms have passed
+            timer(lifetimeMs).pipe(
+              ignoreElements(),
+              startWith("ringing" as const),
+            ),
+        // The notification lifetime has timed out, meaning ringing has likely
+        // stopped on all receiving clients.
+        of("timeout" as const),
+        NEVER,
+      ).pipe(
+        takeUntil(
+          (
+            fromEvent(this.matrixRoom, RoomEvent.Timeline) as Observable<
+              Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
+            >
+          ).pipe(
+            filter(
+              ([event]) =>
+                event.getType() === EventType.RTCDecline &&
+                event.getRelation()?.rel_type === "m.reference" &&
+                event.getRelation()?.event_id === notificationEvent.event_id &&
+                event.getSender() !== this.userId,
+            ),
+          ),
+        ),
+        endWith("decline" as const),
+      );
+    }),
+  );
 
   /**
    * Whether some Matrix user other than ourself is joined to the call.
@@ -917,35 +964,21 @@ export class CallViewModel extends ViewModel {
    *  - null: EC is configured to never show any waiting for answer state.
    */
   public readonly callPickupState$ = this.options.waitForCallPickup
-    ? this.scope.behavior<"unknown" | "ringing" | "timeout" | "success">(
-        concat(
-          concat(
-            // We don't know if the RTC session decides to send a notify event
-            // yet. It will only be known once we sent our own membership and
-            // know we were the first one to join.
-            of("unknown" as const),
-            // Once we get the signal to begin ringing:
-            this.beginRingingForMs$.pipe(
-              take(1),
-              switchMap((lifetime) =>
-                lifetime === 0
-                  ? // If no lifetime, skip the ring state
-                    EMPTY
-                  : // Ring until lifetime ms have passed
-                    timer(lifetime).pipe(
-                      ignoreElements(),
-                      startWith("ringing" as const),
-                    ),
-              ),
-            ),
-            // The notification lifetime has timed out, meaning ringing has
-            // likely stopped on all receiving clients.
-            of("timeout" as const),
-            NEVER,
-          ).pipe(
-            takeUntil(this.someoneElseJoined$.pipe(filter((joined) => joined))),
+    ? this.scope.behavior<
+        "unknown" | "ringing" | "timeout" | "decline" | "success"
+      >(
+        this.someoneElseJoined$.pipe(
+          switchMap((someoneElseJoined) =>
+            someoneElseJoined
+              ? of("success" as const)
+              : // Show the ringing state of the most recent ringing attempt.
+                this.ring$.pipe(switchAll()),
           ),
-          of("success" as const),
+          // The state starts as 'unknown' because we don't know if the RTC
+          // session will actually send a notify event yet. It will only be
+          // known once we send our own membership and see that we were the
+          // first one to join.
+          startWith("unknown" as const),
         ),
       )
     : constant(null);
