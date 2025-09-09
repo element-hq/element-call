@@ -38,6 +38,7 @@ import {
   type RoomAndToDeviceEventsHandlerMap,
 } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import { type TrackReference } from "@livekit/components-core";
+import EventEmitter from "events";
 
 import {
   LocalUserMediaViewModel,
@@ -144,26 +145,25 @@ export function withTestScheduler(
 }
 
 interface EmitterMock<T> {
-  on: () => T;
-  off: () => T;
-  addListener: () => T;
-  removeListener: () => T;
+  on: (...args: unknown[]) => T;
+  off: (...args: unknown[]) => T;
+  addListener: (...args: unknown[]) => T;
+  removeListener: (...args: unknown[]) => T;
+  emit: (event: string | symbol, ...args: unknown[]) => boolean;
 }
 
 export function mockEmitter<T>(): EmitterMock<T> {
+  const ee = new EventEmitter();
   return {
-    on(): T {
-      return this as T;
-    },
-    off(): T {
-      return this as T;
-    },
-    addListener(): T {
-      return this as T;
-    },
-    removeListener(): T {
-      return this as T;
-    },
+    on: ee.on.bind(ee) as unknown as (...args: unknown[]) => T,
+    off: ee.off.bind(ee) as unknown as (...args: unknown[]) => T,
+    addListener: ee.addListener.bind(ee) as unknown as (
+      ...args: unknown[]
+    ) => T,
+    removeListener: ee.removeListener.bind(ee) as unknown as (
+      ...args: unknown[]
+    ) => T,
+    emit: ee.emit.bind(ee),
   };
 }
 
