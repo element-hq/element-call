@@ -129,7 +129,7 @@
     "typescript-eslint-language-service": "^5.0.5",
     "unique-names-generator": "^4.6.0",
     "vaul": "^1.0.0",
-    "vite": "^6.0.0",
+    "vite": "^7.0.0",
     "vite-plugin-generate-file": "^0.3.0",
     "vite-plugin-html": "^3.2.2",
     "vite-plugin-svgr": "^4.0.0",
