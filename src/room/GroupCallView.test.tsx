@@ -13,7 +13,7 @@ import {
   test,
   vi,
 } from "vitest";
-import { render, waitFor, screen } from "@testing-library/react";
+import { render, waitFor, screen, act } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
 import {
   MatrixRTCSessionEvent,
@@ -22,7 +22,7 @@ import {
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
-import { act, useState } from "react";
+import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
 
 import { type MuteStates } from "./MuteStates";
@@ -268,9 +268,12 @@ test("user can reconnect after a membership manager error", async () => {
   await act(() =>
     rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, undefined),
   );
-  await user.click(screen.getByRole("button", { name: "Reconnect" }));
+  // XXX: Wrapping the following click in act() shouldn't be necessary (the
+  // async state update should be processed automatically by the waitFor call),
+  // and yet here we are.
+  await act(async () =>
+    user.click(screen.getByRole("button", { name: "Reconnect" })),
+  );
   // In-call controls should be visible again
-  await waitFor(() => screen.getByRole("button", { name: "Leave" }), {
-    timeout: 3000,
-  });
+  await waitFor(() => screen.getByRole("button", { name: "Leave" }));
 });
