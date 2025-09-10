@@ -111,6 +111,11 @@ exports[`InCallView > rendering > renders 1`] = `
       <div />
     </div>
     <div
+      class="bg animate"
+      data-state="closed"
+    />
+    <div
+      aria-hidden="true"
       class="overlay"
       data-show="false"
     >

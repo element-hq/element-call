@@ -60,6 +60,7 @@ interface TileProps {
   targetHeight: number;
   displayName: string;
   showSpeakingIndicators: boolean;
+  focusable: boolean;
 }
 
 interface UserMediaTileProps extends TileProps {
@@ -81,6 +82,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   menuEnd,
   className,
   displayName,
+  focusable,
   ...props
 }) => {
   const { toggleRaisedHand } = useReactionsSender();
@@ -162,6 +164,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
         />
       }
       displayName={displayName}
+      focusable={focusable}
       primaryButton={
         primaryButton ?? (
           <Menu
@@ -169,7 +172,10 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
             onOpenChange={setMenuOpen}
             title={displayName}
             trigger={
-              <button aria-label={t("common.options")}>
+              <button
+                aria-label={t("common.options")}
+                tabIndex={focusable ? undefined : -1}
+              >
                 <OverflowHorizontalIcon aria-hidden width={20} height={20} />
               </button>
             }
@@ -208,6 +214,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
   ref,
   vm,
   onOpenProfile,
+  focusable,
   ...props
 }) => {
   const { t } = useTranslation();
@@ -236,6 +243,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
             className={styles.switchCamera}
             aria-label={t("switch_camera")}
             onClick={switchCamera}
+            tabIndex={focusable ? undefined : -1}
           >
             <SwitchCameraSolidIcon aria-hidden width={20} height={20} />
           </button>
@@ -258,6 +266,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
           />
         )
       }
+      focusable={focusable}
       {...props}
     />
   );
@@ -337,6 +346,7 @@ interface GridTileProps {
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicators: boolean;
+  focusable: boolean;
 }
 
 export const GridTile: FC<GridTileProps> = ({
