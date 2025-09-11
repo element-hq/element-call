@@ -112,6 +112,12 @@ import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
 import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
 import { Toast } from "../Toast.tsx";
+import { Avatar, Size as AvatarSize } from "../Avatar";
+import waitingStyles from "./WaitingForJoin.module.css";
+import { prefetchSounds } from "../soundUtils";
+import { useAudioContext } from "../useAudioContext";
+// TODO: Dont use this!!!  use the correct sound
+import { GenericReaction } from "../reactions";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -265,6 +271,23 @@ export const InCallView: FC<InCallViewProps> = ({
   });
 
   const muteAllAudio = useBehavior(muteAllAudio$);
+  // Call pickup state and display names are needed for waiting overlay/sounds
+  const callPickupState = useBehavior(vm.callPickupState$);
+  const displaynames = useBehavior(vm.memberDisplaynames$);
+  // Preload a subtle waiting/ringing tone
+  const [waitingSoundCache, setWaitingSoundCache] = useState<ReturnType<
+    typeof prefetchSounds
+  > | null>(null);
+  useEffect(() => {
+    if (!waitingSoundCache && callPickupState === "ringing") {
+      setWaitingSoundCache(prefetchSounds({ waiting: GenericReaction.sound! }));
+    }
+  }, [waitingSoundCache, callPickupState]);
+  const waitingAudio = useAudioContext({
+    sounds: waitingSoundCache,
+    latencyHint: "interactive",
+    muted: muteAllAudio,
+  });
 
   // This seems like it might be enough logic to use move it into the call view model?
   const [didFallbackToRoomKey, setDidFallbackToRoomKey] = useState(false);
@@ -327,6 +350,61 @@ export const InCallView: FC<InCallViewProps> = ({
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   useSubscription(vm.autoLeave$, onLeave);
+
+  // When waiting for pickup, loop a quiet waiting sound
+  useEffect((): void | (() => void) => {
+    // if (callPickupState !== "ringing") return;
+    // play immediately and then every ~2.5s while in ringing
+    void waitingAudio?.playSound("waiting");
+    const id = window.setInterval(
+      () => void waitingAudio?.playSound("waiting"),
+      2500,
+    );
+    return (): void => window.clearInterval(id);
+  }, [callPickupState, waitingAudio]);
+
+  // Waiting UI overlay
+  const waitingOverlay: JSX.Element | null = useMemo(() => {
+    // if (callPickupState !== "ringing") return null;
+
+    // Fallback to room state (joined or invited members)
+    const roomOthers = [
+      ...matrixRoom.getMembersWithMembership("join"),
+      ...matrixRoom.getMembersWithMembership("invite"),
+    ].filter((m) => m.userId !== client.getUserId());
+    const roomOtherIds = Array.from(new Set(roomOthers.map((m) => m.userId)));
+
+    const isOneOnOne = roomOtherIds.length === 1;
+    const otherId = isOneOnOne ? roomOtherIds[0] : undefined;
+    const otherMember = isOneOnOne
+      ? (roomOthers.find((m) => m.userId === otherId) ??
+        matrixRoom.getMember(otherId!))
+      : null;
+    const name: string = isOneOnOne
+      ? (displaynames.get(otherId!) ?? otherMember?.name ?? otherId!)
+      : "Other participants";
+    const avatarMxc = otherMember?.getMxcAvatarUrl?.() ?? undefined;
+    const text = isOneOnOne
+      ? `Waiting for ${name} to join…`
+      : "Waiting for other participants…";
+    return (
+      <div className={waitingStyles.overlay}>
+        <div className={waitingStyles.content}>
+          <div className={waitingStyles.pulse}>
+            <Avatar
+              id={otherId ?? "others"}
+              name={name}
+              src={avatarMxc}
+              size={AvatarSize.XL}
+            />
+          </div>
+          <Text size="md" className={waitingStyles.label}>
+            {text}
+          </Text>
+        </div>
+      </div>
+    );
+  }, [client, displaynames, matrixRoom]);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
@@ -806,6 +884,7 @@ export const InCallView: FC<InCallViewProps> = ({
         onBackToVideoPressed={audioOutputSwitcher?.switch}
       />
       <ReactionsOverlay vm={vm} />
+      {waitingOverlay}
       {footer}
       {layout.type !== "pip" && (
         <>
