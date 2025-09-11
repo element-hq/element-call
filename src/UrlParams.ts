@@ -347,7 +347,7 @@ export const getUrlParams = (
   const inAppDefault = {
     confineToRoom: true,
     appPrompt: false,
-    preload: true,
+    preload: false,
     header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
     showControls: true,
     hideScreensharing: false,
