@@ -50,7 +50,7 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { HeaderStyle, useUrlParams } from "../UrlParams";
+import { HeaderStyle, type UrlParams, useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
 import { callEventAudioSounds } from "./CallEventAudioRenderer";
@@ -83,8 +83,8 @@ interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
   confineToRoom: boolean;
-  preload: boolean;
-  skipLobby: boolean;
+  preload: UrlParams["preload"];
+  skipLobby: UrlParams["skipLobby"];
   header: HeaderStyle;
   rtcSession: MatrixRTCSession;
   isJoined: boolean;
@@ -276,34 +276,28 @@ export const GroupCallView: FC<Props> = ({
     };
 
     if (skipLobby) {
-      if (widget) {
-        if (preload) {
-          // In preload mode without lobby we wait for a join action before entering
-          const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
-            (async (): Promise<void> => {
-              await defaultDeviceSetup(
-                ev.detail.data as unknown as JoinCallData,
-              );
-              await enterRTCSessionOrError(rtcSession);
-              widget.api.transport.reply(ev.detail, {});
-            })().catch((e) => {
-              logger.error("Error joining RTC session", e);
-            });
-          };
-          widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
-          return (): void => {
-            widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
-          };
-        } else {
-          // No lobby and no preload: we enter the rtc session right away
+      if (widget && preload) {
+        // In preload mode without lobby we wait for a join action before entering
+        const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
           (async (): Promise<void> => {
+            await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
             await enterRTCSessionOrError(rtcSession);
+            widget.api.transport.reply(ev.detail, {});
           })().catch((e) => {
-            logger.error("Error joining RTC session", e);
+            logger.error("Error joining RTC session on preload", e);
           });
-        }
+        };
+        widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
+        return (): void => {
+          widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
+        };
       } else {
-        void enterRTCSessionOrError(rtcSession);
+        // No lobby and no preload: we enter the rtc session right away
+        (async (): Promise<void> => {
+          await enterRTCSessionOrError(rtcSession);
+        })().catch((e) => {
+          logger.error("Error joining RTC session immediately", e);
+        });
       }
     }
   }, [
@@ -494,6 +488,7 @@ export const GroupCallView: FC<Props> = ({
     // Left in widget mode:
     body = returnToLobby ? lobbyView : null;
   } else if (preload || skipLobby) {
+    // The RTC session is not joined to yet (`isJoined`), but enterRTCSessionOrError should have been called.
     body = null;
   } else {
     body = lobbyView;
