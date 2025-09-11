@@ -228,7 +228,7 @@ describe("UrlParams", () => {
     const startNewCallDefaults = (platform: string): object => ({
       confineToRoom: true,
       appPrompt: false,
-      preload: true,
+      preload: false,
       header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
       showControls: true,
       hideScreensharing: false,
@@ -242,7 +242,7 @@ describe("UrlParams", () => {
     const joinExistingCallDefaults = (platform: string): object => ({
       confineToRoom: true,
       appPrompt: false,
-      preload: true,
+      preload: false,
       header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
       showControls: true,
       hideScreensharing: false,
