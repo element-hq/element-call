@@ -117,11 +117,13 @@ import { Avatar, Size as AvatarSize } from "../Avatar";
 import waitingStyles from "./WaitingForJoin.module.css";
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
-// TODO: Dont use this!!!  use the correct sound
-import genericSoundOgg from "../sound/reactions/generic.ogg?url";
-import genericSoundMp3 from "../sound/reactions/generic.mp3?url";
-import leftCallSoundMp3 from "../sound/left_call.mp3";
-import leftCallSoundOgg from "../sound/left_call.ogg";
+
+import ringtoneMp3 from "../sound/ringtone.mp3?url";
+import ringtoneOgg from "../sound/ringtone.ogg?url";
+import declineMp3 from "../sound/call_declined.mp3?url";
+import declineOgg from "../sound/call_declined.ogg?url";
+import timeoutMp3 from "../sound/call_timeout.mp3?url";
+import timeoutOgg from "../sound/call_timeout.ogg?url";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -281,9 +283,9 @@ export const InCallView: FC<InCallViewProps> = ({
   // Preload a waiting and decline sounds
   const pickupPhaseSoundCache = useInitial(async () => {
     return prefetchSounds({
-      waiting: { mp3: genericSoundMp3, ogg: genericSoundOgg },
-      decline: { mp3: leftCallSoundMp3, ogg: leftCallSoundOgg },
-      // Do we want a timeout sound?
+      waiting: { mp3: ringtoneMp3, ogg: ringtoneOgg },
+      decline: { mp3: declineMp3, ogg: declineOgg },
+      timeout: { mp3: timeoutMp3, ogg: timeoutOgg },
     });
   });
   // configure this to sth that fits to the pickup waiting sound.
@@ -361,7 +363,14 @@ export const InCallView: FC<InCallViewProps> = ({
   // When we enter timeout or decline we will leave the call.
   useEffect((): void | (() => void) => {
     if (callPickupState === "timeout") {
-      onLeave();
+      void pickupPhaseAudio
+        ?.playSound("timeout")
+        .catch((e) => {
+          logger.error("Failed to play timeout sound", e);
+        })
+        .finally(() => {
+          onLeave();
+        });
     }
     if (callPickupState === "decline") {
       // Wait for the sound to finish before leaving
