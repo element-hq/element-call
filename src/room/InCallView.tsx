@@ -117,7 +117,10 @@ import waitingStyles from "./WaitingForJoin.module.css";
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 // TODO: Dont use this!!!  use the correct sound
-import { GenericReaction } from "../reactions";
+import genericSoundOgg from "../sound/reactions/generic.ogg?url";
+import genericSoundMp3 from "../sound/reactions/generic.mp3?url";
+import leftCallSoundMp3 from "../sound/left_call.mp3";
+import leftCallSoundOgg from "../sound/left_call.ogg";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -273,18 +276,18 @@ export const InCallView: FC<InCallViewProps> = ({
   const muteAllAudio = useBehavior(muteAllAudio$);
   // Call pickup state and display names are needed for waiting overlay/sounds
   const callPickupState = useBehavior(vm.callPickupState$);
-  const displaynames = useBehavior(vm.memberDisplaynames$);
-  // Preload a subtle waiting/ringing tone
-  const [waitingSoundCache, setWaitingSoundCache] = useState<ReturnType<
-    typeof prefetchSounds
-  > | null>(null);
-  useEffect(() => {
-    if (!waitingSoundCache && callPickupState === "ringing") {
-      setWaitingSoundCache(prefetchSounds({ waiting: GenericReaction.sound! }));
-    }
-  }, [waitingSoundCache, callPickupState]);
-  const waitingAudio = useAudioContext({
-    sounds: waitingSoundCache,
+
+  // Preload a waiting and decline sounds
+  const pickupPhaseSoundCache = useInitial(async () => {
+    return prefetchSounds({
+      waiting: { mp3: genericSoundMp3, ogg: genericSoundOgg },
+      decline: { mp3: leftCallSoundMp3, ogg: leftCallSoundOgg },
+      // do we want a timeout sound?
+    });
+  });
+
+  const pickupPhaseAudio = useAudioContext({
+    sounds: pickupPhaseSoundCache,
     latencyHint: "interactive",
     muted: muteAllAudio,
   });
@@ -351,49 +354,64 @@ export const InCallView: FC<InCallViewProps> = ({
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   useSubscription(vm.autoLeave$, onLeave);
 
-  // When waiting for pickup, loop a quiet waiting sound
+  // When we enter timeout or decline we will leave the call.
   useEffect((): void | (() => void) => {
-    // if (callPickupState !== "ringing") return;
+    if (callPickupState === "timeout") {
+      onLeave();
+    }
+    if (callPickupState === "decline") {
+      void pickupPhaseAudio
+        ?.playSound("decline")
+        .then(() => {
+          onLeave();
+        })
+        .catch((e) => {
+          logger.error("Failed to play decline sound", e);
+        });
+    }
+  });
+
+  // When waiting for pickup, loop a waiting sound
+  useEffect((): void | (() => void) => {
+    if (callPickupState !== "ringing") return;
     // play immediately and then every ~2.5s while in ringing
-    void waitingAudio?.playSound("waiting");
+    void pickupPhaseAudio?.playSound("waiting");
     const id = window.setInterval(
-      () => void waitingAudio?.playSound("waiting"),
+      () => void pickupPhaseAudio?.playSound("waiting"),
       2500,
     );
     return (): void => window.clearInterval(id);
-  }, [callPickupState, waitingAudio]);
+  }, [callPickupState, pickupPhaseAudio]);
 
   // Waiting UI overlay
   const waitingOverlay: JSX.Element | null = useMemo(() => {
-    // if (callPickupState !== "ringing") return null;
+    // No overlay if not in ringing state
+    if (callPickupState !== "ringing") return null;
 
-    // Fallback to room state (joined or invited members)
+    // Use room state for other participants data (the one that we likely want to reach)
     const roomOthers = [
       ...matrixRoom.getMembersWithMembership("join"),
       ...matrixRoom.getMembersWithMembership("invite"),
     ].filter((m) => m.userId !== client.getUserId());
-    const roomOtherIds = Array.from(new Set(roomOthers.map((m) => m.userId)));
+    // Yield if there are not other members in the room.
+    if (roomOthers.length === 0) return null;
 
-    const isOneOnOne = roomOtherIds.length === 1;
-    const otherId = isOneOnOne ? roomOtherIds[0] : undefined;
-    const otherMember = isOneOnOne
-      ? (roomOthers.find((m) => m.userId === otherId) ??
-        matrixRoom.getMember(otherId!))
-      : null;
-    const name: string = isOneOnOne
-      ? (displaynames.get(otherId!) ?? otherMember?.name ?? otherId!)
-      : "Other participants";
-    const avatarMxc = otherMember?.getMxcAvatarUrl?.() ?? undefined;
+    const otherMember = roomOthers.length > 0 ? roomOthers[0] : undefined;
+    const isOneOnOne = roomOthers.length === 1 && otherMember;
     const text = isOneOnOne
-      ? `Waiting for ${name} to join…`
+      ? `Waiting for ${otherMember.name ?? otherMember.userId} to join…`
       : "Waiting for other participants…";
+    const avatarMxc = isOneOnOne
+      ? (otherMember.getMxcAvatarUrl?.() ?? undefined)
+      : (matrixRoom.getMxcAvatarUrl() ?? undefined);
+
     return (
       <div className={waitingStyles.overlay}>
         <div className={waitingStyles.content}>
           <div className={waitingStyles.pulse}>
             <Avatar
-              id={otherId ?? "others"}
-              name={name}
+              id={isOneOnOne ? otherMember.userId : matrixRoom.roomId}
+              name={isOneOnOne ? otherMember.name : matrixRoom.name}
               src={avatarMxc}
               size={AvatarSize.XL}
             />
@@ -404,7 +422,7 @@ export const InCallView: FC<InCallViewProps> = ({
         </div>
       </div>
     );
-  }, [client, displaynames, matrixRoom]);
+  }, [callPickupState, client, matrixRoom]);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
