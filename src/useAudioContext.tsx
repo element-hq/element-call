@@ -46,6 +46,40 @@ async function playSound(
   return p;
 }
 
+/**
+ * Play a sound though a given AudioContext, looping until stopped. Will take
+ * care of connecting the correct buffer and gating
+ * through gain.
+ * @param volume The volume to play at.
+ * @param ctx The context to play through.
+ * @param buffer The buffer to play.
+ * @returns A function used to end the sound. This function will return a promise when the sound has stopped.
+ */
+function playSoundLooping(
+  ctx: AudioContext,
+  buffer: AudioBuffer,
+  volume: number,
+  stereoPan: number,
+): () => Promise<void> {
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(volume, 0);
+  const pan = ctx.createStereoPanner();
+  pan.pan.setValueAtTime(stereoPan, 0);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(gain).connect(pan).connect(ctx.destination);
+  controls.setPlaybackStarted();
+  src.loop = true;
+  src.start();
+  return () => {
+    const p = new Promise<void>((r) =>
+      src.addEventListener("ended", () => r()),
+    );
+    src.stop();
+    return p;
+  };
+}
+
 interface Props<S extends string> {
   /**
    * The sounds to play. If no sounds should be played then
@@ -59,6 +93,7 @@ interface Props<S extends string> {
 
 interface UseAudioContext<S> {
   playSound(soundName: S): Promise<void>;
+  playSoundLooping(soundName: S): () => Promise<void>;
 }
 
 /**
@@ -140,6 +175,17 @@ export function useAudioContext<S extends string>(
         return;
       }
       return playSound(
+        audioContext,
+        audioBuffers[name],
+        soundEffectVolume * earpieceVolume,
+        earpiecePan,
+      );
+    },
+    playSoundLooping: (name): (() => Promise<void>) => {
+      if (!audioBuffers[name]) {
+        throw Error(`Tried to play a sound that wasn't buffered (${name})`);
+      }
+      return playSoundLooping(
         audioContext,
         audioBuffers[name],
         soundEffectVolume * earpieceVolume,

@@ -287,9 +287,6 @@ export const InCallView: FC<InCallViewProps> = ({
       timeout: { mp3: timeoutMp3, ogg: timeoutOgg },
     });
   });
-  // configure this to sth that fits to the pickup waiting sound.
-  // 1600 is in sync with the animation.
-  const PICKUP_SOUND_INTERVAL = 1600;
 
   const pickupPhaseAudio = useAudioContext({
     sounds: pickupPhaseSoundCache,
@@ -386,11 +383,13 @@ export const InCallView: FC<InCallViewProps> = ({
 
   // When waiting for pickup, loop a waiting sound
   useEffect((): void | (() => void) => {
-    if (callPickupState !== "ringing") return;
-    const interval = window.setInterval(() => {
-      void pickupPhaseAudio?.playSound("waiting");
-    }, PICKUP_SOUND_INTERVAL);
-    return (): void => window.clearInterval(interval);
+    if (callPickupState !== "ringing" || !pickupPhaseAudio) return;
+    const endSound = pickupPhaseAudio.playSoundLooping("waiting");
+    return () => {
+      void endSound().catch((e) => {
+        logger.error("Failed to stop ringing sound", e);
+      });
+    };
   }, [callPickupState, pickupPhaseAudio]);
 
   // Waiting UI overlay
