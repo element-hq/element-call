@@ -24,8 +24,12 @@
   position: absolute;
   inset: -12px;
   border-radius: 9999px;
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  border: 12px solid rgba(255, 255, 255, 0.6);
   animation: pulse 1.6s ease-out infinite;
+}
+
+.text {
+  color: var(--cpd-color-text-on-solid-primary);
 }
 
 @keyframes pulse {

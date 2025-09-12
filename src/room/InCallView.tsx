@@ -283,11 +283,12 @@ export const InCallView: FC<InCallViewProps> = ({
     return prefetchSounds({
       waiting: { mp3: genericSoundMp3, ogg: genericSoundOgg },
       decline: { mp3: leftCallSoundMp3, ogg: leftCallSoundOgg },
-      // do we want a timeout sound?
+      // Do we want a timeout sound?
     });
   });
   // configure this to sth that fits to the pickup waiting sound.
-  const PICKUP_SOUND_INTERVAL = 1000;
+  // 1600 is in sync with the animation.
+  const PICKUP_SOUND_INTERVAL = 1600;
 
   const pickupPhaseAudio = useAudioContext({
     sounds: pickupPhaseSoundCache,
@@ -373,7 +374,7 @@ export const InCallView: FC<InCallViewProps> = ({
           onLeave();
         });
     }
-  });
+  }, [callPickupState, onLeave, pickupPhaseAudio]);
 
   // When waiting for pickup, loop a waiting sound
   useEffect((): void | (() => void) => {
@@ -418,7 +419,9 @@ export const InCallView: FC<InCallViewProps> = ({
               size={AvatarSize.XL}
             />
           </div>
-          <Text size="md">{text}</Text>
+          <Text size="md" className={waitingStyles.text}>
+            {text}
+          </Text>
         </div>
       </div>
     );
