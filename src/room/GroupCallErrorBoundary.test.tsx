@@ -132,9 +132,10 @@ test("ConnectionLostError: Action handling should reset error state", async () =
   const WrapComponent = (): ReactNode => {
     const [failState, setFailState] = useState(true);
     const reconnectCallback = useCallback(
-      (action: CallErrorRecoveryAction) => {
+      async (action: CallErrorRecoveryAction) => {
         reconnectCallbackSpy(action);
         setFailState(false);
+        return Promise.resolve();
       },
       [setFailState],
     );
