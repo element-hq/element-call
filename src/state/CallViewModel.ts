@@ -977,7 +977,7 @@ export class CallViewModel extends ViewModel {
     : constant(null);
 
   public readonly callWasSuccessful$ = this.callPickupState$.pipe(
-    every((x) => x !== "success"),
+    every((x) => x !== "success" && x === null),
     map((v) => !v),
   );
 
