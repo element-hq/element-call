@@ -71,7 +71,7 @@ function playSoundLooping(
   controls.setPlaybackStarted();
   src.loop = true;
   src.start();
-  return () => {
+  return async () => {
     const p = new Promise<void>((r) =>
       src.addEventListener("ended", () => r()),
     );
