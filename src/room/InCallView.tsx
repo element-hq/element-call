@@ -423,9 +423,7 @@ export const InCallView: FC<InCallViewProps> = ({
               size={AvatarSize.XL}
             />
           </div>
-          <Text size="md" className={waitingStyles.label}>
-            {text}
-          </Text>
+          <Text size="md">{text}</Text>
         </div>
       </div>
     );
