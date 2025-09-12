@@ -117,7 +117,6 @@ import { Avatar, Size as AvatarSize } from "../Avatar";
 import waitingStyles from "./WaitingForJoin.module.css";
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
-
 import ringtoneMp3 from "../sound/ringtone.mp3?url";
 import ringtoneOgg from "../sound/ringtone.ogg?url";
 import declineMp3 from "../sound/call_declined.mp3?url";

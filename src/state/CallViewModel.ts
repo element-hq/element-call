@@ -37,6 +37,7 @@ import {
   concat,
   distinctUntilChanged,
   endWith,
+  every,
   filter,
   forkJoin,
   fromEvent,
@@ -49,6 +50,7 @@ import {
   race,
   scan,
   skip,
+  skipWhile,
   startWith,
   switchAll,
   switchMap,
@@ -853,17 +855,6 @@ export class CallViewModel extends ViewModel {
     throttleTime(THROTTLE_SOUND_EFFECT_MS),
   );
 
-  public readonly leaveSoundEffect$ = this.userMedia$.pipe(
-    pairwise(),
-    filter(
-      ([prev, current]) =>
-        current.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND &&
-        current.length < prev.length,
-    ),
-    map(() => {}),
-    throttleTime(THROTTLE_SOUND_EFFECT_MS),
-  );
-
   /**
    * The number of participants currently in the call.
    *
@@ -963,7 +954,9 @@ export class CallViewModel extends ViewModel {
    *  - "success": Someone else joined. The call is in a normal state. No audiovisual feedback.
    *  - null: EC is configured to never show any waiting for answer state.
    */
-  public readonly callPickupState$ = this.options.waitForCallPickup
+  public readonly callPickupState$: Behavior<
+    "unknown" | "ringing" | "timeout" | "decline" | "success" | null
+  > = this.options.waitForCallPickup
     ? this.scope.behavior<
         "unknown" | "ringing" | "timeout" | "decline" | "success"
       >(
@@ -982,6 +975,28 @@ export class CallViewModel extends ViewModel {
         ),
       )
     : constant(null);
+
+  public readonly callWasSuccessful$ = this.callPickupState$.pipe(
+    every((x) => x !== "success"),
+    map((v) => !v),
+  );
+
+  public readonly leaveSoundEffect$ = combineLatest([
+    this.callWasSuccessful$,
+    this.userMedia$,
+  ]).pipe(
+    // Until the call is successful, do not play a leave sound.
+    skipWhile(([c]) => c === false),
+    map(([, userMedia]) => userMedia),
+    pairwise(),
+    filter(
+      ([prev, current]) =>
+        current.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND &&
+        current.length < prev.length,
+    ),
+    map(() => {}),
+    throttleTime(THROTTLE_SOUND_EFFECT_MS),
+  );
 
   /**
    * List of MediaItems that we want to display, that are of type ScreenShare
