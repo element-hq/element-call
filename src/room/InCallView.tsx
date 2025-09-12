@@ -362,11 +362,11 @@ export const InCallView: FC<InCallViewProps> = ({
     if (callPickupState === "decline") {
       void pickupPhaseAudio
         ?.playSound("decline")
-        .then(() => {
-          onLeave();
-        })
         .catch((e) => {
           logger.error("Failed to play decline sound", e);
+        })
+        .finally(() => {
+          onLeave();
         });
     }
   });
