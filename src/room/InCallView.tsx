@@ -378,6 +378,7 @@ export const InCallView: FC<InCallViewProps> = ({
 
   // When waiting for pickup, loop a waiting sound
   useEffect((): void | (() => void) => {
+    if (callPickupState !== "ringing") return;
     const interval = window.setInterval(() => {
       void pickupPhaseAudio?.playSound("waiting");
     }, PICKUP_SOUND_INTERVAL);
