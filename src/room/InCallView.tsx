@@ -50,6 +50,7 @@ import { type HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
+import overlayStyles from "../Overlay.module.css";
 import { GridTile } from "../tile/GridTile";
 import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
@@ -285,6 +286,8 @@ export const InCallView: FC<InCallViewProps> = ({
       // do we want a timeout sound?
     });
   });
+  // configure this to sth that fits to the pickup waiting sound.
+  const PICKUP_SOUND_INTERVAL = 1000;
 
   const pickupPhaseAudio = useAudioContext({
     sounds: pickupPhaseSoundCache,
@@ -360,6 +363,7 @@ export const InCallView: FC<InCallViewProps> = ({
       onLeave();
     }
     if (callPickupState === "decline") {
+      // Wait for the sound to finish before leaving
       void pickupPhaseAudio
         ?.playSound("decline")
         .catch((e) => {
@@ -372,23 +376,12 @@ export const InCallView: FC<InCallViewProps> = ({
   });
 
   // When waiting for pickup, loop a waiting sound
-  const [playing, setPlaying] = useState(false);
   useEffect((): void | (() => void) => {
-    if (callPickupState !== "ringing") return;
-    setPlaying(true);
-    // play and then wait for 1.5s
-    const playSoundAndWait = async (): Promise<void> => {
-      await pickupPhaseAudio?.playSound("waiting");
-      await new Promise((res) => setTimeout(res, 1500));
-    };
-    const startPlaying = async (): Promise<void> => {
-      while (playing) {
-        await playSoundAndWait();
-      }
-    };
-    void startPlaying();
-    return (): void => setPlaying(false);
-  }, [callPickupState, pickupPhaseAudio, playing]);
+    const interval = window.setInterval(() => {
+      void pickupPhaseAudio?.playSound("waiting");
+    }, PICKUP_SOUND_INTERVAL);
+    return (): void => window.clearInterval(interval);
+  }, [callPickupState, pickupPhaseAudio]);
 
   // Waiting UI overlay
   const waitingOverlay: JSX.Element | null = useMemo(() => {
@@ -413,8 +406,10 @@ export const InCallView: FC<InCallViewProps> = ({
       : (matrixRoom.getMxcAvatarUrl() ?? undefined);
 
     return (
-      <div className={waitingStyles.overlay}>
-        <div className={waitingStyles.content}>
+      <div className={classNames(overlayStyles.bg, waitingStyles.overlay)}>
+        <div
+          className={classNames(overlayStyles.content, waitingStyles.content)}
+        >
           <div className={waitingStyles.pulse}>
             <Avatar
               id={isOneOnOne ? otherMember.userId : matrixRoom.roomId}

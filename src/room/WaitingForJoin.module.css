@@ -5,8 +5,6 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  background: var(--cpd-color-bg-canvas-default);
-  opacity: 0.94;
 }
 
 .content {
