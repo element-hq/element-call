@@ -372,16 +372,23 @@ export const InCallView: FC<InCallViewProps> = ({
   });
 
   // When waiting for pickup, loop a waiting sound
+  const [playing, setPlaying] = useState(false);
   useEffect((): void | (() => void) => {
     if (callPickupState !== "ringing") return;
-    // play immediately and then every ~2.5s while in ringing
-    void pickupPhaseAudio?.playSound("waiting");
-    const id = window.setInterval(
-      () => void pickupPhaseAudio?.playSound("waiting"),
-      2500,
-    );
-    return (): void => window.clearInterval(id);
-  }, [callPickupState, pickupPhaseAudio]);
+    setPlaying(true);
+    // play and then wait for 1.5s
+    const playSoundAndWait = async (): Promise<void> => {
+      await pickupPhaseAudio?.playSound("waiting");
+      await new Promise((res) => setTimeout(res, 1500));
+    };
+    const startPlaying = async (): Promise<void> => {
+      while (playing) {
+        await playSoundAndWait();
+      }
+    };
+    void startPlaying();
+    return (): void => setPlaying(false);
+  }, [callPickupState, pickupPhaseAudio, playing]);
 
   // Waiting UI overlay
   const waitingOverlay: JSX.Element | null = useMemo(() => {
