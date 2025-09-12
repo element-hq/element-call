@@ -37,7 +37,6 @@ import {
   concat,
   distinctUntilChanged,
   endWith,
-  every,
   filter,
   forkJoin,
   fromEvent,
@@ -976,17 +975,12 @@ export class CallViewModel extends ViewModel {
       )
     : constant(null);
 
-  public readonly callWasSuccessful$ = this.callPickupState$.pipe(
-    every((x) => x !== "success" && x === null),
-    map((v) => !v),
-  );
-
   public readonly leaveSoundEffect$ = combineLatest([
-    this.callWasSuccessful$,
+    this.callPickupState$,
     this.userMedia$,
   ]).pipe(
     // Until the call is successful, do not play a leave sound.
-    skipWhile(([c]) => c === false),
+    skipWhile(([c]) => c !== null && c !== "success"),
     map(([, userMedia]) => userMedia),
     pairwise(),
     filter(
