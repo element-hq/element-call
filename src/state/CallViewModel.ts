@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
-  type E2EEOptions,
+  type BaseKeyProvider,
   ExternalE2EEKeyProvider,
   type Room as LivekitRoom,
   type LocalParticipant,
@@ -410,7 +410,7 @@ function getRoomMemberFromRtcMember(
 export class CallViewModel extends ViewModel {
   private readonly livekitAlias = getLivekitAlias(this.matrixRTCSession);
 
-  private readonly livekitE2EERoomOptions = getE2eeOptions(
+  private readonly livekitE2EEKeyProvider = getE2eeKeyProvider(
     this.options.encryptionSystem,
     this.matrixRTCSession,
   );
@@ -427,7 +427,12 @@ export class CallViewModel extends ViewModel {
         this.membershipsAndFocusMap$,
         this.mediaDevices,
         this.muteStates,
-        this.livekitE2EERoomOptions,
+        this.livekitE2EEKeyProvider
+          ? {
+              keyProvider: this.livekitE2EEKeyProvider,
+              worker: new E2EEWorker(),
+            }
+          : undefined,
       ),
   );
 
@@ -483,7 +488,12 @@ export class CallViewModel extends ViewModel {
                   this.matrixRTCSession.room.client,
                   this.scope,
                   this.membershipsAndFocusMap$,
-                  this.livekitE2EERoomOptions,
+                  this.livekitE2EEKeyProvider
+                    ? {
+                        keyProvider: this.livekitE2EEKeyProvider,
+                        worker: new E2EEWorker(),
+                      }
+                    : undefined,
                 );
               } else {
                 logger.log(
@@ -1771,28 +1781,21 @@ export class CallViewModel extends ViewModel {
 // TODO-MULTI-SFU   // Setup and update the keyProvider which was create by `createRoom` was a thing before. Now we never update if the E2EEsystem changes
 // do we need this?
 
-function getE2eeOptions(
+function getE2eeKeyProvider(
   e2eeSystem: EncryptionSystem,
   rtcSession: MatrixRTCSession,
-): E2EEOptions | undefined {
-  return undefined;
+): BaseKeyProvider | undefined {
   if (e2eeSystem.kind === E2eeType.NONE) return undefined;
 
   if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
     const keyProvider = new MatrixKeyProvider();
     keyProvider.setRTCSession(rtcSession);
-    return {
-      keyProvider,
-      worker: new E2EEWorker(),
-    };
+    return keyProvider;
   } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
     const keyProvider = new ExternalE2EEKeyProvider();
     keyProvider
       .setKey(e2eeSystem.secret)
       .catch((e) => logger.error("Failed to set shared key for E2EE", e));
-    return {
-      keyProvider,
-      worker: new E2EEWorker(),
-    };
+    return keyProvider;
   }
 }
