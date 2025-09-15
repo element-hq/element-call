@@ -75,7 +75,7 @@ function playSoundLooping(
   let lastSoundPromise: Promise<void>;
   let nextSoundPromise: Promise<void>;
   let ac: AbortController | undefined;
-  void (async () => {
+  void (async (): Promise<void> => {
     ac = new AbortController();
     // Play a sound immediately
     lastSoundPromise = Promise.resolve();

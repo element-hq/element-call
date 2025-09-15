@@ -55,6 +55,7 @@ beforeEach(() => {
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
     playSoundLooping: vitest.fn(),
+    soundDuration: {},
   });
 });
 

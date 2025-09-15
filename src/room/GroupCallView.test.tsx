@@ -99,6 +99,7 @@ beforeEach(() => {
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
     playSoundLooping: vi.fn(),
+    soundDuration: {},
   });
   // A trivial implementation of Active call to ensure we are testing GroupCallView exclusively here.
   (ActiveCall as MockedFunction<typeof ActiveCall>).mockImplementation(
@@ -212,6 +213,7 @@ test("GroupCallView plays a leave sound synchronously in widget mode", async () 
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
     playSoundLooping: vitest.fn(),
+    soundDuration: {},
   });
 
   const { getByText, rtcSession } = createGroupCallView(
