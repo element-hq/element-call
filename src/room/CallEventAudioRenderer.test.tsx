@@ -54,6 +54,8 @@ beforeEach(() => {
   playSound = vitest.fn();
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
+    playSoundLooping: vitest.fn(),
+    soundDuration: {},
   });
 });
 
@@ -103,6 +105,20 @@ test("plays a sound when a user leaves", () => {
     rtcMemberships$.next([localRtcMember]);
   });
   expect(playSound).toBeCalledWith("left");
+});
+
+test("does not play a sound before the call is successful", () => {
+  const { vm, rtcMemberships$ } = getBasicCallViewModelEnvironment(
+    [local, alice],
+    [localRtcMember],
+    { waitForCallPickup: true },
+  );
+  render(<CallEventAudioRenderer vm={vm} />);
+
+  act(() => {
+    rtcMemberships$.next([localRtcMember]);
+  });
+  expect(playSound).not.toBeCalledWith("left");
 });
 
 test("plays no sound when the participant list is more than the maximum size", () => {

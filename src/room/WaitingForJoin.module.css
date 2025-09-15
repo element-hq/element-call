@@ -25,7 +25,9 @@
   inset: -12px;
   border-radius: 9999px;
   border: 12px solid rgba(255, 255, 255, 0.6);
-  animation: pulse 1.6s ease-out infinite;
+  animation: pulse var(--call-ring-duration-s) ease-out infinite;
+  animation-delay: 1s;
+  opacity: 0;
 }
 
 .text {
@@ -36,13 +38,24 @@
   0% {
     transform: scale(0.95);
     opacity: 0.7;
+    transform: scale(0);
+    opacity: 1;
   }
-  70% {
+  35% {
     transform: scale(1.15);
     opacity: 0.15;
   }
-  100% {
+  50% {
     transform: scale(1.2);
     opacity: 0;
+  }
+  50.01% {
+    transform: scale(0);
+  }
+  85% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(0);
   }
 }

@@ -16,6 +16,10 @@ import handSoundOgg from "../sound/raise_hand.ogg";
 import handSoundMp3 from "../sound/raise_hand.mp3";
 import screenShareStartedOgg from "../sound/screen_share_started.ogg";
 import screenShareStartedMp3 from "../sound/screen_share_started.mp3";
+import declineMp3 from "../sound/call_declined.mp3?url";
+import declineOgg from "../sound/call_declined.ogg?url";
+import timeoutMp3 from "../sound/call_timeout.mp3?url";
+import timeoutOgg from "../sound/call_timeout.ogg?url";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
 import { useLatest } from "../useLatest";
@@ -37,7 +41,17 @@ export const callEventAudioSounds = prefetchSounds({
     mp3: screenShareStartedMp3,
     ogg: screenShareStartedOgg,
   },
+  decline: {
+    mp3: declineMp3,
+    ogg: declineOgg,
+  },
+  timeout: {
+    mp3: timeoutMp3,
+    ogg: timeoutOgg,
+  },
 });
+
+export type CallEventSounds = keyof Awaited<typeof callEventAudioSounds>;
 
 export function CallEventAudioRenderer({
   vm,
