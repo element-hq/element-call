@@ -97,7 +97,7 @@ import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import {
   CallEventAudioRenderer,
-  CallEventSounds,
+  type CallEventSounds,
 } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
