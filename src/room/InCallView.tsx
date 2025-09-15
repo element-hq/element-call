@@ -356,15 +356,24 @@ export const InCallView: FC<InCallViewProps> = ({
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   useSubscription(vm.autoLeave$, onLeave);
 
-  const ringDelay = (pickupPhaseAudio?.soundDuration["waiting"] ?? 1) * 2;
-
+  // We need to set the proper timings on the animation based upon the sound length.
+  const ringDuration = pickupPhaseAudio?.soundDuration["waiting"] ?? 1;
   useEffect(() => {
+    // The CSS animation includes the delay, so we must double the length of the sound.
     window.document.body.style.setProperty(
       "--call-ring-duration-s",
-      `${ringDelay}s`,
+      `${ringDuration * 2}s`,
     );
-    window.document.body.style.setProperty("--call-ring-delay-s", `1s`);
-  }, [pickupPhaseAudio?.soundDuration, ringDelay]);
+    window.document.body.style.setProperty(
+      "--call-ring-delay-s",
+      `${ringDuration}s`,
+    );
+    // Remove properties when we unload.
+    return () => {
+      window.document.body.style.removeProperty("--call-ring-duration-s");
+      window.document.body.style.removeProperty("--call-ring-delay-s");
+    };
+  }, [pickupPhaseAudio?.soundDuration, ringDuration]);
 
   // When we enter timeout or decline we will leave the call.
   useEffect((): void | (() => void) => {
@@ -394,16 +403,13 @@ export const InCallView: FC<InCallViewProps> = ({
   // When waiting for pickup, loop a waiting sound
   useEffect((): void | (() => void) => {
     if (callPickupState !== "ringing" || !pickupPhaseAudio) return;
-    const endSound = pickupPhaseAudio.playSoundLooping(
-      "waiting",
-      ringDelay / 2,
-    );
+    const endSound = pickupPhaseAudio.playSoundLooping("waiting", ringDuration);
     return () => {
       void endSound().catch((e) => {
         logger.error("Failed to stop ringing sound", e);
       });
     };
-  }, [callPickupState, pickupPhaseAudio, ringDelay]);
+  }, [callPickupState, pickupPhaseAudio, ringDuration]);
 
   // Waiting UI overlay
   const waitingOverlay: JSX.Element | null = useMemo(() => {
