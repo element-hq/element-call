@@ -358,7 +358,7 @@ export const InCallView: FC<InCallViewProps> = ({
 
   // We need to set the proper timings on the animation based upon the sound length.
   const ringDuration = pickupPhaseAudio?.soundDuration["waiting"] ?? 1;
-  useEffect(() => {
+  useEffect((): (() => void) => {
     // The CSS animation includes the delay, so we must double the length of the sound.
     window.document.body.style.setProperty(
       "--call-ring-duration-s",
