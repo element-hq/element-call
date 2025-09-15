@@ -356,6 +356,16 @@ export const InCallView: FC<InCallViewProps> = ({
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   useSubscription(vm.autoLeave$, onLeave);
 
+  const ringDelay = (pickupPhaseAudio?.soundDuration["waiting"] ?? 1) * 2;
+
+  useEffect(() => {
+    window.document.body.style.setProperty(
+      "--call-ring-duration-s",
+      `${ringDelay}s`,
+    );
+    window.document.body.style.setProperty("--call-ring-delay-s", `1s`);
+  }, [pickupPhaseAudio?.soundDuration, ringDelay]);
+
   // When we enter timeout or decline we will leave the call.
   useEffect((): void | (() => void) => {
     if (callPickupState === "timeout") {
@@ -384,13 +394,16 @@ export const InCallView: FC<InCallViewProps> = ({
   // When waiting for pickup, loop a waiting sound
   useEffect((): void | (() => void) => {
     if (callPickupState !== "ringing" || !pickupPhaseAudio) return;
-    const endSound = pickupPhaseAudio.playSoundLooping("waiting");
+    const endSound = pickupPhaseAudio.playSoundLooping(
+      "waiting",
+      ringDelay / 2,
+    );
     return () => {
       void endSound().catch((e) => {
         logger.error("Failed to stop ringing sound", e);
       });
     };
-  }, [callPickupState, pickupPhaseAudio]);
+  }, [callPickupState, pickupPhaseAudio, ringDelay]);
 
   // Waiting UI overlay
   const waitingOverlay: JSX.Element | null = useMemo(() => {

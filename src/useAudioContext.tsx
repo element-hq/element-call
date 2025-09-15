@@ -32,6 +32,8 @@ async function playSound(
   buffer: AudioBuffer,
   volume: number,
   stereoPan: number,
+  delayS = 0,
+  abort?: AbortController,
 ): Promise<void> {
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(volume, 0);
@@ -39,10 +41,13 @@ async function playSound(
   pan.pan.setValueAtTime(stereoPan, 0);
   const src = ctx.createBufferSource();
   src.buffer = buffer;
-  src.connect(gain).connect(pan).connect(ctx.destination);
+  abort?.signal.addEventListener("abort", () => {
+    src.disconnect();
+  });
   const p = new Promise<void>((r) => src.addEventListener("ended", () => r()));
+  src.connect(gain).connect(pan).connect(ctx.destination);
   controls.setPlaybackStarted();
-  src.start();
+  src.start(ctx.currentTime + delayS);
   return p;
 }
 
@@ -60,23 +65,35 @@ function playSoundLooping(
   buffer: AudioBuffer,
   volume: number,
   stereoPan: number,
+  delayS?: number,
 ): () => Promise<void> {
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(volume, 0);
-  const pan = ctx.createStereoPanner();
-  pan.pan.setValueAtTime(stereoPan, 0);
-  const src = ctx.createBufferSource();
-  src.buffer = buffer;
-  src.connect(gain).connect(pan).connect(ctx.destination);
-  controls.setPlaybackStarted();
-  src.loop = true;
-  src.start();
+  if (delayS === 0) {
+    throw Error("Looping sounds must have a delay");
+  }
+
+  // Our audio loop
+  let lastSoundPromise: Promise<void>;
+  let nextSoundPromise: Promise<void>;
+  let ac: AbortController | undefined;
+  void (async () => {
+    ac = new AbortController();
+    // Play a sound immediately
+    lastSoundPromise = Promise.resolve();
+    do {
+      // Queue up the next sound.
+      nextSoundPromise = playSound(ctx, buffer, volume, stereoPan, delayS, ac);
+      // Await the previous sound.
+      await lastSoundPromise;
+      // Swap the promises over, and loop round to play the next sound.
+      lastSoundPromise = nextSoundPromise;
+    } while (!ac.signal.aborted);
+  })();
+
   return async () => {
-    const p = new Promise<void>((r) =>
-      src.addEventListener("ended", () => r()),
-    );
-    src.stop();
-    return p;
+    ac?.abort();
+    // Wait for sounds to finish.
+    await lastSoundPromise;
+    await nextSoundPromise;
   };
 }
 
@@ -91,9 +108,13 @@ interface Props<S extends string> {
   muted?: boolean;
 }
 
-interface UseAudioContext<S> {
+interface UseAudioContext<S extends string> {
   playSound(soundName: S): Promise<void>;
-  playSoundLooping(soundName: S): () => Promise<void>;
+  playSoundLooping(soundName: S, delayS?: number): () => Promise<void>;
+  /**
+   * Map of sound name to duration in seconds.
+   */
+  soundDuration: Record<string, number>;
 }
 
 /**
@@ -181,7 +202,7 @@ export function useAudioContext<S extends string>(
         earpiecePan,
       );
     },
-    playSoundLooping: (name): (() => Promise<void>) => {
+    playSoundLooping: (name, delayS: number): (() => Promise<void>) => {
       if (!audioBuffers[name]) {
         throw Error(`Tried to play a sound that wasn't buffered (${name})`);
       }
@@ -190,7 +211,14 @@ export function useAudioContext<S extends string>(
         audioBuffers[name],
         soundEffectVolume * earpieceVolume,
         earpiecePan,
+        delayS,
       );
     },
+    soundDuration: Object.fromEntries(
+      Object.entries(audioBuffers).map(([k, v]) => [
+        k,
+        (v as AudioBuffer).duration,
+      ]),
+    ),
   };
 }
