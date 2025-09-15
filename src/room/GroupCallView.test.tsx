@@ -12,6 +12,7 @@ import {
   onTestFinished,
   test,
   vi,
+  vitest,
 } from "vitest";
 import { render, waitFor, screen, act } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
@@ -97,13 +98,15 @@ beforeEach(() => {
   playSound = vi.fn();
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
+    playSoundLooping: vi.fn(),
+    soundDuration: {},
   });
   // A trivial implementation of Active call to ensure we are testing GroupCallView exclusively here.
   (ActiveCall as MockedFunction<typeof ActiveCall>).mockImplementation(
     ({ onLeave }) => {
       return (
         <div>
-          <button onClick={() => onLeave()}>Leave</button>
+          <button onClick={() => onLeave("user")}>Leave</button>
         </div>
       );
     },
@@ -209,6 +212,8 @@ test("GroupCallView plays a leave sound synchronously in widget mode", async () 
     );
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
+    playSoundLooping: vitest.fn(),
+    soundDuration: {},
   });
 
   const { getByText, rtcSession } = createGroupCallView(

@@ -95,7 +95,10 @@ import {
 } from "../reactions/useReactionsSender";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { ReactionsOverlay } from "./ReactionsOverlay";
-import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
+import {
+  CallEventAudioRenderer,
+  type CallEventSounds,
+} from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
   useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
@@ -117,11 +120,8 @@ import { Avatar, Size as AvatarSize } from "../Avatar";
 import waitingStyles from "./WaitingForJoin.module.css";
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
-// TODO: Dont use this!!!  use the correct sound
-import genericSoundOgg from "../sound/reactions/generic.ogg?url";
-import genericSoundMp3 from "../sound/reactions/generic.mp3?url";
-import leftCallSoundMp3 from "../sound/left_call.mp3";
-import leftCallSoundOgg from "../sound/left_call.ogg";
+import ringtoneMp3 from "../sound/ringtone.mp3?url";
+import ringtoneOgg from "../sound/ringtone.ogg?url";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -232,7 +232,7 @@ export interface InCallViewProps {
   livekitRoom: LivekitRoom;
   muteStates: MuteStates;
   /** Function to call when the user explicitly ends the call */
-  onLeave: () => void;
+  onLeave: (cause: "user", soundFile?: CallEventSounds) => void;
   header: HeaderStyle;
   otelGroupCallMembership?: OTelGroupCallMembership;
   connState: ECConnectionState;
@@ -281,14 +281,9 @@ export const InCallView: FC<InCallViewProps> = ({
   // Preload a waiting and decline sounds
   const pickupPhaseSoundCache = useInitial(async () => {
     return prefetchSounds({
-      waiting: { mp3: genericSoundMp3, ogg: genericSoundOgg },
-      decline: { mp3: leftCallSoundMp3, ogg: leftCallSoundOgg },
-      // Do we want a timeout sound?
+      waiting: { mp3: ringtoneMp3, ogg: ringtoneOgg },
     });
   });
-  // configure this to sth that fits to the pickup waiting sound.
-  // 1600 is in sync with the animation.
-  const PICKUP_SOUND_INTERVAL = 1600;
 
   const pickupPhaseAudio = useAudioContext({
     sounds: pickupPhaseSoundCache,
@@ -356,34 +351,47 @@ export const InCallView: FC<InCallViewProps> = ({
   const showFooter = useBehavior(vm.showFooter$);
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
-  useSubscription(vm.autoLeave$, onLeave);
+  useSubscription(vm.autoLeave$, () => onLeave("user"));
+
+  // We need to set the proper timings on the animation based upon the sound length.
+  const ringDuration = pickupPhaseAudio?.soundDuration["waiting"] ?? 1;
+  useEffect((): (() => void) => {
+    // The CSS animation includes the delay, so we must double the length of the sound.
+    window.document.body.style.setProperty(
+      "--call-ring-duration-s",
+      `${ringDuration * 2}s`,
+    );
+    window.document.body.style.setProperty(
+      "--call-ring-delay-s",
+      `${ringDuration}s`,
+    );
+    // Remove properties when we unload.
+    return () => {
+      window.document.body.style.removeProperty("--call-ring-duration-s");
+      window.document.body.style.removeProperty("--call-ring-delay-s");
+    };
+  }, [pickupPhaseAudio?.soundDuration, ringDuration]);
 
   // When we enter timeout or decline we will leave the call.
   useEffect((): void | (() => void) => {
     if (callPickupState === "timeout") {
-      onLeave();
+      onLeave("user", "timeout");
     }
     if (callPickupState === "decline") {
-      // Wait for the sound to finish before leaving
-      void pickupPhaseAudio
-        ?.playSound("decline")
-        .catch((e) => {
-          logger.error("Failed to play decline sound", e);
-        })
-        .finally(() => {
-          onLeave();
-        });
+      onLeave("user", "decline");
     }
   }, [callPickupState, onLeave, pickupPhaseAudio]);
 
   // When waiting for pickup, loop a waiting sound
   useEffect((): void | (() => void) => {
-    if (callPickupState !== "ringing") return;
-    const interval = window.setInterval(() => {
-      void pickupPhaseAudio?.playSound("waiting");
-    }, PICKUP_SOUND_INTERVAL);
-    return (): void => window.clearInterval(interval);
-  }, [callPickupState, pickupPhaseAudio]);
+    if (callPickupState !== "ringing" || !pickupPhaseAudio) return;
+    const endSound = pickupPhaseAudio.playSoundLooping("waiting", ringDuration);
+    return () => {
+      void endSound().catch((e) => {
+        logger.error("Failed to stop ringing sound", e);
+      });
+    };
+  }, [callPickupState, pickupPhaseAudio, ringDuration]);
 
   // Waiting UI overlay
   const waitingOverlay: JSX.Element | null = useMemo(() => {
@@ -823,7 +831,7 @@ export const InCallView: FC<InCallViewProps> = ({
     <EndCallButton
       key="end_call"
       onClick={function (): void {
-        onLeave();
+        onLeave("user");
       }}
       onTouchEnd={onControlsTouchEnd}
       data-testid="incall_leave"

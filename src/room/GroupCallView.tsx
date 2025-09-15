@@ -53,7 +53,10 @@ import { InviteModal } from "./InviteModal";
 import { HeaderStyle, type UrlParams, useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
-import { callEventAudioSounds } from "./CallEventAudioRenderer";
+import {
+  callEventAudioSounds,
+  type CallEventSounds,
+} from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import {
@@ -317,8 +320,11 @@ export const GroupCallView: FC<Props> = ({
   const navigate = useNavigate();
 
   const onLeave = useCallback(
-    (cause: "user" | "error" = "user"): void => {
-      const audioPromise = leaveSoundContext.current?.playSound("left");
+    (
+      cause: "user" | "error" = "user",
+      playSound: CallEventSounds = "left",
+    ): void => {
+      const audioPromise = leaveSoundContext.current?.playSound(playSound);
       // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
       // therefore we want the event to be sent instantly without getting queued/batched.
       const sendInstantly = !!widget;
