@@ -30,7 +30,7 @@
   opacity: 0;
 }
 
-.pulse::before .text {
+.text {
   color: var(--cpd-color-text-on-solid-primary);
 }
 

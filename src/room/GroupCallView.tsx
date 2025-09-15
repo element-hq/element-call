@@ -497,10 +497,11 @@ export const GroupCallView: FC<Props> = ({
   return (
     <GroupCallErrorBoundary
       widget={widget}
-      recoveryActionHandler={(action) => {
+      recoveryActionHandler={async (action) => {
+        setExternalError(null);
         if (action == "reconnect") {
           setLeft(false);
-          enterRTCSessionOrError(rtcSession).catch((e) => {
+          await enterRTCSessionOrError(rtcSession).catch((e) => {
             logger.error("Error re-entering RTC session", e);
           });
         }
