@@ -106,7 +106,7 @@ beforeEach(() => {
     ({ onLeave }) => {
       return (
         <div>
-          <button onClick={() => onLeave()}>Leave</button>
+          <button onClick={() => onLeave("user")}>Leave</button>
         </div>
       );
     },

@@ -980,6 +980,7 @@ export class CallViewModel extends ViewModel {
     this.userMedia$,
   ]).pipe(
     // Until the call is successful, do not play a leave sound.
+    // If callPickupState$ is null, then we always play the sound as it will not conflict with a decline sound.
     skipWhile(([c]) => c !== null && c !== "success"),
     map(([, userMedia]) => userMedia),
     pairwise(),
