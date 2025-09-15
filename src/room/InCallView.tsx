@@ -50,6 +50,7 @@ import { type HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
+import overlayStyles from "../Overlay.module.css";
 import { GridTile } from "../tile/GridTile";
 import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
@@ -112,6 +113,15 @@ import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
 import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
 import { Toast } from "../Toast.tsx";
+import { Avatar, Size as AvatarSize } from "../Avatar";
+import waitingStyles from "./WaitingForJoin.module.css";
+import { prefetchSounds } from "../soundUtils";
+import { useAudioContext } from "../useAudioContext";
+// TODO: Dont use this!!!  use the correct sound
+import genericSoundOgg from "../sound/reactions/generic.ogg?url";
+import genericSoundMp3 from "../sound/reactions/generic.mp3?url";
+import leftCallSoundMp3 from "../sound/left_call.mp3";
+import leftCallSoundOgg from "../sound/left_call.ogg";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -265,6 +275,26 @@ export const InCallView: FC<InCallViewProps> = ({
   });
 
   const muteAllAudio = useBehavior(muteAllAudio$);
+  // Call pickup state and display names are needed for waiting overlay/sounds
+  const callPickupState = useBehavior(vm.callPickupState$);
+
+  // Preload a waiting and decline sounds
+  const pickupPhaseSoundCache = useInitial(async () => {
+    return prefetchSounds({
+      waiting: { mp3: genericSoundMp3, ogg: genericSoundOgg },
+      decline: { mp3: leftCallSoundMp3, ogg: leftCallSoundOgg },
+      // Do we want a timeout sound?
+    });
+  });
+  // configure this to sth that fits to the pickup waiting sound.
+  // 1600 is in sync with the animation.
+  const PICKUP_SOUND_INTERVAL = 1600;
+
+  const pickupPhaseAudio = useAudioContext({
+    sounds: pickupPhaseSoundCache,
+    latencyHint: "interactive",
+    muted: muteAllAudio,
+  });
 
   // This seems like it might be enough logic to use move it into the call view model?
   const [didFallbackToRoomKey, setDidFallbackToRoomKey] = useState(false);
@@ -327,6 +357,76 @@ export const InCallView: FC<InCallViewProps> = ({
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   useSubscription(vm.autoLeave$, onLeave);
+
+  // When we enter timeout or decline we will leave the call.
+  useEffect((): void | (() => void) => {
+    if (callPickupState === "timeout") {
+      onLeave();
+    }
+    if (callPickupState === "decline") {
+      // Wait for the sound to finish before leaving
+      void pickupPhaseAudio
+        ?.playSound("decline")
+        .catch((e) => {
+          logger.error("Failed to play decline sound", e);
+        })
+        .finally(() => {
+          onLeave();
+        });
+    }
+  }, [callPickupState, onLeave, pickupPhaseAudio]);
+
+  // When waiting for pickup, loop a waiting sound
+  useEffect((): void | (() => void) => {
+    if (callPickupState !== "ringing") return;
+    const interval = window.setInterval(() => {
+      void pickupPhaseAudio?.playSound("waiting");
+    }, PICKUP_SOUND_INTERVAL);
+    return (): void => window.clearInterval(interval);
+  }, [callPickupState, pickupPhaseAudio]);
+
+  // Waiting UI overlay
+  const waitingOverlay: JSX.Element | null = useMemo(() => {
+    // No overlay if not in ringing state
+    if (callPickupState !== "ringing") return null;
+
+    // Use room state for other participants data (the one that we likely want to reach)
+    const roomOthers = [
+      ...matrixRoom.getMembersWithMembership("join"),
+      ...matrixRoom.getMembersWithMembership("invite"),
+    ].filter((m) => m.userId !== client.getUserId());
+    // Yield if there are not other members in the room.
+    if (roomOthers.length === 0) return null;
+
+    const otherMember = roomOthers.length > 0 ? roomOthers[0] : undefined;
+    const isOneOnOne = roomOthers.length === 1 && otherMember;
+    const text = isOneOnOne
+      ? `Waiting for ${otherMember.name ?? otherMember.userId} to join…`
+      : "Waiting for other participants…";
+    const avatarMxc = isOneOnOne
+      ? (otherMember.getMxcAvatarUrl?.() ?? undefined)
+      : (matrixRoom.getMxcAvatarUrl() ?? undefined);
+
+    return (
+      <div className={classNames(overlayStyles.bg, waitingStyles.overlay)}>
+        <div
+          className={classNames(overlayStyles.content, waitingStyles.content)}
+        >
+          <div className={waitingStyles.pulse}>
+            <Avatar
+              id={isOneOnOne ? otherMember.userId : matrixRoom.roomId}
+              name={isOneOnOne ? otherMember.name : matrixRoom.name}
+              src={avatarMxc}
+              size={AvatarSize.XL}
+            />
+          </div>
+          <Text size="md" className={waitingStyles.text}>
+            {text}
+          </Text>
+        </div>
+      </div>
+    );
+  }, [callPickupState, client, matrixRoom]);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
@@ -806,6 +906,7 @@ export const InCallView: FC<InCallViewProps> = ({
         onBackToVideoPressed={audioOutputSwitcher?.switch}
       />
       <ReactionsOverlay vm={vm} />
+      {waitingOverlay}
       {footer}
       {layout.type !== "pip" && (
         <>
