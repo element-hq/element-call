@@ -177,7 +177,8 @@ function createInCallView(): RenderResult & {
                 }}
                 matrixRoom={room}
                 livekitRoom={livekitRoom}
-                onLeave={function (): void {
+                participantCount={0}
+                onLeft={function (): void {
                   throw new Error("Function not implemented.");
                 }}
                 onShareClick={null}

@@ -103,7 +103,7 @@ beforeEach(() => {
   });
   // A trivial implementation of Active call to ensure we are testing GroupCallView exclusively here.
   (ActiveCall as MockedFunction<typeof ActiveCall>).mockImplementation(
-    ({ onLeave }) => {
+    ({ onLeft: onLeave }) => {
       return (
         <div>
           <button onClick={() => onLeave("user")}>Leave</button>
