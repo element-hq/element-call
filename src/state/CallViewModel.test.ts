@@ -1291,6 +1291,51 @@ describe("waitForCallPickup$", () => {
     });
   });
 
+  test("ringing -> unknown if we get disconnected", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      const connectionState$ = new BehaviorSubject(ConnectionState.Connected);
+      // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
+      withCallViewModel(
+        {
+          remoteParticipants$: behavior("a 19ms b", {
+            a: [],
+            b: [aliceParticipant],
+          }),
+          rtcMembers$: behavior("a 19ms b", {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
+          connectionState$,
+        },
+        (vm, rtcSession) => {
+          // Notify at 5ms so we enter ringing, then get disconnected 5ms later
+          schedule("          5ms r 5ms d", {
+            r: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                mockRingEvent("$notif2", 100),
+                mockLegacyRingEvent,
+              );
+            },
+            d: () => {
+              connectionState$.next(ConnectionState.Disconnected);
+            },
+          });
+
+          expectObservable(vm.callPickupState$).toBe("a 4ms b 5ms c", {
+            a: "unknown",
+            b: "ringing",
+            c: "unknown",
+          });
+        },
+        {
+          waitForCallPickup: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
   test("success when someone joins before we notify", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Join at 10ms, notify later at 20ms (state should stay success)
