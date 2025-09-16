@@ -972,12 +972,12 @@ export class CallViewModel extends ViewModel {
           this.livekitDisconnected$,
           this.someoneElseJoined$,
         ]).pipe(
-          switchMap(([isDisconnected, someoneElseJoined]) => {
-            if (isDisconnected) {
+          switchMap(([disconnected, someoneElseJoined]) => {
+            if (disconnected) {
               // Do not ring until we're connected.
               return of("unknown" as const);
             } else if (someoneElseJoined) {
-              of("success" as const);
+              return of("success" as const);
             }
             // Show the ringing state of the most recent ringing attempt.
             return this.ring$.pipe(switchAll());
