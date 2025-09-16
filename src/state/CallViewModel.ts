@@ -968,7 +968,10 @@ export class CallViewModel extends ViewModel {
     ? this.scope.behavior<
         "unknown" | "ringing" | "timeout" | "decline" | "success"
       >(
-        combineLatest(this.livekitDisconnected$, this.someoneElseJoined$).pipe(
+        combineLatest([
+          this.livekitDisconnected$,
+          this.someoneElseJoined$,
+        ]).pipe(
           switchMap(([isDisconnected, someoneElseJoined]) => {
             if (isDisconnected) {
               // Do not ring until we're connected.
