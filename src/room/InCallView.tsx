@@ -23,11 +23,7 @@ import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
-import {
-  useObservable,
-  useObservableEagerState,
-  useSubscription,
-} from "observable-hooks";
+import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import {
@@ -94,10 +90,7 @@ import {
 } from "../reactions/useReactionsSender";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { ReactionsOverlay } from "./ReactionsOverlay";
-import {
-  CallEventAudioRenderer,
-  type CallEventSounds,
-} from "./CallEventAudioRenderer";
+import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
   useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
@@ -129,6 +122,8 @@ const maxTapDurationMs = 400;
 export interface ActiveCallProps
   extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {
   e2eeSystem: EncryptionSystem;
+  // TODO refactor those reasons into an enum
+  onLeft: (reason: "user" | "timeout" | "decline" | "allOthersLeft") => void;
 }
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
@@ -154,8 +149,11 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       reactionsReader.reactions$,
     );
     setVm(vm);
+
+    const sub = vm.left$.subscribe(props.onLeft);
     return (): void => {
       vm.destroy();
+      sub.unsubscribe();
       reactionsReader.destroy();
     };
   }, [
@@ -167,6 +165,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     autoLeaveWhenOthersLeft,
     sendNotificationType,
     waitForCallPickup,
+    props.onLeft,
   ]);
 
   if (vm === null) return null;
@@ -185,8 +184,6 @@ export interface InCallViewProps {
   rtcSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
   muteStates: MuteStates;
-  /** Function to call when the user explicitly ends the call */
-  onLeave: (cause: "user", soundFile?: CallEventSounds) => void;
   header: HeaderStyle;
   otelGroupCallMembership?: OTelGroupCallMembership;
   onShareClick: (() => void) | null;
@@ -199,7 +196,7 @@ export const InCallView: FC<InCallViewProps> = ({
   rtcSession,
   matrixRoom,
   muteStates,
-  onLeave,
+
   header: headerStyle,
   onShareClick,
 }) => {
@@ -295,7 +292,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const showFooter = useBehavior(vm.showFooter$);
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
-  useSubscription(vm.autoLeave$, () => onLeave("user"));
 
   // We need to set the proper timings on the animation based upon the sound length.
   const ringDuration = pickupPhaseAudio?.soundDuration["waiting"] ?? 1;
@@ -316,16 +312,6 @@ export const InCallView: FC<InCallViewProps> = ({
     };
   }, [pickupPhaseAudio?.soundDuration, ringDuration]);
 
-  // When we enter timeout or decline we will leave the call.
-  useEffect((): void | (() => void) => {
-    if (callPickupState === "timeout") {
-      onLeave("user", "timeout");
-    }
-    if (callPickupState === "decline") {
-      onLeave("user", "decline");
-    }
-  }, [callPickupState, onLeave, pickupPhaseAudio]);
-
   // When waiting for pickup, loop a waiting sound
   useEffect((): void | (() => void) => {
     if (callPickupState !== "ringing" || !pickupPhaseAudio) return;
@@ -343,6 +329,7 @@ export const InCallView: FC<InCallViewProps> = ({
     if (callPickupState !== "ringing") return null;
 
     // Use room state for other participants data (the one that we likely want to reach)
+    // TODO: this screams it wants to be a behavior in the vm.
     const roomOthers = [
       ...matrixRoom.getMembersWithMembership("join"),
       ...matrixRoom.getMembersWithMembership("invite"),
@@ -816,7 +803,7 @@ export const InCallView: FC<InCallViewProps> = ({
     <EndCallButton
       key="end_call"
       onClick={function (): void {
-        onLeave("user");
+        vm.leave();
       }}
       onTouchEnd={onControlsTouchEnd}
       data-testid="incall_leave"

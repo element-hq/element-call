@@ -112,17 +112,19 @@ import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
 import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 import { type MediaDevices } from "./MediaDevices";
-import { type Behavior } from "./Behavior";
+import { constant, type Behavior } from "./Behavior";
 import {
   enterRTCSession,
   getLivekitAlias,
+  leaveRTCSession,
   makeFocus,
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-import { type ECConnectionState } from "../livekit/useECConnectionState";
 import { Connection, PublishConnection } from "./Connection";
 import { type MuteStates } from "./MuteStates";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import { getUrlParams } from "../UrlParams";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -461,6 +463,13 @@ export class CallViewModel extends ViewModel {
       ),
   );
 
+  public readonly livekitConnectionState$ = this.scope.behavior(
+    combineLatest([this.localConnection]).pipe(
+      switchMap(([c]) => c.connectionState$),
+      startWith(ConnectionState.Disconnected),
+    ),
+  );
+
   // TODO-MULTI-SFU make sure that we consider the room memberships here as well (so that here we only have valid memberships)
   // this also makes it possible to use this memberships$ list in all observables based on it.
   // there should be no other call to: this.matrixRTCSession.memberships!
@@ -541,11 +550,18 @@ export class CallViewModel extends ViewModel {
     this.join$.next();
   }
 
-  private readonly leave$ = new Subject<void>();
+  private readonly leave$ = new Subject<
+    "decline" | "timeout" | "user" | "allOthersLeft"
+  >();
 
   public leave(): void {
-    this.leave$.next();
+    this.leave$.next("user");
   }
+
+  private readonly _left$ = new Subject<
+    "decline" | "timeout" | "user" | "allOthersLeft"
+  >();
+  public left$ = this._left$.asObservable();
 
   private readonly connectionInstructions$ = this.join$.pipe(
     switchMap(() => this.remoteConnections$),
@@ -628,10 +644,9 @@ export class CallViewModel extends ViewModel {
   private readonly connected$ = this.scope.behavior(
     and$(
       this.matrixConnected$,
-      // TODO-MULTI-SFU
-      // this.livekitConnectionState$.pipe(
-      //   map((state) => state === ConnectionState.Connected),
-      // ),
+      this.livekitConnectionState$.pipe(
+        map((state) => state === ConnectionState.Connected),
+      ),
     ),
   );
 
@@ -662,7 +677,6 @@ export class CallViewModel extends ViewModel {
   // down, for example, and we want to avoid making people worry that the app is
   // in a split-brained state.
   private readonly pretendToBeDisconnected$ = this.reconnecting$;
-
 
   private readonly participants$ = this.scope.behavior<
     {
@@ -731,7 +745,6 @@ export class CallViewModel extends ViewModel {
       // Handle room membership changes (and displayname updates)
       fromEvent(this.matrixRoom, RoomStateEvent.Members),
       // TODO: do we need: pauseWhen(this.pretendToBeDisconnected$),
-
     ).pipe(
       startWith(null),
       map(() => {
@@ -759,7 +772,7 @@ export class CallViewModel extends ViewModel {
           );
         }
         return displaynameMap;
-      },
+      }),
     ),
   );
 
@@ -971,21 +984,6 @@ export class CallViewModel extends ViewModel {
     this.memberships$.pipe(map((ms) => ms.length)),
   );
 
-  private readonly allOthersLeft$ = this.memberships$.pipe(
-    pairwise(),
-    filter(
-      ([prev, current]) =>
-        current.every((m) => m.sender === this.userId) &&
-        prev.some((m) => m.sender !== this.userId),
-    ),
-    map(() => {}),
-    take(1),
-  );
-
-  public readonly autoLeave$ = this.options.autoLeaveWhenOthersLeft
-    ? this.allOthersLeft$
-    : NEVER;
-
   private readonly didSendCallNotification$ = fromEvent(
     this.matrixRTCSession,
     MatrixRTCSessionEvent.DidSendCallNotification,
@@ -994,6 +992,7 @@ export class CallViewModel extends ViewModel {
       MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
     >
   >;
+
   /**
    * Whenever the RTC session tells us that it intends to ring the remote
    * participant's devices, this emits an Observable tracking the current state of
@@ -1109,6 +1108,56 @@ export class CallViewModel extends ViewModel {
     map(() => {}),
     throttleTime(THROTTLE_SOUND_EFFECT_MS),
   );
+  /**
+   * This observable tracks the matrix users that are currently in the call.
+   * There can be just one matrix user with multiple participants (see also participantChanges$)
+   */
+  public readonly matrixUserChanges$ = this.userMedia$.pipe(
+    map(
+      (mediaItems) =>
+        new Set(
+          mediaItems
+            .map((m) => m.vm.member?.userId)
+            .filter((id) => id !== undefined),
+        ),
+    ),
+    scan<
+      Set<string>,
+      {
+        userIds: Set<string>;
+        joinedUserIds: Set<string>;
+        leftUserIds: Set<string>;
+      }
+    >(
+      (prevState, userIds) => {
+        const left = new Set(
+          [...prevState.userIds].filter((id) => !userIds.has(id)),
+        );
+        const joined = new Set(
+          [...userIds].filter((id) => !prevState.userIds.has(id)),
+        );
+        return { userIds: userIds, joinedUserIds: joined, leftUserIds: left };
+      },
+      { userIds: new Set(), joinedUserIds: new Set(), leftUserIds: new Set() },
+    ),
+  );
+
+  private readonly allOthersLeft$ = this.matrixUserChanges$.pipe(
+    map(({ userIds, leftUserIds }) => {
+      if (!this.userId) {
+        logger.warn("Could not access user ID to compute allOthersLeft");
+        return false;
+      }
+      return (
+        userIds.size === 1 && userIds.has(this.userId) && leftUserIds.size > 0
+      );
+    }),
+    startWith(false),
+  );
+
+  public readonly autoLeave$ = this.options.autoLeaveWhenOthersLeft
+    ? this.allOthersLeft$
+    : NEVER;
 
   /**
    * List of MediaItems that we want to display, that are of type ScreenShare
@@ -1791,8 +1840,6 @@ export class CallViewModel extends ViewModel {
     ),
     filter((v) => v.playSounds),
   );
-  // TODO-REBASE: expose connection state observable
-  public readonly livekitConnectionState$: Observable<ECConnectionState>;
 
   public constructor(
     // A call is permanently tied to a single Matrix room
@@ -1839,18 +1886,34 @@ export class CallViewModel extends ViewModel {
         );
       });
 
-    this.join$.pipe(this.scope.bind()).subscribe(() => {
-      // TODO-MULTI-SFU: this makes no sense what so ever!!!
-      // need to look into this again.
-      // leaveRTCSession(
-      //   this.matrixRTCSession,
-      //   "user", // TODO-MULTI-SFU ?
-      //   // Wait for the sound in widget mode (it's not long)
-      //   Promise.resolve(), // TODO-MULTI-SFU
-      //   //Promise.all([audioPromise, posthogRequest]),
-      // ).catch((e) => {
-      //   logger.error("Error leaving RTC session", e);
-      // });
+    this.allOthersLeft$
+      .pipe(
+        this.scope.bind(),
+        filter((l) => (l && this.options.autoLeaveWhenOthersLeft) ?? false),
+        distinctUntilChanged(),
+      )
+      .subscribe(() => {
+        this.leave$.next("allOthersLeft");
+      });
+
+    this.callPickupState$.pipe(this.scope.bind()).subscribe((state) => {
+      if (state === "timeout" || state === "decline") {
+        this.leave$.next(state);
+      }
+    });
+
+    this.leave$.pipe(this.scope.bind()).subscribe((reason) => {
+      const { confineToRoom } = getUrlParams();
+      leaveRTCSession(this.matrixRTCSession, "user")
+        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
+        .then(() => {
+          if (!confineToRoom && !PosthogAnalytics.instance.isEnabled()) {
+            this._left$.next(reason);
+          }
+        })
+        .catch((e) => {
+          logger.error("Error leaving RTC session", e);
+        });
     });
 
     // Pause upstream of all local media tracks when we're disconnected from

@@ -184,9 +184,6 @@ export const GroupCallView: FC<Props> = ({
   } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
   const [useNewMembershipManager] = useSetting(useNewMembershipManagerSetting);
-  const [useExperimentalToDeviceTransport] = useSetting(
-    useExperimentalToDeviceTransportSetting,
-  );
 
   // Save the password once we start the groupCallView
   useEffect(() => {
@@ -223,12 +220,6 @@ export const GroupCallView: FC<Props> = ({
       try {
         setJoined(true);
         // TODO-MULTI-SFU what to do with error handling now that we don't use this function?
-        // await enterRTCSession(
-        //   rtcSession,
-        //   perParticipantE2EE,
-        //   useNewMembershipManager,
-        //   useExperimentalToDeviceTransport,
-        // );
       } catch (e) {
         if (e instanceof ElementCallError) {
           setExternalError(e);
@@ -322,16 +313,16 @@ export const GroupCallView: FC<Props> = ({
 
   const navigate = useNavigate();
 
-  const onLeave = useCallback(
-    (
-      cause: "user" | "error" = "user",
-      playSound: CallEventSounds = "left",
-    ): void => {
+  const onLeft = useCallback(
+    (reason: "timeout" | "user" | "allOthersLeft" | "decline"): void => {
+      let playSound: CallEventSounds = "left";
+      if (reason === "timeout" || reason === "decline") playSound = reason;
+
+      setLeft(true);
       const audioPromise = leaveSoundContext.current?.playSound(playSound);
       // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
       // therefore we want the event to be sent instantly without getting queued/batched.
       const sendInstantly = !!widget;
-      setLeft(true);
       // we need to wait until the callEnded event is tracked on posthog.
       // Otherwise the iFrame gets killed before the callEnded event got tracked.
       const posthogRequest = new Promise((resolve) => {
@@ -339,37 +330,33 @@ export const GroupCallView: FC<Props> = ({
           room.roomId,
           rtcSession.memberships.length,
           sendInstantly,
+
           rtcSession,
         );
         window.setTimeout(resolve, 10);
       });
 
-      // TODO-MULTI-SFU find a solution if this is supposed to happen here or in the view model.
-      leaveRTCSession(
-        rtcSession,
-        cause,
-        // Wait for the sound in widget mode (it's not long)
-        Promise.all([audioPromise, posthogRequest]),
-      )
-        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-        .then(async () => {
+      void Promise.all([audioPromise, posthogRequest])
+        .then(() => {
           if (
             !isPasswordlessUser &&
             !confineToRoom &&
             !PosthogAnalytics.instance.isEnabled()
           ) {
-            await navigate("/");
+            void navigate("/");
           }
         })
-        .catch((e) => {
-          logger.error("Error leaving RTC session", e);
-        });
+        .catch(() =>
+          logger.error(
+            "could failed to play leave audio or send posthog leave event",
+          ),
+        );
     },
     [
       leaveSoundContext,
       widget,
-      rtcSession,
       room.roomId,
+      rtcSession,
       isPasswordlessUser,
       confineToRoom,
       navigate,
@@ -457,7 +444,7 @@ export const GroupCallView: FC<Props> = ({
           matrixInfo={matrixInfo}
           rtcSession={rtcSession as MatrixRTCSession}
           matrixRoom={room}
-          onLeave={onLeave}
+          onLeft={onLeft}
           header={header}
           muteStates={muteStates}
           e2eeSystem={e2eeSystem}
@@ -518,7 +505,8 @@ export const GroupCallView: FC<Props> = ({
       }}
       onError={
         (/**error*/) => {
-          if (rtcSession.isJoined()) onLeave("error");
+          // TODO this should not be "user". It needs a new case
+          if (rtcSession.isJoined()) onLeft("user");
         }
       }
     >
