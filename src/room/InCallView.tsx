@@ -98,7 +98,7 @@ import {
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
 import { useTypedEventEmitter } from "../useEvents.ts";
-import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
+import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
@@ -585,6 +585,8 @@ export const InCallView: FC<InCallViewProps> = ({
     matrixRoom.roomId,
   );
 
+  const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
+  const memberships = useBehavior(vm.memberships$);
   const toggleScreensharing = useCallback(() => {
     throw new Error("TODO-MULTI-SFU");
     // localParticipant
@@ -720,7 +722,14 @@ export const InCallView: FC<InCallViewProps> = ({
           </Text>
         )
       }
-      {/* TODO-MULTI-SFU: <MatrixAudioRenderer members={memberships} muted={muteAllAudio} /> */}
+      {allLivekitRooms.map((roomItem) => (
+        <LivekitRoomAudioRenderer
+          key={roomItem.url}
+          livekitRoom={roomItem.room}
+          members={memberships}
+          muted={muteAllAudio}
+        />
+      ))}
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />

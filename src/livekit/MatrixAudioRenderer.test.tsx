@@ -18,7 +18,7 @@ import { useTracks } from "@livekit/components-react";
 
 import { testAudioContext } from "../useAudioContext.test";
 import * as MediaDevicesContext from "../MediaDevicesContext";
-import { MatrixAudioRenderer } from "./MatrixAudioRenderer";
+import { LivekitRoomAudioRenderer } from "./MatrixAudioRenderer";
 import { mockMediaDevices, mockTrack } from "../utils/test";
 
 export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
@@ -54,7 +54,7 @@ vi.mocked(useTracks).mockReturnValue(tracks);
 it("should render for member", () => {
   const { container, queryAllByTestId } = render(
     <MediaDevicesProvider value={mockMediaDevices({})}>
-      <MatrixAudioRenderer
+      <LivekitRoomAudioRenderer
         members={[{ sender: "test", deviceId: "123" }] as CallMembership[]}
       />
     </MediaDevicesProvider>,
@@ -69,7 +69,7 @@ it("should not render without member", () => {
   ] as CallMembership[];
   const { container, queryAllByTestId } = render(
     <MediaDevicesProvider value={mockMediaDevices({})}>
-      <MatrixAudioRenderer members={memberships} />
+      <LivekitRoomAudioRenderer members={memberships} />
     </MediaDevicesProvider>,
   );
   expect(container).toBeTruthy();
@@ -79,7 +79,7 @@ it("should not render without member", () => {
 it("should not setup audioContext gain and pan if there is no need to.", () => {
   render(
     <MediaDevicesProvider value={mockMediaDevices({})}>
-      <MatrixAudioRenderer
+      <LivekitRoomAudioRenderer
         members={[{ sender: "test", deviceId: "123" }] as CallMembership[]}
       />
     </MediaDevicesProvider>,
@@ -102,7 +102,7 @@ it("should setup audioContext gain and pan", () => {
   });
   render(
     <MediaDevicesProvider value={mockMediaDevices({})}>
-      <MatrixAudioRenderer
+      <LivekitRoomAudioRenderer
         members={[{ sender: "test", deviceId: "123" }] as CallMembership[]}
       />
     </MediaDevicesProvider>,

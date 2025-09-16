@@ -45,7 +45,7 @@ import {
 } from "../settings/settings";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
-import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer";
+import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
 
@@ -88,7 +88,7 @@ beforeEach(() => {
 
   // MatrixAudioRenderer is tested separately.
   (
-    MatrixAudioRenderer as MockedFunction<typeof MatrixAudioRenderer>
+    LivekitRoomAudioRenderer as MockedFunction<typeof LivekitRoomAudioRenderer>
   ).mockImplementation((_props) => {
     return <div>mocked: MatrixAudioRenderer</div>;
   });
