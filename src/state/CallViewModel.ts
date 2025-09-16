@@ -955,6 +955,7 @@ export class CallViewModel extends ViewModel {
    * The current call pickup state of the call.
    *  - "unknown": The client has not yet sent the notification event. We don't know if it will because it first needs to send its own membership.
    *     Then we can conclude if we were the first one to join or not.
+   *     This may also be set if we are disconnected.
    *  - "ringing": The call is ringing on other devices in this room (This client should give audiovisual feedback that this is happening).
    *  - "timeout": No-one picked up in the defined time this call should be ringing on others devices.
    *     The call failed. If desired this can be used as a trigger to exit the call.
@@ -965,13 +966,13 @@ export class CallViewModel extends ViewModel {
     "unknown" | "ringing" | "timeout" | "decline" | "success" | null
   > = this.options.waitForCallPickup
     ? this.scope.behavior<
-        "unknown" | "ringing" | "timeout" | "decline" | "success" | null
+        "unknown" | "ringing" | "timeout" | "decline" | "success"
       >(
         combineLatest(this.livekitDisconnected$, this.someoneElseJoined$).pipe(
           switchMap(([isDisconnected, someoneElseJoined]) => {
             if (isDisconnected) {
               // Do not ring until we're connected.
-              return of(null);
+              return of("unknown" as const);
             } else if (someoneElseJoined) {
               of("success" as const);
             }
