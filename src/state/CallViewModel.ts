@@ -9,6 +9,7 @@ import { observeParticipantEvents } from "@livekit/components-core";
 import {
   ConnectionState,
   type BaseKeyProvider,
+  type E2EEOptions,
   ExternalE2EEKeyProvider,
   type Room as LivekitRoom,
   type LocalParticipant,
@@ -437,6 +438,13 @@ export class CallViewModel extends ViewModel {
     this.options.encryptionSystem,
     this.matrixRTCSession,
   );
+  private readonly e2eeLivekitOptions = (): E2EEOptions | undefined =>
+    this.livekitE2EEKeyProvider
+      ? {
+          keyProvider: this.livekitE2EEKeyProvider,
+          worker: new E2EEWorker(),
+        }
+      : undefined;
 
   private readonly localFocus = makeFocus(this.matrixRTCSession);
 
@@ -450,12 +458,7 @@ export class CallViewModel extends ViewModel {
         this.membershipsAndFocusMap$,
         this.mediaDevices,
         this.muteStates,
-        this.livekitE2EEKeyProvider
-          ? {
-              keyProvider: this.livekitE2EEKeyProvider,
-              worker: new E2EEWorker(),
-            }
-          : undefined,
+        this.e2eeLivekitOptions(),
       ),
   );
 
@@ -511,12 +514,7 @@ export class CallViewModel extends ViewModel {
                   this.matrixRTCSession.room.client,
                   this.scope,
                   this.membershipsAndFocusMap$,
-                  this.livekitE2EEKeyProvider
-                    ? {
-                        keyProvider: this.livekitE2EEKeyProvider,
-                        worker: new E2EEWorker(),
-                      }
-                    : undefined,
+                  this.e2eeLivekitOptions(),
                 );
               } else {
                 logger.log(
@@ -1813,20 +1811,24 @@ export class CallViewModel extends ViewModel {
         void enterRTCSession(
           this.matrixRTCSession,
           localFocus,
-          this.options.encryptionSystem.kind !== E2eeType.PER_PARTICIPANT,
+          this.options.encryptionSystem.kind !== E2eeType.NONE,
+          true,
+          true,
         );
       });
 
     this.join$.pipe(this.scope.bind()).subscribe(() => {
-      leaveRTCSession(
-        this.matrixRTCSession,
-        "user", // TODO-MULTI-SFU ?
-        // Wait for the sound in widget mode (it's not long)
-        Promise.resolve(), // TODO-MULTI-SFU
-        //Promise.all([audioPromise, posthogRequest]),
-      ).catch((e) => {
-        logger.error("Error leaving RTC session", e);
-      });
+      // TODO-MULTI-SFU: this makes no sense what so ever!!!
+      // need to look into this again.
+      // leaveRTCSession(
+      //   this.matrixRTCSession,
+      //   "user", // TODO-MULTI-SFU ?
+      //   // Wait for the sound in widget mode (it's not long)
+      //   Promise.resolve(), // TODO-MULTI-SFU
+      //   //Promise.all([audioPromise, posthogRequest]),
+      // ).catch((e) => {
+      //   logger.error("Error leaving RTC session", e);
+      // });
     });
 
     // Pause upstream of all local media tracks when we're disconnected from
