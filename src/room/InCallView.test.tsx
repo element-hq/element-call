@@ -17,7 +17,7 @@ import { act, render, type RenderResult } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
-import { ConnectionState, type LocalParticipant } from "livekit-client";
+import { type LocalParticipant } from "livekit-client";
 import { of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -180,7 +180,6 @@ function createInCallView(): RenderResult & {
                 onLeave={function (): void {
                   throw new Error("Function not implemented.");
                 }}
-                connState={ConnectionState.Connected}
                 onShareClick={null}
               />
             </RoomContext>

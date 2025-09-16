@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import { IconButton, Text, Tooltip } from "@vector-im/compound-web";
-import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
+import { type Room as LivekitRoom } from "livekit-client";
 import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
@@ -63,7 +63,6 @@ import { type MuteStates } from "./MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
-import { type ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
 import {
   CallViewModel,
@@ -212,12 +211,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   return (
     <RoomContext value={livekitRoom}>
       <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
-        <InCallView
-          {...props}
-          vm={vm}
-          livekitRoom={livekitRoom}
-          connState={connState}
-        />
+        <InCallView {...props} vm={vm} livekitRoom={livekitRoom} />
       </ReactionsSenderProvider>
     </RoomContext>
   );
@@ -235,7 +229,6 @@ export interface InCallViewProps {
   onLeave: (cause: "user", soundFile?: CallEventSounds) => void;
   header: HeaderStyle;
   otelGroupCallMembership?: OTelGroupCallMembership;
-  connState: ECConnectionState;
   onShareClick: (() => void) | null;
 }
 
@@ -249,7 +242,6 @@ export const InCallView: FC<InCallViewProps> = ({
   muteStates,
   onLeave,
   header: headerStyle,
-  connState,
   onShareClick,
 }) => {
   const { t } = useTranslation();
@@ -257,11 +249,11 @@ export const InCallView: FC<InCallViewProps> = ({
     useReactionsSender();
 
   useWakeLock();
+  const isDisconnected = useBehavior(vm.livekitDisconnected$);
 
   // annoyingly we don't get the disconnection reason this way,
   // only by listening for the emitted event
-  if (connState === ConnectionState.Disconnected)
-    throw new ConnectionLostError();
+  if (isDisconnected) throw new ConnectionLostError();
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure();

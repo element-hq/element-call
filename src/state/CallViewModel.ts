@@ -465,6 +465,14 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
+  public readonly livekitDisconnected$ = this.scope.behavior(
+    and$(
+      this.livekitConnectionState$.pipe(
+        map((state) => state === ConnectionState.Disconnected),
+      ),
+    ),
+  );
+
   private readonly connected$ = this.scope.behavior(
     and$(
       this.matrixConnected$,
@@ -957,15 +965,19 @@ export class CallViewModel extends ViewModel {
     "unknown" | "ringing" | "timeout" | "decline" | "success" | null
   > = this.options.waitForCallPickup
     ? this.scope.behavior<
-        "unknown" | "ringing" | "timeout" | "decline" | "success"
+        "unknown" | "ringing" | "timeout" | "decline" | "success" | null
       >(
-        this.someoneElseJoined$.pipe(
-          switchMap((someoneElseJoined) =>
-            someoneElseJoined
-              ? of("success" as const)
-              : // Show the ringing state of the most recent ringing attempt.
-                this.ring$.pipe(switchAll()),
-          ),
+        combineLatest(this.livekitDisconnected$, this.someoneElseJoined$).pipe(
+          switchMap(([isDisconnected, someoneElseJoined]) => {
+            if (isDisconnected) {
+              // Do not ring until we're connected.
+              return of(null);
+            } else if (someoneElseJoined) {
+              of("success" as const);
+            }
+            // Show the ringing state of the most recent ringing attempt.
+            return this.ring$.pipe(switchAll());
+          }),
           // The state starts as 'unknown' because we don't know if the RTC
           // session will actually send a notify event yet. It will only be
           // known once we send our own membership and see that we were the
