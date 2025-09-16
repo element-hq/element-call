@@ -9,6 +9,11 @@ on:
         type: string # This would ideally be a `choice` type, but that isn't supported yet
         description: The package type to be built. Must be one of 'full' or 'embedded'
         required: true
+      build_mode:
+        type: string # This would ideally be a `choice` type, but that isn't supported yet
+        description: The build mode for vite. Must be either 'development' or 'production'
+        required: false
+        default: production
     secrets:
       SENTRY_ORG:
         required: true
@@ -37,20 +42,8 @@ jobs:
           node-version-file: ".node-version"
       - name: Install dependencies
         run: "yarn install --immutable"
-      - name: Build full version
-        if: ${{ inputs.package == 'full' }}
-        run: "yarn run build:full"
-        env:
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-          SENTRY_URL: ${{ secrets.SENTRY_URL }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          VITE_APP_VERSION: ${{ inputs.vite_app_version }}
-          NODE_OPTIONS: "--max-old-space-size=4096"
-      - name: Build embedded
-        if: ${{ inputs.package == 'embedded' }}
-        run: "yarn run build:embedded"
+      - name: Build Element Call
+        run: ${{ format('yarn run build:{0}:{1}', inputs.package, inputs.build_mode) }}
         env:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}

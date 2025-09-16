@@ -9,11 +9,14 @@ import { expect, test } from "@playwright/test";
 
 import { widgetTest } from "../fixtures/widget-user.ts";
 
+// Skip test, including Fixtures
+widgetTest.skip(
+  ({ browserName }) => browserName === "firefox",
+  "This test is not working on firefox, after hangup brooks is locked in a strange state with a blank widget",
+);
+
 widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
-  test.skip(
-    browserName === "firefox",
-    "This test is not working on firefox, after hangup brooks is locked in a strange state with a blank widget",
-  );
+  test.slow(); // Triples the timeout
 
   const { brooks, whistler } = asWidget;
 

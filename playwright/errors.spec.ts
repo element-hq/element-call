@@ -72,3 +72,56 @@ test("Should automatically retry non fatal JWT errors", async ({
   await hasRetriedPromise;
   await expect(page.getByTestId("video").first()).toBeVisible();
 });
+
+test("Should show error screen if call creation is restricted", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  // We need the socket connection to fail, but this cannot be done by using the websocket route.
+  // Instead, we will trick the app by returning a bad URL for the SFU that will not be reachable an error out.
+  await page.route(
+    "**/matrix-rtc.m.localhost/livekit/jwt/sfu/get",
+    async (route) =>
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          url: "wss://badurltotricktest/livekit/sfu",
+          jwt: "FAKE",
+        }),
+      }),
+  );
+
+  // Then if the socket connection fails, livekit will try to validate the token!
+  // Livekit will not auto_create anymore and will return a 404 error.
+  await page.route(
+    "**/badurltotricktest/livekit/sfu/rtc/validate?**",
+    async (route) =>
+      await route.fulfill({
+        status: 404,
+        contentType: "text/plain",
+        body: "requested room does not exist",
+      }),
+  );
+
+  await page.pause();
+
+  await page.getByTestId("home_callName").click();
+  await page.getByTestId("home_callName").fill("HelloCall");
+  await page.getByTestId("home_displayName").click();
+  await page.getByTestId("home_displayName").fill("John Doe");
+  await page.getByTestId("home_go").click();
+
+  // Join the call
+  await page.getByTestId("lobby_joinCall").click();
+
+  await page.pause();
+  // Should fail
+  await expect(page.getByText("Failed to create call")).toBeVisible();
+  await expect(
+    page.getByText(
+      /Call creation might be restricted to authorized users only/,
+    ),
+  ).toBeVisible();
+});

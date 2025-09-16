@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { forwardRef } from "react";
+import { type ReactNode } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
@@ -24,10 +24,11 @@ export const makeSpotlightLandscapeLayout: CallLayout<
 > = ({ minBounds$ }) => ({
   scrollingOnTop: false,
 
-  fixed: forwardRef(function SpotlightLandscapeLayoutFixed(
-    { model, Slot },
+  fixed: function SpotlightLandscapeLayoutFixed({
     ref,
-  ) {
+    model,
+    Slot,
+  }): ReactNode {
     useUpdateLayout();
     useObservableEagerState(minBounds$);
 
@@ -43,12 +44,13 @@ export const makeSpotlightLandscapeLayout: CallLayout<
         <div className={styles.grid} />
       </div>
     );
-  }),
+  },
 
-  scrolling: forwardRef(function SpotlightLandscapeLayoutScrolling(
-    { model, Slot },
+  scrolling: function SpotlightLandscapeLayoutScrolling({
     ref,
-  ) {
+    model,
+    Slot,
+  }): ReactNode {
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
     useObservableEagerState(minBounds$);
@@ -69,5 +71,5 @@ export const makeSpotlightLandscapeLayout: CallLayout<
         </div>
       </div>
     );
-  }),
+  },
 });

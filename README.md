@@ -143,7 +143,8 @@ via the `org.matrix.msc4143.rtc_foci` key, e.g.:
 where the format for MatrixRTC using LiveKit backend is defined in
 [MSC4195](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md).
 In the example above Matrix clients do discover a focus of type `livekit` which
-points them to a Matrix LiveKit JWT Auth Service via `livekit_service_url`.
+points them to a [MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service)
+via `livekit_service_url`.
 
 ### Backend Selection
 
@@ -154,9 +155,9 @@ points them to a Matrix LiveKit JWT Auth Service via `livekit_service_url`.
   the **first participant who joined the call** defines via the `foci_preferred`
   key in their `org.matrix.msc3401.call.member` which actual MatrixRTC backend
   will be used for this call.
-- During the actual call join flow, the **LiveKit JWT Auth Service** provides
-  the client with the **LiveKit SFU WebSocket URL** and an **access JWT token**
-  in order to exchange media via WebRTC.
+- During the actual call join flow, the **[MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service)**
+  provides the client with the **LiveKit SFU WebSocket URL** and an
+  **access JWT token** in order to exchange media via WebRTC.
 
 The example below illustrates how backend selection works across **Matrix
 federation**, using the setup from sites A, B, and C. It demonstrates backend
@@ -208,7 +209,7 @@ A docker compose file `dev-backend-docker-compose.yml` is provided to start the
 whole stack of components which is required for a local development environment:
 
 - Minimum Synapse Setup (servername: `synapse.m.localhost`)
-- LiveKit Authorization Service (Note requires Federation API and hence a TLS reverse proxy)
+- MatrixRTC Authorization Service (Note requires Federation API and hence a TLS reverse proxy)
 - Minimum LiveKit SFU Setup using dev defaults for config
 - Redis db for completeness
 - Minimum `localhost` Certificate Authority (CA) for Transport Layer Security (TLS)

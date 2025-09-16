@@ -19,8 +19,11 @@ import {
   type Focus,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
+  MembershipManagerEvent,
   type SessionMembershipData,
+  Status,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import {
   type LocalParticipant,
   type LocalTrackPublication,
@@ -35,6 +38,7 @@ import {
   type RoomAndToDeviceEventsHandlerMap,
 } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import { type TrackReference } from "@livekit/components-core";
+import EventEmitter from "events";
 
 import {
   LocalUserMediaViewModel,
@@ -46,6 +50,9 @@ import {
   type ResolvedConfigOptions,
 } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
+import { type MediaDevices } from "../state/MediaDevices";
+import { type Behavior, constant } from "../state/Behavior";
+import { ObservableScope } from "../state/ObservableScope";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -66,6 +73,12 @@ export interface OurRunHelpers extends RunHelpers {
    * diagram.
    */
   schedule: (marbles: string, actions: Record<string, () => void>) => void;
+  behavior<T = string>(
+    marbles: string,
+    values?: { [marble: string]: T },
+    error?: unknown,
+  ): Behavior<T>;
+  scope: ObservableScope;
 }
 
 interface TestRunnerGlobal {
@@ -81,12 +94,14 @@ export function withTestScheduler(
   const scheduler = new TestScheduler((actual, expected) => {
     expect(actual).deep.equals(expected);
   });
+  const scope = new ObservableScope();
   // we set the test scheduler as a global so that you can watch it in a debugger
   // and get the frame number. e.g. `rxjsTestScheduler?.now()`
   (global as unknown as TestRunnerGlobal).rxjsTestScheduler = scheduler;
   scheduler.run((helpers) =>
     continuation({
       ...helpers,
+      scope,
       schedule(marbles, actions) {
         const actionsObservable$ = helpers
           .cold(marbles)
@@ -97,31 +112,58 @@ export function withTestScheduler(
         // Run the actions and verify that none of them error
         helpers.expectObservable(actionsObservable$).toBe(marbles, results);
       },
+      behavior<T>(
+        marbles: string,
+        values?: { [marble: string]: T },
+        error?: unknown,
+      ) {
+        // Generate a hot Observable with helpers.hot and use it as a Behavior.
+        // To do this, we need to ensure that the initial value emits
+        // synchronously upon subscription. The issue is that helpers.hot emits
+        // frame 0 of the marble diagram *asynchronously*, only once we return
+        // from the continuation, so we need to splice out the initial marble
+        // and turn it into a proper initial value.
+        const initialMarbleIndex = marbles.search(/[^ ]/);
+        if (initialMarbleIndex === -1)
+          throw new Error("Behavior must have an initial value");
+        const initialMarble = marbles[initialMarbleIndex];
+        const initialValue =
+          values === undefined ? (initialMarble as T) : values[initialMarble];
+        // The remainder of the marble diagram should start on frame 1
+        return scope.behavior(
+          helpers.hot(
+            `-${marbles.slice(initialMarbleIndex + 1)}`,
+            values,
+            error,
+          ),
+          initialValue,
+        );
+      },
     }),
   );
+  scope.end();
 }
 
 interface EmitterMock<T> {
-  on: () => T;
-  off: () => T;
-  addListener: () => T;
-  removeListener: () => T;
+  on: (...args: unknown[]) => T;
+  off: (...args: unknown[]) => T;
+  addListener: (...args: unknown[]) => T;
+  removeListener: (...args: unknown[]) => T;
+  emit: (event: string | symbol, ...args: unknown[]) => boolean;
 }
 
-function mockEmitter<T>(): EmitterMock<T> {
+export function mockEmitter<T>(): EmitterMock<T> {
+  const ee = new EventEmitter();
   return {
-    on(): T {
-      return this as T;
-    },
-    off(): T {
-      return this as T;
-    },
-    addListener(): T {
-      return this as T;
-    },
-    removeListener(): T {
-      return this as T;
-    },
+    on: ee.on.bind(ee) as unknown as (...args: unknown[]) => T,
+    off: ee.off.bind(ee) as unknown as (...args: unknown[]) => T,
+    addListener: ee.addListener.bind(ee) as unknown as (
+      ...args: unknown[]
+    ) => T,
+    removeListener: ee.removeListener.bind(ee) as unknown as (
+      ...args: unknown[]
+    ) => T,
+    emit: ee.emit.bind(ee),
   };
 }
 
@@ -194,6 +236,7 @@ export function mockLocalParticipant(
 ): LocalParticipant {
   return {
     isLocal: true,
+    trackPublications: new Map(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
     ...mockEmitter(),
@@ -204,20 +247,22 @@ export function mockLocalParticipant(
 export async function withLocalMedia(
   localRtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
+  localParticipant: LocalParticipant,
+  mediaDevices: MediaDevices,
   continuation: (vm: LocalUserMediaViewModel) => void | Promise<void>,
 ): Promise<void> {
-  const localParticipant = mockLocalParticipant({});
   const vm = new LocalUserMediaViewModel(
     "local",
     mockMatrixRoomMember(localRtcMember, roomMember),
-    of(localParticipant),
+    constant(localParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({ localParticipant }),
-    of(roomMember.rawDisplayName ?? "nodisplayname"),
-    of(null),
-    of(null),
+    mediaDevices,
+    constant(roomMember.rawDisplayName ?? "nodisplayname"),
+    constant(null),
+    constant(null),
   );
   try {
     await continuation(vm);
@@ -254,9 +299,10 @@ export async function withRemoteMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
-    of(roomMember.rawDisplayName ?? "nodisplayname"),
-    of(null),
-    of(null),
+    constant(false),
+    constant(roomMember.rawDisplayName ?? "nodisplayname"),
+    constant(null),
+    constant(null),
   );
   try {
     await continuation(vm);
@@ -275,8 +321,10 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
 }
 
 export class MockRTCSession extends TypedEventEmitter<
-  MatrixRTCSessionEvent | RoomAndToDeviceEvents,
-  MatrixRTCSessionEventHandlerMap & RoomAndToDeviceEventsHandlerMap
+  MatrixRTCSessionEvent | RoomAndToDeviceEvents | MembershipManagerEvent,
+  MatrixRTCSessionEventHandlerMap &
+    RoomAndToDeviceEventsHandlerMap &
+    MembershipManagerEventHandlerMap
 > {
   public readonly statistics = {
     counters: {},
@@ -286,7 +334,6 @@ export class MockRTCSession extends TypedEventEmitter<
 
   public constructor(
     public readonly room: Room,
-    private localMembership: CallMembership,
     public memberships: CallMembership[] = [],
   ) {
     super();
@@ -298,17 +345,40 @@ export class MockRTCSession extends TypedEventEmitter<
   }
 
   public withMemberships(
-    rtcMembers$: Observable<Partial<CallMembership>[]>,
+    rtcMembers$: Behavior<Partial<CallMembership>[]>,
   ): MockRTCSession {
     rtcMembers$.subscribe((m) => {
       const old = this.memberships;
-      // always prepend the local participant
-      const updated = [this.localMembership, ...(m as CallMembership[])];
-      this.memberships = updated;
-      this.emit(MatrixRTCSessionEvent.MembershipsChanged, old, updated);
+      this.memberships = m as CallMembership[];
+      this.emit(
+        MatrixRTCSessionEvent.MembershipsChanged,
+        old,
+        this.memberships,
+      );
     });
 
     return this;
+  }
+
+  private _membershipStatus = Status.Connected;
+  public get membershipStatus(): Status {
+    return this._membershipStatus;
+  }
+  public set membershipStatus(value: Status) {
+    const prev = this._membershipStatus;
+    this._membershipStatus = value;
+    if (value !== prev)
+      this.emit(MembershipManagerEvent.StatusChanged, prev, value);
+  }
+
+  private _probablyLeft = false;
+  public get probablyLeft(): boolean {
+    return this._probablyLeft;
+  }
+  public set probablyLeft(value: boolean) {
+    const prev = this._probablyLeft;
+    this._probablyLeft = value;
+    if (value !== prev) this.emit(MembershipManagerEvent.ProbablyLeft, value);
   }
 }
 
@@ -332,3 +402,18 @@ export const mockTrack = (identity: string): TrackReference =>
     track: {},
     source: {},
   }) as unknown as TrackReference;
+
+export const deviceStub = {
+  available$: of(new Map<never, never>()),
+  selected$: of(undefined),
+  select(): void {},
+};
+
+export function mockMediaDevices(data: Partial<MediaDevices>): MediaDevices {
+  return {
+    audioInput: deviceStub,
+    audioOutput: deviceStub,
+    videoInput: deviceStub,
+    ...data,
+  } as MediaDevices;
+}

@@ -16,8 +16,9 @@ import {
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { useEarpieceAudioConfig } from "./MediaDevicesContext";
+import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
+import * as controls from "../controls";
 
 export interface MatrixAudioRendererProps {
   /**
@@ -59,6 +60,7 @@ export function MatrixAudioRenderer({
   );
 
   const loggedInvalidIdentities = useRef(new Set<string>());
+
   /**
    * Log an invalid livekit track identity.
    * A invalid identity is one that does not match any of the matrix rtc members.
@@ -69,7 +71,7 @@ export function MatrixAudioRenderer({
   const logInvalid = (identity: string, validIdentities: Set<string>): void => {
     if (loggedInvalidIdentities.current.has(identity)) return;
     logger.warn(
-      `Audio track ${identity} has no matching matrix call member`,
+      `[MatrixAudioRenderer] Audio track ${identity} has no matching matrix call member`,
       `current members: ${Array.from(validIdentities.values())}`,
       `track will not get rendered`,
     );
@@ -96,6 +98,14 @@ export function MatrixAudioRenderer({
       isValid
     );
   });
+  useEffect(() => {
+    if (!tracks.some((t) => !validIdentities.has(t.participant.identity))) {
+      logger.debug(
+        `[MatrixAudioRenderer] All audio tracks have a matching matrix call member identity.`,
+      );
+      loggedInvalidIdentities.current.clear();
+    }
+  }, [tracks, validIdentities]);
 
   // This component is also (in addition to the "only play audio for connected members" logic above)
   // responsible for mimicking earpiece audio on iPhones.
@@ -171,7 +181,7 @@ interface StereoPanAudioTrackProps {
 /**
  * This wraps `livekit.AudioTrack` to allow adding audio nodes to a track.
  * It main purpose is to remount the AudioTrack component when switching from
- * audiooContext to normal audio playback.
+ * audioContext to normal audio playback.
  * As of now the AudioTrack component does not support adding audio nodes while being mounted.
  * @param param0
  * @returns
@@ -191,7 +201,7 @@ function AudioTrackWithAudioNodes({
   const [trackReady, setTrackReady] = useReactiveState(
     () => false,
     // We only want the track to reset once both (audioNodes and audioContext) are set.
-    // for unsetting the audioContext its enough if one of the the is undefined.
+    // for unsetting the audioContext its enough if one of the two is undefined.
     [audioContext && audioNodes],
   );
 
@@ -204,6 +214,7 @@ function AudioTrackWithAudioNodes({
       useContext ? [audioNodes.gain!, audioNodes.pan!] : [],
     );
     setTrackReady(true);
+    controls.setPlaybackStarted();
   }, [audioContext, audioNodes, setTrackReady, trackReady, trackRef]);
 
   return (

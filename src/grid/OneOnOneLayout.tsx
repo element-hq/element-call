@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { forwardRef, useCallback, useMemo } from "react";
+import { type ReactNode, useCallback, useMemo } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
@@ -13,6 +13,7 @@ import { type OneOnOneLayout as OneOnOneLayoutModel } from "../state/CallViewMod
 import { type CallLayout, arrangeTiles } from "./CallLayout";
 import styles from "./OneOnOneLayout.module.css";
 import { type DragCallback, useUpdateLayout } from "./Grid";
+import { useBehavior } from "../useBehavior";
 
 /**
  * An implementation of the "one-on-one" layout, in which the remote participant
@@ -24,15 +25,15 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
 }) => ({
   scrollingOnTop: false,
 
-  fixed: forwardRef(function OneOnOneLayoutFixed(_props, ref) {
+  fixed: function OneOnOneLayoutFixed({ ref }): ReactNode {
     useUpdateLayout();
     return <div ref={ref} />;
-  }),
+  },
 
-  scrolling: forwardRef(function OneOnOneLayoutScrolling({ model, Slot }, ref) {
+  scrolling: function OneOnOneLayoutScrolling({ ref, model, Slot }): ReactNode {
     useUpdateLayout();
     const { width, height } = useObservableEagerState(minBounds$);
-    const pipAlignmentValue = useObservableEagerState(pipAlignment$);
+    const pipAlignmentValue = useBehavior(pipAlignment$);
     const { tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, height, 1),
       [width, height],
@@ -66,5 +67,5 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
         </Slot>
       </div>
     );
-  }),
+  },
 });

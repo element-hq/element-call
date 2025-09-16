@@ -106,28 +106,35 @@ export const widget = ((): WidgetHelpers | null => {
       if (!baseUrl) throw new Error("Base URL must be supplied");
 
       // These are all the event types the app uses
+      const sendEvent = [
+        EventType.CallNotify, // Sent as a deprecated fallback
+        EventType.RTCNotification,
+      ];
       const sendRecvEvent = [
         "org.matrix.rageshake_request",
         EventType.CallEncryptionKeysPrefix,
         EventType.Reaction,
         EventType.RoomRedaction,
         ElementCallReactionEventType,
+        EventType.RTCDecline,
       ];
 
       const sendState = [
         userId, // Legacy call membership events
-        `_${userId}_${deviceId}`, // Session membership events
-        `${userId}_${deviceId}`, // The above with no leading underscore, for room versions whose auth rules allow it
+        `_${userId}_${deviceId}_m.call`, // Session membership events
+        `${userId}_${deviceId}_m.call`, // The above with no leading underscore, for room versions whose auth rules allow it
       ].map((stateKey) => ({
         eventType: EventType.GroupCallMemberPrefix,
         stateKey,
       }));
       const receiveState = [
         { eventType: EventType.RoomCreate },
+        { eventType: EventType.RoomName },
         { eventType: EventType.RoomMember },
         { eventType: EventType.RoomEncryption },
         { eventType: EventType.GroupCallMemberPrefix },
       ];
+
       const sendRecvToDevice = [
         EventType.CallInvite,
         EventType.CallCandidates,
@@ -145,7 +152,7 @@ export const widget = ((): WidgetHelpers | null => {
       const client = createRoomWidgetClient(
         api,
         {
-          sendEvent: sendRecvEvent,
+          sendEvent: [...sendEvent, ...sendRecvEvent],
           receiveEvent: sendRecvEvent,
           sendState,
           receiveState,

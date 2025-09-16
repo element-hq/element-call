@@ -55,6 +55,7 @@
     "profile": "Profile",
     "reaction": "Reaction",
     "reactions": "Reactions",
+    "reconnecting": "Reconnecting…",
     "settings": "Settings",
     "unencrypted": "Not encrypted",
     "username": "Username",
@@ -82,7 +83,7 @@
   "error": {
     "call_is_not_supported": "Call is not supported",
     "call_not_found": "Call not found",
-    "call_not_found_description": "<0>That link doesn't appear to belong to any existing call. Check that you have the right link, or <1>create a new one</1>.</0>",
+    "call_not_found_description": "<0>That link doesn't appear to belong to any existing call. Check that you have the right link, or <2>create a new one</2>.</0>",
     "connection_lost": "Connection lost",
     "connection_lost_description": "You were disconnected from the call.",
     "e2ee_unsupported": "Incompatible browser",
@@ -94,6 +95,8 @@
     "matrix_rtc_focus_missing": "The server is not configured to work with {{brand}}. Please contact your server admin (Domain: {{domain}}, Error Code: {{ errorCode }}).",
     "open_elsewhere": "Opened in another tab",
     "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page.",
+    "room_creation_restricted": "Failed to create call",
+    "room_creation_restricted_description": "Call creation might be restricted to authorized users only. Try again later, or contact your server admin if the problem persists.",
     "unexpected_ec_error": "An unexpected error occurred (<0>Error Code:</0> <1>{{ errorCode }}</1>). Please contact your server admin."
   },
   "group_call_loader": {
@@ -104,6 +107,11 @@
     "knock_reject_body": "Your request to join was declined.",
     "knock_reject_heading": "Access denied",
     "reason": "Reason: {{reason}}"
+  },
+  "handset": {
+    "overlay_back_button": "Back to Speaker Mode",
+    "overlay_description": "Only works while using app",
+    "overlay_title": "Handset Mode"
   },
   "hangup_button_label": "End call",
   "header_label": "Element Call Home",
@@ -176,7 +184,8 @@
       "change_device_button": "Change audio device",
       "default": "Default",
       "default_named": "Default <2>({{name}})</2>",
-      "earpiece": "Earpiece",
+      "handset": "Handset",
+      "loudspeaker": "Loudspeaker",
       "microphone": "Microphone",
       "microphone_numbered": "Microphone {{n}}",
       "speaker": "Speaker",

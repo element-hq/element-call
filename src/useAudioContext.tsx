@@ -7,17 +7,16 @@ Please see LICENSE in the repository root for full details.
 
 import { logger } from "matrix-js-sdk/lib/logger";
 import { useState, useEffect } from "react";
+import { useObservableEagerState } from "observable-hooks";
 
 import {
   soundEffectVolume as soundEffectVolumeSetting,
   useSetting,
 } from "./settings/settings";
-import {
-  useEarpieceAudioConfig,
-  useMediaDevices,
-} from "./livekit/MediaDevicesContext";
+import { useEarpieceAudioConfig, useMediaDevices } from "./MediaDevicesContext";
 import { type PrefetchedSounds } from "./soundUtils";
 import { useUrlParams } from "./UrlParams";
+import * as controls from "./controls";
 
 /**
  * Play a sound though a given AudioContext. Will take
@@ -33,6 +32,8 @@ async function playSound(
   buffer: AudioBuffer,
   volume: number,
   stereoPan: number,
+  delayS = 0,
+  abort?: AbortController,
 ): Promise<void> {
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(volume, 0);
@@ -40,10 +41,60 @@ async function playSound(
   pan.pan.setValueAtTime(stereoPan, 0);
   const src = ctx.createBufferSource();
   src.buffer = buffer;
-  src.connect(gain).connect(pan).connect(ctx.destination);
+  abort?.signal.addEventListener("abort", () => {
+    src.disconnect();
+  });
   const p = new Promise<void>((r) => src.addEventListener("ended", () => r()));
-  src.start();
+  src.connect(gain).connect(pan).connect(ctx.destination);
+  controls.setPlaybackStarted();
+  src.start(ctx.currentTime + delayS);
   return p;
+}
+
+/**
+ * Play a sound though a given AudioContext, looping until stopped. Will take
+ * care of connecting the correct buffer and gating
+ * through gain.
+ * @param volume The volume to play at.
+ * @param ctx The context to play through.
+ * @param buffer The buffer to play.
+ * @returns A function used to end the sound. This function will return a promise when the sound has stopped.
+ */
+function playSoundLooping(
+  ctx: AudioContext,
+  buffer: AudioBuffer,
+  volume: number,
+  stereoPan: number,
+  delayS?: number,
+): () => Promise<void> {
+  if (delayS === 0) {
+    throw Error("Looping sounds must have a delay");
+  }
+
+  // Our audio loop
+  let lastSoundPromise: Promise<void>;
+  let nextSoundPromise: Promise<void>;
+  let ac: AbortController | undefined;
+  void (async (): Promise<void> => {
+    ac = new AbortController();
+    // Play a sound immediately
+    lastSoundPromise = Promise.resolve();
+    do {
+      // Queue up the next sound.
+      nextSoundPromise = playSound(ctx, buffer, volume, stereoPan, delayS, ac);
+      // Await the previous sound.
+      await lastSoundPromise;
+      // Swap the promises over, and loop round to play the next sound.
+      lastSoundPromise = nextSoundPromise;
+    } while (!ac.signal.aborted);
+  })();
+
+  return async () => {
+    ac?.abort();
+    // Wait for sounds to finish.
+    await lastSoundPromise;
+    await nextSoundPromise;
+  };
 }
 
 interface Props<S extends string> {
@@ -57,8 +108,13 @@ interface Props<S extends string> {
   muted?: boolean;
 }
 
-interface UseAudioContext<S> {
+interface UseAudioContext<S extends string> {
   playSound(soundName: S): Promise<void>;
+  playSoundLooping(soundName: S, delayS?: number): () => Promise<void>;
+  /**
+   * Map of sound name to duration in seconds.
+   */
+  soundDuration: Record<string, number>;
 }
 
 /**
@@ -71,8 +127,6 @@ export function useAudioContext<S extends string>(
   props: Props<S>,
 ): UseAudioContext<S> | null {
   const [soundEffectVolume] = useSetting(soundEffectVolumeSetting);
-  const { audioOutput } = useMediaDevices();
-  const { controlledAudioDevices } = useUrlParams();
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
 
@@ -109,6 +163,11 @@ export function useAudioContext<S extends string>(
     };
   }, [props.sounds, props.latencyHint]);
 
+  const audioOutputId = useObservableEagerState(
+    useMediaDevices().audioOutput.selected$,
+  )?.id;
+  const { controlledAudioDevices } = useUrlParams();
+
   // Update the sink ID whenever we change devices.
   useEffect(() => {
     if (
@@ -118,11 +177,11 @@ export function useAudioContext<S extends string>(
     ) {
       // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/setSinkId
       // @ts-expect-error - setSinkId doesn't exist yet in types, maybe because it's not supported everywhere.
-      audioContext.setSinkId(audioOutput.selectedId).catch((ex) => {
+      audioContext.setSinkId(audioOutputId).catch((ex) => {
         logger.warn("Unable to change sink for audio context", ex);
       });
     }
-  }, [audioContext, audioOutput.selectedId, controlledAudioDevices]);
+  }, [audioContext, audioOutputId, controlledAudioDevices]);
   const { pan: earpiecePan, volume: earpieceVolume } = useEarpieceAudioConfig();
 
   // Don't return a function until we're ready.
@@ -143,5 +202,23 @@ export function useAudioContext<S extends string>(
         earpiecePan,
       );
     },
+    playSoundLooping: (name, delayS: number): (() => Promise<void>) => {
+      if (!audioBuffers[name]) {
+        throw Error(`Tried to play a sound that wasn't buffered (${name})`);
+      }
+      return playSoundLooping(
+        audioContext,
+        audioBuffers[name],
+        soundEffectVolume * earpieceVolume,
+        earpiecePan,
+        delayS,
+      );
+    },
+    soundDuration: Object.fromEntries(
+      Object.entries(audioBuffers).map(([k, v]) => [
+        k,
+        (v as AudioBuffer).duration,
+      ]),
+    ),
   };
 }

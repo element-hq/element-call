@@ -5,23 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactNode, useState } from "react";
+import { type FC, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
 import { Button, Root as Form, Separator } from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
-import { useObservableEagerState } from "observable-hooks";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { type Tab, TabContainer } from "../tabs/Tabs";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
-import {
-  useMediaDevices,
-  useMediaDeviceNames,
-  iosDeviceMenu$,
-} from "../livekit/MediaDevicesContext";
+import { iosDeviceMenu$ } from "../state/MediaDevices";
+import { useMediaDevices } from "../MediaDevicesContext";
 import { widget } from "../widget";
 import {
   useSetting,
@@ -37,6 +33,7 @@ import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
 import { FieldRow, InputField } from "../input/Input";
 import { useSubmitRageshake } from "./submit-rageshake";
 import { useUrlParams } from "../UrlParams";
+import { useBehavior } from "../useBehavior";
 
 type SettingsTab =
   | "audio"
@@ -98,7 +95,10 @@ export const SettingsModal: FC<Props> = ({
   };
 
   const devices = useMediaDevices();
-  useMediaDeviceNames(devices, open);
+  useEffect(() => {
+    if (open) devices.requestDeviceNames();
+  }, [open, devices]);
+
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
   const [showDeveloperSettingsTab] = useSetting(developerMode);
@@ -112,7 +112,7 @@ export const SettingsModal: FC<Props> = ({
   // rather than the input section.
   const { controlledAudioDevices } = useUrlParams();
   // If we are on iOS we will show a button to open the native audio device picker.
-  const iosDeviceMenu = useObservableEagerState(iosDeviceMenu$);
+  const iosDeviceMenu = useBehavior(iosDeviceMenu$);
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
@@ -129,7 +129,7 @@ export const SettingsModal: FC<Props> = ({
               }
             />
           )}
-          {iosDeviceMenu && (
+          {iosDeviceMenu && controlledAudioDevices && (
             <Button
               onClick={(e): void => {
                 e.preventDefault();

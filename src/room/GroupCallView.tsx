@@ -24,7 +24,6 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { useNavigate } from "react-router-dom";
-import { useObservableEagerState } from "observable-hooks";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -40,25 +39,30 @@ import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
 import { ActiveCall } from "./InCallView";
 import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
-import { useMediaDevices } from "../livekit/MediaDevicesContext";
+import { useMediaDevices } from "../MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
-import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  saveKeyForRoom,
+  useRoomEncryptionSystem,
+} from "../e2ee/sharedKeyManagement";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { useUrlParams } from "../UrlParams";
+import { HeaderStyle, type UrlParams, useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
-import { callEventAudioSounds } from "./CallEventAudioRenderer";
+import {
+  callEventAudioSounds,
+  type CallEventSounds,
+} from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import {
+  ConnectionLostError,
   E2EENotSupportedError,
   ElementCallError,
-  ErrorCode,
-  RTCSessionError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
@@ -69,6 +73,8 @@ import {
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
+import { useAppBarTitle } from "../AppBar.tsx";
+import { useBehavior } from "../useBehavior.ts";
 
 declare global {
   interface Window {
@@ -80,9 +86,9 @@ interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
   confineToRoom: boolean;
-  preload: boolean;
-  skipLobby: boolean;
-  hideHeader: boolean;
+  preload: UrlParams["preload"];
+  skipLobby: UrlParams["skipLobby"];
+  header: HeaderStyle;
   rtcSession: MatrixRTCSession;
   isJoined: boolean;
   muteStates: MuteStates;
@@ -95,7 +101,7 @@ export const GroupCallView: FC<Props> = ({
   confineToRoom,
   preload,
   skipLobby,
-  hideHeader,
+  header,
   rtcSession,
   isJoined,
   muteStates,
@@ -107,7 +113,7 @@ export const GroupCallView: FC<Props> = ({
   );
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
 
-  const muteAllAudio = useObservableEagerState(muteAllAudio$);
+  const muteAllAudio = useBehavior(muteAllAudio$);
   const leaveSoundContext = useLatest(
     useAudioContext({
       sounds: callEventAudioSounds,
@@ -129,6 +135,16 @@ export const GroupCallView: FC<Props> = ({
     };
   }, []);
 
+  // This CSS is the only way we could find to not make element call scroll for
+  // viewport sizes smaller than 122px width. (It is actually this exact number: 122px
+  // tested on different devices...)
+  useEffect(() => {
+    document.body.classList.add("no-scroll-body");
+    return (): void => {
+      document.body.classList.remove("no-scroll-body");
+    };
+  }, []);
+
   useEffect(() => {
     window.rtcSession = rtcSession;
     return (): void => {
@@ -139,14 +155,7 @@ export const GroupCallView: FC<Props> = ({
   useTypedEventEmitter(
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
-    (error) => {
-      setExternalError(
-        new RTCSessionError(
-          ErrorCode.MEMBERSHIP_MANAGER_UNRECOVERABLE,
-          error.message ?? error,
-        ),
-      );
-    },
+    (error) => setExternalError(new ConnectionLostError()),
   );
   useEffect(() => {
     // Sanity check the room object
@@ -160,14 +169,24 @@ export const GroupCallView: FC<Props> = ({
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(room);
   const roomAvatar = useRoomAvatar(room);
-  const { perParticipantE2EE, returnToLobby } = useUrlParams();
+  const {
+    perParticipantE2EE,
+    returnToLobby,
+    password: passwordFromUrl,
+  } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
   const [useNewMembershipManager] = useSetting(useNewMembershipManagerSetting);
   const [useExperimentalToDeviceTransport] = useSetting(
     useExperimentalToDeviceTransportSetting,
   );
 
+  // Save the password once we start the groupCallView
+  useEffect(() => {
+    if (passwordFromUrl) saveKeyForRoom(room.roomId, passwordFromUrl);
+  }, [passwordFromUrl, room.roomId]);
+
   usePageTitle(roomName);
+  useAppBarTitle(roomName);
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -188,8 +207,7 @@ export const GroupCallView: FC<Props> = ({
     [memberships],
   );
 
-  const deviceContext = useMediaDevices();
-  const latestDevices = useLatest(deviceContext);
+  const mediaDevices = useMediaDevices();
   const latestMuteStates = useLatest(muteStates);
 
   const enterRTCSessionOrError = useCallback(
@@ -241,7 +259,7 @@ export const GroupCallView: FC<Props> = ({
           logger.debug(
             `Found audio input ID ${deviceId} for name ${audioInput}`,
           );
-          latestDevices.current!.audioInput.select(deviceId);
+          mediaDevices.audioInput.select(deviceId);
         }
       }
 
@@ -255,40 +273,34 @@ export const GroupCallView: FC<Props> = ({
           logger.debug(
             `Found video input ID ${deviceId} for name ${videoInput}`,
           );
-          latestDevices.current!.videoInput.select(deviceId);
+          mediaDevices.videoInput.select(deviceId);
         }
       }
     };
 
     if (skipLobby) {
-      if (widget) {
-        if (preload) {
-          // In preload mode without lobby we wait for a join action before entering
-          const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
-            (async (): Promise<void> => {
-              await defaultDeviceSetup(
-                ev.detail.data as unknown as JoinCallData,
-              );
-              await enterRTCSessionOrError(rtcSession);
-              widget.api.transport.reply(ev.detail, {});
-            })().catch((e) => {
-              logger.error("Error joining RTC session", e);
-            });
-          };
-          widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
-          return (): void => {
-            widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
-          };
-        } else {
-          // No lobby and no preload: we enter the rtc session right away
+      if (widget && preload) {
+        // In preload mode without lobby we wait for a join action before entering
+        const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
           (async (): Promise<void> => {
+            await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
             await enterRTCSessionOrError(rtcSession);
+            widget.api.transport.reply(ev.detail, {});
           })().catch((e) => {
-            logger.error("Error joining RTC session", e);
+            logger.error("Error joining RTC session on preload", e);
           });
-        }
+        };
+        widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
+        return (): void => {
+          widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
+        };
       } else {
-        void enterRTCSessionOrError(rtcSession);
+        // No lobby and no preload: we enter the rtc session right away
+        (async (): Promise<void> => {
+          await enterRTCSessionOrError(rtcSession);
+        })().catch((e) => {
+          logger.error("Error joining RTC session immediately", e);
+        });
       }
     }
   }, [
@@ -297,7 +309,7 @@ export const GroupCallView: FC<Props> = ({
     preload,
     skipLobby,
     perParticipantE2EE,
-    latestDevices,
+    mediaDevices,
     latestMuteStates,
     enterRTCSessionOrError,
     useNewMembershipManager,
@@ -308,8 +320,11 @@ export const GroupCallView: FC<Props> = ({
   const navigate = useNavigate();
 
   const onLeave = useCallback(
-    (cause: "user" | "error" = "user"): void => {
-      const audioPromise = leaveSoundContext.current?.playSound("left");
+    (
+      cause: "user" | "error" = "user",
+      playSound: CallEventSounds = "left",
+    ): void => {
+      const audioPromise = leaveSoundContext.current?.playSound(playSound);
       // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
       // therefore we want the event to be sent instantly without getting queued/batched.
       const sendInstantly = !!widget;
@@ -413,7 +428,7 @@ export const GroupCallView: FC<Props> = ({
         muteStates={muteStates}
         onEnter={() => void enterRTCSessionOrError(rtcSession)}
         confineToRoom={confineToRoom}
-        hideHeader={hideHeader}
+        hideHeader={header === HeaderStyle.None}
         participantCount={participantCount}
         onShareClick={onShareClick}
       />
@@ -437,9 +452,9 @@ export const GroupCallView: FC<Props> = ({
           client={client}
           matrixInfo={matrixInfo}
           rtcSession={rtcSession as MatrixRTCSession}
-          participantCount={participantCount}
+          matrixRoom={room}
           onLeave={onLeave}
-          hideHeader={hideHeader}
+          header={header}
           muteStates={muteStates}
           e2eeSystem={e2eeSystem}
           //otelGroupCallMembership={otelGroupCallMembership}
@@ -465,6 +480,7 @@ export const GroupCallView: FC<Props> = ({
           endedCallId={rtcSession.room.roomId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
+          hideHeader={header === HeaderStyle.None}
           confineToRoom={confineToRoom}
         />
       );
@@ -478,6 +494,7 @@ export const GroupCallView: FC<Props> = ({
     // Left in widget mode:
     body = returnToLobby ? lobbyView : null;
   } else if (preload || skipLobby) {
+    // The RTC session is not joined to yet (`isJoined`), but enterRTCSessionOrError should have been called.
     body = null;
   } else {
     body = lobbyView;
@@ -486,10 +503,11 @@ export const GroupCallView: FC<Props> = ({
   return (
     <GroupCallErrorBoundary
       widget={widget}
-      recoveryActionHandler={(action) => {
+      recoveryActionHandler={async (action) => {
+        setExternalError(null);
         if (action == "reconnect") {
           setLeft(false);
-          enterRTCSessionOrError(rtcSession).catch((e) => {
+          await enterRTCSessionOrError(rtcSession).catch((e) => {
             logger.error("Error re-entering RTC session", e);
           });
         }

@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 .tile {
   --media-view-border-radius: var(--cpd-space-4x);
+  --hover-space-margin: var(--cpd-space-1x);
   transition: outline-color ease 0.15s;
   outline: var(--cpd-border-width-2) solid rgb(0 0 0 / 0);
 }
@@ -81,4 +82,26 @@ borders don't support gradients */
 
 .volumeSlider {
   width: 100%;
+}
+
+.tile .switchCamera {
+  opacity: 1;
+  background: var(--cpd-color-bg-action-secondary-rest);
+  border: 1px solid var(--cpd-color-border-interactive-secondary);
+}
+
+.tile .switchCamera > svg {
+  color: var(--cpd-color-icon-primary);
+}
+
+@media (hover) {
+  .tile .switchCamera:hover {
+    background: var(--cpd-color-bg-subtle-secondary);
+    border-color: var(--cpd-color-border-interactive-hovered);
+  }
+}
+
+.tile .switchCamera:active {
+  background: var(--cpd-color-bg-subtle-primary);
+  border-color: var(--cpd-color-border-interactive-hovered);
 }

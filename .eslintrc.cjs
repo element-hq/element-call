@@ -28,8 +28,6 @@ module.exports = {
   rules: {
     "matrix-org/require-copyright-header": ["error", COPYRIGHT_HEADER],
     "jsx-a11y/media-has-caption": "off",
-    // We should use the js-sdk logger, never console directly.
-    "no-console": ["error"],
     "react/display-name": "error",
     // Encourage proper usage of Promises:
     "@typescript-eslint/no-floating-promises": "error",
@@ -44,8 +42,17 @@ module.exports = {
     ],
     // To encourage good usage of RxJS:
     "rxjs/no-exposed-subjects": "error",
-    "rxjs/finnish": "error",
+    "rxjs/finnish": ["error", { names: { "^this$": false } }],
   },
+  overrides: [
+    {
+      files: ["src/*/**"],
+      rules: {
+        // In application code we should use the js-sdk logger, never console directly.
+        "no-console": ["error"],
+      },
+    },
+  ],
   settings: {
     react: {
       version: "detect",

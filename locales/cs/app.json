@@ -61,6 +61,7 @@
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Zobrazit možnost sluchátek pro iPhone na všech platformách",
     "crypto_version": "Kryptografická verze: {{version}}",
     "debug_tile_layout_label": "Ladění rozložení dlaždic",
     "device_id": "ID zařízení: {{id}}",
@@ -81,7 +82,7 @@
   "error": {
     "call_is_not_supported": "Volání není podporováno",
     "call_not_found": "Volání nebylo nalezeno",
-    "call_not_found_description": "<0>Zdá se, že tento odkaz nepatří k žádnému existujícímu volání. Zkontrolujte, zda máte správný odkaz, nebo <1>vytvořte nový</1>.</0>",
+    "call_not_found_description": "<0>Zdá se, že tento odkaz nepatří k žádnému existujícímu hovoru. Zkontrolujte, zda máte správný odkaz, nebo<2> vytvořte nový</2>.</0>",
     "connection_lost": "Spojení ztraceno",
     "connection_lost_description": "Hovor byl přerušen.",
     "e2ee_unsupported": "Nekompatibilní prohlížeč",
@@ -103,6 +104,11 @@
     "knock_reject_body": "Vaše žádost o připojení byla zamítnuta.",
     "knock_reject_heading": "Přístup odepřen",
     "reason": "Důvod"
+  },
+  "handset": {
+    "overlay_back_button": "Zpět do režimu reproduktoru",
+    "overlay_description": "Funguje pouze při používání aplikace",
+    "overlay_title": "Režim sluchátka"
   },
   "hangup_button_label": "Ukončit hovor",
   "header_label": "Domov Element Call",
@@ -173,8 +179,11 @@
     "devices": {
       "camera": "Fotoaparát",
       "camera_numbered": "Fotoaparát {{n}}",
+      "change_device_button": "Změnit zvukové zařízení",
       "default": "Výchozí",
       "default_named": "Výchozí <2> ({{name}}) </2>",
+      "handset": "Sluchátko",
+      "loudspeaker": "Reproduktor",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon {{n}}",
       "speaker": "Reproduktor",

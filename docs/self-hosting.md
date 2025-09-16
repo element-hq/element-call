@@ -64,7 +64,7 @@ rc_delayed_event_mgmt:
 ```
 
 As a prerequisite for the
-[Matrix LiveKit JWT auth service](https://github.com/element-hq/lk-jwt-service)
+[MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service)
 make sure that your Synapse server has either a `federation` or `openid`
 [listener configured](https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html#listeners).
 
@@ -77,7 +77,7 @@ required for each site deployment.
 
 As depicted above in the `example.com` site deployment, Element Call requires a
 [Livekit SFU](https://github.com/livekit/livekit) alongside a
-[Matrix Livekit JWT auth service](https://github.com/element-hq/lk-jwt-service)
+[MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service)
 to implement
 [MSC4195: MatrixRTC using LiveKit backend](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md).
 
@@ -89,7 +89,7 @@ the example above, this results in:
 | Service | Endpoint | Example |
 | -------- | ------- | ------- |
 | [Livekit SFU](https://github.com/livekit/livekit) WebSocket signalling connection | `/livekit/sfu` | `matrix-rtc.example.com/livekit/sfu` |
-| [Matrix Livekit JWT auth service](https://github.com/element-hq/lk-jwt-service) | `/livekit/jwt` | `matrix-rtc.example.com/livekit/jwt` |
+| [MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service) | `/livekit/jwt` | `matrix-rtc.example.com/livekit/jwt` |
 
 Using Nginx, you can achieve this by:
 
@@ -102,7 +102,7 @@ server {
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto $scheme;
 
-      # JWT Service running at port 8080
+      # MatrixRTC Authorization Service running at port 8080
       proxy_pass http://localhost:8080/;
     }
 
@@ -126,6 +126,32 @@ server {
 }
 ```
 
+Or Using Caddy, you can achieve this by:
+
+```caddy configuration file
+# Route for lk-jwt-service with livekit/jwt prefix
+@jwt_service path /livekit/jwt/sfu/get /livekit/jwt/healthz
+handle @jwt_service {
+  uri strip_prefix /livekit/jwt
+  reverse_proxy http://[::1]:8080 {
+    header_up Host {host}
+    header_up X-Forwarded-Server {host}
+    header_up X-Real-IP {remote_addr}
+    header_up X-Forwarded-For {remote_addr}
+  }
+}
+
+# Default route for livekit
+handle {
+  reverse_proxy http://localhost:7880 {
+    header_up Host {host}
+    header_up X-Forwarded-Server {host}
+    header_up X-Real-IP {remote_addr}
+    header_up X-Forwarded-For {remote_addr}
+  }
+}
+```
+
 #### MatrixRTC backend announcement
 
 > [!IMPORTANT]
@@ -145,10 +171,6 @@ server {
     {
         "type": "livekit",
         "livekit_service_url": "https://matrix-rtc-2.example.com/livekit/jwt"
-    },
-    {
-        "type": "nextgen_new_foci_type",
-        "props_for_nextgen_foci": "val"
     }
 ]
 ```
@@ -218,7 +240,7 @@ server {
 There are currently two different config files. `.env` holds variables that are
 used at build time, while `public/config.json` holds variables that are used at
 runtime. Documentation and default values for `public/config.json` can be found
-in [ConfigOptions.ts](src/config/ConfigOptions.ts).
+in [ConfigOptions.ts](../src/config/ConfigOptions.ts).
 
 > [!CAUTION]
 > Please note configuring MatrixRTC backend via `config.json` of
@@ -255,12 +277,16 @@ self-hosters and developers working with Element Call.
 
 - [How to resolve stuck MatrixRTC calls](https://sspaeth.de/2025/02/how-to-resolve-stuck-matrixrtc-calls/)
 
-## 🛠️ How-Tos & Tutorials
+## 📝 How-Tos & Tutorials
 
 - [MatrixRTC aka Element-call setup (Geek warning)](https://sspaeth.de/2024/11/sfu/)
 - [MatrixRTC with Synology Container Manager (Docker)](https://ztfr.de/matrixrtc-with-synology-container-manager-docker/)
 - [Encrypted & Scalable Video Calls: How to deploy an Element Call backend with Synapse Using Docker-Compose](https://willlewis.co.uk/blog/posts/deploy-element-call-backend-with-synapse-and-docker-compose/)
 - [Element Call einrichten: Verschlüsselte Videoanrufe mit Element X und Matrix Synapse](https://www.cleveradmin.de/blog/2025/04/matrixrtc-element-call-backend-einrichten/)
+
+## 🛠️ Tools
+
+- [A Matrix server sanity tester including tests for proper MatrixRTC setup](https://codeberg.org/spaetz/testmatrix)
 
 ## 🤝 Want to Contribute?
 

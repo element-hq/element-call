@@ -14,11 +14,14 @@ import {
 } from "react";
 import { type IWidgetApiRequest } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { useObservableEagerState } from "observable-hooks";
 
 import {
-  type MediaDeviceHandle,
-  useMediaDevices,
-} from "../livekit/MediaDevicesContext";
+  type DeviceLabel,
+  type SelectedDevice,
+  type MediaDevice,
+} from "../state/MediaDevices";
+import { useIsEarpiece, useMediaDevices } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import { ElementWidgetActions, widget } from "../widget";
 import { Config } from "../config/Config";
@@ -53,24 +56,25 @@ export interface MuteStates {
 }
 
 function useMuteState(
-  device: MediaDeviceHandle,
+  device: MediaDevice<DeviceLabel, SelectedDevice>,
   enabledByDefault: () => boolean,
+  forceUnavailable: boolean = false,
 ): MuteState {
+  const available = useObservableEagerState(device.available$);
   const [enabled, setEnabled] = useReactiveState<boolean | undefined>(
     // Determine the default value once devices are actually connected
-    (prev) =>
-      prev ?? (device.available.size > 0 ? enabledByDefault() : undefined),
-    [device],
+    (prev) => prev ?? (available.size > 0 ? enabledByDefault() : undefined),
+    [available.size],
   );
   return useMemo(
     () =>
-      device.available.size === 0
+      available.size === 0 || forceUnavailable
         ? deviceUnavailable
         : {
             enabled: enabled ?? false,
             setEnabled: setEnabled as Dispatch<SetStateAction<boolean>>,
           },
-    [device, enabled, setEnabled],
+    [available.size, enabled, forceUnavailable, setEnabled],
   );
 }
 
@@ -82,9 +86,19 @@ export function useMuteStates(isJoined: boolean): MuteStates {
   const audio = useMuteState(devices.audioInput, () => {
     return Config.get().media_devices.enable_audio && !skipLobby && !isJoined;
   });
+  useEffect(() => {
+    // If audio is enabled, we need to request the device names again,
+    // because iOS will not be able to switch to the correct device after un-muting.
+    // This is one of the main changes that makes iOS work with bluetooth audio devices.
+    if (audio.enabled) {
+      devices.requestDeviceNames();
+    }
+  }, [audio.enabled, devices]);
+  const isEarpiece = useIsEarpiece();
   const video = useMuteState(
     devices.videoInput,
     () => Config.get().media_devices.enable_video && !skipLobby && !isJoined,
+    isEarpiece, // Force video to be unavailable if using earpiece
   );
 
   useEffect(() => {

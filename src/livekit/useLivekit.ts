@@ -14,21 +14,23 @@ import {
   type RoomOptions,
   Track,
 } from "livekit-client";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { useObservable, useObservableEagerState } from "observable-hooks";
-import { map } from "rxjs";
+import {
+  map,
+  NEVER,
+  type Observable,
+  type Subscription,
+  switchMap,
+} from "rxjs";
 
 import { defaultLiveKitOptions } from "./options";
 import { type SFUConfig } from "./openIDSFU";
 import { type MuteStates } from "../room/MuteStates";
-import {
-  type MediaDeviceHandle,
-  type MediaDevices,
-  useMediaDevices,
-} from "./MediaDevicesContext";
+import { useMediaDevices } from "../MediaDevicesContext";
 import {
   type ECConnectionState,
   useECConnectionState,
@@ -40,9 +42,11 @@ import {
   useTrackProcessor,
   useTrackProcessorSync,
 } from "./TrackProcessorContext";
-import { useInitial } from "../useInitial";
 import { observeTrackReference$ } from "../state/MediaViewModel";
 import { useUrlParams } from "../UrlParams";
+import { useInitial } from "../useInitial";
+import { getValue } from "../utils/observable";
+import { type SelectedDevice } from "../state/MediaDevices";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -57,27 +61,85 @@ export function useLivekit(
 ): UseLivekitResult {
   const { controlledAudioDevices } = useUrlParams();
 
-  const e2eeOptions = useMemo((): E2EEManagerOptions | undefined => {
-    if (e2eeSystem.kind === E2eeType.NONE) return undefined;
+  const initialMuteStates = useInitial(() => muteStates);
 
+  const devices = useMediaDevices();
+  const initialAudioInputId = useInitial(
+    () => getValue(devices.audioInput.selected$)?.id,
+  );
+
+  // Store if audio/video are currently updating. If to prohibit unnecessary calls
+  // to setMicrophoneEnabled/setCameraEnabled
+  const audioMuteUpdating = useRef(false);
+  const videoMuteUpdating = useRef(false);
+  // Store the current button mute state that gets passed to this hook via props.
+  // We need to store it for awaited code that relies on the current value.
+  const buttonEnabled = useRef({
+    audio: initialMuteStates.audio.enabled,
+    video: initialMuteStates.video.enabled,
+  });
+
+  const { processor } = useTrackProcessor();
+
+  // Only ever create the room once via useInitial.
+  const room = useInitial(() => {
+    logger.info("[LivekitRoom] Create LiveKit room");
+
+    let e2ee: E2EEManagerOptions | undefined;
     if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
       logger.info("Created MatrixKeyProvider (per participant)");
-      return {
+      e2ee = {
         keyProvider: new MatrixKeyProvider(),
         worker: new E2EEWorker(),
       };
     } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
       logger.info("Created ExternalE2EEKeyProvider (shared key)");
-
-      return {
+      e2ee = {
         keyProvider: new ExternalE2EEKeyProvider(),
         worker: new E2EEWorker(),
       };
     }
-  }, [e2eeSystem]);
 
+    const roomOptions: RoomOptions = {
+      ...defaultLiveKitOptions,
+      videoCaptureDefaults: {
+        ...defaultLiveKitOptions.videoCaptureDefaults,
+        deviceId: getValue(devices.videoInput.selected$)?.id,
+        processor,
+      },
+      audioCaptureDefaults: {
+        ...defaultLiveKitOptions.audioCaptureDefaults,
+        deviceId: initialAudioInputId,
+      },
+      audioOutput: {
+        // When using controlled audio devices, we don't want to set the
+        // deviceId here, because it will be set by the native app.
+        // (also the id does not need to match a browser device id)
+        deviceId: controlledAudioDevices
+          ? undefined
+          : getValue(devices.audioOutput.selected$)?.id,
+      },
+      e2ee,
+    };
+    // We have to create the room manually here due to a bug inside
+    // @livekit/components-react. JSON.stringify() is used in deps of a
+    // useEffect() with an argument that references itself, if E2EE is enabled
+    const room = new Room(roomOptions);
+    room.setE2EEEnabled(e2eeSystem.kind !== E2eeType.NONE).catch((e) => {
+      logger.error("Failed to set E2EE enabled on room", e);
+    });
+
+    return room;
+  });
+
+  // Setup and update the keyProvider which was create by `createRoom`
   useEffect(() => {
-    if (e2eeSystem.kind === E2eeType.NONE || !e2eeOptions) return;
+    const e2eeOptions = room.options.e2ee;
+    if (
+      e2eeSystem.kind === E2eeType.NONE ||
+      !(e2eeOptions && "keyProvider" in e2eeOptions)
+    )
+      return;
 
     if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
       (e2eeOptions.keyProvider as MatrixKeyProvider).setRTCSession(rtcSession);
@@ -88,66 +150,20 @@ export function useLivekit(
           logger.error("Failed to set shared key for E2EE", e);
         });
     }
-  }, [e2eeOptions, e2eeSystem, rtcSession]);
-
-  const initialMuteStates = useRef<MuteStates>(muteStates);
-  const devices = useMediaDevices();
-  const initialDevices = useRef<MediaDevices>(devices);
-
-  const { processor } = useTrackProcessor();
-  const initialProcessor = useInitial(() => processor);
-  const roomOptions = useMemo(
-    (): RoomOptions => ({
-      ...defaultLiveKitOptions,
-      videoCaptureDefaults: {
-        ...defaultLiveKitOptions.videoCaptureDefaults,
-        deviceId: initialDevices.current.videoInput.selectedId,
-        processor: initialProcessor,
-      },
-      audioCaptureDefaults: {
-        ...defaultLiveKitOptions.audioCaptureDefaults,
-        deviceId: initialDevices.current.audioInput.selectedId,
-      },
-      audioOutput: {
-        deviceId: initialDevices.current.audioOutput.selectedId,
-      },
-      e2ee: e2eeOptions,
-    }),
-    [e2eeOptions, initialProcessor],
-  );
-
-  // Store if audio/video are currently updating. If to prohibit unnecessary calls
-  // to setMicrophoneEnabled/setCameraEnabled
-  const audioMuteUpdating = useRef(false);
-  const videoMuteUpdating = useRef(false);
-  // Store the current button mute state that gets passed to this hook via props.
-  // We need to store it for awaited code that relies on the current value.
-  const buttonEnabled = useRef({
-    audio: initialMuteStates.current.audio.enabled,
-    video: initialMuteStates.current.video.enabled,
-  });
-
-  // We have to create the room manually here due to a bug inside
-  // @livekit/components-react. JSON.stringify() is used in deps of a
-  // useEffect() with an argument that references itself, if E2EE is enabled
-  const room = useMemo(() => {
-    logger.info("[LivekitRooms] Create LiveKit room with options", roomOptions);
-    const r = new Room(roomOptions);
-    r.setE2EEEnabled(e2eeSystem.kind !== E2eeType.NONE).catch((e) => {
-      logger.error("Failed to set E2EE enabled on room", e);
-    });
-    return r;
-  }, [roomOptions, e2eeSystem]);
+  }, [room.options.e2ee, e2eeSystem, rtcSession]);
 
   // Sync the requested track processors with LiveKit
   useTrackProcessorSync(
     useObservableEagerState(
       useObservable(
         (room$) =>
-          observeTrackReference$(
-            room$.pipe(map(([room]) => room.localParticipant)),
-            Track.Source.Camera,
-          ).pipe(
+          room$.pipe(
+            switchMap(([room]) =>
+              observeTrackReference$(
+                room.localParticipant,
+                Track.Source.Camera,
+              ),
+            ),
             map((trackRef) => {
               const track = trackRef?.publication?.track;
               return track instanceof LocalVideoTrack ? track : null;
@@ -159,8 +175,8 @@ export function useLivekit(
   );
 
   const connectionState = useECConnectionState(
-    initialDevices.current.audioInput.selectedId,
-    initialMuteStates.current.audio.enabled,
+    initialAudioInputId,
+    initialMuteStates.audio.enabled,
     room,
     sfuConfig,
   );
@@ -307,69 +323,76 @@ export function useLivekit(
 
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
-    if (
-      room !== undefined &&
-      connectionState === ConnectionState.Connected &&
-      !controlledAudioDevices
-    ) {
+    if (room !== undefined && connectionState === ConnectionState.Connected) {
       const syncDevice = (
         kind: MediaDeviceKind,
-        device: MediaDeviceHandle,
-      ): void => {
-        const id = device.selectedId;
-
-        // Detect if we're trying to use chrome's default device, in which case
-        // we need to to see if the default device has changed to a different device
-        // by comparing the group ID of the device we're using against the group ID
-        // of what the default device is *now*.
-        // This is special-cased for only audio inputs because we need to dig around
-        // in the LocalParticipant object for the track object and there's not a nice
-        // way to do that generically. There is usually no OS-level default video capture
-        // device anyway, and audio outputs work differently.
-        if (
-          id === "default" &&
-          kind === "audioinput" &&
-          room.options.audioCaptureDefaults?.deviceId === "default"
-        ) {
-          const activeMicTrack = Array.from(
-            room.localParticipant.audioTrackPublications.values(),
-          ).find((d) => d.source === Track.Source.Microphone)?.track;
-
+        selected$: Observable<SelectedDevice | undefined>,
+      ): Subscription =>
+        selected$.subscribe((device) => {
+          logger.info(
+            "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
+            room.getActiveDevice(kind),
+            " !== ",
+            device?.id,
+          );
           if (
-            activeMicTrack &&
-            // only restart if the stream is still running: LiveKit will detect
-            // when a track stops & restart appropriately, so this is not our job.
-            // Plus, we need to avoid restarting again if the track is already in
-            // the process of being restarted.
-            activeMicTrack.mediaStreamTrack.readyState !== "ended" &&
-            device.selectedGroupId !==
-              activeMicTrack.mediaStreamTrack.getSettings().groupId
+            device !== undefined &&
+            room.getActiveDevice(kind) !== device.id
           ) {
-            // It's different, so restart the track, ie. cause Livekit to do another
-            // getUserMedia() call with deviceId: default to get the *new* default device.
-            // Note that room.switchActiveDevice() won't work: Livekit will ignore it because
-            // the deviceId hasn't changed (was & still is default).
-            room.localParticipant
-              .getTrackPublication(Track.Source.Microphone)
-              ?.audioTrack?.restartTrack()
-              .catch((e) => {
-                logger.error(`Failed to restart audio device track`, e);
-              });
-          }
-        } else {
-          if (id !== undefined && room.getActiveDevice(kind) !== id) {
             room
-              .switchActiveDevice(kind, id)
+              .switchActiveDevice(kind, device.id)
               .catch((e) =>
                 logger.error(`Failed to sync ${kind} device with LiveKit`, e),
               );
           }
-        }
-      };
+        });
 
-      syncDevice("audioinput", devices.audioInput);
-      syncDevice("audiooutput", devices.audioOutput);
-      syncDevice("videoinput", devices.videoInput);
+      const subscriptions = [
+        syncDevice("audioinput", devices.audioInput.selected$),
+        !controlledAudioDevices
+          ? syncDevice("audiooutput", devices.audioOutput.selected$)
+          : undefined,
+        syncDevice("videoinput", devices.videoInput.selected$),
+        // Restart the audio input track whenever we detect that the active media
+        // device has changed to refer to a different hardware device. We do this
+        // for the sake of Chrome, which provides a "default" device that is meant
+        // to match the system's default audio input, whatever that may be.
+        // This is special-cased for only audio inputs because we need to dig around
+        // in the LocalParticipant object for the track object and there's not a nice
+        // way to do that generically. There is usually no OS-level default video capture
+        // device anyway, and audio outputs work differently.
+        devices.audioInput.selected$
+          .pipe(switchMap((device) => device?.hardwareDeviceChange$ ?? NEVER))
+          .subscribe(() => {
+            const activeMicTrack = Array.from(
+              room.localParticipant.audioTrackPublications.values(),
+            ).find((d) => d.source === Track.Source.Microphone)?.track;
+
+            if (
+              activeMicTrack &&
+              // only restart if the stream is still running: LiveKit will detect
+              // when a track stops & restart appropriately, so this is not our job.
+              // Plus, we need to avoid restarting again if the track is already in
+              // the process of being restarted.
+              activeMicTrack.mediaStreamTrack.readyState !== "ended"
+            ) {
+              // Restart the track, which will cause Livekit to do another
+              // getUserMedia() call with deviceId: default to get the *new* default device.
+              // Note that room.switchActiveDevice() won't work: Livekit will ignore it because
+              // the deviceId hasn't changed (was & still is default).
+              room.localParticipant
+                .getTrackPublication(Track.Source.Microphone)
+                ?.audioTrack?.restartTrack()
+                .catch((e) => {
+                  logger.error(`Failed to restart audio device track`, e);
+                });
+            }
+          }),
+      ];
+
+      return (): void => {
+        for (const s of subscriptions) s?.unsubscribe();
+      };
     }
   }, [room, devices, connectionState, controlledAudioDevices]);
 

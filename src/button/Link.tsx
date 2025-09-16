@@ -5,11 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type ComponentPropsWithoutRef,
-  forwardRef,
-  type MouseEvent,
-} from "react";
+import { type ComponentProps, type FC, type MouseEvent } from "react";
 import { Link as CpdLink } from "@vector-im/compound-web";
 import { type LinkProps, useHref, useLinkClickHandler } from "react-router-dom";
 import classNames from "classnames";
@@ -26,31 +22,30 @@ export function useLink(
   return [href, onClick];
 }
 
-type Props = Omit<
-  ComponentPropsWithoutRef<typeof CpdLink>,
-  "href" | "onClick"
-> & { to: LinkProps["to"]; state?: unknown };
+type Props = Omit<ComponentProps<typeof CpdLink>, "href" | "onClick"> & {
+  to: LinkProps["to"];
+  state?: unknown;
+};
 
 /**
  * A version of Compound's link component that integrates with our router setup.
  * This is only for app-internal links.
  */
-export const Link = forwardRef<HTMLAnchorElement, Props>(function Link(
-  { to, state, ...props },
-  ref,
-) {
+export const Link: FC<Props> = ({ ref, to, state, ...props }) => {
   const [path, onClick] = useLink(to, state);
   return <CpdLink ref={ref} {...props} href={path} onClick={onClick} />;
-});
+};
 
 /**
  * A link to an external web page, made to fit into blocks of text more subtly
  * than the normal Compound link component.
  */
-export const ExternalLink = forwardRef<
-  HTMLAnchorElement,
-  ComponentPropsWithoutRef<"a">
->(function ExternalLink({ className, children, ...props }, ref) {
+export const ExternalLink: FC<ComponentProps<"a">> = ({
+  ref,
+  className,
+  children,
+  ...props
+}) => {
   return (
     <a
       ref={ref}
@@ -62,4 +57,4 @@ export const ExternalLink = forwardRef<
       {children}
     </a>
   );
-});
+};

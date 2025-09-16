@@ -9,15 +9,17 @@ import { test, expect, vi } from "vitest";
 import { isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import userEvent from "@testing-library/user-event";
-import { of } from "rxjs";
 
 import { SpotlightTile } from "./SpotlightTile";
 import {
+  mockLocalParticipant,
+  mockMediaDevices,
   mockRtcMembership,
   withLocalMedia,
   withRemoteMedia,
 } from "../utils/test";
 import { SpotlightTileViewModel } from "../state/TileViewModel";
+import { constant } from "../state/Behavior";
 
 global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
@@ -39,12 +41,19 @@ test("SpotlightTile is accessible", async () => {
           rawDisplayName: "Bob",
           getMxcAvatarUrl: () => "mxc://dlskf",
         },
+        mockLocalParticipant({}),
+        mockMediaDevices({}),
         async (vm2) => {
           const user = userEvent.setup();
           const toggleExpanded = vi.fn();
           const { container } = render(
             <SpotlightTile
-              vm={new SpotlightTileViewModel(of([vm1, vm2]), of(false))}
+              vm={
+                new SpotlightTileViewModel(
+                  constant([vm1, vm2]),
+                  constant(false),
+                )
+              }
               targetWidth={300}
               targetHeight={200}
               expanded={false}

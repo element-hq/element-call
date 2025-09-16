@@ -1,7 +1,7 @@
 /*
-Copyright 2024 New Vector Ltd.
+Copyright 2024-2025 New Vector Ltd.
 
-SPDX-License-Identifier: AGPL-3.0-only
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
@@ -10,7 +10,14 @@ import {
   supportsBackgroundProcessors,
   type BackgroundOptions,
 } from "@livekit/track-processors";
-import { createContext, type FC, useContext, useEffect, useMemo } from "react";
+import {
+  createContext,
+  type FC,
+  type JSX,
+  use,
+  useEffect,
+  useMemo,
+} from "react";
 import { type LocalVideoTrack } from "livekit-client";
 
 import {
@@ -27,7 +34,7 @@ type ProcessorState = {
 const ProcessorContext = createContext<ProcessorState | undefined>(undefined);
 
 export function useTrackProcessor(): ProcessorState {
-  const state = useContext(ProcessorContext);
+  const state = use(ProcessorContext);
   if (state === undefined)
     throw new Error(
       "useTrackProcessor must be used within a ProcessorProvider",
@@ -76,9 +83,5 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
     [supported, blurActivated, blur],
   );
 
-  return (
-    <ProcessorContext.Provider value={processorState}>
-      {children}
-    </ProcessorContext.Provider>
-  );
+  return <ProcessorContext value={processorState}>{children}</ProcessorContext>;
 };

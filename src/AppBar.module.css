@@ -1,0 +1,23 @@
+.bar {
+  block-size: 64px;
+  flex-shrink: 0;
+}
+
+.bar > header {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  block-size: 64px;
+  z-index: var(--call-view-header-footer-layer);
+}
+
+.bar svg path {
+  fill: var(--cpd-color-icon-primary);
+}
+
+.bar > header > h1 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -14,6 +14,7 @@ export interface ConfigOptions {
     api_key: string;
     api_host: string;
   };
+
   /**
    * The Sentry endpoint to which crash data will be sent.
    * This is only used in the full package of Element Call.
@@ -22,6 +23,7 @@ export interface ConfigOptions {
     DSN: string;
     environment: string;
   };
+
   /**
    * The rageshake server to which feedback and debug logs will be sent.
    * This is only used in the full package of Element Call.
@@ -66,6 +68,7 @@ export interface ConfigOptions {
      * Allow to join group calls without audio and video.
      */
     feature_group_calls_without_video_and_audio?: boolean;
+
     /**
      * Send device-specific call session membership state events instead of
      * legacy user-specific call membership state events.
@@ -86,6 +89,7 @@ export interface ConfigOptions {
      * Defines whether participants should start with audio enabled by default.
      */
     enable_audio?: boolean;
+
     /**
      * Defines whether participants should start with video enabled by default.
      */
@@ -109,19 +113,43 @@ export interface ConfigOptions {
      * How long (in milliseconds) to wait before rotating end-to-end media encryption keys
      * when someone leaves a call.
      */
-    key_rotation_on_leave_delay?: number;
+    wait_for_key_rotation_ms?: number;
 
     /**
-     * How often (in milliseconds) keep-alive messages should be sent to the server for
-     * the MatrixRTC membership event.
+     * The duration (in milliseconds) after the most recent keep-alive (delayed leave event restart)
+     * that the server waits before sending the leave MatrixRTC membership event.
      */
-    membership_keep_alive_period?: number;
+    delayed_leave_event_delay_ms?: number;
 
     /**
-     * How long (in milliseconds) after the last keep-alive the server should expire the
-     * MatrixRTC membership event.
+     * The time (in milliseconds) after which a we consider a delayed event restart http request to have failed.
+     * Setting this to a lower value will result in more frequent retries but also a higher chance of failiour.
+     *
+     * In the presence of network packet loss (hurting TCP connections), the custom delayedEventRestartLocalTimeoutMs
+     * helps by keeping more delayed event reset candidates in flight,
+     * improving the chances of a successful reset. (its is equivalent to the js-sdk `localTimeout` configuration,
+     * but only applies to calls to the `_unstable_updateDelayedEvent` endpoint with a body of `{action:"restart"}`.)
      */
-    membership_server_side_expiry_timeout?: number;
+    delayed_leave_event_restart_local_timeout_ms?: number;
+
+    /**
+     * The time interval (in milliseconds) at which the client sends membership keep-alive
+     * messages to the server by restarting the timer for the delayed leave event.
+     */
+    delayed_leave_event_restart_ms?: number;
+
+    /**
+     * How long we wait before retrying after a network error on any of the requests.
+     */
+    network_error_retry_ms?: number;
+
+    /**
+     * The timeout (in milliseconds) after we joined the call, that our membership should expire
+     * unless we have explicitly updated it.
+     *
+     * This is what goes into the m.rtc.member event expiry field and is typically set to a number of hours.
+     */
+    membership_event_expiry_ms?: number;
   };
 }
 
