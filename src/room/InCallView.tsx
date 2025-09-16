@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import { IconButton, Text, Tooltip } from "@vector-im/compound-web";
-import { type Room as LivekitRoom } from "livekit-client";
+import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
 import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
@@ -253,11 +253,12 @@ export const InCallView: FC<InCallViewProps> = ({
     useReactionsSender();
 
   useWakeLock();
-  const isDisconnected = useObservableEagerState(vm.livekitConnectionState$);
+  const connectionState = useObservableEagerState(vm.livekitConnectionState$);
 
   // annoyingly we don't get the disconnection reason this way,
   // only by listening for the emitted event
-  if (isDisconnected) throw new ConnectionLostError();
+  if (connectionState === ConnectionState.Disconnected)
+    throw new ConnectionLostError();
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure();
