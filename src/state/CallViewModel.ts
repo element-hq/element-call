@@ -116,7 +116,6 @@ import { type Behavior } from "./Behavior";
 import {
   enterRTCSession,
   getLivekitAlias,
-  leaveRTCSession,
   makeFocus,
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -462,7 +461,10 @@ export class CallViewModel extends ViewModel {
       ),
   );
 
-  private readonly memberships$ = this.scope.behavior(
+  // TODO-MULTI-SFU make sure that we consider the room memberships here as well (so that here we only have valid memberships)
+  // this also makes it possible to use this memberships$ list in all observables based on it.
+  // there should be no other call to: this.matrixRTCSession.memberships!
+  public readonly memberships$ = this.scope.behavior(
     fromEvent(
       this.matrixRTCSession,
       MatrixRTCSessionEvent.MembershipsChanged,
@@ -565,6 +567,26 @@ export class CallViewModel extends ViewModel {
   );
   private readonly stopConnection$ = this.connectionInstructions$.pipe(
     concatMap(({ stop }) => stop),
+  );
+
+  public readonly allLivekitRooms$ = this.scope.behavior(
+    combineLatest([
+      this.remoteConnections$,
+      this.localConnection,
+      this.localFocus,
+    ]).pipe(
+      map(([remoteConnections, localConnection, localFocus]) =>
+        Array.from(remoteConnections.entries())
+          .map(([index, c]) => ({ room: c.livekitRoom, url: index }))
+          .concat([
+            {
+              room: localConnection.livekitRoom,
+              url: localFocus.livekit_service_url,
+            },
+          ]),
+      ),
+      startWith([]),
+    ),
   );
 
   private readonly userId = this.matrixRoom.client.getUserId();

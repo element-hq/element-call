@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { getTrackReferenceId } from "@livekit/components-core";
+import { type Room as LivekitRoom } from "livekit-client";
 import { type RemoteAudioTrack, Track } from "livekit-client";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -19,7 +20,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import * as controls from "../controls";
-
+import {} from "@livekit/components-core";
 export interface MatrixAudioRendererProps {
   /**
    * The list of participants to render audio for.
@@ -27,6 +28,7 @@ export interface MatrixAudioRendererProps {
    * that are not expected to be in the rtc session.
    */
   members: CallMembership[];
+  livekitRoom: LivekitRoom;
   /**
    * If set to `true`, mutes all audio tracks rendered by the component.
    * @remarks
@@ -49,9 +51,10 @@ export interface MatrixAudioRendererProps {
  * ```
  * @public
  */
-export function MatrixAudioRenderer({
+export function LivekitRoomAudioRenderer({
   members,
   muted,
+  livekitRoom,
 }: MatrixAudioRendererProps): ReactNode {
   const validIdentities = useMemo(
     () =>
@@ -89,6 +92,7 @@ export function MatrixAudioRenderer({
     {
       updateOnlyOn: [],
       onlySubscribed: true,
+      room: livekitRoom,
     },
   ).filter((ref) => {
     const isValid = validIdentities?.has(ref.participant.identity);
