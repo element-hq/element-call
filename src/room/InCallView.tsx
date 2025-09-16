@@ -25,7 +25,11 @@ import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
-import { useObservable, useSubscription } from "observable-hooks";
+import {
+  useObservable,
+  useObservableEagerState,
+  useSubscription,
+} from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import {
@@ -63,7 +67,6 @@ import { type MuteStates } from "./MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
-import { type ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
 import {
   CallViewModel,
@@ -212,12 +215,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   return (
     <RoomContext value={livekitRoom}>
       <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
-        <InCallView
-          {...props}
-          vm={vm}
-          livekitRoom={livekitRoom}
-          connState={connState}
-        />
+        <InCallView {...props} vm={vm} livekitRoom={livekitRoom} />
       </ReactionsSenderProvider>
     </RoomContext>
   );
@@ -235,7 +233,6 @@ export interface InCallViewProps {
   onLeave: (cause: "user", soundFile?: CallEventSounds) => void;
   header: HeaderStyle;
   otelGroupCallMembership?: OTelGroupCallMembership;
-  connState: ECConnectionState;
   onShareClick: (() => void) | null;
 }
 
@@ -249,7 +246,6 @@ export const InCallView: FC<InCallViewProps> = ({
   muteStates,
   onLeave,
   header: headerStyle,
-  connState,
   onShareClick,
 }) => {
   const { t } = useTranslation();
@@ -257,10 +253,11 @@ export const InCallView: FC<InCallViewProps> = ({
     useReactionsSender();
 
   useWakeLock();
+  const connectionState = useObservableEagerState(vm.livekitConnectionState$);
 
   // annoyingly we don't get the disconnection reason this way,
   // only by listening for the emitted event
-  if (connState === ConnectionState.Disconnected)
+  if (connectionState === ConnectionState.Disconnected)
     throw new ConnectionLostError();
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);

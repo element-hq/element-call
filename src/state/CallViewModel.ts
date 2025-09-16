@@ -947,6 +947,7 @@ export class CallViewModel extends ViewModel {
    * The current call pickup state of the call.
    *  - "unknown": The client has not yet sent the notification event. We don't know if it will because it first needs to send its own membership.
    *     Then we can conclude if we were the first one to join or not.
+   *     This may also be set if we are disconnected.
    *  - "ringing": The call is ringing on other devices in this room (This client should give audiovisual feedback that this is happening).
    *  - "timeout": No-one picked up in the defined time this call should be ringing on others devices.
    *     The call failed. If desired this can be used as a trigger to exit the call.
@@ -959,13 +960,20 @@ export class CallViewModel extends ViewModel {
     ? this.scope.behavior<
         "unknown" | "ringing" | "timeout" | "decline" | "success"
       >(
-        this.someoneElseJoined$.pipe(
-          switchMap((someoneElseJoined) =>
-            someoneElseJoined
-              ? of("success" as const)
-              : // Show the ringing state of the most recent ringing attempt.
-                this.ring$.pipe(switchAll()),
-          ),
+        combineLatest([
+          this.livekitConnectionState$,
+          this.someoneElseJoined$,
+        ]).pipe(
+          switchMap(([livekitConnectionState, someoneElseJoined]) => {
+            if (livekitConnectionState === ConnectionState.Disconnected) {
+              // Do not ring until we're connected.
+              return of("unknown" as const);
+            } else if (someoneElseJoined) {
+              return of("success" as const);
+            }
+            // Show the ringing state of the most recent ringing attempt.
+            return this.ring$.pipe(switchAll());
+          }),
           // The state starts as 'unknown' because we don't know if the RTC
           // session will actually send a notify event yet. It will only be
           // known once we send our own membership and see that we were the
@@ -1682,7 +1690,7 @@ export class CallViewModel extends ViewModel {
     private readonly livekitRoom: LivekitRoom,
     private readonly mediaDevices: MediaDevices,
     private readonly options: CallViewModelOptions,
-    private readonly livekitConnectionState$: Observable<ECConnectionState>,
+    public readonly livekitConnectionState$: Observable<ECConnectionState>,
     private readonly handsRaisedSubject$: Observable<
       Record<string, RaisedHandInfo>
     >,
