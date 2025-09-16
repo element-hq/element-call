@@ -344,6 +344,7 @@ export const GroupCallView: FC<Props> = ({
         window.setTimeout(resolve, 10);
       });
 
+      // TODO-MULTI-SFU find a solution if this is supposed to happen here or in the view model.
       leaveRTCSession(
         rtcSession,
         cause,
