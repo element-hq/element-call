@@ -465,14 +465,6 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  public readonly livekitDisconnected$ = this.scope.behavior(
-    and$(
-      this.livekitConnectionState$.pipe(
-        map((state) => state === ConnectionState.Disconnected),
-      ),
-    ),
-  );
-
   private readonly connected$ = this.scope.behavior(
     and$(
       this.matrixConnected$,
@@ -969,11 +961,11 @@ export class CallViewModel extends ViewModel {
         "unknown" | "ringing" | "timeout" | "decline" | "success"
       >(
         combineLatest([
-          this.livekitDisconnected$,
+          this.livekitConnectionState$,
           this.someoneElseJoined$,
         ]).pipe(
-          switchMap(([disconnected, someoneElseJoined]) => {
-            if (disconnected) {
+          switchMap(([livekitConnectionState, someoneElseJoined]) => {
+            if (livekitConnectionState === ConnectionState.Disconnected) {
               // Do not ring until we're connected.
               return of("unknown" as const);
             } else if (someoneElseJoined) {
@@ -1698,7 +1690,7 @@ export class CallViewModel extends ViewModel {
     private readonly livekitRoom: LivekitRoom,
     private readonly mediaDevices: MediaDevices,
     private readonly options: CallViewModelOptions,
-    private readonly livekitConnectionState$: Observable<ECConnectionState>,
+    public readonly livekitConnectionState$: Observable<ECConnectionState>,
     private readonly handsRaisedSubject$: Observable<
       Record<string, RaisedHandInfo>
     >,
