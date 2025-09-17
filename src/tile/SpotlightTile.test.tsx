@@ -59,6 +59,7 @@ test("SpotlightTile is accessible", async () => {
               expanded={false}
               onToggleExpanded={toggleExpanded}
               showIndicators
+              focusable={true}
             />,
           );
 

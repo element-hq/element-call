@@ -60,7 +60,7 @@ interface TileProps {
   targetHeight: number;
   displayName: string;
   showSpeakingIndicators: boolean;
-  focusable?: boolean;
+  focusable: boolean;
 }
 
 interface UserMediaTileProps extends TileProps {
@@ -82,7 +82,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   menuEnd,
   className,
   displayName,
-  focusable = true,
+  focusable,
   ...props
 }) => {
   const { toggleRaisedHand } = useReactionsSender();
@@ -214,7 +214,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
   ref,
   vm,
   onOpenProfile,
-  focusable = true,
+  focusable,
   ...props
 }) => {
   const { t } = useTranslation();
@@ -346,14 +346,13 @@ interface GridTileProps {
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicators: boolean;
-  focusable?: boolean;
+  focusable: boolean;
 }
 
 export const GridTile: FC<GridTileProps> = ({
   ref: theirRef,
   vm,
   onOpenProfile,
-  focusable = true,
   ...props
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);

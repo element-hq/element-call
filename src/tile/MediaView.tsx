@@ -38,7 +38,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   encryptionStatus: EncryptionStatus;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
-  focusable?: boolean;
+  focusable: boolean;
   primaryButton?: ReactNode;
   raisedHandTime?: Date;
   currentReaction?: ReactionOption;
@@ -62,7 +62,7 @@ export const MediaView: FC<Props> = ({
   unencryptedWarning,
   nameTagLeadingIcon,
   displayName,
-  focusable = true,
+  focusable,
   primaryButton,
   encryptionStatus,
   raisedHandTime,

@@ -189,7 +189,7 @@ interface Props {
   targetWidth: number;
   targetHeight: number;
   showIndicators: boolean;
-  focusable?: boolean;
+  focusable: boolean;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
 }
