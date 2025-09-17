@@ -54,7 +54,6 @@ import { type HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
-import overlayStyles from "../Overlay.module.css";
 import { GridTile } from "../tile/GridTile";
 import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
