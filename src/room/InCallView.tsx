@@ -209,8 +209,9 @@ export const InCallView: FC<InCallViewProps> = ({
 
   // annoyingly we don't get the disconnection reason this way,
   // only by listening for the emitted event
-  if (connectionState === ConnectionState.Disconnected)
-    throw new ConnectionLostError();
+  // This needs to be done differential. with the vm connection state we start with Disconnected.
+  // if (connectionState === ConnectionState.Disconnected)
+  //   throw new ConnectionLostError();
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure();
