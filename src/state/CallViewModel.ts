@@ -49,6 +49,7 @@ import {
   race,
   scan,
   skip,
+  skipWhile,
   startWith,
   switchAll,
   switchMap,
@@ -853,17 +854,6 @@ export class CallViewModel extends ViewModel {
     throttleTime(THROTTLE_SOUND_EFFECT_MS),
   );
 
-  public readonly leaveSoundEffect$ = this.userMedia$.pipe(
-    pairwise(),
-    filter(
-      ([prev, current]) =>
-        current.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND &&
-        current.length < prev.length,
-    ),
-    map(() => {}),
-    throttleTime(THROTTLE_SOUND_EFFECT_MS),
-  );
-
   /**
    * The number of participants currently in the call.
    *
@@ -957,23 +947,33 @@ export class CallViewModel extends ViewModel {
    * The current call pickup state of the call.
    *  - "unknown": The client has not yet sent the notification event. We don't know if it will because it first needs to send its own membership.
    *     Then we can conclude if we were the first one to join or not.
+   *     This may also be set if we are disconnected.
    *  - "ringing": The call is ringing on other devices in this room (This client should give audiovisual feedback that this is happening).
    *  - "timeout": No-one picked up in the defined time this call should be ringing on others devices.
    *     The call failed. If desired this can be used as a trigger to exit the call.
    *  - "success": Someone else joined. The call is in a normal state. No audiovisual feedback.
    *  - null: EC is configured to never show any waiting for answer state.
    */
-  public readonly callPickupState$ = this.options.waitForCallPickup
+  public readonly callPickupState$: Behavior<
+    "unknown" | "ringing" | "timeout" | "decline" | "success" | null
+  > = this.options.waitForCallPickup
     ? this.scope.behavior<
         "unknown" | "ringing" | "timeout" | "decline" | "success"
       >(
-        this.someoneElseJoined$.pipe(
-          switchMap((someoneElseJoined) =>
-            someoneElseJoined
-              ? of("success" as const)
-              : // Show the ringing state of the most recent ringing attempt.
-                this.ring$.pipe(switchAll()),
-          ),
+        combineLatest([
+          this.livekitConnectionState$,
+          this.someoneElseJoined$,
+        ]).pipe(
+          switchMap(([livekitConnectionState, someoneElseJoined]) => {
+            if (livekitConnectionState === ConnectionState.Disconnected) {
+              // Do not ring until we're connected.
+              return of("unknown" as const);
+            } else if (someoneElseJoined) {
+              return of("success" as const);
+            }
+            // Show the ringing state of the most recent ringing attempt.
+            return this.ring$.pipe(switchAll());
+          }),
           // The state starts as 'unknown' because we don't know if the RTC
           // session will actually send a notify event yet. It will only be
           // known once we send our own membership and see that we were the
@@ -982,6 +982,24 @@ export class CallViewModel extends ViewModel {
         ),
       )
     : constant(null);
+
+  public readonly leaveSoundEffect$ = combineLatest([
+    this.callPickupState$,
+    this.userMedia$,
+  ]).pipe(
+    // Until the call is successful, do not play a leave sound.
+    // If callPickupState$ is null, then we always play the sound as it will not conflict with a decline sound.
+    skipWhile(([c]) => c !== null && c !== "success"),
+    map(([, userMedia]) => userMedia),
+    pairwise(),
+    filter(
+      ([prev, current]) =>
+        current.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND &&
+        current.length < prev.length,
+    ),
+    map(() => {}),
+    throttleTime(THROTTLE_SOUND_EFFECT_MS),
+  );
 
   /**
    * List of MediaItems that we want to display, that are of type ScreenShare
@@ -1672,7 +1690,7 @@ export class CallViewModel extends ViewModel {
     private readonly livekitRoom: LivekitRoom,
     private readonly mediaDevices: MediaDevices,
     private readonly options: CallViewModelOptions,
-    private readonly livekitConnectionState$: Observable<ECConnectionState>,
+    public readonly livekitConnectionState$: Observable<ECConnectionState>,
     private readonly handsRaisedSubject$: Observable<
       Record<string, RaisedHandInfo>
     >,

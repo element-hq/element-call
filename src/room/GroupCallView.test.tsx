@@ -12,10 +12,14 @@ import {
   onTestFinished,
   test,
   vi,
+  vitest,
 } from "vitest";
-import { render, waitFor, screen } from "@testing-library/react";
+import { render, waitFor, screen, act } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  MatrixRTCSessionEvent,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
@@ -94,13 +98,15 @@ beforeEach(() => {
   playSound = vi.fn();
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
+    playSoundLooping: vi.fn(),
+    soundDuration: {},
   });
   // A trivial implementation of Active call to ensure we are testing GroupCallView exclusively here.
   (ActiveCall as MockedFunction<typeof ActiveCall>).mockImplementation(
     ({ onLeave }) => {
       return (
         <div>
-          <button onClick={() => onLeave()}>Leave</button>
+          <button onClick={() => onLeave("user")}>Leave</button>
         </div>
       );
     },
@@ -206,6 +212,8 @@ test("GroupCallView plays a leave sound synchronously in widget mode", async () 
     );
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
+    playSoundLooping: vitest.fn(),
+    soundDuration: {},
   });
 
   const { getByText, rtcSession } = createGroupCallView(
@@ -257,4 +265,20 @@ test("GroupCallView shows errors that occur during joining", async () => {
   createGroupCallView(null, false);
   await user.click(screen.getByRole("button", { name: "Join call" }));
   screen.getByText("Call is not supported");
+});
+
+test("user can reconnect after a membership manager error", async () => {
+  const user = userEvent.setup();
+  const { rtcSession } = createGroupCallView(null, true);
+  await act(() =>
+    rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, undefined),
+  );
+  // XXX: Wrapping the following click in act() shouldn't be necessary (the
+  // async state update should be processed automatically by the waitFor call),
+  // and yet here we are.
+  await act(async () =>
+    user.click(screen.getByRole("button", { name: "Reconnect" })),
+  );
+  // In-call controls should be visible again
+  await waitFor(() => screen.getByRole("button", { name: "Leave" }));
 });

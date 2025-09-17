@@ -22,7 +22,10 @@ import {
 } from "matrix-js-sdk";
 
 import { E2eeType } from "../e2ee/e2eeType";
-import { CallViewModel } from "../state/CallViewModel";
+import {
+  CallViewModel,
+  type CallViewModelOptions,
+} from "../state/CallViewModel";
 import {
   mockLivekitRoom,
   mockMatrixRoom,
@@ -122,6 +125,7 @@ export function getBasicRTCSession(
 export function getBasicCallViewModelEnvironment(
   members: RoomMember[],
   initialRtcMemberships: CallMembership[] = [localRtcMember, aliceRtcMember],
+  callViewModelOptions: Partial<CallViewModelOptions> = {},
 ): {
   vm: CallViewModel;
   rtcMemberships$: BehaviorSubject<CallMembership[]>;
@@ -148,6 +152,7 @@ export function getBasicCallViewModelEnvironment(
     mockMediaDevices({}),
     {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      ...callViewModelOptions,
     },
     of(ConnectionState.Connected),
     handRaisedSubject$,
