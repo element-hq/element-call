@@ -28,8 +28,8 @@ test("can only interact with header and footer while reconnecting", async ({
   await page.getByTestId("lobby_joinCall").click();
 
   // The media tile for the local user should become visible
+  await new Promise((resolve) => setTimeout(resolve, 1500));
   await expect(page.getByTestId("name_tag")).toContainText("Test user");
-  await new Promise((resolve) => setTimeout(resolve, 500));
 
   // Now disconnect from the internet
   await page.route("https://synapse.m.localhost/**/*", async (route) => {
