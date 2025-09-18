@@ -7,6 +7,12 @@ Please see LICENSE in the repository root for full details.
 
 import { expect, test } from "@playwright/test";
 
+// Skip test for Firefox, due to page.keyboard.press("Tab") not reliable on headless mode
+test.skip(
+  ({ browserName }) => browserName === "firefox",
+  'This test is not working on firefox, page.keyboard.press("Tab") not reliable in headless mode',
+);
+
 test("can only interact with header and footer while reconnecting", async ({
   page,
 }) => {
