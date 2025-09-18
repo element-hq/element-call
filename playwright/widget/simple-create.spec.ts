@@ -52,7 +52,7 @@ widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
     brooks.page
       .locator('iframe[title="Element Call"]')
       .contentFrame()
-      .getByRole("button", {"name": "End call"})
+      .getByRole("button", { name: "End call" }),
   ).toBeVisible();
 
   // Join from the other side
