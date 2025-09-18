@@ -317,6 +317,11 @@ class ParamParser {
   }
 }
 
+let urlParamCache: {
+  search?: string;
+  hash?: string;
+  params?: UrlParams;
+} = {};
 /**
  * Gets the app parameters for the current URL.
  * @param search The URL search string
@@ -327,6 +332,14 @@ export const getUrlParams = (
   search = window.location.search,
   hash = window.location.hash,
 ): UrlParams => {
+  // Only run the param configuration if we do not yet have it cached for this url.
+  if (
+    urlParamCache.search === search &&
+    urlParamCache.hash === hash &&
+    urlParamCache.params
+  ) {
+    return urlParamCache.params;
+  }
   const parser = new ParamParser(search, hash);
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
@@ -475,12 +488,29 @@ export const getUrlParams = (
     autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
   };
 
-  return {
+  // Log the final configuration for debugging purposes.
+  // This will only log when the cache is not yet set.
+  logger.info(
+    "UrlParams: final set of url params\n",
+    "intent:",
+    intent,
+    "\nproperties:",
+    properties,
+    "configuration:",
+    configuration,
+    "intentAndPlatformDerivedConfiguration:",
+    intentAndPlatformDerivedConfiguration,
+  );
+
+  const params = {
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
     ...intentAndPlatformDerivedConfiguration,
   };
+  urlParamCache = { search, hash, params };
+
+  return params;
 };
 
 /**
