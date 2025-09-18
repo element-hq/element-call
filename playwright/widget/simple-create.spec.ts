@@ -49,7 +49,10 @@ widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
 
   // Check the join indicator on the room list
   await expect(
-    brooks.page.locator("div").filter({ hasText: /^Joined • 1$/ }),
+    brooks.page
+      .locator('iframe[title="Element Call"]')
+      .contentFrame()
+      .getByRole("button", {"name": "End call"})
   ).toBeVisible();
 
   // Join from the other side
