@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import {
   afterAll,
   afterEach,
+  beforeEach,
   describe,
   expect,
   it,
@@ -26,7 +27,6 @@ import { MediaDevicesContext } from "../MediaDevicesContext";
 import { mockConfig } from "../utils/test";
 import { MediaDevices } from "../state/MediaDevices";
 import { ObservableScope } from "../state/ObservableScope";
-
 vi.mock("@livekit/components-core");
 
 interface TestComponentProps {
@@ -110,9 +110,10 @@ function mockMediaDevices(
   return new MediaDevices(scope);
 }
 
-describe("useMuteStates", () => {
+describe("useMuteStates VITE_PACKAGE='full' (SPA) mode", () => {
   afterEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("VITE_PACKAGE", "full");
   });
 
   afterAll(() => {
@@ -253,6 +254,70 @@ describe("useMuteStates", () => {
     await user.click(screen.getByRole("button", { name: "Connect devices" }));
     // Audio should remember that it was muted, while video should re-enable
     expect(screen.getByTestId("audio-enabled").textContent).toBe("false");
+    expect(screen.getByTestId("video-enabled").textContent).toBe("true");
+  });
+});
+
+describe("useMuteStates in VITE_PACKAGE='embedded' (widget) mode", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_PACKAGE", "embedded");
+  });
+
+  it("uses defaults from config", () => {
+    mockConfig({
+      media_devices: {
+        enable_audio: false,
+        enable_video: false,
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <MediaDevicesContext value={mockMediaDevices()}>
+          <TestComponent />
+        </MediaDevicesContext>
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("audio-enabled").textContent).toBe("false");
+    expect(screen.getByTestId("video-enabled").textContent).toBe("false");
+  });
+
+  it("skipLobby does not mute inputs", () => {
+    mockConfig();
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          "/room/?skipLobby=true&widgetId=1234&parentUrl=www.parent.org",
+        ]}
+      >
+        <MediaDevicesContext value={mockMediaDevices()}>
+          <TestComponent />
+        </MediaDevicesContext>
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("audio-enabled").textContent).toBe("true");
+    expect(screen.getByTestId("video-enabled").textContent).toBe("true");
+  });
+
+  it("url params win over config", () => {
+    // The config sets audio and video to disabled
+    mockConfig({ media_devices: { enable_audio: false, enable_video: false } });
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          // The Intent sets both audio and video enabled to true via the url param configuration
+          "/room/?intent=start_call_dm&widgetId=1234&parentUrl=www.parent.org",
+        ]}
+      >
+        <MediaDevicesContext value={mockMediaDevices()}>
+          <TestComponent />
+        </MediaDevicesContext>
+      </MemoryRouter>,
+    );
+    // At the end we expect the url param to take precedence, resulting in true
+    expect(screen.getByTestId("audio-enabled").textContent).toBe("true");
     expect(screen.getByTestId("video-enabled").textContent).toBe("true");
   });
 });

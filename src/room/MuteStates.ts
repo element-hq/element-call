@@ -81,11 +81,15 @@ function useMuteState(
 export function useMuteStates(isJoined: boolean): MuteStates {
   const devices = useMediaDevices();
 
-  const { skipLobby } = useUrlParams();
+  const { skipLobby, defaultAudioEnabled, defaultVideoEnabled } =
+    useUrlParams();
 
-  const audio = useMuteState(devices.audioInput, () => {
-    return Config.get().media_devices.enable_audio && !skipLobby && !isJoined;
-  });
+  const audio = useMuteState(
+    devices.audioInput,
+    () =>
+      (defaultAudioEnabled ?? Config.get().media_devices.enable_audio) &&
+      allowJoinUnmuted(skipLobby, isJoined),
+  );
   useEffect(() => {
     // If audio is enabled, we need to request the device names again,
     // because iOS will not be able to switch to the correct device after un-muting.
@@ -97,7 +101,9 @@ export function useMuteStates(isJoined: boolean): MuteStates {
   const isEarpiece = useIsEarpiece();
   const video = useMuteState(
     devices.videoInput,
-    () => Config.get().media_devices.enable_video && !skipLobby && !isJoined,
+    () =>
+      (defaultVideoEnabled ?? Config.get().media_devices.enable_video) &&
+      allowJoinUnmuted(skipLobby, isJoined),
     isEarpiece, // Force video to be unavailable if using earpiece
   );
 
@@ -163,4 +169,10 @@ export function useMuteStates(isJoined: boolean): MuteStates {
   }, [onMuteStateChangeRequest]);
 
   return useMemo(() => ({ audio, video }), [audio, video]);
+}
+
+function allowJoinUnmuted(skipLobby: boolean, isJoined: boolean): boolean {
+  return (
+    (!skipLobby && !isJoined) || import.meta.env.VITE_PACKAGE === "embedded"
+  );
 }
