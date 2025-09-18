@@ -35,6 +35,8 @@ Please see LICENSE in the repository root for full details.
 
 .bg.animate[data-state="closed"] {
   animation: fade-out 130ms;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .overlay {

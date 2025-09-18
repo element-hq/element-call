@@ -38,6 +38,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   encryptionStatus: EncryptionStatus;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
+  focusable: boolean;
   primaryButton?: ReactNode;
   raisedHandTime?: Date;
   currentReaction?: ReactionOption;
@@ -61,6 +62,7 @@ export const MediaView: FC<Props> = ({
   unencryptedWarning,
   nameTagLeadingIcon,
   displayName,
+  focusable,
   primaryButton,
   encryptionStatus,
   raisedHandTime,
@@ -114,6 +116,7 @@ export const MediaView: FC<Props> = ({
             miniature={avatarSize < 96}
             showTimer={handRaiseTimerVisible}
             onClick={raisedHandOnClick}
+            tabIndex={focusable ? undefined : -1}
           />
           {currentReaction && (
             <ReactionIndicator
@@ -164,6 +167,7 @@ export const MediaView: FC<Props> = ({
               label={t("common.unencrypted")}
               placement="bottom"
               isTriggerInteractive={false}
+              nonInteractiveTriggerTabIndex={focusable ? undefined : -1}
             >
               <ErrorSolidIcon
                 width={20}

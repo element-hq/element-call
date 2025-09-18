@@ -64,6 +64,7 @@ test("GridTile is accessible", async () => {
             targetWidth={300}
             targetHeight={200}
             showSpeakingIndicators
+            focusable={true}
           />
         </ReactionsSenderProvider>,
       );
