@@ -228,7 +228,7 @@ export interface UrlConfiguration {
    */
   waitForCallPickup: boolean;
 }
-interface IntentDerivedConfiguration {
+interface IntentAndPlatformDerivedConfiguration {
   defaultAudioEnabled?: boolean;
   defaultVideoEnabled?: boolean;
 }
@@ -241,7 +241,7 @@ interface IntentDerivedConfiguration {
 export interface UrlParams
   extends UrlProperties,
     UrlConfiguration,
-    IntentDerivedConfiguration {}
+    IntentAndPlatformDerivedConfiguration {}
 
 // This is here as a stopgap, but what would be far nicer is a function that
 // takes a UrlParams and returns a query string. That would enable us to
@@ -405,7 +405,9 @@ export const getUrlParams = (
       };
   }
 
-  const intentDerivedConfiguration: IntentDerivedConfiguration = {};
+  const intentAndPlatformDerivedConfiguration: IntentAndPlatformDerivedConfiguration =
+    {};
+  // Desktop also includes web. Its anything that is not mobile.
   const desktopMobile = platform === "desktop" ? "desktop" : "mobile";
   switch (desktopMobile) {
     case "desktop":
@@ -415,8 +417,8 @@ export const getUrlParams = (
         case UserIntent.JoinExistingCall:
         case UserIntent.StartNewCallDM:
         case UserIntent.JoinExistingCallDM:
-          intentDerivedConfiguration.defaultAudioEnabled = true;
-          intentDerivedConfiguration.defaultVideoEnabled = true;
+          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
+          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = true;
           break;
       }
   }
@@ -477,7 +479,7 @@ export const getUrlParams = (
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
-    ...intentDerivedConfiguration,
+    ...intentAndPlatformDerivedConfiguration,
   };
 };
 

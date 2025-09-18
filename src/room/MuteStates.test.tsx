@@ -110,7 +110,7 @@ function mockMediaDevices(
   return new MediaDevices(scope);
 }
 
-describe("useMuteStates in full mode", () => {
+describe("useMuteStates VITE_PACKAGE='full' (SPA) mode", () => {
   afterEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("VITE_PACKAGE", "full");
@@ -258,7 +258,7 @@ describe("useMuteStates in full mode", () => {
   });
 });
 
-describe("useMuteStates in embedded mode", () => {
+describe("useMuteStates in VITE_PACKAGE='embedded' (widget) mode", () => {
   beforeEach(() => {
     vi.stubEnv("VITE_PACKAGE", "embedded");
   });
