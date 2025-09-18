@@ -159,8 +159,8 @@ export const widgetTest = test.extend<MyFixtures>({
     } = await registerUser(browser, userB);
 
     // Invite the second user
-    await ewPage1.getByRole("button", { name: "Add room" }).click();
-    await ewPage1.getByText("New room").click();
+    await ewPage1.getByRole("button", { name: "Add", exact: true }).click();
+    await ewPage1.getByRole("menuitem", { name: "New Room" }).click();
     await ewPage1.getByRole("textbox", { name: "Name" }).fill("Welcome Room");
     await ewPage1.getByRole("button", { name: "Create room" }).click();
     await expect(ewPage1.getByText("You created this room.")).toBeVisible();
@@ -184,9 +184,9 @@ export const widgetTest = test.extend<MyFixtures>({
 
     // Accept the invite
     await expect(
-      ewPage2.getByRole("treeitem", { name: "Welcome Room" }),
+      ewPage2.getByRole("option", { name: "Welcome Room" }),
     ).toBeVisible();
-    await ewPage2.getByRole("treeitem", { name: "Welcome Room" }).click();
+    await ewPage2.getByRole("option", { name: "Welcome Room" }).click();
     await ewPage2.getByRole("button", { name: "Accept" }).click();
     await expect(
       ewPage2.getByRole("main").getByRole("heading", { name: "Welcome Room" }),

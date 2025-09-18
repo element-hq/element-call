@@ -44,6 +44,10 @@ rc_message:
   per_second: 10000
   burst_count: 10000
 
+rc_delayed_event_mgmt:
+  per_second: 10000
+  burst_count: 10000
+
 rc_login:
   address:
     per_second: 10000

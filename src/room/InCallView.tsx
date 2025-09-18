@@ -54,7 +54,6 @@ import { type HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
-import overlayStyles from "../Overlay.module.css";
 import { GridTile } from "../tile/GridTile";
 import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
@@ -119,6 +118,7 @@ import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
 import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
 import { Toast } from "../Toast.tsx";
+import overlayStyles from "../Overlay.module.css";
 import { Avatar, Size as AvatarSize } from "../Avatar";
 import waitingStyles from "./WaitingForJoin.module.css";
 import { prefetchSounds } from "../soundUtils";
@@ -641,6 +641,38 @@ export const InCallView: FC<InCallViewProps> = ({
     }
   }
 
+  // The reconnecting toast cannot be dismissed
+  const onDismissReconnectingToast = useCallback(() => {}, []);
+  // We need to use a non-modal toast to avoid trapping focus within the toast.
+  // However, a non-modal toast will not render any background overlay on its
+  // own, so we must render one manually.
+  const reconnectingToast = (
+    <>
+      <div
+        className={classNames(overlayStyles.bg, overlayStyles.animate)}
+        data-state={reconnecting ? "open" : "closed"}
+      />
+      <Toast
+        onDismiss={onDismissReconnectingToast}
+        open={reconnecting}
+        modal={false}
+      >
+        {t("common.reconnecting")}
+      </Toast>
+    </>
+  );
+
+  const earpieceOverlay = (
+    <EarpieceOverlay
+      show={earpieceMode && !reconnecting}
+      onBackToVideoPressed={audioOutputSwitcher?.switch}
+    />
+  );
+
+  // If the reconnecting toast or earpiece overlay obscures the media tiles, we
+  // need to remove them from the accessibility tree and block focus.
+  const contentObscured = reconnecting || earpieceMode;
+
   const Tile = useMemo(
     () =>
       function Tile({
@@ -670,6 +702,7 @@ export const InCallView: FC<InCallViewProps> = ({
             className={classNames(className, styles.tile)}
             style={style}
             showSpeakingIndicators={showSpeakingIndicatorsValue}
+            focusable={!contentObscured}
           />
         ) : (
           <SpotlightTile
@@ -680,12 +713,13 @@ export const InCallView: FC<InCallViewProps> = ({
             targetWidth={targetWidth}
             targetHeight={targetHeight}
             showIndicators={showSpotlightIndicatorsValue}
+            focusable={!contentObscured}
             className={classNames(className, styles.tile)}
             style={style}
           />
         );
       },
-    [vm, openProfile],
+    [vm, openProfile, contentObscured],
   );
 
   const layouts = useMemo(() => {
@@ -714,6 +748,8 @@ export const InCallView: FC<InCallViewProps> = ({
           targetWidth={gridBounds.height}
           targetHeight={gridBounds.width}
           showIndicators={false}
+          focusable={!contentObscured}
+          aria-hidden={contentObscured}
         />
       );
     }
@@ -731,6 +767,7 @@ export const InCallView: FC<InCallViewProps> = ({
         model={layout}
         Layout={layers.fixed}
         Tile={Tile}
+        aria-hidden={contentObscured}
       />
     );
     const scrollingGrid = (
@@ -740,6 +777,7 @@ export const InCallView: FC<InCallViewProps> = ({
         model={layout}
         Layout={layers.scrolling}
         Tile={Tile}
+        aria-hidden={contentObscured}
       />
     );
     // The grid tiles go *under* the spotlight in the portrait layout, but
@@ -869,9 +907,6 @@ export const InCallView: FC<InCallViewProps> = ({
     </div>
   );
 
-  // The reconnecting toast cannot be dismissed
-  const onDismissReconnectingToast = useCallback(() => {}, []);
-
   return (
     <div
       className={styles.inRoom}
@@ -899,17 +934,8 @@ export const InCallView: FC<InCallViewProps> = ({
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
-      <Toast
-        onDismiss={onDismissReconnectingToast}
-        open={reconnecting}
-        portal={false}
-      >
-        {t("common.reconnecting")}
-      </Toast>
-      <EarpieceOverlay
-        show={earpieceMode && !reconnecting}
-        onBackToVideoPressed={audioOutputSwitcher?.switch}
-      />
+      {reconnectingToast}
+      {earpieceOverlay}
       <ReactionsOverlay vm={vm} />
       {waitingOverlay}
       {footer}
