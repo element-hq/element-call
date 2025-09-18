@@ -62,26 +62,28 @@ widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
   ).toBeVisible();
   await whistler.page.getByRole("button", { name: "Join" }).click();
 
-  await expect(
-    whistler.page
-      .locator('iframe[title="Element Call"]')
-      .contentFrame()
-      .getByTestId("lobby_joinCall"),
-  ).toBeVisible();
+  // Currently disabled due to recent Element Web is bypassing Lobby
+  // await expect(
+  //   whistler.page
+  //     .locator('iframe[title="Element Call"]')
+  //     .contentFrame()
+  //     .getByTestId("lobby_joinCall"),
+  // ).toBeVisible();
+  //
+  // await whistler.page
+  //   .locator('iframe[title="Element Call"]')
+  //   .contentFrame()
+  //   .getByTestId("lobby_joinCall")
+  //   .click();
 
-  await whistler.page
-    .locator('iframe[title="Element Call"]')
-    .contentFrame()
-    .getByTestId("lobby_joinCall")
-    .click();
+  // Currrenty disabled due to recent Element Web not indicating the number of participants
+  // await expect(
+  //   whistler.page.locator("div").filter({ hasText: /^Joined • 2$/ }),
+  // ).toBeVisible();
 
-  await expect(
-    whistler.page.locator("div").filter({ hasText: /^Joined • 2$/ }),
-  ).toBeVisible();
-
-  await expect(
-    brooks.page.locator("div").filter({ hasText: /^Joined • 2$/ }),
-  ).toBeVisible();
+  // await expect(
+  //   brooks.page.locator("div").filter({ hasText: /^Joined • 2$/ }),
+  // ).toBeVisible();
 
   // Whistler leaves
   await whistler.page.waitForTimeout(1000);
