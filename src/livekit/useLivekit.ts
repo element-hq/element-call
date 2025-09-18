@@ -9,6 +9,7 @@ import {
   ConnectionState,
   type E2EEManagerOptions,
   ExternalE2EEKeyProvider,
+  type LocalTrackPublication,
   LocalVideoTrack,
   Room,
   type RoomOptions,
@@ -180,6 +181,33 @@ export function useLivekit(
     room,
     sfuConfig,
   );
+
+  // Log errors when local participant has issues publishing a track.
+  useEffect(() => {
+    const localTrackUnpublishedFn = (
+      publication: LocalTrackPublication,
+    ): void => {
+      logger.info(
+        "Local track unpublished",
+        publication.trackName,
+        publication.trackInfo,
+      );
+    };
+    const mediaDevicesErrorFn = (error: Error): void => {
+      logger.warn("Media devices error when publishing a track", error);
+    };
+
+    room.localParticipant.on("localTrackUnpublished", localTrackUnpublishedFn);
+    room.localParticipant.on("mediaDevicesError", mediaDevicesErrorFn);
+
+    return (): void => {
+      room.localParticipant.off(
+        "localTrackUnpublished",
+        localTrackUnpublishedFn,
+      );
+      room.localParticipant.off("mediaDevicesError", mediaDevicesErrorFn);
+    };
+  }, [room.localParticipant]);
 
   useEffect(() => {
     // Sync the requested mute states with LiveKit's mute states. We do it this
