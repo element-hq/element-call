@@ -228,13 +228,20 @@ export interface UrlConfiguration {
    */
   waitForCallPickup: boolean;
 }
+interface IntentAndPlatformDerivedConfiguration {
+  defaultAudioEnabled?: boolean;
+  defaultVideoEnabled?: boolean;
+}
 
 // If you need to add a new flag to this interface, prefer a name that describes
 // a specific behavior (such as 'confineToRoom'), rather than one that describes
 // the situations that call for this behavior ('isEmbedded'). This makes it
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
-export interface UrlParams extends UrlProperties, UrlConfiguration {}
+export interface UrlParams
+  extends UrlProperties,
+    UrlConfiguration,
+    IntentAndPlatformDerivedConfiguration {}
 
 // This is here as a stopgap, but what would be far nicer is a function that
 // takes a UrlParams and returns a query string. That would enable us to
@@ -310,6 +317,11 @@ class ParamParser {
   }
 }
 
+let urlParamCache: {
+  search?: string;
+  hash?: string;
+  params?: UrlParams;
+} = {};
 /**
  * Gets the app parameters for the current URL.
  * @param search The URL search string
@@ -319,7 +331,18 @@ class ParamParser {
 export const getUrlParams = (
   search = window.location.search,
   hash = window.location.hash,
+  /** Skipping the cache might be needed in tests, to allow recomputing based on mocked platform changes. */
+  skipCache = false,
 ): UrlParams => {
+  // Only run the param configuration if we do not yet have it cached for this url.
+  if (
+    urlParamCache.search === search &&
+    urlParamCache.hash === hash &&
+    urlParamCache.params &&
+    !skipCache
+  ) {
+    return urlParamCache.params;
+  }
   const parser = new ParamParser(search, hash);
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
@@ -343,8 +366,7 @@ export const getUrlParams = (
     ? UserIntent.Unknown
     : (parser.getEnumParam("intent", UserIntent) ?? UserIntent.Unknown);
   // Here we only use constants and `platform` to determine the intent preset.
-  let intentPreset: UrlConfiguration;
-  const inAppDefault = {
+  let intentPreset: UrlConfiguration = {
     confineToRoom: true,
     appPrompt: false,
     preload: false,
@@ -362,31 +384,22 @@ export const getUrlParams = (
   };
   switch (intent) {
     case UserIntent.StartNewCall:
-      intentPreset = {
-        ...inAppDefault,
-        skipLobby: true,
-      };
+      intentPreset.skipLobby = true;
       break;
     case UserIntent.JoinExistingCall:
-      intentPreset = {
-        ...inAppDefault,
-        skipLobby: false,
-      };
+      // On desktop this will be overridden based on which button was used to join the call
+      intentPreset.skipLobby = false;
       break;
     case UserIntent.StartNewCallDM:
-      intentPreset = {
-        ...inAppDefault,
-        skipLobby: true,
-        autoLeaveWhenOthersLeft: true,
-        waitForCallPickup: true,
-      };
+      intentPreset.skipLobby = true;
+      intentPreset.autoLeaveWhenOthersLeft = true;
+      intentPreset.waitForCallPickup = true;
+
       break;
     case UserIntent.JoinExistingCallDM:
-      intentPreset = {
-        ...inAppDefault,
-        skipLobby: true,
-        autoLeaveWhenOthersLeft: true,
-      };
+      // On desktop this will be overridden based on which button was used to join the call
+      intentPreset.skipLobby = true;
+      intentPreset.autoLeaveWhenOthersLeft = true;
       break;
     // Non widget usecase defaults
     default:
@@ -406,6 +419,24 @@ export const getUrlParams = (
         autoLeaveWhenOthersLeft: false,
         waitForCallPickup: false,
       };
+  }
+
+  const intentAndPlatformDerivedConfiguration: IntentAndPlatformDerivedConfiguration =
+    {};
+  // Desktop also includes web. Its anything that is not mobile.
+  const desktopMobile = platform === "desktop" ? "desktop" : "mobile";
+  switch (desktopMobile) {
+    case "desktop":
+    case "mobile":
+      switch (intent) {
+        case UserIntent.StartNewCall:
+        case UserIntent.JoinExistingCall:
+        case UserIntent.StartNewCallDM:
+        case UserIntent.JoinExistingCallDM:
+          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
+          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = true;
+          break;
+      }
   }
 
   const properties: UrlProperties = {
@@ -460,11 +491,29 @@ export const getUrlParams = (
     autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
   };
 
-  return {
+  // Log the final configuration for debugging purposes.
+  // This will only log when the cache is not yet set.
+  logger.info(
+    "UrlParams: final set of url params\n",
+    "intent:",
+    intent,
+    "\nproperties:",
+    properties,
+    "configuration:",
+    configuration,
+    "intentAndPlatformDerivedConfiguration:",
+    intentAndPlatformDerivedConfiguration,
+  );
+
+  const params = {
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
+    ...intentAndPlatformDerivedConfiguration,
   };
+  urlParamCache = { search, hash, params };
+
+  return params;
 };
 
 /**
