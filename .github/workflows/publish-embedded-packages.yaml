@@ -165,7 +165,7 @@ jobs:
         run: |
           if [[ "${{ needs.versioning.outputs.TAG }}" == "latest" ]]; then
             echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
-          elif [[ ${{ needs.versioning.outputs.TAG }}" == "rc" ]]; then
+          elif [[ "${{ needs.versioning.outputs.TAG }}" == "rc" ]]; then
             echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
           else
             echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}-SNAPSHOT" >> "$GITHUB_ENV"
