@@ -44,6 +44,8 @@ jobs:
         run: |
           if [[ "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "TAG=latest" >> "$GITHUB_OUTPUT"
+          elif [[ "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\-rc\.[0-9]+$ ]]; then
+            echo "TAG=rc" >> "$GITHUB_OUTPUT"
           else
             echo "TAG=other" >> "$GITHUB_OUTPUT"
           fi
@@ -162,6 +164,8 @@ jobs:
         # Anything that is not a final release will be tagged as a snapshot
         run: |
           if [[ "${{ needs.versioning.outputs.TAG }}" == "latest" ]]; then
+            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
+          elif [[ "${{ needs.versioning.outputs.TAG }}" == "rc" ]]; then
             echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
           else
             echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}-SNAPSHOT" >> "$GITHUB_ENV"
