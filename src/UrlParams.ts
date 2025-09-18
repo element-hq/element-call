@@ -331,12 +331,15 @@ let urlParamCache: {
 export const getUrlParams = (
   search = window.location.search,
   hash = window.location.hash,
+  /** Skipping the cache might be needed in tests, to allow recomputing based on mocked platform changes. */
+  skipCache = false,
 ): UrlParams => {
   // Only run the param configuration if we do not yet have it cached for this url.
   if (
     urlParamCache.search === search &&
     urlParamCache.hash === hash &&
-    urlParamCache.params
+    urlParamCache.params &&
+    !skipCache
   ) {
     return urlParamCache.params;
   }
