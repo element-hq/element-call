@@ -378,7 +378,7 @@ export const getUrlParams = (
     controlledAudioDevices: platform === "desktop" ? false : true,
     skipLobby: true,
     returnToLobby: false,
-    sendNotificationType: "notification" as RTCNotificationType,
+    sendNotificationType: "notification",
     autoLeaveWhenOthersLeft: false,
     waitForCallPickup: false,
   };
@@ -392,6 +392,7 @@ export const getUrlParams = (
       break;
     case UserIntent.StartNewCallDM:
       intentPreset.skipLobby = true;
+      intentPreset.sendNotificationType = "ring";
       intentPreset.autoLeaveWhenOthersLeft = true;
       intentPreset.waitForCallPickup = true;
 
