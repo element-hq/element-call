@@ -322,8 +322,9 @@ let urlParamCache: {
   hash?: string;
   params?: UrlParams;
 } = {};
+
 /**
- * Gets the app parameters for the current URL.
+ * Gets the url params and loads them from a cache if already computed.
  * @param search The URL search string
  * @param hash The URL hash
  * @returns The app parameters encoded in the URL
@@ -331,18 +332,27 @@ let urlParamCache: {
 export const getUrlParams = (
   search = window.location.search,
   hash = window.location.hash,
-  /** Skipping the cache might be needed in tests, to allow recomputing based on mocked platform changes. */
-  skipCache = false,
 ): UrlParams => {
-  // Only run the param configuration if we do not yet have it cached for this url.
   if (
     urlParamCache.search === search &&
     urlParamCache.hash === hash &&
-    urlParamCache.params &&
-    !skipCache
+    urlParamCache.params
   ) {
     return urlParamCache.params;
   }
+  const params = computeUrlParams(search, hash);
+  urlParamCache = { search, hash, params };
+
+  return params;
+};
+
+/**
+ * Gets the app parameters for the current URL.
+ * @param search The URL search string
+ * @param hash The URL hash
+ * @returns The app parameters encoded in the URL
+ */
+export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   const parser = new ParamParser(search, hash);
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
@@ -378,7 +388,7 @@ export const getUrlParams = (
     controlledAudioDevices: platform === "desktop" ? false : true,
     skipLobby: true,
     returnToLobby: false,
-    sendNotificationType: "notification" as RTCNotificationType,
+    sendNotificationType: "notification",
     autoLeaveWhenOthersLeft: false,
     waitForCallPickup: false,
   };
@@ -392,6 +402,7 @@ export const getUrlParams = (
       break;
     case UserIntent.StartNewCallDM:
       intentPreset.skipLobby = true;
+      intentPreset.sendNotificationType = "ring";
       intentPreset.autoLeaveWhenOthersLeft = true;
       intentPreset.waitForCallPickup = true;
 
@@ -505,15 +516,12 @@ export const getUrlParams = (
     intentAndPlatformDerivedConfiguration,
   );
 
-  const params = {
+  return {
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
     ...intentAndPlatformDerivedConfiguration,
   };
-  urlParamCache = { search, hash, params };
-
-  return params;
 };
 
 /**
