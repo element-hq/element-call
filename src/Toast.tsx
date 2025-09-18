@@ -46,11 +46,11 @@ interface Props {
    */
   Icon?: ComponentType<SVGAttributes<SVGElement>>;
   /**
-   * Whether the toast should be portaled into the root of the document (rather
-   * than rendered in-place within the component tree).
+   * Whether the toast should be modal, making it fill the screen (by portalling
+   * it into the root of the document) and trap focus until dismissed.
    * @default true
    */
-  portal?: boolean;
+  modal?: boolean;
 }
 
 /**
@@ -62,7 +62,7 @@ export const Toast: FC<Props> = ({
   autoDismiss,
   children,
   Icon,
-  portal = true,
+  modal = true,
 }) => {
   const onOpenChange = useCallback(
     (open: boolean) => {
@@ -103,8 +103,8 @@ export const Toast: FC<Props> = ({
   );
 
   return (
-    <DialogRoot open={open} onOpenChange={onOpenChange}>
-      {portal ? <DialogPortal>{content}</DialogPortal> : content}
+    <DialogRoot open={open} onOpenChange={onOpenChange} modal={modal}>
+      {modal ? <DialogPortal>{content}</DialogPortal> : content}
     </DialogRoot>
   );
 };

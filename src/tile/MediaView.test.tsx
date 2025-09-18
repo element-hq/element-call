@@ -47,6 +47,7 @@ describe("MediaView", () => {
     video: trackReference,
     member: undefined,
     localParticipant: false,
+    focusable: true,
   };
 
   test("is accessible", async () => {
