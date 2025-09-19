@@ -9,15 +9,8 @@ import { expect, describe, it, vi, beforeAll } from "vitest";
 import { render } from "@testing-library/react";
 
 import { type MatrixInfo, VideoPreview } from "./VideoPreview";
-import { type MuteStates } from "./MuteStates";
 import { E2eeType } from "../e2ee/e2eeType";
-
-function mockMuteStates({ audio = true, video = true } = {}): MuteStates {
-  return {
-    audio: { enabled: audio, setEnabled: vi.fn() },
-    video: { enabled: video, setEnabled: vi.fn() },
-  };
-}
+import { mockMuteStates } from "../utils/test";
 
 describe("VideoPreview", () => {
   const matrixInfo: MatrixInfo = {
@@ -49,7 +42,7 @@ describe("VideoPreview", () => {
     const { queryByRole } = render(
       <VideoPreview
         matrixInfo={matrixInfo}
-        muteStates={mockMuteStates({ video: false })}
+        muteStates={mockMuteStates()}
         videoTrack={null}
         children={<></>}
       />,
@@ -61,7 +54,7 @@ describe("VideoPreview", () => {
     const { queryByRole } = render(
       <VideoPreview
         matrixInfo={matrixInfo}
-        muteStates={mockMuteStates({ video: true })}
+        muteStates={mockMuteStates()}
         videoTrack={null}
         children={<></>}
       />,
