@@ -981,7 +981,7 @@ export class CallViewModel extends ViewModel {
             }
             // Show the ringing state of the most recent ringing attempt.
             // ring$ is a behavior so it will emit the latest observable which very well might already have a running timer.
-            // this is important in case livekitConnectionState$ and someoneElseJoined$ emit after didSendCallNotification$ has already emitted.
+            // this is important in case livekitConnectionState$ after didSendCallNotification$ has already emitted.
             return this.ring$.pipe(switchAll());
           }),
           // The state starts as 'unknown' because we don't know if the RTC
