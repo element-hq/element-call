@@ -880,60 +880,68 @@ export class CallViewModel extends ViewModel {
     ? this.allOthersLeft$
     : NEVER;
 
+  private readonly didSendCallNotification$ = fromEvent(
+    this.matrixRTCSession,
+    MatrixRTCSessionEvent.DidSendCallNotification,
+  ) as Observable<
+    Parameters<
+      MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
+    >
+  >;
   /**
    * Whenever the RTC session tells us that it intends to ring the remote
    * participant's devices, this emits an Observable tracking the current state of
    * that ringing process.
    */
-  private readonly ring$: Observable<
-    Observable<"ringing" | "timeout" | "decline">
-  > = (
-    fromEvent(
-      this.matrixRTCSession,
-      MatrixRTCSessionEvent.DidSendCallNotification,
-    ) as Observable<
-      Parameters<
-        MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
-      >
-    >
-  ).pipe(
-    filter(
-      ([notificationEvent]) => notificationEvent.notification_type === "ring",
-    ),
-    map(([notificationEvent]) => {
-      const lifetimeMs = notificationEvent?.lifetime ?? 0;
-      return concat(
-        lifetimeMs === 0
-          ? // If no lifetime, skip the ring state
-            EMPTY
-          : // Ring until lifetime ms have passed
-            timer(lifetimeMs).pipe(
-              ignoreElements(),
-              startWith("ringing" as const),
-            ),
-        // The notification lifetime has timed out, meaning ringing has likely
-        // stopped on all receiving clients.
-        of("timeout" as const),
-        NEVER,
-      ).pipe(
-        takeUntil(
-          (
-            fromEvent(this.matrixRoom, RoomEvent.Timeline) as Observable<
-              Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
-            >
-          ).pipe(
-            filter(
-              ([event]) =>
-                event.getType() === EventType.RTCDecline &&
-                event.getRelation()?.rel_type === "m.reference" &&
-                event.getRelation()?.event_id === notificationEvent.event_id &&
-                event.getSender() !== this.userId,
+  // This is a behavior since we need to store the latest state for when we subscribe to this after `didSendCallNotification$`
+  // has already emitted but we still need the latest observable with a timeout timer that only gets created on after receiving `notificationEvent`.
+  // A behavior will emit the latest observable with the running timer to new subscribers.
+  // see also: callPickupState$ and in particular the line: `return this.ring$.pipe(mergeAll());` here we otherwise might get an EMPTY observable if
+  // `ring$` would not be a behavior.
+  private readonly ring$: Behavior<
+    Observable<"ringing" | "timeout" | "decline"> | Observable<never>
+  > = this.scope.behavior(
+    this.didSendCallNotification$.pipe(
+      filter(
+        ([notificationEvent]) => notificationEvent.notification_type === "ring",
+      ),
+      map(([notificationEvent]) => {
+        const lifetimeMs = notificationEvent?.lifetime ?? 0;
+        return concat(
+          lifetimeMs === 0
+            ? // If no lifetime, skip the ring state
+              EMPTY
+            : // Ring until lifetime ms have passed
+              timer(lifetimeMs).pipe(
+                ignoreElements(),
+                startWith("ringing" as const),
+              ),
+          // The notification lifetime has timed out, meaning ringing has likely
+          // stopped on all receiving clients.
+          of("timeout" as const),
+          NEVER,
+        ).pipe(
+          takeUntil(
+            (
+              fromEvent(this.matrixRoom, RoomEvent.Timeline) as Observable<
+                Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
+              >
+            ).pipe(
+              filter(
+                ([event]) =>
+                  event.getType() === EventType.RTCDecline &&
+                  event.getRelation()?.rel_type === "m.reference" &&
+                  event.getRelation()?.event_id ===
+                    notificationEvent.event_id &&
+                  event.getSender() !== this.userId,
+              ),
             ),
           ),
-        ),
-        endWith("decline" as const),
-      );
-    }),
+          endWith("decline" as const),
+        );
+      }),
+    ),
+    EMPTY,
   );
 
   /**
@@ -972,6 +980,8 @@ export class CallViewModel extends ViewModel {
               return of("success" as const);
             }
             // Show the ringing state of the most recent ringing attempt.
+            // ring$ is a behavior so it will emit the latest observable which very well might already have a running timer.
+            // this is important in case livekitConnectionState$ after didSendCallNotification$ has already emitted.
             return this.ring$.pipe(switchAll());
           }),
           // The state starts as 'unknown' because we don't know if the RTC

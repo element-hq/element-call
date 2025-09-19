@@ -266,7 +266,7 @@ const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 interface CallViewModelInputs {
   remoteParticipants$: Behavior<RemoteParticipant[]>;
   rtcMembers$: Behavior<Partial<CallMembership>[]>;
-  connectionState$: Observable<ECConnectionState>;
+  livekitConnectionState$: Observable<ECConnectionState>;
   speaking: Map<Participant, Observable<boolean>>;
   mediaDevices: MediaDevices;
   initialSyncState: SyncState;
@@ -276,7 +276,7 @@ function withCallViewModel(
   {
     remoteParticipants$ = constant([]),
     rtcMembers$ = constant([localRtcMember]),
-    connectionState$ = of(ConnectionState.Connected),
+    livekitConnectionState$: connectionState$ = of(ConnectionState.Connected),
     speaking = new Map(),
     mediaDevices = mockMediaDevices({}),
     initialSyncState = SyncState.Syncing,
@@ -384,7 +384,7 @@ test("participants are retained during a focus switch", () => {
           b: [],
         }),
         rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
-        connectionState$: behavior(connectionInputMarbles, {
+        livekitConnectionState$: behavior(connectionInputMarbles, {
           c: ConnectionState.Connected,
           s: ECAddonConnectionState.ECSwitchingFocus,
         }),
@@ -1251,6 +1251,41 @@ describe("waitForCallPickup$", () => {
     });
   });
 
+  test("regression test: does stop ringing in case livekitConnectionState$ emits after didSendCallNotification$ has already emitted", () => {
+    withTestScheduler(({ schedule, expectObservable, behavior }) => {
+      withCallViewModel(
+        {
+          livekitConnectionState$: behavior("d 9ms c", {
+            d: ConnectionState.Disconnected,
+            c: ConnectionState.Connected,
+          }),
+        },
+        (vm, rtcSession) => {
+          // Fire a call notification IMMEDIATELY (its important for this test, that this happens before the livekitConnectionState$ emits)
+          schedule("n", {
+            n: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                mockRingEvent("$notif1", 30),
+                mockLegacyRingEvent,
+              );
+            },
+          });
+
+          expectObservable(vm.callPickupState$).toBe("a 9ms b 29ms c", {
+            a: "unknown",
+            b: "ringing",
+            c: "timeout",
+          });
+        },
+        {
+          waitForCallPickup: true,
+          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        },
+      );
+    });
+  });
+
   test("ringing -> success if someone joins before timeout", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
@@ -1305,7 +1340,7 @@ describe("waitForCallPickup$", () => {
             a: [localRtcMember],
             b: [localRtcMember, aliceRtcMember],
           }),
-          connectionState$,
+          livekitConnectionState$: connectionState$,
         },
         (vm, rtcSession) => {
           // Notify at 5ms so we enter ringing, then get disconnected 5ms later
