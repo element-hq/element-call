@@ -53,7 +53,6 @@ import {
   type Layout,
 } from "./CallViewModel";
 import {
-  mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
   mockMatrixRoomMember,
@@ -62,6 +61,7 @@ import {
   mockRtcMembership,
   MockRTCSession,
   mockMediaDevices,
+  mockMuteStates,
 } from "../utils/test";
 import {
   ECAddonConnectionState,
@@ -340,21 +340,15 @@ function withCallViewModel(
   const roomEventSelectorSpy = vi
     .spyOn(ComponentsCore, "roomEventSelector")
     .mockImplementation((_room, _eventType) => of());
-
-  const livekitRoom = mockLivekitRoom(
-    { localParticipant },
-    { remoteParticipants$ },
-  );
-
+  const muteStates = mockMuteStates();
   const raisedHands$ = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
 
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     room,
-    livekitRoom,
     mediaDevices,
+    muteStates,
     options,
-    connectionState$,
     raisedHands$,
     new BehaviorSubject({}),
   );

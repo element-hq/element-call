@@ -53,6 +53,7 @@ import { Config } from "../config/Config";
 import { type MediaDevices } from "../state/MediaDevices";
 import { type Behavior, constant } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
+import { Handler, MuteStates } from "../state/MuteStates";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -416,4 +417,11 @@ export function mockMediaDevices(data: Partial<MediaDevices>): MediaDevices {
     videoInput: deviceStub,
     ...data,
   } as MediaDevices;
+}
+
+export function mockMuteStates(
+  joined$: Observable<boolean> = of(true),
+): MuteStates {
+  const observableScope = new ObservableScope();
+  return new MuteStates(observableScope, mockMediaDevices({}), joined$);
 }

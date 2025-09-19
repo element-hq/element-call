@@ -210,6 +210,7 @@ export const InCallView: FC<InCallViewProps> = ({
   // annoyingly we don't get the disconnection reason this way,
   // only by listening for the emitted event
   // This needs to be done differential. with the vm connection state we start with Disconnected.
+  // TODO-MULTI-SFU decide how to handle this properly
   // if (connectionState === ConnectionState.Disconnected)
   //   throw new ConnectionLostError();
 
