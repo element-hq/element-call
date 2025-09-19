@@ -239,6 +239,10 @@ interface IntentAndPlatformDerivedConfiguration {
   defaultAudioEnabled?: boolean;
   defaultVideoEnabled?: boolean;
 }
+interface IntentAndPlatformDerivedConfiguration {
+  defaultAudioEnabled?: boolean;
+  defaultVideoEnabled?: boolean;
+}
 
 // If you need to add a new flag to this interface, prefer a name that describes
 // a specific behavior (such as 'confineToRoom'), rather than one that describes
@@ -329,8 +333,12 @@ let urlParamCache: {
   hash?: string;
   params?: UrlParams;
 } = {};
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/livekit
 /**
- * Gets the app parameters for the current URL.
+ * Gets the url params and loads them from a cache if already computed.
  * @param search The URL search string
  * @param hash The URL hash
  * @returns The app parameters encoded in the URL
@@ -341,15 +349,26 @@ export const getUrlParams = (
   /** Skipping the cache might be needed in tests, to allow recomputing based on mocked platform changes. */
   skipCache = false,
 ): UrlParams => {
-  // Only run the param configuration if we do not yet have it cached for this url.
   if (
     urlParamCache.search === search &&
     urlParamCache.hash === hash &&
-    urlParamCache.params &&
-    !skipCache
+    urlParamCache.params
   ) {
     return urlParamCache.params;
   }
+  const params = computeUrlParams(search, hash);
+  urlParamCache = { search, hash, params };
+
+  return params;
+};
+
+/**
+ * Gets the app parameters for the current URL.
+ * @param search The URL search string
+ * @param hash The URL hash
+ * @returns The app parameters encoded in the URL
+ */
+export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   const parser = new ParamParser(search, hash);
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
@@ -385,7 +404,7 @@ export const getUrlParams = (
     controlledAudioDevices: platform === "desktop" ? false : true,
     skipLobby: true,
     returnToLobby: false,
-    sendNotificationType: "notification" as RTCNotificationType,
+    sendNotificationType: "notification",
     autoLeaveWhenOthersLeft: false,
     waitForCallPickup: false,
   };
@@ -404,6 +423,7 @@ export const getUrlParams = (
     // Fall through
     case UserIntent.StartNewCallDM:
       intentPreset.skipLobby = true;
+      intentPreset.sendNotificationType = "ring";
       intentPreset.autoLeaveWhenOthersLeft = true;
       intentPreset.waitForCallPickup = true;
       intentPreset.callIntent = intentPreset.callIntent ?? "video";
@@ -526,7 +546,11 @@ export const getUrlParams = (
     intentAndPlatformDerivedConfiguration,
   );
 
+<<<<<<< HEAD
   const params = {
+=======
+  return {
+>>>>>>> origin/livekit
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
