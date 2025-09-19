@@ -39,6 +39,7 @@ import {
   localRtcMember,
 } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
+import { constant } from "../state/Behavior";
 
 export function getBasicRTCSession(
   members: RoomMember[],
@@ -154,7 +155,7 @@ export function getBasicCallViewModelEnvironment(
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       ...callViewModelOptions,
     },
-    of(ConnectionState.Connected),
+    constant(ConnectionState.Connected),
     handRaisedSubject$,
     reactionsSubject$,
   );

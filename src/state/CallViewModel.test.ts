@@ -266,7 +266,7 @@ const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 interface CallViewModelInputs {
   remoteParticipants$: Behavior<RemoteParticipant[]>;
   rtcMembers$: Behavior<Partial<CallMembership>[]>;
-  livekitConnectionState$: Observable<ECConnectionState>;
+  livekitConnectionState$: Behavior<ECConnectionState>;
   speaking: Map<Participant, Observable<boolean>>;
   mediaDevices: MediaDevices;
   initialSyncState: SyncState;
@@ -276,7 +276,9 @@ function withCallViewModel(
   {
     remoteParticipants$ = constant([]),
     rtcMembers$ = constant([localRtcMember]),
-    livekitConnectionState$: connectionState$ = of(ConnectionState.Connected),
+    livekitConnectionState$: connectionState$ = constant(
+      ConnectionState.Connected,
+    ),
     speaking = new Map(),
     mediaDevices = mockMediaDevices({}),
     initialSyncState = SyncState.Syncing,
