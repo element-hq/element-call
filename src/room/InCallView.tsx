@@ -125,6 +125,7 @@ import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 import ringtoneMp3 from "../sound/ringtone.mp3?url";
 import ringtoneOgg from "../sound/ringtone.ogg?url";
+import { ObservableScope } from "../state/ObservableScope.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -144,8 +145,13 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     sfuConfig,
     props.e2eeSystem,
   );
-  const connStateObservable$ = useObservable(
-    (inputs$) => inputs$.pipe(map(([connState]) => connState)),
+  const observableScope = useInitial(() => new ObservableScope());
+  const connStateBehavior$ = useObservable(
+    (inputs$) =>
+      observableScope.behavior(
+        inputs$.pipe(map(([connState]) => connState)),
+        connState,
+      ),
     [connState],
   );
   const [vm, setVm] = useState<CallViewModel | null>(null);
@@ -188,7 +194,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
           waitForCallPickup:
             waitForCallPickup && sendNotificationType === "ring",
         },
-        connStateObservable$,
+        connStateBehavior$,
         reactionsReader.raisedHands$,
         reactionsReader.reactions$,
       );
@@ -204,7 +210,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     livekitRoom,
     mediaDevices,
     props.e2eeSystem,
-    connStateObservable$,
+    connStateBehavior$,
     autoLeaveWhenOthersLeft,
     sendNotificationType,
     waitForCallPickup,
