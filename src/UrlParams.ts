@@ -333,10 +333,7 @@ let urlParamCache: {
   hash?: string;
   params?: UrlParams;
 } = {};
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/livekit
 /**
  * Gets the url params and loads them from a cache if already computed.
  * @param search The URL search string
@@ -546,11 +543,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     intentAndPlatformDerivedConfiguration,
   );
 
-<<<<<<< HEAD
   const params = {
-=======
-  return {
->>>>>>> origin/livekit
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),

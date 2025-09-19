@@ -1693,11 +1693,7 @@ export class CallViewModel extends ViewModel {
     private readonly livekitRoom: LivekitRoom,
     private readonly mediaDevices: MediaDevices,
     private readonly options: CallViewModelOptions,
-<<<<<<< HEAD
-    public readonly livekitConnectionState$: Observable<ECConnectionState>,
-=======
     public readonly livekitConnectionState$: Behavior<ECConnectionState>,
->>>>>>> origin/livekit
     private readonly handsRaisedSubject$: Observable<
       Record<string, RaisedHandInfo>
     >,
