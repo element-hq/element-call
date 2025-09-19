@@ -2793,10 +2793,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/matrix-sdk-crypto-wasm@npm:^15.1.0":
-  version: 15.1.0
-  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:15.1.0"
-  checksum: 10c0/19edc6d0045ff49fad8d77b6e561cee994f7513f8c18a7176ae2d3f0116c1a91980e02d10300b09c2b72dea4da4a8c3392f2bf1752057f2d6b53030a056d76d8
+"@matrix-org/matrix-sdk-crypto-wasm@npm:^15.2.0":
+  version: 15.3.0
+  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:15.3.0"
+  checksum: 10c0/45628f36b7b0e54a8777ae67a7233dbdf3e3cf14e0d95d21f62f89a7ea7e3f907232f1eb7b1262193b1e227759fad47af829dcccc103ded89011f13c66f01d76
   languageName: node
   linkType: hard
 
@@ -7544,7 +7544,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=develop"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=hs/rtc-notify-hint"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -10297,12 +10297,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
-  version: 37.13.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=2f1d654f14be8dd03896e9e76f12017b6f9eec1c"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=hs/rtc-notify-hint":
+  version: 38.2.0
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=cd844a5de4e240ed0bfb3bd5985fa038f18ce4ff"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.1.0"
+    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.2.0"
     another-json: "npm:^0.2.0"
     bs58: "npm:^6.0.0"
     content-type: "npm:^1.0.4"
@@ -10315,7 +10315,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/ecd019c677c272c5598617dcde407dbe4b1b11460863b2a577e33f3fd8732c9d9073ec0221b471ec1eb24e2839eec20728db7f92c9348be83126547286e50805
+  checksum: 10c0/9c701bb940d933ff206fdeb6bf36412eec7fbdacb5d973ac876bd16923d17645f3aeed9dd920846609e91e9330415b3cedff3f4967c1d030cbe3760ed244c067
   languageName: node
   linkType: hard
 

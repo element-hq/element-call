@@ -9,7 +9,7 @@ import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
-  RTCMediaHint,
+  type RTCCallIntent,
   type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { pickBy } from "lodash-es";
@@ -233,7 +233,7 @@ export interface UrlConfiguration {
    */
   waitForCallPickup: boolean;
 
-  mediaHint?: RTCMediaHint;
+  callIntent?: RTCCallIntent;
 }
 interface IntentAndPlatformDerivedConfiguration {
   defaultAudioEnabled?: boolean;
@@ -392,24 +392,30 @@ export const getUrlParams = (
   switch (intent) {
     case UserIntent.StartNewCall:
       intentPreset.skipLobby = true;
+      intentPreset.callIntent = "video";
       break;
     case UserIntent.JoinExistingCall:
       // On desktop this will be overridden based on which button was used to join the call
       intentPreset.skipLobby = false;
+      intentPreset.callIntent = "video";
       break;
     case UserIntent.StartNewCallDMVoice:
-      intentPreset.mediaHint = "audio";
+      intentPreset.callIntent = "audio";
+    // Fall through
     case UserIntent.StartNewCallDM:
       intentPreset.skipLobby = true;
       intentPreset.autoLeaveWhenOthersLeft = true;
       intentPreset.waitForCallPickup = true;
+      intentPreset.callIntent = intentPreset.callIntent ?? "video";
       break;
     case UserIntent.JoinExistingCallDMVoice:
-      intentPreset.mediaHint = "audio";
+      intentPreset.callIntent = "audio";
+    // Fall through
     case UserIntent.JoinExistingCallDM:
       // On desktop this will be overridden based on which button was used to join the call
       intentPreset.skipLobby = true;
       intentPreset.autoLeaveWhenOthersLeft = true;
+      intentPreset.callIntent = intentPreset.callIntent ?? "video";
       break;
     // Non widget usecase defaults
     default:
@@ -445,6 +451,11 @@ export const getUrlParams = (
         case UserIntent.JoinExistingCallDM:
           intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
           intentAndPlatformDerivedConfiguration.defaultVideoEnabled = true;
+          break;
+        case UserIntent.StartNewCallDMVoice:
+        case UserIntent.JoinExistingCallDMVoice:
+          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
+          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = false;
           break;
       }
   }
