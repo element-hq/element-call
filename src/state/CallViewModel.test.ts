@@ -1274,7 +1274,7 @@ describe("waitForCallPickup$", () => {
             },
           });
 
-          expectObservable(vm.callPickupState$).toBe("a 9ms b 29ms c", {
+          expectObservable(vm.callPickupState$).toBe("a 9ms b 19ms c", {
             a: "unknown",
             b: "ringing",
             c: "timeout",

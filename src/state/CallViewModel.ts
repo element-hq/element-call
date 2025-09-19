@@ -975,7 +975,7 @@ export class CallViewModel extends ViewModel {
             if (livekitConnectionState === ConnectionState.Disconnected) {
               // Do not ring until we're connected.
               return "unknown" as const;
-            } else if (someoneElseJoined && ring !== null) {
+            } else if (someoneElseJoined) {
               return "success" as const;
             }
             // Show the ringing state of the most recent ringing attempt.
