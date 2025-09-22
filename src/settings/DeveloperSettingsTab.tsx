@@ -26,10 +26,10 @@ import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
 interface Props {
   client: MatrixClient;
-  livekitRoom?: LivekitRoom;
+  livekitRooms?: { room: LivekitRoom; url: string; isLocal?: boolean }[];
 }
 
-export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
+export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   const { t } = useTranslation();
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
   const [debugTileLayout, setDebugTileLayout] = useSetting(
@@ -59,15 +59,16 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
 
   const urlParams = useUrlParams();
 
-  const sfuUrl = useMemo((): URL | null => {
-    if (livekitRoom?.engine.client.ws?.url) {
+  const localSfuUrl = useMemo((): URL | null => {
+    const localRoom = livekitRooms?.find((r) => r.isLocal)?.room;
+    if (localRoom?.engine.client.ws?.url) {
       // strip the URL params
-      const url = new URL(livekitRoom.engine.client.ws.url);
+      const url = new URL(localRoom.engine.client.ws.url);
       url.search = "";
       return url;
     }
     return null;
-  }, [livekitRoom]);
+  }, [livekitRooms]);
 
   return (
     <>
@@ -211,22 +212,26 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
           )}
         />{" "}
       </FieldRow>
-      {livekitRoom ? (
+      {livekitRooms?.map((livekitRoom) => (
         <>
-          <p>
+          <h3>
             {t("developer_mode.livekit_sfu", {
-              url: sfuUrl?.href || "unknown",
+              url: livekitRoom.url || "unknown",
             })}
+          </h3>
+          {livekitRoom.isLocal && <p>ws-url: {localSfuUrl?.href}</p>}
+          <p>
+            {t("developer_mode.livekit_server_info")}(
+            {livekitRoom.isLocal ? "local" : "remote"})
           </p>
-          <p>{t("developer_mode.livekit_server_info")}</p>
           <pre className={styles.pre}>
-            {livekitRoom.serverInfo
-              ? JSON.stringify(livekitRoom.serverInfo, null, 2)
+            {livekitRoom.room.serverInfo
+              ? JSON.stringify(livekitRoom.room.serverInfo, null, 2)
               : "undefined"}
-            {livekitRoom.metadata}
+            {livekitRoom.room.metadata}
           </pre>
         </>
-      ) : null}
+      ))}
       <p>{t("developer_mode.environment_variables")}</p>
       <pre>{JSON.stringify(import.meta.env, null, 2)}</pre>
       <p>{t("developer_mode.url_params")}</p>
