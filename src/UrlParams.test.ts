@@ -272,7 +272,7 @@ describe("UrlParams", () => {
         computeUrlParams(
           "?intent=start_call&widgetId=1234&parentUrl=parent.org",
         ),
-      ).toMatchObject(startNewCallDefaults("desktop"));
+      ).toMatchObject({ ...startNewCallDefaults("desktop"), skipLobby: false });
     });
 
     it("accepts start_call_dm mobile", () => {
@@ -320,12 +320,12 @@ describe("UrlParams", () => {
       expect(computeUrlParams("?intent=start_call").skipLobby).toBe(false);
     });
 
-    it("defaults to true if intent is start_call in widget mode", () => {
+    it("defaults to false if intent is start_call in widget mode", () => {
       expect(
         computeUrlParams(
           "?intent=start_call&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
         ).skipLobby,
-      ).toBe(true);
+      ).toBe(false);
     });
 
     it("default to false if intent is join_existing", () => {
