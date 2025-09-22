@@ -1,10 +1,10 @@
-port: 7880
+port: 17880
 bind_addresses:
   - "0.0.0.0"
 rtc:
-  tcp_port: 7881
-  port_range_start: 50100
-  port_range_end: 50200
+  tcp_port: 17881
+  port_range_start: 50300
+  port_range_end: 50400
   use_external_ip: false
 turn:
   enabled: false
