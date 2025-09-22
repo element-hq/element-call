@@ -593,11 +593,18 @@ export class CallViewModel extends ViewModel {
     ]).pipe(
       map(([remoteConnections, localConnection, localFocus]) =>
         Array.from(remoteConnections.entries())
-          .map(([index, c]) => ({ room: c.livekitRoom, url: index }))
+          .map(
+            ([index, c]) =>
+              ({
+                room: c.livekitRoom,
+                url: index,
+              }) as { room: LivekitRoom; url: string; isLocal?: boolean },
+          )
           .concat([
             {
               room: localConnection.livekitRoom,
               url: localFocus.livekit_service_url,
+              isLocal: true,
             },
           ]),
       ),
