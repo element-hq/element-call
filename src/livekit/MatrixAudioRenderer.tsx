@@ -81,8 +81,6 @@ export function LivekitRoomAudioRenderer({
     loggedInvalidIdentities.current.add(identity);
   };
 
-  // TODO-MULTI-SFU this uses the livekit room form the context. We need to change it so it uses the
-  // livekit room explicitly so we can pass a list of rooms into the audio renderer and call useTracks for each room.
   const tracks = useTracks(
     [
       Track.Source.Microphone,
