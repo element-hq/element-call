@@ -394,7 +394,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   };
   switch (intent) {
     case UserIntent.StartNewCall:
-      intentPreset.skipLobby = true;
+      intentPreset.skipLobby = false;
       break;
     case UserIntent.JoinExistingCall:
       // On desktop this will be overridden based on which button was used to join the call
