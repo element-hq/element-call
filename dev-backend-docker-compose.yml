@@ -44,15 +44,10 @@ services:
     networks:
       - ecbackend
 
-  redis:
-    image: redis:6-alpine
     pull_policy: always
-    command: redis-server /etc/redis.conf
     ports:
       # HOST_PORT:CONTAINER_PORT
-      - 6379:6379
     volumes:
-      - ./backend/redis.conf:/etc/redis.conf:Z
     networks:
       - ecbackend
 
