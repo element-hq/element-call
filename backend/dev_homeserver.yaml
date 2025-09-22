@@ -19,8 +19,18 @@ database:
 
 media_store_path: /data/media_store
 signing_key_path: "/data/SERVERNAME.signing.key"
+
+# Due to custom TLS certificate with domains
+# - m.localhost, localhost
+# - *.m.localhost
+# - *.othersite.m.localhost
+# we disable certificate verification to allow for federation.
+# WARNING: DO NOT USE IN PRODUCTION!!!
+federation_verify_certificates: false
+ip_range_blacklist: []
 trusted_key_servers:
-  - server_name: "matrix.org"
+  - server_name: "synapse.othersite.m.localhost"
+    accept_keys_insecurely: true
 
 experimental_features:
   # MSC3266: Room summary API. Used for knocking over federation
@@ -34,6 +44,13 @@ experimental_features:
 # duration (null), which disallows sending delayed events.
 max_event_delay_duration: 24h
 
+# Required for Element Call in Single Page Mode due to on-the-fly user registration
+enable_registration: true
+enable_registration_without_verification: true
+
+report_stats: false
+serve_server_wellknown: true
+
 # Ratelimiting settings for client actions (registration, login, messaging).
 #
 # Each ratelimiting configuration is made of two parameters:
@@ -45,10 +62,3 @@ rc_message:
   # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2s
   per_second: 0.5
   burst_count: 30
-
-# Required for Element Call in Single Page Mode due to on-the-fly user registration
-enable_registration: true
-enable_registration_without_verification: true
-
-report_stats: false
-serve_server_wellknown: true

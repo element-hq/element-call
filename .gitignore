@@ -8,6 +8,7 @@ dist-ssr
 .idea/
 public/config.json
 backend/synapse_tmp/*
+backend/synapse_tmp_othersite/*
 /coverage
 config.json
 
