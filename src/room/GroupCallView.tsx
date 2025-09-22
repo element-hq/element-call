@@ -220,6 +220,7 @@ export const GroupCallView: FC<Props> = ({
       try {
         setJoined(true);
         // TODO-MULTI-SFU what to do with error handling now that we don't use this function?
+        // @BillCarsonFr
       } catch (e) {
         if (e instanceof ElementCallError) {
           setExternalError(e);

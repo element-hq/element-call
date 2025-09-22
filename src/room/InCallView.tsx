@@ -211,6 +211,7 @@ export const InCallView: FC<InCallViewProps> = ({
   // only by listening for the emitted event
   // This needs to be done differential. with the vm connection state we start with Disconnected.
   // TODO-MULTI-SFU decide how to handle this properly
+  // @BillCarsonFr
   // if (connectionState === ConnectionState.Disconnected)
   //   throw new ConnectionLostError();
 
@@ -738,6 +739,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
   const memberships = useBehavior(vm.memberships$);
   const toggleScreensharing = useCallback(() => {
+    // TODO-MULTI-SFU implement screensharing
     throw new Error("TODO-MULTI-SFU");
     // localParticipant
     //   .setScreenShareEnabled(!isScreenShareEnabled, {
