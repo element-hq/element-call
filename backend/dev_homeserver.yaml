@@ -44,7 +44,6 @@ experimental_features:
 # duration (null), which disallows sending delayed events.
 max_event_delay_duration: 24h
 
-
 # Required for Element Call in Single Page Mode due to on-the-fly user registration
 enable_registration: true
 enable_registration_without_verification: true

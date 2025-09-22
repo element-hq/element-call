@@ -62,4 +62,3 @@ rc_message:
   # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2s
   per_second: 0.5
   burst_count: 30
-
