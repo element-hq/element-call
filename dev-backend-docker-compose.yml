@@ -134,6 +134,19 @@ services:
     networks:
       - ecbackend
 
+  element-web-1:
+    image: ghcr.io/element-hq/element-web:develop
+    pull_policy: always
+    volumes:
+      - ./backend/ew.test.othersite.config.json:/app/config.json:Z
+    environment:
+      ELEMENT_WEB_PORT: 18081
+    ports:
+      # HOST_PORT:CONTAINER_PORT
+      - "18081:18081"
+    networks:
+      - ecbackend
+
   nginx:
     #  see backend/dev_tls_setup for how to generate the tls certs
     hostname: synapse.m.localhost
@@ -156,4 +169,7 @@ services:
     networks:
       ecbackend:
         aliases:
+          - synapse.m.localhost
+          - synapse.othersite.m.localhost
           - matrix-rtc.m.localhost
+          - matrix-rtc.othersite.m.localhost
