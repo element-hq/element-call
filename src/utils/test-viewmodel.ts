@@ -5,7 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { ConnectionState } from "livekit-client";
 import {
   type CallMembership,
   type MatrixRTCSession,
@@ -27,19 +26,13 @@ import {
   type CallViewModelOptions,
 } from "../state/CallViewModel";
 import {
-  mockLivekitRoom,
   mockMatrixRoom,
   mockMediaDevices,
+  mockMuteStates,
   MockRTCSession,
 } from "./test";
-import {
-  aliceRtcMember,
-  aliceParticipant,
-  localParticipant,
-  localRtcMember,
-} from "./test-fixtures";
+import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
-import { constant } from "../state/Behavior";
 
 export function getBasicRTCSession(
   members: RoomMember[],
@@ -141,23 +134,20 @@ export function getBasicCallViewModelEnvironment(
   const handRaisedSubject$ = new BehaviorSubject({});
   const reactionsSubject$ = new BehaviorSubject({});
 
-  const remoteParticipants$ = of([aliceParticipant]);
-  const livekitRoom = mockLivekitRoom(
-    { localParticipant },
-    { remoteParticipants$ },
-  );
+  // const remoteParticipants$ = of([aliceParticipant]);
+
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     matrixRoom,
-    livekitRoom,
     mockMediaDevices({}),
+    mockMuteStates(),
     {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       ...callViewModelOptions,
     },
-    constant(ConnectionState.Connected),
     handRaisedSubject$,
     reactionsSubject$,
+    of({ processor: undefined, supported: false }),
   );
   return {
     vm,

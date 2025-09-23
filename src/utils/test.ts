@@ -53,7 +53,7 @@ import { Config } from "../config/Config";
 import { type MediaDevices } from "../state/MediaDevices";
 import { type Behavior, constant } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
-import { Handler, MuteStates } from "../state/MuteStates";
+import { MuteStates } from "../state/MuteStates";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
