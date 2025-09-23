@@ -15,6 +15,7 @@ import {
   Room as LivekitRoom,
   type E2EEOptions,
   Track,
+  LocalVideoTrack,
 } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk";
 import {
@@ -39,6 +40,11 @@ import { defaultLiveKitOptions } from "../livekit/options";
 import { getValue } from "../utils/observable";
 import { getUrlParams } from "../UrlParams";
 import { type MuteStates } from "./MuteStates";
+import {
+  type ProcessorState,
+  trackProcessorSync,
+} from "../livekit/TrackProcessorContext";
+import { observeTrackReference$ } from "./MediaViewModel";
 
 export class Connection {
   protected stopped = false;
@@ -151,6 +157,7 @@ export class PublishConnection extends Connection {
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
     e2eeLivekitOptions: E2EEOptions | undefined,
+    trackerProcessorState$: Behavior<ProcessorState>,
   ) {
     logger.info("[LivekitRoom] Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
@@ -160,8 +167,7 @@ export class PublishConnection extends Connection {
       videoCaptureDefaults: {
         ...defaultLiveKitOptions.videoCaptureDefaults,
         deviceId: devices.videoInput.selected$.value?.id,
-        // TODO-MULTI-SFU add processor support back
-        // processor,
+        processor: trackerProcessorState$.value.processor,
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
@@ -190,6 +196,17 @@ export class PublishConnection extends Connection {
       e2eeLivekitOptions,
       room,
     );
+
+    // Setup track processor syncing (blur)
+    const track$ = this.scope.behavior(
+      observeTrackReference$(room.localParticipant, Track.Source.Camera).pipe(
+        map((trackRef) => {
+          const track = trackRef?.publication?.track;
+          return track instanceof LocalVideoTrack ? track : null;
+        }),
+      ),
+    );
+    trackProcessorSync(track$, trackerProcessorState$);
 
     this.muteStates.audio.setHandler(async (desired) => {
       try {

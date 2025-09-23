@@ -114,6 +114,7 @@ import { useAudioContext } from "../useAudioContext";
 import ringtoneMp3 from "../sound/ringtone.mp3?url";
 import ringtoneOgg from "../sound/ringtone.ogg?url";
 import { ConnectionLostError } from "../utils/errors.ts";
+import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -133,6 +134,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
     useUrlParams();
 
+  const trackProcessorState$ = useTrackProcessorObservable$();
   useEffect(() => {
     const reactionsReader = new ReactionsReader(props.rtcSession);
     const vm = new CallViewModel(
@@ -147,6 +149,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       },
       reactionsReader.raisedHands$,
       reactionsReader.reactions$,
+      trackProcessorState$,
     );
     setVm(vm);
 
@@ -166,6 +169,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     sendNotificationType,
     waitForCallPickup,
     props.onLeft,
+    trackProcessorState$,
   ]);
 
   if (vm === null) return null;

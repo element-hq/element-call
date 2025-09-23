@@ -55,6 +55,7 @@ interface UseLivekitResult {
 }
 
 // TODO-MULTI-SFU This is not used anymore but the device syncing logic needs to be moved into the connection object.
+// seems to be mostly done... See Connection.ts
 export function useLivekitPublicationRoom(
   rtcSession: MatrixRTCSession,
   muteStates: MuteStates,

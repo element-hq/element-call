@@ -125,6 +125,7 @@ import { Connection, PublishConnection } from "./Connection";
 import { type MuteStates } from "./MuteStates";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { getUrlParams } from "../UrlParams";
+import { type ProcessorState } from "../livekit/TrackProcessorContext";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -460,6 +461,7 @@ export class CallViewModel extends ViewModel {
         this.mediaDevices,
         this.muteStates,
         this.e2eeLivekitOptions(),
+        this.scope.behavior(this.trackProcessorState$),
       ),
   );
 
@@ -1861,6 +1863,7 @@ export class CallViewModel extends ViewModel {
     private readonly reactionsSubject$: Observable<
       Record<string, ReactionInfo>
     >,
+    private readonly trackProcessorState$: Observable<ProcessorState>,
   ) {
     super();
 
