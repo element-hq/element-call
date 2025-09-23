@@ -68,7 +68,6 @@ import {
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
 import {
   useNewMembershipManager as useNewMembershipManagerSetting,
-  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   useSetting,
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
@@ -310,6 +309,7 @@ export const GroupCallView: FC<Props> = ({
     useNewMembershipManager,
   ]);
 
+  // TODO refactor this + "joined" to just one callState
   const [left, setLeft] = useState(false);
 
   const navigate = useNavigate();
@@ -319,6 +319,7 @@ export const GroupCallView: FC<Props> = ({
       let playSound: CallEventSounds = "left";
       if (reason === "timeout" || reason === "decline") playSound = reason;
 
+      setJoined(false);
       setLeft(true);
       const audioPromise = leaveSoundContext.current?.playSound(playSound);
       // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
@@ -354,6 +355,7 @@ export const GroupCallView: FC<Props> = ({
         );
     },
     [
+      setJoined,
       leaveSoundContext,
       widget,
       room.roomId,
