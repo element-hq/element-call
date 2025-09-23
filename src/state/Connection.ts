@@ -1,4 +1,3 @@
-// TODO-MULTI-SFU Add all device syncing logic from useLivekit
 /*
 Copyright 2025 New Vector Ltd.
 
@@ -294,5 +293,4 @@ export class PublishConnection extends Connection {
         }
       });
   }
-  // TODO-MULTI-SFU Sync the requested track processors with LiveKit
 }
