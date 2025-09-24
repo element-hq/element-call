@@ -1,10 +1,10 @@
-server_name: "synapse.m.localhost"
-public_baseurl: https://synapse.m.localhost/
+server_name: "synapse.othersite.m.localhost"
+public_baseurl: https://synapse.othersite.m.localhost/
 
 pid_file: /data/homeserver.pid
 
 listeners:
-  - port: 8008
+  - port: 18008
     tls: false
     type: http
     x_forwarded: true
@@ -29,7 +29,7 @@ signing_key_path: "/data/SERVERNAME.signing.key"
 federation_verify_certificates: false
 ip_range_blacklist: []
 trusted_key_servers:
-  - server_name: "synapse.othersite.m.localhost"
+  - server_name: "synapse.m.localhost"
     accept_keys_insecurely: true
 
 experimental_features:
