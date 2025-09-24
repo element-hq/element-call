@@ -24,6 +24,28 @@ services:
     networks:
       - ecbackend
 
+  auth-service-1:
+    image: ghcr.io/element-hq/lk-jwt-service:latest-ci
+    pull_policy: always
+    hostname: auth-server-1
+    environment:
+      - LIVEKIT_JWT_PORT=16080
+      - LIVEKIT_URL=wss://matrix-rtc.othersite.m.localhost/livekit/sfu
+      - LIVEKIT_KEY=devkey
+      - LIVEKIT_SECRET=secret
+      # If the configured homeserver runs on localhost, it'll probably be using
+      # a self-signed certificate
+      - LIVEKIT_INSECURE_SKIP_VERIFY_TLS=YES_I_KNOW_WHAT_I_AM_DOING
+      - LIVEKIT_FULL_ACCESS_HOMESERVERS=*
+    deploy:
+      restart_policy:
+        condition: on-failure
+    ports:
+      # HOST_PORT:CONTAINER_PORT
+      - 16080:16080
+    networks:
+      - ecbackend
+
   livekit:
     image: livekit/livekit-server:latest
     pull_policy: always
@@ -44,15 +66,23 @@ services:
     networks:
       - ecbackend
 
-  redis:
-    image: redis:6-alpine
+  livekit-1:
+    image: livekit/livekit-server:latest
     pull_policy: always
-    command: redis-server /etc/redis.conf
+    hostname: livekit-sfu-1
+    command: --dev --config /etc/livekit.yaml
+    restart: unless-stopped
+    # The SFU seems to work far more reliably when we let it share the host
+    # network rather than opening specific ports (but why?? we're not missing
+    # any…)
     ports:
       # HOST_PORT:CONTAINER_PORT
-      - 6379:6379
+      - 17880:17880/tcp
+      - 17881:17881/tcp
+      - 17882:17882/tcp
+      - 50300-50400:50300-50400/udp
     volumes:
-      - ./backend/redis.conf:/etc/redis.conf:Z
+      - ./backend/dev_livekit-othersite.yaml:/etc/livekit.yaml:Z
     networks:
       - ecbackend
 
@@ -74,6 +104,24 @@ services:
     networks:
       - ecbackend
 
+  synapse-1:
+    hostname: homeserver-1
+    image: docker.io/matrixdotorg/synapse:latest
+    pull_policy: always
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml
+      # Needed for rootless podman-compose such that the uid/gid mapping does
+      # fit local user uid. If the container runs as root (uid 0) it is fine as
+      # it actually maps to your non-root user on the host (e.g. 1000).
+      # Otherwise uid mapping will not match your non-root user.
+      - UID=0
+      - GID=0
+    volumes:
+      - ./backend/synapse_tmp_othersite:/data:Z
+      - ./backend/dev_homeserver-othersite.yaml:/data/cfg/homeserver.yaml:Z
+    networks:
+      - ecbackend
+
   element-web:
     image: ghcr.io/element-hq/element-web:develop
     pull_policy: always
@@ -83,6 +131,19 @@ services:
       ELEMENT_WEB_PORT: 8081
     ports:
       - "8081:8081"
+    networks:
+      - ecbackend
+
+  element-web-1:
+    image: ghcr.io/element-hq/element-web:develop
+    pull_policy: always
+    volumes:
+      - ./backend/ew.test.othersite.config.json:/app/config.json:Z
+    environment:
+      ELEMENT_WEB_PORT: 18081
+    ports:
+      # HOST_PORT:CONTAINER_PORT
+      - "18081:18081"
     networks:
       - ecbackend
 
@@ -108,4 +169,7 @@ services:
     networks:
       ecbackend:
         aliases:
+          - synapse.m.localhost
+          - synapse.othersite.m.localhost
           - matrix-rtc.m.localhost
+          - matrix-rtc.othersite.m.localhost

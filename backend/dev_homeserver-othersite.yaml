@@ -1,10 +1,10 @@
-server_name: "synapse.m.localhost"
-public_baseurl: https://synapse.m.localhost/
+server_name: "synapse.othersite.m.localhost"
+public_baseurl: https://synapse.othersite.m.localhost/
 
 pid_file: /data/homeserver.pid
 
 listeners:
-  - port: 8008
+  - port: 18008
     tls: false
     type: http
     x_forwarded: true
@@ -24,12 +24,12 @@ signing_key_path: "/data/SERVERNAME.signing.key"
 # - m.localhost, localhost
 # - *.m.localhost
 # - *.othersite.m.localhost
-# we disable certificate verification to allow for federation.
+# we disable certificate verification to allow for federation
 # WARNING: DO NOT USE IN PRODUCTION!!!
 federation_verify_certificates: false
 ip_range_blacklist: []
 trusted_key_servers:
-  - server_name: "synapse.othersite.m.localhost"
+  - server_name: "synapse.m.localhost"
     accept_keys_insecurely: true
 
 experimental_features:
@@ -58,24 +58,7 @@ serve_server_wellknown: true
 #   - burst_count: number of requests a client can send before being throttled.
 
 rc_message:
-  per_second: 10000
-  burst_count: 10000
-
-rc_delayed_event_mgmt:
-  per_second: 10000
-  burst_count: 10000
-
-rc_login:
-  address:
-    per_second: 10000
-    burst_count: 10000
-  account:
-    per_second: 10000
-    burst_count: 10000
-  failed_attempts:
-    per_second: 10000
-    burst_count: 10000
-
-rc_registration:
-  per_second: 10000
-  burst_count: 10000
+  # This needs to match at least the heart-beat frequency plus a bit of headroom
+  # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2s
+  per_second: 0.5
+  burst_count: 30
