@@ -139,6 +139,7 @@ export async function enterRTCSession(
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
       useExperimentalToDeviceTransport,
+      useStickyEvents: true,
     },
   );
   if (widget) {
