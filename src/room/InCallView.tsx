@@ -116,8 +116,6 @@ import ringtoneOgg from "../sound/ringtone.ogg?url";
 import { ConnectionLostError } from "../utils/errors.ts";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
 
-const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
-
 const maxTapDurationMs = 400;
 
 export interface ActiveCallProps
@@ -224,7 +222,7 @@ export const InCallView: FC<InCallViewProps> = ({
   // Merge the refs so they can attach to the same element
   const containerRef = useMergedRefs(containerRef1, containerRef2);
 
-  const { hideScreensharing, showControls } = useUrlParams();
+  const { showControls } = useUrlParams();
 
   const muteAllAudio = useBehavior(muteAllAudio$);
   // Call pickup state and display names are needed for waiting overlay/sounds
@@ -299,6 +297,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const showFooter = useBehavior(vm.showFooter$);
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
+  const sharingScreen = useBehavior(vm.sharingScreen$);
 
   // We need to set the proper timings on the animation based upon the sound length.
   const ringDuration = pickupPhaseAudio?.soundDuration["waiting"] ?? 1;
@@ -742,18 +741,6 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
   const memberships = useBehavior(vm.memberships$);
-  const toggleScreensharing = useCallback(() => {
-    // TODO-MULTI-SFU implement screensharing
-    throw new Error("TODO-MULTI-SFU");
-    // localParticipant
-    //   .setScreenShareEnabled(!isScreenShareEnabled, {
-    //     audio: true,
-    //     selfBrowserSurface: "include",
-    //     surfaceSwitching: "include",
-    //     systemAudio: "include",
-    //   })
-    //   .catch(logger.error);
-  }, []);
 
   const buttons: JSX.Element[] = [];
 
@@ -775,13 +762,13 @@ export const InCallView: FC<InCallViewProps> = ({
       data-testid="incall_videomute"
     />,
   );
-  if (canScreenshare && !hideScreensharing) {
+  if (vm.toggleScreenSharing !== null) {
     buttons.push(
       <ShareScreenButton
         key="share_screen"
         className={styles.shareScreen}
-        enabled={false} // TODO-MULTI-SFU
-        onClick={toggleScreensharing}
+        enabled={sharingScreen}
+        onClick={vm.toggleScreenSharing}
         onTouchEnd={onControlsTouchEnd}
         data-testid="incall_screenshare"
       />,

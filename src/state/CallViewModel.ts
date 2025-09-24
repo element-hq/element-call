@@ -15,6 +15,7 @@ import {
   type LocalParticipant,
   ParticipantEvent,
   type RemoteParticipant,
+  type Participant,
 } from "livekit-client";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import {
@@ -341,18 +342,7 @@ class UserMedia {
 
     this.presenter$ = this.scope.behavior(
       this.participant$.pipe(
-        switchMap(
-          (p) =>
-            (p &&
-              observeParticipantEvents(
-                p,
-                ParticipantEvent.TrackPublished,
-                ParticipantEvent.TrackUnpublished,
-                ParticipantEvent.LocalTrackPublished,
-                ParticipantEvent.LocalTrackUnpublished,
-              ).pipe(map((p) => p.isScreenShareEnabled))) ??
-            of(false),
-        ),
+        switchMap((p) => (p === undefined ? of(false) : sharingScreen$(p))),
       ),
     );
   }
@@ -433,7 +423,19 @@ function getRoomMemberFromRtcMember(
   return { id, member };
 }
 
+function sharingScreen$(p: Participant): Observable<boolean> {
+  return observeParticipantEvents(
+    p,
+    ParticipantEvent.TrackPublished,
+    ParticipantEvent.TrackUnpublished,
+    ParticipantEvent.LocalTrackPublished,
+    ParticipantEvent.LocalTrackUnpublished,
+  ).pipe(map((p) => p.isScreenShareEnabled));
+}
+
 export class CallViewModel extends ViewModel {
+  private readonly urlParams = getUrlParams();
+
   private readonly livekitAlias = getLivekitAlias(this.matrixRTCSession);
 
   private readonly livekitE2EEKeyProvider = getE2eeKeyProvider(
@@ -1850,6 +1852,37 @@ export class CallViewModel extends ViewModel {
     filter((v) => v.playSounds),
   );
 
+  /**
+   * Whether we are sharing our screen.
+   */
+  public readonly sharingScreen$ = this.scope.behavior(
+    from(this.localConnection).pipe(
+      switchMap((c) => sharingScreen$(c.livekitRoom.localParticipant)),
+      startWith(false),
+    ),
+  );
+
+  /**
+   * Callback for toggling screen sharing. If null, screen sharing is not
+   * available.
+   */
+  public readonly toggleScreenSharing =
+    "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
+    !this.urlParams.hideScreensharing
+      ? (): void =>
+          void this.localConnection.then(
+            (c) =>
+              void c.livekitRoom.localParticipant
+                .setScreenShareEnabled(!this.sharingScreen$.value, {
+                  audio: true,
+                  selfBrowserSurface: "include",
+                  surfaceSwitching: "include",
+                  systemAudio: "include",
+                })
+                .catch(logger.error),
+          )
+      : null;
+
   public constructor(
     // A call is permanently tied to a single Matrix room
     private readonly matrixRTCSession: MatrixRTCSession,
@@ -1913,7 +1946,7 @@ export class CallViewModel extends ViewModel {
     });
 
     this.leave$.pipe(this.scope.bind()).subscribe((reason) => {
-      const { confineToRoom } = getUrlParams();
+      const { confineToRoom } = this.urlParams;
       leaveRTCSession(this.matrixRTCSession, "user")
         // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
         .then(() => {
