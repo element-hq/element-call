@@ -7544,7 +7544,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=develop"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=voip-team/multi-SFU"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -10297,9 +10297,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=voip-team/multi-SFU":
   version: 37.13.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=2f1d654f14be8dd03896e9e76f12017b6f9eec1c"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=b61e39a81458fb02d76d384e9c4bbef30fcd516a"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.1.0"
@@ -10315,9 +10315,9 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:11"
-  checksum: 10c0/ecd019c677c272c5598617dcde407dbe4b1b11460863b2a577e33f3fd8732c9d9073ec0221b471ec1eb24e2839eec20728db7f92c9348be83126547286e50805
+  checksum: 10c0/da28671be560d3ef56e5a5465d1793dd6c2ccefcf68b510726f21b0a62107b115d40c1940e2a9bb8b915abdc600a9a84b248175ccdd9c77a3b313733efb8f497
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "matrix-widget-api@npm:^1.10.0, matrix-widget-api@npm:^1.13.0":
   version: 1.13.1
