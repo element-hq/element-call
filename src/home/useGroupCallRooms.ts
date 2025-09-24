@@ -137,7 +137,7 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
       // We want to show all rooms that historically had a call and which we are (or can become) part of.
       const rooms = client
         .getRooms()
-        .filter(roomHasCallMembershipEvents)
+        // .filter(roomHasCallMembershipEvents)
         .filter(roomIsJoinable);
       const sortedRooms = sortRooms(client, rooms);
       Promise.all(
