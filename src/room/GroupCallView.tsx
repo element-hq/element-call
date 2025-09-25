@@ -128,6 +128,16 @@ export const GroupCallView: FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Update our member event when our mute state changes.
+  useEffect(() => {
+    if (!isJoined) {
+      return;
+    }
+    void rtcSession.updateCallIntent(
+      muteStates.video.enabled ? "video" : "audio",
+    );
+  }, [rtcSession, isJoined, muteStates.video.enabled]);
+
   useEffect(() => {
     logger.info("[Lifecycle] GroupCallView Component mounted");
     return (): void => {
