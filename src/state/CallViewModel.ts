@@ -57,6 +57,7 @@ import {
   switchScan,
   take,
   takeUntil,
+  tap,
   throttleTime,
   timer,
 } from "rxjs";
@@ -117,16 +118,16 @@ import { constant, type Behavior } from "./Behavior";
 import {
   enterRTCSession,
   getLivekitAlias,
-  leaveRTCSession,
   makeFocus,
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 import { Connection, PublishConnection } from "./Connection";
 import { type MuteStates } from "./MuteStates";
-import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
+import { ElementWidgetActions, widget } from "../widget";
+import { IWidgetApiRequest } from "matrix-widget-api";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -553,19 +554,6 @@ export class CallViewModel extends ViewModel {
   public join(): void {
     this.join$.next();
   }
-
-  private readonly leave$ = new Subject<
-    "decline" | "timeout" | "user" | "allOthersLeft"
-  >();
-
-  public leave(): void {
-    this.leave$.next("user");
-  }
-
-  private readonly _left$ = new Subject<
-    "decline" | "timeout" | "user" | "allOthersLeft"
-  >();
-  public left$ = this._left$.asObservable();
 
   private readonly connectionInstructions$ = this.join$.pipe(
     switchMap(() => this.remoteConnections$),
@@ -1154,7 +1142,7 @@ export class CallViewModel extends ViewModel {
   );
 
   private readonly allOthersLeft$ = this.matrixUserChanges$.pipe(
-    map(({ userIds, leftUserIds }) => {
+    filter(({ userIds, leftUserIds }) => {
       if (!this.userId) {
         logger.warn("Could not access user ID to compute allOthersLeft");
         return false;
@@ -1163,12 +1151,40 @@ export class CallViewModel extends ViewModel {
         userIds.size === 1 && userIds.has(this.userId) && leftUserIds.size > 0
       );
     }),
-    startWith(false),
+    map(() => "allOthersLeft" as const),
   );
 
-  public readonly autoLeave$ = this.options.autoLeaveWhenOthersLeft
-    ? this.allOthersLeft$
-    : NEVER;
+  // Public for testing
+  public readonly autoLeave$ = merge(
+    this.options.autoLeaveWhenOthersLeft ? this.allOthersLeft$ : NEVER,
+    this.callPickupState$.pipe(
+      filter((state) => state === "timeout" || state === "decline"),
+    ),
+  );
+
+  private readonly userHangup$ = new Subject<void>();
+  public hangup(): void {
+    this.userHangup$.next();
+  }
+
+  private readonly widgetHangup$ =
+    widget === null
+      ? NEVER
+      : (
+          fromEvent(
+            widget.lazyActions,
+            ElementWidgetActions.HangupCall,
+          ) as Observable<[CustomEvent<IWidgetApiRequest>]>
+        ).pipe(tap(([ev]) => widget!.api.transport.reply(ev.detail, {})));
+
+  public readonly leave$: Observable<
+    "user" | "timeout" | "decline" | "allOthersLeft"
+  > = merge(
+    this.autoLeave$,
+    merge(this.userHangup$, this.widgetHangup$).pipe(
+      map(() => "user" as const),
+    ),
+  );
 
   /**
    * List of MediaItems that we want to display, that are of type ScreenShare
@@ -1929,34 +1945,17 @@ export class CallViewModel extends ViewModel {
         );
       });
 
-    this.allOthersLeft$
-      .pipe(
-        this.scope.bind(),
-        filter((l) => (l && this.options.autoLeaveWhenOthersLeft) ?? false),
-        distinctUntilChanged(),
-      )
-      .subscribe(() => {
-        this.leave$.next("allOthersLeft");
-      });
-
-    this.callPickupState$.pipe(this.scope.bind()).subscribe((state) => {
-      if (state === "timeout" || state === "decline") {
-        this.leave$.next(state);
-      }
-    });
-
-    this.leave$.pipe(this.scope.bind()).subscribe((reason) => {
-      const { confineToRoom } = this.urlParams;
-      leaveRTCSession(this.matrixRTCSession, "user")
-        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-        .then(() => {
-          if (!confineToRoom && !PosthogAnalytics.instance.isEnabled()) {
-            this._left$.next(reason);
-          }
-        })
-        .catch((e) => {
-          logger.error("Error leaving RTC session", e);
-        });
+    this.leave$.pipe(this.scope.bind()).subscribe(() => {
+      // Only sends Matrix leave event. The LiveKit session will disconnect once, uh...
+      // (TODO-MULTI-SFU does anything actually cause it to disconnect?)
+      void this.matrixRTCSession
+        .leaveRoomSession()
+        .catch((e) => logger.error("Error leaving RTC session", e))
+        .then(async () =>
+          widget?.api.transport
+            .send(ElementWidgetActions.HangupCall, {})
+            .catch((e) => logger.error("Failed to send hangup action", e)),
+        );
     });
 
     // Pause upstream of all local media tracks when we're disconnected from
