@@ -8,7 +8,10 @@ Please see LICENSE in the repository root for full details.
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type RTCNotificationType } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  type RTCCallIntent,
+  type RTCNotificationType,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { pickBy } from "lodash-es";
 
 import { Config } from "./config/Config";
@@ -26,7 +29,9 @@ export enum UserIntent {
   StartNewCall = "start_call",
   JoinExistingCall = "join_existing",
   StartNewCallDM = "start_call_dm",
+  StartNewCallDMVoice = "start_call_dm_voice",
   JoinExistingCallDM = "join_existing_dm",
+  JoinExistingCallDMVoice = "join_existing_dm_voice",
   Unknown = "unknown",
 }
 
@@ -227,6 +232,12 @@ export interface UrlConfiguration {
    *  - auto-dismiss the call widget once the notification lifetime expires on the receivers side.
    */
   waitForCallPickup: boolean;
+
+  callIntent?: RTCCallIntent;
+}
+interface IntentAndPlatformDerivedConfiguration {
+  defaultAudioEnabled?: boolean;
+  defaultVideoEnabled?: boolean;
 }
 interface IntentAndPlatformDerivedConfiguration {
   defaultAudioEnabled?: boolean;
@@ -395,22 +406,31 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   switch (intent) {
     case UserIntent.StartNewCall:
       intentPreset.skipLobby = false;
+      intentPreset.callIntent = "video";
       break;
     case UserIntent.JoinExistingCall:
       // On desktop this will be overridden based on which button was used to join the call
       intentPreset.skipLobby = false;
+      intentPreset.callIntent = "video";
       break;
+    case UserIntent.StartNewCallDMVoice:
+      intentPreset.callIntent = "audio";
+    // Fall through
     case UserIntent.StartNewCallDM:
       intentPreset.skipLobby = true;
       intentPreset.sendNotificationType = "ring";
       intentPreset.autoLeaveWhenOthersLeft = true;
       intentPreset.waitForCallPickup = true;
-
+      intentPreset.callIntent = intentPreset.callIntent ?? "video";
       break;
+    case UserIntent.JoinExistingCallDMVoice:
+      intentPreset.callIntent = "audio";
+    // Fall through
     case UserIntent.JoinExistingCallDM:
       // On desktop this will be overridden based on which button was used to join the call
       intentPreset.skipLobby = true;
       intentPreset.autoLeaveWhenOthersLeft = true;
+      intentPreset.callIntent = intentPreset.callIntent ?? "video";
       break;
     // Non widget usecase defaults
     default:
@@ -446,6 +466,11 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
         case UserIntent.JoinExistingCallDM:
           intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
           intentAndPlatformDerivedConfiguration.defaultVideoEnabled = true;
+          break;
+        case UserIntent.StartNewCallDMVoice:
+        case UserIntent.JoinExistingCallDMVoice:
+          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
+          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = false;
           break;
       }
   }
