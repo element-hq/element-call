@@ -136,7 +136,7 @@ export const GroupCallView: FC<Props> = ({
     void rtcSession.updateCallIntent(
       muteStates.video.enabled ? "video" : "audio",
     );
-  }, [isJoined, muteStates.video.enabled]);
+  }, [rtcSession, isJoined, muteStates.video.enabled]);
 
   useEffect(() => {
     logger.info("[Lifecycle] GroupCallView Component mounted");
