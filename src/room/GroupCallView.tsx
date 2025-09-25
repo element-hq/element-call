@@ -41,7 +41,6 @@ import { ActiveCall } from "./InCallView";
 import { type MuteStates } from "../state/MuteStates";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
-import { leaveRTCSession } from "../rtcSessionHelpers";
 import {
   saveKeyForRoom,
   useRoomEncryptionSystem,
@@ -50,7 +49,12 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { HeaderStyle, type UrlParams, useUrlParams } from "../UrlParams";
+import {
+  getUrlParams,
+  HeaderStyle,
+  type UrlParams,
+  useUrlParams,
+} from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
 import {
@@ -322,37 +326,62 @@ export const GroupCallView: FC<Props> = ({
       setJoined(false);
       setLeft(true);
       const audioPromise = leaveSoundContext.current?.playSound(playSound);
-      // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
-      // therefore we want the event to be sent instantly without getting queued/batched.
-      const sendInstantly = !!widget;
-      // we need to wait until the callEnded event is tracked on posthog.
-      // Otherwise the iFrame gets killed before the callEnded event got tracked.
+      // We need to wait until the callEnded event is tracked on PostHog,
+      // otherwise the iframe may get killed first.
       const posthogRequest = new Promise((resolve) => {
+        // To increase the likelihood of the PostHog event being sent out in
+        // widget mode before the iframe is killed, we ask it to skip the
+        // usual queuing/batching of requests.
+        const sendInstantly = widget !== null;
         PosthogAnalytics.instance.eventCallEnded.track(
           room.roomId,
           rtcSession.memberships.length,
           sendInstantly,
-
           rtcSession,
         );
+        // Unfortunately the PostHog library provides no way to await the
+        // tracking of an event, but we don't really want it to hold up the
+        // closing of the widget that long anyway, so giving it 10 ms will do.
         window.setTimeout(resolve, 10);
       });
 
       void Promise.all([audioPromise, posthogRequest])
-        .then(() => {
+        .catch((e) =>
+          logger.error(
+            "Failed to play leave audio and/or send PostHog leave event",
+            e,
+          ),
+        )
+        .then(async () => {
           if (
             !isPasswordlessUser &&
             !confineToRoom &&
             !PosthogAnalytics.instance.isEnabled()
-          ) {
+          )
             void navigate("/");
+
+          if (widget) {
+            // After this point the iframe could die at any moment!
+            try {
+              await widget.api.setAlwaysOnScreen(false);
+            } catch (e) {
+              logger.error(
+                "Failed to set call widget `alwaysOnScreen` to false",
+                e,
+              );
+            }
+            // On a normal user hangup we can shut down and close the widget. But if an
+            // error occurs we should keep the widget open until the user reads it.
+            if (reason === "user" && !getUrlParams().returnToLobby) {
+              try {
+                await widget.api.transport.send(ElementWidgetActions.Close, {});
+              } catch (e) {
+                logger.error("Failed to send close action", e);
+              }
+              widget.api.transport.stop();
+            }
           }
-        })
-        .catch(() =>
-          logger.error(
-            "could failed to play leave audio or send posthog leave event",
-          ),
-        );
+        });
     },
     [
       setJoined,
@@ -367,24 +396,11 @@ export const GroupCallView: FC<Props> = ({
   );
 
   useEffect(() => {
-    if (widget && joined) {
+    if (widget && joined)
       // set widget to sticky once joined.
       widget.api.setAlwaysOnScreen(true).catch((e) => {
         logger.error("Error calling setAlwaysOnScreen(true)", e);
       });
-
-      const onHangup = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        widget.api.transport.reply(ev.detail, {});
-        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-        leaveRTCSession(rtcSession, "user").catch((e) => {
-          logger.error("Failed to leave RTC session", e);
-        });
-      };
-      widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
-      return (): void => {
-        widget.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
-      };
-    }
   }, [widget, joined, rtcSession]);
 
   const joinRule = useJoinRule(room);

@@ -151,7 +151,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     );
     setVm(vm);
 
-    const sub = vm.left$.subscribe(props.onLeft);
+    const sub = vm.leave$.subscribe(props.onLeft);
     return (): void => {
       vm.destroy();
       sub.unsubscribe();
@@ -798,7 +798,7 @@ export const InCallView: FC<InCallViewProps> = ({
     <EndCallButton
       key="end_call"
       onClick={function (): void {
-        vm.leave();
+        vm.hangup();
       }}
       onTouchEnd={onControlsTouchEnd}
       data-testid="incall_leave"
