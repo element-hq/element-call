@@ -407,7 +407,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   };
   switch (intent) {
     case UserIntent.StartNewCall:
-      intentPreset.skipLobby = true;
+      intentPreset.skipLobby = false;
       intentPreset.callIntent = "video";
       break;
     case UserIntent.JoinExistingCall:
