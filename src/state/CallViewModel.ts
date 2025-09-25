@@ -71,6 +71,7 @@ import {
   MembershipManagerEvent,
   Status,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { type IWidgetApiRequest } from "matrix-widget-api";
 
 import { ViewModel } from "./ViewModel";
 import {
@@ -127,7 +128,6 @@ import { type MuteStates } from "./MuteStates";
 import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../widget";
-import { IWidgetApiRequest } from "matrix-widget-api";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -475,9 +475,11 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  // TODO-MULTI-SFU make sure that we consider the room memberships here as well (so that here we only have valid memberships)
-  // this also makes it possible to use this memberships$ list in all observables based on it.
-  // there should be no other call to: this.matrixRTCSession.memberships!
+  /**
+   * The MatrixRTC session participants.
+   */
+  // Note that MatrixRTCSession already filters the call memberships by users
+  // that are joined to the room; we don't need to perform extra filtering here.
   public readonly memberships$ = this.scope.behavior(
     fromEvent(
       this.matrixRTCSession,
@@ -735,19 +737,17 @@ export class CallViewModel extends ViewModel {
   // than on Chrome/Firefox). This means it is important that we multicast the result so that we
   // don't do this work more times than we need to. This is achieved by converting to a behavior:
   public readonly memberDisplaynames$ = this.scope.behavior(
-    merge(
-      // Handle call membership changes.
-      fromEvent(
-        this.matrixRTCSession,
-        MatrixRTCSessionEvent.MembershipsChanged,
-      ),
-      // Handle room membership changes (and displayname updates)
-      fromEvent(this.matrixRoom, RoomStateEvent.Members),
-      // TODO: do we need: pauseWhen(this.pretendToBeDisconnected$),
-    ).pipe(
-      startWith(null),
-      map(() => {
-        const memberships = this.matrixRTCSession.memberships;
+    combineLatest(
+      [
+        // Handle call membership changes
+        this.memberships$,
+        // Additionally handle display name changes (implicitly reacting to them)
+        fromEvent(this.matrixRoom, RoomStateEvent.Members).pipe(
+          startWith(null),
+        ),
+        // TODO: do we need: pauseWhen(this.pretendToBeDisconnected$),
+      ],
+      (memberships, _displaynames) => {
         const displaynameMap = new Map<string, string>([
           ["local", this.matrixRoom.getMember(this.userId!)!.rawDisplayName],
         ]);
@@ -771,7 +771,7 @@ export class CallViewModel extends ViewModel {
           );
         }
         return displaynameMap;
-      }),
+      },
     ),
   );
 
