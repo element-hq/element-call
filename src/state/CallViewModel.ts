@@ -1942,7 +1942,22 @@ export class CallViewModel extends ViewModel {
           this.options.encryptionSystem.kind !== E2eeType.NONE,
           true,
           true,
-        );
+        )
+          .catch((e) => logger.error("Error entering RTC session", e))
+          .then(() =>
+            // Update our member event when our mute state changes.
+            this.muteStates.video.enabled$
+              .pipe(this.scope.bind(), takeUntil(this.leave$))
+              // eslint-disable-next-line rxjs/no-nested-subscribe
+              .subscribe(
+                (videoEnabled) =>
+                  // TODO: Ensure that these calls are serialized in case of
+                  // fast video toggling
+                  void this.matrixRTCSession.updateCallIntent(
+                    videoEnabled ? "video" : "audio",
+                  ),
+              ),
+          );
       });
 
     this.leave$.pipe(this.scope.bind()).subscribe(() => {
