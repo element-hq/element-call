@@ -343,8 +343,6 @@ let urlParamCache: {
 export const getUrlParams = (
   search = window.location.search,
   hash = window.location.hash,
-  /** Skipping the cache might be needed in tests, to allow recomputing based on mocked platform changes. */
-  skipCache = false,
 ): UrlParams => {
   if (
     urlParamCache.search === search &&
@@ -543,15 +541,12 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     intentAndPlatformDerivedConfiguration,
   );
 
-  const params = {
+  return {
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
     ...intentAndPlatformDerivedConfiguration,
   };
-  urlParamCache = { search, hash, params };
-
-  return params;
 };
 
 /**
