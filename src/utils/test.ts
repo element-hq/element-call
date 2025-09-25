@@ -360,6 +360,8 @@ export class MockRTCSession extends TypedEventEmitter<
     return this;
   }
 
+  public updateCallIntent = vitest.fn();
+
   private _membershipStatus = Status.Connected;
   public get membershipStatus(): Status {
     return this._membershipStatus;
