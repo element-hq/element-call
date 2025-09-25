@@ -120,11 +120,13 @@ export async function enterRTCSession(
   const { features, matrix_rtc_session: matrixRtcSessionConfig } = Config.get();
   const useDeviceSessionMemberEvents =
     features?.feature_use_device_session_member_events;
+  const { sendNotificationType: notificationType, callIntent } = getUrlParams();
   rtcSession.joinRoomSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
     {
-      notificationType: getUrlParams().sendNotificationType,
+      notificationType,
+      callIntent,
       useNewMembershipManager,
       manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {
