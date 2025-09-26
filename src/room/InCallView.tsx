@@ -286,6 +286,8 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
+  const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
+  const participantsByRoom = useBehavior(vm.participantsByRoom$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
   const windowMode = useBehavior(vm.windowMode$);
@@ -739,9 +741,6 @@ export const InCallView: FC<InCallViewProps> = ({
     matrixRoom.roomId,
   );
 
-  const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
-  const memberships = useBehavior(vm.memberships$);
-
   const buttons: JSX.Element[] = [];
 
   buttons.push(
@@ -862,11 +861,12 @@ export const InCallView: FC<InCallViewProps> = ({
           </Text>
         )
       }
-      {allLivekitRooms.map((roomItem) => (
+      {participantsByRoom.map(({ livekitRoom, url, participants }) => (
         <LivekitRoomAudioRenderer
-          key={roomItem.url}
-          livekitRoom={roomItem.room}
-          members={memberships}
+          key={url}
+          url={url}
+          livekitRoom={livekitRoom}
+          participants={participants}
           muted={muteAllAudio}
         />
       ))}

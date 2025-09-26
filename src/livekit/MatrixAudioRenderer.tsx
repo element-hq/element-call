@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { getTrackReferenceId } from "@livekit/components-core";
-import { type Room as LivekitRoom } from "livekit-client";
+import { type Room as LivekitRoom, type Participant } from "livekit-client";
 import { type RemoteAudioTrack, Track } from "livekit-client";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -14,7 +14,7 @@ import {
   AudioTrack,
   type AudioTrackProps,
 } from "@livekit/components-react";
-import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
+import { type RoomMember } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
@@ -23,12 +23,19 @@ import * as controls from "../controls";
 import {} from "@livekit/components-core";
 export interface MatrixAudioRendererProps {
   /**
+   * The service URL of the LiveKit room.
+   */
+  url: string;
+  livekitRoom: LivekitRoom;
+  /**
    * The list of participants to render audio for.
    * This list needs to be composed based on the matrixRTC members so that we do not play audio from users
    * that are not expected to be in the rtc session.
    */
-  members: CallMembership[];
-  livekitRoom: LivekitRoom;
+  participants: {
+    participant: Participant;
+    member: RoomMember;
+  }[];
   /**
    * If set to `true`, mutes all audio tracks rendered by the component.
    * @remarks
@@ -52,14 +59,14 @@ export interface MatrixAudioRendererProps {
  * @public
  */
 export function LivekitRoomAudioRenderer({
-  members,
-  muted,
+  url,
   livekitRoom,
+  participants,
+  muted,
 }: MatrixAudioRendererProps): ReactNode {
-  const validIdentities = useMemo(
-    () =>
-      new Set(members?.map((member) => `${member.sender}:${member.deviceId}`)),
-    [members],
+  const participantSet = useMemo(
+    () => new Set(participants.map(({ participant }) => participant)),
+    [participants],
   );
 
   const loggedInvalidIdentities = useRef(new Set<string>());
@@ -71,11 +78,11 @@ export function LivekitRoomAudioRenderer({
    * @param identity The identity of the track that is invalid
    * @param validIdentities The list of valid identities
    */
-  const logInvalid = (identity: string, validIdentities: Set<string>): void => {
+  const logInvalid = (identity: string): void => {
     if (loggedInvalidIdentities.current.has(identity)) return;
     logger.warn(
-      `[MatrixAudioRenderer] Audio track ${identity} has no matching matrix call member`,
-      `current members: ${Array.from(validIdentities.values())}`,
+      `[MatrixAudioRenderer] Audio track ${identity} from ${url} has no matching matrix call member`,
+      `current members: ${participants.map((p) => p.participant.identity)}`,
       `track will not get rendered`,
     );
     loggedInvalidIdentities.current.add(identity);
@@ -93,23 +100,27 @@ export function LivekitRoomAudioRenderer({
       room: livekitRoom,
     },
   ).filter((ref) => {
-    const isValid = validIdentities?.has(ref.participant.identity);
+    const isValid = participantSet?.has(ref.participant);
     if (!isValid && !ref.participant.isLocal)
-      logInvalid(ref.participant.identity, validIdentities);
+      logInvalid(ref.participant.identity);
     return (
       !ref.participant.isLocal &&
       ref.publication.kind === Track.Kind.Audio &&
       isValid
     );
   });
+
   useEffect(() => {
-    if (!tracks.some((t) => !validIdentities.has(t.participant.identity))) {
+    if (
+      loggedInvalidIdentities.current.size &&
+      tracks.every((t) => participantSet.has(t.participant))
+    ) {
       logger.debug(
-        `[MatrixAudioRenderer] All audio tracks have a matching matrix call member identity.`,
+        `[MatrixAudioRenderer] All audio tracks from ${url} have a matching matrix call member identity.`,
       );
       loggedInvalidIdentities.current.clear();
     }
-  }, [tracks, validIdentities]);
+  }, [tracks, participantSet, url]);
 
   // This component is also (in addition to the "only play audio for connected members" logic above)
   // responsible for mimicking earpiece audio on iPhones.
