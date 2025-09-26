@@ -76,10 +76,6 @@ export const developerMode = new Setting("developer-settings-tab", false);
 
 export const duplicateTiles = new Setting("duplicate-tiles", 0);
 
-export const showNonMemberTiles = new Setting<boolean>(
-  "show-non-member-tiles",
-  false,
-);
 export const debugTileLayout = new Setting("debug-tile-layout", false);
 
 export const showConnectionStats = new Setting<boolean>(

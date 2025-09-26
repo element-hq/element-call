@@ -13,7 +13,6 @@ import {
   useSetting,
   duplicateTiles as duplicateTilesSetting,
   debugTileLayout as debugTileLayoutSetting,
-  showNonMemberTiles as showNonMemberTilesSetting,
   showConnectionStats as showConnectionStatsSetting,
   useNewMembershipManager as useNewMembershipManagerSetting,
   useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
@@ -34,9 +33,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
   const [debugTileLayout, setDebugTileLayout] = useSetting(
     debugTileLayoutSetting,
-  );
-  const [showNonMemberTiles, setShowNonMemberTiles] = useSetting(
-    showNonMemberTilesSetting,
   );
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
@@ -126,20 +122,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
           onChange={(event: ChangeEvent<HTMLInputElement>): void =>
             setDebugTileLayout(event.target.checked)
           }
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="showNonMemberTiles"
-          type="checkbox"
-          label={t("developer_mode.show_non_member_tiles")}
-          checked={!!showNonMemberTiles}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setShowNonMemberTiles(event.target.checked);
-            },
-            [setShowNonMemberTiles],
-          )}
         />
       </FieldRow>
       <FieldRow>
