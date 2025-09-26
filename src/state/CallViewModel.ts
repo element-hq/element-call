@@ -92,7 +92,6 @@ import {
   duplicateTiles,
   playReactionsSound,
   showReactions,
-  showNonMemberTiles,
 } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled$ } from "../controls";
@@ -812,152 +811,84 @@ export class CallViewModel extends ViewModel {
       this.participantsByRoom$,
       duplicateTiles.value$,
       this.memberships$,
-      showNonMemberTiles.value$,
     ]).pipe(
-      scan(
-        (
-          prevItems,
-          [participantsByRoom, duplicateTiles, memberships, showNonMemberTiles],
-        ) => {
-          const newItems: Map<string, UserMedia | ScreenShare> = new Map(
-            function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-              for (const { livekitRoom, participants } of participantsByRoom) {
-                for (const { participant, member } of participants) {
-                  const matrixId = participant.isLocal
-                    ? "local"
-                    : participant.identity;
+      scan((prevItems, [participantsByRoom, duplicateTiles, memberships]) => {
+        const newItems: Map<string, UserMedia | ScreenShare> = new Map(
+          function* (this: CallViewModel): Iterable<[string, MediaItem]> {
+            for (const { livekitRoom, participants } of participantsByRoom) {
+              for (const { participant, member } of participants) {
+                const matrixId = participant.isLocal
+                  ? "local"
+                  : participant.identity;
 
-                  for (let i = 0; i < 1 + duplicateTiles; i++) {
-                    const mediaId = `${matrixId}:${i}`;
-                    let prevMedia = prevItems.get(mediaId);
-                    if (prevMedia && prevMedia instanceof UserMedia) {
-                      prevMedia.updateParticipant(participant);
-                      if (prevMedia.vm.member === undefined) {
-                        // We have a previous media created because of the `debugShowNonMember` flag.
-                        // In this case we actually replace the media item.
-                        // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
-                        // option and if we always find a room member for each rtc member (which also
-                        // only fails if we have a fundamental problem)
-                        prevMedia = undefined;
-                      }
+                for (let i = 0; i < 1 + duplicateTiles; i++) {
+                  const mediaId = `${matrixId}:${i}`;
+                  let prevMedia = prevItems.get(mediaId);
+                  if (prevMedia && prevMedia instanceof UserMedia) {
+                    prevMedia.updateParticipant(participant);
+                    if (prevMedia.vm.member === undefined) {
+                      // We have a previous media created because of the `debugShowNonMember` flag.
+                      // In this case we actually replace the media item.
+                      // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
+                      // option and if we always find a room member for each rtc member (which also
+                      // only fails if we have a fundamental problem)
+                      prevMedia = undefined;
                     }
+                  }
 
+                  yield [
+                    mediaId,
+                    // We create UserMedia with or without a participant.
+                    // This will be the initial value of a BehaviourSubject.
+                    // Once a participant appears we will update the BehaviourSubject. (see above)
+                    prevMedia ??
+                      new UserMedia(
+                        mediaId,
+                        member,
+                        participant,
+                        this.options.encryptionSystem,
+                        livekitRoom,
+                        this.mediaDevices,
+                        this.pretendToBeDisconnected$,
+                        this.memberDisplaynames$.pipe(
+                          map((m) => m.get(matrixId) ?? "[👻]"),
+                        ),
+                        this.handsRaised$.pipe(
+                          map((v) => v[matrixId]?.time ?? null),
+                        ),
+                        this.reactions$.pipe(
+                          map((v) => v[matrixId] ?? undefined),
+                        ),
+                      ),
+                  ];
+
+                  if (participant?.isScreenShareEnabled) {
+                    const screenShareId = `${mediaId}:screen-share`;
                     yield [
-                      mediaId,
-                      // We create UserMedia with or without a participant.
-                      // This will be the initial value of a BehaviourSubject.
-                      // Once a participant appears we will update the BehaviourSubject. (see above)
-                      prevMedia ??
-                        new UserMedia(
-                          mediaId,
+                      screenShareId,
+                      prevItems.get(screenShareId) ??
+                        new ScreenShare(
+                          screenShareId,
                           member,
                           participant,
                           this.options.encryptionSystem,
                           livekitRoom,
-                          this.mediaDevices,
                           this.pretendToBeDisconnected$,
                           this.memberDisplaynames$.pipe(
                             map((m) => m.get(matrixId) ?? "[👻]"),
                           ),
-                          this.handsRaised$.pipe(
-                            map((v) => v[matrixId]?.time ?? null),
-                          ),
-                          this.reactions$.pipe(
-                            map((v) => v[matrixId] ?? undefined),
-                          ),
                         ),
                     ];
-
-                    if (participant?.isScreenShareEnabled) {
-                      const screenShareId = `${mediaId}:screen-share`;
-                      yield [
-                        screenShareId,
-                        prevItems.get(screenShareId) ??
-                          new ScreenShare(
-                            screenShareId,
-                            member,
-                            participant,
-                            this.options.encryptionSystem,
-                            livekitRoom,
-                            this.pretendToBeDisconnected$,
-                            this.memberDisplaynames$.pipe(
-                              map((m) => m.get(matrixId) ?? "[👻]"),
-                            ),
-                          ),
-                      ];
-                    }
                   }
                 }
               }
-            }.bind(this)(),
-          );
+            }
+          }.bind(this)(),
+        );
 
-          // Generate non member items (items without a corresponding MatrixRTC member)
-          // Those items should not be rendered, they are participants in LiveKit that do not have a corresponding
-          // MatrixRTC members. This cannot be any good:
-          //  - A malicious user impersonates someone
-          //  - Someone injects abusive content
-          //  - The user cannot have encryption keys so it makes no sense to participate
-          // We can only trust users that have a MatrixRTC member event.
-          //
-          // This is still available as a debug option. This can be useful
-          //  - If one wants to test scalability using the LiveKit CLI.
-          //  - If an experimental project does not yet do the MatrixRTC bits.
-          //  - If someone wants to debug if the LiveKit connection works but MatrixRTC room state failed to arrive.
-          // TODO-MULTI-SFU
-          // const newNonMemberItems = showNonMemberTiles
-          //   ? new Map(
-          //       function* (
-          //         this: CallViewModel,
-          //       ): Iterable<[string, MediaItem]> {
-          //         for (const participant of remoteParticipants) {
-          //           for (let i = 0; i < 1 + duplicateTiles; i++) {
-          //             const maybeNonMemberParticipantId =
-          //               participant.identity + ":" + i;
-          //             if (!newItems.has(maybeNonMemberParticipantId)) {
-          //               const nonMemberId = maybeNonMemberParticipantId;
-          //               yield [
-          //                 nonMemberId,
-          //                 prevItems.get(nonMemberId) ??
-          //                   new UserMedia(
-          //                     nonMemberId,
-          //                     undefined,
-          //                     participant,
-          //                     this.options.encryptionSystem,
-          //                     localConnection.livekitRoom,
-          //                     this.mediaDevices,
-          //                     this.pretendToBeDisconnected$,
-          //                     this.memberDisplaynames$.pipe(
-          //                       map(
-          //                         (m) =>
-          //                           m.get(participant.identity) ?? "[👻]",
-          //                       ),
-          //                     ),
-          //                     of(null),
-          //                     of(null),
-          //                   ),
-          //               ];
-          //             }
-          //           }
-          //         }
-          //       }.bind(this)(),
-          //     )
-          //   : new Map();
-          // if (newNonMemberItems.size > 0) {
-          //   logger.debug("Added NonMember items: ", newNonMemberItems);
-          // }
-
-          const combinedNew = new Map([
-            // ...newNonMemberItems.entries(),
-            ...newItems.entries(),
-          ]);
-
-          for (const [id, t] of prevItems)
-            if (!combinedNew.has(id)) t.destroy();
-          return combinedNew;
-        },
-        new Map<string, MediaItem>(),
-      ),
+        for (const [id, t] of prevItems) if (!newItems.has(id)) t.destroy();
+        return newItems;
+      }, new Map<string, MediaItem>()),
       map((mediaItems) => [...mediaItems.values()]),
       finalizeValue((ts) => {
         for (const t of ts) t.destroy();
