@@ -93,11 +93,9 @@ export class Connection {
     );
 
     this.publishingParticipants$ = this.scope.behavior(
-      combineLatest([
-        this.participantsIncludingSubscribers$,
-        this.membershipsFocusMap$,
-      ]).pipe(
-        map(([participants, membershipsFocusMap]) =>
+      combineLatest(
+        [this.participantsIncludingSubscribers$, this.membershipsFocusMap$],
+        (participants, membershipsFocusMap) =>
           membershipsFocusMap
             // Find all members that claim to publish on this connection
             .flatMap(({ membership, focus }) =>
@@ -113,7 +111,6 @@ export class Connection {
               );
               return participant ? [{ participant, membership }] : [];
             }),
-        ),
       ),
       [],
     );

@@ -480,7 +480,7 @@ export class CallViewModel extends ViewModel {
    */
   // Note that MatrixRTCSession already filters the call memberships by users
   // that are joined to the room; we don't need to perform extra filtering here.
-  public readonly memberships$ = this.scope.behavior(
+  private readonly memberships$ = this.scope.behavior(
     fromEvent(
       this.matrixRTCSession,
       MatrixRTCSessionEvent.MembershipsChanged,
@@ -679,16 +679,19 @@ export class CallViewModel extends ViewModel {
   // in a split-brained state.
   private readonly pretendToBeDisconnected$ = this.reconnecting$;
 
-  private readonly participants$ = this.scope.behavior<
+  public readonly participantsByRoom$ = this.scope.behavior<
     {
-      participant: LocalParticipant | RemoteParticipant;
-      member: RoomMember;
       livekitRoom: LivekitRoom;
+      url: string;
+      participants: {
+        participant: LocalParticipant | RemoteParticipant;
+        member: RoomMember;
+      }[];
     }[]
   >(
-    from(this.localConnection)
+    combineLatest([this.localConnection, this.localFocus])
       .pipe(
-        switchMap((localConnection) => {
+        switchMap(([localConnection, localFocus]) => {
           const memberError = (): never => {
             throw new Error("No room member for call membership");
           };
@@ -696,32 +699,41 @@ export class CallViewModel extends ViewModel {
             participant: localConnection.livekitRoom.localParticipant,
             member:
               this.matrixRoom.getMember(this.userId ?? "") ?? memberError(),
-            livekitRoom: localConnection.livekitRoom,
           };
+
           return this.remoteConnections$.pipe(
             switchMap((connections) =>
               combineLatest(
-                [localConnection, ...connections.values()].map((c) =>
+                [
+                  [localFocus.livekit_service_url, localConnection] as const,
+                  ...connections,
+                ].map(([url, c]) =>
                   c.publishingParticipants$.pipe(
-                    map((ps) =>
-                      ps.map(({ participant, membership }) => ({
+                    map((ps) => {
+                      const participants: {
+                        participant: LocalParticipant | RemoteParticipant;
+                        member: RoomMember;
+                      }[] = ps.map(({ participant, membership }) => ({
                         participant,
                         member:
                           getRoomMemberFromRtcMember(
                             membership,
                             this.matrixRoom,
                           )?.member ?? memberError(),
+                      }));
+                      if (c === localConnection)
+                        participants.push(localParticipant);
+
+                      return {
                         livekitRoom: c.livekitRoom,
-                      })),
-                    ),
+                        url,
+                        participants,
+                      };
+                    }),
                   ),
                 ),
               ),
             ),
-            map((remoteParticipants) => [
-              localParticipant,
-              ...remoteParticipants.flat(1),
-            ]),
           );
         }),
       )
@@ -798,7 +810,7 @@ export class CallViewModel extends ViewModel {
    */
   private readonly mediaItems$ = this.scope.behavior<MediaItem[]>(
     combineLatest([
-      this.participants$,
+      this.participantsByRoom$,
       duplicateTiles.value$,
       this.memberships$,
       showNonMemberTiles.value$,
@@ -806,71 +818,75 @@ export class CallViewModel extends ViewModel {
       scan(
         (
           prevItems,
-          [participants, duplicateTiles, memberships, showNonMemberTiles],
+          [participantsByRoom, duplicateTiles, memberships, showNonMemberTiles],
         ) => {
           const newItems: Map<string, UserMedia | ScreenShare> = new Map(
             function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-              for (const { participant, member, livekitRoom } of participants) {
-                const matrixId = participant.isLocal
-                  ? "local"
-                  : participant.identity;
-                for (let i = 0; i < 1 + duplicateTiles; i++) {
-                  const mediaId = `${matrixId}:${i}`;
-                  let prevMedia = prevItems.get(mediaId);
-                  if (prevMedia && prevMedia instanceof UserMedia) {
-                    prevMedia.updateParticipant(participant);
-                    if (prevMedia.vm.member === undefined) {
-                      // We have a previous media created because of the `debugShowNonMember` flag.
-                      // In this case we actually replace the media item.
-                      // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
-                      // option and if we always find a room member for each rtc member (which also
-                      // only fails if we have a fundamental problem)
-                      prevMedia = undefined;
-                    }
-                  }
-                  yield [
-                    mediaId,
-                    // We create UserMedia with or without a participant.
-                    // This will be the initial value of a BehaviourSubject.
-                    // Once a participant appears we will update the BehaviourSubject. (see above)
-                    prevMedia ??
-                      new UserMedia(
-                        mediaId,
-                        member,
-                        participant,
-                        this.options.encryptionSystem,
-                        livekitRoom,
-                        this.mediaDevices,
-                        this.pretendToBeDisconnected$,
-                        this.memberDisplaynames$.pipe(
-                          map((m) => m.get(matrixId) ?? "[👻]"),
-                        ),
-                        this.handsRaised$.pipe(
-                          map((v) => v[matrixId]?.time ?? null),
-                        ),
-                        this.reactions$.pipe(
-                          map((v) => v[matrixId] ?? undefined),
-                        ),
-                      ),
-                  ];
+              for (const { livekitRoom, participants } of participantsByRoom) {
+                for (const { participant, member } of participants) {
+                  const matrixId = participant.isLocal
+                    ? "local"
+                    : participant.identity;
 
-                  if (participant?.isScreenShareEnabled) {
-                    const screenShareId = `${mediaId}:screen-share`;
+                  for (let i = 0; i < 1 + duplicateTiles; i++) {
+                    const mediaId = `${matrixId}:${i}`;
+                    let prevMedia = prevItems.get(mediaId);
+                    if (prevMedia && prevMedia instanceof UserMedia) {
+                      prevMedia.updateParticipant(participant);
+                      if (prevMedia.vm.member === undefined) {
+                        // We have a previous media created because of the `debugShowNonMember` flag.
+                        // In this case we actually replace the media item.
+                        // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
+                        // option and if we always find a room member for each rtc member (which also
+                        // only fails if we have a fundamental problem)
+                        prevMedia = undefined;
+                      }
+                    }
+
                     yield [
-                      screenShareId,
-                      prevItems.get(screenShareId) ??
-                        new ScreenShare(
-                          screenShareId,
+                      mediaId,
+                      // We create UserMedia with or without a participant.
+                      // This will be the initial value of a BehaviourSubject.
+                      // Once a participant appears we will update the BehaviourSubject. (see above)
+                      prevMedia ??
+                        new UserMedia(
+                          mediaId,
                           member,
                           participant,
                           this.options.encryptionSystem,
                           livekitRoom,
+                          this.mediaDevices,
                           this.pretendToBeDisconnected$,
                           this.memberDisplaynames$.pipe(
                             map((m) => m.get(matrixId) ?? "[👻]"),
                           ),
+                          this.handsRaised$.pipe(
+                            map((v) => v[matrixId]?.time ?? null),
+                          ),
+                          this.reactions$.pipe(
+                            map((v) => v[matrixId] ?? undefined),
+                          ),
                         ),
                     ];
+
+                    if (participant?.isScreenShareEnabled) {
+                      const screenShareId = `${mediaId}:screen-share`;
+                      yield [
+                        screenShareId,
+                        prevItems.get(screenShareId) ??
+                          new ScreenShare(
+                            screenShareId,
+                            member,
+                            participant,
+                            this.options.encryptionSystem,
+                            livekitRoom,
+                            this.pretendToBeDisconnected$,
+                            this.memberDisplaynames$.pipe(
+                              map((m) => m.get(matrixId) ?? "[👻]"),
+                            ),
+                          ),
+                      ];
+                    }
                   }
                 }
               }
