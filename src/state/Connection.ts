@@ -55,6 +55,7 @@ export class Connection {
   }
 
   public stop(): void {
+    if (this.stopped) return;
     void this.livekitRoom.disconnect();
     this.stopped = true;
   }
@@ -117,6 +118,8 @@ export class Connection {
     this.connectionState$ = this.scope.behavior<ConnectionState>(
       connectionStateObserver(this.livekitRoom),
     );
+
+    this.scope.onEnd(() => this.stop());
   }
 }
 
@@ -135,11 +138,6 @@ export class PublishConnection extends Connection {
         await this.livekitRoom.localParticipant.publishTrack(track);
       }
     }
-  }
-
-  public stop(): void {
-    void this.livekitRoom.disconnect();
-    this.stopped = true;
   }
 
   public constructor(
@@ -220,7 +218,10 @@ export class PublishConnection extends Connection {
       }
       return this.livekitRoom.localParticipant.isCameraEnabled;
     });
-    // TODO-MULTI-SFU: Unset mute state handlers on destroy
+    this.scope.onEnd(() => {
+      this.muteStates.audio.unsetHandler();
+      this.muteStates.video.unsetHandler();
+    });
 
     const syncDevice = (
       kind: MediaDeviceKind,
