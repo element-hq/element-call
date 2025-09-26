@@ -359,7 +359,6 @@ class UserMedia {
 
   public destroy(): void {
     this.scope.end();
-
     this.vm.destroy();
   }
 }

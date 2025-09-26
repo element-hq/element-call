@@ -36,11 +36,16 @@ export class ObservableScope {
     return this.bindImpl;
   }
 
-  private readonly shareImpl: MonoTypeOperator = share({ resetOnError: false, resetOnComplete: false, resetOnRefCountZero: false })
+  private readonly shareImpl: MonoTypeOperator = share({
+    resetOnError: false,
+    resetOnComplete: false,
+    resetOnRefCountZero: false,
+  });
   /**
    * Shares (multicasts) the Observable as a hot Observable.
    */
-  public readonly share: MonoTypeOperator = (input$) => input$.pipe(this.bindImpl, this.shareImpl)
+  public readonly share: MonoTypeOperator = (input$) =>
+    input$.pipe(this.bindImpl, this.shareImpl);
 
   /**
    * Converts an Observable to a Behavior. If no initial value is specified, the
@@ -75,6 +80,13 @@ export class ObservableScope {
   public end(): void {
     this.ended$.next();
     this.ended$.complete();
+  }
+
+  /**
+   * Register a callback to be executed when the scope is ended.
+   */
+  public onEnd(callback: () => void): void {
+    this.ended$.subscribe(callback);
   }
 }
 
