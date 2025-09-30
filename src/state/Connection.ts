@@ -18,7 +18,7 @@ import {
 } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk";
 import {
-  type LivekitFocus,
+  type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
@@ -72,12 +72,12 @@ export class Connection {
 
   public connectionState$: Behavior<ConnectionState>;
   public constructor(
-    protected readonly focus: LivekitFocus,
+    protected readonly focus: LivekitTransport,
     protected readonly livekitAlias: string,
     protected readonly client: MatrixClient,
     protected readonly scope: ObservableScope,
     protected readonly membershipsFocusMap$: Behavior<
-      { membership: CallMembership; focus: LivekitFocus }[]
+      { membership: CallMembership; focus: LivekitTransport }[]
     >,
     e2eeLivekitOptions: E2EEOptions | undefined,
     livekitRoom: LivekitRoom | undefined = undefined,
@@ -141,12 +141,12 @@ export class PublishConnection extends Connection {
   }
 
   public constructor(
-    focus: LivekitFocus,
+    focus: LivekitTransport,
     livekitAlias: string,
     client: MatrixClient,
     scope: ObservableScope,
     membershipsFocusMap$: Behavior<
-      { membership: CallMembership; focus: LivekitFocus }[]
+      { membership: CallMembership; focus: LivekitTransport }[]
     >,
     devices: MediaDevices,
     private readonly muteStates: MuteStates,

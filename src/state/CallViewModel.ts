@@ -64,7 +64,7 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
-  isLivekitFocus,
+  isLivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
@@ -493,7 +493,9 @@ export class CallViewModel extends ViewModel {
       map((memberships) =>
         memberships.flatMap((m) => {
           const f = this.matrixRTCSession.resolveActiveFocus(m);
-          return f && isLivekitFocus(f) ? [{ membership: m, focus: f }] : [];
+          return f && isLivekitTransport(f)
+            ? [{ membership: m, focus: f }]
+            : [];
         }),
       ),
     ),
