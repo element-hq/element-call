@@ -7,9 +7,6 @@ Please see LICENSE in the repository root for full details.
 import { ConnectionState, type E2EEOptions, LocalVideoTrack, Room as LivekitRoom, Track } from "livekit-client";
 import { map, NEVER, type Observable, type Subscription, switchMap } from "rxjs";
 
-import type { CallMembership, LivekitFocus } from "../../../matrix-js-sdk/lib/matrixrtc";
-import type { MatrixClient } from "../../../matrix-js-sdk";
-import type { ObservableScope } from "./ObservableScope.ts";
 import type { Behavior } from "./Behavior.ts";
 import type { MediaDevices, SelectedDevice } from "./MediaDevices.ts";
 import type { MuteStates } from "./MuteStates.ts";
@@ -19,7 +16,7 @@ import { getUrlParams } from "../UrlParams.ts";
 import { defaultLiveKitOptions } from "../livekit/options.ts";
 import { getValue } from "../utils/observable.ts";
 import { observeTrackReference$ } from "./MediaViewModel.ts";
-import { Connection } from "./Connection.ts";
+import { Connection, type ConnectionOpts } from "./Connection.ts";
 
 /**
  * A connection to the publishing LiveKit.e. the local livekit room, the one the user is publishing to.
@@ -39,8 +36,8 @@ export class PublishConnection extends Connection {
    */
   public async start(): Promise<void> {
     this.stopped = false;
-    const { url, jwt } = await this.sfuConfig;
-    if (!this.stopped) await this.livekitRoom.connect(url, jwt);
+
+    await super.start()
 
     if (!this.stopped) {
       // TODO this can throw errors? It will also prompt for permissions if not already granted
@@ -60,29 +57,20 @@ export class PublishConnection extends Connection {
 
   /**
    * Creates a new PublishConnection.
-   * @param focus - The Livekit focus object containing the configuration for the connection.
-   * @param livekitAlias - TODO: remove, use focus.livekit_alias instead
-   * @param client - The Matrix client to use for authentication. TODO: remove only pick OpenIDClientParts
-   * @param scope - The observable scope to use for managing subscriptions.
-   * @param membershipsFocusMap$ - An observable of the current RTC call memberships and their associated focus.
+   * @param args - The connection options. {@link ConnectionOpts}
    * @param devices - The media devices to use for audio and video input.
    * @param muteStates - The mute states for audio and video.
    * @param e2eeLivekitOptions - The E2EE options to use for the LiveKit room. Use to share the same key provider across connections!.
    * @param trackerProcessorState$ - The processor state for the video track processor (e.g. background blur).
    */
   public constructor(
-    focus: LivekitFocus,
-    livekitAlias: string,
-    client: MatrixClient,
-    scope: ObservableScope,
-    membershipsFocusMap$: Behavior<
-      { membership: CallMembership; focus: LivekitFocus }[]
-    >,
+    args: ConnectionOpts,
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
     e2eeLivekitOptions: E2EEOptions | undefined,
     trackerProcessorState$: Behavior<ProcessorState>
   ) {
+    const { scope } = args;
     logger.info("[LivekitRoom] Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
 
@@ -112,17 +100,19 @@ export class PublishConnection extends Connection {
     });
 
     super(
-      focus,
-      livekitAlias,
-      client,
-      scope,
-      membershipsFocusMap$,
-      e2eeLivekitOptions,
-      room
+      room,
+      args,
+      // focus,
+      // livekitAlias,
+      // client,
+      // scope,
+      // membershipsFocusMap$,
+      // e2eeLivekitOptions,
+      // room
     );
 
     // Setup track processor syncing (blur)
-    const track$ = this.scope.behavior(
+    const track$ = scope.behavior(
       observeTrackReference$(room.localParticipant, Track.Source.Camera).pipe(
         map((trackRef) => {
           const track = trackRef?.publication?.track;
@@ -148,7 +138,7 @@ export class PublishConnection extends Connection {
       }
       return this.livekitRoom.localParticipant.isCameraEnabled;
     });
-    this.scope.onEnd(() => {
+    scope.onEnd(() => {
       this.muteStates.audio.unsetHandler();
       this.muteStates.video.unsetHandler();
     });
@@ -157,7 +147,7 @@ export class PublishConnection extends Connection {
       kind: MediaDeviceKind,
       selected$: Observable<SelectedDevice | undefined>
     ): Subscription =>
-      selected$.pipe(this.scope.bind()).subscribe((device) => {
+      selected$.pipe(scope.bind()).subscribe((device) => {
         if (this.connectionState$.value !== ConnectionState.Connected) return;
         logger.info(
           "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
@@ -192,7 +182,7 @@ export class PublishConnection extends Connection {
     devices.audioInput.selected$
       .pipe(
         switchMap((device) => device?.hardwareDeviceChange$ ?? NEVER),
-        this.scope.bind()
+        scope.bind()
       )
       .subscribe(() => {
         if (this.connectionState$.value !== ConnectionState.Connected) return;
