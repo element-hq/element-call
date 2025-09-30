@@ -122,7 +122,7 @@ import {
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-import { Connection } from "./Connection";
+import { type Connection, type ConnectionOpts, RemoteConnection } from "./Connection";
 import { type MuteStates } from "./MuteStates";
 import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
@@ -453,18 +453,21 @@ export class CallViewModel extends ViewModel {
   private readonly localFocus = makeFocus(this.matrixRTCSession);
 
   private readonly localConnection = this.localFocus.then(
-    (focus) =>
-      new PublishConnection(
+    (focus) => {
+      const args: ConnectionOpts = {
         focus,
-        this.livekitAlias,
-        this.matrixRTCSession.room.client,
-        this.scope,
-        this.membershipsAndFocusMap$,
+        client: this.matrixRTCSession.room.client,
+        scope: this.scope,
+        membershipsFocusMap$: this.membershipsAndFocusMap$,
+      }
+      return new PublishConnection(
+        args,
         this.mediaDevices,
         this.muteStates,
         this.e2eeLivekitOptions(),
         this.scope.behavior(this.trackProcessorState$),
-      ),
+      )
+    }
   );
 
   public readonly livekitConnectionState$ = this.scope.behavior(
@@ -521,18 +524,17 @@ export class CallViewModel extends ViewModel {
                   "SFU remoteConnections$ construct new connection: ",
                   focusUrl,
                 );
-                nextConnection = new Connection(
-                  {
+                const args: ConnectionOpts = {
+                  focus: {
+                    type: "livekit",
                     livekit_service_url: focusUrl,
                     livekit_alias: this.livekitAlias,
-                    type: "livekit",
                   },
-                  this.livekitAlias,
-                  this.matrixRTCSession.room.client,
-                  this.scope,
-                  this.membershipsAndFocusMap$,
-                  this.e2eeLivekitOptions(),
-                );
+                  client: this.matrixRTCSession.room.client,
+                  scope: this.scope,
+                  membershipsFocusMap$: this.membershipsAndFocusMap$,
+                }
+                nextConnection = new RemoteConnection(args, this.e2eeLivekitOptions());
               } else {
                 logger.log(
                   "SFU remoteConnections$ use prev connection: ",

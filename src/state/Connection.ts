@@ -7,15 +7,24 @@ Please see LICENSE in the repository root for full details.
 
 import { connectedParticipantsObserver, connectionStateObserver } from "@livekit/components-core";
 import { type ConnectionState, type E2EEOptions, Room as LivekitRoom } from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk";
 import { type CallMembership, type LivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest } from "rxjs";
 
-import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
+import { getSFUConfigWithOpenID, type OpenIDClientParts, type SFUConfig } from "../livekit/openIDSFU";
 import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import { defaultLiveKitOptions } from "../livekit/options";
 
+export interface ConnectionOpts {
+  /** The focus server to connect to. */
+  focus: LivekitFocus;
+  /** The Matrix client to use for OpenID and SFU config requests. */
+  client: OpenIDClientParts;
+  /** The observable scope to use for this connection. */
+  scope: ObservableScope;
+  /** An observable of the current RTC call memberships and their associated focus. */
+  membershipsFocusMap$: Behavior<{ membership: CallMembership; focus: LivekitFocus }[]>;
+}
 /**
  * A connection to a Matrix RTC LiveKit backend.
  *
@@ -39,10 +48,20 @@ export class Connection {
    */
   public async start(): Promise<void> {
     this.stopped = false;
-    const { url, jwt } = await this.sfuConfig;
+    // TODO could this be loaded earlier to save time?
+    const { url, jwt } = await this.getSFUConfigWithOpenID();
+
     if (!this.stopped) await this.livekitRoom.connect(url, jwt);
   }
 
+
+  protected async getSFUConfigWithOpenID(): Promise<SFUConfig> {
+    return await getSFUConfigWithOpenID(
+      this.client,
+      this.targetFocus.livekit_service_url,
+      this.targetFocus.livekit_alias
+    )
+  }
   /**
    * Stops the connection.
    *
@@ -55,17 +74,6 @@ export class Connection {
     this.stopped = true;
   }
 
-  protected readonly sfuConfig = getSFUConfigWithOpenID(
-    this.client,
-    this.focus.livekit_service_url,
-    this.focus.livekit_alias
-  );
-
-  /*
-    * An observable of the participants in the livekit room, including subscribers.
-    * Converts the livekit room events ParticipantConnected/ParticipantDisconnected/StateChange to an observable.
-   */
-  protected readonly participantsIncludingSubscribers$;
 
   /**
    * An observable of the participants that are publishing on this connection.
@@ -75,9 +83,9 @@ export class Connection {
   public readonly publishingParticipants$;
 
   /**
-   * The LiveKit room instance.
+   * The focus server to connect to.
    */
-  public readonly livekitRoom: LivekitRoom;
+  protected readonly targetFocus: LivekitFocus;
 
   /**
    * An observable of the livekit connection state.
@@ -85,48 +93,39 @@ export class Connection {
    */
   public connectionState$: Behavior<ConnectionState>;
 
+
+  private readonly client: OpenIDClientParts;
   /**
    * Creates a new connection to a matrix RTC LiveKit backend.
    *
-   * @param livekitRoom - Optional LiveKit room instance to use. If not provided, a new instance will be created.
-   * @param focus - The focus server to connect to.
-   * @param livekitAlias - The livekit alias to use when connecting to the focus server. TODO duplicate of focus?
-   * @param client - The matrix client, used to fetch the OpenId token. TODO refactor to avoid passing the whole client
-   * @param scope - The observable scope to use for creating observables.
-   * @param membershipsFocusMap$ - The observable of the current call RTC memberships and their associated focus.
-   * @param e2eeLivekitOptions - The E2EE options to use for the LiveKit room. Use to share the same key provider across connections!. TODO refactor to avoid passing the whole options?
+   * @param livekitRoom - LiveKit room instance to use.
+   * @param opts - Connection options {@link ConnectionOpts}.
+   *
    */
-  public constructor(
-    protected readonly focus: LivekitFocus,
-    // TODO : remove livekitAlias, it's already in focus?
-    protected readonly livekitAlias: string,
-    protected readonly client: MatrixClient,
-    protected readonly scope: ObservableScope,
-    protected readonly membershipsFocusMap$: Behavior<
-      { membership: CallMembership; focus: LivekitFocus }[]
-    >,
-    e2eeLivekitOptions: E2EEOptions | undefined,
-    livekitRoom: LivekitRoom | undefined = undefined
+  protected constructor(
+    public readonly livekitRoom: LivekitRoom,
+    opts: ConnectionOpts,
   ) {
-    this.livekitRoom =
-      livekitRoom ??
-      new LivekitRoom({
-        ...defaultLiveKitOptions,
-        e2ee: e2eeLivekitOptions
-      });
-    this.participantsIncludingSubscribers$ = this.scope.behavior(
+    const { focus, client, scope, membershipsFocusMap$ } =
+      opts;
+
+    this.livekitRoom = livekitRoom
+    this.targetFocus = focus;
+    this.client = client;
+
+    const participantsIncludingSubscribers$ = scope.behavior(
       connectedParticipantsObserver(this.livekitRoom),
       []
     );
 
-    this.publishingParticipants$ = this.scope.behavior(
+    this.publishingParticipants$ = scope.behavior(
       combineLatest(
-        [this.participantsIncludingSubscribers$, this.membershipsFocusMap$],
+        [participantsIncludingSubscribers$, membershipsFocusMap$],
         (participants, membershipsFocusMap) =>
           membershipsFocusMap
             // Find all members that claim to publish on this connection
             .flatMap(({ membership, focus }) =>
-              focus.livekit_service_url === this.focus.livekit_service_url
+              focus.livekit_service_url === this.targetFocus.livekit_service_url
                 ? [membership]
                 : []
             )
@@ -141,11 +140,32 @@ export class Connection {
       ),
       []
     );
-    this.connectionState$ = this.scope.behavior<ConnectionState>(
+    this.connectionState$ = scope.behavior<ConnectionState>(
       connectionStateObserver(this.livekitRoom)
     );
 
-    this.scope.onEnd(() => this.stop());
+    scope.onEnd(() => this.stop());
   }
 }
 
+/**
+ * A remote connection to the Matrix RTC LiveKit backend.
+ *
+ * This connection is used for subscribing to remote participants.
+ * It does not publish any local tracks.
+ */
+export class RemoteConnection extends Connection {
+
+  /**
+   * Creates a new remote connection to a matrix RTC LiveKit backend.
+   * @param opts
+   * @param sharedE2eeOption - The shared E2EE options to use for the connection.
+   */
+  public constructor(opts: ConnectionOpts, sharedE2eeOption: E2EEOptions | undefined) {
+    const livekitRoom = new LivekitRoom({
+      ...defaultLiveKitOptions,
+      e2ee: sharedE2eeOption
+    });
+    super(livekitRoom, opts);
+  }
+}
