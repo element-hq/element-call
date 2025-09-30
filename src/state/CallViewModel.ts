@@ -122,11 +122,12 @@ import {
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-import { Connection, PublishConnection } from "./Connection";
+import { Connection } from "./Connection";
 import { type MuteStates } from "./MuteStates";
 import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../widget";
+import { PublishConnection } from "./PublishConnection.ts";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
