@@ -6,11 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  isLivekitFocusConfig,
-  type LivekitFocusConfig,
-  type LivekitFocus,
-  type LivekitFocusSelection,
   type MatrixRTCSession,
+  isLivekitTransportConfig,
+  type LivekitTransportConfig,
+  type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
@@ -24,13 +23,6 @@ import { getSFUConfigWithOpenID } from "./livekit/openIDSFU.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
-export function makeActiveFocus(): LivekitFocusSelection {
-  return {
-    type: "livekit",
-    focus_selection: "oldest_membership",
-  };
-}
-
 export function getLivekitAlias(rtcSession: MatrixRTCSession): string {
   // For now we assume everything is a room-scoped call
   return rtcSession.room.roomId;
@@ -38,13 +30,13 @@ export function getLivekitAlias(rtcSession: MatrixRTCSession): string {
 
 async function makeFocusInternal(
   rtcSession: MatrixRTCSession,
-): Promise<LivekitFocus> {
+): Promise<LivekitTransport> {
   logger.log("Searching for a preferred focus");
   const livekitAlias = getLivekitAlias(rtcSession);
 
   const urlFromStorage = localStorage.getItem("robin-matrixrtc-auth");
   if (urlFromStorage !== null) {
-    const focusFromStorage: LivekitFocus = {
+    const focusFromStorage: LivekitTransport = {
       type: "livekit",
       livekit_service_url: urlFromStorage,
       livekit_alias: livekitAlias,
@@ -57,7 +49,7 @@ async function makeFocusInternal(
   const domain = rtcSession.room.client.getDomain();
   if (localStorage.getItem("timo-focus-url")) {
     const timoFocusUrl = localStorage.getItem("timo-focus-url")!;
-    const focusFromUrl: LivekitFocus = {
+    const focusFromUrl: LivekitTransport = {
       type: "livekit",
       livekit_service_url: timoFocusUrl,
       livekit_alias: livekitAlias,
@@ -72,8 +64,8 @@ async function makeFocusInternal(
       FOCI_WK_KEY
     ];
     if (Array.isArray(wellKnownFoci)) {
-      const focus: LivekitFocusConfig | undefined = wellKnownFoci.find(
-        (f) => f && isLivekitFocusConfig(f),
+      const focus: LivekitTransportConfig | undefined = wellKnownFoci.find(
+        (f) => f && isLivekitTransportConfig(f),
       );
       if (focus !== undefined) {
         logger.log("Using LiveKit focus from .well-known: ", focus);
@@ -84,7 +76,7 @@ async function makeFocusInternal(
 
   const urlFromConf = Config.get().livekit?.livekit_service_url;
   if (urlFromConf) {
-    const focusFromConf: LivekitFocus = {
+    const focusFromConf: LivekitTransport = {
       type: "livekit",
       livekit_service_url: urlFromConf,
       livekit_alias: livekitAlias,
@@ -98,7 +90,7 @@ async function makeFocusInternal(
 
 export async function makeFocus(
   rtcSession: MatrixRTCSession,
-): Promise<LivekitFocus> {
+): Promise<LivekitTransport> {
   const focus = await makeFocusInternal(rtcSession);
   // this will call the jwt/sfu/get endpoint to pre create the livekit room.
   await getSFUConfigWithOpenID(
@@ -111,10 +103,11 @@ export async function makeFocus(
 
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
-  focus: LivekitFocus,
+  focus: LivekitTransport,
   encryptMedia: boolean,
   useNewMembershipManager = true,
   useExperimentalToDeviceTransport = false,
+  useMultiSfu = true,
 ): Promise<void> {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
@@ -127,25 +120,31 @@ export async function enterRTCSession(
   const useDeviceSessionMemberEvents =
     features?.feature_use_device_session_member_events;
   const { sendNotificationType: notificationType, callIntent } = getUrlParams();
-  rtcSession.joinRoomSession([focus], focus, {
-    notificationType,
-    callIntent,
-    useNewMembershipManager,
-    manageMediaKeys: encryptMedia,
-    ...(useDeviceSessionMemberEvents !== undefined && {
-      useLegacyMemberEvents: !useDeviceSessionMemberEvents,
-    }),
-    delayedLeaveEventRestartMs:
-      matrixRtcSessionConfig?.delayed_leave_event_restart_ms,
-    delayedLeaveEventDelayMs:
-      matrixRtcSessionConfig?.delayed_leave_event_delay_ms,
-    delayedLeaveEventRestartLocalTimeoutMs:
-      matrixRtcSessionConfig?.delayed_leave_event_restart_local_timeout_ms,
-    networkErrorRetryMs: matrixRtcSessionConfig?.network_error_retry_ms,
-    makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
-    membershipEventExpiryMs: matrixRtcSessionConfig?.membership_event_expiry_ms,
-    useExperimentalToDeviceTransport,
-  });
+  // Multi-sfu does not need a focus preferred list. just the focus that is actually used.
+  rtcSession.joinRoomSession(
+    useMultiSfu ? [focus] : [],
+    useMultiSfu ? focus : undefined,
+    {
+      notificationType,
+      callIntent,
+      useNewMembershipManager,
+      manageMediaKeys: encryptMedia,
+      ...(useDeviceSessionMemberEvents !== undefined && {
+        useLegacyMemberEvents: !useDeviceSessionMemberEvents,
+      }),
+      delayedLeaveEventRestartMs:
+        matrixRtcSessionConfig?.delayed_leave_event_restart_ms,
+      delayedLeaveEventDelayMs:
+        matrixRtcSessionConfig?.delayed_leave_event_delay_ms,
+      delayedLeaveEventRestartLocalTimeoutMs:
+        matrixRtcSessionConfig?.delayed_leave_event_restart_local_timeout_ms,
+      networkErrorRetryMs: matrixRtcSessionConfig?.network_error_retry_ms,
+      makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
+      membershipEventExpiryMs:
+        matrixRtcSessionConfig?.membership_event_expiry_ms,
+      useExperimentalToDeviceTransport,
+    },
+  );
   if (widget) {
     try {
       await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
