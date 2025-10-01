@@ -270,7 +270,7 @@ describe("Start connection states", () => {
       undefined,
     );
 
-    let capturedState: FocusConnectionState[] = [];
+    const capturedState: FocusConnectionState[] = [];
     connection.focusedConnectionState$.subscribe((value) => {
       capturedState.push(value);
     });
@@ -296,13 +296,13 @@ describe("Start connection states", () => {
     await connection.start();
     await vi.runAllTimersAsync();
 
-    let initialState = capturedState.shift();
+    const initialState = capturedState.shift();
     expect(initialState?.state).toEqual("Initialized");
-    let fetchingState = capturedState.shift();
+    const fetchingState = capturedState.shift();
     expect(fetchingState?.state).toEqual("FetchingConfig");
-    let connectingState = capturedState.shift();
+    const connectingState = capturedState.shift();
     expect(connectingState?.state).toEqual("ConnectingToLkRoom");
-    let connectedState = capturedState.shift();
+    const connectedState = capturedState.shift();
     expect(connectedState?.state).toEqual("ConnectedToLkRoom");
 
   });
