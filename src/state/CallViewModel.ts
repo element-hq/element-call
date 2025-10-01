@@ -1890,7 +1890,7 @@ export class CallViewModel extends ViewModel {
     this.startConnection$
       .pipe(this.scope.bind())
       .subscribe((c) => void c.start());
-    this.stopConnection$.pipe(this.scope.bind()).subscribe((c) => c.stop());
+    this.stopConnection$.pipe(this.scope.bind()).subscribe((c) => void c.stop());
 
     combineLatest([this.localFocus, this.join$])
       .pipe(this.scope.bind())
