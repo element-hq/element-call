@@ -470,12 +470,22 @@ export class CallViewModel extends ViewModel {
     }
   );
 
-  public readonly livekitConnectionState$ = this.scope.behavior(
-    combineLatest([this.localConnection]).pipe(
-      switchMap(([c]) => c.connectionState$),
-      startWith(ConnectionState.Disconnected),
-    ),
-  );
+  public readonly livekitConnectionState$ =
+    this.scope.behavior(
+      from(this.localConnection).pipe(
+        switchMap((c) =>
+          c.focusedConnectionState$.pipe(
+            map((s) => {
+             if (s.state === "ConnectedToLkRoom") return s.connectionState;
+             return ConnectionState.Disconnected
+            }),
+            distinctUntilChanged(),
+          ),
+        ),
+        startWith(ConnectionState.Disconnected),
+      ),
+    )
+
 
   /**
    * The MatrixRTC session participants.

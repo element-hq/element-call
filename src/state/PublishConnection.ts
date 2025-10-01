@@ -4,7 +4,7 @@ Copyright 2025 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
-import { ConnectionState, type E2EEOptions, LocalVideoTrack, Room as LivekitRoom, Track } from "livekit-client";
+import { ConnectionState, type E2EEOptions, LocalVideoTrack, Room as LivekitRoom, type RoomOptions, Track } from "livekit-client";
 import { map, NEVER, type Observable, type Subscription, switchMap } from "rxjs";
 
 import type { Behavior } from "./Behavior.ts";
@@ -39,18 +39,20 @@ export class PublishConnection extends Connection {
 
     await super.start()
 
-    if (!this.stopped) {
-      // TODO this can throw errors? It will also prompt for permissions if not already granted
-      const tracks = await this.livekitRoom.localParticipant.createTracks({
-        audio: this.muteStates.audio.enabled$.value,
-        video: this.muteStates.video.enabled$.value
-      });
-      for (const track of tracks) {
-        // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
-        // with a timeout.
-        await this.livekitRoom.localParticipant.publishTrack(track);
-        // TODO: check if the connection is still active? and break the loop if not?
-      }
+    if (this.stopped) return;
+
+    // TODO this can throw errors? It will also prompt for permissions if not already granted
+    const tracks = await this.livekitRoom.localParticipant.createTracks({
+      audio: this.muteStates.audio.enabled$.value,
+      video: this.muteStates.video.enabled$.value
+    });
+    if (this.stopped) return;
+    for (const track of tracks) {
+      // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
+      // with a timeout.
+      await this.livekitRoom.localParticipant.publishTrack(track);
+      if (this.stopped) return;
+      // TODO: check if the connection is still active? and break the loop if not?
     }
   };
 
@@ -74,7 +76,8 @@ export class PublishConnection extends Connection {
     logger.info("[LivekitRoom] Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
 
-    const room = new LivekitRoom({
+    const factory = args.livekitRoomFactory ?? ((options: RoomOptions): LivekitRoom => new LivekitRoom(options));
+    const room = factory({
       ...defaultLiveKitOptions,
       videoCaptureDefaults: {
         ...defaultLiveKitOptions.videoCaptureDefaults,
@@ -99,17 +102,7 @@ export class PublishConnection extends Connection {
       logger.error("Failed to set E2EE enabled on room", e);
     });
 
-    super(
-      room,
-      args,
-      // focus,
-      // livekitAlias,
-      // client,
-      // scope,
-      // membershipsFocusMap$,
-      // e2eeLivekitOptions,
-      // room
-    );
+    super(room, args);
 
     // Setup track processor syncing (blur)
     const track$ = scope.behavior(
@@ -148,7 +141,8 @@ export class PublishConnection extends Connection {
       selected$: Observable<SelectedDevice | undefined>
     ): Subscription =>
       selected$.pipe(scope.bind()).subscribe((device) => {
-        if (this.connectionState$.value !== ConnectionState.Connected) return;
+        if (this.livekitRoom.state != ConnectionState.Connected) return;
+        // if (this.connectionState$.value !== ConnectionState.Connected) return;
         logger.info(
           "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
           this.livekitRoom.getActiveDevice(kind),
@@ -185,7 +179,7 @@ export class PublishConnection extends Connection {
         scope.bind()
       )
       .subscribe(() => {
-        if (this.connectionState$.value !== ConnectionState.Connected) return;
+        if (this.livekitRoom.state != ConnectionState.Connected) return;
         const activeMicTrack = Array.from(
           this.livekitRoom.localParticipant.audioTrackPublications.values()
         ).find((d) => d.source === Track.Source.Microphone)?.track;

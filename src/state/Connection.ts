@@ -6,9 +6,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { connectedParticipantsObserver, connectionStateObserver } from "@livekit/components-core";
-import { type ConnectionState, type E2EEOptions, Room as LivekitRoom } from "livekit-client";
+import { type ConnectionState, type E2EEOptions, Room as LivekitRoom, type RoomOptions } from "livekit-client";
 import { type CallMembership, type LivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest } from "rxjs";
+import { BehaviorSubject, combineLatest } from "rxjs";
 
 import { getSFUConfigWithOpenID, type OpenIDClientParts, type SFUConfig } from "../livekit/openIDSFU";
 import { type Behavior } from "./Behavior";
@@ -24,7 +24,20 @@ export interface ConnectionOpts {
   scope: ObservableScope;
   /** An observable of the current RTC call memberships and their associated focus. */
   membershipsFocusMap$: Behavior<{ membership: CallMembership; focus: LivekitFocus }[]>;
+
+  /** Optional factory to create the Livekit room, mainly for testing purposes. */
+  livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
 }
+
+export type FocusConnectionState =
+  | { state: 'Initialized' }
+  | { state: 'FetchingConfig', focus: LivekitFocus }
+  | { state: 'ConnectingToLkRoom', focus: LivekitFocus }
+  | { state: 'PublishingTracks', focus: LivekitFocus }
+  | { state: 'FailedToStart', error: Error, focus: LivekitFocus }
+  | { state: 'ConnectedToLkRoom', connectionState: ConnectionState, focus: LivekitFocus }
+  | { state: 'Stopped', focus: LivekitFocus };
+
 /**
  * A connection to a Matrix RTC LiveKit backend.
  *
@@ -32,6 +45,15 @@ export interface ConnectionOpts {
  */
 export class Connection {
 
+  // Private Behavior
+  private readonly _focusedConnectionState$ = new BehaviorSubject<FocusConnectionState>({ state: 'Initialized' });
+
+  /**
+   * The current state of the connection to the focus server.
+   */
+  public get focusedConnectionState$(): Behavior<FocusConnectionState> {
+    return this._focusedConnectionState$;
+  }
   /**
    * Whether the connection has been stopped.
    * @see Connection.stop
@@ -48,10 +70,23 @@ export class Connection {
    */
   public async start(): Promise<void> {
     this.stopped = false;
-    // TODO could this be loaded earlier to save time?
-    const { url, jwt } = await this.getSFUConfigWithOpenID();
+    try {
+      this._focusedConnectionState$.next({ state: 'FetchingConfig', focus: this.targetFocus });
+      // TODO could this be loaded earlier to save time?
+      const { url, jwt } = await this.getSFUConfigWithOpenID();
+      // If we were stopped while fetching the config, don't proceed to connect
+      if (this.stopped) return;
 
-    if (!this.stopped) await this.livekitRoom.connect(url, jwt);
+      this._focusedConnectionState$.next({ state: 'ConnectingToLkRoom', focus: this.targetFocus });
+      await this.livekitRoom.connect(url, jwt);
+      // If we were stopped while connecting, don't proceed to update state.
+      if (this.stopped) return;
+
+      this._focusedConnectionState$.next({ state: 'ConnectedToLkRoom', focus: this.targetFocus, connectionState: this.livekitRoom.state });
+    } catch (error) {
+      this._focusedConnectionState$.next({ state: 'FailedToStart', error: error instanceof Error ? error : new Error(`${error}`), focus: this.targetFocus });
+      throw error;
+    }
   }
 
 
@@ -71,6 +106,7 @@ export class Connection {
   public stop(): void {
     if (this.stopped) return;
     void this.livekitRoom.disconnect();
+    this._focusedConnectionState$.next({ state: 'Stopped', focus: this.targetFocus });
     this.stopped = true;
   }
 
@@ -86,13 +122,6 @@ export class Connection {
    * The focus server to connect to.
    */
   protected readonly targetFocus: LivekitFocus;
-
-  /**
-   * An observable of the livekit connection state.
-   * Converts the livekit room events StateChange to an observable.
-   */
-  public connectionState$: Behavior<ConnectionState>;
-
 
   private readonly client: OpenIDClientParts;
   /**
@@ -140,9 +169,16 @@ export class Connection {
       ),
       []
     );
-    this.connectionState$ = scope.behavior<ConnectionState>(
+
+    scope.behavior<ConnectionState>(
       connectionStateObserver(this.livekitRoom)
-    );
+    ).subscribe((connectionState) => {
+      const current = this.focusedConnectionState$.value;
+      // Only update the state if we are already connected to the LiveKit room.
+      if (current.state === 'ConnectedToLkRoom') {
+        this.focusedConnectionState$.next({ state: 'ConnectedToLkRoom', connectionState, focus: current.focus });
+      }
+    });
 
     scope.onEnd(() => this.stop());
   }
@@ -162,7 +198,8 @@ export class RemoteConnection extends Connection {
    * @param sharedE2eeOption - The shared E2EE options to use for the connection.
    */
   public constructor(opts: ConnectionOpts, sharedE2eeOption: E2EEOptions | undefined) {
-    const livekitRoom = new LivekitRoom({
+    const factory = opts.livekitRoomFactory ?? ((options: RoomOptions): LivekitRoom => new LivekitRoom(options));
+    const livekitRoom = factory({
       ...defaultLiveKitOptions,
       e2ee: sharedE2eeOption
     });
