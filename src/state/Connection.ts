@@ -46,14 +46,14 @@ export type FocusConnectionState =
 export class Connection {
 
   // Private Behavior
-  private readonly _focusedConnectionState$ = new BehaviorSubject<FocusConnectionState>({ state: 'Initialized' });
+  private readonly _focusedConnectionState$
+   = new BehaviorSubject<FocusConnectionState>({ state: 'Initialized' });
 
   /**
    * The current state of the connection to the focus server.
    */
-  public get focusedConnectionState$(): Behavior<FocusConnectionState> {
-    return this._focusedConnectionState$;
-  }
+  public readonly focusedConnectionState$: Behavior<FocusConnectionState>;
+
   /**
    * Whether the connection has been stopped.
    * @see Connection.stop
@@ -103,9 +103,9 @@ export class Connection {
    * This will disconnect from the LiveKit room.
    * If the connection is already stopped, this is a no-op.
    */
-  public stop(): void {
+  public async stop(): Promise<void> {
     if (this.stopped) return;
-    void this.livekitRoom.disconnect();
+    await this.livekitRoom.disconnect();
     this._focusedConnectionState$.next({ state: 'Stopped', focus: this.targetFocus });
     this.stopped = true;
   }
@@ -141,6 +141,10 @@ export class Connection {
     this.livekitRoom = livekitRoom
     this.targetFocus = focus;
     this.client = client;
+
+    this.focusedConnectionState$ = scope.behavior(
+      this._focusedConnectionState$, { state: 'Initialized' }
+    );
 
     const participantsIncludingSubscribers$ = scope.behavior(
       connectedParticipantsObserver(this.livekitRoom),
@@ -180,7 +184,7 @@ export class Connection {
       }
     });
 
-    scope.onEnd(() => this.stop());
+    scope.onEnd(() => void this.stop());
   }
 }
 

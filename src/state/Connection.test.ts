@@ -28,9 +28,9 @@ describe("Start connection states", () => {
   let fakeRoomEventEmiter: EventEmitter<RoomEventCallbacks>;
   let fakeMembershipsFocusMap$: BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>;
 
-  const livekitFocus : LivekitFocus = {
-    livekit_alias:"!roomID:example.org",
-    livekit_service_url : "https://matrix-rtc.example.org/livekit/jwt"
+  const livekitFocus: LivekitFocus = {
+    livekit_alias: "!roomID:example.org",
+    livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt"
   }
 
   afterEach(() => {
@@ -98,8 +98,8 @@ describe("Start connection states", () => {
       .mockResolvedValue(undefined);
 
     const connection = new RemoteConnection(
-        opts,
-        undefined,
+      opts,
+      undefined,
     );
     return connection;
   }
@@ -115,8 +115,8 @@ describe("Start connection states", () => {
       livekitRoomFactory: () => fakeLivekitRoom,
     }
     const connection = new RemoteConnection(
-        opts,
-        undefined,
+      opts,
+      undefined,
     );
 
     expect(connection.focusedConnectionState$.getValue().state)
@@ -254,7 +254,7 @@ describe("Start connection states", () => {
     const deferredSFU = Promise.withResolvers<void>();
     // mock the /sfu/get call
     fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`,
-       () => {
+      () => {
         return {
           status: 200,
           body:
@@ -318,15 +318,13 @@ describe("Start connection states", () => {
   });
 
   it("should relay livekit events once connected", async () => {
-    vi.useFakeTimers();
     setupTest()
 
     const connection = setupRemoteConnection();
 
     await connection.start();
-    await vi.runAllTimersAsync();
 
-    const capturedState: FocusConnectionState[] = [];
+    let capturedState: FocusConnectionState[] = [];
     connection.focusedConnectionState$.subscribe((value) => {
       capturedState.push(value);
     });
@@ -342,10 +340,7 @@ describe("Start connection states", () => {
     ]
     for (const state of states) {
       fakeRoomEventEmiter.emit(RoomEvent.ConnectionStateChanged, state);
-      await vi.runAllTimersAsync();
     }
-
-    await vi.runAllTimersAsync();
 
     for (const state of states) {
       const s = capturedState.shift();
@@ -357,7 +352,47 @@ describe("Start connection states", () => {
       expect(s?.focus.livekit_service_url).toEqual(livekitFocus.livekit_service_url);
     }
 
+    // If the state is not ConnectedToLkRoom, no events should be relayed anymore
+    await connection.stop();
+    capturedState = [];
+    for (const state of states) {
+      fakeRoomEventEmiter.emit(RoomEvent.ConnectionStateChanged, state);
+    }
+
+    expect(capturedState.length).toEqual(0);
+
   });
 
 
-})
+  it("shutting down the scope should stop the connection", async () => {
+    setupTest()
+    vi.useFakeTimers();
+
+    const connection = setupRemoteConnection();
+
+    let capturedState: FocusConnectionState[] = [];
+    connection.focusedConnectionState$.subscribe((value) => {
+      capturedState.push(value);
+    });
+
+    await connection.start();
+
+    const stopSpy = vi.spyOn(connection, "stop");
+    testScope.end();
+
+
+    expect(stopSpy).toHaveBeenCalled();
+    expect(fakeLivekitRoom.disconnect).toHaveBeenCalled();
+
+    /// Ensures that focusedConnectionState$ is bound to the scope.
+    capturedState = [];
+    // the subscription should be closed, and no new state should be received
+    // @ts-expect-error: Accessing private field for testing purposes
+    connection._focusedConnectionState$.next({ state: "Initialized" });
+    // @ts-expect-error: Accessing private field for testing purposes
+    connection._focusedConnectionState$.next({ state: "ConnectingToLkRoom" });
+
+    expect(capturedState.length).toEqual(0);
+  });
+
+});
