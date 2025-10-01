@@ -65,6 +65,42 @@ describe("Start connection states", () => {
 
   }
 
+  async function setupRemoteConnection(): RemoteConnection {
+
+    setupTest()
+
+    const opts: ConnectionOpts = {
+      client: client,
+      focus: livekitFocus,
+      membershipsFocusMap$: fakeMembershipsFocusMap$,
+      scope: testScope,
+      livekitRoomFactory: () => fakeLivekitRoom,
+    }
+
+    fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`,
+      () => {
+        return {
+          status: 200,
+          body:
+            {
+              "url": "wss://matrix-rtc.m.localhost/livekit/sfu",
+              "jwt": "ATOKEN",
+            },
+        }
+      }
+    );
+
+    fakeLivekitRoom
+      .connect
+      .mockResolvedValue(undefined);
+
+    const connection = new RemoteConnection(
+        opts,
+        undefined,
+    );
+    return connection;
+  }
+
   it("start in initialized state", () => {
     setupTest();
 
@@ -254,44 +290,14 @@ describe("Start connection states", () => {
   });
 
   it("connection states happy path", async () => {
-    setupTest();
     vi.useFakeTimers();
 
-    const opts: ConnectionOpts = {
-      client: client,
-      focus: livekitFocus,
-      membershipsFocusMap$: fakeMembershipsFocusMap$,
-      scope: testScope,
-      livekitRoomFactory: () => fakeLivekitRoom,
-    }
-
-    const connection = new RemoteConnection(
-      opts,
-      undefined,
-    );
+    const connection = setupRemoteConnection();
 
     const capturedState: FocusConnectionState[] = [];
     connection.focusedConnectionState$.subscribe((value) => {
       capturedState.push(value);
     });
-
-    // mock the /sfu/get call
-    fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`,
-      () => {
-        return {
-          status: 200,
-          body:
-            {
-              "url": "wss://matrix-rtc.m.localhost/livekit/sfu",
-              "jwt": "ATOKEN",
-            },
-        }
-      }
-    );
-
-    fakeLivekitRoom
-      .connect
-      .mockResolvedValue(undefined);
 
     await connection.start();
     await vi.runAllTimersAsync();
