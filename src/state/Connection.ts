@@ -177,10 +177,10 @@ export class Connection {
     scope.behavior<ConnectionState>(
       connectionStateObserver(this.livekitRoom)
     ).subscribe((connectionState) => {
-      const current = this.focusedConnectionState$.value;
+      const current = this._focusedConnectionState$.value;
       // Only update the state if we are already connected to the LiveKit room.
       if (current.state === 'ConnectedToLkRoom') {
-        this.focusedConnectionState$.next({ state: 'ConnectedToLkRoom', connectionState, focus: current.focus });
+        this._focusedConnectionState$.next({ state: 'ConnectedToLkRoom', connectionState, focus: current.focus });
       }
     });
 

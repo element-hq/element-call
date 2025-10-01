@@ -5,104 +5,107 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { afterEach, vi, it, describe, type MockedObject, expect } from "vitest";
+import { afterEach, describe, expect, it, type MockedObject, vi } from "vitest";
 import { type CallMembership, type LivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject } from "rxjs";
-import { type Room as LivekitRoom, RoomEvent, type RoomEventCallbacks, ConnectionState } from "livekit-client";
+import { ConnectionState, type Room as LivekitRoom, RoomEvent } from "livekit-client";
 import fetchMock from "fetch-mock";
 import EventEmitter from "events";
+import { type IOpenIDToken } from "matrix-js-sdk";
 
 import { type ConnectionOpts, type FocusConnectionState, RemoteConnection } from "./Connection.ts";
 import { ObservableScope } from "./ObservableScope.ts";
-import { type OpenIDClientParts, type SFUConfig } from "../livekit/openIDSFU.ts";
+import { type OpenIDClientParts } from "../livekit/openIDSFU.ts";
 import { FailToGetOpenIdToken } from "../utils/errors.ts";
 
-describe("Start connection states", () => {
 
-  let testScope: ObservableScope;
+let testScope: ObservableScope;
 
-  let client: MockedObject<OpenIDClientParts>;
+let client: MockedObject<OpenIDClientParts>;
 
-  let fakeLivekitRoom: MockedObject<LivekitRoom>;
+let fakeLivekitRoom: MockedObject<LivekitRoom>;
 
-  let fakeRoomEventEmiter: EventEmitter<RoomEventCallbacks>;
-  let fakeMembershipsFocusMap$: BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>;
+let fakeRoomEventEmiter: EventEmitter;
+let fakeMembershipsFocusMap$: BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>;
 
-  const livekitFocus: LivekitFocus = {
-    livekit_alias: "!roomID:example.org",
-    livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt"
+const livekitFocus: LivekitFocus = {
+  livekit_alias: "!roomID:example.org",
+  livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
+  type: "livekit",
+}
+
+function setupTest(): void {
+  testScope = new ObservableScope();
+  client = vi.mocked<OpenIDClientParts>({
+    getOpenIdToken: vi.fn().mockResolvedValue(
+      {
+        "access_token": "rYsmGUEwNjKgJYyeNUkZseJN",
+        "token_type": "Bearer",
+        "matrix_server_name": "example.org",
+        "expires_in": 3600
+      }
+    ),
+    getDeviceId: vi.fn().mockReturnValue("ABCDEF"),
+  } as unknown as OpenIDClientParts);
+  fakeMembershipsFocusMap$ = new BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>([]);
+
+  fakeRoomEventEmiter = new EventEmitter();
+
+  fakeLivekitRoom = vi.mocked<LivekitRoom>({
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    remoteParticipants: new Map(),
+    state: ConnectionState.Disconnected,
+    on: fakeRoomEventEmiter.on.bind(fakeRoomEventEmiter),
+    off: fakeRoomEventEmiter.off.bind(fakeRoomEventEmiter),
+    addListener: fakeRoomEventEmiter.addListener.bind(fakeRoomEventEmiter),
+    removeListener: fakeRoomEventEmiter.removeListener.bind(fakeRoomEventEmiter),
+    removeAllListeners: fakeRoomEventEmiter.removeAllListeners.bind(fakeRoomEventEmiter),
+  } as unknown as LivekitRoom);
+
+}
+
+function setupRemoteConnection(): RemoteConnection {
+
+  const opts: ConnectionOpts = {
+    client: client,
+    focus: livekitFocus,
+    membershipsFocusMap$: fakeMembershipsFocusMap$,
+    scope: testScope,
+    livekitRoomFactory: () => fakeLivekitRoom,
   }
+
+  fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`,
+    () => {
+      return {
+        status: 200,
+        body:
+          {
+            "url": "wss://matrix-rtc.m.localhost/livekit/sfu",
+            "jwt": "ATOKEN",
+          },
+      }
+    }
+  );
+
+  fakeLivekitRoom
+    .connect
+    .mockResolvedValue(undefined);
+
+  return new RemoteConnection(
+    opts,
+    undefined,
+  );
+}
+
+
+describe("Start connection states", () => {
 
   afterEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
     fetchMock.reset();
   })
-
-  function setupTest(): void {
-    testScope = new ObservableScope();
-    client = vi.mocked<OpenIDClientParts>({
-      getOpenIdToken: vi.fn().mockResolvedValue(
-        {
-          "access_token": "rYsmGUEwNjKgJYyeNUkZseJN",
-          "token_type": "Bearer",
-          "matrix_server_name": "example.org",
-          "expires_in": 3600
-        }
-      ),
-      getDeviceId: vi.fn().mockReturnValue("ABCDEF"),
-    } as unknown as OpenIDClientParts);
-    fakeMembershipsFocusMap$ = new BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>([]);
-
-    fakeRoomEventEmiter = new EventEmitter<RoomEventCallbacks>();
-
-    fakeLivekitRoom = vi.mocked<LivekitRoom>({
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      remoteParticipants: new Map(),
-      state: ConnectionState.Disconnected,
-      on: fakeRoomEventEmiter.on.bind(fakeRoomEventEmiter),
-      off: fakeRoomEventEmiter.off.bind(fakeRoomEventEmiter),
-      addListener: fakeRoomEventEmiter.addListener.bind(fakeRoomEventEmiter),
-      removeListener: fakeRoomEventEmiter.removeListener.bind(fakeRoomEventEmiter),
-      removeAllListeners: fakeRoomEventEmiter.removeAllListeners.bind(fakeRoomEventEmiter),
-    } as unknown as LivekitRoom);
-
-  }
-
-  function setupRemoteConnection(): RemoteConnection {
-
-    const opts: ConnectionOpts = {
-      client: client,
-      focus: livekitFocus,
-      membershipsFocusMap$: fakeMembershipsFocusMap$,
-      scope: testScope,
-      livekitRoomFactory: () => fakeLivekitRoom,
-    }
-
-    fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`,
-      () => {
-        return {
-          status: 200,
-          body:
-            {
-              "url": "wss://matrix-rtc.m.localhost/livekit/sfu",
-              "jwt": "ATOKEN",
-            },
-        }
-      }
-    );
-
-    fakeLivekitRoom
-      .connect
-      .mockResolvedValue(undefined);
-
-    const connection = new RemoteConnection(
-      opts,
-      undefined,
-    );
-    return connection;
-  }
 
   it("start in initialized state", () => {
     setupTest();
@@ -141,16 +144,16 @@ describe("Start connection states", () => {
       undefined,
     );
 
-    let capturedState: FocusConnectionState | undefined = undefined;
+    const capturedStates: FocusConnectionState[] = [];
     connection.focusedConnectionState$.subscribe((value) => {
-      capturedState = value;
+      capturedStates.push(value);
     });
 
 
-    const deferred = Promise.withResolvers<SFUConfig>();
+    const deferred = Promise.withResolvers<IOpenIDToken>();
 
-    client.getOpenIdToken.mockImplementation(async () => {
-      await deferred.promise;
+    client.getOpenIdToken.mockImplementation(async (): Promise<IOpenIDToken> => {
+      return await deferred.promise;
     })
 
     connection.start()
@@ -158,17 +161,19 @@ describe("Start connection states", () => {
         // expected to throw
       })
 
-    expect(capturedState.state).toEqual("FetchingConfig");
+    const capturedState = capturedStates.shift();
+    expect(capturedState).toBeDefined();
+    expect(capturedState!.state).toEqual("FetchingConfig");
 
     deferred.reject(new FailToGetOpenIdToken(new Error("Failed to get token")));
 
     await vi.runAllTimersAsync();
 
-    if (capturedState.state === "FailedToStart") {
-      expect(capturedState.error.message).toEqual("Something went wrong");
-      expect(capturedState.focus.livekit_alias).toEqual(livekitFocus.livekit_alias);
+    if (capturedState!.state === "FailedToStart") {
+      expect(capturedState!.error.message).toEqual("Something went wrong");
+      expect(capturedState!.focus.livekit_alias).toEqual(livekitFocus.livekit_alias);
     } else {
-      expect.fail("Expected FailedToStart state but got " + capturedState.state);
+      expect.fail("Expected FailedToStart state but got " + capturedState?.state);
     }
 
   });
@@ -190,9 +195,9 @@ describe("Start connection states", () => {
       undefined,
     );
 
-    let capturedState: FocusConnectionState | undefined = undefined;
+    const capturedStates: FocusConnectionState[] = [];
     connection.focusedConnectionState$.subscribe((value) => {
-      capturedState = value;
+      capturedStates.push(value);
     });
 
     const deferredSFU = Promise.withResolvers<void>();
@@ -213,16 +218,18 @@ describe("Start connection states", () => {
         // expected to throw
       })
 
-    expect(capturedState.state).toEqual("FetchingConfig");
+    const capturedState = capturedStates.shift();
+    expect(capturedState).toBeDefined()
+    expect(capturedState?.state).toEqual("FetchingConfig");
 
     deferredSFU.resolve();
     await vi.runAllTimersAsync();
 
-    if (capturedState.state === "FailedToStart") {
-      expect(capturedState.error.message).toContain("SFU Config fetch failed with exception Error");
-      expect(capturedState.focus.livekit_alias).toEqual(livekitFocus.livekit_alias);
+    if (capturedState?.state === "FailedToStart") {
+      expect(capturedState?.error.message).toContain("SFU Config fetch failed with exception Error");
+      expect(capturedState?.focus.livekit_alias).toEqual(livekitFocus.livekit_alias);
     } else {
-      expect.fail("Expected FailedToStart state but got " + capturedState.state);
+      expect.fail("Expected FailedToStart state but got " + capturedState?.state);
     }
 
   });
@@ -245,9 +252,9 @@ describe("Start connection states", () => {
       undefined,
     );
 
-    let capturedState: FocusConnectionState | undefined = undefined;
+    const capturedStates: FocusConnectionState[] = [];
     connection.focusedConnectionState$.subscribe((value) => {
-      capturedState = value;
+      capturedStates.push(value)
     });
 
 
@@ -278,16 +285,19 @@ describe("Start connection states", () => {
         // expected to throw
       })
 
-    expect(capturedState.state).toEqual("FetchingConfig");
+    const capturedState = capturedStates.shift();
+    expect(capturedState).toBeDefined()
+
+    expect(capturedState?.state).toEqual("FetchingConfig");
 
     deferredSFU.resolve();
     await vi.runAllTimersAsync();
 
-    if (capturedState.state === "FailedToStart") {
+    if (capturedState && capturedState?.state === "FailedToStart") {
       expect(capturedState.error.message).toContain("Failed to connect to livekit");
       expect(capturedState.focus.livekit_alias).toEqual(livekitFocus.livekit_alias);
     } else {
-      expect.fail("Expected FailedToStart state but got " + capturedState.state);
+      expect.fail("Expected FailedToStart state but got " + JSON.stringify(capturedState));
     }
 
   });
@@ -345,11 +355,12 @@ describe("Start connection states", () => {
     for (const state of states) {
       const s = capturedState.shift();
       expect(s?.state).toEqual("ConnectedToLkRoom");
-      expect(s?.connectionState).toEqual(state);
+      const connectedState = s as FocusConnectionState & { state: "ConnectedToLkRoom" };
+      expect(connectedState.connectionState).toEqual(state);
 
       // should always have the focus info
-      expect(s?.focus.livekit_alias).toEqual(livekitFocus.livekit_alias);
-      expect(s?.focus.livekit_service_url).toEqual(livekitFocus.livekit_service_url);
+      expect(connectedState.focus.livekit_alias).toEqual(livekitFocus.livekit_alias);
+      expect(connectedState.focus.livekit_service_url).toEqual(livekitFocus.livekit_service_url);
     }
 
     // If the state is not ConnectedToLkRoom, no events should be relayed anymore
