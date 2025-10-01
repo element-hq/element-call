@@ -8,8 +8,9 @@ Please see LICENSE in the repository root for full details.
 import { afterEach, vi, it, describe, type MockedObject, expect } from "vitest";
 import { type CallMembership, type LivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject } from "rxjs";
-import { type Room as LivekitRoom } from "livekit-client";
+import { type Room as LivekitRoom, RoomEvent, type RoomEventCallbacks, ConnectionState } from "livekit-client";
 import fetchMock from "fetch-mock";
+import EventEmitter from "events";
 
 import { type ConnectionOpts, type FocusConnectionState, RemoteConnection } from "./Connection.ts";
 import { ObservableScope } from "./ObservableScope.ts";
@@ -24,6 +25,7 @@ describe("Start connection states", () => {
 
   let fakeLivekitRoom: MockedObject<LivekitRoom>;
 
+  let fakeRoomEventEmiter: EventEmitter<RoomEventCallbacks>;
   let fakeMembershipsFocusMap$: BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>;
 
   const livekitFocus : LivekitFocus = {
@@ -52,22 +54,23 @@ describe("Start connection states", () => {
     } as unknown as OpenIDClientParts);
     fakeMembershipsFocusMap$ = new BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>([]);
 
+    fakeRoomEventEmiter = new EventEmitter<RoomEventCallbacks>();
+
     fakeLivekitRoom = vi.mocked<LivekitRoom>({
       connect: vi.fn(),
       disconnect: vi.fn(),
       remoteParticipants: new Map(),
-      on: vi.fn(),
-      off: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      removeAllListeners: vi.fn(),
+      state: ConnectionState.Disconnected,
+      on: fakeRoomEventEmiter.on.bind(fakeRoomEventEmiter),
+      off: fakeRoomEventEmiter.off.bind(fakeRoomEventEmiter),
+      addListener: fakeRoomEventEmiter.addListener.bind(fakeRoomEventEmiter),
+      removeListener: fakeRoomEventEmiter.removeListener.bind(fakeRoomEventEmiter),
+      removeAllListeners: fakeRoomEventEmiter.removeAllListeners.bind(fakeRoomEventEmiter),
     } as unknown as LivekitRoom);
 
   }
 
-  async function setupRemoteConnection(): RemoteConnection {
-
-    setupTest()
+  function setupRemoteConnection(): RemoteConnection {
 
     const opts: ConnectionOpts = {
       client: client,
@@ -291,6 +294,7 @@ describe("Start connection states", () => {
 
   it("connection states happy path", async () => {
     vi.useFakeTimers();
+    setupTest()
 
     const connection = setupRemoteConnection();
 
@@ -312,5 +316,48 @@ describe("Start connection states", () => {
     expect(connectedState?.state).toEqual("ConnectedToLkRoom");
 
   });
+
+  it("should relay livekit events once connected", async () => {
+    vi.useFakeTimers();
+    setupTest()
+
+    const connection = setupRemoteConnection();
+
+    await connection.start();
+    await vi.runAllTimersAsync();
+
+    const capturedState: FocusConnectionState[] = [];
+    connection.focusedConnectionState$.subscribe((value) => {
+      capturedState.push(value);
+    });
+
+    const states = [
+      ConnectionState.Disconnected,
+      ConnectionState.Connecting,
+      ConnectionState.Connected,
+      ConnectionState.SignalReconnecting,
+      ConnectionState.Connecting,
+      ConnectionState.Connected,
+      ConnectionState.Reconnecting,
+    ]
+    for (const state of states) {
+      fakeRoomEventEmiter.emit(RoomEvent.ConnectionStateChanged, state);
+      await vi.runAllTimersAsync();
+    }
+
+    await vi.runAllTimersAsync();
+
+    for (const state of states) {
+      const s = capturedState.shift();
+      expect(s?.state).toEqual("ConnectedToLkRoom");
+      expect(s?.connectionState).toEqual(state);
+
+      // should always have the focus info
+      expect(s?.focus.livekit_alias).toEqual(livekitFocus.livekit_alias);
+      expect(s?.focus.livekit_service_url).toEqual(livekitFocus.livekit_service_url);
+    }
+
+  });
+
 
 })
