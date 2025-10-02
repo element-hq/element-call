@@ -26,6 +26,7 @@ import {
   UnknownCallError,
 } from "../utils/errors.ts";
 import { AbortHandle } from "../utils/abortHandle.ts";
+import { getLiveKitAudioCaptureOptions } from "./options";
 
 /*
  * Additional values for states that a call can be in, beyond what livekit
@@ -73,11 +74,16 @@ async function doConnect(
     return;
   }
 
+  const liveKitAudioCaptureOptions = getLiveKitAudioCaptureOptions();
+
   logger.info("Pre-creating microphone track");
   let preCreatedAudioTrack: LocalTrack | undefined;
   try {
     const audioTracks = await livekitRoom!.localParticipant.createTracks({
-      audio: { deviceId: initialDeviceId },
+      audio: {
+        deviceId: initialDeviceId,
+        ...liveKitAudioCaptureOptions,
+      },
     });
 
     if (audioTracks.length < 1) {

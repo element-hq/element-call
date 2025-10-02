@@ -28,7 +28,7 @@ import {
   switchMap,
 } from "rxjs";
 
-import { defaultLiveKitOptions } from "./options";
+import { defaultLiveKitOptions, getLiveKitAudioCaptureOptions } from "./options";
 import { type SFUConfig } from "./openIDSFU";
 import { type MuteStates } from "../room/MuteStates";
 import { useMediaDevices } from "../MediaDevicesContext";
@@ -101,6 +101,8 @@ export function useLivekit(
       };
     }
 
+    const liveKitAudioCaptureOptions = getLiveKitAudioCaptureOptions();
+
     const roomOptions: RoomOptions = {
       ...defaultLiveKitOptions,
       videoCaptureDefaults: {
@@ -111,6 +113,7 @@ export function useLivekit(
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
         deviceId: initialAudioInputId,
+        ...liveKitAudioCaptureOptions,
       },
       audioOutput: {
         // When using controlled audio devices, we don't want to set the

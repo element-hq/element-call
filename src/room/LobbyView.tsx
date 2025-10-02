@@ -52,6 +52,7 @@ import {
 import { usePageTitle } from "../usePageTitle";
 import { useLatest } from "../useLatest";
 import { getValue } from "../utils/observable";
+import { getLiveKitAudioCaptureOptions } from "../livekit/options";
 
 interface Props {
   client: MatrixClient;
@@ -128,6 +129,8 @@ export const LobbyView: FC<Props> = ({
     devices.videoInput.selected$,
   )?.id;
 
+
+  const liveKitAudioCaptureOptions = getLiveKitAudioCaptureOptions();
   // Capture the audio options as they were when we first mounted, because
   // we're not doing anything with the audio anyway so we don't need to
   // re-open the devices when they change (see below).
@@ -135,6 +138,7 @@ export const LobbyView: FC<Props> = ({
     () =>
       muteStates.audio.enabled && {
         deviceId: getValue(devices.audioInput.selected$)?.id,
+        ...liveKitAudioCaptureOptions,
       },
   );
 

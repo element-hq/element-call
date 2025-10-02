@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  type AudioCaptureOptions,
   AudioPresets,
   DefaultReconnectPolicy,
   type RoomOptions,
@@ -14,6 +15,12 @@ import {
   type VideoPreset,
   VideoPresets,
 } from "livekit-client";
+
+import {
+  autoGainControl as autoGainControlSetting,
+  noiseSuppression as noiseSuppressionSetting,
+  echoCancellation as echoCancellationSetting,
+} from "../settings/settings";
 
 const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   audioPreset: AudioPresets.music,
@@ -52,3 +59,12 @@ export const defaultLiveKitOptions: RoomOptions = {
   disconnectOnPageLeave: true,
   webAudioMix: false,
 };
+
+export function getLiveKitAudioCaptureOptions(): AudioCaptureOptions {
+  return {
+    autoGainControl: { ideal: autoGainControlSetting.getValue() },
+    noiseSuppression: { ideal: noiseSuppressionSetting.getValue() },
+    echoCancellation: { ideal: echoCancellationSetting.getValue() },
+    voiceIsolation: { ideal: noiseSuppressionSetting.getValue() },
+  };
+}
