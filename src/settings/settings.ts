@@ -100,6 +100,10 @@ export const videoInput = new Setting<string | undefined>(
   undefined,
 );
 
+export const autoGainControl = new Setting<boolean>("auto-gain-control", true);
+export const noiseSuppression = new Setting<boolean>("noise-suppression", true);
+export const echoCancellation = new Setting<boolean>("echo-cancellation", true);
+
 export const backgroundBlur = new Setting<boolean>("background-blur", false);
 
 export const showHandRaisedTimer = new Setting<boolean>(
