@@ -10299,7 +10299,7 @@ __metadata:
 
 "matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=voip-team/multi-SFU":
   version: 38.3.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=d94d02d19b9f17c724b5919b185fea3413dbf7a2"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=a343e8c92a5a37f419eb1b762db3a123e41ef66d"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.3.0"
@@ -10315,7 +10315,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/dc43617a9398754275e2025af7d5fdee1f2e01b89241fc7881c1206d925e83ad6fe55f439501ae34e734cfbfa5479f6bee3167f4828c913f4f33817d95850189
+  checksum: 10c0/4893878f2fe07b06334bab4674a01569037d0f3e737fef3f0bb97a98b01d71fc304627921673f128821a17d824de9b63cc06456db15f9d45eb10bba1ceacd5c5
   languageName: node
   linkType: hard
 

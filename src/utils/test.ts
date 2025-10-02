@@ -16,12 +16,13 @@ import {
 } from "matrix-js-sdk";
 import {
   CallMembership,
-  type Focus,
+  type Transport,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
   MembershipManagerEvent,
   type SessionMembershipData,
   Status,
+  type LivekitFocusSelection,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import {
@@ -172,8 +173,11 @@ export function mockRtcMembership(
   user: string | RoomMember,
   deviceId: string,
   callId = "",
-  fociPreferred: Focus[] = [],
-  focusActive: Focus = { type: "oldest_membership" },
+  fociPreferred: Transport[] = [],
+  focusActive: LivekitFocusSelection = {
+    type: "livekit",
+    focus_selection: "oldest_membership",
+  },
   membership: Partial<SessionMembershipData> = {},
 ): CallMembership {
   const data: SessionMembershipData = {
