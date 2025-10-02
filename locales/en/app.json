@@ -170,9 +170,13 @@
   "room_auth_view_ssla_caption": "By clicking \"Join call now\", you agree to our <2>Software and Services License Agreement (SSLA)</2>",
   "screenshare_button_label": "Share screen",
   "settings": {
+    "advanced_header": "Advanced",
     "audio_tab": {
+      "auto_gain_control_label": "Automatically adjust the microphone volume",
+      "echo_cancellation_label": "Echo cancellation",
       "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play.",
-      "effect_volume_label": "Sound effect volume"
+      "effect_volume_label": "Sound effect volume",
+      "noise_suppression_label": "Noise suppression"
     },
     "background_blur_header": "Background",
     "background_blur_label": "Blur the background of the video",

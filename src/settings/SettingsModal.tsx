@@ -23,6 +23,9 @@ import {
   useSetting,
   soundEffectVolume as soundEffectVolumeSetting,
   backgroundBlur as backgroundBlurSetting,
+  autoGainControl as autoGainControlSetting,
+  noiseSuppression as noiseSuppressionSetting,
+  echoCancellation as echoCancellationSetting,
   developerMode,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
@@ -94,6 +97,51 @@ export const SettingsModal: FC<Props> = ({
     );
   };
 
+  // Generate a `Checkbox` input to turn blur on or off.
+  const AdvancedAudio: React.FC = (): ReactNode => {
+    const [autoGainControl, setAutoGainControl] = useSetting(autoGainControlSetting);
+    const [noiseSuppression, setNoiseSuppression] = useSetting(noiseSuppressionSetting);
+    const [echoCancellation, setEchoCancellation] = useSetting(echoCancellationSetting);
+
+    return (
+      <>
+        <div>
+          <h4>{t("settings.advanced_header")}</h4>
+
+          <FieldRow>
+            <InputField
+              id="autoGainControl"
+              label={t("settings.audio_tab.auto_gain_control_label")}
+              type="checkbox"
+              checked={!!autoGainControl}
+              onChange={(b): void => setAutoGainControl(b.target.checked)}
+            />
+          </FieldRow>
+
+          <FieldRow>
+            <InputField
+              id="noiseSuppression"
+              label={t("settings.audio_tab.noise_suppression_label")}
+              type="checkbox"
+              checked={!!noiseSuppression}
+              onChange={(b): void => setNoiseSuppression(b.target.checked)}
+            />
+          </FieldRow>
+
+          <FieldRow>
+            <InputField
+              id="echoCancellation"
+              label={t("settings.audio_tab.echo_cancellation_label")}
+              type="checkbox"
+              checked={!!echoCancellation}
+              onChange={(b): void => setEchoCancellation(b.target.checked)}
+            />
+          </FieldRow>
+        </div>
+      </>
+    );
+  };
+
   const devices = useMediaDevices();
   useEffect(() => {
     if (open) devices.requestDeviceNames();
@@ -160,6 +208,8 @@ export const SettingsModal: FC<Props> = ({
               step={0.01}
             />
           </div>
+          <Separator />
+          <AdvancedAudio />
         </Form>
       </>
     ),
