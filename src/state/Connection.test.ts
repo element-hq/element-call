@@ -99,13 +99,14 @@ function setupRemoteConnection(): RemoteConnection {
 }
 
 
-describe("Start connection states", () => {
+afterEach(() => {
+  vi.useRealTimers();
+  vi.clearAllMocks();
+  fetchMock.reset();
+});
 
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.clearAllMocks();
-    fetchMock.reset();
-  });
+
+describe("Start connection states", () => {
 
   it("start in initialized state", () => {
     setupTest();
@@ -520,5 +521,61 @@ describe("Publishing participants observations", () => {
     expect(updatedPublishers?.length).toEqual(1);
     expect(updatedPublishers?.some((p) => p.participant.identity === "@dan:example.org:DEV333")).toBeTruthy();
   })
+
+
+  it("should be scoped to parent scope", async () => {
+    setupTest();
+
+    const connection = setupRemoteConnection();
+
+    let observedPublishers: { participant: RemoteParticipant; membership: CallMembership }[][] = [];
+    connection.publishingParticipants$.subscribe((publishers) => {
+      observedPublishers.push(publishers);
+    });
+
+    let participants: RemoteParticipant[]= [
+      fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
+    ];
+
+    // Let's simulate 3 members on the livekitRoom
+    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get")
+      .mockReturnValue(
+        new Map(participants.map((p) => [p.identity, p]))
+      );
+
+    for (const participant of participants) {
+      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
+    }
+
+    // At this point there should be no publishers
+    expect(observedPublishers.pop()!.length).toEqual(0);
+
+    const rtcMemberships = [
+      // Say bob is on the same focus
+      { membership: fakeRtcMemberShip("@bob:example.org", "DEV111"), focus: livekitFocus },
+    ];
+    // signal this change in rtc memberships
+    fakeMembershipsFocusMap$.next(rtcMemberships);
+
+    // We should have bob has a publisher now
+    const publishers = observedPublishers.pop();
+    expect(publishers?.length).toEqual(1);
+    expect(publishers?.[0].participant.identity).toEqual("@bob:example.org:DEV111");
+
+    // end the parent scope
+    testScope.end();
+    observedPublishers = [];
+
+    // SHOULD NOT emit any more publishers as the scope is ended
+    participants = participants.filter((p) => p.identity !== "@bob:example.org:DEV111");
+    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get")
+      .mockReturnValue(
+        new Map(participants.map((p) => [p.identity, p]))
+      );
+    fakeRoomEventEmiter.emit(RoomEvent.ParticipantDisconnected, fakeRemoteLivekitParticipant("@bob:example.org:DEV111"));
+
+    expect(observedPublishers.length).toEqual(0);
+  })
+
 
 });
