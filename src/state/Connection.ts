@@ -62,7 +62,7 @@ export class Connection {
 
   protected readonly sfuConfig = getSFUConfigWithOpenID(
     this.client,
-    this.focus.livekit_service_url,
+    this.transport.livekit_service_url,
     this.livekitAlias,
   );
 
@@ -72,12 +72,12 @@ export class Connection {
 
   public connectionState$: Behavior<ConnectionState>;
   public constructor(
-    protected readonly focus: LivekitTransport,
+    public readonly transport: LivekitTransport,
     protected readonly livekitAlias: string,
     protected readonly client: MatrixClient,
     protected readonly scope: ObservableScope,
-    protected readonly membershipsFocusMap$: Behavior<
-      { membership: CallMembership; focus: LivekitTransport }[]
+    protected readonly remoteTransports$: Behavior<
+      { membership: CallMembership; transport: LivekitTransport }[]
     >,
     e2eeLivekitOptions: E2EEOptions | undefined,
     livekitRoom: LivekitRoom | undefined = undefined,
@@ -95,12 +95,13 @@ export class Connection {
 
     this.publishingParticipants$ = this.scope.behavior(
       combineLatest(
-        [this.participantsIncludingSubscribers$, this.membershipsFocusMap$],
-        (participants, membershipsFocusMap) =>
-          membershipsFocusMap
+        [this.participantsIncludingSubscribers$, this.remoteTransports$],
+        (participants, remoteTransports) =>
+          remoteTransports
             // Find all members that claim to publish on this connection
-            .flatMap(({ membership, focus }) =>
-              focus.livekit_service_url === this.focus.livekit_service_url
+            .flatMap(({ membership, transport }) =>
+              transport.livekit_service_url ===
+              this.transport.livekit_service_url
                 ? [membership]
                 : [],
             )
@@ -130,23 +131,35 @@ export class PublishConnection extends Connection {
     if (!this.stopped) await this.livekitRoom.connect(url, jwt);
 
     if (!this.stopped) {
-      const tracks = await this.livekitRoom.localParticipant.createTracks({
-        audio: this.muteStates.audio.enabled$.value,
-        video: this.muteStates.video.enabled$.value,
-      });
-      for (const track of tracks) {
-        await this.livekitRoom.localParticipant.publishTrack(track);
+      // TODO-MULTI-SFU: Prepublish a microphone track
+      const audio = this.muteStates.audio.enabled$.value;
+      const video = this.muteStates.video.enabled$.value;
+      // createTracks throws if called with audio=false and video=false
+      if (audio || video) {
+        const tracks = await this.livekitRoom.localParticipant.createTracks({
+          audio,
+          video,
+        });
+        for (const track of tracks) {
+          await this.livekitRoom.localParticipant.publishTrack(track);
+        }
       }
     }
   }
 
+  public stop(): void {
+    this.muteStates.audio.unsetHandler();
+    this.muteStates.video.unsetHandler();
+    super.stop();
+  }
+
   public constructor(
-    focus: LivekitTransport,
+    transport: LivekitTransport,
     livekitAlias: string,
     client: MatrixClient,
     scope: ObservableScope,
-    membershipsFocusMap$: Behavior<
-      { membership: CallMembership; focus: LivekitTransport }[]
+    remoteTransports$: Behavior<
+      { membership: CallMembership; transport: LivekitTransport }[]
     >,
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
@@ -182,11 +195,11 @@ export class PublishConnection extends Connection {
     });
 
     super(
-      focus,
+      transport,
       livekitAlias,
       client,
       scope,
-      membershipsFocusMap$,
+      remoteTransports$,
       e2eeLivekitOptions,
       room,
     );
@@ -217,10 +230,6 @@ export class PublishConnection extends Connection {
         logger.error("Failed to update LiveKit video input mute state", e);
       }
       return this.livekitRoom.localParticipant.isCameraEnabled;
-    });
-    this.scope.onEnd(() => {
-      this.muteStates.audio.unsetHandler();
-      this.muteStates.video.unsetHandler();
     });
 
     const syncDevice = (

@@ -8,9 +8,10 @@ Please see LICENSE in the repository root for full details.
 import {
   BehaviorSubject,
   distinctUntilChanged,
+  filter,
   type Observable,
   share,
-  Subject,
+  take,
   takeUntil,
 } from "rxjs";
 
@@ -24,9 +25,11 @@ const nothing = Symbol("nothing");
  * A scope which limits the execution lifetime of its bound Observables.
  */
 export class ObservableScope {
-  private readonly ended$ = new Subject<void>();
+  private readonly ended$ = new BehaviorSubject(false);
 
-  private readonly bindImpl: MonoTypeOperator = takeUntil(this.ended$);
+  private readonly bindImpl: MonoTypeOperator = takeUntil(
+    this.ended$.pipe(filter((ended) => ended)),
+  );
 
   /**
    * Binds an Observable to this scope, so that it completes when the scope
@@ -78,15 +81,19 @@ export class ObservableScope {
    * Ends the scope, causing any bound Observables to complete.
    */
   public end(): void {
-    this.ended$.next();
-    this.ended$.complete();
+    this.ended$.next(true);
   }
 
   /**
    * Register a callback to be executed when the scope is ended.
    */
   public onEnd(callback: () => void): void {
-    this.ended$.subscribe(callback);
+    this.ended$
+      .pipe(
+        filter((ended) => ended),
+        take(1),
+      )
+      .subscribe(callback);
   }
 }
 
