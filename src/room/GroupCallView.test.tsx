@@ -42,7 +42,7 @@ import {
 import { GroupCallView } from "./GroupCallView";
 import { type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
-import { MatrixRTCFocusMissingError } from "../utils/errors";
+import { MatrixRTCTransportMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
@@ -258,7 +258,7 @@ test("GroupCallView leaves the session when an error occurs", async () => {
 
 test("GroupCallView shows errors that occur during joining", async () => {
   const user = userEvent.setup();
-  enterRTCSession.mockRejectedValue(new MatrixRTCFocusMissingError(""));
+  enterRTCSession.mockRejectedValue(new MatrixRTCTransportMissingError(""));
   onTestFinished(() => {
     enterRTCSession.mockReset();
   });

@@ -26,7 +26,7 @@ import {
   E2EENotSupportedError,
   type ElementCallError,
   InsufficientCapacityError,
-  MatrixRTCFocusMissingError,
+  MatrixRTCTransportMissingError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
@@ -34,7 +34,7 @@ import { ElementWidgetActions, type WidgetHelpers } from "../widget.ts";
 
 test.each([
   {
-    error: new MatrixRTCFocusMissingError("example.com"),
+    error: new MatrixRTCTransportMissingError("example.com"),
     expectedTitle: "Call is not supported",
   },
   {
@@ -85,7 +85,7 @@ test.each([
 );
 
 test("should render the error page with link back to home", async () => {
-  const error = new MatrixRTCFocusMissingError("example.com");
+  const error = new MatrixRTCTransportMissingError("example.com");
   const TestComponent = (): ReactNode => {
     throw error;
   };
@@ -213,7 +213,7 @@ describe("Rageshake button", () => {
 });
 
 test("should have a close button in widget mode", async () => {
-  const error = new MatrixRTCFocusMissingError("example.com");
+  const error = new MatrixRTCTransportMissingError("example.com");
   const TestComponent = (): ReactNode => {
     throw error;
   };
