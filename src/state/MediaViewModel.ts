@@ -255,7 +255,7 @@ abstract class BaseMediaViewModel extends ViewModel {
      */
     // TODO: Fully separate the data layer from the UI layer by keeping the
     // member object internal
-    public readonly member: RoomMember | undefined,
+    public readonly member: RoomMember,
     // We don't necessarily have a participant if a user connects via MatrixRTC but not (yet) through
     // livekit.
     protected readonly participant$: Observable<
@@ -403,7 +403,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
 
   public constructor(
     id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
@@ -535,7 +535,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
 
   public constructor(
     id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant$: Behavior<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
@@ -641,7 +641,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
 
   public constructor(
     id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
@@ -736,7 +736,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
 
   public constructor(
     id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,

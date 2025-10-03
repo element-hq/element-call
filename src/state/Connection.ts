@@ -66,7 +66,7 @@ export class Connection {
     this.livekitAlias,
   );
 
-  public readonly participantsIncludingSubscribers$;
+  private readonly participantsIncludingSubscribers$;
   public readonly publishingParticipants$;
   public readonly livekitRoom: LivekitRoom;
 
@@ -105,13 +105,11 @@ export class Connection {
                 ? [membership]
                 : [],
             )
-            // Find all associated publishing livekit participant objects
-            .flatMap((membership) => {
-              const participant = participants.find(
-                (p) =>
-                  p.identity === `${membership.sender}:${membership.deviceId}`,
-              );
-              return participant ? [{ participant, membership }] : [];
+            // Pair with their associated LiveKit participant (if any)
+            .map((membership) => {
+              const id = `${membership.sender}:${membership.deviceId}`;
+              const participant = participants.find((p) => p.identity === id);
+              return { participant, membership };
             }),
       ),
       [],

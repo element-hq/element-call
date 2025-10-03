@@ -55,7 +55,7 @@ interface SpotlightItemBaseProps {
   targetHeight: number;
   video: TrackReferenceOrPlaceholder | undefined;
   videoEnabled: boolean;
-  member: RoomMember | undefined;
+  member: RoomMember;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
   displayName: string;
