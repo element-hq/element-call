@@ -304,7 +304,7 @@ class UserMedia {
   public readonly presenter$: Behavior<boolean>;
   public constructor(
     public readonly id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant: LocalParticipant | RemoteParticipant | undefined,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
@@ -377,7 +377,7 @@ class ScreenShare {
 
   public constructor(
     id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant: LocalParticipant | RemoteParticipant,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
@@ -799,7 +799,8 @@ export class CallViewModel extends ViewModel {
       livekitRoom: LivekitRoom;
       url: string;
       participants: {
-        participant: LocalParticipant | RemoteParticipant;
+        id: string;
+        participant: LocalParticipant | RemoteParticipant | undefined;
         member: RoomMember;
       }[];
     }[]
@@ -814,6 +815,7 @@ export class CallViewModel extends ViewModel {
             throw new Error("No room member for call membership");
           };
           const localParticipant = {
+            id: "local",
             participant: localConnection.livekitRoom.localParticipant,
             member:
               this.matrixRoom.getMember(this.userId ?? "") ?? memberError(),
@@ -826,9 +828,14 @@ export class CallViewModel extends ViewModel {
                   c.publishingParticipants$.pipe(
                     map((ps) => {
                       const participants: {
-                        participant: LocalParticipant | RemoteParticipant;
+                        id: string;
+                        participant:
+                          | LocalParticipant
+                          | RemoteParticipant
+                          | undefined;
                         member: RoomMember;
                       }[] = ps.map(({ participant, membership }) => ({
+                        id: `${membership.sender}:${membership.deviceId}`,
                         participant,
                         member:
                           getRoomMemberFromRtcMember(
@@ -929,26 +936,12 @@ export class CallViewModel extends ViewModel {
         const newItems: Map<string, UserMedia | ScreenShare> = new Map(
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
             for (const { livekitRoom, participants } of participantsByRoom) {
-              for (const { participant, member } of participants) {
-                const matrixId = participant.isLocal
-                  ? "local"
-                  : participant.identity;
-
+              for (const { id, participant, member } of participants) {
                 for (let i = 0; i < 1 + duplicateTiles; i++) {
-                  const mediaId = `${matrixId}:${i}`;
-                  let prevMedia = prevItems.get(mediaId);
-                  if (prevMedia && prevMedia instanceof UserMedia) {
+                  const mediaId = `${id}:${i}`;
+                  const prevMedia = prevItems.get(mediaId);
+                  if (prevMedia instanceof UserMedia)
                     prevMedia.updateParticipant(participant);
-                    if (prevMedia.vm.member === undefined) {
-                      // TODO-MULTI-SFU: This is outdated.
-                      // We have a previous media created because of the `debugShowNonMember` flag.
-                      // In this case we actually replace the media item.
-                      // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
-                      // option and if we always find a room member for each rtc member (which also
-                      // only fails if we have a fundamental problem)
-                      prevMedia = undefined;
-                    }
-                  }
 
                   yield [
                     mediaId,
@@ -965,14 +958,10 @@ export class CallViewModel extends ViewModel {
                         this.mediaDevices,
                         this.pretendToBeDisconnected$,
                         this.memberDisplaynames$.pipe(
-                          map((m) => m.get(matrixId) ?? "[👻]"),
+                          map((m) => m.get(id) ?? "[👻]"),
                         ),
-                        this.handsRaised$.pipe(
-                          map((v) => v[matrixId]?.time ?? null),
-                        ),
-                        this.reactions$.pipe(
-                          map((v) => v[matrixId] ?? undefined),
-                        ),
+                        this.handsRaised$.pipe(map((v) => v[id]?.time ?? null)),
+                        this.reactions$.pipe(map((v) => v[id] ?? undefined)),
                       ),
                   ];
 
@@ -989,7 +978,7 @@ export class CallViewModel extends ViewModel {
                           livekitRoom,
                           this.pretendToBeDisconnected$,
                           this.memberDisplaynames$.pipe(
-                            map((m) => m.get(matrixId) ?? "[👻]"),
+                            map((m) => m.get(id) ?? "[👻]"),
                           ),
                         ),
                     ];
