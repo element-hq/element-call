@@ -7,7 +7,10 @@ Please see LICENSE in the repository root for full details.
 
 import {
   BehaviorSubject,
+  catchError,
   distinctUntilChanged,
+  EMPTY,
+  endWith,
   filter,
   type Observable,
   share,
@@ -94,6 +97,41 @@ export class ObservableScope {
         take(1),
       )
       .subscribe(callback);
+  }
+
+  // TODO-MULTI-SFU Dear Future Robin, please document this. Love, Past Robin.
+  public reconcile<T>(
+    value$: Behavior<T>,
+    callback: (value: T) => Promise<(() => Promise<void>) | undefined>,
+  ): void {
+    let latestValue: T | typeof nothing = nothing;
+    let reconciledValue: T | typeof nothing = nothing;
+    let cleanUp: (() => Promise<void>) | undefined = undefined;
+    let callbackPromise: Promise<(() => Promise<void>) | undefined>;
+    value$
+      .pipe(
+        catchError(() => EMPTY),
+        this.bind(),
+        endWith(nothing),
+      )
+      .subscribe((value) => {
+        void (async (): Promise<void> => {
+          if (latestValue === nothing) {
+            latestValue = value;
+            while (latestValue !== reconciledValue) {
+              await cleanUp?.();
+              reconciledValue = latestValue;
+              if (latestValue !== nothing) {
+                callbackPromise = callback(latestValue);
+                cleanUp = await callbackPromise;
+              }
+            }
+            latestValue = nothing;
+          } else {
+            latestValue = value;
+          }
+        })();
+      });
   }
 }
 

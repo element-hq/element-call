@@ -125,6 +125,24 @@ export class Connection {
 export class PublishConnection extends Connection {
   public async start(): Promise<void> {
     this.stopped = false;
+
+    this.muteStates.audio.setHandler(async (desired) => {
+      try {
+        await this.livekitRoom.localParticipant.setMicrophoneEnabled(desired);
+      } catch (e) {
+        logger.error("Failed to update LiveKit audio input mute state", e);
+      }
+      return this.livekitRoom.localParticipant.isMicrophoneEnabled;
+    });
+    this.muteStates.video.setHandler(async (desired) => {
+      try {
+        await this.livekitRoom.localParticipant.setCameraEnabled(desired);
+      } catch (e) {
+        logger.error("Failed to update LiveKit video input mute state", e);
+      }
+      return this.livekitRoom.localParticipant.isCameraEnabled;
+    });
+
     const { url, jwt } = await this.sfuConfig;
     if (!this.stopped) await this.livekitRoom.connect(url, jwt);
 
@@ -212,23 +230,6 @@ export class PublishConnection extends Connection {
       ),
     );
     trackProcessorSync(track$, trackerProcessorState$);
-
-    this.muteStates.audio.setHandler(async (desired) => {
-      try {
-        await this.livekitRoom.localParticipant.setMicrophoneEnabled(desired);
-      } catch (e) {
-        logger.error("Failed to update LiveKit audio input mute state", e);
-      }
-      return this.livekitRoom.localParticipant.isMicrophoneEnabled;
-    });
-    this.muteStates.video.setHandler(async (desired) => {
-      try {
-        await this.livekitRoom.localParticipant.setCameraEnabled(desired);
-      } catch (e) {
-        logger.error("Failed to update LiveKit video input mute state", e);
-      }
-      return this.livekitRoom.localParticipant.isCameraEnabled;
-    });
 
     const syncDevice = (
       kind: MediaDeviceKind,
