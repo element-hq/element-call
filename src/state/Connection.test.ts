@@ -5,18 +5,30 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { afterEach, describe, expect, it, type MockedObject, vi } from "vitest";
+import { afterEach, describe, expect, it, type Mock, Mocked, type MockedObject, vi } from "vitest";
 import { type CallMembership, type LivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject } from "rxjs";
-import { ConnectionState, type RemoteParticipant, type Room as LivekitRoom, RoomEvent } from "livekit-client";
+import { BehaviorSubject, of } from "rxjs";
+import {
+  ConnectionState,
+  type LocalParticipant,
+  type RemoteParticipant,
+  type Room as LivekitRoom,
+  RoomEvent, type RoomOptions
+} from "livekit-client";
 import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
+import { type BackgroundOptions, type ProcessorWrapper } from "@livekit/track-processors";
 
 import { type ConnectionOpts, type FocusConnectionState, RemoteConnection } from "./Connection.ts";
 import { ObservableScope } from "./ObservableScope.ts";
 import { type OpenIDClientParts } from "../livekit/openIDSFU.ts";
 import { FailToGetOpenIdToken } from "../utils/errors.ts";
+import { PublishConnection } from "./PublishConnection.ts";
+import { mockMediaDevices, mockMuteStates } from "../utils/test.ts";
+import type { ProcessorState } from "../livekit/TrackProcessorContext.tsx";
+import { type MuteStates } from "./MuteStates.ts";
+import { DeviceLabel, MediaDevice, SelectedDevice } from "./MediaDevices.ts";
 
 
 let testScope: ObservableScope;
@@ -24,6 +36,9 @@ let testScope: ObservableScope;
 let client: MockedObject<OpenIDClientParts>;
 
 let fakeLivekitRoom: MockedObject<LivekitRoom>;
+
+let localParticipantEventEmiter: EventEmitter;
+let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 let fakeRoomEventEmiter: EventEmitter;
 let fakeMembershipsFocusMap$: BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>;
@@ -49,18 +64,32 @@ function setupTest(): void {
   } as unknown as OpenIDClientParts);
   fakeMembershipsFocusMap$ = new BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>([]);
 
+  localParticipantEventEmiter = new EventEmitter();
+
+  fakeLocalParticipant = vi.mocked<LocalParticipant>({
+    identity: "@me:example.org",
+    isMicrophoneEnabled: vi.fn().mockReturnValue(true),
+    getTrackPublication: vi.fn().mockReturnValue(undefined),
+    on: localParticipantEventEmiter.on.bind(localParticipantEventEmiter),
+    off: localParticipantEventEmiter.off.bind(localParticipantEventEmiter),
+    addListener: localParticipantEventEmiter.addListener.bind(localParticipantEventEmiter),
+    removeListener: localParticipantEventEmiter.removeListener.bind(localParticipantEventEmiter),
+    removeAllListeners: localParticipantEventEmiter.removeAllListeners.bind(localParticipantEventEmiter)
+  } as unknown as LocalParticipant);
   fakeRoomEventEmiter = new EventEmitter();
 
   fakeLivekitRoom = vi.mocked<LivekitRoom>({
     connect: vi.fn(),
     disconnect: vi.fn(),
     remoteParticipants: new Map(),
+    localParticipant: fakeLocalParticipant,
     state: ConnectionState.Disconnected,
     on: fakeRoomEventEmiter.on.bind(fakeRoomEventEmiter),
     off: fakeRoomEventEmiter.off.bind(fakeRoomEventEmiter),
     addListener: fakeRoomEventEmiter.addListener.bind(fakeRoomEventEmiter),
     removeListener: fakeRoomEventEmiter.removeListener.bind(fakeRoomEventEmiter),
-    removeAllListeners: fakeRoomEventEmiter.removeAllListeners.bind(fakeRoomEventEmiter)
+    removeAllListeners: fakeRoomEventEmiter.removeAllListeners.bind(fakeRoomEventEmiter),
+    setE2EEEnabled: vi.fn().mockResolvedValue(undefined)
   } as unknown as LivekitRoom);
 
 }
@@ -424,7 +453,7 @@ function fakeRemoteLivekitParticipant(id: string): RemoteParticipant {
 function fakeRtcMemberShip(userId: string, deviceId: string): CallMembership {
   return vi.mocked<CallMembership>({
     sender: userId,
-    deviceId: deviceId,
+    deviceId: deviceId
   } as unknown as CallMembership);
 }
 
@@ -440,19 +469,19 @@ describe("Publishing participants observations", () => {
     const danIsAPublisher = Promise.withResolvers<void>();
     const observedPublishers: { participant: RemoteParticipant; membership: CallMembership }[][] = [];
     connection.publishingParticipants$.subscribe((publishers) => {
-        observedPublishers.push(publishers);
-        if (publishers.some((p) => p.participant.identity === "@bob:example.org:DEV111")) {
-          bobIsAPublisher.resolve();
-        }
-        if (publishers.some((p) => p.participant.identity === "@dan:example.org:DEV333")) {
-          danIsAPublisher.resolve();
-        }
+      observedPublishers.push(publishers);
+      if (publishers.some((p) => p.participant.identity === "@bob:example.org:DEV111")) {
+        bobIsAPublisher.resolve();
+      }
+      if (publishers.some((p) => p.participant.identity === "@dan:example.org:DEV333")) {
+        danIsAPublisher.resolve();
+      }
     });
     // The publishingParticipants$ observable is derived from the current members of the
     // livekitRoom and the rtc membership in order to publish the members that are publishing
     // on this connection.
 
-    let participants: RemoteParticipant[]= [
+    let participants: RemoteParticipant[] = [
       fakeRemoteLivekitParticipant("@alice:example.org:DEV000"),
       fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
       fakeRemoteLivekitParticipant("@carol:example.org:DEV222"),
@@ -477,7 +506,7 @@ describe("Publishing participants observations", () => {
       livekit_alias: "!roomID:example.org",
       livekit_service_url: "https://other-matrix-rtc.example.org/livekit/jwt",
       type: "livekit"
-    }
+    };
 
 
     const rtcMemberships = [
@@ -485,7 +514,7 @@ describe("Publishing participants observations", () => {
       { membership: fakeRtcMemberShip("@bob:example.org", "DEV111"), focus: livekitFocus },
       // Alice and carol is on a different focus
       { membership: fakeRtcMemberShip("@alice:example.org", "DEV000"), focus: otherFocus },
-      { membership: fakeRtcMemberShip("@carol:example.org", "DEV222"), focus: otherFocus },
+      { membership: fakeRtcMemberShip("@carol:example.org", "DEV222"), focus: otherFocus }
       // NO DAVE YET
     ];
     // signal this change in rtc memberships
@@ -520,7 +549,7 @@ describe("Publishing participants observations", () => {
     const updatedPublishers = observedPublishers.pop();
     expect(updatedPublishers?.length).toEqual(1);
     expect(updatedPublishers?.some((p) => p.participant.identity === "@dan:example.org:DEV333")).toBeTruthy();
-  })
+  });
 
 
   it("should be scoped to parent scope", async () => {
@@ -533,8 +562,8 @@ describe("Publishing participants observations", () => {
       observedPublishers.push(publishers);
     });
 
-    let participants: RemoteParticipant[]= [
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
+    let participants: RemoteParticipant[] = [
+      fakeRemoteLivekitParticipant("@bob:example.org:DEV111")
     ];
 
     // Let's simulate 3 members on the livekitRoom
@@ -552,7 +581,7 @@ describe("Publishing participants observations", () => {
 
     const rtcMemberships = [
       // Say bob is on the same focus
-      { membership: fakeRtcMemberShip("@bob:example.org", "DEV111"), focus: livekitFocus },
+      { membership: fakeRtcMemberShip("@bob:example.org", "DEV111"), focus: livekitFocus }
     ];
     // signal this change in rtc memberships
     fakeMembershipsFocusMap$.next(rtcMemberships);
@@ -575,7 +604,122 @@ describe("Publishing participants observations", () => {
     fakeRoomEventEmiter.emit(RoomEvent.ParticipantDisconnected, fakeRemoteLivekitParticipant("@bob:example.org:DEV111"));
 
     expect(observedPublishers.length).toEqual(0);
-  })
+  });
+});
 
 
+describe("PublishConnection", () => {
+
+  let fakeBlurProcessor: ProcessorWrapper<BackgroundOptions>;
+  let roomFactoryMock: Mock<() => LivekitRoom>;
+  let muteStates: MockedObject<MuteStates>;
+
+  function setUpPublishConnection() {
+    setupTest();
+
+    roomFactoryMock = vi.fn().mockReturnValue(fakeLivekitRoom);
+
+
+    muteStates = mockMuteStates();
+
+    fakeBlurProcessor = vi.mocked<ProcessorWrapper<BackgroundOptions>>({
+      name: "BackgroundBlur",
+      start: vi.fn().mockResolvedValue(undefined),
+      stop: vi.fn().mockResolvedValue(undefined),
+      setOptions: vi.fn().mockResolvedValue(undefined),
+      getOptions: vi.fn().mockReturnValue({ strength: 0.5 }),
+      isRunning: vi.fn().mockReturnValue(false)
+    });
+
+
+  }
+
+
+  describe("Livekit room creation", () => {
+
+
+    function createSetup() {
+      setUpPublishConnection();
+
+      const fakeTrackProcessorSubject$ = new BehaviorSubject<ProcessorState>({
+        supported: true,
+        processor: undefined
+      });
+
+      const opts: ConnectionOpts = {
+        client: client,
+        focus: livekitFocus,
+        membershipsFocusMap$: fakeMembershipsFocusMap$,
+        scope: testScope,
+        livekitRoomFactory: roomFactoryMock
+      };
+
+      const audioInput = {
+        available$: of(new Map([["mic1", { id: "mic1" }]])),
+        selected$: new BehaviorSubject({ id: "mic1" }),
+        select(): void {
+        }
+      };
+
+      const videoInput = {
+        available$: of(new Map([["cam1", { id: "cam1" }]])),
+        selected$: new BehaviorSubject({ id: "cam1" }),
+        select(): void {
+        }
+      };
+
+      const audioOutput = {
+        available$: of(new Map([["speaker", { id: "speaker" }]])),
+        selected$: new BehaviorSubject({ id: "speaker" }),
+        select(): void {
+        }
+      };
+
+      const fakeDevices = mockMediaDevices({
+        audioInput,
+        videoInput,
+        audioOutput
+      });
+
+      new PublishConnection(
+        opts,
+        fakeDevices,
+        muteStates,
+        undefined,
+        fakeTrackProcessorSubject$
+      );
+
+    }
+
+    it("should create room with proper initial audio and video settings", () => {
+
+      createSetup();
+
+      expect(roomFactoryMock).toHaveBeenCalled();
+
+      const lastCallArgs = roomFactoryMock.mock.calls[roomFactoryMock.mock.calls.length - 1];
+
+      const roomOptions = lastCallArgs.pop() as unknown as RoomOptions;
+      expect(roomOptions).toBeDefined();
+
+      expect(roomOptions!.videoCaptureDefaults?.deviceId).toEqual("cam1");
+      expect(roomOptions!.audioCaptureDefaults?.deviceId).toEqual("mic1");
+      expect(roomOptions!.audioOutput?.deviceId).toEqual("speaker");
+
+    });
+
+    it("respect controlledAudioDevices", () => {
+      // TODO: Refactor the code to make it testable.
+      // The UrlParams module is a singleton has a cache and is very hard to test.
+      // This breaks other tests as well if not handled properly.
+      // vi.mock(import("./../UrlParams"), () => {
+      //   return {
+      //     getUrlParams: vi.fn().mockReturnValue({
+      //       controlledAudioDevices: true
+      //     })
+      //   };
+      // });
+
+    });
+  });
 });
