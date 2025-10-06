@@ -5,7 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ChangeEvent, type FC, useCallback, useMemo } from "react";
+import {
+  type ChangeEvent,
+  type FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 
 import { FieldRow, InputField } from "../input/Input";
@@ -18,11 +25,16 @@ import {
   multiSfu as multiSfuSetting,
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
+  preferStickyEvents as preferStickyEventsSetting,
 } from "./settings";
-import type { MatrixClient } from "matrix-js-sdk";
+import {
+  UNSTABLE_MSC4354_STICKY_EVENTS,
+  type MatrixClient,
+} from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
+import { logger } from "matrix-js-sdk/lib/logger";
 interface Props {
   client: MatrixClient;
   livekitRooms?: { room: LivekitRoom; url: string; isLocal?: boolean }[];
@@ -33,6 +45,22 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
   const [debugTileLayout, setDebugTileLayout] = useSetting(
     debugTileLayoutSetting,
+  );
+
+  const [stickyEventsSupported, setStickyEventsSupported] = useState(false);
+  useEffect(() => {
+    client
+      .doesServerSupportUnstableFeature(UNSTABLE_MSC4354_STICKY_EVENTS)
+      .then((result) => {
+        setStickyEventsSupported(result);
+      })
+      .catch((ex) => {
+        logger.warn("Failed to check if sticky events are supported", ex);
+      });
+  }, [client]);
+
+  const [preferStickyEvents, setPreferStickyEvents] = useSetting(
+    preferStickyEventsSetting,
   );
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
@@ -119,6 +147,22 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
           onChange={(event: ChangeEvent<HTMLInputElement>): void =>
             setDebugTileLayout(event.target.checked)
           }
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="preferStickyEvents"
+          type="checkbox"
+          label={t("developer_mode.prefer_sticky_events.label")}
+          disabled={!stickyEventsSupported}
+          description={t("developer_mode.prefer_sticky_events.description")}
+          checked={!!preferStickyEvents}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setPreferStickyEvents(event.target.checked);
+            },
+            [setPreferStickyEvents],
+          )}
         />
       </FieldRow>
       <FieldRow>

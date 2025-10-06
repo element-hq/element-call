@@ -20,6 +20,7 @@ import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
 import { MatrixRTCTransportMissingError } from "./utils/errors";
 import { getUrlParams } from "./UrlParams";
 import { getSFUConfigWithOpenID } from "./livekit/openIDSFU.ts";
+import { preferStickyEvents } from "./settings/settings.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -137,7 +138,7 @@ export async function enterRTCSession(
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
       useExperimentalToDeviceTransport,
-      unstableSendStickyEvents: true,
+      unstableSendStickyEvents: preferStickyEvents.getValue(),
     },
   );
   if (widget) {
