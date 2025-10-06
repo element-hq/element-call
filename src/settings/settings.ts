@@ -115,11 +115,6 @@ export const soundEffectVolume = new Setting<number>(
   0.5,
 );
 
-export const useNewMembershipManager = new Setting<boolean>(
-  "new-membership-manager",
-  true,
-);
-
 export const useExperimentalToDeviceTransport = new Setting<boolean>(
   "experimental-to-device-transport",
   true,

@@ -101,7 +101,6 @@ export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   transport: LivekitTransport,
   encryptMedia: boolean,
-  useNewMembershipManager = true,
   useExperimentalToDeviceTransport = false,
   useMultiSfu = true,
 ): Promise<void> {
@@ -123,7 +122,6 @@ export async function enterRTCSession(
     {
       notificationType,
       callIntent,
-      useNewMembershipManager,
       manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {
         useLegacyMemberEvents: !useDeviceSessionMemberEvents,
@@ -139,7 +137,7 @@ export async function enterRTCSession(
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
       useExperimentalToDeviceTransport,
-      useStickyEvents: true,
+      unstableSendStickyEvents: true,
     },
   );
   if (widget) {

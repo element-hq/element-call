@@ -14,7 +14,6 @@ import {
   duplicateTiles as duplicateTilesSetting,
   debugTileLayout as debugTileLayoutSetting,
   showConnectionStats as showConnectionStatsSetting,
-  useNewMembershipManager as useNewMembershipManagerSetting,
   useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   multiSfu as multiSfuSetting,
   muteAllAudio as muteAllAudioSetting,
@@ -38,10 +37,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
-  );
-
-  const [useNewMembershipManager, setNewMembershipManager] = useSetting(
-    useNewMembershipManagerSetting,
   );
 
   const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
@@ -137,20 +132,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
               setShowConnectionStats(event.target.checked);
             },
             [setShowConnectionStats],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="useNewMembershipManager"
-          type="checkbox"
-          label={t("developer_mode.use_new_membership_manager")}
-          checked={!!useNewMembershipManager}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setNewMembershipManager(event.target.checked);
-            },
-            [setNewMembershipManager],
           )}
         />
       </FieldRow>

@@ -70,10 +70,7 @@ import {
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
-import {
-  useNewMembershipManager as useNewMembershipManagerSetting,
-  useSetting,
-} from "../settings/settings";
+import { useSetting } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useAppBarTitle } from "../AppBar.tsx";
@@ -186,7 +183,6 @@ export const GroupCallView: FC<Props> = ({
     password: passwordFromUrl,
   } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
-  const [useNewMembershipManager] = useSetting(useNewMembershipManagerSetting);
 
   // Save the password once we start the groupCallView
   useEffect(() => {
@@ -310,7 +306,6 @@ export const GroupCallView: FC<Props> = ({
     mediaDevices,
     latestMuteStates,
     setJoined,
-    useNewMembershipManager,
   ]);
 
   // TODO refactor this + "joined" to just one callState
