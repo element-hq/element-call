@@ -193,12 +193,12 @@ export const LobbyView: FC<Props> = ({
 
   useTrackProcessorSync(videoTrack);
 
+  const [waitingToEnter, setWaitingToEnter] = useState(false);
   const onEnterCall = useCallback(() => {
-    setWaiting(true);
-    void onEnter().finally(() => setWaiting(false));
+    setWaitingToEnter(true);
+    void onEnter().finally(() => setWaitingToEnter(false));
   }, [onEnter]);
 
-  const [waitingToEnter, setWaitingToEnter] = useState(false);
   const waiting = waitingForInvite || waitingToEnter;
 
   // TODO: Unify this component with InCallView, so we can get slick joining
