@@ -14,6 +14,11 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  UNSTABLE_MSC4354_STICKY_EVENTS,
+  type MatrixClient,
+} from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { FieldRow, InputField } from "../input/Input";
 import {
@@ -27,14 +32,10 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   preferStickyEvents as preferStickyEventsSetting,
 } from "./settings";
-import {
-  UNSTABLE_MSC4354_STICKY_EVENTS,
-  type MatrixClient,
-} from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
-import { logger } from "matrix-js-sdk/lib/logger";
+
 interface Props {
   client: MatrixClient;
   livekitRooms?: { room: LivekitRoom; url: string; isLocal?: boolean }[];
