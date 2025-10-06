@@ -193,13 +193,9 @@ export const LobbyView: FC<Props> = ({
 
   useTrackProcessorSync(videoTrack);
 
-  const onEnterCall = useCallback(async () => {
-    try {
-      setWaiting(true);
-      await onEnter();
-    } finally {
-      setWaiting(false);
-    }
+  const onEnterCall = useCallback(() => {
+    setWaiting(true);
+    void onEnter().finally(() => setWaiting(false));
   }, [onEnter]);
 
   const [waiting, setWaiting] = useState(waitingForInvite);
