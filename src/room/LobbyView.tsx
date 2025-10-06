@@ -198,7 +198,8 @@ export const LobbyView: FC<Props> = ({
     void onEnter().finally(() => setWaiting(false));
   }, [onEnter]);
 
-  const [waiting, setWaiting] = useState(waitingForInvite);
+  const [waitingToEnter, setWaitingToEnter] = useState(false);
+  const waiting = waitingForInvite || waitingToEnter;
 
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
