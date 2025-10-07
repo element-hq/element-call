@@ -167,7 +167,7 @@ function createGroupCallView(
               muteStates={muteState}
               widget={widget}
               joined={true}
-              setJoined={function(value: boolean): void { }}
+              setJoined={function (value: boolean): void {}}
             />
           </ProcessorProvider>
         </MediaDevicesContext>

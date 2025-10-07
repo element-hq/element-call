@@ -10,15 +10,24 @@ import {
   LocalVideoTrack,
   Room as LivekitRoom,
   type RoomOptions,
-  Track
+  Track,
 } from "livekit-client";
-import { map, NEVER, type Observable, type Subscription, switchMap } from "rxjs";
+import {
+  map,
+  NEVER,
+  type Observable,
+  type Subscription,
+  switchMap,
+} from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import type { Behavior } from "./Behavior.ts";
 import type { MediaDevices, SelectedDevice } from "./MediaDevices.ts";
 import type { MuteStates } from "./MuteStates.ts";
-import { type ProcessorState, trackProcessorSync } from "../livekit/TrackProcessorContext.tsx";
+import {
+  type ProcessorState,
+  trackProcessorSync,
+} from "../livekit/TrackProcessorContext.tsx";
 import { getUrlParams } from "../UrlParams.ts";
 import { defaultLiveKitOptions } from "../livekit/options.ts";
 import { getValue } from "../utils/observable.ts";
@@ -31,7 +40,6 @@ import { type ObservableScope } from "./ObservableScope.ts";
  * This connection will publish the local user's audio and video tracks.
  */
 export class PublishConnection extends Connection {
-
   /**
    * Creates a new PublishConnection.
    * @param args - The connection options. {@link ConnectionOpts}
@@ -45,15 +53,22 @@ export class PublishConnection extends Connection {
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
     e2eeLivekitOptions: E2EEOptions | undefined,
-    trackerProcessorState$: Behavior<ProcessorState>
+    trackerProcessorState$: Behavior<ProcessorState>,
   ) {
     const { scope } = args;
     logger.info("[LivekitRoom] Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
 
-    const factory = args.livekitRoomFactory ?? ((options: RoomOptions): LivekitRoom => new LivekitRoom(options));
+    const factory =
+      args.livekitRoomFactory ??
+      ((options: RoomOptions): LivekitRoom => new LivekitRoom(options));
     const room = factory(
-      generateRoomOption(devices, trackerProcessorState$.value, controlledAudioDevices, e2eeLivekitOptions)
+      generateRoomOption(
+        devices,
+        trackerProcessorState$.value,
+        controlledAudioDevices,
+        e2eeLivekitOptions,
+      ),
     );
     room.setE2EEEnabled(e2eeLivekitOptions !== undefined).catch((e) => {
       logger.error("Failed to set E2EE enabled on room", e);
@@ -83,14 +98,14 @@ export class PublishConnection extends Connection {
   public async start(): Promise<void> {
     this.stopped = false;
 
-    await super.start()
+    await super.start();
 
     if (this.stopped) return;
 
     // TODO this can throw errors? It will also prompt for permissions if not already granted
     const tracks = await this.livekitRoom.localParticipant.createTracks({
       audio: this.muteStates.audio.enabled$.value,
-      video: this.muteStates.video.enabled$.value
+      video: this.muteStates.video.enabled$.value,
     });
     if (this.stopped) return;
     for (const track of tracks) {
@@ -100,7 +115,7 @@ export class PublishConnection extends Connection {
       if (this.stopped) return;
       // TODO: check if the connection is still active? and break the loop if not?
     }
-  };
+  }
 
   /// Private methods
 
@@ -112,17 +127,19 @@ export class PublishConnection extends Connection {
   // in the LocalParticipant object for the track object and there's not a nice
   // way to do that generically. There is usually no OS-level default video capture
   // device anyway, and audio outputs work differently.
-  private workaroundRestartAudioInputTrackChrome(devices: MediaDevices, scope: ObservableScope): void {
-
+  private workaroundRestartAudioInputTrackChrome(
+    devices: MediaDevices,
+    scope: ObservableScope,
+  ): void {
     devices.audioInput.selected$
       .pipe(
         switchMap((device) => device?.hardwareDeviceChange$ ?? NEVER),
-        scope.bind()
+        scope.bind(),
       )
       .subscribe(() => {
         if (this.livekitRoom.state != ConnectionState.Connected) return;
         const activeMicTrack = Array.from(
-          this.livekitRoom.localParticipant.audioTrackPublications.values()
+          this.livekitRoom.localParticipant.audioTrackPublications.values(),
         ).find((d) => d.source === Track.Source.Microphone)?.track;
 
         if (
@@ -147,11 +164,15 @@ export class PublishConnection extends Connection {
       });
   }
 
-// Observe changes in the selected media devices and update the LiveKit room accordingly.
-  private observeMediaDevices(scope: ObservableScope, devices: MediaDevices, controlledAudioDevices: boolean):void {
+  // Observe changes in the selected media devices and update the LiveKit room accordingly.
+  private observeMediaDevices(
+    scope: ObservableScope,
+    devices: MediaDevices,
+    controlledAudioDevices: boolean,
+  ): void {
     const syncDevice = (
       kind: MediaDeviceKind,
-      selected$: Observable<SelectedDevice | undefined>
+      selected$: Observable<SelectedDevice | undefined>,
     ): Subscription =>
       selected$.pipe(scope.bind()).subscribe((device) => {
         if (this.livekitRoom.state != ConnectionState.Connected) return;
@@ -160,7 +181,7 @@ export class PublishConnection extends Connection {
           "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
           this.livekitRoom.getActiveDevice(kind),
           " !== ",
-          device?.id
+          device?.id,
         );
         if (
           device !== undefined &&
@@ -169,7 +190,7 @@ export class PublishConnection extends Connection {
           this.livekitRoom
             .switchActiveDevice(kind, device.id)
             .catch((e) =>
-              logger.error(`Failed to sync ${kind} device with LiveKit`, e)
+              logger.error(`Failed to sync ${kind} device with LiveKit`, e),
             );
         }
       });
@@ -208,20 +229,22 @@ export class PublishConnection extends Connection {
     });
   }
 
-  private observeTrackProcessors(scope: ObservableScope, room: LivekitRoom, trackerProcessorState$: Behavior<ProcessorState>): void {
+  private observeTrackProcessors(
+    scope: ObservableScope,
+    room: LivekitRoom,
+    trackerProcessorState$: Behavior<ProcessorState>,
+  ): void {
     const track$ = scope.behavior(
       observeTrackReference$(room.localParticipant, Track.Source.Camera).pipe(
         map((trackRef) => {
           const track = trackRef?.publication?.track;
           return track instanceof LocalVideoTrack ? track : null;
-        })
-      )
+        }),
+      ),
     );
     trackProcessorSync(track$, trackerProcessorState$);
   }
-
 }
-
 
 // Generate the initial LiveKit RoomOptions based on the current media devices and processor state.
 function generateRoomOption(
@@ -235,11 +258,11 @@ function generateRoomOption(
     videoCaptureDefaults: {
       ...defaultLiveKitOptions.videoCaptureDefaults,
       deviceId: devices.videoInput.selected$.value?.id,
-      processor: processorState.processor
+      processor: processorState.processor,
     },
     audioCaptureDefaults: {
       ...defaultLiveKitOptions.audioCaptureDefaults,
-      deviceId: devices.audioInput.selected$.value?.id
+      deviceId: devices.audioInput.selected$.value?.id,
     },
     audioOutput: {
       // When using controlled audio devices, we don't want to set the
@@ -247,8 +270,8 @@ function generateRoomOption(
       // (also the id does not need to match a browser device id)
       deviceId: controlledAudioDevices
         ? undefined
-        : getValue(devices.audioOutput.selected$)?.id
+        : getValue(devices.audioOutput.selected$)?.id,
     },
-    e2ee: e2eeLivekitOptions
+    e2ee: e2eeLivekitOptions,
   };
 }

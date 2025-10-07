@@ -19,7 +19,11 @@ import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
 import { EncryptionStatus } from "../state/MediaViewModel";
-import { mockLocalParticipant, mockMatrixRoomMember, mockRtcMembership } from "../utils/test";
+import {
+  mockLocalParticipant,
+  mockMatrixRoomMember,
+  mockRtcMembership,
+} from "../utils/test";
 
 describe("MediaView", () => {
   const participant = mockLocalParticipant({});
