@@ -352,7 +352,10 @@ function withCallViewModel(
     options,
     raisedHands$,
     reactions$,
-    new BehaviorSubject<ProcessorState>({ processor: undefined, supported: undefined }),
+    new BehaviorSubject<ProcessorState>({
+      processor: undefined,
+      supported: undefined,
+    }),
   );
 
   onTestFinished(() => {

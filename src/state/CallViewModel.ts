@@ -126,7 +126,11 @@ import {
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-import { type Connection, type ConnectionOpts, RemoteConnection } from "./Connection";
+import {
+  type Connection,
+  type ConnectionOpts,
+  RemoteConnection,
+} from "./Connection";
 import { type MuteStates } from "./MuteStates";
 import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
@@ -485,7 +489,6 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-
   /**
    * The MatrixRTC session participants.
    */
@@ -574,7 +577,6 @@ export class CallViewModel extends ViewModel {
         (transport) =>
           transport &&
           mapAsync(transport, (transport) => {
-
             const opts: ConnectionOpts = {
               transport,
               client: this.matrixRTCSession.room.client,
@@ -582,15 +584,16 @@ export class CallViewModel extends ViewModel {
               remoteTransports$: this.remoteTransports$,
             };
             return {
-            connection: new PublishConnection(
-              opts,
-              this.mediaDevices,
-              this.muteStates,
-              this.e2eeLivekitOptions(),
-              this.scope.behavior(this.trackProcessorState$),
-            ),
-            transport,
-          }}),
+              connection: new PublishConnection(
+                opts,
+                this.mediaDevices,
+                this.muteStates,
+                this.e2eeLivekitOptions(),
+                this.scope.behavior(this.trackProcessorState$),
+              ),
+              transport,
+            };
+          }),
       ),
     ),
   );
@@ -605,14 +608,14 @@ export class CallViewModel extends ViewModel {
     this.localConnection$.pipe(
       switchMap((c) =>
         c?.state === "ready"
-          // TODO mapping to ConnectionState for compatibility, but we should use the full state?
-          ? c.value.focusedConnectionState$.pipe(
-            map((s) => {
-              if (s.state === "ConnectedToLkRoom") return s.connectionState;
-              return ConnectionState.Disconnected
-            }),
-            distinctUntilChanged(),
-          )
+          ? // TODO mapping to ConnectionState for compatibility, but we should use the full state?
+            c.value.focusedConnectionState$.pipe(
+              map((s) => {
+                if (s.state === "ConnectedToLkRoom") return s.connectionState;
+                return ConnectionState.Disconnected;
+              }),
+              distinctUntilChanged(),
+            )
           : of(ConnectionState.Disconnected),
       ),
     ),
@@ -659,8 +662,11 @@ export class CallViewModel extends ViewModel {
                 client: this.matrixRTCSession.room.client,
                 scope: this.scope,
                 remoteTransports$: this.remoteTransports$,
-              }
-              nextConnection = new RemoteConnection(args, this.e2eeLivekitOptions());
+              };
+              nextConnection = new RemoteConnection(
+                args,
+                this.e2eeLivekitOptions(),
+              );
             } else {
               logger.log(
                 "SFU remoteConnections$ use prev connection: ",
@@ -1952,16 +1958,20 @@ export class CallViewModel extends ViewModel {
       .pipe(this.scope.bind())
       .subscribe(({ start, stop }) => {
         for (const c of stop) {
-          logger.info(`Disconnecting from ${c.localTransport.livekit_service_url}`);
+          logger.info(
+            `Disconnecting from ${c.localTransport.livekit_service_url}`,
+          );
           c.stop().catch((err) => {
             // TODO: better error handling
             logger.error("MuteState: handler error", err);
-          });;
+          });
         }
         for (const c of start) {
           c.start().then(
             () =>
-              logger.info(`Connected to ${c.localTransport.livekit_service_url}`),
+              logger.info(
+                `Connected to ${c.localTransport.livekit_service_url}`,
+              ),
             (e) =>
               logger.error(
                 `Failed to start connection to ${c.localTransport.livekit_service_url}`,

@@ -24,9 +24,8 @@ import {
   mockMatrixRoomMember,
   mockMediaDevices,
   mockRtcMembership,
-  mockTrack
+  mockTrack,
 } from "../utils/test";
-
 
 export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
 
@@ -65,8 +64,8 @@ it("should render for member", () => {
   const p = {
     id: "test:123",
     participant: undefined,
-    member: carol
-  }
+    member: carol,
+  };
   const livekitRoom = mockLivekitRoom(
     {},
     {
@@ -95,8 +94,8 @@ it("should not render without member", () => {
   const p = {
     id: "test:123",
     participant: undefined,
-    member: carol
-  }
+    member: carol,
+  };
   const livekitRoom = mockLivekitRoom(
     {},
     {
@@ -122,8 +121,8 @@ it("should not setup audioContext gain and pan if there is no need to.", () => {
   const p = {
     id: "test:123",
     participant: undefined,
-    member: carol
-  }
+    member: carol,
+  };
   const livekitRoom = mockLivekitRoom(
     {},
     {
@@ -160,8 +159,8 @@ it("should setup audioContext gain and pan", () => {
   const p = {
     id: "test:123",
     participant: undefined,
-    member: carol
-  }
+    member: carol,
+  };
   const livekitRoom = mockLivekitRoom(
     {},
     {
@@ -173,7 +172,8 @@ it("should setup audioContext gain and pan", () => {
       <LivekitRoomAudioRenderer
         participants={[p]}
         url={""}
-        livekitRoom={livekitRoom}      />
+        livekitRoom={livekitRoom}
+      />
     </MediaDevicesProvider>,
   );
 

@@ -419,7 +419,9 @@ export const deviceStub = {
   select(): void {},
 };
 
-export function mockMediaDevices(data: Partial<MediaDevices>): MockedObject<MediaDevices> {
+export function mockMediaDevices(
+  data: Partial<MediaDevices>,
+): MockedObject<MediaDevices> {
   return vi.mocked<MediaDevices>({
     audioInput: deviceStub,
     audioOutput: deviceStub,

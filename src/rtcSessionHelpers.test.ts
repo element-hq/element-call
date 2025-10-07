@@ -23,38 +23,37 @@ vi.mock("./widget", () => ({
   ...actualWidget,
   widget: {
     api: {
-      setAlwaysOnScreen: (): void => {
-      },
-      transport: { send: vi.fn(), reply: vi.fn(), stop: vi.fn() }
+      setAlwaysOnScreen: (): void => {},
+      transport: { send: vi.fn(), reply: vi.fn(), stop: vi.fn() },
     },
-    lazyActions: new EventEmitter()
-  }
+    lazyActions: new EventEmitter(),
+  },
 }));
 
 test("It joins the correct Session", async () => {
   const focusFromOlderMembership = {
     type: "livekit",
     livekit_service_url: "http://my-oldest-member-service-url.com",
-    livekit_alias: "my-oldest-member-service-alias"
+    livekit_alias: "my-oldest-member-service-alias",
   };
 
   const focusConfigFromWellKnown = {
     type: "livekit",
-    livekit_service_url: "http://my-well-known-service-url.com"
+    livekit_service_url: "http://my-well-known-service-url.com",
   };
   const focusConfigFromWellKnown2 = {
     type: "livekit",
-    livekit_service_url: "http://my-well-known-service-url2.com"
+    livekit_service_url: "http://my-well-known-service-url2.com",
   };
   const clientWellKnown = {
     "org.matrix.msc4143.rtc_foci": [
       focusConfigFromWellKnown,
-      focusConfigFromWellKnown2
-    ]
+      focusConfigFromWellKnown2,
+    ],
   };
 
   mockConfig({
-    livekit: { livekit_service_url: "http://my-default-service-url.com" }
+    livekit: { livekit_service_url: "http://my-default-service-url.com" },
   });
 
   vi.spyOn(AutoDiscovery, "getRawClientConfig").mockImplementation(
@@ -63,7 +62,7 @@ test("It joins the correct Session", async () => {
         return Promise.resolve(clientWellKnown);
       }
       return Promise.resolve({});
-    }
+    },
   );
 
   const mockedSession = vi.mocked({
@@ -75,64 +74,67 @@ test("It joins the correct Session", async () => {
           access_token: "ACCCESS_TOKEN",
           token_type: "Bearer",
           matrix_server_name: "localhost",
-          expires_in: 10000
-        })
-      }
+          expires_in: 10000,
+        }),
+      },
     },
     memberships: [],
     getFocusInUse: vi.fn().mockReturnValue(focusFromOlderMembership),
     getOldestMembership: vi.fn().mockReturnValue({
-      getPreferredFoci: vi.fn().mockReturnValue([focusFromOlderMembership])
+      getPreferredFoci: vi.fn().mockReturnValue([focusFromOlderMembership]),
     }),
-    joinRoomSession: vi.fn()
+    joinRoomSession: vi.fn(),
   }) as unknown as MatrixRTCSession;
 
-  await enterRTCSession(mockedSession, {
+  await enterRTCSession(
+    mockedSession,
+    {
       livekit_alias: "roomId",
       livekit_service_url: "http://my-well-known-service-url.com",
-      type: "livekit"
+      type: "livekit",
     },
-    true);
+    true,
+  );
 
   expect(mockedSession.joinRoomSession).toHaveBeenLastCalledWith(
     [
       {
         livekit_alias: "my-oldest-member-service-alias",
         livekit_service_url: "http://my-oldest-member-service-url.com",
-        type: "livekit"
+        type: "livekit",
       },
       {
         livekit_alias: "roomId",
         livekit_service_url: "http://my-well-known-service-url.com",
-        type: "livekit"
+        type: "livekit",
       },
       {
         livekit_alias: "roomId",
         livekit_service_url: "http://my-well-known-service-url2.com",
-        type: "livekit"
+        type: "livekit",
       },
       {
         livekit_alias: "roomId",
         livekit_service_url: "http://my-default-service-url.com",
-        type: "livekit"
-      }
+        type: "livekit",
+      },
     ],
     {
       focus_selection: "oldest_membership",
-      type: "livekit"
+      type: "livekit",
     },
     {
       manageMediaKeys: false,
       useLegacyMemberEvents: false,
       useNewMembershipManager: true,
-      useExperimentalToDeviceTransport: false
-    }
+      useExperimentalToDeviceTransport: false,
+    },
   );
 });
 
 async function testLeaveRTCSession(
   cause: "user" | "error",
-  expectClose: boolean
+  expectClose: boolean,
 ): Promise<void> {
   vi.clearAllMocks();
   const session = { leaveRoomSession: vi.fn() } as unknown as MatrixRTCSession;
@@ -140,18 +142,18 @@ async function testLeaveRTCSession(
   expect(session.leaveRoomSession).toHaveBeenCalled();
   expect(widget!.api.transport.send).toHaveBeenCalledWith(
     ElementWidgetActions.HangupCall,
-    expect.anything()
+    expect.anything(),
   );
   if (expectClose) {
     expect(widget!.api.transport.send).toHaveBeenCalledWith(
       ElementWidgetActions.Close,
-      expect.anything()
+      expect.anything(),
     );
     expect(widget!.api.transport.stop).toHaveBeenCalled();
   } else {
     expect(widget!.api.transport.send).not.toHaveBeenCalledWith(
       ElementWidgetActions.Close,
-      expect.anything()
+      expect.anything(),
     );
     expect(widget!.api.transport.stop).not.toHaveBeenCalled();
   }
@@ -179,24 +181,26 @@ test("It fails with configuration error if no live kit url config is set in fall
     room: {
       roomId: "roomId",
       client: {
-        getDomain: vi.fn().mockReturnValue("example.org")
-      }
+        getDomain: vi.fn().mockReturnValue("example.org"),
+      },
     },
     memberships: [],
     getFocusInUse: vi.fn(),
-    joinRoomSession: vi.fn()
+    joinRoomSession: vi.fn(),
   }) as unknown as MatrixRTCSession;
 
-  await expect(enterRTCSession(
-    mockedSession,
-    {
-      livekit_alias: "roomId",
-      livekit_service_url: "http://my-well-known-service-url.com",
-      type: "livekit"
-    },
-    true
-  )).rejects.toThrowError(
-    expect.objectContaining({ code: ErrorCode.MISSING_MATRIX_RTC_TRANSPORT })
+  await expect(
+    enterRTCSession(
+      mockedSession,
+      {
+        livekit_alias: "roomId",
+        livekit_service_url: "http://my-well-known-service-url.com",
+        type: "livekit",
+      },
+      true,
+    ),
+  ).rejects.toThrowError(
+    expect.objectContaining({ code: ErrorCode.MISSING_MATRIX_RTC_TRANSPORT }),
   );
 });
 
@@ -206,9 +210,9 @@ test("It should not fail with configuration error if homeserver config has livek
     "org.matrix.msc4143.rtc_foci": [
       {
         type: "livekit",
-        livekit_service_url: "http://my-well-known-service-url.com"
-      }
-    ]
+        livekit_service_url: "http://my-well-known-service-url.com",
+      },
+    ],
   });
 
   const mockedSession = vi.mocked({
@@ -220,19 +224,22 @@ test("It should not fail with configuration error if homeserver config has livek
           access_token: "ACCCESS_TOKEN",
           token_type: "Bearer",
           matrix_server_name: "localhost",
-          expires_in: 10000
-        })
-      }
+          expires_in: 10000,
+        }),
+      },
     },
     memberships: [],
     getFocusInUse: vi.fn(),
-    joinRoomSession: vi.fn()
+    joinRoomSession: vi.fn(),
   }) as unknown as MatrixRTCSession;
 
-  await enterRTCSession(mockedSession, {
+  await enterRTCSession(
+    mockedSession,
+    {
       livekit_alias: "roomId",
       livekit_service_url: "http://my-well-known-service-url.com",
-      type: "livekit"
+      type: "livekit",
     },
-    true);
+    true,
+  );
 });
