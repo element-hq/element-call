@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { afterEach, describe, expect, it, type Mock, Mocked, type MockedObject, vi } from "vitest";
-import { type CallMembership, type LivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
+import { afterEach, describe, expect, it, type Mock, type MockedObject, vi } from "vitest";
+import type { CallMembership, LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, of } from "rxjs";
 import {
   ConnectionState,
@@ -28,7 +28,6 @@ import { PublishConnection } from "./PublishConnection.ts";
 import { mockMediaDevices, mockMuteStates } from "../utils/test.ts";
 import type { ProcessorState } from "../livekit/TrackProcessorContext.tsx";
 import { type MuteStates } from "./MuteStates.ts";
-import { DeviceLabel, MediaDevice, SelectedDevice } from "./MediaDevices.ts";
 
 
 let testScope: ObservableScope;
@@ -41,9 +40,9 @@ let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 let fakeRoomEventEmiter: EventEmitter;
-let fakeMembershipsFocusMap$: BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>;
+let fakeMembershipsFocusMap$: BehaviorSubject<{ membership: CallMembership; transport: LivekitTransport }[]>;
 
-const livekitFocus: LivekitFocus = {
+const livekitFocus: LivekitTransport = {
   livekit_alias: "!roomID:example.org",
   livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
   type: "livekit"
@@ -62,7 +61,7 @@ function setupTest(): void {
     ),
     getDeviceId: vi.fn().mockReturnValue("ABCDEF")
   } as unknown as OpenIDClientParts);
-  fakeMembershipsFocusMap$ = new BehaviorSubject<{ membership: CallMembership; focus: LivekitFocus }[]>([]);
+  fakeMembershipsFocusMap$ = new BehaviorSubject<{ membership: CallMembership; transport: LivekitTransport }[]>([]);
 
   localParticipantEventEmiter = new EventEmitter();
 
@@ -98,8 +97,8 @@ function setupRemoteConnection(): RemoteConnection {
 
   const opts: ConnectionOpts = {
     client: client,
-    focus: livekitFocus,
-    membershipsFocusMap$: fakeMembershipsFocusMap$,
+    transport: livekitFocus,
+    remoteTransports$: fakeMembershipsFocusMap$,
     scope: testScope,
     livekitRoomFactory: () => fakeLivekitRoom
   };
@@ -142,8 +141,8 @@ describe("Start connection states", () => {
 
     const opts: ConnectionOpts = {
       client: client,
-      focus: livekitFocus,
-      membershipsFocusMap$: fakeMembershipsFocusMap$,
+      transport: livekitFocus,
+      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom
     };
@@ -162,8 +161,8 @@ describe("Start connection states", () => {
 
     const opts: ConnectionOpts = {
       client: client,
-      focus: livekitFocus,
-      membershipsFocusMap$: fakeMembershipsFocusMap$,
+      transport: livekitFocus,
+      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom
     };
@@ -215,8 +214,8 @@ describe("Start connection states", () => {
 
     const opts: ConnectionOpts = {
       client: client,
-      focus: livekitFocus,
-      membershipsFocusMap$: fakeMembershipsFocusMap$,
+      transport: livekitFocus,
+      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom
     };
@@ -274,8 +273,8 @@ describe("Start connection states", () => {
 
     const opts: ConnectionOpts = {
       client: client,
-      focus: livekitFocus,
-      membershipsFocusMap$: fakeMembershipsFocusMap$,
+      transport: livekitFocus,
+      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom
     };
@@ -502,7 +501,7 @@ describe("Publishing participants observations", () => {
     expect(observedPublishers.pop()!.length).toEqual(0);
 
 
-    const otherFocus: LivekitFocus = {
+    const otherFocus: LivekitTransport = {
       livekit_alias: "!roomID:example.org",
       livekit_service_url: "https://other-matrix-rtc.example.org/livekit/jwt",
       type: "livekit"
@@ -511,10 +510,10 @@ describe("Publishing participants observations", () => {
 
     const rtcMemberships = [
       // Say bob is on the same focus
-      { membership: fakeRtcMemberShip("@bob:example.org", "DEV111"), focus: livekitFocus },
+      { membership: fakeRtcMemberShip("@bob:example.org", "DEV111"), transport: livekitFocus },
       // Alice and carol is on a different focus
-      { membership: fakeRtcMemberShip("@alice:example.org", "DEV000"), focus: otherFocus },
-      { membership: fakeRtcMemberShip("@carol:example.org", "DEV222"), focus: otherFocus }
+      { membership: fakeRtcMemberShip("@alice:example.org", "DEV000"), transport: otherFocus },
+      { membership: fakeRtcMemberShip("@carol:example.org", "DEV222"), transport: otherFocus }
       // NO DAVE YET
     ];
     // signal this change in rtc memberships
@@ -528,7 +527,7 @@ describe("Publishing participants observations", () => {
 
     // Now let's make dan join the rtc memberships
     rtcMemberships
-      .push({ membership: fakeRtcMemberShip("@dan:example.org", "DEV333"), focus: livekitFocus });
+      .push({ membership: fakeRtcMemberShip("@dan:example.org", "DEV333"), transport: livekitFocus });
     fakeMembershipsFocusMap$.next(rtcMemberships);
 
     // We should have bob and dan has publishers now
@@ -581,7 +580,7 @@ describe("Publishing participants observations", () => {
 
     const rtcMemberships = [
       // Say bob is on the same focus
-      { membership: fakeRtcMemberShip("@bob:example.org", "DEV111"), focus: livekitFocus }
+      { membership: fakeRtcMemberShip("@bob:example.org", "DEV111"), transport: livekitFocus }
     ];
     // signal this change in rtc memberships
     fakeMembershipsFocusMap$.next(rtcMemberships);
@@ -610,7 +609,7 @@ describe("Publishing participants observations", () => {
 
 describe("PublishConnection", () => {
 
-  let fakeBlurProcessor: ProcessorWrapper<BackgroundOptions>;
+  // let fakeBlurProcessor: ProcessorWrapper<BackgroundOptions>;
   let roomFactoryMock: Mock<() => LivekitRoom>;
   let muteStates: MockedObject<MuteStates>;
 
@@ -622,14 +621,13 @@ describe("PublishConnection", () => {
 
     muteStates = mockMuteStates();
 
-    fakeBlurProcessor = vi.mocked<ProcessorWrapper<BackgroundOptions>>({
-      name: "BackgroundBlur",
-      start: vi.fn().mockResolvedValue(undefined),
-      stop: vi.fn().mockResolvedValue(undefined),
-      setOptions: vi.fn().mockResolvedValue(undefined),
-      getOptions: vi.fn().mockReturnValue({ strength: 0.5 }),
-      isRunning: vi.fn().mockReturnValue(false)
-    });
+    // fakeBlurProcessor = vi.mocked<ProcessorWrapper<BackgroundOptions>>({
+    //   name: "BackgroundBlur",
+    //   restart: vi.fn().mockResolvedValue(undefined),
+    //   setOptions: vi.fn().mockResolvedValue(undefined),
+    //   getOptions: vi.fn().mockReturnValue({ strength: 0.5 }),
+    //   isRunning: vi.fn().mockReturnValue(false)
+    // });
 
 
   }
@@ -638,7 +636,7 @@ describe("PublishConnection", () => {
   describe("Livekit room creation", () => {
 
 
-    function createSetup() {
+    function createSetup(): void {
       setUpPublishConnection();
 
       const fakeTrackProcessorSubject$ = new BehaviorSubject<ProcessorState>({
@@ -648,8 +646,8 @@ describe("PublishConnection", () => {
 
       const opts: ConnectionOpts = {
         client: client,
-        focus: livekitFocus,
-        membershipsFocusMap$: fakeMembershipsFocusMap$,
+        transport: livekitFocus,
+        remoteTransports$: fakeMembershipsFocusMap$,
         scope: testScope,
         livekitRoomFactory: roomFactoryMock
       };

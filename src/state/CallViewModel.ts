@@ -28,6 +28,7 @@ import {
   EventType,
   RoomEvent,
 } from "matrix-js-sdk";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 import {
   BehaviorSubject,
   EMPTY,
@@ -36,7 +37,6 @@ import {
   Subject,
   combineLatest,
   concat,
-  concatMap,
   distinctUntilChanged,
   endWith,
   filter,
@@ -48,6 +48,7 @@ import {
   of,
   pairwise,
   race,
+  repeat,
   scan,
   skip,
   skipWhile,
@@ -57,6 +58,7 @@ import {
   switchScan,
   take,
   takeUntil,
+  takeWhile,
   tap,
   throttleTime,
   timer,
@@ -64,7 +66,8 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
-  isLivekitFocus,
+  isLivekitTransport,
+  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
@@ -90,6 +93,7 @@ import {
 import { ObservableScope } from "./ObservableScope";
 import {
   duplicateTiles,
+  multiSfu,
   playReactionsSound,
   showReactions,
 } from "../settings/settings";
@@ -118,7 +122,7 @@ import { constant, type Behavior } from "./Behavior";
 import {
   enterRTCSession,
   getLivekitAlias,
-  makeFocus,
+  makeTransport,
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
@@ -128,6 +132,7 @@ import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../widget";
 import { PublishConnection } from "./PublishConnection.ts";
+import { type Async, async, mapAsync, ready } from "./Async";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -299,7 +304,7 @@ class UserMedia {
   public readonly presenter$: Behavior<boolean>;
   public constructor(
     public readonly id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant: LocalParticipant | RemoteParticipant | undefined,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
@@ -372,7 +377,7 @@ class ScreenShare {
 
   public constructor(
     id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant: LocalParticipant | RemoteParticipant,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
@@ -450,41 +455,35 @@ export class CallViewModel extends ViewModel {
         }
       : undefined;
 
-  private readonly localFocus = makeFocus(this.matrixRTCSession);
+  private readonly join$ = new Subject<void>();
 
-  private readonly localConnection = this.localFocus.then(
-    (focus) => {
-      const args: ConnectionOpts = {
-        focus,
-        client: this.matrixRTCSession.room.client,
-        scope: this.scope,
-        membershipsFocusMap$: this.membershipsAndFocusMap$,
-      }
-      return new PublishConnection(
-        args,
-        this.mediaDevices,
-        this.muteStates,
-        this.e2eeLivekitOptions(),
-        this.scope.behavior(this.trackProcessorState$),
-      )
-    }
+  public join(): void {
+    this.join$.next();
+  }
+
+  // This is functionally the same Observable as leave$, except here it's
+  // hoisted to the top of the class. This enables the cyclic dependency between
+  // leave$ -> autoLeave$ -> callPickupState$ -> livekitConnectionState$ ->
+  // localConnection$ -> transports$ -> joined$ -> leave$.
+  private readonly leaveHoisted$ = new Subject<
+    "user" | "timeout" | "decline" | "allOthersLeft"
+  >();
+
+  /**
+   * Whether we are joined to the call. This reflects our local state rather
+   * than whether all connections are truly up and running.
+   */
+  private readonly joined$ = this.scope.behavior(
+    this.join$.pipe(
+      map(() => true),
+      // Using takeUntil with the repeat operator is perfectly valid.
+      // eslint-disable-next-line rxjs/no-unsafe-takeuntil
+      takeUntil(this.leaveHoisted$),
+      endWith(false),
+      repeat(),
+      startWith(false),
+    ),
   );
-
-  public readonly livekitConnectionState$ =
-    this.scope.behavior(
-      from(this.localConnection).pipe(
-        switchMap((c) =>
-          c.focusedConnectionState$.pipe(
-            map((s) => {
-             if (s.state === "ConnectedToLkRoom") return s.connectionState;
-             return ConnectionState.Disconnected
-            }),
-            distinctUntilChanged(),
-          ),
-        ),
-        startWith(ConnectionState.Disconnected),
-      ),
-    )
 
 
   /**
@@ -502,122 +501,224 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  private readonly membershipsAndFocusMap$ = this.scope.behavior(
-    this.memberships$.pipe(
-      map((memberships) =>
-        memberships.flatMap((m) => {
-          const f = this.matrixRTCSession.resolveActiveFocus(m);
-          return f && isLivekitFocus(f) ? [{ membership: m, focus: f }] : [];
-        }),
-      ),
-    ),
-  );
+  /**
+   * The transport that we would personally prefer to publish on (if not for the
+   * transport preferences of others, perhaps).
+   */
+  private readonly preferredTransport = makeTransport(this.matrixRTCSession);
 
-  private readonly livekitServiceUrls$ = this.membershipsAndFocusMap$.pipe(
-    map((v) => new Set(v.map(({ focus }) => focus.livekit_service_url))),
-  );
-
-  private readonly remoteConnections$ = this.scope.behavior(
-    combineLatest([this.localFocus, this.livekitServiceUrls$]).pipe(
-      accumulate(
-        new Map<string, Connection>(),
-        (prev, [localFocus, focusUrls]) => {
-          const stopped = new Map(prev);
-          const next = new Map<string, Connection>();
-          for (const focusUrl of focusUrls) {
-            if (focusUrl !== localFocus.livekit_service_url) {
-              stopped.delete(focusUrl);
-
-              let nextConnection = prev.get(focusUrl);
-              if (!nextConnection) {
-                logger.log(
-                  "SFU remoteConnections$ construct new connection: ",
-                  focusUrl,
-                );
-                const args: ConnectionOpts = {
-                  focus: {
-                    type: "livekit",
-                    livekit_service_url: focusUrl,
-                    livekit_alias: this.livekitAlias,
-                  },
-                  client: this.matrixRTCSession.room.client,
-                  scope: this.scope,
-                  membershipsFocusMap$: this.membershipsAndFocusMap$,
+  /**
+   * Lists the transports used by ourselves, plus all other MatrixRTC session
+   * members.
+   */
+  private readonly transports$: Behavior<{
+    local: Async<LivekitTransport>;
+    remote: { membership: CallMembership; transport: LivekitTransport }[];
+  } | null> = this.scope.behavior(
+    this.joined$.pipe(
+      switchMap((joined) =>
+        joined
+          ? combineLatest(
+              [
+                async(this.preferredTransport),
+                this.memberships$,
+                multiSfu.value$,
+              ],
+              (preferred, memberships, multiSfu) => {
+                const remote = memberships.flatMap((m) => {
+                  if (m.sender === this.userId && m.deviceId === this.deviceId)
+                    return [];
+                  const t = this.matrixRTCSession.resolveActiveFocus(m);
+                  return t && isLivekitTransport(t)
+                    ? [{ membership: m, transport: t }]
+                    : [];
+                });
+                let local = preferred;
+                if (!multiSfu) {
+                  const oldest = this.matrixRTCSession.getOldestMembership();
+                  if (oldest !== undefined) {
+                    const selection = oldest.getTransport(oldest);
+                    if (isLivekitTransport(selection)) local = ready(selection);
+                  }
                 }
-                nextConnection = new RemoteConnection(args, this.e2eeLivekitOptions());
-              } else {
-                logger.log(
-                  "SFU remoteConnections$ use prev connection: ",
-                  focusUrl,
-                );
-              }
-              next.set(focusUrl, nextConnection);
-            }
-          }
-
-          for (const connection of stopped.values()) connection.stop();
-          return next;
-        },
+                return { local, remote };
+              },
+            )
+          : of(null),
       ),
     ),
   );
 
-  private readonly join$ = new Subject<void>();
+  /**
+   * Lists the transports used by each MatrixRTC session member other than
+   * ourselves.
+   */
+  private readonly remoteTransports$ = this.scope.behavior(
+    this.transports$.pipe(map((transports) => transports?.remote ?? [])),
+  );
 
-  public join(): void {
-    this.join$.next();
-  }
+  /**
+   * The transport over which we should be actively publishing our media.
+   */
+  private readonly localTransport$: Behavior<Async<LivekitTransport> | null> =
+    this.scope.behavior(
+      this.transports$.pipe(
+        map((transports) => transports?.local ?? null),
+        distinctUntilChanged(deepCompare),
+      ),
+    );
 
-  private readonly connectionInstructions$ = this.join$.pipe(
-    switchMap(() => this.remoteConnections$),
-    startWith(new Map<string, Connection>()),
+  private readonly localConnectionAndTransport$ = this.scope.behavior(
+    this.localTransport$.pipe(
+      map(
+        (transport) =>
+          transport &&
+          mapAsync(transport, (transport) => {
+
+            const opts: ConnectionOpts = {
+              transport,
+              client: this.matrixRTCSession.room.client,
+              scope: this.scope,
+              remoteTransports$: this.remoteTransports$,
+            };
+            return {
+            connection: new PublishConnection(
+              opts,
+              this.mediaDevices,
+              this.muteStates,
+              this.e2eeLivekitOptions(),
+              this.scope.behavior(this.trackProcessorState$),
+            ),
+            transport,
+          }}),
+      ),
+    ),
+  );
+
+  private readonly localConnection$ = this.scope.behavior(
+    this.localConnectionAndTransport$.pipe(
+      map((value) => value && mapAsync(value, ({ connection }) => connection)),
+    ),
+  );
+
+  public readonly livekitConnectionState$ = this.scope.behavior(
+    this.localConnection$.pipe(
+      switchMap((c) =>
+        c?.state === "ready"
+          // TODO mapping to ConnectionState for compatibility, but we should use the full state?
+          ? c.value.focusedConnectionState$.pipe(
+            map((s) => {
+              if (s.state === "ConnectedToLkRoom") return s.connectionState;
+              return ConnectionState.Disconnected
+            }),
+            distinctUntilChanged(),
+          )
+          : of(ConnectionState.Disconnected),
+      ),
+    ),
+  );
+
+  /**
+   * Connections for each transport in use by one or more session members that
+   * is *distinct* from the local transport.
+   */
+  private readonly remoteConnections$ = this.scope.behavior(
+    this.transports$.pipe(
+      accumulate(new Map<string, Connection>(), (prev, transports) => {
+        const next = new Map<string, Connection>();
+
+        // Until the local transport becomes ready we have no idea which
+        // transports will actually need a dedicated remote connection
+        if (transports?.local.state === "ready") {
+          const localServiceUrl = transports.local.value.livekit_service_url;
+          const remoteServiceUrls = new Set(
+            transports.remote.flatMap(({ membership, transport }) => {
+              const t = this.matrixRTCSession.resolveActiveFocus(membership);
+              return t &&
+                isLivekitTransport(t) &&
+                t.livekit_service_url !== localServiceUrl
+                ? [t.livekit_service_url]
+                : [];
+            }),
+          );
+
+          for (const remoteServiceUrl of remoteServiceUrls) {
+            let nextConnection = prev.get(remoteServiceUrl);
+            if (!nextConnection) {
+              logger.log(
+                "SFU remoteConnections$ construct new connection: ",
+                remoteServiceUrl,
+              );
+
+              const args: ConnectionOpts = {
+                transport: {
+                  type: "livekit",
+                  livekit_service_url: remoteServiceUrl,
+                  livekit_alias: this.livekitAlias,
+                },
+                client: this.matrixRTCSession.room.client,
+                scope: this.scope,
+                remoteTransports$: this.remoteTransports$,
+              }
+              nextConnection = new RemoteConnection(args, this.e2eeLivekitOptions());
+            } else {
+              logger.log(
+                "SFU remoteConnections$ use prev connection: ",
+                remoteServiceUrl,
+              );
+            }
+            next.set(remoteServiceUrl, nextConnection);
+          }
+        }
+
+        return next;
+      }),
+      map((transports) => [...transports.values()]),
+    ),
+  );
+
+  /**
+   * A list of the connections that should be active at any given time.
+   */
+  private readonly connections$ = this.scope.behavior<Connection[]>(
+    combineLatest(
+      [this.localConnection$, this.remoteConnections$],
+      (local, remote) => [
+        ...(local?.state === "ready" ? [local.value] : []),
+        ...remote.values(),
+      ],
+    ),
+  );
+
+  /**
+   * Emits with connections whenever they should be started or stopped.
+   */
+  private readonly connectionInstructions$ = this.connections$.pipe(
     pairwise(),
     map(([prev, next]) => {
       const start = new Set(next.values());
-      for (const connection of prev.values()) start.delete(connection);
+      for (const connection of prev) start.delete(connection);
       const stop = new Set(prev.values());
-      for (const connection of next.values()) stop.delete(connection);
+      for (const connection of next) stop.delete(connection);
 
       return { start, stop };
     }),
-    this.scope.share,
-  );
-
-  private readonly startConnection$ = this.connectionInstructions$.pipe(
-    concatMap(({ start }) => start),
-  );
-  private readonly stopConnection$ = this.connectionInstructions$.pipe(
-    concatMap(({ stop }) => stop),
   );
 
   public readonly allLivekitRooms$ = this.scope.behavior(
-    combineLatest([
-      this.remoteConnections$,
-      this.localConnection,
-      this.localFocus,
-    ]).pipe(
-      map(([remoteConnections, localConnection, localFocus]) =>
-        Array.from(remoteConnections.entries())
-          .map(
-            ([index, c]) =>
-              ({
-                room: c.livekitRoom,
-                url: index,
-              }) as { room: LivekitRoom; url: string; isLocal?: boolean },
-          )
-          .concat([
-            {
-              room: localConnection.livekitRoom,
-              url: localFocus.livekit_service_url,
-              isLocal: true,
-            },
-          ]),
+    this.connections$.pipe(
+      map((connections) =>
+        [...connections.values()].map((c) => ({
+          room: c.livekitRoom,
+          url: c.localTransport.livekit_service_url,
+          isLocal: c instanceof PublishConnection,
+        })),
       ),
-      startWith([]),
     ),
   );
 
   private readonly userId = this.matrixRoom.client.getUserId();
+  private readonly deviceId = this.matrixRoom.client.getDeviceId();
 
   private readonly matrixConnected$ = this.scope.behavior(
     // To consider ourselves connected to MatrixRTC, we check the following:
@@ -690,41 +791,52 @@ export class CallViewModel extends ViewModel {
   // in a split-brained state.
   private readonly pretendToBeDisconnected$ = this.reconnecting$;
 
+  /**
+   * Lists, for each LiveKit room, the LiveKit participants whose media should
+   * be presented.
+   */
   public readonly participantsByRoom$ = this.scope.behavior<
     {
       livekitRoom: LivekitRoom;
       url: string;
       participants: {
-        participant: LocalParticipant | RemoteParticipant;
+        id: string;
+        participant: LocalParticipant | RemoteParticipant | undefined;
         member: RoomMember;
       }[];
     }[]
   >(
-    combineLatest([this.localConnection, this.localFocus])
+    // TODO: Move this logic into Connection/PublishConnection if possible
+    this.localConnectionAndTransport$
       .pipe(
-        switchMap(([localConnection, localFocus]) => {
+        switchMap((values) => {
+          if (values?.state !== "ready") return [];
+          const localConnection = values.value.connection;
           const memberError = (): never => {
             throw new Error("No room member for call membership");
           };
           const localParticipant = {
+            id: "local",
             participant: localConnection.livekitRoom.localParticipant,
             member:
               this.matrixRoom.getMember(this.userId ?? "") ?? memberError(),
           };
 
           return this.remoteConnections$.pipe(
-            switchMap((connections) =>
+            switchMap((remoteConnections) =>
               combineLatest(
-                [
-                  [localFocus.livekit_service_url, localConnection] as const,
-                  ...connections,
-                ].map(([url, c]) =>
+                [localConnection, ...remoteConnections].map((c) =>
                   c.publishingParticipants$.pipe(
                     map((ps) => {
                       const participants: {
-                        participant: LocalParticipant | RemoteParticipant;
+                        id: string;
+                        participant:
+                          | LocalParticipant
+                          | RemoteParticipant
+                          | undefined;
                         member: RoomMember;
                       }[] = ps.map(({ participant, membership }) => ({
+                        id: `${membership.sender}:${membership.deviceId}`,
                         participant,
                         member:
                           getRoomMemberFromRtcMember(
@@ -737,7 +849,7 @@ export class CallViewModel extends ViewModel {
 
                       return {
                         livekitRoom: c.livekitRoom,
-                        url,
+                        url: c.localTransport.livekit_service_url,
                         participants,
                       };
                     }),
@@ -820,34 +932,17 @@ export class CallViewModel extends ViewModel {
    * List of MediaItems that we want to display
    */
   private readonly mediaItems$ = this.scope.behavior<MediaItem[]>(
-    combineLatest([
-      this.participantsByRoom$,
-      duplicateTiles.value$,
-      this.memberships$,
-    ]).pipe(
-      scan((prevItems, [participantsByRoom, duplicateTiles, memberships]) => {
+    combineLatest([this.participantsByRoom$, duplicateTiles.value$]).pipe(
+      scan((prevItems, [participantsByRoom, duplicateTiles]) => {
         const newItems: Map<string, UserMedia | ScreenShare> = new Map(
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
             for (const { livekitRoom, participants } of participantsByRoom) {
-              for (const { participant, member } of participants) {
-                const matrixId = participant.isLocal
-                  ? "local"
-                  : participant.identity;
-
+              for (const { id, participant, member } of participants) {
                 for (let i = 0; i < 1 + duplicateTiles; i++) {
-                  const mediaId = `${matrixId}:${i}`;
-                  let prevMedia = prevItems.get(mediaId);
-                  if (prevMedia && prevMedia instanceof UserMedia) {
+                  const mediaId = `${id}:${i}`;
+                  const prevMedia = prevItems.get(mediaId);
+                  if (prevMedia instanceof UserMedia)
                     prevMedia.updateParticipant(participant);
-                    if (prevMedia.vm.member === undefined) {
-                      // We have a previous media created because of the `debugShowNonMember` flag.
-                      // In this case we actually replace the media item.
-                      // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
-                      // option and if we always find a room member for each rtc member (which also
-                      // only fails if we have a fundamental problem)
-                      prevMedia = undefined;
-                    }
-                  }
 
                   yield [
                     mediaId,
@@ -864,14 +959,10 @@ export class CallViewModel extends ViewModel {
                         this.mediaDevices,
                         this.pretendToBeDisconnected$,
                         this.memberDisplaynames$.pipe(
-                          map((m) => m.get(matrixId) ?? "[👻]"),
+                          map((m) => m.get(id) ?? "[👻]"),
                         ),
-                        this.handsRaised$.pipe(
-                          map((v) => v[matrixId]?.time ?? null),
-                        ),
-                        this.reactions$.pipe(
-                          map((v) => v[matrixId] ?? undefined),
-                        ),
+                        this.handsRaised$.pipe(map((v) => v[id]?.time ?? null)),
+                        this.reactions$.pipe(map((v) => v[id] ?? undefined)),
                       ),
                   ];
 
@@ -888,7 +979,7 @@ export class CallViewModel extends ViewModel {
                           livekitRoom,
                           this.pretendToBeDisconnected$,
                           this.memberDisplaynames$.pipe(
-                            map((m) => m.get(matrixId) ?? "[👻]"),
+                            map((m) => m.get(id) ?? "[👻]"),
                           ),
                         ),
                     ];
@@ -940,6 +1031,16 @@ export class CallViewModel extends ViewModel {
    */
   public readonly participantCount$ = this.scope.behavior(
     this.memberships$.pipe(map((ms) => ms.length)),
+  );
+
+  private readonly allOthersLeft$ = this.memberships$.pipe(
+    pairwise(),
+    filter(
+      ([prev, current]) =>
+        current.every((m) => m.sender === this.userId) &&
+        prev.some((m) => m.sender !== this.userId),
+    ),
+    map(() => {}),
   );
 
   private readonly didSendCallNotification$ = fromEvent(
@@ -1066,56 +1167,12 @@ export class CallViewModel extends ViewModel {
     map(() => {}),
     throttleTime(THROTTLE_SOUND_EFFECT_MS),
   );
-  /**
-   * This observable tracks the matrix users that are currently in the call.
-   * There can be just one matrix user with multiple participants (see also participantChanges$)
-   */
-  public readonly matrixUserChanges$ = this.userMedia$.pipe(
-    map(
-      (mediaItems) =>
-        new Set(
-          mediaItems
-            .map((m) => m.vm.member?.userId)
-            .filter((id) => id !== undefined),
-        ),
-    ),
-    scan<
-      Set<string>,
-      {
-        userIds: Set<string>;
-        joinedUserIds: Set<string>;
-        leftUserIds: Set<string>;
-      }
-    >(
-      (prevState, userIds) => {
-        const left = new Set(
-          [...prevState.userIds].filter((id) => !userIds.has(id)),
-        );
-        const joined = new Set(
-          [...userIds].filter((id) => !prevState.userIds.has(id)),
-        );
-        return { userIds: userIds, joinedUserIds: joined, leftUserIds: left };
-      },
-      { userIds: new Set(), joinedUserIds: new Set(), leftUserIds: new Set() },
-    ),
-  );
-
-  private readonly allOthersLeft$ = this.matrixUserChanges$.pipe(
-    filter(({ userIds, leftUserIds }) => {
-      if (!this.userId) {
-        logger.warn("Could not access user ID to compute allOthersLeft");
-        return false;
-      }
-      return (
-        userIds.size === 1 && userIds.has(this.userId) && leftUserIds.size > 0
-      );
-    }),
-    map(() => "allOthersLeft" as const),
-  );
 
   // Public for testing
   public readonly autoLeave$ = merge(
-    this.options.autoLeaveWhenOthersLeft ? this.allOthersLeft$ : NEVER,
+    this.options.autoLeaveWhenOthersLeft
+      ? this.allOthersLeft$.pipe(map(() => "allOthersLeft" as const))
+      : NEVER,
     this.callPickupState$.pipe(
       filter((state) => state === "timeout" || state === "decline"),
     ),
@@ -1143,6 +1200,9 @@ export class CallViewModel extends ViewModel {
     merge(this.userHangup$, this.widgetHangup$).pipe(
       map(() => "user" as const),
     ),
+  ).pipe(
+    this.scope.share,
+    tap((reason) => this.leaveHoisted$.next(reason)),
   );
 
   /**
@@ -1831,9 +1891,12 @@ export class CallViewModel extends ViewModel {
    * Whether we are sharing our screen.
    */
   public readonly sharingScreen$ = this.scope.behavior(
-    from(this.localConnection).pipe(
-      switchMap((c) => sharingScreen$(c.livekitRoom.localParticipant)),
-      startWith(false),
+    from(this.localConnection$).pipe(
+      switchMap((c) =>
+        c?.state === "ready"
+          ? sharingScreen$(c.value.livekitRoom.localParticipant)
+          : of(false),
+      ),
     ),
   );
 
@@ -1845,17 +1908,26 @@ export class CallViewModel extends ViewModel {
     "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
     !this.urlParams.hideScreensharing
       ? (): void =>
-          void this.localConnection.then(
-            (c) =>
-              void c.livekitRoom.localParticipant
-                .setScreenShareEnabled(!this.sharingScreen$.value, {
-                  audio: true,
-                  selfBrowserSurface: "include",
-                  surfaceSwitching: "include",
-                  systemAudio: "include",
-                })
-                .catch(logger.error),
-          )
+          // Once a connection is ready...
+          void this.localConnection$
+            .pipe(
+              takeWhile((c) => c !== null && c.state !== "error"),
+              switchMap((c) => (c.state === "ready" ? of(c.value) : NEVER)),
+              take(1),
+              this.scope.bind(),
+            )
+            // ...toggle screen sharing.
+            .subscribe(
+              (c) =>
+                void c.livekitRoom.localParticipant
+                  .setScreenShareEnabled(!this.sharingScreen$.value, {
+                    audio: true,
+                    selfBrowserSurface: "include",
+                    surfaceSwitching: "include",
+                    systemAudio: "include",
+                  })
+                  .catch(logger.error),
+            )
       : null;
 
   public constructor(
@@ -1875,61 +1947,72 @@ export class CallViewModel extends ViewModel {
   ) {
     super();
 
-    void from(this.localConnection)
+    // Start and stop local and remote connections as needed
+    this.connectionInstructions$
       .pipe(this.scope.bind())
-      .subscribe(
-        (c) =>
-          void c
-            .start()
-            // eslint-disable-next-line no-console
-            .then(() => console.log("successfully started publishing"))
-            // eslint-disable-next-line no-console
-            .catch((e) => console.error("failed to start publishing", e)),
-      );
-
-    this.startConnection$
-      .pipe(this.scope.bind())
-      .subscribe((c) => void c.start());
-    this.stopConnection$.pipe(this.scope.bind()).subscribe((c) => void c.stop());
-
-    combineLatest([this.localFocus, this.join$])
-      .pipe(this.scope.bind())
-      .subscribe(([localFocus]) => {
-        void enterRTCSession(
-          this.matrixRTCSession,
-          localFocus,
-          this.options.encryptionSystem.kind !== E2eeType.NONE,
-          true,
-          true,
-        )
-          .catch((e) => logger.error("Error entering RTC session", e))
-          .then(() =>
-            // Update our member event when our mute state changes.
-            this.muteStates.video.enabled$
-              .pipe(this.scope.bind(), takeUntil(this.leave$))
-              // eslint-disable-next-line rxjs/no-nested-subscribe
-              .subscribe(
-                (videoEnabled) =>
-                  // TODO: Ensure that these calls are serialized in case of
-                  // fast video toggling
-                  void this.matrixRTCSession.updateCallIntent(
-                    videoEnabled ? "video" : "audio",
-                  ),
+      .subscribe(({ start, stop }) => {
+        for (const c of stop) {
+          logger.info(`Disconnecting from ${c.localTransport.livekit_service_url}`);
+          c.stop();
+        }
+        for (const c of start) {
+          c.start().then(
+            () =>
+              logger.info(`Connected to ${c.localTransport.livekit_service_url}`),
+            (e) =>
+              logger.error(
+                `Failed to start connection to ${c.localTransport.livekit_service_url}`,
+                e,
               ),
           );
+        }
       });
 
-    this.leave$.pipe(this.scope.bind()).subscribe(() => {
-      // Only sends Matrix leave event. The LiveKit session will disconnect once, uh...
-      // (TODO-MULTI-SFU does anything actually cause it to disconnect?)
-      void this.matrixRTCSession
-        .leaveRoomSession()
-        .catch((e) => logger.error("Error leaving RTC session", e))
-        .then(async () =>
-          widget?.api.transport
-            .send(ElementWidgetActions.HangupCall, {})
-            .catch((e) => logger.error("Failed to send hangup action", e)),
+    // Start and stop session membership as needed
+    this.scope.reconcile(this.localTransport$, async (localTransport) => {
+      if (localTransport?.state === "ready") {
+        try {
+          await enterRTCSession(
+            this.matrixRTCSession,
+            localTransport.value,
+            this.options.encryptionSystem.kind !== E2eeType.NONE,
+            true,
+            true,
+            multiSfu.value$.value,
+          );
+        } catch (e) {
+          logger.error("Error entering RTC session", e);
+        }
+        // Update our member event when our mute state changes.
+        const muteSubscription = this.muteStates.video.enabled$.subscribe(
+          (videoEnabled) =>
+            // TODO: Ensure that these calls are serialized in case of
+            // fast video toggling
+            void this.matrixRTCSession.updateCallIntent(
+              videoEnabled ? "video" : "audio",
+            ),
         );
+
+        return async (): Promise<void> => {
+          muteSubscription.unsubscribe();
+          // Only sends Matrix leave event. The LiveKit session will disconnect
+          // as soon as either the stopConnection$ handler above gets to it or
+          // the view model is destroyed.
+          try {
+            await this.matrixRTCSession.leaveRoomSession();
+          } catch (e) {
+            logger.error("Error leaving RTC session", e);
+          }
+          try {
+            await widget?.api.transport.send(
+              ElementWidgetActions.HangupCall,
+              {},
+            );
+          } catch (e) {
+            logger.error("Failed to send hangup action", e);
+          }
+        };
+      }
     });
 
     // Pause upstream of all local media tracks when we're disconnected from
@@ -1938,10 +2021,12 @@ export class CallViewModel extends ViewModel {
     // We use matrixConnected$ rather than reconnecting$ because we want to
     // pause tracks during the initial joining sequence too until we're sure
     // that our own media is displayed on screen.
-    void this.localConnection.then((localConnection) =>
-      this.matrixConnected$.pipe(this.scope.bind()).subscribe((connected) => {
+    combineLatest([this.localConnection$, this.matrixConnected$])
+      .pipe(this.scope.bind())
+      .subscribe(([connection, connected]) => {
+        if (connection?.state !== "ready") return;
         const publications =
-          localConnection.livekitRoom.localParticipant.trackPublications.values();
+          connection.value.livekitRoom.localParticipant.trackPublications.values();
         if (connected) {
           for (const p of publications) {
             if (p.track?.isUpstreamPaused === true) {
@@ -1977,8 +2062,7 @@ export class CallViewModel extends ViewModel {
             }
           }
         }
-      }),
-    );
+      });
 
     // Join automatically
     this.join(); // TODO-MULTI-SFU: Use this view model for the lobby as well, and only call this once 'join' is clicked?

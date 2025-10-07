@@ -7,10 +7,14 @@ Please see LICENSE in the repository root for full details.
 
 import {
   BehaviorSubject,
+  catchError,
   distinctUntilChanged,
+  EMPTY,
+  endWith,
+  filter,
   type Observable,
   share,
-  Subject,
+  take,
   takeUntil,
 } from "rxjs";
 
@@ -24,9 +28,11 @@ const nothing = Symbol("nothing");
  * A scope which limits the execution lifetime of its bound Observables.
  */
 export class ObservableScope {
-  private readonly ended$ = new Subject<void>();
+  private readonly ended$ = new BehaviorSubject(false);
 
-  private readonly bindImpl: MonoTypeOperator = takeUntil(this.ended$);
+  private readonly bindImpl: MonoTypeOperator = takeUntil(
+    this.ended$.pipe(filter((ended) => ended)),
+  );
 
   /**
    * Binds an Observable to this scope, so that it completes when the scope
@@ -78,15 +84,54 @@ export class ObservableScope {
    * Ends the scope, causing any bound Observables to complete.
    */
   public end(): void {
-    this.ended$.next();
-    this.ended$.complete();
+    this.ended$.next(true);
   }
 
   /**
    * Register a callback to be executed when the scope is ended.
    */
   public onEnd(callback: () => void): void {
-    this.ended$.subscribe(callback);
+    this.ended$
+      .pipe(
+        filter((ended) => ended),
+        take(1),
+      )
+      .subscribe(callback);
+  }
+
+  // TODO-MULTI-SFU Dear Future Robin, please document this. Love, Past Robin.
+  public reconcile<T>(
+    value$: Behavior<T>,
+    callback: (value: T) => Promise<(() => Promise<void>) | undefined>,
+  ): void {
+    let latestValue: T | typeof nothing = nothing;
+    let reconciledValue: T | typeof nothing = nothing;
+    let cleanUp: (() => Promise<void>) | undefined = undefined;
+    let callbackPromise: Promise<(() => Promise<void>) | undefined>;
+    value$
+      .pipe(
+        catchError(() => EMPTY),
+        this.bind(),
+        endWith(nothing),
+      )
+      .subscribe((value) => {
+        void (async (): Promise<void> => {
+          if (latestValue === nothing) {
+            latestValue = value;
+            while (latestValue !== reconciledValue) {
+              await cleanUp?.();
+              reconciledValue = latestValue;
+              if (latestValue !== nothing) {
+                callbackPromise = callback(latestValue);
+                cleanUp = await callbackPromise;
+              }
+            }
+            latestValue = nothing;
+          } else {
+            latestValue = value;
+          }
+        })();
+      });
   }
 }
 
