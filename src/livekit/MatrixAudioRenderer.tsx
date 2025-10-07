@@ -33,7 +33,9 @@ export interface MatrixAudioRendererProps {
    * that are not expected to be in the rtc session.
    */
   participants: {
-    participant: Participant;
+    id: string;
+    // TODO it appears to be optional as per InCallView? but what does that mean here? a rtc member not yet joined in livekit?
+    participant: Participant | undefined;
     member: RoomMember;
   }[];
   /**
@@ -82,7 +84,7 @@ export function LivekitRoomAudioRenderer({
     if (loggedInvalidIdentities.current.has(identity)) return;
     logger.warn(
       `[MatrixAudioRenderer] Audio track ${identity} from ${url} has no matching matrix call member`,
-      `current members: ${participants.map((p) => p.participant.identity)}`,
+      `current members: ${participants.map((p) => p.participant?.identity)}`,
       `track will not get rendered`,
     );
     loggedInvalidIdentities.current.add(identity);

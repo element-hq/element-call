@@ -5,12 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, describe, it, vi, beforeAll } from "vitest";
+import { expect, describe, it, beforeAll } from "vitest";
 import { render } from "@testing-library/react";
 
 import { type MatrixInfo, VideoPreview } from "./VideoPreview";
 import { E2eeType } from "../e2ee/e2eeType";
-import { mockMuteStates } from "../utils/test";
 
 describe("VideoPreview", () => {
   const matrixInfo: MatrixInfo = {
@@ -42,7 +41,7 @@ describe("VideoPreview", () => {
     const { queryByRole } = render(
       <VideoPreview
         matrixInfo={matrixInfo}
-        muteStates={mockMuteStates()}
+        videoEnabled={true}
         videoTrack={null}
         children={<></>}
       />,
@@ -54,7 +53,7 @@ describe("VideoPreview", () => {
     const { queryByRole } = render(
       <VideoPreview
         matrixInfo={matrixInfo}
-        muteStates={mockMuteStates()}
+        videoEnabled={true}
         videoTrack={null}
         children={<></>}
       />,

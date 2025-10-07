@@ -24,7 +24,6 @@ import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
-import { type MuteStates } from "./MuteStates";
 import { InCallView } from "./InCallView";
 import {
   mockLivekitRoom,
@@ -48,6 +47,7 @@ import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
+import { type MuteStates } from "../state/MuteStates.ts";
 
 // vi.hoisted(() => {
 //   localStorage = {} as unknown as Storage;
@@ -136,7 +136,7 @@ function createInCallView(): RenderResult & {
   const muteState = {
     audio: { enabled: false },
     video: { enabled: false },
-  } as MuteStates;
+  } as unknown as MuteStates;
   const livekitRoom = mockLivekitRoom(
     {
       localParticipant,
@@ -176,11 +176,6 @@ function createInCallView(): RenderResult & {
                   },
                 }}
                 matrixRoom={room}
-                livekitRoom={livekitRoom}
-                participantCount={0}
-                onLeft={function (): void {
-                  throw new Error("Function not implemented.");
-                }}
                 onShareClick={null}
               />
             </RoomContext>

@@ -23,7 +23,7 @@ import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
-import { useObservable, useObservableEagerState } from "observable-hooks";
+import { useObservable } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import {
@@ -112,7 +112,6 @@ import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 import ringtoneMp3 from "../sound/ringtone.mp3?url";
 import ringtoneOgg from "../sound/ringtone.ogg?url";
-import { ConnectionLostError } from "../utils/errors.ts";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
 
 const maxTapDurationMs = 400;
@@ -206,7 +205,8 @@ export const InCallView: FC<InCallViewProps> = ({
     useReactionsSender();
 
   useWakeLock();
-  const connectionState = useObservableEagerState(vm.livekitConnectionState$);
+  // TODO multi-sfu This is unused now??
+  // const connectionState = useObservableEagerState(vm.livekitConnectionState$);
 
   // annoyingly we don't get the disconnection reason this way,
   // only by listening for the emitted event

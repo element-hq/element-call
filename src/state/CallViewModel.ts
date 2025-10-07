@@ -132,7 +132,7 @@ import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../widget";
 import { PublishConnection } from "./PublishConnection.ts";
-import { type Async, async, mapAsync, ready } from "./Async";
+import { type Async, async$, mapAsync, ready } from "./Async";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -520,7 +520,7 @@ export class CallViewModel extends ViewModel {
         joined
           ? combineLatest(
               [
-                async(this.preferredTransport),
+                async$(this.preferredTransport),
                 this.memberships$,
                 multiSfu.value$,
               ],
@@ -1953,7 +1953,10 @@ export class CallViewModel extends ViewModel {
       .subscribe(({ start, stop }) => {
         for (const c of stop) {
           logger.info(`Disconnecting from ${c.localTransport.livekit_service_url}`);
-          c.stop();
+          c.stop().catch((err) => {
+            // TODO: better error handling
+            logger.error("MuteState: handler error", err);
+          });;
         }
         for (const c of start) {
           c.start().then(

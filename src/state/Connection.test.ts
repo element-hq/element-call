@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterEach, describe, expect, it, type Mock, type MockedObject, vi } from "vitest";
-import type { CallMembership, LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, of } from "rxjs";
 import {
   ConnectionState,
@@ -18,8 +17,8 @@ import {
 import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
-import { type BackgroundOptions, type ProcessorWrapper } from "@livekit/track-processors";
 
+import type { CallMembership, LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type ConnectionOpts, type FocusConnectionState, RemoteConnection } from "./Connection.ts";
 import { ObservableScope } from "./ObservableScope.ts";
 import { type OpenIDClientParts } from "../livekit/openIDSFU.ts";
@@ -28,7 +27,6 @@ import { PublishConnection } from "./PublishConnection.ts";
 import { mockMediaDevices, mockMuteStates } from "../utils/test.ts";
 import type { ProcessorState } from "../livekit/TrackProcessorContext.tsx";
 import { type MuteStates } from "./MuteStates.ts";
-
 
 let testScope: ObservableScope;
 
@@ -551,7 +549,7 @@ describe("Publishing participants observations", () => {
   });
 
 
-  it("should be scoped to parent scope", async () => {
+  it("should be scoped to parent scope", (): void => {
     setupTest();
 
     const connection = setupRemoteConnection();
@@ -613,7 +611,7 @@ describe("PublishConnection", () => {
   let roomFactoryMock: Mock<() => LivekitRoom>;
   let muteStates: MockedObject<MuteStates>;
 
-  function setUpPublishConnection() {
+  function setUpPublishConnection(): void {
     setupTest();
 
     roomFactoryMock = vi.fn().mockReturnValue(fakeLivekitRoom);
@@ -673,9 +671,13 @@ describe("PublishConnection", () => {
         }
       };
 
+      // TODO understand what is wrong with our mocking that requires ts-expect-error
       const fakeDevices = mockMediaDevices({
+        // @ts-expect-error Mocking only
         audioInput,
+        // @ts-expect-error Mocking only
         videoInput,
+        // @ts-expect-error Mocking only
         audioOutput
       });
 
