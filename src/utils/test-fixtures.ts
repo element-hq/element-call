@@ -9,7 +9,6 @@ import {
   mockRtcMembership,
   mockMatrixRoomMember,
   mockRemoteParticipant,
-  mockLocalParticipant,
 } from "./test";
 
 export const localRtcMember = mockRtcMembership("@carol:example.org", "1111");
@@ -18,7 +17,7 @@ export const localRtcMemberDevice2 = mockRtcMembership(
   "2222",
 );
 export const local = mockMatrixRoomMember(localRtcMember);
-export const localParticipant = mockLocalParticipant({ identity: "" });
+// export const localParticipant = mockLocalParticipant({ identity: "" });
 export const localId = `${local.userId}:${localRtcMember.deviceId}`;
 
 export const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
