@@ -13,12 +13,12 @@ import {
   Track
 } from "livekit-client";
 import { map, NEVER, type Observable, type Subscription, switchMap } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import type { Behavior } from "./Behavior.ts";
 import type { MediaDevices, SelectedDevice } from "./MediaDevices.ts";
 import type { MuteStates } from "./MuteStates.ts";
 import { type ProcessorState, trackProcessorSync } from "../livekit/TrackProcessorContext.tsx";
-import { logger } from "../../../matrix-js-sdk/lib/logger";
 import { getUrlParams } from "../UrlParams.ts";
 import { defaultLiveKitOptions } from "../livekit/options.ts";
 import { getValue } from "../utils/observable.ts";
