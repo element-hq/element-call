@@ -27,11 +27,12 @@ import { ElementWidgetActions, widget } from "../widget";
 import { Config } from "../config/Config";
 import { useUrlParams } from "../UrlParams";
 
-/**
- * If there already are this many participants in the call, we automatically mute
- * the user.
- */
-export const MUTE_PARTICIPANT_COUNT = 8;
+// /**
+//  * If there already are this many participants in the call, we automatically mute
+//  * the user.
+//  */
+// TODO: multi-sfu dead code?
+// export const MUTE_PARTICIPANT_COUNT = 8;
 
 interface DeviceAvailable {
   enabled: boolean;
