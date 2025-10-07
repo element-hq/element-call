@@ -32,7 +32,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   video: TrackReferenceOrPlaceholder | undefined;
   videoFit: "cover" | "contain";
   mirror: boolean;
-  member: RoomMember | undefined;
+  member: RoomMember;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;

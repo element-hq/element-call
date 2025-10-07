@@ -137,7 +137,7 @@ export class MuteStates {
     this.scope,
     this.mediaDevices.audioInput,
     this.joined$,
-    Config.get().media_devices.enable_video,
+    Config.get().media_devices.enable_audio,
   );
   public readonly video = new MuteState(
     this.scope,

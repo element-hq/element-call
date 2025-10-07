@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { connectedParticipantsObserver, connectionStateObserver } from "@livekit/components-core";
 import { type ConnectionState, type E2EEOptions, Room as LivekitRoom, type RoomOptions } from "livekit-client";
-import { type CallMembership, type LivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
+import { type CallMembership, type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, combineLatest } from "rxjs";
 
 import { getSFUConfigWithOpenID, type OpenIDClientParts, type SFUConfig } from "../livekit/openIDSFU";
@@ -17,13 +17,13 @@ import { defaultLiveKitOptions } from "../livekit/options";
 
 export interface ConnectionOpts {
   /** The focus server to connect to. */
-  focus: LivekitFocus;
+  transport: LivekitTransport;
   /** The Matrix client to use for OpenID and SFU config requests. */
   client: OpenIDClientParts;
   /** The observable scope to use for this connection. */
   scope: ObservableScope;
   /** An observable of the current RTC call memberships and their associated focus. */
-  membershipsFocusMap$: Behavior<{ membership: CallMembership; focus: LivekitFocus }[]>;
+  remoteTransports$: Behavior<{ membership: CallMembership; transport: LivekitTransport }[]>;
 
   /** Optional factory to create the Livekit room, mainly for testing purposes. */
   livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
@@ -31,12 +31,12 @@ export interface ConnectionOpts {
 
 export type FocusConnectionState =
   | { state: 'Initialized' }
-  | { state: 'FetchingConfig', focus: LivekitFocus }
-  | { state: 'ConnectingToLkRoom', focus: LivekitFocus }
-  | { state: 'PublishingTracks', focus: LivekitFocus }
-  | { state: 'FailedToStart', error: Error, focus: LivekitFocus }
-  | { state: 'ConnectedToLkRoom', connectionState: ConnectionState, focus: LivekitFocus }
-  | { state: 'Stopped', focus: LivekitFocus };
+  | { state: 'FetchingConfig', focus: LivekitTransport }
+  | { state: 'ConnectingToLkRoom', focus: LivekitTransport }
+  | { state: 'PublishingTracks', focus: LivekitTransport }
+  | { state: 'FailedToStart', error: Error, focus: LivekitTransport }
+  | { state: 'ConnectedToLkRoom', connectionState: ConnectionState, focus: LivekitTransport }
+  | { state: 'Stopped', focus: LivekitTransport };
 
 /**
  * A connection to a Matrix RTC LiveKit backend.
@@ -71,20 +71,20 @@ export class Connection {
   public async start(): Promise<void> {
     this.stopped = false;
     try {
-      this._focusedConnectionState$.next({ state: 'FetchingConfig', focus: this.targetFocus });
+      this._focusedConnectionState$.next({ state: 'FetchingConfig', focus: this.localTransport });
       // TODO could this be loaded earlier to save time?
       const { url, jwt } = await this.getSFUConfigWithOpenID();
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
-      this._focusedConnectionState$.next({ state: 'ConnectingToLkRoom', focus: this.targetFocus });
+      this._focusedConnectionState$.next({ state: 'ConnectingToLkRoom', focus: this.localTransport });
       await this.livekitRoom.connect(url, jwt);
       // If we were stopped while connecting, don't proceed to update state.
       if (this.stopped) return;
 
-      this._focusedConnectionState$.next({ state: 'ConnectedToLkRoom', focus: this.targetFocus, connectionState: this.livekitRoom.state });
+      this._focusedConnectionState$.next({ state: 'ConnectedToLkRoom', focus: this.localTransport, connectionState: this.livekitRoom.state });
     } catch (error) {
-      this._focusedConnectionState$.next({ state: 'FailedToStart', error: error instanceof Error ? error : new Error(`${error}`), focus: this.targetFocus });
+      this._focusedConnectionState$.next({ state: 'FailedToStart', error: error instanceof Error ? error : new Error(`${error}`), focus: this.localTransport });
       throw error;
     }
   }
@@ -93,8 +93,8 @@ export class Connection {
   protected async getSFUConfigWithOpenID(): Promise<SFUConfig> {
     return await getSFUConfigWithOpenID(
       this.client,
-      this.targetFocus.livekit_service_url,
-      this.targetFocus.livekit_alias
+      this.localTransport.livekit_service_url,
+      this.localTransport.livekit_alias
     )
   }
   /**
@@ -106,7 +106,7 @@ export class Connection {
   public async stop(): Promise<void> {
     if (this.stopped) return;
     await this.livekitRoom.disconnect();
-    this._focusedConnectionState$.next({ state: 'Stopped', focus: this.targetFocus });
+    this._focusedConnectionState$.next({ state: 'Stopped', focus: this.localTransport });
     this.stopped = true;
   }
 
@@ -121,7 +121,7 @@ export class Connection {
   /**
    * The focus server to connect to.
    */
-  protected readonly targetFocus: LivekitFocus;
+  public readonly localTransport: LivekitTransport;
 
   private readonly client: OpenIDClientParts;
   /**
@@ -135,11 +135,11 @@ export class Connection {
     public readonly livekitRoom: LivekitRoom,
     opts: ConnectionOpts,
   ) {
-    const { focus, client, scope, membershipsFocusMap$ } =
+    const { transport, client, scope, remoteTransports$ } =
       opts;
 
     this.livekitRoom = livekitRoom
-    this.targetFocus = focus;
+    this.localTransport = transport;
     this.client = client;
 
     this.focusedConnectionState$ = scope.behavior(
@@ -153,23 +153,23 @@ export class Connection {
 
     this.publishingParticipants$ = scope.behavior(
       combineLatest(
-        [participantsIncludingSubscribers$, membershipsFocusMap$],
-        (participants, membershipsFocusMap) =>
-          membershipsFocusMap
+        [participantsIncludingSubscribers$, remoteTransports$],
+        (participants, remoteTransports) =>
+          remoteTransports
             // Find all members that claim to publish on this connection
-            .flatMap(({ membership, focus }) =>
-              focus.livekit_service_url === this.targetFocus.livekit_service_url
+            .flatMap(({ membership, transport }) =>
+              transport.livekit_service_url ===
+              this.localTransport.livekit_service_url
                 ? [membership]
                 : []
             )
-            // Find all associated publishing livekit participant objects
+            // Pair with their associated LiveKit participant (if any)
+            // Uses flatMap to filter out memberships with no associated rtc participant ([])
             .flatMap((membership) => {
-              const participant = participants.find(
-                (p) =>
-                  p.identity === `${membership.sender}:${membership.deviceId}`
-              );
+              const id = `${membership.sender}:${membership.deviceId}`;
+              const participant = participants.find((p) => p.identity === id);
               return participant ? [{ participant, membership }] : [];
-            })
+            }),
       ),
       []
     );

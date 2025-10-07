@@ -16,6 +16,7 @@ import {
   showConnectionStats as showConnectionStatsSetting,
   useNewMembershipManager as useNewMembershipManagerSetting,
   useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
+  multiSfu as multiSfuSetting,
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
 } from "./settings";
@@ -50,6 +51,7 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
     useExperimentalToDeviceTransport,
     setUseExperimentalToDeviceTransport,
   ] = useSetting(useExperimentalToDeviceTransportSetting);
+  const [multiSfu, setMultiSfu] = useSetting(multiSfuSetting);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
@@ -163,6 +165,20 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
               setUseExperimentalToDeviceTransport(event.target.checked);
             },
             [setUseExperimentalToDeviceTransport],
+          )}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="multiSfu"
+          type="checkbox"
+          label={t("developer_mode.multi_sfu")}
+          checked={multiSfu}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setMultiSfu(event.target.checked);
+            },
+            [setMultiSfu],
           )}
         />
       </FieldRow>

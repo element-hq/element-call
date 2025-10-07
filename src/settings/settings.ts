@@ -125,6 +125,8 @@ export const useExperimentalToDeviceTransport = new Setting<boolean>(
   true,
 );
 
+export const multiSfu = new Setting<boolean>("multi-sfu", false);
+
 export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);
 
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
