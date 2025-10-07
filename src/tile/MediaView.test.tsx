@@ -19,7 +19,7 @@ import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
 import { EncryptionStatus } from "../state/MediaViewModel";
-import { mockLocalParticipant } from "../utils/test";
+import { mockLocalParticipant, mockMatrixRoomMember, mockRtcMembership } from "../utils/test";
 
 describe("MediaView", () => {
   const participant = mockLocalParticipant({});
@@ -45,7 +45,10 @@ describe("MediaView", () => {
     mirror: false,
     unencryptedWarning: false,
     video: trackReference,
-    member: undefined,
+    member: mockMatrixRoomMember(
+      mockRtcMembership("@alice:example.org", "CCCC"),
+      { name: "some name" },
+    ),
     localParticipant: false,
     focusable: true,
   };

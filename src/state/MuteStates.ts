@@ -88,7 +88,10 @@ class MuteState<Label, Selected> {
                 } else {
                   subscriber.next(enabled);
                   syncing = true;
-                  sync();
+                  sync().catch((err) => {
+                    // TODO: better error handling
+                    logger.error("MuteState: handler error", err);
+                  });
                 }
               }
             };
@@ -97,7 +100,10 @@ class MuteState<Label, Selected> {
               latestDesired = desired;
               if (syncing === false) {
                 syncing = true;
-                sync();
+                sync().catch((err) => {
+                  // TODO: better error handling
+                  logger.error("MuteState: handler error", err);
+                });
               }
             });
             return (): void => s.unsubscribe();
@@ -132,6 +138,7 @@ class MuteState<Label, Selected> {
   ) {}
 }
 
+// TODO there is another MuteStates in src/room/MuteStates.tsx ?? why
 export class MuteStates {
   public readonly audio = new MuteState(
     this.scope,

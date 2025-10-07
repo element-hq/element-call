@@ -11,7 +11,6 @@ Please see LICENSE in the repository root for full details.
 // dependency references.
 import "matrix-js-sdk/lib/browser-index";
 
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { logger } from "matrix-js-sdk/lib/logger";

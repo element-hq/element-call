@@ -26,7 +26,6 @@ import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-cont
 import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
 
-import { type MuteStates } from "./MuteStates";
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 import { ActiveCall } from "./InCallView";
@@ -47,6 +46,7 @@ import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
 import { constant } from "../state/Behavior";
+import { type MuteStates } from "../state/MuteStates.ts";
 
 vi.mock("../soundUtils");
 vi.mock("../useAudioContext");
@@ -150,7 +150,7 @@ function createGroupCallView(
   const muteState = {
     audio: { enabled: false },
     video: { enabled: false },
-  } as MuteStates;
+  } as unknown as MuteStates;
   const { getByText } = render(
     <BrowserRouter>
       <TooltipProvider>
@@ -164,9 +164,10 @@ function createGroupCallView(
               skipLobby={false}
               header={HeaderStyle.Standard}
               rtcSession={rtcSession as unknown as MatrixRTCSession}
-              isJoined={joined}
               muteStates={muteState}
               widget={widget}
+              joined={true}
+              setJoined={function(value: boolean): void { }}
             />
           </ProcessorProvider>
         </MediaDevicesContext>

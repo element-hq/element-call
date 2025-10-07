@@ -9,12 +9,13 @@ import {
   catchError,
   from,
   map,
-  Observable,
+  type Observable,
   of,
-  startWith,
-  switchMap,
+  startWith
 } from "rxjs";
 
+// TODO where are all the comments? ::cry::
+// There used to be an unitialized state!, a state might not start in loading
 export type Async<A> =
   | { state: "loading" }
   | { state: "error"; value: Error }
@@ -24,21 +25,22 @@ export const loading: Async<never> = { state: "loading" };
 export function error(value: Error): Async<never> {
   return { state: "error", value };
 }
+
 export function ready<A>(value: A): Async<A> {
   return { state: "ready", value };
 }
 
-export function async<A>(promise: Promise<A>): Observable<Async<A>> {
+export function async$<A>(promise: Promise<A>): Observable<Async<A>> {
   return from(promise).pipe(
     map(ready),
     startWith(loading),
-    catchError((e) => of(error(e))),
+    catchError((e: unknown) => of(error(e as Error ?? new Error("Unknown error")))),
   );
 }
 
 export function mapAsync<A, B>(
   async: Async<A>,
-  project: (value: A) => B,
+  project: (value: A) => B
 ): Async<B> {
   return async.state === "ready" ? ready(project(async.value)) : async;
 }
