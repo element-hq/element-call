@@ -149,7 +149,7 @@ export class Connection {
 
   /**
    * An observable of the participants that are publishing on this connection.
-   * This is derived from `participantsIncludingSubscribers$` and `membershipsFocusMap$`.
+   * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
    * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
    */
   public readonly publishingParticipants$;
