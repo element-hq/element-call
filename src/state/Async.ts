@@ -7,8 +7,12 @@ Please see LICENSE in the repository root for full details.
 
 import { catchError, from, map, type Observable, of, startWith } from "rxjs";
 
-// TODO where are all the comments? ::cry::
-// There used to be an unitialized state!, a state might not start in loading
+/**
+ * Data that may need to be loaded asynchronously.
+ *
+ * This type is for when you need to represent the current state of an operation
+ * involving Promises as **immutable data**. See the async$ function below.
+ */
 export type Async<A> =
   | { state: "loading" }
   | { state: "error"; value: Error }
@@ -23,6 +27,11 @@ export function ready<A>(value: A): Async<A> {
   return { state: "ready", value };
 }
 
+/**
+ * Turn a Promise into an Observable async value. The Observable will have the
+ * value "loading" while the Promise is pending, "ready" when the Promise
+ * resolves, and "error" when the Promise rejects.
+ */
 export function async$<A>(promise: Promise<A>): Observable<Async<A>> {
   return from(promise).pipe(
     map(ready),
@@ -33,6 +42,9 @@ export function async$<A>(promise: Promise<A>): Observable<Async<A>> {
   );
 }
 
+/**
+ * If the async value is ready, apply the given function to the inner value.
+ */
 export function mapAsync<A, B>(
   async: Async<A>,
   project: (value: A) => B,
