@@ -286,7 +286,7 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
-  const participantsByRoom = useBehavior(vm.participantsByRoom$);
+  const audioParticipants = useBehavior(vm.audioParticipants$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
   const windowMode = useBehavior(vm.windowMode$);
@@ -860,7 +860,7 @@ export const InCallView: FC<InCallViewProps> = ({
           </Text>
         )
       }
-      {participantsByRoom.map(({ livekitRoom, url, participants }) => (
+      {audioParticipants.map(({ livekitRoom, url, participants }) => (
         <LivekitRoomAudioRenderer
           key={url}
           url={url}

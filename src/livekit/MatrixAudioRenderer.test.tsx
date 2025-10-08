@@ -23,12 +23,7 @@ import { useTracks } from "@livekit/components-react";
 import { testAudioContext } from "../useAudioContext.test";
 import * as MediaDevicesContext from "../MediaDevicesContext";
 import { LivekitRoomAudioRenderer } from "./MatrixAudioRenderer";
-import {
-  mockMatrixRoomMember,
-  mockMediaDevices,
-  mockRtcMembership,
-  mockTrack,
-} from "../utils/test";
+import { mockMediaDevices, mockTrack } from "../utils/test";
 
 export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
 
@@ -80,17 +75,11 @@ function renderTestComponent(
       isLocal,
     } as unknown as RemoteParticipant);
   });
-  const participants = rtcMembers.map(({ userId, deviceId }) => {
+  const participants = rtcMembers.flatMap(({ userId, deviceId }) => {
     const p = liveKitParticipants.find(
       (p) => p.identity === `${userId}:${deviceId}`,
     );
-    const localRtcMember = mockRtcMembership(userId, deviceId);
-    const member = mockMatrixRoomMember(localRtcMember);
-    return {
-      id: `${userId}:${deviceId}`,
-      participant: p,
-      member,
-    };
+    return p === undefined ? [] : [p];
   });
   const livekitRoom = vi.mocked<Room>({
     remoteParticipants: new Map<string, Participant>(
@@ -98,9 +87,7 @@ function renderTestComponent(
     ),
   } as unknown as Room);
 
-  tracks = participants
-    .filter((p) => p.participant)
-    .map((p) => mockTrack(p.participant!)) as TrackReference[];
+  tracks = participants.map((p) => mockTrack(p));
 
   vi.mocked(useTracks).mockReturnValue(tracks);
   return render(

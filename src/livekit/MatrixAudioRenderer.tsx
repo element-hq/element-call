@@ -6,7 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { getTrackReferenceId } from "@livekit/components-core";
-import { type Room as LivekitRoom, type Participant } from "livekit-client";
+import {
+  type RemoteParticipant,
+  type Room as LivekitRoom,
+} from "livekit-client";
 import { type RemoteAudioTrack, Track } from "livekit-client";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -14,13 +17,13 @@ import {
   AudioTrack,
   type AudioTrackProps,
 } from "@livekit/components-react";
-import { type RoomMember } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import * as controls from "../controls";
 import {} from "@livekit/components-core";
+
 export interface MatrixAudioRendererProps {
   /**
    * The service URL of the LiveKit room.
@@ -32,13 +35,7 @@ export interface MatrixAudioRendererProps {
    * This list needs to be composed based on the matrixRTC members so that we do not play audio from users
    * that are not expected to be in the rtc session.
    */
-  // TODO: Why do we have this structure? looks like we only need the valid/active participants (not the room member or id)?
-  participants: {
-    id: string;
-    // TODO it appears to be optional as per InCallView? but what does that mean here? a rtc member not yet joined in livekit?
-    participant: Participant | undefined;
-    member: RoomMember;
-  }[];
+  participants: RemoteParticipant[];
   /**
    * If set to `true`, mutes all audio tracks rendered by the component.
    * @remarks
@@ -48,8 +45,7 @@ export interface MatrixAudioRendererProps {
 }
 
 /**
- * The `MatrixAudioRenderer` component is a drop-in solution for adding audio to your LiveKit app.
- * It takes care of handling remote participants’ audio tracks and makes sure that microphones and screen share are audible.
+ * Takes care of handling remote participants’ audio tracks and makes sure that microphones and screen share are audible.
  *
  * It also takes care of the earpiece audio configuration for iOS devices.
  * This is done by using the WebAudio API to create a stereo pan effect that mimics the earpiece audio.
@@ -70,12 +66,7 @@ export function LivekitRoomAudioRenderer({
   // This is the list of valid identities that are allowed to play audio.
   // It is derived from the list of matrix rtc members.
   const validIdentities = useMemo(
-    () =>
-      new Set(
-        participants
-          .filter(({ participant }) => participant) // filter out participants that are not yet joined in livekit
-          .map(({ participant }) => participant!.identity),
-      ),
+    () => new Set(participants.map((p) => p.identity)),
     [participants],
   );
 
@@ -92,7 +83,7 @@ export function LivekitRoomAudioRenderer({
     if (loggedInvalidIdentities.current.has(identity)) return;
     logger.warn(
       `[MatrixAudioRenderer] Audio track ${identity} from ${url} has no matching matrix call member`,
-      `current members: ${participants.map((p) => p.participant?.identity)}`,
+      `current members: ${participants.map((p) => p.identity)}`,
       `track will not get rendered`,
     );
     loggedInvalidIdentities.current.add(identity);
