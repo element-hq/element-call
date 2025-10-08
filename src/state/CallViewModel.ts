@@ -607,7 +607,7 @@ export class CallViewModel extends ViewModel {
       switchMap((c) =>
         c?.state === "ready"
           ? // TODO mapping to ConnectionState for compatibility, but we should use the full state?
-            c.value.focusedConnectionState$.pipe(
+            c.value.focusConnectionState$.pipe(
               map((s) => {
                 if (s.state === "ConnectedToLkRoom") return s.connectionState;
                 return ConnectionState.Disconnected;
