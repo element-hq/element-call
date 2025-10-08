@@ -138,7 +138,6 @@ class MuteState<Label, Selected> {
   ) {}
 }
 
-// TODO there is another MuteStates in src/room/MuteStates.tsx ?? why
 export class MuteStates {
   public readonly audio = new MuteState(
     this.scope,
