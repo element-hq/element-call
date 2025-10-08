@@ -85,7 +85,7 @@ jobs:
         run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
       - name: Upload
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2
+        uses: softprops/action-gh-release@aec2ec56f94eb8180ceec724245f64ef008b89f5 # v2
         with:
           files: |
             ${{ env.FILENAME_PREFIX }}.tar.gz
@@ -103,7 +103,7 @@ jobs:
       id-token: write # required for the provenance flag on npm publish
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -144,7 +144,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -199,7 +199,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           path: element-call
 
@@ -212,7 +212,7 @@ jobs:
           path: element-call/embedded/ios/Sources/dist
 
       - name: Checkout element-call-swift
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           repository: element-hq/element-call-swift
           path: element-call-swift
@@ -264,7 +264,7 @@ jobs:
           echo "iOS: ${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}"
       - name: Add release notes
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2
+        uses: softprops/action-gh-release@aec2ec56f94eb8180ceec724245f64ef008b89f5 # v2
         with:
           append_body: true
           body: |
