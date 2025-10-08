@@ -36,7 +36,7 @@ import { Connection, type ConnectionOpts } from "./Connection.ts";
 import { type ObservableScope } from "./ObservableScope.ts";
 
 /**
- * A connection to the publishing LiveKit.e. the local livekit room, the one the user is publishing to.
+ * A connection to the local LiveKit room, the one the user is publishing to.
  * This connection will publish the local user's audio and video tracks.
  */
 export class PublishConnection extends Connection {
