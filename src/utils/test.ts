@@ -28,6 +28,7 @@ import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixr
 import {
   type LocalParticipant,
   type LocalTrackPublication,
+  type Participant,
   type RemoteParticipant,
   type RemoteTrackPublication,
   type Room as LivekitRoom,
@@ -392,11 +393,9 @@ export class MockRTCSession extends TypedEventEmitter<
   }
 }
 
-export const mockTrack = (identity: string): TrackReference =>
+export const mockTrack = (participant: Participant): TrackReference =>
   ({
-    participant: {
-      identity,
-    },
+    participant,
     publication: {
       kind: Track.Kind.Audio,
       source: "mic",
