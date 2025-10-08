@@ -14,7 +14,7 @@ import {
   type Room as LivekitRoom,
   type LocalParticipant,
   ParticipantEvent,
-  type RemoteParticipant,
+  RemoteParticipant,
   type Participant,
 } from "livekit-client";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
@@ -793,7 +793,7 @@ export class CallViewModel extends ViewModel {
    * Lists, for each LiveKit room, the LiveKit participants whose media should
    * be presented.
    */
-  public readonly participantsByRoom$ = this.scope.behavior<
+  private readonly participantsByRoom$ = this.scope.behavior<
     {
       livekitRoom: LivekitRoom;
       url: string;
@@ -859,6 +859,25 @@ export class CallViewModel extends ViewModel {
         }),
       )
       .pipe(startWith([]), pauseWhen(this.pretendToBeDisconnected$)),
+  );
+
+  /**
+   * Lists, for each LiveKit room, the LiveKit participants whose audio should
+   * be rendered.
+   */
+  // (This is effectively just participantsByRoom$ with a stricter type)
+  public readonly audioParticipants$ = this.scope.behavior(
+    this.participantsByRoom$.pipe(
+      map((data) =>
+        data.map(({ livekitRoom, url, participants }) => ({
+          livekitRoom,
+          url,
+          participants: participants.flatMap(({ participant }) =>
+            participant instanceof RemoteParticipant ? [participant] : [],
+          ),
+        })),
+      ),
+    ),
   );
 
   /**
