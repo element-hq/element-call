@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 import { map, type Observable, of, type SchedulerLike } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
-import { expect, type MockedObject, vi, vitest } from "vitest";
+import { expect, vi, vitest } from "vitest";
 import {
   type RoomMember,
   type Room as MatrixRoom,
@@ -418,15 +418,13 @@ export const deviceStub = {
   select(): void {},
 };
 
-export function mockMediaDevices(
-  data: Partial<MediaDevices>,
-): MockedObject<MediaDevices> {
-  return vi.mocked<MediaDevices>({
+export function mockMediaDevices(data: Partial<MediaDevices>): MediaDevices {
+  return {
     audioInput: deviceStub,
     audioOutput: deviceStub,
     videoInput: deviceStub,
     ...data,
-  } as MediaDevices);
+  } as MediaDevices;
 }
 
 export function mockMuteStates(
