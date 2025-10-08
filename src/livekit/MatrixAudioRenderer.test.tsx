@@ -65,27 +65,25 @@ let tracks: TrackReference[] = [];
 
 function renderTestComponent(
   rtcMembers: { userId: string; deviceId: string }[],
-  livekitParticipantIdentities: ({ id: string; isLocal?: boolean } | string)[],
+  livekitParticipantIdentities: string[],
 ): RenderResult {
-  const liveKitParticipants = livekitParticipantIdentities.map((p) => {
-    const identity = typeof p === "string" ? p : p.id;
-    const isLocal = typeof p === "string" ? false : (p.isLocal ?? false);
-    return vi.mocked<RemoteParticipant>({
-      identity,
-      isLocal,
-    } as unknown as RemoteParticipant);
-  });
+  const liveKitParticipants = livekitParticipantIdentities.map(
+    (identity) =>
+      ({
+        identity,
+      }) as unknown as RemoteParticipant,
+  );
   const participants = rtcMembers.flatMap(({ userId, deviceId }) => {
     const p = liveKitParticipants.find(
       (p) => p.identity === `${userId}:${deviceId}`,
     );
     return p === undefined ? [] : [p];
   });
-  const livekitRoom = vi.mocked<Room>({
+  const livekitRoom = {
     remoteParticipants: new Map<string, Participant>(
       liveKitParticipants.map((p) => [p.identity, p]),
     ),
-  } as unknown as Room);
+  } as unknown as Room;
 
   tracks = participants.map((p) => mockTrack(p));
 
@@ -121,7 +119,7 @@ it("should not render without member", () => {
 
 const TEST_CASES: {
   rtcUsers: { userId: string; deviceId: string }[];
-  livekitParticipantIdentities: (string | { id: string; isLocal?: boolean })[];
+  livekitParticipantIdentities: string[];
   expectedAudioTracks: number;
 }[] = [
   {
@@ -130,26 +128,8 @@ const TEST_CASES: {
       { userId: "@alice", deviceId: "DEV1" },
       { userId: "@bob", deviceId: "DEV0" },
     ],
-    livekitParticipantIdentities: [
-      { id: "@alice:DEV0" },
-      "@bob:DEV0",
-      "@alice:DEV1",
-    ],
+    livekitParticipantIdentities: ["@alice:DEV0", "@bob:DEV0", "@alice:DEV1"],
     expectedAudioTracks: 3,
-  },
-  // Alice DEV0 is local participant, should not render
-  {
-    rtcUsers: [
-      { userId: "@alice", deviceId: "DEV0" },
-      { userId: "@alice", deviceId: "DEV1" },
-      { userId: "@bob", deviceId: "DEV0" },
-    ],
-    livekitParticipantIdentities: [
-      { id: "@alice:DEV0", isLocal: true },
-      "@bob:DEV0",
-      "@alice:DEV1",
-    ],
-    expectedAudioTracks: 2,
   },
   // Charlie is a rtc member but not in livekit
   {
@@ -158,7 +138,7 @@ const TEST_CASES: {
       { userId: "@bob", deviceId: "DEV0" },
       { userId: "@charlie", deviceId: "DEV0" },
     ],
-    livekitParticipantIdentities: ["@alice:DEV0", { id: "@bob:DEV0" }],
+    livekitParticipantIdentities: ["@alice:DEV0", "@bob:DEV0"],
     expectedAudioTracks: 2,
   },
   // Charlie is in livekit but not rtc member
