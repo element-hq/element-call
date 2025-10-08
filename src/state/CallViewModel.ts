@@ -563,7 +563,7 @@ export class CallViewModel extends ViewModel {
   /**
    * The transport over which we should be actively publishing our media.
    */
-  private readonly localTransport$: Behavior<Async<LivekitTransport> | null> =
+  private readonly localTransport$: Behavior<Async<LivekitTransport>> =
     this.scope.behavior(
       this.transports$.pipe(
         map((transports) => transports?.local ?? null),
@@ -571,38 +571,30 @@ export class CallViewModel extends ViewModel {
       ),
     );
 
-  private readonly localConnectionAndTransport$ = this.scope.behavior(
-    this.localTransport$.pipe(
-      map(
-        (transport) =>
-          transport &&
-          mapAsync(transport, (transport) => {
-            const opts: ConnectionOpts = {
-              transport,
-              client: this.matrixRTCSession.room.client,
-              scope: this.scope,
-              remoteTransports$: this.remoteTransports$,
-            };
-            return {
-              connection: new PublishConnection(
+  private readonly localConnection$: Behavior<Async<PublishConnection>> =
+    this.scope.behavior(
+      this.localTransport$.pipe(
+        map(
+          (transport) =>
+            transport &&
+            mapAsync(transport, (transport) => {
+              const opts: ConnectionOpts = {
+                transport,
+                client: this.matrixRTCSession.room.client,
+                scope: this.scope,
+                remoteTransports$: this.remoteTransports$,
+              };
+              return new PublishConnection(
                 opts,
                 this.mediaDevices,
                 this.muteStates,
                 this.e2eeLivekitOptions(),
                 this.scope.behavior(this.trackProcessorState$),
-              ),
-              transport,
-            };
-          }),
+              );
+            }),
+        ),
       ),
-    ),
-  );
-
-  private readonly localConnection$ = this.scope.behavior(
-    this.localConnectionAndTransport$.pipe(
-      map((value) => value && mapAsync(value, ({ connection }) => connection)),
-    ),
-  );
+    );
 
   public readonly livekitConnectionState$ = this.scope.behavior(
     this.localConnection$.pipe(
@@ -813,11 +805,11 @@ export class CallViewModel extends ViewModel {
     }[]
   >(
     // TODO: Move this logic into Connection/PublishConnection if possible
-    this.localConnectionAndTransport$
+    this.localConnection$
       .pipe(
         switchMap((values) => {
           if (values?.state !== "ready") return [];
-          const localConnection = values.value.connection;
+          const localConnection = values.value;
           const memberError = (): never => {
             throw new Error("No room member for call membership");
           };
