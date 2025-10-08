@@ -159,7 +159,7 @@ describe("Start connection states", () => {
     };
     const connection = new RemoteConnection(opts, undefined);
 
-    expect(connection.focusedConnectionState$.getValue().state).toEqual(
+    expect(connection.focusConnectionState$.getValue().state).toEqual(
       "Initialized",
     );
   });
@@ -179,7 +179,7 @@ describe("Start connection states", () => {
     const connection = new RemoteConnection(opts, undefined);
 
     const capturedStates: FocusConnectionState[] = [];
-    connection.focusedConnectionState$.subscribe((value) => {
+    connection.focusConnectionState$.subscribe((value) => {
       capturedStates.push(value);
     });
 
@@ -231,7 +231,7 @@ describe("Start connection states", () => {
     const connection = new RemoteConnection(opts, undefined);
 
     const capturedStates: FocusConnectionState[] = [];
-    connection.focusedConnectionState$.subscribe((value) => {
+    connection.focusConnectionState$.subscribe((value) => {
       capturedStates.push(value);
     });
 
@@ -287,7 +287,7 @@ describe("Start connection states", () => {
     const connection = new RemoteConnection(opts, undefined);
 
     const capturedStates: FocusConnectionState[] = [];
-    connection.focusedConnectionState$.subscribe((value) => {
+    connection.focusConnectionState$.subscribe((value) => {
       capturedStates.push(value);
     });
 
@@ -343,7 +343,7 @@ describe("Start connection states", () => {
     const connection = setupRemoteConnection();
 
     const capturedState: FocusConnectionState[] = [];
-    connection.focusedConnectionState$.subscribe((value) => {
+    connection.focusConnectionState$.subscribe((value) => {
       capturedState.push(value);
     });
 
@@ -368,7 +368,7 @@ describe("Start connection states", () => {
     await connection.start();
 
     let capturedState: FocusConnectionState[] = [];
-    connection.focusedConnectionState$.subscribe((value) => {
+    connection.focusConnectionState$.subscribe((value) => {
       capturedState.push(value);
     });
 
@@ -417,12 +417,6 @@ describe("Start connection states", () => {
     vi.useFakeTimers();
 
     const connection = setupRemoteConnection();
-
-    let capturedState: FocusConnectionState[] = [];
-    connection.focusedConnectionState$.subscribe((value) => {
-      capturedState.push(value);
-    });
-
     await connection.start();
 
     const stopSpy = vi.spyOn(connection, "stop");
@@ -430,16 +424,6 @@ describe("Start connection states", () => {
 
     expect(stopSpy).toHaveBeenCalled();
     expect(fakeLivekitRoom.disconnect).toHaveBeenCalled();
-
-    /// Ensures that focusedConnectionState$ is bound to the scope.
-    capturedState = [];
-    // the subscription should be closed, and no new state should be received
-    // @ts-expect-error: Accessing private field for testing purposes
-    connection._focusedConnectionState$.next({ state: "Initialized" });
-    // @ts-expect-error: Accessing private field for testing purposes
-    connection._focusedConnectionState$.next({ state: "ConnectingToLkRoom" });
-
-    expect(capturedState.length).toEqual(0);
   });
 });
 

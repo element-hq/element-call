@@ -66,13 +66,14 @@ export type FocusConnectionState =
  */
 export class Connection {
   // Private Behavior
-  private readonly _focusedConnectionState$ =
+  private readonly _focusConnectionState$ =
     new BehaviorSubject<FocusConnectionState>({ state: "Initialized" });
 
   /**
    * The current state of the connection to the focus server.
    */
-  public readonly focusedConnectionState$: Behavior<FocusConnectionState>;
+  public readonly focusConnectionState$: Behavior<FocusConnectionState> =
+    this._focusConnectionState$;
 
   /**
    * Whether the connection has been stopped.
@@ -91,7 +92,7 @@ export class Connection {
   public async start(): Promise<void> {
     this.stopped = false;
     try {
-      this._focusedConnectionState$.next({
+      this._focusConnectionState$.next({
         state: "FetchingConfig",
         focus: this.localTransport,
       });
@@ -100,7 +101,7 @@ export class Connection {
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
-      this._focusedConnectionState$.next({
+      this._focusConnectionState$.next({
         state: "ConnectingToLkRoom",
         focus: this.localTransport,
       });
@@ -108,13 +109,13 @@ export class Connection {
       // If we were stopped while connecting, don't proceed to update state.
       if (this.stopped) return;
 
-      this._focusedConnectionState$.next({
+      this._focusConnectionState$.next({
         state: "ConnectedToLkRoom",
         focus: this.localTransport,
         connectionState: this.livekitRoom.state,
       });
     } catch (error) {
-      this._focusedConnectionState$.next({
+      this._focusConnectionState$.next({
         state: "FailedToStart",
         error: error instanceof Error ? error : new Error(`${error}`),
         focus: this.localTransport,
@@ -139,7 +140,7 @@ export class Connection {
   public async stop(): Promise<void> {
     if (this.stopped) return;
     await this.livekitRoom.disconnect();
-    this._focusedConnectionState$.next({
+    this._focusConnectionState$.next({
       state: "Stopped",
       focus: this.localTransport,
     });
@@ -172,14 +173,8 @@ export class Connection {
   ) {
     const { transport, client, scope, remoteTransports$ } = opts;
 
-    this.livekitRoom = livekitRoom;
     this.localTransport = transport;
     this.client = client;
-
-    this.focusedConnectionState$ = scope.behavior(
-      this._focusedConnectionState$,
-      { state: "Initialized" },
-    );
 
     const participantsIncludingSubscribers$ = scope.behavior(
       connectedParticipantsObserver(this.livekitRoom),
@@ -212,10 +207,10 @@ export class Connection {
     scope
       .behavior<ConnectionState>(connectionStateObserver(this.livekitRoom))
       .subscribe((connectionState) => {
-        const current = this._focusedConnectionState$.value;
+        const current = this._focusConnectionState$.value;
         // Only update the state if we are already connected to the LiveKit room.
         if (current.state === "ConnectedToLkRoom") {
-          this._focusedConnectionState$.next({
+          this._focusConnectionState$.next({
             state: "ConnectedToLkRoom",
             connectionState,
             focus: current.focus,
