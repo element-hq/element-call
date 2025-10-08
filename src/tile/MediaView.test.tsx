@@ -47,10 +47,9 @@ describe("MediaView", () => {
     unencryptedWarning: false,
     video: trackReference,
     member: vi.mocked<RoomMember>({
-      name: () => "some name",
       userId: "@alice:example.com",
       getMxcAvatarUrl: vi.fn().mockReturnValue(undefined),
-    }),
+    } as unknown as RoomMember),
     localParticipant: false,
     focusable: true,
   };
