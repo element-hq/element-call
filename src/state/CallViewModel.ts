@@ -562,16 +562,22 @@ export class CallViewModel extends ViewModel {
 
   /**
    * The transport over which we should be actively publishing our media.
+   * null when not joined.
    */
-  private readonly localTransport$: Behavior<Async<LivekitTransport>> =
+  private readonly localTransport$: Behavior<Async<LivekitTransport> | null> =
     this.scope.behavior(
       this.transports$.pipe(
         map((transports) => transports?.local ?? null),
-        distinctUntilChanged(deepCompare),
+        distinctUntilChanged<Async<LivekitTransport> | null>(deepCompare),
       ),
     );
 
-  private readonly localConnection$: Behavior<Async<PublishConnection>> =
+  /**
+   * The local connection over which we will publish our media. It could
+   * possibly also have some remote users' media available on it.
+   * null when not joined.
+   */
+  private readonly localConnection$: Behavior<Async<PublishConnection> | null> =
     this.scope.behavior(
       this.localTransport$.pipe(
         map(
@@ -807,15 +813,14 @@ export class CallViewModel extends ViewModel {
     // TODO: Move this logic into Connection/PublishConnection if possible
     this.localConnection$
       .pipe(
-        switchMap((values) => {
-          if (values?.state !== "ready") return [];
-          const localConnection = values.value;
+        switchMap((localConnection) => {
+          if (localConnection?.state !== "ready") return [];
           const memberError = (): never => {
             throw new Error("No room member for call membership");
           };
           const localParticipant = {
             id: "local",
-            participant: localConnection.livekitRoom.localParticipant,
+            participant: localConnection.value.livekitRoom.localParticipant,
             member:
               this.matrixRoom.getMember(this.userId ?? "") ?? memberError(),
           };
@@ -823,7 +828,7 @@ export class CallViewModel extends ViewModel {
           return this.remoteConnections$.pipe(
             switchMap((remoteConnections) =>
               combineLatest(
-                [localConnection, ...remoteConnections].map((c) =>
+                [localConnection.value, ...remoteConnections].map((c) =>
                   c.publishingParticipants$.pipe(
                     map((ps) => {
                       const participants: {
@@ -842,7 +847,7 @@ export class CallViewModel extends ViewModel {
                             this.matrixRoom,
                           )?.member ?? memberError(),
                       }));
-                      if (c === localConnection)
+                      if (c === localConnection.value)
                         participants.push(localParticipant);
 
                       return {
@@ -1974,7 +1979,10 @@ export class CallViewModel extends ViewModel {
           );
           c.stop().catch((err) => {
             // TODO: better error handling
-            logger.error("MuteState: handler error", err);
+            logger.error(
+              `Fail to stop connection to ${c.localTransport.livekit_service_url}`,
+              err,
+            );
           });
         }
         for (const c of start) {
