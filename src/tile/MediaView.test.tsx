@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it, test } from "vitest";
+import { describe, expect, it, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -16,6 +16,7 @@ import {
 import { LocalTrackPublication, Track } from "livekit-client";
 import { TrackInfo } from "@livekit/protocol";
 import { type ComponentProps } from "react";
+import { type RoomMember } from "matrix-js-sdk";
 
 import { MediaView } from "./MediaView";
 import { EncryptionStatus } from "../state/MediaViewModel";
@@ -45,7 +46,11 @@ describe("MediaView", () => {
     mirror: false,
     unencryptedWarning: false,
     video: trackReference,
-    member: undefined,
+    member: vi.mocked<RoomMember>({
+      name: () => "some name",
+      userId: "@alice:example.com",
+      getMxcAvatarUrl: vi.fn().mockReturnValue(undefined),
+    }),
     localParticipant: false,
     focusable: true,
   };
@@ -59,9 +64,9 @@ describe("MediaView", () => {
     test("neither video nor avatar are shown", () => {
       render(<MediaView {...baseProps} video={trackReferencePlaceholder} />);
       expect(screen.queryByTestId("video")).toBeNull();
-      expect(screen.queryAllByRole("img", { name: "some name" }).length).toBe(
-        0,
-      );
+      expect(
+        screen.queryAllByRole("img", { name: "@alice:example.com" }).length,
+      ).toBe(0);
     });
   });
 
@@ -70,14 +75,18 @@ describe("MediaView", () => {
       render(
         <MediaView {...baseProps} video={undefined} localParticipant={true} />,
       );
-      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
+      expect(
+        screen.getByRole("img", { name: "@alice:example.com" }),
+      ).toBeVisible();
       expect(screen.queryAllByText("Waiting for media...").length).toBe(0);
     });
     it("shows avatar and label for remote user", () => {
       render(
         <MediaView {...baseProps} video={undefined} localParticipant={false} />,
       );
-      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
+      expect(
+        screen.getByRole("img", { name: "@alice:example.com" }),
+      ).toBeVisible();
       expect(screen.getByText("Waiting for media...")).toBeVisible();
     });
   });
@@ -131,7 +140,9 @@ describe("MediaView", () => {
           <MediaView {...baseProps} videoEnabled={false} />
         </TooltipProvider>,
       );
-      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
+      expect(
+        screen.getByRole("img", { name: "@alice:example.com" }),
+      ).toBeVisible();
       expect(screen.getByTestId("video")).not.toBeVisible();
     });
   });
