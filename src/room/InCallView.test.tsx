@@ -136,6 +136,7 @@ function createInCallView(): RenderResult & {
   const muteState = {
     audio: { enabled: false },
     video: { enabled: false },
+    // TODO-MULTI-SFU: This cast isn't valid, it's likely the cause of some current test failures
   } as unknown as MuteStates;
   const livekitRoom = mockLivekitRoom(
     {

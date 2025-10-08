@@ -150,6 +150,7 @@ function createGroupCallView(
   const muteState = {
     audio: { enabled: false },
     video: { enabled: false },
+    // TODO-MULTI-SFU: This cast isn't valid, it's likely the cause of some current test failures
   } as unknown as MuteStates;
   const { getByText } = render(
     <BrowserRouter>
@@ -166,6 +167,7 @@ function createGroupCallView(
               rtcSession={rtcSession as unknown as MatrixRTCSession}
               muteStates={muteState}
               widget={widget}
+              // TODO-MULTI-SFU: Make joined and setJoined work
               joined={true}
               setJoined={function (value: boolean): void {}}
             />

@@ -41,7 +41,7 @@ describe("VideoPreview", () => {
     const { queryByRole } = render(
       <VideoPreview
         matrixInfo={matrixInfo}
-        videoEnabled={true}
+        videoEnabled={false}
         videoTrack={null}
         children={<></>}
       />,
@@ -53,7 +53,7 @@ describe("VideoPreview", () => {
     const { queryByRole } = render(
       <VideoPreview
         matrixInfo={matrixInfo}
-        videoEnabled={true}
+        videoEnabled
         videoTrack={null}
         children={<></>}
       />,
