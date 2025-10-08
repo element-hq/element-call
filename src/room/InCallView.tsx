@@ -205,7 +205,7 @@ export const InCallView: FC<InCallViewProps> = ({
     useReactionsSender();
 
   useWakeLock();
-  // TODO multi-sfu This is unused now??
+  // TODO-MULTI-SFU This is unused now??
   // const connectionState = useObservableEagerState(vm.livekitConnectionState$);
 
   // annoyingly we don't get the disconnection reason this way,
