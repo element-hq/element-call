@@ -32,6 +32,7 @@ export interface MatrixAudioRendererProps {
    * This list needs to be composed based on the matrixRTC members so that we do not play audio from users
    * that are not expected to be in the rtc session.
    */
+  // TODO: Why do we have this structure? looks like we only need the valid/active participants (not the room member or id)?
   participants: {
     id: string;
     // TODO it appears to be optional as per InCallView? but what does that mean here? a rtc member not yet joined in livekit?
@@ -66,8 +67,15 @@ export function LivekitRoomAudioRenderer({
   participants,
   muted,
 }: MatrixAudioRendererProps): ReactNode {
-  const participantSet = useMemo(
-    () => new Set(participants.map(({ participant }) => participant)),
+  // This is the list of valid identities that are allowed to play audio.
+  // It is derived from the list of matrix rtc members.
+  const validIdentities = useMemo(
+    () =>
+      new Set(
+        participants
+          .filter(({ participant }) => participant) // filter out participants that are not yet joined in livekit
+          .map(({ participant }) => participant!.identity),
+      ),
     [participants],
   );
 
@@ -102,7 +110,7 @@ export function LivekitRoomAudioRenderer({
       room: livekitRoom,
     },
   ).filter((ref) => {
-    const isValid = participantSet?.has(ref.participant);
+    const isValid = validIdentities.has(ref.participant.identity);
     if (!isValid && !ref.participant.isLocal)
       logInvalid(ref.participant.identity);
     return (
@@ -115,14 +123,14 @@ export function LivekitRoomAudioRenderer({
   useEffect(() => {
     if (
       loggedInvalidIdentities.current.size &&
-      tracks.every((t) => participantSet.has(t.participant))
+      tracks.every((t) => validIdentities.has(t.participant.identity))
     ) {
       logger.debug(
         `[MatrixAudioRenderer] All audio tracks from ${url} have a matching matrix call member identity.`,
       );
       loggedInvalidIdentities.current.clear();
     }
-  }, [tracks, participantSet, url]);
+  }, [tracks, validIdentities, url]);
 
   // This component is also (in addition to the "only play audio for connected members" logic above)
   // responsible for mimicking earpiece audio on iPhones.

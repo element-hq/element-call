@@ -6,21 +6,24 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { render, type RenderResult } from "@testing-library/react";
 import {
   getTrackReferenceId,
   type TrackReference,
 } from "@livekit/components-core";
-import { type RemoteAudioTrack } from "livekit-client";
+import {
+  type Participant,
+  type RemoteAudioTrack,
+  type RemoteParticipant,
+  type Room,
+} from "livekit-client";
 import { type ReactNode } from "react";
 import { useTracks } from "@livekit/components-react";
-import { of } from "rxjs";
 
 import { testAudioContext } from "../useAudioContext.test";
 import * as MediaDevicesContext from "../MediaDevicesContext";
 import { LivekitRoomAudioRenderer } from "./MatrixAudioRenderer";
 import {
-  mockLivekitRoom,
   mockMatrixRoomMember,
   mockMediaDevices,
   mockRtcMembership,
@@ -54,90 +57,148 @@ vi.mock("@livekit/components-react", async (importOriginal) => {
   };
 });
 
-const tracks = [mockTrack("test:123")];
-vi.mocked(useTracks).mockReturnValue(tracks);
+let tracks: TrackReference[] = [];
 
-it("should render for member", () => {
-  // TODO this is duplicated test setup in all tests
-  const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
-  const carol = mockMatrixRoomMember(localRtcMember);
-  const p = {
-    id: "test:123",
-    participant: undefined,
-    member: carol,
-  };
-  const livekitRoom = mockLivekitRoom(
-    {},
-    {
-      remoteParticipants$: of([]),
-    },
-  );
-  const { container, queryAllByTestId } = render(
+/**
+ * Render the test component with given rtc members and livekit participant identities.
+ *
+ * It is possible to have rtc members that are not in livekit (e.g. not yet joined) and vice versa.
+ *
+ * @param rtcMembers - Array of active rtc members with userId and deviceId.
+ * @param livekitParticipantIdentities - Array of livekit participant (that are publishing).
+ * */
+
+function renderTestComponent(
+  rtcMembers: { userId: string; deviceId: string }[],
+  livekitParticipantIdentities: ({ id: string; isLocal?: boolean } | string)[],
+): RenderResult {
+  const liveKitParticipants = livekitParticipantIdentities.map((p) => {
+    const identity = typeof p === "string" ? p : p.id;
+    const isLocal = typeof p === "string" ? false : (p.isLocal ?? false);
+    return vi.mocked<RemoteParticipant>({
+      identity,
+      isLocal,
+    } as unknown as RemoteParticipant);
+  });
+  const participants = rtcMembers.map(({ userId, deviceId }) => {
+    const p = liveKitParticipants.find(
+      (p) => p.identity === `${userId}:${deviceId}`,
+    );
+    const localRtcMember = mockRtcMembership(userId, deviceId);
+    const member = mockMatrixRoomMember(localRtcMember);
+    return {
+      id: `${userId}:${deviceId}`,
+      participant: p,
+      member,
+    };
+  });
+  const livekitRoom = vi.mocked<Room>({
+    remoteParticipants: new Map<string, Participant>(
+      liveKitParticipants.map((p) => [p.identity, p]),
+    ),
+  } as unknown as Room);
+
+  tracks = participants
+    .filter((p) => p.participant)
+    .map((p) => mockTrack(p.participant!)) as TrackReference[];
+
+  vi.mocked(useTracks).mockReturnValue(tracks);
+  return render(
     <MediaDevicesProvider value={mockMediaDevices({})}>
       <LivekitRoomAudioRenderer
-        participants={[p]}
+        participants={participants}
         livekitRoom={livekitRoom}
         url={""}
       />
     </MediaDevicesProvider>,
+  );
+}
+
+it("should render for member", () => {
+  const { container, queryAllByTestId } = renderTestComponent(
+    [{ userId: "@alice", deviceId: "DEV0" }],
+    ["@alice:DEV0"],
   );
   expect(container).toBeTruthy();
   expect(queryAllByTestId("audio")).toHaveLength(1);
 });
 
 it("should not render without member", () => {
-  // const memberships = [
-  //   { sender: "othermember", deviceId: "123" },
-  // ] as CallMembership[];
-  const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
-  const carol = mockMatrixRoomMember(localRtcMember);
-  const p = {
-    id: "test:123",
-    participant: undefined,
-    member: carol,
-  };
-  const livekitRoom = mockLivekitRoom(
-    {},
-    {
-      remoteParticipants$: of([]),
-    },
-  );
-  const { container, queryAllByTestId } = render(
-    <MediaDevicesProvider value={mockMediaDevices({})}>
-      <LivekitRoomAudioRenderer
-        participants={[p]}
-        livekitRoom={livekitRoom}
-        url={""}
-      />
-    </MediaDevicesProvider>,
+  const { container, queryAllByTestId } = renderTestComponent(
+    [{ userId: "@bob", deviceId: "DEV0" }],
+    ["@alice:DEV0"],
   );
   expect(container).toBeTruthy();
   expect(queryAllByTestId("audio")).toHaveLength(0);
 });
 
+const TEST_CASES: {
+  rtcUsers: { userId: string; deviceId: string }[];
+  livekitParticipantIdentities: (string | { id: string; isLocal?: boolean })[];
+  expectedAudioTracks: number;
+}[] = [
+  {
+    rtcUsers: [
+      { userId: "@alice", deviceId: "DEV0" },
+      { userId: "@alice", deviceId: "DEV1" },
+      { userId: "@bob", deviceId: "DEV0" },
+    ],
+    livekitParticipantIdentities: [
+      { id: "@alice:DEV0" },
+      "@bob:DEV0",
+      "@alice:DEV1",
+    ],
+    expectedAudioTracks: 3,
+  },
+  // Alice DEV0 is local participant, should not render
+  {
+    rtcUsers: [
+      { userId: "@alice", deviceId: "DEV0" },
+      { userId: "@alice", deviceId: "DEV1" },
+      { userId: "@bob", deviceId: "DEV0" },
+    ],
+    livekitParticipantIdentities: [
+      { id: "@alice:DEV0", isLocal: true },
+      "@bob:DEV0",
+      "@alice:DEV1",
+    ],
+    expectedAudioTracks: 2,
+  },
+  // Charlie is a rtc member but not in livekit
+  {
+    rtcUsers: [
+      { userId: "@alice", deviceId: "DEV0" },
+      { userId: "@bob", deviceId: "DEV0" },
+      { userId: "@charlie", deviceId: "DEV0" },
+    ],
+    livekitParticipantIdentities: ["@alice:DEV0", { id: "@bob:DEV0" }],
+    expectedAudioTracks: 2,
+  },
+  // Charlie is in livekit but not rtc member
+  {
+    rtcUsers: [
+      { userId: "@alice", deviceId: "DEV0" },
+      { userId: "@bob", deviceId: "DEV0" },
+    ],
+    livekitParticipantIdentities: ["@alice:DEV0", "@bob:DEV0", "@charlie:DEV0"],
+    expectedAudioTracks: 2,
+  },
+];
+
+TEST_CASES.forEach(
+  ({ rtcUsers, livekitParticipantIdentities, expectedAudioTracks }, index) => {
+    it(`should render sound test cases #${index + 1}`, () => {
+      const { queryAllByTestId } = renderTestComponent(
+        rtcUsers,
+        livekitParticipantIdentities,
+      );
+      expect(queryAllByTestId("audio")).toHaveLength(expectedAudioTracks);
+    });
+  },
+);
+
 it("should not setup audioContext gain and pan if there is no need to.", () => {
-  const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
-  const carol = mockMatrixRoomMember(localRtcMember);
-  const p = {
-    id: "test:123",
-    participant: undefined,
-    member: carol,
-  };
-  const livekitRoom = mockLivekitRoom(
-    {},
-    {
-      remoteParticipants$: of([]),
-    },
-  );
-  render(
-    <MediaDevicesProvider value={mockMediaDevices({})}>
-      <LivekitRoomAudioRenderer
-        participants={[p]}
-        livekitRoom={livekitRoom}
-        url={""}
-      />
-    </MediaDevicesProvider>,
-  );
+  renderTestComponent([{ userId: "@bob", deviceId: "DEV0" }], ["@bob:DEV0"]);
   const audioTrack = tracks[0].publication.track! as RemoteAudioTrack;
 
   expect(audioTrack.setAudioContext).toHaveBeenCalledTimes(1);
@@ -154,28 +215,8 @@ it("should setup audioContext gain and pan", () => {
     pan: 1,
     volume: 0.1,
   });
-  const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
-  const carol = mockMatrixRoomMember(localRtcMember);
-  const p = {
-    id: "test:123",
-    participant: undefined,
-    member: carol,
-  };
-  const livekitRoom = mockLivekitRoom(
-    {},
-    {
-      remoteParticipants$: of([]),
-    },
-  );
-  render(
-    <MediaDevicesProvider value={mockMediaDevices({})}>
-      <LivekitRoomAudioRenderer
-        participants={[p]}
-        url={""}
-        livekitRoom={livekitRoom}
-      />
-    </MediaDevicesProvider>,
-  );
+
+  renderTestComponent([{ userId: "@bob", deviceId: "DEV0" }], ["@bob:DEV0"]);
 
   const audioTrack = tracks[0].publication.track! as RemoteAudioTrack;
   expect(audioTrack.setAudioContext).toHaveBeenCalled();
