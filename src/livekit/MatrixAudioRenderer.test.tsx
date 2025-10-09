@@ -152,15 +152,14 @@ const TEST_CASES: {
   },
 ];
 
-TEST_CASES.forEach(
-  ({ rtcUsers, livekitParticipantIdentities, expectedAudioTracks }, index) => {
-    it(`should render sound test cases #${index + 1}`, () => {
-      const { queryAllByTestId } = renderTestComponent(
-        rtcUsers,
-        livekitParticipantIdentities,
-      );
-      expect(queryAllByTestId("audio")).toHaveLength(expectedAudioTracks);
-    });
+it.each(TEST_CASES)(
+  `should render sound test cases %s`,
+  ({ rtcUsers, livekitParticipantIdentities, expectedAudioTracks }) => {
+    const { queryAllByTestId } = renderTestComponent(
+      rtcUsers,
+      livekitParticipantIdentities,
+    );
+    expect(queryAllByTestId("audio")).toHaveLength(expectedAudioTracks);
   },
 );
 
