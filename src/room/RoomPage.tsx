@@ -116,20 +116,22 @@ export const RoomPage: FC = () => {
   const groupCallView = (): ReactNode => {
     switch (groupCallState.kind) {
       case "loaded":
-        return muteStates && (
-          <GroupCallView
-            widget={widget}
-            client={client!}
-            rtcSession={groupCallState.rtcSession}
-            joined={joined}
-            setJoined={setJoined}
-            isPasswordlessUser={passwordlessUser}
-            confineToRoom={confineToRoom}
-            preload={preload}
-            skipLobby={skipLobby || wasInWaitForInviteState.current}
-            header={header}
-            muteStates={muteStates}
-          />
+        return (
+          muteStates && (
+            <GroupCallView
+              widget={widget}
+              client={client!}
+              rtcSession={groupCallState.rtcSession}
+              joined={joined}
+              setJoined={setJoined}
+              isPasswordlessUser={passwordlessUser}
+              confineToRoom={confineToRoom}
+              preload={preload}
+              skipLobby={skipLobby || wasInWaitForInviteState.current}
+              header={header}
+              muteStates={muteStates}
+            />
+          )
         );
       case "waitForInvite":
       case "canKnock": {
@@ -148,31 +150,35 @@ export const RoomPage: FC = () => {
             </>
           );
         return (
-          muteStates && <LobbyView
-            client={client!}
-            matrixInfo={{
-              userId: client!.getUserId() ?? "",
-              displayName: userDisplayName ?? "",
-              avatarUrl: avatarUrl ?? "",
-              roomAlias: null,
-              roomId: groupCallState.roomSummary.room_id,
-              roomName: groupCallState.roomSummary.name ?? "",
-              roomAvatar: groupCallState.roomSummary.avatar_url ?? null,
-              e2eeSystem: {
-                kind: groupCallState.roomSummary["im.nheko.summary.encryption"]
-                  ? E2eeType.PER_PARTICIPANT
-                  : E2eeType.NONE,
-              },
-            }}
-            onEnter={(): void => knock?.()}
-            enterLabel={label}
-            waitingForInvite={groupCallState.kind === "waitForInvite"}
-            confineToRoom={confineToRoom}
-            hideHeader={header !== "standard"}
-            participantCount={null}
-            muteStates={muteStates}
-            onShareClick={null}
-          />
+          muteStates && (
+            <LobbyView
+              client={client!}
+              matrixInfo={{
+                userId: client!.getUserId() ?? "",
+                displayName: userDisplayName ?? "",
+                avatarUrl: avatarUrl ?? "",
+                roomAlias: null,
+                roomId: groupCallState.roomSummary.room_id,
+                roomName: groupCallState.roomSummary.name ?? "",
+                roomAvatar: groupCallState.roomSummary.avatar_url ?? null,
+                e2eeSystem: {
+                  kind: groupCallState.roomSummary[
+                    "im.nheko.summary.encryption"
+                  ]
+                    ? E2eeType.PER_PARTICIPANT
+                    : E2eeType.NONE,
+                },
+              }}
+              onEnter={(): void => knock?.()}
+              enterLabel={label}
+              waitingForInvite={groupCallState.kind === "waitForInvite"}
+              confineToRoom={confineToRoom}
+              hideHeader={header !== "standard"}
+              participantCount={null}
+              muteStates={muteStates}
+              onShareClick={null}
+            />
+          )
         );
       }
       case "loading":
