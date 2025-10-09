@@ -20,6 +20,7 @@ import {
   MatrixRTCSessionManagerEvents,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { getKeyForRoom } from "../e2ee/sharedKeyManagement";
 
@@ -139,22 +140,24 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
         .filter(roomHasCallMembershipEvents)
         .filter(roomIsJoinable);
       const sortedRooms = sortRooms(client, rooms);
-      const items = sortedRooms.map((room) => {
-        const session = client.matrixRTC.getRoomSession(room);
-        return {
-          roomAlias: room.getCanonicalAlias() ?? undefined,
-          roomName: room.name,
-          avatarUrl: room.getMxcAvatarUrl()!,
-          room,
-          session,
-          participants: session.memberships
-            .filter((m) => m.sender)
-            .map((m) => room.getMember(m.sender!))
-            .filter((m) => m) as RoomMember[],
-        };
-      });
-
-      setRooms(items);
+      Promise.all(
+        sortedRooms.map(async (room) => {
+          const session = await client.matrixRTC.getRoomSession(room);
+          return {
+            roomAlias: room.getCanonicalAlias() ?? undefined,
+            roomName: room.name,
+            avatarUrl: room.getMxcAvatarUrl()!,
+            room,
+            session,
+            participants: session.memberships
+              .filter((m) => m.sender)
+              .map((m) => room.getMember(m.sender!))
+              .filter((m) => m) as RoomMember[],
+          };
+        }),
+      )
+        .then((items) => setRooms(items))
+        .catch(logger.error);
     }
 
     updateRooms();
