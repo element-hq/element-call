@@ -393,13 +393,17 @@ export class MockRTCSession extends TypedEventEmitter<
   }
 }
 
-export const mockTrack = (participant: Participant): TrackReference =>
+export const mockTrack = (
+  participant: Participant,
+  kind?: Track.Kind,
+  source?: Track.Source,
+): TrackReference =>
   ({
     participant,
     publication: {
-      kind: Track.Kind.Audio,
-      source: "mic",
-      trackSid: "123",
+      kind: kind ?? Track.Kind.Audio,
+      source: source ?? Track.Source.Microphone,
+      trackSid: `123##${participant.identity}`,
       track: {
         attach: vi.fn(),
         detach: vi.fn(),
