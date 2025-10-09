@@ -14,8 +14,8 @@ import {
 import {
   type Participant,
   type RemoteAudioTrack,
-  type RemoteParticipant,
   type Room,
+  Track,
 } from "livekit-client";
 import { type ReactNode } from "react";
 import { useTracks } from "@livekit/components-react";
@@ -23,7 +23,11 @@ import { useTracks } from "@livekit/components-react";
 import { testAudioContext } from "../useAudioContext.test";
 import * as MediaDevicesContext from "../MediaDevicesContext";
 import { LivekitRoomAudioRenderer } from "./MatrixAudioRenderer";
-import { mockMediaDevices, mockTrack } from "../utils/test";
+import {
+  mockMediaDevices,
+  mockRemoteParticipant,
+  mockTrack,
+} from "../utils/test";
 
 export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
 
@@ -61,17 +65,20 @@ let tracks: TrackReference[] = [];
  *
  * @param rtcMembers - Array of active rtc members with userId and deviceId.
  * @param livekitParticipantIdentities - Array of livekit participant (that are publishing).
+ * @param explicitTracks - Array of tracks available in livekit, if not provided, one audio track per livekitParticipantIdentities will be created.
  * */
 
 function renderTestComponent(
   rtcMembers: { userId: string; deviceId: string }[],
   livekitParticipantIdentities: string[],
+  explicitTracks?: {
+    participantId: string;
+    kind: Track.Kind;
+    source: Track.Source;
+  }[],
 ): RenderResult {
-  const liveKitParticipants = livekitParticipantIdentities.map(
-    (identity) =>
-      ({
-        identity,
-      }) as unknown as RemoteParticipant,
+  const liveKitParticipants = livekitParticipantIdentities.map((identity) =>
+    mockRemoteParticipant({ identity }),
   );
   const participants = rtcMembers.flatMap(({ userId, deviceId }) => {
     const p = liveKitParticipants.find(
@@ -85,13 +92,22 @@ function renderTestComponent(
     ),
   } as unknown as Room;
 
-  tracks = participants.map((p) => mockTrack(p));
+  if (explicitTracks?.length ?? 0 > 0) {
+    tracks = explicitTracks!.map(({ participantId, source, kind }) => {
+      const participant =
+        liveKitParticipants.find((p) => p.identity === participantId) ??
+        mockRemoteParticipant({ identity: participantId });
+      return mockTrack(participant, kind, source);
+    });
+  } else {
+    tracks = participants.map((p) => mockTrack(p));
+  }
 
   vi.mocked(useTracks).mockReturnValue(tracks);
   return render(
     <MediaDevicesProvider value={mockMediaDevices({})}>
       <LivekitRoomAudioRenderer
-        participants={participants}
+        validIdentities={participants.map((p) => p.identity)}
         livekitRoom={livekitRoom}
         url={""}
       />
@@ -118,11 +134,18 @@ it("should not render without member", () => {
 });
 
 const TEST_CASES: {
+  name: string;
   rtcUsers: { userId: string; deviceId: string }[];
   livekitParticipantIdentities: string[];
+  explicitTracks?: {
+    participantId: string;
+    kind: Track.Kind;
+    source: Track.Source;
+  }[];
   expectedAudioTracks: number;
 }[] = [
   {
+    name: "single user single device",
     rtcUsers: [
       { userId: "@alice", deviceId: "DEV0" },
       { userId: "@alice", deviceId: "DEV1" },
@@ -133,6 +156,7 @@ const TEST_CASES: {
   },
   // Charlie is a rtc member but not in livekit
   {
+    name: "Charlie is rtc member but not in livekit",
     rtcUsers: [
       { userId: "@alice", deviceId: "DEV0" },
       { userId: "@bob", deviceId: "DEV0" },
@@ -143,6 +167,7 @@ const TEST_CASES: {
   },
   // Charlie is in livekit but not rtc member
   {
+    name: "Charlie is in livekit but not rtc member",
     rtcUsers: [
       { userId: "@alice", deviceId: "DEV0" },
       { userId: "@bob", deviceId: "DEV0" },
@@ -150,14 +175,77 @@ const TEST_CASES: {
     livekitParticipantIdentities: ["@alice:DEV0", "@bob:DEV0", "@charlie:DEV0"],
     expectedAudioTracks: 2,
   },
+  {
+    name: "no audio track, only video track",
+    rtcUsers: [{ userId: "@alice", deviceId: "DEV0" }],
+    livekitParticipantIdentities: ["@alice:DEV0"],
+    explicitTracks: [
+      {
+        participantId: "@alice:DEV0",
+        kind: Track.Kind.Video,
+        source: Track.Source.Camera,
+      },
+    ],
+    expectedAudioTracks: 0,
+  },
+  {
+    name: "Audio track from unknown source",
+    rtcUsers: [{ userId: "@alice", deviceId: "DEV0" }],
+    livekitParticipantIdentities: ["@alice:DEV0"],
+    explicitTracks: [
+      {
+        participantId: "@alice:DEV0",
+        kind: Track.Kind.Audio,
+        source: Track.Source.Unknown,
+      },
+    ],
+    expectedAudioTracks: 1,
+  },
+  {
+    name: "Audio track from other device",
+    rtcUsers: [{ userId: "@alice", deviceId: "DEV0" }],
+    livekitParticipantIdentities: ["@alice:DEV0"],
+    explicitTracks: [
+      {
+        participantId: "@alice:DEV1",
+        kind: Track.Kind.Audio,
+        source: Track.Source.Microphone,
+      },
+    ],
+    expectedAudioTracks: 0,
+  },
+  {
+    name: "two audio tracks, microphone and screenshare",
+    rtcUsers: [{ userId: "@alice", deviceId: "DEV0" }],
+    livekitParticipantIdentities: ["@alice:DEV0"],
+    explicitTracks: [
+      {
+        participantId: "@alice:DEV0",
+        kind: Track.Kind.Audio,
+        source: Track.Source.Microphone,
+      },
+      {
+        participantId: "@alice:DEV0",
+        kind: Track.Kind.Audio,
+        source: Track.Source.ScreenShareAudio,
+      },
+    ],
+    expectedAudioTracks: 2,
+  },
 ];
 
 it.each(TEST_CASES)(
-  `should render sound test cases %s`,
-  ({ rtcUsers, livekitParticipantIdentities, expectedAudioTracks }) => {
+  `should render sound test cases $name`,
+  ({
+    rtcUsers,
+    livekitParticipantIdentities,
+    explicitTracks,
+    expectedAudioTracks,
+  }) => {
     const { queryAllByTestId } = renderTestComponent(
       rtcUsers,
       livekitParticipantIdentities,
+      explicitTracks,
     );
     expect(queryAllByTestId("audio")).toHaveLength(expectedAudioTracks);
   },

@@ -865,7 +865,7 @@ export const InCallView: FC<InCallViewProps> = ({
           key={url}
           url={url}
           livekitRoom={livekitRoom}
-          participants={participants}
+          validIdentities={participants.map((p) => p.identity)}
           muted={muteAllAudio}
         />
       ))}
