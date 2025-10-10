@@ -141,8 +141,8 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
         .filter(roomIsJoinable);
       const sortedRooms = sortRooms(client, rooms);
       Promise.all(
-        sortedRooms.map((room) => {
-          const session = client.matrixRTC.getRoomSession(room);
+        sortedRooms.map(async (room) => {
+          const session = await client.matrixRTC.getRoomSession(room);
           return {
             roomAlias: room.getCanonicalAlias() ?? undefined,
             roomName: room.name,
