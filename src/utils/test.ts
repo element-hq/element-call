@@ -193,8 +193,10 @@ export function mockRtcMembership(
   const event = new MatrixEvent({
     sender: typeof user === "string" ? user : user.userId,
     event_id: `$-ev-${randomUUID()}:example.org`,
+    content: data,
   });
-  const cms = new CallMembership(event, data);
+
+  const cms = new CallMembership(event);
   vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
   return cms;
 }
@@ -344,9 +346,6 @@ export class MockRTCSession extends TypedEventEmitter<
 
     vi.mocked(session).reemitEncryptionKeys = vi
       .fn<() => void>()
-      .mockReturnValue(undefined);
-    vi.mocked(session).resolveActiveFocus = vi
-      .fn<(member?: CallMembership) => Transport | undefined>()
       .mockReturnValue(undefined);
     vi.mocked(session).getOldestMembership = vi
       .fn<() => CallMembership | undefined>()
