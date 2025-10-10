@@ -292,7 +292,7 @@ exports[`should have a close button in widget mode 1`] = `
             Call is not supported
           </h1>
           <p>
-            The server is not configured to work with Element Call. Please contact your server admin (Domain: example.com, Error Code: MISSING_MATRIX_RTC_FOCUS).
+            The server is not configured to work with Element Call. Please contact your server admin (Domain: example.com, Error Code: MISSING_MATRIX_RTC_TRANSPORT).
           </p>
           <button
             class="_button_vczzf_8"
@@ -445,7 +445,7 @@ exports[`should render the error page with link back to home 1`] = `
             Call is not supported
           </h1>
           <p>
-            The server is not configured to work with Element Call. Please contact your server admin (Domain: example.com, Error Code: MISSING_MATRIX_RTC_FOCUS).
+            The server is not configured to work with Element Call. Please contact your server admin (Domain: example.com, Error Code: MISSING_MATRIX_RTC_TRANSPORT).
           </p>
           <button
             class="_button_vczzf_8 homeLink"
@@ -598,7 +598,7 @@ exports[`should report correct error for 'Call is not supported' 1`] = `
             Call is not supported
           </h1>
           <p>
-            The server is not configured to work with Element Call. Please contact your server admin (Domain: example.com, Error Code: MISSING_MATRIX_RTC_FOCUS).
+            The server is not configured to work with Element Call. Please contact your server admin (Domain: example.com, Error Code: MISSING_MATRIX_RTC_TRANSPORT).
           </p>
           <button
             class="_button_vczzf_8 homeLink"
