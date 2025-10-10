@@ -169,10 +169,7 @@ export const RoomPage: FC = () => {
                     : E2eeType.NONE,
                 },
               }}
-              onEnter={async (): Promise<void> => {
-                knock?.();
-                return Promise.resolve();
-              }}
+              onEnter={(): void => knock?.()}
               enterLabel={label}
               waitingForInvite={groupCallState.kind === "waitForInvite"}
               confineToRoom={confineToRoom}

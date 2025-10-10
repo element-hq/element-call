@@ -436,10 +436,7 @@ export const GroupCallView: FC<Props> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={async () => {
-          setJoined(true);
-          return Promise.resolve();
-        }}
+        onEnter={() => setJoined(true)}
         confineToRoom={confineToRoom}
         hideHeader={header === HeaderStyle.None}
         participantCount={participantCount}
