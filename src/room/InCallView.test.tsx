@@ -15,7 +15,6 @@ import {
 } from "vitest";
 import { act, render, type RenderResult } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { type LocalParticipant } from "livekit-client";
 import { of } from "rxjs";
@@ -154,14 +153,14 @@ function createInCallView(): RenderResult & {
       <MediaDevicesContext value={mockMediaDevices({})}>
         <ReactionsSenderProvider
           vm={vm}
-          rtcSession={rtcSession as unknown as MatrixRTCSession}
+          rtcSession={rtcSession.asMockedSession()}
         >
           <TooltipProvider>
             <RoomContext value={livekitRoom}>
               <InCallView
                 client={client}
                 header={HeaderStyle.Standard}
-                rtcSession={rtcSession as unknown as MatrixRTCSession}
+                rtcSession={rtcSession.asMockedSession()}
                 muteStates={muteState}
                 vm={vm}
                 matrixInfo={{

@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 import { map, type Observable, of, type SchedulerLike } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
-import { expect, vi, vitest } from "vitest";
+import { expect, type MockedObject, vi, vitest } from "vitest";
 import {
   type RoomMember,
   type Room as MatrixRoom,
@@ -23,6 +23,7 @@ import {
   type SessionMembershipData,
   Status,
   type LivekitFocusSelection,
+  type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import {
@@ -193,7 +194,9 @@ export function mockRtcMembership(
     sender: typeof user === "string" ? user : user.userId,
     event_id: `$-ev-${randomUUID()}:example.org`,
   });
-  return new CallMembership(event, data);
+  const cms = new CallMembership(event, data);
+  vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
+  return cms;
 }
 
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
@@ -209,6 +212,7 @@ export function mockMatrixRoomMember(
     getMxcAvatarUrl(): string | undefined {
       return undefined;
     },
+    rawDisplayName: rtcMembership.sender,
     ...member,
   } as RoomMember;
 }
@@ -335,6 +339,22 @@ export class MockRTCSession extends TypedEventEmitter<
     RoomAndToDeviceEventsHandlerMap &
     MembershipManagerEventHandlerMap
 > {
+  public asMockedSession(): MockedObject<MatrixRTCSession> {
+    const session = this as unknown as MockedObject<MatrixRTCSession>;
+
+    vi.mocked(session).reemitEncryptionKeys = vi
+      .fn<() => void>()
+      .mockReturnValue(undefined);
+    vi.mocked(session).resolveActiveFocus = vi
+      .fn<(member?: CallMembership) => Transport | undefined>()
+      .mockReturnValue(undefined);
+    vi.mocked(session).getOldestMembership = vi
+      .fn<() => CallMembership | undefined>()
+      .mockReturnValue(this.memberships[0]);
+
+    return session;
+  }
+
   public readonly statistics = {
     counters: {},
   };

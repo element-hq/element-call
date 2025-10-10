@@ -117,7 +117,7 @@ function createGroupCallView(
   widget: WidgetHelpers | null,
   joined = true,
 ): {
-  rtcSession: MockRTCSession;
+  rtcSession: MatrixRTCSession;
   getByText: ReturnType<typeof render>["getByText"];
 } {
   const client = {
@@ -164,7 +164,7 @@ function createGroupCallView(
               preload={false}
               skipLobby={false}
               header={HeaderStyle.Standard}
-              rtcSession={rtcSession as unknown as MatrixRTCSession}
+              rtcSession={rtcSession.asMockedSession()}
               muteStates={muteState}
               widget={widget}
               // TODO-MULTI-SFU: Make joined and setJoined work
@@ -178,7 +178,7 @@ function createGroupCallView(
   );
   return {
     getByText,
-    rtcSession,
+    rtcSession: rtcSession.asMockedSession(),
   };
 }
 

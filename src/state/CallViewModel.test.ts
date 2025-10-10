@@ -40,7 +40,6 @@ import * as ComponentsCore from "@livekit/components-core";
 import {
   Status,
   type CallMembership,
-  type MatrixRTCSession,
   type IRTCNotificationContent,
   type ICallNotifyContent,
   MatrixRTCSessionEvent,
@@ -345,7 +344,7 @@ function withCallViewModel(
   const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
 
   const vm = new CallViewModel(
-    rtcSession as unknown as MatrixRTCSession,
+    rtcSession.asMockedSession(),
     room,
     mediaDevices,
     muteStates,
