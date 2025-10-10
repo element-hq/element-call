@@ -67,6 +67,7 @@ export const trackProcessorSync = (
   videoTrack$: Behavior<LocalVideoTrack | null>,
   processor$: Behavior<ProcessorState>,
 ): void => {
+  // TODO-MULTI-SFU: Bind to an ObservableScope to avoid leaking resources.
   combineLatest([videoTrack$, processor$]).subscribe(
     ([videoTrack, processorState]) => {
       if (!processorState) return;
