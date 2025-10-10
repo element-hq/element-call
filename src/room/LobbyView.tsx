@@ -57,7 +57,7 @@ interface Props {
   client: MatrixClient;
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
-  onEnter: () => void;
+  onEnter: () => Promise<void>;
   enterLabel?: JSX.Element | string;
   confineToRoom: boolean;
   hideHeader: boolean;
@@ -183,6 +183,14 @@ export const LobbyView: FC<Props> = ({
 
   useTrackProcessorSync(videoTrack);
 
+  const [waitingToEnter, setWaitingToEnter] = useState(false);
+  const onEnterCall = useCallback(() => {
+    setWaitingToEnter(true);
+    void onEnter().finally(() => setWaitingToEnter(false));
+  }, [onEnter]);
+
+  const waiting = waitingForInvite || waitingToEnter;
+
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
   return (
@@ -212,11 +220,12 @@ export const LobbyView: FC<Props> = ({
           >
             <Button
               className={classNames(styles.join, {
-                [styles.wait]: waitingForInvite,
+                [styles.wait]: waiting,
               })}
-              size={waitingForInvite ? "sm" : "lg"}
+              size={waiting ? "sm" : "lg"}
+              disabled={waiting}
               onClick={() => {
-                if (!waitingForInvite) onEnter();
+                if (!waiting) onEnterCall();
               }}
               data-testid="lobby_joinCall"
             >

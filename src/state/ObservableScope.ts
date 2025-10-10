@@ -99,7 +99,19 @@ export class ObservableScope {
       .subscribe(callback);
   }
 
-  // TODO-MULTI-SFU Dear Future Robin, please document this. Love, Past Robin.
+  /**
+   * For the duration of the scope, sync some external state with the value of
+   * the provided Behavior by way of an async function which attempts to update
+   * (reconcile) the external state. The reconciliation function may return a
+   * clean-up callback which will be called and awaited before the next change
+   * in value (or the end of the scope).
+   *
+   * All calls to the function and its clean-up callbacks are serialized. If the
+   * value changes faster than the handlers can keep up with, intermediate
+   * values may be skipped.
+   *
+   * Basically, this is like React's useEffect but async and for Behaviors.
+   */
   public reconcile<T>(
     value$: Behavior<T>,
     callback: (value: T) => Promise<(() => Promise<void>) | undefined>,
@@ -107,27 +119,27 @@ export class ObservableScope {
     let latestValue: T | typeof nothing = nothing;
     let reconciledValue: T | typeof nothing = nothing;
     let cleanUp: (() => Promise<void>) | undefined = undefined;
-    let callbackPromise: Promise<(() => Promise<void>) | undefined>;
     value$
       .pipe(
-        catchError(() => EMPTY),
-        this.bind(),
-        endWith(nothing),
+        catchError(() => EMPTY), // Ignore errors
+        this.bind(), // Limit to the duration of the scope
+        endWith(nothing), // Clean up when the scope ends
       )
       .subscribe((value) => {
         void (async (): Promise<void> => {
           if (latestValue === nothing) {
             latestValue = value;
             while (latestValue !== reconciledValue) {
-              await cleanUp?.();
+              await cleanUp?.(); // Call the previous value's clean-up handler
               reconciledValue = latestValue;
-              if (latestValue !== nothing) {
-                callbackPromise = callback(latestValue);
-                cleanUp = await callbackPromise;
-              }
+              if (latestValue !== nothing)
+                cleanUp = await callback(latestValue); // Sync current value
             }
+            // Reset to signal that reconciliation is done for now
             latestValue = nothing;
           } else {
+            // There's already an instance of the above 'while' loop running
+            // concurrently. Just update the latest value and let it be handled.
             latestValue = value;
           }
         })();
