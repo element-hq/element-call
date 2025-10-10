@@ -541,7 +541,9 @@ export class CallViewModel extends ViewModel {
                   const oldest = this.matrixRTCSession.getOldestMembership();
                   if (oldest !== undefined) {
                     const selection = oldest.getTransport(oldest);
-                    if (isLivekitTransport(selection)) local = ready(selection);
+                    // TODO selection can be null if no transport is configured should we report an error?
+                    if (selection && isLivekitTransport(selection))
+                      local = ready(selection);
                   }
                 }
                 return { local, remote };
@@ -721,8 +723,8 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  private readonly userId = this.matrixRoom.client.getUserId();
-  private readonly deviceId = this.matrixRoom.client.getDeviceId();
+  private readonly userId = this.matrixRoom.client.getUserId()!;
+  private readonly deviceId = this.matrixRoom.client.getDeviceId()!;
 
   private readonly matrixConnected$ = this.scope.behavior(
     // To consider ourselves connected to MatrixRTC, we check the following:
@@ -906,7 +908,11 @@ export class CallViewModel extends ViewModel {
       ],
       (memberships, _displaynames) => {
         const displaynameMap = new Map<string, string>([
-          ["local", this.matrixRoom.getMember(this.userId!)!.rawDisplayName],
+          [
+            "local",
+            this.matrixRoom.getMember(this.userId)?.rawDisplayName ??
+              this.userId,
+          ],
         ]);
         const room = this.matrixRoom;
 
