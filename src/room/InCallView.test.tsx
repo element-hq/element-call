@@ -29,10 +29,10 @@ import {
   mockLocalParticipant,
   mockMatrixRoom,
   mockMatrixRoomMember,
-  mockMediaDevices,
+  mockMediaDevices, mockMuteStates,
   mockRemoteParticipant,
   mockRtcMembership,
-  type MockRTCSession,
+  type MockRTCSession
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
@@ -46,7 +46,6 @@ import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
-import { type MuteStates } from "../state/MuteStates.ts";
 
 // vi.hoisted(() => {
 //   localStorage = {} as unknown as Storage;
@@ -132,11 +131,7 @@ function createInCallView(): RenderResult & {
     } as Partial<RoomState> as RoomState,
   });
 
-  const muteState = {
-    audio: { enabled: false },
-    video: { enabled: false },
-    // TODO-MULTI-SFU: This cast isn't valid, it's likely the cause of some current test failures
-  } as unknown as MuteStates;
+  const muteState = mockMuteStates();
   const livekitRoom = mockLivekitRoom(
     {
       localParticipant,
