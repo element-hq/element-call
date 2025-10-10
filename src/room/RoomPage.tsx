@@ -150,34 +150,38 @@ export const RoomPage: FC = () => {
             </>
           );
         return (
-          muteStates && <LobbyView
-            client={client!}
-            matrixInfo={{
-              userId: client!.getUserId() ?? "",
-              displayName: userDisplayName ?? "",
-              avatarUrl: avatarUrl ?? "",
-              roomAlias: null,
-              roomId: groupCallState.roomSummary.room_id,
-              roomName: groupCallState.roomSummary.name ?? "",
-              roomAvatar: groupCallState.roomSummary.avatar_url ?? null,
-              e2eeSystem: {
-                kind: groupCallState.roomSummary["im.nheko.summary.encryption"]
-                  ? E2eeType.PER_PARTICIPANT
-                  : E2eeType.NONE,
-              },
-            }}
-            onEnter={async (): Promise<void> => {
-              knock?.();
-              return Promise.resolve();
-            }}
-            enterLabel={label}
-            waitingForInvite={groupCallState.kind === "waitForInvite"}
-            confineToRoom={confineToRoom}
-            hideHeader={header !== "standard"}
-            participantCount={null}
-            muteStates={muteStates}
-            onShareClick={null}
-          />
+          muteStates && (
+            <LobbyView
+              client={client!}
+              matrixInfo={{
+                userId: client!.getUserId() ?? "",
+                displayName: userDisplayName ?? "",
+                avatarUrl: avatarUrl ?? "",
+                roomAlias: null,
+                roomId: groupCallState.roomSummary.room_id,
+                roomName: groupCallState.roomSummary.name ?? "",
+                roomAvatar: groupCallState.roomSummary.avatar_url ?? null,
+                e2eeSystem: {
+                  kind: groupCallState.roomSummary[
+                    "im.nheko.summary.encryption"
+                  ]
+                    ? E2eeType.PER_PARTICIPANT
+                    : E2eeType.NONE,
+                },
+              }}
+              onEnter={async (): Promise<void> => {
+                knock?.();
+                return Promise.resolve();
+              }}
+              enterLabel={label}
+              waitingForInvite={groupCallState.kind === "waitForInvite"}
+              confineToRoom={confineToRoom}
+              hideHeader={header !== "standard"}
+              participantCount={null}
+              muteStates={muteStates}
+              onShareClick={null}
+            />
+          )
         );
       }
       case "loading":
