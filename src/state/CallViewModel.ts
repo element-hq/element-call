@@ -528,10 +528,12 @@ export class CallViewModel extends ViewModel {
                 multiSfu.value$,
               ],
               (preferred, memberships, multiSfu) => {
+                const oldestMembership =
+                  this.matrixRTCSession.getOldestMembership();
                 const remote = memberships.flatMap((m) => {
                   if (m.sender === this.userId && m.deviceId === this.deviceId)
                     return [];
-                  const t = this.matrixRTCSession.resolveActiveFocus(m);
+                  const t = m.getTransport(oldestMembership ?? m);
                   return t && isLivekitTransport(t)
                     ? [{ membership: m, transport: t }]
                     : [];
@@ -633,10 +635,11 @@ export class CallViewModel extends ViewModel {
         // Until the local transport becomes ready we have no idea which
         // transports will actually need a dedicated remote connection
         if (transports?.local.state === "ready") {
+          const oldestMembership = this.matrixRTCSession.getOldestMembership();
           const localServiceUrl = transports.local.value.livekit_service_url;
           const remoteServiceUrls = new Set(
             transports.remote.flatMap(({ membership, transport }) => {
-              const t = this.matrixRTCSession.resolveActiveFocus(membership);
+              const t = membership.getTransport(oldestMembership ?? membership);
               return t &&
                 isLivekitTransport(t) &&
                 t.livekit_service_url !== localServiceUrl
