@@ -29,10 +29,11 @@ import {
   mockLocalParticipant,
   mockMatrixRoom,
   mockMatrixRoomMember,
-  mockMediaDevices, mockMuteStates,
+  mockMediaDevices,
+  mockMuteStates,
   mockRemoteParticipant,
   mockRtcMembership,
-  type MockRTCSession
+  type MockRTCSession,
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
