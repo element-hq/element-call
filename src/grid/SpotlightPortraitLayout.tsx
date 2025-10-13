@@ -10,7 +10,7 @@ import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
 import { type CallLayout, arrangeTiles } from "./CallLayout";
-import { type SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
+import { type SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/layout-types.ts";
 import styles from "./SpotlightPortraitLayout.module.css";
 import { useUpdateLayout, useVisibleTiles } from "./Grid";
 import { useBehavior } from "../useBehavior";

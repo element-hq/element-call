@@ -59,11 +59,7 @@ import { type MuteStates } from "../state/MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
-import {
-  CallViewModel,
-  type GridMode,
-  type Layout,
-} from "../state/CallViewModel";
+import { CallViewModel, GridMode } from "../state/CallViewModel";
 import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
@@ -113,6 +109,7 @@ import { useAudioContext } from "../useAudioContext";
 import ringtoneMp3 from "../sound/ringtone.mp3?url";
 import ringtoneOgg from "../sound/ringtone.ogg?url";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
+import { Layout } from "../state/layout-types.ts";
 
 const maxTapDurationMs = 400;
 

@@ -94,10 +94,6 @@ import {
 } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled$ } from "../controls";
-import {
-  type GridTileViewModel,
-  type SpotlightTileViewModel,
-} from "./TileViewModel";
 import { TileStore } from "./TileStore";
 import { gridLikeLayout } from "./GridLikeLayout";
 import { spotlightExpandedLayout } from "./SpotlightExpandedLayout";
@@ -133,6 +129,15 @@ import { PublishConnection } from "./PublishConnection.ts";
 import { type Async, async$, mapAsync, ready } from "./Async";
 import { sharingScreen$, UserMedia } from "./UserMedia.ts";
 import { ScreenShare } from "./ScreenShare.ts";
+import {
+  GridLayoutMedia,
+  Layout,
+  LayoutMedia,
+  OneOnOneLayoutMedia,
+  SpotlightExpandedLayoutMedia,
+  SpotlightLandscapeLayoutMedia,
+  SpotlightPortraitLayoutMedia,
+} from "./layout-types.ts";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -156,99 +161,6 @@ const smallMobileCallThreshold = 3;
 // How long the footer should be shown for when hovering over or interacting
 // with the interface
 const showFooterMs = 4000;
-
-export interface GridLayoutMedia {
-  type: "grid";
-  spotlight?: MediaViewModel[];
-  grid: UserMediaViewModel[];
-}
-
-export interface SpotlightLandscapeLayoutMedia {
-  type: "spotlight-landscape";
-  spotlight: MediaViewModel[];
-  grid: UserMediaViewModel[];
-}
-
-export interface SpotlightPortraitLayoutMedia {
-  type: "spotlight-portrait";
-  spotlight: MediaViewModel[];
-  grid: UserMediaViewModel[];
-}
-
-export interface SpotlightExpandedLayoutMedia {
-  type: "spotlight-expanded";
-  spotlight: MediaViewModel[];
-  pip?: UserMediaViewModel;
-}
-
-export interface OneOnOneLayoutMedia {
-  type: "one-on-one";
-  local: UserMediaViewModel;
-  remote: UserMediaViewModel;
-}
-
-export interface PipLayoutMedia {
-  type: "pip";
-  spotlight: MediaViewModel[];
-}
-
-export type LayoutMedia =
-  | GridLayoutMedia
-  | SpotlightLandscapeLayoutMedia
-  | SpotlightPortraitLayoutMedia
-  | SpotlightExpandedLayoutMedia
-  | OneOnOneLayoutMedia
-  | PipLayoutMedia;
-
-export interface GridLayout {
-  type: "grid";
-  spotlight?: SpotlightTileViewModel;
-  grid: GridTileViewModel[];
-  setVisibleTiles: (value: number) => void;
-}
-
-export interface SpotlightLandscapeLayout {
-  type: "spotlight-landscape";
-  spotlight: SpotlightTileViewModel;
-  grid: GridTileViewModel[];
-  setVisibleTiles: (value: number) => void;
-}
-
-export interface SpotlightPortraitLayout {
-  type: "spotlight-portrait";
-  spotlight: SpotlightTileViewModel;
-  grid: GridTileViewModel[];
-  setVisibleTiles: (value: number) => void;
-}
-
-export interface SpotlightExpandedLayout {
-  type: "spotlight-expanded";
-  spotlight: SpotlightTileViewModel;
-  pip?: GridTileViewModel;
-}
-
-export interface OneOnOneLayout {
-  type: "one-on-one";
-  local: GridTileViewModel;
-  remote: GridTileViewModel;
-}
-
-export interface PipLayout {
-  type: "pip";
-  spotlight: SpotlightTileViewModel;
-}
-
-/**
- * A layout defining the media tiles present on screen and their visual
- * arrangement.
- */
-export type Layout =
-  | GridLayout
-  | SpotlightLandscapeLayout
-  | SpotlightPortraitLayout
-  | SpotlightExpandedLayout
-  | OneOnOneLayout
-  | PipLayout;
 
 export type GridMode = "grid" | "spotlight";
 
@@ -294,28 +206,6 @@ interface LayoutScanState {
 }
 
 type MediaItem = UserMedia | ScreenShare;
-
-function getRoomMemberFromRtcMember(
-  rtcMember: CallMembership,
-  room: MatrixRoom,
-): { id: string; member: RoomMember | undefined } {
-  // WARN! This is not exactly the sender but the user defined in the state key.
-  // This will be available once we change to the new "member as object" format in the MatrixRTC object.
-  let id = rtcMember.sender + ":" + rtcMember.deviceId;
-
-  if (!rtcMember.sender) {
-    return { id, member: undefined };
-  }
-  if (
-    rtcMember.sender === room.client.getUserId() &&
-    rtcMember.deviceId === room.client.getDeviceId()
-  ) {
-    id = "local";
-  }
-
-  const member = room.getMember(rtcMember.sender) ?? undefined;
-  return { id, member };
-}
 
 export class CallViewModel extends ViewModel {
   private readonly urlParams = getUrlParams();
@@ -2003,4 +1893,26 @@ function getE2eeKeyProvider(
       .catch((e) => logger.error("Failed to set shared key for E2EE", e));
     return keyProvider;
   }
+}
+
+function getRoomMemberFromRtcMember(
+  rtcMember: CallMembership,
+  room: MatrixRoom,
+): { id: string; member: RoomMember | undefined } {
+  // WARN! This is not exactly the sender but the user defined in the state key.
+  // This will be available once we change to the new "member as object" format in the MatrixRTC object.
+  let id = rtcMember.sender + ":" + rtcMember.deviceId;
+
+  if (!rtcMember.sender) {
+    return { id, member: undefined };
+  }
+  if (
+    rtcMember.sender === room.client.getUserId() &&
+    rtcMember.deviceId === room.client.getDeviceId()
+  ) {
+    id = "local";
+  }
+
+  const member = room.getMember(rtcMember.sender) ?? undefined;
+  return { id, member };
 }
