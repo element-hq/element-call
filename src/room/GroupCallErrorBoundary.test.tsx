@@ -106,7 +106,7 @@ test("should render the error page with link back to home", async () => {
   await screen.findByText("Call is not supported");
   expect(screen.getByText(/Domain: example\.com/i)).toBeInTheDocument();
   expect(
-    screen.getByText(/Error Code: MISSING_MATRIX_RTC_FOCUS/i),
+    screen.getByText(/Error Code: MISSING_MATRIX_RTC_TRANSPORT/i),
   ).toBeInTheDocument();
 
   await screen.findByRole("button", { name: "Return to home screen" });

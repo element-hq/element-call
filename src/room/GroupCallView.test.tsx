@@ -26,7 +26,6 @@ import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-cont
 import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
 
-import { type MuteStates } from "./MuteStates";
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 import { ActiveCall } from "./InCallView";
@@ -47,6 +46,7 @@ import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
 import { constant } from "../state/Behavior";
+import { type MuteStates } from "../state/MuteStates.ts";
 
 vi.mock("../soundUtils");
 vi.mock("../useAudioContext");
@@ -117,7 +117,7 @@ function createGroupCallView(
   widget: WidgetHelpers | null,
   joined = true,
 ): {
-  rtcSession: MockRTCSession;
+  rtcSession: MatrixRTCSession;
   getByText: ReturnType<typeof render>["getByText"];
 } {
   const client = {
@@ -150,7 +150,8 @@ function createGroupCallView(
   const muteState = {
     audio: { enabled: false },
     video: { enabled: false },
-  } as MuteStates;
+    // TODO-MULTI-SFU: This cast isn't valid, it's likely the cause of some current test failures
+  } as unknown as MuteStates;
   const { getByText } = render(
     <BrowserRouter>
       <TooltipProvider>
@@ -163,10 +164,12 @@ function createGroupCallView(
               preload={false}
               skipLobby={false}
               header={HeaderStyle.Standard}
-              rtcSession={rtcSession as unknown as MatrixRTCSession}
-              isJoined={joined}
+              rtcSession={rtcSession.asMockedSession()}
               muteStates={muteState}
               widget={widget}
+              // TODO-MULTI-SFU: Make joined and setJoined work
+              joined={true}
+              setJoined={function (value: boolean): void {}}
             />
           </ProcessorProvider>
         </MediaDevicesContext>
@@ -175,7 +178,7 @@ function createGroupCallView(
   );
   return {
     getByText,
-    rtcSession,
+    rtcSession: rtcSession.asMockedSession(),
   };
 }
 

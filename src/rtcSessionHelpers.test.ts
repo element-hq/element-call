@@ -85,7 +85,16 @@ test("It joins the correct Session", async () => {
     }),
     joinRoomSession: vi.fn(),
   }) as unknown as MatrixRTCSession;
-  await enterRTCSession(mockedSession, false);
+
+  await enterRTCSession(
+    mockedSession,
+    {
+      livekit_alias: "roomId",
+      livekit_service_url: "http://my-well-known-service-url.com",
+      type: "livekit",
+    },
+    true,
+  );
 
   expect(mockedSession.joinRoomSession).toHaveBeenLastCalledWith(
     [
@@ -180,8 +189,18 @@ test("It fails with configuration error if no live kit url config is set in fall
     joinRoomSession: vi.fn(),
   }) as unknown as MatrixRTCSession;
 
-  await expect(enterRTCSession(mockedSession, false)).rejects.toThrowError(
-    expect.objectContaining({ code: ErrorCode.MISSING_MATRIX_RTC_FOCUS }),
+  await expect(
+    enterRTCSession(
+      mockedSession,
+      {
+        livekit_alias: "roomId",
+        livekit_service_url: "http://my-well-known-service-url.com",
+        type: "livekit",
+      },
+      true,
+    ),
+  ).rejects.toThrowError(
+    expect.objectContaining({ code: ErrorCode.MISSING_MATRIX_RTC_TRANSPORT }),
   );
 });
 
@@ -214,5 +233,13 @@ test("It should not fail with configuration error if homeserver config has livek
     joinRoomSession: vi.fn(),
   }) as unknown as MatrixRTCSession;
 
-  await enterRTCSession(mockedSession, false);
+  await enterRTCSession(
+    mockedSession,
+    {
+      livekit_alias: "roomId",
+      livekit_service_url: "http://my-well-known-service-url.com",
+      type: "livekit",
+    },
+    true,
+  );
 });

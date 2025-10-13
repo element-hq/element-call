@@ -5,10 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type CallMembership,
-  type MatrixRTCSession,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, of } from "rxjs";
 import { vitest } from "vitest";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
@@ -99,12 +96,12 @@ export function getBasicRTCSession(
     initialRtcMemberships,
   );
 
-  const rtcSession = new MockRTCSession(matrixRoom).withMemberships(
+  const fakeRtcSession = new MockRTCSession(matrixRoom).withMemberships(
     rtcMemberships$,
   );
 
   return {
-    rtcSession,
+    rtcSession: fakeRtcSession,
     matrixRoom,
     rtcMemberships$,
   };
@@ -137,7 +134,7 @@ export function getBasicCallViewModelEnvironment(
   // const remoteParticipants$ = of([aliceParticipant]);
 
   const vm = new CallViewModel(
-    rtcSession as unknown as MatrixRTCSession,
+    rtcSession.asMockedSession(),
     matrixRoom,
     mockMediaDevices({}),
     mockMuteStates(),

@@ -15,7 +15,6 @@ import {
 } from "vitest";
 import { act, render, type RenderResult } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { type LocalParticipant } from "livekit-client";
 import { of } from "rxjs";
@@ -24,7 +23,6 @@ import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
-import { type MuteStates } from "./MuteStates";
 import { InCallView } from "./InCallView";
 import {
   mockLivekitRoom,
@@ -32,6 +30,7 @@ import {
   mockMatrixRoom,
   mockMatrixRoomMember,
   mockMediaDevices,
+  mockMuteStates,
   mockRemoteParticipant,
   mockRtcMembership,
   type MockRTCSession,
@@ -133,10 +132,7 @@ function createInCallView(): RenderResult & {
     } as Partial<RoomState> as RoomState,
   });
 
-  const muteState = {
-    audio: { enabled: false },
-    video: { enabled: false },
-  } as MuteStates;
+  const muteState = mockMuteStates();
   const livekitRoom = mockLivekitRoom(
     {
       localParticipant,
@@ -153,14 +149,14 @@ function createInCallView(): RenderResult & {
       <MediaDevicesContext value={mockMediaDevices({})}>
         <ReactionsSenderProvider
           vm={vm}
-          rtcSession={rtcSession as unknown as MatrixRTCSession}
+          rtcSession={rtcSession.asMockedSession()}
         >
           <TooltipProvider>
             <RoomContext value={livekitRoom}>
               <InCallView
                 client={client}
                 header={HeaderStyle.Standard}
-                rtcSession={rtcSession as unknown as MatrixRTCSession}
+                rtcSession={rtcSession.asMockedSession()}
                 muteStates={muteState}
                 vm={vm}
                 matrixInfo={{
@@ -176,11 +172,6 @@ function createInCallView(): RenderResult & {
                   },
                 }}
                 matrixRoom={room}
-                livekitRoom={livekitRoom}
-                participantCount={0}
-                onLeft={function (): void {
-                  throw new Error("Function not implemented.");
-                }}
                 onShareClick={null}
               />
             </RoomContext>
