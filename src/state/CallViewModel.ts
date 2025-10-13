@@ -5,39 +5,32 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { observeParticipantEvents } from "@livekit/components-core";
 import {
-  ConnectionState,
   type BaseKeyProvider,
+  ConnectionState,
   type E2EEOptions,
   ExternalE2EEKeyProvider,
-  type Room as LivekitRoom,
   type LocalParticipant,
-  ParticipantEvent,
   RemoteParticipant,
-  type Participant,
+  type Room as LivekitRoom,
 } from "livekit-client";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import {
   ClientEvent,
+  type EventTimelineSetHandlerMap,
+  EventType,
+  type Room as MatrixRoom,
+  RoomEvent,
   type RoomMember,
   RoomStateEvent,
   SyncState,
-  type Room as MatrixRoom,
-  type EventTimelineSetHandlerMap,
-  EventType,
-  RoomEvent,
 } from "matrix-js-sdk";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 import {
-  BehaviorSubject,
-  EMPTY,
-  NEVER,
-  type Observable,
-  Subject,
   combineLatest,
   concat,
   distinctUntilChanged,
+  EMPTY,
   endWith,
   filter,
   from,
@@ -45,6 +38,8 @@ import {
   ignoreElements,
   map,
   merge,
+  NEVER,
+  type Observable,
   of,
   pairwise,
   race,
@@ -53,6 +48,7 @@ import {
   skip,
   skipWhile,
   startWith,
+  Subject,
   switchAll,
   switchMap,
   switchScan,
@@ -90,7 +86,6 @@ import {
   finalizeValue,
   pauseWhen,
 } from "../utils/observable";
-import { ObservableScope } from "./ObservableScope";
 import {
   duplicateTiles,
   multiSfu,
@@ -114,11 +109,10 @@ import {
   type ReactionInfo,
   type ReactionOption,
 } from "../reactions";
-import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
 import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 import { type MediaDevices } from "./MediaDevices";
-import { constant, type Behavior } from "./Behavior";
+import { type Behavior, constant } from "./Behavior";
 import {
   enterRTCSession,
   getLivekitAlias,
@@ -137,6 +131,8 @@ import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../widget";
 import { PublishConnection } from "./PublishConnection.ts";
 import { type Async, async$, mapAsync, ready } from "./Async";
+import { sharingScreen$, UserMedia } from "./UserMedia.ts";
+import { ScreenShare } from "./ScreenShare.ts";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -297,117 +293,6 @@ interface LayoutScanState {
   tiles: TileStore;
 }
 
-class UserMedia {
-  private readonly scope = new ObservableScope();
-  public readonly vm: UserMediaViewModel;
-  private readonly participant$: BehaviorSubject<
-    LocalParticipant | RemoteParticipant | undefined
-  >;
-
-  public readonly speaker$: Behavior<boolean>;
-  public readonly presenter$: Behavior<boolean>;
-  public constructor(
-    public readonly id: string,
-    member: RoomMember,
-    participant: LocalParticipant | RemoteParticipant | undefined,
-    encryptionSystem: EncryptionSystem,
-    livekitRoom: LivekitRoom,
-    mediaDevices: MediaDevices,
-    pretendToBeDisconnected$: Behavior<boolean>,
-    displayname$: Observable<string>,
-    handRaised$: Observable<Date | null>,
-    reaction$: Observable<ReactionOption | null>,
-  ) {
-    this.participant$ = new BehaviorSubject(participant);
-
-    if (participant?.isLocal) {
-      this.vm = new LocalUserMediaViewModel(
-        this.id,
-        member,
-        this.participant$ as Behavior<LocalParticipant>,
-        encryptionSystem,
-        livekitRoom,
-        mediaDevices,
-        this.scope.behavior(displayname$),
-        this.scope.behavior(handRaised$),
-        this.scope.behavior(reaction$),
-      );
-    } else {
-      this.vm = new RemoteUserMediaViewModel(
-        id,
-        member,
-        this.participant$.asObservable() as Observable<
-          RemoteParticipant | undefined
-        >,
-        encryptionSystem,
-        livekitRoom,
-        pretendToBeDisconnected$,
-        this.scope.behavior(displayname$),
-        this.scope.behavior(handRaised$),
-        this.scope.behavior(reaction$),
-      );
-    }
-
-    this.speaker$ = this.scope.behavior(observeSpeaker$(this.vm.speaking$));
-
-    this.presenter$ = this.scope.behavior(
-      this.participant$.pipe(
-        switchMap((p) => (p === undefined ? of(false) : sharingScreen$(p))),
-      ),
-    );
-  }
-
-  public updateParticipant(
-    newParticipant: LocalParticipant | RemoteParticipant | undefined,
-  ): void {
-    if (this.participant$.value !== newParticipant) {
-      // Update the BehaviourSubject in the UserMedia.
-      this.participant$.next(newParticipant);
-    }
-  }
-
-  public destroy(): void {
-    this.scope.end();
-    this.vm.destroy();
-  }
-}
-
-class ScreenShare {
-  private readonly scope = new ObservableScope();
-  public readonly vm: ScreenShareViewModel;
-  private readonly participant$: BehaviorSubject<
-    LocalParticipant | RemoteParticipant
-  >;
-
-  public constructor(
-    id: string,
-    member: RoomMember,
-    participant: LocalParticipant | RemoteParticipant,
-    encryptionSystem: EncryptionSystem,
-    livekitRoom: LivekitRoom,
-    pretendToBeDisconnected$: Behavior<boolean>,
-    displayName$: Observable<string>,
-  ) {
-    this.participant$ = new BehaviorSubject(participant);
-
-    this.vm = new ScreenShareViewModel(
-      id,
-      member,
-      this.participant$.asObservable(),
-      encryptionSystem,
-      livekitRoom,
-      pretendToBeDisconnected$,
-      this.scope.behavior(displayName$),
-      participant.isLocal,
-    );
-  }
-
-  public destroy(): void {
-    this.scope.end();
-    this.vm.destroy();
-  }
-}
-
 type MediaItem = UserMedia | ScreenShare;
 
 function getRoomMemberFromRtcMember(
@@ -430,16 +315,6 @@ function getRoomMemberFromRtcMember(
 
   const member = room.getMember(rtcMember.sender) ?? undefined;
   return { id, member };
-}
-
-function sharingScreen$(p: Participant): Observable<boolean> {
-  return observeParticipantEvents(
-    p,
-    ParticipantEvent.TrackPublished,
-    ParticipantEvent.TrackUnpublished,
-    ParticipantEvent.LocalTrackPublished,
-    ParticipantEvent.LocalTrackUnpublished,
-  ).pipe(map((p) => p.isScreenShareEnabled));
 }
 
 export class CallViewModel extends ViewModel {
@@ -2013,16 +1888,12 @@ export class CallViewModel extends ViewModel {
     this.scope.reconcile(this.localTransport$, async (localTransport) => {
       if (localTransport?.state === "ready") {
         try {
-          await enterRTCSession(
-            this.matrixRTCSession,
-            localTransport.value,
-            {
-              encryptMedia: this.options.encryptionSystem.kind !== E2eeType.NONE,
-              useExperimentalToDeviceTransport: true,
-              useNewMembershipManager: true,
-              useMultiSfu: multiSfu.value$.value
-            }
-          );
+          await enterRTCSession(this.matrixRTCSession, localTransport.value, {
+            encryptMedia: this.options.encryptionSystem.kind !== E2eeType.NONE,
+            useExperimentalToDeviceTransport: true,
+            useNewMembershipManager: true,
+            useMultiSfu: multiSfu.value$.value,
+          });
         } catch (e) {
           logger.error("Error entering RTC session", e);
         }
