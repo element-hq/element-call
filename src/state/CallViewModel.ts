@@ -2016,10 +2016,12 @@ export class CallViewModel extends ViewModel {
           await enterRTCSession(
             this.matrixRTCSession,
             localTransport.value,
-            this.options.encryptionSystem.kind !== E2eeType.NONE,
-            true,
-            true,
-            multiSfu.value$.value,
+            {
+              encryptMedia: this.options.encryptionSystem.kind !== E2eeType.NONE,
+              useExperimentalToDeviceTransport: true,
+              useNewMembershipManager: true,
+              useMultiSfu: multiSfu.value$.value
+            }
           );
         } catch (e) {
           logger.error("Error entering RTC session", e);
