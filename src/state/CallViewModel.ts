@@ -14,7 +14,7 @@ import {
   type Room as LivekitRoom,
   type LocalParticipant,
   ParticipantEvent,
-  type RemoteParticipant,
+  RemoteParticipant,
   type Participant,
 } from "livekit-client";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
@@ -126,12 +126,17 @@ import {
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-import { Connection, PublishConnection } from "./Connection";
+import {
+  type Connection,
+  type ConnectionOpts,
+  RemoteConnection,
+} from "./Connection";
 import { type MuteStates } from "./MuteStates";
 import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../widget";
-import { type Async, async, mapAsync, ready } from "./Async";
+import { PublishConnection } from "./PublishConnection.ts";
+import { type Async, async$, mapAsync, ready } from "./Async";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -518,7 +523,7 @@ export class CallViewModel extends ViewModel {
         joined
           ? combineLatest(
               [
-                async(this.preferredTransport),
+                async$(this.preferredTransport),
                 this.memberships$,
                 multiSfu.value$,
               ],
@@ -538,7 +543,9 @@ export class CallViewModel extends ViewModel {
                   const oldest = this.matrixRTCSession.getOldestMembership();
                   if (oldest !== undefined) {
                     const selection = oldest.getTransport(oldest);
-                    if (isLivekitTransport(selection)) local = ready(selection);
+                    // TODO selection can be null if no transport is configured should we report an error?
+                    if (selection && isLivekitTransport(selection))
+                      local = ready(selection);
                   }
                 }
                 return { local, remote };
@@ -559,49 +566,58 @@ export class CallViewModel extends ViewModel {
 
   /**
    * The transport over which we should be actively publishing our media.
+   * null when not joined.
    */
   private readonly localTransport$: Behavior<Async<LivekitTransport> | null> =
     this.scope.behavior(
       this.transports$.pipe(
         map((transports) => transports?.local ?? null),
-        distinctUntilChanged(deepCompare),
+        distinctUntilChanged<Async<LivekitTransport> | null>(deepCompare),
       ),
     );
 
-  private readonly localConnectionAndTransport$ = this.scope.behavior(
-    this.localTransport$.pipe(
-      map(
-        (transport) =>
-          transport &&
-          mapAsync(transport, (transport) => ({
-            connection: new PublishConnection(
-              transport,
-              this.livekitAlias,
-              this.matrixRTCSession.room.client,
-              this.scope,
-              this.remoteTransports$,
-              this.mediaDevices,
-              this.muteStates,
-              this.e2eeLivekitOptions(),
-              this.scope.behavior(this.trackProcessorState$),
-            ),
-            transport,
-          })),
+  /**
+   * The local connection over which we will publish our media. It could
+   * possibly also have some remote users' media available on it.
+   * null when not joined.
+   */
+  private readonly localConnection$: Behavior<Async<PublishConnection> | null> =
+    this.scope.behavior(
+      this.localTransport$.pipe(
+        map(
+          (transport) =>
+            transport &&
+            mapAsync(transport, (transport) => {
+              const opts: ConnectionOpts = {
+                transport,
+                client: this.matrixRTCSession.room.client,
+                scope: this.scope,
+                remoteTransports$: this.remoteTransports$,
+              };
+              return new PublishConnection(
+                opts,
+                this.mediaDevices,
+                this.muteStates,
+                this.e2eeLivekitOptions(),
+                this.scope.behavior(this.trackProcessorState$),
+              );
+            }),
+        ),
       ),
-    ),
-  );
-
-  private readonly localConnection$ = this.scope.behavior(
-    this.localConnectionAndTransport$.pipe(
-      map((value) => value && mapAsync(value, ({ connection }) => connection)),
-    ),
-  );
+    );
 
   public readonly livekitConnectionState$ = this.scope.behavior(
     this.localConnection$.pipe(
       switchMap((c) =>
         c?.state === "ready"
-          ? c.value.connectionState$
+          ? // TODO mapping to ConnectionState for compatibility, but we should use the full state?
+            c.value.focusConnectionState$.pipe(
+              map((s) => {
+                if (s.state === "ConnectedToLkRoom") return s.connectionState;
+                return ConnectionState.Disconnected;
+              }),
+              distinctUntilChanged(),
+            )
           : of(ConnectionState.Disconnected),
       ),
     ),
@@ -639,16 +655,19 @@ export class CallViewModel extends ViewModel {
                 "SFU remoteConnections$ construct new connection: ",
                 remoteServiceUrl,
               );
-              nextConnection = new Connection(
-                {
+
+              const args: ConnectionOpts = {
+                transport: {
+                  type: "livekit",
                   livekit_service_url: remoteServiceUrl,
                   livekit_alias: this.livekitAlias,
-                  type: "livekit",
                 },
-                this.livekitAlias,
-                this.matrixRTCSession.room.client,
-                this.scope,
-                this.remoteTransports$,
+                client: this.matrixRTCSession.room.client,
+                scope: this.scope,
+                remoteTransports$: this.remoteTransports$,
+              };
+              nextConnection = new RemoteConnection(
+                args,
                 this.e2eeLivekitOptions(),
               );
             } else {
@@ -700,15 +719,15 @@ export class CallViewModel extends ViewModel {
       map((connections) =>
         [...connections.values()].map((c) => ({
           room: c.livekitRoom,
-          url: c.transport.livekit_service_url,
+          url: c.localTransport.livekit_service_url,
           isLocal: c instanceof PublishConnection,
         })),
       ),
     ),
   );
 
-  private readonly userId = this.matrixRoom.client.getUserId();
-  private readonly deviceId = this.matrixRoom.client.getDeviceId();
+  private readonly userId = this.matrixRoom.client.getUserId()!;
+  private readonly deviceId = this.matrixRoom.client.getDeviceId()!;
 
   private readonly matrixConnected$ = this.scope.behavior(
     // To consider ourselves connected to MatrixRTC, we check the following:
@@ -785,7 +804,7 @@ export class CallViewModel extends ViewModel {
    * Lists, for each LiveKit room, the LiveKit participants whose media should
    * be presented.
    */
-  public readonly participantsByRoom$ = this.scope.behavior<
+  private readonly participantsByRoom$ = this.scope.behavior<
     {
       livekitRoom: LivekitRoom;
       url: string;
@@ -797,17 +816,16 @@ export class CallViewModel extends ViewModel {
     }[]
   >(
     // TODO: Move this logic into Connection/PublishConnection if possible
-    this.localConnectionAndTransport$
+    this.localConnection$
       .pipe(
-        switchMap((values) => {
-          if (values?.state !== "ready") return [];
-          const localConnection = values.value.connection;
+        switchMap((localConnection) => {
+          if (localConnection?.state !== "ready") return [];
           const memberError = (): never => {
             throw new Error("No room member for call membership");
           };
           const localParticipant = {
             id: "local",
-            participant: localConnection.livekitRoom.localParticipant,
+            participant: localConnection.value.livekitRoom.localParticipant,
             member:
               this.matrixRoom.getMember(this.userId ?? "") ?? memberError(),
           };
@@ -815,7 +833,7 @@ export class CallViewModel extends ViewModel {
           return this.remoteConnections$.pipe(
             switchMap((remoteConnections) =>
               combineLatest(
-                [localConnection, ...remoteConnections].map((c) =>
+                [localConnection.value, ...remoteConnections].map((c) =>
                   c.publishingParticipants$.pipe(
                     map((ps) => {
                       const participants: {
@@ -834,12 +852,12 @@ export class CallViewModel extends ViewModel {
                             this.matrixRoom,
                           )?.member ?? memberError(),
                       }));
-                      if (c === localConnection)
+                      if (c === localConnection.value)
                         participants.push(localParticipant);
 
                       return {
                         livekitRoom: c.livekitRoom,
-                        url: c.transport.livekit_service_url,
+                        url: c.localTransport.livekit_service_url,
                         participants,
                       };
                     }),
@@ -851,6 +869,25 @@ export class CallViewModel extends ViewModel {
         }),
       )
       .pipe(startWith([]), pauseWhen(this.pretendToBeDisconnected$)),
+  );
+
+  /**
+   * Lists, for each LiveKit room, the LiveKit participants whose audio should
+   * be rendered.
+   */
+  // (This is effectively just participantsByRoom$ with a stricter type)
+  public readonly audioParticipants$ = this.scope.behavior(
+    this.participantsByRoom$.pipe(
+      map((data) =>
+        data.map(({ livekitRoom, url, participants }) => ({
+          livekitRoom,
+          url,
+          participants: participants.flatMap(({ participant }) =>
+            participant instanceof RemoteParticipant ? [participant] : [],
+          ),
+        })),
+      ),
+    ),
   );
 
   /**
@@ -874,7 +911,11 @@ export class CallViewModel extends ViewModel {
       ],
       (memberships, _displaynames) => {
         const displaynameMap = new Map<string, string>([
-          ["local", this.matrixRoom.getMember(this.userId!)!.rawDisplayName],
+          [
+            "local",
+            this.matrixRoom.getMember(this.userId)?.rawDisplayName ??
+              this.userId,
+          ],
         ]);
         const room = this.matrixRoom;
 
@@ -1942,16 +1983,26 @@ export class CallViewModel extends ViewModel {
       .pipe(this.scope.bind())
       .subscribe(({ start, stop }) => {
         for (const c of stop) {
-          logger.info(`Disconnecting from ${c.transport.livekit_service_url}`);
-          c.stop();
+          logger.info(
+            `Disconnecting from ${c.localTransport.livekit_service_url}`,
+          );
+          c.stop().catch((err) => {
+            // TODO: better error handling
+            logger.error(
+              `Fail to stop connection to ${c.localTransport.livekit_service_url}`,
+              err,
+            );
+          });
         }
         for (const c of start) {
           c.start().then(
             () =>
-              logger.info(`Connected to ${c.transport.livekit_service_url}`),
+              logger.info(
+                `Connected to ${c.localTransport.livekit_service_url}`,
+              ),
             (e) =>
               logger.error(
-                `Failed to start connection to ${c.transport.livekit_service_url}`,
+                `Failed to start connection to ${c.localTransport.livekit_service_url}`,
                 e,
               ),
           );

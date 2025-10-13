@@ -155,7 +155,8 @@ test("plays one sound when a hand is raised", () => {
 
   act(() => {
     handRaisedSubject$.next({
-      [bobRtcMember.callId]: {
+      // TODO: What is this string supposed to be?
+      [`${bobRtcMember.sender}:${bobRtcMember.deviceId}`]: {
         time: new Date(),
         membershipEventId: "",
         reactionEventId: "",

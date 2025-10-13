@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { renderHook } from "@testing-library/react";
 import { afterEach, test, vitest } from "vitest";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import {
   RoomEvent as MatrixRoomEvent,
   MatrixEvent,
@@ -38,7 +37,7 @@ test("handles a hand raised reaction", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        rtcSession.asMockedSession(),
       );
       schedule("ab", {
         a: () => {},
@@ -86,7 +85,7 @@ test("handles a redaction", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        rtcSession.asMockedSession(),
       );
       schedule("abc", {
         a: () => {},
@@ -149,7 +148,7 @@ test("handles waiting for event decryption", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        rtcSession.asMockedSession(),
       );
       schedule("abc", {
         a: () => {},
@@ -218,7 +217,7 @@ test("hands rejecting events without a proper membership", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        rtcSession.asMockedSession(),
       );
       schedule("ab", {
         a: () => {},
@@ -262,9 +261,7 @@ test("handles a reaction", () => {
 
   withTestScheduler(({ schedule, time, expectObservable }) => {
     renderHook(() => {
-      const { reactions$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
-      );
+      const { reactions$ } = new ReactionsReader(rtcSession.asMockedSession());
       schedule(`abc`, {
         a: () => {},
         b: () => {
@@ -320,9 +317,7 @@ test("ignores bad reaction events", () => {
 
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
-      const { reactions$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
-      );
+      const { reactions$ } = new ReactionsReader(rtcSession.asMockedSession());
       schedule("ab", {
         a: () => {},
         b: () => {
@@ -444,9 +439,7 @@ test("that reactions cannot be spammed", () => {
 
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
-      const { reactions$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
-      );
+      const { reactions$ } = new ReactionsReader(rtcSession.asMockedSession());
       schedule("abcd", {
         a: () => {},
         b: () => {

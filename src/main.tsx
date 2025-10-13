@@ -60,9 +60,9 @@ if (fatalError !== null) {
 Initializer.initBeforeReact()
   .then(() => {
     root.render(
-      // <StrictMode>
-      <App vm={new AppViewModel()} />,
-      // </StrictMode>,
+      <StrictMode>
+        <App vm={new AppViewModel()} />,
+      </StrictMode>,
     );
   })
   .catch((e) => {

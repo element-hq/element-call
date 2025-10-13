@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 import { map, type Observable, of, type SchedulerLike } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
-import { expect, vi, vitest } from "vitest";
+import { expect, type MockedObject, vi, vitest } from "vitest";
 import {
   type RoomMember,
   type Room as MatrixRoom,
@@ -23,11 +23,13 @@ import {
   type SessionMembershipData,
   Status,
   type LivekitFocusSelection,
+  type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import {
   type LocalParticipant,
   type LocalTrackPublication,
+  type Participant,
   type RemoteParticipant,
   type RemoteTrackPublication,
   type Room as LivekitRoom,
@@ -191,8 +193,12 @@ export function mockRtcMembership(
   const event = new MatrixEvent({
     sender: typeof user === "string" ? user : user.userId,
     event_id: `$-ev-${randomUUID()}:example.org`,
+    content: data,
   });
-  return new CallMembership(event, data);
+
+  const cms = new CallMembership(event);
+  vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
+  return cms;
 }
 
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
@@ -205,6 +211,10 @@ export function mockMatrixRoomMember(
   return {
     ...mockEmitter(),
     userId: rtcMembership.sender,
+    getMxcAvatarUrl(): string | undefined {
+      return undefined;
+    },
+    rawDisplayName: rtcMembership.sender,
     ...member,
   } as RoomMember;
 }
@@ -331,6 +341,19 @@ export class MockRTCSession extends TypedEventEmitter<
     RoomAndToDeviceEventsHandlerMap &
     MembershipManagerEventHandlerMap
 > {
+  public asMockedSession(): MockedObject<MatrixRTCSession> {
+    const session = this as unknown as MockedObject<MatrixRTCSession>;
+
+    vi.mocked(session).reemitEncryptionKeys = vi
+      .fn<() => void>()
+      .mockReturnValue(undefined);
+    vi.mocked(session).getOldestMembership = vi
+      .fn<() => CallMembership | undefined>()
+      .mockReturnValue(this.memberships[0]);
+
+    return session;
+  }
+
   public readonly statistics = {
     counters: {},
   };
@@ -389,15 +412,17 @@ export class MockRTCSession extends TypedEventEmitter<
   }
 }
 
-export const mockTrack = (identity: string): TrackReference =>
+export const mockTrack = (
+  participant: Participant,
+  kind?: Track.Kind,
+  source?: Track.Source,
+): TrackReference =>
   ({
-    participant: {
-      identity,
-    },
+    participant,
     publication: {
-      kind: Track.Kind.Audio,
-      source: "mic",
-      trackSid: "123",
+      kind: kind ?? Track.Kind.Audio,
+      source: source ?? Track.Source.Microphone,
+      trackSid: `123##${participant.identity}`,
       track: {
         attach: vi.fn(),
         detach: vi.fn(),

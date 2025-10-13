@@ -40,7 +40,6 @@ import * as ComponentsCore from "@livekit/components-core";
 import {
   Status,
   type CallMembership,
-  type MatrixRTCSession,
   type IRTCNotificationContent,
   type ICallNotifyContent,
   MatrixRTCSessionEvent,
@@ -68,7 +67,7 @@ import {
   type ECConnectionState,
 } from "../livekit/useECConnectionState";
 import { E2eeType } from "../e2ee/e2eeType";
-import type { RaisedHandInfo } from "../reactions";
+import type { RaisedHandInfo, ReactionInfo } from "../reactions";
 import {
   alice,
   aliceDoppelganger,
@@ -95,6 +94,7 @@ import { ObservableScope } from "./ObservableScope";
 import { MediaDevices } from "./MediaDevices";
 import { getValue } from "../utils/observable";
 import { type Behavior, constant } from "./Behavior";
+import type { ProcessorState } from "../livekit/TrackProcessorContext.tsx";
 
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("../UrlParams", () => ({ getUrlParams }));
@@ -341,15 +341,20 @@ function withCallViewModel(
     .mockImplementation((_room, _eventType) => of());
   const muteStates = mockMuteStates();
   const raisedHands$ = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
+  const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
 
   const vm = new CallViewModel(
-    rtcSession as unknown as MatrixRTCSession,
+    rtcSession.asMockedSession(),
     room,
     mediaDevices,
     muteStates,
     options,
     raisedHands$,
-    new BehaviorSubject({}),
+    reactions$,
+    new BehaviorSubject<ProcessorState>({
+      processor: undefined,
+      supported: undefined,
+    }),
   );
 
   onTestFinished(() => {

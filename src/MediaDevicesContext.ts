@@ -23,14 +23,6 @@ export function useMediaDevices(): MediaDevices {
   return mediaDevices;
 }
 
-export const useIsEarpiece = (): boolean => {
-  const devices = useMediaDevices();
-  const audioOutput = useObservableEagerState(devices.audioOutput.selected$);
-  const available = useObservableEagerState(devices.audioOutput.available$);
-  if (!audioOutput?.id) return false;
-  return available.get(audioOutput.id)?.type === "earpiece";
-};
-
 /**
  * A convenience hook to get the audio node configuration for the earpiece.
  * It will check the `useAsEarpiece` of the `audioOutput` device and return
