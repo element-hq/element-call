@@ -46,11 +46,8 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
-import {
-  CallViewModel,
-  type CallViewModelOptions,
-  type Layout,
-} from "./CallViewModel";
+import { CallViewModel, type CallViewModelOptions } from "./CallViewModel";
+import { type Layout } from "./layout-types";
 import {
   mockLocalParticipant,
   mockMatrixRoom,
