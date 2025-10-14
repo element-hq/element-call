@@ -40,6 +40,8 @@ import { type ObservableScope } from "./ObservableScope.ts";
  * This connection will publish the local user's audio and video tracks.
  */
 export class PublishConnection extends Connection {
+  private readonly scope: ObservableScope;
+
   /**
    * Creates a new PublishConnection.
    * @param args - The connection options. {@link ConnectionOpts}
@@ -75,11 +77,10 @@ export class PublishConnection extends Connection {
     });
 
     super(room, args);
+    this.scope = scope;
 
     // Setup track processor syncing (blur)
     this.observeTrackProcessors(scope, room, trackerProcessorState$);
-    // Observe mute state changes and update LiveKit microphone/camera states accordingly
-    this.observeMuteStates(scope);
     // Observe media device changes and update LiveKit active devices accordingly
     this.observeMediaDevices(scope, devices, controlledAudioDevices);
 
@@ -101,6 +102,9 @@ export class PublishConnection extends Connection {
   public async start(): Promise<void> {
     this.stopped = false;
 
+    // Observe mute state changes and update LiveKit microphone/camera states accordingly
+    this.observeMuteStates(this.scope);
+
     await super.start();
 
     if (this.stopped) return;
@@ -118,6 +122,14 @@ export class PublishConnection extends Connection {
       if (this.stopped) return;
       // TODO: check if the connection is still active? and break the loop if not?
     }
+  }
+
+  public async stop(): Promise<void> {
+    // TODO-MULTI-SFU: Move these calls back to ObservableScope.onEnd once scope
+    // actually has the right lifetime
+    this.muteStates.audio.unsetHandler();
+    this.muteStates.video.unsetHandler();
+    await super.stop();
   }
 
   /// Private methods
@@ -225,10 +237,6 @@ export class PublishConnection extends Connection {
         logger.error("Failed to update LiveKit video input mute state", e);
       }
       return this.livekitRoom.localParticipant.isCameraEnabled;
-    });
-    scope.onEnd(() => {
-      this.muteStates.audio.unsetHandler();
-      this.muteStates.video.unsetHandler();
     });
   }
 
