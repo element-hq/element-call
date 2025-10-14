@@ -5,27 +5,28 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { BehaviorSubject, map, type Observable, of, switchMap } from "rxjs";
+import {
+  type LocalParticipant,
+  type Participant,
+  ParticipantEvent,
+  type RemoteParticipant,
+  type Room as LivekitRoom,
+} from "livekit-client";
+import { observeParticipantEvents } from "@livekit/components-core";
+
 import { ObservableScope } from "./ObservableScope.ts";
 import {
   LocalUserMediaViewModel,
   RemoteUserMediaViewModel,
-  UserMediaViewModel,
+  type UserMediaViewModel,
 } from "./MediaViewModel.ts";
-import { BehaviorSubject, map, type Observable, of, switchMap } from "rxjs";
-import {
-  LocalParticipant,
-  Participant,
-  ParticipantEvent,
-  RemoteParticipant,
-  type Room as LivekitRoom,
-} from "livekit-client";
 import type { Behavior } from "./Behavior.ts";
 import type { RoomMember } from "matrix-js-sdk";
 import type { EncryptionSystem } from "../e2ee/sharedKeyManagement.ts";
 import type { MediaDevices } from "./MediaDevices.ts";
 import type { ReactionOption } from "../reactions";
 import { observeSpeaker$ } from "./observeSpeaker.ts";
-import { observeParticipantEvents } from "@livekit/components-core";
 
 /**
  * TODO Document this

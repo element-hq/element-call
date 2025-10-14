@@ -59,7 +59,7 @@ import { type MuteStates } from "../state/MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
-import { CallViewModel, GridMode } from "../state/CallViewModel";
+import { CallViewModel, type GridMode } from "../state/CallViewModel";
 import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
@@ -109,7 +109,7 @@ import { useAudioContext } from "../useAudioContext";
 import ringtoneMp3 from "../sound/ringtone.mp3?url";
 import ringtoneOgg from "../sound/ringtone.ogg?url";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
-import { Layout } from "../state/layout-types.ts";
+import { type Layout } from "../state/layout-types.ts";
 
 const maxTapDurationMs = 400;
 
@@ -296,6 +296,10 @@ export const InCallView: FC<InCallViewProps> = ({
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
+
+  const fatalCallError = useBehavior(vm.configError$);
+  // Stop the rendering and throw for the error boundary
+  if (fatalCallError) throw fatalCallError;
 
   // We need to set the proper timings on the animation based upon the sound length.
   const ringDuration = pickupPhaseAudio?.soundDuration["waiting"] ?? 1;

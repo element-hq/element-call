@@ -123,7 +123,6 @@ export async function enterRTCSession(
     useMultiSfu: true,
   },
 ): Promise<void> {
-
   const {
     encryptMedia,
     useNewMembershipManager = true,

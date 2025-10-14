@@ -5,8 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel.ts";
-import { MediaViewModel, UserMediaViewModel } from "./MediaViewModel.ts";
+import {
+  type GridTileViewModel,
+  type SpotlightTileViewModel,
+} from "./TileViewModel.ts";
+import {
+  type MediaViewModel,
+  type UserMediaViewModel,
+} from "./MediaViewModel.ts";
 
 export interface GridLayoutMedia {
   type: "grid";

@@ -10,6 +10,7 @@ import {
   connectionStateObserver,
 } from "@livekit/components-core";
 import {
+  ConnectionError,
   type ConnectionState,
   type E2EEOptions,
   Room as LivekitRoom,
@@ -29,6 +30,10 @@ import {
 import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import { defaultLiveKitOptions } from "../livekit/options";
+import {
+  InsufficientCapacityError,
+  SFURoomCreationRestrictedError,
+} from "../utils/errors.ts";
 
 export interface ConnectionOpts {
   /** The focus server to connect to. */
@@ -88,6 +93,9 @@ export class Connection {
    * 1. Request an OpenId token `request_token` (allows matrix users to verify their identity with a third-party service.)
    * 2. Use this token to request the SFU config to the MatrixRtc authentication service.
    * 3. Connect to the configured LiveKit room.
+   *
+   * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
+   * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
    */
   public async start(): Promise<void> {
     this.stopped = false;
@@ -105,7 +113,30 @@ export class Connection {
         state: "ConnectingToLkRoom",
         focus: this.localTransport,
       });
-      await this.livekitRoom.connect(url, jwt);
+      try {
+        await this.livekitRoom.connect(url, jwt);
+      } catch (e) {
+        // LiveKit uses 503 to indicate that the server has hit its track limits.
+        // https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
+        // It also errors with a status code of 200 (yes, really) for room
+        // participant limits.
+        // LiveKit Cloud uses 429 for connection limits.
+        // Either way, all these errors can be explained as "insufficient capacity".
+        if (e instanceof ConnectionError) {
+          if (e.status === 503 || e.status === 200 || e.status === 429) {
+            throw new InsufficientCapacityError();
+          }
+          if (e.status === 404) {
+            // error msg is "Could not establish signal connection: requested room does not exist"
+            // The room does not exist. There are two different modes of operation for the SFU:
+            // - the room is created on the fly when connecting (livekit `auto_create` option)
+            // - Only authorized users can create rooms, so the room must exist before connecting (done by the auth jwt service)
+            // In the first case there will not be a 404, so we are in the second case.
+            throw new SFURoomCreationRestrictedError();
+          }
+        }
+        throw e;
+      }
       // If we were stopped while connecting, don't proceed to update state.
       if (this.stopped) return;
 
