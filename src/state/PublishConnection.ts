@@ -94,6 +94,9 @@ export class PublishConnection extends Connection {
    * 2. Use this token to request the SFU config to the MatrixRtc authentication service.
    * 3. Connect to the configured LiveKit room.
    * 4. Create local audio and video tracks based on the current mute states and publish them to the room.
+   *
+   * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
+   * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
    */
   public async start(): Promise<void> {
     this.stopped = false;

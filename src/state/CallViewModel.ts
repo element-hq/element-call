@@ -27,6 +27,7 @@ import {
 } from "matrix-js-sdk";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 import {
+  BehaviorSubject,
   combineLatest,
   concat,
   distinctUntilChanged,
@@ -76,7 +77,7 @@ import { ViewModel } from "./ViewModel";
 import {
   LocalUserMediaViewModel,
   type MediaViewModel,
-  RemoteUserMediaViewModel,
+  type RemoteUserMediaViewModel,
   ScreenShareViewModel,
   type UserMediaViewModel,
 } from "./MediaViewModel";
@@ -130,14 +131,15 @@ import { type Async, async$, mapAsync, ready } from "./Async";
 import { sharingScreen$, UserMedia } from "./UserMedia.ts";
 import { ScreenShare } from "./ScreenShare.ts";
 import {
-  GridLayoutMedia,
-  Layout,
-  LayoutMedia,
-  OneOnOneLayoutMedia,
-  SpotlightExpandedLayoutMedia,
-  SpotlightLandscapeLayoutMedia,
-  SpotlightPortraitLayoutMedia,
+  type GridLayoutMedia,
+  type Layout,
+  type LayoutMedia,
+  type OneOnOneLayoutMedia,
+  type SpotlightExpandedLayoutMedia,
+  type SpotlightLandscapeLayoutMedia,
+  type SpotlightPortraitLayoutMedia,
 } from "./layout-types.ts";
+import { ElementCallError, UnknownCallError } from "../utils/errors.ts";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -224,6 +226,19 @@ export class CallViewModel extends ViewModel {
         }
       : undefined;
 
+  private readonly _configError$ = new BehaviorSubject<ElementCallError | null>(
+    null,
+  );
+
+  /**
+   * If there is a configuration error with the call (e.g. misconfigured E2EE).
+   * This is a fatal error that prevents the call from being created/joined.
+   * Should render a blocking error screen.
+   */
+  public get configError$(): Behavior<ElementCallError | null> {
+    return this._configError$;
+  }
+
   private readonly join$ = new Subject<void>();
 
   public join(): void {
@@ -273,7 +288,7 @@ export class CallViewModel extends ViewModel {
    * The transport that we would personally prefer to publish on (if not for the
    * transport preferences of others, perhaps).
    */
-  private readonly preferredTransport = makeTransport(this.matrixRTCSession);
+  private readonly preferredTransport$: Observable<Async<LivekitTransport>>;
 
   /**
    * Lists the transports used by ourselves, plus all other MatrixRTC session
@@ -287,11 +302,7 @@ export class CallViewModel extends ViewModel {
       switchMap((joined) =>
         joined
           ? combineLatest(
-              [
-                async$(this.preferredTransport),
-                this.memberships$,
-                multiSfu.value$,
-              ],
+              [this.preferredTransport$, this.memberships$, multiSfu.value$],
               (preferred, memberships, multiSfu) => {
                 const oldestMembership =
                   this.matrixRTCSession.getOldestMembership();
@@ -312,6 +323,13 @@ export class CallViewModel extends ViewModel {
                     if (selection && isLivekitTransport(selection))
                       local = ready(selection);
                   }
+                }
+                if (local.state === "error") {
+                  this._configError$.next(
+                    local.value instanceof ElementCallError
+                      ? local.value
+                      : new UnknownCallError(local.value),
+                  );
                 }
                 return { local, remote };
               },
@@ -1743,6 +1761,10 @@ export class CallViewModel extends ViewModel {
   ) {
     super();
 
+    this.preferredTransport$ = async$(
+      makeTransport(this.matrixRTCSession),
+    ).pipe(this.scope.bind());
+
     // Start and stop local and remote connections as needed
     this.connectionInstructions$
       .pipe(this.scope.bind())
@@ -1765,11 +1787,21 @@ export class CallViewModel extends ViewModel {
               logger.info(
                 `Connected to ${c.localTransport.livekit_service_url}`,
               ),
-            (e) =>
+            (e) => {
+              // We only want to report fatal errors `_configError$` for the publish connection.
+              // If there is an error with another connection, it will not terminate the call and will be displayed
+              // on eacn tile.
+              if (
+                c instanceof PublishConnection &&
+                e instanceof ElementCallError
+              ) {
+                this._configError$.next(e);
+              }
               logger.error(
                 `Failed to start connection to ${c.localTransport.livekit_service_url}`,
                 e,
-              ),
+              );
+            },
           );
         }
       });
@@ -1778,6 +1810,7 @@ export class CallViewModel extends ViewModel {
     this.scope.reconcile(this.localTransport$, async (localTransport) => {
       if (localTransport?.state === "ready") {
         try {
+          this._configError$.next(null);
           await enterRTCSession(this.matrixRTCSession, localTransport.value, {
             encryptMedia: this.options.encryptionSystem.kind !== E2eeType.NONE,
             useExperimentalToDeviceTransport: true,

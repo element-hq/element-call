@@ -13,7 +13,6 @@ import EventEmitter from "events";
 import { enterRTCSession, leaveRTCSession } from "../src/rtcSessionHelpers";
 import { mockConfig } from "./utils/test";
 import { ElementWidgetActions, widget } from "./widget";
-import { ErrorCode } from "./utils/errors.ts";
 
 const USE_MUTI_SFU = false;
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
@@ -97,38 +96,20 @@ test("It joins the correct Session", async () => {
     {
       encryptMedia: true,
       useMultiSfu: USE_MUTI_SFU,
-    }
+    },
   );
 
   expect(mockedSession.joinRoomSession).toHaveBeenLastCalledWith(
     [
       {
-        livekit_alias: "my-oldest-member-service-alias",
-        livekit_service_url: "http://my-oldest-member-service-url.com",
-        type: "livekit",
-      },
-      {
         livekit_alias: "roomId",
         livekit_service_url: "http://my-well-known-service-url.com",
         type: "livekit",
       },
-      {
-        livekit_alias: "roomId",
-        livekit_service_url: "http://my-well-known-service-url2.com",
-        type: "livekit",
-      },
-      {
-        livekit_alias: "roomId",
-        livekit_service_url: "http://my-default-service-url.com",
-        type: "livekit",
-      },
     ],
-    {
-      focus_selection: "oldest_membership",
-      type: "livekit",
-    },
+    undefined,
     expect.objectContaining({
-      manageMediaKeys: false,
+      manageMediaKeys: true,
       useLegacyMemberEvents: false,
       useNewMembershipManager: true,
       useExperimentalToDeviceTransport: false,
@@ -177,40 +158,6 @@ test("leaveRTCSession doesn't close the widget when returning to lobby", async (
   await testLeaveRTCSession("user", false);
 });
 
-test("It fails with configuration error if no live kit url config is set in fallback", async () => {
-  mockConfig({});
-  vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({});
-
-  const mockedSession = vi.mocked({
-    room: {
-      roomId: "roomId",
-      client: {
-        getDomain: vi.fn().mockReturnValue("example.org"),
-      },
-    },
-    memberships: [],
-    getFocusInUse: vi.fn(),
-    joinRoomSession: vi.fn(),
-  }) as unknown as MatrixRTCSession;
-
-  await expect(
-    enterRTCSession(
-      mockedSession,
-      {
-        livekit_alias: "roomId",
-        livekit_service_url: "http://my-well-known-service-url.com",
-        type: "livekit",
-      },
-      {
-        encryptMedia: true,
-        useMultiSfu: USE_MUTI_SFU,
-      }
-    ),
-  ).rejects.toThrowError(
-    expect.objectContaining({ code: ErrorCode.MISSING_MATRIX_RTC_TRANSPORT }),
-  );
-});
-
 test("It should not fail with configuration error if homeserver config has livekit url but not fallback", async () => {
   mockConfig({});
   vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({
@@ -250,6 +197,6 @@ test("It should not fail with configuration error if homeserver config has livek
     {
       encryptMedia: true,
       useMultiSfu: USE_MUTI_SFU,
-    }
+    },
   );
 });
