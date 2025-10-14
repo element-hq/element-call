@@ -35,6 +35,7 @@ import type {
 import {
   type ConnectionOpts,
   type FocusConnectionState,
+  type PublishingParticipant,
   RemoteConnection,
 } from "./Connection.ts";
 import { ObservableScope } from "./ObservableScope.ts";
@@ -454,22 +455,19 @@ describe("Publishing participants observations", () => {
 
     const bobIsAPublisher = Promise.withResolvers<void>();
     const danIsAPublisher = Promise.withResolvers<void>();
-    const observedPublishers: {
-      participant: RemoteParticipant;
-      membership: CallMembership;
-    }[][] = [];
+    const observedPublishers: PublishingParticipant[][] = [];
     const s = connection.publishingParticipants$.subscribe((publishers) => {
       observedPublishers.push(publishers);
       if (
         publishers.some(
-          (p) => p.participant.identity === "@bob:example.org:DEV111",
+          (p) => p.participant?.identity === "@bob:example.org:DEV111",
         )
       ) {
         bobIsAPublisher.resolve();
       }
       if (
         publishers.some(
-          (p) => p.participant.identity === "@dan:example.org:DEV333",
+          (p) => p.participant?.identity === "@dan:example.org:DEV333",
         )
       ) {
         danIsAPublisher.resolve();
@@ -529,7 +527,7 @@ describe("Publishing participants observations", () => {
     await bobIsAPublisher.promise;
     const publishers = observedPublishers.pop();
     expect(publishers?.length).toEqual(1);
-    expect(publishers?.[0].participant.identity).toEqual(
+    expect(publishers?.[0].participant?.identity).toEqual(
       "@bob:example.org:DEV111",
     );
 
@@ -546,12 +544,12 @@ describe("Publishing participants observations", () => {
     expect(twoPublishers?.length).toEqual(2);
     expect(
       twoPublishers?.some(
-        (p) => p.participant.identity === "@bob:example.org:DEV111",
+        (p) => p.participant?.identity === "@bob:example.org:DEV111",
       ),
     ).toBeTruthy();
     expect(
       twoPublishers?.some(
-        (p) => p.participant.identity === "@dan:example.org:DEV333",
+        (p) => p.participant?.identity === "@dan:example.org:DEV333",
       ),
     ).toBeTruthy();
 
@@ -568,12 +566,25 @@ describe("Publishing participants observations", () => {
     );
 
     const updatedPublishers = observedPublishers.pop();
-    expect(updatedPublishers?.length).toEqual(1);
+    // Bob is not connected to the room but he is still in the rtc memberships declaring that
+    // he is using that focus to publish, so he should still appear as a publisher
+    expect(updatedPublishers?.length).toEqual(2);
+    const pp = updatedPublishers?.find(
+      (p) => p.membership.sender == "@bob:example.org",
+    );
+    expect(pp).toBeDefined();
+    expect(pp!.participant).not.toBeDefined();
     expect(
       updatedPublishers?.some(
-        (p) => p.participant.identity === "@dan:example.org:DEV333",
+        (p) => p.participant?.identity === "@dan:example.org:DEV333",
       ),
     ).toBeTruthy();
+    // Now if bob is not in the rtc memberships, he should disappear
+    const noBob = rtcMemberships.filter(
+      ({ membership }) => membership.sender !== "@bob:example.org",
+    );
+    fakeMembershipsFocusMap$.next(noBob);
+    expect(observedPublishers.pop()?.length).toEqual(1);
   });
 
   it("should be scoped to parent scope", (): void => {
@@ -581,10 +592,7 @@ describe("Publishing participants observations", () => {
 
     const connection = setupRemoteConnection();
 
-    let observedPublishers: {
-      participant: RemoteParticipant;
-      membership: CallMembership;
-    }[][] = [];
+    let observedPublishers: PublishingParticipant[][] = [];
     const s = connection.publishingParticipants$.subscribe((publishers) => {
       observedPublishers.push(publishers);
     });
@@ -619,7 +627,7 @@ describe("Publishing participants observations", () => {
     // We should have bob has a publisher now
     const publishers = observedPublishers.pop();
     expect(publishers?.length).toEqual(1);
-    expect(publishers?.[0].participant.identity).toEqual(
+    expect(publishers?.[0].participant?.identity).toEqual(
       "@bob:example.org:DEV111",
     );
 
