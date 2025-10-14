@@ -435,16 +435,16 @@ describe("Start connection states", () => {
 });
 
 function fakeRemoteLivekitParticipant(id: string): RemoteParticipant {
-  return vi.mocked<RemoteParticipant>({
+  return {
     identity: id,
-  } as unknown as RemoteParticipant);
+  } as unknown as RemoteParticipant;
 }
 
 function fakeRtcMemberShip(userId: string, deviceId: string): CallMembership {
-  return vi.mocked<CallMembership>({
-    sender: userId,
-    deviceId: deviceId,
-  } as unknown as CallMembership);
+  return {
+    userId,
+    deviceId,
+  } as unknown as CallMembership;
 }
 
 describe("Publishing participants observations", () => {
@@ -570,7 +570,7 @@ describe("Publishing participants observations", () => {
     // he is using that focus to publish, so he should still appear as a publisher
     expect(updatedPublishers?.length).toEqual(2);
     const pp = updatedPublishers?.find(
-      (p) => p.membership.sender == "@bob:example.org",
+      (p) => p.membership.userId == "@bob:example.org",
     );
     expect(pp).toBeDefined();
     expect(pp!.participant).not.toBeDefined();
@@ -581,7 +581,7 @@ describe("Publishing participants observations", () => {
     ).toBeTruthy();
     // Now if bob is not in the rtc memberships, he should disappear
     const noBob = rtcMemberships.filter(
-      ({ membership }) => membership.sender !== "@bob:example.org",
+      ({ membership }) => membership.userId !== "@bob:example.org",
     );
     fakeMembershipsFocusMap$.next(noBob);
     expect(observedPublishers.pop()?.length).toEqual(1);

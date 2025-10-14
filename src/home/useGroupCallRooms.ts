@@ -150,8 +150,8 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
             room,
             session,
             participants: session.memberships
-              .filter((m) => m.sender)
-              .map((m) => room.getMember(m.sender!))
+              .filter((m) => m.userId)
+              .map((m) => room.getMember(m.userId!))
               .filter((m) => m) as RoomMember[],
           };
         }),

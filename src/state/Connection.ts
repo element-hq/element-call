@@ -242,7 +242,7 @@ export class Connection {
             )
             // Pair with their associated LiveKit participant (if any)
             .map((membership) => {
-              const id = `${membership.sender}:${membership.deviceId}`;
+              const id = `${membership.userId}:${membership.deviceId}`;
               const participant = participants.find((p) => p.identity === id);
               return { participant, membership };
             }),

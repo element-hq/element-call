@@ -211,7 +211,7 @@ export const GroupCallView: FC<Props> = ({
 
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(
-    () => new Set<string>(memberships.map((m) => m.sender!)).size,
+    () => new Set<string>(memberships.map((m) => m.userId!)).size,
     [memberships],
   );
 

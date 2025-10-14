@@ -130,7 +130,7 @@ export class ReactionsReader {
   private onMembershipsChanged = (oldMemberships: CallMembership[]): void => {
     // Remove any raised hands for users no longer joined to the call.
     for (const identifier of Object.keys(this.raisedHandsSubject$.value).filter(
-      (rhId) => oldMemberships.find((u) => u.sender == rhId),
+      (rhId) => oldMemberships.find((u) => u.userId == rhId),
     )) {
       this.removeRaisedHand(identifier);
     }
@@ -138,10 +138,10 @@ export class ReactionsReader {
     // For each member in the call, check to see if a reaction has
     // been raised and adjust.
     for (const m of this.rtcSession.memberships) {
-      if (!m.sender || !m.eventId) {
+      if (!m.userId || !m.eventId) {
         continue;
       }
-      const identifier = `${m.sender}:${m.deviceId}`;
+      const identifier = `${m.userId}:${m.deviceId}`;
       if (
         this.raisedHandsSubject$.value[identifier] &&
         this.raisedHandsSubject$.value[identifier].membershipEventId !==
@@ -151,13 +151,13 @@ export class ReactionsReader {
         // was raised, reset.
         this.removeRaisedHand(identifier);
       }
-      const reaction = this.getLastReactionEvent(m.eventId, m.sender);
+      const reaction = this.getLastReactionEvent(m.eventId, m.userId);
       if (reaction) {
         const eventId = reaction?.getId();
         if (!eventId) {
           continue;
         }
-        this.addRaisedHand(`${m.sender}:${m.deviceId}`, {
+        this.addRaisedHand(`${m.userId}:${m.deviceId}`, {
           membershipEventId: m.eventId,
           reactionEventId: eventId,
           time: new Date(reaction.localTimestamp),
@@ -219,7 +219,7 @@ export class ReactionsReader {
 
       const membershipEventId = content?.["m.relates_to"]?.event_id;
       const membershipEvent = this.rtcSession.memberships.find(
-        (e) => e.eventId === membershipEventId && e.sender === sender,
+        (e) => e.eventId === membershipEventId && e.userId === sender,
       );
       // Check to see if this reaction was made to a membership event (and the
       // sender of the reaction matches the membership)
@@ -229,7 +229,7 @@ export class ReactionsReader {
         );
         return;
       }
-      const identifier = `${membershipEvent.sender}:${membershipEvent.deviceId}`;
+      const identifier = `${membershipEvent.userId}:${membershipEvent.deviceId}`;
 
       if (!content.emoji) {
         logger.warn(`Reaction had no emoji from ${reactionEventId}`);
@@ -278,7 +278,7 @@ export class ReactionsReader {
       // Check to see if this reaction was made to a membership event (and the
       // sender of the reaction matches the membership)
       const membershipEvent = this.rtcSession.memberships.find(
-        (e) => e.eventId === membershipEventId && e.sender === sender,
+        (e) => e.eventId === membershipEventId && e.userId === sender,
       );
       if (!membershipEvent) {
         logger.warn(
@@ -289,7 +289,7 @@ export class ReactionsReader {
 
       if (content?.["m.relates_to"].key === "🖐️") {
         this.addRaisedHand(
-          `${membershipEvent.sender}:${membershipEvent.deviceId}`,
+          `${membershipEvent.userId}:${membershipEvent.deviceId}`,
           {
             reactionEventId,
             membershipEventId,

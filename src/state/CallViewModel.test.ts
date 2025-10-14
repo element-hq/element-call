@@ -305,7 +305,7 @@ function withCallViewModel(
   const room = mockMatrixRoom({
     client: new (class extends EventEmitter {
       public getUserId(): string | undefined {
-        return localRtcMember.sender;
+        return localRtcMember.userId;
       }
       public getDeviceId(): string {
         return localRtcMember.deviceId;
@@ -1070,7 +1070,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
           },
           b: () => {
             raisedHands$.next({
-              [`${bobRtcMember.sender}:${bobRtcMember.deviceId}`]: {
+              [`${bobRtcMember.userId}:${bobRtcMember.deviceId}`]: {
                 time: new Date(),
                 reactionEventId: "",
                 membershipEventId: "",

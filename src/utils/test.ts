@@ -210,11 +210,11 @@ export function mockMatrixRoomMember(
 ): RoomMember {
   return {
     ...mockEmitter(),
-    userId: rtcMembership.sender,
+    userId: rtcMembership.userId,
     getMxcAvatarUrl(): string | undefined {
       return undefined;
     },
-    rawDisplayName: rtcMembership.sender,
+    rawDisplayName: rtcMembership.userId,
     ...member,
   } as RoomMember;
 }
