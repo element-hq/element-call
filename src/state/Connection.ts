@@ -37,13 +37,13 @@ import {
 } from "../utils/errors.ts";
 
 export interface ConnectionOpts {
-  /** The focus server to connect to. */
+  /** The media transport to connect to. */
   transport: LivekitTransport;
   /** The Matrix client to use for OpenID and SFU config requests. */
   client: OpenIDClientParts;
   /** The observable scope to use for this connection. */
   scope: ObservableScope;
-  /** An observable of the current RTC call memberships and their associated focus. */
+  /** An observable of the current RTC call memberships and their associated transports. */
   remoteTransports$: Behavior<
     { membership: CallMembership; transport: LivekitTransport }[]
   >;
@@ -52,18 +52,18 @@ export interface ConnectionOpts {
   livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
 }
 
-export type FocusConnectionState =
+export type TransportState =
   | { state: "Initialized" }
-  | { state: "FetchingConfig"; focus: LivekitTransport }
-  | { state: "ConnectingToLkRoom"; focus: LivekitTransport }
-  | { state: "PublishingTracks"; focus: LivekitTransport }
-  | { state: "FailedToStart"; error: Error; focus: LivekitTransport }
+  | { state: "FetchingConfig"; transport: LivekitTransport }
+  | { state: "ConnectingToLkRoom"; transport: LivekitTransport }
+  | { state: "PublishingTracks"; transport: LivekitTransport }
+  | { state: "FailedToStart"; error: Error; transport: LivekitTransport }
   | {
       state: "ConnectedToLkRoom";
       connectionState: ConnectionState;
-      focus: LivekitTransport;
+      transport: LivekitTransport;
     }
-  | { state: "Stopped"; focus: LivekitTransport };
+  | { state: "Stopped"; transport: LivekitTransport };
 
 /**
  * Represents participant publishing or expected to publish on the connection.
@@ -87,14 +87,15 @@ export type PublishingParticipant = {
  */
 export class Connection {
   // Private Behavior
-  private readonly _focusConnectionState$ =
-    new BehaviorSubject<FocusConnectionState>({ state: "Initialized" });
+  private readonly _transportState$ = new BehaviorSubject<TransportState>({
+    state: "Initialized",
+  });
 
   /**
-   * The current state of the connection to the focus server.
+   * The current state of the connection to the media transport.
    */
-  public readonly focusConnectionState$: Behavior<FocusConnectionState> =
-    this._focusConnectionState$;
+  public readonly transportState$: Behavior<TransportState> =
+    this._transportState$;
 
   /**
    * Whether the connection has been stopped.
@@ -116,17 +117,17 @@ export class Connection {
   public async start(): Promise<void> {
     this.stopped = false;
     try {
-      this._focusConnectionState$.next({
+      this._transportState$.next({
         state: "FetchingConfig",
-        focus: this.transport,
+        transport: this.transport,
       });
       const { url, jwt } = await this.getSFUConfigWithOpenID();
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
-      this._focusConnectionState$.next({
+      this._transportState$.next({
         state: "ConnectingToLkRoom",
-        focus: this.transport,
+        transport: this.transport,
       });
       try {
         await this.livekitRoom.connect(url, jwt);
@@ -155,16 +156,16 @@ export class Connection {
       // If we were stopped while connecting, don't proceed to update state.
       if (this.stopped) return;
 
-      this._focusConnectionState$.next({
+      this._transportState$.next({
         state: "ConnectedToLkRoom",
-        focus: this.transport,
+        transport: this.transport,
         connectionState: this.livekitRoom.state,
       });
     } catch (error) {
-      this._focusConnectionState$.next({
+      this._transportState$.next({
         state: "FailedToStart",
         error: error instanceof Error ? error : new Error(`${error}`),
-        focus: this.transport,
+        transport: this.transport,
       });
       throw error;
     }
@@ -186,9 +187,9 @@ export class Connection {
   public async stop(): Promise<void> {
     if (this.stopped) return;
     await this.livekitRoom.disconnect();
-    this._focusConnectionState$.next({
+    this._transportState$.next({
       state: "Stopped",
-      focus: this.transport,
+      transport: this.transport,
     });
     this.stopped = true;
   }
@@ -252,13 +253,13 @@ export class Connection {
     scope
       .behavior<ConnectionState>(connectionStateObserver(this.livekitRoom))
       .subscribe((connectionState) => {
-        const current = this._focusConnectionState$.value;
+        const current = this._transportState$.value;
         // Only update the state if we are already connected to the LiveKit room.
         if (current.state === "ConnectedToLkRoom") {
-          this._focusConnectionState$.next({
+          this._transportState$.next({
             state: "ConnectedToLkRoom",
             connectionState,
-            focus: current.focus,
+            transport: current.transport,
           });
         }
       });
