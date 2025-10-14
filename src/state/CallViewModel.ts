@@ -288,7 +288,9 @@ export class CallViewModel extends ViewModel {
    * The transport that we would personally prefer to publish on (if not for the
    * transport preferences of others, perhaps).
    */
-  private readonly preferredTransport$: Observable<Async<LivekitTransport>>;
+  private readonly preferredTransport$ = this.scope.behavior(
+    async$(makeTransport(this.matrixRTCSession)),
+  );
 
   /**
    * Lists the transports used by ourselves, plus all other MatrixRTC session
@@ -1801,10 +1803,6 @@ export class CallViewModel extends ViewModel {
     private readonly trackProcessorState$: Observable<ProcessorState>,
   ) {
     super();
-
-    this.preferredTransport$ = async$(
-      makeTransport(this.matrixRTCSession),
-    ).pipe(this.scope.bind());
 
     // Start and stop local and remote connections as needed
     this.connectionInstructions$
