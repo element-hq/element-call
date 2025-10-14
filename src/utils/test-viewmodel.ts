@@ -49,7 +49,7 @@ export function getBasicRTCSession(
       getChildEventsForEvent: vitest.fn(),
     } as Partial<RelationsContainer> as RelationsContainer,
     client: {
-      getUserId: () => localRtcMember.sender,
+      getUserId: () => localRtcMember.userId,
       getDeviceId: () => localRtcMember.deviceId,
       getSyncState: () => SyncState.Syncing,
       sendEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),

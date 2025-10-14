@@ -315,7 +315,7 @@ export class CallViewModel extends ViewModel {
                 const oldestMembership =
                   this.matrixRTCSession.getOldestMembership();
                 const remote = memberships.flatMap((m) => {
-                  if (m.sender === this.userId && m.deviceId === this.deviceId)
+                  if (m.userId === this.userId && m.deviceId === this.deviceId)
                     return [];
                   const t = m.getTransport(oldestMembership ?? m);
                   return t && isLivekitTransport(t)
@@ -664,7 +664,7 @@ export class CallViewModel extends ViewModel {
                           | undefined;
                         member: RoomMember;
                       }[] = ps.map(({ participant, membership }) => ({
-                        id: `${membership.sender}:${membership.deviceId}`,
+                        id: `${membership.userId}:${membership.deviceId}`,
                         participant,
                         member:
                           getRoomMemberFromRtcMember(
@@ -741,7 +741,7 @@ export class CallViewModel extends ViewModel {
 
         // We only consider RTC members for disambiguation as they are the only visible members.
         for (const rtcMember of memberships) {
-          const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
+          const matrixIdentifier = `${rtcMember.userId}:${rtcMember.deviceId}`;
           const { member } = getRoomMemberFromRtcMember(rtcMember, room);
           if (!member) {
             logger.error(
@@ -894,8 +894,8 @@ export class CallViewModel extends ViewModel {
     pairwise(),
     filter(
       ([prev, current]) =>
-        current.every((m) => m.sender === this.userId) &&
-        prev.some((m) => m.sender !== this.userId),
+        current.every((m) => m.userId === this.userId) &&
+        prev.some((m) => m.userId !== this.userId),
     ),
     map(() => {}),
   );
@@ -970,7 +970,7 @@ export class CallViewModel extends ViewModel {
    * Whether some Matrix user other than ourself is joined to the call.
    */
   private readonly someoneElseJoined$ = this.memberships$.pipe(
-    map((ms) => ms.some((m) => m.sender !== this.userId)),
+    map((ms) => ms.some((m) => m.userId !== this.userId)),
   ) as Behavior<boolean>;
 
   /**
@@ -1971,20 +1971,18 @@ function getRoomMemberFromRtcMember(
   rtcMember: CallMembership,
   room: MatrixRoom,
 ): { id: string; member: RoomMember | undefined } {
-  // WARN! This is not exactly the sender but the user defined in the state key.
-  // This will be available once we change to the new "member as object" format in the MatrixRTC object.
-  let id = rtcMember.sender + ":" + rtcMember.deviceId;
+  let id = rtcMember.userId + ":" + rtcMember.deviceId;
 
-  if (!rtcMember.sender) {
+  if (!rtcMember.userId) {
     return { id, member: undefined };
   }
   if (
-    rtcMember.sender === room.client.getUserId() &&
+    rtcMember.userId === room.client.getUserId() &&
     rtcMember.deviceId === room.client.getDeviceId()
   ) {
     id = "local";
   }
 
-  const member = room.getMember(rtcMember.sender) ?? undefined;
+  const member = room.getMember(rtcMember.userId) ?? undefined;
   return { id, member };
 }
