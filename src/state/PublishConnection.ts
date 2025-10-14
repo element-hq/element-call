@@ -109,18 +109,24 @@ export class PublishConnection extends Connection {
 
     if (this.stopped) return;
 
-    // TODO this can throw errors? It will also prompt for permissions if not already granted
-    const tracks = await this.livekitRoom.localParticipant.createTracks({
-      audio: this.muteStates.audio.enabled$.value,
-      video: this.muteStates.video.enabled$.value,
-    });
-    if (this.stopped) return;
-    for (const track of tracks) {
-      // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
-      // with a timeout.
-      await this.livekitRoom.localParticipant.publishTrack(track);
+    // TODO-MULTI-SFU: Prepublish a microphone track
+    const audio = this.muteStates.audio.enabled$.value;
+    const video = this.muteStates.video.enabled$.value;
+    // createTracks throws if called with audio=false and video=false
+    if (audio || video) {
+      // TODO this can still throw errors? It will also prompt for permissions if not already granted
+      const tracks = await this.livekitRoom.localParticipant.createTracks({
+        audio,
+        video,
+      });
       if (this.stopped) return;
-      // TODO: check if the connection is still active? and break the loop if not?
+      for (const track of tracks) {
+        // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
+        // with a timeout.
+        await this.livekitRoom.localParticipant.publishTrack(track);
+        if (this.stopped) return;
+        // TODO: check if the connection is still active? and break the loop if not?
+      }
     }
   }
 
