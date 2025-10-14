@@ -168,40 +168,6 @@ export type GridMode = "grid" | "spotlight";
 
 export type WindowMode = "normal" | "narrow" | "flat" | "pip";
 
-/**
- * Sorting bins defining the order in which media tiles appear in the layout.
- */
-enum SortingBin {
-  /**
-   * Yourself, when the "always show self" option is on.
-   */
-  SelfAlwaysShown,
-  /**
-   * Participants that are sharing their screen.
-   */
-  Presenters,
-  /**
-   * Participants that have been speaking recently.
-   */
-  Speakers,
-  /**
-   * Participants that have their hand raised.
-   */
-  HandRaised,
-  /**
-   * Participants with video.
-   */
-  Video,
-  /**
-   * Participants not sharing any video.
-   */
-  NoVideo,
-  /**
-   * Yourself, when the "always show self" option is off.
-   */
-  SelfNotAlwaysShown,
-}
-
 interface LayoutScanState {
   layout: Layout | null;
   tiles: TileStore;
@@ -549,6 +515,9 @@ export class CallViewModel extends ViewModel {
   private readonly userId = this.matrixRoom.client.getUserId()!;
   private readonly deviceId = this.matrixRoom.client.getDeviceId()!;
 
+  /**
+   * Whether we are connected to the MatrixRTC session.
+   */
   private readonly matrixConnected$ = this.scope.behavior(
     // To consider ourselves connected to MatrixRTC, we check the following:
     and$(
@@ -583,6 +552,10 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
+  /**
+   * Whether we are "fully" connected to the call. Accounts for both the
+   * connection to the MatrixRTC session and the LiveKit publish connection.
+   */
   private readonly connected$ = this.scope.behavior(
     and$(
       this.matrixConnected$,
@@ -600,7 +573,7 @@ export class CallViewModel extends ViewModel {
       // We are reconnecting if we previously had some successful initial
       // connection but are now disconnected
       scan(
-        ({ connectedPreviously, reconnecting }, connectedNow) => ({
+        ({ connectedPreviously }, connectedNow) => ({
           connectedPreviously: connectedPreviously || connectedNow,
           reconnecting: connectedPreviously && !connectedNow,
         }),
@@ -627,7 +600,7 @@ export class CallViewModel extends ViewModel {
   private readonly participantsByRoom$ = this.scope.behavior<
     {
       livekitRoom: LivekitRoom;
-      url: string;
+      url: string; // Included for use as a React key
       participants: {
         id: string;
         participant: LocalParticipant | RemoteParticipant | undefined;
@@ -1114,31 +1087,7 @@ export class CallViewModel extends ViewModel {
     this.userMedia$.pipe(
       switchMap((mediaItems) => {
         const bins = mediaItems.map((m) =>
-          combineLatest(
-            [
-              m.speaker$,
-              m.presenter$,
-              m.vm.videoEnabled$,
-              m.vm.handRaised$,
-              m.vm instanceof LocalUserMediaViewModel
-                ? m.vm.alwaysShow$
-                : of(false),
-            ],
-            (speaker, presenter, video, handRaised, alwaysShow) => {
-              let bin: SortingBin;
-              if (m.vm.local)
-                bin = alwaysShow
-                  ? SortingBin.SelfAlwaysShown
-                  : SortingBin.SelfNotAlwaysShown;
-              else if (presenter) bin = SortingBin.Presenters;
-              else if (speaker) bin = SortingBin.Speakers;
-              else if (handRaised) bin = SortingBin.HandRaised;
-              else if (video) bin = SortingBin.Video;
-              else bin = SortingBin.NoVideo;
-
-              return [m, bin] as const;
-            },
-          ),
+          m.bin$.pipe(map((bin) => [m, bin] as const)),
         );
         // Sort the media by bin order and generate a tile for each one
         return bins.length === 0

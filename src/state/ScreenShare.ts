@@ -4,7 +4,7 @@ Copyright 2025 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
-import { BehaviorSubject, type Observable } from "rxjs";
+import { of, type Observable } from "rxjs";
 import {
   type LocalParticipant,
   type RemoteParticipant,
@@ -17,13 +17,14 @@ import type { RoomMember } from "matrix-js-sdk";
 import type { EncryptionSystem } from "../e2ee/sharedKeyManagement.ts";
 import type { Behavior } from "./Behavior.ts";
 
-// TODO Document this
+/**
+ * A screen share media item to be presented in a tile. This is a thin wrapper
+ * around ScreenShareViewModel which essentially just establishes an
+ * ObservableScope for behaviors that the view model depends on.
+ */
 export class ScreenShare {
   private readonly scope = new ObservableScope();
   public readonly vm: ScreenShareViewModel;
-  private readonly participant$: BehaviorSubject<
-    LocalParticipant | RemoteParticipant
-  >;
 
   public constructor(
     id: string,
@@ -35,12 +36,10 @@ export class ScreenShare {
     pretendToBeDisconnected$: Behavior<boolean>,
     displayName$: Observable<string>,
   ) {
-    this.participant$ = new BehaviorSubject(participant);
-
     this.vm = new ScreenShareViewModel(
       id,
       member,
-      this.participant$.asObservable(),
+      of(participant),
       encryptionSystem,
       livekitRoom,
       focusUrl,
