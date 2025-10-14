@@ -31,6 +31,7 @@ export class ScreenShare {
     participant: LocalParticipant | RemoteParticipant,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    focusUrl: string,
     pretendToBeDisconnected$: Behavior<boolean>,
     displayName$: Observable<string>,
   ) {
@@ -42,6 +43,7 @@ export class ScreenShare {
       this.participant$.asObservable(),
       encryptionSystem,
       livekitRoom,
+      focusUrl,
       pretendToBeDisconnected$,
       this.scope.behavior(displayName$),
       participant.isLocal,
