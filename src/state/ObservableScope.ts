@@ -114,11 +114,11 @@ export class ObservableScope {
    */
   public reconcile<T>(
     value$: Behavior<T>,
-    callback: (value: T) => Promise<(() => Promise<void>) | undefined>,
+    callback: (value: T) => Promise<(() => Promise<void>) | void>,
   ): void {
     let latestValue: T | typeof nothing = nothing;
     let reconciledValue: T | typeof nothing = nothing;
-    let cleanUp: (() => Promise<void>) | undefined = undefined;
+    let cleanUp: (() => Promise<void>) | void = undefined;
     value$
       .pipe(
         catchError(() => EMPTY), // Ignore errors

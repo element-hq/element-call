@@ -140,6 +140,7 @@ import {
   type SpotlightPortraitLayoutMedia,
 } from "./layout-types.ts";
 import { ElementCallError, UnknownCallError } from "../utils/errors.ts";
+import { ObservableScope } from "./ObservableScope.ts";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -1805,18 +1806,19 @@ export class CallViewModel extends ViewModel {
         } catch (e) {
           logger.error("Error entering RTC session", e);
         }
+
         // Update our member event when our mute state changes.
-        const muteSubscription = this.muteStates.video.enabled$.subscribe(
-          (videoEnabled) =>
-            // TODO: Ensure that these calls are serialized in case of
-            // fast video toggling
-            void this.matrixRTCSession.updateCallIntent(
+        const intentScope = new ObservableScope();
+        intentScope.reconcile(
+          this.muteStates.video.enabled$,
+          async (videoEnabled) =>
+            this.matrixRTCSession.updateCallIntent(
               videoEnabled ? "video" : "audio",
             ),
         );
 
         return async (): Promise<void> => {
-          muteSubscription.unsubscribe();
+          intentScope.end();
           // Only sends Matrix leave event. The LiveKit session will disconnect
           // as soon as either the stopConnection$ handler above gets to it or
           // the view model is destroyed.
