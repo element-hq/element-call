@@ -507,11 +507,17 @@ export class CallViewModel extends ViewModel {
 
   /**
    * Lists the transports used by ourselves, plus all other MatrixRTC session
-   * members.
+   * members. For completeness this also lists the preferred transport and
+   * whether we are in multi-SFU mode (because advertisedTransport$ wants to
+   * read them at the same time, and bundling data together when it might change
+   * together is what you have to do in RxJS to avoid reading inconsistent state
+   * or observing too many changes.)
    */
   private readonly transports$: Behavior<{
     local: Async<LivekitTransport>;
     remote: { membership: CallMembership; transport: LivekitTransport }[];
+    preferred: Async<LivekitTransport>;
+    multiSfu: boolean;
   } | null> = this.scope.behavior(
     this.joined$.pipe(
       switchMap((joined) =>
@@ -541,7 +547,7 @@ export class CallViewModel extends ViewModel {
                     if (isLivekitTransport(selection)) local = ready(selection);
                   }
                 }
-                return { local, remote };
+                return { local, remote, preferred, multiSfu };
               },
             )
           : of(null),
@@ -567,6 +573,35 @@ export class CallViewModel extends ViewModel {
         distinctUntilChanged(deepCompare),
       ),
     );
+
+  /**
+   * The transport we should advertise in our MatrixRTC membership (plus whether
+   * it is a multi-SFU transport).
+   */
+  private readonly advertisedTransport$: Behavior<{
+    multiSfu: boolean;
+    transport: LivekitTransport;
+  } | null> = this.scope.behavior(
+    this.transports$.pipe(
+      map((transports) =>
+        transports?.local.state === "ready" &&
+        transports.preferred.state === "ready"
+          ? {
+              multiSfu: transports.multiSfu,
+              // In non-multi-SFU mode we should always advertise the preferred
+              // SFU to minimize the number of membership updates
+              transport: transports.multiSfu
+                ? transports.local.value
+                : transports.preferred.value,
+            }
+          : null,
+      ),
+      distinctUntilChanged<{
+        multiSfu: boolean;
+        transport: LivekitTransport;
+      } | null>(deepCompare),
+    ),
+  );
 
   private readonly localConnectionAndTransport$ = this.scope.behavior(
     this.localTransport$.pipe(
@@ -1959,16 +1994,16 @@ export class CallViewModel extends ViewModel {
       });
 
     // Start and stop session membership as needed
-    this.scope.reconcile(this.localTransport$, async (localTransport) => {
-      if (localTransport?.state === "ready") {
+    this.scope.reconcile(this.advertisedTransport$, async (advertised) => {
+      if (advertised !== null) {
         try {
           await enterRTCSession(
             this.matrixRTCSession,
-            localTransport.value,
+            advertised.transport,
             this.options.encryptionSystem.kind !== E2eeType.NONE,
             true,
             true,
-            multiSfu.value$.value,
+            advertised.multiSfu,
           );
         } catch (e) {
           logger.error("Error entering RTC session", e);
