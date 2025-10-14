@@ -10,7 +10,6 @@ import { expect, test } from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { userEvent } from "@testing-library/user-event";
 import { type ReactNode } from "react";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { ReactionToggleButton } from "./ReactionToggleButton";
 import { ElementCallReactionEventType } from "../reactions";
@@ -33,7 +32,7 @@ function TestComponent({
     <TooltipProvider>
       <ReactionsSenderProvider
         vm={vm}
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
+        rtcSession={rtcSession.asMockedSession()}
       >
         <ReactionToggleButton vm={vm} identifier={localIdent} />
       </ReactionsSenderProvider>

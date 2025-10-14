@@ -97,14 +97,39 @@ export async function makeTransport(
   return transport;
 }
 
+export interface EnterRTCSessionOptions {
+  encryptMedia: boolean;
+  // TODO: remove this flag, the new membership manager is stable enough
+  useNewMembershipManager?: boolean;
+  // TODO: remove this flag, to-device transport is stable enough now
+  useExperimentalToDeviceTransport?: boolean;
+  /** EXPERIMENTAL: If true, will use the multi-sfu codepath where each member connects to its SFU instead of everyone connecting to an elected on. */
+  useMultiSfu?: boolean;
+}
+
+/**
+ * TODO! document this function properly
+ * @param rtcSession
+ * @param transport
+ * @param options
+ */
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   transport: LivekitTransport,
-  encryptMedia: boolean,
-  useNewMembershipManager = true,
-  useExperimentalToDeviceTransport = false,
-  useMultiSfu = true,
+  options: EnterRTCSessionOptions = {
+    encryptMedia: true,
+    useNewMembershipManager: true,
+    useExperimentalToDeviceTransport: false,
+    useMultiSfu: true,
+  },
 ): Promise<void> {
+  const {
+    encryptMedia,
+    useNewMembershipManager = true,
+    useExperimentalToDeviceTransport = false,
+    useMultiSfu = true,
+  } = options;
+
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
