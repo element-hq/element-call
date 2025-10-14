@@ -13,6 +13,7 @@ import {
   ConnectionError,
   type ConnectionState,
   type E2EEOptions,
+  type RemoteParticipant,
   Room as LivekitRoom,
   type RoomOptions,
 } from "livekit-client";
@@ -63,6 +64,21 @@ export type FocusConnectionState =
       focus: LivekitTransport;
     }
   | { state: "Stopped"; focus: LivekitTransport };
+
+/**
+ * Represents participant publishing or expected to publish on the connection.
+ * It is paired with its associated rtc membership.
+ */
+export type PublishingParticipant = {
+  /**
+   * The LiveKit participant publishing on this connection, or undefined if the participant is not currently (yet) connected to the livekit room.
+   */
+  participant: RemoteParticipant | undefined;
+  /**
+   * The rtc call membership associated with this participant.
+   */
+  membership: CallMembership;
+};
 
 /**
  * A connection to a Matrix RTC LiveKit backend.
@@ -183,7 +199,7 @@ export class Connection {
    * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
    * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
    */
-  public readonly publishingParticipants$;
+  public readonly publishingParticipants$: Behavior<PublishingParticipant[]>;
 
   /**
    * The focus server to connect to.
@@ -226,10 +242,10 @@ export class Connection {
             )
             // Pair with their associated LiveKit participant (if any)
             // Uses flatMap to filter out memberships with no associated rtc participant ([])
-            .flatMap((membership) => {
+            .map((membership) => {
               const id = `${membership.sender}:${membership.deviceId}`;
               const participant = participants.find((p) => p.identity === id);
-              return participant ? [{ participant, membership }] : [];
+              return { participant, membership };
             }),
       ),
       [],
