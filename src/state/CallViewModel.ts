@@ -750,7 +750,11 @@ export class CallViewModel extends ViewModel {
       scan((prevItems, [participantsByRoom, duplicateTiles]) => {
         const newItems: Map<string, UserMedia | ScreenShare> = new Map(
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-            for (const { livekitRoom, participants } of participantsByRoom) {
+            for (const {
+              livekitRoom,
+              participants,
+              url,
+            } of participantsByRoom) {
               for (const { id, participant, member } of participants) {
                 for (let i = 0; i < 1 + duplicateTiles; i++) {
                   const mediaId = `${id}:${i}`;
@@ -770,6 +774,7 @@ export class CallViewModel extends ViewModel {
                         participant,
                         this.options.encryptionSystem,
                         livekitRoom,
+                        url,
                         this.mediaDevices,
                         this.pretendToBeDisconnected$,
                         this.memberDisplaynames$.pipe(
@@ -791,6 +796,7 @@ export class CallViewModel extends ViewModel {
                           participant,
                           this.options.encryptionSystem,
                           livekitRoom,
+                          url,
                           this.pretendToBeDisconnected$,
                           this.memberDisplaynames$.pipe(
                             map((m) => m.get(id) ?? "[👻]"),

@@ -78,7 +78,7 @@ const SpotlightLocalUserMediaItem: FC<SpotlightLocalUserMediaItemProps> = ({
   ...props
 }) => {
   const mirror = useBehavior(vm.mirror$);
-  return <MediaView mirror={mirror} {...props} />;
+  return <MediaView mirror={mirror} focusUrl={vm.focusURL} {...props} />;
 };
 
 SpotlightLocalUserMediaItem.displayName = "SpotlightLocalUserMediaItem";
