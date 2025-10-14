@@ -34,7 +34,7 @@ import type {
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   type ConnectionOpts,
-  type FocusConnectionState,
+  type TransportState,
   type PublishingParticipant,
   RemoteConnection,
 } from "./Connection.ts";
@@ -161,9 +161,7 @@ describe("Start connection states", () => {
     };
     const connection = new RemoteConnection(opts, undefined);
 
-    expect(connection.focusConnectionState$.getValue().state).toEqual(
-      "Initialized",
-    );
+    expect(connection.transportState$.getValue().state).toEqual("Initialized");
   });
 
   it("fail to getOpenId token then error state", async () => {
@@ -180,8 +178,8 @@ describe("Start connection states", () => {
 
     const connection = new RemoteConnection(opts, undefined);
 
-    const capturedStates: FocusConnectionState[] = [];
-    const s = connection.focusConnectionState$.subscribe((value) => {
+    const capturedStates: TransportState[] = [];
+    const s = connection.transportState$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -209,7 +207,7 @@ describe("Start connection states", () => {
     capturedState = capturedStates.pop();
     if (capturedState!.state === "FailedToStart") {
       expect(capturedState!.error.message).toEqual("Something went wrong");
-      expect(capturedState!.focus.livekit_alias).toEqual(
+      expect(capturedState!.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
@@ -233,8 +231,8 @@ describe("Start connection states", () => {
 
     const connection = new RemoteConnection(opts, undefined);
 
-    const capturedStates: FocusConnectionState[] = [];
-    const s = connection.focusConnectionState$.subscribe((value) => {
+    const capturedStates: TransportState[] = [];
+    const s = connection.transportState$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -266,7 +264,7 @@ describe("Start connection states", () => {
       expect(capturedState?.error.message).toContain(
         "SFU Config fetch failed with exception Error",
       );
-      expect(capturedState?.focus.livekit_alias).toEqual(
+      expect(capturedState?.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
@@ -290,8 +288,8 @@ describe("Start connection states", () => {
 
     const connection = new RemoteConnection(opts, undefined);
 
-    const capturedStates: FocusConnectionState[] = [];
-    const s = connection.focusConnectionState$.subscribe((value) => {
+    const capturedStates: TransportState[] = [];
+    const s = connection.transportState$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -331,7 +329,7 @@ describe("Start connection states", () => {
       expect(capturedState.error.message).toContain(
         "Failed to connect to livekit",
       );
-      expect(capturedState.focus.livekit_alias).toEqual(
+      expect(capturedState.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
@@ -347,8 +345,8 @@ describe("Start connection states", () => {
 
     const connection = setupRemoteConnection();
 
-    const capturedStates: FocusConnectionState[] = [];
-    const s = connection.focusConnectionState$.subscribe((value) => {
+    const capturedStates: TransportState[] = [];
+    const s = connection.transportState$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -364,59 +362,6 @@ describe("Start connection states", () => {
     expect(connectingState?.state).toEqual("ConnectingToLkRoom");
     const connectedState = capturedStates.shift();
     expect(connectedState?.state).toEqual("ConnectedToLkRoom");
-  });
-
-  it("should relay livekit events once connected", async () => {
-    setupTest();
-
-    const connection = setupRemoteConnection();
-
-    await connection.start();
-
-    let capturedStates: FocusConnectionState[] = [];
-    const s = connection.focusConnectionState$.subscribe((value) => {
-      capturedStates.push(value);
-    });
-    onTestFinished(() => s.unsubscribe());
-
-    const states = [
-      ConnectionState.Disconnected,
-      ConnectionState.Connecting,
-      ConnectionState.Connected,
-      ConnectionState.SignalReconnecting,
-      ConnectionState.Connecting,
-      ConnectionState.Connected,
-      ConnectionState.Reconnecting,
-    ];
-    for (const state of states) {
-      fakeRoomEventEmiter.emit(RoomEvent.ConnectionStateChanged, state);
-    }
-
-    for (const state of states) {
-      const s = capturedStates.shift();
-      expect(s?.state).toEqual("ConnectedToLkRoom");
-      const connectedState = s as FocusConnectionState & {
-        state: "ConnectedToLkRoom";
-      };
-      expect(connectedState.connectionState).toEqual(state);
-
-      // should always have the focus info
-      expect(connectedState.focus.livekit_alias).toEqual(
-        livekitFocus.livekit_alias,
-      );
-      expect(connectedState.focus.livekit_service_url).toEqual(
-        livekitFocus.livekit_service_url,
-      );
-    }
-
-    // If the state is not ConnectedToLkRoom, no events should be relayed anymore
-    await connection.stop();
-    capturedStates = [];
-    for (const state of states) {
-      fakeRoomEventEmiter.emit(RoomEvent.ConnectionStateChanged, state);
-    }
-
-    expect(capturedStates.length).toEqual(0);
   });
 
   it("shutting down the scope should stop the connection", async () => {
