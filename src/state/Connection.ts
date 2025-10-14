@@ -120,7 +120,6 @@ export class Connection {
         state: "FetchingConfig",
         focus: this.localTransport,
       });
-      // TODO could this be loaded earlier to save time?
       const { url, jwt } = await this.getSFUConfigWithOpenID();
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;

@@ -105,6 +105,10 @@ export class PublishConnection extends Connection {
     // Observe mute state changes and update LiveKit microphone/camera states accordingly
     this.observeMuteStates(this.scope);
 
+    // TODO: This will fetch the JWT token. Perhaps we could keep it preloaded
+    // instead? This optimization would only be safe for a publish connection,
+    // because we don't want to leak the user's intent to perhaps join a call to
+    // remote servers before they actually commit to it.
     await super.start();
 
     if (this.stopped) return;
