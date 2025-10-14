@@ -241,7 +241,6 @@ export class Connection {
                 : [],
             )
             // Pair with their associated LiveKit participant (if any)
-            // Uses flatMap to filter out memberships with no associated rtc participant ([])
             .map((membership) => {
               const id = `${membership.sender}:${membership.deviceId}`;
               const participant = participants.find((p) => p.identity === id);
