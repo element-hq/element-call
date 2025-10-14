@@ -505,7 +505,7 @@ export class CallViewModel extends ViewModel {
       map((connections) =>
         [...connections.values()].map((c) => ({
           room: c.livekitRoom,
-          url: c.localTransport.livekit_service_url,
+          url: c.transport.livekit_service_url,
           isLocal: c instanceof PublishConnection,
         })),
       ),
@@ -650,7 +650,7 @@ export class CallViewModel extends ViewModel {
 
                       return {
                         livekitRoom: c.livekitRoom,
-                        url: c.localTransport.livekit_service_url,
+                        url: c.transport.livekit_service_url,
                         participants,
                       };
                     }),
@@ -1758,13 +1758,11 @@ export class CallViewModel extends ViewModel {
       .pipe(this.scope.bind())
       .subscribe(({ start, stop }) => {
         for (const c of stop) {
-          logger.info(
-            `Disconnecting from ${c.localTransport.livekit_service_url}`,
-          );
+          logger.info(`Disconnecting from ${c.transport.livekit_service_url}`);
           c.stop().catch((err) => {
             // TODO: better error handling
             logger.error(
-              `Fail to stop connection to ${c.localTransport.livekit_service_url}`,
+              `Fail to stop connection to ${c.transport.livekit_service_url}`,
               err,
             );
           });
@@ -1772,9 +1770,7 @@ export class CallViewModel extends ViewModel {
         for (const c of start) {
           c.start().then(
             () =>
-              logger.info(
-                `Connected to ${c.localTransport.livekit_service_url}`,
-              ),
+              logger.info(`Connected to ${c.transport.livekit_service_url}`),
             (e) => {
               // We only want to report fatal errors `_configError$` for the publish connection.
               // If there is an error with another connection, it will not terminate the call and will be displayed
@@ -1786,7 +1782,7 @@ export class CallViewModel extends ViewModel {
                 this._configError$.next(e);
               }
               logger.error(
-                `Failed to start connection to ${c.localTransport.livekit_service_url}`,
+                `Failed to start connection to ${c.transport.livekit_service_url}`,
                 e,
               );
             },
