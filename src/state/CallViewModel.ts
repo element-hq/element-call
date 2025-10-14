@@ -392,22 +392,23 @@ export class CallViewModel extends ViewModel {
       ),
     );
 
-  public readonly livekitConnectionState$ = this.scope.behavior(
-    this.localConnection$.pipe(
-      switchMap((c) =>
-        c?.state === "ready"
-          ? // TODO mapping to ConnectionState for compatibility, but we should use the full state?
-            c.value.transportState$.pipe(
-              map((s) => {
-                if (s.state === "ConnectedToLkRoom") return s.connectionState;
-                return ConnectionState.Disconnected;
-              }),
-              distinctUntilChanged(),
-            )
-          : of(ConnectionState.Disconnected),
+  public readonly livekitConnectionState$ =
+    this.scope.behavior<ConnectionState>(
+      this.localConnection$.pipe(
+        switchMap((c) =>
+          c?.state === "ready"
+            ? // TODO mapping to ConnectionState for compatibility, but we should use the full state?
+              c.value.transportState$.pipe(
+                switchMap((s) => {
+                  if (s.state === "ConnectedToLkRoom")
+                    return s.connectionState$;
+                  return of(ConnectionState.Disconnected);
+                }),
+              )
+            : of(ConnectionState.Disconnected),
+        ),
       ),
-    ),
-  );
+    );
 
   /**
    * Connections for each transport in use by one or more session members that
