@@ -7545,7 +7545,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "matrix-org/matrix-js-sdk#develop"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=develop"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -10335,7 +10335,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@matrix-org/matrix-js-sdk#develop":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
   version: 38.4.0
   resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=fd949fe486038099ee111a72b57ce711e85bc352"
   dependencies:
