@@ -118,7 +118,7 @@ export class Connection {
     try {
       this._focusConnectionState$.next({
         state: "FetchingConfig",
-        focus: this.localTransport,
+        focus: this.transport,
       });
       const { url, jwt } = await this.getSFUConfigWithOpenID();
       // If we were stopped while fetching the config, don't proceed to connect
@@ -126,7 +126,7 @@ export class Connection {
 
       this._focusConnectionState$.next({
         state: "ConnectingToLkRoom",
-        focus: this.localTransport,
+        focus: this.transport,
       });
       try {
         await this.livekitRoom.connect(url, jwt);
@@ -157,14 +157,14 @@ export class Connection {
 
       this._focusConnectionState$.next({
         state: "ConnectedToLkRoom",
-        focus: this.localTransport,
+        focus: this.transport,
         connectionState: this.livekitRoom.state,
       });
     } catch (error) {
       this._focusConnectionState$.next({
         state: "FailedToStart",
         error: error instanceof Error ? error : new Error(`${error}`),
-        focus: this.localTransport,
+        focus: this.transport,
       });
       throw error;
     }
@@ -173,8 +173,8 @@ export class Connection {
   protected async getSFUConfigWithOpenID(): Promise<SFUConfig> {
     return await getSFUConfigWithOpenID(
       this.client,
-      this.localTransport.livekit_service_url,
-      this.localTransport.livekit_alias,
+      this.transport.livekit_service_url,
+      this.transport.livekit_alias,
     );
   }
   /**
@@ -188,7 +188,7 @@ export class Connection {
     await this.livekitRoom.disconnect();
     this._focusConnectionState$.next({
       state: "Stopped",
-      focus: this.localTransport,
+      focus: this.transport,
     });
     this.stopped = true;
   }
@@ -201,9 +201,9 @@ export class Connection {
   public readonly publishingParticipants$: Behavior<PublishingParticipant[]>;
 
   /**
-   * The focus server to connect to.
+   * The media transport to connect to.
    */
-  public readonly localTransport: LivekitTransport;
+  public readonly transport: LivekitTransport;
 
   private readonly client: OpenIDClientParts;
   /**
@@ -219,7 +219,7 @@ export class Connection {
   ) {
     const { transport, client, scope, remoteTransports$ } = opts;
 
-    this.localTransport = transport;
+    this.transport = transport;
     this.client = client;
 
     const participantsIncludingSubscribers$ = scope.behavior(
@@ -235,7 +235,7 @@ export class Connection {
             // Find all members that claim to publish on this connection
             .flatMap(({ membership, transport }) =>
               transport.livekit_service_url ===
-              this.localTransport.livekit_service_url
+              this.transport.livekit_service_url
                 ? [membership]
                 : [],
             )
