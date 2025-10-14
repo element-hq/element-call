@@ -10,293 +10,272 @@ import {
   connectionStateObserver,
 } from "@livekit/components-core";
 import {
-  ConnectionState,
-  Room as LivekitRoom,
+  ConnectionError,
+  type ConnectionState,
   type E2EEOptions,
-  Track,
-  LocalVideoTrack,
+  Room as LivekitRoom,
+  type RoomOptions,
 } from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk";
 import {
-  type LivekitTransport,
   type CallMembership,
+  type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
-import {
-  combineLatest,
-  map,
-  NEVER,
-  type Observable,
-  type Subscription,
-  switchMap,
-} from "rxjs";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { BehaviorSubject, combineLatest } from "rxjs";
 
-import { type SelectedDevice, type MediaDevices } from "./MediaDevices";
-import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
+import {
+  getSFUConfigWithOpenID,
+  type OpenIDClientParts,
+  type SFUConfig,
+} from "../livekit/openIDSFU";
 import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import { defaultLiveKitOptions } from "../livekit/options";
-import { getValue } from "../utils/observable";
-import { getUrlParams } from "../UrlParams";
-import { type MuteStates } from "./MuteStates";
 import {
-  type ProcessorState,
-  trackProcessorSync,
-} from "../livekit/TrackProcessorContext";
-import { observeTrackReference$ } from "./MediaViewModel";
+  InsufficientCapacityError,
+  SFURoomCreationRestrictedError,
+} from "../utils/errors.ts";
 
+export interface ConnectionOpts {
+  /** The focus server to connect to. */
+  transport: LivekitTransport;
+  /** The Matrix client to use for OpenID and SFU config requests. */
+  client: OpenIDClientParts;
+  /** The observable scope to use for this connection. */
+  scope: ObservableScope;
+  /** An observable of the current RTC call memberships and their associated focus. */
+  remoteTransports$: Behavior<
+    { membership: CallMembership; transport: LivekitTransport }[]
+  >;
+
+  /** Optional factory to create the Livekit room, mainly for testing purposes. */
+  livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
+}
+
+export type FocusConnectionState =
+  | { state: "Initialized" }
+  | { state: "FetchingConfig"; focus: LivekitTransport }
+  | { state: "ConnectingToLkRoom"; focus: LivekitTransport }
+  | { state: "PublishingTracks"; focus: LivekitTransport }
+  | { state: "FailedToStart"; error: Error; focus: LivekitTransport }
+  | {
+      state: "ConnectedToLkRoom";
+      connectionState: ConnectionState;
+      focus: LivekitTransport;
+    }
+  | { state: "Stopped"; focus: LivekitTransport };
+
+/**
+ * A connection to a Matrix RTC LiveKit backend.
+ *
+ * Expose observables for participants and connection state.
+ */
 export class Connection {
+  // Private Behavior
+  private readonly _focusConnectionState$ =
+    new BehaviorSubject<FocusConnectionState>({ state: "Initialized" });
+
+  /**
+   * The current state of the connection to the focus server.
+   */
+  public readonly focusConnectionState$: Behavior<FocusConnectionState> =
+    this._focusConnectionState$;
+
+  /**
+   * Whether the connection has been stopped.
+   * @see Connection.stop
+   * */
   protected stopped = false;
 
+  /**
+   * Starts the connection.
+   *
+   * This will:
+   * 1. Request an OpenId token `request_token` (allows matrix users to verify their identity with a third-party service.)
+   * 2. Use this token to request the SFU config to the MatrixRtc authentication service.
+   * 3. Connect to the configured LiveKit room.
+   *
+   * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
+   * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
+   */
   public async start(): Promise<void> {
     this.stopped = false;
-    const { url, jwt } = await this.sfuConfig;
-    if (!this.stopped) await this.livekitRoom.connect(url, jwt);
+    try {
+      this._focusConnectionState$.next({
+        state: "FetchingConfig",
+        focus: this.localTransport,
+      });
+      // TODO could this be loaded earlier to save time?
+      const { url, jwt } = await this.getSFUConfigWithOpenID();
+      // If we were stopped while fetching the config, don't proceed to connect
+      if (this.stopped) return;
+
+      this._focusConnectionState$.next({
+        state: "ConnectingToLkRoom",
+        focus: this.localTransport,
+      });
+      try {
+        await this.livekitRoom.connect(url, jwt);
+      } catch (e) {
+        // LiveKit uses 503 to indicate that the server has hit its track limits.
+        // https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
+        // It also errors with a status code of 200 (yes, really) for room
+        // participant limits.
+        // LiveKit Cloud uses 429 for connection limits.
+        // Either way, all these errors can be explained as "insufficient capacity".
+        if (e instanceof ConnectionError) {
+          if (e.status === 503 || e.status === 200 || e.status === 429) {
+            throw new InsufficientCapacityError();
+          }
+          if (e.status === 404) {
+            // error msg is "Could not establish signal connection: requested room does not exist"
+            // The room does not exist. There are two different modes of operation for the SFU:
+            // - the room is created on the fly when connecting (livekit `auto_create` option)
+            // - Only authorized users can create rooms, so the room must exist before connecting (done by the auth jwt service)
+            // In the first case there will not be a 404, so we are in the second case.
+            throw new SFURoomCreationRestrictedError();
+          }
+        }
+        throw e;
+      }
+      // If we were stopped while connecting, don't proceed to update state.
+      if (this.stopped) return;
+
+      this._focusConnectionState$.next({
+        state: "ConnectedToLkRoom",
+        focus: this.localTransport,
+        connectionState: this.livekitRoom.state,
+      });
+    } catch (error) {
+      this._focusConnectionState$.next({
+        state: "FailedToStart",
+        error: error instanceof Error ? error : new Error(`${error}`),
+        focus: this.localTransport,
+      });
+      throw error;
+    }
   }
 
-  public stop(): void {
+  protected async getSFUConfigWithOpenID(): Promise<SFUConfig> {
+    return await getSFUConfigWithOpenID(
+      this.client,
+      this.localTransport.livekit_service_url,
+      this.localTransport.livekit_alias,
+    );
+  }
+  /**
+   * Stops the connection.
+   *
+   * This will disconnect from the LiveKit room.
+   * If the connection is already stopped, this is a no-op.
+   */
+  public async stop(): Promise<void> {
     if (this.stopped) return;
-    void this.livekitRoom.disconnect();
+    await this.livekitRoom.disconnect();
+    this._focusConnectionState$.next({
+      state: "Stopped",
+      focus: this.localTransport,
+    });
     this.stopped = true;
   }
 
-  protected readonly sfuConfig = getSFUConfigWithOpenID(
-    this.client,
-    this.transport.livekit_service_url,
-    this.livekitAlias,
-  );
-
-  private readonly participantsIncludingSubscribers$;
+  /**
+   * An observable of the participants that are publishing on this connection.
+   * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
+   * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
+   */
   public readonly publishingParticipants$;
-  public readonly livekitRoom: LivekitRoom;
 
-  public connectionState$: Behavior<ConnectionState>;
-  public constructor(
-    public readonly transport: LivekitTransport,
-    protected readonly livekitAlias: string,
-    protected readonly client: MatrixClient,
-    protected readonly scope: ObservableScope,
-    protected readonly remoteTransports$: Behavior<
-      { membership: CallMembership; transport: LivekitTransport }[]
-    >,
-    e2eeLivekitOptions: E2EEOptions | undefined,
-    livekitRoom: LivekitRoom | undefined = undefined,
+  /**
+   * The focus server to connect to.
+   */
+  public readonly localTransport: LivekitTransport;
+
+  private readonly client: OpenIDClientParts;
+  /**
+   * Creates a new connection to a matrix RTC LiveKit backend.
+   *
+   * @param livekitRoom - LiveKit room instance to use.
+   * @param opts - Connection options {@link ConnectionOpts}.
+   *
+   */
+  protected constructor(
+    public readonly livekitRoom: LivekitRoom,
+    opts: ConnectionOpts,
   ) {
-    this.livekitRoom =
-      livekitRoom ??
-      new LivekitRoom({
-        ...defaultLiveKitOptions,
-        e2ee: e2eeLivekitOptions,
-      });
-    this.participantsIncludingSubscribers$ = this.scope.behavior(
+    const { transport, client, scope, remoteTransports$ } = opts;
+
+    this.localTransport = transport;
+    this.client = client;
+
+    const participantsIncludingSubscribers$ = scope.behavior(
       connectedParticipantsObserver(this.livekitRoom),
       [],
     );
 
-    this.publishingParticipants$ = this.scope.behavior(
+    this.publishingParticipants$ = scope.behavior(
       combineLatest(
-        [this.participantsIncludingSubscribers$, this.remoteTransports$],
+        [participantsIncludingSubscribers$, remoteTransports$],
         (participants, remoteTransports) =>
           remoteTransports
             // Find all members that claim to publish on this connection
             .flatMap(({ membership, transport }) =>
               transport.livekit_service_url ===
-              this.transport.livekit_service_url
+              this.localTransport.livekit_service_url
                 ? [membership]
                 : [],
             )
             // Pair with their associated LiveKit participant (if any)
-            .map((membership) => {
+            // Uses flatMap to filter out memberships with no associated rtc participant ([])
+            .flatMap((membership) => {
               const id = `${membership.sender}:${membership.deviceId}`;
               const participant = participants.find((p) => p.identity === id);
-              return { participant, membership };
+              return participant ? [{ participant, membership }] : [];
             }),
       ),
       [],
     );
-    this.connectionState$ = this.scope.behavior<ConnectionState>(
-      connectionStateObserver(this.livekitRoom),
-    );
 
-    this.scope.onEnd(() => this.stop());
+    scope
+      .behavior<ConnectionState>(connectionStateObserver(this.livekitRoom))
+      .subscribe((connectionState) => {
+        const current = this._focusConnectionState$.value;
+        // Only update the state if we are already connected to the LiveKit room.
+        if (current.state === "ConnectedToLkRoom") {
+          this._focusConnectionState$.next({
+            state: "ConnectedToLkRoom",
+            connectionState,
+            focus: current.focus,
+          });
+        }
+      });
+
+    scope.onEnd(() => void this.stop());
   }
 }
 
-export class PublishConnection extends Connection {
-  public async start(): Promise<void> {
-    this.stopped = false;
-
-    this.muteStates.audio.setHandler(async (desired) => {
-      try {
-        await this.livekitRoom.localParticipant.setMicrophoneEnabled(desired);
-      } catch (e) {
-        logger.error("Failed to update LiveKit audio input mute state", e);
-      }
-      return this.livekitRoom.localParticipant.isMicrophoneEnabled;
-    });
-    this.muteStates.video.setHandler(async (desired) => {
-      try {
-        await this.livekitRoom.localParticipant.setCameraEnabled(desired);
-      } catch (e) {
-        logger.error("Failed to update LiveKit video input mute state", e);
-      }
-      return this.livekitRoom.localParticipant.isCameraEnabled;
-    });
-
-    const { url, jwt } = await this.sfuConfig;
-    if (!this.stopped) await this.livekitRoom.connect(url, jwt);
-
-    if (!this.stopped) {
-      // TODO-MULTI-SFU: Prepublish a microphone track
-      const audio = this.muteStates.audio.enabled$.value;
-      const video = this.muteStates.video.enabled$.value;
-      // createTracks throws if called with audio=false and video=false
-      if (audio || video) {
-        const tracks = await this.livekitRoom.localParticipant.createTracks({
-          audio,
-          video,
-        });
-        for (const track of tracks) {
-          await this.livekitRoom.localParticipant.publishTrack(track);
-        }
-      }
-    }
-  }
-
-  public stop(): void {
-    this.muteStates.audio.unsetHandler();
-    this.muteStates.video.unsetHandler();
-    super.stop();
-  }
-
+/**
+ * A remote connection to the Matrix RTC LiveKit backend.
+ *
+ * This connection is used for subscribing to remote participants.
+ * It does not publish any local tracks.
+ */
+export class RemoteConnection extends Connection {
+  /**
+   * Creates a new remote connection to a matrix RTC LiveKit backend.
+   * @param opts
+   * @param sharedE2eeOption - The shared E2EE options to use for the connection.
+   */
   public constructor(
-    transport: LivekitTransport,
-    livekitAlias: string,
-    client: MatrixClient,
-    scope: ObservableScope,
-    remoteTransports$: Behavior<
-      { membership: CallMembership; transport: LivekitTransport }[]
-    >,
-    devices: MediaDevices,
-    private readonly muteStates: MuteStates,
-    e2eeLivekitOptions: E2EEOptions | undefined,
-    trackerProcessorState$: Behavior<ProcessorState>,
+    opts: ConnectionOpts,
+    sharedE2eeOption: E2EEOptions | undefined,
   ) {
-    logger.info("[LivekitRoom] Create LiveKit room");
-    const { controlledAudioDevices } = getUrlParams();
-
-    const room = new LivekitRoom({
+    const factory =
+      opts.livekitRoomFactory ??
+      ((options: RoomOptions): LivekitRoom => new LivekitRoom(options));
+    const livekitRoom = factory({
       ...defaultLiveKitOptions,
-      videoCaptureDefaults: {
-        ...defaultLiveKitOptions.videoCaptureDefaults,
-        deviceId: devices.videoInput.selected$.value?.id,
-        processor: trackerProcessorState$.value.processor,
-      },
-      audioCaptureDefaults: {
-        ...defaultLiveKitOptions.audioCaptureDefaults,
-        deviceId: devices.audioInput.selected$.value?.id,
-      },
-      audioOutput: {
-        // When using controlled audio devices, we don't want to set the
-        // deviceId here, because it will be set by the native app.
-        // (also the id does not need to match a browser device id)
-        deviceId: controlledAudioDevices
-          ? undefined
-          : getValue(devices.audioOutput.selected$)?.id,
-      },
-      e2ee: e2eeLivekitOptions,
+      e2ee: sharedE2eeOption,
     });
-    room.setE2EEEnabled(e2eeLivekitOptions !== undefined).catch((e) => {
-      logger.error("Failed to set E2EE enabled on room", e);
-    });
-
-    super(
-      transport,
-      livekitAlias,
-      client,
-      scope,
-      remoteTransports$,
-      e2eeLivekitOptions,
-      room,
-    );
-
-    // Setup track processor syncing (blur)
-    const track$ = this.scope.behavior(
-      observeTrackReference$(room.localParticipant, Track.Source.Camera).pipe(
-        map((trackRef) => {
-          const track = trackRef?.publication?.track;
-          return track instanceof LocalVideoTrack ? track : null;
-        }),
-      ),
-    );
-    trackProcessorSync(track$, trackerProcessorState$);
-
-    const syncDevice = (
-      kind: MediaDeviceKind,
-      selected$: Observable<SelectedDevice | undefined>,
-    ): Subscription =>
-      selected$.pipe(this.scope.bind()).subscribe((device) => {
-        if (this.connectionState$.value !== ConnectionState.Connected) return;
-        logger.info(
-          "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
-          this.livekitRoom.getActiveDevice(kind),
-          " !== ",
-          device?.id,
-        );
-        if (
-          device !== undefined &&
-          this.livekitRoom.getActiveDevice(kind) !== device.id
-        ) {
-          this.livekitRoom
-            .switchActiveDevice(kind, device.id)
-            .catch((e) =>
-              logger.error(`Failed to sync ${kind} device with LiveKit`, e),
-            );
-        }
-      });
-
-    syncDevice("audioinput", devices.audioInput.selected$);
-    if (!controlledAudioDevices)
-      syncDevice("audiooutput", devices.audioOutput.selected$);
-    syncDevice("videoinput", devices.videoInput.selected$);
-    // Restart the audio input track whenever we detect that the active media
-    // device has changed to refer to a different hardware device. We do this
-    // for the sake of Chrome, which provides a "default" device that is meant
-    // to match the system's default audio input, whatever that may be.
-    // This is special-cased for only audio inputs because we need to dig around
-    // in the LocalParticipant object for the track object and there's not a nice
-    // way to do that generically. There is usually no OS-level default video capture
-    // device anyway, and audio outputs work differently.
-    devices.audioInput.selected$
-      .pipe(
-        switchMap((device) => device?.hardwareDeviceChange$ ?? NEVER),
-        this.scope.bind(),
-      )
-      .subscribe(() => {
-        if (this.connectionState$.value !== ConnectionState.Connected) return;
-        const activeMicTrack = Array.from(
-          this.livekitRoom.localParticipant.audioTrackPublications.values(),
-        ).find((d) => d.source === Track.Source.Microphone)?.track;
-
-        if (
-          activeMicTrack &&
-          // only restart if the stream is still running: LiveKit will detect
-          // when a track stops & restart appropriately, so this is not our job.
-          // Plus, we need to avoid restarting again if the track is already in
-          // the process of being restarted.
-          activeMicTrack.mediaStreamTrack.readyState !== "ended"
-        ) {
-          // Restart the track, which will cause Livekit to do another
-          // getUserMedia() call with deviceId: default to get the *new* default device.
-          // Note that room.switchActiveDevice() won't work: Livekit will ignore it because
-          // the deviceId hasn't changed (was & still is default).
-          this.livekitRoom.localParticipant
-            .getTrackPublication(Track.Source.Microphone)
-            ?.audioTrack?.restartTrack()
-            .catch((e) => {
-              logger.error(`Failed to restart audio device track`, e);
-            });
-        }
-      });
+    super(livekitRoom, opts);
   }
 }

@@ -23,7 +23,7 @@ import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
-import { useObservable, useObservableEagerState } from "observable-hooks";
+import { useObservable } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import {
@@ -31,7 +31,6 @@ import {
   VolumeOnSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
-import { ConnectionState } from "livekit-client";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -60,11 +59,7 @@ import { type MuteStates } from "../state/MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
-import {
-  CallViewModel,
-  type GridMode,
-  type Layout,
-} from "../state/CallViewModel";
+import { CallViewModel, type GridMode } from "../state/CallViewModel";
 import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
@@ -113,8 +108,8 @@ import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 import ringtoneMp3 from "../sound/ringtone.mp3?url";
 import ringtoneOgg from "../sound/ringtone.ogg?url";
-import { ConnectionLostError } from "../utils/errors.ts";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
+import { type Layout } from "../state/layout-types.ts";
 
 const maxTapDurationMs = 400;
 
@@ -207,7 +202,8 @@ export const InCallView: FC<InCallViewProps> = ({
     useReactionsSender();
 
   useWakeLock();
-  const connectionState = useObservableEagerState(vm.livekitConnectionState$);
+  // TODO-MULTI-SFU This is unused now??
+  // const connectionState = useObservableEagerState(vm.livekitConnectionState$);
 
   // annoyingly we don't get the disconnection reason this way,
   // only by listening for the emitted event
@@ -287,7 +283,7 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
-  const participantsByRoom = useBehavior(vm.participantsByRoom$);
+  const audioParticipants = useBehavior(vm.audioParticipants$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
   const windowMode = useBehavior(vm.windowMode$);
@@ -300,6 +296,10 @@ export const InCallView: FC<InCallViewProps> = ({
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
+
+  const fatalCallError = useBehavior(vm.configError$);
+  // Stop the rendering and throw for the error boundary
+  if (fatalCallError) throw fatalCallError;
 
   // We need to set the proper timings on the animation based upon the sound length.
   const ringDuration = pickupPhaseAudio?.soundDuration["waiting"] ?? 1;
@@ -861,12 +861,12 @@ export const InCallView: FC<InCallViewProps> = ({
           </Text>
         )
       }
-      {participantsByRoom.map(({ livekitRoom, url, participants }) => (
+      {audioParticipants.map(({ livekitRoom, url, participants }) => (
         <LivekitRoomAudioRenderer
           key={url}
           url={url}
           livekitRoom={livekitRoom}
-          participants={participants}
+          validIdentities={participants.map((p) => p.identity)}
           muted={muteAllAudio}
         />
       ))}
