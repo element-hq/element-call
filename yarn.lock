@@ -10355,6 +10355,11 @@ __metadata:
     uuid: "npm:13"
   checksum: 10c0/6eedb93865419ca375f550c66801cd8f331833aed80ef16c49ad23b3eab648d3963571a2124d9737deb6ec909211d716949ad78d127268e16a8e2cc5b18d9fe1
   languageName: node
+  linkType: hard
+
+"matrix-widget-api@npm:^1.10.0, matrix-widget-api@npm:^1.13.0":
+  version: 1.13.1
+  resolution: "matrix-widget-api@npm:1.13.1"
   dependencies:
     "@types/events": "npm:^3.0.0"
     events: "npm:^3.2.0"
