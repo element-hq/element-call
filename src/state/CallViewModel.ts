@@ -400,10 +400,10 @@ export class CallViewModel extends ViewModel {
           c?.state === "ready"
             ? // TODO mapping to ConnectionState for compatibility, but we should use the full state?
               c.value.transportState$.pipe(
-                switchMap((s) => {
+                map((s) => {
                   if (s.state === "ConnectedToLkRoom")
-                    return s.connectionState$;
-                  return of(ConnectionState.Disconnected);
+                    return s.livekitState;
+                  return ConnectionState.Disconnected;
                 }),
               )
             : of(ConnectionState.Disconnected),

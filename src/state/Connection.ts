@@ -21,7 +21,7 @@ import {
   type CallMembership,
   type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, combineLatest, type Observable } from "rxjs";
+import { BehaviorSubject, combineLatest } from "rxjs";
 
 import {
   getSFUConfigWithOpenID,
@@ -60,7 +60,7 @@ export type TransportState =
   | { state: "FailedToStart"; error: Error; transport: LivekitTransport }
   | {
       state: "ConnectedToLkRoom";
-      connectionState$: Observable<ConnectionState>;
+      livekitState: ConnectionState;
       transport: LivekitTransport;
     }
   | { state: "Stopped"; transport: LivekitTransport };
@@ -159,7 +159,7 @@ export class Connection {
       this._transportState$.next({
         state: "ConnectedToLkRoom",
         transport: this.transport,
-        connectionState$: connectionStateObserver(this.livekitRoom),
+        livekitState: this.livekitRoom.state,
       });
     } catch (error) {
       this._transportState$.next({
@@ -249,6 +249,20 @@ export class Connection {
       ),
       [],
     );
+
+    scope
+      .behavior<ConnectionState>(connectionStateObserver(livekitRoom))
+      .subscribe((livekitState) => {
+        const current = this._transportState$.value;
+        // Only update the state if we are already connected to the LiveKit room.
+        if (current.state === "ConnectedToLkRoom") {
+          this._transportState$.next({
+            state: "ConnectedToLkRoom",
+            livekitState,
+            transport: current.transport,
+          });
+        }
+      });
 
     scope.onEnd(() => void this.stop());
   }

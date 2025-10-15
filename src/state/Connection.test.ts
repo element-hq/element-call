@@ -364,6 +364,59 @@ describe("Start connection states", () => {
     expect(connectedState?.state).toEqual("ConnectedToLkRoom");
   });
 
+  it("should relay livekit events once connected", async () => {
+    setupTest();
+
+    const connection = setupRemoteConnection();
+
+    await connection.start();
+
+    let capturedStates: TransportState[] = [];
+    const s = connection.transportState$.subscribe((value) => {
+      capturedStates.push(value);
+    });
+    onTestFinished(() => s.unsubscribe());
+
+    const states = [
+      ConnectionState.Disconnected,
+      ConnectionState.Connecting,
+      ConnectionState.Connected,
+      ConnectionState.SignalReconnecting,
+      ConnectionState.Connecting,
+      ConnectionState.Connected,
+      ConnectionState.Reconnecting,
+    ];
+    for (const state of states) {
+      fakeRoomEventEmiter.emit(RoomEvent.ConnectionStateChanged, state);
+    }
+
+    for (const state of states) {
+      const s = capturedStates.shift();
+      expect(s?.state).toEqual("ConnectedToLkRoom");
+      const transportState = s as TransportState & {
+        state: "ConnectedToLkRoom";
+      };
+      expect(transportState.livekitState).toEqual(state);
+
+      // should always have the focus info
+      expect(transportState.transport.livekit_alias).toEqual(
+        livekitFocus.livekit_alias,
+      );
+      expect(transportState.transport.livekit_service_url).toEqual(
+        livekitFocus.livekit_service_url,
+      );
+    }
+
+    // If the state is not ConnectedToLkRoom, no events should be relayed anymore
+    await connection.stop();
+    capturedStates = [];
+    for (const state of states) {
+      fakeRoomEventEmiter.emit(RoomEvent.ConnectionStateChanged, state);
+    }
+
+    expect(capturedStates.length).toEqual(0);
+  });
+
   it("shutting down the scope should stop the connection", async () => {
     setupTest();
     vi.useFakeTimers();
