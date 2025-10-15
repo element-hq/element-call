@@ -40,6 +40,8 @@ import { type ObservableScope } from "./ObservableScope.ts";
  * This connection will publish the local user's audio and video tracks.
  */
 export class PublishConnection extends Connection {
+  private readonly scope: ObservableScope;
+
   /**
    * Creates a new PublishConnection.
    * @param args - The connection options. {@link ConnectionOpts}
@@ -75,11 +77,10 @@ export class PublishConnection extends Connection {
     });
 
     super(room, args);
+    this.scope = scope;
 
     // Setup track processor syncing (blur)
     this.observeTrackProcessors(scope, room, trackerProcessorState$);
-    // Observe mute state changes and update LiveKit microphone/camera states accordingly
-    this.observeMuteStates(scope);
     // Observe media device changes and update LiveKit active devices accordingly
     this.observeMediaDevices(scope, devices, controlledAudioDevices);
 
@@ -94,27 +95,51 @@ export class PublishConnection extends Connection {
    * 2. Use this token to request the SFU config to the MatrixRtc authentication service.
    * 3. Connect to the configured LiveKit room.
    * 4. Create local audio and video tracks based on the current mute states and publish them to the room.
+   *
+   * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
+   * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
    */
   public async start(): Promise<void> {
     this.stopped = false;
 
+    // Observe mute state changes and update LiveKit microphone/camera states accordingly
+    this.observeMuteStates(this.scope);
+
+    // TODO: This will fetch the JWT token. Perhaps we could keep it preloaded
+    // instead? This optimization would only be safe for a publish connection,
+    // because we don't want to leak the user's intent to perhaps join a call to
+    // remote servers before they actually commit to it.
     await super.start();
 
     if (this.stopped) return;
 
-    // TODO this can throw errors? It will also prompt for permissions if not already granted
-    const tracks = await this.livekitRoom.localParticipant.createTracks({
-      audio: this.muteStates.audio.enabled$.value,
-      video: this.muteStates.video.enabled$.value,
-    });
-    if (this.stopped) return;
-    for (const track of tracks) {
-      // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
-      // with a timeout.
-      await this.livekitRoom.localParticipant.publishTrack(track);
+    // TODO-MULTI-SFU: Prepublish a microphone track
+    const audio = this.muteStates.audio.enabled$.value;
+    const video = this.muteStates.video.enabled$.value;
+    // createTracks throws if called with audio=false and video=false
+    if (audio || video) {
+      // TODO this can still throw errors? It will also prompt for permissions if not already granted
+      const tracks = await this.livekitRoom.localParticipant.createTracks({
+        audio,
+        video,
+      });
       if (this.stopped) return;
-      // TODO: check if the connection is still active? and break the loop if not?
+      for (const track of tracks) {
+        // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
+        // with a timeout.
+        await this.livekitRoom.localParticipant.publishTrack(track);
+        if (this.stopped) return;
+        // TODO: check if the connection is still active? and break the loop if not?
+      }
     }
+  }
+
+  public async stop(): Promise<void> {
+    // TODO-MULTI-SFU: Move these calls back to ObservableScope.onEnd once scope
+    // actually has the right lifetime
+    this.muteStates.audio.unsetHandler();
+    this.muteStates.video.unsetHandler();
+    await super.stop();
   }
 
   /// Private methods
@@ -222,10 +247,6 @@ export class PublishConnection extends Connection {
         logger.error("Failed to update LiveKit video input mute state", e);
       }
       return this.livekitRoom.localParticipant.isCameraEnabled;
-    });
-    scope.onEnd(() => {
-      this.muteStates.audio.unsetHandler();
-      this.muteStates.video.unsetHandler();
     });
   }
 

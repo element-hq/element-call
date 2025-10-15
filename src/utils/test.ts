@@ -196,7 +196,7 @@ export function mockRtcMembership(
     content: data,
   });
 
-  const cms = new CallMembership(event);
+  const cms = new CallMembership(event, data);
   vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
   return cms;
 }
@@ -210,11 +210,11 @@ export function mockMatrixRoomMember(
 ): RoomMember {
   return {
     ...mockEmitter(),
-    userId: rtcMembership.sender,
+    userId: rtcMembership.userId,
     getMxcAvatarUrl(): string | undefined {
       return undefined;
     },
-    rawDisplayName: rtcMembership.sender,
+    rawDisplayName: rtcMembership.userId,
     ...member,
   } as RoomMember;
 }
@@ -274,6 +274,7 @@ export async function withLocalMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({ localParticipant }),
+    "https://rtc-example.org",
     mediaDevices,
     constant(roomMember.rawDisplayName ?? "nodisplayname"),
     constant(null),
@@ -314,6 +315,7 @@ export async function withRemoteMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
+    "https://rtc-example.org",
     constant(false),
     constant(roomMember.rawDisplayName ?? "nodisplayname"),
     constant(null),

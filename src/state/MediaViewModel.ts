@@ -266,6 +266,7 @@ abstract class BaseMediaViewModel extends ViewModel {
     audioSource: AudioSource,
     videoSource: VideoSource,
     livekitRoom: LivekitRoom,
+    public readonly focusURL: string,
     public readonly displayName$: Behavior<string>,
   ) {
     super();
@@ -407,6 +408,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    focusUrl: string,
     displayName$: Behavior<string>,
     public readonly handRaised$: Behavior<Date | null>,
     public readonly reaction$: Behavior<ReactionOption | null>,
@@ -419,6 +421,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       Track.Source.Microphone,
       Track.Source.Camera,
       livekitRoom,
+      focusUrl,
       displayName$,
     );
 
@@ -539,6 +542,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Behavior<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    focusURL: string,
     private readonly mediaDevices: MediaDevices,
     displayName$: Behavior<string>,
     handRaised$: Behavior<Date | null>,
@@ -550,6 +554,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
       participant$,
       encryptionSystem,
       livekitRoom,
+      focusURL,
       displayName$,
       handRaised$,
       reaction$,
@@ -645,6 +650,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    focusUrl: string,
     private readonly pretendToBeDisconnected$: Behavior<boolean>,
     displayname$: Behavior<string>,
     handRaised$: Behavior<Date | null>,
@@ -656,6 +662,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
       participant$,
       encryptionSystem,
       livekitRoom,
+      focusUrl,
       displayname$,
       handRaised$,
       reaction$,
@@ -740,6 +747,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
     participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    focusUrl: string,
     private readonly pretendToBeDisconnected$: Behavior<boolean>,
     displayname$: Behavior<string>,
     public readonly local: boolean,
@@ -752,6 +760,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
       Track.Source.ScreenShareAudio,
       Track.Source.ScreenShare,
       livekitRoom,
+      focusUrl,
       displayname$,
     );
   }

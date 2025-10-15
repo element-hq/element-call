@@ -19,7 +19,7 @@ import { alice, local, localRtcMember } from "../utils/test-fixtures";
 import { type MockRTCSession } from "../utils/test";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 
-const localIdent = `${localRtcMember.sender}:${localRtcMember.deviceId}`;
+const localIdent = `${localRtcMember.userId}:${localRtcMember.deviceId}`;
 
 function TestComponent({
   rtcSession,

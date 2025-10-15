@@ -65,7 +65,7 @@ export function shouldDisambiguate(
   // displayname, after hidden character removal.
   return (
     memberships
-      .map((m) => m.sender && room.getMember(m.sender))
+      .map((m) => m.userId && room.getMember(m.userId))
       // NOTE: We *should* have a room member for everyone.
       .filter((m) => !!m)
       .filter((m) => m.userId !== userId)

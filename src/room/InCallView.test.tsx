@@ -110,7 +110,7 @@ function createInCallView(): RenderResult & {
 } {
   const client = {
     getUser: () => null,
-    getUserId: () => localRtcMember.sender,
+    getUserId: () => localRtcMember.userId,
     getDeviceId: () => localRtcMember.deviceId,
     getRoom: (rId) => (rId === roomId ? room : null),
   } as Partial<MatrixClient> as MatrixClient;

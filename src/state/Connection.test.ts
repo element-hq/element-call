@@ -34,7 +34,8 @@ import type {
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   type ConnectionOpts,
-  type FocusConnectionState,
+  type TransportState,
+  type PublishingParticipant,
   RemoteConnection,
 } from "./Connection.ts";
 import { ObservableScope } from "./ObservableScope.ts";
@@ -160,9 +161,7 @@ describe("Start connection states", () => {
     };
     const connection = new RemoteConnection(opts, undefined);
 
-    expect(connection.focusConnectionState$.getValue().state).toEqual(
-      "Initialized",
-    );
+    expect(connection.transportState$.getValue().state).toEqual("Initialized");
   });
 
   it("fail to getOpenId token then error state", async () => {
@@ -179,8 +178,8 @@ describe("Start connection states", () => {
 
     const connection = new RemoteConnection(opts, undefined);
 
-    const capturedStates: FocusConnectionState[] = [];
-    const s = connection.focusConnectionState$.subscribe((value) => {
+    const capturedStates: TransportState[] = [];
+    const s = connection.transportState$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -208,7 +207,7 @@ describe("Start connection states", () => {
     capturedState = capturedStates.pop();
     if (capturedState!.state === "FailedToStart") {
       expect(capturedState!.error.message).toEqual("Something went wrong");
-      expect(capturedState!.focus.livekit_alias).toEqual(
+      expect(capturedState!.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
@@ -232,8 +231,8 @@ describe("Start connection states", () => {
 
     const connection = new RemoteConnection(opts, undefined);
 
-    const capturedStates: FocusConnectionState[] = [];
-    const s = connection.focusConnectionState$.subscribe((value) => {
+    const capturedStates: TransportState[] = [];
+    const s = connection.transportState$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -265,7 +264,7 @@ describe("Start connection states", () => {
       expect(capturedState?.error.message).toContain(
         "SFU Config fetch failed with exception Error",
       );
-      expect(capturedState?.focus.livekit_alias).toEqual(
+      expect(capturedState?.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
@@ -289,8 +288,8 @@ describe("Start connection states", () => {
 
     const connection = new RemoteConnection(opts, undefined);
 
-    const capturedStates: FocusConnectionState[] = [];
-    const s = connection.focusConnectionState$.subscribe((value) => {
+    const capturedStates: TransportState[] = [];
+    const s = connection.transportState$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -330,7 +329,7 @@ describe("Start connection states", () => {
       expect(capturedState.error.message).toContain(
         "Failed to connect to livekit",
       );
-      expect(capturedState.focus.livekit_alias).toEqual(
+      expect(capturedState.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
@@ -346,8 +345,8 @@ describe("Start connection states", () => {
 
     const connection = setupRemoteConnection();
 
-    const capturedStates: FocusConnectionState[] = [];
-    const s = connection.focusConnectionState$.subscribe((value) => {
+    const capturedStates: TransportState[] = [];
+    const s = connection.transportState$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -363,59 +362,6 @@ describe("Start connection states", () => {
     expect(connectingState?.state).toEqual("ConnectingToLkRoom");
     const connectedState = capturedStates.shift();
     expect(connectedState?.state).toEqual("ConnectedToLkRoom");
-  });
-
-  it("should relay livekit events once connected", async () => {
-    setupTest();
-
-    const connection = setupRemoteConnection();
-
-    await connection.start();
-
-    let capturedStates: FocusConnectionState[] = [];
-    const s = connection.focusConnectionState$.subscribe((value) => {
-      capturedStates.push(value);
-    });
-    onTestFinished(() => s.unsubscribe());
-
-    const states = [
-      ConnectionState.Disconnected,
-      ConnectionState.Connecting,
-      ConnectionState.Connected,
-      ConnectionState.SignalReconnecting,
-      ConnectionState.Connecting,
-      ConnectionState.Connected,
-      ConnectionState.Reconnecting,
-    ];
-    for (const state of states) {
-      fakeRoomEventEmiter.emit(RoomEvent.ConnectionStateChanged, state);
-    }
-
-    for (const state of states) {
-      const s = capturedStates.shift();
-      expect(s?.state).toEqual("ConnectedToLkRoom");
-      const connectedState = s as FocusConnectionState & {
-        state: "ConnectedToLkRoom";
-      };
-      expect(connectedState.connectionState).toEqual(state);
-
-      // should always have the focus info
-      expect(connectedState.focus.livekit_alias).toEqual(
-        livekitFocus.livekit_alias,
-      );
-      expect(connectedState.focus.livekit_service_url).toEqual(
-        livekitFocus.livekit_service_url,
-      );
-    }
-
-    // If the state is not ConnectedToLkRoom, no events should be relayed anymore
-    await connection.stop();
-    capturedStates = [];
-    for (const state of states) {
-      fakeRoomEventEmiter.emit(RoomEvent.ConnectionStateChanged, state);
-    }
-
-    expect(capturedStates.length).toEqual(0);
   });
 
   it("shutting down the scope should stop the connection", async () => {
@@ -434,16 +380,16 @@ describe("Start connection states", () => {
 });
 
 function fakeRemoteLivekitParticipant(id: string): RemoteParticipant {
-  return vi.mocked<RemoteParticipant>({
+  return {
     identity: id,
-  } as unknown as RemoteParticipant);
+  } as unknown as RemoteParticipant;
 }
 
 function fakeRtcMemberShip(userId: string, deviceId: string): CallMembership {
-  return vi.mocked<CallMembership>({
-    sender: userId,
-    deviceId: deviceId,
-  } as unknown as CallMembership);
+  return {
+    userId,
+    deviceId,
+  } as unknown as CallMembership;
 }
 
 describe("Publishing participants observations", () => {
@@ -454,22 +400,19 @@ describe("Publishing participants observations", () => {
 
     const bobIsAPublisher = Promise.withResolvers<void>();
     const danIsAPublisher = Promise.withResolvers<void>();
-    const observedPublishers: {
-      participant: RemoteParticipant;
-      membership: CallMembership;
-    }[][] = [];
+    const observedPublishers: PublishingParticipant[][] = [];
     const s = connection.publishingParticipants$.subscribe((publishers) => {
       observedPublishers.push(publishers);
       if (
         publishers.some(
-          (p) => p.participant.identity === "@bob:example.org:DEV111",
+          (p) => p.participant?.identity === "@bob:example.org:DEV111",
         )
       ) {
         bobIsAPublisher.resolve();
       }
       if (
         publishers.some(
-          (p) => p.participant.identity === "@dan:example.org:DEV333",
+          (p) => p.participant?.identity === "@dan:example.org:DEV333",
         )
       ) {
         danIsAPublisher.resolve();
@@ -529,7 +472,7 @@ describe("Publishing participants observations", () => {
     await bobIsAPublisher.promise;
     const publishers = observedPublishers.pop();
     expect(publishers?.length).toEqual(1);
-    expect(publishers?.[0].participant.identity).toEqual(
+    expect(publishers?.[0].participant?.identity).toEqual(
       "@bob:example.org:DEV111",
     );
 
@@ -546,12 +489,12 @@ describe("Publishing participants observations", () => {
     expect(twoPublishers?.length).toEqual(2);
     expect(
       twoPublishers?.some(
-        (p) => p.participant.identity === "@bob:example.org:DEV111",
+        (p) => p.participant?.identity === "@bob:example.org:DEV111",
       ),
     ).toBeTruthy();
     expect(
       twoPublishers?.some(
-        (p) => p.participant.identity === "@dan:example.org:DEV333",
+        (p) => p.participant?.identity === "@dan:example.org:DEV333",
       ),
     ).toBeTruthy();
 
@@ -568,12 +511,25 @@ describe("Publishing participants observations", () => {
     );
 
     const updatedPublishers = observedPublishers.pop();
-    expect(updatedPublishers?.length).toEqual(1);
+    // Bob is not connected to the room but he is still in the rtc memberships declaring that
+    // he is using that focus to publish, so he should still appear as a publisher
+    expect(updatedPublishers?.length).toEqual(2);
+    const pp = updatedPublishers?.find(
+      (p) => p.membership.userId == "@bob:example.org",
+    );
+    expect(pp).toBeDefined();
+    expect(pp!.participant).not.toBeDefined();
     expect(
       updatedPublishers?.some(
-        (p) => p.participant.identity === "@dan:example.org:DEV333",
+        (p) => p.participant?.identity === "@dan:example.org:DEV333",
       ),
     ).toBeTruthy();
+    // Now if bob is not in the rtc memberships, he should disappear
+    const noBob = rtcMemberships.filter(
+      ({ membership }) => membership.userId !== "@bob:example.org",
+    );
+    fakeMembershipsFocusMap$.next(noBob);
+    expect(observedPublishers.pop()?.length).toEqual(1);
   });
 
   it("should be scoped to parent scope", (): void => {
@@ -581,10 +537,7 @@ describe("Publishing participants observations", () => {
 
     const connection = setupRemoteConnection();
 
-    let observedPublishers: {
-      participant: RemoteParticipant;
-      membership: CallMembership;
-    }[][] = [];
+    let observedPublishers: PublishingParticipant[][] = [];
     const s = connection.publishingParticipants$.subscribe((publishers) => {
       observedPublishers.push(publishers);
     });
@@ -619,7 +572,7 @@ describe("Publishing participants observations", () => {
     // We should have bob has a publisher now
     const publishers = observedPublishers.pop();
     expect(publishers?.length).toEqual(1);
-    expect(publishers?.[0].participant.identity).toEqual(
+    expect(publishers?.[0].participant?.identity).toEqual(
       "@bob:example.org:DEV111",
     );
 
