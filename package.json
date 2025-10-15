@@ -109,7 +109,7 @@
     "livekit-client": "^2.13.0",
     "lodash-es": "^4.17.21",
     "loglevel": "^1.9.1",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#head=toger5/sticky-events&commit=679652f4af5109134c147fa8d820a878e141057a",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#head=toger5/sticky-events&commit=3a8fc193dff321176af8098d2a94fffb601d0b1e",
     "matrix-widget-api": "^1.13.0",
     "normalize.css": "^8.0.1",
     "observable-hooks": "^4.2.3",
