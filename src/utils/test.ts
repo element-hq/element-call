@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 import { map, type Observable, of, type SchedulerLike } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
-import { expect, type MockedObject, vi, vitest } from "vitest";
+import { expect, type MockedObject, onTestFinished, vi, vitest } from "vitest";
 import {
   type RoomMember,
   type Room as MatrixRoom,
@@ -87,6 +87,15 @@ export interface OurRunHelpers extends RunHelpers {
 
 interface TestRunnerGlobal {
   rxjsTestScheduler?: SchedulerLike;
+}
+
+/**
+ * Create a new ObservableScope which ends when the current test ends.
+ */
+export function testScope(): ObservableScope {
+  const scope = new ObservableScope();
+  onTestFinished(() => scope.end());
+  return scope;
 }
 
 /**
@@ -267,6 +276,7 @@ export async function withLocalMedia(
   continuation: (vm: LocalUserMediaViewModel) => void | Promise<void>,
 ): Promise<void> {
   const vm = new LocalUserMediaViewModel(
+    testScope(),
     "local",
     mockMatrixRoomMember(localRtcMember, roomMember),
     constant(localParticipant),
@@ -280,11 +290,8 @@ export async function withLocalMedia(
     constant(null),
     constant(null),
   );
-  try {
-    await continuation(vm);
-  } finally {
-    vm.destroy();
-  }
+  // TODO: Simplify to just return the view model
+  await continuation(vm);
 }
 
 export function mockRemoteParticipant(
@@ -308,6 +315,7 @@ export async function withRemoteMedia(
 ): Promise<void> {
   const remoteParticipant = mockRemoteParticipant(participant);
   const vm = new RemoteUserMediaViewModel(
+    testScope(),
     "remote",
     mockMatrixRoomMember(localRtcMember, roomMember),
     of(remoteParticipant),
@@ -321,11 +329,8 @@ export async function withRemoteMedia(
     constant(null),
     constant(null),
   );
-  try {
-    await continuation(vm);
-  } finally {
-    vm.destroy();
-  }
+  // TODO: Simplify to just return the view model
+  await continuation(vm);
 }
 
 export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {

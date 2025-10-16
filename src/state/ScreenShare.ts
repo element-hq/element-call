@@ -11,7 +11,7 @@ import {
   type Room as LivekitRoom,
 } from "livekit-client";
 
-import { ObservableScope } from "./ObservableScope.ts";
+import { type ObservableScope } from "./ObservableScope.ts";
 import { ScreenShareViewModel } from "./MediaViewModel.ts";
 import type { RoomMember } from "matrix-js-sdk";
 import type { EncryptionSystem } from "../e2ee/sharedKeyManagement.ts";
@@ -23,10 +23,10 @@ import type { Behavior } from "./Behavior.ts";
  * ObservableScope for behaviors that the view model depends on.
  */
 export class ScreenShare {
-  private readonly scope = new ObservableScope();
   public readonly vm: ScreenShareViewModel;
 
   public constructor(
+    private readonly scope: ObservableScope,
     id: string,
     member: RoomMember,
     participant: LocalParticipant | RemoteParticipant,
@@ -37,6 +37,7 @@ export class ScreenShare {
     displayName$: Observable<string>,
   ) {
     this.vm = new ScreenShareViewModel(
+      this.scope,
       id,
       member,
       of(participant),
@@ -47,10 +48,5 @@ export class ScreenShare {
       this.scope.behavior(displayName$),
       participant.isLocal,
     );
-  }
-
-  public destroy(): void {
-    this.scope.end();
-    this.vm.destroy();
   }
 }

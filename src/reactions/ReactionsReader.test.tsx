@@ -23,7 +23,7 @@ import {
   localRtcMember,
 } from "../utils/test-fixtures";
 import { getBasicRTCSession } from "../utils/test-viewmodel";
-import { withTestScheduler } from "../utils/test";
+import { testScope, withTestScheduler } from "../utils/test";
 import { ElementCallReactionEventType, ReactionSet } from ".";
 
 afterEach(() => {
@@ -37,6 +37,7 @@ test("handles a hand raised reaction", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
+        testScope(),
         rtcSession.asMockedSession(),
       );
       schedule("ab", {
@@ -85,6 +86,7 @@ test("handles a redaction", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
+        testScope(),
         rtcSession.asMockedSession(),
       );
       schedule("abc", {
@@ -148,6 +150,7 @@ test("handles waiting for event decryption", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
+        testScope(),
         rtcSession.asMockedSession(),
       );
       schedule("abc", {
@@ -217,6 +220,7 @@ test("hands rejecting events without a proper membership", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
+        testScope(),
         rtcSession.asMockedSession(),
       );
       schedule("ab", {
@@ -261,7 +265,10 @@ test("handles a reaction", () => {
 
   withTestScheduler(({ schedule, time, expectObservable }) => {
     renderHook(() => {
-      const { reactions$ } = new ReactionsReader(rtcSession.asMockedSession());
+      const { reactions$ } = new ReactionsReader(
+        testScope(),
+        rtcSession.asMockedSession(),
+      );
       schedule(`abc`, {
         a: () => {},
         b: () => {
@@ -317,7 +324,10 @@ test("ignores bad reaction events", () => {
 
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
-      const { reactions$ } = new ReactionsReader(rtcSession.asMockedSession());
+      const { reactions$ } = new ReactionsReader(
+        testScope(),
+        rtcSession.asMockedSession(),
+      );
       schedule("ab", {
         a: () => {},
         b: () => {
@@ -439,7 +449,10 @@ test("that reactions cannot be spammed", () => {
 
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
-      const { reactions$ } = new ReactionsReader(rtcSession.asMockedSession());
+      const { reactions$ } = new ReactionsReader(
+        testScope(),
+        rtcSession.asMockedSession(),
+      );
       schedule("abcd", {
         a: () => {},
         b: () => {
