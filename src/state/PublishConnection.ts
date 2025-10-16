@@ -58,7 +58,7 @@ export class PublishConnection extends Connection {
     trackerProcessorState$: Behavior<ProcessorState>,
   ) {
     const { scope } = args;
-    logger.info("[LivekitRoom] Create LiveKit room");
+    logger.info("[PublishConnection] Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
 
     const factory =
