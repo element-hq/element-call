@@ -23,6 +23,7 @@ import {
 } from "rxjs";
 
 import { type Behavior } from "../state/Behavior";
+import { ObservableScope } from "../state/ObservableScope";
 
 const nothing = Symbol("nothing");
 
@@ -116,4 +117,57 @@ export function pauseWhen<T>(pause$: Behavior<boolean>) {
       ),
       map(([value]) => value),
     );
+}
+
+/**
+ * Maps a changing input value to an output value consisting of items that have
+ * automatically generated ObservableScopes tied to a key. Items will be
+ * automatically created when their key is requested for the first time, reused
+ * when the same key is requested at a later time, and destroyed (have their
+ * scope ended) when the key is no longer requested.
+ */
+export function generateKeyed$<In, Item, Out>(
+  input$: Observable<In>,
+  project: (
+    input: In,
+    createOrGet: (
+      key: string,
+      factory: (scope: ObservableScope) => Item,
+    ) => Item,
+  ) => Out,
+): Observable<Out> {
+  return input$.pipe(
+    scan<
+      In,
+      {
+        items: Map<string, { item: Item; scope: ObservableScope }>;
+        output: Out;
+      },
+      { items: Map<string, { item: Item; scope: ObservableScope }> }
+    >(
+      (state, data) => {
+        const nextItems = new Map<
+          string,
+          { item: Item; scope: ObservableScope }
+        >();
+        const output = project(data, (key, factory) => {
+          let item = state.items.get(key);
+          if (item === undefined) {
+            const scope = new ObservableScope();
+            item = { item: factory(scope), scope };
+          }
+          nextItems.set(key, item);
+          return item.item;
+        });
+        for (const [key, { scope }] of state.items)
+          if (!nextItems.has(key)) scope.end();
+        return { items: nextItems, output };
+      },
+      { items: new Map() },
+    ),
+    finalizeValue((state) => {
+      for (const { scope } of state.items.values()) scope.end();
+    }),
+    map(({ output }) => output),
+  );
 }

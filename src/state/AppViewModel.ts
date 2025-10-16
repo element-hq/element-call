@@ -6,14 +6,16 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { MediaDevices } from "./MediaDevices";
-import { ViewModel } from "./ViewModel";
+import { type ObservableScope } from "./ObservableScope";
 
 /**
  * The top-level state holder for the application.
  */
-export class AppViewModel extends ViewModel {
+export class AppViewModel {
   public readonly mediaDevices = new MediaDevices(this.scope);
 
   // TODO: Move more application logic here. The CallViewModel, at the very
   // least, ought to be accessible from this object.
+
+  public constructor(private readonly scope: ObservableScope) {}
 }
