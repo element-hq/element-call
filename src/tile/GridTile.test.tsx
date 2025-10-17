@@ -12,7 +12,7 @@ import { axe } from "vitest-axe";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { GridTile } from "./GridTile";
-import { mockRtcMembership, withRemoteMedia } from "../utils/test";
+import { mockRtcMembership, createRemoteMedia } from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import type { CallViewModel } from "../state/CallViewModel";
@@ -25,7 +25,7 @@ global.IntersectionObserver = class MockIntersectionObserver {
 } as unknown as typeof IntersectionObserver;
 
 test("GridTile is accessible", async () => {
-  await withRemoteMedia(
+  const vm = createRemoteMedia(
     mockRtcMembership("@alice:example.org", "AAAA"),
     {
       rawDisplayName: "Alice",
@@ -36,41 +36,40 @@ test("GridTile is accessible", async () => {
       getTrackPublication: () =>
         ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
     },
-    async (vm) => {
-      const fakeRtcSession = {
+  );
+
+  const fakeRtcSession = {
+    on: () => {},
+    off: () => {},
+    room: {
+      on: () => {},
+      off: () => {},
+      client: {
+        getUserId: () => null,
+        getDeviceId: () => null,
         on: () => {},
         off: () => {},
-        room: {
-          on: () => {},
-          off: () => {},
-          client: {
-            getUserId: () => null,
-            getDeviceId: () => null,
-            on: () => {},
-            off: () => {},
-          },
-        },
-        memberships: [],
-      } as unknown as MatrixRTCSession;
-      const cVm = {
-        reactions$: constant({}),
-        handsRaised$: constant({}),
-      } as Partial<CallViewModel> as CallViewModel;
-      const { container } = render(
-        <ReactionsSenderProvider vm={cVm} rtcSession={fakeRtcSession}>
-          <GridTile
-            vm={new GridTileViewModel(constant(vm))}
-            onOpenProfile={() => {}}
-            targetWidth={300}
-            targetHeight={200}
-            showSpeakingIndicators
-            focusable={true}
-          />
-        </ReactionsSenderProvider>,
-      );
-      expect(await axe(container)).toHaveNoViolations();
-      // Name should be visible
-      screen.getByText("Alice");
+      },
     },
+    memberships: [],
+  } as unknown as MatrixRTCSession;
+  const cVm = {
+    reactions$: constant({}),
+    handsRaised$: constant({}),
+  } as Partial<CallViewModel> as CallViewModel;
+  const { container } = render(
+    <ReactionsSenderProvider vm={cVm} rtcSession={fakeRtcSession}>
+      <GridTile
+        vm={new GridTileViewModel(constant(vm))}
+        onOpenProfile={() => {}}
+        targetWidth={300}
+        targetHeight={200}
+        showSpeakingIndicators
+        focusable={true}
+      />
+    </ReactionsSenderProvider>,
   );
+  expect(await axe(container)).toHaveNoViolations();
+  // Name should be visible
+  screen.getByText("Alice");
 });
