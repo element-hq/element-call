@@ -732,6 +732,84 @@ test("layout enters picture-in-picture mode when requested", () => {
   });
 });
 
+test("PiP tile in expanded spotlight layout switches speakers without layout shifts", () => {
+  withTestScheduler(({ behavior, schedule, expectObservable }) => {
+    // Switch to spotlight immediately
+    const modeInputMarbles = "     s";
+    // And expand the spotlight immediately
+    const expandInputMarbles = "   a";
+    // First Bob speaks, then Dave, then Bob again
+    const bSpeakingInputMarbles = "n-yn--yn";
+    const dSpeakingInputMarbles = "n---yn";
+    // Should show Alice (presenter) in the PiP, then Bob, then Dave, then Bob
+    // again
+    const expectedLayoutMarbles = "a-b-c-b";
+
+    withCallViewModel(
+      {
+        remoteParticipants$: constant([
+          aliceSharingScreen,
+          bobParticipant,
+          daveParticipant,
+        ]),
+        rtcMembers$: constant([
+          localRtcMember,
+          aliceRtcMember,
+          bobRtcMember,
+          daveRtcMember,
+        ]),
+        speaking: new Map([
+          [bobParticipant, behavior(bSpeakingInputMarbles, yesNo)],
+          [daveParticipant, behavior(dSpeakingInputMarbles, yesNo)],
+        ]),
+      },
+      (vm) => {
+        schedule(modeInputMarbles, {
+          s: () => vm.setGridMode("spotlight"),
+        });
+        schedule(expandInputMarbles, {
+          a: () => vm.toggleSpotlightExpanded$.value!(),
+        });
+
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
+          expectedLayoutMarbles,
+          {
+            a: {
+              type: "spotlight-expanded",
+              spotlight: [`${aliceId}:0:screen-share`],
+              pip: `${aliceId}:0`,
+            },
+            b: {
+              type: "spotlight-expanded",
+              spotlight: [`${aliceId}:0:screen-share`],
+              pip: `${bobId}:0`,
+            },
+            c: {
+              type: "spotlight-expanded",
+              spotlight: [`${aliceId}:0:screen-share`],
+              pip: `${daveId}:0`,
+            },
+          },
+        );
+
+        // While we expect the media on the PiP tile to change, layout$ itself
+        // should *never* meaningfully change. That is, we expect the same PiP
+        // tile to exist throughout the test and just have its media swapped out
+        // when the speaker changes, rather than for tiles to animate in/out.
+        // This is meaningful for keeping the interface not too visually
+        // distracting during back-and-forth conversations.
+        expectObservable(
+          vm.layout$.pipe(
+            distinctUntilChanged(deepCompare),
+            debounceTime(0),
+            map(() => "x"),
+          ),
+        ).toBe("x"); // Expect just one emission
+      },
+    );
+  });
+});
+
 test("spotlight remembers whether it's expanded", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     // Start in spotlight mode, then switch to grid and back to spotlight a
@@ -754,11 +832,7 @@ test("spotlight remembers whether it's expanded", () => {
           g: () => vm.setGridMode("grid"),
         });
         schedule(expandInputMarbles, {
-          a: () => {
-            let toggle: () => void;
-            vm.toggleSpotlightExpanded$.subscribe((val) => (toggle = val!));
-            toggle!();
-          },
+          a: () => vm.toggleSpotlightExpanded$.value!(),
         });
 
         expectObservable(summarizeLayout$(vm.layout$)).toBe(

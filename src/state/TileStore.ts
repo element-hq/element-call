@@ -262,6 +262,33 @@ export class TileStoreBuilder {
   }
 
   /**
+   * Sets up a PiP tile for the given media. This is a special kind of grid tile
+   * that is expected to stand on its own and switch between speakers, so this
+   * method will more eagerly try to reuse an existing tile, replacing its
+   * media, than registerGridTile would.
+   */
+  public registerPipTile(media: UserMediaViewModel): void {
+    if (DEBUG_ENABLED)
+      logger.debug(
+        `[TileStore, ${this.generation}] register PiP tile: ${media.member?.rawDisplayName ?? "[👻]"}`,
+      );
+
+    // If there is a single grid tile that we can reuse
+    if (this.prevGrid.length === 1) {
+      const entry = this.prevGrid[0];
+      this.stationaryGridEntries[0] = entry;
+      // Do the media swap
+      entry.media = media;
+      this.prevGridByMedia.delete(entry.media);
+      this.prevGridByMedia.set(media, [entry, 0]);
+    } else {
+      this.visibleGridEntries.push(new GridTileData(media));
+    }
+
+    this.numGridEntries++;
+  }
+
+  /**
    * Constructs a new collection of all registered tiles, transferring ownership
    * of the tiles to the new collection. Any tiles present in the previous
    * collection but not the new collection will be destroyed.
