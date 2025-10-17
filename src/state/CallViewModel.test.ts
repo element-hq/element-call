@@ -675,6 +675,21 @@ test("spotlight speakers swap places", () => {
             },
           },
         );
+
+        // While we expect the media on tiles to change, layout$ itself should
+        // *never* meaningfully change. That is, we expect there to be no layout
+        // shifts as the spotlight speaker changes; instead, the same tiles
+        // should be reused for the whole duration of the test and simply have
+        // their media swapped out. This is meaningful for keeping the interface
+        // not too visually distracting during back-and-forth conversations,
+        // while still animating tiles to express people joining, leaving, etc.
+        expectObservable(
+          vm.layout$.pipe(
+            distinctUntilChanged(deepCompare),
+            debounceTime(0),
+            map(() => "x"),
+          ),
+        ).toBe("x"); // Expect just one emission
       },
     );
   });

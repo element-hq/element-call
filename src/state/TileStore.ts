@@ -118,10 +118,11 @@ export class TileStore {
  */
 export class TileStoreBuilder {
   private spotlight: SpotlightTileData | null = null;
-  private readonly prevSpotlightSpeaker =
+  private readonly prevSpotlightSpeaker: UserMediaViewModel | null =
     this.prevSpotlight?.media.length === 1 &&
-    "speaking" in this.prevSpotlight.media[0] &&
-    this.prevSpotlight.media[0];
+    "speaking$" in this.prevSpotlight.media[0]
+      ? this.prevSpotlight.media[0]
+      : null;
 
   private readonly prevGridByMedia: Map<
     MediaViewModel,
@@ -201,7 +202,7 @@ export class TileStoreBuilder {
       if (
         media === this.prevSpotlightSpeaker &&
         this.spotlight.media.length === 1 &&
-        "speaking" in this.spotlight.media[0] &&
+        "speaking$" in this.spotlight.media[0] &&
         this.prevSpotlightSpeaker !== this.spotlight.media[0]
       ) {
         const prev = this.prevGridByMedia.get(this.spotlight.media[0]);
