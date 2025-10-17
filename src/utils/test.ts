@@ -268,14 +268,13 @@ export function mockLocalParticipant(
   } as Partial<LocalParticipant> as LocalParticipant;
 }
 
-export async function withLocalMedia(
+export function createLocalMedia(
   localRtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
   localParticipant: LocalParticipant,
   mediaDevices: MediaDevices,
-  continuation: (vm: LocalUserMediaViewModel) => void | Promise<void>,
-): Promise<void> {
-  const vm = new LocalUserMediaViewModel(
+): LocalUserMediaViewModel {
+  return new LocalUserMediaViewModel(
     testScope(),
     "local",
     mockMatrixRoomMember(localRtcMember, roomMember),
@@ -290,8 +289,6 @@ export async function withLocalMedia(
     constant(null),
     constant(null),
   );
-  // TODO: Simplify to just return the view model
-  await continuation(vm);
 }
 
 export function mockRemoteParticipant(
@@ -307,14 +304,13 @@ export function mockRemoteParticipant(
   } as RemoteParticipant;
 }
 
-export async function withRemoteMedia(
+export function createRemoteMedia(
   localRtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
   participant: Partial<RemoteParticipant>,
-  continuation: (vm: RemoteUserMediaViewModel) => void | Promise<void>,
-): Promise<void> {
+): RemoteUserMediaViewModel {
   const remoteParticipant = mockRemoteParticipant(participant);
-  const vm = new RemoteUserMediaViewModel(
+  return new RemoteUserMediaViewModel(
     testScope(),
     "remote",
     mockMatrixRoomMember(localRtcMember, roomMember),
@@ -329,8 +325,6 @@ export async function withRemoteMedia(
     constant(null),
     constant(null),
   );
-  // TODO: Simplify to just return the view model
-  await continuation(vm);
 }
 
 export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
