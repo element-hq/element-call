@@ -199,7 +199,9 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
           id="multiSfu"
           type="checkbox"
           label={t("developer_mode.multi_sfu")}
-          checked={multiSfu}
+          // If using sticky events we implicitly prefer use multi-sfu
+          checked={multiSfu || preferStickyEvents}
+          disabled={preferStickyEvents}
           onChange={useCallback(
             (event: ChangeEvent<HTMLInputElement>): void => {
               setMultiSfu(event.target.checked);
