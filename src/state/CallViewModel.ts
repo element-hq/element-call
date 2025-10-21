@@ -171,6 +171,14 @@ interface LayoutScanState {
 
 type MediaItem = UserMedia | ScreenShare;
 
+/**
+ * A view model providing all the application logic needed to show the in-call
+ * UI (may eventually be expanded to cover the lobby and feedback screens in the
+ * future).
+ */
+// Throughout this class and related code we must distinguish between MatrixRTC
+// state and LiveKit state. We use the common terminology of room "members", RTC
+// "memberships", and LiveKit "participants".
 export class CallViewModel {
   private readonly urlParams = getUrlParams();
 
