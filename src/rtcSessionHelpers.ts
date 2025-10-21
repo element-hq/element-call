@@ -124,7 +124,7 @@ export async function enterRTCSession(
   },
 ): Promise<void> {
   const { encryptMedia, useExperimentalToDeviceTransport = false } = options;
-  const useMultiSfu = preferStickyEvents.getValue() ?? options.useMultiSfu;
+  const useMultiSfu = preferStickyEvents.getValue() || options.useMultiSfu;
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 

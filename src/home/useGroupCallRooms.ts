@@ -143,7 +143,7 @@ const roomHasCallMembershipEvents = (room: Room): boolean => {
 
   // Check for *active* calls using sticky events.
   for (const sticky of room._unstable_getStickyEvents()) {
-    if (sticky.getType() === EventType.GroupCallMemberPrefix) {
+    if (sticky.getType() === EventType.RTCMembership) {
       return true;
     }
   }
