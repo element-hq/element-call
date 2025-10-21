@@ -21,6 +21,7 @@ import {
   type CallMembership,
   type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { BehaviorSubject, combineLatest, type Observable } from "rxjs";
 
 import {
@@ -218,6 +219,9 @@ export class Connection {
     public readonly livekitRoom: LivekitRoom,
     opts: ConnectionOpts,
   ) {
+    logger.log(
+      `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
+    );
     const { transport, client, scope, remoteTransports$ } = opts;
 
     this.transport = transport;

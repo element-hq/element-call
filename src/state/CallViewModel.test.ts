@@ -60,6 +60,7 @@ import {
   mockMediaDevices,
   mockMuteStates,
   mockConfig,
+  testScope,
 } from "../utils/test";
 import {
   ECAddonConnectionState,
@@ -89,7 +90,6 @@ import {
   localRtcMember,
   localRtcMemberDevice2,
 } from "../utils/test-fixtures";
-import { ObservableScope } from "./ObservableScope";
 import { MediaDevices } from "./MediaDevices";
 import { getValue } from "../utils/observable";
 import { type Behavior, constant } from "./Behavior";
@@ -347,6 +347,7 @@ function withCallViewModel(
   const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
 
   const vm = new CallViewModel(
+    testScope(),
     rtcSession.asMockedSession(),
     room,
     mediaDevices,
@@ -361,7 +362,6 @@ function withCallViewModel(
   );
 
   onTestFinished(() => {
-    vm!.destroy();
     participantsSpy!.mockRestore();
     mediaSpy!.mockRestore();
     eventsSpy!.mockRestore();
@@ -402,6 +402,7 @@ test("test missing RTC config error", async () => {
   vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({});
 
   const callVM = new CallViewModel(
+    testScope(),
     fakeRtcSession.asMockedSession(),
     matrixRoom,
     mockMediaDevices({}),
@@ -1630,9 +1631,7 @@ test("audio output changes when toggling earpiece mode", () => {
     getUrlParams.mockReturnValue({ controlledAudioDevices: true });
     vi.mocked(ComponentsCore.createMediaDeviceObserver).mockReturnValue(of([]));
 
-    const scope = new ObservableScope();
-    onTestFinished(() => scope.end());
-    const devices = new MediaDevices(scope);
+    const devices = new MediaDevices(testScope());
 
     window.controls.setAvailableAudioDevices([
       { id: "speaker", name: "Speaker", isSpeaker: true },

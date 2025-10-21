@@ -46,7 +46,6 @@ import {
   throttleTime,
 } from "rxjs";
 
-import { ViewModel } from "./ViewModel";
 import { alwaysShowSelf } from "../settings/settings";
 import { showConnectionStats } from "../settings/settings";
 import { accumulate } from "../utils/observable";
@@ -56,6 +55,7 @@ import { type ReactionOption } from "../reactions";
 import { platform } from "../Platform";
 import { type MediaDevices } from "./MediaDevices";
 import { type Behavior } from "./Behavior";
+import { type ObservableScope } from "./ObservableScope";
 
 export function observeTrackReference$(
   participant: Participant,
@@ -216,7 +216,7 @@ export enum EncryptionStatus {
   PasswordInvalid,
 }
 
-abstract class BaseMediaViewModel extends ViewModel {
+abstract class BaseMediaViewModel {
   /**
    * The LiveKit video track for this media.
    */
@@ -246,6 +246,7 @@ abstract class BaseMediaViewModel extends ViewModel {
   }
 
   public constructor(
+    protected readonly scope: ObservableScope,
     /**
      * An opaque identifier for this media.
      */
@@ -269,8 +270,6 @@ abstract class BaseMediaViewModel extends ViewModel {
     public readonly focusURL: string,
     public readonly displayName$: Behavior<string>,
   ) {
-    super();
-
     const audio$ = this.observeTrackReference$(audioSource);
     this.video$ = this.observeTrackReference$(videoSource);
 
@@ -403,6 +402,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   public readonly cropVideo$: Behavior<boolean> = this._cropVideo$;
 
   public constructor(
+    scope: ObservableScope,
     id: string,
     member: RoomMember,
     participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
@@ -414,6 +414,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     public readonly reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
+      scope,
       id,
       member,
       participant$,
@@ -537,6 +538,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     );
 
   public constructor(
+    scope: ObservableScope,
     id: string,
     member: RoomMember,
     participant$: Behavior<LocalParticipant | undefined>,
@@ -549,6 +551,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
+      scope,
       id,
       member,
       participant$,
@@ -645,6 +648,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
   );
 
   public constructor(
+    scope: ObservableScope,
     id: string,
     member: RoomMember,
     participant$: Observable<RemoteParticipant | undefined>,
@@ -657,6 +661,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
+      scope,
       id,
       member,
       participant$,
@@ -742,6 +747,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
   );
 
   public constructor(
+    scope: ObservableScope,
     id: string,
     member: RoomMember,
     participant$: Observable<LocalParticipant | RemoteParticipant>,
@@ -753,6 +759,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
     public readonly local: boolean,
   ) {
     super(
+      scope,
       id,
       member,
       participant$,

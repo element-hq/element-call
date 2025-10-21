@@ -108,9 +108,7 @@ function mockMediaDevices(
         throw new Error("Unimplemented");
     }
   });
-  const scope = new ObservableScope();
-  onTestFinished(() => scope.end());
-  return new MediaDevices(scope);
+  return new MediaDevices(testScope());
 }
 
 describe("useMuteStates VITE_PACKAGE='full' (SPA) mode", () => {

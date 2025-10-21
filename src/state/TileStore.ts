@@ -44,10 +44,6 @@ class SpotlightTileData {
     this.maximised$ = new BehaviorSubject(maximised);
     this.vm = new SpotlightTileViewModel(this.media$, this.maximised$);
   }
-
-  public destroy(): void {
-    this.vm.destroy();
-  }
 }
 
 class GridTileData {
@@ -65,14 +61,10 @@ class GridTileData {
     this.media$ = new BehaviorSubject(media);
     this.vm = new GridTileViewModel(this.media$);
   }
-
-  public destroy(): void {
-    this.vm.destroy();
-  }
 }
 
 /**
- * A collection of tiles to be mapped to a layout.
+ * An immutable collection of tiles to be mapped to a layout.
  */
 export class TileStore {
   private constructor(
@@ -287,13 +279,6 @@ export class TileStoreBuilder {
         `[TileStore, ${this.generation}] result: ${debugEntries(grid)}`,
       );
     }
-
-    // Destroy unused tiles
-    if (this.spotlight === null && this.prevSpotlight !== null)
-      this.prevSpotlight.destroy();
-    const gridEntries = new Set(grid);
-    for (const entry of this.prevGrid)
-      if (!gridEntries.has(entry)) entry.destroy();
 
     return this.construct(this.spotlight, grid);
   }

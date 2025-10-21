@@ -23,6 +23,7 @@ import {
 } from "rxjs";
 
 import { type Behavior } from "../state/Behavior";
+import { ObservableScope } from "../state/ObservableScope";
 
 const nothing = Symbol("nothing");
 
@@ -116,4 +117,72 @@ export function pauseWhen<T>(pause$: Behavior<boolean>) {
       ),
       map(([value]) => value),
     );
+}
+
+/**
+ * Maps a changing input value to an output value consisting of items that have
+ * automatically generated ObservableScopes tied to a key. Items will be
+ * automatically created when their key is requested for the first time, reused
+ * when the same key is requested at a later time, and destroyed (have their
+ * scope ended) when the key is no longer requested.
+ *
+ * @param input$ The input value to be mapped.
+ * @param project A function mapping input values to output values. This
+ *   function receives an additional callback `createOrGet` which can be used
+ *   within the function body to request that an item be generated for a certain
+ *   key. The caller provides a factory which will be used to create the item if
+ *   it is being requested for the first time. Otherwise, the item previously
+ *   existing under that key will be returned.
+ */
+export function generateKeyed$<In, Item, Out>(
+  input$: Observable<In>,
+  project: (
+    input: In,
+    createOrGet: (
+      key: string,
+      factory: (scope: ObservableScope) => Item,
+    ) => Item,
+  ) => Out,
+): Observable<Out> {
+  return input$.pipe(
+    // Keep track of the existing items over time, so we can reuse them
+    scan<
+      In,
+      {
+        items: Map<string, { item: Item; scope: ObservableScope }>;
+        output: Out;
+      },
+      { items: Map<string, { item: Item; scope: ObservableScope }> }
+    >(
+      (state, data) => {
+        const nextItems = new Map<
+          string,
+          { item: Item; scope: ObservableScope }
+        >();
+
+        const output = project(data, (key, factory) => {
+          let item = state.items.get(key);
+          if (item === undefined) {
+            // First time requesting the key; create the item
+            const scope = new ObservableScope();
+            item = { item: factory(scope), scope };
+          }
+          nextItems.set(key, item);
+          return item.item;
+        });
+
+        // Destroy all items that are no longer being requested
+        for (const [key, { scope }] of state.items)
+          if (!nextItems.has(key)) scope.end();
+
+        return { items: nextItems, output };
+      },
+      { items: new Map() },
+    ),
+    finalizeValue((state) => {
+      // Destroy all remaining items when no longer subscribed
+      for (const { scope } of state.items.values()) scope.end();
+    }),
+    map(({ output }) => output),
+  );
 }

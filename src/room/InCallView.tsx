@@ -110,6 +110,7 @@ import ringtoneMp3 from "../sound/ringtone.mp3?url";
 import ringtoneOgg from "../sound/ringtone.ogg?url";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
 import { type Layout } from "../state/layout-types.ts";
+import { ObservableScope } from "../state/ObservableScope.ts";
 
 const maxTapDurationMs = 400;
 
@@ -129,8 +130,10 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   const trackProcessorState$ = useTrackProcessorObservable$();
   useEffect(() => {
-    const reactionsReader = new ReactionsReader(props.rtcSession);
+    const scope = new ObservableScope();
+    const reactionsReader = new ReactionsReader(scope, props.rtcSession);
     const vm = new CallViewModel(
+      scope,
       props.rtcSession,
       props.matrixRoom,
       mediaDevices,
@@ -146,11 +149,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     );
     setVm(vm);
 
-    const sub = vm.leave$.subscribe(props.onLeft);
+    vm.leave$.pipe(scope.bind()).subscribe(props.onLeft);
     return (): void => {
-      vm.destroy();
-      sub.unsubscribe();
-      reactionsReader.destroy();
+      scope.end();
     };
   }, [
     props.rtcSession,
