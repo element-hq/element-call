@@ -203,7 +203,8 @@ export class TileStoreBuilder {
         media === this.prevSpotlightSpeaker &&
         this.spotlight.media.length === 1 &&
         "speaking$" in this.spotlight.media[0] &&
-        this.prevSpotlightSpeaker !== this.spotlight.media[0]
+        this.prevSpotlightSpeaker !==
+          (this.spotlight.media[0] satisfies UserMediaViewModel)
       ) {
         const prev = this.prevGridByMedia.get(this.spotlight.media[0]);
         if (prev !== undefined) {
