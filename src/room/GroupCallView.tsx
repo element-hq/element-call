@@ -70,7 +70,6 @@ import {
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
-import { useSetting } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useAppBarTitle } from "../AppBar.tsx";
