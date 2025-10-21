@@ -27,6 +27,7 @@ import {
   mockMediaDevices,
   mockMuteStates,
   MockRTCSession,
+  testScope,
 } from "./test";
 import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
@@ -134,6 +135,7 @@ export function getBasicCallViewModelEnvironment(
   // const remoteParticipants$ = of([aliceParticipant]);
 
   const vm = new CallViewModel(
+    testScope(),
     rtcSession.asMockedSession(),
     matrixRoom,
     mockMediaDevices({}),

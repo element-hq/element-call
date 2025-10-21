@@ -73,7 +73,6 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
 
-import { ViewModel } from "./ViewModel";
 import {
   LocalUserMediaViewModel,
   type MediaViewModel,
@@ -84,7 +83,7 @@ import {
 import {
   accumulate,
   and$,
-  finalizeValue,
+  generateKeyed$,
   pauseWhen,
 } from "../utils/observable";
 import {
@@ -117,11 +116,7 @@ import {
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-import {
-  type Connection,
-  type ConnectionOpts,
-  RemoteConnection,
-} from "./Connection";
+import { type Connection, RemoteConnection } from "./Connection";
 import { type MuteStates } from "./MuteStates";
 import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
@@ -176,7 +171,15 @@ interface LayoutScanState {
 
 type MediaItem = UserMedia | ScreenShare;
 
-export class CallViewModel extends ViewModel {
+/**
+ * A view model providing all the application logic needed to show the in-call
+ * UI (may eventually be expanded to cover the lobby and feedback screens in the
+ * future).
+ */
+// Throughout this class and related code we must distinguish between MatrixRTC
+// state and LiveKit state. We use the common terminology of room "members", RTC
+// "memberships", and LiveKit "participants".
+export class CallViewModel {
   private readonly urlParams = getUrlParams();
 
   private readonly livekitAlias = getLivekitAlias(this.matrixRTCSession);
@@ -370,26 +373,36 @@ export class CallViewModel extends ViewModel {
    */
   private readonly localConnection$: Behavior<Async<PublishConnection> | null> =
     this.scope.behavior(
-      this.localTransport$.pipe(
-        map(
-          (transport) =>
-            transport &&
-            mapAsync(transport, (transport) => {
-              const opts: ConnectionOpts = {
-                transport,
-                client: this.matrixRTCSession.room.client,
-                scope: this.scope,
-                remoteTransports$: this.remoteTransports$,
-              };
-              return new PublishConnection(
-                opts,
-                this.mediaDevices,
-                this.muteStates,
-                this.e2eeLivekitOptions(),
-                this.scope.behavior(this.trackProcessorState$),
-              );
-            }),
-        ),
+      generateKeyed$<
+        Async<LivekitTransport> | null,
+        PublishConnection,
+        Async<PublishConnection> | null
+      >(
+        this.localTransport$,
+        (transport, createOrGet) =>
+          transport &&
+          mapAsync(transport, (transport) =>
+            createOrGet(
+              // Stable key that uniquely idenifies the transport
+              JSON.stringify({
+                url: transport.livekit_service_url,
+                alias: transport.livekit_alias,
+              }),
+              (scope) =>
+                new PublishConnection(
+                  {
+                    transport,
+                    client: this.matrixRoom.client,
+                    scope,
+                    remoteTransports$: this.remoteTransports$,
+                  },
+                  this.mediaDevices,
+                  this.muteStates,
+                  this.e2eeLivekitOptions(),
+                  this.scope.behavior(this.trackProcessorState$),
+                ),
+            ),
+          ),
       ),
     );
 
@@ -416,61 +429,47 @@ export class CallViewModel extends ViewModel {
    * is *distinct* from the local transport.
    */
   private readonly remoteConnections$ = this.scope.behavior(
-    this.transports$.pipe(
-      accumulate(new Map<string, Connection>(), (prev, transports) => {
-        const next = new Map<string, Connection>();
+    generateKeyed$<typeof this.transports$.value, Connection, Connection[]>(
+      this.transports$,
+      (transports, createOrGet) => {
+        const connections: Connection[] = [];
 
         // Until the local transport becomes ready we have no idea which
         // transports will actually need a dedicated remote connection
         if (transports?.local.state === "ready") {
-          const oldestMembership = this.matrixRTCSession.getOldestMembership();
+          // TODO: Handle custom transport.livekit_alias values here
           const localServiceUrl = transports.local.value.livekit_service_url;
           const remoteServiceUrls = new Set(
-            transports.remote.flatMap(({ membership, transport }) => {
-              const t = membership.getTransport(oldestMembership ?? membership);
-              return t &&
-                isLivekitTransport(t) &&
-                t.livekit_service_url !== localServiceUrl
-                ? [t.livekit_service_url]
-                : [];
-            }),
+            transports.remote.map(
+              ({ transport }) => transport.livekit_service_url,
+            ),
           );
+          remoteServiceUrls.delete(localServiceUrl);
 
-          for (const remoteServiceUrl of remoteServiceUrls) {
-            let nextConnection = prev.get(remoteServiceUrl);
-            if (!nextConnection) {
-              logger.log(
-                "SFU remoteConnections$ construct new connection: ",
+          for (const remoteServiceUrl of remoteServiceUrls)
+            connections.push(
+              createOrGet(
                 remoteServiceUrl,
-              );
-
-              const args: ConnectionOpts = {
-                transport: {
-                  type: "livekit",
-                  livekit_service_url: remoteServiceUrl,
-                  livekit_alias: this.livekitAlias,
-                },
-                client: this.matrixRTCSession.room.client,
-                scope: this.scope,
-                remoteTransports$: this.remoteTransports$,
-              };
-              nextConnection = new RemoteConnection(
-                args,
-                this.e2eeLivekitOptions(),
-              );
-            } else {
-              logger.log(
-                "SFU remoteConnections$ use prev connection: ",
-                remoteServiceUrl,
-              );
-            }
-            next.set(remoteServiceUrl, nextConnection);
-          }
+                (scope) =>
+                  new RemoteConnection(
+                    {
+                      transport: {
+                        type: "livekit",
+                        livekit_service_url: remoteServiceUrl,
+                        livekit_alias: this.livekitAlias,
+                      },
+                      client: this.matrixRoom.client,
+                      scope,
+                      remoteTransports$: this.remoteTransports$,
+                    },
+                    this.e2eeLivekitOptions(),
+                  ),
+              ),
+            );
         }
 
-        return next;
-      }),
-      map((transports) => [...transports.values()]),
+        return connections;
+      },
     ),
   );
 
@@ -755,80 +754,78 @@ export class CallViewModel extends ViewModel {
   );
 
   /**
-   * List of MediaItems that we want to display
+   * List of MediaItems that we want to have tiles for.
    */
   private readonly mediaItems$ = this.scope.behavior<MediaItem[]>(
-    combineLatest([this.participantsByRoom$, duplicateTiles.value$]).pipe(
-      scan((prevItems, [participantsByRoom, duplicateTiles]) => {
-        const newItems: Map<string, UserMedia | ScreenShare> = new Map(
-          function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-            for (const {
-              livekitRoom,
-              participants,
-              url,
-            } of participantsByRoom) {
-              for (const { id, participant, member } of participants) {
-                for (let i = 0; i < 1 + duplicateTiles; i++) {
-                  const mediaId = `${id}:${i}`;
-                  const prevMedia = prevItems.get(mediaId);
-                  if (prevMedia instanceof UserMedia)
-                    prevMedia.updateParticipant(participant);
+    generateKeyed$<
+      [typeof this.participantsByRoom$.value, number],
+      MediaItem,
+      MediaItem[]
+    >(
+      // Generate a collection of MediaItems from the list of expected (whether
+      // present or missing) LiveKit participants.
+      combineLatest([this.participantsByRoom$, duplicateTiles.value$]),
+      ([participantsByRoom, duplicateTiles], createOrGet) => {
+        const items: MediaItem[] = [];
 
-                  yield [
+        for (const { livekitRoom, participants, url } of participantsByRoom) {
+          for (const { id, participant, member } of participants) {
+            for (let i = 0; i < 1 + duplicateTiles; i++) {
+              const mediaId = `${id}:${i}`;
+              const item = createOrGet(
+                mediaId,
+                (scope) =>
+                  // We create UserMedia with or without a participant.
+                  // This will be the initial value of a BehaviourSubject.
+                  // Once a participant appears we will update the BehaviourSubject. (see below)
+                  new UserMedia(
+                    scope,
                     mediaId,
-                    // We create UserMedia with or without a participant.
-                    // This will be the initial value of a BehaviourSubject.
-                    // Once a participant appears we will update the BehaviourSubject. (see above)
-                    prevMedia ??
-                      new UserMedia(
-                        mediaId,
+                    member,
+                    participant,
+                    this.options.encryptionSystem,
+                    livekitRoom,
+                    url,
+                    this.mediaDevices,
+                    this.pretendToBeDisconnected$,
+                    this.memberDisplaynames$.pipe(
+                      map((m) => m.get(id) ?? "[👻]"),
+                    ),
+                    this.handsRaised$.pipe(map((v) => v[id]?.time ?? null)),
+                    this.reactions$.pipe(map((v) => v[id] ?? undefined)),
+                  ),
+              );
+              items.push(item);
+              (item as UserMedia).updateParticipant(participant);
+
+              if (participant?.isScreenShareEnabled) {
+                const screenShareId = `${mediaId}:screen-share`;
+                items.push(
+                  createOrGet(
+                    screenShareId,
+                    (scope) =>
+                      new ScreenShare(
+                        scope,
+                        screenShareId,
                         member,
                         participant,
                         this.options.encryptionSystem,
                         livekitRoom,
                         url,
-                        this.mediaDevices,
                         this.pretendToBeDisconnected$,
                         this.memberDisplaynames$.pipe(
                           map((m) => m.get(id) ?? "[👻]"),
                         ),
-                        this.handsRaised$.pipe(map((v) => v[id]?.time ?? null)),
-                        this.reactions$.pipe(map((v) => v[id] ?? undefined)),
                       ),
-                  ];
-
-                  if (participant?.isScreenShareEnabled) {
-                    const screenShareId = `${mediaId}:screen-share`;
-                    yield [
-                      screenShareId,
-                      prevItems.get(screenShareId) ??
-                        new ScreenShare(
-                          screenShareId,
-                          member,
-                          participant,
-                          this.options.encryptionSystem,
-                          livekitRoom,
-                          url,
-                          this.pretendToBeDisconnected$,
-                          this.memberDisplaynames$.pipe(
-                            map((m) => m.get(id) ?? "[👻]"),
-                          ),
-                        ),
-                    ];
-                  }
-                }
+                  ),
+                );
               }
             }
-          }.bind(this)(),
-        );
+          }
+        }
 
-        for (const [id, t] of prevItems) if (!newItems.has(id)) t.destroy();
-        return newItems;
-      }, new Map<string, MediaItem>()),
-      map((mediaItems) => [...mediaItems.values()]),
-      finalizeValue((ts) => {
-        for (const t of ts) t.destroy();
-      }),
+        return items;
+      },
     ),
   );
 
@@ -1739,6 +1736,7 @@ export class CallViewModel extends ViewModel {
       : null;
 
   public constructor(
+    private readonly scope: ObservableScope,
     // A call is permanently tied to a single Matrix room
     private readonly matrixRTCSession: MatrixRTCSession,
     private readonly matrixRoom: MatrixRoom,
@@ -1753,8 +1751,6 @@ export class CallViewModel extends ViewModel {
     >,
     private readonly trackProcessorState$: Observable<ProcessorState>,
   ) {
-    super();
-
     // Start and stop local and remote connections as needed
     this.connectionInstructions$
       .pipe(this.scope.bind())

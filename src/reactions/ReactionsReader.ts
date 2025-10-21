@@ -18,7 +18,7 @@ import {
   EventType,
   RoomEvent as MatrixRoomEvent,
 } from "matrix-js-sdk";
-import { BehaviorSubject, delay, type Subscription } from "rxjs";
+import { BehaviorSubject, delay } from "rxjs";
 
 import {
   ElementCallReactionEventType,
@@ -28,6 +28,7 @@ import {
   type RaisedHandInfo,
   type ReactionInfo,
 } from ".";
+import { type ObservableScope } from "../state/ObservableScope";
 
 export const REACTION_ACTIVE_TIME_MS = 3000;
 
@@ -54,12 +55,13 @@ export class ReactionsReader {
    */
   public readonly reactions$ = this.reactionsSubject$.asObservable();
 
-  private readonly reactionsSub: Subscription;
-
-  public constructor(private readonly rtcSession: MatrixRTCSession) {
+  public constructor(
+    private readonly scope: ObservableScope,
+    private readonly rtcSession: MatrixRTCSession,
+  ) {
     // Hide reactions after a given time.
-    this.reactionsSub = this.reactionsSubject$
-      .pipe(delay(REACTION_ACTIVE_TIME_MS))
+    this.reactionsSubject$
+      .pipe(delay(REACTION_ACTIVE_TIME_MS), this.scope.bind())
       .subscribe((reactions) => {
         const date = new Date();
         const nextEntries = Object.fromEntries(
@@ -71,14 +73,37 @@ export class ReactionsReader {
         this.reactionsSubject$.next(nextEntries);
       });
 
+    // TODO: Convert this class to the functional reactive style and get rid of
+    // all this manual setup and teardown for event listeners
+
     this.rtcSession.room.on(MatrixRoomEvent.Timeline, this.handleReactionEvent);
+    this.scope.onEnd(() =>
+      this.rtcSession.room.off(
+        MatrixRoomEvent.Timeline,
+        this.handleReactionEvent,
+      ),
+    );
+
     this.rtcSession.room.on(
       MatrixRoomEvent.Redaction,
       this.handleReactionEvent,
     );
+    this.scope.onEnd(() =>
+      this.rtcSession.room.off(
+        MatrixRoomEvent.Redaction,
+        this.handleReactionEvent,
+      ),
+    );
+
     this.rtcSession.room.client.on(
       MatrixEventEvent.Decrypted,
       this.handleReactionEvent,
+    );
+    this.scope.onEnd(() =>
+      this.rtcSession.room.client.off(
+        MatrixEventEvent.Decrypted,
+        this.handleReactionEvent,
+      ),
     );
 
     // We listen for a local echo to get the real event ID, as timeline events
@@ -87,10 +112,22 @@ export class ReactionsReader {
       MatrixRoomEvent.LocalEchoUpdated,
       this.handleReactionEvent,
     );
+    this.scope.onEnd(() =>
+      this.rtcSession.room.off(
+        MatrixRoomEvent.LocalEchoUpdated,
+        this.handleReactionEvent,
+      ),
+    );
 
-    rtcSession.on(
+    this.rtcSession.on(
       MatrixRTCSessionEvent.MembershipsChanged,
       this.onMembershipsChanged,
+    );
+    this.scope.onEnd(() =>
+      this.rtcSession.off(
+        MatrixRTCSessionEvent.MembershipsChanged,
+        this.onMembershipsChanged,
+      ),
     );
 
     // Run this once to ensure we have fetched the state from the call.
@@ -309,31 +346,4 @@ export class ReactionsReader {
       this.removeRaisedHand(targetUser);
     }
   };
-
-  /**
-   * Stop listening for events.
-   */
-  public destroy(): void {
-    this.rtcSession.off(
-      MatrixRTCSessionEvent.MembershipsChanged,
-      this.onMembershipsChanged,
-    );
-    this.rtcSession.room.off(
-      MatrixRoomEvent.Timeline,
-      this.handleReactionEvent,
-    );
-    this.rtcSession.room.off(
-      MatrixRoomEvent.Redaction,
-      this.handleReactionEvent,
-    );
-    this.rtcSession.room.client.off(
-      MatrixEventEvent.Decrypted,
-      this.handleReactionEvent,
-    );
-    this.rtcSession.room.off(
-      MatrixRoomEvent.LocalEchoUpdated,
-      this.handleReactionEvent,
-    );
-    this.reactionsSub.unsubscribe();
-  }
 }

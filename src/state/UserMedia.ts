@@ -22,7 +22,7 @@ import {
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 
-import { ObservableScope } from "./ObservableScope.ts";
+import { type ObservableScope } from "./ObservableScope.ts";
 import {
   LocalUserMediaViewModel,
   RemoteUserMediaViewModel,
@@ -75,11 +75,11 @@ enum SortingBin {
  * for inclusion in the call layout.
  */
 export class UserMedia {
-  private readonly scope = new ObservableScope();
   private readonly participant$ = new BehaviorSubject(this.initialParticipant);
 
   public readonly vm: UserMediaViewModel = this.participant$.value?.isLocal
     ? new LocalUserMediaViewModel(
+        this.scope,
         this.id,
         this.member,
         this.participant$ as Behavior<LocalParticipant>,
@@ -92,6 +92,7 @@ export class UserMedia {
         this.scope.behavior(this.reaction$),
       )
     : new RemoteUserMediaViewModel(
+        this.scope,
         this.id,
         this.member,
         this.participant$ as Observable<RemoteParticipant | undefined>,
@@ -144,6 +145,7 @@ export class UserMedia {
   );
 
   public constructor(
+    private readonly scope: ObservableScope,
     public readonly id: string,
     private readonly member: RoomMember,
     private readonly initialParticipant:
@@ -167,11 +169,6 @@ export class UserMedia {
       // Update the BehaviourSubject in the UserMedia.
       this.participant$.next(newParticipant);
     }
-  }
-
-  public destroy(): void {
-    this.scope.end();
-    this.vm.destroy();
   }
 }
 
