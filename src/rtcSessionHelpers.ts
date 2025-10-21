@@ -20,7 +20,6 @@ import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
 import { MatrixRTCTransportMissingError } from "./utils/errors";
 import { getUrlParams } from "./UrlParams";
 import { getSFUConfigWithOpenID } from "./livekit/openIDSFU.ts";
-import { preferStickyEvents } from "./settings/settings.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -100,12 +99,11 @@ export async function makeTransport(
 
 export interface EnterRTCSessionOptions {
   encryptMedia: boolean;
-  // TODO: remove this flag, the new membership manager is stable enough
-  useNewMembershipManager?: boolean;
   // TODO: remove this flag, to-device transport is stable enough now
   useExperimentalToDeviceTransport?: boolean;
   /** EXPERIMENTAL: If true, will use the multi-sfu codepath where each member connects to its SFU instead of everyone connecting to an elected on. */
-  useMultiSfu?: boolean;
+  useMultiSfu: boolean;
+  preferStickyEvents: boolean;
 }
 
 /**
@@ -117,14 +115,13 @@ export interface EnterRTCSessionOptions {
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   transport: LivekitTransport,
-  options: EnterRTCSessionOptions = {
-    encryptMedia: true,
-    useExperimentalToDeviceTransport: false,
-    useMultiSfu: true,
-  },
+  {
+    encryptMedia,
+    useExperimentalToDeviceTransport = false,
+    useMultiSfu,
+    preferStickyEvents,
+  }: EnterRTCSessionOptions,
 ): Promise<void> {
-  const { encryptMedia, useExperimentalToDeviceTransport = false } = options;
-  const useMultiSfu = preferStickyEvents.getValue() || options.useMultiSfu;
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
@@ -158,7 +155,7 @@ export async function enterRTCSession(
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
       useExperimentalToDeviceTransport,
-      unstableSendStickyEvents: preferStickyEvents.getValue(),
+      unstableSendStickyEvents: preferStickyEvents,
     },
   );
   if (widget) {
