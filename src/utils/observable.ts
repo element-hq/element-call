@@ -125,6 +125,14 @@ export function pauseWhen<T>(pause$: Behavior<boolean>) {
  * automatically created when their key is requested for the first time, reused
  * when the same key is requested at a later time, and destroyed (have their
  * scope ended) when the key is no longer requested.
+ *
+ * @param input$ The input value to be mapped.
+ * @param project A function mapping input values to output values. This
+ *   function receives an additional callback `createOrGet` which can be used
+ *   within the function body to request that an item be generated for a certain
+ *   key. The caller provides a factory which will be used to create the item if
+ *   it is being requested for the first time. Otherwise, the item previously
+ *   existing under that key will be returned.
  */
 export function generateKeyed$<In, Item, Out>(
   input$: Observable<In>,
@@ -137,6 +145,7 @@ export function generateKeyed$<In, Item, Out>(
   ) => Out,
 ): Observable<Out> {
   return input$.pipe(
+    // Keep track of the existing items over time, so we can reuse them
     scan<
       In,
       {
@@ -150,22 +159,28 @@ export function generateKeyed$<In, Item, Out>(
           string,
           { item: Item; scope: ObservableScope }
         >();
+
         const output = project(data, (key, factory) => {
           let item = state.items.get(key);
           if (item === undefined) {
+            // First time requesting the key; create the item
             const scope = new ObservableScope();
             item = { item: factory(scope), scope };
           }
           nextItems.set(key, item);
           return item.item;
         });
+
+        // Destroy all items that are no longer being requested
         for (const [key, { scope }] of state.items)
           if (!nextItems.has(key)) scope.end();
+
         return { items: nextItems, output };
       },
       { items: new Map() },
     ),
     finalizeValue((state) => {
+      // Destroy all remaining items when no longer subscribed
       for (const { scope } of state.items.values()) scope.end();
     }),
     map(({ output }) => output),

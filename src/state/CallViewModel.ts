@@ -762,6 +762,8 @@ export class CallViewModel {
       MediaItem,
       MediaItem[]
     >(
+      // Generate a collection of MediaItems from the list of expected (whether
+      // present or missing) LiveKit participants.
       combineLatest([this.participantsByRoom$, duplicateTiles.value$]),
       ([participantsByRoom, duplicateTiles], createOrGet) => {
         const items: MediaItem[] = [];
