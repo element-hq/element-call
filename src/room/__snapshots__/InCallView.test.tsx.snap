@@ -83,32 +83,20 @@ exports[`InCallView > rendering > renders 1`] = `
         class="nav rightNav"
       />
     </header>
-    <div>
-      mocked: MatrixAudioRenderer
-    </div>
     <div
       class="scrollingGrid grid"
     >
       <div
-        class="layer"
-      >
-        <div
-          class="container slot"
-          data-id="1"
-        >
-          <div
-            class="slot local slot"
-            data-block-alignment="start"
-            data-id="0"
-            data-inline-alignment="end"
-          />
-        </div>
-      </div>
+        class="scrolling"
+        style="--gap: 20px; --width: NaNpx; --height: NaNpx;"
+      />
     </div>
     <div
       class="fixedGrid grid"
     >
-      <div />
+      <div
+        class="fixed"
+      />
     </div>
     <div
       class="bg animate"
@@ -288,7 +276,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="buttons"
       >
         <button
-          aria-disabled="false"
+          aria-disabled="true"
           aria-labelledby="«r8»"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="primary"
@@ -311,7 +299,7 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-disabled="false"
+          aria-disabled="true"
           aria-labelledby="«rd»"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="primary"
