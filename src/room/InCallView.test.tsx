@@ -13,7 +13,7 @@ import {
   type MockedFunction,
   vi,
 } from "vitest";
-import { act, render, type RenderResult } from "@testing-library/react";
+import { render, type RenderResult } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { type LocalParticipant } from "livekit-client";
@@ -21,7 +21,6 @@ import { of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
-import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
 import { InCallView } from "./InCallView";
 import {
@@ -38,10 +37,6 @@ import {
 import { E2eeType } from "../e2ee/e2eeType";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local } from "../utils/test-fixtures";
-import {
-  developerMode as developerModeSetting,
-  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
-} from "../settings/settings";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
@@ -191,73 +186,6 @@ describe("InCallView", () => {
     it("renders", () => {
       const { container } = createInCallView();
       expect(container).toMatchSnapshot();
-    });
-  });
-  describe("toDevice label", () => {
-    it("is shown if setting activated and room encrypted", () => {
-      useRoomEncryptionSystemMock.mockReturnValue({
-        kind: E2eeType.PER_PARTICIPANT,
-      });
-      useExperimentalToDeviceTransportSetting.setValue(true);
-      developerModeSetting.setValue(true);
-      const { getByText } = createInCallView();
-      expect(getByText("using to Device key transport")).toBeInTheDocument();
-    });
-
-    it("is not shown in unenecrypted room", () => {
-      useRoomEncryptionSystemMock.mockReturnValue({
-        kind: E2eeType.NONE,
-      });
-      useExperimentalToDeviceTransportSetting.setValue(true);
-      developerModeSetting.setValue(true);
-      const { queryByText } = createInCallView();
-      expect(
-        queryByText("using to Device key transport"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("is hidden once fallback was triggered", async () => {
-      useRoomEncryptionSystemMock.mockReturnValue({
-        kind: E2eeType.PER_PARTICIPANT,
-      });
-      useExperimentalToDeviceTransportSetting.setValue(true);
-      developerModeSetting.setValue(true);
-      const { rtcSession, queryByText } = createInCallView();
-      expect(queryByText("using to Device key transport")).toBeInTheDocument();
-      expect(rtcSession).toBeDefined();
-      await act(() =>
-        rtcSession.emit(RoomAndToDeviceEvents.EnabledTransportsChanged, {
-          toDevice: true,
-          room: true,
-        }),
-      );
-      expect(
-        queryByText("using to Device key transport"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("is not shown if setting is disabled", () => {
-      useExperimentalToDeviceTransportSetting.setValue(false);
-      developerModeSetting.setValue(true);
-      useRoomEncryptionSystemMock.mockReturnValue({
-        kind: E2eeType.PER_PARTICIPANT,
-      });
-      const { queryByText } = createInCallView();
-      expect(
-        queryByText("using to Device key transport"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("is not shown if developer mode is disabled", () => {
-      useExperimentalToDeviceTransportSetting.setValue(true);
-      developerModeSetting.setValue(false);
-      useRoomEncryptionSystemMock.mockReturnValue({
-        kind: E2eeType.PER_PARTICIPANT,
-      });
-      const { queryByText } = createInCallView();
-      expect(
-        queryByText("using to Device key transport"),
-      ).not.toBeInTheDocument();
     });
   });
 });

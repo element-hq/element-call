@@ -25,7 +25,6 @@ import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable } from "observable-hooks";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import {
   VoiceCallSolidIcon,
   VolumeOnSolidIcon,
@@ -63,10 +62,7 @@ import { CallViewModel, type GridMode } from "../state/CallViewModel";
 import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
-import {
-  useRoomEncryptionSystem,
-  type EncryptionSystem,
-} from "../e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import {
@@ -88,12 +84,9 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
-  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
-  developerMode as developerModeSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
-import { useTypedEventEmitter } from "../useEvents.ts";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
@@ -191,7 +184,6 @@ export const InCallView: FC<InCallViewProps> = ({
   client,
   vm,
   matrixInfo,
-  rtcSession,
   matrixRoom,
   muteStates,
 
@@ -237,34 +229,6 @@ export const InCallView: FC<InCallViewProps> = ({
     latencyHint: "interactive",
     muted: muteAllAudio,
   });
-
-  // This seems like it might be enough logic to use move it into the call view model?
-  const [didFallbackToRoomKey, setDidFallbackToRoomKey] = useState(false);
-  useTypedEventEmitter(
-    rtcSession,
-    RoomAndToDeviceEvents.EnabledTransportsChanged,
-    (enabled) => setDidFallbackToRoomKey(enabled.room),
-  );
-
-  const [developerMode] = useSetting(developerModeSetting);
-  const [useExperimentalToDeviceTransport] = useSetting(
-    useExperimentalToDeviceTransportSetting,
-  );
-  const encryptionSystem = useRoomEncryptionSystem(matrixRoom.roomId);
-
-  const showToDeviceEncryption = useMemo(
-    () =>
-      developerMode &&
-      useExperimentalToDeviceTransport &&
-      encryptionSystem.kind === E2eeType.PER_PARTICIPANT &&
-      !didFallbackToRoomKey,
-    [
-      developerMode,
-      useExperimentalToDeviceTransport,
-      encryptionSystem.kind,
-      didFallbackToRoomKey,
-    ],
-  );
 
   const audioEnabled = useBehavior(muteStates.audio.enabled$);
   const videoEnabled = useBehavior(muteStates.video.enabled$);
@@ -850,18 +814,6 @@ export const InCallView: FC<InCallViewProps> = ({
       onPointerOut={onPointerOut}
     >
       {header}
-      {
-        // TODO: remove this once we remove the developer flag gets removed and we have shipped to
-        // device transport as the default.
-        showToDeviceEncryption && (
-          <Text
-            style={{ height: 0, zIndex: 1, alignSelf: "center", margin: 0 }}
-            size="sm"
-          >
-            using to Device key transport
-          </Text>
-        )
-      }
       {audioParticipants.map(({ livekitRoom, url, participants }) => (
         <LivekitRoomAudioRenderer
           key={url}

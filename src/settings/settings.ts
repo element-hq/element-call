@@ -120,11 +120,6 @@ export const soundEffectVolume = new Setting<number>(
   0.5,
 );
 
-export const useExperimentalToDeviceTransport = new Setting<boolean>(
-  "experimental-to-device-transport",
-  true,
-);
-
 export const multiSfu = new Setting<boolean>("multi-sfu", false);
 
 export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);

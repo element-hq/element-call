@@ -1818,7 +1818,6 @@ export class CallViewModel {
           this._configError$.next(null);
           await enterRTCSession(this.matrixRTCSession, advertised.transport, {
             encryptMedia: this.options.encryptionSystem.kind !== E2eeType.NONE,
-            useExperimentalToDeviceTransport: true,
             useMultiSfu: advertised.multiSfu,
             preferStickyEvents: advertised.preferStickyEvents,
           });
