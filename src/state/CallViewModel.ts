@@ -13,6 +13,7 @@ import {
   type LocalParticipant,
   RemoteParticipant,
   type Room as LivekitRoom,
+  type RoomOptions,
 } from "livekit-client";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import {
@@ -146,6 +147,10 @@ export interface CallViewModelOptions {
    * If we sent a notification event, we want the ui to show a ringing state
    */
   waitForCallPickup?: boolean;
+  /** Optional factory to create LiveKit rooms, mainly for testing purposes. */
+  livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
+  /** Optional behavior overriding the local connection state, mainly for testing purposes. */
+  connectionState$?: Behavior<ConnectionState>;
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -418,6 +423,7 @@ export class CallViewModel {
                     client: this.matrixRoom.client,
                     scope,
                     remoteTransports$: this.remoteTransports$,
+                    livekitRoomFactory: this.options.livekitRoomFactory,
                   },
                   this.mediaDevices,
                   this.muteStates,
@@ -430,6 +436,10 @@ export class CallViewModel {
     );
 
   public readonly livekitConnectionState$ =
+    // TODO: This options.connectionState$ behavior is a small hack inserted
+    // here to facilitate testing. This would likely be better served by
+    // breaking CallViewModel down into more naturally testable components.
+    this.options.connectionState$ ??
     this.scope.behavior<ConnectionState>(
       this.localConnection$.pipe(
         switchMap((c) =>
@@ -484,6 +494,7 @@ export class CallViewModel {
                       client: this.matrixRoom.client,
                       scope,
                       remoteTransports$: this.remoteTransports$,
+                      livekitRoomFactory: this.options.livekitRoomFactory,
                     },
                     this.e2eeLivekitOptions(),
                   ),
@@ -641,7 +652,7 @@ export class CallViewModel {
             throw new Error("No room member for call membership");
           };
           const localParticipant = {
-            id: "local",
+            id: `${this.userId}:${this.deviceId}`,
             participant: localConnection.value.livekitRoom.localParticipant,
             member:
               this.matrixRoom.getMember(this.userId ?? "") ?? memberError(),
@@ -729,7 +740,7 @@ export class CallViewModel {
       (memberships, _displaynames) => {
         const displaynameMap = new Map<string, string>([
           [
-            "local",
+            `${this.userId}:${this.deviceId}`,
             this.matrixRoom.getMember(this.userId)?.rawDisplayName ??
               this.userId,
           ],
@@ -1937,18 +1948,8 @@ function getRoomMemberFromRtcMember(
   rtcMember: CallMembership,
   room: MatrixRoom,
 ): { id: string; member: RoomMember | undefined } {
-  let id = rtcMember.userId + ":" + rtcMember.deviceId;
-
-  if (!rtcMember.userId) {
-    return { id, member: undefined };
-  }
-  if (
-    rtcMember.userId === room.client.getUserId() &&
-    rtcMember.deviceId === room.client.getDeviceId()
-  ) {
-    id = "local";
-  }
-
-  const member = room.getMember(rtcMember.userId) ?? undefined;
-  return { id, member };
+  return {
+    id: rtcMember.userId + ":" + rtcMember.deviceId,
+    member: room.getMember(rtcMember.userId) ?? undefined,
+  };
 }

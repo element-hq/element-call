@@ -72,7 +72,7 @@ export class PublishConnection extends Connection {
         e2eeLivekitOptions,
       ),
     );
-    room.setE2EEEnabled(e2eeLivekitOptions !== undefined).catch((e) => {
+    room.setE2EEEnabled(e2eeLivekitOptions !== undefined)?.catch((e) => {
       logger.error("Failed to set E2EE enabled on room", e);
     });
 

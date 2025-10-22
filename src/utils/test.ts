@@ -24,6 +24,7 @@ import {
   Status,
   type LivekitFocusSelection,
   type MatrixRTCSession,
+  type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import {
@@ -180,11 +181,17 @@ export function mockEmitter<T>(): EmitterMock<T> {
   };
 }
 
+export const exampleTransport: LivekitTransport = {
+  type: "livekit",
+  livekit_service_url: "https://lk.example.org",
+  livekit_alias: "!alias:example.org",
+};
+
 export function mockRtcMembership(
   user: string | RoomMember,
   deviceId: string,
   callId = "",
-  fociPreferred: Transport[] = [],
+  fociPreferred: Transport[] = [exampleTransport],
   focusActive: LivekitFocusSelection = {
     type: "livekit",
     focus_selection: "oldest_membership",
@@ -410,6 +417,10 @@ export class MockRTCSession extends TypedEventEmitter<
     const prev = this._probablyLeft;
     this._probablyLeft = value;
     if (value !== prev) this.emit(MembershipManagerEvent.ProbablyLeft, value);
+  }
+
+  public async joinRoomSession(): Promise<void> {
+    return Promise.resolve();
   }
 }
 
