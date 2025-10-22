@@ -83,6 +83,11 @@ export const showConnectionStats = new Setting<boolean>(
   false,
 );
 
+export const preferStickyEvents = new Setting<boolean>(
+  "prefer-sticky-events",
+  false,
+);
+
 export const audioInput = new Setting<string | undefined>(
   "audio-input",
   undefined,
@@ -113,11 +118,6 @@ export const playReactionsSound = new Setting<boolean>(
 export const soundEffectVolume = new Setting<number>(
   "sound-effect-volume",
   0.5,
-);
-
-export const useNewMembershipManager = new Setting<boolean>(
-  "new-membership-manager",
-  true,
 );
 
 export const useExperimentalToDeviceTransport = new Setting<boolean>(

@@ -20,7 +20,6 @@ import {
   MatrixRTCSessionManagerEvents,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 import { getKeyForRoom } from "../e2ee/sharedKeyManagement";
 
@@ -114,19 +113,49 @@ const roomIsJoinable = (room: Room): boolean => {
   }
 };
 
+/**
+ * Determines if a given room has call events in it, and therefore
+ * is likely to be a call room.
+ * @param room The Matrix room instance.
+ * @returns `true` if the room has call events.
+ */
 const roomHasCallMembershipEvents = (room: Room): boolean => {
-  switch (room.getMyMembership()) {
-    case KnownMembership.Join:
-      return !!room
-        .getLiveTimeline()
-        .getState(EventTimeline.FORWARDS)
-        ?.events?.get(EventType.GroupCallMemberPrefix);
-    case KnownMembership.Knock:
-      // Assume that a room you've knocked on is able to hold calls
-      return true;
-    default:
-      return false;
+  // Check our room membership first, to rule out any rooms
+  // we can't have a call in.
+  const myMembership = room.getMyMembership();
+  if (myMembership === KnownMembership.Knock) {
+    // Assume that a room you've knocked on is able to hold calls
+    return true;
+  } else if (myMembership !== KnownMembership.Join) {
+    // Otherwise, non-joined rooms should never show up.
+    return false;
   }
+
+  // Legacy member state checks (cheaper to check.)
+  const timeline = room.getLiveTimeline();
+  if (
+    timeline
+      .getState(EventTimeline.FORWARDS)
+      ?.events?.has(EventType.GroupCallMemberPrefix)
+  ) {
+    return true;
+  }
+
+  // Check for *active* calls using sticky events.
+  for (const sticky of room._unstable_getStickyEvents()) {
+    if (sticky.getType() === EventType.RTCMembership) {
+      return true;
+    }
+  }
+
+  // Otherwise, check recent event history to see if anyone had
+  // sent a call membership in here.
+  return timeline.getEvents().some(
+    (e) =>
+      // Membership events only count if both of these are true
+      e.unstableStickyInfo && e.getType() === EventType.GroupCallMemberPrefix,
+  );
+  // Otherwise, it's *unlikely* this room was ever a call.
 };
 
 export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
@@ -140,24 +169,22 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
         .filter(roomHasCallMembershipEvents)
         .filter(roomIsJoinable);
       const sortedRooms = sortRooms(client, rooms);
-      Promise.all(
-        sortedRooms.map((room) => {
-          const session = client.matrixRTC.getRoomSession(room);
-          return {
-            roomAlias: room.getCanonicalAlias() ?? undefined,
-            roomName: room.name,
-            avatarUrl: room.getMxcAvatarUrl()!,
-            room,
-            session,
-            participants: session.memberships
-              .filter((m) => m.userId)
-              .map((m) => room.getMember(m.userId!))
-              .filter((m) => m) as RoomMember[],
-          };
-        }),
-      )
-        .then((items) => setRooms(items))
-        .catch(logger.error);
+      const items = sortedRooms.map((room) => {
+        const session = client.matrixRTC.getRoomSession(room);
+        return {
+          roomAlias: room.getCanonicalAlias() ?? undefined,
+          roomName: room.name,
+          avatarUrl: room.getMxcAvatarUrl()!,
+          room,
+          session,
+          participants: session.memberships
+            .filter((m) => m.sender)
+            .map((m) => room.getMember(m.sender!))
+            .filter((m) => m) as RoomMember[],
+        };
+      });
+
+      setRooms(items);
     }
 
     updateRooms();

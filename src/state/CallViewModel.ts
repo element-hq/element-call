@@ -90,6 +90,7 @@ import {
   duplicateTiles,
   multiSfu,
   playReactionsSound,
+  preferStickyEvents,
   showReactions,
 } from "../settings/settings";
 import { isFirefox } from "../Platform";
@@ -265,23 +266,33 @@ export class CallViewModel {
   /**
    * Lists the transports used by ourselves, plus all other MatrixRTC session
    * members. For completeness this also lists the preferred transport and
-   * whether we are in multi-SFU mode (because advertisedTransport$ wants to
-   * read them at the same time, and bundling data together when it might change
-   * together is what you have to do in RxJS to avoid reading inconsistent state
-   * or observing too many changes.)
+   * whether we are in multi-SFU mode or sticky events mode (because
+   * advertisedTransport$ wants to read them at the same time, and bundling data
+   * together when it might change together is what you have to do in RxJS to
+   * avoid reading inconsistent state or observing too many changes.)
    */
+  // TODO-MULTI-SFU find a better name for this. with the addition of sticky events it's no longer just about transports.
   private readonly transports$: Behavior<{
     local: Async<LivekitTransport>;
     remote: { membership: CallMembership; transport: LivekitTransport }[];
     preferred: Async<LivekitTransport>;
     multiSfu: boolean;
+    preferStickyEvents: boolean;
   } | null> = this.scope.behavior(
     this.joined$.pipe(
       switchMap((joined) =>
         joined
           ? combineLatest(
-              [this.preferredTransport$, this.memberships$, multiSfu.value$],
-              (preferred, memberships, multiSfu) => {
+              [
+                this.preferredTransport$,
+                this.memberships$,
+                multiSfu.value$,
+                preferStickyEvents.value$,
+              ],
+              (preferred, memberships, preferMultiSfu, preferStickyEvents) => {
+                // Multi-SFU must be implicitly enabled when using sticky events
+                const multiSfu = preferStickyEvents || preferMultiSfu;
+
                 const oldestMembership =
                   this.matrixRTCSession.getOldestMembership();
                 const remote = memberships.flatMap((m) => {
@@ -292,6 +303,7 @@ export class CallViewModel {
                     ? [{ membership: m, transport: t }]
                     : [];
                 });
+
                 let local = preferred;
                 if (!multiSfu) {
                   const oldest = this.matrixRTCSession.getOldestMembership();
@@ -302,6 +314,7 @@ export class CallViewModel {
                       local = ready(selection);
                   }
                 }
+
                 if (local.state === "error") {
                   this._configError$.next(
                     local.value instanceof ElementCallError
@@ -309,7 +322,14 @@ export class CallViewModel {
                       : new UnknownCallError(local.value),
                   );
                 }
-                return { local, remote, preferred, multiSfu };
+
+                return {
+                  local,
+                  remote,
+                  preferred,
+                  multiSfu,
+                  preferStickyEvents,
+                };
               },
             )
           : of(null),
@@ -339,10 +359,11 @@ export class CallViewModel {
 
   /**
    * The transport we should advertise in our MatrixRTC membership (plus whether
-   * it is a multi-SFU transport).
+   * it is a multi-SFU transport and whether we should use sticky events).
    */
   private readonly advertisedTransport$: Behavior<{
     multiSfu: boolean;
+    preferStickyEvents: boolean;
     transport: LivekitTransport;
   } | null> = this.scope.behavior(
     this.transports$.pipe(
@@ -351,6 +372,7 @@ export class CallViewModel {
         transports.preferred.state === "ready"
           ? {
               multiSfu: transports.multiSfu,
+              preferStickyEvents: transports.preferStickyEvents,
               // In non-multi-SFU mode we should always advertise the preferred
               // SFU to minimize the number of membership updates
               transport: transports.multiSfu
@@ -361,6 +383,7 @@ export class CallViewModel {
       ),
       distinctUntilChanged<{
         multiSfu: boolean;
+        preferStickyEvents: boolean;
         transport: LivekitTransport;
       } | null>(deepCompare),
     ),
@@ -1796,8 +1819,8 @@ export class CallViewModel {
           await enterRTCSession(this.matrixRTCSession, advertised.transport, {
             encryptMedia: this.options.encryptionSystem.kind !== E2eeType.NONE,
             useExperimentalToDeviceTransport: true,
-            useNewMembershipManager: true,
             useMultiSfu: advertised.multiSfu,
+            preferStickyEvents: advertised.preferStickyEvents,
           });
         } catch (e) {
           logger.error("Error entering RTC session", e);
