@@ -88,7 +88,7 @@ services:
 
   synapse:
     hostname: homeserver
-    image: docker.io/matrixdotorg/synapse:latest
+    image: ghcr.io/element-hq/synapse:msc4354-5
     pull_policy: always
     environment:
       - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml

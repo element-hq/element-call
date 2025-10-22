@@ -96,6 +96,7 @@ test("It joins the correct Session", async () => {
     {
       encryptMedia: true,
       useMultiSfu: USE_MUTI_SFU,
+      preferStickyEvents: false,
     },
   );
 
@@ -111,7 +112,6 @@ test("It joins the correct Session", async () => {
     expect.objectContaining({
       manageMediaKeys: true,
       useLegacyMemberEvents: false,
-      useNewMembershipManager: true,
       useExperimentalToDeviceTransport: false,
     }),
   );
@@ -197,6 +197,7 @@ test("It should not fail with configuration error if homeserver config has livek
     {
       encryptMedia: true,
       useMultiSfu: USE_MUTI_SFU,
+      preferStickyEvents: false,
     },
   );
 });

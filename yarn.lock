@@ -7545,7 +7545,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=develop"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=toger5/sticky-events&commit=e7f5bec51b6f70501a025b79fe5021c933385b21"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -10335,9 +10335,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=develop":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/sticky-events&commit=e7f5bec51b6f70501a025b79fe5021c933385b21":
   version: 38.4.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=fd949fe486038099ee111a72b57ce711e85bc352"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=e7f5bec51b6f70501a025b79fe5021c933385b21"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.3.0"
@@ -10353,7 +10353,7 @@ __metadata:
     sdp-transform: "npm:^2.14.1"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/d334811074726482b58089fef6c9e98a462fbc1d91c63798307648bdc1349d2e154aa31f391690e2c9cd90eee61a3be9fe8872873e7f828b529d9268d2a25b78
+  checksum: 10c0/7adffdc183affd2d3ee1e8497cad6ca7904a37f98328ff7bc15aa6c1829dc9f9a92f8e1bd6260432a33626ff2a839644de938270163e73438b7294675cd954e4
   languageName: node
   linkType: hard
 
