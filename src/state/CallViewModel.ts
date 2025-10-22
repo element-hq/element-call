@@ -268,6 +268,7 @@ export class CallViewModel extends ViewModel {
    * together when it might change together is what you have to do in RxJS to
    * avoid reading inconsistent state or observing too many changes.)
    */
+  // TODO-MULTI-SFU find a better name for this. with the addition of sticky events it's no longer just about transports.
   private readonly transports$: Behavior<{
     local: Async<LivekitTransport>;
     remote: { membership: CallMembership; transport: LivekitTransport }[];
