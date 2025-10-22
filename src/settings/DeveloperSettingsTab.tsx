@@ -26,7 +26,6 @@ import {
   duplicateTiles as duplicateTilesSetting,
   debugTileLayout as debugTileLayoutSetting,
   showConnectionStats as showConnectionStatsSetting,
-  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   multiSfu as multiSfuSetting,
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
@@ -71,10 +70,7 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
     alwaysShowIphoneEarpieceSetting,
   );
-  const [
-    useExperimentalToDeviceTransport,
-    setUseExperimentalToDeviceTransport,
-  ] = useSetting(useExperimentalToDeviceTransportSetting);
+
   const [multiSfu, setMultiSfu] = useSetting(multiSfuSetting);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
@@ -177,20 +173,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
               setShowConnectionStats(event.target.checked);
             },
             [setShowConnectionStats],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="useToDeviceKeyTransport"
-          type="checkbox"
-          label={t("developer_mode.use_to_device_key_transport")}
-          checked={!!useExperimentalToDeviceTransport}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setUseExperimentalToDeviceTransport(event.target.checked);
-            },
-            [setUseExperimentalToDeviceTransport],
           )}
         />
       </FieldRow>

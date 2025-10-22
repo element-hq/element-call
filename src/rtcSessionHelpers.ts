@@ -99,8 +99,6 @@ export async function makeTransport(
 
 export interface EnterRTCSessionOptions {
   encryptMedia: boolean;
-  // TODO: remove this flag, to-device transport is stable enough now
-  useExperimentalToDeviceTransport?: boolean;
   /** EXPERIMENTAL: If true, will use the multi-sfu codepath where each member connects to its SFU instead of everyone connecting to an elected on. */
   useMultiSfu: boolean;
   preferStickyEvents: boolean;
@@ -115,12 +113,7 @@ export interface EnterRTCSessionOptions {
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   transport: LivekitTransport,
-  {
-    encryptMedia,
-    useExperimentalToDeviceTransport = false,
-    useMultiSfu,
-    preferStickyEvents,
-  }: EnterRTCSessionOptions,
+  { encryptMedia, useMultiSfu, preferStickyEvents }: EnterRTCSessionOptions,
 ): Promise<void> {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
@@ -154,7 +147,7 @@ export async function enterRTCSession(
       makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
-      useExperimentalToDeviceTransport,
+      useExperimentalToDeviceTransport: true,
       unstableSendStickyEvents: preferStickyEvents,
     },
   );

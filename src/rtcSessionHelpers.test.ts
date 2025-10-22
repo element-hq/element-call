@@ -112,7 +112,6 @@ test("It joins the correct Session", async () => {
     expect.objectContaining({
       manageMediaKeys: true,
       useLegacyMemberEvents: false,
-      useExperimentalToDeviceTransport: false,
     }),
   );
 });
