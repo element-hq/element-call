@@ -49,7 +49,7 @@ export interface ConnectionOpts {
     { membership: CallMembership; transport: LivekitTransport }[]
   >;
 
-  /** Optional factory to create the Livekit room, mainly for testing purposes. */
+  /** Optional factory to create the LiveKit room, mainly for testing purposes. */
   livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
 }
 
