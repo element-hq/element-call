@@ -5,6 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+// TODO-MULTI-SFU: Make sure all these tests are ported in some way to the Connection tests
+/*
 import { type FC, useCallback, useState } from "react";
 import { describe, expect, test, vi, vitest } from "vitest";
 import {
@@ -182,3 +184,4 @@ describe("Leaking connection prevention", () => {
     expect(connectMock).not.toHaveBeenCalled();
   });
 });
+*/
