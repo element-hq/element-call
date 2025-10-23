@@ -2772,21 +2772,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/protocol@npm:1.42.2":
+"@livekit/protocol@npm:1.42.2, @livekit/protocol@npm:^1.42.2":
   version: 1.42.2
   resolution: "@livekit/protocol@npm:1.42.2"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
   checksum: 10c0/73e77e0975d4d8ca0baa23ad03cb9ac3a844e8d89e9cefbd17343131a774c7aeb4d190fd0397152fcf5a396d921af3eb83e83e660a4aa12215d9ac4e52bf037a
-  languageName: node
-  linkType: hard
-
-"@livekit/protocol@npm:^1.38.0":
-  version: 1.39.3
-  resolution: "@livekit/protocol@npm:1.39.3"
-  dependencies:
-    "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/192ce7283db4505232aa487e71d08670783a1045a8935926f95ff4b9d3d310db706c2ad4af2ebdb0bd735c2e9042c1ee3b1f62e44a9d01bd41fd58cf8dc272b9
   languageName: node
   linkType: hard
 
@@ -7489,7 +7480,7 @@ __metadata:
     "@formatjs/intl-segmenter": "npm:^11.7.3"
     "@livekit/components-core": "npm:^0.12.0"
     "@livekit/components-react": "npm:^2.0.0"
-    "@livekit/protocol": "npm:^1.38.0"
+    "@livekit/protocol": "npm:^1.42.2"
     "@livekit/track-processors": "npm:^0.5.5"
     "@mediapipe/tasks-vision": "npm:^0.10.18"
     "@opentelemetry/api": "npm:^1.4.0"
