@@ -6,101 +6,96 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  connectedParticipantsObserver,
-  observeParticipantEvents,
-  observeParticipantMedia,
-} from "@livekit/components-core";
-import {
+  type BaseKeyProvider,
   ConnectionState,
-  type Room as LivekitRoom,
+  type E2EEOptions,
+  ExternalE2EEKeyProvider,
   type LocalParticipant,
-  ParticipantEvent,
-  type RemoteParticipant,
+  RemoteParticipant,
+  type Room as LivekitRoom,
+  type RoomOptions,
 } from "livekit-client";
+import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import {
   ClientEvent,
   type EventTimelineSetHandlerMap,
   EventType,
+  type Room as MatrixRoom,
   RoomEvent,
+  type RoomMember,
   RoomStateEvent,
   SyncState,
-  type Room as MatrixRoom,
-  type RoomMember,
 } from "matrix-js-sdk";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 import {
   BehaviorSubject,
-  EMPTY,
-  NEVER,
-  type Observable,
-  Subject,
   combineLatest,
   concat,
   distinctUntilChanged,
+  EMPTY,
   endWith,
   filter,
-  forkJoin,
+  from,
   fromEvent,
   ignoreElements,
   map,
   merge,
-  mergeMap,
+  NEVER,
+  type Observable,
   of,
   pairwise,
   race,
+  repeat,
   scan,
   skip,
   skipWhile,
   startWith,
+  Subject,
   switchAll,
   switchMap,
   switchScan,
   take,
   takeUntil,
+  takeWhile,
+  tap,
   throttleTime,
   timer,
-  withLatestFrom,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
+  isLivekitTransport,
+  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
   MembershipManagerEvent,
   Status,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { type IWidgetApiRequest } from "matrix-widget-api";
 
-import { ViewModel } from "./ViewModel";
-import {
-  ECAddonConnectionState,
-  type ECConnectionState,
-} from "../livekit/useECConnectionState";
 import {
   LocalUserMediaViewModel,
   type MediaViewModel,
-  RemoteUserMediaViewModel,
+  type RemoteUserMediaViewModel,
   ScreenShareViewModel,
   type UserMediaViewModel,
 } from "./MediaViewModel";
 import {
   accumulate,
   and$,
-  finalizeValue,
+  generateKeyed$,
   pauseWhen,
 } from "../utils/observable";
-import { ObservableScope } from "./ObservableScope";
 import {
   duplicateTiles,
+  multiSfu,
   playReactionsSound,
+  preferStickyEvents,
   showReactions,
-  showNonMemberTiles,
 } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled$ } from "../controls";
-import {
-  type GridTileViewModel,
-  type SpotlightTileViewModel,
-} from "./TileViewModel";
 import { TileStore } from "./TileStore";
 import { gridLikeLayout } from "./GridLikeLayout";
 import { spotlightExpandedLayout } from "./SpotlightExpandedLayout";
@@ -112,11 +107,37 @@ import {
   type ReactionInfo,
   type ReactionOption,
 } from "../reactions";
-import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
 import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 import { type MediaDevices } from "./MediaDevices";
-import { constant, type Behavior } from "./Behavior";
+import { type Behavior, constant } from "./Behavior";
+import {
+  enterRTCSession,
+  getLivekitAlias,
+  makeTransport,
+} from "../rtcSessionHelpers";
+import { E2eeType } from "../e2ee/e2eeType";
+import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
+import { type Connection, RemoteConnection } from "./Connection";
+import { type MuteStates } from "./MuteStates";
+import { getUrlParams } from "../UrlParams";
+import { type ProcessorState } from "../livekit/TrackProcessorContext";
+import { ElementWidgetActions, widget } from "../widget";
+import { PublishConnection } from "./PublishConnection.ts";
+import { type Async, async$, mapAsync, ready } from "./Async";
+import { sharingScreen$, UserMedia } from "./UserMedia.ts";
+import { ScreenShare } from "./ScreenShare.ts";
+import {
+  type GridLayoutMedia,
+  type Layout,
+  type LayoutMedia,
+  type OneOnOneLayoutMedia,
+  type SpotlightExpandedLayoutMedia,
+  type SpotlightLandscapeLayoutMedia,
+  type SpotlightPortraitLayoutMedia,
+} from "./layout-types.ts";
+import { ElementCallError, UnknownCallError } from "../utils/errors.ts";
+import { ObservableScope } from "./ObservableScope.ts";
 
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
@@ -126,11 +147,11 @@ export interface CallViewModelOptions {
    * If we sent a notification event, we want the ui to show a ringing state
    */
   waitForCallPickup?: boolean;
+  /** Optional factory to create LiveKit rooms, mainly for testing purposes. */
+  livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
+  /** Optional behavior overriding the local connection state, mainly for testing purposes. */
+  connectionState$?: Behavior<ConnectionState>;
 }
-
-// How long we wait after a focus switch before showing the real participant
-// list again
-const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 
 // Do not play any sounds if the participant count has exceeded this
 // number.
@@ -145,292 +166,393 @@ const smallMobileCallThreshold = 3;
 // with the interface
 const showFooterMs = 4000;
 
-export interface GridLayoutMedia {
-  type: "grid";
-  spotlight?: MediaViewModel[];
-  grid: UserMediaViewModel[];
-}
-
-export interface SpotlightLandscapeLayoutMedia {
-  type: "spotlight-landscape";
-  spotlight: MediaViewModel[];
-  grid: UserMediaViewModel[];
-}
-
-export interface SpotlightPortraitLayoutMedia {
-  type: "spotlight-portrait";
-  spotlight: MediaViewModel[];
-  grid: UserMediaViewModel[];
-}
-
-export interface SpotlightExpandedLayoutMedia {
-  type: "spotlight-expanded";
-  spotlight: MediaViewModel[];
-  pip?: UserMediaViewModel;
-}
-
-export interface OneOnOneLayoutMedia {
-  type: "one-on-one";
-  local: UserMediaViewModel;
-  remote: UserMediaViewModel;
-}
-
-export interface PipLayoutMedia {
-  type: "pip";
-  spotlight: MediaViewModel[];
-}
-
-export type LayoutMedia =
-  | GridLayoutMedia
-  | SpotlightLandscapeLayoutMedia
-  | SpotlightPortraitLayoutMedia
-  | SpotlightExpandedLayoutMedia
-  | OneOnOneLayoutMedia
-  | PipLayoutMedia;
-
-export interface GridLayout {
-  type: "grid";
-  spotlight?: SpotlightTileViewModel;
-  grid: GridTileViewModel[];
-  setVisibleTiles: (value: number) => void;
-}
-
-export interface SpotlightLandscapeLayout {
-  type: "spotlight-landscape";
-  spotlight: SpotlightTileViewModel;
-  grid: GridTileViewModel[];
-  setVisibleTiles: (value: number) => void;
-}
-
-export interface SpotlightPortraitLayout {
-  type: "spotlight-portrait";
-  spotlight: SpotlightTileViewModel;
-  grid: GridTileViewModel[];
-  setVisibleTiles: (value: number) => void;
-}
-
-export interface SpotlightExpandedLayout {
-  type: "spotlight-expanded";
-  spotlight: SpotlightTileViewModel;
-  pip?: GridTileViewModel;
-}
-
-export interface OneOnOneLayout {
-  type: "one-on-one";
-  local: GridTileViewModel;
-  remote: GridTileViewModel;
-}
-
-export interface PipLayout {
-  type: "pip";
-  spotlight: SpotlightTileViewModel;
-}
-
-/**
- * A layout defining the media tiles present on screen and their visual
- * arrangement.
- */
-export type Layout =
-  | GridLayout
-  | SpotlightLandscapeLayout
-  | SpotlightPortraitLayout
-  | SpotlightExpandedLayout
-  | OneOnOneLayout
-  | PipLayout;
-
 export type GridMode = "grid" | "spotlight";
 
 export type WindowMode = "normal" | "narrow" | "flat" | "pip";
-
-/**
- * Sorting bins defining the order in which media tiles appear in the layout.
- */
-enum SortingBin {
-  /**
-   * Yourself, when the "always show self" option is on.
-   */
-  SelfAlwaysShown,
-  /**
-   * Participants that are sharing their screen.
-   */
-  Presenters,
-  /**
-   * Participants that have been speaking recently.
-   */
-  Speakers,
-  /**
-   * Participants that have their hand raised.
-   */
-  HandRaised,
-  /**
-   * Participants with video.
-   */
-  Video,
-  /**
-   * Participants not sharing any video.
-   */
-  NoVideo,
-  /**
-   * Yourself, when the "always show self" option is off.
-   */
-  SelfNotAlwaysShown,
-}
 
 interface LayoutScanState {
   layout: Layout | null;
   tiles: TileStore;
 }
 
-class UserMedia {
-  private readonly scope = new ObservableScope();
-  public readonly vm: UserMediaViewModel;
-  private readonly participant$: BehaviorSubject<
-    LocalParticipant | RemoteParticipant | undefined
-  >;
+type MediaItem = UserMedia | ScreenShare;
 
-  public readonly speaker$: Behavior<boolean>;
-  public readonly presenter$: Behavior<boolean>;
-  public constructor(
-    public readonly id: string,
-    member: RoomMember | undefined,
-    participant: LocalParticipant | RemoteParticipant | undefined,
-    encryptionSystem: EncryptionSystem,
-    livekitRoom: LivekitRoom,
-    mediaDevices: MediaDevices,
-    pretendToBeDisconnected$: Behavior<boolean>,
-    displayname$: Observable<string>,
-    handRaised$: Observable<Date | null>,
-    reaction$: Observable<ReactionOption | null>,
-  ) {
-    this.participant$ = new BehaviorSubject(participant);
+/**
+ * A view model providing all the application logic needed to show the in-call
+ * UI (may eventually be expanded to cover the lobby and feedback screens in the
+ * future).
+ */
+// Throughout this class and related code we must distinguish between MatrixRTC
+// state and LiveKit state. We use the common terminology of room "members", RTC
+// "memberships", and LiveKit "participants".
+export class CallViewModel {
+  private readonly urlParams = getUrlParams();
 
-    if (participant?.isLocal) {
-      this.vm = new LocalUserMediaViewModel(
-        this.id,
-        member,
-        this.participant$ as Behavior<LocalParticipant>,
-        encryptionSystem,
-        livekitRoom,
-        mediaDevices,
-        this.scope.behavior(displayname$),
-        this.scope.behavior(handRaised$),
-        this.scope.behavior(reaction$),
-      );
-    } else {
-      this.vm = new RemoteUserMediaViewModel(
-        id,
-        member,
-        this.participant$.asObservable() as Observable<
-          RemoteParticipant | undefined
-        >,
-        encryptionSystem,
-        livekitRoom,
-        pretendToBeDisconnected$,
-        this.scope.behavior(displayname$),
-        this.scope.behavior(handRaised$),
-        this.scope.behavior(reaction$),
-      );
-    }
+  private readonly livekitAlias = getLivekitAlias(this.matrixRTCSession);
 
-    this.speaker$ = this.scope.behavior(observeSpeaker$(this.vm.speaking$));
+  private readonly livekitE2EEKeyProvider = getE2eeKeyProvider(
+    this.options.encryptionSystem,
+    this.matrixRTCSession,
+  );
+  private readonly e2eeLivekitOptions = (): E2EEOptions | undefined =>
+    this.livekitE2EEKeyProvider
+      ? {
+          keyProvider: this.livekitE2EEKeyProvider,
+          worker: new E2EEWorker(),
+        }
+      : undefined;
 
-    this.presenter$ = this.scope.behavior(
-      this.participant$.pipe(
-        switchMap(
-          (p) =>
-            (p &&
-              observeParticipantEvents(
-                p,
-                ParticipantEvent.TrackPublished,
-                ParticipantEvent.TrackUnpublished,
-                ParticipantEvent.LocalTrackPublished,
-                ParticipantEvent.LocalTrackUnpublished,
-              ).pipe(map((p) => p.isScreenShareEnabled))) ??
-            of(false),
+  private readonly _configError$ = new BehaviorSubject<ElementCallError | null>(
+    null,
+  );
+
+  /**
+   * If there is a configuration error with the call (e.g. misconfigured E2EE).
+   * This is a fatal error that prevents the call from being created/joined.
+   * Should render a blocking error screen.
+   */
+  public get configError$(): Behavior<ElementCallError | null> {
+    return this._configError$;
+  }
+
+  private readonly join$ = new Subject<void>();
+
+  public join(): void {
+    this.join$.next();
+  }
+
+  // This is functionally the same Observable as leave$, except here it's
+  // hoisted to the top of the class. This enables the cyclic dependency between
+  // leave$ -> autoLeave$ -> callPickupState$ -> livekitConnectionState$ ->
+  // localConnection$ -> transports$ -> joined$ -> leave$.
+  private readonly leaveHoisted$ = new Subject<
+    "user" | "timeout" | "decline" | "allOthersLeft"
+  >();
+
+  /**
+   * Whether we are joined to the call. This reflects our local state rather
+   * than whether all connections are truly up and running.
+   */
+  private readonly joined$ = this.scope.behavior(
+    this.join$.pipe(
+      map(() => true),
+      // Using takeUntil with the repeat operator is perfectly valid.
+      // eslint-disable-next-line rxjs/no-unsafe-takeuntil
+      takeUntil(this.leaveHoisted$),
+      endWith(false),
+      repeat(),
+      startWith(false),
+    ),
+  );
+
+  /**
+   * The MatrixRTC session participants.
+   */
+  // Note that MatrixRTCSession already filters the call memberships by users
+  // that are joined to the room; we don't need to perform extra filtering here.
+  private readonly memberships$ = this.scope.behavior(
+    fromEvent(
+      this.matrixRTCSession,
+      MatrixRTCSessionEvent.MembershipsChanged,
+    ).pipe(
+      startWith(null),
+      map(() => this.matrixRTCSession.memberships),
+    ),
+  );
+
+  /**
+   * The transport that we would personally prefer to publish on (if not for the
+   * transport preferences of others, perhaps).
+   */
+  private readonly preferredTransport$ = this.scope.behavior(
+    async$(makeTransport(this.matrixRTCSession)),
+  );
+
+  /**
+   * Lists the transports used by ourselves, plus all other MatrixRTC session
+   * members. For completeness this also lists the preferred transport and
+   * whether we are in multi-SFU mode or sticky events mode (because
+   * advertisedTransport$ wants to read them at the same time, and bundling data
+   * together when it might change together is what you have to do in RxJS to
+   * avoid reading inconsistent state or observing too many changes.)
+   */
+  // TODO-MULTI-SFU find a better name for this. with the addition of sticky events it's no longer just about transports.
+  private readonly transports$: Behavior<{
+    local: Async<LivekitTransport>;
+    remote: { membership: CallMembership; transport: LivekitTransport }[];
+    preferred: Async<LivekitTransport>;
+    multiSfu: boolean;
+    preferStickyEvents: boolean;
+  } | null> = this.scope.behavior(
+    this.joined$.pipe(
+      switchMap((joined) =>
+        joined
+          ? combineLatest(
+              [
+                this.preferredTransport$,
+                this.memberships$,
+                multiSfu.value$,
+                preferStickyEvents.value$,
+              ],
+              (preferred, memberships, preferMultiSfu, preferStickyEvents) => {
+                // Multi-SFU must be implicitly enabled when using sticky events
+                const multiSfu = preferStickyEvents || preferMultiSfu;
+
+                const oldestMembership =
+                  this.matrixRTCSession.getOldestMembership();
+                const remote = memberships.flatMap((m) => {
+                  if (m.userId === this.userId && m.deviceId === this.deviceId)
+                    return [];
+                  const t = m.getTransport(oldestMembership ?? m);
+                  return t && isLivekitTransport(t)
+                    ? [{ membership: m, transport: t }]
+                    : [];
+                });
+
+                let local = preferred;
+                if (!multiSfu) {
+                  const oldest = this.matrixRTCSession.getOldestMembership();
+                  if (oldest !== undefined) {
+                    const selection = oldest.getTransport(oldest);
+                    // TODO selection can be null if no transport is configured should we report an error?
+                    if (selection && isLivekitTransport(selection))
+                      local = ready(selection);
+                  }
+                }
+
+                if (local.state === "error") {
+                  this._configError$.next(
+                    local.value instanceof ElementCallError
+                      ? local.value
+                      : new UnknownCallError(local.value),
+                  );
+                }
+
+                return {
+                  local,
+                  remote,
+                  preferred,
+                  multiSfu,
+                  preferStickyEvents,
+                };
+              },
+            )
+          : of(null),
+      ),
+    ),
+  );
+
+  /**
+   * Lists the transports used by each MatrixRTC session member other than
+   * ourselves.
+   */
+  private readonly remoteTransports$ = this.scope.behavior(
+    this.transports$.pipe(map((transports) => transports?.remote ?? [])),
+  );
+
+  /**
+   * The transport over which we should be actively publishing our media.
+   * null when not joined.
+   */
+  private readonly localTransport$: Behavior<Async<LivekitTransport> | null> =
+    this.scope.behavior(
+      this.transports$.pipe(
+        map((transports) => transports?.local ?? null),
+        distinctUntilChanged<Async<LivekitTransport> | null>(deepCompare),
+      ),
+    );
+
+  /**
+   * The transport we should advertise in our MatrixRTC membership (plus whether
+   * it is a multi-SFU transport and whether we should use sticky events).
+   */
+  private readonly advertisedTransport$: Behavior<{
+    multiSfu: boolean;
+    preferStickyEvents: boolean;
+    transport: LivekitTransport;
+  } | null> = this.scope.behavior(
+    this.transports$.pipe(
+      map((transports) =>
+        transports?.local.state === "ready" &&
+        transports.preferred.state === "ready"
+          ? {
+              multiSfu: transports.multiSfu,
+              preferStickyEvents: transports.preferStickyEvents,
+              // In non-multi-SFU mode we should always advertise the preferred
+              // SFU to minimize the number of membership updates
+              transport: transports.multiSfu
+                ? transports.local.value
+                : transports.preferred.value,
+            }
+          : null,
+      ),
+      distinctUntilChanged<{
+        multiSfu: boolean;
+        preferStickyEvents: boolean;
+        transport: LivekitTransport;
+      } | null>(deepCompare),
+    ),
+  );
+
+  /**
+   * The local connection over which we will publish our media. It could
+   * possibly also have some remote users' media available on it.
+   * null when not joined.
+   */
+  private readonly localConnection$: Behavior<Async<PublishConnection> | null> =
+    this.scope.behavior(
+      generateKeyed$<
+        Async<LivekitTransport> | null,
+        PublishConnection,
+        Async<PublishConnection> | null
+      >(
+        this.localTransport$,
+        (transport, createOrGet) =>
+          transport &&
+          mapAsync(transport, (transport) =>
+            createOrGet(
+              // Stable key that uniquely idenifies the transport
+              JSON.stringify({
+                url: transport.livekit_service_url,
+                alias: transport.livekit_alias,
+              }),
+              (scope) =>
+                new PublishConnection(
+                  {
+                    transport,
+                    client: this.matrixRoom.client,
+                    scope,
+                    remoteTransports$: this.remoteTransports$,
+                    livekitRoomFactory: this.options.livekitRoomFactory,
+                  },
+                  this.mediaDevices,
+                  this.muteStates,
+                  this.e2eeLivekitOptions(),
+                  this.scope.behavior(this.trackProcessorState$),
+                ),
+            ),
+          ),
+      ),
+    );
+
+  public readonly livekitConnectionState$ =
+    // TODO: This options.connectionState$ behavior is a small hack inserted
+    // here to facilitate testing. This would likely be better served by
+    // breaking CallViewModel down into more naturally testable components.
+    this.options.connectionState$ ??
+    this.scope.behavior<ConnectionState>(
+      this.localConnection$.pipe(
+        switchMap((c) =>
+          c?.state === "ready"
+            ? // TODO mapping to ConnectionState for compatibility, but we should use the full state?
+              c.value.transportState$.pipe(
+                switchMap((s) => {
+                  if (s.state === "ConnectedToLkRoom")
+                    return s.connectionState$;
+                  return of(ConnectionState.Disconnected);
+                }),
+              )
+            : of(ConnectionState.Disconnected),
         ),
       ),
     );
-  }
 
-  public updateParticipant(
-    newParticipant: LocalParticipant | RemoteParticipant | undefined,
-  ): void {
-    if (this.participant$.value !== newParticipant) {
-      // Update the BehaviourSubject in the UserMedia.
-      this.participant$.next(newParticipant);
-    }
-  }
+  /**
+   * Connections for each transport in use by one or more session members that
+   * is *distinct* from the local transport.
+   */
+  private readonly remoteConnections$ = this.scope.behavior(
+    generateKeyed$<typeof this.transports$.value, Connection, Connection[]>(
+      this.transports$,
+      (transports, createOrGet) => {
+        const connections: Connection[] = [];
 
-  public destroy(): void {
-    this.scope.end();
-    this.vm.destroy();
-  }
-}
+        // Until the local transport becomes ready we have no idea which
+        // transports will actually need a dedicated remote connection
+        if (transports?.local.state === "ready") {
+          // TODO: Handle custom transport.livekit_alias values here
+          const localServiceUrl = transports.local.value.livekit_service_url;
+          const remoteServiceUrls = new Set(
+            transports.remote.map(
+              ({ transport }) => transport.livekit_service_url,
+            ),
+          );
+          remoteServiceUrls.delete(localServiceUrl);
 
-class ScreenShare {
-  private readonly scope = new ObservableScope();
-  public readonly vm: ScreenShareViewModel;
-  private readonly participant$: BehaviorSubject<
-    LocalParticipant | RemoteParticipant
-  >;
+          for (const remoteServiceUrl of remoteServiceUrls)
+            connections.push(
+              createOrGet(
+                remoteServiceUrl,
+                (scope) =>
+                  new RemoteConnection(
+                    {
+                      transport: {
+                        type: "livekit",
+                        livekit_service_url: remoteServiceUrl,
+                        livekit_alias: this.livekitAlias,
+                      },
+                      client: this.matrixRoom.client,
+                      scope,
+                      remoteTransports$: this.remoteTransports$,
+                      livekitRoomFactory: this.options.livekitRoomFactory,
+                    },
+                    this.e2eeLivekitOptions(),
+                  ),
+              ),
+            );
+        }
 
-  public constructor(
-    id: string,
-    member: RoomMember | undefined,
-    participant: LocalParticipant | RemoteParticipant,
-    encryptionSystem: EncryptionSystem,
-    livekitRoom: LivekitRoom,
-    pretendToBeDisconnected$: Behavior<boolean>,
-    displayName$: Observable<string>,
-  ) {
-    this.participant$ = new BehaviorSubject(participant);
+        return connections;
+      },
+    ),
+  );
 
-    this.vm = new ScreenShareViewModel(
-      id,
-      member,
-      this.participant$.asObservable(),
-      encryptionSystem,
-      livekitRoom,
-      pretendToBeDisconnected$,
-      this.scope.behavior(displayName$),
-      participant.isLocal,
-    );
-  }
+  /**
+   * A list of the connections that should be active at any given time.
+   */
+  private readonly connections$ = this.scope.behavior<Connection[]>(
+    combineLatest(
+      [this.localConnection$, this.remoteConnections$],
+      (local, remote) => [
+        ...(local?.state === "ready" ? [local.value] : []),
+        ...remote.values(),
+      ],
+    ),
+  );
 
-  public destroy(): void {
-    this.scope.end();
-    this.vm.destroy();
-  }
-}
+  /**
+   * Emits with connections whenever they should be started or stopped.
+   */
+  private readonly connectionInstructions$ = this.connections$.pipe(
+    pairwise(),
+    map(([prev, next]) => {
+      const start = new Set(next.values());
+      for (const connection of prev) start.delete(connection);
+      const stop = new Set(prev.values());
+      for (const connection of next) stop.delete(connection);
 
-type MediaItem = UserMedia | ScreenShare;
+      return { start, stop };
+    }),
+  );
 
-function getRoomMemberFromRtcMember(
-  rtcMember: CallMembership,
-  room: MatrixRoom,
-): { id: string; member: RoomMember | undefined } {
-  // WARN! This is not exactly the sender but the user defined in the state key.
-  // This will be available once we change to the new "member as object" format in the MatrixRTC object.
-  let id = rtcMember.sender + ":" + rtcMember.deviceId;
+  public readonly allLivekitRooms$ = this.scope.behavior(
+    this.connections$.pipe(
+      map((connections) =>
+        [...connections.values()].map((c) => ({
+          room: c.livekitRoom,
+          url: c.transport.livekit_service_url,
+          isLocal: c instanceof PublishConnection,
+        })),
+      ),
+    ),
+  );
 
-  if (!rtcMember.sender) {
-    return { id, member: undefined };
-  }
-  if (
-    rtcMember.sender === room.client.getUserId() &&
-    rtcMember.deviceId === room.client.getDeviceId()
-  ) {
-    id = "local";
-  }
+  private readonly userId = this.matrixRoom.client.getUserId()!;
+  private readonly deviceId = this.matrixRoom.client.getDeviceId()!;
 
-  const member = room.getMember(rtcMember.sender) ?? undefined;
-  return { id, member };
-}
-
-// TODO: Move wayyyy more business logic from the call and lobby views into here
-export class CallViewModel extends ViewModel {
-  private readonly userId = this.matrixRoom.client.getUserId();
-
+  /**
+   * Whether we are connected to the MatrixRTC session.
+   */
   private readonly matrixConnected$ = this.scope.behavior(
     // To consider ourselves connected to MatrixRTC, we check the following:
     and$(
@@ -465,6 +587,10 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
+  /**
+   * Whether we are "fully" connected to the call. Accounts for both the
+   * connection to the MatrixRTC session and the LiveKit publish connection.
+   */
   private readonly connected$ = this.scope.behavior(
     and$(
       this.matrixConnected$,
@@ -482,7 +608,7 @@ export class CallViewModel extends ViewModel {
       // We are reconnecting if we previously had some successful initial
       // connection but are now disconnected
       scan(
-        ({ connectedPreviously, reconnecting }, connectedNow) => ({
+        ({ connectedPreviously }, connectedNow) => ({
           connectedPreviously: connectedPreviously || connectedNow,
           reconnecting: connectedPreviously && !connectedNow,
         }),
@@ -503,88 +629,92 @@ export class CallViewModel extends ViewModel {
   private readonly pretendToBeDisconnected$ = this.reconnecting$;
 
   /**
-   * The raw list of RemoteParticipants as reported by LiveKit
+   * Lists, for each LiveKit room, the LiveKit participants whose media should
+   * be presented.
    */
-  private readonly rawRemoteParticipants$ = this.scope.behavior<
-    RemoteParticipant[]
-  >(connectedParticipantsObserver(this.livekitRoom), []);
-
-  /**
-   * Lists of RemoteParticipants to "hold" on display, even if LiveKit claims that
-   * they've left
-   */
-  private readonly remoteParticipantHolds$ = this.scope.behavior<
-    RemoteParticipant[][]
+  private readonly participantsByRoom$ = this.scope.behavior<
+    {
+      livekitRoom: LivekitRoom;
+      url: string; // Included for use as a React key
+      participants: {
+        id: string;
+        participant: LocalParticipant | RemoteParticipant | undefined;
+        member: RoomMember;
+      }[];
+    }[]
   >(
-    this.livekitConnectionState$.pipe(
-      withLatestFrom(this.rawRemoteParticipants$),
-      mergeMap(([s, ps]) => {
-        // Whenever we switch focuses, we should retain all the previous
-        // participants for at least POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS ms to
-        // give their clients time to switch over and avoid jarring layout shifts
-        if (s === ECAddonConnectionState.ECSwitchingFocus) {
-          return concat(
-            // Hold these participants
-            of({ hold: ps }),
-            // Wait for time to pass and the connection state to have changed
-            forkJoin([
-              timer(POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
-              this.livekitConnectionState$.pipe(
-                filter((s) => s !== ECAddonConnectionState.ECSwitchingFocus),
-                take(1),
+    // TODO: Move this logic into Connection/PublishConnection if possible
+    this.localConnection$
+      .pipe(
+        switchMap((localConnection) => {
+          if (localConnection?.state !== "ready") return [];
+          const memberError = (): never => {
+            throw new Error("No room member for call membership");
+          };
+          const localParticipant = {
+            id: `${this.userId}:${this.deviceId}`,
+            participant: localConnection.value.livekitRoom.localParticipant,
+            member:
+              this.matrixRoom.getMember(this.userId ?? "") ?? memberError(),
+          };
+
+          return this.remoteConnections$.pipe(
+            switchMap((remoteConnections) =>
+              combineLatest(
+                [localConnection.value, ...remoteConnections].map((c) =>
+                  c.publishingParticipants$.pipe(
+                    map((ps) => {
+                      const participants: {
+                        id: string;
+                        participant:
+                          | LocalParticipant
+                          | RemoteParticipant
+                          | undefined;
+                        member: RoomMember;
+                      }[] = ps.map(({ participant, membership }) => ({
+                        id: `${membership.userId}:${membership.deviceId}`,
+                        participant,
+                        member:
+                          getRoomMemberFromRtcMember(
+                            membership,
+                            this.matrixRoom,
+                          )?.member ?? memberError(),
+                      }));
+                      if (c === localConnection.value)
+                        participants.push(localParticipant);
+
+                      return {
+                        livekitRoom: c.livekitRoom,
+                        url: c.transport.livekit_service_url,
+                        participants,
+                      };
+                    }),
+                  ),
+                ),
               ),
-              // Then unhold them
-            ]).pipe(map(() => ({ unhold: ps }))),
+            ),
           );
-        } else {
-          return EMPTY;
-        }
-      }),
-      // Accumulate the hold instructions into a single list showing which
-      // participants are being held
-      accumulate([] as RemoteParticipant[][], (holds, instruction) =>
-        "hold" in instruction
-          ? [instruction.hold, ...holds]
-          : holds.filter((h) => h !== instruction.unhold),
-      ),
-    ),
+        }),
+      )
+      .pipe(startWith([]), pauseWhen(this.pretendToBeDisconnected$)),
   );
 
   /**
-   * The RemoteParticipants including those that are being "held" on the screen
+   * Lists, for each LiveKit room, the LiveKit participants whose audio should
+   * be rendered.
    */
-  private readonly remoteParticipants$ = this.scope
-    .behavior<RemoteParticipant[]>(
-      combineLatest(
-        [this.rawRemoteParticipants$, this.remoteParticipantHolds$],
-        (raw, holds) => {
-          const result = [...raw];
-          const resultIds = new Set(result.map((p) => p.identity));
-
-          // Incorporate the held participants into the list
-          for (const hold of holds) {
-            for (const p of hold) {
-              if (!resultIds.has(p.identity)) {
-                result.push(p);
-                resultIds.add(p.identity);
-              }
-            }
-          }
-
-          return result;
-        },
+  // (This is effectively just participantsByRoom$ with a stricter type)
+  public readonly audioParticipants$ = this.scope.behavior(
+    this.participantsByRoom$.pipe(
+      map((data) =>
+        data.map(({ livekitRoom, url, participants }) => ({
+          livekitRoom,
+          url,
+          participants: participants.flatMap(({ participant }) =>
+            participant instanceof RemoteParticipant ? [participant] : [],
+          ),
+        })),
       ),
-    )
-    .pipe(pauseWhen(this.pretendToBeDisconnected$));
-
-  private readonly memberships$ = this.scope.behavior(
-    fromEvent(
-      this.matrixRTCSession,
-      MatrixRTCSessionEvent.MembershipsChanged,
-    ).pipe(
-      startWith(null),
-      pauseWhen(this.pretendToBeDisconnected$),
-      map(() => this.matrixRTCSession.memberships),
     ),
   );
 
@@ -597,23 +727,29 @@ export class CallViewModel extends ViewModel {
   // than on Chrome/Firefox). This means it is important that we multicast the result so that we
   // don't do this work more times than we need to. This is achieved by converting to a behavior:
   public readonly memberDisplaynames$ = this.scope.behavior(
-    // React to call memberships and also display name updates
-    // (calculateDisplayName implicitly depends on the room member data)
     combineLatest(
       [
+        // Handle call membership changes
         this.memberships$,
+        // Additionally handle display name changes (implicitly reacting to them)
         fromEvent(this.matrixRoom, RoomStateEvent.Members).pipe(
           startWith(null),
-          pauseWhen(this.pretendToBeDisconnected$),
         ),
+        // TODO: do we need: pauseWhen(this.pretendToBeDisconnected$),
       ],
-      (memberships, _members) => {
-        const displaynameMap = new Map<string, string>();
+      (memberships, _displaynames) => {
+        const displaynameMap = new Map<string, string>([
+          [
+            `${this.userId}:${this.deviceId}`,
+            this.matrixRoom.getMember(this.userId)?.rawDisplayName ??
+              this.userId,
+          ],
+        ]);
         const room = this.matrixRoom;
 
         // We only consider RTC members for disambiguation as they are the only visible members.
         for (const rtcMember of memberships) {
-          const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
+          const matrixIdentifier = `${rtcMember.userId}:${rtcMember.deviceId}`;
           const { member } = getRoomMemberFromRtcMember(rtcMember, room);
           if (!member) {
             logger.error(
@@ -652,183 +788,78 @@ export class CallViewModel extends ViewModel {
   );
 
   /**
-   * List of MediaItems that we want to display
+   * List of MediaItems that we want to have tiles for.
    */
   private readonly mediaItems$ = this.scope.behavior<MediaItem[]>(
-    combineLatest([
-      this.remoteParticipants$,
-      observeParticipantMedia(this.livekitRoom.localParticipant),
-      duplicateTiles.value$,
-      this.memberships$,
-      showNonMemberTiles.value$,
-    ]).pipe(
-      scan(
-        (
-          prevItems,
-          [
-            remoteParticipants,
-            { participant: localParticipant },
-            duplicateTiles,
-            memberships,
-            showNonMemberTiles,
-          ],
-        ) => {
-          const newItems = new Map(
-            function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-              const room = this.matrixRoom;
-              // m.rtc.members are the basis for calculating what is visible in the call
-              for (const rtcMember of memberships) {
-                const { member, id: livekitParticipantId } =
-                  getRoomMemberFromRtcMember(rtcMember, room);
-                const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
+    generateKeyed$<
+      [typeof this.participantsByRoom$.value, number],
+      MediaItem,
+      MediaItem[]
+    >(
+      // Generate a collection of MediaItems from the list of expected (whether
+      // present or missing) LiveKit participants.
+      combineLatest([this.participantsByRoom$, duplicateTiles.value$]),
+      ([participantsByRoom, duplicateTiles], createOrGet) => {
+        const items: MediaItem[] = [];
 
-                let participant:
-                  | LocalParticipant
-                  | RemoteParticipant
-                  | undefined = undefined;
-                if (livekitParticipantId === "local") {
-                  participant = localParticipant;
-                } else {
-                  participant = remoteParticipants.find(
-                    (p) => p.identity === livekitParticipantId,
-                  );
-                }
+        for (const { livekitRoom, participants, url } of participantsByRoom) {
+          for (const { id, participant, member } of participants) {
+            for (let i = 0; i < 1 + duplicateTiles; i++) {
+              const mediaId = `${id}:${i}`;
+              const item = createOrGet(
+                mediaId,
+                (scope) =>
+                  // We create UserMedia with or without a participant.
+                  // This will be the initial value of a BehaviourSubject.
+                  // Once a participant appears we will update the BehaviourSubject. (see below)
+                  new UserMedia(
+                    scope,
+                    mediaId,
+                    member,
+                    participant,
+                    this.options.encryptionSystem,
+                    livekitRoom,
+                    url,
+                    this.mediaDevices,
+                    this.pretendToBeDisconnected$,
+                    this.memberDisplaynames$.pipe(
+                      map((m) => m.get(id) ?? "[👻]"),
+                    ),
+                    this.handsRaised$.pipe(map((v) => v[id]?.time ?? null)),
+                    this.reactions$.pipe(map((v) => v[id] ?? undefined)),
+                  ),
+              );
+              items.push(item);
+              (item as UserMedia).updateParticipant(participant);
 
-                if (!member) {
-                  logger.error(
-                    "Could not find member for media id: ",
-                    livekitParticipantId,
-                  );
-                }
-                for (let i = 0; i < 1 + duplicateTiles; i++) {
-                  const indexedMediaId = `${livekitParticipantId}:${i}`;
-                  let prevMedia = prevItems.get(indexedMediaId);
-                  if (prevMedia && prevMedia instanceof UserMedia) {
-                    prevMedia.updateParticipant(participant);
-                    if (prevMedia.vm.member === undefined) {
-                      // We have a previous media created because of the `debugShowNonMember` flag.
-                      // In this case we actually replace the media item.
-                      // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
-                      // option and if we always find a room member for each rtc member (which also
-                      // only fails if we have a fundamental problem)
-                      prevMedia = undefined;
-                    }
-                  }
-                  yield [
-                    indexedMediaId,
-                    // We create UserMedia with or without a participant.
-                    // This will be the initial value of a BehaviourSubject.
-                    // Once a participant appears we will update the BehaviourSubject. (see above)
-                    prevMedia ??
-                      new UserMedia(
-                        indexedMediaId,
+              if (participant?.isScreenShareEnabled) {
+                const screenShareId = `${mediaId}:screen-share`;
+                items.push(
+                  createOrGet(
+                    screenShareId,
+                    (scope) =>
+                      new ScreenShare(
+                        scope,
+                        screenShareId,
                         member,
                         participant,
                         this.options.encryptionSystem,
-                        this.livekitRoom,
-                        this.mediaDevices,
+                        livekitRoom,
+                        url,
                         this.pretendToBeDisconnected$,
                         this.memberDisplaynames$.pipe(
-                          map((m) => m.get(matrixIdentifier) ?? "[👻]"),
-                        ),
-                        this.handsRaised$.pipe(
-                          map((v) => v[matrixIdentifier]?.time ?? null),
-                        ),
-                        this.reactions$.pipe(
-                          map((v) => v[matrixIdentifier] ?? undefined),
+                          map((m) => m.get(id) ?? "[👻]"),
                         ),
                       ),
-                  ];
-
-                  if (participant?.isScreenShareEnabled) {
-                    const screenShareId = `${indexedMediaId}:screen-share`;
-                    yield [
-                      screenShareId,
-                      prevItems.get(screenShareId) ??
-                        new ScreenShare(
-                          screenShareId,
-                          member,
-                          participant,
-                          this.options.encryptionSystem,
-                          this.livekitRoom,
-                          this.pretendToBeDisconnected$,
-                          this.memberDisplaynames$.pipe(
-                            map((m) => m.get(matrixIdentifier) ?? "[👻]"),
-                          ),
-                        ),
-                    ];
-                  }
-                }
+                  ),
+                );
               }
-            }.bind(this)(),
-          );
-
-          // Generate non member items (items without a corresponding MatrixRTC member)
-          // Those items should not be rendered, they are participants in LiveKit that do not have a corresponding
-          // MatrixRTC members. This cannot be any good:
-          //  - A malicious user impersonates someone
-          //  - Someone injects abusive content
-          //  - The user cannot have encryption keys so it makes no sense to participate
-          // We can only trust users that have a MatrixRTC member event.
-          //
-          // This is still available as a debug option. This can be useful
-          //  - If one wants to test scalability using the LiveKit CLI.
-          //  - If an experimental project does not yet do the MatrixRTC bits.
-          //  - If someone wants to debug if the LiveKit connection works but MatrixRTC room state failed to arrive.
-          const newNonMemberItems = showNonMemberTiles
-            ? new Map(
-                function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-                  for (const participant of remoteParticipants) {
-                    for (let i = 0; i < 1 + duplicateTiles; i++) {
-                      const maybeNonMemberParticipantId =
-                        participant.identity + ":" + i;
-                      if (!newItems.has(maybeNonMemberParticipantId)) {
-                        const nonMemberId = maybeNonMemberParticipantId;
-                        yield [
-                          nonMemberId,
-                          prevItems.get(nonMemberId) ??
-                            new UserMedia(
-                              nonMemberId,
-                              undefined,
-                              participant,
-                              this.options.encryptionSystem,
-                              this.livekitRoom,
-                              this.mediaDevices,
-                              this.pretendToBeDisconnected$,
-                              this.memberDisplaynames$.pipe(
-                                map(
-                                  (m) => m.get(participant.identity) ?? "[👻]",
-                                ),
-                              ),
-                              of(null),
-                              of(null),
-                            ),
-                        ];
-                      }
-                    }
-                  }
-                }.bind(this)(),
-              )
-            : new Map();
-          if (newNonMemberItems.size > 0) {
-            logger.debug("Added NonMember items: ", newNonMemberItems);
+            }
           }
+        }
 
-          const combinedNew = new Map([
-            ...newNonMemberItems.entries(),
-            ...newItems.entries(),
-          ]);
-
-          for (const [id, t] of prevItems)
-            if (!combinedNew.has(id)) t.destroy();
-          return combinedNew;
-        },
-        new Map<string, MediaItem>(),
-      ),
-      map((mediaItems) => [...mediaItems.values()]),
-      finalizeValue((ts) => {
-        for (const t of ts) t.destroy();
-      }),
+        return items;
+      },
     ),
   );
 
@@ -869,16 +900,11 @@ export class CallViewModel extends ViewModel {
     pairwise(),
     filter(
       ([prev, current]) =>
-        current.every((m) => m.sender === this.userId) &&
-        prev.some((m) => m.sender !== this.userId),
+        current.every((m) => m.userId === this.userId) &&
+        prev.some((m) => m.userId !== this.userId),
     ),
     map(() => {}),
-    take(1),
   );
-
-  public readonly autoLeave$ = this.options.autoLeaveWhenOthersLeft
-    ? this.allOthersLeft$
-    : NEVER;
 
   private readonly didSendCallNotification$ = fromEvent(
     this.matrixRTCSession,
@@ -888,6 +914,7 @@ export class CallViewModel extends ViewModel {
       MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
     >
   >;
+
   /**
    * Whenever the RTC session tells us that it intends to ring the remote
    * participant's devices, this emits an Observable tracking the current state of
@@ -949,7 +976,7 @@ export class CallViewModel extends ViewModel {
    * Whether some Matrix user other than ourself is joined to the call.
    */
   private readonly someoneElseJoined$ = this.memberships$.pipe(
-    map((ms) => ms.some((m) => m.sender !== this.userId)),
+    map((ms) => ms.some((m) => m.userId !== this.userId)),
   ) as Behavior<boolean>;
 
   /**
@@ -1004,6 +1031,43 @@ export class CallViewModel extends ViewModel {
     throttleTime(THROTTLE_SOUND_EFFECT_MS),
   );
 
+  // Public for testing
+  public readonly autoLeave$ = merge(
+    this.options.autoLeaveWhenOthersLeft
+      ? this.allOthersLeft$.pipe(map(() => "allOthersLeft" as const))
+      : NEVER,
+    this.callPickupState$.pipe(
+      filter((state) => state === "timeout" || state === "decline"),
+    ),
+  );
+
+  private readonly userHangup$ = new Subject<void>();
+  public hangup(): void {
+    this.userHangup$.next();
+  }
+
+  private readonly widgetHangup$ =
+    widget === null
+      ? NEVER
+      : (
+          fromEvent(
+            widget.lazyActions,
+            ElementWidgetActions.HangupCall,
+          ) as Observable<[CustomEvent<IWidgetApiRequest>]>
+        ).pipe(tap(([ev]) => widget!.api.transport.reply(ev.detail, {})));
+
+  public readonly leave$: Observable<
+    "user" | "timeout" | "decline" | "allOthersLeft"
+  > = merge(
+    this.autoLeave$,
+    merge(this.userHangup$, this.widgetHangup$).pipe(
+      map(() => "user" as const),
+    ),
+  ).pipe(
+    this.scope.share,
+    tap((reason) => this.leaveHoisted$.next(reason)),
+  );
+
   /**
    * List of MediaItems that we want to display, that are of type ScreenShare
    */
@@ -1056,31 +1120,7 @@ export class CallViewModel extends ViewModel {
     this.userMedia$.pipe(
       switchMap((mediaItems) => {
         const bins = mediaItems.map((m) =>
-          combineLatest(
-            [
-              m.speaker$,
-              m.presenter$,
-              m.vm.videoEnabled$,
-              m.vm.handRaised$,
-              m.vm instanceof LocalUserMediaViewModel
-                ? m.vm.alwaysShow$
-                : of(false),
-            ],
-            (speaker, presenter, video, handRaised, alwaysShow) => {
-              let bin: SortingBin;
-              if (m.vm.local)
-                bin = alwaysShow
-                  ? SortingBin.SelfAlwaysShown
-                  : SortingBin.SelfNotAlwaysShown;
-              else if (presenter) bin = SortingBin.Presenters;
-              else if (speaker) bin = SortingBin.Speakers;
-              else if (handRaised) bin = SortingBin.HandRaised;
-              else if (video) bin = SortingBin.Video;
-              else bin = SortingBin.NoVideo;
-
-              return [m, bin] as const;
-            },
-          ),
+          m.bin$.pipe(map((bin) => [m, bin] as const)),
         );
         // Sort the media by bin order and generate a tile for each one
         return bins.length === 0
@@ -1686,22 +1726,147 @@ export class CallViewModel extends ViewModel {
     filter((v) => v.playSounds),
   );
 
+  /**
+   * Whether we are sharing our screen.
+   */
+  public readonly sharingScreen$ = this.scope.behavior(
+    from(this.localConnection$).pipe(
+      switchMap((c) =>
+        c?.state === "ready"
+          ? sharingScreen$(c.value.livekitRoom.localParticipant)
+          : of(false),
+      ),
+    ),
+  );
+
+  /**
+   * Callback for toggling screen sharing. If null, screen sharing is not
+   * available.
+   */
+  public readonly toggleScreenSharing =
+    "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
+    !this.urlParams.hideScreensharing
+      ? (): void =>
+          // Once a connection is ready...
+          void this.localConnection$
+            .pipe(
+              takeWhile((c) => c !== null && c.state !== "error"),
+              switchMap((c) => (c.state === "ready" ? of(c.value) : NEVER)),
+              take(1),
+              this.scope.bind(),
+            )
+            // ...toggle screen sharing.
+            .subscribe(
+              (c) =>
+                void c.livekitRoom.localParticipant
+                  .setScreenShareEnabled(!this.sharingScreen$.value, {
+                    audio: true,
+                    selfBrowserSurface: "include",
+                    surfaceSwitching: "include",
+                    systemAudio: "include",
+                  })
+                  .catch(logger.error),
+            )
+      : null;
+
   public constructor(
-    // A call is permanently tied to a single Matrix room and LiveKit room
+    private readonly scope: ObservableScope,
+    // A call is permanently tied to a single Matrix room
     private readonly matrixRTCSession: MatrixRTCSession,
     private readonly matrixRoom: MatrixRoom,
-    private readonly livekitRoom: LivekitRoom,
     private readonly mediaDevices: MediaDevices,
+    private readonly muteStates: MuteStates,
     private readonly options: CallViewModelOptions,
-    public readonly livekitConnectionState$: Behavior<ECConnectionState>,
     private readonly handsRaisedSubject$: Observable<
       Record<string, RaisedHandInfo>
     >,
     private readonly reactionsSubject$: Observable<
       Record<string, ReactionInfo>
     >,
+    private readonly trackProcessorState$: Observable<ProcessorState>,
   ) {
-    super();
+    // Start and stop local and remote connections as needed
+    this.connectionInstructions$
+      .pipe(this.scope.bind())
+      .subscribe(({ start, stop }) => {
+        for (const c of stop) {
+          logger.info(`Disconnecting from ${c.transport.livekit_service_url}`);
+          c.stop().catch((err) => {
+            // TODO: better error handling
+            logger.error(
+              `Fail to stop connection to ${c.transport.livekit_service_url}`,
+              err,
+            );
+          });
+        }
+        for (const c of start) {
+          c.start().then(
+            () =>
+              logger.info(`Connected to ${c.transport.livekit_service_url}`),
+            (e) => {
+              // We only want to report fatal errors `_configError$` for the publish connection.
+              // If there is an error with another connection, it will not terminate the call and will be displayed
+              // on eacn tile.
+              if (
+                c instanceof PublishConnection &&
+                e instanceof ElementCallError
+              ) {
+                this._configError$.next(e);
+              }
+              logger.error(
+                `Failed to start connection to ${c.transport.livekit_service_url}`,
+                e,
+              );
+            },
+          );
+        }
+      });
+
+    // Start and stop session membership as needed
+    this.scope.reconcile(this.advertisedTransport$, async (advertised) => {
+      if (advertised !== null) {
+        try {
+          this._configError$.next(null);
+          await enterRTCSession(this.matrixRTCSession, advertised.transport, {
+            encryptMedia: this.options.encryptionSystem.kind !== E2eeType.NONE,
+            useMultiSfu: advertised.multiSfu,
+            preferStickyEvents: advertised.preferStickyEvents,
+          });
+        } catch (e) {
+          logger.error("Error entering RTC session", e);
+        }
+
+        // Update our member event when our mute state changes.
+        const intentScope = new ObservableScope();
+        intentScope.reconcile(
+          this.muteStates.video.enabled$,
+          async (videoEnabled) =>
+            this.matrixRTCSession.updateCallIntent(
+              videoEnabled ? "video" : "audio",
+            ),
+        );
+
+        return async (): Promise<void> => {
+          intentScope.end();
+          // Only sends Matrix leave event. The LiveKit session will disconnect
+          // as soon as either the stopConnection$ handler above gets to it or
+          // the view model is destroyed.
+          try {
+            await this.matrixRTCSession.leaveRoomSession();
+          } catch (e) {
+            logger.error("Error leaving RTC session", e);
+          }
+          try {
+            await widget?.api.transport.send(
+              ElementWidgetActions.HangupCall,
+              {},
+            );
+          } catch (e) {
+            logger.error("Failed to send hangup action", e);
+          }
+        };
+      }
+    });
 
     // Pause upstream of all local media tracks when we're disconnected from
     // MatrixRTC, because it can be an unpleasant surprise for the app to say
@@ -1709,44 +1874,82 @@ export class CallViewModel extends ViewModel {
     // We use matrixConnected$ rather than reconnecting$ because we want to
     // pause tracks during the initial joining sequence too until we're sure
     // that our own media is displayed on screen.
-    this.matrixConnected$.pipe(this.scope.bind()).subscribe((connected) => {
-      const publications =
-        this.livekitRoom.localParticipant.trackPublications.values();
-      if (connected) {
-        for (const p of publications) {
-          if (p.track?.isUpstreamPaused === true) {
-            const kind = p.track.kind;
-            logger.log(
-              `Resumming ${kind} track (MatrixRTC connection present)`,
-            );
-            p.track
-              .resumeUpstream()
-              .catch((e) =>
-                logger.error(
-                  `Failed to resume ${kind} track after MatrixRTC reconnection`,
-                  e,
-                ),
+    combineLatest([this.localConnection$, this.matrixConnected$])
+      .pipe(this.scope.bind())
+      .subscribe(([connection, connected]) => {
+        if (connection?.state !== "ready") return;
+        const publications =
+          connection.value.livekitRoom.localParticipant.trackPublications.values();
+        if (connected) {
+          for (const p of publications) {
+            if (p.track?.isUpstreamPaused === true) {
+              const kind = p.track.kind;
+              logger.log(
+                `Resuming ${kind} track (MatrixRTC connection present)`,
               );
+              p.track
+                .resumeUpstream()
+                .catch((e) =>
+                  logger.error(
+                    `Failed to resume ${kind} track after MatrixRTC reconnection`,
+                    e,
+                  ),
+                );
+            }
+          }
+        } else {
+          for (const p of publications) {
+            if (p.track?.isUpstreamPaused === false) {
+              const kind = p.track.kind;
+              logger.log(
+                `Pausing ${kind} track (uncertain MatrixRTC connection)`,
+              );
+              p.track
+                .pauseUpstream()
+                .catch((e) =>
+                  logger.error(
+                    `Failed to pause ${kind} track after entering uncertain MatrixRTC connection`,
+                    e,
+                  ),
+                );
+            }
           }
         }
-      } else {
-        for (const p of publications) {
-          if (p.track?.isUpstreamPaused === false) {
-            const kind = p.track.kind;
-            logger.log(
-              `Pausing ${kind} track (uncertain MatrixRTC connection)`,
-            );
-            p.track
-              .pauseUpstream()
-              .catch((e) =>
-                logger.error(
-                  `Failed to pause ${kind} track after entering uncertain MatrixRTC connection`,
-                  e,
-                ),
-              );
-          }
-        }
-      }
-    });
+      });
+
+    // Join automatically
+    this.join(); // TODO-MULTI-SFU: Use this view model for the lobby as well, and only call this once 'join' is clicked?
   }
+}
+
+// TODO-MULTI-SFU   // Setup and update the keyProvider which was create by `createRoom` was a thing before. Now we never update if the E2EEsystem changes
+// do we need this?
+
+function getE2eeKeyProvider(
+  e2eeSystem: EncryptionSystem,
+  rtcSession: MatrixRTCSession,
+): BaseKeyProvider | undefined {
+  if (e2eeSystem.kind === E2eeType.NONE) return undefined;
+
+  if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
+    const keyProvider = new MatrixKeyProvider();
+    keyProvider.setRTCSession(rtcSession);
+    return keyProvider;
+  } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
+    const keyProvider = new ExternalE2EEKeyProvider();
+    keyProvider
+      .setKey(e2eeSystem.secret)
+      .catch((e) => logger.error("Failed to set shared key for E2EE", e));
+    return keyProvider;
+  }
+}
+
+function getRoomMemberFromRtcMember(
+  rtcMember: CallMembership,
+  room: MatrixRoom,
+): { id: string; member: RoomMember | undefined } {
+  return {
+    id: rtcMember.userId + ":" + rtcMember.deviceId,
+    member: room.getMember(rtcMember.userId) ?? undefined,
+  };
 }

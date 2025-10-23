@@ -76,14 +76,15 @@ export const developerMode = new Setting("developer-settings-tab", false);
 
 export const duplicateTiles = new Setting("duplicate-tiles", 0);
 
-export const showNonMemberTiles = new Setting<boolean>(
-  "show-non-member-tiles",
-  false,
-);
 export const debugTileLayout = new Setting("debug-tile-layout", false);
 
 export const showConnectionStats = new Setting<boolean>(
   "show-connection-stats",
+  false,
+);
+
+export const preferStickyEvents = new Setting<boolean>(
+  "prefer-sticky-events",
   false,
 );
 
@@ -119,15 +120,7 @@ export const soundEffectVolume = new Setting<number>(
   0.5,
 );
 
-export const useNewMembershipManager = new Setting<boolean>(
-  "new-membership-manager",
-  true,
-);
-
-export const useExperimentalToDeviceTransport = new Setting<boolean>(
-  "experimental-to-device-transport",
-  true,
-);
+export const multiSfu = new Setting<boolean>("multi-sfu", false);
 
 export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);
 

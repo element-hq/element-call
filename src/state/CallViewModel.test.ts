@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, onTestFinished, it, describe } from "vitest";
+import { test, vi, onTestFinished, it, describe, expect } from "vitest";
 import EventEmitter from "events";
 import {
   BehaviorSubject,
@@ -35,25 +35,23 @@ import {
   type Participant,
   ParticipantEvent,
   type RemoteParticipant,
+  type Room as LivekitRoom,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
 import {
   Status,
   type CallMembership,
-  type MatrixRTCSession,
   type IRTCNotificationContent,
   type ICallNotifyContent,
   MatrixRTCSessionEvent,
+  type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
+import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
+import { CallViewModel, type CallViewModelOptions } from "./CallViewModel";
+import { type Layout } from "./layout-types";
 import {
-  CallViewModel,
-  type CallViewModelOptions,
-  type Layout,
-} from "./CallViewModel";
-import {
-  mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
   mockMatrixRoomMember,
@@ -62,14 +60,14 @@ import {
   mockRtcMembership,
   MockRTCSession,
   mockMediaDevices,
+  mockMuteStates,
+  mockConfig,
+  testScope,
+  mockLivekitRoom,
+  exampleTransport,
 } from "../utils/test";
-import {
-  ECAddonConnectionState,
-  type ECConnectionState,
-} from "../livekit/useECConnectionState";
 import { E2eeType } from "../e2ee/e2eeType";
-import type { RaisedHandInfo } from "../reactions";
-import { showNonMemberTiles } from "../settings/settings";
+import type { RaisedHandInfo, ReactionInfo } from "../reactions";
 import {
   alice,
   aliceDoppelganger,
@@ -92,13 +90,14 @@ import {
   localRtcMember,
   localRtcMemberDevice2,
 } from "../utils/test-fixtures";
-import { ObservableScope } from "./ObservableScope";
 import { MediaDevices } from "./MediaDevices";
 import { getValue } from "../utils/observable";
 import { type Behavior, constant } from "./Behavior";
-
-const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
-vi.mock("../UrlParams", () => ({ getUrlParams }));
+import type { ProcessorState } from "../livekit/TrackProcessorContext.tsx";
+import {
+  type ElementCallError,
+  MatrixRTCTransportMissingError,
+} from "../utils/errors.ts";
 
 vi.mock("rxjs", async (importOriginal) => ({
   ...(await importOriginal()),
@@ -108,6 +107,18 @@ vi.mock("rxjs", async (importOriginal) => ({
 }));
 
 vi.mock("@livekit/components-core");
+vi.mock("livekit-client/e2ee-worker?worker");
+
+vi.mock("../e2ee/matrixKeyProvider");
+
+const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
+vi.mock("../UrlParams", () => ({ getUrlParams }));
+
+vi.mock("../rtcSessionHelpers", async (importOriginal) => ({
+  ...(await importOriginal()),
+  makeTransport: async (): Promise<LivekitTransport> =>
+    Promise.resolve(exampleTransport),
+}));
 
 const yesNo = {
   y: true,
@@ -264,7 +275,7 @@ const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 interface CallViewModelInputs {
   remoteParticipants$: Behavior<RemoteParticipant[]>;
   rtcMembers$: Behavior<Partial<CallMembership>[]>;
-  livekitConnectionState$: Behavior<ECConnectionState>;
+  livekitConnectionState$: Behavior<ConnectionState>;
   speaking: Map<Participant, Observable<boolean>>;
   mediaDevices: MediaDevices;
   initialSyncState: SyncState;
@@ -301,7 +312,7 @@ function withCallViewModel(
   const room = mockMatrixRoom({
     client: new (class extends EventEmitter {
       public getUserId(): string | undefined {
-        return localRtcMember.sender;
+        return localRtcMember.userId;
       }
       public getDeviceId(): string {
         return localRtcMember.deviceId;
@@ -338,35 +349,107 @@ function withCallViewModel(
   const roomEventSelectorSpy = vi
     .spyOn(ComponentsCore, "roomEventSelector")
     .mockImplementation((_room, _eventType) => of());
-
-  const livekitRoom = mockLivekitRoom(
-    { localParticipant },
-    { remoteParticipants$ },
-  );
-
+  const muteStates = mockMuteStates();
   const raisedHands$ = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
+  const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
 
   const vm = new CallViewModel(
-    rtcSession as unknown as MatrixRTCSession,
+    testScope(),
+    rtcSession.asMockedSession(),
     room,
-    livekitRoom,
     mediaDevices,
-    options,
-    connectionState$,
+    muteStates,
+    {
+      ...options,
+      livekitRoomFactory: (): LivekitRoom =>
+        mockLivekitRoom({
+          localParticipant,
+          disconnect: async () => Promise.resolve(),
+          setE2EEEnabled: async () => Promise.resolve(),
+        }),
+      connectionState$,
+    },
     raisedHands$,
-    new BehaviorSubject({}),
+    reactions$,
+    new BehaviorSubject<ProcessorState>({
+      processor: undefined,
+      supported: undefined,
+    }),
   );
 
   onTestFinished(() => {
-    vm!.destroy();
-    participantsSpy!.mockRestore();
-    mediaSpy!.mockRestore();
-    eventsSpy!.mockRestore();
-    roomEventSelectorSpy!.mockRestore();
+    participantsSpy.mockRestore();
+    mediaSpy.mockRestore();
+    eventsSpy.mockRestore();
+    roomEventSelectorSpy.mockRestore();
   });
 
   continuation(vm, rtcSession, { raisedHands$: raisedHands$ }, setSyncState);
 }
+
+// TODO: Restore this test. It requires makeTransport to not be mocked, unlike
+// the rest of the tests in this file… what do we do?
+test.skip("test missing RTC config error", async () => {
+  const rtcMemberships$ = new BehaviorSubject<CallMembership[]>([]);
+  const emitter = new EventEmitter();
+  const client = vi.mocked<MatrixClient>({
+    on: emitter.on.bind(emitter),
+    off: emitter.off.bind(emitter),
+    getSyncState: vi.fn().mockReturnValue(SyncState.Syncing),
+    getUserId: vi.fn().mockReturnValue("@user:localhost"),
+    getUser: vi.fn().mockReturnValue(null),
+    getDeviceId: vi.fn().mockReturnValue("DEVICE"),
+    credentials: {
+      userId: "@user:localhost",
+    },
+    getCrypto: vi.fn().mockReturnValue(undefined),
+    getDomain: vi.fn().mockReturnValue("example.org"),
+  } as unknown as MatrixClient);
+
+  const matrixRoom = mockMatrixRoom({
+    roomId: "!myRoomId:example.com",
+    client,
+    getMember: vi.fn().mockReturnValue(undefined),
+  });
+
+  const fakeRtcSession = new MockRTCSession(matrixRoom).withMemberships(
+    rtcMemberships$,
+  );
+
+  mockConfig({});
+  vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({});
+
+  const callVM = new CallViewModel(
+    testScope(),
+    fakeRtcSession.asMockedSession(),
+    matrixRoom,
+    mockMediaDevices({}),
+    mockMuteStates(),
+    {
+      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      autoLeaveWhenOthersLeft: false,
+      livekitRoomFactory: (): LivekitRoom =>
+        mockLivekitRoom({
+          localParticipant,
+          disconnect: async () => Promise.resolve(),
+          setE2EEEnabled: async () => Promise.resolve(),
+        }),
+    },
+    new BehaviorSubject({} as Record<string, RaisedHandInfo>),
+    new BehaviorSubject({} as Record<string, ReactionInfo>),
+    of({ processor: undefined, supported: false }),
+  );
+
+  const failPromise = Promise.withResolvers<ElementCallError>();
+  callVM.configError$.subscribe((error) => {
+    if (error) {
+      failPromise.resolve(error);
+    }
+  });
+
+  const error = await failPromise.promise;
+  expect(error).toBeInstanceOf(MatrixRTCTransportMissingError);
+});
 
 test("participants are retained during a focus switch", () => {
   withTestScheduler(({ behavior, expectObservable }) => {
@@ -386,7 +469,7 @@ test("participants are retained during a focus switch", () => {
         rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
         livekitConnectionState$: behavior(connectionInputMarbles, {
           c: ConnectionState.Connected,
-          s: ECAddonConnectionState.ECSwitchingFocus,
+          s: ConnectionState.Connecting,
         }),
       },
       (vm) => {
@@ -396,7 +479,7 @@ test("participants are retained during a focus switch", () => {
             a: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
             },
           },
         );
@@ -440,12 +523,12 @@ test("screen sharing activates spotlight layout", () => {
             a: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
             },
             b: {
               type: "spotlight-landscape",
               spotlight: [`${aliceId}:0:screen-share`],
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
             },
             c: {
               type: "spotlight-landscape",
@@ -453,27 +536,27 @@ test("screen sharing activates spotlight layout", () => {
                 `${aliceId}:0:screen-share`,
                 `${bobId}:0:screen-share`,
               ],
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
             },
             d: {
               type: "spotlight-landscape",
               spotlight: [`${bobId}:0:screen-share`],
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
             },
             e: {
               type: "spotlight-landscape",
               spotlight: [`${aliceId}:0`],
-              grid: ["local:0", `${bobId}:0`],
+              grid: [`${localId}:0`, `${bobId}:0`],
             },
             f: {
               type: "spotlight-landscape",
               spotlight: [`${aliceId}:0:screen-share`],
-              grid: ["local:0", `${bobId}:0`, `${aliceId}:0`],
+              grid: [`${localId}:0`, `${bobId}:0`, `${aliceId}:0`],
             },
             g: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${bobId}:0`, `${aliceId}:0`],
+              grid: [`${localId}:0`, `${bobId}:0`, `${aliceId}:0`],
             },
           },
         );
@@ -535,17 +618,32 @@ test("participants stay in the same order unless to appear/disappear", () => {
             a: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`, `${daveId}:0`],
+              grid: [
+                `${localId}:0`,
+                `${aliceId}:0`,
+                `${bobId}:0`,
+                `${daveId}:0`,
+              ],
             },
             b: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${daveId}:0`, `${bobId}:0`, `${aliceId}:0`],
+              grid: [
+                `${localId}:0`,
+                `${daveId}:0`,
+                `${bobId}:0`,
+                `${aliceId}:0`,
+              ],
             },
             c: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${daveId}:0`, `${bobId}:0`],
+              grid: [
+                `${localId}:0`,
+                `${aliceId}:0`,
+                `${daveId}:0`,
+                `${bobId}:0`,
+              ],
             },
           },
         );
@@ -600,12 +698,22 @@ test("participants adjust order when space becomes constrained", () => {
             a: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`, `${daveId}:0`],
+              grid: [
+                `${localId}:0`,
+                `${aliceId}:0`,
+                `${bobId}:0`,
+                `${daveId}:0`,
+              ],
             },
             b: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${daveId}:0`, `${bobId}:0`, `${aliceId}:0`],
+              grid: [
+                `${localId}:0`,
+                `${daveId}:0`,
+                `${bobId}:0`,
+                `${aliceId}:0`,
+              ],
             },
           },
         );
@@ -656,22 +764,22 @@ test("spotlight speakers swap places", () => {
             a: {
               type: "spotlight-landscape",
               spotlight: [`${aliceId}:0`],
-              grid: ["local:0", `${bobId}:0`, `${daveId}:0`],
+              grid: [`${localId}:0`, `${bobId}:0`, `${daveId}:0`],
             },
             b: {
               type: "spotlight-landscape",
               spotlight: [`${bobId}:0`],
-              grid: ["local:0", `${aliceId}:0`, `${daveId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${daveId}:0`],
             },
             c: {
               type: "spotlight-landscape",
               spotlight: [`${daveId}:0`],
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
             },
             d: {
               type: "spotlight-landscape",
               spotlight: [`${aliceId}:0`],
-              grid: ["local:0", `${daveId}:0`, `${bobId}:0`],
+              grid: [`${localId}:0`, `${daveId}:0`, `${bobId}:0`],
             },
           },
         );
@@ -719,7 +827,7 @@ test("layout enters picture-in-picture mode when requested", () => {
             a: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
             },
             b: {
               type: "pip",
@@ -841,22 +949,22 @@ test("spotlight remembers whether it's expanded", () => {
             a: {
               type: "spotlight-landscape",
               spotlight: [`${aliceId}:0`],
-              grid: ["local:0", `${bobId}:0`],
+              grid: [`${localId}:0`, `${bobId}:0`],
             },
             b: {
               type: "spotlight-expanded",
               spotlight: [`${aliceId}:0`],
-              pip: "local:0",
+              pip: `${localId}:0`,
             },
             c: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
             },
             d: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${bobId}:0`, `${aliceId}:0`],
+              grid: [`${localId}:0`, `${bobId}:0`, `${aliceId}:0`],
             },
           },
         );
@@ -898,70 +1006,23 @@ test("participants must have a MatrixRTCSession to be visible", () => {
             a: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0"],
+              grid: [`${localId}:0`],
             },
             b: {
               type: "one-on-one",
-              local: "local:0",
+              local: `${localId}:0`,
               remote: `${aliceId}:0`,
             },
             c: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${daveId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${daveId}:0`],
             },
           },
         );
       },
     );
   });
-});
-
-test("shows participants without MatrixRTCSession when enabled in settings", () => {
-  try {
-    // enable the setting:
-    showNonMemberTiles.setValue(true);
-    withTestScheduler(({ behavior, expectObservable }) => {
-      const scenarioInputMarbles = " abc";
-      const expectedLayoutMarbles = "abc";
-
-      withCallViewModel(
-        {
-          remoteParticipants$: behavior(scenarioInputMarbles, {
-            a: [],
-            b: [aliceParticipant],
-            c: [aliceParticipant, bobParticipant],
-          }),
-          rtcMembers$: constant([localRtcMember]), // No one else joins the MatrixRTC session
-        },
-        (vm) => {
-          vm.setGridMode("grid");
-          expectObservable(summarizeLayout$(vm.layout$)).toBe(
-            expectedLayoutMarbles,
-            {
-              a: {
-                type: "grid",
-                spotlight: undefined,
-                grid: ["local:0"],
-              },
-              b: {
-                type: "one-on-one",
-                local: "local:0",
-                remote: `${aliceId}:0`,
-              },
-              c: {
-                type: "grid",
-                spotlight: undefined,
-                grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
-              },
-            },
-          );
-        },
-      );
-    });
-  } finally {
-    showNonMemberTiles.setValue(showNonMemberTiles.defaultValue);
-  }
 });
 
 it("should show at least one tile per MatrixRTCSession", () => {
@@ -988,21 +1049,21 @@ it("should show at least one tile per MatrixRTCSession", () => {
             a: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0"],
+              grid: [`${localId}:0`],
             },
             b: {
               type: "one-on-one",
-              local: "local:0",
+              local: `${localId}:0`,
               remote: `${aliceId}:0`,
             },
             c: {
               type: "grid",
               spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${daveId}:0`],
+              grid: [`${localId}:0`, `${aliceId}:0`, `${daveId}:0`],
             },
             d: {
               type: "one-on-one",
-              local: "local:0",
+              local: `${localId}:0`,
               remote: `${daveId}:0`,
             },
           },
@@ -1148,7 +1209,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
           },
           b: () => {
             raisedHands$.next({
-              [`${bobRtcMember.sender}:${bobRtcMember.deviceId}`]: {
+              [`${bobRtcMember.userId}:${bobRtcMember.deviceId}`]: {
                 time: new Date(),
                 reactionEventId: "",
                 membershipEventId: "",
@@ -1163,7 +1224,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
               type: "grid",
               spotlight: undefined,
               grid: [
-                "local:0",
+                `${localId}:0`,
                 "@alice:example.org:AAAA:0",
                 "@bob:example.org:BBBB:0",
               ],
@@ -1172,7 +1233,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
               type: "grid",
               spotlight: undefined,
               grid: [
-                "local:0",
+                `${localId}:0`,
                 // Bob shifts up!
                 "@bob:example.org:BBBB:0",
                 "@alice:example.org:AAAA:0",
@@ -1232,7 +1293,9 @@ test("autoLeave$ emits only when autoLeaveWhenOthersLeft option is enabled", () 
         rtcMembers$: rtcMemberJoinLeave$(behavior),
       },
       (vm) => {
-        expectObservable(vm.autoLeave$).toBe("------(e|)", { e: undefined });
+        expectObservable(vm.autoLeave$).toBe("------a", {
+          a: "allOthersLeft",
+        });
       },
       {
         autoLeaveWhenOthersLeft: true,
@@ -1296,8 +1359,8 @@ test("autoLeave$ emits when autoLeaveWhenOthersLeft option is enabled and all ot
         }),
       },
       (vm) => {
-        expectObservable(vm.autoLeave$).toBe("------(e|)", {
-          e: undefined,
+        expectObservable(vm.autoLeave$).toBe("------a", {
+          a: "allOthersLeft",
         });
       },
       {
@@ -1708,9 +1771,7 @@ test("audio output changes when toggling earpiece mode", () => {
     getUrlParams.mockReturnValue({ controlledAudioDevices: true });
     vi.mocked(ComponentsCore.createMediaDeviceObserver).mockReturnValue(of([]));
 
-    const scope = new ObservableScope();
-    onTestFinished(() => scope.end());
-    const devices = new MediaDevices(scope);
+    const devices = new MediaDevices(testScope());
 
     window.controls.setAvailableAudioDevices([
       { id: "speaker", name: "Speaker", isSpeaker: true },

@@ -5,11 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { ConnectionState } from "livekit-client";
-import {
-  type CallMembership,
-  type MatrixRTCSession,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, of } from "rxjs";
 import { vitest } from "vitest";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
@@ -20,6 +16,7 @@ import {
   type Room,
   SyncState,
 } from "matrix-js-sdk";
+import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
 
 import { E2eeType } from "../e2ee/e2eeType";
 import {
@@ -28,16 +25,14 @@ import {
 } from "../state/CallViewModel";
 import {
   mockLivekitRoom,
+  mockLocalParticipant,
   mockMatrixRoom,
   mockMediaDevices,
+  mockMuteStates,
   MockRTCSession,
+  testScope,
 } from "./test";
-import {
-  aliceRtcMember,
-  aliceParticipant,
-  localParticipant,
-  localRtcMember,
-} from "./test-fixtures";
+import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "../state/Behavior";
 
@@ -59,7 +54,7 @@ export function getBasicRTCSession(
       getChildEventsForEvent: vitest.fn(),
     } as Partial<RelationsContainer> as RelationsContainer,
     client: {
-      getUserId: () => localRtcMember.sender,
+      getUserId: () => localRtcMember.userId,
       getDeviceId: () => localRtcMember.deviceId,
       getSyncState: () => SyncState.Syncing,
       sendEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
@@ -106,12 +101,12 @@ export function getBasicRTCSession(
     initialRtcMemberships,
   );
 
-  const rtcSession = new MockRTCSession(matrixRoom).withMemberships(
+  const fakeRtcSession = new MockRTCSession(matrixRoom).withMemberships(
     rtcMemberships$,
   );
 
   return {
-    rtcSession,
+    rtcSession: fakeRtcSession,
     matrixRoom,
     rtcMemberships$,
   };
@@ -141,23 +136,29 @@ export function getBasicCallViewModelEnvironment(
   const handRaisedSubject$ = new BehaviorSubject({});
   const reactionsSubject$ = new BehaviorSubject({});
 
-  const remoteParticipants$ = of([aliceParticipant]);
-  const livekitRoom = mockLivekitRoom(
-    { localParticipant },
-    { remoteParticipants$ },
-  );
+  // const remoteParticipants$ = of([aliceParticipant]);
+
   const vm = new CallViewModel(
-    rtcSession as unknown as MatrixRTCSession,
+    testScope(),
+    rtcSession.asMockedSession(),
     matrixRoom,
-    livekitRoom,
     mockMediaDevices({}),
+    mockMuteStates(),
     {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      livekitRoomFactory: (): LivekitRoom =>
+        mockLivekitRoom({
+          localParticipant: mockLocalParticipant({ identity: "" }),
+          remoteParticipants: new Map(),
+          disconnect: async () => Promise.resolve(),
+          setE2EEEnabled: async () => Promise.resolve(),
+        }),
+      connectionState$: constant(ConnectionState.Connected),
       ...callViewModelOptions,
     },
-    constant(ConnectionState.Connected),
     handRaisedSubject$,
     reactionsSubject$,
+    of({ processor: undefined, supported: false }),
   );
   return {
     vm,

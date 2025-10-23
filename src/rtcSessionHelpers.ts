@@ -6,49 +6,50 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  isLivekitFocus,
-  isLivekitFocusConfig,
-  type LivekitFocus,
-  type LivekitFocusActive,
   type MatrixRTCSession,
+  isLivekitTransportConfig,
+  type LivekitTransportConfig,
+  type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
-import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
-import { MatrixRTCFocusMissingError } from "./utils/errors";
+import { ElementWidgetActions, widget } from "./widget";
+import { MatrixRTCTransportMissingError } from "./utils/errors";
 import { getUrlParams } from "./UrlParams";
 import { getSFUConfigWithOpenID } from "./livekit/openIDSFU.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
-export function makeActiveFocus(): LivekitFocusActive {
-  return {
-    type: "livekit",
-    focus_selection: "oldest_membership",
-  };
+export function getLivekitAlias(rtcSession: MatrixRTCSession): string {
+  // For now we assume everything is a room-scoped call
+  return rtcSession.room.roomId;
 }
 
-async function makePreferredLivekitFoci(
+async function makeTransportInternal(
   rtcSession: MatrixRTCSession,
-  livekitAlias: string,
-): Promise<LivekitFocus[]> {
-  logger.log("Start building foci_preferred list: ", rtcSession.room.roomId);
+): Promise<LivekitTransport> {
+  logger.log("Searching for a preferred transport");
+  const livekitAlias = getLivekitAlias(rtcSession);
 
-  const preferredFoci: LivekitFocus[] = [];
-
-  // Make the Focus from the running rtc session the highest priority one
-  // This minimizes how often we need to switch foci during a call.
-  const focusInUse = rtcSession.getFocusInUse();
-  if (focusInUse && isLivekitFocus(focusInUse)) {
-    logger.log("Adding livekit focus from oldest member: ", focusInUse);
-    preferredFoci.push(focusInUse);
+  // TODO-MULTI-SFU: Either remove this dev tool or make it more official
+  const urlFromStorage =
+    localStorage.getItem("robin-matrixrtc-auth") ??
+    localStorage.getItem("timo-focus-url");
+  if (urlFromStorage !== null) {
+    const transportFromStorage: LivekitTransport = {
+      type: "livekit",
+      livekit_service_url: urlFromStorage,
+      livekit_alias: livekitAlias,
+    };
+    logger.log(
+      "Using LiveKit transport from local storage: ",
+      transportFromStorage,
+    );
+    return transportFromStorage;
   }
-
-  // Warm up the first focus we owned, to ensure livekit room is created before any state event sent.
-  let toWarmUp: LivekitFocus | undefined;
 
   // Prioritize the .well-known/matrix/client, if available, over the configured SFU
   const domain = rtcSession.room.client.getDomain();
@@ -59,54 +60,60 @@ async function makePreferredLivekitFoci(
       FOCI_WK_KEY
     ];
     if (Array.isArray(wellKnownFoci)) {
-      const validWellKnownFoci = wellKnownFoci
-        .filter((f) => !!f)
-        .filter(isLivekitFocusConfig)
-        .map((wellKnownFocus) => {
-          logger.log("Adding livekit focus from well known: ", wellKnownFocus);
-          return { ...wellKnownFocus, livekit_alias: livekitAlias };
-        });
-      if (validWellKnownFoci.length > 0) {
-        toWarmUp = validWellKnownFoci[0];
+      const transport: LivekitTransportConfig | undefined = wellKnownFoci.find(
+        (f) => f && isLivekitTransportConfig(f),
+      );
+      if (transport !== undefined) {
+        logger.log("Using LiveKit transport from .well-known: ", transport);
+        return { ...transport, livekit_alias: livekitAlias };
       }
-      preferredFoci.push(...validWellKnownFoci);
     }
   }
 
   const urlFromConf = Config.get().livekit?.livekit_service_url;
   if (urlFromConf) {
-    const focusFormConf: LivekitFocus = {
+    const transportFromConf: LivekitTransport = {
       type: "livekit",
       livekit_service_url: urlFromConf,
       livekit_alias: livekitAlias,
     };
-    toWarmUp = toWarmUp ?? focusFormConf;
-    logger.log("Adding livekit focus from config: ", focusFormConf);
-    preferredFoci.push(focusFormConf);
+    logger.log("Using LiveKit transport from config: ", transportFromConf);
+    return transportFromConf;
   }
 
-  if (toWarmUp) {
-    // this will call the jwt/sfu/get endpoint to pre create the livekit room.
-    await getSFUConfigWithOpenID(rtcSession.room.client, toWarmUp);
-  }
-  if (preferredFoci.length === 0)
-    throw new MatrixRTCFocusMissingError(domain ?? "");
-  return Promise.resolve(preferredFoci);
-
-  // TODO: we want to do something like this:
-  //
-  // const focusOtherMembers = await focusFromOtherMembers(
-  //   rtcSession,
-  //   livekitAlias,
-  // );
-  // if (focusOtherMembers) preferredFoci.push(focusOtherMembers);
+  throw new MatrixRTCTransportMissingError(domain ?? "");
 }
 
+export async function makeTransport(
+  rtcSession: MatrixRTCSession,
+): Promise<LivekitTransport> {
+  const transport = await makeTransportInternal(rtcSession);
+  // this will call the jwt/sfu/get endpoint to pre create the livekit room.
+  await getSFUConfigWithOpenID(
+    rtcSession.room.client,
+    transport.livekit_service_url,
+    transport.livekit_alias,
+  );
+  return transport;
+}
+
+export interface EnterRTCSessionOptions {
+  encryptMedia: boolean;
+  /** EXPERIMENTAL: If true, will use the multi-sfu codepath where each member connects to its SFU instead of everyone connecting to an elected on. */
+  useMultiSfu: boolean;
+  preferStickyEvents: boolean;
+}
+
+/**
+ * TODO! document this function properly
+ * @param rtcSession
+ * @param transport
+ * @param options
+ */
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
-  encryptMedia: boolean,
-  useNewMembershipManager = true,
-  useExperimentalToDeviceTransport = false,
+  transport: LivekitTransport,
+  { encryptMedia, useMultiSfu, preferStickyEvents }: EnterRTCSessionOptions,
 ): Promise<void> {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
@@ -115,19 +122,17 @@ export async function enterRTCSession(
   // have started tracking by the time calls start getting created.
   // groupCallOTelMembership?.onJoinCall();
 
-  // right now we assume everything is a room-scoped call
-  const livekitAlias = rtcSession.room.roomId;
   const { features, matrix_rtc_session: matrixRtcSessionConfig } = Config.get();
   const useDeviceSessionMemberEvents =
     features?.feature_use_device_session_member_events;
   const { sendNotificationType: notificationType, callIntent } = getUrlParams();
+  // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   rtcSession.joinRoomSession(
-    await makePreferredLivekitFoci(rtcSession, livekitAlias),
-    makeActiveFocus(),
+    useMultiSfu ? [] : [transport],
+    useMultiSfu ? transport : undefined,
     {
       notificationType,
       callIntent,
-      useNewMembershipManager,
       manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {
         useLegacyMemberEvents: !useDeviceSessionMemberEvents,
@@ -142,7 +147,8 @@ export async function enterRTCSession(
       makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
-      useExperimentalToDeviceTransport,
+      useExperimentalToDeviceTransport: true,
+      unstableSendStickyEvents: preferStickyEvents,
     },
   );
   if (widget) {
@@ -151,51 +157,5 @@ export async function enterRTCSession(
     } catch (e) {
       logger.error("Failed to send join action", e);
     }
-  }
-}
-
-const widgetPostHangupProcedure = async (
-  widget: WidgetHelpers,
-  cause: "user" | "error",
-  promiseBeforeHangup?: Promise<unknown>,
-): Promise<void> => {
-  try {
-    await widget.api.setAlwaysOnScreen(false);
-  } catch (e) {
-    logger.error("Failed to set call widget `alwaysOnScreen` to false", e);
-  }
-
-  // Wait for any last bits before hanging up.
-  await promiseBeforeHangup;
-  // We send the hangup event after the memberships have been updated
-  // calling leaveRTCSession.
-  // We need to wait because this makes the client hosting this widget killing the IFrame.
-  try {
-    await widget.api.transport.send(ElementWidgetActions.HangupCall, {});
-  } catch (e) {
-    logger.error("Failed to send hangup action", e);
-  }
-  // On a normal user hangup we can shut down and close the widget. But if an
-  // error occurs we should keep the widget open until the user reads it.
-  if (cause === "user" && !getUrlParams().returnToLobby) {
-    try {
-      await widget.api.transport.send(ElementWidgetActions.Close, {});
-    } catch (e) {
-      logger.error("Failed to send close action", e);
-    }
-    widget.api.transport.stop();
-  }
-};
-
-export async function leaveRTCSession(
-  rtcSession: MatrixRTCSession,
-  cause: "user" | "error",
-  promiseBeforeHangup?: Promise<unknown>,
-): Promise<void> {
-  await rtcSession.leaveRoomSession();
-  if (widget) {
-    await widgetPostHangupProcedure(widget, cause, promiseBeforeHangup);
-  } else {
-    await promiseBeforeHangup;
   }
 }

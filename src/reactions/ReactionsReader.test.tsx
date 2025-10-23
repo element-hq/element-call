@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { renderHook } from "@testing-library/react";
 import { afterEach, test, vitest } from "vitest";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import {
   RoomEvent as MatrixRoomEvent,
   MatrixEvent,
@@ -24,7 +23,7 @@ import {
   localRtcMember,
 } from "../utils/test-fixtures";
 import { getBasicRTCSession } from "../utils/test-viewmodel";
-import { withTestScheduler } from "../utils/test";
+import { testScope, withTestScheduler } from "../utils/test";
 import { ElementCallReactionEventType, ReactionSet } from ".";
 
 afterEach(() => {
@@ -38,7 +37,8 @@ test("handles a hand raised reaction", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        testScope(),
+        rtcSession.asMockedSession(),
       );
       schedule("ab", {
         a: () => {},
@@ -48,7 +48,7 @@ test("handles a hand raised reaction", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: EventType.Reaction,
               origin_server_ts: localTimestamp.getTime(),
               content: {
@@ -68,7 +68,7 @@ test("handles a hand raised reaction", () => {
       expectObservable(raisedHands$).toBe("ab", {
         a: {},
         b: {
-          [`${localRtcMember.sender}:${localRtcMember.deviceId}`]: {
+          [`${localRtcMember.userId}:${localRtcMember.deviceId}`]: {
             reactionEventId,
             membershipEventId: localRtcMember.eventId,
             time: localTimestamp,
@@ -86,7 +86,8 @@ test("handles a redaction", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        testScope(),
+        rtcSession.asMockedSession(),
       );
       schedule("abc", {
         a: () => {},
@@ -96,7 +97,7 @@ test("handles a redaction", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: EventType.Reaction,
               origin_server_ts: localTimestamp.getTime(),
               content: {
@@ -118,7 +119,7 @@ test("handles a redaction", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: EventType.RoomRedaction,
               redacts: reactionEventId,
             }),
@@ -130,7 +131,7 @@ test("handles a redaction", () => {
       expectObservable(raisedHands$).toBe("abc", {
         a: {},
         b: {
-          [`${localRtcMember.sender}:${localRtcMember.deviceId}`]: {
+          [`${localRtcMember.userId}:${localRtcMember.deviceId}`]: {
             reactionEventId,
             membershipEventId: localRtcMember.eventId,
             time: localTimestamp,
@@ -149,7 +150,8 @@ test("handles waiting for event decryption", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        testScope(),
+        rtcSession.asMockedSession(),
       );
       schedule("abc", {
         a: () => {},
@@ -157,7 +159,7 @@ test("handles waiting for event decryption", () => {
           const encryptedEvent = new MatrixEvent({
             room_id: rtcSession.room.roomId,
             event_id: reactionEventId,
-            sender: localRtcMember.sender,
+            sender: localRtcMember.userId,
             type: EventType.Reaction,
             origin_server_ts: localTimestamp.getTime(),
             content: {
@@ -184,7 +186,7 @@ test("handles waiting for event decryption", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: EventType.Reaction,
               origin_server_ts: localTimestamp.getTime(),
               content: {
@@ -200,7 +202,7 @@ test("handles waiting for event decryption", () => {
       expectObservable(raisedHands$).toBe("a-c", {
         a: {},
         c: {
-          [`${localRtcMember.sender}:${localRtcMember.deviceId}`]: {
+          [`${localRtcMember.userId}:${localRtcMember.deviceId}`]: {
             reactionEventId,
             membershipEventId: localRtcMember.eventId,
             time: localTimestamp,
@@ -218,7 +220,8 @@ test("hands rejecting events without a proper membership", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        testScope(),
+        rtcSession.asMockedSession(),
       );
       schedule("ab", {
         a: () => {},
@@ -228,7 +231,7 @@ test("hands rejecting events without a proper membership", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: EventType.Reaction,
               origin_server_ts: localTimestamp.getTime(),
               content: {
@@ -263,7 +266,8 @@ test("handles a reaction", () => {
   withTestScheduler(({ schedule, time, expectObservable }) => {
     renderHook(() => {
       const { reactions$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        testScope(),
+        rtcSession.asMockedSession(),
       );
       schedule(`abc`, {
         a: () => {},
@@ -273,7 +277,7 @@ test("handles a reaction", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
               content: {
                 emoji: reaction.emoji,
@@ -298,7 +302,7 @@ test("handles a reaction", () => {
         {
           a: {},
           b: {
-            [`${localRtcMember.sender}:${localRtcMember.deviceId}`]: {
+            [`${localRtcMember.userId}:${localRtcMember.deviceId}`]: {
               reactionOption: reaction,
               expireAfter: new Date(REACTION_ACTIVE_TIME_MS),
             },
@@ -321,7 +325,8 @@ test("ignores bad reaction events", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { reactions$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        testScope(),
+        rtcSession.asMockedSession(),
       );
       schedule("ab", {
         a: () => {},
@@ -332,7 +337,7 @@ test("ignores bad reaction events", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
               content: {},
             }),
@@ -347,7 +352,7 @@ test("ignores bad reaction events", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
               content: {
                 emoji: reaction.emoji,
@@ -368,7 +373,7 @@ test("ignores bad reaction events", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: aliceRtcMember.sender,
+              sender: aliceRtcMember.userId,
               type: ElementCallReactionEventType,
               content: {
                 emoji: reaction.emoji,
@@ -389,7 +394,7 @@ test("ignores bad reaction events", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
               content: {
                 name: reaction.name,
@@ -409,7 +414,7 @@ test("ignores bad reaction events", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
               content: {
                 emoji: " ",
@@ -445,7 +450,8 @@ test("that reactions cannot be spammed", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { reactions$ } = new ReactionsReader(
-        rtcSession as unknown as MatrixRTCSession,
+        testScope(),
+        rtcSession.asMockedSession(),
       );
       schedule("abcd", {
         a: () => {},
@@ -455,7 +461,7 @@ test("that reactions cannot be spammed", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
               content: {
                 emoji: reactionA.emoji,
@@ -477,7 +483,7 @@ test("that reactions cannot be spammed", () => {
             new MatrixEvent({
               room_id: rtcSession.room.roomId,
               event_id: reactionEventId,
-              sender: localRtcMember.sender,
+              sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
               content: {
                 emoji: reactionB.emoji,
@@ -502,7 +508,7 @@ test("that reactions cannot be spammed", () => {
         {
           a: {},
           b: {
-            [`${localRtcMember.sender}:${localRtcMember.deviceId}`]: {
+            [`${localRtcMember.userId}:${localRtcMember.deviceId}`]: {
               reactionOption: reactionA,
               expireAfter: new Date(REACTION_ACTIVE_TIME_MS),
             },

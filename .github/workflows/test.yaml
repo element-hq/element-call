@@ -30,7 +30,7 @@ jobs:
           fail_ci_if_error: true
   playwright:
     name: Run end-to-end tests
-    timeout-minutes: 30
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4

@@ -46,7 +46,6 @@ import {
   throttleTime,
 } from "rxjs";
 
-import { ViewModel } from "./ViewModel";
 import { alwaysShowSelf } from "../settings/settings";
 import { showConnectionStats } from "../settings/settings";
 import { accumulate } from "../utils/observable";
@@ -56,6 +55,7 @@ import { type ReactionOption } from "../reactions";
 import { platform } from "../Platform";
 import { type MediaDevices } from "./MediaDevices";
 import { type Behavior } from "./Behavior";
+import { type ObservableScope } from "./ObservableScope";
 
 export function observeTrackReference$(
   participant: Participant,
@@ -216,7 +216,7 @@ export enum EncryptionStatus {
   PasswordInvalid,
 }
 
-abstract class BaseMediaViewModel extends ViewModel {
+abstract class BaseMediaViewModel {
   /**
    * The LiveKit video track for this media.
    */
@@ -246,6 +246,7 @@ abstract class BaseMediaViewModel extends ViewModel {
   }
 
   public constructor(
+    protected readonly scope: ObservableScope,
     /**
      * An opaque identifier for this media.
      */
@@ -255,7 +256,7 @@ abstract class BaseMediaViewModel extends ViewModel {
      */
     // TODO: Fully separate the data layer from the UI layer by keeping the
     // member object internal
-    public readonly member: RoomMember | undefined,
+    public readonly member: RoomMember,
     // We don't necessarily have a participant if a user connects via MatrixRTC but not (yet) through
     // livekit.
     protected readonly participant$: Observable<
@@ -266,10 +267,9 @@ abstract class BaseMediaViewModel extends ViewModel {
     audioSource: AudioSource,
     videoSource: VideoSource,
     livekitRoom: LivekitRoom,
+    public readonly focusURL: string,
     public readonly displayName$: Behavior<string>,
   ) {
-    super();
-
     const audio$ = this.observeTrackReference$(audioSource);
     this.video$ = this.observeTrackReference$(videoSource);
 
@@ -402,16 +402,19 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   public readonly cropVideo$: Behavior<boolean> = this._cropVideo$;
 
   public constructor(
+    scope: ObservableScope,
     id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    focusUrl: string,
     displayName$: Behavior<string>,
     public readonly handRaised$: Behavior<Date | null>,
     public readonly reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
+      scope,
       id,
       member,
       participant$,
@@ -419,6 +422,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       Track.Source.Microphone,
       Track.Source.Camera,
       livekitRoom,
+      focusUrl,
       displayName$,
     );
 
@@ -534,22 +538,26 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     );
 
   public constructor(
+    scope: ObservableScope,
     id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant$: Behavior<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    focusURL: string,
     private readonly mediaDevices: MediaDevices,
     displayName$: Behavior<string>,
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
+      scope,
       id,
       member,
       participant$,
       encryptionSystem,
       livekitRoom,
+      focusURL,
       displayName$,
       handRaised$,
       reaction$,
@@ -640,22 +648,26 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
   );
 
   public constructor(
+    scope: ObservableScope,
     id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    focusUrl: string,
     private readonly pretendToBeDisconnected$: Behavior<boolean>,
     displayname$: Behavior<string>,
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
+      scope,
       id,
       member,
       participant$,
       encryptionSystem,
       livekitRoom,
+      focusUrl,
       displayname$,
       handRaised$,
       reaction$,
@@ -735,16 +747,19 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
   );
 
   public constructor(
+    scope: ObservableScope,
     id: string,
-    member: RoomMember | undefined,
+    member: RoomMember,
     participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    focusUrl: string,
     private readonly pretendToBeDisconnected$: Behavior<boolean>,
     displayname$: Behavior<string>,
     public readonly local: boolean,
   ) {
     super(
+      scope,
       id,
       member,
       participant$,
@@ -752,6 +767,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
       Track.Source.ScreenShareAudio,
       Track.Source.ScreenShare,
       livekitRoom,
+      focusUrl,
       displayname$,
     );
   }
