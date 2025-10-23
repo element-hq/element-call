@@ -76,7 +76,7 @@ const setDevToolElementCallDevUrl = process.env.USE_DOCKER
           "Developer.elementCallUrl",
           null,
           "device",
-          "http://localhost:8080/room",
+          "http://localhost:3000/room",
         );
       });
     }
