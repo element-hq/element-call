@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.USE_DOCKER
-  ? "http://localhost:8080"
+  ? "http://localhost:3000"
   : "https://localhost:3000";
 
 /**
