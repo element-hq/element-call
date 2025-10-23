@@ -1053,8 +1053,12 @@ export class CallViewModel {
           fromEvent(
             widget.lazyActions,
             ElementWidgetActions.HangupCall,
-          ) as Observable<[CustomEvent<IWidgetApiRequest>]>
-        ).pipe(tap(([ev]) => widget!.api.transport.reply(ev.detail, {})));
+          ) as Observable<CustomEvent<IWidgetApiRequest>>
+        ).pipe(
+          tap((ev) => {
+            widget!.api.transport.reply(ev.detail, {});
+          }),
+        );
 
   public readonly leave$: Observable<
     "user" | "timeout" | "decline" | "allOthersLeft"
