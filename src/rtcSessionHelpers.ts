@@ -16,7 +16,7 @@ import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
-import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
+import { ElementWidgetActions, widget } from "./widget";
 import { MatrixRTCTransportMissingError } from "./utils/errors";
 import { getUrlParams } from "./UrlParams";
 import { getSFUConfigWithOpenID } from "./livekit/openIDSFU.ts";
@@ -157,51 +157,5 @@ export async function enterRTCSession(
     } catch (e) {
       logger.error("Failed to send join action", e);
     }
-  }
-}
-
-const widgetPostHangupProcedure = async (
-  widget: WidgetHelpers,
-  cause: "user" | "error",
-  promiseBeforeHangup?: Promise<unknown>,
-): Promise<void> => {
-  try {
-    await widget.api.setAlwaysOnScreen(false);
-  } catch (e) {
-    logger.error("Failed to set call widget `alwaysOnScreen` to false", e);
-  }
-
-  // Wait for any last bits before hanging up.
-  await promiseBeforeHangup;
-  // We send the hangup event after the memberships have been updated
-  // calling leaveRTCSession.
-  // We need to wait because this makes the client hosting this widget killing the IFrame.
-  try {
-    await widget.api.transport.send(ElementWidgetActions.HangupCall, {});
-  } catch (e) {
-    logger.error("Failed to send hangup action", e);
-  }
-  // On a normal user hangup we can shut down and close the widget. But if an
-  // error occurs we should keep the widget open until the user reads it.
-  if (cause === "user" && !getUrlParams().returnToLobby) {
-    try {
-      await widget.api.transport.send(ElementWidgetActions.Close, {});
-    } catch (e) {
-      logger.error("Failed to send close action", e);
-    }
-    widget.api.transport.stop();
-  }
-};
-
-export async function leaveRTCSession(
-  rtcSession: MatrixRTCSession,
-  cause: "user" | "error",
-  promiseBeforeHangup?: Promise<unknown>,
-): Promise<void> {
-  await rtcSession.leaveRoomSession();
-  if (widget) {
-    await widgetPostHangupProcedure(widget, cause, promiseBeforeHangup);
-  } else {
-    await promiseBeforeHangup;
   }
 }

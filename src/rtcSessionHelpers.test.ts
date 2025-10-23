@@ -6,13 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
-import { expect, onTestFinished, test, vi } from "vitest";
+import { expect, test, vi } from "vitest";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import EventEmitter from "events";
 
-import { enterRTCSession, leaveRTCSession } from "../src/rtcSessionHelpers";
+import { enterRTCSession } from "../src/rtcSessionHelpers";
 import { mockConfig } from "./utils/test";
-import { ElementWidgetActions, widget } from "./widget";
 
 const USE_MUTI_SFU = false;
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
@@ -114,47 +113,6 @@ test("It joins the correct Session", async () => {
       useLegacyMemberEvents: false,
     }),
   );
-});
-
-async function testLeaveRTCSession(
-  cause: "user" | "error",
-  expectClose: boolean,
-): Promise<void> {
-  vi.clearAllMocks();
-  const session = { leaveRoomSession: vi.fn() } as unknown as MatrixRTCSession;
-  await leaveRTCSession(session, cause);
-  expect(session.leaveRoomSession).toHaveBeenCalled();
-  expect(widget!.api.transport.send).toHaveBeenCalledWith(
-    ElementWidgetActions.HangupCall,
-    expect.anything(),
-  );
-  if (expectClose) {
-    expect(widget!.api.transport.send).toHaveBeenCalledWith(
-      ElementWidgetActions.Close,
-      expect.anything(),
-    );
-    expect(widget!.api.transport.stop).toHaveBeenCalled();
-  } else {
-    expect(widget!.api.transport.send).not.toHaveBeenCalledWith(
-      ElementWidgetActions.Close,
-      expect.anything(),
-    );
-    expect(widget!.api.transport.stop).not.toHaveBeenCalled();
-  }
-}
-
-test("leaveRTCSession closes the widget on a normal hangup", async () => {
-  await testLeaveRTCSession("user", true);
-});
-
-test("leaveRTCSession doesn't close the widget on a fatal error", async () => {
-  await testLeaveRTCSession("error", false);
-});
-
-test("leaveRTCSession doesn't close the widget when returning to lobby", async () => {
-  getUrlParams.mockReturnValue({ returnToLobby: true });
-  onTestFinished(() => void getUrlParams.mockReset());
-  await testLeaveRTCSession("user", false);
 });
 
 test("It should not fail with configuration error if homeserver config has livekit url but not fallback", async () => {
