@@ -81,6 +81,7 @@ vi.mock("../rtcSessionHelpers", async (importOriginal) => {
   // TODO: perhaps there is a more elegant way to manage the type import here?
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   const orig = await importOriginal<typeof import("../rtcSessionHelpers")>();
+  // TODO: leaveRTCSession no longer exists! Tests need adapting.
   return { ...orig, enterRTCSession, leaveRTCSession };
 });
 
