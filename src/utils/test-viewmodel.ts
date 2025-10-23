@@ -16,6 +16,7 @@ import {
   type Room,
   SyncState,
 } from "matrix-js-sdk";
+import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
 
 import { E2eeType } from "../e2ee/e2eeType";
 import {
@@ -23,6 +24,8 @@ import {
   type CallViewModelOptions,
 } from "../state/CallViewModel";
 import {
+  mockLivekitRoom,
+  mockLocalParticipant,
   mockMatrixRoom,
   mockMediaDevices,
   mockMuteStates,
@@ -31,6 +34,7 @@ import {
 } from "./test";
 import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
+import { constant } from "../state/Behavior";
 
 export function getBasicRTCSession(
   members: RoomMember[],
@@ -142,6 +146,14 @@ export function getBasicCallViewModelEnvironment(
     mockMuteStates(),
     {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      livekitRoomFactory: (): LivekitRoom =>
+        mockLivekitRoom({
+          localParticipant: mockLocalParticipant({ identity: "" }),
+          remoteParticipants: new Map(),
+          disconnect: async () => Promise.resolve(),
+          setE2EEEnabled: async () => Promise.resolve(),
+        }),
+      connectionState$: constant(ConnectionState.Connected),
       ...callViewModelOptions,
     },
     handRaisedSubject$,

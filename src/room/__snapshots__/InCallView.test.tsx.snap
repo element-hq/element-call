@@ -83,20 +83,32 @@ exports[`InCallView > rendering > renders 1`] = `
         class="nav rightNav"
       />
     </header>
+    <div>
+      mocked: MatrixAudioRenderer
+    </div>
     <div
       class="scrollingGrid grid"
     >
       <div
-        class="scrolling"
-        style="--gap: 20px; --width: NaNpx; --height: NaNpx;"
-      />
+        class="layer"
+      >
+        <div
+          class="container slot"
+          data-id="1"
+        >
+          <div
+            class="slot local slot"
+            data-block-alignment="start"
+            data-id="0"
+            data-inline-alignment="end"
+          />
+        </div>
+      </div>
     </div>
     <div
       class="fixedGrid grid"
     >
-      <div
-        class="fixed"
-      />
+      <div />
     </div>
     <div
       class="bg animate"
