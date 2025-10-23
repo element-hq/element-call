@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.USE_DOCKER
-  ? "http://localhost:3000"
+  ? "http://localhost:8080"
   : "https://localhost:3000";
 
 /**
@@ -81,7 +81,6 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     ignoreHTTPSErrors: true,
-    timeout: 240000,
     gracefulShutdown: {
       signal: "SIGTERM",
       timeout: 500,
