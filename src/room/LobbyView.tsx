@@ -31,7 +31,7 @@ import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { type MatrixInfo, VideoPreview } from "./VideoPreview";
-import { type MuteStates } from "./MuteStates";
+import { type MuteStates } from "../state/MuteStates";
 import { InviteButton } from "../button/InviteButton";
 import {
   EndCallButton,
@@ -50,14 +50,14 @@ import {
   useTrackProcessorSync,
 } from "../livekit/TrackProcessorContext";
 import { usePageTitle } from "../usePageTitle";
-import { useLatest } from "../useLatest";
 import { getValue } from "../utils/observable";
+import { useBehavior } from "../useBehavior";
 
 interface Props {
   client: MatrixClient;
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
-  onEnter: () => Promise<void>;
+  onEnter: () => void;
   enterLabel?: JSX.Element | string;
   confineToRoom: boolean;
   hideHeader: boolean;
@@ -88,14 +88,10 @@ export const LobbyView: FC<Props> = ({
   const { t } = useTranslation();
   usePageTitle(matrixInfo.roomName);
 
-  const onAudioPress = useCallback(
-    () => muteStates.audio.setEnabled?.((e) => !e),
-    [muteStates],
-  );
-  const onVideoPress = useCallback(
-    () => muteStates.video.setEnabled?.((e) => !e),
-    [muteStates],
-  );
+  const audioEnabled = useBehavior(muteStates.audio.enabled$);
+  const videoEnabled = useBehavior(muteStates.video.enabled$);
+  const toggleAudio = useBehavior(muteStates.audio.toggle$);
+  const toggleVideo = useBehavior(muteStates.video.toggle$);
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
@@ -133,7 +129,7 @@ export const LobbyView: FC<Props> = ({
   // re-open the devices when they change (see below).
   const initialAudioOptions = useInitial(
     () =>
-      muteStates.audio.enabled && {
+      audioEnabled && {
         deviceId: getValue(devices.audioInput.selected$)?.id,
       },
   );
@@ -150,27 +146,21 @@ export const LobbyView: FC<Props> = ({
       // We also pass in a clone because livekit mutates the object passed in,
       // which would cause the devices to be re-opened on the next render.
       audio: Object.assign({}, initialAudioOptions),
-      video: muteStates.video.enabled && {
+      video: videoEnabled && {
         deviceId: videoInputId,
         processor: initialProcessor,
       },
     }),
-    [
-      initialAudioOptions,
-      muteStates.video.enabled,
-      videoInputId,
-      initialProcessor,
-    ],
+    [initialAudioOptions, videoEnabled, videoInputId, initialProcessor],
   );
 
-  const latestMuteStates = useLatest(muteStates);
   const onError = useCallback(
     (error: Error) => {
       logger.error("Error while creating preview Tracks:", error);
-      latestMuteStates.current.audio.setEnabled?.(false);
-      latestMuteStates.current.video.setEnabled?.(false);
+      muteStates.audio.setEnabled$.value?.(false);
+      muteStates.video.setEnabled$.value?.(false);
     },
-    [latestMuteStates],
+    [muteStates],
   );
 
   const tracks = usePreviewTracks(localTrackOptions, onError);
@@ -192,14 +182,6 @@ export const LobbyView: FC<Props> = ({
   }, [devices, videoInputId, videoTrack]);
 
   useTrackProcessorSync(videoTrack);
-
-  const [waitingToEnter, setWaitingToEnter] = useState(false);
-  const onEnterCall = useCallback(() => {
-    setWaitingToEnter(true);
-    void onEnter().finally(() => setWaitingToEnter(false));
-  }, [onEnter]);
-
-  const waiting = waitingForInvite || waitingToEnter;
 
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
@@ -225,17 +207,17 @@ export const LobbyView: FC<Props> = ({
         <div className={styles.content}>
           <VideoPreview
             matrixInfo={matrixInfo}
-            muteStates={muteStates}
+            videoEnabled={videoEnabled}
             videoTrack={videoTrack}
           >
             <Button
               className={classNames(styles.join, {
-                [styles.wait]: waiting,
+                [styles.wait]: waitingForInvite,
               })}
-              size={waiting ? "sm" : "lg"}
-              disabled={waiting}
+              size={waitingForInvite ? "sm" : "lg"}
+              disabled={waitingForInvite}
               onClick={() => {
-                if (!waiting) onEnterCall();
+                if (!waitingForInvite) onEnter();
               }}
               data-testid="lobby_joinCall"
             >
@@ -248,14 +230,14 @@ export const LobbyView: FC<Props> = ({
           {recentsButtonInFooter && recentsButton}
           <div className={inCallStyles.buttons}>
             <MicButton
-              muted={!muteStates.audio.enabled}
-              onClick={onAudioPress}
-              disabled={muteStates.audio.setEnabled === null}
+              muted={!audioEnabled}
+              onClick={toggleAudio ?? undefined}
+              disabled={toggleAudio === null}
             />
             <VideoButton
-              muted={!muteStates.video.enabled}
-              onClick={onVideoPress}
-              disabled={muteStates.video.setEnabled === null}
+              muted={!videoEnabled}
+              onClick={toggleVideo ?? undefined}
+              disabled={toggleVideo === null}
             />
             <SettingsButton onClick={openSettings} />
             {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}

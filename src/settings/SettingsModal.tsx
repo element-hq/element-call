@@ -51,7 +51,11 @@ interface Props {
   onTabChange: (tab: SettingsTab) => void;
   client: MatrixClient;
   roomId?: string;
-  livekitRoom?: LivekitRoom;
+  livekitRooms?: {
+    room: LivekitRoom;
+    url: string;
+    isLocal?: boolean;
+  }[];
 }
 
 export const defaultSettingsTab: SettingsTab = "audio";
@@ -63,7 +67,7 @@ export const SettingsModal: FC<Props> = ({
   onTabChange,
   client,
   roomId,
-  livekitRoom,
+  livekitRooms,
 }) => {
   const { t } = useTranslation();
 
@@ -204,7 +208,9 @@ export const SettingsModal: FC<Props> = ({
   const developerTab: Tab<SettingsTab> = {
     key: "developer",
     name: t("settings.developer_tab_title"),
-    content: <DeveloperSettingsTab client={client} livekitRoom={livekitRoom} />,
+    content: (
+      <DeveloperSettingsTab client={client} livekitRooms={livekitRooms} />
+    ),
   };
 
   const tabs = [audioTab, videoTab];

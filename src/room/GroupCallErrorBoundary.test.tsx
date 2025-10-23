@@ -26,7 +26,7 @@ import {
   E2EENotSupportedError,
   type ElementCallError,
   InsufficientCapacityError,
-  MatrixRTCFocusMissingError,
+  MatrixRTCTransportMissingError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
@@ -34,7 +34,7 @@ import { ElementWidgetActions, type WidgetHelpers } from "../widget.ts";
 
 test.each([
   {
-    error: new MatrixRTCFocusMissingError("example.com"),
+    error: new MatrixRTCTransportMissingError("example.com"),
     expectedTitle: "Call is not supported",
   },
   {
@@ -85,7 +85,7 @@ test.each([
 );
 
 test("should render the error page with link back to home", async () => {
-  const error = new MatrixRTCFocusMissingError("example.com");
+  const error = new MatrixRTCTransportMissingError("example.com");
   const TestComponent = (): ReactNode => {
     throw error;
   };
@@ -106,7 +106,7 @@ test("should render the error page with link back to home", async () => {
   await screen.findByText("Call is not supported");
   expect(screen.getByText(/Domain: example\.com/i)).toBeInTheDocument();
   expect(
-    screen.getByText(/Error Code: MISSING_MATRIX_RTC_FOCUS/i),
+    screen.getByText(/Error Code: MISSING_MATRIX_RTC_TRANSPORT/i),
   ).toBeInTheDocument();
 
   await screen.findByRole("button", { name: "Return to home screen" });
@@ -213,7 +213,7 @@ describe("Rageshake button", () => {
 });
 
 test("should have a close button in widget mode", async () => {
-  const error = new MatrixRTCFocusMissingError("example.com");
+  const error = new MatrixRTCTransportMissingError("example.com");
   const TestComponent = (): ReactNode => {
     throw error;
   };

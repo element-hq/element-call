@@ -288,7 +288,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="buttons"
       >
         <button
-          aria-disabled="false"
+          aria-disabled="true"
           aria-labelledby="«r8»"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="primary"
@@ -311,7 +311,7 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-disabled="false"
+          aria-disabled="true"
           aria-labelledby="«rd»"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="primary"

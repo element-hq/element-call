@@ -38,10 +38,9 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
 import { ActiveCall } from "./InCallView";
-import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
+import { type MuteStates } from "../state/MuteStates";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
-import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import {
   saveKeyForRoom,
   useRoomEncryptionSystem,
@@ -50,7 +49,12 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { HeaderStyle, type UrlParams, useUrlParams } from "../UrlParams";
+import {
+  getUrlParams,
+  HeaderStyle,
+  type UrlParams,
+  useUrlParams,
+} from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
 import {
@@ -66,15 +70,16 @@ import {
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
-import {
-  useNewMembershipManager as useNewMembershipManagerSetting,
-  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
-  useSetting,
-} from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useAppBarTitle } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
+
+/**
+ * If there already are this many participants in the call, we automatically mute
+ * the user.
+ */
+export const MUTE_PARTICIPANT_COUNT = 8;
 
 declare global {
   interface Window {
@@ -90,7 +95,8 @@ interface Props {
   skipLobby: UrlParams["skipLobby"];
   header: HeaderStyle;
   rtcSession: MatrixRTCSession;
-  isJoined: boolean;
+  joined: boolean;
+  setJoined: (value: boolean) => void;
   muteStates: MuteStates;
   widget: WidgetHelpers | null;
 }
@@ -103,7 +109,8 @@ export const GroupCallView: FC<Props> = ({
   skipLobby,
   header,
   rtcSession,
-  isJoined,
+  joined,
+  setJoined,
   muteStates,
   widget,
 }) => {
@@ -124,19 +131,9 @@ export const GroupCallView: FC<Props> = ({
   // This should use `useEffectEvent` (only available in experimental versions)
   useEffect(() => {
     if (memberships.length >= MUTE_PARTICIPANT_COUNT)
-      muteStates.audio.setEnabled?.(false);
+      muteStates.audio.setEnabled$.value?.(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Update our member event when our mute state changes.
-  useEffect(() => {
-    if (!isJoined) {
-      return;
-    }
-    void rtcSession.updateCallIntent(
-      muteStates.video.enabled ? "video" : "audio",
-    );
-  }, [rtcSession, isJoined, muteStates.video.enabled]);
 
   useEffect(() => {
     logger.info("[Lifecycle] GroupCallView Component mounted");
@@ -185,10 +182,6 @@ export const GroupCallView: FC<Props> = ({
     password: passwordFromUrl,
   } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
-  const [useNewMembershipManager] = useSetting(useNewMembershipManagerSetting);
-  const [useExperimentalToDeviceTransport] = useSetting(
-    useExperimentalToDeviceTransportSetting,
-  );
 
   // Save the password once we start the groupCallView
   useEffect(() => {
@@ -213,7 +206,7 @@ export const GroupCallView: FC<Props> = ({
 
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(
-    () => new Set<string>(memberships.map((m) => m.sender!)).size,
+    () => new Set<string>(memberships.map((m) => m.userId!)).size,
     [memberships],
   );
 
@@ -223,12 +216,9 @@ export const GroupCallView: FC<Props> = ({
   const enterRTCSessionOrError = useCallback(
     async (rtcSession: MatrixRTCSession): Promise<void> => {
       try {
-        await enterRTCSession(
-          rtcSession,
-          perParticipantE2EE,
-          useNewMembershipManager,
-          useExperimentalToDeviceTransport,
-        );
+        setJoined(true);
+        // TODO-MULTI-SFU what to do with error handling now that we don't use this function?
+        // @BillCarsonFr
       } catch (e) {
         if (e instanceof ElementCallError) {
           setExternalError(e);
@@ -240,12 +230,9 @@ export const GroupCallView: FC<Props> = ({
           setExternalError(error);
         }
       }
+      return Promise.resolve();
     },
-    [
-      perParticipantE2EE,
-      useExperimentalToDeviceTransport,
-      useNewMembershipManager,
-    ],
+    [setJoined],
   );
 
   useEffect(() => {
@@ -264,7 +251,7 @@ export const GroupCallView: FC<Props> = ({
         if (!deviceId) {
           logger.warn("Unknown audio input: " + audioInput);
           // override the default mute state
-          latestMuteStates.current!.audio.setEnabled?.(false);
+          latestMuteStates.current!.audio.setEnabled$.value?.(false);
         } else {
           logger.debug(
             `Found audio input ID ${deviceId} for name ${audioInput}`,
@@ -278,7 +265,7 @@ export const GroupCallView: FC<Props> = ({
         if (!deviceId) {
           logger.warn("Unknown video input: " + videoInput);
           // override the default mute state
-          latestMuteStates.current!.video.setEnabled?.(false);
+          latestMuteStates.current!.video.setEnabled$.value?.(false);
         } else {
           logger.debug(
             `Found video input ID ${deviceId} for name ${videoInput}`,
@@ -294,7 +281,7 @@ export const GroupCallView: FC<Props> = ({
         const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
           (async (): Promise<void> => {
             await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
-            await enterRTCSessionOrError(rtcSession);
+            setJoined(true);
             widget.api.transport.reply(ev.detail, {});
           })().catch((e) => {
             logger.error("Error joining RTC session on preload", e);
@@ -306,11 +293,7 @@ export const GroupCallView: FC<Props> = ({
         };
       } else {
         // No lobby and no preload: we enter the rtc session right away
-        (async (): Promise<void> => {
-          await enterRTCSessionOrError(rtcSession);
-        })().catch((e) => {
-          logger.error("Error joining RTC session immediately", e);
-        });
+        setJoined(true);
       }
     }
   }, [
@@ -321,61 +304,85 @@ export const GroupCallView: FC<Props> = ({
     perParticipantE2EE,
     mediaDevices,
     latestMuteStates,
-    enterRTCSessionOrError,
-    useNewMembershipManager,
+    setJoined,
   ]);
 
+  // TODO refactor this + "joined" to just one callState
   const [left, setLeft] = useState(false);
 
   const navigate = useNavigate();
 
-  const onLeave = useCallback(
-    (
-      cause: "user" | "error" = "user",
-      playSound: CallEventSounds = "left",
-    ): void => {
-      const audioPromise = leaveSoundContext.current?.playSound(playSound);
-      // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
-      // therefore we want the event to be sent instantly without getting queued/batched.
-      const sendInstantly = !!widget;
+  const onLeft = useCallback(
+    (reason: "timeout" | "user" | "allOthersLeft" | "decline"): void => {
+      let playSound: CallEventSounds = "left";
+      if (reason === "timeout" || reason === "decline") playSound = reason;
+
+      setJoined(false);
       setLeft(true);
-      // we need to wait until the callEnded event is tracked on posthog.
-      // Otherwise the iFrame gets killed before the callEnded event got tracked.
+      const audioPromise = leaveSoundContext.current?.playSound(playSound);
+      // We need to wait until the callEnded event is tracked on PostHog,
+      // otherwise the iframe may get killed first.
       const posthogRequest = new Promise((resolve) => {
+        // To increase the likelihood of the PostHog event being sent out in
+        // widget mode before the iframe is killed, we ask it to skip the
+        // usual queuing/batching of requests.
+        const sendInstantly = widget !== null;
         PosthogAnalytics.instance.eventCallEnded.track(
           room.roomId,
           rtcSession.memberships.length,
           sendInstantly,
           rtcSession,
         );
+        // Unfortunately the PostHog library provides no way to await the
+        // tracking of an event, but we don't really want it to hold up the
+        // closing of the widget that long anyway, so giving it 10 ms will do.
         window.setTimeout(resolve, 10);
       });
 
-      leaveRTCSession(
-        rtcSession,
-        cause,
-        // Wait for the sound in widget mode (it's not long)
-        Promise.all([audioPromise, posthogRequest]),
-      )
-        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
+      void Promise.all([audioPromise, posthogRequest])
+        .catch((e) =>
+          logger.error(
+            "Failed to play leave audio and/or send PostHog leave event",
+            e,
+          ),
+        )
         .then(async () => {
           if (
             !isPasswordlessUser &&
             !confineToRoom &&
             !PosthogAnalytics.instance.isEnabled()
-          ) {
-            await navigate("/");
+          )
+            void navigate("/");
+
+          if (widget) {
+            // After this point the iframe could die at any moment!
+            try {
+              await widget.api.setAlwaysOnScreen(false);
+            } catch (e) {
+              logger.error(
+                "Failed to set call widget `alwaysOnScreen` to false",
+                e,
+              );
+            }
+            // On a normal user hangup we can shut down and close the widget. But if an
+            // error occurs we should keep the widget open until the user reads it.
+            if (reason === "user" && !getUrlParams().returnToLobby) {
+              try {
+                await widget.api.transport.send(ElementWidgetActions.Close, {});
+              } catch (e) {
+                logger.error("Failed to send close action", e);
+              }
+              widget.api.transport.stop();
+            }
           }
-        })
-        .catch((e) => {
-          logger.error("Error leaving RTC session", e);
         });
     },
     [
+      setJoined,
       leaveSoundContext,
       widget,
-      rtcSession,
       room.roomId,
+      rtcSession,
       isPasswordlessUser,
       confineToRoom,
       navigate,
@@ -383,25 +390,12 @@ export const GroupCallView: FC<Props> = ({
   );
 
   useEffect(() => {
-    if (widget && isJoined) {
+    if (widget && joined)
       // set widget to sticky once joined.
       widget.api.setAlwaysOnScreen(true).catch((e) => {
         logger.error("Error calling setAlwaysOnScreen(true)", e);
       });
-
-      const onHangup = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        widget.api.transport.reply(ev.detail, {});
-        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-        leaveRTCSession(rtcSession, "user").catch((e) => {
-          logger.error("Failed to leave RTC session", e);
-        });
-      };
-      widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
-      return (): void => {
-        widget.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
-      };
-    }
-  }, [widget, isJoined, rtcSession]);
+  }, [widget, joined, rtcSession]);
 
   const joinRule = useJoinRule(room);
 
@@ -436,7 +430,7 @@ export const GroupCallView: FC<Props> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={async () => enterRTCSessionOrError(rtcSession)}
+        onEnter={() => setJoined(true)}
         confineToRoom={confineToRoom}
         hideHeader={header === HeaderStyle.None}
         participantCount={participantCount}
@@ -454,7 +448,7 @@ export const GroupCallView: FC<Props> = ({
       throw externalError;
     };
     body = <ErrorComponent />;
-  } else if (isJoined) {
+  } else if (joined) {
     body = (
       <>
         {shareModal}
@@ -463,7 +457,7 @@ export const GroupCallView: FC<Props> = ({
           matrixInfo={matrixInfo}
           rtcSession={rtcSession as MatrixRTCSession}
           matrixRoom={room}
-          onLeave={onLeave}
+          onLeft={onLeft}
           header={header}
           muteStates={muteStates}
           e2eeSystem={e2eeSystem}
@@ -524,7 +518,8 @@ export const GroupCallView: FC<Props> = ({
       }}
       onError={
         (/**error*/) => {
-          if (rtcSession.isJoined()) onLeave("error");
+          // TODO this should not be "user". It needs a new case
+          if (rtcSession.isJoined()) onLeft("user");
         }
       }
     >

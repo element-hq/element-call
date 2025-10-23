@@ -19,14 +19,21 @@ import {
   useMemo,
 } from "react";
 import { type LocalVideoTrack } from "livekit-client";
+import { combineLatest, map, type Observable } from "rxjs";
+import { useObservable } from "observable-hooks";
 
 import {
   backgroundBlur as backgroundBlurSettings,
   useSetting,
 } from "../settings/settings";
 import { BlurBackgroundTransformer } from "./BlurBackgroundTransformer";
+import { type Behavior } from "../state/Behavior";
 
-type ProcessorState = {
+//TODO-MULTI-SFU: This is not yet fully there.
+// it is a combination of exposing observable and react hooks.
+// preferably we should not make this a context anymore and instead just a vm?
+
+export type ProcessorState = {
   supported: boolean | undefined;
   processor: undefined | ProcessorWrapper<BackgroundOptions>;
 };
@@ -41,6 +48,40 @@ export function useTrackProcessor(): ProcessorState {
     );
   return state;
 }
+
+export function useTrackProcessorObservable$(): Observable<ProcessorState> {
+  const state = use(ProcessorContext);
+  if (state === undefined)
+    throw new Error(
+      "useTrackProcessor must be used within a ProcessorProvider",
+    );
+  const state$ = useObservable(
+    (init$) => init$.pipe(map(([init]) => init)),
+    [state],
+  );
+
+  return state$;
+}
+
+export const trackProcessorSync = (
+  videoTrack$: Behavior<LocalVideoTrack | null>,
+  processor$: Behavior<ProcessorState>,
+): void => {
+  // TODO-MULTI-SFU: Bind to an ObservableScope to avoid leaking resources.
+  combineLatest([videoTrack$, processor$]).subscribe(
+    ([videoTrack, processorState]) => {
+      if (!processorState) return;
+      if (!videoTrack) return;
+      const { processor } = processorState;
+      if (processor && !videoTrack.getProcessor()) {
+        void videoTrack.setProcessor(processor);
+      }
+      if (!processor && videoTrack.getProcessor()) {
+        void videoTrack.stopProcessor();
+      }
+    },
+  );
+};
 
 export const useTrackProcessorSync = (
   videoTrack: LocalVideoTrack | null,

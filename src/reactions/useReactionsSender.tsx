@@ -65,7 +65,7 @@ export const ReactionsSenderProvider = ({
   const myMembershipEvent = useMemo(
     () =>
       memberships.find(
-        (m) => m.sender === myUserId && m.deviceId === myDeviceId,
+        (m) => m.userId === myUserId && m.deviceId === myDeviceId,
       )?.eventId,
     [memberships, myUserId, myDeviceId],
   );

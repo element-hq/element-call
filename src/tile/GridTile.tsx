@@ -190,6 +190,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       currentReaction={reaction ?? undefined}
       raisedHandOnClick={raisedHandOnClick}
       localParticipant={vm.local}
+      focusUrl={vm.focusURL}
       audioStreamStats={audioStreamStats}
       videoStreamStats={videoStreamStats}
       {...props}

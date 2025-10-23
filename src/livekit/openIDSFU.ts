@@ -7,12 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type IOpenIDToken, type MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
-import { useEffect, useState } from "react";
-import { type LivekitFocus } from "matrix-js-sdk/lib/matrixrtc";
 
-import { useActiveLivekitFocus } from "../room/useActiveFocus";
-import { useErrorBoundary } from "../useErrorBoundary";
 import { FailToGetOpenIdToken } from "../utils/errors";
 import { doNetworkOperationWithRetry } from "../utils/matrix";
 
@@ -21,51 +16,17 @@ export interface SFUConfig {
   jwt: string;
 }
 
-export function sfuConfigEquals(a?: SFUConfig, b?: SFUConfig): boolean {
-  if (a === undefined && b === undefined) return true;
-  if (a === undefined || b === undefined) return false;
-
-  return a.jwt === b.jwt && a.url === b.url;
-}
-
 // The bits we need from MatrixClient
 export type OpenIDClientParts = Pick<
   MatrixClient,
   "getOpenIdToken" | "getDeviceId"
 >;
 
-export function useOpenIDSFU(
-  client: OpenIDClientParts,
-  rtcSession: MatrixRTCSession,
-): SFUConfig | undefined {
-  const [sfuConfig, setSFUConfig] = useState<SFUConfig | undefined>(undefined);
-
-  const activeFocus = useActiveLivekitFocus(rtcSession);
-  const { showErrorBoundary } = useErrorBoundary();
-
-  useEffect(() => {
-    if (activeFocus) {
-      getSFUConfigWithOpenID(client, activeFocus).then(
-        (sfuConfig) => {
-          setSFUConfig(sfuConfig);
-        },
-        (e) => {
-          showErrorBoundary(new FailToGetOpenIdToken(e));
-          logger.error("Failed to get SFU config", e);
-        },
-      );
-    } else {
-      setSFUConfig(undefined);
-    }
-  }, [client, activeFocus, showErrorBoundary]);
-
-  return sfuConfig;
-}
-
 export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
-  activeFocus: LivekitFocus,
-): Promise<SFUConfig | undefined> {
+  serviceUrl: string,
+  livekitAlias: string,
+): Promise<SFUConfig> {
   let openIdToken: IOpenIDToken;
   try {
     openIdToken = await doNetworkOperationWithRetry(async () =>
@@ -78,26 +39,16 @@ export async function getSFUConfigWithOpenID(
   }
   logger.debug("Got openID token", openIdToken);
 
-  try {
-    logger.info(
-      `Trying to get JWT from call's active focus URL of ${activeFocus.livekit_service_url}...`,
-    );
-    const sfuConfig = await getLiveKitJWT(
-      client,
-      activeFocus.livekit_service_url,
-      activeFocus.livekit_alias,
-      openIdToken,
-    );
-    logger.info(`Got JWT from call's active focus URL.`);
+  logger.info(`Trying to get JWT for focus ${serviceUrl}...`);
+  const sfuConfig = await getLiveKitJWT(
+    client,
+    serviceUrl,
+    livekitAlias,
+    openIdToken,
+  );
+  logger.info(`Got JWT from call's active focus URL.`);
 
-    return sfuConfig;
-  } catch (e) {
-    logger.warn(
-      `Failed to get JWT from RTC session's active focus URL of ${activeFocus.livekit_service_url}.`,
-      e,
-    );
-    return undefined;
-  }
+  return sfuConfig;
 }
 
 async function getLiveKitJWT(

@@ -5,69 +5,88 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ChangeEvent, type FC, useCallback, useMemo } from "react";
+import {
+  type ChangeEvent,
+  type FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
+import {
+  UNSTABLE_MSC4354_STICKY_EVENTS,
+  type MatrixClient,
+} from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { FieldRow, InputField } from "../input/Input";
 import {
   useSetting,
   duplicateTiles as duplicateTilesSetting,
   debugTileLayout as debugTileLayoutSetting,
-  showNonMemberTiles as showNonMemberTilesSetting,
   showConnectionStats as showConnectionStatsSetting,
-  useNewMembershipManager as useNewMembershipManagerSetting,
-  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
+  multiSfu as multiSfuSetting,
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
+  preferStickyEvents as preferStickyEventsSetting,
 } from "./settings";
-import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
+
 interface Props {
   client: MatrixClient;
-  livekitRoom?: LivekitRoom;
+  livekitRooms?: { room: LivekitRoom; url: string; isLocal?: boolean }[];
 }
 
-export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
+export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   const { t } = useTranslation();
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
   const [debugTileLayout, setDebugTileLayout] = useSetting(
     debugTileLayoutSetting,
   );
-  const [showNonMemberTiles, setShowNonMemberTiles] = useSetting(
-    showNonMemberTilesSetting,
+
+  const [stickyEventsSupported, setStickyEventsSupported] = useState(false);
+  useEffect(() => {
+    client
+      .doesServerSupportUnstableFeature(UNSTABLE_MSC4354_STICKY_EVENTS)
+      .then((result) => {
+        setStickyEventsSupported(result);
+      })
+      .catch((ex) => {
+        logger.warn("Failed to check if sticky events are supported", ex);
+      });
+  }, [client]);
+
+  const [preferStickyEvents, setPreferStickyEvents] = useSetting(
+    preferStickyEventsSetting,
   );
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
   );
 
-  const [useNewMembershipManager, setNewMembershipManager] = useSetting(
-    useNewMembershipManagerSetting,
-  );
-
   const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
     alwaysShowIphoneEarpieceSetting,
   );
-  const [
-    useExperimentalToDeviceTransport,
-    setUseExperimentalToDeviceTransport,
-  ] = useSetting(useExperimentalToDeviceTransportSetting);
+
+  const [multiSfu, setMultiSfu] = useSetting(multiSfuSetting);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
   const urlParams = useUrlParams();
 
-  const sfuUrl = useMemo((): URL | null => {
-    if (livekitRoom?.engine.client.ws?.url) {
+  const localSfuUrl = useMemo((): URL | null => {
+    const localRoom = livekitRooms?.find((r) => r.isLocal)?.room;
+    if (localRoom?.engine.client.ws?.url) {
       // strip the URL params
-      const url = new URL(livekitRoom.engine.client.ws.url);
+      const url = new URL(localRoom.engine.client.ws.url);
       url.search = "";
       return url;
     }
     return null;
-  }, [livekitRoom]);
+  }, [livekitRooms]);
 
   return (
     <>
@@ -129,15 +148,17 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
       </FieldRow>
       <FieldRow>
         <InputField
-          id="showNonMemberTiles"
+          id="preferStickyEvents"
           type="checkbox"
-          label={t("developer_mode.show_non_member_tiles")}
-          checked={!!showNonMemberTiles}
+          label={t("developer_mode.prefer_sticky_events.label")}
+          disabled={!stickyEventsSupported}
+          description={t("developer_mode.prefer_sticky_events.description")}
+          checked={!!preferStickyEvents}
           onChange={useCallback(
             (event: ChangeEvent<HTMLInputElement>): void => {
-              setShowNonMemberTiles(event.target.checked);
+              setPreferStickyEvents(event.target.checked);
             },
-            [setShowNonMemberTiles],
+            [setPreferStickyEvents],
           )}
         />
       </FieldRow>
@@ -157,29 +178,17 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
       </FieldRow>
       <FieldRow>
         <InputField
-          id="useNewMembershipManager"
+          id="multiSfu"
           type="checkbox"
-          label={t("developer_mode.use_new_membership_manager")}
-          checked={!!useNewMembershipManager}
+          label={t("developer_mode.multi_sfu")}
+          // If using sticky events we implicitly prefer use multi-sfu
+          checked={multiSfu || preferStickyEvents}
+          disabled={preferStickyEvents}
           onChange={useCallback(
             (event: ChangeEvent<HTMLInputElement>): void => {
-              setNewMembershipManager(event.target.checked);
+              setMultiSfu(event.target.checked);
             },
-            [setNewMembershipManager],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="useToDeviceKeyTransport"
-          type="checkbox"
-          label={t("developer_mode.use_to_device_key_transport")}
-          checked={!!useExperimentalToDeviceTransport}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setUseExperimentalToDeviceTransport(event.target.checked);
-            },
-            [setUseExperimentalToDeviceTransport],
+            [setMultiSfu],
           )}
         />
       </FieldRow>
@@ -211,22 +220,26 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
           )}
         />{" "}
       </FieldRow>
-      {livekitRoom ? (
+      {livekitRooms?.map((livekitRoom) => (
         <>
-          <p>
+          <h3>
             {t("developer_mode.livekit_sfu", {
-              url: sfuUrl?.href || "unknown",
+              url: livekitRoom.url || "unknown",
             })}
+          </h3>
+          {livekitRoom.isLocal && <p>ws-url: {localSfuUrl?.href}</p>}
+          <p>
+            {t("developer_mode.livekit_server_info")}(
+            {livekitRoom.isLocal ? "local" : "remote"})
           </p>
-          <p>{t("developer_mode.livekit_server_info")}</p>
           <pre className={styles.pre}>
-            {livekitRoom.serverInfo
-              ? JSON.stringify(livekitRoom.serverInfo, null, 2)
+            {livekitRoom.room.serverInfo
+              ? JSON.stringify(livekitRoom.room.serverInfo, null, 2)
               : "undefined"}
-            {livekitRoom.metadata}
+            {livekitRoom.room.metadata}
           </pre>
         </>
-      ) : null}
+      ))}
       <p>{t("developer_mode.environment_variables")}</p>
       <pre>{JSON.stringify(import.meta.env, null, 2)}</pre>
       <p>{t("developer_mode.url_params")}</p>

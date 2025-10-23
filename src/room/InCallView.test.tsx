@@ -13,18 +13,15 @@ import {
   type MockedFunction,
   vi,
 } from "vitest";
-import { act, render, type RenderResult } from "@testing-library/react";
+import { render, type RenderResult } from "@testing-library/react";
 import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { type LocalParticipant } from "livekit-client";
 import { of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
-import { RoomAndToDeviceEvents } from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 
-import { type MuteStates } from "./MuteStates";
 import { InCallView } from "./InCallView";
 import {
   mockLivekitRoom,
@@ -32,6 +29,7 @@ import {
   mockMatrixRoom,
   mockMatrixRoomMember,
   mockMediaDevices,
+  mockMuteStates,
   mockRemoteParticipant,
   mockRtcMembership,
   type MockRTCSession,
@@ -39,13 +37,9 @@ import {
 import { E2eeType } from "../e2ee/e2eeType";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local } from "../utils/test-fixtures";
-import {
-  developerMode as developerModeSetting,
-  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
-} from "../settings/settings";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
-import { MatrixAudioRenderer } from "../livekit/MatrixAudioRenderer";
+import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
 
@@ -64,6 +58,7 @@ vi.mock("../useAudioContext");
 vi.mock("../tile/GridTile");
 vi.mock("../tile/SpotlightTile");
 vi.mock("@livekit/components-react");
+vi.mock("livekit-client/e2ee-worker?worker");
 vi.mock("../e2ee/sharedKeyManagement");
 vi.mock("../livekit/MatrixAudioRenderer");
 vi.mock("react-use-measure", () => ({
@@ -88,7 +83,7 @@ beforeEach(() => {
 
   // MatrixAudioRenderer is tested separately.
   (
-    MatrixAudioRenderer as MockedFunction<typeof MatrixAudioRenderer>
+    LivekitRoomAudioRenderer as MockedFunction<typeof LivekitRoomAudioRenderer>
   ).mockImplementation((_props) => {
     return <div>mocked: MatrixAudioRenderer</div>;
   });
@@ -111,7 +106,7 @@ function createInCallView(): RenderResult & {
 } {
   const client = {
     getUser: () => null,
-    getUserId: () => localRtcMember.sender,
+    getUserId: () => localRtcMember.userId,
     getDeviceId: () => localRtcMember.deviceId,
     getRoom: (rId) => (rId === roomId ? room : null),
   } as Partial<MatrixClient> as MatrixClient;
@@ -133,10 +128,7 @@ function createInCallView(): RenderResult & {
     } as Partial<RoomState> as RoomState,
   });
 
-  const muteState = {
-    audio: { enabled: false },
-    video: { enabled: false },
-  } as MuteStates;
+  const muteState = mockMuteStates();
   const livekitRoom = mockLivekitRoom(
     {
       localParticipant,
@@ -153,14 +145,14 @@ function createInCallView(): RenderResult & {
       <MediaDevicesContext value={mockMediaDevices({})}>
         <ReactionsSenderProvider
           vm={vm}
-          rtcSession={rtcSession as unknown as MatrixRTCSession}
+          rtcSession={rtcSession.asMockedSession()}
         >
           <TooltipProvider>
             <RoomContext value={livekitRoom}>
               <InCallView
                 client={client}
                 header={HeaderStyle.Standard}
-                rtcSession={rtcSession as unknown as MatrixRTCSession}
+                rtcSession={rtcSession.asMockedSession()}
                 muteStates={muteState}
                 vm={vm}
                 matrixInfo={{
@@ -176,10 +168,6 @@ function createInCallView(): RenderResult & {
                   },
                 }}
                 matrixRoom={room}
-                livekitRoom={livekitRoom}
-                onLeave={function (): void {
-                  throw new Error("Function not implemented.");
-                }}
                 onShareClick={null}
               />
             </RoomContext>
@@ -199,73 +187,6 @@ describe("InCallView", () => {
     it("renders", () => {
       const { container } = createInCallView();
       expect(container).toMatchSnapshot();
-    });
-  });
-  describe("toDevice label", () => {
-    it("is shown if setting activated and room encrypted", () => {
-      useRoomEncryptionSystemMock.mockReturnValue({
-        kind: E2eeType.PER_PARTICIPANT,
-      });
-      useExperimentalToDeviceTransportSetting.setValue(true);
-      developerModeSetting.setValue(true);
-      const { getByText } = createInCallView();
-      expect(getByText("using to Device key transport")).toBeInTheDocument();
-    });
-
-    it("is not shown in unenecrypted room", () => {
-      useRoomEncryptionSystemMock.mockReturnValue({
-        kind: E2eeType.NONE,
-      });
-      useExperimentalToDeviceTransportSetting.setValue(true);
-      developerModeSetting.setValue(true);
-      const { queryByText } = createInCallView();
-      expect(
-        queryByText("using to Device key transport"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("is hidden once fallback was triggered", async () => {
-      useRoomEncryptionSystemMock.mockReturnValue({
-        kind: E2eeType.PER_PARTICIPANT,
-      });
-      useExperimentalToDeviceTransportSetting.setValue(true);
-      developerModeSetting.setValue(true);
-      const { rtcSession, queryByText } = createInCallView();
-      expect(queryByText("using to Device key transport")).toBeInTheDocument();
-      expect(rtcSession).toBeDefined();
-      await act(() =>
-        rtcSession.emit(RoomAndToDeviceEvents.EnabledTransportsChanged, {
-          toDevice: true,
-          room: true,
-        }),
-      );
-      expect(
-        queryByText("using to Device key transport"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("is not shown if setting is disabled", () => {
-      useExperimentalToDeviceTransportSetting.setValue(false);
-      developerModeSetting.setValue(true);
-      useRoomEncryptionSystemMock.mockReturnValue({
-        kind: E2eeType.PER_PARTICIPANT,
-      });
-      const { queryByText } = createInCallView();
-      expect(
-        queryByText("using to Device key transport"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("is not shown if developer mode is disabled", () => {
-      useExperimentalToDeviceTransportSetting.setValue(true);
-      developerModeSetting.setValue(false);
-      useRoomEncryptionSystemMock.mockReturnValue({
-        kind: E2eeType.PER_PARTICIPANT,
-      });
-      const { queryByText } = createInCallView();
-      expect(
-        queryByText("using to Device key transport"),
-      ).not.toBeInTheDocument();
     });
   });
 });

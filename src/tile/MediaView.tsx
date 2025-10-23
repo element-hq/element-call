@@ -32,7 +32,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   video: TrackReferenceOrPlaceholder | undefined;
   videoFit: "cover" | "contain";
   mirror: boolean;
-  member: RoomMember | undefined;
+  member: RoomMember;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
@@ -46,6 +46,8 @@ interface Props extends ComponentProps<typeof animated.div> {
   localParticipant: boolean;
   audioStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
+  // The focus url, mainly for debugging purposes
+  focusUrl?: string;
 }
 
 export const MediaView: FC<Props> = ({
@@ -71,6 +73,7 @@ export const MediaView: FC<Props> = ({
   localParticipant,
   audioStreamStats,
   videoStreamStats,
+  focusUrl,
   ...props
 }) => {
   const { t } = useTranslation();
@@ -134,6 +137,7 @@ export const MediaView: FC<Props> = ({
           <RTCConnectionStats
             audio={audioStreamStats}
             video={videoStreamStats}
+            focusUrl={focusUrl}
           />
         )}
         {/* TODO: Bring this back once encryption status is less broken */}

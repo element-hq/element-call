@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import {
   type SpotlightExpandedLayout,
   type SpotlightExpandedLayoutMedia,
-} from "./CallViewModel";
+} from "./layout-types";
 import { type TileStore } from "./TileStore";
 
 /**

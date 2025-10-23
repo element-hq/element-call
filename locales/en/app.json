@@ -72,12 +72,14 @@
     "livekit_server_info": "LiveKit Server Info",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
+    "multi_sfu": "Multi-SFU media transport",
     "mute_all_audio": "Mute all audio (participants, reactions, join sounds)",
+    "prefer_sticky_events": {
+      "description": "Improves reliability of calls (requires homeserver support)",
+      "label": "Prefer sticky events"
+    },
     "show_connection_stats": "Show connection statistics",
-    "show_non_member_tiles": "Show tiles for non-member media",
-    "url_params": "URL parameters",
-    "use_new_membership_manager": "Use the new implementation of the call MembershipManager",
-    "use_to_device_key_transport": "Use to device key transport. This will fallback to room key transport when another call member sent a room key"
+    "url_params": "URL parameters"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "error": {
@@ -92,7 +94,7 @@
     "generic_description": "Submitting debug logs will help us track down the problem.",
     "insufficient_capacity": "Insufficient capacity",
     "insufficient_capacity_description": "The server has reached its maximum capacity and you cannot join the call at this time. Try again later, or contact your server admin if the problem persists.",
-    "matrix_rtc_focus_missing": "The server is not configured to work with {{brand}}. Please contact your server admin (Domain: {{domain}}, Error Code: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "The server is not configured to work with {{brand}}. Please contact your server admin (Domain: {{domain}}, Error Code: {{ errorCode }}).",
     "open_elsewhere": "Opened in another tab",
     "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page.",
     "room_creation_restricted": "Failed to create call",
