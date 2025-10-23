@@ -283,6 +283,7 @@ self-hosters and developers working with Element Call.
 - [MatrixRTC with Synology Container Manager (Docker)](https://ztfr.de/matrixrtc-with-synology-container-manager-docker/)
 - [Encrypted & Scalable Video Calls: How to deploy an Element Call backend with Synapse Using Docker-Compose](https://willlewis.co.uk/blog/posts/deploy-element-call-backend-with-synapse-and-docker-compose/)
 - [Element Call einrichten: Verschlüsselte Videoanrufe mit Element X und Matrix Synapse](https://www.cleveradmin.de/blog/2025/04/matrixrtc-element-call-backend-einrichten/)
+- [MatrixRTC Back-End for Synapse with Docker Compose and Traefik](https://forge.avontech.net/kstro1/matrixrtc-docker-traefik/)
 
 ## 🛠️ Tools
 
