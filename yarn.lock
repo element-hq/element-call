@@ -2772,12 +2772,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/protocol@npm:1.39.3, @livekit/protocol@npm:^1.38.0":
-  version: 1.39.3
-  resolution: "@livekit/protocol@npm:1.39.3"
+"@livekit/protocol@npm:1.42.2, @livekit/protocol@npm:^1.42.2":
+  version: 1.42.2
+  resolution: "@livekit/protocol@npm:1.42.2"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/192ce7283db4505232aa487e71d08670783a1045a8935926f95ff4b9d3d310db706c2ad4af2ebdb0bd735c2e9042c1ee3b1f62e44a9d01bd41fd58cf8dc272b9
+  checksum: 10c0/73e77e0975d4d8ca0baa23ad03cb9ac3a844e8d89e9cefbd17343131a774c7aeb4d190fd0397152fcf5a396d921af3eb83e83e660a4aa12215d9ac4e52bf037a
   languageName: node
   linkType: hard
 
@@ -7480,7 +7480,7 @@ __metadata:
     "@formatjs/intl-segmenter": "npm:^11.7.3"
     "@livekit/components-core": "npm:^0.12.0"
     "@livekit/components-react": "npm:^2.0.0"
-    "@livekit/protocol": "npm:^1.38.0"
+    "@livekit/protocol": "npm:^1.42.2"
     "@livekit/track-processors": "npm:^0.5.5"
     "@mediapipe/tasks-vision": "npm:^0.10.18"
     "@opentelemetry/api": "npm:^1.4.0"
@@ -9828,6 +9828,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^6.1.0":
+  version: 6.1.0
+  resolution: "jose@npm:6.1.0"
+  checksum: 10c0/f4518579e907317e144facd15c7627acd06097bbea17735097437217498aa419564c039dd4020f6af5f2d024a7cee6b7be4648ccbbdc238aedb80a47c061217d
+  languageName: node
+  linkType: hard
+
 "js-tokens@npm:^3.0.0 || ^4.0.0, js-tokens@npm:^4.0.0":
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
@@ -10103,12 +10110,13 @@ __metadata:
   linkType: hard
 
 "livekit-client@npm:^2.13.0":
-  version: 2.15.7
-  resolution: "livekit-client@npm:2.15.7"
+  version: 2.15.13
+  resolution: "livekit-client@npm:2.15.13"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
-    "@livekit/protocol": "npm:1.39.3"
+    "@livekit/protocol": "npm:1.42.2"
     events: "npm:^3.3.0"
+    jose: "npm:^6.1.0"
     loglevel: "npm:^1.9.2"
     sdp-transform: "npm:^2.15.0"
     ts-debounce: "npm:^4.0.0"
@@ -10117,7 +10125,7 @@ __metadata:
     webrtc-adapter: "npm:^9.0.1"
   peerDependencies:
     "@types/dom-mediacapture-record": ^1
-  checksum: 10c0/17ea084565a4fef31038af4ce1aa6951125dc80b78d6d320789d67bfc544d95b6b661032848221758c9ece6dab6ab0e867da683759f11b0bc65a1d94ab27d185
+  checksum: 10c0/5a061df9000461a6d40ef8aa1e72e8aedc640181cc57fe6f2c48c5c7f90ce96a735b125aede377fc43f4692a685e098f17eeae0f42c5b2fed473305867bf2789
   languageName: node
   linkType: hard
 
