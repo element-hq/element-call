@@ -58,6 +58,7 @@ vi.mock("../useAudioContext");
 vi.mock("../tile/GridTile");
 vi.mock("../tile/SpotlightTile");
 vi.mock("@livekit/components-react");
+vi.mock("livekit-client/e2ee-worker?worker");
 vi.mock("../e2ee/sharedKeyManagement");
 vi.mock("../livekit/MatrixAudioRenderer");
 vi.mock("react-use-measure", () => ({
