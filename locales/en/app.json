@@ -79,8 +79,7 @@
       "label": "Prefer sticky events"
     },
     "show_connection_stats": "Show connection statistics",
-    "url_params": "URL parameters",
-    "use_to_device_key_transport": "Use to device key transport. This will fallback to room key transport when another call member sent a room key"
+    "url_params": "URL parameters"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "error": {
