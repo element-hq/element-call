@@ -281,7 +281,7 @@ interface CallViewModelInputs {
   initialSyncState: SyncState;
 }
 
-function withCallViewModel(
+export function withCallViewModel(
   {
     remoteParticipants$ = constant([]),
     rtcMembers$ = constant([localRtcMember]),
