@@ -1834,7 +1834,9 @@ export class CallViewModel {
           await enterRTCSession(this.matrixRTCSession, advertised.transport, {
             encryptMedia: this.options.encryptionSystem.kind !== E2eeType.NONE,
             useMultiSfu: advertised.multiSfu,
-            preferStickyEvents: advertised.preferStickyEvents,
+            preferStickyEvents:
+              this.urlParams.preferStickyEvents &&
+              advertised.preferStickyEvents,
           });
         } catch (e) {
           logger.error("Error entering RTC session", e);

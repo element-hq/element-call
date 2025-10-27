@@ -141,6 +141,11 @@ export interface UrlProperties {
    * can be "light", "dark", "light-high-contrast" or "dark-high-contrast".
    */
   theme: string | null;
+  /**
+   * Whether or not the call should be held using the sticky event implementation,
+   * where possible.
+   */
+  preferStickyEvents: boolean;
 }
 
 /**
@@ -501,6 +506,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     sentryDsn: parser.getParam("sentryDsn"),
     sentryEnvironment: parser.getParam("sentryEnvironment"),
     e2eEnabled: parser.getFlagParam("enableE2EE", true),
+    preferStickyEvents: parser.getFlagParam("preferStickyEvents", false),
   };
 
   const configuration: Partial<UrlConfiguration> = {
