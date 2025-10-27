@@ -313,7 +313,9 @@ export const GroupCallView: FC<Props> = ({
   const navigate = useNavigate();
 
   const onLeft = useCallback(
-    (reason: "timeout" | "user" | "allOthersLeft" | "decline"): void => {
+    (
+      reason: "timeout" | "user" | "allOthersLeft" | "decline" | "error",
+    ): void => {
       let playSound: CallEventSounds = "left";
       if (reason === "timeout" || reason === "decline") playSound = reason;
 
@@ -366,7 +368,7 @@ export const GroupCallView: FC<Props> = ({
             }
             // On a normal user hangup we can shut down and close the widget. But if an
             // error occurs we should keep the widget open until the user reads it.
-            if (reason === "user" && !getUrlParams().returnToLobby) {
+            if (reason != "error" && !getUrlParams().returnToLobby) {
               try {
                 await widget.api.transport.send(ElementWidgetActions.Close, {});
               } catch (e) {
@@ -518,8 +520,7 @@ export const GroupCallView: FC<Props> = ({
       }}
       onError={
         (/**error*/) => {
-          // TODO this should not be "user". It needs a new case
-          if (rtcSession.isJoined()) onLeft("user");
+          if (rtcSession.isJoined()) onLeft("error");
         }
       }
     >
