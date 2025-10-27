@@ -29,6 +29,7 @@ import userEvent from "@testing-library/user-event";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
+import { type ITransport } from "matrix-widget-api/src/transport/ITransport.ts";
 
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
@@ -43,7 +44,7 @@ import {
   MockRTCSession,
 } from "../utils/test";
 import { GroupCallView } from "./GroupCallView";
-import { type WidgetHelpers } from "../widget";
+import { ElementWidgetActions, type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
@@ -112,6 +113,10 @@ beforeEach(() => {
       return (
         <div>
           <button onClick={() => onLeave("user")}>Leave</button>
+          <button onClick={() => onLeave("allOthersLeft")}>
+            SimulateOtherLeft
+          </button>
+          <button onClick={() => onLeave("error")}>SimulateErrorLeft</button>
         </div>
       );
     },
@@ -241,6 +246,82 @@ test.skip("GroupCallView plays a leave sound synchronously in widget mode", asyn
     expect.any(Promise),
   );
   expect(leaveRTCSession).toHaveBeenCalledOnce();
+});
+
+test("Should close widget when all other left and have time to play a sound", async () => {
+  const user = userEvent.setup();
+  const widgetClosedCalled = Promise.withResolvers<void>();
+  const widgetSendMock = vi.fn().mockImplementation((action: string) => {
+    if (action === ElementWidgetActions.Close) {
+      widgetClosedCalled.resolve();
+    }
+  });
+  const widgetStopMock = vi.fn().mockResolvedValue(undefined);
+  const widget = {
+    api: {
+      setAlwaysOnScreen: vi.fn().mockResolvedValue(true),
+      transport: {
+        send: widgetSendMock,
+        reply: vi.fn().mockResolvedValue(undefined),
+        stop: widgetStopMock,
+      } as unknown as ITransport,
+    } as Partial<WidgetHelpers["api"]>,
+    lazyActions: new LazyEventEmitter(),
+  };
+  const resolvePlaySound = Promise.withResolvers<void>();
+  playSound = vi.fn().mockReturnValue(resolvePlaySound);
+  (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
+    playSound,
+    playSoundLooping: vitest.fn(),
+    soundDuration: {},
+  });
+
+  const { getByText } = createGroupCallView(widget as WidgetHelpers);
+  const leaveButton = getByText("SimulateOtherLeft");
+  await user.click(leaveButton);
+  await flushPromises();
+  expect(widgetSendMock).not.toHaveBeenCalled();
+  resolvePlaySound.resolve();
+  await flushPromises();
+
+  expect(playSound).toHaveBeenCalledWith("left");
+
+  await widgetClosedCalled.promise;
+  await flushPromises();
+  expect(widgetStopMock).toHaveBeenCalledOnce();
+});
+
+
+test("Should not close widget when auto leave due to error", async () => {
+  const user = userEvent.setup();
+
+  const widgetStopMock = vi.fn().mockResolvedValue(undefined);
+  const widget = {
+    api: {
+      setAlwaysOnScreen: vi.fn().mockResolvedValue(true),
+      transport: {
+        send: vi.fn().mockResolvedValue(undefined),
+        reply: vi.fn().mockResolvedValue(undefined),
+        stop: widgetStopMock,
+      } as unknown as ITransport,
+    } as Partial<WidgetHelpers["api"]>,
+    lazyActions: new LazyEventEmitter(),
+  };
+
+  const alwaysOnScreenSpy = vi.spyOn(widget.api, "setAlwaysOnScreen");
+  const transportSendSpy = vi.spyOn(widget.api.transport, "send");
+
+  const { getByText } = createGroupCallView(widget as WidgetHelpers);
+  const leaveButton = getByText("SimulateErrorLeft");
+  await user.click(leaveButton);
+  await flushPromises();
+
+  // When onLeft is called, we first set always on screen to false
+  await waitFor(() => expect(alwaysOnScreenSpy).toHaveBeenCalledWith(false));
+  await flushPromises();
+  // But then we do not close the widget automatically
+  expect(widgetStopMock).not.toHaveBeenCalledOnce();
+  expect(transportSendSpy).not.toHaveBeenCalledOnce();
 });
 
 test.skip("GroupCallView leaves the session when an error occurs", async () => {
