@@ -291,7 +291,6 @@ test("Should close widget when all other left and have time to play a sound", as
   expect(widgetStopMock).toHaveBeenCalledOnce();
 });
 
-
 test("Should not close widget when auto leave due to error", async () => {
   const user = userEvent.setup();
 
