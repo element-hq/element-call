@@ -295,11 +295,12 @@ test("Should not close widget when auto leave due to error", async () => {
   const user = userEvent.setup();
 
   const widgetStopMock = vi.fn().mockResolvedValue(undefined);
+  const widgetSendMock = vi.fn().mockResolvedValue(undefined);
   const widget = {
     api: {
       setAlwaysOnScreen: vi.fn().mockResolvedValue(true),
       transport: {
-        send: vi.fn().mockResolvedValue(undefined),
+        send: widgetSendMock,
         reply: vi.fn().mockResolvedValue(undefined),
         stop: widgetStopMock,
       } as unknown as ITransport,
@@ -308,7 +309,6 @@ test("Should not close widget when auto leave due to error", async () => {
   };
 
   const alwaysOnScreenSpy = vi.spyOn(widget.api, "setAlwaysOnScreen");
-  const transportSendSpy = vi.spyOn(widget.api.transport, "send");
 
   const { getByText } = createGroupCallView(widget as WidgetHelpers);
   const leaveButton = getByText("SimulateErrorLeft");
@@ -320,7 +320,7 @@ test("Should not close widget when auto leave due to error", async () => {
   await flushPromises();
   // But then we do not close the widget automatically
   expect(widgetStopMock).not.toHaveBeenCalledOnce();
-  expect(transportSendSpy).not.toHaveBeenCalledOnce();
+  expect(widgetSendMock).not.toHaveBeenCalledOnce();
 });
 
 test.skip("GroupCallView leaves the session when an error occurs", async () => {
