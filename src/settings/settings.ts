@@ -83,11 +83,6 @@ export const showConnectionStats = new Setting<boolean>(
   false,
 );
 
-export const preferStickyEvents = new Setting<boolean>(
-  "prefer-sticky-events",
-  false,
-);
-
 export const audioInput = new Setting<string | undefined>(
   "audio-input",
   undefined,

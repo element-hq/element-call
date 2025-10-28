@@ -72,11 +72,10 @@
     "livekit_server_info": "LiveKit Server Info",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
-    "multi_sfu": "Multi-SFU media transport",
     "mute_all_audio": "Mute all audio (participants, reactions, join sounds)",
-    "prefer_sticky_events": {
-      "description": "Improves reliability of calls (requires homeserver support)",
-      "label": "Prefer sticky events"
+    "multi_sfu": {
+      "description": "Allows multiple SFUs to be present in a call (requires homeserver support)",
+      "label": "Multi-SFU media transport"
     },
     "show_connection_stats": "Show connection statistics",
     "url_params": "URL parameters"

@@ -29,7 +29,6 @@ import {
   multiSfu as multiSfuSetting,
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
-  preferStickyEvents as preferStickyEventsSetting,
 } from "./settings";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
@@ -58,10 +57,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
         logger.warn("Failed to check if sticky events are supported", ex);
       });
   }, [client]);
-
-  const [preferStickyEvents, setPreferStickyEvents] = useSetting(
-    preferStickyEventsSetting,
-  );
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
@@ -148,22 +143,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
       </FieldRow>
       <FieldRow>
         <InputField
-          id="preferStickyEvents"
-          type="checkbox"
-          label={t("developer_mode.prefer_sticky_events.label")}
-          disabled={!stickyEventsSupported}
-          description={t("developer_mode.prefer_sticky_events.description")}
-          checked={!!preferStickyEvents}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setPreferStickyEvents(event.target.checked);
-            },
-            [setPreferStickyEvents],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
           id="showConnectionStats"
           type="checkbox"
           label={t("developer_mode.show_connection_stats")}
@@ -180,10 +159,10 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
         <InputField
           id="multiSfu"
           type="checkbox"
-          label={t("developer_mode.multi_sfu")}
-          // If using sticky events we implicitly prefer use multi-sfu
-          checked={multiSfu || preferStickyEvents}
-          disabled={preferStickyEvents}
+          label={t("developer_mode.multi_sfu.label")}
+          description={t("developer_mode.multi_sfu.description")}
+          checked={multiSfu}
+          disabled={!stickyEventsSupported}
           onChange={useCallback(
             (event: ChangeEvent<HTMLInputElement>): void => {
               setMultiSfu(event.target.checked);

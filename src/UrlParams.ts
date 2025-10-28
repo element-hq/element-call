@@ -145,7 +145,7 @@ export interface UrlProperties {
    * Whether or not the call should be held using the sticky event implementation,
    * where possible.
    */
-  preferStickyEvents: boolean;
+  multiSFU: boolean;
 }
 
 /**
@@ -506,7 +506,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     sentryDsn: parser.getParam("sentryDsn"),
     sentryEnvironment: parser.getParam("sentryEnvironment"),
     e2eEnabled: parser.getFlagParam("enableE2EE", true),
-    preferStickyEvents: parser.getFlagParam("preferStickyEvents", false),
+    multiSFU: parser.getFlagParam("useMultiSFU", false),
   };
 
   const configuration: Partial<UrlConfiguration> = {

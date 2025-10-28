@@ -91,7 +91,6 @@ import {
   duplicateTiles,
   multiSfu,
   playReactionsSound,
-  preferStickyEvents,
   showReactions,
 } from "../settings/settings";
 import { isFirefox } from "../Platform";
@@ -288,15 +287,10 @@ export class CallViewModel {
       switchMap((joined) =>
         joined
           ? combineLatest(
-              [
-                this.preferredTransport$,
-                this.memberships$,
-                multiSfu.value$,
-                preferStickyEvents.value$,
-              ],
-              (preferred, memberships, preferMultiSfu, preferStickyEvents) => {
+              [this.preferredTransport$, this.memberships$, multiSfu.value$],
+              (preferred, memberships, preferMultiSfu) => {
                 // Multi-SFU must be implicitly enabled when using sticky events
-                const multiSfu = preferStickyEvents || preferMultiSfu;
+                const multiSfu = preferMultiSfu;
 
                 const oldestMembership =
                   this.matrixRTCSession.getOldestMembership();
@@ -333,7 +327,7 @@ export class CallViewModel {
                   remote,
                   preferred,
                   multiSfu,
-                  preferStickyEvents,
+                  preferStickyEvents: multiSfu,
                 };
               },
             )
@@ -1834,9 +1828,8 @@ export class CallViewModel {
           await enterRTCSession(this.matrixRTCSession, advertised.transport, {
             encryptMedia: this.options.encryptionSystem.kind !== E2eeType.NONE,
             useMultiSfu: advertised.multiSfu,
-            preferStickyEvents:
-              this.urlParams.preferStickyEvents &&
-              advertised.preferStickyEvents,
+            // Multi-SFU enables sticky events.
+            preferStickyEvents: advertised.multiSfu ?? this.urlParams.multiSFU,
           });
         } catch (e) {
           logger.error("Error entering RTC session", e);
