@@ -1,0 +1,78 @@
+/*
+Copyright 2025 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import { type Room, type RoomMember, RoomStateEvent } from "matrix-js-sdk";
+import { combineLatest, fromEvent, type Observable, startWith } from "rxjs";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type Room as MatrixRoom } from "matrix-js-sdk/lib/matrix";
+
+import { type ObservableScope } from "../ObservableScope";
+import { calculateDisplayName, shouldDisambiguate } from "../../utils/displayname";
+
+/**
+ * Displayname for each member of the call. This will disambiguate
+ * any displayname that clashes with another member. Only members
+ * joined to the call are considered here.
+ */
+// don't do this work more times than we need to. This is achieved by converting to a behavior:
+export const memberDisplaynames$ = (
+  matrixRoom: Room,
+  memberships$: Observable<CallMembership[]>,
+  scope: ObservableScope,
+  userId: string,
+  deviceId: string,
+) =>
+  scope.behavior(
+    combineLatest(
+      [
+        // Handle call membership changes
+        memberships$,
+        // Additionally handle display name changes (implicitly reacting to them)
+        fromEvent(matrixRoom, RoomStateEvent.Members).pipe(startWith(null)),
+        // TODO: do we need: pauseWhen(this.pretendToBeDisconnected$),
+      ],
+      (memberships, _displaynames) => {
+        const displaynameMap = new Map<string, string>([
+          [
+            `${userId}:${deviceId}`,
+            matrixRoom.getMember(userId)?.rawDisplayName ?? userId,
+          ],
+        ]);
+        const room = matrixRoom;
+
+        // We only consider RTC members for disambiguation as they are the only visible members.
+        for (const rtcMember of memberships) {
+          const matrixIdentifier = `${rtcMember.userId}:${rtcMember.deviceId}`;
+          const { member } = getRoomMemberFromRtcMember(rtcMember, room);
+          if (!member) {
+            logger.error(
+              "Could not find member for media id:",
+              matrixIdentifier,
+            );
+            continue;
+          }
+          const disambiguate = shouldDisambiguate(member, memberships, room);
+          displaynameMap.set(
+            matrixIdentifier,
+            calculateDisplayName(member, disambiguate),
+          );
+        }
+        return displaynameMap;
+      },
+    ),
+  );
+
+export function getRoomMemberFromRtcMember(
+  rtcMember: CallMembership,
+  room: MatrixRoom,
+): { id: string; member: RoomMember | undefined } {
+  return {
+    id: rtcMember.userId + ":" + rtcMember.deviceId,
+    member: room.getMember(rtcMember.userId) ?? undefined,
+  };
+}

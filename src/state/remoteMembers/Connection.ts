@@ -11,7 +11,7 @@ import {
 } from "@livekit/components-core";
 import {
   ConnectionError,
-  type ConnectionState,
+  type ConnectionState as LivekitConenctionState,
   type E2EEOptions,
   type RemoteParticipant,
   Room as LivekitRoom,
@@ -21,21 +21,21 @@ import {
   type CallMembership,
   type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { logger } from "matrix-js-sdk/lib/logger";
 import { BehaviorSubject, combineLatest, type Observable } from "rxjs";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import {
   getSFUConfigWithOpenID,
   type OpenIDClientParts,
   type SFUConfig,
-} from "../livekit/openIDSFU";
-import { type Behavior } from "./Behavior";
-import { type ObservableScope } from "./ObservableScope";
-import { defaultLiveKitOptions } from "../livekit/options";
+} from "../../livekit/openIDSFU.ts";
+import { type Behavior } from "../Behavior.ts";
+import { type ObservableScope } from "../ObservableScope.ts";
+import { defaultLiveKitOptions } from "../../livekit/options.ts";
 import {
   InsufficientCapacityError,
   SFURoomCreationRestrictedError,
-} from "../utils/errors.ts";
+} from "../../utils/errors.ts";
 
 export interface ConnectionOpts {
   /** The media transport to connect to. */
@@ -44,8 +44,14 @@ export interface ConnectionOpts {
   client: OpenIDClientParts;
   /** The observable scope to use for this connection. */
   scope: ObservableScope;
-  /** An observable of the current RTC call memberships and their associated transports. */
-  remoteTransports$: Behavior<
+  /**
+   * An observable of the current RTC call memberships and their associated transports.
+   * Used to differentiate between publishing and subscribging participants on each connection.
+   * Used to find out which rtc member should upload to this connection (publishingParticipants$).
+   * The livekit room gives access to all the users subscribing to this connection, we need
+   * to filter out the ones that are uploading to this connection.
+   */
+  membershipsWithTransport$: Behavior<
     { membership: CallMembership; transport: LivekitTransport }[]
   >;
 
@@ -53,7 +59,7 @@ export interface ConnectionOpts {
   livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
 }
 
-export type TransportState =
+export type ConnectionState =
   | { state: "Initialized" }
   | { state: "FetchingConfig"; transport: LivekitTransport }
   | { state: "ConnectingToLkRoom"; transport: LivekitTransport }
@@ -61,7 +67,7 @@ export type TransportState =
   | { state: "FailedToStart"; error: Error; transport: LivekitTransport }
   | {
       state: "ConnectedToLkRoom";
-      connectionState$: Observable<ConnectionState>;
+      livekitConnectionState$: Observable<LivekitConenctionState>;
       transport: LivekitTransport;
     }
   | { state: "Stopped"; transport: LivekitTransport };
@@ -88,15 +94,14 @@ export type PublishingParticipant = {
  */
 export class Connection {
   // Private Behavior
-  private readonly _transportState$ = new BehaviorSubject<TransportState>({
+  private readonly _state$ = new BehaviorSubject<ConnectionState>({
     state: "Initialized",
   });
 
   /**
    * The current state of the connection to the media transport.
    */
-  public readonly transportState$: Behavior<TransportState> =
-    this._transportState$;
+  public readonly state$: Behavior<ConnectionState> = this._state$;
 
   /**
    * Whether the connection has been stopped.
@@ -118,7 +123,7 @@ export class Connection {
   public async start(): Promise<void> {
     this.stopped = false;
     try {
-      this._transportState$.next({
+      this._state$.next({
         state: "FetchingConfig",
         transport: this.transport,
       });
@@ -126,7 +131,7 @@ export class Connection {
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
-      this._transportState$.next({
+      this._state$.next({
         state: "ConnectingToLkRoom",
         transport: this.transport,
       });
@@ -157,13 +162,13 @@ export class Connection {
       // If we were stopped while connecting, don't proceed to update state.
       if (this.stopped) return;
 
-      this._transportState$.next({
+      this._state$.next({
         state: "ConnectedToLkRoom",
         transport: this.transport,
-        connectionState$: connectionStateObserver(this.livekitRoom),
+        livekitConnectionState$: connectionStateObserver(this.livekitRoom),
       });
     } catch (error) {
-      this._transportState$.next({
+      this._state$.next({
         state: "FailedToStart",
         error: error instanceof Error ? error : new Error(`${error}`),
         transport: this.transport,
@@ -188,7 +193,7 @@ export class Connection {
   public async stop(): Promise<void> {
     if (this.stopped) return;
     await this.livekitRoom.disconnect();
-    this._transportState$.next({
+    this._state$.next({
       state: "Stopped",
       transport: this.transport,
     });
@@ -218,23 +223,22 @@ export class Connection {
   protected constructor(
     public readonly livekitRoom: LivekitRoom,
     opts: ConnectionOpts,
+    logger?: Logger,
   ) {
-    logger.log(
+    logger?.info(
       `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
     );
-    const { transport, client, scope, remoteTransports$ } = opts;
+    const { transport, client, scope, membershipsWithTransport$ } = opts;
 
     this.transport = transport;
     this.client = client;
 
-    const participantsIncludingSubscribers$ = scope.behavior(
-      connectedParticipantsObserver(this.livekitRoom),
-      [],
-    );
+    const participantsIncludingSubscribers$: Behavior<RemoteParticipant[]> =
+      scope.behavior(connectedParticipantsObserver(this.livekitRoom), []);
 
     this.publishingParticipants$ = scope.behavior(
       combineLatest(
-        [participantsIncludingSubscribers$, remoteTransports$],
+        [participantsIncludingSubscribers$, membershipsWithTransport$],
         (participants, remoteTransports) =>
           remoteTransports
             // Find all members that claim to publish on this connection
