@@ -34,17 +34,17 @@ import type {
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   type ConnectionOpts,
-  type TransportState,
+  type ConnectionState,
   type PublishingParticipant,
   RemoteConnection,
 } from "./Connection.ts";
-import { ObservableScope } from "./ObservableScope.ts";
-import { type OpenIDClientParts } from "../livekit/openIDSFU.ts";
-import { FailToGetOpenIdToken } from "../utils/errors.ts";
-import { PublishConnection } from "./PublishConnection.ts";
-import { mockMediaDevices, mockMuteStates } from "../utils/test.ts";
-import type { ProcessorState } from "../livekit/TrackProcessorContext.tsx";
-import { type MuteStates } from "./MuteStates.ts";
+import { ObservableScope } from "../ObservableScope.ts";
+import { type OpenIDClientParts } from "../../livekit/openIDSFU.ts";
+import { FailToGetOpenIdToken } from "../../utils/errors.ts";
+import { PublishConnection } from "../ownMember/PublishConnection.ts";
+import { mockMediaDevices, mockMuteStates } from "../../utils/test.ts";
+import type { ProcessorState } from "../../livekit/TrackProcessorContext.tsx";
+import { type MuteStates } from "../MuteStates.ts";
 
 let testScope: ObservableScope;
 
@@ -161,7 +161,7 @@ describe("Start connection states", () => {
     };
     const connection = new RemoteConnection(opts, undefined);
 
-    expect(connection.transportState$.getValue().state).toEqual("Initialized");
+    expect(connection.state$.getValue().state).toEqual("Initialized");
   });
 
   it("fail to getOpenId token then error state", async () => {
@@ -178,8 +178,8 @@ describe("Start connection states", () => {
 
     const connection = new RemoteConnection(opts, undefined);
 
-    const capturedStates: TransportState[] = [];
-    const s = connection.transportState$.subscribe((value) => {
+    const capturedStates: ConnectionState[] = [];
+    const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -231,8 +231,8 @@ describe("Start connection states", () => {
 
     const connection = new RemoteConnection(opts, undefined);
 
-    const capturedStates: TransportState[] = [];
-    const s = connection.transportState$.subscribe((value) => {
+    const capturedStates: ConnectionState[] = [];
+    const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -288,8 +288,8 @@ describe("Start connection states", () => {
 
     const connection = new RemoteConnection(opts, undefined);
 
-    const capturedStates: TransportState[] = [];
-    const s = connection.transportState$.subscribe((value) => {
+    const capturedStates: ConnectionState[] = [];
+    const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -345,8 +345,8 @@ describe("Start connection states", () => {
 
     const connection = setupRemoteConnection();
 
-    const capturedStates: TransportState[] = [];
-    const s = connection.transportState$.subscribe((value) => {
+    const capturedStates: ConnectionState[] = [];
+    const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -401,7 +401,7 @@ describe("Publishing participants observations", () => {
     const bobIsAPublisher = Promise.withResolvers<void>();
     const danIsAPublisher = Promise.withResolvers<void>();
     const observedPublishers: PublishingParticipant[][] = [];
-    const s = connection.publishingParticipants$.subscribe((publishers) => {
+    const s = connection.allLivekitParticipants$.subscribe((publishers) => {
       observedPublishers.push(publishers);
       if (
         publishers.some(
@@ -538,7 +538,7 @@ describe("Publishing participants observations", () => {
     const connection = setupRemoteConnection();
 
     let observedPublishers: PublishingParticipant[][] = [];
-    const s = connection.publishingParticipants$.subscribe((publishers) => {
+    const s = connection.allLivekitParticipants$.subscribe((publishers) => {
       observedPublishers.push(publishers);
     });
     onTestFinished(() => s.unsubscribe());

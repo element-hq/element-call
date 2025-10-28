@@ -21,19 +21,19 @@ import {
 } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import type { Behavior } from "./Behavior.ts";
-import type { MediaDevices, SelectedDevice } from "./MediaDevices.ts";
-import type { MuteStates } from "./MuteStates.ts";
+import type { Behavior } from "../Behavior.ts";
+import type { MediaDevices, SelectedDevice } from "../MediaDevices.ts";
+import type { MuteStates } from "../MuteStates.ts";
 import {
   type ProcessorState,
   trackProcessorSync,
-} from "../livekit/TrackProcessorContext.tsx";
-import { getUrlParams } from "../UrlParams.ts";
-import { defaultLiveKitOptions } from "../livekit/options.ts";
-import { getValue } from "../utils/observable.ts";
-import { observeTrackReference$ } from "./MediaViewModel.ts";
-import { Connection, type ConnectionOpts } from "./Connection.ts";
-import { type ObservableScope } from "./ObservableScope.ts";
+} from "../../livekit/TrackProcessorContext.tsx";
+import { getUrlParams } from "../../UrlParams.ts";
+import { defaultLiveKitOptions } from "../../livekit/options.ts";
+import { getValue } from "../../utils/observable.ts";
+import { observeTrackReference$ } from "../MediaViewModel.ts";
+import { Connection, type ConnectionOpts } from "../remoteMembers/Connection.ts";
+import { type ObservableScope } from "../ObservableScope.ts";
 
 /**
  * A connection to the local LiveKit room, the one the user is publishing to.
