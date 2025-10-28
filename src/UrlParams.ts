@@ -506,7 +506,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     sentryDsn: parser.getParam("sentryDsn"),
     sentryEnvironment: parser.getParam("sentryEnvironment"),
     e2eEnabled: parser.getFlagParam("enableE2EE", true),
-    multiSFU: parser.getFlagParam("useMultiSFU", false),
+    multiSFU: parser.getFlagParam("multiSFU", false),
   };
 
   const configuration: Partial<UrlConfiguration> = {
