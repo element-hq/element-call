@@ -281,17 +281,13 @@ export class CallViewModel {
     remote: { membership: CallMembership; transport: LivekitTransport }[];
     preferred: Async<LivekitTransport>;
     multiSfu: boolean;
-    preferStickyEvents: boolean;
   } | null> = this.scope.behavior(
     this.joined$.pipe(
       switchMap((joined) =>
         joined
           ? combineLatest(
               [this.preferredTransport$, this.memberships$, multiSfu.value$],
-              (preferred, memberships, preferMultiSfu) => {
-                // Multi-SFU must be implicitly enabled when using sticky events
-                const multiSfu = preferMultiSfu;
-
+              (preferred, memberships, multiSfu) => {
                 const oldestMembership =
                   this.matrixRTCSession.getOldestMembership();
                 const remote = memberships.flatMap((m) => {
@@ -327,7 +323,6 @@ export class CallViewModel {
                   remote,
                   preferred,
                   multiSfu,
-                  preferStickyEvents: multiSfu,
                 };
               },
             )
@@ -362,7 +357,6 @@ export class CallViewModel {
    */
   private readonly advertisedTransport$: Behavior<{
     multiSfu: boolean;
-    preferStickyEvents: boolean;
     transport: LivekitTransport;
   } | null> = this.scope.behavior(
     this.transports$.pipe(
@@ -371,7 +365,6 @@ export class CallViewModel {
         transports.preferred.state === "ready"
           ? {
               multiSfu: transports.multiSfu,
-              preferStickyEvents: transports.preferStickyEvents,
               // In non-multi-SFU mode we should always advertise the preferred
               // SFU to minimize the number of membership updates
               transport: transports.multiSfu
@@ -382,7 +375,6 @@ export class CallViewModel {
       ),
       distinctUntilChanged<{
         multiSfu: boolean;
-        preferStickyEvents: boolean;
         transport: LivekitTransport;
       } | null>(deepCompare),
     ),
