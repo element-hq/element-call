@@ -12,14 +12,12 @@ import {
 import {
   ConnectionError,
   type ConnectionState as LivekitConenctionState,
-  type E2EEOptions,
-  Room as LivekitRoom,
-  type RoomOptions,
+  type Room as LivekitRoom,
   type Participant,
   RoomEvent,
 } from "livekit-client";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, combineLatest, type Observable } from "rxjs";
+import { BehaviorSubject, type Observable } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -29,7 +27,6 @@ import {
 } from "../../livekit/openIDSFU.ts";
 import { type Behavior } from "../Behavior.ts";
 import { type ObservableScope } from "../ObservableScope.ts";
-import { defaultLiveKitOptions } from "../../livekit/options.ts";
 import {
   InsufficientCapacityError,
   SFURoomCreationRestrictedError,
@@ -44,19 +41,9 @@ export interface ConnectionOpts {
   client: OpenIDClientParts;
   /** The observable scope to use for this connection. */
   scope: ObservableScope;
-  /**
-   * An observable of the current RTC call memberships and their associated transports.
-   * Used to differentiate between publishing and subscribging participants on each connection.
-   * Used to find out which rtc member should upload to this connection (publishingParticipants$).
-   * The livekit room gives access to all the users subscribing to this connection, we need
-   * to filter out the ones that are uploading to this connection.
-   */
-  // membershipsWithTransport$: Behavior<
-  //   { membership: CallMembership; transport: LivekitTransport }[]
-  // >;
 
   /** Optional factory to create the LiveKit room, mainly for testing purposes. */
-  livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
+  livekitRoomFactory: () => LivekitRoom;
 }
 
 export type ConnectionState =
@@ -173,6 +160,7 @@ export class Connection {
       this.transport.livekit_alias,
     );
   }
+
   /**
    * Stops the connection.
    *
@@ -195,10 +183,7 @@ export class Connection {
    * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
    */
 
-  public readonly publishingParticipants$: Behavior<PublishingParticipant[]>;
-  public readonly participantsWithPublishTrack$: Behavior<
-    PublishingParticipant[]
-  >;
+  public readonly participantsWithTrack$: Behavior<PublishingParticipant[]>;
 
   /**
    * The media transport to connect to.
@@ -206,6 +191,8 @@ export class Connection {
   public readonly transport: LivekitTransport;
 
   private readonly client: OpenIDClientParts;
+  public readonly livekitRoom: LivekitRoom;
+
   /**
    * Creates a new connection to a matrix RTC LiveKit backend.
    *
@@ -213,20 +200,17 @@ export class Connection {
    * @param opts - Connection options {@link ConnectionOpts}.
    *
    */
-  protected constructor(
-    public readonly livekitRoom: LivekitRoom,
-    opts: ConnectionOpts,
-    logger?: Logger,
-  ) {
+  public constructor(opts: ConnectionOpts, logger?: Logger) {
     logger?.info(
       `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
     );
     const { transport, client, scope } = opts;
 
+    this.livekitRoom = opts.livekitRoomFactory();
     this.transport = transport;
     this.client = client;
 
-    this.participantsWithPublishTrack$ = scope.behavior(
+    this.participantsWithTrack$ = scope.behavior(
       connectedParticipantsObserver(
         this.livekitRoom,
         // VALR: added that while I think about it
@@ -241,32 +225,5 @@ export class Connection {
     );
 
     scope.onEnd(() => void this.stop());
-  }
-}
-
-/**
- * A remote connection to the Matrix RTC LiveKit backend.
- *
- * This connection is used for subscribing to remote participants.
- * It does not publish any local tracks.
- */
-export class RemoteConnection extends Connection {
-  /**
-   * Creates a new remote connection to a matrix RTC LiveKit backend.
-   * @param opts
-   * @param sharedE2eeOption - The shared E2EE options to use for the connection.
-   */
-  public constructor(
-    opts: ConnectionOpts,
-    sharedE2eeOption: E2EEOptions | undefined,
-  ) {
-    const factory =
-      opts.livekitRoomFactory ??
-      ((options: RoomOptions): LivekitRoom => new LivekitRoom(options));
-    const livekitRoom = factory({
-      ...defaultLiveKitOptions,
-      e2ee: sharedE2eeOption,
-    });
-    super(livekitRoom, opts);
   }
 }

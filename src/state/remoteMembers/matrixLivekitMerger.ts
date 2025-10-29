@@ -148,7 +148,7 @@ export class MatrixLivekitMerger {
    * together when it might change together is what you have to do in RxJS to
    * avoid reading inconsistent state or observing too many changes.)
    */
-  private mapMembershipsToMembershipWithTransport$(): Observable<
+  private mapMembershipsToMembershipWithTransport$(): Behavior<
     { membership: CallMembership; transport?: LivekitTransport }[]
   > {
     return this.scope.behavior(
