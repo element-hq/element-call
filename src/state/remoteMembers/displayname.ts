@@ -12,7 +12,11 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { type Room as MatrixRoom } from "matrix-js-sdk/lib/matrix";
 
 import { type ObservableScope } from "../ObservableScope";
-import { calculateDisplayName, shouldDisambiguate } from "../../utils/displayname";
+import {
+  calculateDisplayName,
+  shouldDisambiguate,
+} from "../../utils/displayname";
+import { type Behavior } from "../Behavior";
 
 /**
  * Displayname for each member of the call. This will disambiguate
@@ -21,12 +25,12 @@ import { calculateDisplayName, shouldDisambiguate } from "../../utils/displaynam
  */
 // don't do this work more times than we need to. This is achieved by converting to a behavior:
 export const memberDisplaynames$ = (
+  scope: ObservableScope,
   matrixRoom: Room,
   memberships$: Observable<CallMembership[]>,
-  scope: ObservableScope,
   userId: string,
   deviceId: string,
-) =>
+): Behavior<Map<string, string>> =>
   scope.behavior(
     combineLatest(
       [
