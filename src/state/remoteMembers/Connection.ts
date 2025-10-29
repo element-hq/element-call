@@ -16,8 +16,10 @@ import {
   type RemoteParticipant,
   Room as LivekitRoom,
   type RoomOptions,
+  Participant,
 } from "livekit-client";
 import {
+  ParticipantId,
   type CallMembership,
   type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -36,6 +38,8 @@ import {
   InsufficientCapacityError,
   SFURoomCreationRestrictedError,
 } from "../../utils/errors.ts";
+
+export type PublishingParticipant = Participant;
 
 export interface ConnectionOpts {
   /** The media transport to connect to. */
@@ -71,21 +75,6 @@ export type ConnectionState =
       transport: LivekitTransport;
     }
   | { state: "Stopped"; transport: LivekitTransport };
-
-/**
- * Represents participant publishing or expected to publish on the connection.
- * It is paired with its associated rtc membership.
- */
-export type PublishingParticipant = {
-  /**
-   * The LiveKit participant publishing on this connection, or undefined if the participant is not currently (yet) connected to the livekit room.
-   */
-  participant: RemoteParticipant | undefined;
-  /**
-   * The rtc call membership associated with this participant.
-   */
-  membership: CallMembership;
-};
 
 /**
  * A connection to a Matrix RTC LiveKit backend.
@@ -205,7 +194,11 @@ export class Connection {
    * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
    * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
    */
+
   public readonly publishingParticipants$: Behavior<PublishingParticipant[]>;
+  public readonly participantsWithPublishTrack$: Behavior<
+    PublishingParticipant[]
+  >;
 
   /**
    * The media transport to connect to.
@@ -233,12 +226,15 @@ export class Connection {
     this.transport = transport;
     this.client = client;
 
-    const participantsIncludingSubscribers$: Behavior<RemoteParticipant[]> =
-      scope.behavior(connectedParticipantsObserver(this.livekitRoom), []);
+    this.participantsWithPublishTrack$ = scope.behavior(
+      connectedParticipantsObserver(this.livekitRoom),
+      [],
+    );
 
+    // Legacy using callMemberships
     this.publishingParticipants$ = scope.behavior(
       combineLatest(
-        [participantsIncludingSubscribers$, membershipsWithTransport$],
+        [this.participantsIncludingSubscribers$, membershipsWithTransport$],
         (participants, remoteTransports) =>
           remoteTransports
             // Find all members that claim to publish on this connection
