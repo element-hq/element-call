@@ -13,16 +13,12 @@ import {
   ConnectionError,
   type ConnectionState as LivekitConenctionState,
   type E2EEOptions,
-  type RemoteParticipant,
   Room as LivekitRoom,
   type RoomOptions,
-  Participant,
+  type Participant,
+  RoomEvent,
 } from "livekit-client";
-import {
-  ParticipantId,
-  type CallMembership,
-  type LivekitTransport,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, combineLatest, type Observable } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
@@ -55,9 +51,9 @@ export interface ConnectionOpts {
    * The livekit room gives access to all the users subscribing to this connection, we need
    * to filter out the ones that are uploading to this connection.
    */
-  membershipsWithTransport$: Behavior<
-    { membership: CallMembership; transport: LivekitTransport }[]
-  >;
+  // membershipsWithTransport$: Behavior<
+  //   { membership: CallMembership; transport: LivekitTransport }[]
+  // >;
 
   /** Optional factory to create the LiveKit room, mainly for testing purposes. */
   livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
@@ -106,9 +102,13 @@ export class Connection {
    * 2. Use this token to request the SFU config to the MatrixRtc authentication service.
    * 3. Connect to the configured LiveKit room.
    *
+   * The errors are also represented as a state in the `state$` observable.
+   * It is safe to ignore those errors and handle them accordingly via the `state$` observable.
    * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
    * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
    */
+  // TODO dont make this throw and instead store a connection error state in this class?
+  // TODO consider an autostart pattern...
   public async start(): Promise<void> {
     this.stopped = false;
     try {
@@ -221,35 +221,21 @@ export class Connection {
     logger?.info(
       `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
     );
-    const { transport, client, scope, membershipsWithTransport$ } = opts;
+    const { transport, client, scope } = opts;
 
     this.transport = transport;
     this.client = client;
 
     this.participantsWithPublishTrack$ = scope.behavior(
-      connectedParticipantsObserver(this.livekitRoom),
-      [],
-    );
-
-    // Legacy using callMemberships
-    this.publishingParticipants$ = scope.behavior(
-      combineLatest(
-        [this.participantsIncludingSubscribers$, membershipsWithTransport$],
-        (participants, remoteTransports) =>
-          remoteTransports
-            // Find all members that claim to publish on this connection
-            .flatMap(({ membership, transport }) =>
-              transport.livekit_service_url ===
-              this.transport.livekit_service_url
-                ? [membership]
-                : [],
-            )
-            // Pair with their associated LiveKit participant (if any)
-            .map((membership) => {
-              const id = `${membership.userId}:${membership.deviceId}`;
-              const participant = participants.find((p) => p.identity === id);
-              return { participant, membership };
-            }),
+      connectedParticipantsObserver(
+        this.livekitRoom,
+        // VALR: added that while I think about it
+        {
+          additionalRoomEvents: [
+            RoomEvent.TrackPublished,
+            RoomEvent.TrackUnpublished,
+          ],
+        },
       ),
       [],
     );

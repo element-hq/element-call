@@ -1,12 +1,29 @@
-import { Behavior } from "../Behavior";
+/*
+Copyright 2025 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import { LiveKitReactNativeInfo } from "livekit-client";
+import { Behavior, constant } from "../Behavior";
+import { LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { ConnectionManager } from "../remoteMembers/ConnectionManager";
 
 const ownMembership$ = (
   multiSfu: boolean,
   preferStickyEvents: boolean,
+  connectionManager: ConnectionManager,
+  transport: LivekitTransport,
 ): {
   connected: Behavior<boolean>;
   transport: Behavior<LivekitTransport | null>;
 } => {
+  const connection = connectionManager.registerTransports(
+    constant([transport]),
+  );
+  const publisher = new Publisher(connection);
+
   /**
    * Lists the transports used by ourselves, plus all other MatrixRTC session
    * members. For completeness this also lists the preferred transport and

@@ -23,7 +23,6 @@ import {
   type Room as MatrixRoom,
   RoomEvent,
   type RoomMember,
-  RoomStateEvent,
   SyncState,
 } from "matrix-js-sdk";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
@@ -108,7 +107,6 @@ import {
   type ReactionOption,
 } from "../reactions";
 import { shallowEquals } from "../utils/array";
-import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 import { type MediaDevices } from "./MediaDevices";
 import { type Behavior, constant } from "./Behavior";
 import {
@@ -118,12 +116,12 @@ import {
 } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-import { type Connection, RemoteConnection } from "./remoteMembers/Connection.ts";
+import { type Connection } from "./remoteMembers/Connection.ts";
 import { type MuteStates } from "./MuteStates";
 import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../widget";
-import { PublishConnection } from "./ownMember/PublishConnection.ts";
+import { PublishConnection } from "./ownMember/Publisher.ts";
 import { type Async, async$, mapAsync, ready } from "./Async";
 import { sharingScreen$, UserMedia } from "./UserMedia.ts";
 import { ScreenShare } from "./ScreenShare.ts";
@@ -368,57 +366,6 @@ export class CallViewModel {
         ),
       ),
     );
-
-  /**
-   * Connections for each transport in use by one or more session members that
-   * is *distinct* from the local transport.
-   */
-  // DISCUSSION move to ConnectionManager
-  private readonly remoteConnections$ = this.scope.behavior(
-    generateKeyed$<typeof this.transports$.value, Connection, Connection[]>(
-      this.transports$,
-      (transports, createOrGet) => {
-        const connections: Connection[] = [];
-
-        // Until the local transport becomes ready we have no idea which
-        // transports will actually need a dedicated remote connection
-        if (transports?.local.state === "ready") {
-          // TODO: Handle custom transport.livekit_alias values here
-          const localServiceUrl = transports.local.value.livekit_service_url;
-          const remoteServiceUrls = new Set(
-            transports.remote.map(
-              ({ transport }) => transport.livekit_service_url,
-            ),
-          );
-          remoteServiceUrls.delete(localServiceUrl);
-
-          for (const remoteServiceUrl of remoteServiceUrls)
-            connections.push(
-              createOrGet(
-                remoteServiceUrl,
-                (scope) =>
-                  new RemoteConnection(
-                    {
-                      transport: {
-                        type: "livekit",
-                        livekit_service_url: remoteServiceUrl,
-                        livekit_alias: this.livekitAlias,
-                      },
-                      client: this.matrixRoom.client,
-                      scope,
-                      remoteTransports$: this.remoteTransports$,
-                      livekitRoomFactory: this.options.livekitRoomFactory,
-                    },
-                    this.e2eeLivekitOptions(),
-                  ),
-              ),
-            );
-        }
-
-        return connections;
-      },
-    ),
-  );
 
   /**
    * A list of the connections that should be active at any given time.
