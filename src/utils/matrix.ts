@@ -13,6 +13,7 @@ import {
   MemoryStore,
   Preset,
   Visibility,
+  EventType,
 } from "matrix-js-sdk";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -28,6 +29,10 @@ import {
   type EncryptionSystem,
   saveKeyForRoom,
 } from "../e2ee/sharedKeyManagement";
+import {
+  DefaultCallApplicationSlot,
+  RtcSlotEventContent,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
@@ -236,6 +241,15 @@ export async function createRoom(
     preset: Preset.PublicChat,
     name,
     room_alias_name: e2ee ? undefined : roomAliasLocalpartFromRoomName(name),
+    initial_state: [
+      // Always create a slot
+      {
+        type: EventType.RTCSlot,
+        content: {
+          application: { ...DefaultCallApplicationSlot.application },
+        } satisfies RtcSlotEventContent,
+      },
+    ],
     power_level_content_override: {
       invite: 100,
       kick: 100,
