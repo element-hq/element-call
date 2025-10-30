@@ -139,6 +139,7 @@ import { ObservableScope } from "./ObservableScope.ts";
 import { memberDisplaynames$ } from "./remoteMembers/displayname.ts";
 import { ConnectionManager } from "./remoteMembers/ConnectionManager.ts";
 import { MatrixLivekitMerger } from "./remoteMembers/matrixLivekitMerger.ts";
+import { ownMembership$ } from "./ownMember/OwnMembership.ts";
 
 //TODO
 // Larger rename
@@ -236,6 +237,15 @@ export class CallViewModel {
     this.connectionManager,
     this.matrixRoom,
   );
+
+  private ownMembership = ownMembership$({
+    scope: this.scope,
+    muteStates: this.muteStates,
+    multiSfu: this.multiSfu,
+    mediaDevices: this.mediaDevices,
+    trackProcessorState$: this.trackProcessorState$,
+    e2eeLivekitOptions: this.e2eeLivekitOptions,
+  });
 
   /**
    * If there is a configuration error with the call (e.g. misconfigured E2EE).
@@ -358,45 +368,6 @@ export class CallViewModel {
   //   );
 
   private readonly userId = this.matrixRoom.client.getUserId()!;
-  private readonly deviceId = this.matrixRoom.client.getDeviceId()!;
-
-  /**
-   * Whether we are connected to the MatrixRTC session.
-   */
-  // DISCUSSION own membership manager
-  private readonly matrixConnected$ = this.scope.behavior(
-    // To consider ourselves connected to MatrixRTC, we check the following:
-    and$(
-      // The client is connected to the sync loop
-      (
-        fromEvent(this.matrixRoom.client, ClientEvent.Sync) as Observable<
-          [SyncState]
-        >
-      ).pipe(
-        startWith([this.matrixRoom.client.getSyncState()]),
-        map(([state]) => state === SyncState.Syncing),
-      ),
-      // Room state observed by session says we're connected
-      fromEvent(
-        this.matrixRTCSession,
-        MembershipManagerEvent.StatusChanged,
-      ).pipe(
-        startWith(null),
-        map(() => this.matrixRTCSession.membershipStatus === Status.Connected),
-      ),
-      // Also watch out for warnings that we've likely hit a timeout and our
-      // delayed leave event is being sent (this condition is here because it
-      // provides an earlier warning than the sync loop timeout, and we wouldn't
-      // see the actual leave event until we reconnect to the sync loop)
-      fromEvent(
-        this.matrixRTCSession,
-        MembershipManagerEvent.ProbablyLeft,
-      ).pipe(
-        startWith(null),
-        map(() => this.matrixRTCSession.probablyLeft !== true),
-      ),
-    ),
-  );
 
   /**
    * Whether various media/event sources should pretend to be disconnected from

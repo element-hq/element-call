@@ -25,7 +25,7 @@ export type OpenIDClientParts = Pick<
 export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
   serviceUrl: string,
-  livekitAlias: string,
+  matrixRoomId: string,
 ): Promise<SFUConfig> {
   let openIdToken: IOpenIDToken;
   try {
@@ -43,7 +43,7 @@ export async function getSFUConfigWithOpenID(
   const sfuConfig = await getLiveKitJWT(
     client,
     serviceUrl,
-    livekitAlias,
+    matrixRoomId,
     openIdToken,
   );
   logger.info(`Got JWT from call's active focus URL.`);

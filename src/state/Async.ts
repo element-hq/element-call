@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { catchError, from, map, type Observable, of, startWith } from "rxjs";
+import { Behavior } from "./Behavior";
 
 /**
  * Data that may need to be loaded asynchronously.
@@ -50,4 +51,10 @@ export function mapAsync<A, B>(
   project: (value: A) => B,
 ): Async<B> {
   return async.state === "ready" ? ready(project(async.value)) : async;
+}
+
+export function unwrapAsync<A>(fallback: A): (async: Async<A>) => A {
+  return (async: Async<A>) => {
+    return async.state === "ready" ? async.value : fallback;
+  };
 }

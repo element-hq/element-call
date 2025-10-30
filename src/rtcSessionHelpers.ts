@@ -13,6 +13,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
@@ -23,16 +24,13 @@ import { getSFUConfigWithOpenID } from "./livekit/openIDSFU.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
-export function getLivekitAlias(rtcSession: MatrixRTCSession): string {
-  // For now we assume everything is a room-scoped call
-  return rtcSession.room.roomId;
-}
-
 async function makeTransportInternal(
-  rtcSession: MatrixRTCSession,
+  client: MatrixClient,
+  roomId: string,
 ): Promise<LivekitTransport> {
   logger.log("Searching for a preferred transport");
-  const livekitAlias = getLivekitAlias(rtcSession);
+  //TODO refactor this to use the jwt service returned alias.
+  const livekitAlias = roomId;
 
   // TODO-MULTI-SFU: Either remove this dev tool or make it more official
   const urlFromStorage =
@@ -52,7 +50,7 @@ async function makeTransportInternal(
   }
 
   // Prioritize the .well-known/matrix/client, if available, over the configured SFU
-  const domain = rtcSession.room.client.getDomain();
+  const domain = client.getDomain();
   if (domain) {
     // we use AutoDiscovery instead of relying on the MatrixClient having already
     // been fully configured and started
@@ -85,12 +83,13 @@ async function makeTransportInternal(
 }
 
 export async function makeTransport(
-  rtcSession: MatrixRTCSession,
+  client: MatrixClient,
+  roomId: string,
 ): Promise<LivekitTransport> {
-  const transport = await makeTransportInternal(rtcSession);
+  const transport = await makeTransportInternal(client, roomId);
   // this will call the jwt/sfu/get endpoint to pre create the livekit room.
   await getSFUConfigWithOpenID(
-    rtcSession.room.client,
+    client,
     transport.livekit_service_url,
     transport.livekit_alias,
   );
