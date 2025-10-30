@@ -5,38 +5,23 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type RemoteParticipant,
-  type Participant as LivekitParticipant,
-} from "livekit-client";
+import { type Participant as LivekitParticipant } from "livekit-client";
 import {
   isLivekitTransport,
   type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, map, startWith, type Observable } from "rxjs";
+// eslint-disable-next-line rxjs/no-internal
+import { type HasEventTargetAddRemove } from "rxjs/internal/observable/fromEvent";
 
 import type { Room as MatrixRoom, RoomMember } from "matrix-js-sdk";
 // import type { Logger } from "matrix-js-sdk/lib/logger";
 import { type Behavior } from "../Behavior";
 import { type ObservableScope } from "../ObservableScope";
 import { type ConnectionManager } from "./ConnectionManager";
-import { getRoomMemberFromRtcMember } from "./displayname";
-
-/**
- * Represents participant publishing or expected to publish on the connection.
- * It is paired with its associated rtc membership.
- */
-export type PublishingParticipant = {
-  /**
-   * The LiveKit participant publishing on this connection, or undefined if the participant is not currently (yet) connected to the livekit room.
-   */
-  participant: RemoteParticipant | undefined;
-  /**
-   * The rtc call membership associated with this participant.
-   */
-  membership: CallMembership;
-};
+import { getRoomMemberFromRtcMember, memberDisplaynames$ } from "./displayname";
+import { type Connection } from "./Connection";
 
 /**
  * Represent a matrix call member and his associated livekit participation.
@@ -45,10 +30,16 @@ export type PublishingParticipant = {
  */
 export interface MatrixLivekitItem {
   membership: CallMembership;
-  livekitParticipant?: LivekitParticipant;
-  //TODO Try to remove this! Its waaay to much information
-  // Just use to get the member's avatar
+  displayName: string;
+  participant?: LivekitParticipant;
+  connection?: Connection;
+  /**
+   * TODO Try to remove this! Its waaay to much information.
+   * Just get the member's avatar
+   * @deprecated
+   */
   member?: RoomMember;
+  mxcAvatarUrl?: string;
 }
 
 // Alternative structure idea:
@@ -73,13 +64,17 @@ export class MatrixLivekitMerger {
   // private readonly logger: Logger;
 
   public constructor(
+    private scope: ObservableScope,
     private memberships$: Observable<CallMembership[]>,
     private connectionManager: ConnectionManager,
-    private scope: ObservableScope,
     // TODO this is too much information for that class,
     // apparently needed to get a room member to later get the Avatar
     // => Extract an AvatarService instead?
-    private matrixRoom: MatrixRoom,
+    // Better with just `getMember`
+    private matrixRoom: Pick<MatrixRoom, "getMember"> &
+      HasEventTargetAddRemove<unknown>,
+    private userId: string,
+    private deviceId: string,
     // parentLogger: Logger,
   ) {
     // this.logger = parentLogger.getChild("MatrixLivekitMerger");
@@ -93,6 +88,13 @@ export class MatrixLivekitMerger {
   /// PRIVATES
   // =======================================
   private start$(): Observable<MatrixLivekitItem[]> {
+    const displaynameMap$ = memberDisplaynames$(
+      this.scope,
+      this.matrixRoom,
+      this.memberships$,
+      this.userId,
+      this.deviceId,
+    );
     const membershipsWithTransport$ =
       this.mapMembershipsToMembershipWithTransport$();
 
@@ -101,26 +103,33 @@ export class MatrixLivekitMerger {
     return combineLatest([
       membershipsWithTransport$,
       this.connectionManager.allParticipantsByMemberId$,
+      displaynameMap$,
     ]).pipe(
-      map(([memberships, participantsByMemberId]) => {
-        const items = memberships.map(({ membership, transport }) => {
-          const participantsWithConnection = participantsByMemberId.get(
-            membership.membershipID,
-          );
-          const participant =
-            transport &&
-            participantsWithConnection?.find((p) =>
-              areLivekitTransportsEqual(p.connection.transport, transport),
+      map(([memberships, participantsByMemberId, displayNameMap]) => {
+        const items: MatrixLivekitItem[] = memberships.map(
+          ({ membership, transport }) => {
+            const participantsWithConnection = participantsByMemberId.get(
+              membership.membershipID,
             );
-          return {
-            livekitParticipant: participant,
-            membership,
-            // This makes sense to add the the js-sdk callMembership (we only need the avatar so probably the call memberhsip just should aquire the avatar)
-            member:
-              // Why a member error? if we have a call membership there is a room member
-              getRoomMemberFromRtcMember(membership, this.matrixRoom)?.member,
-          } as MatrixLivekitItem;
-        });
+            const participant =
+              transport &&
+              participantsWithConnection?.find((p) =>
+                areLivekitTransportsEqual(p.connection.transport, transport),
+              );
+            const member = getRoomMemberFromRtcMember(
+              membership,
+              this.matrixRoom,
+            )?.member;
+            return {
+              ...participant,
+              membership,
+              // This makes sense to add the the js-sdk callMembership (we only need the avatar so probably the call memberhsip just should aquire the avatar)
+              member,
+              displayName: displayNameMap.get(membership.membershipID) ?? "---",
+              mxcAvatarUrl: member?.getMxcAvatarUrl(),
+            };
+          },
+        );
         return items;
       }),
     );
