@@ -109,7 +109,8 @@ export class MatrixLivekitMerger {
         const items: MatrixLivekitItem[] = memberships.map(
           ({ membership, transport }) => {
             const participantsWithConnection = participantsByMemberId.get(
-              membership.membershipID,
+              // membership.membershipID, Currently its hardcoded by the jwt service to
+              `${membership.userId}:${membership.deviceId}`,
             );
             const participant =
               transport &&
