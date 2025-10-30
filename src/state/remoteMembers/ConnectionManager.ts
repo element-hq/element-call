@@ -99,7 +99,7 @@ export class ConnectionManager {
   /**
    * Connections for each transport in use by one or more session members.
    */
-  private readonly connections$ = this.scope.behavior(
+  public readonly connections$ = this.scope.behavior(
     generateKeyed$<LivekitTransport[], Connection, Connection[]>(
       this.transports$,
       (transports, createOrGet) => {
@@ -144,22 +144,20 @@ export class ConnectionManager {
    *    the same `transports$` behavior reference.
    * @param transports$ The Behavior containing a list of transports to subscribe to.
    */
-  public registerTransports(
-    transports$: Behavior<LivekitTransport[]>,
-  ): Connection[] {
+  public registerTransports(transports$: Behavior<LivekitTransport[]>): void {
     if (!this.transportsSubscriptions$.value.some((t$) => t$ === transports$)) {
       this.transportsSubscriptions$.next(
         this.transportsSubscriptions$.value.concat(transports$),
       );
     }
-    // After updating the subscriptions our connection list is also updated.
-    return transports$.value
-      .map((transport) => {
-        const isConnectionForTransport = (connection: Connection): boolean =>
-          areLivekitTransportsEqual(connection.transport, transport);
-        return this.connections$.value.find(isConnectionForTransport);
-      })
-      .filter((c) => c !== undefined);
+    // // After updating the subscriptions our connection list is also updated.
+    // return transports$.value
+    //   .map((transport) => {
+    //     const isConnectionForTransport = (connection: Connection): boolean =>
+    //       areLivekitTransportsEqual(connection.transport, transport);
+    //     return this.connections$.value.find(isConnectionForTransport);
+    //   })
+    //   .filter((c) => c !== undefined);
   }
 
   /**
@@ -218,7 +216,7 @@ export class ConnectionManager {
    * Each participant that is found on all connections managed by the manager will be listed.
    *
    * They are stored an a map keyed by `participant.identity`
-   * (which is equivalent to the `member.id` field in the `m.rtc.member` event)
+   * TODO (which is equivalent to the `member.id` field in the `m.rtc.member` event) right now its userId:deviceId
    */
   public allParticipantsByMemberId$ = this.scope.behavior(
     this.allParticipantsWithConnection$.pipe(

@@ -19,10 +19,21 @@ import {
   SyncState,
   type Room as MatrixRoom,
 } from "matrix-js-sdk";
-import { fromEvent, map, type Observable, scan, startWith } from "rxjs";
+import {
+  BehaviorSubject,
+  combineLatest,
+  from,
+  fromEvent,
+  map,
+  type Observable,
+  of,
+  scan,
+  startWith,
+  switchMap,
+} from "rxjs";
 import { multiSfu } from "../../settings/settings";
 import { type Behavior } from "../Behavior";
-import { type ConnectionManager } from "../remoteMembers/ConnectionManager";
+import { ConnectionManager } from "../remoteMembers/ConnectionManager";
 import { makeTransport } from "../../rtcSessionHelpers";
 import { type ObservableScope } from "../ObservableScope";
 import { async$, unwrapAsync } from "../Async";
@@ -31,7 +42,19 @@ import { type MuteStates } from "../MuteStates";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { type MediaDevices } from "../../state/MediaDevices";
 import { and$ } from "../../utils/observable";
+import { areLivekitTransportsEqual } from "../remoteMembers/matrixLivekitMerger";
 
+/*
+ * - get well known
+ * - get oldest membership
+ * - get transport to use
+ * - get openId + jwt token
+ * - wait for createTrack() call
+ *    - create tracks
+ * - wait for join() call
+ *   - Publisher.publishTracks()
+ *   - send join state/sticky event
+ */
 interface Props {
   scope: ObservableScope;
   mediaDevices: MediaDevices;
@@ -71,10 +94,18 @@ export const ownMembership$ = ({
   roomId,
   trackerProcessorState$,
 }: Props): {
-  connected$: Behavior<boolean>;
-  transport$: Behavior<LivekitTransport | null>;
-  publisher: Publisher;
+  // publisher: Publisher
+  requestJoin(): Observable<JoinedStateWithErrors>;
+  startTracks(): Track[];
 } => {
+  // This should be used in a combineLatest with publisher$ to connect.
+  const shouldStartTracks$ = BehaviorSubject(false);
+
+  // to make it possible to call startTracks before the preferredTransport$ has resolved.
+  const startTracks = () => {
+    shouldStartTracks$.next(true);
+  };
+
   const userId = client.getUserId()!;
   const deviceId = client.getDeviceId()!;
   const multiSfu$ = multiSfu.value$;
@@ -82,22 +113,23 @@ export const ownMembership$ = ({
    * The transport that we would personally prefer to publish on (if not for the
    * transport preferences of others, perhaps).
    */
-  const preferredTransport$ = scope.behavior(
-    async$(makeTransport(client, roomId)).pipe(
-      map(unwrapAsync<LivekitTransport | null>(null)),
-    ),
+  const preferredTransport$: Behavior<LivekitTransport> = scope.behavior(
+    from(makeTransport(client, roomId)),
   );
 
-  const connection = connectionManager.registerTransports(
+  connectionManager.registerTransports(
     scope.behavior(preferredTransport$.pipe(map((t) => (t ? [t] : [])))),
-  )[0];
-  if (!connection) {
-    logger.warn(
-      "No connection found when passing transport to connectionManager. transport:",
-      preferredTransport$.value,
-    );
-  }
+  );
 
+  const connection$ = scope.behavior(
+    combineLatest([connectionManager.connections$, preferredTransport$]).pipe(
+      map(([connections, transport]) =>
+        connections.find((connection) =>
+          areLivekitTransportsEqual(connection.transport, transport),
+        ),
+      ),
+    ),
+  );
   /**
    * Whether we are connected to the MatrixRTC session.
    */
@@ -129,6 +161,7 @@ export const ownMembership$ = ({
       ),
     ),
   );
+
   /**
    * Whether we are "fully" connected to the call. Accounts for both the
    * connection to the MatrixRTC session and the LiveKit publish connection.
@@ -136,19 +169,31 @@ export const ownMembership$ = ({
   const connected$ = scope.behavior(
     and$(
       matrixConnected$,
-      connection.state$.pipe(
-        map((state) => state.state === "ConnectedToLkRoom"),
+      connection$.pipe(
+        switchMap((c) =>
+          c
+            ? c.state$.pipe(map((state) => state.state === "ConnectedToLkRoom"))
+            : of(false),
+        ),
       ),
     ),
   );
 
-  const publisher = new Publisher(
-    scope,
-    connection,
-    mediaDevices,
-    muteStates,
-    e2eeLivekitOptions,
-    trackerProcessorState$,
+  const publisher = scope.behavior(
+    connection$.pipe(
+      map((c) =>
+        c
+          ? new Publisher(
+              scope,
+              c,
+              mediaDevices,
+              muteStates,
+              e2eeLivekitOptions,
+              trackerProcessorState$,
+            )
+          : null,
+      ),
+    ),
   );
 
   // HOW IT WAS PREVIEOUSLY CREATED
@@ -171,11 +216,11 @@ export const ownMembership$ = ({
    * null when not joined.
    */
   // DISCUSSION ownMembershipManager
-  const localTransport$: Behavior<Async<LivekitTransport> | null> =
+  const localTransport$: Behavior<LivekitTransport | null> =
     this.scope.behavior(
       this.transports$.pipe(
         map((transports) => transports?.local ?? null),
-        distinctUntilChanged<Async<LivekitTransport> | null>(deepCompare),
+        distinctUntilChanged<LivekitTransport | null>(deepCompare),
       ),
     );
 
