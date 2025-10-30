@@ -41,7 +41,7 @@ function removeHiddenChars(str: string): string {
 export function shouldDisambiguate(
   member: { rawDisplayName?: string; userId: string },
   memberships: CallMembership[],
-  room: Room,
+  room: Pick<Room, "getMember">,
 ): boolean {
   const { rawDisplayName: displayName, userId } = member;
   if (!displayName || displayName === userId) return false;

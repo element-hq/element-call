@@ -42,11 +42,11 @@ export type ParticipantByMemberIdMap = Map<
 export class ConnectionManager {
   private livekitRoomFactory: () => LivekitRoom;
   public constructor(
-    private client: MatrixClient,
     private scope: ObservableScope,
+    private client: MatrixClient,
     private devices: MediaDevices,
-    private processorState: ProcessorState,
-    private e2eeLivekitOptions$: Behavior<E2EEOptions | undefined>,
+    private processorState$: Behavior<ProcessorState>,
+    private e2eeLivekitOptions: E2EEOptions | undefined,
     private logger?: Logger,
     livekitRoomFactory?: () => LivekitRoom,
   ) {
@@ -55,8 +55,8 @@ export class ConnectionManager {
       new LivekitRoom(
         generateRoomOption(
           this.devices,
-          this.processorState,
-          this.e2eeLivekitOptions$.value,
+          this.processorState$.value,
+          this.e2eeLivekitOptions,
         ),
       );
     this.livekitRoomFactory = livekitRoomFactory ?? defaultFactory;

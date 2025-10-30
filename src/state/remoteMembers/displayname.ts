@@ -5,11 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type Room, type RoomMember, RoomStateEvent } from "matrix-js-sdk";
+import { type RoomMember, RoomStateEvent } from "matrix-js-sdk";
 import { combineLatest, fromEvent, type Observable, startWith } from "rxjs";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type Room as MatrixRoom } from "matrix-js-sdk/lib/matrix";
+// eslint-disable-next-line rxjs/no-internal
+import { type HasEventTargetAddRemove } from "rxjs/internal/observable/fromEvent";
 
 import { type ObservableScope } from "../ObservableScope";
 import {
@@ -22,11 +24,13 @@ import { type Behavior } from "../Behavior";
  * Displayname for each member of the call. This will disambiguate
  * any displayname that clashes with another member. Only members
  * joined to the call are considered here.
+ *
+ * @returns Map<member.id, displayname> uses the rtc member idenitfier as the key.
  */
 // don't do this work more times than we need to. This is achieved by converting to a behavior:
 export const memberDisplaynames$ = (
   scope: ObservableScope,
-  matrixRoom: Room,
+  matrixRoom: Pick<MatrixRoom, "getMember"> & HasEventTargetAddRemove<unknown>,
   memberships$: Observable<CallMembership[]>,
   userId: string,
   deviceId: string,
@@ -73,7 +77,7 @@ export const memberDisplaynames$ = (
 
 export function getRoomMemberFromRtcMember(
   rtcMember: CallMembership,
-  room: MatrixRoom,
+  room: Pick<MatrixRoom, "getMember">,
 ): { id: string; member: RoomMember | undefined } {
   return {
     id: rtcMember.userId + ":" + rtcMember.deviceId,
