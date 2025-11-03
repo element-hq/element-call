@@ -13,7 +13,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, map, startWith, type Observable } from "rxjs";
 // eslint-disable-next-line rxjs/no-internal
-import { type HasEventTargetAddRemove } from "rxjs/internal/observable/fromEvent";
+import { type NodeStyleEventEmitter } from "rxjs/src/internal/observable/fromEvent.ts";
 
 import type { Room as MatrixRoom, RoomMember } from "matrix-js-sdk";
 // import type { Logger } from "matrix-js-sdk/lib/logger";
@@ -71,8 +71,7 @@ export class MatrixLivekitMerger {
     // apparently needed to get a room member to later get the Avatar
     // => Extract an AvatarService instead?
     // Better with just `getMember`
-    private matrixRoom: Pick<MatrixRoom, "getMember"> &
-      HasEventTargetAddRemove<unknown>,
+    private matrixRoom: Pick<MatrixRoom, "getMember"> & NodeStyleEventEmitter,
     private userId: string,
     private deviceId: string,
     // parentLogger: Logger,
@@ -102,28 +101,32 @@ export class MatrixLivekitMerger {
 
     return combineLatest([
       membershipsWithTransport$,
-      this.connectionManager.allParticipantsByMemberId$,
+      this.connectionManager.connectionManagerData$,
       displaynameMap$,
     ]).pipe(
-      map(([memberships, participantsByMemberId, displayNameMap]) => {
+      map(([memberships, managerData, displayNameMap]) => {
         const items: MatrixLivekitItem[] = memberships.map(
           ({ membership, transport }) => {
-            const participantsWithConnection = participantsByMemberId.get(
-              // membership.membershipID, Currently its hardcoded by the jwt service to
-              `${membership.userId}:${membership.deviceId}`,
+            // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
+            const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
+
+            const participants = transport
+              ? managerData.getParticipantForTransport(transport)
+              : [];
+            const participant = participants.find(
+              (p) => p.identity == participantId,
             );
-            const participant =
-              transport &&
-              participantsWithConnection?.find((p) =>
-                areLivekitTransportsEqual(p.connection.transport, transport),
-              );
             const member = getRoomMemberFromRtcMember(
               membership,
               this.matrixRoom,
             )?.member;
+            const connection = transport
+              ? managerData.getConnectionForTransport(transport)
+              : undefined;
             return {
-              ...participant,
+              participant,
               membership,
+              connection,
               // This makes sense to add the the js-sdk callMembership (we only need the avatar so probably the call memberhsip just should aquire the avatar)
               member,
               displayName: displayNameMap.get(membership.membershipID) ?? "---",

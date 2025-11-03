@@ -2,6 +2,7 @@
 // - make ConnectionManager its own actual class
 
 /*
+Copyright 2025 Element Creations Ltd.
 Copyright 2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
@@ -14,52 +15,84 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, combineLatest, map, switchMap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
-import {
-  type E2EEOptions,
-  Room as LivekitRoom,
-  type Participant as LivekitParticipant,
-  type RoomOptions,
-} from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk";
+import { type Participant as LivekitParticipant } from "livekit-client";
 
 import { type Behavior } from "../Behavior";
-import { Connection } from "./Connection";
+import { type Connection } from "./Connection";
 import { type ObservableScope } from "../ObservableScope";
 import { generateKeyed$ } from "../../utils/observable";
 import { areLivekitTransportsEqual } from "./matrixLivekitMerger";
-import { getUrlParams } from "../../UrlParams";
-import { type ProcessorState } from "../../livekit/TrackProcessorContext";
-import { type MediaDevices } from "../MediaDevices";
-import { defaultLiveKitOptions } from "../../livekit/options";
+import { type ConnectionFactory } from "./ConnectionFactory.ts";
 
-export type ParticipantByMemberIdMap = Map<
-  ParticipantId,
-  // It can be an array because a bad behaving client could be publishingParticipants$
-  // multiple times to several livekit rooms.
-  { participant: LivekitParticipant; connection: Connection }[]
->;
+export class ConnectionManagerData {
+  private readonly store: Map<string, [Connection, LivekitParticipant[]]> =
+    new Map();
+
+  public constructor() {}
+
+  public add(connection: Connection, participants: LivekitParticipant[]): void {
+    const key = this.getKey(connection.transport);
+    const existing = this.store.get(key);
+    if (!existing) {
+      this.store.set(key, [connection, participants]);
+    } else {
+      existing[1].push(...participants);
+    }
+  }
+
+  private getKey(transport: LivekitTransport): string {
+    return transport.livekit_service_url + "|" + transport.livekit_alias;
+  }
+
+  public getConnections(): Connection[] {
+    return Array.from(this.store.values()).map(([connection]) => connection);
+  }
+
+  public getConnectionForTransport(
+    transport: LivekitTransport,
+  ): Connection | undefined {
+    return this.store.get(this.getKey(transport))?.[0];
+  }
+
+  public getParticipantForTransport(
+    transport: LivekitTransport,
+  ): LivekitParticipant[] {
+    const key = transport.livekit_service_url + "|" + transport.livekit_alias;
+    const existing = this.store.get(key);
+    if (existing) {
+      return existing[1];
+    }
+    return [];
+  }
+  /**
+   * Get all connections where the given participant is publishing.
+   * In theory, there could be several connections where the same participant is publishing but with
+   * only well behaving clients a participant should only be publishing on a single connection.
+   * @param participantId
+   */
+  public getConnectionsForParticipant(
+    participantId: ParticipantId,
+  ): Connection[] {
+    const connections: Connection[] = [];
+    for (const [connection, participants] of this.store.values()) {
+      if (participants.some((p) => p.identity === participantId)) {
+        connections.push(connection);
+      }
+    }
+    return connections;
+  }
+}
+
 // TODO - write test for scopes (do we really need to bind scope)
 export class ConnectionManager {
-  private livekitRoomFactory: () => LivekitRoom;
+  private readonly logger: Logger;
+
   public constructor(
-    private scope: ObservableScope,
-    private client: MatrixClient,
-    private devices: MediaDevices,
-    private processorState$: Behavior<ProcessorState>,
-    private e2eeLivekitOptions: E2EEOptions | undefined,
-    private logger?: Logger,
-    livekitRoomFactory?: () => LivekitRoom,
+    private readonly scope: ObservableScope,
+    private readonly connectionFactory: ConnectionFactory,
+    logger: Logger,
   ) {
-    this.scope = scope;
-    const defaultFactory = (): LivekitRoom =>
-      new LivekitRoom(
-        generateRoomOption(
-          this.devices,
-          this.processorState$.value,
-          this.e2eeLivekitOptions,
-        ),
-      );
-    this.livekitRoomFactory = livekitRoomFactory ?? defaultFactory;
+    this.logger = logger.getChild("ConnectionManager");
   }
 
   /**
@@ -94,6 +127,7 @@ export class ConnectionManager {
         ),
       ),
     ),
+    [],
   );
 
   /**
@@ -108,26 +142,23 @@ export class ConnectionManager {
             transport: LivekitTransport,
           ): ((scope: ObservableScope) => Connection) =>
           (scope) => {
-            const connection = new Connection(
-              {
-                transport,
-                client: this.client,
-                scope: scope,
-                livekitRoomFactory: this.livekitRoomFactory,
-              },
+            const connection = this.connectionFactory.createConnection(
+              transport,
+              scope,
               this.logger,
             );
+            // Start the connection immediately
+            // Use connection state to track connection progress
             void connection.start();
+            // TODO subscribe to connection state to retry or log issues?
             return connection;
           };
 
-        const connections = transports.map((transport) => {
+        return transports.map((transport) => {
           const key =
             transport.livekit_service_url + "|" + transport.livekit_alias;
           return createOrGet(key, createConnection(transport));
         });
-
-        return connections;
       },
     ),
   );
@@ -186,67 +217,39 @@ export class ConnectionManager {
     this.transportsSubscriptions$.next([]);
   }
 
-  // We have a lost of connections, for each of these these
-  // connection we create a stream of (participant, connection) tuples.
-  // Then we combine the several streams (1 per Connection) into a single stream of tuples.
-  private allParticipantsWithConnection$ = this.scope.behavior(
-    this.connections$.pipe(
-      switchMap((connections) => {
-        const listsOfParticipantWithConnection = connections.map(
-          (connection) => {
-            return connection.participantsWithTrack$.pipe(
-              map((participants) =>
-                participants.map((p) => ({
-                  participant: p,
+  public connectionManagerData$: Behavior<ConnectionManagerData> =
+    this.scope.behavior(
+      this.connections$.pipe(
+        switchMap((connections) => {
+          // Map the connections to list of (connection, participant[])[] tuples
+          const listOfConnectionsWithPublishingParticipants = connections.map(
+            (connection) => {
+              return connection.participantsWithTrack$.pipe(
+                map((participants): [Connection, LivekitParticipant[]] => [
                   connection,
-                })),
-              ),
-            );
-          },
-        );
-        return combineLatest(listsOfParticipantWithConnection).pipe(
-          map((lists) => lists.flatMap((list) => list)),
-        );
-      }),
-    ),
-  );
-
-  /**
-   * This field makes the connection manager to behave as close to a single SFU as possible.
-   * Each participant that is found on all connections managed by the manager will be listed.
-   *
-   * They are stored an a map keyed by `participant.identity`
-   * TODO (which is equivalent to the `member.id` field in the `m.rtc.member` event) right now its userId:deviceId
-   */
-  public allParticipantsByMemberId$ = this.scope.behavior(
-    this.allParticipantsWithConnection$.pipe(
-      map((participantsWithConnections) => {
-        const participantsByMemberId = participantsWithConnections.reduce(
-          (acc, test) => {
-            const { participant, connection } = test;
-            if (participant.getTrackPublications().length > 0) {
-              const currentVal = acc.get(participant.identity);
-              if (!currentVal) {
-                acc.set(participant.identity, [{ connection, participant }]);
-              } else {
-                // already known
-                // This is for users publishing on several SFUs
-                currentVal.push({ connection, participant });
-                this.logger?.info(
-                  `Participant ${participant.identity} is publishing on several SFUs ${currentVal.map((v) => v.connection.transport.livekit_service_url).join(", ")}`,
-                );
-              }
-            }
-            return acc;
-          },
-          new Map() as ParticipantByMemberIdMap,
-        );
-
-        return participantsByMemberId;
-      }),
-    ),
-  );
+                  participants,
+                ]),
+              );
+            },
+          );
+          // combineLatest the several streams into a single stream with the ConnectionManagerData
+          return combineLatest(
+            listOfConnectionsWithPublishingParticipants,
+          ).pipe(
+            map((lists) =>
+              lists.reduce((data, [connection, participants]) => {
+                data.add(connection, participants);
+                return data;
+              }, new ConnectionManagerData()),
+            ),
+          );
+        }),
+      ),
+      // start empty
+      new ConnectionManagerData(),
+    );
 }
+
 function removeDuplicateTransports(
   transports: LivekitTransport[],
 ): LivekitTransport[] {
@@ -255,38 +258,4 @@ function removeDuplicateTransports(
       acc.push(transport);
     return acc;
   }, [] as LivekitTransport[]);
-}
-
-/**
- *  Generate the initial LiveKit RoomOptions based on the current media devices and processor state.
- */
-function generateRoomOption(
-  devices: MediaDevices,
-  processorState: ProcessorState,
-  e2eeLivekitOptions: E2EEOptions | undefined,
-): RoomOptions {
-  const { controlledAudioDevices } = getUrlParams();
-  return {
-    ...defaultLiveKitOptions,
-    videoCaptureDefaults: {
-      ...defaultLiveKitOptions.videoCaptureDefaults,
-      deviceId: devices.videoInput.selected$.value?.id,
-      processor: processorState.processor,
-    },
-    audioCaptureDefaults: {
-      ...defaultLiveKitOptions.audioCaptureDefaults,
-      deviceId: devices.audioInput.selected$.value?.id,
-    },
-    audioOutput: {
-      // When using controlled audio devices, we don't want to set the
-      // deviceId here, because it will be set by the native app.
-      // (also the id does not need to match a browser device id)
-      deviceId: controlledAudioDevices
-        ? undefined
-        : devices.audioOutput.selected$.value?.id,
-    },
-    e2ee: e2eeLivekitOptions,
-    // TODO test and consider this:
-    // webAudioMix: true,
-  };
 }
