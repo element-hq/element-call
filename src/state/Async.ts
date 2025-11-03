@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { catchError, from, map, type Observable, of, startWith } from "rxjs";
-import { Behavior } from "./Behavior";
 
 /**
  * Data that may need to be loaded asynchronously.

@@ -8,23 +8,23 @@ import { map, type Observable, of, type SchedulerLike } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, type MockedObject, onTestFinished, vi, vitest } from "vitest";
 import {
-  type RoomMember,
-  type Room as MatrixRoom,
   MatrixEvent,
+  type Room as MatrixRoom,
   type Room,
+  type RoomMember,
   TypedEventEmitter,
 } from "matrix-js-sdk";
 import {
   CallMembership,
-  type Transport,
+  type LivekitFocusSelection,
+  type LivekitTransport,
+  type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
   MembershipManagerEvent,
   type SessionMembershipData,
   Status,
-  type LivekitFocusSelection,
-  type MatrixRTCSession,
-  type LivekitTransport,
+  type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import {
