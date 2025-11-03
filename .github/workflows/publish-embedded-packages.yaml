@@ -100,7 +100,7 @@ jobs:
       ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
     permissions:
       contents: read
-      id-token: write # required for the provenance flag on npm publish
+      id-token: write # Allow npm to authenticate as a trusted publisher
     steps:
       - name: Checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -126,8 +126,6 @@ jobs:
           npm version ${{ needs.versioning.outputs.PREFIXED_VERSION }} --no-git-tag-version
           echo "ARTIFACT_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
           npm publish --provenance --access public --tag ${{ needs.versioning.outputs.TAG }} ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
 
       - id: artifact_version
         name: Output artifact version
