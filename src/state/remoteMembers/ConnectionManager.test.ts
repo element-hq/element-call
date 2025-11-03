@@ -14,12 +14,11 @@ import { type Participant as LivekitParticipant } from "livekit-client";
 import { ObservableScope } from "../ObservableScope.ts";
 import {
   ConnectionManager,
-  type ConnectionManagerData,
 } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { areLivekitTransportsEqual } from "./matrixLivekitMerger.ts";
-import { flushPromises } from "../../utils/test.ts";
+import { flushPromises, withTestScheduler } from "../../utils/test.ts";
 
 // Some test constants
 
@@ -213,95 +212,79 @@ describe("connectionManagerData$ stream", () => {
   });
 
   test("Should report connections with the publishing participants", async () => {
-    const managerDataUpdates: ConnectionManagerData[] = [];
-    manager.connectionManagerData$.subscribe((data) => {
-      managerDataUpdates.push(data);
+    withTestScheduler(({ expectObservable, schedule, cold, behavior }) => {
+      manager.registerTransports(
+        behavior("a", {
+          a: [TRANSPORT_1, TRANSPORT_2],
+        }),
+      );
+      const conn1Participants$ = fakePublishingParticipantsStreams.get(
+        keyForTransport(TRANSPORT_1),
+      )!;
+
+      schedule("-a-b", {
+        a: () => {
+          conn1Participants$.next([
+            { identity: "user1A" } as LivekitParticipant,
+          ]);
+        },
+        b: () => {
+          conn1Participants$.next([
+            { identity: "user1A" } as LivekitParticipant,
+            { identity: "user1B" } as LivekitParticipant,
+          ]);
+        },
+      });
+
+      const conn2Participants$ = fakePublishingParticipantsStreams.get(
+        keyForTransport(TRANSPORT_2),
+      )!;
+
+      schedule("--a", {
+        a: () => {
+          conn2Participants$.next([
+            { identity: "user2A" } as LivekitParticipant,
+          ]);
+        },
+      });
+
+      expectObservable(manager.connectionManagerData$).toBe("abcd", {
+        a: expect.toSatisfy((data) => {
+          return (
+            data.getConnections().length == 2 &&
+            data.getParticipantForTransport(TRANSPORT_1).length == 0 &&
+            data.getParticipantForTransport(TRANSPORT_2).length == 0
+          );
+        }),
+        b: expect.toSatisfy((data) => {
+          return  (
+            data.getConnections().length == 2 &&
+            data.getParticipantForTransport(TRANSPORT_1).length == 1 &&
+            data.getParticipantForTransport(TRANSPORT_2).length == 0 &&
+            data.getParticipantForTransport(TRANSPORT_1)[0].identity == "user1A"
+          );
+        }),
+        c: expect.toSatisfy((data) => {
+          return  (
+            data.getConnections().length == 2 &&
+            data.getParticipantForTransport(TRANSPORT_1).length == 1 &&
+            data.getParticipantForTransport(TRANSPORT_2).length == 1 &&
+            data.getParticipantForTransport(TRANSPORT_1)[0].identity == "user1A"&&
+            data.getParticipantForTransport(TRANSPORT_2)[0].identity == "user2A"
+          );
+        }),
+        d: expect.toSatisfy((data) => {
+          return  (
+            data.getConnections().length == 2 &&
+            data.getParticipantForTransport(TRANSPORT_1).length == 2 &&
+            data.getParticipantForTransport(TRANSPORT_2).length == 1 &&
+            data.getParticipantForTransport(TRANSPORT_1)[0].identity == "user1A"&&
+            data.getParticipantForTransport(TRANSPORT_1)[1].identity == "user1B"&&
+            data.getParticipantForTransport(TRANSPORT_2)[0].identity == "user2A"
+          );
+        }),
+      });
     });
-
-    testTransportStream$.next([TRANSPORT_1, TRANSPORT_2]);
-    await flushPromises();
-
-    const conn1Participants$ = fakePublishingParticipantsStreams.get(
-      keyForTransport(TRANSPORT_1),
-    )!;
-
-    conn1Participants$.next([{ identity: "user1A" } as LivekitParticipant]);
-
-    const conn2Participants$ = fakePublishingParticipantsStreams.get(
-      keyForTransport(TRANSPORT_2),
-    )!;
-    conn2Participants$.next([{ identity: "user2A" } as LivekitParticipant]);
-
-    conn1Participants$.next([
-      { identity: "user1A" } as LivekitParticipant,
-      { identity: "user1B" } as LivekitParticipant,
-    ]);
-
-    testTransportStream$.next([TRANSPORT_1, TRANSPORT_2, TRANSPORT_3]);
-
-    expect(managerDataUpdates[0].getConnections().length).toEqual(0);
-
-    {
-      const data = managerDataUpdates[1];
-      expect(data.getConnections().length).toEqual(2);
-      expect(data.getParticipantForTransport(TRANSPORT_1).length).toEqual(0);
-      expect(data.getParticipantForTransport(TRANSPORT_1).length).toEqual(0);
-    }
-
-    {
-      const data = managerDataUpdates[2];
-      expect(data.getConnections().length).toEqual(2);
-      expect(data.getParticipantForTransport(TRANSPORT_1).length).toEqual(1);
-      expect(data.getParticipantForTransport(TRANSPORT_1)[0].identity).toEqual(
-        "user1A",
-      );
-      expect(data.getParticipantForTransport(TRANSPORT_2).length).toEqual(0);
-    }
-    {
-      const data = managerDataUpdates[3];
-      expect(data.getConnections().length).toEqual(2);
-      expect(data.getParticipantForTransport(TRANSPORT_1).length).toEqual(1);
-      expect(data.getParticipantForTransport(TRANSPORT_1)[0].identity).toEqual(
-        "user1A",
-      );
-      expect(data.getParticipantForTransport(TRANSPORT_2).length).toEqual(1);
-      expect(data.getParticipantForTransport(TRANSPORT_2)[0].identity).toEqual(
-        "user2A",
-      );
-    }
-
-    {
-      const data = managerDataUpdates[4];
-      expect(data.getConnections().length).toEqual(2);
-      expect(data.getParticipantForTransport(TRANSPORT_1).length).toEqual(2);
-      expect(data.getParticipantForTransport(TRANSPORT_1)[0].identity).toEqual(
-        "user1A",
-      );
-      expect(data.getParticipantForTransport(TRANSPORT_1)[1].identity).toEqual(
-        "user1B",
-      );
-      expect(data.getParticipantForTransport(TRANSPORT_2).length).toEqual(1);
-      expect(data.getParticipantForTransport(TRANSPORT_2)[0].identity).toEqual(
-        "user2A",
-      );
-    }
-
-    {
-      const data = managerDataUpdates[5];
-      expect(data.getConnections().length).toEqual(3);
-      expect(data.getParticipantForTransport(TRANSPORT_1).length).toEqual(2);
-      expect(data.getParticipantForTransport(TRANSPORT_1)[0].identity).toEqual(
-        "user1A",
-      );
-      expect(data.getParticipantForTransport(TRANSPORT_1)[1].identity).toEqual(
-        "user1B",
-      );
-      expect(data.getParticipantForTransport(TRANSPORT_2).length).toEqual(1);
-      expect(data.getParticipantForTransport(TRANSPORT_2)[0].identity).toEqual(
-        "user2A",
-      );
-
-      expect(data.getParticipantForTransport(TRANSPORT_3).length).toEqual(0);
-    }
   });
+
 });
