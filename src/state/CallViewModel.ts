@@ -134,7 +134,7 @@ import {
   type SpotlightLandscapeLayoutMedia,
   type SpotlightPortraitLayoutMedia,
 } from "./layout-types.ts";
-import { ElementCallError, UnknownCallError } from "../utils/errors.ts";
+import { type ElementCallError, UnknownCallError } from "../utils/errors.ts";
 import { ObservableScope } from "./ObservableScope.ts";
 import { memberDisplaynames$ } from "./remoteMembers/displayname.ts";
 import { ConnectionManager } from "./remoteMembers/ConnectionManager.ts";

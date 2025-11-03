@@ -17,7 +17,6 @@ import {
 } from "vitest";
 import { BehaviorSubject, of } from "rxjs";
 import {
-  ConnectionState as LivekitConnectionState,
   type LocalParticipant,
   type RemoteParticipant,
   type Room as LivekitRoom,
@@ -36,7 +35,6 @@ import {
   type ConnectionOpts,
   type ConnectionState,
   type PublishingParticipant,
-  Connection,
 } from "./Connection.ts";
 import { ObservableScope } from "../ObservableScope.ts";
 import { type OpenIDClientParts } from "../../livekit/openIDSFU.ts";

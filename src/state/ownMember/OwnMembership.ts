@@ -31,9 +31,10 @@ import {
   startWith,
   switchMap,
 } from "rxjs";
+
 import { multiSfu } from "../../settings/settings";
 import { type Behavior } from "../Behavior";
-import { ConnectionManager } from "../remoteMembers/ConnectionManager";
+import { type ConnectionManager } from "../remoteMembers/ConnectionManager";
 import { makeTransport } from "../../rtcSessionHelpers";
 import { type ObservableScope } from "../ObservableScope";
 import { async$, unwrapAsync } from "../Async";
