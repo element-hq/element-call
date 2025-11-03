@@ -106,7 +106,7 @@ export function withTestScheduler(
   continuation: (helpers: OurRunHelpers) => void,
 ): void {
   const scheduler = new TestScheduler((actual, expected) => {
-    expect(actual).deep.equals(expected);
+    expect(actual).toStrictEqual(expected);
   });
   const scope = new ObservableScope();
   // we set the test scheduler as a global so that you can watch it in a debugger
