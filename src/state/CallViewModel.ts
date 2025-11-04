@@ -121,7 +121,7 @@ import { type MuteStates } from "./MuteStates";
 import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../widget";
-import { PublishConnection } from "./ownMember/Publisher.ts";
+import { PublishConnection } from "./localMember/Publisher.ts";
 import { type Async, async$, mapAsync, ready } from "./Async";
 import { sharingScreen$, UserMedia } from "./UserMedia.ts";
 import { ScreenShare } from "./ScreenShare.ts";
@@ -139,7 +139,10 @@ import { ObservableScope } from "./ObservableScope.ts";
 import { memberDisplaynames$ } from "./remoteMembers/displayname.ts";
 import { ConnectionManager } from "./remoteMembers/ConnectionManager.ts";
 import { MatrixLivekitMerger } from "./remoteMembers/matrixLivekitMerger.ts";
-import { ownMembership$ } from "./ownMember/OwnMembership.ts";
+import { ownMembership$ } from "./localMember/LocalMembership.ts";
+import { localTransport$ as computeLocalTransport$ } from "./localMember/LocalTransport.ts";
+import { sessionBehaviors$ } from "./SessionBehaviors.ts";
+import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
 
 //TODO
 // Larger rename
@@ -197,6 +200,8 @@ type MediaItem = UserMedia | ScreenShare;
 export class CallViewModel {
   private readonly urlParams = getUrlParams();
 
+  private readonly userId = this.matrixRoom.client.getUserId()!;
+  private readonly deviceId = this.matrixRoom.client.getDeviceId()!;
   private readonly livekitAlias = getLivekitAlias(this.matrixRTCSession);
 
   private readonly livekitE2EEKeyProvider = getE2eeKeyProvider(
@@ -214,31 +219,52 @@ export class CallViewModel {
   private readonly _configError$ = new BehaviorSubject<ElementCallError | null>(
     null,
   );
+  private sessionBehaviors = sessionBehaviors$(
+    this.scope,
+    this.matrixRTCSession,
+  );
+  private memberships$ = this.sessionBehaviors.memberships$;
 
-  private memberships$ = this.scope.behavior(
-    fromEvent(
-      this.matrixRTCSession,
-      MatrixRTCSessionEvent.MembershipsChanged,
-      (_, memberships: CallMembership[]) => memberships,
+  private localTransport$ = computeLocalTransport$({
+    scope: this.scope,
+    memberships$: this.memberships$,
+    client: this.matrixRoom.client,
+    roomId: this.matrixRoom.roomId,
+    useOldestMember$: multiSfu.value$,
+  });
+
+  private connectionFactory = new ECConnectionFactory(
+    this.matrixRoom.client,
+    this.mediaDevices,
+    this.trackProcessorState$,
+    this.e2eeLivekitOptions(),
+    getUrlParams().controlledAudioDevices,
+  );
+
+  private allTransports$ = this.scope.behavior(
+    combineLatest(
+      [this.localTransport$, this.sessionBehaviors.transports$],
+      (l, t) => [...(l ? [l] : []), ...t],
     ),
   );
 
   private connectionManager = new ConnectionManager(
     this.scope,
-    this.matrixRoom.client,
-    this.mediaDevices,
-    this.trackProcessorState$,
-    this.e2eeLivekitOptions(),
+    this.connectionFactory,
+    this.allTransports$,
+    logger,
   );
 
   private matrixLivekitMerger = new MatrixLivekitMerger(
     this.scope,
-    this.memberships$,
+    this.sessionBehaviors.membershipsWithTransport$,
     this.connectionManager,
     this.matrixRoom,
+    this.userId,
+    this.deviceId,
   );
 
-  private ownMembership = ownMembership$({
+  private localMembership = this.localMembership$({
     scope: this.scope,
     muteStates: this.muteStates,
     multiSfu: this.multiSfu,
@@ -247,6 +273,7 @@ export class CallViewModel {
     e2eeLivekitOptions: this.e2eeLivekitOptions,
   });
 
+  private matrixLivekitItems$ = this.matrixLivekitMerger.matrixLivekitItems$;
   /**
    * If there is a configuration error with the call (e.g. misconfigured E2EE).
    * This is a fatal error that prevents the call from being created/joined.
@@ -289,60 +316,27 @@ export class CallViewModel {
     ),
   );
 
-  /**
-   * The transport that we would personally prefer to publish on (if not for the
-   * transport preferences of others, perhaps).
-   */
-  // DISCUSS move to ownMembership
-  private readonly preferredTransport$ = this.scope.behavior(
-    async$(makeTransport(this.matrixRTCSession)),
-  );
+  // /**
+  //  * The transport that we would personally prefer to publish on (if not for the
+  //  * transport preferences of others, perhaps).
+  //  */
+  // // DISCUSS move to ownMembership
+  // private readonly preferredTransport$ = this.scope.behavior(
+  //   async$(makeTransport(this.matrixRTCSession)),
+  // );
 
-  /**
-   * The transport over which we should be actively publishing our media.
-   * null when not joined.
-   */
-  // DISCUSSION ownMembershipManager
-  private readonly localTransport$: Behavior<Async<LivekitTransport> | null> =
-    this.scope.behavior(
-      this.transports$.pipe(
-        map((transports) => transports?.local ?? null),
-        distinctUntilChanged<Async<LivekitTransport> | null>(deepCompare),
-      ),
-    );
-
-  /**
-   * The transport we should advertise in our MatrixRTC membership (plus whether
-   * it is a multi-SFU transport and whether we should use sticky events).
-   */
-  // DISCUSSION ownMembershipManager
-  private readonly advertisedTransport$: Behavior<{
-    multiSfu: boolean;
-    preferStickyEvents: boolean;
-    transport: LivekitTransport;
-  } | null> = this.scope.behavior(
-    this.transports$.pipe(
-      map((transports) =>
-        transports?.local.state === "ready" &&
-        transports.preferred.state === "ready"
-          ? {
-              multiSfu: transports.multiSfu,
-              preferStickyEvents: transports.preferStickyEvents,
-              // In non-multi-SFU mode we should always advertise the preferred
-              // SFU to minimize the number of membership updates
-              transport: transports.multiSfu
-                ? transports.local.value
-                : transports.preferred.value,
-            }
-          : null,
-      ),
-      distinctUntilChanged<{
-        multiSfu: boolean;
-        preferStickyEvents: boolean;
-        transport: LivekitTransport;
-      } | null>(deepCompare),
-    ),
-  );
+  // /**
+  //  * The transport over which we should be actively publishing our media.
+  //  * null when not joined.
+  //  */
+  // // DISCUSSION ownMembershipManager
+  // private readonly localTransport$: Behavior<Async<LivekitTransport> | null> =
+  //   this.scope.behavior(
+  //     this.transports$.pipe(
+  //       map((transports) => transports?.local ?? null),
+  //       distinctUntilChanged<Async<LivekitTransport> | null>(deepCompare),
+  //     ),
+  //   );
 
   // // DISCUSSION move to ConnectionManager
   // public readonly livekitConnectionState$ =
@@ -366,8 +360,6 @@ export class CallViewModel {
   //       ),
   //     ),
   //   );
-
-  private readonly userId = this.matrixRoom.client.getUserId()!;
 
   /**
    * Whether various media/event sources should pretend to be disconnected from
