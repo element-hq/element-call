@@ -221,14 +221,14 @@ export class ConnectionManager {
     this.scope.behavior(
       this.connections$.pipe(
         switchMap((connections) => {
-          // Map the connections to list of (connection, participant[])[] tuples
+          // Map the connections to list of {connection, participants}[]
           const listOfConnectionsWithPublishingParticipants = connections.map(
             (connection) => {
               return connection.participantsWithTrack$.pipe(
-                map((participants): [Connection, LivekitParticipant[]] => [
+                map((participants) => ({
                   connection,
                   participants,
-                ]),
+                })),
               );
             },
           );
@@ -237,7 +237,7 @@ export class ConnectionManager {
             listOfConnectionsWithPublishingParticipants,
           ).pipe(
             map((lists) =>
-              lists.reduce((data, [connection, participants]) => {
+              lists.reduce((data, { connection, participants }) => {
                 data.add(connection, participants);
                 return data;
               }, new ConnectionManagerData()),
