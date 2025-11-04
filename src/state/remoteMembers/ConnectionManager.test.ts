@@ -12,9 +12,7 @@ import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type Participant as LivekitParticipant } from "livekit-client";
 
 import { ObservableScope } from "../ObservableScope.ts";
-import {
-  ConnectionManager,
-} from "./ConnectionManager.ts";
+import { ConnectionManager } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { areLivekitTransportsEqual } from "./matrixLivekitMerger.ts";
@@ -34,11 +32,11 @@ const TRANSPORT_2: LivekitTransport = {
   livekit_alias: "!alias:sample.com",
 };
 
-const TRANSPORT_3: LivekitTransport = {
-  type: "livekit",
-  livekit_service_url: "https://lk-other.sample.com",
-  livekit_alias: "!alias:sample.com",
-};
+// const TRANSPORT_3: LivekitTransport = {
+//   type: "livekit",
+//   livekit_service_url: "https://lk-other.sample.com",
+//   livekit_alias: "!alias:sample.com",
+// };
 
 let testScope: ObservableScope;
 let fakeConnectionFactory: ConnectionFactory;
@@ -211,8 +209,8 @@ describe("connectionManagerData$ stream", () => {
       );
   });
 
-  test("Should report connections with the publishing participants", async () => {
-    withTestScheduler(({ expectObservable, schedule, cold, behavior }) => {
+  test("Should report connections with the publishing participants", () => {
+    withTestScheduler(({ expectObservable, schedule, behavior }) => {
       manager.registerTransports(
         behavior("a", {
           a: [TRANSPORT_1, TRANSPORT_2],
@@ -257,7 +255,7 @@ describe("connectionManagerData$ stream", () => {
           );
         }),
         b: expect.toSatisfy((data) => {
-          return  (
+          return (
             data.getConnections().length == 2 &&
             data.getParticipantForTransport(TRANSPORT_1).length == 1 &&
             data.getParticipantForTransport(TRANSPORT_2).length == 0 &&
@@ -265,26 +263,28 @@ describe("connectionManagerData$ stream", () => {
           );
         }),
         c: expect.toSatisfy((data) => {
-          return  (
+          return (
             data.getConnections().length == 2 &&
             data.getParticipantForTransport(TRANSPORT_1).length == 1 &&
             data.getParticipantForTransport(TRANSPORT_2).length == 1 &&
-            data.getParticipantForTransport(TRANSPORT_1)[0].identity == "user1A"&&
+            data.getParticipantForTransport(TRANSPORT_1)[0].identity ==
+              "user1A" &&
             data.getParticipantForTransport(TRANSPORT_2)[0].identity == "user2A"
           );
         }),
         d: expect.toSatisfy((data) => {
-          return  (
+          return (
             data.getConnections().length == 2 &&
             data.getParticipantForTransport(TRANSPORT_1).length == 2 &&
             data.getParticipantForTransport(TRANSPORT_2).length == 1 &&
-            data.getParticipantForTransport(TRANSPORT_1)[0].identity == "user1A"&&
-            data.getParticipantForTransport(TRANSPORT_1)[1].identity == "user1B"&&
+            data.getParticipantForTransport(TRANSPORT_1)[0].identity ==
+              "user1A" &&
+            data.getParticipantForTransport(TRANSPORT_1)[1].identity ==
+              "user1B" &&
             data.getParticipantForTransport(TRANSPORT_2)[0].identity == "user2A"
           );
         }),
       });
     });
   });
-
 });
