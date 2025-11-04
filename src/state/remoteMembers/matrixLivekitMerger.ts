@@ -177,6 +177,7 @@ export class MatrixLivekitMerger {
           });
         }),
       ),
+      [],
     );
   }
 }

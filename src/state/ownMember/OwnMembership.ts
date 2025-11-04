@@ -5,8 +5,7 @@ SPDX-License-IdFentifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type E2EEOptions } from "livekit-client";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { type E2EEOptions, type Track } from "livekit-client";
 import {
   type LivekitTransport,
   type MatrixRTCSession,
@@ -22,6 +21,7 @@ import {
 import {
   BehaviorSubject,
   combineLatest,
+  distinctUntilChanged,
   from,
   fromEvent,
   map,
@@ -31,19 +31,20 @@ import {
   startWith,
   switchMap,
 } from "rxjs";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { multiSfu } from "../../settings/settings";
 import { type Behavior } from "../Behavior";
 import { type ConnectionManager } from "../remoteMembers/ConnectionManager";
 import { makeTransport } from "../../rtcSessionHelpers";
 import { type ObservableScope } from "../ObservableScope";
-import { async$, unwrapAsync } from "../Async";
 import { Publisher } from "./Publisher";
 import { type MuteStates } from "../MuteStates";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { type MediaDevices } from "../../state/MediaDevices";
 import { and$ } from "../../utils/observable";
 import { areLivekitTransportsEqual } from "../remoteMembers/matrixLivekitMerger";
+import { type ElementCallError } from "../../utils/errors.ts";
 
 /*
  * - get well known
@@ -69,6 +70,10 @@ interface Props {
   e2eeLivekitOptions: E2EEOptions | undefined;
   trackerProcessorState$: Behavior<ProcessorState>;
 }
+
+export type JoinedState =
+  | { state: "Initialized" }
+  | { state: "Error"; error: ElementCallError };
 
 /**
  * This class is responsible for managing the own membership in a room.
@@ -96,11 +101,11 @@ export const ownMembership$ = ({
   trackerProcessorState$,
 }: Props): {
   // publisher: Publisher
-  requestJoin(): Observable<JoinedStateWithErrors>;
+  requestJoin$(): Observable<JoinedState>;
   startTracks(): Track[];
 } => {
   // This should be used in a combineLatest with publisher$ to connect.
-  const shouldStartTracks$ = BehaviorSubject(false);
+  const shouldStartTracks$ = new BehaviorSubject(false);
 
   // to make it possible to call startTracks before the preferredTransport$ has resolved.
   const startTracks = () => {

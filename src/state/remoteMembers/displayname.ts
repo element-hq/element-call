@@ -6,7 +6,13 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type RoomMember, RoomStateEvent } from "matrix-js-sdk";
-import { combineLatest, fromEvent, type Observable, startWith } from "rxjs";
+import {
+  combineLatest,
+  fromEvent,
+  map,
+  type Observable,
+  startWith,
+} from "rxjs";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type Room as MatrixRoom } from "matrix-js-sdk/lib/matrix";
@@ -36,15 +42,14 @@ export const memberDisplaynames$ = (
   deviceId: string,
 ): Behavior<Map<string, string>> =>
   scope.behavior(
-    combineLatest(
-      [
-        // Handle call membership changes
-        memberships$,
-        // Additionally handle display name changes (implicitly reacting to them)
-        fromEvent(matrixRoom, RoomStateEvent.Members).pipe(startWith(null)),
-        // TODO: do we need: pauseWhen(this.pretendToBeDisconnected$),
-      ],
-      (memberships, _displaynames) => {
+    combineLatest([
+      // Handle call membership changes
+      memberships$,
+      // Additionally handle display name changes (implicitly reacting to them)
+      fromEvent(matrixRoom, RoomStateEvent.Members).pipe(startWith(null)),
+      // TODO: do we need: pauseWhen(this.pretendToBeDisconnected$),
+    ]).pipe(
+      map((memberships, _displaynames) => {
         const displaynameMap = new Map<string, string>([
           [
             `${userId}:${deviceId}`,
@@ -71,8 +76,9 @@ export const memberDisplaynames$ = (
           );
         }
         return displaynameMap;
-      },
+      }),
     ),
+    new Map<string, string>(),
   );
 
 export function getRoomMemberFromRtcMember(

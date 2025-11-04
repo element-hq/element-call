@@ -211,16 +211,12 @@ export class Connection {
     this.client = client;
 
     this.participantsWithTrack$ = scope.behavior(
-      connectedParticipantsObserver(
-        this.livekitRoom,
-        // VALR: added that while I think about it
-        {
-          additionalRoomEvents: [
-            RoomEvent.TrackPublished,
-            RoomEvent.TrackUnpublished,
-          ],
-        },
-      ),
+      connectedParticipantsObserver(this.livekitRoom, {
+        additionalRoomEvents: [
+          RoomEvent.TrackPublished,
+          RoomEvent.TrackUnpublished,
+        ],
+      }),
       [],
     );
 
