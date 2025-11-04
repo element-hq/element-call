@@ -7,13 +7,12 @@ Please see LICENSE in the repository root for full details.
 
 import { type Participant as LivekitParticipant } from "livekit-client";
 import {
-  isLivekitTransport,
   type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, map, startWith, type Observable } from "rxjs";
 // eslint-disable-next-line rxjs/no-internal
-import { type NodeStyleEventEmitter } from "rxjs/src/internal/observable/fromEvent.ts";
+import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
 
 import type { Room as MatrixRoom, RoomMember } from "matrix-js-sdk";
 // import type { Logger } from "matrix-js-sdk/lib/logger";
@@ -65,7 +64,9 @@ export class MatrixLivekitMerger {
 
   public constructor(
     private scope: ObservableScope,
-    private memberships$: Observable<CallMembership[]>,
+    private membershipsWithTransport$: Behavior<
+      { membership: CallMembership; transport?: LivekitTransport }[]
+    >,
     private connectionManager: ConnectionManager,
     // TODO this is too much information for that class,
     // apparently needed to get a room member to later get the Avatar
@@ -90,14 +91,13 @@ export class MatrixLivekitMerger {
     const displaynameMap$ = memberDisplaynames$(
       this.scope,
       this.matrixRoom,
-      this.memberships$,
+      this.membershipsWithTransport$.pipe(
+        map((v) => v.map((v) => v.membership)),
+      ),
       this.userId,
       this.deviceId,
     );
-    const membershipsWithTransport$ =
-      this.mapMembershipsToMembershipWithTransport$();
-
-    this.startFeedingConnectionManager(membershipsWithTransport$);
+    const membershipsWithTransport$ = this.membershipsWithTransport$;
 
     return combineLatest([
       membershipsWithTransport$,
@@ -136,48 +136,6 @@ export class MatrixLivekitMerger {
         );
         return items;
       }),
-    );
-  }
-
-  private startFeedingConnectionManager(
-    membershipsWithTransport$: Behavior<
-      { membership: CallMembership; transport?: LivekitTransport }[]
-    >,
-  ): void {
-    const transports$ = this.scope.behavior(
-      membershipsWithTransport$.pipe(
-        map((mts) => mts.flatMap(({ transport: t }) => (t ? [t] : []))),
-      ),
-    );
-    // duplicated transports will be elimiated by the connection manager
-    this.connectionManager.registerTransports(transports$);
-  }
-
-  /**
-   * Lists the transports used by ourselves, plus all other MatrixRTC session
-   * members. For completeness this also lists the preferred transport and
-   * whether we are in multi-SFU mode or sticky events mode (because
-   * advertisedTransport$ wants to read them at the same time, and bundling data
-   * together when it might change together is what you have to do in RxJS to
-   * avoid reading inconsistent state or observing too many changes.)
-   */
-  private mapMembershipsToMembershipWithTransport$(): Behavior<
-    { membership: CallMembership; transport?: LivekitTransport }[]
-  > {
-    return this.scope.behavior(
-      this.memberships$.pipe(
-        map((memberships) => {
-          return memberships.map((membership) => {
-            const oldestMembership = memberships[0] ?? membership;
-            const transport = membership.getTransport(oldestMembership);
-            return {
-              membership,
-              transport: isLivekitTransport(transport) ? transport : undefined,
-            };
-          });
-        }),
-      ),
-      [],
     );
   }
 }

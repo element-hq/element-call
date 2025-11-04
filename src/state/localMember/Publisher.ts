@@ -89,7 +89,7 @@ export class Publisher {
    * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
    * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
    */
-  public async createAndSetupTracks(): Promise<void> {
+  public async createAndSetupTracks(): Promise<LocalTrack[]> {
     const lkRoom = this.connection.livekitRoom;
     // Observe mute state changes and update LiveKit microphone/camera states accordingly
     this.observeMuteStates(this.scope);
@@ -125,6 +125,7 @@ export class Publisher {
         video,
       });
     }
+    return this.tracks;
   }
 
   public async startPublishing(): Promise<LocalTrack[]> {

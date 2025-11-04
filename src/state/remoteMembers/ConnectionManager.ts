@@ -87,28 +87,30 @@ export class ConnectionManagerData {
 export class ConnectionManager {
   private readonly logger: Logger;
 
+  private running$ = new BehaviorSubject(true);
+  /**
+   * Crete a `ConnectionManager`
+   * @param scope the observable scope used by this object.
+   * @param connectionFactory used to create new connections.
+   * @param _transportsSubscriptions$ A list of Behaviors each containing a LIST of LivekitTransport.
+   *   Each of these behaviors can be interpreted as subscribed list of transports.
+   *
+   *   Using `registerTransports` independent external modules can control what connections
+   *   are created by the ConnectionManager.
+   *
+   *   The connection manager will remove all duplicate transports in each subscibed list.
+   *
+   *   See `unregisterAllTransports` and `unregisterTransport` for details on how to unsubscribe.
+   */
   public constructor(
     private readonly scope: ObservableScope,
     private readonly connectionFactory: ConnectionFactory,
+    private readonly inputTransports$: Behavior<LivekitTransport[]>,
     logger: Logger,
   ) {
     this.logger = logger.getChild("ConnectionManager");
+    scope.onEnd(() => this.running$.next(false));
   }
-
-  /**
-   * A list of Behaviors each containing a LIST of LivekitTransport.
-   * Each of these behaviors can be interpreted as subscribed list of transports.
-   *
-   * Using `registerTransports` independent external modules can control what connections
-   * are created by the ConnectionManager.
-   *
-   * The connection manager will remove all duplicate transports in each subscibed list.
-   *
-   * See `unregisterAllTransports` and `unregisterTransport` for details on how to unsubscribe.
-   */
-  private readonly transportsSubscriptions$ = new BehaviorSubject<
-    Behavior<LivekitTransport[]>[]
-  >([]);
 
   /**
    * All transports currently managed by the ConnectionManager.
@@ -119,15 +121,10 @@ export class ConnectionManager {
    * externally this is modified via `registerTransports()`.
    */
   private readonly transports$ = this.scope.behavior(
-    this.transportsSubscriptions$.pipe(
-      switchMap((subscriptions) =>
-        combineLatest(subscriptions).pipe(
-          map((transportsNested) => transportsNested.flat()),
-          map(removeDuplicateTransports),
-        ),
-      ),
+    combineLatest([this.running$, this.inputTransports$]).pipe(
+      map(([running, transports]) => (running ? transports : [])),
+      map(removeDuplicateTransports),
     ),
-    [],
   );
 
   /**
@@ -162,60 +159,6 @@ export class ConnectionManager {
       },
     ),
   );
-
-  /**
-   * Add an a Behavior containing a list of transports to this ConnectionManager.
-   *
-   * The intended usage is:
-   *  - create a ConnectionManager
-   *  - register one `transports$` behavior using registerTransports
-   *  - add new connections to the `ConnectionManager` by updating the `transports$` behavior
-   *  - remove a single connection by removing the transport.
-   *  - remove this subscription by calling `unregisterTransports` and passing
-   *    the same `transports$` behavior reference.
-   * @param transports$ The Behavior containing a list of transports to subscribe to.
-   */
-  public registerTransports(transports$: Behavior<LivekitTransport[]>): void {
-    if (!this.transportsSubscriptions$.value.some((t$) => t$ === transports$)) {
-      this.transportsSubscriptions$.next(
-        this.transportsSubscriptions$.value.concat(transports$),
-      );
-    }
-    // // After updating the subscriptions our connection list is also updated.
-    // return transports$.value
-    //   .map((transport) => {
-    //     const isConnectionForTransport = (connection: Connection): boolean =>
-    //       areLivekitTransportsEqual(connection.transport, transport);
-    //     return this.connections$.value.find(isConnectionForTransport);
-    //   })
-    //   .filter((c) => c !== undefined);
-  }
-
-  /**
-   * Unsubscribe from the given transports.
-   * @param transports$ The behavior to unsubscribe from
-   * @returns
-   */
-  public unregisterTransports(
-    transports$: Behavior<LivekitTransport[]>,
-  ): boolean {
-    const subscriptions = this.transportsSubscriptions$.value;
-    const subscriptionsUnregistered = subscriptions.filter(
-      (t$) => t$ !== transports$,
-    );
-    const canUnregister =
-      subscriptions.length !== subscriptionsUnregistered.length;
-    if (canUnregister)
-      this.transportsSubscriptions$.next(subscriptionsUnregistered);
-    return canUnregister;
-  }
-
-  /**
-   * Unsubscribe from all transports.
-   */
-  public unregisterAllTransports(): void {
-    this.transportsSubscriptions$.next([]);
-  }
 
   public connectionManagerData$: Behavior<ConnectionManagerData> =
     this.scope.behavior(
