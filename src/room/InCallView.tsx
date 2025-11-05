@@ -138,7 +138,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       },
       reactionsReader.raisedHands$,
       reactionsReader.reactions$,
-      trackProcessorState$,
+      scope.behavior(trackProcessorState$),
     );
     setVm(vm);
 
@@ -247,7 +247,7 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
-  const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
+  // const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
   const audioParticipants = useBehavior(vm.audioParticipants$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
@@ -841,7 +841,8 @@ export const InCallView: FC<InCallViewProps> = ({
             onDismiss={closeSettings}
             tab={settingsTab}
             onTabChange={setSettingsTab}
-            livekitRooms={allLivekitRooms}
+            // TODO expose correct data to setttings modal
+            livekitRooms={[]}
           />
         </>
       )}

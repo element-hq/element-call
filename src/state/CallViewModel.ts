@@ -21,7 +21,6 @@ import {
   RoomEvent,
 } from "matrix-js-sdk";
 import {
-  BehaviorSubject,
   combineLatest,
   concat,
   distinctUntilChanged,
@@ -38,7 +37,6 @@ import {
   of,
   pairwise,
   race,
-  repeat,
   scan,
   skip,
   skipWhile,
@@ -93,7 +91,6 @@ import {
 import { shallowEquals } from "../utils/array";
 import { type MediaDevices } from "./MediaDevices";
 import { type Behavior, constant } from "./Behavior";
-import { enterRTCSession } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 import { type MuteStates } from "./MuteStates";
@@ -112,12 +109,12 @@ import {
   type SpotlightPortraitLayoutMedia,
 } from "./layout-types.ts";
 import { type ElementCallError } from "../utils/errors.ts";
-import { ObservableScope } from "./ObservableScope.ts";
+import { type ObservableScope } from "./ObservableScope.ts";
 import { ConnectionManager } from "./remoteMembers/ConnectionManager.ts";
 import { MatrixLivekitMerger } from "./remoteMembers/matrixLivekitMerger.ts";
 import {
   localMembership$,
-  LocalMemberState,
+  type LocalMemberState,
 } from "./localMember/LocalMembership.ts";
 import { localTransport$ as computeLocalTransport$ } from "./localMember/LocalTransport.ts";
 import { sessionBehaviors$ } from "./SessionBehaviors.ts";
@@ -195,10 +192,10 @@ export class CallViewModel {
       }
     : undefined;
 
-  private sessionBehaviors = sessionBehaviors$(
-    this.scope,
-    this.matrixRTCSession,
-  );
+  private sessionBehaviors = sessionBehaviors$({
+    scope: this.scope,
+    matrixRTCSession: this.matrixRTCSession,
+  });
   private memberships$ = this.sessionBehaviors.memberships$;
 
   private localTransport$ = computeLocalTransport$({
@@ -211,6 +208,8 @@ export class CallViewModel {
     ),
   });
 
+  // ------------------------------------------------------------------------
+
   private connectionFactory = new ECConnectionFactory(
     this.matrixRoom.client,
     this.mediaDevices,
@@ -219,10 +218,14 @@ export class CallViewModel {
     getUrlParams().controlledAudioDevices,
   );
 
+  // Can contain duplicates. The connection manager will take care of this.
   private allTransports$ = this.scope.behavior(
     combineLatest(
       [this.localTransport$, this.sessionBehaviors.transports$],
-      (l, t) => [...(l ? [l] : []), ...t],
+      (localTransport, transports) => {
+        const localTransportAsArray = localTransport ? [localTransport] : [];
+        return [...localTransportAsArray, ...transports];
+      },
     ),
   );
 
@@ -232,6 +235,8 @@ export class CallViewModel {
     this.allTransports$,
   );
 
+  // ------------------------------------------------------------------------
+
   private matrixLivekitMerger = new MatrixLivekitMerger(
     this.scope,
     this.sessionBehaviors.membershipsWithTransport$,
@@ -240,7 +245,7 @@ export class CallViewModel {
     this.userId,
     this.deviceId,
   );
-  private matrixLivekitItems$ = this.matrixLivekitMerger.matrixLivekitItems$;
+  private matrixLivekitMembers$ = this.matrixLivekitMerger.matrixLivekitMember$;
 
   private localMembership = localMembership$({
     scope: this.scope,
@@ -297,12 +302,12 @@ export class CallViewModel {
   // down, for example, and we want to avoid making people worry that the app is
   // in a split-brained state.
   // DISCUSSION own membership manager ALSO this probably can be simplifis
-  private readonly pretendToBeDisconnected$ =
-    this.localMembership.reconnecting$;
+  public reconnecting$ = this.localMembership.reconnecting$;
+  private readonly pretendToBeDisconnected$ = this.reconnecting$;
 
   public readonly audioParticipants$ = this.scope.behavior(
-    this.matrixLivekitItems$.pipe(
-      map((items) => items.map((item) => item.participant)),
+    this.matrixLivekitMembers$.pipe(
+      map((members) => members.map((m) => m.participant)),
     ),
   );
 
@@ -330,72 +335,82 @@ export class CallViewModel {
   // TODO KEEP THIS!! and adapt it to what our membershipManger returns
   private readonly mediaItems$ = this.scope.behavior<MediaItem[]>(
     generateKeyed$<
-      [typeof this.participantsByRoom$.value, number],
+      [typeof this.matrixLivekitMembers$.value, number],
       MediaItem,
       MediaItem[]
     >(
       // Generate a collection of MediaItems from the list of expected (whether
       // present or missing) LiveKit participants.
-      combineLatest([this.participantsByRoom$, duplicateTiles.value$]),
-      ([participantsByRoom, duplicateTiles], createOrGet) => {
+      combineLatest([this.matrixLivekitMembers$, duplicateTiles.value$]),
+      ([matrixLivekitMembers, duplicateTiles], createOrGet) => {
         const items: MediaItem[] = [];
 
-        for (const { livekitRoom, participants, url } of participantsByRoom) {
-          for (const { id, participant, member } of participants) {
-            for (let i = 0; i < 1 + duplicateTiles; i++) {
-              const mediaId = `${id}:${i}`;
-              const item = createOrGet(
-                mediaId,
-                (scope) =>
-                  // We create UserMedia with or without a participant.
-                  // This will be the initial value of a BehaviourSubject.
-                  // Once a participant appears we will update the BehaviourSubject. (see below)
-                  new UserMedia(
-                    scope,
-                    mediaId,
-                    member,
-                    participant,
-                    this.options.encryptionSystem,
-                    livekitRoom,
-                    url,
-                    this.mediaDevices,
-                    this.pretendToBeDisconnected$,
-                    this.memberDisplaynames$.pipe(
-                      map((m) => m.get(id) ?? "[👻]"),
-                    ),
-                    this.handsRaised$.pipe(map((v) => v[id]?.time ?? null)),
-                    this.reactions$.pipe(map((v) => v[id] ?? undefined)),
+        for (const {
+          connection,
+          participant,
+          member,
+          displayName$,
+          participantId,
+        } of matrixLivekitMembers) {
+          if (connection === undefined) {
+            logger.warn("connection is not yet initialised.");
+            continue;
+          }
+          for (let i = 0; i < 1 + duplicateTiles; i++) {
+            const mediaId = `${participantId}:${i}`;
+            const lkRoom = connection?.livekitRoom;
+            const url = connection?.transport.livekit_service_url;
+            const dpName$ = displayName$.pipe(map((n) => n ?? "[👻]"));
+            const item = createOrGet(
+              mediaId,
+              (scope) =>
+                // We create UserMedia with or without a participant.
+                // This will be the initial value of a BehaviourSubject.
+                // Once a participant appears we will update the BehaviourSubject. (see below)
+                new UserMedia(
+                  scope,
+                  mediaId,
+                  member,
+                  participant,
+                  this.options.encryptionSystem,
+                  lkRoom,
+                  url,
+                  this.mediaDevices,
+                  this.pretendToBeDisconnected$,
+                  dpName$,
+                  this.handsRaised$.pipe(
+                    map((v) => v[participantId]?.time ?? null),
                   ),
-              );
-              items.push(item);
-              (item as UserMedia).updateParticipant(participant);
+                  this.reactions$.pipe(
+                    map((v) => v[participantId] ?? undefined),
+                  ),
+                ),
+            );
+            items.push(item);
+            (item as UserMedia).updateParticipant(participant);
 
-              if (participant?.isScreenShareEnabled) {
-                const screenShareId = `${mediaId}:screen-share`;
-                items.push(
-                  createOrGet(
-                    screenShareId,
-                    (scope) =>
-                      new ScreenShare(
-                        scope,
-                        screenShareId,
-                        member,
-                        participant,
-                        this.options.encryptionSystem,
-                        livekitRoom,
-                        url,
-                        this.pretendToBeDisconnected$,
-                        this.memberDisplaynames$.pipe(
-                          map((m) => m.get(id) ?? "[👻]"),
-                        ),
-                      ),
-                  ),
-                );
-              }
+            if (participant?.isScreenShareEnabled) {
+              const screenShareId = `${mediaId}:screen-share`;
+              items.push(
+                createOrGet(
+                  screenShareId,
+                  (scope) =>
+                    new ScreenShare(
+                      scope,
+                      screenShareId,
+                      member,
+                      participant,
+                      this.options.encryptionSystem,
+                      lkRoom,
+                      url,
+                      this.pretendToBeDisconnected$,
+                      dpName$,
+                    ),
+                ),
+              );
             }
           }
         }
-
         return items;
       },
     ),

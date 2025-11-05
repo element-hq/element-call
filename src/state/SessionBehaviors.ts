@@ -17,16 +17,29 @@ import { fromEvent, map } from "rxjs";
 import { type ObservableScope } from "./ObservableScope";
 import { type Behavior } from "./Behavior";
 
-export const sessionBehaviors$ = (
-  scope: ObservableScope,
-  matrixRTCSession: MatrixRTCSession,
-): {
+interface Props {
+  scope: ObservableScope;
+  matrixRTCSession: MatrixRTCSession;
+}
+
+/**
+ * Wraps behaviors that we extract from an matrixRTCSession.
+ */
+interface RxRtcSession {
+  /**
+   * some prop
+   */
   memberships$: Behavior<CallMembership[]>;
   membershipsWithTransport$: Behavior<
     { membership: CallMembership; transport?: LivekitTransport }[]
   >;
   transports$: Behavior<LivekitTransport[]>;
-} => {
+}
+
+export const sessionBehaviors$ = ({
+  scope,
+  matrixRTCSession,
+}: Props): RxRtcSession => {
   const memberships$ = scope.behavior(
     fromEvent(
       matrixRTCSession,
