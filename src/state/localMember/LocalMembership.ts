@@ -40,9 +40,8 @@ import {
   enterRTCSession,
   type EnterRTCSessionOptions,
 } from "../../rtcSessionHelpers";
-import { ElementCallError } from "../../utils/errors";
-import { Widget } from "matrix-widget-api";
-import { ElementWidgetActions, WidgetHelpers } from "../../widget";
+import { type ElementCallError } from "../../utils/errors";
+import { ElementWidgetActions, type WidgetHelpers } from "../../widget";
 
 enum LivekitState {
   UNINITIALIZED = "uninitialized",
@@ -87,6 +86,7 @@ export interface LocalMemberState {
  *   - send join state/sticky event
  */
 interface Props {
+  options: Behavior<EnterRTCSessionOptions>;
   scope: ObservableScope;
   mediaDevices: MediaDevices;
   muteStates: MuteStates;
@@ -113,6 +113,7 @@ interface Props {
  */
 export const localMembership$ = ({
   scope,
+  options,
   muteStates,
   mediaDevices,
   connectionManager,
@@ -124,7 +125,7 @@ export const localMembership$ = ({
   widget,
 }: Props): {
   // publisher: Publisher
-  requestConnect: (options: EnterRTCSessionOptions) => LocalMemberState;
+  requestConnect: () => LocalMemberState;
   startTracks: () => Behavior<LocalTrack[]>;
   requestDisconnect: () => Observable<LocalMemberLivekitState> | null;
   state: LocalMemberState; // TODO this is probably superseeded by joinState$
@@ -268,9 +269,7 @@ export const localMembership$ = ({
     return tracks$;
   };
 
-  const requestConnect = (
-    options: EnterRTCSessionOptions,
-  ): LocalMemberState => {
+  const requestConnect = (): LocalMemberState => {
     if (state.livekit$.value === null) {
       startTracks();
       state.livekit$.next({ state: LivekitState.CONNECTING });
@@ -290,7 +289,7 @@ export const localMembership$ = ({
       localTransport$.pipe(
         tap((transport) => {
           if (transport !== undefined) {
-            enterRTCSession(matrixRTCSession, transport, options).catch(
+            enterRTCSession(matrixRTCSession, transport, options.value).catch(
               (error) => {
                 logger.error(error);
               },
@@ -379,7 +378,7 @@ export const localMembership$ = ({
     if (advertised !== null && advertised !== undefined) {
       try {
         configError$.next(null);
-        await enterRTCSession(matrixRTCSession, advertised, options);
+        await enterRTCSession(matrixRTCSession, advertised, options.value);
       } catch (e) {
         logger.error("Error entering RTC session", e);
       }

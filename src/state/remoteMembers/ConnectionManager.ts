@@ -107,7 +107,7 @@ export class ConnectionManager {
     private readonly connectionFactory: ConnectionFactory,
     private readonly inputTransports$: Behavior<LivekitTransport[]>,
   ) {
-    // TODO logger: only construct one logger from the client and make it compatible via a EC specific singleton.
+    // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
     this.logger = logger.getChild("ConnectionManager");
     scope.onEnd(() => this.running$.next(false));
   }

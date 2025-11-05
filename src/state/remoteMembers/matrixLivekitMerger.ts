@@ -5,7 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type Participant as LivekitParticipant } from "livekit-client";
+import {
+  type LocalParticipant as LocalLivekitParticipant,
+  type RemoteParticipant as RemoteLivekitParticipant,
+} from "livekit-client";
 import {
   type LivekitTransport,
   type CallMembership,
@@ -27,22 +30,23 @@ import { type Connection } from "./Connection";
  * `livekitParticipant` can be undefined if the member is not yet connected to the livekit room
  * or if it has no livekit transport at all.
  */
-export interface MatrixLivekitItem {
+export interface MatrixLivekitMember {
   membership: CallMembership;
-  displayName: string;
-  participant?: LivekitParticipant;
+  displayName$: Behavior<string>;
+  participant?: LocalLivekitParticipant | RemoteLivekitParticipant;
   connection?: Connection;
   /**
    * TODO Try to remove this! Its waaay to much information.
    * Just get the member's avatar
    * @deprecated
    */
-  member?: RoomMember;
+  member: RoomMember;
   mxcAvatarUrl?: string;
+  participantId: string;
 }
 
 // Alternative structure idea:
-// const livekitMatrixItems$ = (callMemberships$,connectionManager,scope): Observable<MatrixLivekitItem[]> => {
+// const livekitMatrixMember$ = (callMemberships$,connectionManager,scope): Observable<MatrixLivekitMember[]> => {
 
 /**
  * Combines MatrixRtc and Livekit worlds.
@@ -52,13 +56,13 @@ export interface MatrixLivekitItem {
  *    - an observable of CallMembership[] to track the call members (The matrix side)
  *    - a `ConnectionManager` for the lk rooms (The livekit side)
  *  - out (via public Observable):
- *    - `remoteMatrixLivekitItems` an observable of MatrixLivekitItem[] to track the remote members and associated livekit data.
+ *    - `remoteMatrixLivekitMember` an observable of MatrixLivekitMember[] to track the remote members and associated livekit data.
  */
 export class MatrixLivekitMerger {
   /**
    * Stream of all the call members and their associated livekit data (if available).
    */
-  public matrixLivekitItems$: Behavior<MatrixLivekitItem[]>;
+  public matrixLivekitMember$: Behavior<MatrixLivekitMember[]>;
 
   // private readonly logger: Logger;
 
@@ -79,7 +83,7 @@ export class MatrixLivekitMerger {
   ) {
     // this.logger = parentLogger.getChild("MatrixLivekitMerger");
 
-    this.matrixLivekitItems$ = this.scope.behavior(
+    this.matrixLivekitMember$ = this.scope.behavior(
       this.start$().pipe(startWith([])),
     );
   }
@@ -87,7 +91,7 @@ export class MatrixLivekitMerger {
   // =======================================
   /// PRIVATES
   // =======================================
-  private start$(): Observable<MatrixLivekitItem[]> {
+  private start$(): Observable<MatrixLivekitMember[]> {
     const displaynameMap$ = memberDisplaynames$(
       this.scope,
       this.matrixRoom,
@@ -102,10 +106,9 @@ export class MatrixLivekitMerger {
     return combineLatest([
       membershipsWithTransport$,
       this.connectionManager.connectionManagerData$,
-      displaynameMap$,
     ]).pipe(
-      map(([memberships, managerData, displayNameMap]) => {
-        const items: MatrixLivekitItem[] = memberships.map(
+      map(([memberships, managerData]) => {
+        const items: MatrixLivekitMember[] = memberships.map(
           ({ membership, transport }) => {
             // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
             const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
@@ -123,14 +126,23 @@ export class MatrixLivekitMerger {
             const connection = transport
               ? managerData.getConnectionForTransport(transport)
               : undefined;
+            const displayName$ = this.scope.behavior(
+              displaynameMap$.pipe(
+                map(
+                  (displayNameMap) =>
+                    displayNameMap.get(membership.membershipID) ?? "---",
+                ),
+              ),
+            );
             return {
               participant,
               membership,
               connection,
               // This makes sense to add the the js-sdk callMembership (we only need the avatar so probably the call memberhsip just should aquire the avatar)
               member,
-              displayName: displayNameMap.get(membership.membershipID) ?? "---",
+              displayName$,
               mxcAvatarUrl: member?.getMxcAvatarUrl(),
+              participantId,
             };
           },
         );

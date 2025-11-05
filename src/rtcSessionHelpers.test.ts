@@ -12,8 +12,9 @@ import EventEmitter from "events";
 
 import { enterRTCSession } from "../src/rtcSessionHelpers";
 import { mockConfig } from "./utils/test";
+import { MatrixRTCMode } from "./settings/settings";
 
-const USE_MUTI_SFU = false;
+const MATRIX_RTC_MODE = MatrixRTCMode.Legacy;
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("./UrlParams", () => ({ getUrlParams }));
 
@@ -94,8 +95,7 @@ test("It joins the correct Session", async () => {
     },
     {
       encryptMedia: true,
-      useMultiSfu: USE_MUTI_SFU,
-      preferStickyEvents: false,
+      matrixRTCMode: MATRIX_RTC_MODE,
     },
   );
 
@@ -153,8 +153,7 @@ test("It should not fail with configuration error if homeserver config has livek
     },
     {
       encryptMedia: true,
-      useMultiSfu: USE_MUTI_SFU,
-      preferStickyEvents: false,
+      matrixRTCMode: MATRIX_RTC_MODE,
     },
   );
 });

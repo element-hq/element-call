@@ -23,7 +23,7 @@ import { type Room as MatrixRoom } from "matrix-js-sdk";
 import { getParticipantId } from "matrix-js-sdk/lib/matrixrtc/utils";
 
 import {
-  type MatrixLivekitItem,
+  type MatrixLivekitMember,
   MatrixLivekitMerger,
 } from "./matrixLivekitMerger";
 import { ObservableScope } from "../ObservableScope";
@@ -79,10 +79,12 @@ afterEach(() => {
 test("should signal participant not yet connected to livekit", () => {
   fakeMemberships$.next([aliceRtcMember]);
 
-  let items: MatrixLivekitItem[] = [];
-  matrixLivekitMerger.matrixLivekitItems$.pipe(take(1)).subscribe((emitted) => {
-    items = emitted;
-  });
+  let items: MatrixLivekitMember[] = [];
+  matrixLivekitMerger.matrixLivekitMember$
+    .pipe(take(1))
+    .subscribe((emitted) => {
+      items = emitted;
+    });
 
   expect(items).toHaveLength(1);
   const item = items[0];
@@ -112,10 +114,12 @@ test("should signal participant on a connection that is publishing", () => {
   ]);
   fakeManagerData$.next(managerData);
 
-  let items: MatrixLivekitItem[] = [];
-  matrixLivekitMerger.matrixLivekitItems$.pipe(take(1)).subscribe((emitted) => {
-    items = emitted;
-  });
+  let items: MatrixLivekitMember[] = [];
+  matrixLivekitMerger.matrixLivekitMember$
+    .pipe(take(1))
+    .subscribe((emitted) => {
+      items = emitted;
+    });
   expect(items).toHaveLength(1);
   const item = items[0];
 
@@ -136,7 +140,7 @@ test("should signal participant on a connection that is not publishing", () => {
   managerData.add(fakeConnection, []);
   fakeManagerData$.next(managerData);
 
-  matrixLivekitMerger.matrixLivekitItems$.pipe(take(1)).subscribe((items) => {
+  matrixLivekitMerger.matrixLivekitMember$.pipe(take(1)).subscribe((items) => {
     expect(items).toHaveLength(1);
     const item = items[0];
 
@@ -177,8 +181,8 @@ describe("Publication edge case", () => {
   );
 
   test("bob is publishing in several connections", () => {
-    let lastMatrixLkItems: MatrixLivekitItem[] = [];
-    matrixLivekitMerger.matrixLivekitItems$.subscribe((items) => {
+    let lastMatrixLkItems: MatrixLivekitMember[] = [];
+    matrixLivekitMerger.matrixLivekitMember$.subscribe((items) => {
       lastMatrixLkItems = items;
     });
 
@@ -218,8 +222,8 @@ describe("Publication edge case", () => {
   });
 
   test("bob is publishing in the wrong connection", () => {
-    let lastMatrixLkItems: MatrixLivekitItem[] = [];
-    matrixLivekitMerger.matrixLivekitItems$.subscribe((items) => {
+    let lastMatrixLkItems: MatrixLivekitMember[] = [];
+    matrixLivekitMerger.matrixLivekitMember$.subscribe((items) => {
       lastMatrixLkItems = items;
     });
 

@@ -77,13 +77,12 @@ export const localTransport$ = ({
     scope.behavior(from(makeTransport(client, roomId)), undefined);
 
   /**
-   * The transport we should advertise in our MatrixRTC membership (plus whether
-   * it is a multi-SFU transport and whether we should use sticky events).
+   * The transport we should advertise in our MatrixRTC membership.
    */
   const advertisedTransport$ = scope.behavior(
     combineLatest(
-      [useOldestMember$, preferredTransport$, oldestMemberTransport$],
-      (useOldestMember, preferredTransport, oldestMemberTransport) =>
+      [useOldestMember$, oldestMemberTransport$, preferredTransport$],
+      (useOldestMember, oldestMemberTransport, preferredTransport) =>
         useOldestMember ? oldestMemberTransport : preferredTransport,
     ).pipe<LivekitTransport>(distinctUntilChanged(deepCompare)),
     undefined,
