@@ -29,7 +29,8 @@ import {
   multiSfu as multiSfuSetting,
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
-  preferStickyEvents as preferStickyEventsSetting,
+  matrixRTCMode as matrixRTCModeSetting,
+  MatrixRTCMode,
 } from "./settings";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
@@ -59,9 +60,7 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
       });
   }, [client]);
 
-  const [preferStickyEvents, setPreferStickyEvents] = useSetting(
-    preferStickyEventsSetting,
-  );
+  const [matrixRTCMode, setMatrixRTCMode] = useSetting(matrixRTCModeSetting);
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
@@ -70,8 +69,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
     alwaysShowIphoneEarpieceSetting,
   );
-
-  const [multiSfu, setMultiSfu] = useSetting(multiSfuSetting);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
@@ -148,17 +145,47 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
       </FieldRow>
       <FieldRow>
         <InputField
-          id="preferStickyEvents"
+          id="matrixRTCMode"
           type="checkbox"
-          label={t("developer_mode.prefer_sticky_events.label")}
-          disabled={!stickyEventsSupported}
-          description={t("developer_mode.prefer_sticky_events.description")}
-          checked={!!preferStickyEvents}
+          label={t("developer_mode.matrixRTCMode.Legacy.label")}
+          description={t("developer_mode.matrixRTCMode.Legacy.description")}
+          checked={matrixRTCMode === MatrixRTCMode.Legacy}
           onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setPreferStickyEvents(event.target.checked);
+            (event: ChangeEvent<HTMLInputElement>) => {
+              if (event.target.checked) setMatrixRTCMode(MatrixRTCMode.Legacy);
             },
-            [setPreferStickyEvents],
+            [setMatrixRTCMode],
+          )}
+        />
+        <InputField
+          id="matrixRTCMode"
+          type="checkbox"
+          label={t("developer_mode.matrixRTCMode.Comptibility.label")}
+          description={t(
+            "developer_mode.matrixRTCMode.Comptibility.description",
+          )}
+          checked={matrixRTCMode === MatrixRTCMode.Compatibil}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>) => {
+              if (event.target.checked)
+                setMatrixRTCMode(MatrixRTCMode.Compatibil);
+            },
+            [setMatrixRTCMode],
+          )}
+        />
+        <InputField
+          id="matrixRTCMode"
+          type="checkbox"
+          label={t("developer_mode.matrixRTCMode.Matrix_2_0.label")}
+          description={t("developer_mode.matrixRTCMode.Matrix_2_0.description")}
+          disabled={!stickyEventsSupported}
+          checked={matrixRTCMode === MatrixRTCMode.Matrix_2_0}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>) => {
+              if (event.target.checked)
+                setMatrixRTCMode(MatrixRTCMode.Matrix_2_0);
+            },
+            [setMatrixRTCMode],
           )}
         />
       </FieldRow>
@@ -173,22 +200,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
               setShowConnectionStats(event.target.checked);
             },
             [setShowConnectionStats],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="multiSfu"
-          type="checkbox"
-          label={t("developer_mode.multi_sfu")}
-          // If using sticky events we implicitly prefer use multi-sfu
-          checked={multiSfu || preferStickyEvents}
-          disabled={preferStickyEvents}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setMultiSfu(event.target.checked);
-            },
-            [setMultiSfu],
           )}
         />
       </FieldRow>
