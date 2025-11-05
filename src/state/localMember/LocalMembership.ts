@@ -28,7 +28,7 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../Behavior";
-import { type ConnectionManager } from "../remoteMembers/ConnectionManager";
+import { type createConnectionManager$ } from "../remoteMembers/ConnectionManager";
 import { ObservableScope } from "../ObservableScope";
 import { Publisher } from "./Publisher";
 import { type MuteStates } from "../MuteStates";
@@ -90,7 +90,7 @@ interface Props {
   scope: ObservableScope;
   mediaDevices: MediaDevices;
   muteStates: MuteStates;
-  connectionManager: ConnectionManager;
+  connectionManager: ReturnType<typeof createConnectionManager$>;
   matrixRTCSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
   localTransport$: Behavior<LivekitTransport | undefined>;
@@ -111,7 +111,7 @@ interface Props {
  *  - transport$: the transport object the ownMembership$ ended up using.
  *
  */
-export const localMembership$ = ({
+export const createLocalMembership$ = ({
   scope,
   options,
   muteStates,
@@ -151,13 +151,14 @@ export const localMembership$ = ({
   const tracks$ = new BehaviorSubject<LocalTrack[]>([]);
 
   const connection$ = scope.behavior(
-    combineLatest([connectionManager.connections$, localTransport$]).pipe(
-      map(([connections, transport]) => {
+    combineLatest(
+      [connectionManager.connections$, localTransport$],
+      (connections, transport) => {
         if (transport === undefined) return undefined;
         return connections.find((connection) =>
           areLivekitTransportsEqual(connection.transport, transport),
         );
-      }),
+      },
     ),
   );
   /**

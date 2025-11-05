@@ -18,7 +18,7 @@ import { ECConnectionFactory } from "./ConnectionFactory.ts";
 import { type OpenIDClientParts } from "../../livekit/openIDSFU.ts";
 import { mockMediaDevices, withTestScheduler } from "../../utils/test";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext.tsx";
-import { MatrixLivekitMerger } from "./matrixLivekitMerger.ts";
+import { matrixLivekitMerger$ } from "./matrixLivekitMerger.ts";
 import type { CallMembership, Transport } from "matrix-js-sdk/lib/matrixrtc";
 import { TRANSPORT_1 } from "./ConnectionManager.test.ts";
 
@@ -39,9 +39,9 @@ let connectionManager: ConnectionManager;
 
 function createLkMerger(
   memberships$: Observable<CallMembership[]>,
-): MatrixLivekitMerger {
+): matrixLivekitMerger$ {
   const mockRoomEmitter = new EventEmitter();
-  return new MatrixLivekitMerger(
+  return new matrixLivekitMerger$(
     testScope,
     memberships$,
     connectionManager,

@@ -14,8 +14,8 @@ import {
   type ParticipantId,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, combineLatest, map, switchMap } from "rxjs";
-import { logger, type Logger } from "matrix-js-sdk/lib/logger";
-import { type Participant as LivekitParticipant } from "livekit-client";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
 
 import { type Behavior } from "../Behavior";
 import { type Connection } from "./Connection";
@@ -25,12 +25,17 @@ import { areLivekitTransportsEqual } from "./matrixLivekitMerger";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 
 export class ConnectionManagerData {
-  private readonly store: Map<string, [Connection, LivekitParticipant[]]> =
-    new Map();
+  private readonly store: Map<
+    string,
+    [Connection, (LocalParticipant | RemoteParticipant)[]]
+  > = new Map();
 
   public constructor() {}
 
-  public add(connection: Connection, participants: LivekitParticipant[]): void {
+  public add(
+    connection: Connection,
+    participants: (LocalParticipant | RemoteParticipant)[],
+  ): void {
     const key = this.getKey(connection.transport);
     const existing = this.store.get(key);
     if (!existing) {
@@ -56,7 +61,7 @@ export class ConnectionManagerData {
 
   public getParticipantForTransport(
     transport: LivekitTransport,
-  ): LivekitParticipant[] {
+  ): (LocalParticipant | RemoteParticipant)[] {
     const key = transport.livekit_service_url + "|" + transport.livekit_alias;
     const existing = this.store.get(key);
     if (existing) {
@@ -82,35 +87,41 @@ export class ConnectionManagerData {
     return connections;
   }
 }
-
+interface Props {
+  scope: ObservableScope;
+  connectionFactory: ConnectionFactory;
+  inputTransports$: Behavior<LivekitTransport[]>;
+}
 // TODO - write test for scopes (do we really need to bind scope)
-export class ConnectionManager {
-  private readonly logger: Logger;
 
-  private running$ = new BehaviorSubject(true);
-  /**
-   * Crete a `ConnectionManager`
-   * @param scope the observable scope used by this object.
-   * @param connectionFactory used to create new connections.
-   * @param _transportsSubscriptions$ A list of Behaviors each containing a LIST of LivekitTransport.
-   *   Each of these behaviors can be interpreted as subscribed list of transports.
-   *
-   *   Using `registerTransports` independent external modules can control what connections
-   *   are created by the ConnectionManager.
-   *
-   *   The connection manager will remove all duplicate transports in each subscibed list.
-   *
-   *   See `unregisterAllTransports` and `unregisterTransport` for details on how to unsubscribe.
-   */
-  public constructor(
-    private readonly scope: ObservableScope,
-    private readonly connectionFactory: ConnectionFactory,
-    private readonly inputTransports$: Behavior<LivekitTransport[]>,
-  ) {
-    // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
-    this.logger = logger.getChild("ConnectionManager");
-    scope.onEnd(() => this.running$.next(false));
-  }
+/**
+ * Crete a `ConnectionManager`
+ * @param scope the observable scope used by this object.
+ * @param connectionFactory used to create new connections.
+ * @param _transportsSubscriptions$ A list of Behaviors each containing a LIST of LivekitTransport.
+ *   Each of these behaviors can be interpreted as subscribed list of transports.
+ *
+ *   Using `registerTransports` independent external modules can control what connections
+ *   are created by the ConnectionManager.
+ *
+ *   The connection manager will remove all duplicate transports in each subscibed list.
+ *
+ *   See `unregisterAllTransports` and `unregisterTransport` for details on how to unsubscribe.
+ */
+export function createConnectionManager$({
+  scope,
+  connectionFactory,
+  inputTransports$,
+}: Props): {
+  transports$: Behavior<LivekitTransport[]>;
+  connectionManagerData$: Behavior<ConnectionManagerData>;
+  connections$: Behavior<Connection[]>;
+} {
+  const logger = rootLogger.getChild("ConnectionManager");
+
+  const running$ = new BehaviorSubject(true);
+  scope.onEnd(() => running$.next(false));
+  // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
 
   /**
    * All transports currently managed by the ConnectionManager.
@@ -120,8 +131,8 @@ export class ConnectionManager {
    * It is build based on the list of subscribed transports (`transportsSubscriptions$`).
    * externally this is modified via `registerTransports()`.
    */
-  private readonly transports$ = this.scope.behavior(
-    combineLatest([this.running$, this.inputTransports$]).pipe(
+  const transports$ = scope.behavior(
+    combineLatest([running$, inputTransports$]).pipe(
       map(([running, transports]) => (running ? transports : [])),
       map(removeDuplicateTransports),
     ),
@@ -130,19 +141,19 @@ export class ConnectionManager {
   /**
    * Connections for each transport in use by one or more session members.
    */
-  public readonly connections$ = this.scope.behavior(
+  const connections$ = scope.behavior(
     generateKeyed$<LivekitTransport[], Connection, Connection[]>(
-      this.transports$,
+      transports$,
       (transports, createOrGet) => {
         const createConnection =
           (
             transport: LivekitTransport,
           ): ((scope: ObservableScope) => Connection) =>
           (scope) => {
-            const connection = this.connectionFactory.createConnection(
+            const connection = connectionFactory.createConnection(
               transport,
               scope,
-              this.logger,
+              logger,
             );
             // Start the connection immediately
             // Use connection state to track connection progress
@@ -160,9 +171,9 @@ export class ConnectionManager {
     ),
   );
 
-  public connectionManagerData$: Behavior<ConnectionManagerData> =
-    this.scope.behavior(
-      this.connections$.pipe(
+  const connectionManagerData$: Behavior<ConnectionManagerData> =
+    scope.behavior(
+      connections$.pipe(
         switchMap((connections) => {
           // Map the connections to list of {connection, participants}[]
           const listOfConnectionsWithPublishingParticipants = connections.map(
@@ -191,6 +202,7 @@ export class ConnectionManager {
       // start empty
       new ConnectionManagerData(),
     );
+  return { transports$, connectionManagerData$, connections$ };
 }
 
 function removeDuplicateTransports(

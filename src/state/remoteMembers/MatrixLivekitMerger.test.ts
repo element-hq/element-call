@@ -24,7 +24,7 @@ import { getParticipantId } from "matrix-js-sdk/lib/matrixrtc/utils";
 
 import {
   type MatrixLivekitMember,
-  MatrixLivekitMerger,
+  matrixLivekitMerger$,
 } from "./matrixLivekitMerger";
 import { ObservableScope } from "../ObservableScope";
 import {
@@ -44,7 +44,7 @@ const userId = "@local:example.com";
 const deviceId = "DEVICE000";
 
 // The merger beeing tested
-let matrixLivekitMerger: MatrixLivekitMerger;
+let matrixLivekitMerger: matrixLivekitMerger$;
 
 beforeEach(() => {
   testScope = new ObservableScope();
@@ -62,7 +62,7 @@ beforeEach(() => {
     removeEventListener: vi.fn(),
   } as unknown as MatrixRoom);
 
-  matrixLivekitMerger = new MatrixLivekitMerger(
+  matrixLivekitMerger = new matrixLivekitMerger$(
     testScope,
     fakeMemberships$,
     mockConnectionManager,

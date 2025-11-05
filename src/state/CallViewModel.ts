@@ -110,15 +110,12 @@ import {
 } from "./layout-types.ts";
 import { type ElementCallError } from "../utils/errors.ts";
 import { type ObservableScope } from "./ObservableScope.ts";
-import { ConnectionManager } from "./remoteMembers/ConnectionManager.ts";
-import { MatrixLivekitMerger } from "./remoteMembers/matrixLivekitMerger.ts";
-import {
-  localMembership$,
-  type LocalMemberState,
-} from "./localMember/LocalMembership.ts";
-import { localTransport$ as computeLocalTransport$ } from "./localMember/LocalTransport.ts";
-import { sessionBehaviors$ } from "./SessionBehaviors.ts";
+import { createMatrixLivekitMembers$ } from "./remoteMembers/matrixLivekitMerger.ts";
+import { createLocalMembership$ } from "./localMember/LocalMembership.ts";
+import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
+import { createSessionMembershipsAndTransports$ } from "./SessionBehaviors.ts";
 import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
+import { createConnectionManager$ } from "./remoteMembers/ConnectionManager.ts";
 
 //TODO
 // Larger rename
@@ -192,13 +189,13 @@ export class CallViewModel {
       }
     : undefined;
 
-  private sessionBehaviors = sessionBehaviors$({
+  private sessionBehaviors = createSessionMembershipsAndTransports$({
     scope: this.scope,
     matrixRTCSession: this.matrixRTCSession,
   });
   private memberships$ = this.sessionBehaviors.memberships$;
 
-  private localTransport$ = computeLocalTransport$({
+  private localTransport$ = createLocalTransport$({
     scope: this.scope,
     memberships$: this.memberships$,
     client: this.matrixRoom.client,
@@ -229,25 +226,34 @@ export class CallViewModel {
     ),
   );
 
-  private connectionManager = new ConnectionManager(
-    this.scope,
-    this.connectionFactory,
-    this.allTransports$,
-  );
+  private connectionManager = createConnectionManager$({
+    scope: this.scope,
+    connectionFactory: this.connectionFactory,
+    inputTransports$: this.allTransports$,
+  });
 
   // ------------------------------------------------------------------------
 
-  private matrixLivekitMerger = new MatrixLivekitMerger(
-    this.scope,
-    this.sessionBehaviors.membershipsWithTransport$,
-    this.connectionManager,
-    this.matrixRoom,
-    this.userId,
-    this.deviceId,
-  );
-  private matrixLivekitMembers$ = this.matrixLivekitMerger.matrixLivekitMember$;
+  private matrixLivekitMembers$ = createMatrixLivekitMembers$({
+    scope: this.scope,
+    membershipsWithTransport$: this.sessionBehaviors.membershipsWithTransport$,
+    connectionManager: this.connectionManager,
+    matrixRoom: this.matrixRoom,
+    userId: this.userId,
+    deviceId: this.deviceId,
+  });
 
-  private localMembership = localMembership$({
+  private connectOptions$ = this.scope.behavior(
+    matrixRTCMode.value$.pipe(
+      map((mode) => ({
+        encryptMedia: this.e2eeLivekitOptions !== undefined,
+        // TODO. This might need to get called again on each cahnge of matrixRTCMode...
+        matrixRTCMode: mode,
+      })),
+    ),
+  );
+
+  private localMembership = createLocalMembership$({
     scope: this.scope,
     muteStates: this.muteStates,
     mediaDevices: this.mediaDevices,
@@ -258,6 +264,7 @@ export class CallViewModel {
     e2eeLivekitOptions: this.e2eeLivekitOptions,
     trackProcessorState$: this.trackProcessorState$,
     widget,
+    options: this.connectOptions$,
   });
 
   /**
@@ -269,13 +276,7 @@ export class CallViewModel {
     return this.localMembership.configError$;
   }
 
-  public join(): LocalMemberState {
-    return this.localMembership.requestConnect({
-      encryptMedia: this.e2eeLivekitOptions !== undefined,
-      // TODO. This might need to get called again on each cahnge of matrixRTCMode...
-      matrixRTCMode: matrixRTCMode.getValue(),
-    });
-  }
+  public join = this.localMembership.requestConnect;
 
   // CODESMELL?
   // This is functionally the same Observable as leave$, except here it's

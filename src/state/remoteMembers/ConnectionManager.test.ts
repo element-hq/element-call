@@ -6,13 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { logger } from "matrix-js-sdk/lib/logger";
 import { BehaviorSubject } from "rxjs";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type Participant as LivekitParticipant } from "livekit-client";
 
 import { ObservableScope } from "../ObservableScope.ts";
-import { ConnectionManager } from "./ConnectionManager.ts";
+import { createConnectionManager$ } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { areLivekitTransportsEqual } from "./matrixLivekitMerger.ts";
@@ -37,15 +36,15 @@ const TRANSPORT_2: LivekitTransport = {
 //   livekit_service_url: "https://lk-other.sample.com",
 //   livekit_alias: "!alias:sample.com",
 // };
-
-let testScope: ObservableScope;
 let fakeConnectionFactory: ConnectionFactory;
-
+let testScope: ObservableScope;
 let testTransportStream$: BehaviorSubject<LivekitTransport[]>;
-
-// The connection manager under test
-let manager: ConnectionManager;
-
+let connectionManagerInputs: {
+  scope: ObservableScope;
+  connectionFactory: ConnectionFactory;
+  inputTransports$: BehaviorSubject<LivekitTransport[]>;
+};
+let manager: ReturnType<typeof createConnectionManager$>;
 beforeEach(() => {
   testScope = new ObservableScope();
 
@@ -68,9 +67,12 @@ beforeEach(() => {
     );
 
   testTransportStream$ = new BehaviorSubject<LivekitTransport[]>([]);
-
-  manager = new ConnectionManager(testScope, fakeConnectionFactory, logger);
-  manager.registerTransports(testTransportStream$);
+  connectionManagerInputs = {
+    scope: testScope,
+    connectionFactory: fakeConnectionFactory,
+    inputTransports$: testTransportStream$,
+  };
+  manager = createConnectionManager$(connectionManagerInputs);
 });
 
 afterEach(() => {
@@ -84,7 +86,7 @@ describe("connections$ stream", () => {
       if (connections.length > 0) managedConnections.resolve(connections);
     });
 
-    testTransportStream$.next([TRANSPORT_1, TRANSPORT_2]);
+    connectionManagerInputs.inputTransports$.next([TRANSPORT_1, TRANSPORT_2]);
 
     const connections = await managedConnections.promise;
 
@@ -211,11 +213,13 @@ describe("connectionManagerData$ stream", () => {
 
   test("Should report connections with the publishing participants", () => {
     withTestScheduler(({ expectObservable, schedule, behavior }) => {
-      manager.registerTransports(
-        behavior("a", {
+      manager = createConnectionManager$({
+        ...connectionManagerInputs,
+        inputTransports$: behavior("a", {
           a: [TRANSPORT_1, TRANSPORT_2],
         }),
-      );
+      });
+
       const conn1Participants$ = fakePublishingParticipantsStreams.get(
         keyForTransport(TRANSPORT_1),
       )!;

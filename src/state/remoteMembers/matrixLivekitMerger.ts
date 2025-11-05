@@ -16,12 +16,12 @@ import {
 import { combineLatest, map, startWith, type Observable } from "rxjs";
 // eslint-disable-next-line rxjs/no-internal
 import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
+import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
 
-import type { Room as MatrixRoom, RoomMember } from "matrix-js-sdk";
 // import type { Logger } from "matrix-js-sdk/lib/logger";
 import { type Behavior } from "../Behavior";
 import { type ObservableScope } from "../ObservableScope";
-import { type ConnectionManager } from "./ConnectionManager";
+import { type createConnectionManager$ } from "./ConnectionManager";
 import { getRoomMemberFromRtcMember, memberDisplaynames$ } from "./displayname";
 import { type Connection } from "./Connection";
 
@@ -45,11 +45,25 @@ export interface MatrixLivekitMember {
   participantId: string;
 }
 
+interface Props {
+  scope: ObservableScope;
+  membershipsWithTransport$: Behavior<
+    { membership: CallMembership; transport?: LivekitTransport }[]
+  >;
+  connectionManager: ReturnType<typeof createConnectionManager$>;
+  // TODO this is too much information for that class,
+  // apparently needed to get a room member to later get the Avatar
+  // => Extract an AvatarService instead?
+  // Better with just `getMember`
+  matrixRoom: Pick<MatrixRoom, "getMember"> & NodeStyleEventEmitter;
+  userId: string;
+  deviceId: string;
+}
 // Alternative structure idea:
 // const livekitMatrixMember$ = (callMemberships$,connectionManager,scope): Observable<MatrixLivekitMember[]> => {
 
 /**
- * Combines MatrixRtc and Livekit worlds.
+ * Combines MatrixRTC and Livekit worlds.
  *
  * It has a small public interface:
  *  - in (via constructor):
@@ -58,54 +72,30 @@ export interface MatrixLivekitMember {
  *  - out (via public Observable):
  *    - `remoteMatrixLivekitMember` an observable of MatrixLivekitMember[] to track the remote members and associated livekit data.
  */
-export class MatrixLivekitMerger {
+export function createMatrixLivekitMembers$({
+  scope,
+  membershipsWithTransport$,
+  connectionManager,
+  matrixRoom,
+  userId,
+  deviceId,
+}: Props): Behavior<MatrixLivekitMember[]> {
   /**
    * Stream of all the call members and their associated livekit data (if available).
    */
-  public matrixLivekitMember$: Behavior<MatrixLivekitMember[]>;
 
-  // private readonly logger: Logger;
-
-  public constructor(
-    private scope: ObservableScope,
-    private membershipsWithTransport$: Behavior<
-      { membership: CallMembership; transport?: LivekitTransport }[]
-    >,
-    private connectionManager: ConnectionManager,
-    // TODO this is too much information for that class,
-    // apparently needed to get a room member to later get the Avatar
-    // => Extract an AvatarService instead?
-    // Better with just `getMember`
-    private matrixRoom: Pick<MatrixRoom, "getMember"> & NodeStyleEventEmitter,
-    private userId: string,
-    private deviceId: string,
-    // parentLogger: Logger,
-  ) {
-    // this.logger = parentLogger.getChild("MatrixLivekitMerger");
-
-    this.matrixLivekitMember$ = this.scope.behavior(
-      this.start$().pipe(startWith([])),
-    );
-  }
-
-  // =======================================
-  /// PRIVATES
-  // =======================================
-  private start$(): Observable<MatrixLivekitMember[]> {
+  function createMatrixLivekitMember$(): Observable<MatrixLivekitMember[]> {
     const displaynameMap$ = memberDisplaynames$(
-      this.scope,
-      this.matrixRoom,
-      this.membershipsWithTransport$.pipe(
-        map((v) => v.map((v) => v.membership)),
-      ),
-      this.userId,
-      this.deviceId,
+      scope,
+      matrixRoom,
+      membershipsWithTransport$.pipe(map((v) => v.map((v) => v.membership))),
+      userId,
+      deviceId,
     );
-    const membershipsWithTransport$ = this.membershipsWithTransport$;
 
     return combineLatest([
       membershipsWithTransport$,
-      this.connectionManager.connectionManagerData$,
+      connectionManager.connectionManagerData$,
     ]).pipe(
       map(([memberships, managerData]) => {
         const items: MatrixLivekitMember[] = memberships.map(
@@ -121,12 +111,12 @@ export class MatrixLivekitMerger {
             );
             const member = getRoomMemberFromRtcMember(
               membership,
-              this.matrixRoom,
+              matrixRoom,
             )?.member;
             const connection = transport
               ? managerData.getConnectionForTransport(transport)
               : undefined;
-            const displayName$ = this.scope.behavior(
+            const displayName$ = scope.behavior(
               displaynameMap$.pipe(
                 map(
                   (displayNameMap) =>
@@ -139,7 +129,8 @@ export class MatrixLivekitMerger {
               membership,
               connection,
               // This makes sense to add the the js-sdk callMembership (we only need the avatar so probably the call memberhsip just should aquire the avatar)
-              member,
+              // TODO Ugh this is hidign that it might be undefined!! best we remove the member entirely.
+              member: member as RoomMember,
               displayName$,
               mxcAvatarUrl: member?.getMxcAvatarUrl(),
               participantId,
@@ -150,6 +141,8 @@ export class MatrixLivekitMerger {
       }),
     );
   }
+
+  return scope.behavior(createMatrixLivekitMember$().pipe(startWith([])));
 }
 
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)

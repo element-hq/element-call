@@ -50,7 +50,7 @@ interface Props {
  * @prop useOldestMember Whether to use the same transport as the oldest member.
  * This will only update once the first oldest member appears. Will not recompute if the oldest member leaves.
  */
-export const localTransport$ = ({
+export const createLocalTransport$ = ({
   scope,
   memberships$,
   client,
