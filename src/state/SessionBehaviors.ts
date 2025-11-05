@@ -22,24 +22,16 @@ interface Props {
   matrixRTCSession: MatrixRTCSession;
 }
 
-/**
- * Wraps behaviors that we extract from an matrixRTCSession.
- */
-interface RxRtcSession {
-  /**
-   * some prop
-   */
+export const createSessionMembershipsAndTransports$ = ({
+  scope,
+  matrixRTCSession,
+}: Props): {
   memberships$: Behavior<CallMembership[]>;
   membershipsWithTransport$: Behavior<
     { membership: CallMembership; transport?: LivekitTransport }[]
   >;
   transports$: Behavior<LivekitTransport[]>;
-}
-
-export const sessionBehaviors$ = ({
-  scope,
-  matrixRTCSession,
-}: Props): RxRtcSession => {
+} => {
   const memberships$ = scope.behavior(
     fromEvent(
       matrixRTCSession,

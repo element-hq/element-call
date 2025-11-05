@@ -13,7 +13,8 @@ import {
   ConnectionError,
   type ConnectionState as LivekitConenctionState,
   type Room as LivekitRoom,
-  type Participant,
+  type LocalParticipant,
+  type RemoteParticipant,
   RoomEvent,
 } from "livekit-client";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
@@ -32,7 +33,7 @@ import {
   SFURoomCreationRestrictedError,
 } from "../../utils/errors.ts";
 
-export type PublishingParticipant = Participant;
+export type PublishingParticipant = LocalParticipant | RemoteParticipant;
 
 export interface ConnectionOpts {
   /** The media transport to connect to. */
