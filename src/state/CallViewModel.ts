@@ -10,22 +10,16 @@ import {
   ConnectionState,
   type E2EEOptions,
   ExternalE2EEKeyProvider,
-  type LocalParticipant,
-  RemoteParticipant,
   type Room as LivekitRoom,
   type RoomOptions,
 } from "livekit-client";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import {
-  ClientEvent,
   type EventTimelineSetHandlerMap,
   EventType,
   type Room as MatrixRoom,
   RoomEvent,
-  type RoomMember,
-  SyncState,
 } from "matrix-js-sdk";
-import { deepCompare } from "matrix-js-sdk/lib/utils";
 import {
   BehaviorSubject,
   combineLatest,
@@ -62,14 +56,9 @@ import {
 } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
-  type CallMembership,
-  isLivekitTransport,
-  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
-  MembershipManagerEvent,
-  Status,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
 
@@ -80,17 +69,12 @@ import {
   ScreenShareViewModel,
   type UserMediaViewModel,
 } from "./MediaViewModel";
-import {
-  accumulate,
-  and$,
-  generateKeyed$,
-  pauseWhen,
-} from "../utils/observable";
+import { accumulate, generateKeyed$, pauseWhen } from "../utils/observable";
 import {
   duplicateTiles,
-  multiSfu,
+  MatrixRTCMode,
+  matrixRTCMode,
   playReactionsSound,
-  preferStickyEvents,
   showReactions,
 } from "../settings/settings";
 import { isFirefox } from "../Platform";
@@ -109,20 +93,13 @@ import {
 import { shallowEquals } from "../utils/array";
 import { type MediaDevices } from "./MediaDevices";
 import { type Behavior, constant } from "./Behavior";
-import {
-  enterRTCSession,
-  getLivekitAlias,
-  makeTransport,
-} from "../rtcSessionHelpers";
+import { enterRTCSession } from "../rtcSessionHelpers";
 import { E2eeType } from "../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-import { type Connection } from "./remoteMembers/Connection.ts";
 import { type MuteStates } from "./MuteStates";
 import { getUrlParams } from "../UrlParams";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../widget";
-import { PublishConnection } from "./localMember/Publisher.ts";
-import { type Async, async$, mapAsync, ready } from "./Async";
 import { sharingScreen$, UserMedia } from "./UserMedia.ts";
 import { ScreenShare } from "./ScreenShare.ts";
 import {
@@ -134,12 +111,14 @@ import {
   type SpotlightLandscapeLayoutMedia,
   type SpotlightPortraitLayoutMedia,
 } from "./layout-types.ts";
-import { type ElementCallError, UnknownCallError } from "../utils/errors.ts";
+import { type ElementCallError } from "../utils/errors.ts";
 import { ObservableScope } from "./ObservableScope.ts";
-import { memberDisplaynames$ } from "./remoteMembers/displayname.ts";
 import { ConnectionManager } from "./remoteMembers/ConnectionManager.ts";
 import { MatrixLivekitMerger } from "./remoteMembers/matrixLivekitMerger.ts";
-import { ownMembership$ } from "./localMember/LocalMembership.ts";
+import {
+  localMembership$,
+  LocalMemberState,
+} from "./localMember/LocalMembership.ts";
 import { localTransport$ as computeLocalTransport$ } from "./localMember/LocalTransport.ts";
 import { sessionBehaviors$ } from "./SessionBehaviors.ts";
 import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
@@ -202,23 +181,20 @@ export class CallViewModel {
 
   private readonly userId = this.matrixRoom.client.getUserId()!;
   private readonly deviceId = this.matrixRoom.client.getDeviceId()!;
-  private readonly livekitAlias = getLivekitAlias(this.matrixRTCSession);
 
   private readonly livekitE2EEKeyProvider = getE2eeKeyProvider(
     this.options.encryptionSystem,
     this.matrixRTCSession,
   );
-  private readonly e2eeLivekitOptions = (): E2EEOptions | undefined =>
-    this.livekitE2EEKeyProvider
-      ? {
-          keyProvider: this.livekitE2EEKeyProvider,
-          worker: new E2EEWorker(),
-        }
-      : undefined;
 
-  private readonly _configError$ = new BehaviorSubject<ElementCallError | null>(
-    null,
-  );
+  private readonly e2eeLivekitOptions: E2EEOptions | undefined = this
+    .livekitE2EEKeyProvider
+    ? {
+        keyProvider: this.livekitE2EEKeyProvider,
+        worker: new E2EEWorker(),
+      }
+    : undefined;
+
   private sessionBehaviors = sessionBehaviors$(
     this.scope,
     this.matrixRTCSession,
@@ -230,14 +206,16 @@ export class CallViewModel {
     memberships$: this.memberships$,
     client: this.matrixRoom.client,
     roomId: this.matrixRoom.roomId,
-    useOldestMember$: multiSfu.value$,
+    useOldestMember$: this.scope.behavior(
+      matrixRTCMode.value$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
+    ),
   });
 
   private connectionFactory = new ECConnectionFactory(
     this.matrixRoom.client,
     this.mediaDevices,
     this.trackProcessorState$,
-    this.e2eeLivekitOptions(),
+    this.e2eeLivekitOptions,
     getUrlParams().controlledAudioDevices,
   );
 
@@ -252,7 +230,6 @@ export class CallViewModel {
     this.scope,
     this.connectionFactory,
     this.allTransports$,
-    logger,
   );
 
   private matrixLivekitMerger = new MatrixLivekitMerger(
@@ -263,31 +240,36 @@ export class CallViewModel {
     this.userId,
     this.deviceId,
   );
+  private matrixLivekitItems$ = this.matrixLivekitMerger.matrixLivekitItems$;
 
-  private localMembership = this.localMembership$({
+  private localMembership = localMembership$({
     scope: this.scope,
     muteStates: this.muteStates,
-    multiSfu: this.multiSfu,
     mediaDevices: this.mediaDevices,
-    trackProcessorState$: this.trackProcessorState$,
+    connectionManager: this.connectionManager,
+    matrixRTCSession: this.matrixRTCSession,
+    matrixRoom: this.matrixRoom,
+    localTransport$: this.localTransport$,
     e2eeLivekitOptions: this.e2eeLivekitOptions,
+    trackProcessorState$: this.trackProcessorState$,
+    widget,
   });
 
-  private matrixLivekitItems$ = this.matrixLivekitMerger.matrixLivekitItems$;
   /**
    * If there is a configuration error with the call (e.g. misconfigured E2EE).
    * This is a fatal error that prevents the call from being created/joined.
    * Should render a blocking error screen.
    */
   public get configError$(): Behavior<ElementCallError | null> {
-    return this._configError$;
+    return this.localMembership.configError$;
   }
 
-  private readonly join$ = new Subject<void>();
-
-  // DISCUSS BAD ?
-  public join(): void {
-    this.join$.next();
+  public join(): LocalMemberState {
+    return this.localMembership.requestConnect({
+      encryptMedia: this.e2eeLivekitOptions !== undefined,
+      // TODO. This might need to get called again on each cahnge of matrixRTCMode...
+      matrixRTCMode: matrixRTCMode.getValue(),
+    });
   }
 
   // CODESMELL?
@@ -304,62 +286,7 @@ export class CallViewModel {
    * than whether all connections are truly up and running.
    */
   // DISCUSS ? lets think why we need joined and how to do it better
-  private readonly joined$ = this.scope.behavior(
-    this.join$.pipe(
-      map(() => true),
-      // Using takeUntil with the repeat operator is perfectly valid.
-      // eslint-disable-next-line rxjs/no-unsafe-takeuntil
-      takeUntil(this.leaveHoisted$),
-      endWith(false),
-      repeat(),
-      startWith(false),
-    ),
-  );
-
-  // /**
-  //  * The transport that we would personally prefer to publish on (if not for the
-  //  * transport preferences of others, perhaps).
-  //  */
-  // // DISCUSS move to ownMembership
-  // private readonly preferredTransport$ = this.scope.behavior(
-  //   async$(makeTransport(this.matrixRTCSession)),
-  // );
-
-  // /**
-  //  * The transport over which we should be actively publishing our media.
-  //  * null when not joined.
-  //  */
-  // // DISCUSSION ownMembershipManager
-  // private readonly localTransport$: Behavior<Async<LivekitTransport> | null> =
-  //   this.scope.behavior(
-  //     this.transports$.pipe(
-  //       map((transports) => transports?.local ?? null),
-  //       distinctUntilChanged<Async<LivekitTransport> | null>(deepCompare),
-  //     ),
-  //   );
-
-  // // DISCUSSION move to ConnectionManager
-  // public readonly livekitConnectionState$ =
-  //   // TODO: This options.connectionState$ behavior is a small hack inserted
-  //   // here to facilitate testing. This would likely be better served by
-  //   // breaking CallViewModel down into more naturally testable components.
-  //   this.options.connectionState$ ??
-  //   this.scope.behavior<ConnectionState>(
-  //     this.localConnection$.pipe(
-  //       switchMap((c) =>
-  //         c?.state === "ready"
-  //           ? // TODO mapping to ConnectionState for compatibility, but we should use the full state?
-  //             c.value.state$.pipe(
-  //               switchMap((s) => {
-  //                 if (s.state === "ConnectedToLkRoom")
-  //                   return s.connectionState$;
-  //                 return of(ConnectionState.Disconnected);
-  //               }),
-  //             )
-  //           : of(ConnectionState.Disconnected),
-  //       ),
-  //     ),
-  //   );
+  private readonly joined$ = this.localMembership.connected$;
 
   /**
    * Whether various media/event sources should pretend to be disconnected from
@@ -370,9 +297,14 @@ export class CallViewModel {
   // down, for example, and we want to avoid making people worry that the app is
   // in a split-brained state.
   // DISCUSSION own membership manager ALSO this probably can be simplifis
-  private readonly pretendToBeDisconnected$ = this.reconnecting$;
+  private readonly pretendToBeDisconnected$ =
+    this.localMembership.reconnecting$;
 
-  public readonly audioParticipants$; // now will be created based on the connectionmanager
+  public readonly audioParticipants$ = this.scope.behavior(
+    this.matrixLivekitItems$.pipe(
+      map((items) => items.map((item) => item.participant)),
+    ),
+  );
 
   public readonly handsRaised$ = this.scope.behavior(
     this.handsRaisedSubject$.pipe(pauseWhen(this.pretendToBeDisconnected$)),
@@ -391,15 +323,6 @@ export class CallViewModel {
       pauseWhen(this.pretendToBeDisconnected$),
     ),
   );
-
-  // Now will be added to the matricLivekitMerger
-  // memberDisplaynames$ = memberDisplaynames$(
-  //   this.matrixRoom,
-  //   this.memberships$,
-  //   this.scope,
-  //   this.userId,
-  //   this.deviceId,
-  // );
 
   /**
    * List of MediaItems that we want to have tiles for.
@@ -1352,6 +1275,7 @@ export class CallViewModel {
   /**
    * Whether we are sharing our screen.
    */
+  // TODO move to LocalMembership
   public readonly sharingScreen$ = this.scope.behavior(
     from(this.localConnection$).pipe(
       switchMap((c) =>
@@ -1366,6 +1290,7 @@ export class CallViewModel {
    * Callback for toggling screen sharing. If null, screen sharing is not
    * available.
    */
+  // TODO move to LocalMembership
   public readonly toggleScreenSharing =
     "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
     !this.urlParams.hideScreensharing
@@ -1408,101 +1333,6 @@ export class CallViewModel {
     >,
     private readonly trackProcessorState$: Behavior<ProcessorState>,
   ) {
-    // Start and stop session membership as needed
-    this.scope.reconcile(this.advertisedTransport$, async (advertised) => {
-      if (advertised !== null) {
-        try {
-          this._configError$.next(null);
-          await enterRTCSession(this.matrixRTCSession, advertised.transport, {
-            encryptMedia: this.options.encryptionSystem.kind !== E2eeType.NONE,
-            useMultiSfu: advertised.multiSfu,
-            preferStickyEvents: advertised.preferStickyEvents,
-          });
-        } catch (e) {
-          logger.error("Error entering RTC session", e);
-        }
-
-        // Update our member event when our mute state changes.
-        const intentScope = new ObservableScope();
-        intentScope.reconcile(
-          this.muteStates.video.enabled$,
-          async (videoEnabled) =>
-            this.matrixRTCSession.updateCallIntent(
-              videoEnabled ? "video" : "audio",
-            ),
-        );
-
-        return async (): Promise<void> => {
-          intentScope.end();
-          // Only sends Matrix leave event. The LiveKit session will disconnect
-          // as soon as either the stopConnection$ handler above gets to it or
-          // the view model is destroyed.
-          try {
-            await this.matrixRTCSession.leaveRoomSession();
-          } catch (e) {
-            logger.error("Error leaving RTC session", e);
-          }
-          try {
-            await widget?.api.transport.send(
-              ElementWidgetActions.HangupCall,
-              {},
-            );
-          } catch (e) {
-            logger.error("Failed to send hangup action", e);
-          }
-        };
-      }
-    });
-
-    // Pause upstream of all local media tracks when we're disconnected from
-    // MatrixRTC, because it can be an unpleasant surprise for the app to say
-    // 'reconnecting' and yet still be transmitting your media to others.
-    // We use matrixConnected$ rather than reconnecting$ because we want to
-    // pause tracks during the initial joining sequence too until we're sure
-    // that our own media is displayed on screen.
-    combineLatest([this.localConnection$, this.matrixConnected$])
-      .pipe(this.scope.bind())
-      .subscribe(([connection, connected]) => {
-        if (connection?.state !== "ready") return;
-        const publications =
-          connection.value.livekitRoom.localParticipant.trackPublications.values();
-        if (connected) {
-          for (const p of publications) {
-            if (p.track?.isUpstreamPaused === true) {
-              const kind = p.track.kind;
-              logger.log(
-                `Resuming ${kind} track (MatrixRTC connection present)`,
-              );
-              p.track
-                .resumeUpstream()
-                .catch((e) =>
-                  logger.error(
-                    `Failed to resume ${kind} track after MatrixRTC reconnection`,
-                    e,
-                  ),
-                );
-            }
-          }
-        } else {
-          for (const p of publications) {
-            if (p.track?.isUpstreamPaused === false) {
-              const kind = p.track.kind;
-              logger.log(
-                `Pausing ${kind} track (uncertain MatrixRTC connection)`,
-              );
-              p.track
-                .pauseUpstream()
-                .catch((e) =>
-                  logger.error(
-                    `Failed to pause ${kind} track after entering uncertain MatrixRTC connection`,
-                    e,
-                  ),
-                );
-            }
-          }
-        }
-      });
-
     // Join automatically
     this.join(); // TODO-MULTI-SFU: Use this view model for the lobby as well, and only call this once 'join' is clicked?
   }

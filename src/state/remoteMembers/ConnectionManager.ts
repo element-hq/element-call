@@ -14,7 +14,7 @@ import {
   type ParticipantId,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, combineLatest, map, switchMap } from "rxjs";
-import { type Logger } from "matrix-js-sdk/lib/logger";
+import { logger, type Logger } from "matrix-js-sdk/lib/logger";
 import { type Participant as LivekitParticipant } from "livekit-client";
 
 import { type Behavior } from "../Behavior";
@@ -106,8 +106,8 @@ export class ConnectionManager {
     private readonly scope: ObservableScope,
     private readonly connectionFactory: ConnectionFactory,
     private readonly inputTransports$: Behavior<LivekitTransport[]>,
-    logger: Logger,
   ) {
+    // TODO logger: only construct one logger from the client and make it compatible via a EC specific singleton.
     this.logger = logger.getChild("ConnectionManager");
     scope.onEnd(() => this.running$.next(false));
   }

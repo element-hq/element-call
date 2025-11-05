@@ -21,6 +21,7 @@ import { ElementWidgetActions, widget } from "./widget";
 import { MatrixRTCTransportMissingError } from "./utils/errors";
 import { getUrlParams } from "./UrlParams";
 import { getSFUConfigWithOpenID } from "./livekit/openIDSFU.ts";
+import { MatrixRTCMode } from "./settings/settings.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -98,9 +99,7 @@ export async function makeTransport(
 
 export interface EnterRTCSessionOptions {
   encryptMedia: boolean;
-  /** EXPERIMENTAL: If true, will use the multi-sfu codepath where each member connects to its SFU instead of everyone connecting to an elected on. */
-  useMultiSfu: boolean;
-  preferStickyEvents: boolean;
+  matrixRTCMode: MatrixRTCMode;
 }
 
 /**
@@ -112,7 +111,7 @@ export interface EnterRTCSessionOptions {
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   transport: LivekitTransport,
-  { encryptMedia, useMultiSfu, preferStickyEvents }: EnterRTCSessionOptions,
+  { encryptMedia, matrixRTCMode }: EnterRTCSessionOptions,
 ): Promise<void> {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
@@ -125,10 +124,11 @@ export async function enterRTCSession(
   const useDeviceSessionMemberEvents =
     features?.feature_use_device_session_member_events;
   const { sendNotificationType: notificationType, callIntent } = getUrlParams();
+  const multiSFU = matrixRTCMode !== MatrixRTCMode.Legacy;
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   rtcSession.joinRoomSession(
-    useMultiSfu ? [] : [transport],
-    useMultiSfu ? transport : undefined,
+    multiSFU ? [] : [transport],
+    multiSFU ? transport : undefined,
     {
       notificationType,
       callIntent,
@@ -147,7 +147,7 @@ export async function enterRTCSession(
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
       useExperimentalToDeviceTransport: true,
-      unstableSendStickyEvents: preferStickyEvents,
+      unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
     },
   );
   if (widget) {
