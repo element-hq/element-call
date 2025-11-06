@@ -78,11 +78,11 @@ export interface OurRunHelpers extends RunHelpers {
    * diagram.
    */
   schedule: (marbles: string, actions: Record<string, () => void>) => void;
-  behavior<T = string>(
+  behavior: <T>(
     marbles: string,
     values?: { [marble: string]: T },
     error?: unknown,
-  ): Behavior<T>;
+  ) => Behavior<T>;
   scope: ObservableScope;
 }
 

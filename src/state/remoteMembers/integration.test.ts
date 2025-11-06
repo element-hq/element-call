@@ -26,8 +26,12 @@ import {
   createMatrixLivekitMembers$,
   type MatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
-import { createConnectionManager$ } from "./ConnectionManager.ts";
+import {
+  ConnectionManagerData,
+  createConnectionManager$,
+} from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../SessionBehaviors.ts";
+import { Connection } from "./Connection.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
 
@@ -109,61 +113,79 @@ test("example test 2", () => {
     const bobMembership = mockCallMembership("@bob:example.com", "BDEV000");
     const carlMembership = mockCallMembership("@carl:example.com", "CDEV000");
     const daveMembership = mockCallMembership("@dave:foo.bar", "DDEV000");
-    const memberships$ = behavior("ab---c", {
+    const memberships$ = behavior("abc", {
       a: [bobMembership],
       b: [bobMembership, carlMembership],
       c: [bobMembership, carlMembership, daveMembership],
     });
 
-    const transports$ = testScope.behavior(
-      memberships$.pipe(
-        map((memberships) => {
-          return memberships.map((membership) => {
-            return membership.getTransport(memberships[0]) as LivekitTransport;
-          });
-        }),
-      ),
+    const membershipsAndTransports = membershipsAndTransports$(
+      testScope,
+      memberships$,
     );
 
     const connectionManager = createConnectionManager$({
       scope: testScope,
       connectionFactory: ecConnectionFactory,
-      inputTransports$: transports$,
+      inputTransports$: membershipsAndTransports.transports$,
     });
 
-    const marixLivekitItems$ = createMatrixLivekitMembers$({
+    const matrixLivekitItems$ = createMatrixLivekitMembers$({
       scope: testScope,
-      membershipsWithTransport$: membershipsAndTransports$(
-        testScope,
-        memberships$,
-      ).membershipsWithTransport$,
+      membershipsWithTransport$:
+        membershipsAndTransports.membershipsWithTransport$,
       connectionManager,
       matrixRoom: mockMatrixRoom,
-      userId: "local:example.org",
-      deviceId: "ME00",
     });
 
-    expectObservable(marixLivekitItems$).toBe("a(bb)(cc)", {
+    expectObservable(membershipsAndTransports.transports$).toBe("abc", {
+      a: expect.toSatisfy((t: LivekitTransport[]) => t.length === 1),
+      b: expect.toSatisfy((t: LivekitTransport[]) => t.length === 2),
+      c: expect.toSatisfy((t: LivekitTransport[]) => t.length === 3),
+    });
+
+    expectObservable(membershipsAndTransports.membershipsWithTransport$).toBe(
+      "abc",
+      {
+        a: expect.toSatisfy((t: LivekitTransport[]) => t.length === 1),
+        b: expect.toSatisfy((t: LivekitTransport[]) => t.length === 2),
+        c: expect.toSatisfy((t: LivekitTransport[]) => t.length === 3),
+      },
+    );
+
+    expectObservable(connectionManager.transports$).toBe("abc", {
+      a: expect.toSatisfy((t: LivekitTransport[]) => t.length === 1),
+      b: expect.toSatisfy((t: LivekitTransport[]) => t.length === 1),
+      c: expect.toSatisfy((t: LivekitTransport[]) => t.length === 2),
+    });
+
+    expectObservable(connectionManager.connectionManagerData$).toBe("abc", {
+      a: expect.toSatisfy(
+        (d: ConnectionManagerData) => d.getConnections().length === 1,
+      ),
+      b: expect.toSatisfy(
+        (d: ConnectionManagerData) => d.getConnections().length === 1,
+      ),
+      c: expect.toSatisfy(
+        (d: ConnectionManagerData) => d.getConnections().length === 2,
+      ),
+    });
+
+    expectObservable(connectionManager.connections$).toBe("abc", {
+      a: expect.toSatisfy((t: Connection[]) => t.length === 1),
+      b: expect.toSatisfy((t: Connection[]) => t.length === 1),
+      c: expect.toSatisfy((t: Connection[]) => t.length === 2),
+    });
+
+    expectObservable(matrixLivekitItems$).toBe("abc", {
       a: expect.toSatisfy((items: MatrixLivekitMember[]) => {
-        expect(items.length).toBe(1);
-        const item = items[0]!;
-        expect(item.membership).toStrictEqual(bobMembership);
-        expect(item.participant).toBeUndefined();
-        return true;
-      }),
-      b: expect.toSatisfy((items: MatrixLivekitMember[]) => {
-        // TODO
-        // expect(items.length).toBe(2);
-        //
+        // expect(items.length).toBe(1);
         // const item = items[0]!;
         // expect(item.membership).toStrictEqual(bobMembership);
         // expect(item.participant).toBeUndefined();
-        //
-        // {
-        //   const item = items[1]!;
-        //   expect(item.membership).toStrictEqual(carlMembership);
-        //   expect(item.participant).toBeUndefined();
-        // }
+        return true;
+      }),
+      b: expect.toSatisfy((items: MatrixLivekitMember[]) => {
         return true;
       }),
       c: expect.toSatisfy(() => true),

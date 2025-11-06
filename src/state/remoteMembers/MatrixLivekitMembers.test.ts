@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, test, vi, expect, beforeEach, afterEach } from "vitest";
-import { BehaviorSubject } from "rxjs";
 import {
   type CallMembership,
   type LivekitTransport,
@@ -14,14 +13,14 @@ import {
 import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
 import { getParticipantId } from "matrix-js-sdk/lib/matrixrtc/utils";
 
-import { type ConnectionManagerReturn } from "./ConnectionManager.ts";
+import { type IConnectionManager } from "./ConnectionManager.ts";
 import {
   type MatrixLivekitMember,
   createMatrixLivekitMembers$,
   areLivekitTransportsEqual,
-} from "./MatrixLivekitMembers";
-import { ObservableScope } from "../ObservableScope";
-import { ConnectionManagerData } from "./ConnectionManager";
+} from "./MatrixLivekitMembers.ts";
+import { ObservableScope } from "../ObservableScope.ts";
+import { ConnectionManagerData } from "./ConnectionManager.ts";
 import {
   mockCallMembership,
   mockRemoteParticipant,
@@ -32,8 +31,6 @@ import { type Connection } from "./Connection.ts";
 
 let testScope: ObservableScope;
 let mockMatrixRoom: MatrixRoom;
-const userId = "@local:example.com";
-const deviceId = "DEVICE000";
 
 // The merger beeing tested
 
@@ -87,8 +84,6 @@ test("should signal participant not yet connected to livekit", () => {
         connections$: behavior("a", { a: [] }),
       },
       matrixRoom: mockMatrixRoom,
-      userId,
-      deviceId,
     });
 
     expectObservable(matrixLivekitMember$).toBe("a", {
@@ -106,14 +101,14 @@ test("should signal participant not yet connected to livekit", () => {
 
 function aConnectionManager(
   data: ConnectionManagerData,
-  behavior: Pick<OurRunHelpers, "behavior">,
-): ConnectionManagerReturn {
+  behavior: OurRunHelpers["behavior"],
+): IConnectionManager {
   return {
     connectionManagerData$: behavior("a", { a: data }),
     transports$: behavior("a", {
-      a: [data.getConnections().map((connection) => connection.transport)],
+      a: data.getConnections().map((connection) => connection.transport),
     }),
-    connections$: behavior("a", { a: [data.getConnections()] }),
+    connections$: behavior("a", { a: data.getConnections() }),
   };
 }
 
@@ -154,8 +149,6 @@ test("should signal participant on a connection that is publishing", () => {
       }),
       connectionManager: aConnectionManager(connectionWithPublisher, behavior),
       matrixRoom: mockMatrixRoom,
-      userId,
-      deviceId,
     });
 
     expectObservable(matrixLivekitMember$).toBe("a", {
@@ -205,8 +198,6 @@ test("should signal participant on a connection that is not publishing", () => {
       }),
       connectionManager: aConnectionManager(connectionWithPublisher, behavior),
       matrixRoom: mockMatrixRoom,
-      userId,
-      deviceId,
     });
 
     expectObservable(matrixLivekitMember$).toBe("a", {
@@ -278,8 +269,6 @@ describe("Publication edge case", () => {
           behavior,
         ),
         matrixRoom: mockMatrixRoom,
-        userId,
-        deviceId,
       });
 
       expectObservable(matrixLivekitMember$).toBe("a", {
@@ -352,8 +341,6 @@ describe("Publication edge case", () => {
           behavior,
         ),
         matrixRoom: mockMatrixRoom,
-        userId,
-        deviceId,
       });
 
       expectObservable(matrixLivekitMember$).toBe("a", {
