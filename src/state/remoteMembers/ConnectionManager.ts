@@ -133,11 +133,8 @@ export function createConnectionManager$({
    */
   const transports$ = scope.behavior(
     combineLatest([running$, inputTransports$]).pipe(
-      map(([running, transports]) => ({
-        epoch: transports.epoch,
-        value: running ? transports.value : [],
-      })),
-      map((transports) => removeDuplicateTransports(transports.value)),
+      map(([running, transports]) => (running ? transports : [])),
+      map((transports) => removeDuplicateTransports(transports)),
     ),
   );
 
