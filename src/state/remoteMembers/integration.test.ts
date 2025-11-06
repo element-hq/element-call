@@ -14,7 +14,7 @@ import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { ObservableScope } from "../ObservableScope.ts";
+import { type Epoch, ObservableScope, trackEpoch } from "../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
 import { type OpenIDClientParts } from "../../livekit/openIDSFU.ts";
 import {
@@ -107,25 +107,20 @@ afterEach(() => {
 });
 
 test("bob, carl, then bob joining no tracks yet", () => {
-  withTestScheduler(({ expectObservable, behavior }) => {
+  withTestScheduler(({ expectObservable, behavior, scope }) => {
     const bobMembership = mockCallMembership("@bob:example.com", "BDEV000");
     const carlMembership = mockCallMembership("@carl:example.com", "CDEV000");
     const daveMembership = mockCallMembership("@dave:foo.bar", "DDEV000");
 
-    // We add the `---` because there is a limitation in rxjs marbles https://github.com/ReactiveX/rxjs/issues/5677
-    // Because we several values emitted at the same frame, so we use the grouping format
-    // e.g. a(bc) to indicate that b and c are emitted at the same time. But rxjs marbles advance the
-    // time by the number of characters in the marble diagram, so we need to add some padding to avoid so that
-    // the next emission is testable
-    // ab---c---
-    // a(bc)(de)
-    const eMarble = "ab----c----";
-    const vMarble = "a(xxb)(xxc)";
-    const memberships$ = behavior(eMarble, {
-      a: [bobMembership],
-      b: [bobMembership, carlMembership],
-      c: [bobMembership, carlMembership, daveMembership],
-    });
+    const eMarble = "abc";
+    const vMarble = "abc";
+    const memberships$ = scope.behavior(
+      behavior(eMarble, {
+        a: [bobMembership],
+        b: [bobMembership, carlMembership],
+        c: [bobMembership, carlMembership, daveMembership],
+      }).pipe(trackEpoch()),
+    );
 
     const membershipsAndTransports = membershipsAndTransports$(
       testScope,
@@ -147,7 +142,8 @@ test("bob, carl, then bob joining no tracks yet", () => {
     });
 
     expectObservable(matrixLivekitItems$).toBe(vMarble, {
-      a: expect.toSatisfy((items: MatrixLivekitMember[]) => {
+      a: expect.toSatisfy((e: Epoch<MatrixLivekitMember[]>) => {
+        const items = e.value;
         expect(items.length).toBe(1);
         const item = items[0]!;
         expect(item.membership).toStrictEqual(bobMembership);
@@ -160,7 +156,8 @@ test("bob, carl, then bob joining no tracks yet", () => {
         expect(item.participant).toBeUndefined();
         return true;
       }),
-      b: expect.toSatisfy((items: MatrixLivekitMember[]) => {
+      b: expect.toSatisfy((e: Epoch<MatrixLivekitMember[]>) => {
+        const items = e.value;
         expect(items.length).toBe(2);
 
         {
@@ -185,7 +182,8 @@ test("bob, carl, then bob joining no tracks yet", () => {
         }
         return true;
       }),
-      c: expect.toSatisfy((items: MatrixLivekitMember[]) => {
+      c: expect.toSatisfy((e: Epoch<MatrixLivekitMember[]>) => {
+        const items = e.value;
         logger.info(`E Items length: ${items.length}`);
         expect(items.length).toBe(3);
         {

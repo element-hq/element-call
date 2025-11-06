@@ -19,7 +19,7 @@ import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
 
 import { type Behavior } from "../Behavior";
 import { type Connection } from "./Connection";
-import { type ObservableScope } from "../ObservableScope";
+import { Epoch, type ObservableScope } from "../ObservableScope";
 import { generateKeyed$ } from "../../utils/observable";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
@@ -90,13 +90,13 @@ export class ConnectionManagerData {
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
-  inputTransports$: Behavior<LivekitTransport[]>;
+  inputTransports$: Behavior<Epoch<LivekitTransport[]>>;
 }
 // TODO - write test for scopes (do we really need to bind scope)
 export interface IConnectionManager {
-  transports$: Behavior<LivekitTransport[]>;
-  connectionManagerData$: Behavior<ConnectionManagerData>;
-  connections$: Behavior<Connection[]>;
+  transports$: Behavior<Epoch<LivekitTransport[]>>;
+  connectionManagerData$: Behavior<Epoch<ConnectionManagerData>>;
+  connections$: Behavior<Epoch<Connection[]>>;
 }
 /**
  * Crete a `ConnectionManager`
@@ -133,8 +133,10 @@ export function createConnectionManager$({
    */
   const transports$ = scope.behavior(
     combineLatest([running$, inputTransports$]).pipe(
-      map(([running, transports]) => (running ? transports : [])),
-      map((transports) => removeDuplicateTransports(transports)),
+      map(([running, transports]) =>
+        transports.mapInner((transport) => (running ? transport : [])),
+      ),
+      map((transports) => transports.mapInner(removeDuplicateTransports)),
     ),
   );
 
@@ -142,7 +144,7 @@ export function createConnectionManager$({
    * Connections for each transport in use by one or more session members.
    */
   const connections$ = scope.behavior(
-    generateKeyed$<LivekitTransport[], Connection, Connection[]>(
+    generateKeyed$<Epoch<LivekitTransport[]>, Connection, Epoch<Connection[]>>(
       transports$,
       (transports, createOrGet) => {
         const createConnection =
@@ -162,46 +164,50 @@ export function createConnectionManager$({
             return connection;
           };
 
-        return transports.map((transport) => {
-          const key =
-            transport.livekit_service_url + "|" + transport.livekit_alias;
-          return createOrGet(key, createConnection(transport));
+        return transports.mapInner((transports) => {
+          return transports.map((transport) => {
+            const key =
+              transport.livekit_service_url + "|" + transport.livekit_alias;
+            return createOrGet(key, createConnection(transport));
+          });
         });
       },
     ),
   );
 
-  const connectionManagerData$: Behavior<ConnectionManagerData> =
-    scope.behavior(
-      connections$.pipe(
-        switchMap((connections) => {
-          // Map the connections to list of {connection, participants}[]
-          const listOfConnectionsWithPublishingParticipants = connections.map(
-            (connection) => {
-              return connection.participantsWithTrack$.pipe(
-                map((participants) => ({
-                  connection,
-                  participants,
-                })),
-              );
-            },
-          );
-          // combineLatest the several streams into a single stream with the ConnectionManagerData
-          return combineLatest(
-            listOfConnectionsWithPublishingParticipants,
-          ).pipe(
-            map((lists) =>
-              lists.reduce((data, { connection, participants }) => {
-                data.add(connection, participants);
-                return data;
-              }, new ConnectionManagerData()),
-            ),
-          );
-        }),
-      ),
-      // start empty
-      new ConnectionManagerData(),
-    );
+  const connectionManagerData$ = scope.behavior(
+    connections$.pipe(
+      switchMap((connections) => {
+        const epoch = connections.epoch;
+
+        // Map the connections to list of {connection, participants}[]
+        const listOfConnectionsWithPublishingParticipants =
+          connections.value.map((connection) => {
+            return connection.participantsWithTrack$.pipe(
+              map((participants) => ({
+                connection,
+                participants,
+              })),
+            );
+          });
+
+        // combineLatest the several streams into a single stream with the ConnectionManagerData
+        return combineLatest(listOfConnectionsWithPublishingParticipants).pipe(
+          map(
+            (lists) =>
+              new Epoch(
+                lists.reduce((data, { connection, participants }) => {
+                  data.add(connection, participants);
+                  return data;
+                }, new ConnectionManagerData()),
+                epoch,
+              ),
+          ),
+        );
+      }),
+    ),
+  );
+
   return { transports$, connectionManagerData$, connections$ };
 }
 
