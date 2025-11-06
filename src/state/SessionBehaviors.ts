@@ -22,23 +22,15 @@ interface Props {
   matrixRTCSession: MatrixRTCSession;
 }
 
-export const createSessionMembershipsAndTransports$ = ({
-  scope,
-  matrixRTCSession,
-}: Props): {
-  memberships$: Behavior<CallMembership[]>;
+export const membershipsAndTransports$ = (
+  scope: ObservableScope,
+  memberships$: Behavior<CallMembership[]>,
+): {
   membershipsWithTransport$: Behavior<
     { membership: CallMembership; transport?: LivekitTransport }[]
   >;
   transports$: Behavior<LivekitTransport[]>;
 } => {
-  const memberships$ = scope.behavior(
-    fromEvent(
-      matrixRTCSession,
-      MatrixRTCSessionEvent.MembershipsChanged,
-      (_, memberships: CallMembership[]) => memberships,
-    ),
-  );
   /**
    * Lists the transports used by ourselves, plus all other MatrixRTC session
    * members. For completeness this also lists the preferred transport and
@@ -47,9 +39,7 @@ export const createSessionMembershipsAndTransports$ = ({
    * together when it might change together is what you have to do in RxJS to
    * avoid reading inconsistent state or observing too many changes.)
    */
-  const membershipsWithTransport$: Behavior<
-    { membership: CallMembership; transport?: LivekitTransport }[]
-  > = scope.behavior(
+  const membershipsWithTransport$ = scope.behavior(
     memberships$.pipe(
       map((memberships) => {
         return memberships.map((membership) => {
@@ -69,9 +59,48 @@ export const createSessionMembershipsAndTransports$ = ({
       map((mts) => mts.flatMap(({ transport: t }) => (t ? [t] : []))),
     ),
   );
+
   return {
-    memberships$,
     membershipsWithTransport$,
     transports$,
+  };
+};
+
+export const createMemberships$ = ({
+  scope,
+  matrixRTCSession,
+}: Props): Behavior<CallMembership[]> => {
+  return scope.behavior(
+    fromEvent(
+      matrixRTCSession,
+      MatrixRTCSessionEvent.MembershipsChanged,
+      (_, memberships: CallMembership[]) => memberships,
+    ),
+  );
+};
+
+export const createSessionMembershipsAndTransports$ = ({
+  scope,
+  matrixRTCSession,
+}: Props): {
+  memberships$: Behavior<CallMembership[]>;
+  membershipsWithTransport$: Behavior<
+    { membership: CallMembership; transport?: LivekitTransport }[]
+  >;
+  transports$: Behavior<LivekitTransport[]>;
+} => {
+  const memberships$ = scope.behavior(
+    fromEvent(
+      matrixRTCSession,
+      MatrixRTCSessionEvent.MembershipsChanged,
+      (_, memberships: CallMembership[]) => memberships,
+    ),
+  );
+
+  const memberAndTransport = membershipsAndTransports$(scope, memberships$);
+
+  return {
+    memberships$,
+    ...memberAndTransport,
   };
 };

@@ -11,11 +11,14 @@ import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type Participant as LivekitParticipant } from "livekit-client";
 
 import { ObservableScope } from "../ObservableScope.ts";
-import { createConnectionManager$ } from "./ConnectionManager.ts";
+import {
+  type ConnectionManagerReturn,
+  createConnectionManager$,
+} from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
-import { areLivekitTransportsEqual } from "./matrixLivekitMerger.ts";
 import { flushPromises, withTestScheduler } from "../../utils/test.ts";
+import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 
 // Some test constants
 
@@ -44,7 +47,7 @@ let connectionManagerInputs: {
   connectionFactory: ConnectionFactory;
   inputTransports$: BehaviorSubject<LivekitTransport[]>;
 };
-let manager: ReturnType<typeof createConnectionManager$>;
+let manager: ConnectionManagerReturn;
 beforeEach(() => {
   testScope = new ObservableScope();
 

@@ -113,7 +113,11 @@ import { type ObservableScope } from "./ObservableScope.ts";
 import { createMatrixLivekitMembers$ } from "./remoteMembers/matrixLivekitMerger.ts";
 import { createLocalMembership$ } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
-import { createSessionMembershipsAndTransports$ } from "./SessionBehaviors.ts";
+import {
+  createMemberships$,
+  createSessionMembershipsAndTransports$,
+  membershipsAndTransports$,
+} from "./SessionBehaviors.ts";
 import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
 import { createConnectionManager$ } from "./remoteMembers/ConnectionManager.ts";
 
@@ -189,11 +193,14 @@ export class CallViewModel {
       }
     : undefined;
 
-  private sessionBehaviors = createSessionMembershipsAndTransports$({
+  private memberships$ = createMemberships$({
     scope: this.scope,
     matrixRTCSession: this.matrixRTCSession,
   });
-  private memberships$ = this.sessionBehaviors.memberships$;
+  private membershipsAndTransports = membershipsAndTransports$(
+    this.scope,
+    this.memberships$,
+  );
 
   private localTransport$ = createLocalTransport$({
     scope: this.scope,

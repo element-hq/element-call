@@ -5,22 +5,29 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, beforeEach, afterEach } from "vitest";
-import { BehaviorSubject, type Observable } from "rxjs";
+import { test, vi, expect, beforeEach, afterEach } from "vitest";
+import { BehaviorSubject, map } from "rxjs";
 import { type Room as LivekitRoom } from "livekit-client";
-import { logger } from "matrix-js-sdk/lib/logger";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
 
-import { ConnectionManager } from "./ConnectionManager.ts";
 import { ObservableScope } from "../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
 import { type OpenIDClientParts } from "../../livekit/openIDSFU.ts";
-import { mockMediaDevices, withTestScheduler } from "../../utils/test";
+import {
+  mockCallMembership,
+  mockMediaDevices,
+  withTestScheduler,
+} from "../../utils/test";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext.tsx";
-import { matrixLivekitMerger$ } from "./matrixLivekitMerger.ts";
-import type { CallMembership, Transport } from "matrix-js-sdk/lib/matrixrtc";
-import { TRANSPORT_1 } from "./ConnectionManager.test.ts";
+import {
+  createMatrixLivekitMembers$,
+  type MatrixLivekitMember,
+} from "./MatrixLivekitMembers.ts";
+import { createConnectionManager$ } from "./ConnectionManager.ts";
+import { membershipsAndTransports$ } from "../SessionBehaviors.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
 
@@ -28,32 +35,9 @@ let testScope: ObservableScope;
 let ecConnectionFactory: ECConnectionFactory;
 let mockClient: OpenIDClientParts;
 let lkRoomFactory: () => LivekitRoom;
+let mockMatrixRoom: MatrixRoom;
 
 const createdMockLivekitRooms: Map<string, LivekitRoom> = new Map();
-
-// Main test input
-const memberships$ = new BehaviorSubject<CallMembership[]>([]);
-
-// under test
-let connectionManager: ConnectionManager;
-
-function createLkMerger(
-  memberships$: Observable<CallMembership[]>,
-): matrixLivekitMerger$ {
-  const mockRoomEmitter = new EventEmitter();
-  return new matrixLivekitMerger$(
-    testScope,
-    memberships$,
-    connectionManager,
-    {
-      on: mockRoomEmitter.on.bind(mockRoomEmitter),
-      off: mockRoomEmitter.off.bind(mockRoomEmitter),
-      getMember: vi.fn().mockReturnValue(undefined),
-    },
-    "@user:example.com",
-    "DEV000",
-  );
-}
 
 beforeEach(() => {
   testScope = new ObservableScope();
@@ -90,16 +74,9 @@ beforeEach(() => {
     lkRoomFactory,
   );
 
-  connectionManager = new ConnectionManager(
-    testScope,
-    ecConnectionFactory,
-    logger,
-  );
-
   //TODO a bit annoying to have to do a http mock?
-  fetchMock.post(`**/sfu/get`, (url) => {
+  fetchMock.post(`path:/sfu/get`, (url) => {
     const domain = new URL(url).hostname; // Extract the domain from the URL
-
     return {
       status: 200,
       body: {
@@ -108,6 +85,18 @@ beforeEach(() => {
       },
     };
   });
+
+  mockMatrixRoom = vi.mocked<MatrixRoom>({
+    getMember: vi.fn().mockImplementation((userId: string) => {
+      return {
+        userId,
+        rawDisplayName: userId.replace("@", "").replace(":example.org", ""),
+        getMxcAvatarUrl: vi.fn().mockReturnValue(null),
+      } as unknown as RoomMember;
+    }),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  } as unknown as MatrixRoom);
 });
 
 afterEach(() => {
@@ -115,43 +104,82 @@ afterEach(() => {
   fetchMock.reset();
 });
 
-test("example test", () => {
-  withTestScheduler(({ schedule, expectObservable, cold }) => {
-    connectionManager.connections$.subscribe((connections) => {
-      // console.log(
-      //   "Connections updated:",
-      //   connections.map((c) => c.transport),
-      // );
+test("example test 2", () => {
+  withTestScheduler(({ schedule, expectObservable, behavior, cold }) => {
+    const bobMembership = mockCallMembership("@bob:example.com", "BDEV000");
+    const carlMembership = mockCallMembership("@carl:example.com", "CDEV000");
+    const daveMembership = mockCallMembership("@dave:foo.bar", "DDEV000");
+    const memberships$ = behavior("ab---c", {
+      a: [bobMembership],
+      b: [bobMembership, carlMembership],
+      c: [bobMembership, carlMembership, daveMembership],
     });
 
-    const memberships$ = cold("-a-b-c", {
-      a: [mockCallmembership("@bob:example.com", "BDEV000")],
-      b: [
-        mockCallmembership("@bob:example.com", "BDEV000"),
-        mockCallmembership("@carl:example.com", "CDEV000"),
-      ],
-      c: [
-        mockCallmembership("@bob:example.com", "BDEV000"),
-        mockCallmembership("@carl:example.com", "CDEV000"),
-        mockCallmembership("@dave:foo.bar", "DDEV000"),
-      ],
+    const transports$ = testScope.behavior(
+      memberships$.pipe(
+        map((memberships) => {
+          return memberships.map((membership) => {
+            return membership.getTransport(memberships[0]) as LivekitTransport;
+          });
+        }),
+      ),
+    );
+
+    const connectionManager = createConnectionManager$({
+      scope: testScope,
+      connectionFactory: ecConnectionFactory,
+      inputTransports$: transports$,
     });
 
-    // TODO IN PROGRESS
-    const merger = createLkMerger(memberships$);
+    const marixLivekitItems$ = createMatrixLivekitMembers$({
+      scope: testScope,
+      membershipsWithTransport$: membershipsAndTransports$(
+        testScope,
+        memberships$,
+      ).membershipsWithTransport$,
+      connectionManager,
+      matrixRoom: mockMatrixRoom,
+      userId: "local:example.org",
+      deviceId: "ME00",
+    });
+
+    expectObservable(marixLivekitItems$).toBe("a(bb)(cc)", {
+      a: expect.toSatisfy((items: MatrixLivekitMember[]) => {
+        expect(items.length).toBe(1);
+        const item = items[0]!;
+        expect(item.membership).toStrictEqual(bobMembership);
+        expect(item.participant).toBeUndefined();
+        return true;
+      }),
+      b: expect.toSatisfy((items: MatrixLivekitMember[]) => {
+        // TODO
+        // expect(items.length).toBe(2);
+        //
+        // const item = items[0]!;
+        // expect(item.membership).toStrictEqual(bobMembership);
+        // expect(item.participant).toBeUndefined();
+        //
+        // {
+        //   const item = items[1]!;
+        //   expect(item.membership).toStrictEqual(carlMembership);
+        //   expect(item.participant).toBeUndefined();
+        // }
+        return true;
+      }),
+      c: expect.toSatisfy(() => true),
+    });
   });
 });
 
-function mockCallmembership(
-  userId: string,
-  deviceId: string,
-  transport?: Transport,
-): CallMembership {
-  const t = transport ?? TRANSPORT_1;
-  return {
-    userId: userId,
-    deviceId: deviceId,
-    getTransport: vi.fn().mockReturnValue(t),
-    transports: [t],
-  } as unknown as CallMembership;
-}
+// test("Tryng", () => {
+//
+//   withTestScheduler(({ schedule, expectObservable, behavior, cold }) => {
+//     const one = cold("a-b-c", { a: 1, b: 2, c: 3 });
+//     const a = one.pipe(map(() => 1));
+//     const b = one.pipe(map(() => 2));
+//     const combined = combineLatest([a,b])
+//       .pipe(map(([a,b])=>`${a}${b}`));
+//     expectObservable(combined).toBe("a-b-c", { a: 1, b: expect.anything(), c: 3 });
+//
+//   })
+// })

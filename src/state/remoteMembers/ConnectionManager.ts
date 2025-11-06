@@ -21,7 +21,7 @@ import { type Behavior } from "../Behavior";
 import { type Connection } from "./Connection";
 import { type ObservableScope } from "../ObservableScope";
 import { generateKeyed$ } from "../../utils/observable";
-import { areLivekitTransportsEqual } from "./matrixLivekitMerger";
+import { areLivekitTransportsEqual } from "./MatrixLivekitMembers";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 
 export class ConnectionManagerData {
@@ -94,6 +94,12 @@ interface Props {
 }
 // TODO - write test for scopes (do we really need to bind scope)
 
+export interface ConnectionManagerReturn {
+  deduplicatedTransports$: Behavior<LivekitTransport[]>;
+  connectionManagerData$: Behavior<ConnectionManagerData>;
+  connections$: Behavior<Connection[]>;
+}
+
 /**
  * Crete a `ConnectionManager`
  * @param scope the observable scope used by this object.
@@ -112,11 +118,7 @@ export function createConnectionManager$({
   scope,
   connectionFactory,
   inputTransports$,
-}: Props): {
-  transports$: Behavior<LivekitTransport[]>;
-  connectionManagerData$: Behavior<ConnectionManagerData>;
-  connections$: Behavior<Connection[]>;
-} {
+}: Props): ConnectionManagerReturn {
   const logger = rootLogger.getChild("ConnectionManager");
 
   const running$ = new BehaviorSubject(true);
@@ -131,7 +133,7 @@ export function createConnectionManager$({
    * It is build based on the list of subscribed transports (`transportsSubscriptions$`).
    * externally this is modified via `registerTransports()`.
    */
-  const transports$ = scope.behavior(
+  const deduplicatedTransports$ = scope.behavior(
     combineLatest([running$, inputTransports$]).pipe(
       map(([running, transports]) => (running ? transports : [])),
       map(removeDuplicateTransports),
@@ -143,7 +145,7 @@ export function createConnectionManager$({
    */
   const connections$ = scope.behavior(
     generateKeyed$<LivekitTransport[], Connection, Connection[]>(
-      transports$,
+      deduplicatedTransports$,
       (transports, createOrGet) => {
         const createConnection =
           (
@@ -202,7 +204,7 @@ export function createConnectionManager$({
       // start empty
       new ConnectionManagerData(),
     );
-  return { transports$, connectionManagerData$, connections$ };
+  return { deduplicatedTransports$, connectionManagerData$, connections$ };
 }
 
 function removeDuplicateTransports(

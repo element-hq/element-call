@@ -5,71 +5,51 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  describe,
-  test,
-  vi,
-  expect,
-  beforeEach,
-  afterEach,
-  type MockedObject,
-} from "vitest";
-import { BehaviorSubject, take } from "rxjs";
+import { describe, test, vi, expect, beforeEach, afterEach } from "vitest";
+import { BehaviorSubject } from "rxjs";
 import {
   type CallMembership,
   type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { type Room as MatrixRoom } from "matrix-js-sdk";
+import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
 import { getParticipantId } from "matrix-js-sdk/lib/matrixrtc/utils";
 
+import { type ConnectionManagerReturn } from "./ConnectionManager.ts";
 import {
   type MatrixLivekitMember,
-  matrixLivekitMerger$,
-} from "./matrixLivekitMerger";
+  createMatrixLivekitMembers$,
+  areLivekitTransportsEqual,
+} from "./MatrixLivekitMembers";
 import { ObservableScope } from "../ObservableScope";
+import { ConnectionManagerData } from "./ConnectionManager";
 import {
-  type ConnectionManager,
-  ConnectionManagerData,
-} from "./ConnectionManager";
-import { aliceRtcMember } from "../../utils/test-fixtures";
-import { mockRemoteParticipant } from "../../utils/test.ts";
+  mockCallMembership,
+  mockRemoteParticipant,
+  type OurRunHelpers,
+  withTestScheduler,
+} from "../../utils/test.ts";
 import { type Connection } from "./Connection.ts";
 
 let testScope: ObservableScope;
-let fakeManagerData$: BehaviorSubject<ConnectionManagerData>;
-let fakeMemberships$: BehaviorSubject<CallMembership[]>;
-let mockConnectionManager: MockedObject<ConnectionManager>;
 let mockMatrixRoom: MatrixRoom;
 const userId = "@local:example.com";
 const deviceId = "DEVICE000";
 
 // The merger beeing tested
-let matrixLivekitMerger: matrixLivekitMerger$;
 
 beforeEach(() => {
   testScope = new ObservableScope();
-  fakeMemberships$ = new BehaviorSubject<CallMembership[]>([]);
-  fakeManagerData$ = new BehaviorSubject<ConnectionManagerData>(
-    new ConnectionManagerData(),
-  );
-  mockConnectionManager = vi.mocked<ConnectionManager>({
-    registerTransports: vi.fn(),
-    connectionManagerData$: fakeManagerData$,
-  } as unknown as ConnectionManager);
   mockMatrixRoom = vi.mocked<MatrixRoom>({
-    getMember: vi.fn().mockReturnValue(null),
+    getMember: vi.fn().mockImplementation((userId: string) => {
+      return {
+        userId,
+        rawDisplayName: userId.replace("@", "").replace(":example.org", ""),
+        getMxcAvatarUrl: vi.fn().mockReturnValue(null),
+      } as unknown as RoomMember;
+    }),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
   } as unknown as MatrixRoom);
-
-  matrixLivekitMerger = new matrixLivekitMerger$(
-    testScope,
-    fakeMemberships$,
-    mockConnectionManager,
-    mockMatrixRoom,
-    userId,
-    deviceId,
-  );
 });
 
 afterEach(() => {
@@ -77,186 +57,357 @@ afterEach(() => {
 });
 
 test("should signal participant not yet connected to livekit", () => {
-  fakeMemberships$.next([aliceRtcMember]);
+  withTestScheduler(({ behavior, expectObservable }) => {
+    const bobMembership = {
+      userId: "@bob:example.org",
+      deviceId: "DEV000",
+      transports: [
+        {
+          type: "livekit",
+          livekit_service_url: "https://lk.example.org",
+          livekit_alias: "!alias:example.org",
+        },
+      ],
+    } as unknown as CallMembership;
 
-  let items: MatrixLivekitMember[] = [];
-  matrixLivekitMerger.matrixLivekitMember$
-    .pipe(take(1))
-    .subscribe((emitted) => {
-      items = emitted;
+    const matrixLivekitMember$ = createMatrixLivekitMembers$({
+      scope: testScope,
+      membershipsWithTransport$: behavior("a", {
+        a: [
+          {
+            membership: bobMembership,
+          },
+        ],
+      }),
+      connectionManager: {
+        connectionManagerData$: behavior("a", {
+          a: new ConnectionManagerData(),
+        }),
+        transports$: behavior("a", { a: [] }),
+        connections$: behavior("a", { a: [] }),
+      },
+      matrixRoom: mockMatrixRoom,
+      userId,
+      deviceId,
     });
 
-  expect(items).toHaveLength(1);
-  const item = items[0];
-
-  // Assert the expected membership
-  expect(item.membership).toBe(aliceRtcMember);
-
-  // Assert participant & connection are absent (not just `undefined`)
-  expect(item.participant).not.toBeDefined();
-  expect(item.participant).not.toBeDefined();
+    expectObservable(matrixLivekitMember$).toBe("a", {
+      a: expect.toSatisfy((data: MatrixLivekitMember[]) => {
+        return (
+          data.length == 1 &&
+          data[0].membership === bobMembership &&
+          data[0].participant === undefined &&
+          data[0].connection === undefined
+        );
+      }),
+    });
+  });
 });
 
+function aConnectionManager(
+  data: ConnectionManagerData,
+  behavior: Pick<OurRunHelpers, "behavior">,
+): ConnectionManagerReturn {
+  return {
+    connectionManagerData$: behavior("a", { a: data }),
+    transports$: behavior("a", {
+      a: [data.getConnections().map((connection) => connection.transport)],
+    }),
+    connections$: behavior("a", { a: [data.getConnections()] }),
+  };
+}
+
 test("should signal participant on a connection that is publishing", () => {
-  const fakeConnection = {
-    transport: aliceRtcMember.getTransport(aliceRtcMember) as LivekitTransport,
-  } as unknown as Connection;
+  withTestScheduler(({ behavior, expectObservable }) => {
+    const transport: LivekitTransport = {
+      type: "livekit",
+      livekit_service_url: "https://lk.example.org",
+      livekit_alias: "!alias:example.org",
+    };
 
-  fakeMemberships$.next([aliceRtcMember]);
-  const aliceParticipantId = getParticipantId(
-    aliceRtcMember.userId,
-    aliceRtcMember.deviceId,
-  );
+    const bobMembership = mockCallMembership(
+      "@bob:example.org",
+      "DEV000",
+      transport,
+    );
 
-  const managerData: ConnectionManagerData = new ConnectionManagerData();
-  managerData.add(fakeConnection, [
-    mockRemoteParticipant({ identity: aliceParticipantId }),
-  ]);
-  fakeManagerData$.next(managerData);
-
-  let items: MatrixLivekitMember[] = [];
-  matrixLivekitMerger.matrixLivekitMember$
-    .pipe(take(1))
-    .subscribe((emitted) => {
-      items = emitted;
+    const connectionWithPublisher = new ConnectionManagerData();
+    const bobParticipantId = getParticipantId(
+      bobMembership.userId,
+      bobMembership.deviceId,
+    );
+    const connection = {
+      transport: transport,
+    } as unknown as Connection;
+    connectionWithPublisher.add(connection, [
+      mockRemoteParticipant({ identity: bobParticipantId }),
+    ]);
+    const matrixLivekitMember$ = createMatrixLivekitMembers$({
+      scope: testScope,
+      membershipsWithTransport$: behavior("a", {
+        a: [
+          {
+            membership: bobMembership,
+            transport,
+          },
+        ],
+      }),
+      connectionManager: aConnectionManager(connectionWithPublisher, behavior),
+      matrixRoom: mockMatrixRoom,
+      userId,
+      deviceId,
     });
-  expect(items).toHaveLength(1);
-  const item = items[0];
 
-  // Assert the expected membership
-  expect(item.membership).toBe(aliceRtcMember);
-  expect(item.participant?.identity).toBe(aliceParticipantId);
-  expect(item.connection?.transport).toEqual(fakeConnection.transport);
+    expectObservable(matrixLivekitMember$).toBe("a", {
+      a: expect.toSatisfy((data: MatrixLivekitMember[]) => {
+        expect(data.length).toEqual(1);
+        expect(data[0].participant).toBeDefined();
+        expect(data[0].connection).toBeDefined();
+        expect(data[0].membership).toEqual(bobMembership);
+        expect(
+          areLivekitTransportsEqual(data[0].connection!.transport, transport),
+        ).toBe(true);
+        return true;
+      }),
+    });
+  });
 });
 
 test("should signal participant on a connection that is not publishing", () => {
-  const fakeConnection = {
-    transport: aliceRtcMember.getTransport(aliceRtcMember) as LivekitTransport,
-  } as unknown as Connection;
+  withTestScheduler(({ behavior, expectObservable }) => {
+    const transport: LivekitTransport = {
+      type: "livekit",
+      livekit_service_url: "https://lk.example.org",
+      livekit_alias: "!alias:example.org",
+    };
 
-  fakeMemberships$.next([aliceRtcMember]);
+    const bobMembership = mockCallMembership(
+      "@bob:example.org",
+      "DEV000",
+      transport,
+    );
 
-  const managerData: ConnectionManagerData = new ConnectionManagerData();
-  managerData.add(fakeConnection, []);
-  fakeManagerData$.next(managerData);
+    const connectionWithPublisher = new ConnectionManagerData();
+    // const bobParticipantId = getParticipantId(bobMembership.userId, bobMembership.deviceId);
+    const connection = {
+      transport: transport,
+    } as unknown as Connection;
+    connectionWithPublisher.add(connection, []);
+    const matrixLivekitMember$ = createMatrixLivekitMembers$({
+      scope: testScope,
+      membershipsWithTransport$: behavior("a", {
+        a: [
+          {
+            membership: bobMembership,
+            transport,
+          },
+        ],
+      }),
+      connectionManager: aConnectionManager(connectionWithPublisher, behavior),
+      matrixRoom: mockMatrixRoom,
+      userId,
+      deviceId,
+    });
 
-  matrixLivekitMerger.matrixLivekitMember$.pipe(take(1)).subscribe((items) => {
-    expect(items).toHaveLength(1);
-    const item = items[0];
-
-    // Assert the expected membership
-    expect(item.membership).toBe(aliceRtcMember);
-    expect(item.participant).not.toBeDefined();
-    // We have the connection
-    expect(item.connection?.transport).toEqual(fakeConnection.transport);
+    expectObservable(matrixLivekitMember$).toBe("a", {
+      a: expect.toSatisfy((data: MatrixLivekitMember[]) => {
+        expect(data.length).toEqual(1);
+        expect(data[0].participant).not.toBeDefined();
+        expect(data[0].connection).toBeDefined();
+        expect(data[0].membership).toEqual(bobMembership);
+        expect(
+          areLivekitTransportsEqual(data[0].connection!.transport, transport),
+        ).toBe(true);
+        return true;
+      }),
+    });
   });
 });
 
 describe("Publication edge case", () => {
-  const connectionA = {
-    transport: {
-      type: "livekit",
-      livekit_service_url: "https://lk.example.org",
-      livekit_alias: "!alias:example.org",
-    },
-  } as unknown as Connection;
-
-  const connectionB = {
-    transport: {
-      type: "livekit",
-      livekit_service_url: "https://lk.sample.com",
-      livekit_alias: "!alias:sample.com",
-    },
-  } as unknown as Connection;
-
-  const bobMembership = {
-    userId: "@bob:example.org",
-    deviceId: "DEV000",
-    transports: [connectionA.transport],
-  } as unknown as CallMembership;
-
-  const bobParticipantId = getParticipantId(
-    bobMembership.userId,
-    bobMembership.deviceId,
-  );
-
   test("bob is publishing in several connections", () => {
-    let lastMatrixLkItems: MatrixLivekitMember[] = [];
-    matrixLivekitMerger.matrixLivekitMember$.subscribe((items) => {
-      lastMatrixLkItems = items;
+    withTestScheduler(({ behavior, expectObservable }) => {
+      const transportA: LivekitTransport = {
+        type: "livekit",
+        livekit_service_url: "https://lk.example.org",
+        livekit_alias: "!alias:example.org",
+      };
+
+      const transportB: LivekitTransport = {
+        type: "livekit",
+        livekit_service_url: "https://lk.sample.com",
+        livekit_alias: "!alias:sample.com",
+      };
+
+      const bobMembership = mockCallMembership(
+        "@bob:example.org",
+        "DEV000",
+        transportA,
+      );
+
+      const connectionWithPublisher = new ConnectionManagerData();
+      const bobParticipantId = getParticipantId(
+        bobMembership.userId,
+        bobMembership.deviceId,
+      );
+      const connectionA = {
+        transport: transportA,
+      } as unknown as Connection;
+      const connectionB = {
+        transport: transportB,
+      } as unknown as Connection;
+
+      connectionWithPublisher.add(connectionA, [
+        mockRemoteParticipant({ identity: bobParticipantId }),
+      ]);
+      connectionWithPublisher.add(connectionB, [
+        mockRemoteParticipant({ identity: bobParticipantId }),
+      ]);
+      const matrixLivekitMember$ = createMatrixLivekitMembers$({
+        scope: testScope,
+        membershipsWithTransport$: behavior("a", {
+          a: [
+            {
+              membership: bobMembership,
+              transport: transportA,
+            },
+          ],
+        }),
+        connectionManager: aConnectionManager(
+          connectionWithPublisher,
+          behavior,
+        ),
+        matrixRoom: mockMatrixRoom,
+        userId,
+        deviceId,
+      });
+
+      expectObservable(matrixLivekitMember$).toBe("a", {
+        a: expect.toSatisfy((data: MatrixLivekitMember[]) => {
+          expect(data.length).toEqual(1);
+          expect(data[0].participant).toBeDefined();
+          expect(data[0].participant!.identity).toEqual(bobParticipantId);
+          expect(data[0].connection).toBeDefined();
+          expect(data[0].membership).toEqual(bobMembership);
+          expect(
+            areLivekitTransportsEqual(
+              data[0].connection!.transport,
+              transportA,
+            ),
+          ).toBe(true);
+          return true;
+        }),
+      });
     });
-
-    vi.mocked(bobMembership).getTransport = vi
-      .fn()
-      .mockReturnValue(connectionA.transport);
-
-    fakeMemberships$.next([bobMembership]);
-
-    const lkMap = new ConnectionManagerData();
-    lkMap.add(connectionA, [
-      mockRemoteParticipant({ identity: bobParticipantId }),
-    ]);
-    lkMap.add(connectionB, [
-      mockRemoteParticipant({ identity: bobParticipantId }),
-    ]);
-
-    fakeManagerData$.next(lkMap);
-
-    const items = lastMatrixLkItems;
-    expect(items).toHaveLength(1);
-    const item = items[0];
-
-    // Assert the expected membership
-    expect(item.membership.userId).toEqual(bobMembership.userId);
-    expect(item.membership.deviceId).toEqual(bobMembership.deviceId);
-
-    expect(item.participant?.identity).toEqual(bobParticipantId);
-
-    // The transport info should come from the membership transports and not only from the publishing connection
-    expect(item.connection?.transport?.livekit_service_url).toEqual(
-      bobMembership.transports[0]?.livekit_service_url,
-    );
-    expect(item.connection?.transport?.livekit_alias).toEqual(
-      bobMembership.transports[0]?.livekit_alias,
-    );
   });
 
   test("bob is publishing in the wrong connection", () => {
-    let lastMatrixLkItems: MatrixLivekitMember[] = [];
-    matrixLivekitMerger.matrixLivekitMember$.subscribe((items) => {
-      lastMatrixLkItems = items;
+    withTestScheduler(({ behavior, expectObservable }) => {
+      const transportA: LivekitTransport = {
+        type: "livekit",
+        livekit_service_url: "https://lk.example.org",
+        livekit_alias: "!alias:example.org",
+      };
+
+      const transportB: LivekitTransport = {
+        type: "livekit",
+        livekit_service_url: "https://lk.sample.com",
+        livekit_alias: "!alias:sample.com",
+      };
+
+      const bobMembership = mockCallMembership(
+        "@bob:example.org",
+        "DEV000",
+        transportA,
+      );
+
+      const connectionWithPublisher = new ConnectionManagerData();
+      const bobParticipantId = getParticipantId(
+        bobMembership.userId,
+        bobMembership.deviceId,
+      );
+      const connectionA = {
+        transport: transportA,
+      } as unknown as Connection;
+      const connectionB = {
+        transport: transportB,
+      } as unknown as Connection;
+
+      connectionWithPublisher.add(connectionA, []);
+      connectionWithPublisher.add(connectionB, [
+        mockRemoteParticipant({ identity: bobParticipantId }),
+      ]);
+      const matrixLivekitMember$ = createMatrixLivekitMembers$({
+        scope: testScope,
+        membershipsWithTransport$: behavior("a", {
+          a: [
+            {
+              membership: bobMembership,
+              transport: transportA,
+            },
+          ],
+        }),
+        connectionManager: aConnectionManager(
+          connectionWithPublisher,
+          behavior,
+        ),
+        matrixRoom: mockMatrixRoom,
+        userId,
+        deviceId,
+      });
+
+      expectObservable(matrixLivekitMember$).toBe("a", {
+        a: expect.toSatisfy((data: MatrixLivekitMember[]) => {
+          expect(data.length).toEqual(1);
+          expect(data[0].participant).not.toBeDefined();
+          expect(data[0].connection).toBeDefined();
+          expect(data[0].membership).toEqual(bobMembership);
+          expect(
+            areLivekitTransportsEqual(
+              data[0].connection!.transport,
+              transportA,
+            ),
+          ).toBe(true);
+          return true;
+        }),
+      });
     });
 
-    vi.mocked(bobMembership).getTransport = vi
-      .fn()
-      .mockReturnValue(connectionA.transport);
+    // let lastMatrixLkItems: MatrixLivekitMember[] = [];
+    // matrixLivekitMerger.matrixLivekitMember$.subscribe((items) => {
+    //   lastMatrixLkItems = items;
+    // });
 
-    fakeMemberships$.next([bobMembership]);
+    // vi.mocked(bobMembership).getTransport = vi
+    //   .fn()
+    //   .mockReturnValue(connectionA.transport);
 
-    const lkMap = new ConnectionManagerData();
-    lkMap.add(connectionA, []);
-    lkMap.add(connectionB, [
-      mockRemoteParticipant({ identity: bobParticipantId }),
-    ]);
+    // fakeMemberships$.next([bobMembership]);
 
-    fakeManagerData$.next(lkMap);
+    // const lkMap = new ConnectionManagerData();
+    // lkMap.add(connectionA, []);
+    // lkMap.add(connectionB, [
+    //   mockRemoteParticipant({ identity: bobParticipantId })
+    // ]);
 
-    const items = lastMatrixLkItems;
-    expect(items).toHaveLength(1);
-    const item = items[0];
+    // fakeManagerData$.next(lkMap);
 
-    // Assert the expected membership
-    expect(item.membership.userId).toEqual(bobMembership.userId);
-    expect(item.membership.deviceId).toEqual(bobMembership.deviceId);
+    // const items = lastMatrixLkItems;
+    // expect(items).toHaveLength(1);
+    // const item = items[0];
 
-    expect(item.participant).not.toBeDefined();
+    // // Assert the expected membership
+    // expect(item.membership.userId).toEqual(bobMembership.userId);
+    // expect(item.membership.deviceId).toEqual(bobMembership.deviceId);
 
-    // The transport info should come from the membership transports and not only from the publishing connection
-    expect(item.connection?.transport?.livekit_service_url).toEqual(
-      bobMembership.transports[0]?.livekit_service_url,
-    );
-    expect(item.connection?.transport?.livekit_alias).toEqual(
-      bobMembership.transports[0]?.livekit_alias,
-    );
+    // expect(item.participant).not.toBeDefined();
+
+    // // The transport info should come from the membership transports and not only from the publishing connection
+    // expect(item.connection?.transport?.livekit_service_url).toEqual(
+    //   bobMembership.transports[0]?.livekit_service_url
+    // );
+    // expect(item.connection?.transport?.livekit_alias).toEqual(
+    //   bobMembership.transports[0]?.livekit_alias
+    // );
   });
 });

@@ -13,15 +13,14 @@ import {
   type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, map, startWith, type Observable } from "rxjs";
+import { combineLatest, map, type Observable } from "rxjs";
 // eslint-disable-next-line rxjs/no-internal
 import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
 import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
 
-// import type { Logger } from "matrix-js-sdk/lib/logger";
 import { type Behavior } from "../Behavior";
 import { type ObservableScope } from "../ObservableScope";
-import { type createConnectionManager$ } from "./ConnectionManager";
+import type * as ConnectionManager from "./ConnectionManager";
 import { getRoomMemberFromRtcMember, memberDisplaynames$ } from "./displayname";
 import { type Connection } from "./Connection";
 
@@ -50,7 +49,7 @@ interface Props {
   membershipsWithTransport$: Behavior<
     { membership: CallMembership; transport?: LivekitTransport }[]
   >;
-  connectionManager: ReturnType<typeof createConnectionManager$>;
+  connectionManager: ConnectionManager.ConnectionManagerReturn;
   // TODO this is too much information for that class,
   // apparently needed to get a room member to later get the Avatar
   // => Extract an AvatarService instead?
@@ -142,7 +141,7 @@ export function createMatrixLivekitMembers$({
     );
   }
 
-  return scope.behavior(createMatrixLivekitMember$().pipe(startWith([])));
+  return scope.behavior(createMatrixLivekitMember$(), []);
 }
 
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
