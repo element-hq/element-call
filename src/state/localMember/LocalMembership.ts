@@ -28,7 +28,10 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../Behavior";
-import { type createConnectionManager$ } from "../remoteMembers/ConnectionManager";
+import {
+  type ConnectionManagerReturn,
+  type createConnectionManager$,
+} from "../remoteMembers/ConnectionManager";
 import { ObservableScope } from "../ObservableScope";
 import { Publisher } from "./Publisher";
 import { type MuteStates } from "../MuteStates";
@@ -90,7 +93,7 @@ interface Props {
   scope: ObservableScope;
   mediaDevices: MediaDevices;
   muteStates: MuteStates;
-  connectionManager: ReturnType<typeof createConnectionManager$>;
+  connectionManager: ConnectionManagerReturn;
   matrixRTCSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
   localTransport$: Behavior<LivekitTransport | undefined>;

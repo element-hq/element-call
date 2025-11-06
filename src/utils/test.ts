@@ -187,6 +187,29 @@ export const exampleTransport: LivekitTransport = {
   livekit_alias: "!alias:example.org",
 };
 
+export function mockCallMembership(
+  userId: string,
+  deviceId: string,
+  transport?: Transport,
+): CallMembership {
+  const t = transport ?? transportForUser(userId);
+  return {
+    userId: userId,
+    deviceId: deviceId,
+    getTransport: vi.fn().mockReturnValue(t),
+    transports: [t],
+  } as unknown as CallMembership;
+}
+
+function transportForUser(userId: string): Transport {
+  const domain = userId.split(":")[1];
+  return {
+    type: "livekit",
+    livekit_service_url: `https://lk.${domain}`,
+    livekit_alias: `!alias:${domain}`,
+  };
+}
+
 export function mockRtcMembership(
   user: string | RoomMember,
   deviceId: string,
