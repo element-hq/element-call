@@ -16,14 +16,15 @@ import {
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type Room as MatrixRoom } from "matrix-js-sdk/lib/matrix";
+// eslint-disable-next-line rxjs/no-internal
+import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
 
-import { type ObservableScope } from "../ObservableScope";
+import { Epoch, type ObservableScope } from "../ObservableScope";
 import {
   calculateDisplayName,
   shouldDisambiguate,
 } from "../../utils/displayname";
 import { type Behavior } from "../Behavior";
-import type { NodeStyleEventEmitter } from "rxjs/src/internal/observable/fromEvent.ts";
 
 /**
  * Displayname for each member of the call. This will disambiguate
@@ -36,8 +37,8 @@ import type { NodeStyleEventEmitter } from "rxjs/src/internal/observable/fromEve
 export const memberDisplaynames$ = (
   scope: ObservableScope,
   matrixRoom: Pick<MatrixRoom, "getMember"> & NodeStyleEventEmitter,
-  memberships$: Observable<CallMembership[]>,
-): Behavior<Map<string, string>> =>
+  memberships$: Observable<Epoch<CallMembership[]>>,
+): Behavior<Epoch<Map<string, string>>> =>
   scope.behavior(
     combineLatest([
       // Handle call membership changes
@@ -46,7 +47,8 @@ export const memberDisplaynames$ = (
       fromEvent(matrixRoom, RoomStateEvent.Members).pipe(startWith(null)),
       // TODO: do we need: pauseWhen(this.pretendToBeDisconnected$),
     ]).pipe(
-      map(([memberships, _displayNames]) => {
+      map(([epochMemberships, _displayNames]) => {
+        const { epoch, value: memberships } = epochMemberships;
         const displaynameMap = new Map<string, string>();
         const room = matrixRoom;
 
@@ -68,10 +70,10 @@ export const memberDisplaynames$ = (
             calculateDisplayName(member, disambiguate),
           );
         }
-        return displaynameMap;
+        return new Epoch(displaynameMap, epoch);
       }),
     ),
-    new Map<string, string>(),
+    new Epoch(new Map<string, string>()),
   );
 
 export function getRoomMemberFromRtcMember(

@@ -28,23 +28,20 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../Behavior";
-import {
-  type ConnectionManagerReturn,
-  type createConnectionManager$,
-} from "../remoteMembers/ConnectionManager";
+import { type IConnectionManager } from "../remoteMembers/ConnectionManager";
 import { ObservableScope } from "../ObservableScope";
 import { Publisher } from "./Publisher";
 import { type MuteStates } from "../MuteStates";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { type MediaDevices } from "../MediaDevices";
 import { and$ } from "../../utils/observable";
-import { areLivekitTransportsEqual } from "../remoteMembers/matrixLivekitMerger";
 import {
   enterRTCSession,
   type EnterRTCSessionOptions,
 } from "../../rtcSessionHelpers";
 import { type ElementCallError } from "../../utils/errors";
 import { ElementWidgetActions, type WidgetHelpers } from "../../widget";
+import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers";
 
 enum LivekitState {
   UNINITIALIZED = "uninitialized",
@@ -93,7 +90,7 @@ interface Props {
   scope: ObservableScope;
   mediaDevices: MediaDevices;
   muteStates: MuteStates;
-  connectionManager: ConnectionManagerReturn;
+  connectionManager: IConnectionManager;
   matrixRTCSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
   localTransport$: Behavior<LivekitTransport | undefined>;
@@ -153,12 +150,13 @@ export const createLocalMembership$ = ({
   // This should be used in a combineLatest with publisher$ to connect.
   const tracks$ = new BehaviorSubject<LocalTrack[]>([]);
 
+  // Drop Epoch data here since we will not combine this anymore
   const connection$ = scope.behavior(
     combineLatest(
       [connectionManager.connections$, localTransport$],
       (connections, transport) => {
         if (transport === undefined) return undefined;
-        return connections.find((connection) =>
+        return connections.value.find((connection) =>
           areLivekitTransportsEqual(connection.transport, transport),
         );
       },

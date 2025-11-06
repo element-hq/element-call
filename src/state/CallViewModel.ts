@@ -226,7 +226,10 @@ export class CallViewModel {
       [this.localTransport$, this.membershipsAndTransports.transports$],
       (localTransport, transports) => {
         const localTransportAsArray = localTransport ? [localTransport] : [];
-        return [...localTransportAsArray, ...transports];
+        return transports.mapInner((transports) => [
+          ...localTransportAsArray,
+          ...transports,
+        ]);
       },
     ),
   );

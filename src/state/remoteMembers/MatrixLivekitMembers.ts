@@ -13,14 +13,15 @@ import {
   type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, map } from "rxjs";
+import { combineLatest, filter, map } from "rxjs";
 // eslint-disable-next-line rxjs/no-internal
 import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
 import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
-import { type ObservableScope } from "../ObservableScope";
+import { Epoch, mapEpoch, type ObservableScope } from "../ObservableScope";
 import { getRoomMemberFromRtcMember, memberDisplaynames$ } from "./displayname";
 import { type Connection } from "./Connection";
 
@@ -47,7 +48,7 @@ export interface MatrixLivekitMember {
 interface Props {
   scope: ObservableScope;
   membershipsWithTransport$: Behavior<
-    { membership: CallMembership; transport?: LivekitTransport }[]
+    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
   >;
   connectionManager: IConnectionManager;
   // TODO this is too much information for that class,
@@ -74,7 +75,7 @@ export function createMatrixLivekitMembers$({
   membershipsWithTransport$,
   connectionManager,
   matrixRoom,
-}: Props): Behavior<MatrixLivekitMember[]> {
+}: Props): Behavior<Epoch<MatrixLivekitMember[]>> {
   /**
    * Stream of all the call members and their associated livekit data (if available).
    */
@@ -82,7 +83,7 @@ export function createMatrixLivekitMembers$({
   const displaynameMap$ = memberDisplaynames$(
     scope,
     matrixRoom,
-    membershipsWithTransport$.pipe(map((v) => v.map((v) => v.membership))),
+    membershipsWithTransport$.pipe(mapEpoch((v) => v.map((v) => v.membership))),
   );
 
   return scope.behavior(
@@ -91,48 +92,52 @@ export function createMatrixLivekitMembers$({
       connectionManager.connectionManagerData$,
       displaynameMap$,
     ]).pipe(
-      // filter(
-      //   ([membershipsWithTransports, managerData, displaynames]) =>
-      //     // for each change in
-      //     displaynames.size === membershipsWithTransports.length &&
-      //     displaynames.size === managerData.getConnections().length,
-      // ),
-      map(([memberships, managerData, displaynames]) => {
-        const items: MatrixLivekitMember[] = memberships.map(
-          ({ membership, transport }) => {
-            // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
-            const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
+      filter((values) =>
+        values.every((value) => value.epoch === values[0].epoch),
+      ),
+      map(
+        ([
+          { value: membershipsWithTransports, epoch },
+          { value: managerData },
+          { value: displaynames },
+        ]) => {
+          const items: MatrixLivekitMember[] = membershipsWithTransports.map(
+            ({ membership, transport }) => {
+              // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
+              const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
 
-            const participants = transport
-              ? managerData.getParticipantForTransport(transport)
-              : [];
-            const participant = participants.find(
-              (p) => p.identity == participantId,
-            );
-            const member = getRoomMemberFromRtcMember(
-              membership,
-              matrixRoom,
-            )?.member;
-            const connection = transport
-              ? managerData.getConnectionForTransport(transport)
-              : undefined;
-            const displayName = displaynames.get(participantId);
-            return {
-              participant,
-              membership,
-              connection,
-              // This makes sense to add to the js-sdk callMembership (we only need the avatar so probably the call memberhsip just should aquire the avatar)
-              // TODO Ugh this is hidign that it might be undefined!! best we remove the member entirely.
-              member: member as RoomMember,
-              displayName,
-              mxcAvatarUrl: member?.getMxcAvatarUrl(),
-              participantId,
-            };
-          },
-        );
-        return items;
-      }),
+              const participants = transport
+                ? managerData.getParticipantForTransport(transport)
+                : [];
+              const participant = participants.find(
+                (p) => p.identity == participantId,
+              );
+              const member = getRoomMemberFromRtcMember(
+                membership,
+                matrixRoom,
+              )?.member;
+              const connection = transport
+                ? managerData.getConnectionForTransport(transport)
+                : undefined;
+              const displayName = displaynames.get(participantId);
+              return {
+                participant,
+                membership,
+                connection,
+                // This makes sense to add to the js-sdk callMembership (we only need the avatar so probably the call memberhsip just should aquire the avatar)
+                // TODO Ugh this is hidign that it might be undefined!! best we remove the member entirely.
+                member: member as RoomMember,
+                displayName,
+                mxcAvatarUrl: member?.getMxcAvatarUrl(),
+                participantId,
+              };
+            },
+          );
+          return new Epoch(items, epoch);
+        },
+      ),
     ),
+    // new Epoch([]),
   );
 }
 

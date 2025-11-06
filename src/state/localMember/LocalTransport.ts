@@ -13,13 +13,17 @@ import {
   isLivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
-import { combineLatest, distinctUntilChanged, first, from, map } from "rxjs";
+import { combineLatest, distinctUntilChanged, first, from } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { type Behavior } from "../Behavior.ts";
-import { type ObservableScope } from "../ObservableScope.ts";
+import {
+  type Epoch,
+  mapEpoch,
+  type ObservableScope,
+} from "../ObservableScope.ts";
 import { Config } from "../../config/Config.ts";
 import { MatrixRTCTransportMissingError } from "../../utils/errors.ts";
 import { getSFUConfigWithOpenID } from "../../livekit/openIDSFU.ts";
@@ -37,7 +41,7 @@ import { getSFUConfigWithOpenID } from "../../livekit/openIDSFU.ts";
  */
 interface Props {
   scope: ObservableScope;
-  memberships$: Behavior<CallMembership[]>;
+  memberships$: Behavior<Epoch<CallMembership[]>>;
   client: MatrixClient;
   roomId: string;
   useOldestMember$: Behavior<boolean>;
@@ -63,7 +67,7 @@ export const createLocalTransport$ = ({
    */
   const oldestMemberTransport$ = scope.behavior(
     memberships$.pipe(
-      map((memberships) => memberships[0].getTransport(memberships[0])),
+      mapEpoch((memberships) => memberships[0].getTransport(memberships[0])),
       first((t) => t != undefined && isLivekitTransport(t)),
     ),
     undefined,

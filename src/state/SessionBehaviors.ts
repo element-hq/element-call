@@ -12,19 +12,24 @@ import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { fromEvent, map } from "rxjs";
+import { fromEvent } from "rxjs";
 
-import { type ObservableScope } from "./ObservableScope";
+import {
+  type Epoch,
+  mapEpoch,
+  trackEpoch,
+  type ObservableScope,
+} from "./ObservableScope";
 import { type Behavior } from "./Behavior";
 
 export const membershipsAndTransports$ = (
   scope: ObservableScope,
-  memberships$: Behavior<CallMembership[]>,
+  memberships$: Behavior<Epoch<CallMembership[]>>,
 ): {
   membershipsWithTransport$: Behavior<
-    { membership: CallMembership; transport?: LivekitTransport }[]
+    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
   >;
-  transports$: Behavior<LivekitTransport[]>;
+  transports$: Behavior<Epoch<LivekitTransport[]>>;
 } => {
   /**
    * Lists the transports used by ourselves, plus all other MatrixRTC session
@@ -36,7 +41,7 @@ export const membershipsAndTransports$ = (
    */
   const membershipsWithTransport$ = scope.behavior(
     memberships$.pipe(
-      map((memberships) => {
+      mapEpoch((memberships) => {
         return memberships.map((membership) => {
           const oldestMembership = memberships[0] ?? membership;
           const transport = membership.getTransport(oldestMembership);
@@ -51,7 +56,7 @@ export const membershipsAndTransports$ = (
 
   const transports$ = scope.behavior(
     membershipsWithTransport$.pipe(
-      map((mts) => mts.flatMap(({ transport: t }) => (t ? [t] : []))),
+      mapEpoch((mts) => mts.flatMap(({ transport: t }) => (t ? [t] : []))),
     ),
   );
 
@@ -64,12 +69,12 @@ export const membershipsAndTransports$ = (
 export const createMemberships$ = (
   scope: ObservableScope,
   matrixRTCSession: MatrixRTCSession,
-): Behavior<CallMembership[]> => {
+): Behavior<Epoch<CallMembership[]>> => {
   return scope.behavior(
     fromEvent(
       matrixRTCSession,
       MatrixRTCSessionEvent.MembershipsChanged,
       (_, memberships: CallMembership[]) => memberships,
-    ),
+    ).pipe(trackEpoch()),
   );
 };
