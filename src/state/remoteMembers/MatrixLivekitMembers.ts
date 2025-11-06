@@ -13,7 +13,7 @@ import {
   type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, filter, map, skipWhile, type Observable } from "rxjs";
+import { combineLatest, map } from "rxjs";
 // eslint-disable-next-line rxjs/no-internal
 import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
 import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
@@ -91,12 +91,12 @@ export function createMatrixLivekitMembers$({
       connectionManager.connectionManagerData$,
       displaynameMap$,
     ]).pipe(
-      filter(
-        ([membershipsWithTransports, managerData, displaynames]) =>
-          // for each change in
-          displaynames.size === membershipsWithTransports.length &&
-          displaynames.size === managerData.getConnections().length,
-      ),
+      // filter(
+      //   ([membershipsWithTransports, managerData, displaynames]) =>
+      //     // for each change in
+      //     displaynames.size === membershipsWithTransports.length &&
+      //     displaynames.size === managerData.getConnections().length,
+      // ),
       map(([memberships, managerData, displaynames]) => {
         const items: MatrixLivekitMember[] = memberships.map(
           ({ membership, transport }) => {

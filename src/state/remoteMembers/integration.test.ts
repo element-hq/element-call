@@ -6,12 +6,13 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, vi, expect, beforeEach, afterEach } from "vitest";
-import { BehaviorSubject, map } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { ObservableScope } from "../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
@@ -23,15 +24,12 @@ import {
 } from "../../utils/test";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext.tsx";
 import {
+  areLivekitTransportsEqual,
   createMatrixLivekitMembers$,
   type MatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
-import {
-  ConnectionManagerData,
-  createConnectionManager$,
-} from "./ConnectionManager.ts";
+import { createConnectionManager$ } from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../SessionBehaviors.ts";
-import { Connection } from "./Connection.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
 
@@ -108,12 +106,22 @@ afterEach(() => {
   fetchMock.reset();
 });
 
-test("example test 2", () => {
-  withTestScheduler(({ schedule, expectObservable, behavior, cold }) => {
+test("bob, carl, then bob joining no tracks yet", () => {
+  withTestScheduler(({ expectObservable, behavior }) => {
     const bobMembership = mockCallMembership("@bob:example.com", "BDEV000");
     const carlMembership = mockCallMembership("@carl:example.com", "CDEV000");
     const daveMembership = mockCallMembership("@dave:foo.bar", "DDEV000");
-    const memberships$ = behavior("abc", {
+
+    // We add the `---` because there is a limitation in rxjs marbles https://github.com/ReactiveX/rxjs/issues/5677
+    // Because we several values emitted at the same frame, so we use the grouping format
+    // e.g. a(bc) to indicate that b and c are emitted at the same time. But rxjs marbles advance the
+    // time by the number of characters in the marble diagram, so we need to add some padding to avoid so that
+    // the next emission is testable
+    // ab---c---
+    // a(bc)(de)
+    const eMarble = "ab----c----";
+    const vMarble = "a(xxb)(xxc)";
+    const memberships$ = behavior(eMarble, {
       a: [bobMembership],
       b: [bobMembership, carlMembership],
       c: [bobMembership, carlMembership, daveMembership],
@@ -138,70 +146,73 @@ test("example test 2", () => {
       matrixRoom: mockMatrixRoom,
     });
 
-    expectObservable(membershipsAndTransports.transports$).toBe("abc", {
-      a: expect.toSatisfy((t: LivekitTransport[]) => t.length === 1),
-      b: expect.toSatisfy((t: LivekitTransport[]) => t.length === 2),
-      c: expect.toSatisfy((t: LivekitTransport[]) => t.length === 3),
-    });
-
-    expectObservable(membershipsAndTransports.membershipsWithTransport$).toBe(
-      "abc",
-      {
-        a: expect.toSatisfy((t: LivekitTransport[]) => t.length === 1),
-        b: expect.toSatisfy((t: LivekitTransport[]) => t.length === 2),
-        c: expect.toSatisfy((t: LivekitTransport[]) => t.length === 3),
-      },
-    );
-
-    expectObservable(connectionManager.transports$).toBe("abc", {
-      a: expect.toSatisfy((t: LivekitTransport[]) => t.length === 1),
-      b: expect.toSatisfy((t: LivekitTransport[]) => t.length === 1),
-      c: expect.toSatisfy((t: LivekitTransport[]) => t.length === 2),
-    });
-
-    expectObservable(connectionManager.connectionManagerData$).toBe("abc", {
-      a: expect.toSatisfy(
-        (d: ConnectionManagerData) => d.getConnections().length === 1,
-      ),
-      b: expect.toSatisfy(
-        (d: ConnectionManagerData) => d.getConnections().length === 1,
-      ),
-      c: expect.toSatisfy(
-        (d: ConnectionManagerData) => d.getConnections().length === 2,
-      ),
-    });
-
-    expectObservable(connectionManager.connections$).toBe("abc", {
-      a: expect.toSatisfy((t: Connection[]) => t.length === 1),
-      b: expect.toSatisfy((t: Connection[]) => t.length === 1),
-      c: expect.toSatisfy((t: Connection[]) => t.length === 2),
-    });
-
-    expectObservable(matrixLivekitItems$).toBe("abc", {
+    expectObservable(matrixLivekitItems$).toBe(vMarble, {
       a: expect.toSatisfy((items: MatrixLivekitMember[]) => {
-        // expect(items.length).toBe(1);
-        // const item = items[0]!;
-        // expect(item.membership).toStrictEqual(bobMembership);
-        // expect(item.participant).toBeUndefined();
+        expect(items.length).toBe(1);
+        const item = items[0]!;
+        expect(item.membership).toStrictEqual(bobMembership);
+        expect(
+          areLivekitTransportsEqual(
+            item.connection!.transport,
+            bobMembership.transports[0]! as LivekitTransport,
+          ),
+        ).toBe(true);
+        expect(item.participant).toBeUndefined();
         return true;
       }),
       b: expect.toSatisfy((items: MatrixLivekitMember[]) => {
+        expect(items.length).toBe(2);
+
+        {
+          const item = items[0]!;
+          expect(item.membership).toStrictEqual(bobMembership);
+          expect(item.participant).toBeUndefined();
+        }
+
+        {
+          const item = items[1]!;
+          expect(item.membership).toStrictEqual(carlMembership);
+          expect(item.participantId).toStrictEqual(
+            `${carlMembership.userId}:${carlMembership.deviceId}`,
+          );
+          expect(
+            areLivekitTransportsEqual(
+              item.connection!.transport,
+              carlMembership.transports[0]! as LivekitTransport,
+            ),
+          ).toBe(true);
+          expect(item.participant).toBeUndefined();
+        }
         return true;
       }),
-      c: expect.toSatisfy(() => true),
+      c: expect.toSatisfy((items: MatrixLivekitMember[]) => {
+        logger.info(`E Items length: ${items.length}`);
+        expect(items.length).toBe(3);
+        {
+          expect(items[0]!.membership).toStrictEqual(bobMembership);
+        }
+
+        {
+          expect(items[1]!.membership).toStrictEqual(carlMembership);
+        }
+
+        {
+          const item = items[2]!;
+          expect(item.membership).toStrictEqual(daveMembership);
+          expect(item.participantId).toStrictEqual(
+            `${daveMembership.userId}:${daveMembership.deviceId}`,
+          );
+          expect(
+            areLivekitTransportsEqual(
+              item.connection!.transport,
+              daveMembership.transports[0]! as LivekitTransport,
+            ),
+          ).toBe(true);
+          expect(item.participant).toBeUndefined();
+        }
+        return true;
+      }),
+      x: expect.anything(),
     });
   });
 });
-
-// test("Tryng", () => {
-//
-//   withTestScheduler(({ schedule, expectObservable, behavior, cold }) => {
-//     const one = cold("a-b-c", { a: 1, b: 2, c: 3 });
-//     const a = one.pipe(map(() => 1));
-//     const b = one.pipe(map(() => 2));
-//     const combined = combineLatest([a,b])
-//       .pipe(map(([a,b])=>`${a}${b}`));
-//     expectObservable(combined).toBe("a-b-c", { a: 1, b: expect.anything(), c: 3 });
-//
-//   })
-// })
