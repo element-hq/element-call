@@ -52,7 +52,7 @@ import {
   throttleTime,
   timer,
 } from "rxjs";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
@@ -110,17 +110,17 @@ import {
 } from "./layout-types.ts";
 import { type ElementCallError } from "../utils/errors.ts";
 import { type ObservableScope } from "./ObservableScope.ts";
-import { createMatrixLivekitMembers$ } from "./remoteMembers/matrixLivekitMerger.ts";
 import { createLocalMembership$ } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import {
   createMemberships$,
-  createSessionMembershipsAndTransports$,
   membershipsAndTransports$,
 } from "./SessionBehaviors.ts";
 import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
 import { createConnectionManager$ } from "./remoteMembers/ConnectionManager.ts";
+import { createMatrixLivekitMembers$ } from "./remoteMembers/MatrixLivekitMembers.ts";
 
+const logger = rootLogger.getChild("[CallViewModel]");
 //TODO
 // Larger rename
 // member,membership -> rtcMember
@@ -193,10 +193,8 @@ export class CallViewModel {
       }
     : undefined;
 
-  private memberships$ = createMemberships$({
-    scope: this.scope,
-    matrixRTCSession: this.matrixRTCSession,
-  });
+  private memberships$ = createMemberships$(this.scope, this.matrixRTCSession);
+
   private membershipsAndTransports = membershipsAndTransports$(
     this.scope,
     this.memberships$,
@@ -225,7 +223,7 @@ export class CallViewModel {
   // Can contain duplicates. The connection manager will take care of this.
   private allTransports$ = this.scope.behavior(
     combineLatest(
-      [this.localTransport$, this.sessionBehaviors.transports$],
+      [this.localTransport$, this.membershipsAndTransports.transports$],
       (localTransport, transports) => {
         const localTransportAsArray = localTransport ? [localTransport] : [];
         return [...localTransportAsArray, ...transports];
@@ -243,11 +241,10 @@ export class CallViewModel {
 
   private matrixLivekitMembers$ = createMatrixLivekitMembers$({
     scope: this.scope,
-    membershipsWithTransport$: this.sessionBehaviors.membershipsWithTransport$,
+    membershipsWithTransport$:
+      this.membershipsAndTransports.membershipsWithTransport$,
     connectionManager: this.connectionManager,
     matrixRoom: this.matrixRoom,
-    userId: this.userId,
-    deviceId: this.deviceId,
   });
 
   private connectOptions$ = this.scope.behavior(
@@ -357,7 +354,7 @@ export class CallViewModel {
           connection,
           participant,
           member,
-          displayName$,
+          displayName,
           participantId,
         } of matrixLivekitMembers) {
           if (connection === undefined) {
@@ -368,7 +365,7 @@ export class CallViewModel {
             const mediaId = `${participantId}:${i}`;
             const lkRoom = connection?.livekitRoom;
             const url = connection?.transport.livekit_service_url;
-            const dpName$ = displayName$.pipe(map((n) => n ?? "[👻]"));
+
             const item = createOrGet(
               mediaId,
               (scope) =>
@@ -385,7 +382,7 @@ export class CallViewModel {
                   url,
                   this.mediaDevices,
                   this.pretendToBeDisconnected$,
-                  dpName$,
+                  constant(displayName ?? "[👻]"),
                   this.handsRaised$.pipe(
                     map((v) => v[participantId]?.time ?? null),
                   ),
@@ -412,7 +409,7 @@ export class CallViewModel {
                       lkRoom,
                       url,
                       this.pretendToBeDisconnected$,
-                      dpName$,
+                      constant(displayName ?? "[👻]"),
                     ),
                 ),
               );

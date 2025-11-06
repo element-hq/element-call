@@ -37,8 +37,6 @@ export const memberDisplaynames$ = (
   scope: ObservableScope,
   matrixRoom: Pick<MatrixRoom, "getMember"> & NodeStyleEventEmitter,
   memberships$: Observable<CallMembership[]>,
-  userId: string,
-  deviceId: string,
 ): Behavior<Map<string, string>> =>
   scope.behavior(
     combineLatest([
@@ -49,12 +47,7 @@ export const memberDisplaynames$ = (
       // TODO: do we need: pauseWhen(this.pretendToBeDisconnected$),
     ]).pipe(
       map(([memberships, _displayNames]) => {
-        const displaynameMap = new Map<string, string>([
-          [
-            `${userId}:${deviceId}`,
-            matrixRoom.getMember(userId)?.rawDisplayName ?? userId,
-          ],
-        ]);
+        const displaynameMap = new Map<string, string>();
         const room = matrixRoom;
 
         // We only consider RTC members for disambiguation as they are the only visible members.

@@ -21,7 +21,7 @@ import { type Behavior } from "../Behavior";
 import { type Connection } from "./Connection";
 import { type ObservableScope } from "../ObservableScope";
 import { generateKeyed$ } from "../../utils/observable";
-import { areLivekitTransportsEqual } from "./MatrixLivekitMembers";
+import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 
 export class ConnectionManagerData {
@@ -93,13 +93,11 @@ interface Props {
   inputTransports$: Behavior<LivekitTransport[]>;
 }
 // TODO - write test for scopes (do we really need to bind scope)
-
-export interface ConnectionManagerReturn {
-  deduplicatedTransports$: Behavior<LivekitTransport[]>;
+export interface IConnectionManager {
+  transports$: Behavior<LivekitTransport[]>;
   connectionManagerData$: Behavior<ConnectionManagerData>;
   connections$: Behavior<Connection[]>;
 }
-
 /**
  * Crete a `ConnectionManager`
  * @param scope the observable scope used by this object.
@@ -118,7 +116,7 @@ export function createConnectionManager$({
   scope,
   connectionFactory,
   inputTransports$,
-}: Props): ConnectionManagerReturn {
+}: Props): IConnectionManager {
   const logger = rootLogger.getChild("ConnectionManager");
 
   const running$ = new BehaviorSubject(true);
@@ -133,10 +131,13 @@ export function createConnectionManager$({
    * It is build based on the list of subscribed transports (`transportsSubscriptions$`).
    * externally this is modified via `registerTransports()`.
    */
-  const deduplicatedTransports$ = scope.behavior(
+  const transports$ = scope.behavior(
     combineLatest([running$, inputTransports$]).pipe(
-      map(([running, transports]) => (running ? transports : [])),
-      map(removeDuplicateTransports),
+      map(([running, transports]) => ({
+        epoch: transports.epoch,
+        value: running ? transports.value : [],
+      })),
+      map((transports) => removeDuplicateTransports(transports.value)),
     ),
   );
 
@@ -145,7 +146,7 @@ export function createConnectionManager$({
    */
   const connections$ = scope.behavior(
     generateKeyed$<LivekitTransport[], Connection, Connection[]>(
-      deduplicatedTransports$,
+      transports$,
       (transports, createOrGet) => {
         const createConnection =
           (
@@ -204,7 +205,7 @@ export function createConnectionManager$({
       // start empty
       new ConnectionManagerData(),
     );
-  return { deduplicatedTransports$, connectionManagerData$, connections$ };
+  return { transports$, connectionManagerData$, connections$ };
 }
 
 function removeDuplicateTransports(

@@ -17,11 +17,6 @@ import { fromEvent, map } from "rxjs";
 import { type ObservableScope } from "./ObservableScope";
 import { type Behavior } from "./Behavior";
 
-interface Props {
-  scope: ObservableScope;
-  matrixRTCSession: MatrixRTCSession;
-}
-
 export const membershipsAndTransports$ = (
   scope: ObservableScope,
   memberships$: Behavior<CallMembership[]>,
@@ -66,10 +61,10 @@ export const membershipsAndTransports$ = (
   };
 };
 
-export const createMemberships$ = ({
-  scope,
-  matrixRTCSession,
-}: Props): Behavior<CallMembership[]> => {
+export const createMemberships$ = (
+  scope: ObservableScope,
+  matrixRTCSession: MatrixRTCSession,
+): Behavior<CallMembership[]> => {
   return scope.behavior(
     fromEvent(
       matrixRTCSession,
@@ -77,30 +72,4 @@ export const createMemberships$ = ({
       (_, memberships: CallMembership[]) => memberships,
     ),
   );
-};
-
-export const createSessionMembershipsAndTransports$ = ({
-  scope,
-  matrixRTCSession,
-}: Props): {
-  memberships$: Behavior<CallMembership[]>;
-  membershipsWithTransport$: Behavior<
-    { membership: CallMembership; transport?: LivekitTransport }[]
-  >;
-  transports$: Behavior<LivekitTransport[]>;
-} => {
-  const memberships$ = scope.behavior(
-    fromEvent(
-      matrixRTCSession,
-      MatrixRTCSessionEvent.MembershipsChanged,
-      (_, memberships: CallMembership[]) => memberships,
-    ),
-  );
-
-  const memberAndTransport = membershipsAndTransports$(scope, memberships$);
-
-  return {
-    memberships$,
-    ...memberAndTransport,
-  };
 };

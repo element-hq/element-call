@@ -12,7 +12,7 @@ import { type Participant as LivekitParticipant } from "livekit-client";
 
 import { ObservableScope } from "../ObservableScope.ts";
 import {
-  type ConnectionManagerReturn,
+  type IConnectionManager,
   createConnectionManager$,
 } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
@@ -47,7 +47,7 @@ let connectionManagerInputs: {
   connectionFactory: ConnectionFactory;
   inputTransports$: BehaviorSubject<LivekitTransport[]>;
 };
-let manager: ConnectionManagerReturn;
+let manager: IConnectionManager;
 beforeEach(() => {
   testScope = new ObservableScope();
 
