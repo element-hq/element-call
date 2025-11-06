@@ -20,6 +20,7 @@ import {
   takeWhile,
   tap,
   withLatestFrom,
+  BehaviorSubject,
 } from "rxjs";
 
 import { type Behavior } from "../state/Behavior";
@@ -120,69 +121,54 @@ export function pauseWhen<T>(pause$: Behavior<boolean>) {
 }
 
 /**
- * Maps a changing input value to an output value consisting of items that have
- * automatically generated ObservableScopes tied to a key. Items will be
- * automatically created when their key is requested for the first time, reused
- * when the same key is requested at a later time, and destroyed (have their
- * scope ended) when the key is no longer requested.
+ * Maps a changing input value to a collection of items that each capture some
+ * dynamic data and are tied to a key. Items will be automatically created when
+ * their key is requested for the first time, reused when the same key is
+ * requested acy later time, and destroyed (have their scope ended) when the key
+ * is no longer requested.
  *
  * @param input$ The input value to be mapped.
- * @param project A function mapping input values to output values. This
- *   function receives an additional callback `createOrGet` which can be used
- *   within the function body to request that an item be generated for a certain
- *   key. The caller provides a factory which will be used to create the item if
- *   it is being requested for the first time. Otherwise, the item previously
- *   existing under that key will be returned.
+ * @param generator A generator function yielding a key and the currently
+ *   associated data for each item that it wants to exist.
+ * @param factory A function constructing an actual item, given the item's key,
+ *   dynamic data, and an automatically managed ObservableScope for the item.
  */
-export function generateKeyed$<In, Item, Out>(
-  input$: Observable<In>,
-  project: (
-    input: In,
-    createOrGet: (
-      key: string,
-      factory: (scope: ObservableScope) => Item,
-    ) => Item,
-  ) => Out,
-): Observable<Out> {
+export function generateItems$<Input, Key, Data, Item>(
+  input$: Observable<Input>,
+  generator: (input: Input) => Generator<{ key: Key; data: Data }, void, void>,
+  factory: (scope: ObservableScope, key: Key, data$: Behavior<Data>) => Item,
+): Observable<Item[]> {
   return input$.pipe(
     // Keep track of the existing items over time, so we can reuse them
-    scan<
-      In,
-      {
-        items: Map<string, { item: Item; scope: ObservableScope }>;
-        output: Out;
-      },
-      { items: Map<string, { item: Item; scope: ObservableScope }> }
-    >(
-      (state, data) => {
-        const nextItems = new Map<
-          string,
-          { item: Item; scope: ObservableScope }
-        >();
+    scan((prevItems, input) => {
+      const nextItems = new Map<
+        Key,
+        { scope: ObservableScope; data$: BehaviorSubject<Data>; item: Item }
+      >();
 
-        const output = project(data, (key, factory) => {
-          let item = state.items.get(key);
-          if (item === undefined) {
-            // First time requesting the key; create the item
-            const scope = new ObservableScope();
-            item = { item: factory(scope), scope };
-          }
-          nextItems.set(key, item);
-          return item.item;
-        });
+      for (const { key, data } of generator(input)) {
+        let item = prevItems.get(key);
+        if (item === undefined) {
+          // First time requesting the key; create the item
+          const scope = new ObservableScope();
+          const data$ = new BehaviorSubject(data);
+          item = { scope, data$, item: factory(scope, key, data$) };
+        } else {
+          item.data$.next(data);
+        }
+        nextItems.set(key, item);
+      }
 
-        // Destroy all items that are no longer being requested
-        for (const [key, { scope }] of state.items)
-          if (!nextItems.has(key)) scope.end();
+      // Destroy all items that are no longer being requested
+      for (const [key, { scope }] of prevItems)
+        if (!nextItems.has(key)) scope.end();
 
-        return { items: nextItems, output };
-      },
-      { items: new Map() },
-    ),
-    finalizeValue((state) => {
+      return nextItems;
+    }, new Map<Key, { scope: ObservableScope; data$: BehaviorSubject<Data>; item: Item }>()),
+    finalizeValue((items) => {
       // Destroy all remaining items when no longer subscribed
-      for (const { scope } of state.items.values()) scope.end();
+      for (const { scope } of items.values()) scope.end();
     }),
-    map(({ output }) => output),
+    map((items) => [...items.values()].map(({ item }) => item)),
   );
 }

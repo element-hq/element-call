@@ -67,7 +67,7 @@ import {
   ScreenShareViewModel,
   type UserMediaViewModel,
 } from "./MediaViewModel";
-import { accumulate, generateKeyed$, pauseWhen } from "../utils/observable";
+import { accumulate, generateMap$, pauseWhen } from "../utils/observable";
 import {
   duplicateTiles,
   MatrixRTCMode,
@@ -110,7 +110,7 @@ import {
 } from "./layout-types.ts";
 import { type ElementCallError } from "../utils/errors.ts";
 import { type ObservableScope } from "./ObservableScope.ts";
-import { createMatrixLivekitMembers$ } from "./remoteMembers/matrixLivekitMerger.ts";
+import { createMatrixLivekitMembers$ } from "./remoteMembers/MatrixLivekitMembers.ts";
 import { createLocalMembership$ } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import { createSessionMembershipsAndTransports$ } from "./SessionBehaviors.ts";
@@ -335,24 +335,17 @@ export class CallViewModel {
    */
   // TODO KEEP THIS!! and adapt it to what our membershipManger returns
   private readonly mediaItems$ = this.scope.behavior<MediaItem[]>(
-    generateKeyed$<
-      [typeof this.matrixLivekitMembers$.value, number],
-      MediaItem,
-      MediaItem[]
-    >(
+    generateMap$(
       // Generate a collection of MediaItems from the list of expected (whether
       // present or missing) LiveKit participants.
       combineLatest([this.matrixLivekitMembers$, duplicateTiles.value$]),
-      ([matrixLivekitMembers, duplicateTiles], createOrGet) => {
+      function* ([matrixLivekitMembers, duplicateTiles]) {
         const items: MediaItem[] = [];
 
-        for (const {
-          connection,
-          participant,
-          member,
-          displayName$,
+        for (const [
           participantId,
-        } of matrixLivekitMembers) {
+          { connection$, participant$, member$, displayName$ },
+        ] of matrixLivekitMembers) {
           if (connection === undefined) {
             logger.warn("connection is not yet initialised.");
             continue;
@@ -361,7 +354,6 @@ export class CallViewModel {
             const mediaId = `${participantId}:${i}`;
             const lkRoom = connection?.livekitRoom;
             const url = connection?.transport.livekit_service_url;
-            const dpName$ = displayName$.pipe(map((n) => n ?? "[👻]"));
             const item = createOrGet(
               mediaId,
               (scope) =>
@@ -378,7 +370,7 @@ export class CallViewModel {
                   url,
                   this.mediaDevices,
                   this.pretendToBeDisconnected$,
-                  dpName$,
+                  displayName$,
                   this.handsRaised$.pipe(
                     map((v) => v[participantId]?.time ?? null),
                   ),
@@ -405,7 +397,7 @@ export class CallViewModel {
                       lkRoom,
                       url,
                       this.pretendToBeDisconnected$,
-                      dpName$,
+                      displayName$,
                     ),
                 ),
               );

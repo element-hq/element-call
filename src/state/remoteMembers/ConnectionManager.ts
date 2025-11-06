@@ -20,8 +20,8 @@ import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
 import { type Behavior } from "../Behavior";
 import { type Connection } from "./Connection";
 import { type ObservableScope } from "../ObservableScope";
-import { generateKeyed$ } from "../../utils/observable";
-import { areLivekitTransportsEqual } from "./matrixLivekitMerger";
+import { generateItems$ } from "../../utils/observable";
+import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 
 export class ConnectionManagerData {
@@ -142,31 +142,28 @@ export function createConnectionManager$({
    * Connections for each transport in use by one or more session members.
    */
   const connections$ = scope.behavior(
-    generateKeyed$<LivekitTransport[], Connection, Connection[]>(
+    generateItems$(
       transports$,
-      (transports, createOrGet) => {
-        const createConnection =
-          (
-            transport: LivekitTransport,
-          ): ((scope: ObservableScope) => Connection) =>
-          (scope) => {
-            const connection = connectionFactory.createConnection(
-              transport,
-              scope,
-              logger,
-            );
-            // Start the connection immediately
-            // Use connection state to track connection progress
-            void connection.start();
-            // TODO subscribe to connection state to retry or log issues?
-            return connection;
+      function* (transports) {
+        for (const transport of transports)
+          yield {
+            // We need to serialize the transport to a string to properly use it
+            // as a Map key, but we also need the real transport object in order
+            // to construct the connection; pass it through as the item's data.
+            key: `${transport.livekit_service_url}|${transport.livekit_alias}`,
+            data: transport,
           };
-
-        return transports.map((transport) => {
-          const key =
-            transport.livekit_service_url + "|" + transport.livekit_alias;
-          return createOrGet(key, createConnection(transport));
-        });
+      },
+      (scope, key, transport$) => {
+        const connection = connectionFactory.createConnection(
+          transport$.value,
+          scope,
+          logger,
+        );
+        // Start the connection immediately
+        // Use connection state to track connection progress
+        void connection.start();
+        return connection;
       },
     ),
   );

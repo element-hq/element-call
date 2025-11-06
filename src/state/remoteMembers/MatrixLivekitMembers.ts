@@ -13,10 +13,23 @@ import {
   type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, map, startWith, type Observable } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
+import {
+  combineLatest,
+  filter,
+  fromEvent,
+  map,
+  startWith,
+  switchMap,
+  type Observable,
+} from "rxjs";
 // eslint-disable-next-line rxjs/no-internal
 import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
-import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
+import {
+  RoomStateEvent,
+  type Room as MatrixRoom,
+  type RoomMember,
+} from "matrix-js-sdk";
 
 // import type { Logger } from "matrix-js-sdk/lib/logger";
 import { type Behavior } from "../Behavior";
@@ -24,6 +37,7 @@ import { type ObservableScope } from "../ObservableScope";
 import { type createConnectionManager$ } from "./ConnectionManager";
 import { getRoomMemberFromRtcMember, memberDisplaynames$ } from "./displayname";
 import { type Connection } from "./Connection";
+import { generateItems$ } from "../../utils/observable";
 
 /**
  * Represent a matrix call member and his associated livekit participation.
@@ -31,18 +45,20 @@ import { type Connection } from "./Connection";
  * or if it has no livekit transport at all.
  */
 export interface MatrixLivekitMember {
-  membership: CallMembership;
+  participantId: string;
+  membership$: Behavior<CallMembership>;
   displayName$: Behavior<string>;
-  participant?: LocalLivekitParticipant | RemoteLivekitParticipant;
-  connection?: Connection;
+  participant$:
+    | Behavior<LocalLivekitParticipant | undefined>
+    | Behavior<RemoteLivekitParticipant | undefined>;
+  connection$: Behavior<Connection | undefined>;
+  mxcAvatarUrl$: Behavior<string | undefined>;
   /**
    * TODO Try to remove this! Its waaay to much information.
    * Just get the member's avatar
    * @deprecated
    */
-  member: RoomMember;
-  mxcAvatarUrl?: string;
-  participantId: string;
+  member$: Behavior<RoomMember>;
 }
 
 interface Props {
@@ -85,7 +101,7 @@ export function createMatrixLivekitMembers$({
    */
 
   function createMatrixLivekitMember$(): Observable<MatrixLivekitMember[]> {
-    const displaynameMap$ = memberDisplaynames$(
+    const displayNameMap$ = memberDisplaynames$(
       scope,
       matrixRoom,
       membershipsWithTransport$.pipe(map((v) => v.map((v) => v.membership))),
@@ -93,51 +109,75 @@ export function createMatrixLivekitMembers$({
       deviceId,
     );
 
-    return combineLatest([
-      membershipsWithTransport$,
-      connectionManager.connectionManagerData$,
-    ]).pipe(
-      map(([memberships, managerData]) => {
-        const items: MatrixLivekitMember[] = memberships.map(
-          ({ membership, transport }) => {
-            // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
-            const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
+    return generateItems$(
+      combineLatest([
+        membershipsWithTransport$,
+        connectionManager.connectionManagerData$,
+      ]),
+      function* ([memberships, managerData]) {
+        for (const { membership, transport } of memberships) {
+          // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
+          const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
 
-            const participants = transport
-              ? managerData.getParticipantForTransport(transport)
-              : [];
-            const participant = participants.find(
-              (p) => p.identity == participantId,
-            );
-            const member = getRoomMemberFromRtcMember(
-              membership,
-              matrixRoom,
-            )?.member;
-            const connection = transport
-              ? managerData.getConnectionForTransport(transport)
-              : undefined;
-            const displayName$ = scope.behavior(
-              displaynameMap$.pipe(
-                map(
-                  (displayNameMap) =>
-                    displayNameMap.get(membership.membershipID) ?? "---",
-                ),
-              ),
-            );
-            return {
+          const participants = transport
+            ? managerData.getParticipantForTransport(transport)
+            : [];
+          const participant = participants.find(
+            (p) => p.identity == participantId,
+          );
+          const member = getRoomMemberFromRtcMember(
+            membership,
+            matrixRoom,
+          )?.member;
+          if (member === undefined) {
+            logger.warn(`No room member for participant ${participantId}`);
+            continue;
+          }
+
+          const connection = transport
+            ? managerData.getConnectionForTransport(transport)
+            : undefined;
+
+          yield {
+            key: participantId,
+            data: {
               participant,
               membership,
               connection,
               // This makes sense to add the the js-sdk callMembership (we only need the avatar so probably the call memberhsip just should aquire the avatar)
-              // TODO Ugh this is hidign that it might be undefined!! best we remove the member entirely.
-              member: member as RoomMember,
-              displayName$,
-              mxcAvatarUrl: member?.getMxcAvatarUrl(),
-              participantId,
-            };
-          },
-        );
-        return items;
+              member,
+            },
+          };
+        }
+      },
+      (scope, participantId, data$): MatrixLivekitMember => ({
+        participantId,
+        membership$: scope.behavior(data$.pipe(map((data) => data.membership))),
+        displayName$: scope.behavior(
+          displayNameMap$.pipe(
+            map((displayNames) => displayNames.get(participantId)),
+            filter((name) => name !== undefined),
+          ),
+          "",
+        ),
+        participant$: scope.behavior(
+          data$.pipe(map((data) => data.participant)),
+          // Assert that a local participant will never become a remote
+          // participant or vice versa
+        ) as
+          | Behavior<LocalLivekitParticipant | undefined>
+          | Behavior<RemoteLivekitParticipant | undefined>,
+        connection$: scope.behavior(data$.pipe(map((data) => data.connection))),
+        mxcAvatarUrl$: scope.behavior(
+          // React to avatar changes
+          fromEvent(matrixRoom, RoomStateEvent.Members).pipe(
+            startWith(null),
+            switchMap(() =>
+              data$.pipe(map((data) => data.member.getMxcAvatarUrl())),
+            ),
+          ),
+        ),
+        member$: scope.behavior(data$.pipe(map((data) => data.member))),
       }),
     );
   }
