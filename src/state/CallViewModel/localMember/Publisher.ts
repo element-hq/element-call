@@ -31,7 +31,7 @@ import {
 } from "../../../livekit/TrackProcessorContext.tsx";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { observeTrackReference$ } from "../../MediaViewModel.ts";
-import { type Connection } from "../CallViewModel/remoteMembers/Connection.ts";
+import { type Connection } from "../remoteMembers/Connection.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
 
 /**
@@ -64,7 +64,7 @@ export class Publisher {
 
     const room = connection.livekitRoom;
 
-    room.setE2EEEnabled(e2eeLivekitOptions !== undefined)?.catch((e) => {
+    room.setE2EEEnabled(e2eeLivekitOptions !== undefined)?.catch((e: Error) => {
       this.logger?.error("Failed to set E2EE enabled on room", e);
     });
 
@@ -249,7 +249,7 @@ export class Publisher {
         ) {
           lkRoom
             .switchActiveDevice(kind, device.id)
-            .catch((e) =>
+            .catch((e: Error) =>
               this.logger?.error(
                 `Failed to sync ${kind} device with LiveKit`,
                 e,

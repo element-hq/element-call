@@ -22,7 +22,7 @@ import { E2eeType } from "../e2ee/e2eeType";
 import {
   CallViewModel,
   type CallViewModelOptions,
-} from "../state/CallViewModel";
+} from "../state/CallViewModel/CallViewModel";
 import {
   mockLivekitRoom,
   mockLocalParticipant,

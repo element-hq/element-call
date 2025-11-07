@@ -27,7 +27,7 @@ import {
 import { useAudioContext } from "../useAudioContext";
 import { GenericReaction, ReactionSet } from "../reactions";
 import { prefetchSounds } from "../soundUtils";
-import { type CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import {
   alice,

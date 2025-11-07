@@ -12,7 +12,7 @@ import { GenericReaction, ReactionSet } from "../reactions";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
 import { useLatest } from "../useLatest";
-import { type CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 
 const soundMap = Object.fromEntries([
   ...ReactionSet.filter((v) => v.sound !== undefined).map((v) => [

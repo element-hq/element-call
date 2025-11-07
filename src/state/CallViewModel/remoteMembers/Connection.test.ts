@@ -22,6 +22,7 @@ import {
   type Room as LivekitRoom,
   RoomEvent,
   type RoomOptions,
+  ConnectionState as LivekitConnectionState,
 } from "livekit-client";
 import fetchMock from "fetch-mock";
 import EventEmitter from "events";
@@ -32,6 +33,7 @@ import type {
   LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
+  Connection,
   type ConnectionOpts,
   type ConnectionState,
   type PublishingParticipant,
@@ -103,7 +105,7 @@ function setupTest(): void {
     disconnect: vi.fn(),
     remoteParticipants: new Map(),
     localParticipant: fakeLocalParticipant,
-    state: ConnectionState.Disconnected,
+    state: LivekitConnectionState.Disconnected,
     on: fakeRoomEventEmiter.on.bind(fakeRoomEventEmiter),
     off: fakeRoomEventEmiter.off.bind(fakeRoomEventEmiter),
     addListener: fakeRoomEventEmiter.addListener.bind(fakeRoomEventEmiter),
@@ -115,11 +117,10 @@ function setupTest(): void {
   } as unknown as LivekitRoom);
 }
 
-function setupRemoteConnection(): RemoteConnection {
+function setupRemoteConnection(): Connection {
   const opts: ConnectionOpts = {
     client: client,
     transport: livekitFocus,
-    remoteTransports$: fakeMembershipsFocusMap$,
     scope: testScope,
     livekitRoomFactory: () => fakeLivekitRoom,
   };
@@ -136,7 +137,7 @@ function setupRemoteConnection(): RemoteConnection {
 
   fakeLivekitRoom.connect.mockResolvedValue(undefined);
 
-  return new RemoteConnection(opts, undefined);
+  return new Connection(opts);
 }
 
 afterEach(() => {
@@ -152,11 +153,10 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       transport: livekitFocus,
-      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
-    const connection = new RemoteConnection(opts, undefined);
+    const connection = new Connection(opts);
 
     expect(connection.state$.getValue().state).toEqual("Initialized");
   });
@@ -168,12 +168,11 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       transport: livekitFocus,
-      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new RemoteConnection(opts, undefined);
+    const connection = new Connection(opts, undefined);
 
     const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {
@@ -221,12 +220,11 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       transport: livekitFocus,
-      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new RemoteConnection(opts, undefined);
+    const connection = new Connection(opts, undefined);
 
     const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {
@@ -278,12 +276,11 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       transport: livekitFocus,
-      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new RemoteConnection(opts, undefined);
+    const connection = new Connection(opts, undefined);
 
     const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {

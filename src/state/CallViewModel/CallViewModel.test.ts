@@ -50,7 +50,7 @@ import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
 import { CallViewModel, type CallViewModelOptions } from "./CallViewModel";
-import { type Layout } from "./layout-types";
+import { type Layout } from "../layout-types.ts";
 import {
   mockLocalParticipant,
   mockMatrixRoom,
@@ -65,9 +65,9 @@ import {
   testScope,
   mockLivekitRoom,
   exampleTransport,
-} from "../utils/test";
-import { E2eeType } from "../e2ee/e2eeType";
-import type { RaisedHandInfo, ReactionInfo } from "../reactions";
+} from "../../utils/test.ts";
+import { E2eeType } from "../../e2ee/e2eeType.ts";
+import type { RaisedHandInfo, ReactionInfo } from "../../reactions/index.ts";
 import {
   alice,
   aliceDoppelganger,
@@ -89,15 +89,15 @@ import {
   localId,
   localRtcMember,
   localRtcMemberDevice2,
-} from "../utils/test-fixtures";
-import { MediaDevices } from "./MediaDevices";
-import { getValue } from "../utils/observable";
-import { type Behavior, constant } from "./Behavior";
-import type { ProcessorState } from "../livekit/TrackProcessorContext.tsx";
+} from "../../utils/test-fixtures.ts";
+import { MediaDevices } from "../MediaDevices.ts";
+import { getValue } from "../../utils/observable.ts";
+import { type Behavior, constant } from "../Behavior.ts";
+import type { ProcessorState } from "../../livekit/TrackProcessorContext.tsx";
 import {
   type ElementCallError,
   MatrixRTCTransportMissingError,
-} from "../utils/errors.ts";
+} from "../../utils/errors.ts";
 
 vi.mock("rxjs", async (importOriginal) => ({
   ...(await importOriginal()),

@@ -156,7 +156,11 @@ interface LayoutScanState {
 }
 
 type MediaItem = UserMedia | ScreenShare;
-
+type AudioLivekitItem = {
+  livekitRoom: LivekitRoom;
+  participants: string[];
+  url: string;
+};
 /**
  * A view model providing all the application logic needed to show the in-call
  * UI (may eventually be expanded to cover the lobby and feedback screens in the
@@ -166,8 +170,6 @@ type MediaItem = UserMedia | ScreenShare;
 // state and LiveKit state. We use the common terminology of room "members", RTC
 // "memberships", and LiveKit "participants".
 export class CallViewModel {
-  private readonly urlParams = getUrlParams();
-
   private readonly userId = this.matrixRoom.client.getUserId()!;
   private readonly deviceId = this.matrixRoom.client.getDeviceId()!;
 
@@ -285,6 +287,7 @@ export class CallViewModel {
 
   // ------------------------------------------------------------------------
   // ROOM MEMBER tracking TODO
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private roomMembers$ = createRoomMembers$(this.scope, this.matrixRoom);
   /**
    * If there is a configuration error with the call (e.g. misconfigured E2EE).
@@ -311,6 +314,7 @@ export class CallViewModel {
    * than whether all connections are truly up and running.
    */
   // DISCUSS ? lets think why we need joined and how to do it better
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private readonly joined$ = this.localMembership.connected$;
 
   /**
@@ -327,7 +331,23 @@ export class CallViewModel {
 
   public readonly audioParticipants$ = this.scope.behavior(
     this.matrixLivekitMembers$.pipe(
-      map((members) => members.value.map((m) => m.participant)),
+      map((members) =>
+        members.value.reduce<AudioLivekitItem[]>((acc, curr) => {
+          const url = curr.connection?.transport.livekit_service_url;
+          const livekitRoom = curr.connection?.livekitRoom;
+          const participant = curr.participant?.identity;
+
+          if (!url || !livekitRoom || !participant) return acc;
+
+          const existing = acc.find((item) => item.url === url);
+          if (existing) {
+            existing.participants.push(participant);
+          } else {
+            acc.push({ livekitRoom, participants: [participant], url });
+          }
+          return acc;
+        }, []),
+      ),
     ),
   );
 

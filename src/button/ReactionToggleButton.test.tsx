@@ -13,7 +13,7 @@ import { type ReactNode } from "react";
 
 import { ReactionToggleButton } from "./ReactionToggleButton";
 import { ElementCallReactionEventType } from "../reactions";
-import { type CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local, localRtcMember } from "../utils/test-fixtures";
 import { type MockRTCSession } from "../utils/test";
