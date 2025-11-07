@@ -22,17 +22,17 @@ import {
 } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import type { Behavior } from "../Behavior.ts";
-import type { MediaDevices, SelectedDevice } from "../MediaDevices.ts";
-import type { MuteStates } from "../MuteStates.ts";
+import type { Behavior } from "../../Behavior.ts";
+import type { MediaDevices, SelectedDevice } from "../../MediaDevices.ts";
+import type { MuteStates } from "../../MuteStates.ts";
 import {
   type ProcessorState,
   trackProcessorSync,
-} from "../../livekit/TrackProcessorContext.tsx";
-import { getUrlParams } from "../../UrlParams.ts";
-import { observeTrackReference$ } from "../MediaViewModel.ts";
-import { type Connection } from "../remoteMembers/Connection.ts";
-import { type ObservableScope } from "../ObservableScope.ts";
+} from "../../../livekit/TrackProcessorContext.tsx";
+import { getUrlParams } from "../../../UrlParams.ts";
+import { observeTrackReference$ } from "../../MediaViewModel.ts";
+import { type Connection } from "../CallViewModel/remoteMembers/Connection.ts";
+import { type ObservableScope } from "../../ObservableScope.ts";
 
 /**
  * A wrapper for a Connection object.

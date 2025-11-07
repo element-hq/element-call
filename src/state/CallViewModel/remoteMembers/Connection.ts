@@ -25,13 +25,13 @@ import {
   getSFUConfigWithOpenID,
   type OpenIDClientParts,
   type SFUConfig,
-} from "../../livekit/openIDSFU.ts";
-import { type Behavior } from "../Behavior.ts";
-import { type ObservableScope } from "../ObservableScope.ts";
+} from "../../../livekit/openIDSFU.ts";
+import { type Behavior } from "../../Behavior.ts";
+import { type ObservableScope } from "../../ObservableScope.ts";
 import {
   InsufficientCapacityError,
   SFURoomCreationRestrictedError,
-} from "../../utils/errors.ts";
+} from "../../../utils/errors.ts";
 
 export type PublishingParticipant = LocalParticipant | RemoteParticipant;
 

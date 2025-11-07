@@ -14,22 +14,26 @@ import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { type Epoch, ObservableScope, trackEpoch } from "../ObservableScope.ts";
+import {
+  type Epoch,
+  ObservableScope,
+  trackEpoch,
+} from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
-import { type OpenIDClientParts } from "../../livekit/openIDSFU.ts";
+import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
 import {
   mockCallMembership,
   mockMediaDevices,
   withTestScheduler,
-} from "../../utils/test";
-import { type ProcessorState } from "../../livekit/TrackProcessorContext.tsx";
+} from "../../../utils/test.ts";
+import { type ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import {
   areLivekitTransportsEqual,
   createMatrixLivekitMembers$,
   type MatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
 import { createConnectionManager$ } from "./ConnectionManager.ts";
-import { membershipsAndTransports$ } from "../SessionBehaviors.ts";
+import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
 

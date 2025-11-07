@@ -13,13 +13,13 @@ import {
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import { type ObservableScope } from "../ObservableScope.ts";
+import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
-import type { OpenIDClientParts } from "../../livekit/openIDSFU.ts";
-import type { MediaDevices } from "../MediaDevices.ts";
-import type { Behavior } from "../Behavior.ts";
-import type { ProcessorState } from "../../livekit/TrackProcessorContext.tsx";
-import { defaultLiveKitOptions } from "../../livekit/options.ts";
+import type { OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import type { MediaDevices } from "../../MediaDevices.ts";
+import type { Behavior } from "../../Behavior.ts";
+import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
+import { defaultLiveKitOptions } from "../../../livekit/options.ts";
 
 export interface ConnectionFactory {
   createConnection(

@@ -14,9 +14,9 @@ import {
 } from "matrix-js-sdk";
 import EventEmitter from "events";
 
-import { ObservableScope } from "../ObservableScope.ts";
+import { ObservableScope } from "../../ObservableScope.ts";
 import type { Room as MatrixRoom } from "matrix-js-sdk/lib/models/room";
-import { mockCallMembership, withTestScheduler } from "../../utils/test.ts";
+import { mockCallMembership, withTestScheduler } from "../../../utils/test.ts";
 import { memberDisplaynames$ } from "./displayname.ts";
 
 let testScope: ObservableScope;

@@ -19,9 +19,9 @@ import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
 import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { type Behavior } from "../Behavior";
+import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
-import { Epoch, mapEpoch, type ObservableScope } from "../ObservableScope";
+import { Epoch, mapEpoch, type ObservableScope } from "../../ObservableScope";
 import { getRoomMemberFromRtcMember, memberDisplaynames$ } from "./displayname";
 import { type Connection } from "./Connection";
 

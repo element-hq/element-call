@@ -36,12 +36,12 @@ import {
   type ConnectionState,
   type PublishingParticipant,
 } from "./Connection.ts";
-import { ObservableScope } from "../ObservableScope.ts";
-import { type OpenIDClientParts } from "../../livekit/openIDSFU.ts";
-import { FailToGetOpenIdToken } from "../../utils/errors.ts";
-import { mockMediaDevices, mockMuteStates } from "../../utils/test.ts";
-import type { ProcessorState } from "../../livekit/TrackProcessorContext.tsx";
-import { type MuteStates } from "../MuteStates.ts";
+import { ObservableScope } from "../../ObservableScope.ts";
+import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import { FailToGetOpenIdToken } from "../../../utils/errors.ts";
+import { mockMediaDevices, mockMuteStates } from "../../../utils/test.ts";
+import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
+import { type MuteStates } from "../../MuteStates.ts";
 
 let testScope: ObservableScope;
 
