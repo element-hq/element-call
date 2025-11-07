@@ -288,7 +288,7 @@ export const createLocalMembership$ = ({
   };
 
   const requestConnect = (): LocalMemberConnectionState => {
-    if (state.livekit$.value === null) {
+    if (state.livekit$.value.state === LivekitState.Uninitialized) {
       startTracks();
       state.livekit$.next({ state: LivekitState.Connecting });
       combineLatest([publisher$, tracks$], (publisher, tracks) => {
@@ -302,7 +302,7 @@ export const createLocalMembership$ = ({
           });
       });
     }
-    if (state.matrix$.value.state !== MatrixState.Disconnected) {
+    if (state.matrix$.value.state === MatrixState.Disconnected) {
       state.matrix$.next({ state: MatrixState.Connecting });
       localTransport$.pipe(
         tap((transport) => {
@@ -438,6 +438,7 @@ export const createLocalMembership$ = ({
         return of(false);
       }),
     ),
+    null,
   );
 
   const toggleScreenSharing =

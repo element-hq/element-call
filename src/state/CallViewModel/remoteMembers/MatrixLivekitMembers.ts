@@ -17,7 +17,6 @@ import { combineLatest, filter, map } from "rxjs";
 // eslint-disable-next-line rxjs/no-internal
 import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
 import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
@@ -56,6 +55,7 @@ interface Props {
   // => Extract an AvatarService instead?
   // Better with just `getMember`
   matrixRoom: Pick<MatrixRoom, "getMember"> & NodeStyleEventEmitter;
+  roomMember$: Behavior<Pick<RoomMember, "userId" | "getMxcAvatarUrl">>;
 }
 // Alternative structure idea:
 // const livekitMatrixMember$ = (callMemberships$,connectionManager,scope): Observable<MatrixLivekitMember[]> => {

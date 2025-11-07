@@ -7,8 +7,14 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, it } from "vitest";
 
-import { Epoch, mapEpoch, trackEpoch } from "./ObservableScope";
+import {
+  Epoch,
+  mapEpoch,
+  ObservableScope,
+  trackEpoch,
+} from "./ObservableScope";
 import { withTestScheduler } from "../utils/test";
+import { BehaviorSubject, timer } from "rxjs";
 
 describe("Epoch", () => {
   it("should map the value correctly", () => {
@@ -52,5 +58,18 @@ describe("Epoch", () => {
         c: new Epoch("C-mapped", 2),
       });
     });
+  });
+  it("obs", () => {
+    const nothing = Symbol("nothing");
+    const scope = new ObservableScope();
+    const sb$ = new BehaviorSubject("initial");
+    const su$ = new BehaviorSubject(undefined);
+    expect(sb$.value).toBe("initial");
+    expect(su$.value).toBe(undefined);
+    expect(su$.value === nothing).toBe(false);
+
+    const a$ = timer(10);
+
+    scope.behavior(a$, undefined);
   });
 });

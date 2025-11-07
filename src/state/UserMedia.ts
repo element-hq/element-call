@@ -111,7 +111,7 @@ export class UserMedia {
 
   private readonly presenter$ = this.scope.behavior(
     this.participant$.pipe(
-      switchMap((p) => (p === undefined ? of(false) : sharingScreen$(p))),
+      switchMap((p) => (p === null ? of(false) : sharingScreen$(p))),
     ),
   );
 
@@ -151,7 +151,7 @@ export class UserMedia {
     private readonly initialParticipant:
       | LocalParticipant
       | RemoteParticipant
-      | undefined,
+      | null = null,
     private readonly encryptionSystem: EncryptionSystem,
     private readonly livekitRoom: LivekitRoom,
     private readonly focusURL: string,
@@ -163,7 +163,7 @@ export class UserMedia {
   ) {}
 
   public updateParticipant(
-    newParticipant: LocalParticipant | RemoteParticipant | undefined,
+    newParticipant: LocalParticipant | RemoteParticipant | null = null,
   ): void {
     if (this.participant$.value !== newParticipant) {
       // Update the BehaviourSubject in the UserMedia.

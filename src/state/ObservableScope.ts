@@ -24,7 +24,7 @@ import { type Behavior } from "./Behavior";
 
 type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
 
-const nothing = Symbol("nothing");
+export const noInitialValue = Symbol("nothing");
 
 /**
  * A scope which limits the execution lifetime of its bound Observables.
@@ -59,10 +59,7 @@ export class ObservableScope {
    * Converts an Observable to a Behavior. If no initial value is specified, the
    * Observable must synchronously emit an initial value.
    */
-  public behavior<T>(
-    setValue$: Observable<T>,
-    initialValue: T | typeof nothing = nothing,
-  ): Behavior<T> {
+  public behavior<T>(setValue$: Observable<T>, initialValue?: T): Behavior<T> {
     const subject$ = new BehaviorSubject(initialValue);
     // Push values from the Observable into the BehaviorSubject.
     // BehaviorSubjects have an undesirable feature where if you call 'complete',
@@ -77,7 +74,7 @@ export class ObservableScope {
         subject$.error(err);
       },
     });
-    if (subject$.value === nothing)
+    if (subject$.value === noInitialValue)
       throw new Error("Behavior failed to synchronously emit an initial value");
     return subject$ as Behavior<T>;
   }
@@ -118,27 +115,27 @@ export class ObservableScope {
     value$: Behavior<T>,
     callback: (value: T) => Promise<(() => Promise<void>) | void>,
   ): void {
-    let latestValue: T | typeof nothing = nothing;
-    let reconciledValue: T | typeof nothing = nothing;
+    let latestValue: T | typeof noInitialValue = noInitialValue;
+    let reconciledValue: T | typeof noInitialValue = noInitialValue;
     let cleanUp: (() => Promise<void>) | void = undefined;
     value$
       .pipe(
         catchError(() => EMPTY), // Ignore errors
         this.bind(), // Limit to the duration of the scope
-        endWith(nothing), // Clean up when the scope ends
+        endWith(noInitialValue), // Clean up when the scope ends
       )
       .subscribe((value) => {
         void (async (): Promise<void> => {
-          if (latestValue === nothing) {
+          if (latestValue === noInitialValue) {
             latestValue = value;
             while (latestValue !== reconciledValue) {
               await cleanUp?.(); // Call the previous value's clean-up handler
               reconciledValue = latestValue;
-              if (latestValue !== nothing)
+              if (latestValue !== noInitialValue)
                 cleanUp = await callback(latestValue); // Sync current value
             }
             // Reset to signal that reconciliation is done for now
-            latestValue = nothing;
+            latestValue = noInitialValue;
           } else {
             // There's already an instance of the above 'while' loop running
             // concurrently. Just update the latest value and let it be handled.
@@ -176,11 +173,11 @@ export const globalScope = new ObservableScope();
  *
  * # Use Epoch
  * ```
- * const rootObs$ = of(1,2,3).pipe(trackEpoch());
- * const derivedObs$ = rootObs$.pipe(
+ * const ancestorObs$ = of(1,2,3).pipe(trackEpoch());
+ * const derivedObs$ = ancestorObs$.pipe(
  *   mapEpoch((v)=> "this number: " + v)
  * );
- * const otherDerivedObs$ = rootObs$.pipe(
+ * const otherDerivedObs$ = ancestorObs$.pipe(
  *   mapEpoch((v)=> "multiplied by: " + v)
  * );
  * const mergedObs$ = combineLatest([derivedObs$, otherDerivedObs$]).pipe(
@@ -241,6 +238,7 @@ export function mapEpoch<T, U>(
 ): OperatorFunction<Epoch<T>, Epoch<U>> {
   return map((e) => e.mapInner(mapFn));
 }
+
 /**
  * # usage
  * ```

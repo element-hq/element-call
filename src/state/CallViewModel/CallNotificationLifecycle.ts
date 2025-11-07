@@ -146,7 +146,7 @@ export function createCallNotificationLifecycle$({
             newAndLegacyEvents?.[0].notification_type === "ring",
         ),
         map((e) => e as CallNotificationWrapper),
-        switchMap(([notificastionEvent]) => {
+        switchMap(([notificationEvent]) => {
           const lifetimeMs = notificationEvent?.lifetime ?? 0;
           return concat(
             lifetimeMs === 0

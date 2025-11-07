@@ -67,18 +67,22 @@ export const createLocalTransport$ = ({
    */
   const oldestMemberTransport$ = scope.behavior(
     memberships$.pipe(
-      mapEpoch((memberships) => memberships[0].getTransport(memberships[0])),
-      first((t) => t != undefined && isLivekitTransport(t)),
+      mapEpoch(
+        (memberships) => memberships[0]?.getTransport(memberships[0]) ?? null,
+      ),
+      first((t) => t != null && isLivekitTransport(t)),
     ),
-    undefined,
+    null,
   );
 
   /**
    * The transport that we would personally prefer to publish on (if not for the
    * transport preferences of others, perhaps).
    */
-  const preferredTransport$: Behavior<LivekitTransport | undefined> =
-    scope.behavior(from(makeTransport(client, roomId)), undefined);
+  const preferredTransport$: Behavior<LivekitTransport | null> = scope.behavior(
+    from(makeTransport(client, roomId)),
+    null,
+  );
 
   /**
    * The transport we should advertise in our MatrixRTC membership.
@@ -89,7 +93,6 @@ export const createLocalTransport$ = ({
       (useOldestMember, oldestMemberTransport, preferredTransport) =>
         useOldestMember ? oldestMemberTransport : preferredTransport,
     ).pipe<LivekitTransport>(distinctUntilChanged(deepCompare)),
-    undefined,
   );
   return advertisedTransport$;
 };
@@ -103,7 +106,6 @@ async function makeTransportInternal(
   logger.log("Searching for a preferred transport");
   //TODO refactor this to use the jwt service returned alias.
   const livekitAlias = roomId;
-
   // TODO-MULTI-SFU: Either remove this dev tool or make it more official
   const urlFromStorage =
     localStorage.getItem("robin-matrixrtc-auth") ??

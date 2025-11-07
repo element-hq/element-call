@@ -13,7 +13,7 @@ import {
   type LivekitTransport,
   type ParticipantId,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, combineLatest, map, switchMap } from "rxjs";
+import { BehaviorSubject, combineLatest, map, of, switchMap } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
 
@@ -191,6 +191,11 @@ export function createConnectionManager$({
             );
           });
 
+        // probably not required
+        if (listOfConnectionsWithPublishingParticipants.length === 0) {
+          return of(new Epoch(new ConnectionManagerData(), epoch));
+        }
+
         // combineLatest the several streams into a single stream with the ConnectionManagerData
         return combineLatest(listOfConnectionsWithPublishingParticipants).pipe(
           map(
@@ -206,6 +211,7 @@ export function createConnectionManager$({
         );
       }),
     ),
+    new Epoch(new ConnectionManagerData()),
   );
 
   return { transports$, connectionManagerData$, connections$ };

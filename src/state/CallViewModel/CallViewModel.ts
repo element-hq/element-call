@@ -109,6 +109,7 @@ import {
   createReceivedDecline$,
   createSentCallNotification$,
 } from "./CallNotificationLifecycle.ts";
+import { createRoomMembers$ } from "./remoteMembers/displayname.ts";
 
 const logger = rootLogger.getChild("[CallViewModel]");
 //TODO
@@ -266,6 +267,7 @@ export class CallViewModel {
 
   // ------------------------------------------------------------------------
   // CallNotificationLifecycle
+  // consider inlining these!!!
   private sentCallNotification$ = createSentCallNotification$(
     this.scope,
     this.matrixRTCSession,
@@ -281,6 +283,9 @@ export class CallViewModel {
     localUser: { userId: this.userId, deviceId: this.deviceId },
   });
 
+  // ------------------------------------------------------------------------
+  // ROOM MEMBER tracking TODO
+  private roomMembers$ = createRoomMembers$(this.scope, this.matrixRoom);
   /**
    * If there is a configuration error with the call (e.g. misconfigured E2EE).
    * This is a fatal error that prevents the call from being created/joined.
@@ -440,6 +445,7 @@ export class CallViewModel {
         mediaItems.filter((m): m is UserMedia => m instanceof UserMedia),
       ),
     ),
+    [],
   );
 
   public readonly joinSoundEffect$ = this.userMedia$.pipe(
@@ -464,6 +470,9 @@ export class CallViewModel {
   public readonly participantCount$ = this.scope.behavior(
     this.memberships$.pipe(map((ms) => ms.value.length)),
   );
+
+  // only public to expose to the view.
+  public readonly callPickupState$ = this.callLifecycle.callPickupState$;
 
   public readonly leaveSoundEffect$ = combineLatest([
     this.callLifecycle.callPickupState$,
@@ -645,7 +654,6 @@ export class CallViewModel {
 
   private readonly naturalWindowMode$ = this.scope.behavior<WindowMode>(
     fromEvent(window, "resize").pipe(
-      startWith(null),
       map(() => {
         const height = window.innerHeight;
         const width = window.innerWidth;
@@ -658,6 +666,7 @@ export class CallViewModel {
         return "normal";
       }),
     ),
+    "normal",
   );
 
   /**
@@ -687,7 +696,6 @@ export class CallViewModel {
     // automatically switch to spotlight mode and reset when screen sharing ends
     this.scope.behavior<GridMode>(
       this.gridModeUserSelection$.pipe(
-        startWith(null),
         switchMap((userSelection) =>
           (userSelection === "spotlight"
             ? EMPTY
@@ -706,6 +714,7 @@ export class CallViewModel {
           ).pipe(startWith(userSelection ?? "grid")),
         ),
       ),
+      "grid",
     );
 
   public setGridMode(value: GridMode): void {
