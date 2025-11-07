@@ -19,12 +19,12 @@ import { type Room as MatrixRoom } from "matrix-js-sdk/lib/matrix";
 // eslint-disable-next-line rxjs/no-internal
 import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
 
-import { Epoch, type ObservableScope } from "../ObservableScope";
+import { Epoch, type ObservableScope } from "../../ObservableScope";
 import {
   calculateDisplayName,
   shouldDisambiguate,
-} from "../../utils/displayname";
-import { type Behavior } from "../Behavior";
+} from "../../../utils/displayname";
+import { type Behavior } from "../../Behavior";
 
 /**
  * Displayname for each member of the call. This will disambiguate

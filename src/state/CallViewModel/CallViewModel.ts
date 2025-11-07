@@ -7,29 +7,20 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type BaseKeyProvider,
-  ConnectionState,
+  type ConnectionState,
   type E2EEOptions,
   ExternalE2EEKeyProvider,
   type Room as LivekitRoom,
   type RoomOptions,
 } from "livekit-client";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
-import {
-  type EventTimelineSetHandlerMap,
-  EventType,
-  type Room as MatrixRoom,
-  RoomEvent,
-} from "matrix-js-sdk";
+import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   combineLatest,
-  concat,
   distinctUntilChanged,
   EMPTY,
-  endWith,
   filter,
-  from,
   fromEvent,
-  ignoreElements,
   map,
   merge,
   NEVER,
@@ -46,18 +37,12 @@ import {
   switchMap,
   switchScan,
   take,
-  takeUntil,
-  takeWhile,
   tap,
   throttleTime,
   timer,
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import {
-  type MatrixRTCSession,
-  MatrixRTCSessionEvent,
-  type MatrixRTCSessionEventHandlerMap,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
 
 import {
@@ -66,39 +51,39 @@ import {
   type RemoteUserMediaViewModel,
   ScreenShareViewModel,
   type UserMediaViewModel,
-} from "./MediaViewModel";
-import { accumulate, generateKeyed$, pauseWhen } from "../utils/observable";
+} from "../MediaViewModel";
+import { accumulate, generateKeyed$, pauseWhen } from "../../utils/observable";
 import {
   duplicateTiles,
   MatrixRTCMode,
   matrixRTCMode,
   playReactionsSound,
   showReactions,
-} from "../settings/settings";
-import { isFirefox } from "../Platform";
-import { setPipEnabled$ } from "../controls";
-import { TileStore } from "./TileStore";
-import { gridLikeLayout } from "./GridLikeLayout";
-import { spotlightExpandedLayout } from "./SpotlightExpandedLayout";
-import { oneOnOneLayout } from "./OneOnOneLayout";
-import { pipLayout } from "./PipLayout";
-import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+} from "../../settings/settings";
+import { isFirefox } from "../../Platform";
+import { setPipEnabled$ } from "../../controls";
+import { TileStore } from "../TileStore";
+import { gridLikeLayout } from "../GridLikeLayout";
+import { spotlightExpandedLayout } from "../SpotlightExpandedLayout";
+import { oneOnOneLayout } from "../OneOnOneLayout";
+import { pipLayout } from "../PipLayout";
+import { type EncryptionSystem } from "../../e2ee/sharedKeyManagement";
 import {
   type RaisedHandInfo,
   type ReactionInfo,
   type ReactionOption,
-} from "../reactions";
-import { shallowEquals } from "../utils/array";
-import { type MediaDevices } from "./MediaDevices";
-import { type Behavior, constant } from "./Behavior";
-import { E2eeType } from "../e2ee/e2eeType";
-import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-import { type MuteStates } from "./MuteStates";
-import { getUrlParams } from "../UrlParams";
-import { type ProcessorState } from "../livekit/TrackProcessorContext";
-import { ElementWidgetActions, widget } from "../widget";
-import { sharingScreen$, UserMedia } from "./UserMedia.ts";
-import { ScreenShare } from "./ScreenShare.ts";
+} from "../../reactions";
+import { shallowEquals } from "../../utils/array";
+import { type MediaDevices } from "../MediaDevices";
+import { type Behavior, constant } from "../Behavior";
+import { E2eeType } from "../../e2ee/e2eeType";
+import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
+import { type MuteStates } from "../MuteStates";
+import { getUrlParams } from "../../UrlParams";
+import { type ProcessorState } from "../../livekit/TrackProcessorContext";
+import { ElementWidgetActions, widget } from "../../widget";
+import { UserMedia } from "../UserMedia.ts";
+import { ScreenShare } from "../ScreenShare.ts";
 import {
   type GridLayoutMedia,
   type Layout,
@@ -107,18 +92,23 @@ import {
   type SpotlightExpandedLayoutMedia,
   type SpotlightLandscapeLayoutMedia,
   type SpotlightPortraitLayoutMedia,
-} from "./layout-types.ts";
-import { type ElementCallError } from "../utils/errors.ts";
-import { type ObservableScope } from "./ObservableScope.ts";
+} from "../layout-types.ts";
+import { type ElementCallError } from "../../utils/errors.ts";
+import { type ObservableScope } from "../ObservableScope.ts";
 import { createLocalMembership$ } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import {
   createMemberships$,
   membershipsAndTransports$,
-} from "./SessionBehaviors.ts";
+} from "../SessionBehaviors.ts";
 import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
 import { createConnectionManager$ } from "./remoteMembers/ConnectionManager.ts";
 import { createMatrixLivekitMembers$ } from "./remoteMembers/MatrixLivekitMembers.ts";
+import {
+  createCallNotificationLifecycle$,
+  createReceivedDecline$,
+  createSentCallNotification$,
+} from "./CallNotificationLifecycle.ts";
 
 const logger = rootLogger.getChild("[CallViewModel]");
 //TODO
@@ -274,6 +264,23 @@ export class CallViewModel {
     options: this.connectOptions$,
   });
 
+  // ------------------------------------------------------------------------
+  // CallNotificationLifecycle
+  private sentCallNotification$ = createSentCallNotification$(
+    this.scope,
+    this.matrixRTCSession,
+  );
+  private receivedDecline$ = createReceivedDecline$(this.matrixRoom);
+
+  private callLifecycle = createCallNotificationLifecycle$({
+    scope: this.scope,
+    memberships$: this.memberships$,
+    sentCallNotification$: this.sentCallNotification$,
+    receivedDecline$: this.receivedDecline$,
+    options: this.options,
+    localUser: { userId: this.userId, deviceId: this.deviceId },
+  });
+
   /**
    * If there is a configuration error with the call (e.g. misconfigured E2EE).
    * This is a fatal error that prevents the call from being created/joined.
@@ -315,7 +322,7 @@ export class CallViewModel {
 
   public readonly audioParticipants$ = this.scope.behavior(
     this.matrixLivekitMembers$.pipe(
-      map((members) => members.map((m) => m.participant)),
+      map((members) => members.value.map((m) => m.participant)),
     ),
   );
 
@@ -350,7 +357,7 @@ export class CallViewModel {
       // Generate a collection of MediaItems from the list of expected (whether
       // present or missing) LiveKit participants.
       combineLatest([this.matrixLivekitMembers$, duplicateTiles.value$]),
-      ([matrixLivekitMembers, duplicateTiles], createOrGet) => {
+      ([{ value: matrixLivekitMembers }, duplicateTiles], createOrGet) => {
         const items: MediaItem[] = [];
 
         for (const {
@@ -455,129 +462,11 @@ export class CallViewModel {
    */
   // TODO KEEP THIS!! and adapt it to what our membershipManger returns
   public readonly participantCount$ = this.scope.behavior(
-    this.memberships$.pipe(map((ms) => ms.length)),
+    this.memberships$.pipe(map((ms) => ms.value.length)),
   );
-
-  // TODO convert all ring and all others left logic into one callLifecycleTracker$(didSendCallNotification$,matrixLivekitItem$): {autoLeave$,callPickupState$}
-  private readonly allOthersLeft$ = this.memberships$.pipe(
-    pairwise(),
-    filter(
-      ([prev, current]) =>
-        current.every((m) => m.userId === this.userId) &&
-        prev.some((m) => m.userId !== this.userId),
-    ),
-    map(() => {}),
-  );
-
-  private readonly didSendCallNotification$ = fromEvent(
-    this.matrixRTCSession,
-    MatrixRTCSessionEvent.DidSendCallNotification,
-  ) as Observable<
-    Parameters<
-      MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
-    >
-  >;
-
-  /**
-   * Whenever the RTC session tells us that it intends to ring the remote
-   * participant's devices, this emits an Observable tracking the current state of
-   * that ringing process.
-   */
-  // This is a behavior since we need to store the latest state for when we subscribe to this after `didSendCallNotification$`
-  // has already emitted but we still need the latest observable with a timeout timer that only gets created on after receiving `notificationEvent`.
-  // A behavior will emit the latest observable with the running timer to new subscribers.
-  // see also: callPickupState$ and in particular the line: `return this.ring$.pipe(mergeAll());` here we otherwise might get an EMPTY observable if
-  // `ring$` would not be a behavior.
-  private readonly ring$: Behavior<"ringing" | "timeout" | "decline" | null> =
-    this.scope.behavior(
-      this.didSendCallNotification$.pipe(
-        filter(
-          ([notificationEvent]) =>
-            notificationEvent.notification_type === "ring",
-        ),
-        switchMap(([notificationEvent]) => {
-          const lifetimeMs = notificationEvent?.lifetime ?? 0;
-          return concat(
-            lifetimeMs === 0
-              ? // If no lifetime, skip the ring state
-                of(null)
-              : // Ring until lifetime ms have passed
-                timer(lifetimeMs).pipe(
-                  ignoreElements(),
-                  startWith("ringing" as const),
-                ),
-            // The notification lifetime has timed out, meaning ringing has likely
-            // stopped on all receiving clients.
-            of("timeout" as const),
-            // This makes sure we will not drop into the `endWith("decline" as const)` state
-            NEVER,
-          ).pipe(
-            takeUntil(
-              (
-                fromEvent(this.matrixRoom, RoomEvent.Timeline) as Observable<
-                  Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
-                >
-              ).pipe(
-                filter(
-                  ([event]) =>
-                    event.getType() === EventType.RTCDecline &&
-                    event.getRelation()?.rel_type === "m.reference" &&
-                    event.getRelation()?.event_id ===
-                      notificationEvent.event_id &&
-                    event.getSender() !== this.userId,
-                ),
-              ),
-            ),
-            endWith("decline" as const),
-          );
-        }),
-      ),
-      null,
-    );
-
-  /**
-   * Whether some Matrix user other than ourself is joined to the call.
-   */
-  private readonly someoneElseJoined$ = this.memberships$.pipe(
-    map((ms) => ms.some((m) => m.userId !== this.userId)),
-  ) as Behavior<boolean>;
-
-  /**
-   * The current call pickup state of the call.
-   *  - "unknown": The client has not yet sent the notification event. We don't know if it will because it first needs to send its own membership.
-   *     Then we can conclude if we were the first one to join or not.
-   *     This may also be set if we are disconnected.
-   *  - "ringing": The call is ringing on other devices in this room (This client should give audiovisual feedback that this is happening).
-   *  - "timeout": No-one picked up in the defined time this call should be ringing on others devices.
-   *     The call failed. If desired this can be used as a trigger to exit the call.
-   *  - "success": Someone else joined. The call is in a normal state. No audiovisual feedback.
-   *  - null: EC is configured to never show any waiting for answer state.
-   */
-  public readonly callPickupState$: Behavior<
-    "unknown" | "ringing" | "timeout" | "decline" | "success" | null
-  > = this.options.waitForCallPickup
-    ? this.scope.behavior<
-        "unknown" | "ringing" | "timeout" | "decline" | "success"
-      >(
-        combineLatest(
-          [this.livekitConnectionState$, this.someoneElseJoined$, this.ring$],
-          (livekitConnectionState, someoneElseJoined, ring) => {
-            if (livekitConnectionState === ConnectionState.Disconnected) {
-              // Do not ring until we're connected.
-              return "unknown" as const;
-            } else if (someoneElseJoined) {
-              return "success" as const;
-            }
-            // Show the ringing state of the most recent ringing attempt.
-            // as long as we have not yet sent an RTC notification event, ring will be null -> callPickupState$ = unknown.
-            return ring ?? ("unknown" as const);
-          },
-        ),
-      )
-    : constant(null);
 
   public readonly leaveSoundEffect$ = combineLatest([
-    this.callPickupState$,
+    this.callLifecycle.callPickupState$,
     this.userMedia$,
   ]).pipe(
     // Until the call is successful, do not play a leave sound.
@@ -592,16 +481,6 @@ export class CallViewModel {
     ),
     map(() => {}),
     throttleTime(THROTTLE_SOUND_EFFECT_MS),
-  );
-
-  // Public for testing
-  public readonly autoLeave$ = merge(
-    this.options.autoLeaveWhenOthersLeft
-      ? this.allOthersLeft$.pipe(map(() => "allOthersLeft" as const))
-      : NEVER,
-    this.callPickupState$.pipe(
-      filter((state) => state === "timeout" || state === "decline"),
-    ),
   );
 
   private readonly userHangup$ = new Subject<void>();
@@ -626,7 +505,7 @@ export class CallViewModel {
   public readonly leave$: Observable<
     "user" | "timeout" | "decline" | "allOthersLeft"
   > = merge(
-    this.autoLeave$,
+    this.callLifecycle.autoLeave$,
     merge(this.userHangup$, this.widgetHangup$).pipe(
       map(() => "user" as const),
     ),
@@ -717,6 +596,7 @@ export class CallViewModel {
 
   private readonly pip$ = this.scope.behavior<UserMediaViewModel | null>(
     combineLatest([
+      // TODO This also needs epoch logic to dedupe the screenshares and mediaItems emits
       this.screenShares$,
       this.spotlightSpeaker$,
       this.mediaItems$,
@@ -1298,47 +1178,16 @@ export class CallViewModel {
   /**
    * Whether we are sharing our screen.
    */
-  // TODO move to LocalMembership
-  public readonly sharingScreen$ = this.scope.behavior(
-    from(this.localConnection$).pipe(
-      switchMap((c) =>
-        c?.state === "ready"
-          ? sharingScreen$(c.value.livekitRoom.localParticipant)
-          : of(false),
-      ),
-    ),
-  );
+  // reassigned here to make it publicly accessible
+  public readonly sharingScreen$ = this.localMembership.sharingScreen$;
 
   /**
    * Callback for toggling screen sharing. If null, screen sharing is not
    * available.
    */
-  // TODO move to LocalMembership
+  // reassigned here to make it publicly accessible
   public readonly toggleScreenSharing =
-    "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
-    !this.urlParams.hideScreensharing
-      ? (): void =>
-          // Once a connection is ready...
-          void this.localConnection$
-            .pipe(
-              takeWhile((c) => c !== null && c.state !== "error"),
-              switchMap((c) => (c.state === "ready" ? of(c.value) : NEVER)),
-              take(1),
-              this.scope.bind(),
-            )
-            // ...toggle screen sharing.
-            .subscribe(
-              (c) =>
-                void c.livekitRoom.localParticipant
-                  .setScreenShareEnabled(!this.sharingScreen$.value, {
-                    audio: true,
-                    selfBrowserSurface: "include",
-                    surfaceSwitching: "include",
-                    systemAudio: "include",
-                  })
-                  .catch(logger.error),
-            )
-      : null;
+    this.localMembership.toggleScreenSharing;
 
   public constructor(
     private readonly scope: ObservableScope,

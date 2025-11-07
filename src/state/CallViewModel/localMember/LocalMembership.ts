@@ -18,58 +18,63 @@ import {
   combineLatest,
   fromEvent,
   map,
+  NEVER,
   type Observable,
   of,
   scan,
   startWith,
   switchMap,
+  take,
+  takeWhile,
   tap,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { type Behavior } from "../Behavior";
+import { sharingScreen$ as observeSharingScreen$ } from "../../UserMedia.ts";
+import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager";
-import { ObservableScope } from "../ObservableScope";
+import { ObservableScope } from "../../ObservableScope";
 import { Publisher } from "./Publisher";
-import { type MuteStates } from "../MuteStates";
-import { type ProcessorState } from "../../livekit/TrackProcessorContext";
-import { type MediaDevices } from "../MediaDevices";
-import { and$ } from "../../utils/observable";
+import { type MuteStates } from "../../MuteStates";
+import { type ProcessorState } from "../../../livekit/TrackProcessorContext";
+import { type MediaDevices } from "../../MediaDevices";
+import { and$ } from "../../../utils/observable";
 import {
   enterRTCSession,
   type EnterRTCSessionOptions,
-} from "../../rtcSessionHelpers";
-import { type ElementCallError } from "../../utils/errors";
-import { ElementWidgetActions, type WidgetHelpers } from "../../widget";
+} from "../../../rtcSessionHelpers";
+import { type ElementCallError } from "../../../utils/errors";
+import { ElementWidgetActions, type WidgetHelpers } from "../../../widget";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers";
+import { getUrlParams } from "../../../UrlParams.ts";
 
-enum LivekitState {
-  UNINITIALIZED = "uninitialized",
-  CONNECTING = "connecting",
-  CONNECTED = "connected",
-  ERROR = "error",
-  DISCONNECTED = "disconnected",
-  DISCONNECTING = "disconnecting",
+export enum LivekitState {
+  Uninitialized = "uninitialized",
+  Connecting = "connecting",
+  Connected = "connected",
+  Error = "error",
+  Disconnected = "disconnected",
+  Disconnecting = "disconnecting",
 }
 type LocalMemberLivekitState =
-  | { state: LivekitState.ERROR; error: string }
-  | { state: LivekitState.CONNECTED }
-  | { state: LivekitState.CONNECTING }
-  | { state: LivekitState.UNINITIALIZED }
-  | { state: LivekitState.DISCONNECTED }
-  | { state: LivekitState.DISCONNECTING };
+  | { state: LivekitState.Error; error: string }
+  | { state: LivekitState.Connected }
+  | { state: LivekitState.Connecting }
+  | { state: LivekitState.Uninitialized }
+  | { state: LivekitState.Disconnected }
+  | { state: LivekitState.Disconnecting };
 
-enum MatrixState {
-  CONNECTED = "connected",
-  DISCONNECTED = "disconnected",
-  CONNECTING = "connecting",
+export enum MatrixState {
+  Connected = "connected",
+  Disconnected = "disconnected",
+  Connecting = "connecting",
 }
 type LocalMemberMatrixState =
-  | { state: MatrixState.CONNECTED }
-  | { state: MatrixState.CONNECTING }
-  | { state: MatrixState.DISCONNECTED };
+  | { state: MatrixState.Connected }
+  | { state: MatrixState.Connecting }
+  | { state: MatrixState.Disconnected };
 
-export interface LocalMemberState {
+export interface LocalMemberConnectionState {
   livekit$: BehaviorSubject<LocalMemberLivekitState>;
   matrix$: BehaviorSubject<LocalMemberMatrixState>;
 }
@@ -107,9 +112,10 @@ interface Props {
  * @param param0
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
- *  - connected$: the current connection state. Including matrix server and livekit server connection. (only the livekit server relevant for our own participation)
+ *  - connected$: the current connection state. Including matrix server and livekit server connection. (only considering the livekit server we are using for our own media publication)
  *  - transport$: the transport object the ownMembership$ ended up using.
- *
+ *  - connectionState: the current connection state. Including matrix server and livekit server connection.
+ *  - sharingScreen$: Whether we are sharing our screen. `undefined` if we cannot share the screen.
  */
 export const createLocalMembership$ = ({
   scope,
@@ -125,21 +131,31 @@ export const createLocalMembership$ = ({
   widget,
 }: Props): {
   // publisher: Publisher
-  requestConnect: () => LocalMemberState;
+  requestConnect: () => LocalMemberConnectionState;
   startTracks: () => Behavior<LocalTrack[]>;
   requestDisconnect: () => Observable<LocalMemberLivekitState> | null;
-  state: LocalMemberState; // TODO this is probably superseeded by joinState$
+  connectionState: LocalMemberConnectionState;
+  sharingScreen$: Behavior<boolean | undefined>;
+  toggleScreenSharing: (() => void) | null;
+
+  // deprecated fields
+  /** @deprecated use state instead*/
   homeserverConnected$: Behavior<boolean>;
+  /** @deprecated use state instead*/
   connected$: Behavior<boolean>;
+  // this needs to be discussed
+  /** @deprecated use state instead*/
   reconnecting$: Behavior<boolean>;
+  // also needs to be disccues
+  /** @deprecated use state instead*/
   configError$: Behavior<ElementCallError | null>;
 } => {
   const state = {
     livekit$: new BehaviorSubject<LocalMemberLivekitState>({
-      state: LivekitState.UNINITIALIZED,
+      state: LivekitState.Uninitialized,
     }),
     matrix$: new BehaviorSubject<LocalMemberMatrixState>({
-      state: MatrixState.DISCONNECTED,
+      state: MatrixState.Disconnected,
     }),
   };
 
@@ -271,23 +287,23 @@ export const createLocalMembership$ = ({
     return tracks$;
   };
 
-  const requestConnect = (): LocalMemberState => {
+  const requestConnect = (): LocalMemberConnectionState => {
     if (state.livekit$.value === null) {
       startTracks();
-      state.livekit$.next({ state: LivekitState.CONNECTING });
+      state.livekit$.next({ state: LivekitState.Connecting });
       combineLatest([publisher$, tracks$], (publisher, tracks) => {
         publisher
           ?.startPublishing()
           .then(() => {
-            state.livekit$.next({ state: LivekitState.CONNECTED });
+            state.livekit$.next({ state: LivekitState.Connected });
           })
           .catch((error) => {
-            state.livekit$.next({ state: LivekitState.ERROR, error });
+            state.livekit$.next({ state: LivekitState.Error, error });
           });
       });
     }
-    if (state.matrix$.value.state !== MatrixState.DISCONNECTED) {
-      state.matrix$.next({ state: MatrixState.CONNECTING });
+    if (state.matrix$.value.state !== MatrixState.Disconnected) {
+      state.matrix$.next({ state: MatrixState.Connecting });
       localTransport$.pipe(
         tap((transport) => {
           if (transport !== undefined) {
@@ -306,17 +322,17 @@ export const createLocalMembership$ = ({
   };
 
   const requestDisconnect = (): Behavior<LocalMemberLivekitState> | null => {
-    if (state.livekit$.value.state !== LivekitState.CONNECTED) return null;
-    state.livekit$.next({ state: LivekitState.DISCONNECTING });
+    if (state.livekit$.value.state !== LivekitState.Connected) return null;
+    state.livekit$.next({ state: LivekitState.Disconnecting });
     combineLatest([publisher$, tracks$], (publisher, tracks) => {
       publisher
         ?.stopPublishing()
         .then(() => {
           tracks.forEach((track) => track.stop());
-          state.livekit$.next({ state: LivekitState.DISCONNECTED });
+          state.livekit$.next({ state: LivekitState.Disconnected });
         })
         .catch((error) => {
-          state.livekit$.next({ state: LivekitState.ERROR, error });
+          state.livekit$.next({ state: LivekitState.Error, error });
         });
     });
 
@@ -410,14 +426,83 @@ export const createLocalMembership$ = ({
     }
   });
 
+  /**
+   * Returns undefined if scrennSharing is not yet ready.
+   */
+  const sharingScreen$ = scope.behavior(
+    connection$.pipe(
+      switchMap((c) => {
+        if (!c) return of(undefined);
+        if (c.state$.value.state === "ConnectedToLkRoom")
+          return observeSharingScreen$(c.livekitRoom.localParticipant);
+        return of(false);
+      }),
+    ),
+  );
+
+  const toggleScreenSharing =
+    "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
+    !getUrlParams().hideScreensharing
+      ? (): void =>
+          // If a connection is ready...
+          void connection$
+            .pipe(
+              // I dont see why we need this. isnt the check later on superseeding it?
+              takeWhile(
+                (c) =>
+                  c !== undefined && c.state$.value.state !== "FailedToStart",
+              ),
+              switchMap((c) =>
+                c?.state$.value.state === "ConnectedToLkRoom" ? of(c) : NEVER,
+              ),
+              take(1),
+              scope.bind(),
+            )
+            // ...toggle screen sharing.
+            .subscribe(
+              (c) =>
+                void c.livekitRoom.localParticipant
+                  .setScreenShareEnabled(!sharingScreen$.value, {
+                    audio: true,
+                    selfBrowserSurface: "include",
+                    surfaceSwitching: "include",
+                    systemAudio: "include",
+                  })
+                  .catch(logger.error),
+            )
+      : null;
+
+  // we do not need all the auto waiting since we can just check via sharingScreen$.value !== undefined
+  let alternativeScreenshareToggle: (() => void) | null = null;
+  if (
+    "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
+    !getUrlParams().hideScreensharing
+  ) {
+    alternativeScreenshareToggle = (): void =>
+      void connection$.value?.livekitRoom.localParticipant
+        .setScreenShareEnabled(!sharingScreen$.value, {
+          audio: true,
+          selfBrowserSurface: "include",
+          surfaceSwitching: "include",
+          systemAudio: "include",
+        })
+        .catch(logger.error);
+  }
+  logger.log(
+    "alternativeScreenshareToggle so that it is used",
+    alternativeScreenshareToggle,
+  );
+
   return {
     startTracks,
     requestConnect,
     requestDisconnect,
-    state,
+    connectionState: state,
     homeserverConnected$,
     connected$,
     reconnecting$,
     configError$,
+    sharingScreen$,
+    toggleScreenSharing,
   };
 };

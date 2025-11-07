@@ -10,14 +10,14 @@ import { BehaviorSubject } from "rxjs";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type Participant as LivekitParticipant } from "livekit-client";
 
-import { ObservableScope } from "../ObservableScope.ts";
+import { ObservableScope } from "../../ObservableScope.ts";
 import {
   type IConnectionManager,
   createConnectionManager$,
 } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
-import { flushPromises, withTestScheduler } from "../../utils/test.ts";
+import { flushPromises, withTestScheduler } from "../../../utils/test.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 
 // Some test constants

@@ -19,14 +19,14 @@ import {
   createMatrixLivekitMembers$,
   areLivekitTransportsEqual,
 } from "./MatrixLivekitMembers.ts";
-import { ObservableScope } from "../ObservableScope.ts";
+import { ObservableScope } from "../../ObservableScope.ts";
 import { ConnectionManagerData } from "./ConnectionManager.ts";
 import {
   mockCallMembership,
   mockRemoteParticipant,
   type OurRunHelpers,
   withTestScheduler,
-} from "../../utils/test.ts";
+} from "../../../utils/test.ts";
 import { type Connection } from "./Connection.ts";
 
 let testScope: ObservableScope;

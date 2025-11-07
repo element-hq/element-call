@@ -17,10 +17,10 @@ import { BehaviorSubject, combineLatest, map, switchMap } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
 
-import { type Behavior } from "../Behavior";
-import { type Connection } from "./Connection";
-import { Epoch, type ObservableScope } from "../ObservableScope";
-import { generateKeyed$ } from "../../utils/observable";
+import { type Behavior } from "../../Behavior.ts";
+import { type Connection } from "./Connection.ts";
+import { Epoch, type ObservableScope } from "../../ObservableScope.ts";
+import { generateKeyed$ } from "../../../utils/observable.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 

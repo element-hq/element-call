@@ -18,15 +18,15 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
-import { type Behavior } from "../Behavior.ts";
+import { type Behavior } from "../../Behavior.ts";
 import {
   type Epoch,
   mapEpoch,
   type ObservableScope,
-} from "../ObservableScope.ts";
-import { Config } from "../../config/Config.ts";
-import { MatrixRTCTransportMissingError } from "../../utils/errors.ts";
-import { getSFUConfigWithOpenID } from "../../livekit/openIDSFU.ts";
+} from "../../ObservableScope.ts";
+import { Config } from "../../../config/Config.ts";
+import { MatrixRTCTransportMissingError } from "../../../utils/errors.ts";
+import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
 
 /*
  * - get well known
