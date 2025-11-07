@@ -246,6 +246,7 @@ export async function createRoom(
       {
         type: EventType.RTCSlot,
         content: {
+          slot_id: DefaultCallApplicationSlot.slot_id,
           application: { ...DefaultCallApplicationSlot.application },
         } satisfies RtcSlotEventContent,
       },
