@@ -172,9 +172,11 @@ export const createLocalMembership$ = ({
     combineLatest(
       [connectionManager.connections$, localTransport$],
       (connections, transport) => {
-        if (transport === undefined) return undefined;
-        return connections.value.find((connection) =>
-          areLivekitTransportsEqual(connection.transport, transport),
+        if (transport === null) return null;
+        return (
+          connections.value.find((connection) =>
+            areLivekitTransportsEqual(connection.transport, transport),
+          ) ?? null
         );
       },
     ),

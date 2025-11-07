@@ -91,7 +91,9 @@ export const createLocalTransport$ = ({
     combineLatest(
       [useOldestMember$, oldestMemberTransport$, preferredTransport$],
       (useOldestMember, oldestMemberTransport, preferredTransport) =>
-        useOldestMember ? oldestMemberTransport : preferredTransport,
+        useOldestMember
+          ? (oldestMemberTransport ?? preferredTransport)
+          : preferredTransport,
     ).pipe<LivekitTransport>(distinctUntilChanged(deepCompare)),
   );
   return advertisedTransport$;

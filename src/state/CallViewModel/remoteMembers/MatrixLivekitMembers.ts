@@ -145,13 +145,12 @@ export function createMatrixLivekitMembers$({
 
 // TODO add this to the JS-SDK
 export function areLivekitTransportsEqual(
-  t1: LivekitTransport,
-  t2: LivekitTransport,
+  t1?: LivekitTransport,
+  t2?: LivekitTransport,
 ): boolean {
-  return (
-    t1.livekit_service_url === t2.livekit_service_url &&
-    // In case we have different lk rooms in the same SFU (depends on the livekit authorization service)
-    // It is only needed in case the livekit authorization service is not behaving as expected (or custom implementation)
-    t1.livekit_alias === t2.livekit_alias
-  );
+  if (t1 && t2) return t1.livekit_service_url === t2.livekit_service_url;
+  // In case we have different lk rooms in the same SFU (depends on the livekit authorization service)
+  // It is only needed in case the livekit authorization service is not behaving as expected (or custom implementation)
+  if (!t1 && !t2) return true;
+  return false;
 }
