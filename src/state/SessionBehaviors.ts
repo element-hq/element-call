@@ -15,7 +15,7 @@ import {
 import { fromEvent } from "rxjs";
 
 import {
-  type Epoch,
+  Epoch,
   mapEpoch,
   trackEpoch,
   type ObservableScope,
@@ -76,5 +76,6 @@ export const createMemberships$ = (
       MatrixRTCSessionEvent.MembershipsChanged,
       (_, memberships: CallMembership[]) => memberships,
     ).pipe(trackEpoch()),
+    new Epoch([]),
   );
 };

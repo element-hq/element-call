@@ -307,6 +307,7 @@ export class Publisher {
           return track instanceof LocalVideoTrack ? track : null;
         }),
       ),
+      null,
     );
     trackProcessorSync(track$, trackerProcessorState$);
   }

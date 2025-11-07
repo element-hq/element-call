@@ -26,6 +26,17 @@ import {
 } from "../../../utils/displayname";
 import { type Behavior } from "../../Behavior";
 
+export function createRoomMembers$(
+  scope: ObservableScope,
+  matrixRoom: MatrixRoom,
+): Behavior<Pick<RoomMember, "userId" | "getMxcAvatarUrl">[]> {
+  return scope.behavior(
+    fromEvent(matrixRoom, RoomStateEvent.Members).pipe(
+      map(() => matrixRoom.getMembers()),
+    ),
+    [],
+  );
+}
 /**
  * Displayname for each member of the call. This will disambiguate
  * any displayname that clashes with another member. Only members
@@ -37,6 +48,7 @@ import { type Behavior } from "../../Behavior";
 export const memberDisplaynames$ = (
   scope: ObservableScope,
   matrixRoom: Pick<MatrixRoom, "getMember"> & NodeStyleEventEmitter,
+  // roomMember$: Behavior<Pick<RoomMember, "userId" | "getMxcAvatarUrl">>;
   memberships$: Observable<Epoch<CallMembership[]>>,
 ): Behavior<Epoch<Map<string, string>>> =>
   scope.behavior(
