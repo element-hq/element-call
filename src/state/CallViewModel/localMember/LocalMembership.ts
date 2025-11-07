@@ -5,7 +5,13 @@ SPDX-License-IdFentifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type LocalTrack, type E2EEOptions } from "livekit-client";
+import {
+  type LocalTrack,
+  type E2EEOptions,
+  type Participant,
+  ParticipantEvent,
+} from "livekit-client";
+import { observeParticipantEvents } from "@livekit/components-core";
 import {
   type LivekitTransport,
   type MatrixRTCSession,
@@ -26,11 +32,9 @@ import {
   switchMap,
   take,
   takeWhile,
-  tap,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { sharingScreen$ as observeSharingScreen$ } from "../../UserMedia.ts";
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager";
 import { ObservableScope } from "../../ObservableScope";
@@ -521,3 +525,13 @@ export const createLocalMembership$ = ({
     toggleScreenSharing,
   };
 };
+
+export function observeSharingScreen$(p: Participant): Observable<boolean> {
+  return observeParticipantEvents(
+    p,
+    ParticipantEvent.TrackPublished,
+    ParticipantEvent.TrackUnpublished,
+    ParticipantEvent.LocalTrackPublished,
+    ParticipantEvent.LocalTrackUnpublished,
+  ).pipe(map((p) => p.isScreenShareEnabled));
+}

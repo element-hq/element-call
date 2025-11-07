@@ -24,7 +24,11 @@ import { type Behavior } from "./Behavior";
 
 type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
 
-export const noInitialValue = Symbol("nothing");
+type SplitBehavior<T> = keyof T extends string | number
+  ? { [K in keyof T as `${K}$`]: Behavior<T[K]> }
+  : never;
+
+const nothing = Symbol("nothing");
 
 /**
  * A scope which limits the execution lifetime of its bound Observables.
@@ -59,7 +63,10 @@ export class ObservableScope {
    * Converts an Observable to a Behavior. If no initial value is specified, the
    * Observable must synchronously emit an initial value.
    */
-  public behavior<T>(setValue$: Observable<T>, initialValue?: T): Behavior<T> {
+  public behavior<T>(
+    setValue$: Observable<T>,
+    initialValue: T | typeof nothing = nothing,
+  ): Behavior<T> {
     const subject$ = new BehaviorSubject(initialValue);
     // Push values from the Observable into the BehaviorSubject.
     // BehaviorSubjects have an undesirable feature where if you call 'complete',
@@ -74,7 +81,7 @@ export class ObservableScope {
         subject$.error(err);
       },
     });
-    if (subject$.value === noInitialValue)
+    if (subject$.value === nothing)
       throw new Error("Behavior failed to synchronously emit an initial value");
     return subject$ as Behavior<T>;
   }
@@ -115,27 +122,27 @@ export class ObservableScope {
     value$: Behavior<T>,
     callback: (value: T) => Promise<(() => Promise<void>) | void>,
   ): void {
-    let latestValue: T | typeof noInitialValue = noInitialValue;
-    let reconciledValue: T | typeof noInitialValue = noInitialValue;
+    let latestValue: T | typeof nothing = nothing;
+    let reconciledValue: T | typeof nothing = nothing;
     let cleanUp: (() => Promise<void>) | void = undefined;
     value$
       .pipe(
         catchError(() => EMPTY), // Ignore errors
         this.bind(), // Limit to the duration of the scope
-        endWith(noInitialValue), // Clean up when the scope ends
+        endWith(nothing), // Clean up when the scope ends
       )
       .subscribe((value) => {
         void (async (): Promise<void> => {
-          if (latestValue === noInitialValue) {
+          if (latestValue === nothing) {
             latestValue = value;
             while (latestValue !== reconciledValue) {
               await cleanUp?.(); // Call the previous value's clean-up handler
               reconciledValue = latestValue;
-              if (latestValue !== noInitialValue)
+              if (latestValue !== nothing)
                 cleanUp = await callback(latestValue); // Sync current value
             }
             // Reset to signal that reconciliation is done for now
-            latestValue = noInitialValue;
+            latestValue = nothing;
           } else {
             // There's already an instance of the above 'while' loop running
             // concurrently. Just update the latest value and let it be handled.
@@ -143,6 +150,24 @@ export class ObservableScope {
           }
         })();
       });
+  }
+
+  /**
+   * Splits a Behavior of objects with static properties into an object with
+   * Behavior properties.
+   *
+   * For example, splitting a Behavior<{ name: string, age: number }> results in
+   * an object of type { name$: Behavior<string> age$: Behavior<number> }.
+   */
+  public splitBehavior<T extends object>(
+    input$: Behavior<T>,
+  ): SplitBehavior<T> {
+    return Object.fromEntries(
+      Object.keys(input$.value).map((key) => [
+        `${key}$`,
+        this.behavior(input$.pipe(map((input) => input[key as keyof T]))),
+      ]),
+    ) as SplitBehavior<T>;
   }
 }
 

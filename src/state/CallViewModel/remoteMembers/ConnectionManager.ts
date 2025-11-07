@@ -20,7 +20,7 @@ import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
 import { type Behavior } from "../../Behavior.ts";
 import { type Connection } from "./Connection.ts";
 import { Epoch, type ObservableScope } from "../../ObservableScope.ts";
-import { generateKeyed$ } from "../../../utils/observable.ts";
+import { generateItemsWithEpoch } from "../../../utils/observable.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 
@@ -144,34 +144,32 @@ export function createConnectionManager$({
    * Connections for each transport in use by one or more session members.
    */
   const connections$ = scope.behavior(
-    generateKeyed$<Epoch<LivekitTransport[]>, Connection, Epoch<Connection[]>>(
-      transports$,
-      (transports, createOrGet) => {
-        const createConnection =
-          (
-            transport: LivekitTransport,
-          ): ((scope: ObservableScope) => Connection) =>
-          (scope) => {
-            const connection = connectionFactory.createConnection(
-              transport,
-              scope,
-              logger,
-            );
-            // Start the connection immediately
-            // Use connection state to track connection progress
-            void connection.start();
-            // TODO subscribe to connection state to retry or log issues?
-            return connection;
-          };
-
-        return transports.mapInner((transports) => {
-          return transports.map((transport) => {
-            const key =
-              transport.livekit_service_url + "|" + transport.livekit_alias;
-            return createOrGet(key, createConnection(transport));
-          });
-        });
-      },
+    transports$.pipe(
+      generateItemsWithEpoch(
+        function* (transports) {
+          for (const transport of transports)
+            yield {
+              keys: [transport.livekit_service_url, transport.livekit_alias],
+              data: undefined,
+            };
+        },
+        (scope, _data$, serviceUrl, alias) => {
+          const connection = connectionFactory.createConnection(
+            {
+              type: "livekit",
+              livekit_service_url: serviceUrl,
+              livekit_alias: alias,
+            },
+            scope,
+            logger,
+          );
+          // Start the connection immediately
+          // Use connection state to track connection progress
+          void connection.start();
+          // TODO subscribe to connection state to retry or log issues?
+          return connection;
+        },
+      ),
     ),
   );
 
