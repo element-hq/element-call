@@ -144,7 +144,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const tile = (
     <MediaView
       ref={ref}
-      video={video}
+      video={video ?? undefined}
       member={vm.member}
       unencryptedWarning={unencryptedWarning}
       encryptionStatus={encryptionStatus}

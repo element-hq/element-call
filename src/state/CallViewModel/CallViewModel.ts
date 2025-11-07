@@ -373,6 +373,7 @@ export class CallViewModel {
    * List of MediaItems that we want to have tiles for.
    */
   // TODO KEEP THIS!! and adapt it to what our membershipManger returns
+  // TODO this also needs the local participant to be added.
   private readonly mediaItems$ = this.scope.behavior<MediaItem[]>(
     generateKeyed$<
       [typeof this.matrixLivekitMembers$.value, number],

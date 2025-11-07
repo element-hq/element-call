@@ -98,7 +98,7 @@ interface Props {
   connectionManager: IConnectionManager;
   matrixRTCSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
-  localTransport$: Behavior<LivekitTransport | undefined>;
+  localTransport$: Behavior<LivekitTransport | null>;
   e2eeLivekitOptions: E2EEOptions | undefined;
   trackProcessorState$: Behavior<ProcessorState>;
   widget: WidgetHelpers | null;
@@ -162,7 +162,11 @@ export const createLocalMembership$ = ({
 
   // This should be used in a combineLatest with publisher$ to connect.
   // to make it possible to call startTracks before the preferredTransport$ has resolved.
-  const shouldStartTracks$ = new BehaviorSubject(false);
+  const trackStartRequested$ = new BehaviorSubject(false);
+
+  // This should be used in a combineLatest with publisher$ to connect.
+  // to make it possible to call startTracks before the preferredTransport$ has resolved.
+  const connectRequested$ = new BehaviorSubject(false);
 
   // This should be used in a combineLatest with publisher$ to connect.
   const tracks$ = new BehaviorSubject<LocalTrack[]>([]);
@@ -230,26 +234,24 @@ export const createLocalMembership$ = ({
     ),
   );
 
-  const publisher$ = scope.behavior(
-    connection$.pipe(
-      map((connection) =>
-        connection
-          ? new Publisher(
-              scope,
-              connection,
-              mediaDevices,
-              muteStates,
-              e2eeLivekitOptions,
-              trackProcessorState$,
-            )
-          : null,
-      ),
-    ),
-  );
+  const publisher$ = new BehaviorSubject<Publisher | null>(null);
+  connection$.subscribe((connection) => {
+    if (connection !== null && publisher$.value === null) {
+      publisher$.next(
+        new Publisher(
+          scope,
+          connection,
+          mediaDevices,
+          muteStates,
+          e2eeLivekitOptions,
+          trackProcessorState$,
+        ),
+      );
+    }
+  });
 
-  combineLatest(
-    [publisher$, shouldStartTracks$],
-    (publisher, shouldStartTracks) => {
+  combineLatest([publisher$, trackStartRequested$]).subscribe(
+    ([publisher, shouldStartTracks]) => {
       if (publisher && shouldStartTracks) {
         publisher
           .createAndSetupTracks()
@@ -286,41 +288,51 @@ export const createLocalMembership$ = ({
   );
 
   const startTracks = (): Behavior<LocalTrack[]> => {
-    shouldStartTracks$.next(true);
+    trackStartRequested$.next(true);
     return tracks$;
   };
 
-  const requestConnect = (): LocalMemberConnectionState => {
-    if (state.livekit$.value.state === LivekitState.Uninitialized) {
-      startTracks();
-      state.livekit$.next({ state: LivekitState.Connecting });
-      combineLatest([publisher$, tracks$], (publisher, tracks) => {
-        publisher
-          ?.startPublishing()
-          .then(() => {
-            state.livekit$.next({ state: LivekitState.Connected });
-          })
-          .catch((error) => {
-            state.livekit$.next({ state: LivekitState.Error, error });
-          });
+  combineLatest([publisher$, tracks$]).subscribe(([publisher, tracks]) => {
+    if (
+      tracks.length === 0 ||
+      // change this to !== Publishing
+      state.livekit$.value.state !== LivekitState.Uninitialized
+    ) {
+      return;
+    }
+    state.livekit$.next({ state: LivekitState.Connecting });
+    publisher
+      ?.startPublishing()
+      .then(() => {
+        state.livekit$.next({ state: LivekitState.Connected });
+      })
+      .catch((error) => {
+        state.livekit$.next({ state: LivekitState.Error, error });
       });
-    }
-    if (state.matrix$.value.state === MatrixState.Disconnected) {
+  });
+  combineLatest([localTransport$, connectRequested$]).subscribe(
+    ([transport, connectRequested]) => {
+      if (
+        transport === null ||
+        !connectRequested ||
+        state.matrix$.value.state !== MatrixState.Disconnected
+      ) {
+        logger.info("Waiting for transport to enter rtc session");
+        return;
+      }
       state.matrix$.next({ state: MatrixState.Connecting });
-      localTransport$.pipe(
-        tap((transport) => {
-          if (transport !== undefined) {
-            enterRTCSession(matrixRTCSession, transport, options.value).catch(
-              (error) => {
-                logger.error(error);
-              },
-            );
-          } else {
-            logger.info("Waiting for transport to enter rtc session");
-          }
-        }),
+      enterRTCSession(matrixRTCSession, transport, options.value).catch(
+        (error) => {
+          logger.error(error);
+        },
       );
-    }
+    },
+  );
+
+  const requestConnect = (): LocalMemberConnectionState => {
+    trackStartRequested$.next(true);
+    connectRequested$.next(true);
+
     return state;
   };
 
@@ -453,8 +465,7 @@ export const createLocalMembership$ = ({
             .pipe(
               // I dont see why we need this. isnt the check later on superseeding it?
               takeWhile(
-                (c) =>
-                  c !== undefined && c.state$.value.state !== "FailedToStart",
+                (c) => c !== null && c.state$.value.state !== "FailedToStart",
               ),
               switchMap((c) =>
                 c?.state$.value.state === "ConnectedToLkRoom" ? of(c) : NEVER,
