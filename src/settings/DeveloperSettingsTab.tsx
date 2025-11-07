@@ -26,7 +26,6 @@ import {
   duplicateTiles as duplicateTilesSetting,
   debugTileLayout as debugTileLayoutSetting,
   showConnectionStats as showConnectionStatsSetting,
-  multiSfu as multiSfuSetting,
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   matrixRTCMode as matrixRTCModeSetting,

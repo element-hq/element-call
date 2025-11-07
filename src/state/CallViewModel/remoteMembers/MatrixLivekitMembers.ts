@@ -55,7 +55,7 @@ interface Props {
   // => Extract an AvatarService instead?
   // Better with just `getMember`
   matrixRoom: Pick<MatrixRoom, "getMember"> & NodeStyleEventEmitter;
-  roomMember$: Behavior<Pick<RoomMember, "userId" | "getMxcAvatarUrl">>;
+  // roomMember$: Behavior<Pick<RoomMember, "userId" | "getMxcAvatarUrl">>;
 }
 // Alternative structure idea:
 // const livekitMatrixMember$ = (callMemberships$,connectionManager,scope): Observable<MatrixLivekitMember[]> => {

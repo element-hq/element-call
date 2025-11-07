@@ -14,7 +14,7 @@ import {
 } from "matrix-js-sdk";
 import EventEmitter from "events";
 
-import { ObservableScope } from "../../ObservableScope.ts";
+import { ObservableScope, trackEpoch } from "../../ObservableScope.ts";
 import type { Room as MatrixRoom } from "matrix-js-sdk/lib/models/room";
 import { mockCallMembership, withTestScheduler } from "../../../utils/test.ts";
 import { memberDisplaynames$ } from "./displayname.ts";
@@ -90,9 +90,7 @@ test("should always have our own user", () => {
       mockMatrixRoom,
       cold("a", {
         a: [],
-      }),
-      "@local:example.com",
-      "DEVICE000",
+      }).pipe(trackEpoch()),
     );
 
     expectObservable(dn$).toBe("a", {
@@ -125,9 +123,7 @@ test("should get displayName for users", () => {
           mockCallMembership("@alice:example.com", "DEVICE1"),
           mockCallMembership("@bob:example.com", "DEVICE1"),
         ],
-      }),
-      "@local:example.com",
-      "DEVICE000",
+      }).pipe(trackEpoch()),
     );
 
     expectObservable(dn$).toBe("a", {
@@ -149,9 +145,7 @@ test("should use userId if no display name", () => {
       mockMatrixRoom,
       cold("a", {
         a: [mockCallMembership("@no-name:foo.bar", "D000")],
-      }),
-      "@local:example.com",
-      "DEVICE000",
+      }).pipe(trackEpoch()),
     );
 
     expectObservable(dn$).toBe("a", {
@@ -178,9 +172,7 @@ test("should disambiguate users with same display name", () => {
           mockCallMembership("@carl:example.com", "C000"),
           mockCallMembership("@evil:example.com", "E000"),
         ],
-      }),
-      "@local:example.com",
-      "DEVICE000",
+      }).pipe(trackEpoch()),
     );
 
     expectObservable(dn$).toBe("a", {
@@ -209,9 +201,7 @@ test("should disambiguate when needed", () => {
           mockCallMembership("@bob:example.com", "DEVICE1"),
           mockCallMembership("@bob:foo.bar", "BOB000"),
         ],
-      }),
-      "@local:example.com",
-      "DEVICE000",
+      }).pipe(trackEpoch()),
     );
 
     expectObservable(dn$).toBe("ab", {
@@ -241,9 +231,7 @@ test.skip("should keep disambiguated name when other leave", () => {
           mockCallMembership("@bob:foo.bar", "BOB000"),
         ],
         b: [mockCallMembership("@bob:example.com", "DEVICE1")],
-      }),
-      "@local:example.com",
-      "DEVICE000",
+      }).pipe(trackEpoch()),
     );
 
     expectObservable(dn$).toBe("ab", {
@@ -272,9 +260,7 @@ test("should disambiguate on name change", () => {
           mockCallMembership("@bob:example.com", "B000"),
           mockCallMembership("@carl:example.com", "C000"),
         ],
-      }),
-      "@local:example.com",
-      "DEVICE000",
+      }).pipe(trackEpoch()),
     );
 
     schedule("-a", {

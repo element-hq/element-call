@@ -135,7 +135,8 @@ export const createLocalMembership$ = ({
   startTracks: () => Behavior<LocalTrack[]>;
   requestDisconnect: () => Observable<LocalMemberLivekitState> | null;
   connectionState: LocalMemberConnectionState;
-  sharingScreen$: Behavior<boolean | undefined>;
+  // Use null here since behavior cannot be initialised with undefined.
+  sharingScreen$: Behavior<boolean | null>;
   toggleScreenSharing: (() => void) | null;
 
   // deprecated fields
@@ -432,7 +433,7 @@ export const createLocalMembership$ = ({
   const sharingScreen$ = scope.behavior(
     connection$.pipe(
       switchMap((c) => {
-        if (!c) return of(undefined);
+        if (!c) return of(null);
         if (c.state$.value.state === "ConnectedToLkRoom")
           return observeSharingScreen$(c.livekitRoom.localParticipant);
         return of(false);

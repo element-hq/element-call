@@ -734,7 +734,8 @@ export const InCallView: FC<InCallViewProps> = ({
       <ShareScreenButton
         key="share_screen"
         className={styles.shareScreen}
-        enabled={sharingScreen}
+        disabled={sharingScreen === undefined}
+        enabled={sharingScreen === true}
         onClick={vm.toggleScreenSharing}
         onTouchEnd={onControlsTouchEnd}
         data-testid="incall_screenshare"
@@ -822,7 +823,7 @@ export const InCallView: FC<InCallViewProps> = ({
           key={url}
           url={url}
           livekitRoom={livekitRoom}
-          validIdentities={participants.map((p) => p.identity)}
+          validIdentities={participants}
           muted={muteAllAudio}
         />
       ))}
