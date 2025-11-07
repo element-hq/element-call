@@ -7545,7 +7545,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=toger5/sticky-events&commit=e7f5bec51b6f70501a025b79fe5021c933385b21"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=hs/rtc-slots&commit=c56fe525aa4dcb8c3b8629dc303b95f4dd4988bd"
     matrix-widget-api: "npm:^1.13.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -10343,9 +10343,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/sticky-events&commit=e7f5bec51b6f70501a025b79fe5021c933385b21":
-  version: 38.4.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=e7f5bec51b6f70501a025b79fe5021c933385b21"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=hs/rtc-slots&commit=c56fe525aa4dcb8c3b8629dc303b95f4dd4988bd":
+  version: 39.0.0
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=c56fe525aa4dcb8c3b8629dc303b95f4dd4988bd"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.3.0"
@@ -10358,10 +10358,10 @@ __metadata:
     matrix-widget-api: "npm:^1.10.0"
     oidc-client-ts: "npm:^3.0.1"
     p-retry: "npm:7"
-    sdp-transform: "npm:^2.14.1"
+    sdp-transform: "npm:^3.0.0"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/7adffdc183affd2d3ee1e8497cad6ca7904a37f98328ff7bc15aa6c1829dc9f9a92f8e1bd6260432a33626ff2a839644de938270163e73438b7294675cd954e4
+  checksum: 10c0/f8267c2a1fac67076400f886259d9b58b597f975865ce49aefe774d2f56a5c7caef66307f02fe24dcad35829e747bd7e563ecbb9a694d1f80b2439eebe0724fa
   languageName: node
   linkType: hard
 
@@ -12544,12 +12544,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sdp-transform@npm:^2.14.1, sdp-transform@npm:^2.15.0":
+"sdp-transform@npm:^2.15.0":
   version: 2.15.0
   resolution: "sdp-transform@npm:2.15.0"
   bin:
     sdp-verify: checker.js
   checksum: 10c0/96c060f113a3d5418defa168db609f7e23e5bd7954fa1cf7784f103dbe702e24d667e5310d2ac6d88abdb32322af83d6ebd0df08e07f4f172d5ed5888f921386
+  languageName: node
+  linkType: hard
+
+"sdp-transform@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "sdp-transform@npm:3.0.0"
+  bin:
+    sdp-verify: checker.js
+  checksum: 10c0/828a4595041ba64c86b29075aa4007ab384519b1fa29882db59ccb83b54b2b2a33b60848293f8da537fe151c52f5844fc17c8325396cac309fb19e2e81ec5bf4
   languageName: node
   linkType: hard
 
