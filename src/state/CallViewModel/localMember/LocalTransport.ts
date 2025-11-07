@@ -13,20 +13,21 @@ import {
   isLivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
-import { combineLatest, distinctUntilChanged, first, from } from "rxjs";
+import { combineLatest, distinctUntilChanged, first, from, map } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { type Behavior } from "../../Behavior.ts";
 import {
-  type Epoch,
+  Epoch,
   mapEpoch,
   type ObservableScope,
 } from "../../ObservableScope.ts";
 import { Config } from "../../../config/Config.ts";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors.ts";
 import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
+import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 
 /*
  * - get well known
@@ -60,15 +61,16 @@ export const createLocalTransport$ = ({
   client,
   roomId,
   useOldestMember$,
-}: Props): Behavior<LivekitTransport | undefined> => {
+}: Props): Behavior<LivekitTransport | null> => {
   /**
    * The transport over which we should be actively publishing our media.
    * undefined when not joined.
    */
   const oldestMemberTransport$ = scope.behavior(
     memberships$.pipe(
-      mapEpoch(
-        (memberships) => memberships[0]?.getTransport(memberships[0]) ?? null,
+      map(
+        (memberships) =>
+          memberships.value[0]?.getTransport(memberships.value[0]) ?? null,
       ),
       first((t) => t != null && isLivekitTransport(t)),
     ),
@@ -88,13 +90,18 @@ export const createLocalTransport$ = ({
    * The transport we should advertise in our MatrixRTC membership.
    */
   const advertisedTransport$ = scope.behavior(
-    combineLatest(
-      [useOldestMember$, oldestMemberTransport$, preferredTransport$],
-      (useOldestMember, oldestMemberTransport, preferredTransport) =>
+    combineLatest([
+      useOldestMember$,
+      oldestMemberTransport$,
+      preferredTransport$,
+    ]).pipe(
+      map(([useOldestMember, oldestMemberTransport, preferredTransport]) =>
         useOldestMember
           ? (oldestMemberTransport ?? preferredTransport)
           : preferredTransport,
-    ).pipe<LivekitTransport>(distinctUntilChanged(deepCompare)),
+      ),
+      distinctUntilChanged(areLivekitTransportsEqual),
+    ),
   );
   return advertisedTransport$;
 };

@@ -220,7 +220,7 @@ abstract class BaseMediaViewModel {
   /**
    * The LiveKit video track for this media.
    */
-  public readonly video$: Behavior<TrackReferenceOrPlaceholder | undefined>;
+  public readonly video$: Behavior<TrackReferenceOrPlaceholder | null>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
@@ -235,12 +235,10 @@ abstract class BaseMediaViewModel {
 
   private observeTrackReference$(
     source: Track.Source,
-  ): Behavior<TrackReferenceOrPlaceholder | undefined> {
+  ): Behavior<TrackReferenceOrPlaceholder | null> {
     return this.scope.behavior(
       this.participant$.pipe(
-        switchMap((p) =>
-          p === undefined ? of(undefined) : observeTrackReference$(p, source),
-        ),
+        switchMap((p) => (!p ? of(null) : observeTrackReference$(p, source))),
       ),
     );
   }
@@ -260,7 +258,7 @@ abstract class BaseMediaViewModel {
     // We don't necessarily have a participant if a user connects via MatrixRTC but not (yet) through
     // livekit.
     protected readonly participant$: Observable<
-      LocalParticipant | RemoteParticipant | undefined
+      LocalParticipant | RemoteParticipant | null
     >,
 
     encryptionSystem: EncryptionSystem,
@@ -405,7 +403,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     scope: ObservableScope,
     id: string,
     member: RoomMember,
-    participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
+    participant$: Observable<LocalParticipant | RemoteParticipant | null>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     focusUrl: string,
@@ -541,7 +539,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     scope: ObservableScope,
     id: string,
     member: RoomMember,
-    participant$: Behavior<LocalParticipant | undefined>,
+    participant$: Behavior<LocalParticipant | null>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     focusURL: string,
@@ -651,7 +649,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     scope: ObservableScope,
     id: string,
     member: RoomMember,
-    participant$: Observable<RemoteParticipant | undefined>,
+    participant$: Observable<RemoteParticipant | null>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     focusUrl: string,

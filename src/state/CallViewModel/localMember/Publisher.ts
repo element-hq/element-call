@@ -99,31 +99,36 @@ export class Publisher {
     // instead? This optimization would only be safe for a publish connection,
     // because we don't want to leak the user's intent to perhaps join a call to
     // remote servers before they actually commit to it.
-    const { promise, resolve, reject } = Promise.withResolvers<void>();
-    const sub = this.connection.state$.subscribe((s) => {
-      if (s.state !== "FailedToStart") {
-        reject(new Error("Disconnected from LiveKit server"));
-      } else {
-        resolve();
-      }
-    });
-    try {
-      await promise;
-    } catch (e) {
-      throw e;
-    } finally {
-      sub.unsubscribe();
-    }
+    // const { promise, resolve, reject } = Promise.withResolvers<void>();
+    // const sub = this.connection.state$.subscribe((s) => {
+    //   if (s.state === "FailedToStart") {
+    //     reject(new Error("Disconnected from LiveKit server"));
+    //   } else if (s.state === "ConnectedToLkRoom") {
+    //     resolve();
+    //   }
+    // });
+    // try {
+    //   await promise;
+    // } catch (e) {
+    //   throw e;
+    // } finally {
+    //   sub.unsubscribe();
+    // }
     // TODO-MULTI-SFU: Prepublish a microphone track
     const audio = this.muteStates.audio.enabled$.value;
     const video = this.muteStates.video.enabled$.value;
     // createTracks throws if called with audio=false and video=false
     if (audio || video) {
       // TODO this can still throw errors? It will also prompt for permissions if not already granted
-      this.tracks = await lkRoom.localParticipant.createTracks({
-        audio,
-        video,
-      });
+      this.tracks =
+        (await lkRoom.localParticipant
+          .createTracks({
+            audio,
+            video,
+          })
+          .catch((error) => {
+            this.logger?.error("Failed to create tracks", error);
+          })) ?? [];
     }
     return this.tracks;
   }
@@ -153,7 +158,9 @@ export class Publisher {
     for (const track of this.tracks) {
       // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
       // with a timeout.
-      await lkRoom.localParticipant.publishTrack(track);
+      await lkRoom.localParticipant.publishTrack(track).catch((error) => {
+        this.logger?.error("Failed to publish track", error);
+      });
 
       // TODO: check if the connection is still active? and break the loop if not?
     }
