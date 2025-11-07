@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, of } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { vitest } from "vitest";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import EventEmitter from "events";
@@ -158,7 +158,7 @@ export function getBasicCallViewModelEnvironment(
     },
     handRaisedSubject$,
     reactionsSubject$,
-    of({ processor: undefined, supported: false }),
+    constant({ processor: undefined, supported: false }),
   );
   return {
     vm,

@@ -42,7 +42,7 @@ export function createRoomMembers$(
  * any displayname that clashes with another member. Only members
  * joined to the call are considered here.
  *
- * @returns Map<member.id, displayname> uses the rtc member idenitfier as the key.
+ * @returns Map<userId, displayname> uses the Matrix user ID as the key.
  */
 // don't do this work more times than we need to. This is achieved by converting to a behavior:
 export const memberDisplaynames$ = (
@@ -66,19 +66,14 @@ export const memberDisplaynames$ = (
 
         // We only consider RTC members for disambiguation as they are the only visible members.
         for (const rtcMember of memberships) {
-          // TODO a hard-coded participant ID ? should use rtcMember.membershipID instead?
-          const matrixIdentifier = `${rtcMember.userId}:${rtcMember.deviceId}`;
-          const { member } = getRoomMemberFromRtcMember(rtcMember, room);
-          if (!member) {
-            logger.error(
-              "Could not find member for participant id:",
-              matrixIdentifier,
-            );
+          const member = room.getMember(rtcMember.userId);
+          if (member === null) {
+            logger.error(`Could not find member for user ${rtcMember.userId}`);
             continue;
           }
           const disambiguate = shouldDisambiguate(member, memberships, room);
           displaynameMap.set(
-            matrixIdentifier,
+            rtcMember.userId,
             calculateDisplayName(member, disambiguate),
           );
         }
@@ -87,13 +82,3 @@ export const memberDisplaynames$ = (
     ),
     new Epoch(new Map<string, string>()),
   );
-
-export function getRoomMemberFromRtcMember(
-  rtcMember: CallMembership,
-  room: Pick<MatrixRoom, "getMember">,
-): { id: string; member: RoomMember | undefined } {
-  return {
-    id: rtcMember.userId + ":" + rtcMember.deviceId,
-    member: room.getMember(rtcMember.userId) ?? undefined,
-  };
-}

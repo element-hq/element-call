@@ -52,7 +52,7 @@ import {
   ScreenShareViewModel,
   type UserMediaViewModel,
 } from "../MediaViewModel";
-import { accumulate, generateKeyed$, pauseWhen } from "../../utils/observable";
+import { accumulate, generateItems, pauseWhen } from "../../utils/observable";
 import {
   duplicateTiles,
   MatrixRTCMode,
@@ -75,7 +75,7 @@ import {
 } from "../../reactions";
 import { shallowEquals } from "../../utils/array";
 import { type MediaDevices } from "../MediaDevices";
-import { type Behavior, constant } from "../Behavior";
+import { type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
@@ -370,103 +370,101 @@ export class CallViewModel {
   );
 
   /**
-   * List of MediaItems that we want to have tiles for.
+   * List of user media (camera feeds) that we want tiles for.
    */
-  // TODO KEEP THIS!! and adapt it to what our membershipManger returns
   // TODO this also needs the local participant to be added.
-  private readonly mediaItems$ = this.scope.behavior<MediaItem[]>(
-    generateKeyed$<
-      [typeof this.matrixLivekitMembers$.value, number],
-      MediaItem,
-      MediaItem[]
-    >(
+  private readonly userMedia$ = this.scope.behavior<UserMedia[]>(
+    combineLatest([this.matrixLivekitMembers$, duplicateTiles.value$]).pipe(
       // Generate a collection of MediaItems from the list of expected (whether
       // present or missing) LiveKit participants.
-      combineLatest([this.matrixLivekitMembers$, duplicateTiles.value$]),
-      ([{ value: matrixLivekitMembers }, duplicateTiles], createOrGet) => {
-        const items: MediaItem[] = [];
-
-        for (const {
-          connection,
-          participant,
-          member,
-          displayName,
+      generateItems(
+        function* ([{ value: matrixLivekitMembers }, duplicateTiles]) {
+          for (const {
+            participantId,
+            userId,
+            participant$,
+            connection$,
+            displayName$,
+            mxcAvatarUrl$,
+          } of matrixLivekitMembers)
+            for (let dup = 0; dup < 1 + duplicateTiles; dup++)
+              yield {
+                keys: [
+                  dup,
+                  participantId,
+                  userId,
+                  participant$,
+                  connection$,
+                  displayName$,
+                  mxcAvatarUrl$,
+                ],
+                data: undefined,
+              };
+        },
+        (
+          scope,
+          _data$,
+          dup,
           participantId,
-        } of matrixLivekitMembers) {
-          if (connection === undefined) {
-            logger.warn("connection is not yet initialised.");
-            continue;
-          }
-          for (let i = 0; i < 1 + duplicateTiles; i++) {
-            const mediaId = `${participantId}:${i}`;
-            const lkRoom = connection?.livekitRoom;
-            const url = connection?.transport.livekit_service_url;
+          userId,
+          participant$,
+          connection$,
+          displayName$,
+          mxcAvatarUrl$,
+        ) => {
+          const livekitRoom$ = scope.behavior(
+            connection$.pipe(map((c) => c?.livekitRoom)),
+          );
+          const focusUrl$ = scope.behavior(
+            connection$.pipe(map((c) => c?.transport.livekit_service_url)),
+          );
 
-            const item = createOrGet(
-              mediaId,
-              (scope) =>
-                // We create UserMedia with or without a participant.
-                // This will be the initial value of a BehaviourSubject.
-                // Once a participant appears we will update the BehaviourSubject. (see below)
-                new UserMedia(
-                  scope,
-                  mediaId,
-                  member,
-                  participant,
-                  this.options.encryptionSystem,
-                  lkRoom,
-                  url,
-                  this.mediaDevices,
-                  this.pretendToBeDisconnected$,
-                  constant(displayName ?? "[👻]"),
-                  this.handsRaised$.pipe(
-                    map((v) => v[participantId]?.time ?? null),
-                  ),
-                  this.reactions$.pipe(
-                    map((v) => v[participantId] ?? undefined),
-                  ),
-                ),
-            );
-            items.push(item);
-            (item as UserMedia).updateParticipant(participant);
-
-            if (participant?.isScreenShareEnabled) {
-              const screenShareId = `${mediaId}:screen-share`;
-              items.push(
-                createOrGet(
-                  screenShareId,
-                  (scope) =>
-                    new ScreenShare(
-                      scope,
-                      screenShareId,
-                      member,
-                      participant,
-                      this.options.encryptionSystem,
-                      lkRoom,
-                      url,
-                      this.pretendToBeDisconnected$,
-                      constant(displayName ?? "[👻]"),
-                    ),
-                ),
-              );
-            }
-          }
-        }
-        return items;
-      },
+          return new UserMedia(
+            scope,
+            `${participantId}:${dup}`,
+            userId,
+            participant$,
+            this.options.encryptionSystem,
+            livekitRoom$,
+            focusUrl$,
+            this.mediaDevices,
+            this.pretendToBeDisconnected$,
+            displayName$,
+            mxcAvatarUrl$,
+            this.handsRaised$.pipe(map((v) => v[participantId]?.time ?? null)),
+            this.reactions$.pipe(map((v) => v[participantId] ?? undefined)),
+          );
+        },
+      ),
     ),
   );
 
   /**
-   * List of MediaItems that we want to display, that are of type UserMedia
+   * List of all media items (user media and screen share media) that we want
+   * tiles for.
    */
-  private readonly userMedia$ = this.scope.behavior<UserMedia[]>(
-    this.mediaItems$.pipe(
-      map((mediaItems) =>
-        mediaItems.filter((m): m is UserMedia => m instanceof UserMedia),
+  private readonly mediaItems$ = this.scope.behavior<MediaItem[]>(
+    this.userMedia$.pipe(
+      switchMap((userMedia) =>
+        userMedia.length === 0
+          ? of([])
+          : combineLatest(
+              userMedia.map((m) => m.screenShares$),
+              (...screenShares) => [...userMedia, ...screenShares.flat(1)],
+            ),
       ),
     ),
-    [],
+  );
+
+  /**
+   * List of MediaItems that we want to display, that are of type ScreenShare
+   */
+  private readonly screenShares$ = this.scope.behavior<ScreenShare[]>(
+    this.mediaItems$.pipe(
+      map((mediaItems) =>
+        mediaItems.filter((m): m is ScreenShare => m instanceof ScreenShare),
+      ),
+    ),
   );
 
   public readonly joinSoundEffect$ = this.userMedia$.pipe(
@@ -542,17 +540,6 @@ export class CallViewModel {
   ).pipe(
     this.scope.share,
     tap((reason) => this.leaveHoisted$.next(reason)),
-  );
-
-  /**
-   * List of MediaItems that we want to display, that are of type ScreenShare
-   */
-  private readonly screenShares$ = this.scope.behavior<ScreenShare[]>(
-    this.mediaItems$.pipe(
-      map((mediaItems) =>
-        mediaItems.filter((m): m is ScreenShare => m instanceof ScreenShare),
-      ),
-    ),
   );
 
   private readonly spotlightSpeaker$ =
