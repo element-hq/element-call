@@ -32,6 +32,8 @@ export enum UserIntent {
   StartNewCallDMVoice = "start_call_dm_voice",
   JoinExistingCallDM = "join_existing_dm",
   JoinExistingCallDMVoice = "join_existing_dm_voice",
+  CallRoom = "call_room",
+  CallRoomVoice = "call_room_voice",
   Unknown = "unknown",
 }
 
@@ -432,6 +434,13 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
       intentPreset.autoLeaveWhenOthersLeft = true;
       intentPreset.callIntent = intentPreset.callIntent ?? "video";
       break;
+    case UserIntent.CallRoomVoice:
+      intentPreset.callIntent = "audio";
+    // Fall through
+    case UserIntent.CallRoom:
+      intentPreset.skipLobby = false; // In video rooms, we want to show the lobby before the user joins the call.
+      intentPreset.callIntent = intentPreset.callIntent ?? "video";
+      break;
     // Non widget usecase defaults
     default:
       intentPreset = {
@@ -469,6 +478,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
           break;
         case UserIntent.StartNewCallDMVoice:
         case UserIntent.JoinExistingCallDMVoice:
+        case UserIntent.CallRoomVoice:
           intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
           intentAndPlatformDerivedConfiguration.defaultVideoEnabled = false;
           break;
