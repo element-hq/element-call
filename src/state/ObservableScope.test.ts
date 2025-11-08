@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, expect, it } from "vitest";
+import { BehaviorSubject, timer } from "rxjs";
 
 import {
   Epoch,
@@ -14,7 +15,6 @@ import {
   trackEpoch,
 } from "./ObservableScope";
 import { withTestScheduler } from "../utils/test";
-import { BehaviorSubject, timer } from "rxjs";
 
 describe("Epoch", () => {
   it("should map the value correctly", () => {
