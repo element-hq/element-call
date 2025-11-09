@@ -13,15 +13,15 @@ import {
   type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, filter, map } from "rxjs";
+import { combineLatest, filter, fromEvent, map, startWith } from "rxjs";
 // eslint-disable-next-line rxjs/no-internal
 import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
-import { type Room as MatrixRoom } from "matrix-js-sdk";
+import { RoomStateEvent, type Room as MatrixRoom } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
-import { Epoch, mapEpoch, type ObservableScope } from "../../ObservableScope";
+import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { memberDisplaynames$ } from "./displayname";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
@@ -82,14 +82,17 @@ export function createMatrixLivekitMembers$({
   const displaynameMap$ = memberDisplaynames$(
     scope,
     matrixRoom,
-    membershipsWithTransport$.pipe(mapEpoch((v) => v.map((v) => v.membership))),
+    scope.behavior(
+      membershipsWithTransport$.pipe(
+        map((ms) => ms.value.map((m) => m.membership)),
+      ),
+    ),
   );
 
   return scope.behavior(
     combineLatest([
       membershipsWithTransport$,
       connectionManager.connectionManagerData$,
-      displaynameMap$,
     ]).pipe(
       filter((values) =>
         values.every((value) => value.epoch === values[0].epoch),
@@ -98,15 +101,11 @@ export function createMatrixLivekitMembers$({
         ([
           { value: membershipsWithTransports, epoch },
           { value: managerData },
-          { value: displaynames },
         ]) =>
-          new Epoch(
-            [membershipsWithTransports, managerData, displaynames] as const,
-            epoch,
-          ),
+          new Epoch([membershipsWithTransports, managerData] as const, epoch),
       ),
       generateItemsWithEpoch(
-        function* ([membershipsWithTransports, managerData, displaynames]) {
+        function* ([membershipsWithTransports, managerData]) {
           for (const { membership, transport } of membershipsWithTransports) {
             // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
             const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
@@ -116,35 +115,42 @@ export function createMatrixLivekitMembers$({
               : [];
             const participant =
               participants.find((p) => p.identity == participantId) ?? null;
-            // This makes sense to add to the js-sdk callMembership (we only need the avatar so probably the call memberhsip just should aquire the avatar)
-            const member = matrixRoom.getMember(membership.userId);
             const connection = transport
               ? managerData.getConnectionForTransport(transport)
               : undefined;
 
-            let displayName = displaynames.get(membership.userId);
-            if (displayName === undefined) {
-              logger.warn(`No display name for user ${membership.userId}`);
-              displayName = "";
-            }
-
             yield {
               keys: [participantId, membership.userId],
-              data: {
-                membership,
-                participant,
-                connection,
-                displayName,
-                mxcAvatarUrl: member?.getMxcAvatarUrl(),
-              },
+              data: { membership, participant, connection },
             };
           }
         },
-        (scope, data$, participantId, userId) => ({
-          participantId,
-          userId,
-          ...scope.splitBehavior(data$),
-        }),
+        (scope, data$, participantId, userId) => {
+          const member = matrixRoom.getMember(userId);
+          return {
+            participantId,
+            userId,
+            ...scope.splitBehavior(data$),
+            displayName$: scope.behavior(
+              displaynameMap$.pipe(
+                map((displayNames) => {
+                  const name = displayNames.get(userId);
+                  if (name === undefined) {
+                    logger.warn(`No display name for user ${userId}`);
+                    return "";
+                  }
+                  return name;
+                }),
+              ),
+            ),
+            mxcAvatarUrl$: scope.behavior(
+              fromEvent(matrixRoom, RoomStateEvent.Members).pipe(
+                startWith(undefined),
+                map(() => member?.getMxcAvatarUrl()),
+              ),
+            ),
+          };
+        },
       ),
     ),
   );
