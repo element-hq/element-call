@@ -6,20 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type RoomMember, RoomStateEvent } from "matrix-js-sdk";
-import {
-  combineLatest,
-  fromEvent,
-  map,
-  type Observable,
-  startWith,
-} from "rxjs";
+import { combineLatest, fromEvent, map, startWith } from "rxjs";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type Room as MatrixRoom } from "matrix-js-sdk/lib/matrix";
 // eslint-disable-next-line rxjs/no-internal
 import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
 
-import { Epoch, type ObservableScope } from "../../ObservableScope";
+import { type ObservableScope } from "../../ObservableScope";
 import {
   calculateDisplayName,
   shouldDisambiguate,
@@ -49,8 +43,8 @@ export const memberDisplaynames$ = (
   scope: ObservableScope,
   matrixRoom: Pick<MatrixRoom, "getMember"> & NodeStyleEventEmitter,
   // roomMember$: Behavior<Pick<RoomMember, "userId" | "getMxcAvatarUrl">>;
-  memberships$: Observable<Epoch<CallMembership[]>>,
-): Behavior<Epoch<Map<string, string>>> =>
+  memberships$: Behavior<CallMembership[]>,
+): Behavior<Map<string, string>> =>
   scope.behavior(
     combineLatest([
       // Handle call membership changes
@@ -59,8 +53,7 @@ export const memberDisplaynames$ = (
       fromEvent(matrixRoom, RoomStateEvent.Members).pipe(startWith(null)),
       // TODO: do we need: pauseWhen(this.pretendToBeDisconnected$),
     ]).pipe(
-      map(([epochMemberships, _displayNames]) => {
-        const { epoch, value: memberships } = epochMemberships;
+      map(([memberships, _displayNames]) => {
         const displaynameMap = new Map<string, string>();
         const room = matrixRoom;
 
@@ -77,8 +70,7 @@ export const memberDisplaynames$ = (
             calculateDisplayName(member, disambiguate),
           );
         }
-        return new Epoch(displaynameMap, epoch);
+        return displaynameMap;
       }),
     ),
-    new Epoch(new Map<string, string>()),
   );

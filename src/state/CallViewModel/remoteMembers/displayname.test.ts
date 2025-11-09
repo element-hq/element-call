@@ -13,9 +13,8 @@ import {
   RoomStateEvent,
 } from "matrix-js-sdk";
 import EventEmitter from "events";
-import { map } from "rxjs";
 
-import { ObservableScope, trackEpoch } from "../../ObservableScope.ts";
+import { ObservableScope } from "../../ObservableScope.ts";
 import type { Room as MatrixRoom } from "matrix-js-sdk/lib/models/room";
 import { mockCallMembership, withTestScheduler } from "../../../utils/test.ts";
 import { memberDisplaynames$ } from "./displayname.ts";
@@ -86,16 +85,16 @@ afterEach(() => {
 
 // TODO this is a regression, now there the own user is not always in the map. Ask Timo if fine
 test.skip("should always have our own user", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     const dn$ = memberDisplaynames$(
       testScope,
       mockMatrixRoom,
-      cold("a", {
+      behavior("a", {
         a: [],
-      }).pipe(trackEpoch()),
+      }),
     );
 
-    expectObservable(dn$.pipe(map((e) => e.value))).toBe("a", {
+    expectObservable(dn$).toBe("a", {
       a: new Map<string, string>([
         ["@local:example.com", "@local:example.com"],
       ]),
@@ -116,19 +115,19 @@ function setUpBasicRoom(): void {
 test("should get displayName for users", () => {
   setUpBasicRoom();
 
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     const dn$ = memberDisplaynames$(
       testScope,
       mockMatrixRoom,
-      cold("a", {
+      behavior("a", {
         a: [
           mockCallMembership("@alice:example.com", "DEVICE1"),
           mockCallMembership("@bob:example.com", "DEVICE1"),
         ],
-      }).pipe(trackEpoch()),
+      }),
     );
 
-    expectObservable(dn$.pipe(map((e) => e.value))).toBe("a", {
+    expectObservable(dn$).toBe("a", {
       a: new Map<string, string>([
         // ["@local:example.com", "it's a me"],
         ["@alice:example.com", "Alice"],
@@ -139,18 +138,18 @@ test("should get displayName for users", () => {
 });
 
 test("should use userId if no display name", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     setUpBasicRoom();
 
     const dn$ = memberDisplaynames$(
       testScope,
       mockMatrixRoom,
-      cold("a", {
+      behavior("a", {
         a: [mockCallMembership("@no-name:foo.bar", "D000")],
-      }).pipe(trackEpoch()),
+      }),
     );
 
-    expectObservable(dn$.pipe(map((e) => e.value))).toBe("a", {
+    expectObservable(dn$).toBe("a", {
       a: new Map<string, string>([
         // ["@local:example.com", "it's a me"],
         ["@no-name:foo.bar", "@no-name:foo.bar"],
@@ -160,13 +159,13 @@ test("should use userId if no display name", () => {
 });
 
 test("should disambiguate users with same display name", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     setUpBasicRoom();
 
     const dn$ = memberDisplaynames$(
       testScope,
       mockMatrixRoom,
-      cold("a", {
+      behavior("a", {
         a: [
           mockCallMembership("@bob:example.com", "DEVICE1"),
           mockCallMembership("@bob:example.com", "DEVICE2"),
@@ -174,10 +173,10 @@ test("should disambiguate users with same display name", () => {
           mockCallMembership("@carl:example.com", "C000"),
           mockCallMembership("@evil:example.com", "E000"),
         ],
-      }).pipe(trackEpoch()),
+      }),
     );
 
-    expectObservable(dn$.pipe(map((e) => e.value))).toBe("a", {
+    expectObservable(dn$).toBe("a", {
       a: new Map<string, string>([
         // ["@local:example.com", "it's a me"],
         ["@bob:example.com", "Bob (@bob:example.com)"],
@@ -191,22 +190,22 @@ test("should disambiguate users with same display name", () => {
 });
 
 test("should disambiguate when needed", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     setUpBasicRoom();
 
     const dn$ = memberDisplaynames$(
       testScope,
       mockMatrixRoom,
-      cold("ab", {
+      behavior("ab", {
         a: [mockCallMembership("@bob:example.com", "DEVICE1")],
         b: [
           mockCallMembership("@bob:example.com", "DEVICE1"),
           mockCallMembership("@bob:foo.bar", "BOB000"),
         ],
-      }).pipe(trackEpoch()),
+      }),
     );
 
-    expectObservable(dn$.pipe(map((e) => e.value))).toBe("ab", {
+    expectObservable(dn$).toBe("ab", {
       a: new Map<string, string>([
         // ["@local:example.com", "it's a me"],
         ["@bob:example.com", "Bob"],
@@ -221,22 +220,22 @@ test("should disambiguate when needed", () => {
 });
 
 test.skip("should keep disambiguated name when other leave", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, expectObservable }) => {
     setUpBasicRoom();
 
     const dn$ = memberDisplaynames$(
       testScope,
       mockMatrixRoom,
-      cold("ab", {
+      behavior("ab", {
         a: [
           mockCallMembership("@bob:example.com", "DEVICE1"),
           mockCallMembership("@bob:foo.bar", "BOB000"),
         ],
         b: [mockCallMembership("@bob:example.com", "DEVICE1")],
-      }).pipe(trackEpoch()),
+      }),
     );
 
-    expectObservable(dn$.pipe(map((e) => e.value))).toBe("ab", {
+    expectObservable(dn$).toBe("ab", {
       a: new Map<string, string>([
         // ["@local:example.com", "it's a me"],
         ["@bob:example.com", "Bob (@bob:example.com)"],
@@ -251,18 +250,18 @@ test.skip("should keep disambiguated name when other leave", () => {
 });
 
 test("should disambiguate on name change", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ behavior, schedule, expectObservable }) => {
     setUpBasicRoom();
 
     const dn$ = memberDisplaynames$(
       testScope,
       mockMatrixRoom,
-      cold("a", {
+      behavior("a", {
         a: [
           mockCallMembership("@bob:example.com", "B000"),
           mockCallMembership("@carl:example.com", "C000"),
         ],
-      }).pipe(trackEpoch()),
+      }),
     );
 
     schedule("-a", {
@@ -271,7 +270,7 @@ test("should disambiguate on name change", () => {
       },
     });
 
-    expectObservable(dn$.pipe(map((e) => e.value))).toBe("ab", {
+    expectObservable(dn$).toBe("ab", {
       a: new Map<string, string>([
         // ["@local:example.com", "it's a me"],
         ["@bob:example.com", "Bob"],
