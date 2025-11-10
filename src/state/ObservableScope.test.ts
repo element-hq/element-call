@@ -6,7 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, expect, it } from "vitest";
-import { BehaviorSubject, timer } from "rxjs";
+import { BehaviorSubject, combineLatest, timer } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   Epoch,
@@ -71,5 +72,29 @@ describe("Epoch", () => {
     const a$ = timer(10);
 
     scope.behavior(a$, undefined);
+  });
+
+  it("diamonds emits in a predictable order", () => {
+    const sb$ = new BehaviorSubject("initial");
+    const root$ = sb$.pipe(trackEpoch());
+    const derivedA$ = root$.pipe(mapEpoch((e) => e + "-A"));
+    const derivedB$ = root$.pipe(mapEpoch((e) => e + "-B"));
+    combineLatest([root$, derivedB$, derivedA$]).subscribe(
+      ([root, derivedA, derivedB]) => {
+        logger.log(
+          "combined" +
+            root.epoch +
+            root.value +
+            "\n" +
+            derivedA.epoch +
+            derivedA.value +
+            "\n" +
+            derivedB.epoch +
+            derivedB.value,
+        );
+      },
+    );
+    sb$.next("updated");
+    sb$.next("ANOTERUPDATE");
   });
 });

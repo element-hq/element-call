@@ -16,14 +16,9 @@ import { type MatrixClient } from "matrix-js-sdk";
 import { combineLatest, distinctUntilChanged, first, from, map } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
-import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { type Behavior } from "../../Behavior.ts";
-import {
-  Epoch,
-  mapEpoch,
-  type ObservableScope,
-} from "../../ObservableScope.ts";
+import { type Epoch, type ObservableScope } from "../../ObservableScope.ts";
 import { Config } from "../../../config/Config.ts";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors.ts";
 import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
