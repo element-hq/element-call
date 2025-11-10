@@ -12,7 +12,6 @@ import EventEmitter from "events";
 import fetchMock from "fetch-mock";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   type Epoch,
@@ -150,14 +149,22 @@ test("bob, carl, then bob joining no tracks yet", () => {
         const items = e.value;
         expect(items.length).toBe(1);
         const item = items[0]!;
-        expect(item.membership).toStrictEqual(bobMembership);
-        expect(
-          areLivekitTransportsEqual(
-            item.connection!.transport,
-            bobMembership.transports[0]! as LivekitTransport,
-          ),
-        ).toBe(true);
-        expect(item.participant).toBeUndefined();
+        expectObservable(item.membership$).toBe("a", {
+          a: bobMembership,
+        });
+        expectObservable(item.connection$).toBe("a", {
+          a: expect.toSatisfy((co) => {
+            expect(
+              areLivekitTransportsEqual(
+                co.transport,
+                bobMembership.transports[0]! as LivekitTransport,
+              ),
+            );
+          }),
+        });
+        expectObservable(item.participant$).toBe("a", {
+          a: null,
+        });
         return true;
       }),
       b: expect.toSatisfy((e: Epoch<MatrixLivekitMember[]>) => {
@@ -166,51 +173,67 @@ test("bob, carl, then bob joining no tracks yet", () => {
 
         {
           const item = items[0]!;
-          expect(item.membership).toStrictEqual(bobMembership);
-          expect(item.participant).toBeUndefined();
+          expectObservable(item.membership$).toBe("a", {
+            a: bobMembership,
+          });
+          expectObservable(item.participant$).toBe("a", {
+            a: null,
+          });
         }
 
         {
           const item = items[1]!;
-          expect(item.membership).toStrictEqual(carlMembership);
-          expect(item.participantId).toStrictEqual(
-            `${carlMembership.userId}:${carlMembership.deviceId}`,
-          );
-          expect(
-            areLivekitTransportsEqual(
-              item.connection!.transport,
-              carlMembership.transports[0]! as LivekitTransport,
-            ),
-          ).toBe(true);
-          expect(item.participant).toBeUndefined();
+
+          expectObservable(item.membership$).toBe("a", {
+            a: carlMembership,
+          });
+          expectObservable(item.participant$).toBe("a", {
+            a: null,
+          });
+          expectObservable(item.connection$).toBe("a", {
+            a: expect.toSatisfy((connection) => {
+              expect(
+                areLivekitTransportsEqual(
+                  connection.transport,
+                  carlMembership.transports[0]! as LivekitTransport,
+                ),
+              ).toBe(true);
+              return true;
+            }),
+          });
         }
         return true;
       }),
       c: expect.toSatisfy((e: Epoch<MatrixLivekitMember[]>) => {
         const items = e.value;
-        logger.info(`E Items length: ${items.length}`);
         expect(items.length).toBe(3);
-        {
-          expect(items[0]!.membership).toStrictEqual(bobMembership);
-        }
 
-        {
-          expect(items[1]!.membership).toStrictEqual(carlMembership);
-        }
+        expectObservable(items[0].membership$).toBe("a", {
+          a: bobMembership,
+        });
+        expectObservable(items[1].membership$).toBe("b", {
+          a: carlMembership,
+        });
 
         {
           const item = items[2]!;
-          expect(item.membership).toStrictEqual(daveMembership);
-          expect(item.participantId).toStrictEqual(
-            `${daveMembership.userId}:${daveMembership.deviceId}`,
-          );
-          expect(
-            areLivekitTransportsEqual(
-              item.connection!.transport,
-              daveMembership.transports[0]! as LivekitTransport,
-            ),
-          ).toBe(true);
-          expect(item.participant).toBeUndefined();
+          expectObservable(item.membership$).toBe("a", {
+            a: daveMembership,
+          });
+          expectObservable(item.connection$).toBe("a", {
+            a: expect.toSatisfy((connection) => {
+              expect(
+                areLivekitTransportsEqual(
+                  connection.transport,
+                  daveMembership.transports[0]! as LivekitTransport,
+                ),
+              ).toBe(true);
+              return true;
+            }),
+          });
+          expectObservable(item.participant$).toBe("a", {
+            a: null,
+          });
         }
         return true;
       }),
