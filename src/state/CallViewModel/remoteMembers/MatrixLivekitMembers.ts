@@ -105,6 +105,9 @@ export function createMatrixLivekitMembers$({
           new Epoch([membershipsWithTransports, managerData] as const, epoch),
       ),
       generateItemsWithEpoch(
+        // Generator function.
+        // creates an array of `{key, data}[]`
+        // Each change in the keys (new key, missing key) will result in a call to the factory function.
         function* ([membershipsWithTransports, managerData]) {
           for (const { membership, transport } of membershipsWithTransports) {
             // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
@@ -125,8 +128,11 @@ export function createMatrixLivekitMembers$({
             };
           }
         },
+        // Each update where the key of the generator array do not change will result in updates to the `data$` observable in the factory.
         (scope, data$, participantId, userId) => {
           const member = matrixRoom.getMember(userId);
+          // will only get called once per `participantId, userId` pair.
+          // updates to data$ and as a result to displayName$ and mxcAvatarUrl$ are more frequent.
           return {
             participantId,
             userId,
@@ -134,11 +140,9 @@ export function createMatrixLivekitMembers$({
             displayName$: scope.behavior(
               displaynameMap$.pipe(
                 map((displayNames) => {
-                  const name = displayNames.get(userId);
-                  if (name === undefined) {
+                  const name = displayNames.get(userId) ?? "";
+                  if (name === "")
                     logger.warn(`No display name for user ${userId}`);
-                    return "";
-                  }
                   return name;
                 }),
               ),

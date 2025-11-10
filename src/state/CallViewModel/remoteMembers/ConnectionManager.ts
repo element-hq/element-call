@@ -181,7 +181,7 @@ export function createConnectionManager$({
         // Map the connections to list of {connection, participants}[]
         const listOfConnectionsWithPublishingParticipants =
           connections.value.map((connection) => {
-            return connection.participantsWithTrack$.pipe(
+            return connection.participants$.pipe(
               map((participants) => ({
                 connection,
                 participants,

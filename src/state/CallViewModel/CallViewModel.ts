@@ -268,19 +268,15 @@ export class CallViewModel {
   });
 
   // ------------------------------------------------------------------------
-  // CallNotificationLifecycle
-  // consider inlining these!!!
-  private sentCallNotification$ = createSentCallNotification$(
-    this.scope,
-    this.matrixRTCSession,
-  );
-  private receivedDecline$ = createReceivedDecline$(this.matrixRoom);
 
   private callLifecycle = createCallNotificationLifecycle$({
     scope: this.scope,
     memberships$: this.memberships$,
-    sentCallNotification$: this.sentCallNotification$,
-    receivedDecline$: this.receivedDecline$,
+    sentCallNotification$: createSentCallNotification$(
+      this.scope,
+      this.matrixRTCSession,
+    ),
+    receivedDecline$: createReceivedDecline$(this.matrixRoom),
     options: this.options,
     localUser: { userId: this.userId, deviceId: this.deviceId },
   });
@@ -331,24 +327,44 @@ export class CallViewModel {
 
   public readonly audioParticipants$ = this.scope.behavior(
     this.matrixLivekitMembers$.pipe(
+      switchMap((membersWithEpoch) => {
+        const members = membersWithEpoch.value;
+        const a$ = combineLatest(
+          members.map((member) =>
+            combineLatest([member.connection$, member.participant$]).pipe(
+              map(([connection, participant]) => {
+                // do not render audio for local participant
+                if (!connection || !participant || participant.isLocal)
+                  return null;
+                const livekitRoom = connection.livekitRoom;
+                const url = connection.transport.livekit_service_url;
+
+                return { url, livekitRoom, participant: participant.identity };
+              }),
+            ),
+          ),
+        );
+        return a$;
+      }),
       map((members) =>
-        members.value.reduce<AudioLivekitItem[]>((acc, curr) => {
-          const url = curr.connection?.transport.livekit_service_url;
-          const livekitRoom = curr.connection?.livekitRoom;
-          const participant = curr.participant?.identity;
+        members.reduce<AudioLivekitItem[]>((acc, curr) => {
+          if (!curr) return acc;
 
-          if (!url || !livekitRoom || !participant) return acc;
-
-          const existing = acc.find((item) => item.url === url);
+          const existing = acc.find((item) => item.url === curr.url);
           if (existing) {
-            existing.participants.push(participant);
+            existing.participants.push(curr.participant);
           } else {
-            acc.push({ livekitRoom, participants: [participant], url });
+            acc.push({
+              livekitRoom: curr.livekitRoom,
+              participants: [curr.participant],
+              url: curr.url,
+            });
           }
           return acc;
         }, []),
       ),
     ),
+    [],
   );
 
   public readonly handsRaised$ = this.scope.behavior(

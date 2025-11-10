@@ -18,7 +18,7 @@ import {
   RoomEvent,
 } from "livekit-client";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, type Observable } from "rxjs";
+import { BehaviorSubject, map, type Observable } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -184,7 +184,7 @@ export class Connection {
    * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
    */
 
-  public readonly participantsWithTrack$: Behavior<PublishingParticipant[]>;
+  public readonly participants$: Behavior<PublishingParticipant[]>;
 
   /**
    * The media transport to connect to.
@@ -211,13 +211,19 @@ export class Connection {
     this.transport = transport;
     this.client = client;
 
-    this.participantsWithTrack$ = scope.behavior(
+    this.participants$ = scope.behavior(
+      // only tracks remote participants
       connectedParticipantsObserver(this.livekitRoom, {
         additionalRoomEvents: [
           RoomEvent.TrackPublished,
           RoomEvent.TrackUnpublished,
         ],
-      }),
+      }).pipe(
+        map((participants) => [
+          this.livekitRoom.localParticipant,
+          ...participants,
+        ]),
+      ),
       [],
     );
 
