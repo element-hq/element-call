@@ -37,7 +37,6 @@ export const aliceDoppelganger = mockMatrixRoomMember(
     rawDisplayName: "Alice",
   },
 );
-export const aliceDoppelgangerId = `${aliceDoppelganger.userId}:${aliceDoppelgangerRtcMember.deviceId}`;
 
 export const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
 export const bob = mockMatrixRoomMember(bobRtcMember, {
@@ -55,10 +54,8 @@ export const bobZeroWidthSpace = mockMatrixRoomMember(
     rawDisplayName: "Bo\u200bb",
   },
 );
-export const bobZeroWidthSpaceId = `${bobZeroWidthSpace.userId}:${bobZeroWidthSpaceRtcMember.deviceId}`;
 
 export const daveRTLRtcMember = mockRtcMembership("@dave2:example.org", "DDDD");
 export const daveRTL = mockMatrixRoomMember(daveRTLRtcMember, {
   rawDisplayName: "\u202eevaD",
 });
-export const daveRTLId = `${daveRTL.userId}:${daveRTLRtcMember.deviceId}`;

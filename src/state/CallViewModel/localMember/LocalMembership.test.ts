@@ -5,14 +5,31 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  type LivekitTransport,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { expect, test, vi } from "vitest";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import EventEmitter from "events";
 
-import { enterRTCSession } from "../src/rtcSessionHelpers";
-import { mockConfig } from "./utils/test";
-import { MatrixRTCMode } from "./settings/settings";
+import { MatrixRTCMode } from "../../../settings/settings";
+import { mockConfig } from "../../../utils/test";
+import * as LocalMembership from "./LocalMembership";
+
+// Read private function so we do not have to make it public
+const enterRTCSession = (
+  LocalMembership as unknown as {
+    enterRTCSession: (
+      rtcSession: MatrixRTCSession,
+      transport: LivekitTransport,
+      {
+        encryptMedia,
+        matrixRTCMode,
+      }: { encryptMedia: boolean; matrixRTCMode: MatrixRTCMode },
+    ) => Promise<void>;
+  }
+).enterRTCSession;
 
 const MATRIX_RTC_MODE = MatrixRTCMode.Legacy;
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));

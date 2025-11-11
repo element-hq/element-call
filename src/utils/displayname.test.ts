@@ -20,62 +20,70 @@ import {
   daveRTL,
 } from "./test-fixtures";
 import { mockMatrixRoom } from "./test";
+import { roomToMembersMap } from "../state/CallViewModel/remoteMembers/MatrixMemberMetadata";
 
 describe("shouldDisambiguate", () => {
   test("should not disambiguate a solo member", () => {
-    const room = mockMatrixRoom({});
-    expect(shouldDisambiguate(alice, [], room)).toEqual(false);
+    const room = mockMatrixRoom({
+      getMembers: () => [],
+    });
+    expect(shouldDisambiguate(alice, [], roomToMembersMap(room))).toEqual(
+      false,
+    );
   });
   test("should not disambiguate a member with an empty displayname", () => {
     const room = mockMatrixRoom({
-      getMember: (u) =>
-        [alice, aliceDoppelganger].find((m) => m.userId === u) ?? null,
+      getMembers: () => [alice, aliceDoppelganger],
     });
     expect(
       shouldDisambiguate(
         { rawDisplayName: "", userId: alice.userId },
         [aliceRtcMember, aliceDoppelgangerRtcMember],
-        room,
+        roomToMembersMap(room),
       ),
     ).toEqual(false);
   });
   test("should disambiguate a member with RTL characters", () => {
-    const room = mockMatrixRoom({});
-    expect(shouldDisambiguate(daveRTL, [], room)).toEqual(true);
+    const room = mockMatrixRoom({ getMembers: () => [] });
+    expect(shouldDisambiguate(daveRTL, [], roomToMembersMap(room))).toEqual(
+      true,
+    );
   });
   test("should disambiguate a member with a matching displayname", () => {
     const room = mockMatrixRoom({
-      getMember: (u) =>
-        [alice, aliceDoppelganger].find((m) => m.userId === u) ?? null,
+      getMembers: () => [alice, aliceDoppelganger],
     });
     expect(
       shouldDisambiguate(
         alice,
         [aliceRtcMember, aliceDoppelgangerRtcMember],
-        room,
+        roomToMembersMap(room),
       ),
     ).toEqual(true);
     expect(
       shouldDisambiguate(
         aliceDoppelganger,
         [aliceRtcMember, aliceDoppelgangerRtcMember],
-        room,
+        roomToMembersMap(room),
       ),
     ).toEqual(true);
   });
   test("should disambiguate a member with a matching displayname with hidden spaces", () => {
     const room = mockMatrixRoom({
-      getMember: (u) =>
-        [bob, bobZeroWidthSpace].find((m) => m.userId === u) ?? null,
+      getMembers: () => [bob, bobZeroWidthSpace],
     });
     expect(
-      shouldDisambiguate(bob, [bobRtcMember, bobZeroWidthSpaceRtcMember], room),
+      shouldDisambiguate(
+        bob,
+        [bobRtcMember, bobZeroWidthSpaceRtcMember],
+        roomToMembersMap(room),
+      ),
     ).toEqual(true);
     expect(
       shouldDisambiguate(
         bobZeroWidthSpace,
         [bobRtcMember, bobZeroWidthSpaceRtcMember],
-        room,
+        roomToMembersMap(room),
       ),
     ).toEqual(true);
   });
@@ -83,11 +91,14 @@ describe("shouldDisambiguate", () => {
     "should disambiguate a member with a displayname containing a mxid-like string '%s'",
     (rawDisplayName) => {
       const room = mockMatrixRoom({
-        getMember: (u) =>
-          [alice, aliceDoppelganger].find((m) => m.userId === u) ?? null,
+        getMembers: () => [alice, aliceDoppelganger],
       });
       expect(
-        shouldDisambiguate({ rawDisplayName, userId: alice.userId }, [], room),
+        shouldDisambiguate(
+          { rawDisplayName, userId: alice.userId },
+          [],
+          roomToMembersMap(room),
+        ),
       ).toEqual(true);
     },
   );
