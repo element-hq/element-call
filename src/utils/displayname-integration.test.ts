@@ -6,10 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
+import { type RoomMember } from "matrix-js-sdk";
 
 import { shouldDisambiguate } from "./displayname";
 import { alice } from "./test-fixtures";
-import { mockMatrixRoom } from "./test";
 
 // Ideally these tests would be in ./displayname.test.ts but I can't figure out how to
 // just spy on the removeHiddenChars() function without impacting the other tests.
@@ -29,7 +29,7 @@ describe("shouldDisambiguate", () => {
   });
 
   test("should only call removeHiddenChars once for a single displayname", () => {
-    const room = mockMatrixRoom({});
+    const room: Map<string, Pick<RoomMember, "userId">> = new Map([]);
     shouldDisambiguate(alice, [], room);
     expect(jsUtils.removeHiddenChars).toHaveBeenCalledTimes(1);
     for (let i = 0; i < 10; i++) {

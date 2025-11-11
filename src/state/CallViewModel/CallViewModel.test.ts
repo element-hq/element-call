@@ -71,8 +71,6 @@ import type { RaisedHandInfo, ReactionInfo } from "../../reactions/index.ts";
 import {
   alice,
   aliceDoppelganger,
-  aliceDoppelgangerId,
-  aliceDoppelgangerRtcMember,
   aliceId,
   aliceParticipant,
   aliceRtcMember,
@@ -80,11 +78,7 @@ import {
   bobId,
   bobRtcMember,
   bobZeroWidthSpace,
-  bobZeroWidthSpaceId,
-  bobZeroWidthSpaceRtcMember,
   daveRTL,
-  daveRTLId,
-  daveRTLRtcMember,
   local,
   localId,
   localRtcMember,
@@ -128,7 +122,7 @@ const yesNo = {
 const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
 const carol = local;
-const carolId = localId;
+
 const dave = mockMatrixRoomMember(daveRtcMember, { rawDisplayName: "Dave" });
 
 const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
@@ -437,7 +431,7 @@ test.skip("test missing RTC config error", async () => {
     },
     new BehaviorSubject({} as Record<string, RaisedHandInfo>),
     new BehaviorSubject({} as Record<string, ReactionInfo>),
-    of({ processor: undefined, supported: false }),
+    constant({ processor: undefined, supported: false }),
   );
 
   const failPromise = Promise.withResolvers<ElementCallError>();
@@ -1068,120 +1062,6 @@ it("should show at least one tile per MatrixRTCSession", () => {
             },
           },
         );
-      },
-    );
-  });
-});
-
-test("should disambiguate users with the same displayname", () => {
-  withTestScheduler(({ behavior, expectObservable }) => {
-    const scenarioInputMarbles = "abcde";
-    const expectedLayoutMarbles = "abcde";
-
-    withCallViewModel(
-      {
-        rtcMembers$: behavior(scenarioInputMarbles, {
-          a: [localRtcMember],
-          b: [localRtcMember, aliceRtcMember],
-          c: [localRtcMember, aliceRtcMember, aliceDoppelgangerRtcMember],
-          d: [
-            localRtcMember,
-            aliceRtcMember,
-            aliceDoppelgangerRtcMember,
-            bobRtcMember,
-          ],
-          e: [localRtcMember, aliceDoppelgangerRtcMember, bobRtcMember],
-        }),
-      },
-      (vm) => {
-        expectObservable(vm.memberDisplaynames$).toBe(expectedLayoutMarbles, {
-          // Carol has no displayname - So userId is used.
-          a: new Map([[carolId, carol.userId]]),
-          b: new Map([
-            [carolId, carol.userId],
-            [aliceId, alice.rawDisplayName],
-          ]),
-          // The second alice joins.
-          c: new Map([
-            [carolId, carol.userId],
-            [aliceId, "Alice (@alice:example.org)"],
-            [aliceDoppelgangerId, "Alice (@alice2:example.org)"],
-          ]),
-          // Bob also joins
-          d: new Map([
-            [carolId, carol.userId],
-            [aliceId, "Alice (@alice:example.org)"],
-            [aliceDoppelgangerId, "Alice (@alice2:example.org)"],
-            [bobId, bob.rawDisplayName],
-          ]),
-          // Alice leaves, and the displayname should reset.
-          e: new Map([
-            [carolId, carol.userId],
-            [aliceDoppelgangerId, "Alice"],
-            [bobId, bob.rawDisplayName],
-          ]),
-        });
-      },
-    );
-  });
-});
-
-test("should disambiguate users with invisible characters", () => {
-  withTestScheduler(({ behavior, expectObservable }) => {
-    const scenarioInputMarbles = "ab";
-    const expectedLayoutMarbles = "ab";
-
-    withCallViewModel(
-      {
-        rtcMembers$: behavior(scenarioInputMarbles, {
-          a: [localRtcMember],
-          b: [localRtcMember, bobRtcMember, bobZeroWidthSpaceRtcMember],
-        }),
-      },
-      (vm) => {
-        expectObservable(vm.memberDisplaynames$).toBe(expectedLayoutMarbles, {
-          // Carol has no displayname - So userId is used.
-          a: new Map([[carolId, carol.userId]]),
-          // Both Bobs join, and should handle zero width hacks.
-          b: new Map([
-            [carolId, carol.userId],
-            [bobId, `Bob (${bob.userId})`],
-            [
-              bobZeroWidthSpaceId,
-              `${bobZeroWidthSpace.rawDisplayName} (${bobZeroWidthSpace.userId})`,
-            ],
-          ]),
-        });
-      },
-    );
-  });
-});
-
-test("should strip RTL characters from displayname", () => {
-  withTestScheduler(({ behavior, expectObservable }) => {
-    const scenarioInputMarbles = "ab";
-    const expectedLayoutMarbles = "ab";
-
-    withCallViewModel(
-      {
-        rtcMembers$: behavior(scenarioInputMarbles, {
-          a: [localRtcMember],
-          b: [localRtcMember, daveRtcMember, daveRTLRtcMember],
-        }),
-      },
-      (vm) => {
-        expectObservable(vm.memberDisplaynames$).toBe(expectedLayoutMarbles, {
-          // Carol has no displayname - So userId is used.
-          a: new Map([[carolId, carol.userId]]),
-          // Both Dave's join. Since after stripping
-          b: new Map([
-            [carolId, carol.userId],
-            // Not disambiguated
-            [daveId, "Dave"],
-            // This one is, since it's using RTL.
-            [daveRTLId, `evaD (${daveRTL.userId})`],
-          ]),
-        });
       },
     );
   });

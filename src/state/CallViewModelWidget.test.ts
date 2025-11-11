@@ -9,11 +9,11 @@ import { test, vi, expect } from "vitest";
 import EventEmitter from "events";
 
 import { constant } from "./Behavior.ts";
-import { withCallViewModel } from "./CallViewModel.test.ts";
 import { aliceParticipant, localRtcMember } from "../utils/test-fixtures.ts";
 import { ElementWidgetActions, widget } from "../widget.ts";
 import { E2eeType } from "../e2ee/e2eeType.ts";
-import { type CallViewModel } from "./CallViewModel.ts";
+import { withCallViewModel } from "./CallViewModel/CallViewModel.test.ts";
+import { type CallViewModel } from "./CallViewModel/CallViewModel.ts";
 
 vi.mock("../widget", () => ({
   ElementWidgetActions: {

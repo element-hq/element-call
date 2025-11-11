@@ -11,7 +11,6 @@ import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
 
 import {
   type Epoch,
@@ -40,7 +39,6 @@ let testScope: ObservableScope;
 let ecConnectionFactory: ECConnectionFactory;
 let mockClient: OpenIDClientParts;
 let lkRoomFactory: () => LivekitRoom;
-let mockMatrixRoom: MatrixRoom;
 
 const createdMockLivekitRooms: Map<string, LivekitRoom> = new Map();
 
@@ -90,18 +88,6 @@ beforeEach(() => {
       },
     };
   });
-
-  mockMatrixRoom = vi.mocked<MatrixRoom>({
-    getMember: vi.fn().mockImplementation((userId: string) => {
-      return {
-        userId,
-        rawDisplayName: userId.replace("@", "").replace(":example.org", ""),
-        getMxcAvatarUrl: vi.fn().mockReturnValue(null),
-      } as unknown as RoomMember;
-    }),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-  } as unknown as MatrixRoom);
 });
 
 afterEach(() => {
@@ -141,7 +127,6 @@ test("bob, carl, then bob joining no tracks yet", () => {
       membershipsWithTransport$:
         membershipsAndTransports.membershipsWithTransport$,
       connectionManager,
-      matrixRoom: mockMatrixRoom,
     });
 
     expectObservable(matrixLivekitItems$).toBe(vMarble, {
@@ -153,14 +138,12 @@ test("bob, carl, then bob joining no tracks yet", () => {
           a: bobMembership,
         });
         expectObservable(item.connection$).toBe("a", {
-          a: expect.toSatisfy((co) => {
-            expect(
-              areLivekitTransportsEqual(
-                co.transport,
-                bobMembership.transports[0]! as LivekitTransport,
-              ),
-            );
-          }),
+          a: expect.toSatisfy((co) =>
+            areLivekitTransportsEqual(
+              co.transport,
+              bobMembership.transports[0]! as LivekitTransport,
+            ),
+          ),
         });
         expectObservable(item.participant$).toBe("a", {
           a: null,

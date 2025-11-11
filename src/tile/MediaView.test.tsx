@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it, test, vi } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -16,7 +16,6 @@ import {
 import { LocalTrackPublication, Track } from "livekit-client";
 import { TrackInfo } from "@livekit/protocol";
 import { type ComponentProps } from "react";
-import { type RoomMember } from "matrix-js-sdk";
 
 import { MediaView } from "./MediaView";
 import { EncryptionStatus } from "../state/MediaViewModel";
@@ -46,10 +45,8 @@ describe("MediaView", () => {
     mirror: false,
     unencryptedWarning: false,
     video: trackReference,
-    member: vi.mocked<RoomMember>({
-      userId: "@alice:example.com",
-      getMxcAvatarUrl: vi.fn().mockReturnValue(undefined),
-    } as unknown as RoomMember),
+    userId: "@alice:example.com",
+    mxcAvatarUrl: undefined,
     localParticipant: false,
     focusable: true,
   };

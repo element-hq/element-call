@@ -5,12 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, test, vi, expect, beforeEach, afterEach } from "vitest";
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import {
   type CallMembership,
   type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk";
 import { getParticipantId } from "matrix-js-sdk/lib/matrixrtc/utils";
 import { combineLatest, map, type Observable } from "rxjs";
 
@@ -34,7 +33,6 @@ import {
 import { type Connection } from "./Connection.ts";
 
 let testScope: ObservableScope;
-let mockMatrixRoom: MatrixRoom;
 
 const transportA: LivekitTransport = {
   type: "livekit",
@@ -61,17 +59,6 @@ const carlMembership = mockCallMembership(
 
 beforeEach(() => {
   testScope = new ObservableScope();
-  mockMatrixRoom = vi.mocked<MatrixRoom>({
-    getMember: vi.fn().mockImplementation((userId: string) => {
-      return {
-        userId,
-        rawDisplayName: userId.replace("@", "").replace(":example.org", ""),
-        getMxcAvatarUrl: vi.fn().mockReturnValue(null),
-      } as unknown as RoomMember;
-    }),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-  } as unknown as MatrixRoom);
 });
 
 afterEach(() => {
@@ -110,7 +97,6 @@ test("should signal participant not yet connected to livekit", () => {
       connectionManager: {
         connectionManagerData$: connectionManagerData$,
       } as unknown as IConnectionManager,
-      matrixRoom: mockMatrixRoom,
     });
 
     expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
@@ -191,7 +177,6 @@ test("should signal participant on a connection that is publishing", () => {
       connectionManager: {
         connectionManagerData$: connectionManagerData$,
       } as unknown as IConnectionManager,
-      matrixRoom: mockMatrixRoom,
     });
 
     expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
@@ -243,7 +228,6 @@ test("should signal participant on a connection that is not publishing", () => {
       connectionManager: {
         connectionManagerData$: connectionManagerData$,
       } as unknown as IConnectionManager,
-      matrixRoom: mockMatrixRoom,
     });
 
     expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
@@ -307,7 +291,6 @@ describe("Publication edge case", () => {
         connectionManager: {
           connectionManagerData$: connectionManagerData$,
         } as unknown as IConnectionManager,
-        matrixRoom: mockMatrixRoom,
       });
 
       expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe(
@@ -374,7 +357,6 @@ describe("Publication edge case", () => {
         connectionManager: {
           connectionManagerData$: connectionManagerData$,
         } as unknown as IConnectionManager,
-        matrixRoom: mockMatrixRoom,
       });
 
       expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe(
