@@ -109,7 +109,10 @@ import {
   createReceivedDecline$,
   createSentCallNotification$,
 } from "./CallNotificationLifecycle.ts";
-import { createRoomMembers$ } from "./remoteMembers/displayname.ts";
+import {
+  createMatrixMemberMetadata$,
+  createRoomMembers$,
+} from "./remoteMembers/MatrixMemberMetadata.ts";
 
 const logger = rootLogger.getChild("[CallViewModel]");
 //TODO
@@ -240,7 +243,6 @@ export class CallViewModel {
     membershipsWithTransport$:
       this.membershipsAndTransports.membershipsWithTransport$,
     connectionManager: this.connectionManager,
-    matrixRoom: this.matrixRoom,
   });
 
   private connectOptions$ = this.scope.behavior(
@@ -280,11 +282,9 @@ export class CallViewModel {
     options: this.options,
     localUser: { userId: this.userId, deviceId: this.deviceId },
   });
-
+  public autoLeave$ = this.callLifecycle.autoLeave$;
   // ------------------------------------------------------------------------
-  // ROOM MEMBER tracking TODO
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private roomMembers$ = createRoomMembers$(this.scope, this.matrixRoom);
+
   /**
    * If there is a configuration error with the call (e.g. misconfigured E2EE).
    * This is a fatal error that prevents the call from being created/joined.
@@ -304,14 +304,6 @@ export class CallViewModel {
   private readonly leaveHoisted$ = new Subject<
     "user" | "timeout" | "decline" | "allOthersLeft"
   >();
-
-  /**
-   * Whether we are joined to the call. This reflects our local state rather
-   * than whether all connections are truly up and running.
-   */
-  // DISCUSS ? lets think why we need joined and how to do it better
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private readonly joined$ = this.localMembership.connected$;
 
   /**
    * Whether various media/event sources should pretend to be disconnected from
@@ -385,6 +377,14 @@ export class CallViewModel {
     ),
   );
 
+  private roomMembers$ = createRoomMembers$(this.scope, this.matrixRoom);
+
+  private matrixMemberMetadataStore = createMatrixMemberMetadata$(
+    this.scope,
+    this.scope.behavior(this.memberships$.pipe(map((mems) => mems.value))),
+    this.roomMembers$,
+  );
+
   /**
    * List of user media (camera feeds) that we want tiles for.
    */
@@ -400,20 +400,10 @@ export class CallViewModel {
             userId,
             participant$,
             connection$,
-            displayName$,
-            mxcAvatarUrl$,
           } of matrixLivekitMembers)
             for (let dup = 0; dup < 1 + duplicateTiles; dup++)
               yield {
-                keys: [
-                  dup,
-                  participantId,
-                  userId,
-                  participant$,
-                  connection$,
-                  displayName$,
-                  mxcAvatarUrl$,
-                ],
+                keys: [dup, participantId, userId, participant$, connection$],
                 data: undefined,
               };
         },
@@ -425,14 +415,17 @@ export class CallViewModel {
           userId,
           participant$,
           connection$,
-          displayName$,
-          mxcAvatarUrl$,
         ) => {
           const livekitRoom$ = scope.behavior(
             connection$.pipe(map((c) => c?.livekitRoom)),
           );
           const focusUrl$ = scope.behavior(
             connection$.pipe(map((c) => c?.transport.livekit_service_url)),
+          );
+          const displayName$ = scope.behavior(
+            this.matrixMemberMetadataStore
+              .createDisplayNameBehavior$(userId)
+              .pipe(map((name) => name ?? userId)),
           );
 
           return new UserMedia(
@@ -446,7 +439,7 @@ export class CallViewModel {
             this.mediaDevices,
             this.pretendToBeDisconnected$,
             displayName$,
-            mxcAvatarUrl$,
+            this.matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
             this.handsRaised$.pipe(map((v) => v[participantId]?.time ?? null)),
             this.reactions$.pipe(map((v) => v[participantId] ?? undefined)),
           );

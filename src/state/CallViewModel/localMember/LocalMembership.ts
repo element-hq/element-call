@@ -43,14 +43,17 @@ import { type MuteStates } from "../../MuteStates";
 import { type ProcessorState } from "../../../livekit/TrackProcessorContext";
 import { type MediaDevices } from "../../MediaDevices";
 import { and$ } from "../../../utils/observable";
-import {
-  enterRTCSession,
-  type EnterRTCSessionOptions,
-} from "../../../rtcSessionHelpers";
 import { type ElementCallError } from "../../../utils/errors";
-import { ElementWidgetActions, type WidgetHelpers } from "../../../widget";
+import {
+  ElementWidgetActions,
+  widget,
+  type WidgetHelpers,
+} from "../../../widget";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers";
 import { getUrlParams } from "../../../UrlParams.ts";
+import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
+import { MatrixRTCMode } from "../../../settings/settings.ts";
+import { Config } from "../../../config/Config.ts";
 
 export enum LivekitState {
   Uninitialized = "uninitialized",
@@ -534,4 +537,66 @@ export function observeSharingScreen$(p: Participant): Observable<boolean> {
     ParticipantEvent.LocalTrackPublished,
     ParticipantEvent.LocalTrackUnpublished,
   ).pipe(map((p) => p.isScreenShareEnabled));
+}
+
+interface EnterRTCSessionOptions {
+  encryptMedia: boolean;
+  matrixRTCMode: MatrixRTCMode;
+}
+
+/**
+ * TODO! document this function properly
+ * @param rtcSession
+ * @param transport
+ * @param options
+ */
+async function enterRTCSession(
+  rtcSession: MatrixRTCSession,
+  transport: LivekitTransport,
+  { encryptMedia, matrixRTCMode }: EnterRTCSessionOptions,
+): Promise<void> {
+  PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
+  PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
+
+  // This must be called before we start trying to join the call, as we need to
+  // have started tracking by the time calls start getting created.
+  // groupCallOTelMembership?.onJoinCall();
+
+  const { features, matrix_rtc_session: matrixRtcSessionConfig } = Config.get();
+  const useDeviceSessionMemberEvents =
+    features?.feature_use_device_session_member_events;
+  const { sendNotificationType: notificationType, callIntent } = getUrlParams();
+  const multiSFU = matrixRTCMode !== MatrixRTCMode.Legacy;
+  // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
+  rtcSession.joinRoomSession(
+    multiSFU ? [] : [transport],
+    multiSFU ? transport : undefined,
+    {
+      notificationType,
+      callIntent,
+      manageMediaKeys: encryptMedia,
+      ...(useDeviceSessionMemberEvents !== undefined && {
+        useLegacyMemberEvents: !useDeviceSessionMemberEvents,
+      }),
+      delayedLeaveEventRestartMs:
+        matrixRtcSessionConfig?.delayed_leave_event_restart_ms,
+      delayedLeaveEventDelayMs:
+        matrixRtcSessionConfig?.delayed_leave_event_delay_ms,
+      delayedLeaveEventRestartLocalTimeoutMs:
+        matrixRtcSessionConfig?.delayed_leave_event_restart_local_timeout_ms,
+      networkErrorRetryMs: matrixRtcSessionConfig?.network_error_retry_ms,
+      makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
+      membershipEventExpiryMs:
+        matrixRtcSessionConfig?.membership_event_expiry_ms,
+      useExperimentalToDeviceTransport: true,
+      unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
+    },
+  );
+  if (widget) {
+    try {
+      await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
+    } catch (e) {
+      logger.error("Failed to send join action", e);
+    }
+  }
 }

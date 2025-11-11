@@ -74,6 +74,12 @@ export class Publisher {
     this.observeMediaDevices(scope, devices, controlledAudioDevices);
 
     this.workaroundRestartAudioInputTrackChrome(devices, scope);
+    this.scope.onEnd(() => {
+      this.logger?.info(
+        "[PublishConnection] Scope ended -> stop publishing all tracks",
+      );
+      void this.stopPublishing();
+    });
   }
 
   /**

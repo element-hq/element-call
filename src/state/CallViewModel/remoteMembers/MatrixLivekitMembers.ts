@@ -13,18 +13,16 @@ import {
   type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, filter, fromEvent, map, startWith } from "rxjs";
-// eslint-disable-next-line rxjs/no-internal
-import { type NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent";
-import { RoomStateEvent, type Room as MatrixRoom } from "matrix-js-sdk";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { combineLatest, filter, map } from "rxjs";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
 import { Epoch, type ObservableScope } from "../../ObservableScope";
-import { memberDisplaynames$ } from "./displayname";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
+
+const logger = rootLogger.getChild("MatrixLivekitMembers");
 
 /**
  * Represents a Matrix call member and their associated LiveKit participation.
@@ -39,8 +37,6 @@ export interface MatrixLivekitMember {
     LocalLivekitParticipant | RemoteLivekitParticipant | null
   >;
   connection$: Behavior<Connection | undefined>;
-  displayName$: Behavior<string>;
-  mxcAvatarUrl$: Behavior<string | undefined>;
 }
 
 interface Props {
@@ -49,16 +45,7 @@ interface Props {
     Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
   >;
   connectionManager: IConnectionManager;
-  // TODO this is too much information for that class,
-  // apparently needed to get a room member to later get the Avatar
-  // => Extract an AvatarService instead?
-  // Better with just `getMember`
-  matrixRoom: Pick<MatrixRoom, "getMember"> & NodeStyleEventEmitter;
-  // roomMember$: Behavior<Pick<RoomMember, "userId" | "getMxcAvatarUrl">>;
 }
-// Alternative structure idea:
-// const livekitMatrixMember$ = (callMemberships$,connectionManager,scope): Observable<MatrixLivekitMember[]> => {
-
 /**
  * Combines MatrixRTC and Livekit worlds.
  *
@@ -73,21 +60,10 @@ export function createMatrixLivekitMembers$({
   scope,
   membershipsWithTransport$,
   connectionManager,
-  matrixRoom,
 }: Props): Behavior<Epoch<MatrixLivekitMember[]>> {
   /**
    * Stream of all the call members and their associated livekit data (if available).
    */
-
-  const displaynameMap$ = memberDisplaynames$(
-    scope,
-    matrixRoom,
-    scope.behavior(
-      membershipsWithTransport$.pipe(
-        map((ms) => ms.value.map((m) => m.membership)),
-      ),
-    ),
-  );
 
   return scope.behavior(
     combineLatest([
@@ -130,29 +106,15 @@ export function createMatrixLivekitMembers$({
         },
         // Each update where the key of the generator array do not change will result in updates to the `data$` observable in the factory.
         (scope, data$, participantId, userId) => {
-          const member = matrixRoom.getMember(userId);
+          logger.debug(
+            `Updating data$ for participantId: ${participantId}, userId: ${userId}`,
+          );
           // will only get called once per `participantId, userId` pair.
           // updates to data$ and as a result to displayName$ and mxcAvatarUrl$ are more frequent.
           return {
             participantId,
             userId,
             ...scope.splitBehavior(data$),
-            displayName$: scope.behavior(
-              displaynameMap$.pipe(
-                map((displayNames) => {
-                  const name = displayNames.get(userId) ?? "";
-                  if (name === "")
-                    logger.warn(`No display name for user ${userId}`);
-                  return name;
-                }),
-              ),
-            ),
-            mxcAvatarUrl$: scope.behavior(
-              fromEvent(matrixRoom, RoomStateEvent.Members).pipe(
-                startWith(undefined),
-                map(() => member?.getMxcAvatarUrl()),
-              ),
-            ),
           };
         },
       ),

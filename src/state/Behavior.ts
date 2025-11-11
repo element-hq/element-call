@@ -18,10 +18,6 @@ import { BehaviorSubject } from "rxjs";
  */
 export type Behavior<T> = Omit<BehaviorSubject<T>, "next" | "observers">;
 
-export type BehaviorWithEpoch<T> = Behavior<T> & {
-  pipeEpoch(): Behavior<{ value: T; epoch: number }>;
-};
-
 /**
  * Creates a Behavior which never changes in value.
  */
