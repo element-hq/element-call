@@ -156,8 +156,8 @@ export class ObservableScope {
    * Splits a Behavior of objects with static properties into an object with
    * Behavior properties.
    *
-   * For example, splitting a Behavior<{ name: string, age: number }> results in
-   * an object of type { name$: Behavior<string> age$: Behavior<number> }.
+   * For example, splitting a `Behavior<{ name: string; age: number }>` results
+   * in an object of type `{ name$: Behavior<string>; age$: Behavior<number> }`.
    */
   public splitBehavior<T extends object>(
     input$: Behavior<T>,
