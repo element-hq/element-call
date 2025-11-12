@@ -55,8 +55,8 @@ export class ConnectionManagerData {
 
   public getConnectionForTransport(
     transport: LivekitTransport,
-  ): Connection | undefined {
-    return this.store.get(this.getKey(transport))?.[0];
+  ): Connection | null {
+    return this.store.get(this.getKey(transport))?.[0] ?? null;
   }
 
   public getParticipantForTransport(
@@ -181,7 +181,7 @@ export function createConnectionManager$({
         // Map the connections to list of {connection, participants}[]
         const listOfConnectionsWithPublishingParticipants =
           connections.value.map((connection) => {
-            return connection.participants$.pipe(
+            return connection.remoteParticipantsWithTracks$.pipe(
               map((participants) => ({
                 connection,
                 participants,

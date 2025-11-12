@@ -10,6 +10,7 @@ import {
   type E2EEOptions,
   type Participant,
   ParticipantEvent,
+  type LocalParticipant,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
@@ -54,6 +55,7 @@ import { getUrlParams } from "../../../UrlParams.ts";
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
 import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
+import { type Connection } from "../remoteMembers/Connection.ts";
 
 export enum LivekitState {
   Uninitialized = "uninitialized",
@@ -82,8 +84,8 @@ type LocalMemberMatrixState =
   | { state: MatrixState.Disconnected };
 
 export interface LocalMemberConnectionState {
-  livekit$: BehaviorSubject<LocalMemberLivekitState>;
-  matrix$: BehaviorSubject<LocalMemberMatrixState>;
+  livekit$: Behavior<LocalMemberLivekitState>;
+  matrix$: Behavior<LocalMemberMatrixState>;
 }
 
 /*
@@ -145,7 +147,8 @@ export const createLocalMembership$ = ({
   // Use null here since behavior cannot be initialised with undefined.
   sharingScreen$: Behavior<boolean | null>;
   toggleScreenSharing: (() => void) | null;
-
+  participant$: Behavior<LocalParticipant | null>;
+  connection$: Behavior<Connection | null>;
   // deprecated fields
   /** @deprecated use state instead*/
   homeserverConnected$: Behavior<boolean>;
@@ -317,6 +320,7 @@ export const createLocalMembership$ = ({
         state.livekit$.next({ state: LivekitState.Error, error });
       });
   });
+
   combineLatest([localTransport$, connectRequested$]).subscribe(
     ([transport, connectRequested]) => {
       if (
@@ -515,6 +519,9 @@ export const createLocalMembership$ = ({
     alternativeScreenshareToggle,
   );
 
+  const participant$ = scope.behavior(
+    connection$.pipe(map((c) => c?.livekitRoom.localParticipant ?? null)),
+  );
   return {
     startTracks,
     requestConnect,
@@ -526,6 +533,8 @@ export const createLocalMembership$ = ({
     configError$,
     sharingScreen$,
     toggleScreenSharing,
+    participant$,
+    connection$,
   };
 };
 
