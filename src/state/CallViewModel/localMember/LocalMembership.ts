@@ -25,14 +25,11 @@ import {
   combineLatest,
   fromEvent,
   map,
-  NEVER,
   type Observable,
   of,
   scan,
   startWith,
   switchMap,
-  take,
-  takeWhile,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -144,8 +141,10 @@ export const createLocalMembership$ = ({
   startTracks: () => Behavior<LocalTrack[]>;
   requestDisconnect: () => Observable<LocalMemberLivekitState> | null;
   connectionState: LocalMemberConnectionState;
-  // Use null here since behavior cannot be initialised with undefined.
-  sharingScreen$: Behavior<boolean | null>;
+  sharingScreen$: Behavior<boolean>;
+  /**
+   * Callback to toggle screen sharing. If null, screen sharing is not possible.
+   */
   toggleScreenSharing: (() => void) | null;
   participant$: Behavior<LocalParticipant | null>;
   connection$: Behavior<Connection | null>;
@@ -453,71 +452,39 @@ export const createLocalMembership$ = ({
   });
 
   /**
-   * Returns undefined if scrennSharing is not yet ready.
+   * Whether the user is currently sharing their screen.
    */
   const sharingScreen$ = scope.behavior(
     connection$.pipe(
-      switchMap((c) => {
-        if (!c) return of(null);
-        if (c.state$.value.state === "ConnectedToLkRoom")
-          return observeSharingScreen$(c.livekitRoom.localParticipant);
-        return of(false);
-      }),
+      switchMap((c) =>
+        c === null
+          ? of(false)
+          : observeSharingScreen$(c.livekitRoom.localParticipant),
+      ),
     ),
-    null,
   );
 
   const toggleScreenSharing =
     "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
     !getUrlParams().hideScreensharing
       ? (): void =>
-          // If a connection is ready...
-          void connection$
-            .pipe(
-              // I dont see why we need this. isnt the check later on superseeding it?
-              takeWhile(
-                (c) => c !== null && c.state$.value.state !== "FailedToStart",
-              ),
-              switchMap((c) =>
-                c?.state$.value.state === "ConnectedToLkRoom" ? of(c) : NEVER,
-              ),
-              take(1),
-              scope.bind(),
-            )
-            // ...toggle screen sharing.
-            .subscribe(
-              (c) =>
-                void c.livekitRoom.localParticipant
-                  .setScreenShareEnabled(!sharingScreen$.value, {
-                    audio: true,
-                    selfBrowserSurface: "include",
-                    surfaceSwitching: "include",
-                    systemAudio: "include",
-                  })
-                  .catch(logger.error),
-            )
+          // If a connection is ready, toggle screen sharing.
+          // We deliberately do nothing in the case of a null connection because
+          // it looks nice for the call control buttons to all become available
+          // at once upon joining the call, rather than introducing a disabled
+          // state. The user can just click again.
+          // We also allow screen sharing to be toggled even if the connection
+          // is still initializing or publishing tracks, because there's no
+          // technical reason to disallow this. LiveKit will publish if it can.
+          void connection$.value?.livekitRoom.localParticipant
+            .setScreenShareEnabled(!sharingScreen$.value, {
+              audio: true,
+              selfBrowserSurface: "include",
+              surfaceSwitching: "include",
+              systemAudio: "include",
+            })
+            .catch(logger.error)
       : null;
-
-  // we do not need all the auto waiting since we can just check via sharingScreen$.value !== undefined
-  let alternativeScreenshareToggle: (() => void) | null = null;
-  if (
-    "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
-    !getUrlParams().hideScreensharing
-  ) {
-    alternativeScreenshareToggle = (): void =>
-      void connection$.value?.livekitRoom.localParticipant
-        .setScreenShareEnabled(!sharingScreen$.value, {
-          audio: true,
-          selfBrowserSurface: "include",
-          surfaceSwitching: "include",
-          systemAudio: "include",
-        })
-        .catch(logger.error);
-  }
-  logger.log(
-    "alternativeScreenshareToggle so that it is used",
-    alternativeScreenshareToggle,
-  );
 
   const participant$ = scope.behavior(
     connection$.pipe(map((c) => c?.livekitRoom.localParticipant ?? null)),

@@ -734,8 +734,7 @@ export const InCallView: FC<InCallViewProps> = ({
       <ShareScreenButton
         key="share_screen"
         className={styles.shareScreen}
-        disabled={sharingScreen === undefined}
-        enabled={sharingScreen === true}
+        enabled={sharingScreen}
         onClick={vm.toggleScreenSharing}
         onTouchEnd={onControlsTouchEnd}
         data-testid="incall_screenshare"

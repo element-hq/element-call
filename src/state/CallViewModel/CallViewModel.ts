@@ -1275,8 +1275,7 @@ export class CallViewModel {
   public readonly sharingScreen$ = this.localMembership.sharingScreen$;
 
   /**
-   * Callback for toggling screen sharing. If null, screen sharing is not
-   * available.
+   * Callback to toggle screen sharing. If null, screen sharing is not possible.
    */
   // reassigned here to make it publicly accessible
   public readonly toggleScreenSharing =
