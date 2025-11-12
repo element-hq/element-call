@@ -8,12 +8,10 @@ Please see LICENSE in the repository root for full details.
 import {
   type BaseKeyProvider,
   type ConnectionState,
-  type E2EEOptions,
   ExternalE2EEKeyProvider,
   type Room as LivekitRoom,
   type RoomOptions,
 } from "livekit-client";
-import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   combineLatest,
@@ -179,18 +177,10 @@ export class CallViewModel {
   private readonly userId = this.matrixRoom.client.getUserId()!;
   private readonly deviceId = this.matrixRoom.client.getDeviceId()!;
 
-  private readonly livekitE2EEKeyProvider = getE2eeKeyProvider(
+  private readonly livekitKeyProvider = getE2eeKeyProvider(
     this.options.encryptionSystem,
     this.matrixRTCSession,
   );
-
-  private readonly e2eeLivekitOptions: E2EEOptions | undefined = this
-    .livekitE2EEKeyProvider
-    ? {
-        keyProvider: this.livekitE2EEKeyProvider,
-        worker: new E2EEWorker(),
-      }
-    : undefined;
 
   private memberships$ = createMemberships$(this.scope, this.matrixRTCSession);
 
@@ -215,7 +205,7 @@ export class CallViewModel {
     this.matrixRoom.client,
     this.mediaDevices,
     this.trackProcessorState$,
-    this.e2eeLivekitOptions,
+    this.livekitKeyProvider,
     getUrlParams().controlledAudioDevices,
   );
 
@@ -251,7 +241,7 @@ export class CallViewModel {
   private connectOptions$ = this.scope.behavior(
     matrixRTCMode.value$.pipe(
       map((mode) => ({
-        encryptMedia: this.e2eeLivekitOptions !== undefined,
+        encryptMedia: this.livekitKeyProvider !== undefined,
         // TODO. This might need to get called again on each cahnge of matrixRTCMode...
         matrixRTCMode: mode,
       })),
@@ -266,7 +256,6 @@ export class CallViewModel {
     matrixRTCSession: this.matrixRTCSession,
     matrixRoom: this.matrixRoom,
     localTransport$: this.localTransport$,
-    e2eeLivekitOptions: this.e2eeLivekitOptions,
     trackProcessorState$: this.trackProcessorState$,
     widget,
     options: this.connectOptions$,
