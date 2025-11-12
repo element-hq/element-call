@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type LocalTrack,
-  type E2EEOptions,
   type Participant,
   ParticipantEvent,
   type LocalParticipant,
@@ -105,7 +104,6 @@ interface Props {
   matrixRTCSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
   localTransport$: Behavior<LivekitTransport | null>;
-  e2eeLivekitOptions: E2EEOptions | undefined;
   trackProcessorState$: Behavior<ProcessorState>;
   widget: WidgetHelpers | null;
 }
@@ -132,7 +130,6 @@ export const createLocalMembership$ = ({
   matrixRTCSession,
   localTransport$,
   matrixRoom,
-  e2eeLivekitOptions,
   trackProcessorState$,
   widget,
 }: Props): {
@@ -252,7 +249,6 @@ export const createLocalMembership$ = ({
           connection,
           mediaDevices,
           muteStates,
-          e2eeLivekitOptions,
           trackProcessorState$,
         ),
       );

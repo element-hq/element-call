@@ -10,8 +10,10 @@ import {
   type E2EEOptions,
   Room as LivekitRoom,
   type RoomOptions,
+  type BaseKeyProvider,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
+import E2EEWorker from "livekit-client/e2ee-worker?worker";
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
@@ -46,7 +48,7 @@ export class ECConnectionFactory implements ConnectionFactory {
     private client: OpenIDClientParts,
     private devices: MediaDevices,
     private processorState$: Behavior<ProcessorState>,
-    private e2eeLivekitOptions: E2EEOptions | undefined,
+    livekitKeyProvider: BaseKeyProvider | undefined,
     private controlledAudioDevices: boolean,
     livekitRoomFactory?: () => LivekitRoom,
   ) {
@@ -55,7 +57,12 @@ export class ECConnectionFactory implements ConnectionFactory {
         generateRoomOption(
           this.devices,
           this.processorState$.value,
-          this.e2eeLivekitOptions,
+          livekitKeyProvider && {
+            keyProvider: livekitKeyProvider,
+            // It's important that every room use a separate E2EE worker.
+            // They get confused if given streams from multiple rooms.
+            worker: new E2EEWorker(),
+          },
           this.controlledAudioDevices,
         ),
       );

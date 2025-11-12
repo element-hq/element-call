@@ -5,7 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 import {
-  type E2EEOptions,
   LocalVideoTrack,
   type Room as LivekitRoom,
   Track,
@@ -55,7 +54,6 @@ export class Publisher {
     private connection: Connection,
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
-    e2eeLivekitOptions: E2EEOptions | undefined,
     trackerProcessorState$: Behavior<ProcessorState>,
     private logger?: Logger,
   ) {
@@ -64,7 +62,7 @@ export class Publisher {
 
     const room = connection.livekitRoom;
 
-    room.setE2EEEnabled(e2eeLivekitOptions !== undefined)?.catch((e: Error) => {
+    room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {
       this.logger?.error("Failed to set E2EE enabled on room", e);
     });
 
