@@ -179,12 +179,13 @@ export class Connection {
   }
 
   /**
-   * An observable of the participants that are publishing on this connection.
+   * An observable of the participants that are publishing on this connection. (Excluding our local participant)
    * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
    * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
    */
-
-  public readonly participants$: Behavior<PublishingParticipant[]>;
+  public readonly remoteParticipantsWithTracks$: Behavior<
+    PublishingParticipant[]
+  >;
 
   /**
    * The media transport to connect to.
@@ -211,7 +212,9 @@ export class Connection {
     this.transport = transport;
     this.client = client;
 
-    this.participants$ = scope.behavior(
+    // REMOTE participants with track!!!
+    // this.remoteParticipantsWithTracks$
+    this.remoteParticipantsWithTracks$ = scope.behavior(
       // only tracks remote participants
       connectedParticipantsObserver(this.livekitRoom, {
         additionalRoomEvents: [
@@ -219,10 +222,11 @@ export class Connection {
           RoomEvent.TrackUnpublished,
         ],
       }).pipe(
-        map((participants) => [
-          this.livekitRoom.localParticipant,
-          ...participants,
-        ]),
+        map((participants) => {
+          return participants.filter(
+            (participant) => participant.getTrackPublications().length > 0,
+          );
+        }),
       ),
       [],
     );

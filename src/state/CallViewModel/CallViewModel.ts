@@ -103,7 +103,10 @@ import {
 } from "../SessionBehaviors.ts";
 import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
 import { createConnectionManager$ } from "./remoteMembers/ConnectionManager.ts";
-import { createMatrixLivekitMembers$ } from "./remoteMembers/MatrixLivekitMembers.ts";
+import {
+  createMatrixLivekitMembers$,
+  type MatrixLivekitMember,
+} from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
   createCallNotificationLifecycle$,
   createReceivedDecline$,
@@ -269,6 +272,38 @@ export class CallViewModel {
     options: this.connectOptions$,
   });
 
+  private localRtcMembership$ = this.scope.behavior(
+    this.memberships$.pipe(
+      map(
+        (memberships) =>
+          memberships.value.find(
+            (membership) =>
+              membership.userId === this.userId &&
+              membership.deviceId === this.deviceId,
+          ) ?? null,
+      ),
+    ),
+  );
+  private localMatrixLivekitMemberUninitialized = {
+    membership$: this.localRtcMembership$,
+    participant$: this.localMembership.participant$,
+    connection$: this.localMembership.connection$,
+    userId: this.userId,
+  };
+
+  private localMatrixLivekitMember$: Behavior<MatrixLivekitMember | null> =
+    this.scope.behavior(
+      this.localRtcMembership$.pipe(
+        switchMap((membership) => {
+          if (!membership) return of(null);
+          return of(
+            // casting is save here since we know that localRtcMembership$ is !== null since we reached this case.
+            this.localMatrixLivekitMemberUninitialized as MatrixLivekitMember,
+          );
+        }),
+      ),
+    );
+
   // ------------------------------------------------------------------------
 
   private callLifecycle = createCallNotificationLifecycle$({
@@ -283,6 +318,7 @@ export class CallViewModel {
     localUser: { userId: this.userId, deviceId: this.deviceId },
   });
   public autoLeave$ = this.callLifecycle.autoLeave$;
+
   // ------------------------------------------------------------------------
 
   /**
@@ -377,12 +413,10 @@ export class CallViewModel {
     ),
   );
 
-  private roomMembers$ = createRoomMembers$(this.scope, this.matrixRoom);
-
   private matrixMemberMetadataStore = createMatrixMemberMetadata$(
     this.scope,
     this.scope.behavior(this.memberships$.pipe(map((mems) => mems.value))),
-    this.roomMembers$,
+    createRoomMembers$(this.scope, this.matrixRoom),
   );
 
   /**
@@ -390,22 +424,55 @@ export class CallViewModel {
    */
   // TODO this also needs the local participant to be added.
   private readonly userMedia$ = this.scope.behavior<UserMedia[]>(
-    combineLatest([this.matrixLivekitMembers$, duplicateTiles.value$]).pipe(
+    combineLatest([
+      this.localMatrixLivekitMember$,
+      this.matrixLivekitMembers$,
+      duplicateTiles.value$,
+    ]).pipe(
       // Generate a collection of MediaItems from the list of expected (whether
       // present or missing) LiveKit participants.
       generateItems(
-        function* ([{ value: matrixLivekitMembers }, duplicateTiles]) {
+        function* ([
+          localMatrixLivekitMember,
+          { value: matrixLivekitMembers },
+          duplicateTiles,
+        ]) {
+          // add local member if available
+          if (localMatrixLivekitMember) {
+            const {
+              userId,
+              participant$,
+              connection$,
+              // membership$,
+            } = localMatrixLivekitMember;
+            const participantId = participant$.value?.identity; // should be membership$.value.membershipID which is not optional
+            // const participantId = membership$.value.membershipID;
+            if (participantId) {
+              for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
+                yield {
+                  keys: [dup, participantId, userId, participant$, connection$],
+                  data: undefined,
+                };
+              }
+            }
+          }
+          // add remote members that are available
           for (const {
-            participantId,
             userId,
             participant$,
             connection$,
-          } of matrixLivekitMembers)
-            for (let dup = 0; dup < 1 + duplicateTiles; dup++)
+            // membership$
+          } of matrixLivekitMembers) {
+            const participantId = participant$.value?.identity;
+            // const participantId = membership$.value?.identity;
+            if (!participantId) continue;
+            for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
                 keys: [dup, participantId, userId, participant$, connection$],
                 data: undefined,
               };
+            }
+          }
         },
         (
           scope,
