@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, expect, it } from "vitest";
-import { BehaviorSubject, combineLatest, timer } from "rxjs";
+import { BehaviorSubject, combineLatest, of, Subject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -60,19 +60,6 @@ describe("Epoch", () => {
       });
     });
   });
-  it("obs", () => {
-    const nothing = Symbol("nothing");
-    const scope = new ObservableScope();
-    const sb$ = new BehaviorSubject("initial");
-    const su$ = new BehaviorSubject(undefined);
-    expect(sb$.value).toBe("initial");
-    expect(su$.value).toBe(undefined);
-    expect(su$.value === nothing).toBe(false);
-
-    const a$ = timer(10);
-
-    scope.behavior(a$, undefined);
-  });
 
   it("diamonds emits in a predictable order", () => {
     const sb$ = new BehaviorSubject("initial");
@@ -96,5 +83,22 @@ describe("Epoch", () => {
     );
     sb$.next("updated");
     sb$.next("ANOTERUPDATE");
+  });
+
+  it("behavior test", () => {
+    const scope = new ObservableScope();
+    const s$ = new Subject();
+    const behavior$ = scope.behavior(s$, 0);
+    behavior$.subscribe((value) => {
+      logger.log(`Received value: ${value}`);
+    });
+    s$.next(1);
+    s$.next(2);
+    s$.next(3);
+    s$.next(3);
+    s$.next(3);
+    s$.next(3);
+    s$.next(3);
+    s$.complete();
   });
 });

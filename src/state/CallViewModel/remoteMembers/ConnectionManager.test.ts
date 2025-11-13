@@ -51,7 +51,7 @@ beforeEach(() => {
       (transport: LivekitTransport, scope: ObservableScope) => {
         const mockConnection = {
           transport,
-          participantsWithTrack$: new BehaviorSubject([]),
+          remoteParticipantsWithTracks$: new BehaviorSubject([]),
         } as unknown as Connection;
         vi.mocked(mockConnection).start = vi.fn();
         vi.mocked(mockConnection).stop = vi.fn();
@@ -190,7 +190,7 @@ describe("connections$ stream", () => {
 });
 
 describe("connectionManagerData$ stream", () => {
-  // Used in test to control fake connections' participantsWithTrack$ streams
+  // Used in test to control fake connections' remoteParticipantsWithTracks$ streams
   let fakePublishingParticipantsStreams: Map<
     string,
     Behavior<LivekitParticipant[]>
@@ -222,7 +222,8 @@ describe("connectionManagerData$ stream", () => {
           >([]);
           const mockConnection = {
             transport,
-            participantsWithTrack$: getPublishingParticipantsFor(transport),
+            remoteParticipantsWithTracks$:
+              getPublishingParticipantsFor(transport),
           } as unknown as Connection;
           vi.mocked(mockConnection).start = vi.fn();
           vi.mocked(mockConnection).stop = vi.fn();

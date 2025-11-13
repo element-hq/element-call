@@ -367,21 +367,18 @@ describe("Start connection states", () => {
   });
 });
 
-function fakeRemoteLivekitParticipant(id: string): RemoteParticipant {
+function fakeRemoteLivekitParticipant(
+  id: string,
+  publications: number = 1,
+): RemoteParticipant {
   return {
     identity: id,
+    getTrackPublications: () => Array(publications),
   } as unknown as RemoteParticipant;
 }
 
-function fakeRtcMemberShip(userId: string, deviceId: string): CallMembership {
-  return {
-    userId,
-    deviceId,
-  } as unknown as CallMembership;
-}
-
 describe("Publishing participants observations", () => {
-  it("should emit the list of publishing participants", async () => {
+  it("should emit the list of publishing participants", () => {
     setupTest();
 
     const connection = setupRemoteConnection();
@@ -406,107 +403,36 @@ describe("Publishing participants observations", () => {
     // on this connection.
 
     let participants: RemoteParticipant[] = [
-      fakeRemoteLivekitParticipant("@alice:example.org:DEV000"),
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
-      fakeRemoteLivekitParticipant("@carol:example.org:DEV222"),
-      fakeRemoteLivekitParticipant("@dan:example.org:DEV333"),
+      fakeRemoteLivekitParticipant("@alice:example.org:DEV000", 0),
+      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 0),
+      fakeRemoteLivekitParticipant("@carol:example.org:DEV222", 0),
+      fakeRemoteLivekitParticipant("@dan:example.org:DEV333", 0),
     ];
 
     // Let's simulate 3 members on the livekitRoom
-    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockReturnValue(
-      new Map(participants.map((p) => [p.identity, p])),
+    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockImplementation(
+      () => new Map(participants.map((p) => [p.identity, p])),
     );
 
-    for (const participant of participants) {
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
-    }
+    participants.forEach((p) =>
+      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
+    );
 
     // At this point there should be no publishers
     expect(observedPublishers.pop()!.length).toEqual(0);
 
-    const otherFocus: LivekitTransport = {
-      livekit_alias: "!roomID:example.org",
-      livekit_service_url: "https://other-matrix-rtc.example.org/livekit/jwt",
-      type: "livekit",
-    };
-
-    const rtcMemberships = [
-      // Say bob is on the same focus
-      {
-        membership: fakeRtcMemberShip("@bob:example.org", "DEV111"),
-        transport: livekitFocus,
-      },
-      // Alice and carol is on a different focus
-      {
-        membership: fakeRtcMemberShip("@alice:example.org", "DEV000"),
-        transport: otherFocus,
-      },
-      {
-        membership: fakeRtcMemberShip("@carol:example.org", "DEV222"),
-        transport: otherFocus,
-      },
-      // NO DAVE YET
+    participants = [
+      fakeRemoteLivekitParticipant("@alice:example.org:DEV000", 1),
+      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1),
+      fakeRemoteLivekitParticipant("@carol:example.org:DEV222", 1),
+      fakeRemoteLivekitParticipant("@dan:example.org:DEV333", 2),
     ];
-    // signal this change in rtc memberships
-    fakeMembershipsFocusMap$.next(rtcMemberships);
-
-    // We should have bob has a publisher now
-    await bobIsAPublisher.promise;
-    const publishers = observedPublishers.pop();
-    expect(publishers?.length).toEqual(1);
-    expect(publishers?.[0].identity).toEqual("@bob:example.org:DEV111");
-
-    // Now let's make dan join the rtc memberships
-    rtcMemberships.push({
-      membership: fakeRtcMemberShip("@dan:example.org", "DEV333"),
-      transport: livekitFocus,
-    });
-    fakeMembershipsFocusMap$.next(rtcMemberships);
-
-    // We should have bob and dan has publishers now
-    await danIsAPublisher.promise;
-    const twoPublishers = observedPublishers.pop();
-    expect(twoPublishers?.length).toEqual(2);
-    expect(
-      twoPublishers?.some((p) => p.identity === "@bob:example.org:DEV111"),
-    ).toBeTruthy();
-    expect(
-      twoPublishers?.some((p) => p.identity === "@dan:example.org:DEV333"),
-    ).toBeTruthy();
-
-    // Now let's make bob leave the livekit room
-    participants = participants.filter(
-      (p) => p.identity !== "@bob:example.org:DEV111",
-    );
-    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockReturnValue(
-      new Map(participants.map((p) => [p.identity, p])),
-    );
-    fakeRoomEventEmiter.emit(
-      RoomEvent.ParticipantDisconnected,
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
+    participants.forEach((p) =>
+      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
     );
 
-    // TODO: evaluate this test. It looks like this is not the task of the Connection anymore. Valere?
-    // const updatedPublishers = observedPublishers.pop();
-    // // Bob is not connected to the room but he is still in the rtc memberships declaring that
-    // // he is using that focus to publish, so he should still appear as a publisher
-    // expect(updatedPublishers?.length).toEqual(2);
-    // const pp = updatedPublishers?.find((p) =>
-    //   p.identity.startsWith("@bob:example.org"),
-    // );
-    // expect(pp).toBeDefined();
-    // expect(pp!).not.toBeDefined();
-    // expect(
-    //   updatedPublishers?.some(
-    //     (p) => p.participant?.identity === "@dan:example.org:DEV333",
-    //   ),
-    // ).toBeTruthy();
-    // // Now if bob is not in the rtc memberships, he should disappear
-    // const noBob = rtcMemberships.filter(
-    //   ({ membership }) => membership.userId !== "@bob:example.org",
-    // );
-    // fakeMembershipsFocusMap$.next(noBob);
-    // expect(observedPublishers.pop()?.length).toEqual(1);
+    // At this point there should be no publishers
+    expect(observedPublishers.pop()!.length).toEqual(4);
   });
 
   it("should be scoped to parent scope", (): void => {
@@ -523,12 +449,12 @@ describe("Publishing participants observations", () => {
     onTestFinished(() => s.unsubscribe());
 
     let participants: RemoteParticipant[] = [
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
+      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 0),
     ];
 
     // Let's simulate 3 members on the livekitRoom
-    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockReturnValue(
-      new Map(participants.map((p) => [p.identity, p])),
+    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockImplementation(
+      () => new Map(participants.map((p) => [p.identity, p])),
     );
 
     for (const participant of participants) {
@@ -538,15 +464,11 @@ describe("Publishing participants observations", () => {
     // At this point there should be no publishers
     expect(observedPublishers.pop()!.length).toEqual(0);
 
-    const rtcMemberships = [
-      // Say bob is on the same focus
-      {
-        membership: fakeRtcMemberShip("@bob:example.org", "DEV111"),
-        transport: livekitFocus,
-      },
-    ];
-    // signal this change in rtc memberships
-    fakeMembershipsFocusMap$.next(rtcMemberships);
+    participants = [fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1)];
+
+    for (const participant of participants) {
+      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
+    }
 
     // We should have bob has a publisher now
     const publishers = observedPublishers.pop();
@@ -561,9 +483,7 @@ describe("Publishing participants observations", () => {
     participants = participants.filter(
       (p) => p.identity !== "@bob:example.org:DEV111",
     );
-    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockReturnValue(
-      new Map(participants.map((p) => [p.identity, p])),
-    );
+
     fakeRoomEventEmiter.emit(
       RoomEvent.ParticipantDisconnected,
       fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),

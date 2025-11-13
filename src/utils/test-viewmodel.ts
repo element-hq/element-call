@@ -24,6 +24,7 @@ import {
   type CallViewModelOptions,
 } from "../state/CallViewModel/CallViewModel";
 import {
+  mockConfig,
   mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
@@ -35,6 +36,8 @@ import {
 import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "../state/Behavior";
+
+mockConfig({ livekit: { livekit_service_url: "https://example.com" } });
 
 export function getBasicRTCSession(
   members: RoomMember[],
@@ -57,6 +60,7 @@ export function getBasicRTCSession(
       getUserId: () => localRtcMember.userId,
       getDeviceId: () => localRtcMember.deviceId,
       getSyncState: () => SyncState.Syncing,
+      getDomain: () => null,
       sendEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
       redactEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
       decryptEventIfNeeded: vitest.fn().mockResolvedValue(undefined),
@@ -78,6 +82,7 @@ export function getBasicRTCSession(
         ),
     } as Partial<MatrixClient> as MatrixClient,
     getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
+    getMembers: () => Array.from(matrixRoomMembers.values()),
     roomId: matrixRoomId,
     on: vitest
       .fn()
