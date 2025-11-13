@@ -118,16 +118,16 @@ export interface ActiveCallProps
 }
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
-  const mediaDevices = useMediaDevices();
   const [vm, setVm] = useState<CallViewModel | null>(null);
 
-  const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
-    useUrlParams();
-
+  const urlParams = useUrlParams();
+  const mediaDevices = useMediaDevices();
   const trackProcessorState$ = useTrackProcessorObservable$();
   useEffect(() => {
     const scope = new ObservableScope();
     const reactionsReader = new ReactionsReader(scope, props.rtcSession);
+    const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
+      urlParams;
     const vm = new CallViewModel(
       scope,
       props.rtcSession,
@@ -152,13 +152,11 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   }, [
     props.rtcSession,
     props.matrixRoom,
-    mediaDevices,
     props.muteStates,
     props.e2eeSystem,
-    autoLeaveWhenOthersLeft,
-    sendNotificationType,
-    waitForCallPickup,
     props.onLeft,
+    urlParams,
+    mediaDevices,
     trackProcessorState$,
   ]);
 

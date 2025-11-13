@@ -311,11 +311,14 @@ export function withCallViewModel(
       public getDeviceId(): string {
         return localRtcMember.deviceId;
       }
+      public getDomain(): string {
+        return "example.com";
+      }
       public getSyncState(): SyncState {
         return syncState;
       }
     })() as Partial<MatrixClient> as MatrixClient,
-    getMember: (userId) => roomMembers.get(userId) ?? null,
+    getMembers: () => Array.from(roomMembers.values()),
   });
   const rtcSession = new MockRTCSession(room, []).withMemberships(rtcMembers$);
   const participantsSpy = vi

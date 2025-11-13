@@ -223,9 +223,10 @@ export class Connection {
         ],
       }).pipe(
         map((participants) => {
-          return participants.filter(
+          const partsFiltered = participants.filter(
             (participant) => participant.getTrackPublications().length > 0,
           );
+          return partsFiltered;
         }),
       ),
       [],

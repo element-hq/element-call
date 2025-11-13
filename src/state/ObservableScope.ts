@@ -21,6 +21,7 @@ import {
 } from "rxjs";
 
 import { type Behavior } from "./Behavior";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
 
@@ -73,14 +74,22 @@ export class ObservableScope {
     // they will no longer re-emit their current value upon subscription. We want
     // to support Observables that complete (for example `of({})`), so we have to
     // take care to not propagate the completion event.
-    setValue$.pipe(this.bind(), distinctUntilChanged()).subscribe({
-      next(value) {
-        subject$.next(value);
-      },
-      error(err: unknown) {
-        subject$.error(err);
-      },
-    });
+    setValue$
+      .pipe(
+        this.bind(),
+        distinctUntilChanged((a, b) => {
+          logger.log("distinctUntilChanged", a, b);
+          return a === b;
+        }),
+      )
+      .subscribe({
+        next(value) {
+          subject$.next(value);
+        },
+        error(err: unknown) {
+          subject$.error(err);
+        },
+      });
     if (subject$.value === nothing)
       throw new Error("Behavior failed to synchronously emit an initial value");
     return subject$ as Behavior<T>;
