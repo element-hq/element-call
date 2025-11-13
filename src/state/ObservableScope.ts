@@ -19,9 +19,9 @@ import {
   take,
   takeUntil,
 } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "./Behavior";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
 

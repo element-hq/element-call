@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type Participant as LivekitParticipant } from "livekit-client";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Epoch, ObservableScope } from "../../ObservableScope.ts";
 import {
@@ -78,6 +79,7 @@ describe("connections$ stream", () => {
         inputTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
+        logger: logger,
       });
 
       expectObservable(connections$).toBe("a", {
@@ -119,6 +121,7 @@ describe("connections$ stream", () => {
           e: new Epoch([TRANSPORT_1], 4),
           f: new Epoch([TRANSPORT_1, TRANSPORT_2], 5),
         }),
+        logger: logger,
       });
 
       expectObservable(connections$).toBe("xxxxxa", {
@@ -158,6 +161,7 @@ describe("connections$ stream", () => {
           b: new Epoch([TRANSPORT_1, TRANSPORT_2], 1),
           c: new Epoch([TRANSPORT_1], 2),
         }),
+        logger: logger,
       });
 
       expectObservable(connections$).toBe("xab", {
@@ -272,6 +276,7 @@ describe("connectionManagerData$ stream", () => {
         inputTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
+        logger,
       });
 
       expectObservable(connectionManagerData$).toBe("abcd", {

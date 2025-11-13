@@ -227,6 +227,7 @@ export class CallViewModel {
     scope: this.scope,
     connectionFactory: this.connectionFactory,
     inputTransports$: this.allTransports$,
+    logger: logger,
   });
 
   // ------------------------------------------------------------------------
@@ -259,6 +260,7 @@ export class CallViewModel {
     trackProcessorState$: this.trackProcessorState$,
     widget,
     options: this.connectOptions$,
+    logger: logger.getChild(`[${Date.now()}]`),
   });
 
   private localRtcMembership$ = this.scope.behavior(
