@@ -19,7 +19,6 @@ import {
   switchMap,
 } from "rxjs";
 import {
-  ClientEvent,
   SyncState,
   type MatrixClient,
   RoomEvent as MatrixRoomEvent,
@@ -30,10 +29,7 @@ import {
 } from "matrix-js-sdk";
 import {
   ConnectionState,
-  type LocalParticipant,
   type LocalTrackPublication,
-  type Participant,
-  ParticipantEvent,
   type RemoteParticipant,
   type Room as LivekitRoom,
 } from "livekit-client";
@@ -49,7 +45,7 @@ import {
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
-import { CallViewModel, type CallViewModelOptions } from "./CallViewModel";
+import { CallViewModel } from "./CallViewModel";
 import { type Layout } from "../layout-types.ts";
 import {
   mockLocalParticipant,
@@ -70,15 +66,11 @@ import { E2eeType } from "../../e2ee/e2eeType.ts";
 import type { RaisedHandInfo, ReactionInfo } from "../../reactions/index.ts";
 import {
   alice,
-  aliceDoppelganger,
   aliceId,
   aliceParticipant,
   aliceRtcMember,
-  bob,
   bobId,
   bobRtcMember,
-  bobZeroWidthSpace,
-  daveRTL,
   local,
   localId,
   localRtcMember,
@@ -87,11 +79,11 @@ import {
 import { MediaDevices } from "../MediaDevices.ts";
 import { getValue } from "../../utils/observable.ts";
 import { type Behavior, constant } from "../Behavior.ts";
-import type { ProcessorState } from "../../livekit/TrackProcessorContext.tsx";
 import {
   type ElementCallError,
   MatrixRTCTransportMissingError,
 } from "../../utils/errors.ts";
+import { withCallViewModel } from "./CallViewModelTestUtils.test";
 
 mockConfig({
   livekit: { livekit_service_url: "http://my-default-service-url.com" },
@@ -124,7 +116,7 @@ const yesNo = {
 
 const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
-const carol = local;
+// const carol = local;
 
 const dave = mockMatrixRoomMember(daveRtcMember, { rawDisplayName: "Dave" });
 
@@ -141,12 +133,6 @@ const bobSharingScreen = mockRemoteParticipant({
   isScreenShareEnabled: true,
 });
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
-
-const roomMembers = new Map(
-  [alice, aliceDoppelganger, bob, bobZeroWidthSpace, carol, dave, daveRTL].map(
-    (p) => [p.userId, p],
-  ),
-);
 
 export interface GridLayoutSummary {
   type: "grid";
@@ -268,124 +254,6 @@ function mockRingEvent(
 // The app doesn't really care about the content of these legacy events, we just
 // need a value to fill in for them when emitting notifications
 const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
-
-interface CallViewModelInputs {
-  remoteParticipants$: Behavior<RemoteParticipant[]>;
-  rtcMembers$: Behavior<Partial<CallMembership>[]>;
-  livekitConnectionState$: Behavior<ConnectionState>;
-  speaking: Map<Participant, Observable<boolean>>;
-  mediaDevices: MediaDevices;
-  initialSyncState: SyncState;
-}
-
-export function withCallViewModel(
-  {
-    remoteParticipants$ = constant([]),
-    rtcMembers$ = constant([localRtcMember]),
-    livekitConnectionState$: connectionState$ = constant(
-      ConnectionState.Connected,
-    ),
-    speaking = new Map(),
-    mediaDevices = mockMediaDevices({}),
-    initialSyncState = SyncState.Syncing,
-  }: Partial<CallViewModelInputs>,
-  continuation: (
-    vm: CallViewModel,
-    rtcSession: MockRTCSession,
-    subjects: { raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>> },
-    setSyncState: (value: SyncState) => void,
-  ) => void,
-  options: CallViewModelOptions = {
-    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    autoLeaveWhenOthersLeft: false,
-  },
-): void {
-  let syncState = initialSyncState;
-  const setSyncState = (value: SyncState): void => {
-    const prev = syncState;
-    syncState = value;
-    room.client.emit(ClientEvent.Sync, value, prev);
-  };
-  const room = mockMatrixRoom({
-    client: new (class extends EventEmitter {
-      public getUserId(): string | undefined {
-        return localRtcMember.userId;
-      }
-      public getDeviceId(): string {
-        return localRtcMember.deviceId;
-      }
-      public getDomain(): string {
-        return "example.com";
-      }
-      public getSyncState(): SyncState {
-        return syncState;
-      }
-    })() as Partial<MatrixClient> as MatrixClient,
-    getMembers: () => Array.from(roomMembers.values()),
-  });
-  const rtcSession = new MockRTCSession(room, []).withMemberships(rtcMembers$);
-  const participantsSpy = vi
-    .spyOn(ComponentsCore, "connectedParticipantsObserver")
-    .mockReturnValue(remoteParticipants$);
-  const mediaSpy = vi
-    .spyOn(ComponentsCore, "observeParticipantMedia")
-    .mockImplementation((p) =>
-      of({ participant: p } as Partial<
-        ComponentsCore.ParticipantMedia<LocalParticipant>
-      > as ComponentsCore.ParticipantMedia<LocalParticipant>),
-    );
-  const eventsSpy = vi
-    .spyOn(ComponentsCore, "observeParticipantEvents")
-    .mockImplementation((p, ...eventTypes) => {
-      if (eventTypes.includes(ParticipantEvent.IsSpeakingChanged)) {
-        return (speaking.get(p) ?? of(false)).pipe(
-          map((s) => ({ ...p, isSpeaking: s }) as Participant),
-        );
-      } else {
-        return of(p);
-      }
-    });
-
-  const roomEventSelectorSpy = vi
-    .spyOn(ComponentsCore, "roomEventSelector")
-    .mockImplementation((_room, _eventType) => of());
-  const muteStates = mockMuteStates();
-  const raisedHands$ = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
-  const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
-
-  const vm = new CallViewModel(
-    testScope(),
-    rtcSession.asMockedSession(),
-    room,
-    mediaDevices,
-    muteStates,
-    {
-      ...options,
-      livekitRoomFactory: (): LivekitRoom =>
-        mockLivekitRoom({
-          localParticipant,
-          disconnect: async () => Promise.resolve(),
-          setE2EEEnabled: async () => Promise.resolve(),
-        }),
-      connectionState$,
-    },
-    raisedHands$,
-    reactions$,
-    new BehaviorSubject<ProcessorState>({
-      processor: undefined,
-      supported: undefined,
-    }),
-  );
-
-  onTestFinished(() => {
-    participantsSpy.mockRestore();
-    mediaSpy.mockRestore();
-    eventsSpy.mockRestore();
-    roomEventSelectorSpy.mockRestore();
-  });
-
-  continuation(vm, rtcSession, { raisedHands$: raisedHands$ }, setSyncState);
-}
 
 describe("CallViewModel", () => {
   // TODO: Restore this test. It requires makeTransport to not be mocked, unlike

@@ -24,8 +24,8 @@ import {
   createCallNotificationLifecycle$,
   type Props as CallNotificationLifecycleProps,
 } from "./CallNotificationLifecycle";
-// import { withCallViewModel } from "./CallViewModel.test";
 import { trackEpoch } from "../ObservableScope";
+import { withCallViewModel } from "./CallViewModelTestUtils.test";
 
 const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 function mockRingEvent(
