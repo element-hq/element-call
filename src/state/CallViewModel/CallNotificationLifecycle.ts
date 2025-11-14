@@ -70,7 +70,7 @@ export function createReceivedDecline$(
   ).pipe(filter(([event]) => event.getType() === EventType.RTCDecline));
 }
 
-interface Props {
+export interface Props {
   scope: ObservableScope;
   memberships$: Behavior<Epoch<CallMembership[]>>;
   sentCallNotification$: Observable<CallNotificationWrapper | null>;
@@ -109,7 +109,6 @@ export function createCallNotificationLifecycle$({
   callPickupState$: Behavior<CallPickupState>;
   autoLeave$: Observable<AutoLeaveReason>;
 } {
-  // TODO convert all ring and all others left logic into one callLifecycleTracker$(didSendCallNotification$,matrixLivekitItem$): {autoLeave$,callPickupState$}
   const allOthersLeft$ = memberships$.pipe(
     pairwise(),
     filter(
@@ -186,7 +185,7 @@ export function createCallNotificationLifecycle$({
       ? combineLatest(
           [someoneElseJoined$, remoteRingState$],
           (someoneElseJoined, ring) => {
-            if (someoneElseJoined) {
+            if (someoneElseJoined.value === true) {
               return "success" as const;
             }
             // Show the ringing state of the most recent ringing attempt.
