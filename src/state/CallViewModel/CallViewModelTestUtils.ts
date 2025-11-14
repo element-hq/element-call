@@ -26,6 +26,7 @@ import { E2eeType } from "../../e2ee/e2eeType";
 import { type RaisedHandInfo, type ReactionInfo } from "../../reactions";
 import { CallViewModel, type CallViewModelOptions } from "./CallViewModel";
 import {
+  mockConfig,
   mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
@@ -48,6 +49,10 @@ import {
 import { type Behavior, constant } from "../Behavior";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { type MediaDevices } from "../MediaDevices";
+
+mockConfig({
+  livekit: { livekit_service_url: "http://my-default-service-url.com" },
+});
 
 const carol = local;
 

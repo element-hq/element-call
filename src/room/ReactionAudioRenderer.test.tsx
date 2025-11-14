@@ -10,8 +10,9 @@ import {
   afterAll,
   afterEach,
   beforeEach,
+  describe,
   expect,
-  test,
+  it,
   vitest,
   type MockedFunction,
   type Mock,
@@ -49,122 +50,125 @@ vitest.mock("livekit-client/e2ee-worker?worker");
 vitest.mock("../useAudioContext");
 vitest.mock("../soundUtils");
 
-afterEach(() => {
-  vitest.resetAllMocks();
-  playReactionsSoundSetting.setValue(playReactionsSoundSetting.defaultValue);
-  soundEffectVolumeSetting.setValue(soundEffectVolumeSetting.defaultValue);
-});
-
-afterAll(() => {
-  vitest.restoreAllMocks();
-});
-
 let playSound: Mock<
   NonNullable<ReturnType<typeof useAudioContext>>["playSound"]
 >;
 
-beforeEach(() => {
-  (prefetchSounds as MockedFunction<typeof prefetchSounds>).mockResolvedValue({
-    sound: new ArrayBuffer(0),
+describe("ReactionAudioRenderer", () => {
+  afterEach(() => {
+    playReactionsSoundSetting.setValue(playReactionsSoundSetting.defaultValue);
+    soundEffectVolumeSetting.setValue(soundEffectVolumeSetting.defaultValue);
   });
-  playSound = vitest.fn();
-  (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
-    playSound,
-    playSoundLooping: vitest.fn(),
-    soundDuration: {},
-  });
-});
-
-test("preloads all audio elements", () => {
-  const { vm } = getBasicCallViewModelEnvironment([local, alice]);
-  playReactionsSoundSetting.setValue(true);
-  render(<TestComponent vm={vm} />);
-  expect(prefetchSounds).toHaveBeenCalledOnce();
-});
-
-test("will play an audio sound when there is a reaction", () => {
-  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
-  playReactionsSoundSetting.setValue(true);
-  render(<TestComponent vm={vm} />);
-
-  // Find the first reaction with a sound effect
-  const chosenReaction = ReactionSet.find((r) => !!r.sound);
-  if (!chosenReaction) {
-    throw Error(
-      "No reactions have sounds configured, this test cannot succeed",
+  beforeEach(() => {
+    (prefetchSounds as MockedFunction<typeof prefetchSounds>).mockResolvedValue(
+      {
+        sound: new ArrayBuffer(0),
+      },
     );
-  }
-  act(() => {
-    reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: {
-        reactionOption: chosenReaction,
-        expireAfter: new Date(0),
+    playSound = vitest.fn();
+    (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue(
+      {
+        playSound,
+        playSoundLooping: vitest.fn(),
+        soundDuration: {},
       },
-    });
-  });
-  expect(playSound).toHaveBeenCalledWith(chosenReaction.name);
-});
-
-test("will play the generic audio sound when there is soundless reaction", () => {
-  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
-  playReactionsSoundSetting.setValue(true);
-  render(<TestComponent vm={vm} />);
-
-  // Find the first reaction with a sound effect
-  const chosenReaction = ReactionSet.find((r) => !r.sound);
-  if (!chosenReaction) {
-    throw Error(
-      "No reactions have sounds configured, this test cannot succeed",
     );
-  }
-  act(() => {
-    reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: {
-        reactionOption: chosenReaction,
-        expireAfter: new Date(0),
-      },
-    });
   });
-  expect(playSound).toHaveBeenCalledWith(GenericReaction.name);
-});
-
-test("will play multiple audio sounds when there are multiple different reactions", () => {
-  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
-  playReactionsSoundSetting.setValue(true);
-  render(<TestComponent vm={vm} />);
-
-  // Find the first reaction with a sound effect
-  const [reaction1, reaction2] = ReactionSet.filter((r) => !!r.sound);
-  if (!reaction1 || !reaction2) {
-    throw Error(
-      "No reactions have sounds configured, this test cannot succeed",
-    );
-  }
-  act(() => {
-    reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: {
-        reactionOption: reaction1,
-        expireAfter: new Date(0),
-      },
-      [bobRtcMember.deviceId]: {
-        reactionOption: reaction2,
-        expireAfter: new Date(0),
-      },
-      [localRtcMember.deviceId]: {
-        reactionOption: reaction1,
-        expireAfter: new Date(0),
-      },
-    });
+  afterAll(() => {
+    vitest.restoreAllMocks();
   });
-  expect(playSound).toHaveBeenCalledWith(reaction1.name);
-  expect(playSound).toHaveBeenCalledWith(reaction2.name);
+
+  it("preloads all audio elements", () => {
+    const { vm } = getBasicCallViewModelEnvironment([local, alice]);
+    playReactionsSoundSetting.setValue(true);
+    render(<TestComponent vm={vm} />);
+    expect(prefetchSounds).toHaveBeenCalledOnce();
+  });
+
+  it("will play an audio sound when there is a reaction", () => {
+    const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+      local,
+      alice,
+    ]);
+    playReactionsSoundSetting.setValue(true);
+    render(<TestComponent vm={vm} />);
+
+    // Find the first reaction with a sound effect
+    const chosenReaction = ReactionSet.find((r) => !!r.sound);
+    if (!chosenReaction) {
+      throw Error(
+        "No reactions have sounds configured, this test cannot succeed",
+      );
+    }
+    act(() => {
+      reactionsSubject$.next({
+        [aliceRtcMember.deviceId]: {
+          reactionOption: chosenReaction,
+          expireAfter: new Date(0),
+        },
+      });
+    });
+    expect(playSound).toHaveBeenCalledWith(chosenReaction.name);
+  });
+
+  it("will play the generic audio sound when there is soundless reaction", () => {
+    const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+      local,
+      alice,
+    ]);
+    playReactionsSoundSetting.setValue(true);
+    render(<TestComponent vm={vm} />);
+
+    // Find the first reaction with a sound effect
+    const chosenReaction = ReactionSet.find((r) => !r.sound);
+    if (!chosenReaction) {
+      throw Error(
+        "No reactions have sounds configured, this test cannot succeed",
+      );
+    }
+    act(() => {
+      reactionsSubject$.next({
+        [aliceRtcMember.deviceId]: {
+          reactionOption: chosenReaction,
+          expireAfter: new Date(0),
+        },
+      });
+    });
+    expect(playSound).toHaveBeenCalledWith(GenericReaction.name);
+  });
+
+  it("will play multiple audio sounds when there are multiple different reactions", () => {
+    const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+      local,
+      alice,
+    ]);
+    playReactionsSoundSetting.setValue(true);
+    render(<TestComponent vm={vm} />);
+
+    // Find the first reaction with a sound effect
+    const [reaction1, reaction2] = ReactionSet.filter((r) => !!r.sound);
+    if (!reaction1 || !reaction2) {
+      throw Error(
+        "No reactions have sounds configured, this test cannot succeed",
+      );
+    }
+    act(() => {
+      reactionsSubject$.next({
+        [aliceRtcMember.deviceId]: {
+          reactionOption: reaction1,
+          expireAfter: new Date(0),
+        },
+        [bobRtcMember.deviceId]: {
+          reactionOption: reaction2,
+          expireAfter: new Date(0),
+        },
+        [localRtcMember.deviceId]: {
+          reactionOption: reaction1,
+          expireAfter: new Date(0),
+        },
+      });
+    });
+    expect(playSound).toHaveBeenCalledWith(reaction1.name);
+    expect(playSound).toHaveBeenCalledWith(reaction2.name);
+  });
 });

@@ -49,6 +49,34 @@ exports[`InCallView > rendering > renders 1`] = `
               </svg>
             </span>
           </div>
+          <div
+            class="participantsLine"
+          >
+            <svg
+              aria-label="Participants"
+              fill="currentColor"
+              height="20"
+              viewBox="0 0 24 24"
+              width="20"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.175 13.825Q10.35 15 12 15t2.825-1.175T16 11t-1.175-2.825T12 7 9.175 8.175 8 11t1.175 2.825m4.237-1.412A1.93 1.93 0 0 1 12 13q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 11q0-.825.588-1.412A1.93 1.93 0 0 1 12 9q.825 0 1.412.588Q14 10.175 14 11t-.588 1.412"
+              />
+              <path
+                d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10m-2 0a8 8 0 1 0-16 0 8 8 0 0 0 16 0"
+              />
+              <path
+                d="M16.23 18.792a13 13 0 0 0-1.455-.455 11.6 11.6 0 0 0-5.55 0q-.73.18-1.455.455a8 8 0 0 1-1.729-1.454q1.336-.618 2.709-.95A13.8 13.8 0 0 1 12 16q1.65 0 3.25.387 1.373.333 2.709.95a8 8 0 0 1-1.73 1.455"
+              />
+            </svg>
+            <span
+              class="_typography_6v6n8_153 _font-body-sm-medium_6v6n8_41"
+              data-testid="roomHeader_participants_count"
+            >
+              2
+            </span>
+          </div>
         </div>
       </div>
       <div
@@ -59,16 +87,25 @@ exports[`InCallView > rendering > renders 1`] = `
       class="scrollingGrid grid"
     >
       <div
-        class="scrolling"
-        style="--gap: 20px; --width: NaNpx; --height: NaNpx;"
-      />
+        class="layer"
+      >
+        <div
+          class="container slot"
+          data-id="1"
+        >
+          <div
+            class="slot local slot"
+            data-block-alignment="start"
+            data-id="0"
+            data-inline-alignment="end"
+          />
+        </div>
+      </div>
     </div>
     <div
       class="fixedGrid grid"
     >
-      <div
-        class="fixed"
-      />
+      <div />
     </div>
     <div
       class="bg animate"

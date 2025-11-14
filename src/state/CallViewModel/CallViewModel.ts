@@ -199,13 +199,13 @@ export class CallViewModel {
   // memberships$
   private memberships$ = createMemberships$(this.scope, this.matrixRTCSession);
 
+  // ------------------------------------------------------------------------
+  // matrixLivekitMembers$ AND localMembership
+
   private membershipsAndTransports = membershipsAndTransports$(
     this.scope,
     this.memberships$,
   );
-
-  // ------------------------------------------------------------------------
-  // matrixLivekitMembers$ AND localMembership
 
   private localTransport$ = createLocalTransport$({
     scope: this.scope,
@@ -575,6 +575,8 @@ export class CallViewModel {
   );
 
   // only public to expose to the view.
+  // TODO if we are in "unknown" state we need a loading rendering (or empty screen)
+  // Otherwise it looks like we already connected and only than the ringing starts which is weird.
   public readonly callPickupState$ = this.callLifecycle.callPickupState$;
 
   public readonly leaveSoundEffect$ = combineLatest([
