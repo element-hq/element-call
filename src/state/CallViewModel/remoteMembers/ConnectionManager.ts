@@ -117,9 +117,9 @@ export function createConnectionManager$({
   scope,
   connectionFactory,
   inputTransports$,
-  logger: _logger,
+  logger: parentLogger,
 }: Props): IConnectionManager {
-  const logger = _logger.getChild("[ConnectionManager]");
+  const logger = parentLogger.getChild("[ConnectionManager]");
 
   const running$ = new BehaviorSubject(true);
   scope.onEnd(() => running$.next(false));

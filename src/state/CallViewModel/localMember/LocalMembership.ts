@@ -137,7 +137,7 @@ export const createLocalMembership$ = ({
   matrixRoom,
   trackProcessorState$,
   widget,
-  logger,
+  logger: parentLogger,
 }: Props): {
   // publisher: Publisher
   requestConnect: () => LocalMemberConnectionState;
@@ -163,8 +163,8 @@ export const createLocalMembership$ = ({
   /** @deprecated use state instead*/
   configError$: Behavior<ElementCallError | null>;
 } => {
-  const prefixLogger = logger.getChild("[LocalMembership]");
-  prefixLogger.debug(`Creating local membership..`);
+  const logger = parentLogger.getChild("[LocalMembership]");
+  logger.debug(`Creating local membership..`);
   const state = {
     livekit$: new BehaviorSubject<LocalMemberLivekitState>({
       state: LivekitState.Uninitialized,
@@ -187,35 +187,23 @@ export const createLocalMembership$ = ({
 
   // Drop Epoch data here since we will not combine this anymore
   const localConnection$ = scope.behavior(
-    combineLatest([connectionManager.connections$, localTransport$])
-      .pipe(
-        map(([connections, localTransport]) => {
-          if (localTransport === null) {
-            return null;
-          }
-          return (
-            connections.value.find((connection) =>
-              areLivekitTransportsEqual(connection.transport, localTransport),
-            ) ?? null
-          );
-        }),
-      )
-      .pipe(
-        distinctUntilChanged((a, b) => {
-          const eq = a === b;
-          logger.debug(
-            `distinctUntilChanged: Local connection equality check: ${eq}`,
-          );
-          return eq;
-        }),
-      )
-      .pipe(
-        tap((connection) => {
-          prefixLogger.info(
-            `Local connection updated: ${connection?.transport?.livekit_service_url}`,
-          );
-        }),
-      ),
+    combineLatest([connectionManager.connections$, localTransport$]).pipe(
+      map(([connections, localTransport]) => {
+        if (localTransport === null) {
+          return null;
+        }
+        return (
+          connections.value.find((connection) =>
+            areLivekitTransportsEqual(connection.transport, localTransport),
+          ) ?? null
+        );
+      }),
+      tap((connection) => {
+        logger.info(
+          `Local connection updated: ${connection?.transport?.livekit_service_url}`,
+        );
+      }),
+    ),
   );
   /**
    * Whether we are connected to the MatrixRTC session.
@@ -247,7 +235,7 @@ export const createLocalMembership$ = ({
       ),
     ).pipe(
       tap((connected) => {
-        prefixLogger.info(`Homeserver connected update: ${connected}`);
+        logger.info(`Homeserver connected update: ${connected}`);
       }),
     ),
   );
@@ -563,6 +551,7 @@ interface EnterRTCSessionOptions {
  * @param rtcSession
  * @param transport
  * @param options
+ * @throws If the widget could not send ElementWidgetActions.JoinCall action.
  */
 async function enterRTCSession(
   rtcSession: MatrixRTCSession,
@@ -607,11 +596,6 @@ async function enterRTCSession(
     },
   );
   if (widget) {
-    // try {
     await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
-    // TODO Why catch and swallow?
-    // } catch (e) {
-    //   logger.error("Failed to send join action", e);
-    // }
   }
 }

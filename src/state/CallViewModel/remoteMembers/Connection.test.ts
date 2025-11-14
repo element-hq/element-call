@@ -68,9 +68,6 @@ function setupTest(): void {
     }),
     getDeviceId: vi.fn().mockReturnValue("ABCDEF"),
   } as unknown as OpenIDClientParts);
-  // fakeMembershipsFocusMap$ = new BehaviorSubject<
-  //   { membership: CallMembership; transport: LivekitTransport }[]
-  // >([]);
 
   localParticipantEventEmiter = new EventEmitter();
 
