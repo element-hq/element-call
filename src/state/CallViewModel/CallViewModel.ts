@@ -229,7 +229,7 @@ export class CallViewModel {
   private connectionManager = createConnectionManager$({
     scope: this.scope,
     connectionFactory: this.connectionFactory,
-    inputTransports$: this.allTransports$,
+    inputTransports$: this.membershipsAndTransports.transports$,
     logger: logger,
   });
 

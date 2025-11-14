@@ -19,7 +19,6 @@ import {
   take,
   takeUntil,
 } from "rxjs";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "./Behavior";
 

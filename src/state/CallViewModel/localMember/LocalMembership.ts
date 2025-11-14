@@ -32,7 +32,7 @@ import {
   switchMap,
   tap,
 } from "rxjs";
-import { type Logger, logger } from "matrix-js-sdk/lib/logger";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager";
@@ -54,7 +54,7 @@ import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
 import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import { type Connection } from "../remoteMembers/Connection.ts";
-const logger = rootLogger.getChild("[LocalMembership]");
+
 export enum LivekitState {
   Uninitialized = "uninitialized",
   Connecting = "connecting",
@@ -220,39 +220,37 @@ export const createLocalMembership$ = ({
   /**
    * Whether we are connected to the MatrixRTC session.
    */
-  const homeserverConnected$ = scope
-    .behavior(
-      // To consider ourselves connected to MatrixRTC, we check the following:
-      and$(
-        // The client is connected to the sync loop
-        (
-          fromEvent(matrixRoom.client, ClientEvent.Sync) as Observable<
-            [SyncState]
-          >
-        ).pipe(
-          startWith([matrixRoom.client.getSyncState()]),
-          map(([state]) => state === SyncState.Syncing),
-        ),
-        // Room state observed by session says we're connected
-        fromEvent(matrixRTCSession, MembershipManagerEvent.StatusChanged).pipe(
-          startWith(null),
-          map(() => matrixRTCSession.membershipStatus === Status.Connected),
-        ),
-        // Also watch out for warnings that we've likely hit a timeout and our
-        // delayed leave event is being sent (this condition is here because it
-        // provides an earlier warning than the sync loop timeout, and we wouldn't
-        // see the actual leave event until we reconnect to the sync loop)
-        fromEvent(matrixRTCSession, MembershipManagerEvent.ProbablyLeft).pipe(
-          startWith(null),
-          map(() => matrixRTCSession.probablyLeft !== true),
-        ),
+  const homeserverConnected$ = scope.behavior(
+    // To consider ourselves connected to MatrixRTC, we check the following:
+    and$(
+      // The client is connected to the sync loop
+      (
+        fromEvent(matrixRoom.client, ClientEvent.Sync) as Observable<
+          [SyncState]
+        >
+      ).pipe(
+        startWith([matrixRoom.client.getSyncState()]),
+        map(([state]) => state === SyncState.Syncing),
       ),
-    )
-    .pipe(
+      // Room state observed by session says we're connected
+      fromEvent(matrixRTCSession, MembershipManagerEvent.StatusChanged).pipe(
+        startWith(null),
+        map(() => matrixRTCSession.membershipStatus === Status.Connected),
+      ),
+      // Also watch out for warnings that we've likely hit a timeout and our
+      // delayed leave event is being sent (this condition is here because it
+      // provides an earlier warning than the sync loop timeout, and we wouldn't
+      // see the actual leave event until we reconnect to the sync loop)
+      fromEvent(matrixRTCSession, MembershipManagerEvent.ProbablyLeft).pipe(
+        startWith(null),
+        map(() => matrixRTCSession.probablyLeft !== true),
+      ),
+    ).pipe(
       tap((connected) => {
         prefixLogger.info(`Homeserver connected update: ${connected}`);
       }),
-    );
+    ),
+  );
 
   // /**
   //  * Whether we are "fully" connected to the call. Accounts for both the
@@ -609,10 +607,11 @@ async function enterRTCSession(
     },
   );
   if (widget) {
-    try {
-      await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
-    } catch (e) {
-      logger.error("Failed to send join action", e);
-    }
+    // try {
+    await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
+    // TODO Why catch and swallow?
+    // } catch (e) {
+    //   logger.error("Failed to send join action", e);
+    // }
   }
 }
