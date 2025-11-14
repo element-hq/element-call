@@ -12,6 +12,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useId,
 } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -19,6 +20,14 @@ import {
   type MatrixClient,
 } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
+import {
+  Root as Form,
+  Heading,
+  HelpMessage,
+  InlineField,
+  Label,
+  RadioControl,
+} from "@vector-im/compound-web";
 
 import { FieldRow, InputField } from "../input/Input";
 import {
@@ -60,6 +69,13 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   }, [client]);
 
   const [matrixRTCMode, setMatrixRTCMode] = useSetting(matrixRTCModeSetting);
+  const matrixRTCModeRadioGroup = useId();
+  const onMatrixRTCModeChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setMatrixRTCMode(e.target.value as MatrixRTCMode);
+    },
+    [setMatrixRTCMode],
+  );
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
@@ -85,7 +101,7 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   }, [livekitRooms]);
 
   return (
-    <>
+    <Form>
       <p>
         {t("developer_mode.hostname", {
           hostname: window.location.hostname || "unknown",
@@ -144,52 +160,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
       </FieldRow>
       <FieldRow>
         <InputField
-          id="matrixRTCMode"
-          type="checkbox"
-          label={t("developer_mode.matrixRTCMode.Legacy.label")}
-          description={t("developer_mode.matrixRTCMode.Legacy.description")}
-          checked={matrixRTCMode === MatrixRTCMode.Legacy}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>) => {
-              if (event.target.checked) setMatrixRTCMode(MatrixRTCMode.Legacy);
-            },
-            [setMatrixRTCMode],
-          )}
-        />
-        <InputField
-          id="matrixRTCMode"
-          type="checkbox"
-          label={t("developer_mode.matrixRTCMode.Comptibility.label")}
-          description={t(
-            "developer_mode.matrixRTCMode.Comptibility.description",
-          )}
-          checked={matrixRTCMode === MatrixRTCMode.Compatibil}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>) => {
-              if (event.target.checked)
-                setMatrixRTCMode(MatrixRTCMode.Compatibil);
-            },
-            [setMatrixRTCMode],
-          )}
-        />
-        <InputField
-          id="matrixRTCMode"
-          type="checkbox"
-          label={t("developer_mode.matrixRTCMode.Matrix_2_0.label")}
-          description={t("developer_mode.matrixRTCMode.Matrix_2_0.description")}
-          disabled={!stickyEventsSupported}
-          checked={matrixRTCMode === MatrixRTCMode.Matrix_2_0}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>) => {
-              if (event.target.checked)
-                setMatrixRTCMode(MatrixRTCMode.Matrix_2_0);
-            },
-            [setMatrixRTCMode],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
           id="showConnectionStats"
           type="checkbox"
           label={t("developer_mode.show_connection_stats")}
@@ -230,6 +200,55 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
           )}
         />{" "}
       </FieldRow>
+      <Heading as="h3" type="body" weight="semibold" size="lg">
+        {t("developer_mode.matrixRTCMode.title")}
+      </Heading>
+      <InlineField
+        name={matrixRTCModeRadioGroup}
+        control={
+          <RadioControl
+            checked={matrixRTCMode === MatrixRTCMode.Legacy}
+            value={MatrixRTCMode.Legacy}
+            onChange={onMatrixRTCModeChange}
+          />
+        }
+      >
+        <Label>{t("developer_mode.matrixRTCMode.Legacy.label")}</Label>
+        <HelpMessage>
+          {t("developer_mode.matrixRTCMode.Legacy.description")}
+        </HelpMessage>
+      </InlineField>
+      <InlineField
+        name={matrixRTCModeRadioGroup}
+        control={
+          <RadioControl
+            checked={matrixRTCMode === MatrixRTCMode.Compatibil}
+            value={MatrixRTCMode.Compatibil}
+            onChange={onMatrixRTCModeChange}
+          />
+        }
+      >
+        <Label>{t("developer_mode.matrixRTCMode.Comptibility.label")}</Label>
+        <HelpMessage>
+          {t("developer_mode.matrixRTCMode.Comptibility.description")}
+        </HelpMessage>
+      </InlineField>
+      <InlineField
+        name={matrixRTCModeRadioGroup}
+        control={
+          <RadioControl
+            checked={matrixRTCMode === MatrixRTCMode.Matrix_2_0}
+            value={MatrixRTCMode.Matrix_2_0}
+            disabled={!stickyEventsSupported}
+            onChange={onMatrixRTCModeChange}
+          />
+        }
+      >
+        <Label>{t("developer_mode.matrixRTCMode.Matrix_2_0.label")}</Label>
+        <HelpMessage>
+          {t("developer_mode.matrixRTCMode.Matrix_2_0.description")}
+        </HelpMessage>
+      </InlineField>
       {livekitRooms?.map((livekitRoom) => (
         <>
           <h3>
@@ -254,6 +273,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
       <pre>{JSON.stringify(import.meta.env, null, 2)}</pre>
       <p>{t("developer_mode.url_params")}</p>
       <pre>{JSON.stringify(urlParams, null, 2)}</pre>
-    </>
+    </Form>
   );
 };
