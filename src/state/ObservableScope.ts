@@ -21,7 +21,6 @@ import {
 } from "rxjs";
 
 import { type Behavior } from "./Behavior";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
 

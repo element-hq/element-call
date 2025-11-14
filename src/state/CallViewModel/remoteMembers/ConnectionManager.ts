@@ -13,8 +13,8 @@ import {
   type LivekitTransport,
   type ParticipantId,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, combineLatest, map, of, switchMap } from "rxjs";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { BehaviorSubject, combineLatest, map, of, switchMap, tap } from "rxjs";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
 
 import { type Behavior } from "../../Behavior.ts";
@@ -91,6 +91,7 @@ interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
   inputTransports$: Behavior<Epoch<LivekitTransport[]>>;
+  logger: Logger;
 }
 // TODO - write test for scopes (do we really need to bind scope)
 export interface IConnectionManager {
@@ -116,8 +117,9 @@ export function createConnectionManager$({
   scope,
   connectionFactory,
   inputTransports$,
+  logger: parentLogger,
 }: Props): IConnectionManager {
-  const logger = rootLogger.getChild("[ConnectionManager]");
+  const logger = parentLogger.getChild("[ConnectionManager]");
 
   const running$ = new BehaviorSubject(true);
   scope.onEnd(() => running$.next(false));
@@ -137,6 +139,11 @@ export function createConnectionManager$({
         transports.mapInner((transport) => (running ? transport : [])),
       ),
       map((transports) => transports.mapInner(removeDuplicateTransports)),
+      tap(({ value: transports }) => {
+        logger.trace(
+          `Managing transports: ${transports.map((t) => t.livekit_service_url).join(", ")}`,
+        );
+      }),
     ),
   );
 
@@ -154,6 +161,7 @@ export function createConnectionManager$({
             };
         },
         (scope, _data$, serviceUrl, alias) => {
+          logger.debug(`Creating connection to ${serviceUrl} (${alias})`);
           const connection = connectionFactory.createConnection(
             {
               type: "livekit",

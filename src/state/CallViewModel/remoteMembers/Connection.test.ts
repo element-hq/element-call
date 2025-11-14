@@ -14,7 +14,6 @@ import {
   onTestFinished,
   vi,
 } from "vitest";
-import { BehaviorSubject } from "rxjs";
 import {
   type LocalParticipant,
   type RemoteParticipant,
@@ -25,11 +24,9 @@ import {
 import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 
-import type {
-  CallMembership,
-  LivekitTransport,
-} from "matrix-js-sdk/lib/matrixrtc";
+import type { LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   Connection,
   type ConnectionOpts,
@@ -39,6 +36,7 @@ import {
 import { ObservableScope } from "../../ObservableScope.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
 import { FailToGetOpenIdToken } from "../../../utils/errors.ts";
+
 let testScope: ObservableScope;
 
 let client: MockedObject<OpenIDClientParts>;
@@ -49,9 +47,9 @@ let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 let fakeRoomEventEmiter: EventEmitter;
-let fakeMembershipsFocusMap$: BehaviorSubject<
-  { membership: CallMembership; transport: LivekitTransport }[]
->;
+// let fakeMembershipsFocusMap$: BehaviorSubject<
+//   { membership: CallMembership; transport: LivekitTransport }[]
+// >;
 
 const livekitFocus: LivekitTransport = {
   livekit_alias: "!roomID:example.org",
@@ -70,9 +68,6 @@ function setupTest(): void {
     }),
     getDeviceId: vi.fn().mockReturnValue("ABCDEF"),
   } as unknown as OpenIDClientParts);
-  fakeMembershipsFocusMap$ = new BehaviorSubject<
-    { membership: CallMembership; transport: LivekitTransport }[]
-  >([]);
 
   localParticipantEventEmiter = new EventEmitter();
 
@@ -131,7 +126,7 @@ function setupRemoteConnection(): Connection {
 
   fakeLivekitRoom.connect.mockResolvedValue(undefined);
 
-  return new Connection(opts);
+  return new Connection(opts, logger);
 }
 
 afterEach(() => {
@@ -150,7 +145,7 @@ describe("Start connection states", () => {
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
-    const connection = new Connection(opts);
+    const connection = new Connection(opts, logger);
 
     expect(connection.state$.getValue().state).toEqual("Initialized");
   });
@@ -166,7 +161,7 @@ describe("Start connection states", () => {
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new Connection(opts, undefined);
+    const connection = new Connection(opts, logger);
 
     const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {
@@ -218,7 +213,7 @@ describe("Start connection states", () => {
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new Connection(opts, undefined);
+    const connection = new Connection(opts, logger);
 
     const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {
@@ -274,7 +269,7 @@ describe("Start connection states", () => {
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new Connection(opts, undefined);
+    const connection = new Connection(opts, logger);
 
     const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {

@@ -241,6 +241,7 @@ export class CallViewModel {
         },
       ),
     ),
+    logger: logger,
   });
 
   private matrixLivekitMembers$ = createMatrixLivekitMembers$({
@@ -271,6 +272,7 @@ export class CallViewModel {
     trackProcessorState$: this.trackProcessorState$,
     widget,
     options: this.connectOptions$,
+    logger: logger.getChild(`[${Date.now()}]`),
   });
 
   private localRtcMembership$ = this.scope.behavior(

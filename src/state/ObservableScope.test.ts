@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, expect, it } from "vitest";
-import { BehaviorSubject, combineLatest, of, Subject } from "rxjs";
+import { BehaviorSubject, combineLatest, Subject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
