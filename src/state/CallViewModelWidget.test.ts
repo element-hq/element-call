@@ -12,8 +12,8 @@ import { constant } from "./Behavior.ts";
 import { aliceParticipant, localRtcMember } from "../utils/test-fixtures.ts";
 import { ElementWidgetActions, widget } from "../widget.ts";
 import { E2eeType } from "../e2ee/e2eeType.ts";
-import { withCallViewModel } from "./CallViewModel/CallViewModel.test.ts";
 import { type CallViewModel } from "./CallViewModel/CallViewModel.ts";
+import { withCallViewModel } from "./CallViewModel/CallViewModelTestUtils.test";
 
 vi.mock("../widget", () => ({
   ElementWidgetActions: {
