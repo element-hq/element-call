@@ -229,7 +229,18 @@ export class CallViewModel {
   private connectionManager = createConnectionManager$({
     scope: this.scope,
     connectionFactory: this.connectionFactory,
-    inputTransports$: this.membershipsAndTransports.transports$,
+    inputTransports$: this.scope.behavior(
+      combineLatest(
+        [this.localTransport$, this.membershipsAndTransports.transports$],
+        (localTransport, transports) => {
+          const localTransportAsArray = localTransport ? [localTransport] : [];
+          return transports.mapInner((transports) => [
+            ...localTransportAsArray,
+            ...transports,
+          ]);
+        },
+      ),
+    ),
     logger: logger,
   });
 
