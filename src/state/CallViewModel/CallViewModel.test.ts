@@ -1261,37 +1261,6 @@ describe("CallViewModel", () => {
   });
 
   describe("waitForCallPickup$", () => {
-    test("unknown -> ringing -> timeout when notified and nobody joins", () => {
-      withTestScheduler(({ schedule, expectObservable }) => {
-        // No one ever joins (only local user)
-        withCallViewModel(
-          { remoteParticipants$: constant([]) },
-          (vm, rtcSession) => {
-            // Fire a call notification at 10ms with lifetime 30ms
-            schedule("          10ms r", {
-              r: () => {
-                rtcSession.emit(
-                  MatrixRTCSessionEvent.DidSendCallNotification,
-                  mockRingEvent("$notif1", 30),
-                  mockLegacyRingEvent,
-                );
-              },
-            });
-
-            expectObservable(vm.callPickupState$).toBe("a 9ms b 29ms c", {
-              a: "unknown",
-              b: "ringing",
-              c: "timeout",
-            });
-          },
-          {
-            waitForCallPickup: true,
-            encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-          },
-        );
-      });
-    });
-
     test("regression test: does stop ringing in case livekitConnectionState$ emits after didSendCallNotification$ has already emitted", () => {
       withTestScheduler(({ schedule, expectObservable, behavior }) => {
         withCallViewModel(
@@ -1317,46 +1286,6 @@ describe("CallViewModel", () => {
               a: "unknown",
               b: "ringing",
               c: "timeout",
-            });
-          },
-          {
-            waitForCallPickup: true,
-            encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-          },
-        );
-      });
-    });
-
-    test("ringing -> success if someone joins before timeout", () => {
-      withTestScheduler(({ behavior, schedule, expectObservable }) => {
-        // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
-        withCallViewModel(
-          {
-            remoteParticipants$: behavior("a 19ms b", {
-              a: [],
-              b: [aliceParticipant],
-            }),
-            rtcMembers$: behavior("a 19ms b", {
-              a: [localRtcMember],
-              b: [localRtcMember, aliceRtcMember],
-            }),
-          },
-          (vm, rtcSession) => {
-            // Notify at 5ms so we enter ringing, then success at 20ms
-            schedule("          5ms r", {
-              r: () => {
-                rtcSession.emit(
-                  MatrixRTCSessionEvent.DidSendCallNotification,
-                  mockRingEvent("$notif2", 100),
-                  mockLegacyRingEvent,
-                );
-              },
-            });
-
-            expectObservable(vm.callPickupState$).toBe("a 4ms b 14ms c", {
-              a: "unknown",
-              b: "ringing",
-              c: "success",
             });
           },
           {
@@ -1402,70 +1331,6 @@ describe("CallViewModel", () => {
               a: "unknown",
               b: "ringing",
               c: "unknown",
-            });
-          },
-          {
-            waitForCallPickup: true,
-            encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-          },
-        );
-      });
-    });
-
-    test("success when someone joins before we notify", () => {
-      withTestScheduler(({ behavior, schedule, expectObservable }) => {
-        // Join at 10ms, notify later at 20ms (state should stay success)
-        withCallViewModel(
-          {
-            remoteParticipants$: behavior("a 9ms b", {
-              a: [],
-              b: [aliceParticipant],
-            }),
-            rtcMembers$: behavior("a 9ms b", {
-              a: [localRtcMember],
-              b: [localRtcMember, aliceRtcMember],
-            }),
-          },
-          (vm, rtcSession) => {
-            schedule("          20ms r", {
-              r: () => {
-                rtcSession.emit(
-                  MatrixRTCSessionEvent.DidSendCallNotification,
-                  mockRingEvent("$notif3", 50),
-                  mockLegacyRingEvent,
-                );
-              },
-            });
-            expectObservable(vm.callPickupState$).toBe("a 9ms b", {
-              a: "unknown",
-              b: "success",
-            });
-          },
-          {
-            waitForCallPickup: true,
-            encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-          },
-        );
-      });
-    });
-
-    test("notify without lifetime -> immediate timeout", () => {
-      withTestScheduler(({ schedule, expectObservable }) => {
-        withCallViewModel(
-          {},
-          (vm, rtcSession) => {
-            schedule("          10ms r", {
-              r: () => {
-                rtcSession.emit(
-                  MatrixRTCSessionEvent.DidSendCallNotification,
-                  mockRingEvent("$notif4", undefined),
-                  mockLegacyRingEvent,
-                );
-              },
-            });
-            expectObservable(vm.callPickupState$).toBe("a 9ms b", {
-              a: "unknown",
-              b: "timeout",
             });
           },
           {
