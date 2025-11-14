@@ -6,7 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 import { map, type Observable, of, type SchedulerLike } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
-import { expect, type MockedObject, onTestFinished, vi, vitest } from "vitest";
+import {
+  expect,
+  type MockedObject,
+  type MockInstance,
+  onTestFinished,
+  vi,
+  vitest,
+} from "vitest";
 import {
   MatrixEvent,
   type Room as MatrixRoom,
@@ -269,6 +276,7 @@ export function mockLivekitRoom(
   }: { remoteParticipants$?: Observable<RemoteParticipant[]> } = {},
 ): LivekitRoom {
   const livekitRoom = {
+    options: {},
     ...mockEmitter(),
     ...room,
   } as Partial<LivekitRoom> as LivekitRoom;
@@ -291,6 +299,7 @@ export function mockLocalParticipant(
   return {
     isLocal: true,
     trackPublications: new Map(),
+    unpublishTracks: async () => Promise.resolve(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
     ...mockEmitter(),
@@ -331,6 +340,8 @@ export function mockRemoteParticipant(
     setVolume() {},
     getTrackPublication: () =>
       ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
+    // this will only get used for `getTrackPublications().length`
+    getTrackPublications: () => [0],
     ...mockEmitter(),
     ...participant,
   } as RemoteParticipant;
@@ -363,13 +374,16 @@ export function createRemoteMedia(
   );
 }
 
-export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
-  vi.spyOn(Config, "get").mockReturnValue({
+export function mockConfig(
+  config: Partial<ResolvedConfigOptions> = {},
+): MockInstance<() => ResolvedConfigOptions> {
+  const spy = vi.spyOn(Config, "get").mockReturnValue({
     ...DEFAULT_CONFIG,
     ...config,
   });
   // simulate loading the config
   vi.spyOn(Config, "init").mockResolvedValue(void 0);
+  return spy;
 }
 
 export class MockRTCSession extends TypedEventEmitter<

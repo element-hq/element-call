@@ -182,12 +182,30 @@ export class CallViewModel {
     this.matrixRTCSession,
   );
 
+  // Each hbar seperates a block of input variables required for the CallViewModel to function.
+  // The outputs of this block is written under the hbar.
+  //
+  // For mocking purposes it is recommended to only mock the functions creating those outputs.
+  // All other fields are just temp computations for the mentioned output.
+  // The class does not need anything except the values underneath the bar.
+  // The creation of the values under the bar are all tested independently and testing the callViewModel Should
+  // not test their cretation. Call view model only needs:
+  //  - memberships$ via createMemberships$
+  //  - localMembership via createLocalMembership$
+  //  - callLifecycle via createCallNotificationLifecycle$
+  //  - matrixMemberMetadataStore via createMatrixMemberMetadata$
+
+  // ------------------------------------------------------------------------
+  // memberships$
   private memberships$ = createMemberships$(this.scope, this.matrixRTCSession);
 
   private membershipsAndTransports = membershipsAndTransports$(
     this.scope,
     this.memberships$,
   );
+
+  // ------------------------------------------------------------------------
+  // matrixLivekitMembers$ AND localMembership
 
   private localTransport$ = createLocalTransport$({
     scope: this.scope,
@@ -199,28 +217,13 @@ export class CallViewModel {
     ),
   });
 
-  // ------------------------------------------------------------------------
-
   private connectionFactory = new ECConnectionFactory(
     this.matrixRoom.client,
     this.mediaDevices,
     this.trackProcessorState$,
     this.livekitKeyProvider,
     getUrlParams().controlledAudioDevices,
-  );
-
-  // Can contain duplicates. The connection manager will take care of this.
-  private allTransports$ = this.scope.behavior(
-    combineLatest(
-      [this.localTransport$, this.membershipsAndTransports.transports$],
-      (localTransport, transports) => {
-        const localTransportAsArray = localTransport ? [localTransport] : [];
-        return transports.mapInner((transports) => [
-          ...localTransportAsArray,
-          ...transports,
-        ]);
-      },
-    ),
+    this.options.livekitRoomFactory,
   );
 
   private connectionManager = createConnectionManager$({
@@ -229,8 +232,6 @@ export class CallViewModel {
     inputTransports$: this.allTransports$,
     logger: logger,
   });
-
-  // ------------------------------------------------------------------------
 
   private matrixLivekitMembers$ = createMatrixLivekitMembers$({
     scope: this.scope,
@@ -275,6 +276,7 @@ export class CallViewModel {
       ),
     ),
   );
+
   private localMatrixLivekitMemberUninitialized = {
     membership$: this.localRtcMembership$,
     participant$: this.localMembership.participant$,
@@ -296,6 +298,7 @@ export class CallViewModel {
     );
 
   // ------------------------------------------------------------------------
+  // callLifecycle
 
   private callLifecycle = createCallNotificationLifecycle$({
     scope: this.scope,
@@ -311,6 +314,13 @@ export class CallViewModel {
   public autoLeave$ = this.callLifecycle.autoLeave$;
 
   // ------------------------------------------------------------------------
+  // matrixMemberMetadataStore
+
+  private matrixMemberMetadataStore = createMatrixMemberMetadata$(
+    this.scope,
+    this.scope.behavior(this.memberships$.pipe(map((mems) => mems.value))),
+    createRoomMembers$(this.scope, this.matrixRoom),
+  );
 
   /**
    * If there is a configuration error with the call (e.g. misconfigured E2EE).
@@ -404,12 +414,6 @@ export class CallViewModel {
     ),
   );
 
-  private matrixMemberMetadataStore = createMatrixMemberMetadata$(
-    this.scope,
-    this.scope.behavior(this.memberships$.pipe(map((mems) => mems.value))),
-    createRoomMembers$(this.scope, this.matrixRoom),
-  );
-
   /**
    * List of user media (camera feeds) that we want tiles for.
    */
@@ -428,20 +432,23 @@ export class CallViewModel {
           { value: matrixLivekitMembers },
           duplicateTiles,
         ]) {
+          let localParticipantId = undefined;
           // add local member if available
           if (localMatrixLivekitMember) {
-            const {
-              userId,
-              participant$,
-              connection$,
-              // membership$,
-            } = localMatrixLivekitMember;
-            const participantId = participant$.value?.identity; // should be membership$.value.membershipID which is not optional
+            const { userId, participant$, connection$, membership$ } =
+              localMatrixLivekitMember;
+            localParticipantId = `${userId}:${membership$.value.deviceId}`; // should be membership$.value.membershipID which is not optional
             // const participantId = membership$.value.membershipID;
-            if (participantId) {
+            if (localParticipantId) {
               for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
                 yield {
-                  keys: [dup, participantId, userId, participant$, connection$],
+                  keys: [
+                    dup,
+                    localParticipantId,
+                    userId,
+                    participant$,
+                    connection$,
+                  ],
                   data: undefined,
                 };
               }
@@ -452,11 +459,11 @@ export class CallViewModel {
             userId,
             participant$,
             connection$,
-            // membership$
+            membership$,
           } of matrixLivekitMembers) {
-            const participantId = participant$.value?.identity;
+            const participantId = `${userId}:${membership$.value.deviceId}`;
+            if (participantId === localParticipantId) continue;
             // const participantId = membership$.value?.identity;
-            if (!participantId) continue;
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
                 keys: [dup, participantId, userId, participant$, connection$],
@@ -552,9 +559,8 @@ export class CallViewModel {
    *  - There can be multiple participants for one Matrix user if they join from
    *    multiple devices.
    */
-  // TODO KEEP THIS!! and adapt it to what our membershipManger returns
   public readonly participantCount$ = this.scope.behavior(
-    this.memberships$.pipe(map((ms) => ms.value.length)),
+    this.matrixLivekitMembers$.pipe(map((ms) => ms.value.length)),
   );
 
   // only public to expose to the view.

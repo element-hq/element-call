@@ -54,7 +54,7 @@ import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
 import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import { type Connection } from "../remoteMembers/Connection.ts";
-
+const logger = rootLogger.getChild("[LocalMembership]");
 export enum LivekitState {
   Uninitialized = "uninitialized",
   Connecting = "connecting",
@@ -356,10 +356,19 @@ export const createLocalMembership$ = ({
         !connectRequested ||
         state.matrix$.value.state !== MatrixState.Disconnected
       ) {
-        logger.info("Waiting for transport to enter rtc session");
+        logger.info(
+          "Not yet connecting because: ",
+          "transport === null:",
+          transport === null,
+          "!connectRequested:",
+          !connectRequested,
+          "state.matrix$.value.state !== MatrixState.Disconnected:",
+          state.matrix$.value.state !== MatrixState.Disconnected,
+        );
         return;
       }
       state.matrix$.next({ state: MatrixState.Connecting });
+      logger.info("Matrix State connecting");
       enterRTCSession(matrixRTCSession, transport, options.value).catch(
         (error) => {
           logger.error(error);
@@ -409,7 +418,9 @@ export const createLocalMembership$ = ({
         for (const p of publications) {
           if (p.track?.isUpstreamPaused === true) {
             const kind = p.track.kind;
-            logger.log(`Resuming ${kind} track (MatrixRTC connection present)`);
+            logger.info(
+              `Resuming ${kind} track (MatrixRTC connection present)`,
+            );
             p.track
               .resumeUpstream()
               .catch((e) =>
@@ -424,7 +435,7 @@ export const createLocalMembership$ = ({
         for (const p of publications) {
           if (p.track?.isUpstreamPaused === false) {
             const kind = p.track.kind;
-            logger.log(
+            logger.info(
               `Pausing ${kind} track (uncertain MatrixRTC connection)`,
             );
             p.track
