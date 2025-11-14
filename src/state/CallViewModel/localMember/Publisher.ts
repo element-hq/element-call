@@ -320,6 +320,6 @@ export class Publisher {
       ),
       null,
     );
-    trackProcessorSync(track$, trackerProcessorState$);
+    trackProcessorSync(scope, track$, trackerProcessorState$);
   }
 }

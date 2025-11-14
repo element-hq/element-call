@@ -28,6 +28,7 @@ import {
 } from "../settings/settings";
 import { BlurBackgroundTransformer } from "./BlurBackgroundTransformer";
 import { type Behavior } from "../state/Behavior";
+import { type ObservableScope } from "../state/ObservableScope";
 
 //TODO-MULTI-SFU: This is not yet fully there.
 // it is a combination of exposing observable and react hooks.
@@ -63,13 +64,17 @@ export function useTrackProcessorObservable$(): Observable<ProcessorState> {
   return state$;
 }
 
+/**
+ * Updates your video tracks to always use the given processor.
+ */
 export const trackProcessorSync = (
+  scope: ObservableScope,
   videoTrack$: Behavior<LocalVideoTrack | null>,
   processor$: Behavior<ProcessorState>,
 ): void => {
-  // TODO-MULTI-SFU: Bind to an ObservableScope to avoid leaking resources.
-  combineLatest([videoTrack$, processor$]).subscribe(
-    ([videoTrack, processorState]) => {
+  combineLatest([videoTrack$, processor$])
+    .pipe(scope.bind())
+    .subscribe(([videoTrack, processorState]) => {
       if (!processorState) return;
       if (!videoTrack) return;
       const { processor } = processorState;
@@ -79,8 +84,7 @@ export const trackProcessorSync = (
       if (!processor && videoTrack.getProcessor()) {
         void videoTrack.stopProcessor();
       }
-    },
-  );
+    });
 };
 
 export const useTrackProcessorSync = (
