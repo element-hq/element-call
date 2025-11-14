@@ -76,6 +76,6 @@ export const createMemberships$ = (
       MatrixRTCSessionEvent.MembershipsChanged,
       (_, memberships: CallMembership[]) => memberships,
     ).pipe(trackEpoch()),
-    new Epoch([]),
+    new Epoch(matrixRTCSession.memberships),
   );
 };

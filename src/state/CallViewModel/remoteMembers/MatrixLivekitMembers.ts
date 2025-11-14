@@ -22,7 +22,7 @@ import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
 
-const logger = rootLogger.getChild("MatrixLivekitMembers");
+const logger = rootLogger.getChild("[MatrixLivekitMembers]");
 
 /**
  * Represents a Matrix call member and their associated LiveKit participation.
