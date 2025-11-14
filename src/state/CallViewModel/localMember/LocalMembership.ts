@@ -22,7 +22,6 @@ import { ClientEvent, SyncState, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   BehaviorSubject,
   combineLatest,
-  distinctUntilChanged,
   fromEvent,
   map,
   type Observable,
@@ -553,7 +552,8 @@ interface EnterRTCSessionOptions {
  * @param options
  * @throws If the widget could not send ElementWidgetActions.JoinCall action.
  */
-async function enterRTCSession(
+// Exported for unit testing
+export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   transport: LivekitTransport,
   { encryptMedia, matrixRTCMode }: EnterRTCSessionOptions,
