@@ -22,6 +22,7 @@ import { ClientEvent, SyncState, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   BehaviorSubject,
   combineLatest,
+  distinctUntilChanged,
   fromEvent,
   map,
   type Observable,
@@ -29,8 +30,9 @@ import {
   scan,
   startWith,
   switchMap,
+  tap,
 } from "rxjs";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager";
@@ -52,7 +54,7 @@ import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
 import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import { type Connection } from "../remoteMembers/Connection.ts";
-const logger = rootLogger.getChild("[LocalMembership]");
+
 export enum LivekitState {
   Uninitialized = "uninitialized",
   Connecting = "connecting",
@@ -61,6 +63,7 @@ export enum LivekitState {
   Disconnected = "disconnected",
   Disconnecting = "disconnecting",
 }
+
 type LocalMemberLivekitState =
   | { state: LivekitState.Error; error: string }
   | { state: LivekitState.Connected }
@@ -74,6 +77,7 @@ export enum MatrixState {
   Disconnected = "disconnected",
   Connecting = "connecting",
 }
+
 type LocalMemberMatrixState =
   | { state: MatrixState.Connected }
   | { state: MatrixState.Connecting }
@@ -106,6 +110,7 @@ interface Props {
   localTransport$: Behavior<LivekitTransport | null>;
   trackProcessorState$: Behavior<ProcessorState>;
   widget: WidgetHelpers | null;
+  logger: Logger;
 }
 
 /**
@@ -132,6 +137,7 @@ export const createLocalMembership$ = ({
   matrixRoom,
   trackProcessorState$,
   widget,
+  logger: parentLogger,
 }: Props): {
   // publisher: Publisher
   requestConnect: () => LocalMemberConnectionState;
@@ -157,6 +163,8 @@ export const createLocalMembership$ = ({
   /** @deprecated use state instead*/
   configError$: Behavior<ElementCallError | null>;
 } => {
+  const logger = parentLogger.getChild("[LocalMembership]");
+  logger.debug(`Creating local membership..`);
   const state = {
     livekit$: new BehaviorSubject<LocalMemberLivekitState>({
       state: LivekitState.Uninitialized,
@@ -178,17 +186,23 @@ export const createLocalMembership$ = ({
   const tracks$ = new BehaviorSubject<LocalTrack[]>([]);
 
   // Drop Epoch data here since we will not combine this anymore
-  const connection$ = scope.behavior(
-    combineLatest(
-      [connectionManager.connections$, localTransport$],
-      (connections, transport) => {
-        if (transport === null) return null;
+  const localConnection$ = scope.behavior(
+    combineLatest([connectionManager.connections$, localTransport$]).pipe(
+      map(([connections, localTransport]) => {
+        if (localTransport === null) {
+          return null;
+        }
         return (
           connections.value.find((connection) =>
-            areLivekitTransportsEqual(connection.transport, transport),
+            areLivekitTransportsEqual(connection.transport, localTransport),
           ) ?? null
         );
-      },
+      }),
+      tap((connection) => {
+        logger.info(
+          `Local connection updated: ${connection?.transport?.livekit_service_url}`,
+        );
+      }),
     ),
   );
   /**
@@ -219,6 +233,10 @@ export const createLocalMembership$ = ({
         startWith(null),
         map(() => matrixRTCSession.probablyLeft !== true),
       ),
+    ).pipe(
+      tap((connected) => {
+        logger.info(`Homeserver connected update: ${connected}`);
+      }),
     ),
   );
 
@@ -230,7 +248,7 @@ export const createLocalMembership$ = ({
   const connected$ = scope.behavior(
     and$(
       homeserverConnected$,
-      connection$.pipe(
+      localConnection$.pipe(
         switchMap((c) =>
           c
             ? c.state$.pipe(map((state) => state.state === "ConnectedToLkRoom"))
@@ -241,8 +259,9 @@ export const createLocalMembership$ = ({
   );
 
   const publisher$ = new BehaviorSubject<Publisher | null>(null);
-  connection$.subscribe((connection) => {
+  localConnection$.subscribe((connection) => {
     if (connection !== null && publisher$.value === null) {
+      // TODO looks strange to not change publisher if connection changes.
       publisher$.next(
         new Publisher(
           scope,
@@ -375,7 +394,7 @@ export const createLocalMembership$ = ({
   // We use matrixConnected$ rather than reconnecting$ because we want to
   // pause tracks during the initial joining sequence too until we're sure
   // that our own media is displayed on screen.
-  combineLatest([connection$, homeserverConnected$])
+  combineLatest([localConnection$, homeserverConnected$])
     .pipe(scope.bind())
     .subscribe(([connection, connected]) => {
       if (connection?.state$.value.state !== "ConnectedToLkRoom") return;
@@ -462,7 +481,7 @@ export const createLocalMembership$ = ({
    * Whether the user is currently sharing their screen.
    */
   const sharingScreen$ = scope.behavior(
-    connection$.pipe(
+    localConnection$.pipe(
       switchMap((c) =>
         c === null
           ? of(false)
@@ -483,7 +502,7 @@ export const createLocalMembership$ = ({
           // We also allow screen sharing to be toggled even if the connection
           // is still initializing or publishing tracks, because there's no
           // technical reason to disallow this. LiveKit will publish if it can.
-          void connection$.value?.livekitRoom.localParticipant
+          void localConnection$.value?.livekitRoom.localParticipant
             .setScreenShareEnabled(!sharingScreen$.value, {
               audio: true,
               selfBrowserSurface: "include",
@@ -494,7 +513,7 @@ export const createLocalMembership$ = ({
       : null;
 
   const participant$ = scope.behavior(
-    connection$.pipe(map((c) => c?.livekitRoom.localParticipant ?? null)),
+    localConnection$.pipe(map((c) => c?.livekitRoom.localParticipant ?? null)),
   );
   return {
     startTracks,
@@ -508,7 +527,7 @@ export const createLocalMembership$ = ({
     sharingScreen$,
     toggleScreenSharing,
     participant$,
-    connection$,
+    connection$: localConnection$,
   };
 };
 
@@ -532,6 +551,7 @@ interface EnterRTCSessionOptions {
  * @param rtcSession
  * @param transport
  * @param options
+ * @throws If the widget could not send ElementWidgetActions.JoinCall action.
  */
 async function enterRTCSession(
   rtcSession: MatrixRTCSession,
@@ -576,10 +596,6 @@ async function enterRTCSession(
     },
   );
   if (widget) {
-    try {
-      await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
-    } catch (e) {
-      logger.error("Failed to send join action", e);
-    }
+    await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
   }
 }

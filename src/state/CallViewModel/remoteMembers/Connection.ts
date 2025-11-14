@@ -98,6 +98,7 @@ export class Connection {
   // TODO dont make this throw and instead store a connection error state in this class?
   // TODO consider an autostart pattern...
   public async start(): Promise<void> {
+    this.logger.debug("Starting Connection");
     this.stopped = false;
     try {
       this._state$.next({
@@ -145,6 +146,7 @@ export class Connection {
         livekitConnectionState$: connectionStateObserver(this.livekitRoom),
       });
     } catch (error) {
+      this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
       this._state$.next({
         state: "FailedToStart",
         error: error instanceof Error ? error : new Error(`${error}`),
@@ -169,6 +171,9 @@ export class Connection {
    * If the connection is already stopped, this is a no-op.
    */
   public async stop(): Promise<void> {
+    this.logger.debug(
+      `Stopping connection to ${this.transport.livekit_service_url}`,
+    );
     if (this.stopped) return;
     await this.livekitRoom.disconnect();
     this._state$.next({
@@ -195,15 +200,18 @@ export class Connection {
   private readonly client: OpenIDClientParts;
   public readonly livekitRoom: LivekitRoom;
 
+  private readonly logger: Logger;
+
   /**
    * Creates a new connection to a matrix RTC LiveKit backend.
    *
-   * @param livekitRoom - LiveKit room instance to use.
    * @param opts - Connection options {@link ConnectionOpts}.
    *
+   * @param logger
    */
-  public constructor(opts: ConnectionOpts, logger?: Logger) {
-    logger?.info(
+  public constructor(opts: ConnectionOpts, logger: Logger) {
+    this.logger = logger.getChild("[Connection]");
+    this.logger.info(
       `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
     );
     const { transport, client, scope } = opts;
@@ -223,15 +231,17 @@ export class Connection {
         ],
       }).pipe(
         map((participants) => {
-          const partsFiltered = participants.filter(
+          return participants.filter(
             (participant) => participant.getTrackPublications().length > 0,
           );
-          return partsFiltered;
         }),
       ),
       [],
     );
 
-    scope.onEnd(() => void this.stop());
+    scope.onEnd(() => {
+      this.logger.info(`Connection scope ended, stopping connection`);
+      void this.stop();
+    });
   }
 }

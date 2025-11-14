@@ -11,6 +11,7 @@ import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   type Epoch,
@@ -120,6 +121,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
       scope: testScope,
       connectionFactory: ecConnectionFactory,
       inputTransports$: membershipsAndTransports.transports$,
+      logger: logger,
     });
 
     const matrixLivekitItems$ = createMatrixLivekitMembers$({
