@@ -169,7 +169,8 @@ export function createCallNotificationLifecycle$({
                     event.getRelation()?.rel_type === "m.reference" &&
                     event.getRelation()?.event_id ===
                       notificationEvent.event_id &&
-                    event.getSender() !== localUser.userId,
+                    event.getSender() !== localUser.userId &&
+                    callPickupState$.value !== "timeout",
                 ),
               ),
             ),
@@ -189,7 +190,8 @@ export function createCallNotificationLifecycle$({
               return "success" as const;
             }
             // Show the ringing state of the most recent ringing attempt.
-            // as long as we have not yet sent an RTC notification event, ring will be null -> callPickupState$ = unknown.
+            // as long as we have not yet sent an RTC notification event or noone else joined,
+            // ring will be null -> callPickupState$ = unknown.
             return ring ?? ("unknown" as const);
           },
         )
