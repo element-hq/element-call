@@ -11,9 +11,9 @@ import {
   mockRemoteParticipant,
 } from "./test";
 
-export const localRtcMember = mockRtcMembership("@carol:example.org", "1111");
+export const localRtcMember = mockRtcMembership("@local:example.org", "1111");
 export const localRtcMemberDevice2 = mockRtcMembership(
-  "@carol:example.org",
+  "@local:example.org",
   "2222",
 );
 export const local = mockMatrixRoomMember(localRtcMember);
