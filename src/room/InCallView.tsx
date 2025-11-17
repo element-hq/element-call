@@ -248,7 +248,6 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
-  // const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
   const audioParticipants = useBehavior(vm.audioParticipants$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
@@ -262,9 +261,8 @@ export const InCallView: FC<InCallViewProps> = ({
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
-  const localUserIsAlone = useBehavior(vm.localUserIsAlone$);
-  const oneOnOneMember = useBehavior(vm.isOneOnOneWith$);
 
+  const ringOverlay = useBehavior(vm.ringOverlay$);
   const fatalCallError = useBehavior(vm.configError$);
   // Stop the rendering and throw for the error boundary
   if (fatalCallError) throw fatalCallError;
@@ -301,33 +299,26 @@ export const InCallView: FC<InCallViewProps> = ({
 
   // Waiting UI overlay
   const waitingOverlay: JSX.Element | null = useMemo(() => {
-    // No overlay if not in ringing state
-    if (callPickupState !== "ringing" || localUserIsAlone) return null;
-
-    const name = oneOnOneMember ? oneOnOneMember.userId : matrixRoom.roomId;
-    const id = oneOnOneMember ? oneOnOneMember.userId : matrixRoom.roomId;
-    const text = oneOnOneMember
-      ? `Waiting for ${name ?? oneOnOneMember.userId} to join…`
-      : "Waiting for other participants…";
-    const avatarMxc = oneOnOneMember
-      ? (oneOnOneMember.getMxcAvatarUrl?.() ?? undefined)
-      : (matrixRoom.getMxcAvatarUrl() ?? undefined);
-
-    return (
+    return ringOverlay ? (
       <div className={classNames(overlayStyles.bg, waitingStyles.overlay)}>
         <div
           className={classNames(overlayStyles.content, waitingStyles.content)}
         >
           <div className={waitingStyles.pulse}>
-            <Avatar id={id} name={name} src={avatarMxc} size={AvatarSize.XL} />
+            <Avatar
+              id={ringOverlay.idForAvatar}
+              name={ringOverlay.name}
+              src={ringOverlay.avatarMxc}
+              size={AvatarSize.XL}
+            />
           </div>
           <Text size="md" className={waitingStyles.text}>
-            {text}
+            {ringOverlay.text}
           </Text>
         </div>
       </div>
-    );
-  }, [callPickupState, localUserIsAlone, matrixRoom, oneOnOneMember]);
+    ) : null;
+  }, [ringOverlay]);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported

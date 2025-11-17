@@ -53,6 +53,32 @@ export function createRoomMembers$(
     roomToMembersMap(matrixRoom),
   );
 }
+
+/**
+ * creates the member that this DM is with in case it is a DM (two members) otherwise null
+ */
+export function createDMMember$(
+  scope: ObservableScope,
+  roomMembers$: Behavior<RoomMemberMap>,
+  matrixRoom: MatrixRoom,
+): Behavior<Pick<
+  RoomMember,
+  "userId" | "getMxcAvatarUrl" | "rawDisplayName"
+> | null> {
+  // We cannot use the normal direct check from matrix since we do not have access to the account data.
+  // use primitive member count === 2 check instead.
+  return scope.behavior(
+    roomMembers$.pipe(
+      map((membersMap) => {
+        // primitive appraoch do to no access to account data.
+        const isDM = membersMap.size === 2;
+        if (!isDM) return null;
+        return matrixRoom.getMember(matrixRoom.guessDMUserId());
+      }),
+    ),
+  );
+}
+
 /**
  * Displayname for each member of the call. This will disambiguate
  * any displayname that clashes with another member. Only members
