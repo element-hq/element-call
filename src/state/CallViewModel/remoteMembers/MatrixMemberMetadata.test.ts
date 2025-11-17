@@ -58,6 +58,10 @@ describe("MatrixMemberMetadata", () => {
         const members = Array.from(fakeMembersMap.values());
         return members;
       }),
+      getMembersWithMembership: vi.fn().mockImplementation(() => {
+        const members = Array.from(fakeMembersMap.values());
+        return members;
+      }),
     } as unknown as MatrixRoom;
   });
 

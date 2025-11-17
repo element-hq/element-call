@@ -9,7 +9,10 @@ import { type RoomMember, RoomStateEvent } from "matrix-js-sdk";
 import { combineLatest, fromEvent, map } from "rxjs";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import { type Room as MatrixRoom } from "matrix-js-sdk/lib/matrix";
+import {
+  KnownMembership,
+  type Room as MatrixRoom,
+} from "matrix-js-sdk/lib/matrix";
 // eslint-disable-next-line rxjs/no-internal
 
 import { type ObservableScope } from "../../ObservableScope";
@@ -26,7 +29,10 @@ export type RoomMemberMap = Map<
   Pick<RoomMember, "userId" | "getMxcAvatarUrl" | "rawDisplayName">
 >;
 export function roomToMembersMap(matrixRoom: MatrixRoom): RoomMemberMap {
-  return matrixRoom.getMembers().reduce((acc, member) => {
+  const members = matrixRoom
+    .getMembersWithMembership(KnownMembership.Join)
+    .concat(matrixRoom.getMembersWithMembership(KnownMembership.Invite));
+  return members.reduce((acc, member) => {
     acc.set(member.userId, {
       userId: member.userId,
       getMxcAvatarUrl: member.getMxcAvatarUrl.bind(member),
@@ -47,6 +53,32 @@ export function createRoomMembers$(
     roomToMembersMap(matrixRoom),
   );
 }
+
+/**
+ * creates the member that this DM is with in case it is a DM (two members) otherwise null
+ */
+export function createDMMember$(
+  scope: ObservableScope,
+  roomMembers$: Behavior<RoomMemberMap>,
+  matrixRoom: MatrixRoom,
+): Behavior<Pick<
+  RoomMember,
+  "userId" | "getMxcAvatarUrl" | "rawDisplayName"
+> | null> {
+  // We cannot use the normal direct check from matrix since we do not have access to the account data.
+  // use primitive member count === 2 check instead.
+  return scope.behavior(
+    roomMembers$.pipe(
+      map((membersMap) => {
+        // primitive appraoch do to no access to account data.
+        const isDM = membersMap.size === 2;
+        if (!isDM) return null;
+        return matrixRoom.getMember(matrixRoom.guessDMUserId());
+      }),
+    ),
+  );
+}
+
 /**
  * Displayname for each member of the call. This will disambiguate
  * any displayname that clashes with another member. Only members

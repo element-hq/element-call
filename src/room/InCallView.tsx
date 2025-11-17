@@ -248,7 +248,6 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
-  // const allLivekitRooms = useBehavior(vm.allLivekitRooms$);
   const audioParticipants = useBehavior(vm.audioParticipants$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
@@ -263,6 +262,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
 
+  const ringOverlay = useBehavior(vm.ringOverlay$);
   const fatalCallError = useBehavior(vm.configError$);
   // Stop the rendering and throw for the error boundary
   if (fatalCallError) throw fatalCallError;
@@ -299,47 +299,26 @@ export const InCallView: FC<InCallViewProps> = ({
 
   // Waiting UI overlay
   const waitingOverlay: JSX.Element | null = useMemo(() => {
-    // No overlay if not in ringing state
-    if (callPickupState !== "ringing") return null;
-
-    // Use room state for other participants data (the one that we likely want to reach)
-    // TODO: this screams it wants to be a behavior in the vm.
-    const roomOthers = [
-      ...matrixRoom.getMembersWithMembership("join"),
-      ...matrixRoom.getMembersWithMembership("invite"),
-    ].filter((m) => m.userId !== client.getUserId());
-    // Yield if there are not other members in the room.
-    if (roomOthers.length === 0) return null;
-
-    const otherMember = roomOthers.length > 0 ? roomOthers[0] : undefined;
-    const isOneOnOne = roomOthers.length === 1 && otherMember;
-    const text = isOneOnOne
-      ? `Waiting for ${otherMember.name ?? otherMember.userId} to join…`
-      : "Waiting for other participants…";
-    const avatarMxc = isOneOnOne
-      ? (otherMember.getMxcAvatarUrl?.() ?? undefined)
-      : (matrixRoom.getMxcAvatarUrl() ?? undefined);
-
-    return (
+    return ringOverlay ? (
       <div className={classNames(overlayStyles.bg, waitingStyles.overlay)}>
         <div
           className={classNames(overlayStyles.content, waitingStyles.content)}
         >
           <div className={waitingStyles.pulse}>
             <Avatar
-              id={isOneOnOne ? otherMember.userId : matrixRoom.roomId}
-              name={isOneOnOne ? otherMember.name : matrixRoom.name}
-              src={avatarMxc}
+              id={ringOverlay.idForAvatar}
+              name={ringOverlay.name}
+              src={ringOverlay.avatarMxc}
               size={AvatarSize.XL}
             />
           </div>
           <Text size="md" className={waitingStyles.text}>
-            {text}
+            {ringOverlay.text}
           </Text>
         </div>
       </div>
-    );
-  }, [callPickupState, client, matrixRoom]);
+    ) : null;
+  }, [ringOverlay]);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
