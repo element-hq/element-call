@@ -15,7 +15,12 @@ import { type Behavior } from "./state/Behavior";
 export function useBehavior<T>(behavior: Behavior<T>): T {
   const subscribe = useCallback(
     (onChange: () => void) => {
-      const s = behavior.subscribe(onChange);
+      const s = behavior.subscribe({
+        next: onChange,
+        error: (e) => {
+          throw e;
+        },
+      });
       return (): void => s.unsubscribe();
     },
     [behavior],
