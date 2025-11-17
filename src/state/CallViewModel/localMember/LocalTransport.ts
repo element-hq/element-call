@@ -166,10 +166,14 @@ async function makeTransport(
 ): Promise<LivekitTransport> {
   const transport = await makeTransportInternal(client, roomId);
   // this will call the jwt/sfu/get endpoint to pre create the livekit room.
-  await getSFUConfigWithOpenID(
-    client,
-    transport.livekit_service_url,
-    transport.livekit_alias,
-  );
+  try {
+    await getSFUConfigWithOpenID(
+      client,
+      transport.livekit_service_url,
+      transport.livekit_alias,
+    );
+  } catch (e) {
+    logger.warn(`Failed to get SFU config for transport: ${e}`);
+  }
   return transport;
 }
