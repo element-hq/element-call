@@ -173,7 +173,7 @@ type AudioLivekitItem = {
 
 /**
  * The return of createCallViewModel$
- * This interface represents the root snapshot for the call view. Snapshots in EC with rxjs behave like snapshot trees.
+ * this interface represents the root source of data for the call view.
  * They are a list of observables and objects containing observables to allow for a very granular update mechanism.
  *
  * This allows to have one huge call view model that represents the entire view without a unnecessary amount of updates.
