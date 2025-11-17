@@ -42,7 +42,7 @@ import { type MuteStates } from "../../MuteStates";
 import { type ProcessorState } from "../../../livekit/TrackProcessorContext";
 import { type MediaDevices } from "../../MediaDevices";
 import { and$ } from "../../../utils/observable";
-import { type ElementCallError } from "../../../utils/errors";
+import { type ElementCallError, UnknownCallError } from "../../../utils/errors";
 import {
   ElementWidgetActions,
   widget,
@@ -487,19 +487,21 @@ export const createLocalMembership$ = ({
       switchMap((c) =>
         c === null ? of({ state: "Initialized" } as ConnectionState) : c.state$,
       ),
-      tap((s) => {
+      map((s) => {
         logger.trace(`Local connection state update: ${s.state}`);
         if (s.state == "FailedToStart") {
-          configError$.next(s.error as ElementCallError);
+          return s.error instanceof ElementCallError
+            ? s.error
+            : new UnknownCallError(s.error);
         } else {
-          // TODO do we need to clear errors on other states?
-          // It is a fatal error so the user needs to reload or similar anyway.
-          configError$.next(null);
+          return null;
         }
       }),
       scope.bind(),
     )
-    .subscribe();
+    .subscribe((fatalError) => {
+      configError$.next(fatalError);
+    });
 
   /**
    * Whether the user is currently sharing their screen.
