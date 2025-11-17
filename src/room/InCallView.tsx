@@ -59,7 +59,8 @@ import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
 import {
-  CallViewModel,
+  type CallViewModel,
+  createCallViewModel$,
   type GridMode,
 } from "../state/CallViewModel/CallViewModel.ts";
 import { Grid, type TileProps } from "../grid/Grid";
@@ -128,7 +129,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     const reactionsReader = new ReactionsReader(scope, props.rtcSession);
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
       urlParams;
-    const vm = new CallViewModel(
+    const vm = createCallViewModel$(
       scope,
       props.rtcSession,
       props.matrixRoom,
