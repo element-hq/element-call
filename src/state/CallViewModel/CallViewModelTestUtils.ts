@@ -24,7 +24,11 @@ import * as ComponentsCore from "@livekit/components-core";
 import type { CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { type RaisedHandInfo, type ReactionInfo } from "../../reactions";
-import { CallViewModel, type CallViewModelOptions } from "./CallViewModel";
+import {
+  type CallViewModel,
+  createCallViewModel$,
+  type CallViewModelOptions,
+} from "./CallViewModel";
 import {
   mockConfig,
   mockLivekitRoom,
@@ -154,7 +158,7 @@ export function withCallViewModel(
   const raisedHands$ = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
   const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
 
-  const vm = new CallViewModel(
+  const vm = createCallViewModel$(
     testScope(),
     rtcSession.asMockedSession(),
     room,

@@ -37,7 +37,7 @@ import {
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
-import { CallViewModel } from "./CallViewModel";
+import { createCallViewModel$ } from "./CallViewModel";
 import { type Layout } from "../layout-types.ts";
 import {
   mockLocalParticipant,
@@ -277,7 +277,7 @@ describe("CallViewModel", () => {
 
     vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({});
 
-    const callVM = new CallViewModel(
+    const callVM = createCallViewModel$(
       testScope(),
       fakeRtcSession.asMockedSession(),
       matrixRoom,
