@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { catchError, of, tap, Subject, map } from "rxjs";
+import { catchError, of, tap, Subject, map, BehaviorSubject } from "rxjs";
 
 import { type Behavior } from "./state/Behavior";
 import { useBehavior } from "./useBehavior";
@@ -64,7 +64,6 @@ describe("useBehavior", () => {
   it("useBehavior forwards the throw in obs computation", () => {
     const throwingOperation = (): string => {
       throw new Error("Test error");
-      return "a";
     };
 
     expect(() => {
@@ -75,12 +74,13 @@ describe("useBehavior", () => {
       render(<TestComponent behavior$={b$}>Test</TestComponent>);
     }).toThrow("Test error");
   });
-  it("useBehavior does not throw in caught obs computation", () => {
-    function errorOnE(s: string): string {
-      if (s === "E") throw new Error("Test error");
-      return s + "CheckedForE";
-    }
 
+  function errorOnE(s: string): string {
+    if (s === "E") throw new Error("Test error");
+    return s + "CheckedForE";
+  }
+
+  it("useBehavior does not throw in caught obs computation", () => {
     console.log("hello");
     const s$ = new Subject<string>();
     const b$ = scope.behavior(s$.pipe(map(errorOnE)), "START");
@@ -107,5 +107,18 @@ describe("useBehavior", () => {
     expect(() => {
       render(<TestComponent behavior$={b$}>Test</TestComponent>);
     }).toThrow();
+  });
+  it("a playground to test around a little bit", () => {
+    const s$ = new BehaviorSubject("initial");
+    const e = new Error("Test error");
+
+    console.log("hello");
+
+    s$.error(e);
+    // does not help to set the value afterwards if it errord once it cannot recover
+    s$.next("nextval");
+    const s2$ = scope.behavior(s$.pipe(catchError((e) => e.message)));
+    expect(() => s$.value).toThrow(e);
+    expect(() => s2$.value).not.toThrow();
   });
 });
