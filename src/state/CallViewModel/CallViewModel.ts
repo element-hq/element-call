@@ -469,10 +469,10 @@ export class CallViewModel {
     // down, for example, and we want to avoid making people worry that the app is
     // in a split-brained state.
     // DISCUSSION own membership manager ALSO this probably can be simplifis
-    /*PUBLIC*/ const reconnecting$ = localMembership.reconnecting$;
+    const reconnecting$ = localMembership.reconnecting$;
     const pretendToBeDisconnected$ = reconnecting$;
 
-    /*PUBLIC*/ const audioParticipants$ = scope.behavior(
+    const audioParticipants$ = scope.behavior(
       matrixLivekitMembers$.pipe(
         switchMap((membersWithEpoch) => {
           const members = membersWithEpoch.value;
@@ -518,11 +518,11 @@ export class CallViewModel {
       [],
     );
 
-    /*PUBLIC*/ const handsRaised$ = scope.behavior(
+    const handsRaised$ = scope.behavior(
       handsRaisedSubject$.pipe(pauseWhen(pretendToBeDisconnected$)),
     );
 
-    /*PUBLIC*/ const reactions$ = scope.behavior(
+    const reactions$ = scope.behavior(
       reactionsSubject$.pipe(
         map((v) =>
           Object.fromEntries(
@@ -663,7 +663,7 @@ export class CallViewModel {
       ),
     );
 
-    /*PUBLIC*/ const joinSoundEffect$ = userMedia$.pipe(
+    const joinSoundEffect$ = userMedia$.pipe(
       pairwise(),
       filter(
         ([prev, current]) =>
@@ -681,16 +681,16 @@ export class CallViewModel {
      *  - There can be multiple participants for one Matrix user if they join from
      *    multiple devices.
      */
-    /*PUBLIC*/ const participantCount$ = scope.behavior(
+    const participantCount$ = scope.behavior(
       matrixLivekitMembers$.pipe(map((ms) => ms.value.length)),
     );
 
     // only public to expose to the view.
     // TODO if we are in "unknown" state we need a loading rendering (or empty screen)
     // Otherwise it looks like we already connected and only than the ringing starts which is weird.
-    /*PUBLIC*/ const callPickupState$ = callLifecycle.callPickupState$;
+    const callPickupState$ = callLifecycle.callPickupState$;
 
-    /*PUBLIC*/ const leaveSoundEffect$ = combineLatest([
+    const leaveSoundEffect$ = combineLatest([
       callLifecycle.callPickupState$,
       userMedia$,
     ]).pipe(
@@ -871,14 +871,14 @@ export class CallViewModel {
     /**
      * The general shape of the window.
      */
-    /*PUBLIC*/ const windowMode$ = scope.behavior<WindowMode>(
+    const windowMode$ = scope.behavior<WindowMode>(
       pipEnabled$.pipe(
         switchMap((pip) => (pip ? of<WindowMode>("pip") : naturalWindowMode$)),
       ),
     );
 
     const spotlightExpandedToggle$ = new Subject<void>();
-    /*PUBLIC*/ const spotlightExpanded$ = scope.behavior<boolean>(
+    const spotlightExpanded$ = scope.behavior<boolean>(
       spotlightExpandedToggle$.pipe(accumulate(false, (expanded) => !expanded)),
     );
 
@@ -886,7 +886,7 @@ export class CallViewModel {
     /**
      * The layout mode of the media tile grid.
      */
-    /*PUBLIC*/ const gridMode$ =
+    const gridMode$ =
       // If the user hasn't selected spotlight and somebody starts screen sharing,
       // automatically switch to spotlight mode and reset when screen sharing ends
       scope.behavior<GridMode>(
@@ -909,7 +909,7 @@ export class CallViewModel {
         "grid",
       );
 
-    /*PUBLIC*/ const setGridMode = (value: GridMode): void => {
+    const setGridMode = (value: GridMode): void => {
       gridModeUserSelection$.next(value);
     };
 
@@ -1087,22 +1087,22 @@ export class CallViewModel {
     /**
      * The layout of tiles in the call interface.
      */
-    /*PUBLIC*/ const layout$ = scope.behavior<Layout>(
+    const layout$ = scope.behavior<Layout>(
       layoutInternals$.pipe(map(({ layout }) => layout)),
     );
 
     /**
      * The current generation of the tile store, exposed for debugging purposes.
      */
-    /*PUBLIC*/ const tileStoreGeneration$ = scope.behavior<number>(
+    const tileStoreGeneration$ = scope.behavior<number>(
       layoutInternals$.pipe(map(({ tiles }) => tiles.generation)),
     );
 
-    /*PUBLIC*/ const showSpotlightIndicators$ = scope.behavior<boolean>(
+    const showSpotlightIndicators$ = scope.behavior<boolean>(
       layout$.pipe(map((l) => l.type !== "grid")),
     );
 
-    /*PUBLIC*/ const showSpeakingIndicators$ = scope.behavior<boolean>(
+    const showSpeakingIndicators$ = scope.behavior<boolean>(
       layout$.pipe(
         switchMap((l) => {
           switch (l.type) {
@@ -1130,9 +1130,7 @@ export class CallViewModel {
       ),
     );
 
-    /*PUBLIC*/ const toggleSpotlightExpanded$ = scope.behavior<
-      (() => void) | null
-    >(
+    const toggleSpotlightExpanded$ = scope.behavior<(() => void) | null>(
       windowMode$.pipe(
         switchMap((mode) =>
           mode === "normal"
@@ -1157,11 +1155,11 @@ export class CallViewModel {
     const screenHover$ = new Subject<void>();
     const screenUnhover$ = new Subject<void>();
 
-    /*PUBLIC*/ const showHeader$ = scope.behavior<boolean>(
+    const showHeader$ = scope.behavior<boolean>(
       windowMode$.pipe(map((mode) => mode !== "pip" && mode !== "flat")),
     );
 
-    /*PUBLIC*/ const showFooter$ = scope.behavior<boolean>(
+    const showFooter$ = scope.behavior<boolean>(
       windowMode$.pipe(
         switchMap((mode) => {
           switch (mode) {
@@ -1219,7 +1217,7 @@ export class CallViewModel {
     /**
      * Whether audio is currently being output through the earpiece.
      */
-    /*PUBLIC*/ const earpieceMode$ = scope.behavior<boolean>(
+    const earpieceMode$ = scope.behavior<boolean>(
       combineLatest(
         [
           mediaDevices.audioOutput.available$,
@@ -1237,7 +1235,7 @@ export class CallViewModel {
      * This will be `null` in case the target does not exist in the list
      * of available audio outputs.
      */
-    /*PUBLIC*/ const audioOutputSwitcher$ = scope.behavior<{
+    const audioOutputSwitcher$ = scope.behavior<{
       targetOutput: "earpiece" | "speaker";
       switch: () => void;
     } | null>(
