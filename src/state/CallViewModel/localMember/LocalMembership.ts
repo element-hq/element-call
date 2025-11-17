@@ -22,6 +22,7 @@ import { ClientEvent, SyncState, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   BehaviorSubject,
   combineLatest,
+  distinctUntilChanged,
   fromEvent,
   map,
   type Observable,
@@ -52,7 +53,10 @@ import { getUrlParams } from "../../../UrlParams.ts";
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
 import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
-import { type Connection } from "../remoteMembers/Connection.ts";
+import {
+  type Connection,
+  type ConnectionState,
+} from "../remoteMembers/Connection.ts";
 
 export enum LivekitState {
   Uninitialized = "uninitialized",
@@ -446,8 +450,8 @@ export const createLocalMembership$ = ({
   scope.reconcile(localTransport$, async (advertised) => {
     if (advertised !== null && advertised !== undefined) {
       try {
-        configError$.next(null);
         await enterRTCSession(matrixRTCSession, advertised, options.value);
+        configError$.next(null);
       } catch (e) {
         logger.error("Error entering RTC session", e);
       }
@@ -476,6 +480,26 @@ export const createLocalMembership$ = ({
       };
     }
   });
+
+  localConnection$
+    .pipe(
+      distinctUntilChanged(),
+      switchMap((c) =>
+        c === null ? of({ state: "Initialized" } as ConnectionState) : c.state$,
+      ),
+      tap((s) => {
+        logger.trace(`Local connection state update: ${s.state}`);
+        if (s.state == "FailedToStart") {
+          configError$.next(s.error as ElementCallError);
+        } else {
+          // TODO do we need to clear errors on other states?
+          // It is a fatal error so the user needs to reload or similar anyway.
+          configError$.next(null);
+        }
+      }),
+      scope.bind(),
+    )
+    .subscribe();
 
   /**
    * Whether the user is currently sharing their screen.
