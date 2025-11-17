@@ -122,6 +122,7 @@ export function withCallViewModel(
       }
     })() as Partial<MatrixClient> as MatrixClient,
     getMembers: () => Array.from(roomMembers.values()),
+    getMembersWithMembership: () => Array.from(roomMembers.values()),
   });
   const rtcSession = new MockRTCSession(room, []).withMemberships(rtcMembers$);
   const participantsSpy = vi

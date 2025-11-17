@@ -262,6 +262,8 @@ export const InCallView: FC<InCallViewProps> = ({
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
+  const localUserIsAlone = useBehavior(vm.localUserIsAlone$);
+  const oneOnOneMember = useBehavior(vm.isOneOnOneWith$);
 
   const fatalCallError = useBehavior(vm.configError$);
   // Stop the rendering and throw for the error boundary
@@ -300,24 +302,15 @@ export const InCallView: FC<InCallViewProps> = ({
   // Waiting UI overlay
   const waitingOverlay: JSX.Element | null = useMemo(() => {
     // No overlay if not in ringing state
-    if (callPickupState !== "ringing") return null;
+    if (callPickupState !== "ringing" || localUserIsAlone) return null;
 
-    // Use room state for other participants data (the one that we likely want to reach)
-    // TODO: this screams it wants to be a behavior in the vm.
-    const roomOthers = [
-      ...matrixRoom.getMembersWithMembership("join"),
-      ...matrixRoom.getMembersWithMembership("invite"),
-    ].filter((m) => m.userId !== client.getUserId());
-    // Yield if there are not other members in the room.
-    if (roomOthers.length === 0) return null;
-
-    const otherMember = roomOthers.length > 0 ? roomOthers[0] : undefined;
-    const isOneOnOne = roomOthers.length === 1 && otherMember;
-    const text = isOneOnOne
-      ? `Waiting for ${otherMember.name ?? otherMember.userId} to join…`
+    const name = oneOnOneMember ? oneOnOneMember.userId : matrixRoom.roomId;
+    const id = oneOnOneMember ? oneOnOneMember.userId : matrixRoom.roomId;
+    const text = oneOnOneMember
+      ? `Waiting for ${name ?? oneOnOneMember.userId} to join…`
       : "Waiting for other participants…";
-    const avatarMxc = isOneOnOne
-      ? (otherMember.getMxcAvatarUrl?.() ?? undefined)
+    const avatarMxc = oneOnOneMember
+      ? (oneOnOneMember.getMxcAvatarUrl?.() ?? undefined)
       : (matrixRoom.getMxcAvatarUrl() ?? undefined);
 
     return (
@@ -326,12 +319,7 @@ export const InCallView: FC<InCallViewProps> = ({
           className={classNames(overlayStyles.content, waitingStyles.content)}
         >
           <div className={waitingStyles.pulse}>
-            <Avatar
-              id={isOneOnOne ? otherMember.userId : matrixRoom.roomId}
-              name={isOneOnOne ? otherMember.name : matrixRoom.name}
-              src={avatarMxc}
-              size={AvatarSize.XL}
-            />
+            <Avatar id={id} name={name} src={avatarMxc} size={AvatarSize.XL} />
           </div>
           <Text size="md" className={waitingStyles.text}>
             {text}
@@ -339,7 +327,7 @@ export const InCallView: FC<InCallViewProps> = ({
         </div>
       </div>
     );
-  }, [callPickupState, client, matrixRoom]);
+  }, [callPickupState, localUserIsAlone, matrixRoom, oneOnOneMember]);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
