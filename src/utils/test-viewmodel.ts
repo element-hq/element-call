@@ -20,7 +20,8 @@ import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
 
 import { E2eeType } from "../e2ee/e2eeType";
 import {
-  CallViewModel,
+  type CallViewModel,
+  createCallViewModel$,
   type CallViewModelOptions,
 } from "../state/CallViewModel/CallViewModel";
 import {
@@ -145,7 +146,7 @@ export function getBasicCallViewModelEnvironment(
 
   // const remoteParticipants$ = of([aliceParticipant]);
 
-  const vm = new CallViewModel(
+  const vm = createCallViewModel$(
     testScope(),
     rtcSession.asMockedSession(),
     matrixRoom,
