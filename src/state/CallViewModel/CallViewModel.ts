@@ -181,32 +181,68 @@ type AudioLivekitItem = {
 export class CallViewModel {
   // lifecycle
   public autoLeave$: Observable<AutoLeaveReason>;
+  // TODO if we are in "unknown" state we need a loading rendering (or empty screen)
+  // Otherwise it looks like we already connected and only than the ringing starts which is weird.
   public callPickupState$: Behavior<
     "unknown" | "ringing" | "timeout" | "decline" | "success" | null
   >;
   public leave$: Observable<"user" | AutoLeaveReason>;
+  /** Call to initiate hangup. Use in conbination with connectino state track the async hangup process. */
   public hangup: () => void;
 
   // joining
   public join: () => LocalMemberConnectionState;
 
   // screen sharing
+  /**
+   * Callback to toggle screen sharing. If null, screen sharing is not possible.
+   */
   public toggleScreenSharing: (() => void) | null;
+  /**
+   * Whether we are sharing our screen.
+   */
   public sharingScreen$: Behavior<boolean>;
 
   // UI interactions
+  /**
+   * Callback for when the user taps the call view.
+   */
   public tapScreen: () => void;
+  /**
+   * Callback for when the user taps the call's controls.
+   */
   public tapControls: () => void;
+  /**
+   * Callback for when the user hovers over the call view.
+   */
   public hoverScreen: () => void;
+  /**
+   * Callback for when the user stops hovering over the call view.
+   */
   public unhoverScreen: () => void;
 
   // errors
+  /**
+   * If there is a configuration error with the call (e.g. misconfigured E2EE).
+   * This is a fatal error that prevents the call from being created/joined.
+   * Should render a blocking error screen.
+   */
   public configError$: Behavior<ElementCallError | null>;
 
   // participants and counts
+  /**
+   * The number of participants currently in the call.
+   *
+   *  - Each participant has a corresponding MatrixRTC membership state event
+   *  - There can be multiple participants for one Matrix user if they join from
+   *    multiple devices.
+   */
   public participantCount$: Behavior<number>;
+  /** Participants sorted by livekit room so they can be used in the audio rendering */
   public audioParticipants$: Behavior<AudioLivekitItem[]>;
+  /** List of participants raising their hand */
   public handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
+  /** List of reactions. Keys are: membership.membershipId (currently predefined as: `${membershipEvent.userId}:${membershipEvent.deviceId}`)*/
   public reactions$: Behavior<Record<string, ReactionOption>>;
   public isOneOnOneWith$: Behavior<Pick<
     RoomMember,
@@ -216,14 +252,32 @@ export class CallViewModel {
   // sounds and events
   public joinSoundEffect$: Observable<void>;
   public leaveSoundEffect$: Observable<void>;
+  /**
+   * Emits an event every time a new hand is raised in
+   * the call.
+   */
   public newHandRaised$: Observable<{ value: number; playSounds: boolean }>;
+  /**
+   * Emits an event every time a new screenshare is started in
+   * the call.
+   */
   public newScreenShare$: Observable<{ value: number; playSounds: boolean }>;
+  /**
+   * Emits an array of reactions that should be played.
+   */
   public audibleReactions$: Observable<string[]>;
+  /**
+   * Emits an array of reactions that should be visible on the screen.
+   */
+  // DISCUSSION move this into a reaction file
   public visibleReactions$: Behavior<
     { sender: string; emoji: string; startX: number }[]
   >;
 
   // window/layout
+  /**
+   * The general shape of the window.
+   */
   public windowMode$: Behavior<WindowMode>;
   public spotlightExpanded$: Behavior<boolean>;
   public toggleSpotlightExpanded$: Behavior<(() => void) | null>;
@@ -234,7 +288,13 @@ export class CallViewModel {
   public grid$: Behavior<UserMediaViewModel[]>;
   public spotlight$: Behavior<MediaViewModel[]>;
   public pip$: Behavior<UserMediaViewModel | null>;
+  /**
+   * The layout of tiles in the call interface.
+   */
   public layout$: Behavior<Layout>;
+  /**
+   * The current generation of the tile store, exposed for debugging purposes.
+   */
   public tileStoreGeneration$: Behavior<number>;
   public showSpotlightIndicators$: Behavior<boolean>;
   public showSpeakingIndicators$: Behavior<boolean>;
@@ -244,13 +304,31 @@ export class CallViewModel {
   public showFooter$: Behavior<boolean>;
 
   // audio routing
+  /**
+   * Whether audio is currently being output through the earpiece.
+   */
   public earpieceMode$: Behavior<boolean>;
+  /**
+   * Callback to toggle between the earpiece and the loudspeaker.
+   *
+   * This will be `null` in case the target does not exist in the list
+   * of available audio outputs.
+   */
   public audioOutputSwitcher$: Behavior<{
     targetOutput: "earpiece" | "speaker";
     switch: () => void;
   } | null>;
 
   // connection state
+  /**
+   * Whether various media/event sources should pretend to be disconnected from
+   * all network input, even if their connection still technically works.
+   */
+  // We do this when the app is in the 'reconnecting' state, because it might be
+  // that the LiveKit connection is still functional while the homeserver is
+  // down, for example, and we want to avoid making people worry that the app is
+  // in a split-brained state.
+  // DISCUSSION own membership manager ALSO this probably can be simplifis
   public reconnecting$: Behavior<boolean>;
 
   // THIS has to be the last public field declaration
