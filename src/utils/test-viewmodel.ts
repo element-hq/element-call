@@ -83,6 +83,8 @@ export function getBasicRTCSession(
     } as Partial<MatrixClient> as MatrixClient,
     getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
     getMembers: () => Array.from(matrixRoomMembers.values()),
+    getMembersWithMembership: () => Array.from(matrixRoomMembers.values()),
+    guessDMUserId: vitest.fn(),
     roomId: matrixRoomId,
     on: vitest
       .fn()

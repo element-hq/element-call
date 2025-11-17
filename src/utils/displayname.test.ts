@@ -25,7 +25,7 @@ import { roomToMembersMap } from "../state/CallViewModel/remoteMembers/MatrixMem
 describe("shouldDisambiguate", () => {
   test("should not disambiguate a solo member", () => {
     const room = mockMatrixRoom({
-      getMembers: () => [],
+      getMembersWithMembership: () => [],
     });
     expect(shouldDisambiguate(alice, [], roomToMembersMap(room))).toEqual(
       false,
@@ -33,7 +33,7 @@ describe("shouldDisambiguate", () => {
   });
   test("should not disambiguate a member with an empty displayname", () => {
     const room = mockMatrixRoom({
-      getMembers: () => [alice, aliceDoppelganger],
+      getMembersWithMembership: () => [alice, aliceDoppelganger],
     });
     expect(
       shouldDisambiguate(
@@ -44,14 +44,14 @@ describe("shouldDisambiguate", () => {
     ).toEqual(false);
   });
   test("should disambiguate a member with RTL characters", () => {
-    const room = mockMatrixRoom({ getMembers: () => [] });
+    const room = mockMatrixRoom({ getMembersWithMembership: () => [] });
     expect(shouldDisambiguate(daveRTL, [], roomToMembersMap(room))).toEqual(
       true,
     );
   });
   test("should disambiguate a member with a matching displayname", () => {
     const room = mockMatrixRoom({
-      getMembers: () => [alice, aliceDoppelganger],
+      getMembersWithMembership: () => [alice, aliceDoppelganger],
     });
     expect(
       shouldDisambiguate(
@@ -70,7 +70,7 @@ describe("shouldDisambiguate", () => {
   });
   test("should disambiguate a member with a matching displayname with hidden spaces", () => {
     const room = mockMatrixRoom({
-      getMembers: () => [bob, bobZeroWidthSpace],
+      getMembersWithMembership: () => [bob, bobZeroWidthSpace],
     });
     expect(
       shouldDisambiguate(
@@ -91,7 +91,7 @@ describe("shouldDisambiguate", () => {
     "should disambiguate a member with a displayname containing a mxid-like string '%s'",
     (rawDisplayName) => {
       const room = mockMatrixRoom({
-        getMembers: () => [alice, aliceDoppelganger],
+        getMembersWithMembership: () => [alice, aliceDoppelganger],
       });
       expect(
         shouldDisambiguate(

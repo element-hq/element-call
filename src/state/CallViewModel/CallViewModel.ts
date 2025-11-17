@@ -12,7 +12,7 @@ import {
   type Room as LivekitRoom,
   type RoomOptions,
 } from "livekit-client";
-import { type RoomMember, type Room as MatrixRoom } from "matrix-js-sdk";
+import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   combineLatest,
   distinctUntilChanged,
@@ -115,6 +115,7 @@ import {
   createSentCallNotification$,
 } from "./CallNotificationLifecycle.ts";
 import {
+  createDMMember$,
   createMatrixMemberMetadata$,
   createRoomMembers$,
 } from "./remoteMembers/MatrixMemberMetadata.ts";
@@ -244,11 +245,14 @@ export class CallViewModel {
   public handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
   /** List of reactions. Keys are: membership.membershipId (currently predefined as: `${membershipEvent.userId}:${membershipEvent.deviceId}`)*/
   public reactions$: Behavior<Record<string, ReactionOption>>;
-  public isOneOnOneWith$: Behavior<Pick<
-    RoomMember,
-    "userId" | "getMxcAvatarUrl" | "rawDisplayName"
-  > | null>;
-  public localUserIsAlone$: Behavior<boolean>;
+
+  public ringOverlay$: Behavior<null | {
+    name: string;
+    /** roomId or userId for the avatar generation. */
+    idForAvatar: string;
+    text: string;
+    avatarMxc?: string;
+  }>;
   // sounds and events
   public joinSoundEffect$: Observable<void>;
   public leaveSoundEffect$: Observable<void>;
@@ -483,7 +487,9 @@ export class CallViewModel {
     // ------------------------------------------------------------------------
     // callLifecycle
 
-    const callLifecycle = createCallNotificationLifecycle$({
+    // TODO if we are in "unknown" state we need a loading rendering (or empty screen)
+    // Otherwise it looks like we already connected and only than the ringing starts which is weird.
+    const { callPickupState$, autoLeave$ } = createCallNotificationLifecycle$({
       scope: scope,
       memberships$: memberships$,
       sentCallNotification$: createSentCallNotification$(
@@ -505,27 +511,38 @@ export class CallViewModel {
       matrixRoomMembers$,
     );
 
-    /**
-     * Returns the Member {userId, getMxcAvatarUrl, rawDisplayName} of the other user in the call, if it's a one-on-one call.
-     */
-    const isOneOnOneWith$ = scope.behavior(
-      matrixRoomMembers$.pipe(
-        map((roomMembersMap) => {
-          const otherMembers = Array.from(roomMembersMap.values()).filter(
-            (member) => member.userId !== userId,
-          );
-          return otherMembers.length === 1 ? otherMembers[0] : null;
-        }),
-      ),
-    );
-
-    const localUserIsAlone$ = scope.behavior(
+    const dmMember$ = createDMMember$(scope, matrixRoomMembers$, matrixRoom);
+    const noUserToCallInRoom$ = scope.behavior(
       matrixRoomMembers$.pipe(
         map(
           (roomMembersMap) =>
             roomMembersMap.size === 1 &&
             roomMembersMap.get(userId) !== undefined,
         ),
+      ),
+    );
+
+    const ringOverlay$ = scope.behavior(
+      combineLatest([noUserToCallInRoom$, dmMember$, callPickupState$]).pipe(
+        map(([noUserToCallInRoom, dmMember, callPickupState]) => {
+          // No overlay if not in ringing state
+          if (callPickupState !== "ringing" || noUserToCallInRoom) return null;
+
+          const name = dmMember ? dmMember.rawDisplayName : matrixRoom.name;
+          const id = dmMember ? dmMember.userId : matrixRoom.roomId;
+          const text = dmMember
+            ? `Waiting for ${name} to join…`
+            : "Waiting for other participants…";
+          const avatarMxc = dmMember
+            ? (dmMember.getMxcAvatarUrl?.() ?? undefined)
+            : (matrixRoom.getMxcAvatarUrl() ?? undefined);
+          return {
+            name: name ?? id,
+            idForAvatar: id,
+            text,
+            avatarMxc,
+          };
+        }),
       ),
     );
 
@@ -763,13 +780,8 @@ export class CallViewModel {
       matrixLivekitMembers$.pipe(map((ms) => ms.value.length)),
     );
 
-    // only public to expose to the view.
-    // TODO if we are in "unknown" state we need a loading rendering (or empty screen)
-    // Otherwise it looks like we already connected and only than the ringing starts which is weird.
-    const callPickupState$ = callLifecycle.callPickupState$;
-
     const leaveSoundEffect$ = combineLatest([
-      callLifecycle.callPickupState$,
+      callPickupState$,
       userMedia$,
     ]).pipe(
       // Until the call is successful, do not play a leave sound.
@@ -804,7 +816,7 @@ export class CallViewModel {
 
     const leave$: Observable<"user" | "timeout" | "decline" | "allOthersLeft"> =
       merge(
-        callLifecycle.autoLeave$,
+        autoLeave$,
         merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
       ).pipe(
         scope.share,
@@ -1430,8 +1442,9 @@ export class CallViewModel {
     const join = localMembership.requestConnect;
     join(); // TODO-MULTI-SFU: Use this view model for the lobby as well, and only call this once 'join' is clicked?
 
-    this.autoLeave$ = callLifecycle.autoLeave$;
+    this.autoLeave$ = autoLeave$;
     this.callPickupState$ = callPickupState$;
+    this.ringOverlay$ = ringOverlay$;
     this.leave$ = leave$;
     this.hangup = (): void => userHangup$.next();
     this.join = join;
@@ -1446,8 +1459,6 @@ export class CallViewModel {
     this.configError$ = localMembership.configError$;
     this.participantCount$ = participantCount$;
     this.audioParticipants$ = audioParticipants$;
-    this.isOneOnOneWith$ = isOneOnOneWith$;
-    this.localUserIsAlone$ = localUserIsAlone$;
 
     this.handsRaised$ = handsRaised$;
     this.reactions$ = reactions$;
