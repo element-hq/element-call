@@ -42,7 +42,7 @@ import { type MuteStates } from "../../MuteStates";
 import { type ProcessorState } from "../../../livekit/TrackProcessorContext";
 import { type MediaDevices } from "../../MediaDevices";
 import { and$ } from "../../../utils/observable";
-import { type ElementCallError, UnknownCallError } from "../../../utils/errors";
+import { ElementCallError, UnknownCallError } from "../../../utils/errors";
 import {
   ElementWidgetActions,
   widget,
