@@ -93,7 +93,10 @@ import {
 } from "../layout-types.ts";
 import { type ElementCallError } from "../../utils/errors.ts";
 import { type ObservableScope } from "../ObservableScope.ts";
-import { createLocalMembership$ } from "./localMember/LocalMembership.ts";
+import {
+  createLocalMembership$,
+  type LocalMemberConnectionState,
+} from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import {
   createMemberships$,
@@ -167,10 +170,6 @@ type AudioLivekitItem = {
   url: string;
 };
 
-type JoinReturn = ReturnType<
-  ReturnType<typeof createLocalMembership$>["requestConnect"]
->;
-
 /**
  * A view model providing all the application logic needed to show the in-call
  * UI (may eventually be expanded to cover the lobby and feedback screens in the
@@ -189,7 +188,7 @@ export class CallViewModel {
   public hangup: () => void;
 
   // joining
-  public join: () => JoinReturn;
+  public join: () => LocalMemberConnectionState;
 
   // screen sharing
   public toggleScreenSharing: (() => void) | null;
