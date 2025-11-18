@@ -1,6 +1,3 @@
-// TODOs:
-// - make ConnectionManager its own actual class
-
 /*
 Copyright 2025 Element Creations Ltd.
 Copyright 2025 New Vector Ltd.
