@@ -14,7 +14,7 @@ import { fillGaps } from "../utils/iter";
 import { debugTileLayout } from "../settings/settings";
 
 function debugEntries(entries: GridTileData[]): string[] {
-  return entries.map((e) => e.media.member?.rawDisplayName ?? "[👻]");
+  return entries.map((e) => e.media.displayName$.value);
 }
 
 let DEBUG_ENABLED = false;
@@ -156,7 +156,7 @@ export class TileStoreBuilder {
   public registerSpotlight(media: MediaViewModel[], maximised: boolean): void {
     if (DEBUG_ENABLED)
       logger.debug(
-        `[TileStore, ${this.generation}] register spotlight: ${media.map((m) => m.member?.rawDisplayName ?? "[👻]")}`,
+        `[TileStore, ${this.generation}] register spotlight: ${media.map((m) => m.displayName$.value)}`,
       );
 
     if (this.spotlight !== null) throw new Error("Spotlight already set");
@@ -180,7 +180,7 @@ export class TileStoreBuilder {
   public registerGridTile(media: UserMediaViewModel): void {
     if (DEBUG_ENABLED)
       logger.debug(
-        `[TileStore, ${this.generation}] register grid tile: ${media.member?.rawDisplayName ?? "[👻]"}`,
+        `[TileStore, ${this.generation}] register grid tile: ${media.displayName$.value}`,
       );
 
     if (this.spotlight !== null) {
@@ -263,7 +263,7 @@ export class TileStoreBuilder {
   public registerPipTile(media: UserMediaViewModel): void {
     if (DEBUG_ENABLED)
       logger.debug(
-        `[TileStore, ${this.generation}] register PiP tile: ${media.member?.rawDisplayName ?? "[👻]"}`,
+        `[TileStore, ${this.generation}] register PiP tile: ${media.displayName$.value}`,
       );
 
     // If there is a single grid tile that we can reuse

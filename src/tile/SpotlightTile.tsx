@@ -27,7 +27,6 @@ import { useObservableRef } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
-import { type RoomMember } from "matrix-js-sdk";
 
 import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
 import FullScreenMinimiseIcon from "../icons/FullScreenMinimise.svg?react";
@@ -55,10 +54,12 @@ interface SpotlightItemBaseProps {
   targetHeight: number;
   video: TrackReferenceOrPlaceholder | undefined;
   videoEnabled: boolean;
-  member: RoomMember;
+  userId: string;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
+  focusUrl: string | undefined;
   displayName: string;
+  mxcAvatarUrl: string | undefined;
   focusable: boolean;
   "aria-hidden"?: boolean;
   localParticipant: boolean;
@@ -78,7 +79,7 @@ const SpotlightLocalUserMediaItem: FC<SpotlightLocalUserMediaItemProps> = ({
   ...props
 }) => {
   const mirror = useBehavior(vm.mirror$);
-  return <MediaView mirror={mirror} focusUrl={vm.focusURL} {...props} />;
+  return <MediaView mirror={mirror} {...props} />;
 };
 
 SpotlightLocalUserMediaItem.displayName = "SpotlightLocalUserMediaItem";
@@ -134,7 +135,9 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
+  const focusUrl = useBehavior(vm.focusUrl$);
   const displayName = useBehavior(vm.displayName$);
+  const mxcAvatarUrl = useBehavior(vm.mxcAvatarUrl$);
   const video = useBehavior(vm.video$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
   const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
@@ -161,11 +164,13 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     className: classNames(styles.item, { [styles.snap]: snap }),
     targetWidth,
     targetHeight,
-    video,
+    video: video ?? undefined,
     videoEnabled,
-    member: vm.member,
+    userId: vm.userId,
     unencryptedWarning,
+    focusUrl,
     displayName,
+    mxcAvatarUrl,
     focusable,
     encryptionStatus,
     "aria-hidden": ariaHidden,

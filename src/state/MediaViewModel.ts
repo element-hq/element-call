@@ -27,7 +27,6 @@ import {
   RoomEvent as LivekitRoomEvent,
   RemoteTrack,
 } from "livekit-client";
-import { type RoomMember } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   BehaviorSubject,
@@ -44,6 +43,7 @@ import {
   startWith,
   switchMap,
   throttleTime,
+  distinctUntilChanged,
 } from "rxjs";
 
 import { alwaysShowSelf } from "../settings/settings";
@@ -180,29 +180,35 @@ function observeRemoteTrackReceivingOkay$(
 }
 
 function encryptionErrorObservable$(
-  room: LivekitRoom,
+  room$: Behavior<LivekitRoom | undefined>,
   participant: Participant,
   encryptionSystem: EncryptionSystem,
   criteria: string,
 ): Observable<boolean> {
-  return roomEventSelector(room, LivekitRoomEvent.EncryptionError).pipe(
-    map((e) => {
-      const [err] = e;
-      if (encryptionSystem.kind === E2eeType.PER_PARTICIPANT) {
-        return (
-          // Ideally we would pull the participant identity from the field on the error.
-          // However, it gets lost in the serialization process between workers.
-          // So, instead we do a string match
-          (err?.message.includes(participant.identity) &&
-            err?.message.includes(criteria)) ??
-          false
-        );
-      } else if (encryptionSystem.kind === E2eeType.SHARED_KEY) {
-        return !!err?.message.includes(criteria);
-      }
+  return room$.pipe(
+    switchMap((room) => {
+      if (room === undefined) return of(false);
+      return roomEventSelector(room, LivekitRoomEvent.EncryptionError).pipe(
+        map((e) => {
+          const [err] = e;
+          if (encryptionSystem.kind === E2eeType.PER_PARTICIPANT) {
+            return (
+              // Ideally we would pull the participant identity from the field on the error.
+              // However, it gets lost in the serialization process between workers.
+              // So, instead we do a string match
+              (err?.message.includes(participant.identity) &&
+                err?.message.includes(criteria)) ??
+              false
+            );
+          } else if (encryptionSystem.kind === E2eeType.SHARED_KEY) {
+            return !!err?.message.includes(criteria);
+          }
 
-      return false;
+          return false;
+        }),
+      );
     }),
+    distinctUntilChanged(),
     throttleTime(1000), // Throttle to avoid spamming the UI
     startWith(false),
   );
@@ -220,7 +226,7 @@ abstract class BaseMediaViewModel {
   /**
    * The LiveKit video track for this media.
    */
-  public readonly video$: Behavior<TrackReferenceOrPlaceholder | undefined>;
+  public readonly video$: Behavior<TrackReferenceOrPlaceholder | null>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
@@ -235,12 +241,10 @@ abstract class BaseMediaViewModel {
 
   private observeTrackReference$(
     source: Track.Source,
-  ): Behavior<TrackReferenceOrPlaceholder | undefined> {
+  ): Behavior<TrackReferenceOrPlaceholder | null> {
     return this.scope.behavior(
       this.participant$.pipe(
-        switchMap((p) =>
-          p === undefined ? of(undefined) : observeTrackReference$(p, source),
-        ),
+        switchMap((p) => (!p ? of(null) : observeTrackReference$(p, source))),
       ),
     );
   }
@@ -252,23 +256,22 @@ abstract class BaseMediaViewModel {
      */
     public readonly id: string,
     /**
-     * The Matrix room member to which this media belongs.
+     * The Matrix user to which this media belongs.
      */
-    // TODO: Fully separate the data layer from the UI layer by keeping the
-    // member object internal
-    public readonly member: RoomMember,
+    public readonly userId: string,
     // We don't necessarily have a participant if a user connects via MatrixRTC but not (yet) through
     // livekit.
     protected readonly participant$: Observable<
-      LocalParticipant | RemoteParticipant | undefined
+      LocalParticipant | RemoteParticipant | null
     >,
 
     encryptionSystem: EncryptionSystem,
     audioSource: AudioSource,
     videoSource: VideoSource,
-    livekitRoom: LivekitRoom,
-    public readonly focusURL: string,
+    livekitRoom$: Behavior<LivekitRoom | undefined>,
+    public readonly focusUrl$: Behavior<string | undefined>,
     public readonly displayName$: Behavior<string>,
+    public readonly mxcAvatarUrl$: Behavior<string | undefined>,
   ) {
     const audio$ = this.observeTrackReference$(audioSource);
     this.video$ = this.observeTrackReference$(videoSource);
@@ -296,13 +299,13 @@ abstract class BaseMediaViewModel {
           } else if (encryptionSystem.kind === E2eeType.PER_PARTICIPANT) {
             return combineLatest([
               encryptionErrorObservable$(
-                livekitRoom,
+                livekitRoom$,
                 participant,
                 encryptionSystem,
                 "MissingKey",
               ),
               encryptionErrorObservable$(
-                livekitRoom,
+                livekitRoom$,
                 participant,
                 encryptionSystem,
                 "InvalidKey",
@@ -322,7 +325,7 @@ abstract class BaseMediaViewModel {
           } else {
             return combineLatest([
               encryptionErrorObservable$(
-                livekitRoom,
+                livekitRoom$,
                 participant,
                 encryptionSystem,
                 "InvalidKey",
@@ -404,26 +407,28 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   public constructor(
     scope: ObservableScope,
     id: string,
-    member: RoomMember,
-    participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
+    userId: string,
+    participant$: Observable<LocalParticipant | RemoteParticipant | null>,
     encryptionSystem: EncryptionSystem,
-    livekitRoom: LivekitRoom,
-    focusUrl: string,
+    livekitRoom$: Behavior<LivekitRoom | undefined>,
+    focusUrl$: Behavior<string | undefined>,
     displayName$: Behavior<string>,
+    mxcAvatarUrl$: Behavior<string | undefined>,
     public readonly handRaised$: Behavior<Date | null>,
     public readonly reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
       scope,
       id,
-      member,
+      userId,
       participant$,
       encryptionSystem,
       Track.Source.Microphone,
       Track.Source.Camera,
-      livekitRoom,
-      focusUrl,
+      livekitRoom$,
+      focusUrl$,
       displayName$,
+      mxcAvatarUrl$,
     );
 
     const media$ = this.scope.behavior(
@@ -540,25 +545,27 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   public constructor(
     scope: ObservableScope,
     id: string,
-    member: RoomMember,
-    participant$: Behavior<LocalParticipant | undefined>,
+    userId: string,
+    participant$: Behavior<LocalParticipant | null>,
     encryptionSystem: EncryptionSystem,
-    livekitRoom: LivekitRoom,
-    focusURL: string,
+    livekitRoom$: Behavior<LivekitRoom | undefined>,
+    focusUrl$: Behavior<string | undefined>,
     private readonly mediaDevices: MediaDevices,
     displayName$: Behavior<string>,
+    mxcAvatarUrl$: Behavior<string | undefined>,
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
       scope,
       id,
-      member,
+      userId,
       participant$,
       encryptionSystem,
-      livekitRoom,
-      focusURL,
+      livekitRoom$,
+      focusUrl$,
       displayName$,
+      mxcAvatarUrl$,
       handRaised$,
       reaction$,
     );
@@ -650,25 +657,27 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
   public constructor(
     scope: ObservableScope,
     id: string,
-    member: RoomMember,
-    participant$: Observable<RemoteParticipant | undefined>,
+    userId: string,
+    participant$: Observable<RemoteParticipant | null>,
     encryptionSystem: EncryptionSystem,
-    livekitRoom: LivekitRoom,
-    focusUrl: string,
+    livekitRoom$: Behavior<LivekitRoom | undefined>,
+    focusUrl$: Behavior<string | undefined>,
     private readonly pretendToBeDisconnected$: Behavior<boolean>,
-    displayname$: Behavior<string>,
+    displayName$: Behavior<string>,
+    mxcAvatarUrl$: Behavior<string | undefined>,
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
   ) {
     super(
       scope,
       id,
-      member,
+      userId,
       participant$,
       encryptionSystem,
-      livekitRoom,
-      focusUrl,
-      displayname$,
+      livekitRoom$,
+      focusUrl$,
+      displayName$,
+      mxcAvatarUrl$,
       handRaised$,
       reaction$,
     );
@@ -749,26 +758,28 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
   public constructor(
     scope: ObservableScope,
     id: string,
-    member: RoomMember,
+    userId: string,
     participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
-    livekitRoom: LivekitRoom,
-    focusUrl: string,
+    livekitRoom$: Behavior<LivekitRoom | undefined>,
+    focusUrl$: Behavior<string | undefined>,
     private readonly pretendToBeDisconnected$: Behavior<boolean>,
-    displayname$: Behavior<string>,
+    displayName$: Behavior<string>,
+    mxcAvatarUrl$: Behavior<string | undefined>,
     public readonly local: boolean,
   ) {
     super(
       scope,
       id,
-      member,
+      userId,
       participant$,
       encryptionSystem,
       Track.Source.ScreenShareAudio,
       Track.Source.ScreenShare,
-      livekitRoom,
-      focusUrl,
-      displayname$,
+      livekitRoom$,
+      focusUrl$,
+      displayName$,
+      mxcAvatarUrl$,
     );
   }
 }

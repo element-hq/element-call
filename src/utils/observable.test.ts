@@ -9,7 +9,7 @@ import { test } from "vitest";
 import { Subject } from "rxjs";
 
 import { withTestScheduler } from "./test";
-import { generateKeyed$, pauseWhen } from "./observable";
+import { generateItems, pauseWhen } from "./observable";
 
 test("pauseWhen", () => {
   withTestScheduler(({ behavior, expectObservable }) => {
@@ -24,7 +24,7 @@ test("pauseWhen", () => {
   });
 });
 
-test("generateKeyed$ has the right output and ends scopes at the right times", () => {
+test("generateItems", () => {
   const scope1$ = new Subject<string>();
   const scope2$ = new Subject<string>();
   const scope3$ = new Subject<string>();
@@ -44,18 +44,27 @@ test("generateKeyed$ has the right output and ends scopes at the right times", (
     const scope4Marbles = "      ----yn";
 
     expectObservable(
-      generateKeyed$(hot<string>(inputMarbles), (input, createOrGet) => {
-        for (let i = 1; i <= +input; i++) {
-          createOrGet(i.toString(), (scope) => {
+      hot<string>(inputMarbles).pipe(
+        generateItems(
+          function* (input) {
+            for (let i = 1; i <= +input; i++) {
+              yield { keys: [i], data: undefined };
+            }
+          },
+          (scope, data$, i) => {
             scopeSubjects[i - 1].next("y");
             scope.onEnd(() => scopeSubjects[i - 1].next("n"));
             return i.toString();
-          });
-        }
-        return "abcd"[+input - 1];
-      }),
+          },
+        ),
+      ),
       subscriptionMarbles,
-    ).toBe(outputMarbles);
+    ).toBe(outputMarbles, {
+      a: ["1"],
+      b: ["1", "2"],
+      c: ["1", "2", "3"],
+      d: ["1", "2", "3", "4"],
+    });
 
     expectObservable(scope1$).toBe(scope1Marbles);
     expectObservable(scope2$).toBe(scope2Marbles);

@@ -1,4 +1,5 @@
 /*
+Copyright 2025 Element Creations Ltd.
 Copyright 2024 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
@@ -10,16 +11,16 @@ import { expect, test, vi } from "vitest";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import EventEmitter from "events";
 
-import { enterRTCSession } from "../src/rtcSessionHelpers";
-import { mockConfig } from "./utils/test";
+import { MatrixRTCMode } from "../../../settings/settings";
+import { mockConfig } from "../../../utils/test";
+import { enterRTCSession } from "./LocalMembership";
 
-const USE_MUTI_SFU = false;
+const MATRIX_RTC_MODE = MatrixRTCMode.Legacy;
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
-vi.mock("./UrlParams", () => ({ getUrlParams }));
+vi.mock("../../../UrlParams", () => ({ getUrlParams }));
 
-const actualWidget = await vi.hoisted(async () => vi.importActual("./widget"));
-vi.mock("./widget", () => ({
-  ...actualWidget,
+vi.mock("../../../widget", async (importOriginal) => ({
+  ...(await importOriginal()),
   widget: {
     api: {
       setAlwaysOnScreen: (): void => {},
@@ -94,8 +95,7 @@ test("It joins the correct Session", async () => {
     },
     {
       encryptMedia: true,
-      useMultiSfu: USE_MUTI_SFU,
-      preferStickyEvents: false,
+      matrixRTCMode: MATRIX_RTC_MODE,
     },
   );
 
@@ -153,8 +153,7 @@ test("It should not fail with configuration error if homeserver config has livek
     },
     {
       encryptMedia: true,
-      useMultiSfu: USE_MUTI_SFU,
-      preferStickyEvents: false,
+      matrixRTCMode: MATRIX_RTC_MODE,
     },
   );
 });

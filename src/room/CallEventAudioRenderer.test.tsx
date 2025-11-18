@@ -38,7 +38,7 @@ import {
   local,
   localRtcMember,
 } from "../utils/test-fixtures";
-import { MAX_PARTICIPANT_COUNT_FOR_SOUND } from "../state/CallViewModel";
+import { MAX_PARTICIPANT_COUNT_FOR_SOUND } from "../state/CallViewModel/CallViewModel";
 
 vitest.mock("livekit-client/e2ee-worker?worker");
 vitest.mock("../useAudioContext");

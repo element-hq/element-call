@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, of } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { vitest } from "vitest";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import EventEmitter from "events";
@@ -20,10 +20,12 @@ import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
 
 import { E2eeType } from "../e2ee/e2eeType";
 import {
-  CallViewModel,
+  type CallViewModel,
+  createCallViewModel$,
   type CallViewModelOptions,
-} from "../state/CallViewModel";
+} from "../state/CallViewModel/CallViewModel";
 import {
+  mockConfig,
   mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
@@ -35,6 +37,8 @@ import {
 import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "../state/Behavior";
+
+mockConfig({ livekit: { livekit_service_url: "https://example.com" } });
 
 export function getBasicRTCSession(
   members: RoomMember[],
@@ -57,6 +61,7 @@ export function getBasicRTCSession(
       getUserId: () => localRtcMember.userId,
       getDeviceId: () => localRtcMember.deviceId,
       getSyncState: () => SyncState.Syncing,
+      getDomain: () => null,
       sendEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
       redactEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
       decryptEventIfNeeded: vitest.fn().mockResolvedValue(undefined),
@@ -78,6 +83,9 @@ export function getBasicRTCSession(
         ),
     } as Partial<MatrixClient> as MatrixClient,
     getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
+    getMembers: () => Array.from(matrixRoomMembers.values()),
+    getMembersWithMembership: () => Array.from(matrixRoomMembers.values()),
+    guessDMUserId: vitest.fn(),
     roomId: matrixRoomId,
     on: vitest
       .fn()
@@ -138,7 +146,7 @@ export function getBasicCallViewModelEnvironment(
 
   // const remoteParticipants$ = of([aliceParticipant]);
 
-  const vm = new CallViewModel(
+  const vm = createCallViewModel$(
     testScope(),
     rtcSession.asMockedSession(),
     matrixRoom,
@@ -158,7 +166,7 @@ export function getBasicCallViewModelEnvironment(
     },
     handRaisedSubject$,
     reactionsSubject$,
-    of({ processor: undefined, supported: false }),
+    constant({ processor: undefined, supported: false }),
   );
   return {
     vm,

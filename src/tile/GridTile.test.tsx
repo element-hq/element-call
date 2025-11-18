@@ -15,7 +15,7 @@ import { GridTile } from "./GridTile";
 import { mockRtcMembership, createRemoteMedia } from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
-import type { CallViewModel } from "../state/CallViewModel";
+import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { constant } from "../state/Behavior";
 
 global.IntersectionObserver = class MockIntersectionObserver {

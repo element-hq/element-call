@@ -43,9 +43,6 @@ import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
 
-// vi.hoisted(() => {
-//   localStorage = {} as unknown as Storage;
-// });
 vi.hoisted(
   () =>
     (global.ImageData = class MockImageData {
@@ -109,6 +106,7 @@ function createInCallView(): RenderResult & {
     getUserId: () => localRtcMember.userId,
     getDeviceId: () => localRtcMember.deviceId,
     getRoom: (rId) => (rId === roomId ? room : null),
+    getDomain: () => "example.com",
   } as Partial<MatrixClient> as MatrixClient;
   const room = mockMatrixRoom({
     relations: {
@@ -119,7 +117,8 @@ function createInCallView(): RenderResult & {
     } as unknown as RelationsContainer,
     client,
     roomId,
-    getMember: (userId) => roomMembers.get(userId) ?? null,
+    // getMember: (userId) => roomMembers.get(userId) ?? null,
+    getMembers: () => Array.from(roomMembers.values()),
     getMxcAvatarUrl: () => null,
     hasEncryptionStateEvent: vi.fn().mockReturnValue(true),
     getCanonicalAlias: () => null,

@@ -12,7 +12,9 @@ import {
   EMPTY,
   endWith,
   filter,
+  map,
   type Observable,
+  type OperatorFunction,
   share,
   take,
   takeUntil,
@@ -21,6 +23,10 @@ import {
 import { type Behavior } from "./Behavior";
 
 type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
+
+type SplitBehavior<T> = keyof T extends string | number
+  ? { [K in keyof T as `${K}$`]: Behavior<T[K]> }
+  : never;
 
 const nothing = Symbol("nothing");
 
@@ -145,9 +151,132 @@ export class ObservableScope {
         })();
       });
   }
+
+  /**
+   * Splits a Behavior of objects with static properties into an object with
+   * Behavior properties.
+   *
+   * For example, splitting a `Behavior<{ name: string; age: number }>` results
+   * in an object of type `{ name$: Behavior<string>; age$: Behavior<number> }`.
+   */
+  public splitBehavior<T extends object>(
+    input$: Behavior<T>,
+  ): SplitBehavior<T> {
+    return Object.fromEntries(
+      Object.keys(input$.value).map((key) => [
+        `${key}$`,
+        this.behavior(input$.pipe(map((input) => input[key as keyof T]))),
+      ]),
+    ) as SplitBehavior<T>;
+  }
 }
 
 /**
  * The global scope, a scope which never ends.
  */
 export const globalScope = new ObservableScope();
+
+/**
+ * `Epoch`'s can be used to create `Behavior`s and `Observable`s which derivitives can be merged
+ * with `combinedLatest` without duplicated emissions.
+ *
+ * This is useful in the following example:
+ * ```
+ * const rootObs$ = of("red","green","blue");
+ * const derivedObs$ = rootObs$.pipe(
+ *   map((v)=> {red:"fire", green:"grass", blue:"water"}[v])
+ * );
+ * const otherDerivedObs$ = rootObs$.pipe(
+ *   map((v)=> {red:"tomatoes", green:"leaves", blue:"sky"}[v])
+ * );
+ * const mergedObs$ = combineLatest([rootObs$, derivedObs$, otherDerivedObs$]).pipe(
+ *   map(([color, a,b]) => color + " like " + a + " and " + b)
+ * );
+ *
+ * ```
+ * will result in 6 emissions with mismatching items like "red like fire and leaves"
+ *
+ * # Use Epoch
+ * ```
+ * const ancestorObs$ = of(1,2,3).pipe(trackEpoch());
+ * const derivedObs$ = ancestorObs$.pipe(
+ *   mapEpoch((v)=> "this number: " + v)
+ * );
+ * const otherDerivedObs$ = ancestorObs$.pipe(
+ *   mapEpoch((v)=> "multiplied by: " + v)
+ * );
+ * const mergedObs$ = combineLatest([derivedObs$, otherDerivedObs$]).pipe(
+ *   filter((values) => values.every((v) => v.epoch === values[0].v)),
+ *   map(([color, a, b]) => color + " like " + a + " and " + b)
+ * );
+ *
+ * ```
+ * will result in 3 emissions all matching (e.g. "blue like water and sky")
+ */
+export class Epoch<T> {
+  public readonly epoch: number;
+  public readonly value: T;
+
+  public constructor(value: T, epoch?: number) {
+    this.value = value;
+    this.epoch = epoch ?? 0;
+  }
+  /**
+   * Maps the value inside the epoch to a new value while keeping the epoch number.
+   * # usage
+   * ```
+   * const myEpoch$ = myObservable$.pipe(
+   *   map(trackEpoch()),
+   *   // this is the preferred way using mapEpoch
+   *   mapEpoch((v)=> v+1)
+   *   // This is how inner map can be used:
+   *   map((epoch) => epoch.innerMap((v)=> v+1))
+   *   // It is equivalent to:
+   *   map((epoch) => new Epoch(epoch.value + 1, epoch.epoch))
+   * )
+   * ```
+   * See also `Epoch<T>`
+   */
+  public mapInner<U>(map: (value: T) => U): Epoch<U> {
+    return new Epoch<U>(map(this.value), this.epoch);
+  }
+}
+
+/**
+ * A `pipe` compatible map oparator that keeps the epoch in tact but allows mapping the value.
+ * # usage
+ * ```
+ * const myEpoch$ = myObservable$.pipe(
+ *   map(trackEpoch()),
+ *   // this is the preferred way using mapEpoch
+ *   mapEpoch((v)=> v+1)
+ *   // This is how inner map can be used:
+ *   map((epoch) => epoch.innerMap((v)=> v+1))
+ *   // It is equivalent to:
+ *   map((epoch) => new Epoch(epoch.value + 1, epoch.epoch))
+ * )
+ * ```
+ * See also `Epoch<T>`
+ */
+export function mapEpoch<T, U>(
+  mapFn: (value: T) => U,
+): OperatorFunction<Epoch<T>, Epoch<U>> {
+  return map((e) => e.mapInner(mapFn));
+}
+
+/**
+ * # usage
+ * ```
+ * const myEpoch$ = myObservable$.pipe(
+ *   map(trackEpoch()),
+ *   map((epoch) => epoch.innerMap((v)=> v+1))
+ * )
+ * const derived = myEpoch$.pipe(
+ *   mapEpoch((v)=>v^2)
+ * )
+ * ```
+ * See also `Epoch<T>`
+ */
+export function trackEpoch<T>(): OperatorFunction<T, Epoch<T>> {
+  return map<T, Epoch<T>>((value, number) => new Epoch(value, number));
+}
