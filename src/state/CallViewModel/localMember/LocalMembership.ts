@@ -262,7 +262,7 @@ export const createLocalMembership$ = ({
   );
 
   const publisher$ = new BehaviorSubject<Publisher | null>(null);
-  localConnection$.subscribe((connection) => {
+  localConnection$.pipe(scope.bind()).subscribe((connection) => {
     if (connection !== null && publisher$.value === null) {
       // TODO looks strange to not change publisher if connection changes.
       publisher$.next(
@@ -339,7 +339,7 @@ export const createLocalMembership$ = ({
   });
 
   combineLatest([localTransport$, connectRequested$]).subscribe(
-    // TODO reconnect on options change.
+    // TODO reconnect when transport changes => create test.
     ([transport, connectRequested]) => {
       if (
         transport === null ||
@@ -573,7 +573,12 @@ interface EnterRTCSessionOptions {
 }
 
 /**
- * TODO! document this function properly
+ * Does the necessary steps to enter the RTC session on the matrix side:
+ *  - Preparing the membership info (FOCUS to use, options)
+ *  - Sends the matrix event to join the call, and starts the membership manager:
+ *      - Delay events management
+ *      - Handles retries (fails only after several attempts)
+ *
  * @param rtcSession
  * @param transport
  * @param options

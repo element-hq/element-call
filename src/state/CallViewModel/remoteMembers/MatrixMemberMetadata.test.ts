@@ -104,7 +104,6 @@ describe("MatrixMemberMetadata", () => {
       }
     }
 
-    // TODO this is a regression, now there the own user is not always in the map. Ask Timo if fine
     it("should show our own user if present in rtc session and room", () => {
       withTestScheduler(({ behavior, expectObservable }) => {
         fakeMemberWith({
@@ -517,7 +516,6 @@ describe("MatrixMemberMetadata", () => {
       }
     }
 
-    // TODO this is a regression, now there the own user is not always in the map. Ask Timo if fine
     it("should use avatar url from room members", () => {
       withTestScheduler(({ behavior, expectObservable }) => {
         fakeMemberWith({

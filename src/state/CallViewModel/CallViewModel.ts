@@ -371,8 +371,8 @@ export function createCallViewModel$(
   // For mocking purposes it is recommended to only mock the functions creating those outputs.
   // All other fields are just temp computations for the mentioned output.
   // The class does not need anything except the values underneath the bar.
-  // The creation of the values under the bar are all tested independently and testing the callViewModel Should
-  // not test their cretation. Call view model only needs:
+  // The creations of the values under the bar are all tested independently and testing the callViewModel Should
+  // not test their creation. Call view model only needs:
   //  - memberships$ via createMemberships$
   //  - localMembership via createLocalMembership$
   //  - callLifecycle via createCallNotificationLifecycle$
@@ -438,7 +438,7 @@ export function createCallViewModel$(
     matrixRTCMode.value$.pipe(
       map((mode) => ({
         encryptMedia: livekitKeyProvider !== undefined,
-        // TODO. This might need to get called again on each cahnge of matrixRTCMode...
+        // TODO. This might need to get called again on each change of matrixRTCMode...
         matrixRTCMode: mode,
       })),
     ),
@@ -636,7 +636,6 @@ export function createCallViewModel$(
   /**
    * List of user media (camera feeds) that we want tiles for.
    */
-  // TODO this also needs the local participant to be added.
   const userMedia$ = scope.behavior<UserMedia[]>(
     combineLatest([
       localMatrixLivekitMember$,
@@ -1475,8 +1474,6 @@ export function createCallViewModel$(
     reconnecting$: reconnecting$,
   };
 }
-// TODO-MULTI-SFU   // Setup and update the keyProvider which was create by `createRoom` was a thing before. Now we never update if the E2EEsystem changes
-// do we need this?
 
 function getE2eeKeyProvider(
   e2eeSystem: EncryptionSystem,
