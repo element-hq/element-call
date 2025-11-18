@@ -62,7 +62,7 @@ Initializer.initBeforeReact()
   .then(() => {
     root.render(
       <StrictMode>
-        <App vm={new AppViewModel(globalScope)} />,
+        <App vm={new AppViewModel(globalScope)} />
       </StrictMode>,
     );
   })

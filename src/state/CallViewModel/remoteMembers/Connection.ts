@@ -1,4 +1,5 @@
 /*
+Copyright 2025 Element Creations Ltd.
 Copyright 2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
@@ -11,31 +12,29 @@ import {
 } from "@livekit/components-core";
 import {
   ConnectionError,
-  type ConnectionState,
-  type E2EEOptions,
+  type ConnectionState as LivekitConenctionState,
+  type Room as LivekitRoom,
+  type LocalParticipant,
   type RemoteParticipant,
-  Room as LivekitRoom,
-  type RoomOptions,
+  RoomEvent,
 } from "livekit-client";
-import {
-  type CallMembership,
-  type LivekitTransport,
-} from "matrix-js-sdk/lib/matrixrtc";
-import { logger } from "matrix-js-sdk/lib/logger";
-import { BehaviorSubject, combineLatest, type Observable } from "rxjs";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { BehaviorSubject, map, type Observable } from "rxjs";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import {
   getSFUConfigWithOpenID,
   type OpenIDClientParts,
   type SFUConfig,
-} from "../livekit/openIDSFU";
-import { type Behavior } from "./Behavior";
-import { type ObservableScope } from "./ObservableScope";
-import { defaultLiveKitOptions } from "../livekit/options";
+} from "../../../livekit/openIDSFU.ts";
+import { type Behavior } from "../../Behavior.ts";
+import { type ObservableScope } from "../../ObservableScope.ts";
 import {
   InsufficientCapacityError,
   SFURoomCreationRestrictedError,
-} from "../utils/errors.ts";
+} from "../../../utils/errors.ts";
+
+export type PublishingParticipant = LocalParticipant | RemoteParticipant;
 
 export interface ConnectionOpts {
   /** The media transport to connect to. */
@@ -44,16 +43,12 @@ export interface ConnectionOpts {
   client: OpenIDClientParts;
   /** The observable scope to use for this connection. */
   scope: ObservableScope;
-  /** An observable of the current RTC call memberships and their associated transports. */
-  remoteTransports$: Behavior<
-    { membership: CallMembership; transport: LivekitTransport }[]
-  >;
 
   /** Optional factory to create the LiveKit room, mainly for testing purposes. */
-  livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
+  livekitRoomFactory: () => LivekitRoom;
 }
 
-export type TransportState =
+export type ConnectionState =
   | { state: "Initialized" }
   | { state: "FetchingConfig"; transport: LivekitTransport }
   | { state: "ConnectingToLkRoom"; transport: LivekitTransport }
@@ -61,25 +56,10 @@ export type TransportState =
   | { state: "FailedToStart"; error: Error; transport: LivekitTransport }
   | {
       state: "ConnectedToLkRoom";
-      connectionState$: Observable<ConnectionState>;
+      livekitConnectionState$: Observable<LivekitConenctionState>;
       transport: LivekitTransport;
     }
   | { state: "Stopped"; transport: LivekitTransport };
-
-/**
- * Represents participant publishing or expected to publish on the connection.
- * It is paired with its associated rtc membership.
- */
-export type PublishingParticipant = {
-  /**
-   * The LiveKit participant publishing on this connection, or undefined if the participant is not currently (yet) connected to the livekit room.
-   */
-  participant: RemoteParticipant | undefined;
-  /**
-   * The rtc call membership associated with this participant.
-   */
-  membership: CallMembership;
-};
 
 /**
  * A connection to a Matrix RTC LiveKit backend.
@@ -88,15 +68,14 @@ export type PublishingParticipant = {
  */
 export class Connection {
   // Private Behavior
-  private readonly _transportState$ = new BehaviorSubject<TransportState>({
+  private readonly _state$ = new BehaviorSubject<ConnectionState>({
     state: "Initialized",
   });
 
   /**
    * The current state of the connection to the media transport.
    */
-  public readonly transportState$: Behavior<TransportState> =
-    this._transportState$;
+  public readonly state$: Behavior<ConnectionState> = this._state$;
 
   /**
    * Whether the connection has been stopped.
@@ -112,13 +91,18 @@ export class Connection {
    * 2. Use this token to request the SFU config to the MatrixRtc authentication service.
    * 3. Connect to the configured LiveKit room.
    *
+   * The errors are also represented as a state in the `state$` observable.
+   * It is safe to ignore those errors and handle them accordingly via the `state$` observable.
    * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
    * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
    */
+  // TODO dont make this throw and instead store a connection error state in this class?
+  // TODO consider an autostart pattern...
   public async start(): Promise<void> {
+    this.logger.debug("Starting Connection");
     this.stopped = false;
     try {
-      this._transportState$.next({
+      this._state$.next({
         state: "FetchingConfig",
         transport: this.transport,
       });
@@ -126,7 +110,7 @@ export class Connection {
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
-      this._transportState$.next({
+      this._state$.next({
         state: "ConnectingToLkRoom",
         transport: this.transport,
       });
@@ -157,13 +141,14 @@ export class Connection {
       // If we were stopped while connecting, don't proceed to update state.
       if (this.stopped) return;
 
-      this._transportState$.next({
+      this._state$.next({
         state: "ConnectedToLkRoom",
         transport: this.transport,
-        connectionState$: connectionStateObserver(this.livekitRoom),
+        livekitConnectionState$: connectionStateObserver(this.livekitRoom),
       });
     } catch (error) {
-      this._transportState$.next({
+      this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
+      this._state$.next({
         state: "FailedToStart",
         error: error instanceof Error ? error : new Error(`${error}`),
         transport: this.transport,
@@ -179,6 +164,7 @@ export class Connection {
       this.transport.livekit_alias,
     );
   }
+
   /**
    * Stops the connection.
    *
@@ -186,9 +172,12 @@ export class Connection {
    * If the connection is already stopped, this is a no-op.
    */
   public async stop(): Promise<void> {
+    this.logger.debug(
+      `Stopping connection to ${this.transport.livekit_service_url}`,
+    );
     if (this.stopped) return;
     await this.livekitRoom.disconnect();
-    this._transportState$.next({
+    this._state$.next({
       state: "Stopped",
       transport: this.transport,
     });
@@ -196,11 +185,13 @@ export class Connection {
   }
 
   /**
-   * An observable of the participants that are publishing on this connection.
+   * An observable of the participants that are publishing on this connection. (Excluding our local participant)
    * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
    * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
    */
-  public readonly publishingParticipants$: Behavior<PublishingParticipant[]>;
+  public readonly remoteParticipantsWithTracks$: Behavior<
+    PublishingParticipant[]
+  >;
 
   /**
    * The media transport to connect to.
@@ -208,79 +199,50 @@ export class Connection {
   public readonly transport: LivekitTransport;
 
   private readonly client: OpenIDClientParts;
+  public readonly livekitRoom: LivekitRoom;
+
+  private readonly logger: Logger;
+
   /**
    * Creates a new connection to a matrix RTC LiveKit backend.
    *
-   * @param livekitRoom - LiveKit room instance to use.
    * @param opts - Connection options {@link ConnectionOpts}.
    *
+   * @param logger
    */
-  protected constructor(
-    public readonly livekitRoom: LivekitRoom,
-    opts: ConnectionOpts,
-  ) {
-    logger.log(
+  public constructor(opts: ConnectionOpts, logger: Logger) {
+    this.logger = logger.getChild("[Connection]");
+    this.logger.info(
       `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
     );
-    const { transport, client, scope, remoteTransports$ } = opts;
+    const { transport, client, scope } = opts;
 
+    this.livekitRoom = opts.livekitRoomFactory();
     this.transport = transport;
     this.client = client;
 
-    const participantsIncludingSubscribers$ = scope.behavior(
-      connectedParticipantsObserver(this.livekitRoom),
-      [],
-    );
-
-    this.publishingParticipants$ = scope.behavior(
-      combineLatest(
-        [participantsIncludingSubscribers$, remoteTransports$],
-        (participants, remoteTransports) =>
-          remoteTransports
-            // Find all members that claim to publish on this connection
-            .flatMap(({ membership, transport }) =>
-              transport.livekit_service_url ===
-              this.transport.livekit_service_url
-                ? [membership]
-                : [],
-            )
-            // Pair with their associated LiveKit participant (if any)
-            .map((membership) => {
-              const id = `${membership.userId}:${membership.deviceId}`;
-              const participant = participants.find((p) => p.identity === id);
-              return { participant, membership };
-            }),
+    // REMOTE participants with track!!!
+    // this.remoteParticipantsWithTracks$
+    this.remoteParticipantsWithTracks$ = scope.behavior(
+      // only tracks remote participants
+      connectedParticipantsObserver(this.livekitRoom, {
+        additionalRoomEvents: [
+          RoomEvent.TrackPublished,
+          RoomEvent.TrackUnpublished,
+        ],
+      }).pipe(
+        map((participants) => {
+          return participants.filter(
+            (participant) => participant.getTrackPublications().length > 0,
+          );
+        }),
       ),
       [],
     );
 
-    scope.onEnd(() => void this.stop());
-  }
-}
-
-/**
- * A remote connection to the Matrix RTC LiveKit backend.
- *
- * This connection is used for subscribing to remote participants.
- * It does not publish any local tracks.
- */
-export class RemoteConnection extends Connection {
-  /**
-   * Creates a new remote connection to a matrix RTC LiveKit backend.
-   * @param opts
-   * @param sharedE2eeOption - The shared E2EE options to use for the connection.
-   */
-  public constructor(
-    opts: ConnectionOpts,
-    sharedE2eeOption: E2EEOptions | undefined,
-  ) {
-    const factory =
-      opts.livekitRoomFactory ??
-      ((options: RoomOptions): LivekitRoom => new LivekitRoom(options));
-    const livekitRoom = factory({
-      ...defaultLiveKitOptions,
-      e2ee: sharedE2eeOption,
+    scope.onEnd(() => {
+      this.logger.info(`Connection scope ended, stopping connection`);
+      void this.stop();
     });
-    super(livekitRoom, opts);
   }
 }

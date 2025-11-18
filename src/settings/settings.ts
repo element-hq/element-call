@@ -83,11 +83,6 @@ export const showConnectionStats = new Setting<boolean>(
   false,
 );
 
-export const preferStickyEvents = new Setting<boolean>(
-  "prefer-sticky-events",
-  false,
-);
-
 export const audioInput = new Setting<string | undefined>(
   "audio-input",
   undefined,
@@ -120,8 +115,6 @@ export const soundEffectVolume = new Setting<number>(
   0.5,
 );
 
-export const multiSfu = new Setting<boolean>("multi-sfu", false);
-
 export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);
 
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
@@ -129,4 +122,15 @@ export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
 export const alwaysShowIphoneEarpiece = new Setting<boolean>(
   "always-show-iphone-earpiece",
   false,
+);
+
+export enum MatrixRTCMode {
+  Legacy = "legacy",
+  Compatibil = "compatibil",
+  Matrix_2_0 = "matrix_2_0",
+}
+
+export const matrixRTCMode = new Setting<MatrixRTCMode>(
+  "matrix-rtc-mode",
+  MatrixRTCMode.Legacy,
 );

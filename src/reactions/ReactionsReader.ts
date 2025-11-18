@@ -266,6 +266,7 @@ export class ReactionsReader {
         );
         return;
       }
+      // TODO refactor to use memer id `membershipEvent.membershipID` (needs to happen in combination with other memberId refactors)
       const identifier = `${membershipEvent.userId}:${membershipEvent.deviceId}`;
 
       if (!content.emoji) {

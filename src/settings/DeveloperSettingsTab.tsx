@@ -12,6 +12,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useId,
 } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -19,6 +20,14 @@ import {
   type MatrixClient,
 } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
+import {
+  Root as Form,
+  Heading,
+  HelpMessage,
+  InlineField,
+  Label,
+  RadioControl,
+} from "@vector-im/compound-web";
 
 import { FieldRow, InputField } from "../input/Input";
 import {
@@ -26,10 +35,10 @@ import {
   duplicateTiles as duplicateTilesSetting,
   debugTileLayout as debugTileLayoutSetting,
   showConnectionStats as showConnectionStatsSetting,
-  multiSfu as multiSfuSetting,
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
-  preferStickyEvents as preferStickyEventsSetting,
+  matrixRTCMode as matrixRTCModeSetting,
+  MatrixRTCMode,
 } from "./settings";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
@@ -59,8 +68,13 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
       });
   }, [client]);
 
-  const [preferStickyEvents, setPreferStickyEvents] = useSetting(
-    preferStickyEventsSetting,
+  const [matrixRTCMode, setMatrixRTCMode] = useSetting(matrixRTCModeSetting);
+  const matrixRTCModeRadioGroup = useId();
+  const onMatrixRTCModeChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setMatrixRTCMode(e.target.value as MatrixRTCMode);
+    },
+    [setMatrixRTCMode],
   );
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
@@ -70,8 +84,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
     alwaysShowIphoneEarpieceSetting,
   );
-
-  const [multiSfu, setMultiSfu] = useSetting(multiSfuSetting);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
@@ -89,7 +101,7 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   }, [livekitRooms]);
 
   return (
-    <>
+    <Form>
       <p>
         {t("developer_mode.hostname", {
           hostname: window.location.hostname || "unknown",
@@ -148,22 +160,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
       </FieldRow>
       <FieldRow>
         <InputField
-          id="preferStickyEvents"
-          type="checkbox"
-          label={t("developer_mode.prefer_sticky_events.label")}
-          disabled={!stickyEventsSupported}
-          description={t("developer_mode.prefer_sticky_events.description")}
-          checked={!!preferStickyEvents}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setPreferStickyEvents(event.target.checked);
-            },
-            [setPreferStickyEvents],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
           id="showConnectionStats"
           type="checkbox"
           label={t("developer_mode.show_connection_stats")}
@@ -173,22 +169,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
               setShowConnectionStats(event.target.checked);
             },
             [setShowConnectionStats],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="multiSfu"
-          type="checkbox"
-          label={t("developer_mode.multi_sfu")}
-          // If using sticky events we implicitly prefer use multi-sfu
-          checked={multiSfu || preferStickyEvents}
-          disabled={preferStickyEvents}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setMultiSfu(event.target.checked);
-            },
-            [setMultiSfu],
           )}
         />
       </FieldRow>
@@ -220,6 +200,55 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
           )}
         />{" "}
       </FieldRow>
+      <Heading as="h3" type="body" weight="semibold" size="lg">
+        {t("developer_mode.matrixRTCMode.title")}
+      </Heading>
+      <InlineField
+        name={matrixRTCModeRadioGroup}
+        control={
+          <RadioControl
+            checked={matrixRTCMode === MatrixRTCMode.Legacy}
+            value={MatrixRTCMode.Legacy}
+            onChange={onMatrixRTCModeChange}
+          />
+        }
+      >
+        <Label>{t("developer_mode.matrixRTCMode.Legacy.label")}</Label>
+        <HelpMessage>
+          {t("developer_mode.matrixRTCMode.Legacy.description")}
+        </HelpMessage>
+      </InlineField>
+      <InlineField
+        name={matrixRTCModeRadioGroup}
+        control={
+          <RadioControl
+            checked={matrixRTCMode === MatrixRTCMode.Compatibil}
+            value={MatrixRTCMode.Compatibil}
+            onChange={onMatrixRTCModeChange}
+          />
+        }
+      >
+        <Label>{t("developer_mode.matrixRTCMode.Comptibility.label")}</Label>
+        <HelpMessage>
+          {t("developer_mode.matrixRTCMode.Comptibility.description")}
+        </HelpMessage>
+      </InlineField>
+      <InlineField
+        name={matrixRTCModeRadioGroup}
+        control={
+          <RadioControl
+            checked={matrixRTCMode === MatrixRTCMode.Matrix_2_0}
+            value={MatrixRTCMode.Matrix_2_0}
+            disabled={!stickyEventsSupported}
+            onChange={onMatrixRTCModeChange}
+          />
+        }
+      >
+        <Label>{t("developer_mode.matrixRTCMode.Matrix_2_0.label")}</Label>
+        <HelpMessage>
+          {t("developer_mode.matrixRTCMode.Matrix_2_0.description")}
+        </HelpMessage>
+      </InlineField>
       {livekitRooms?.map((livekitRoom) => (
         <>
           <h3>
@@ -244,6 +273,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
       <pre>{JSON.stringify(import.meta.env, null, 2)}</pre>
       <p>{t("developer_mode.url_params")}</p>
       <pre>{JSON.stringify(urlParams, null, 2)}</pre>
-    </>
+    </Form>
   );
 };
