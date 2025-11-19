@@ -2731,37 +2731,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/components-core@npm:0.12.10, @livekit/components-core@npm:^0.12.0":
-  version: 0.12.10
-  resolution: "@livekit/components-core@npm:0.12.10"
+"@livekit/components-core@npm:0.12.11, @livekit/components-core@npm:^0.12.0":
+  version: 0.12.11
+  resolution: "@livekit/components-core@npm:0.12.11"
   dependencies:
     "@floating-ui/dom": "npm:1.6.13"
     loglevel: "npm:1.9.1"
     rxjs: "npm:7.8.2"
   peerDependencies:
-    livekit-client: ^2.13.3
+    livekit-client: ^2.15.14
     tslib: ^2.6.2
-  checksum: 10c0/bfd84fb950f72dd037bd5329658c1e750a8ac6b8f2953ea673e3e944b8ea9d412ef9c98eb8b690052323e03c675964b162aacb00e60530cdc5187f77d21979bd
+  checksum: 10c0/9c2ac3d30bb8cc9067ae0b2049784f81e90e57df9eabf7edbaf3c8ceb65a63f644a4e6abeb6cc38d3ebe52663d8dbb88535e01a965011f365d5ae1f3daf86052
   languageName: node
   linkType: hard
 
 "@livekit/components-react@npm:^2.0.0":
-  version: 2.9.15
-  resolution: "@livekit/components-react@npm:2.9.15"
+  version: 2.9.16
+  resolution: "@livekit/components-react@npm:2.9.16"
   dependencies:
-    "@livekit/components-core": "npm:0.12.10"
+    "@livekit/components-core": "npm:0.12.11"
     clsx: "npm:2.1.1"
+    events: "npm:^3.3.0"
+    jose: "npm:^6.0.12"
     usehooks-ts: "npm:3.1.1"
   peerDependencies:
     "@livekit/krisp-noise-filter": ^0.2.12 || ^0.3.0
-    livekit-client: ^2.13.3
+    livekit-client: ^2.15.14
     react: ">=18"
     react-dom: ">=18"
     tslib: ^2.6.2
   peerDependenciesMeta:
     "@livekit/krisp-noise-filter":
       optional: true
-  checksum: 10c0/58a93d85c3b8267d0afd00eceb4f34992ce66124f93450e828a78dd825ecc20e254c3123ed22ec33061a3728f50f4f020ff896769fb3a0ff79656ed8cf452a2b
+  checksum: 10c0/4ba4ff473c5a29d3107412733a6676a3b708d70684ed463e9b34cda26abb3d2f317c2828a52e730837b756de9df3fc248260d6f390aedebfb6ec96ef63c7b151
   languageName: node
   linkType: hard
 
@@ -9825,6 +9827,13 @@ __metadata:
   bin:
     jiti: lib/jiti-cli.mjs
   checksum: 10c0/4ceac133a08c8faff7eac84aabb917e85e8257f5ad659e843004ce76e981c457c390a220881748ac67ba1b940b9b729b30fb85cbaf6e7989f04b6002c94da331
+  languageName: node
+  linkType: hard
+
+"jose@npm:^6.0.12":
+  version: 6.1.2
+  resolution: "jose@npm:6.1.2"
+  checksum: 10c0/55f79426f43e652ed6d5de938d50f66bb0a10dcae078db81a23f8d3303e889ce226f000e815f3211f9956bb84badce10da892d130d40fe2eca658045a6f1778e
   languageName: node
   linkType: hard
 
