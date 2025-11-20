@@ -29,7 +29,7 @@ import userEvent from "@testing-library/user-event";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { type ITransport } from "matrix-widget-api/src/transport/ITransport.ts";
+import { type ITransport } from "matrix-widget-api";
 
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
