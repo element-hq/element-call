@@ -33,6 +33,7 @@ import {
 import { FullScreenView } from "../FullScreenView.tsx";
 import { ErrorView } from "../ErrorView.tsx";
 import { type WidgetHelpers } from "../widget.ts";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 export type CallErrorRecoveryAction = "reconnect"; // | "retry" ;
 
@@ -53,7 +54,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
   widget,
 }: ErrorPageProps): ReactElement => {
   const { t } = useTranslation();
-
+  logger.log("Error boundary caught:", error);
   let icon: ComponentType<SVGAttributes<SVGElement>>;
   switch (error.category) {
     case ErrorCategory.CONFIGURATION_ISSUE:
