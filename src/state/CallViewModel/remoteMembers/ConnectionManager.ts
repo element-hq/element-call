@@ -94,7 +94,6 @@ interface Props {
 export interface IConnectionManager {
   transports$: Behavior<Epoch<LivekitTransport[]>>;
   connectionManagerData$: Behavior<Epoch<ConnectionManagerData>>;
-  connections$: Behavior<Epoch<Connection[]>>;
 }
 /**
  * Crete a `ConnectionManager`
@@ -217,7 +216,7 @@ export function createConnectionManager$({
     new Epoch(new ConnectionManagerData()),
   );
 
-  return { transports$, connectionManagerData$, connections$ };
+  return { transports$, connectionManagerData$ };
 }
 
 function removeDuplicateTransports(

@@ -157,6 +157,7 @@ export class MuteStates {
     private readonly mediaDevices: MediaDevices,
     private readonly joined$: Observable<boolean>,
   ) {
+    logger.log("widget", widget);
     if (widget !== null) {
       // Sync our mute states with the hosting client
       const widgetApiState$ = combineLatest(

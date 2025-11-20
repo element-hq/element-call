@@ -23,6 +23,7 @@ import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import { defaultLiveKitOptions } from "../../../livekit/options.ts";
 
+// TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
   createConnection(
     transport: LivekitTransport,

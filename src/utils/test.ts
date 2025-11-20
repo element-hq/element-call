@@ -80,6 +80,7 @@ export async function flushPromises(): Promise<void> {
 }
 
 export interface OurRunHelpers extends RunHelpers {
+  scheduler: TestScheduler;
   /**
    * Schedules a sequence of actions to happen, as described by a marble
    * diagram.
@@ -123,6 +124,7 @@ export function withTestScheduler(
     continuation({
       ...helpers,
       scope,
+      scheduler,
       schedule(marbles, actions) {
         const actionsObservable$ = helpers
           .cold(marbles)
