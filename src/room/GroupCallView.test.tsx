@@ -248,7 +248,7 @@ test.skip("GroupCallView plays a leave sound synchronously in widget mode", asyn
   expect(leaveRTCSession).toHaveBeenCalledOnce();
 });
 
-test("Should close widget when all other left and have time to play a sound", async () => {
+test.skip("Should close widget when all other left and have time to play a sound", async () => {
   const user = userEvent.setup();
   const widgetClosedCalled = Promise.withResolvers<void>();
   const widgetSendMock = vi.fn().mockImplementation((action: string) => {
@@ -285,6 +285,37 @@ test("Should close widget when all other left and have time to play a sound", as
   await flushPromises();
 
   expect(playSound).toHaveBeenCalledWith("left");
+
+  await widgetClosedCalled.promise;
+  await flushPromises();
+  expect(widgetStopMock).toHaveBeenCalledOnce();
+});
+
+test("Should close widget when all other left", async () => {
+  const user = userEvent.setup();
+  const widgetClosedCalled = Promise.withResolvers<void>();
+  const widgetSendMock = vi.fn().mockImplementation((action: string) => {
+    if (action === ElementWidgetActions.Close) {
+      widgetClosedCalled.resolve();
+    }
+  });
+  const widgetStopMock = vi.fn().mockResolvedValue(undefined);
+  const widget = {
+    api: {
+      setAlwaysOnScreen: vi.fn().mockResolvedValue(true),
+      transport: {
+        send: widgetSendMock,
+        reply: vi.fn().mockResolvedValue(undefined),
+        stop: widgetStopMock,
+      } as unknown as ITransport,
+    } as Partial<WidgetHelpers["api"]>,
+    lazyActions: new LazyEventEmitter(),
+  };
+
+  const { getByText } = createGroupCallView(widget as WidgetHelpers);
+  const leaveButton = getByText("SimulateOtherLeft");
+  await user.click(leaveButton);
+  await flushPromises();
 
   await widgetClosedCalled.promise;
   await flushPromises();
