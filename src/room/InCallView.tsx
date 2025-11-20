@@ -115,7 +115,9 @@ export interface ActiveCallProps
   extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {
   e2eeSystem: EncryptionSystem;
   // TODO refactor those reasons into an enum
-  onLeft: (reason: "user" | "timeout" | "decline" | "allOthersLeft") => void;
+  onLeft: (
+    reason: "user" | "timeout" | "decline" | "allOthersLeft" | "error",
+  ) => void;
 }
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
