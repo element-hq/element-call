@@ -2731,37 +2731,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/components-core@npm:0.12.10, @livekit/components-core@npm:^0.12.0":
-  version: 0.12.10
-  resolution: "@livekit/components-core@npm:0.12.10"
+"@livekit/components-core@npm:0.12.11, @livekit/components-core@npm:^0.12.0":
+  version: 0.12.11
+  resolution: "@livekit/components-core@npm:0.12.11"
   dependencies:
     "@floating-ui/dom": "npm:1.6.13"
     loglevel: "npm:1.9.1"
     rxjs: "npm:7.8.2"
   peerDependencies:
-    livekit-client: ^2.13.3
+    livekit-client: ^2.15.14
     tslib: ^2.6.2
-  checksum: 10c0/bfd84fb950f72dd037bd5329658c1e750a8ac6b8f2953ea673e3e944b8ea9d412ef9c98eb8b690052323e03c675964b162aacb00e60530cdc5187f77d21979bd
+  checksum: 10c0/9c2ac3d30bb8cc9067ae0b2049784f81e90e57df9eabf7edbaf3c8ceb65a63f644a4e6abeb6cc38d3ebe52663d8dbb88535e01a965011f365d5ae1f3daf86052
   languageName: node
   linkType: hard
 
 "@livekit/components-react@npm:^2.0.0":
-  version: 2.9.15
-  resolution: "@livekit/components-react@npm:2.9.15"
+  version: 2.9.16
+  resolution: "@livekit/components-react@npm:2.9.16"
   dependencies:
-    "@livekit/components-core": "npm:0.12.10"
+    "@livekit/components-core": "npm:0.12.11"
     clsx: "npm:2.1.1"
+    events: "npm:^3.3.0"
+    jose: "npm:^6.0.12"
     usehooks-ts: "npm:3.1.1"
   peerDependencies:
     "@livekit/krisp-noise-filter": ^0.2.12 || ^0.3.0
-    livekit-client: ^2.13.3
+    livekit-client: ^2.15.14
     react: ">=18"
     react-dom: ">=18"
     tslib: ^2.6.2
   peerDependenciesMeta:
     "@livekit/krisp-noise-filter":
       optional: true
-  checksum: 10c0/58a93d85c3b8267d0afd00eceb4f34992ce66124f93450e828a78dd825ecc20e254c3123ed22ec33061a3728f50f4f020ff896769fb3a0ff79656ed8cf452a2b
+  checksum: 10c0/4ba4ff473c5a29d3107412733a6676a3b708d70684ed463e9b34cda26abb3d2f317c2828a52e730837b756de9df3fc248260d6f390aedebfb6ec96ef63c7b151
   languageName: node
   linkType: hard
 
@@ -5247,12 +5249,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^22.0.0":
-  version: 22.17.0
-  resolution: "@types/node@npm:22.17.0"
+"@types/node@npm:^24.0.0":
+  version: 24.10.0
+  resolution: "@types/node@npm:24.10.0"
   dependencies:
-    undici-types: "npm:~6.21.0"
-  checksum: 10c0/e1c603b660d3de3243dfc02ded5d40623ff3f36315ffbdd8cdc81bc2c5a8da172035879d437b72e9fa61ca01827f28e9c2b0c32898f411a8e9ba0a5efac0b4ca
+    undici-types: "npm:~7.16.0"
+  checksum: 10c0/f82ed7194e16f5590ef7afdc20c6d09068c76d50278b485ede8f0c5749683536e3064ffa8def8db76915196afb3724b854aa5723c64d6571b890b14492943b46
   languageName: node
   linkType: hard
 
@@ -7507,7 +7509,7 @@ __metadata:
     "@types/grecaptcha": "npm:^3.0.9"
     "@types/jsdom": "npm:^21.1.7"
     "@types/lodash-es": "npm:^4.17.12"
-    "@types/node": "npm:^22.0.0"
+    "@types/node": "npm:^24.0.0"
     "@types/pako": "npm:^2.0.3"
     "@types/qrcode": "npm:^1.5.5"
     "@types/react": "npm:^19.0.0"
@@ -9828,6 +9830,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^6.0.12":
+  version: 6.1.2
+  resolution: "jose@npm:6.1.2"
+  checksum: 10c0/55f79426f43e652ed6d5de938d50f66bb0a10dcae078db81a23f8d3303e889ce226f000e815f3211f9956bb84badce10da892d130d40fe2eca658045a6f1778e
+  languageName: node
+  linkType: hard
+
 "jose@npm:^6.1.0":
   version: 6.1.0
   resolution: "jose@npm:6.1.0"
@@ -10110,8 +10119,8 @@ __metadata:
   linkType: hard
 
 "livekit-client@npm:^2.13.0":
-  version: 2.15.13
-  resolution: "livekit-client@npm:2.15.13"
+  version: 2.16.0
+  resolution: "livekit-client@npm:2.16.0"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
     "@livekit/protocol": "npm:1.42.2"
@@ -10125,7 +10134,7 @@ __metadata:
     webrtc-adapter: "npm:^9.0.1"
   peerDependencies:
     "@types/dom-mediacapture-record": ^1
-  checksum: 10c0/5a061df9000461a6d40ef8aa1e72e8aedc640181cc57fe6f2c48c5c7f90ce96a735b125aede377fc43f4692a685e098f17eeae0f42c5b2fed473305867bf2789
+  checksum: 10c0/5d03adc5d09efde343ab894db397529dff26117598e773b23a5df90a4fb166bde12c6bb1f2cfd1d28dbaf93fe9f275026d7abb75f2ffd2ba816393a2d58e6c7e
   languageName: node
   linkType: hard
 
@@ -13603,10 +13612,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:~6.21.0":
-  version: 6.21.0
-  resolution: "undici-types@npm:6.21.0"
-  checksum: 10c0/c01ed51829b10aa72fc3ce64b747f8e74ae9b60eafa19a7b46ef624403508a54c526ffab06a14a26b3120d055e1104d7abe7c9017e83ced038ea5cf52f8d5e04
+"undici-types@npm:~7.16.0":
+  version: 7.16.0
+  resolution: "undici-types@npm:7.16.0"
+  checksum: 10c0/3033e2f2b5c9f1504bdc5934646cb54e37ecaca0f9249c983f7b1fc2e87c6d18399ebb05dc7fd5419e02b2e915f734d872a65da2e3eeed1813951c427d33cc9a
   languageName: node
   linkType: hard
 

@@ -1,16 +1,17 @@
 /*
+Copyright 2025 Element Creations Ltd.
 Copyright 2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 import {
-  ConnectionState,
-  type E2EEOptions,
   LocalVideoTrack,
-  Room as LivekitRoom,
-  type RoomOptions,
+  type Room as LivekitRoom,
   Track,
+  type LocalTrack,
+  type LocalTrackPublication,
+  ConnectionState as LivekitConnectionState,
 } from "livekit-client";
 import {
   map,
@@ -19,65 +20,52 @@ import {
   type Subscription,
   switchMap,
 } from "rxjs";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import type { Behavior } from "./Behavior.ts";
-import type { MediaDevices, SelectedDevice } from "./MediaDevices.ts";
-import type { MuteStates } from "./MuteStates.ts";
+import type { Behavior } from "../../Behavior.ts";
+import type { MediaDevices, SelectedDevice } from "../../MediaDevices.ts";
+import type { MuteStates } from "../../MuteStates.ts";
 import {
   type ProcessorState,
   trackProcessorSync,
-} from "../livekit/TrackProcessorContext.tsx";
-import { getUrlParams } from "../UrlParams.ts";
-import { defaultLiveKitOptions } from "../livekit/options.ts";
-import { getValue } from "../utils/observable.ts";
-import { observeTrackReference$ } from "./MediaViewModel.ts";
-import { Connection, type ConnectionOpts } from "./Connection.ts";
-import { type ObservableScope } from "./ObservableScope.ts";
+} from "../../../livekit/TrackProcessorContext.tsx";
+import { getUrlParams } from "../../../UrlParams.ts";
+import { observeTrackReference$ } from "../../MediaViewModel.ts";
+import { type Connection } from "../remoteMembers/Connection.ts";
+import { type ObservableScope } from "../../ObservableScope.ts";
 
 /**
- * A connection to the local LiveKit room, the one the user is publishing to.
- * This connection will publish the local user's audio and video tracks.
+ * A wrapper for a Connection object.
+ * This wrapper will manage the connection used to publish to the LiveKit room.
+ * The Publisher is also responsible for creating the media tracks.
  */
-export class PublishConnection extends Connection {
-  private readonly scope: ObservableScope;
-
+export class Publisher {
+  public tracks: LocalTrack<Track.Kind>[] = [];
   /**
-   * Creates a new PublishConnection.
-   * @param args - The connection options. {@link ConnectionOpts}
+   * Creates a new Publisher.
+   * @param scope - The observable scope to use for managing the publisher.
+   * @param connection - The connection to use for publishing.
    * @param devices - The media devices to use for audio and video input.
    * @param muteStates - The mute states for audio and video.
    * @param e2eeLivekitOptions - The E2EE options to use for the LiveKit room. Use to share the same key provider across connections!.
    * @param trackerProcessorState$ - The processor state for the video track processor (e.g. background blur).
    */
   public constructor(
-    args: ConnectionOpts,
+    private scope: ObservableScope,
+    private connection: Connection,
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
-    e2eeLivekitOptions: E2EEOptions | undefined,
     trackerProcessorState$: Behavior<ProcessorState>,
+    private logger?: Logger,
   ) {
-    const { scope } = args;
-    logger.info("[PublishConnection] Create LiveKit room");
+    this.logger?.info("[PublishConnection] Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
 
-    const factory =
-      args.livekitRoomFactory ??
-      ((options: RoomOptions): LivekitRoom => new LivekitRoom(options));
-    const room = factory(
-      generateRoomOption(
-        devices,
-        trackerProcessorState$.value,
-        controlledAudioDevices,
-        e2eeLivekitOptions,
-      ),
-    );
-    room.setE2EEEnabled(e2eeLivekitOptions !== undefined)?.catch((e) => {
-      logger.error("Failed to set E2EE enabled on room", e);
-    });
+    const room = connection.livekitRoom;
 
-    super(room, args);
-    this.scope = scope;
+    room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {
+      this.logger?.error("Failed to set E2EE enabled on room", e);
+    });
 
     // Setup track processor syncing (blur)
     this.observeTrackProcessors(scope, room, trackerProcessorState$);
@@ -85,61 +73,118 @@ export class PublishConnection extends Connection {
     this.observeMediaDevices(scope, devices, controlledAudioDevices);
 
     this.workaroundRestartAudioInputTrackChrome(devices, scope);
+    this.scope.onEnd(() => {
+      this.logger?.info(
+        "[PublishConnection] Scope ended -> stop publishing all tracks",
+      );
+      void this.stopPublishing();
+    });
   }
 
   /**
    * Start the connection to LiveKit and publish local tracks.
    *
    * This will:
-   * 1. Request an OpenId token `request_token` (allows matrix users to verify their identity with a third-party service.)
-   * 2. Use this token to request the SFU config to the MatrixRtc authentication service.
-   * 3. Connect to the configured LiveKit room.
-   * 4. Create local audio and video tracks based on the current mute states and publish them to the room.
+   * wait for the connection to be ready.
+   // * 1. Request an OpenId token `request_token` (allows matrix users to verify their identity with a third-party service.)
+   // * 2. Use this token to request the SFU config to the MatrixRtc authentication service.
+   // * 3. Connect to the configured LiveKit room.
+   // * 4. Create local audio and video tracks based on the current mute states and publish them to the room.
    *
    * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
    * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
    */
-  public async start(): Promise<void> {
-    this.stopped = false;
-
+  public async createAndSetupTracks(): Promise<LocalTrack[]> {
+    const lkRoom = this.connection.livekitRoom;
     // Observe mute state changes and update LiveKit microphone/camera states accordingly
     this.observeMuteStates(this.scope);
 
+    // TODO: This should be an autostarted connection no need to start here. just check the connection state.
     // TODO: This will fetch the JWT token. Perhaps we could keep it preloaded
     // instead? This optimization would only be safe for a publish connection,
     // because we don't want to leak the user's intent to perhaps join a call to
     // remote servers before they actually commit to it.
-    await super.start();
-
-    if (this.stopped) return;
-
+    // const { promise, resolve, reject } = Promise.withResolvers<void>();
+    // const sub = this.connection.state$.subscribe((s) => {
+    //   if (s.state === "FailedToStart") {
+    //     reject(new Error("Disconnected from LiveKit server"));
+    //   } else if (s.state === "ConnectedToLkRoom") {
+    //     resolve();
+    //   }
+    // });
+    // try {
+    //   await promise;
+    // } catch (e) {
+    //   throw e;
+    // } finally {
+    //   sub.unsubscribe();
+    // }
     // TODO-MULTI-SFU: Prepublish a microphone track
     const audio = this.muteStates.audio.enabled$.value;
     const video = this.muteStates.video.enabled$.value;
     // createTracks throws if called with audio=false and video=false
     if (audio || video) {
       // TODO this can still throw errors? It will also prompt for permissions if not already granted
-      const tracks = await this.livekitRoom.localParticipant.createTracks({
-        audio,
-        video,
-      });
-      if (this.stopped) return;
-      for (const track of tracks) {
-        // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
-        // with a timeout.
-        await this.livekitRoom.localParticipant.publishTrack(track);
-        if (this.stopped) return;
-        // TODO: check if the connection is still active? and break the loop if not?
-      }
+      this.tracks =
+        (await lkRoom.localParticipant
+          .createTracks({
+            audio,
+            video,
+          })
+          .catch((error) => {
+            this.logger?.error("Failed to create tracks", error);
+          })) ?? [];
     }
+    return this.tracks;
   }
 
-  public async stop(): Promise<void> {
+  public async startPublishing(): Promise<LocalTrack[]> {
+    const lkRoom = this.connection.livekitRoom;
+    const { promise, resolve, reject } = Promise.withResolvers<void>();
+    const sub = this.connection.state$.subscribe((s) => {
+      switch (s.state) {
+        case "ConnectedToLkRoom":
+          resolve();
+          break;
+        case "FailedToStart":
+          reject(new Error("Failed to connect to LiveKit server"));
+          break;
+        default:
+          this.logger?.info("waiting for connection: ", s.state);
+      }
+    });
+    try {
+      await promise;
+    } catch (e) {
+      throw e;
+    } finally {
+      sub.unsubscribe();
+    }
+    for (const track of this.tracks) {
+      // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
+      // with a timeout.
+      await lkRoom.localParticipant.publishTrack(track).catch((error) => {
+        this.logger?.error("Failed to publish track", error);
+      });
+
+      // TODO: check if the connection is still active? and break the loop if not?
+    }
+    return this.tracks;
+  }
+
+  public async stopPublishing(): Promise<void> {
     // TODO-MULTI-SFU: Move these calls back to ObservableScope.onEnd once scope
     // actually has the right lifetime
     this.muteStates.audio.unsetHandler();
     this.muteStates.video.unsetHandler();
-    await super.stop();
+
+    const localParticipant = this.connection.livekitRoom.localParticipant;
+    const tracks: LocalTrack[] = [];
+    const addToTracksIfDefined = (p: LocalTrackPublication): void => {
+      if (p.track !== undefined) tracks.push(p.track);
+    };
+    localParticipant.trackPublications.forEach(addToTracksIfDefined);
+    await localParticipant.unpublishTracks(tracks);
   }
 
   /// Private methods
@@ -156,15 +201,16 @@ export class PublishConnection extends Connection {
     devices: MediaDevices,
     scope: ObservableScope,
   ): void {
+    const lkRoom = this.connection.livekitRoom;
     devices.audioInput.selected$
       .pipe(
         switchMap((device) => device?.hardwareDeviceChange$ ?? NEVER),
         scope.bind(),
       )
       .subscribe(() => {
-        if (this.livekitRoom.state != ConnectionState.Connected) return;
+        if (lkRoom.state != LivekitConnectionState.Connected) return;
         const activeMicTrack = Array.from(
-          this.livekitRoom.localParticipant.audioTrackPublications.values(),
+          lkRoom.localParticipant.audioTrackPublications.values(),
         ).find((d) => d.source === Track.Source.Microphone)?.track;
 
         if (
@@ -179,11 +225,11 @@ export class PublishConnection extends Connection {
           // getUserMedia() call with deviceId: default to get the *new* default device.
           // Note that room.switchActiveDevice() won't work: Livekit will ignore it because
           // the deviceId hasn't changed (was & still is default).
-          this.livekitRoom.localParticipant
+          lkRoom.localParticipant
             .getTrackPublication(Track.Source.Microphone)
             ?.audioTrack?.restartTrack()
             .catch((e) => {
-              logger.error(`Failed to restart audio device track`, e);
+              this.logger?.error(`Failed to restart audio device track`, e);
             });
         }
       });
@@ -195,27 +241,31 @@ export class PublishConnection extends Connection {
     devices: MediaDevices,
     controlledAudioDevices: boolean,
   ): void {
+    const lkRoom = this.connection.livekitRoom;
     const syncDevice = (
       kind: MediaDeviceKind,
       selected$: Observable<SelectedDevice | undefined>,
     ): Subscription =>
       selected$.pipe(scope.bind()).subscribe((device) => {
-        if (this.livekitRoom.state != ConnectionState.Connected) return;
+        if (lkRoom.state != LivekitConnectionState.Connected) return;
         // if (this.connectionState$.value !== ConnectionState.Connected) return;
-        logger.info(
+        this.logger?.info(
           "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
-          this.livekitRoom.getActiveDevice(kind),
+          lkRoom.getActiveDevice(kind),
           " !== ",
           device?.id,
         );
         if (
           device !== undefined &&
-          this.livekitRoom.getActiveDevice(kind) !== device.id
+          lkRoom.getActiveDevice(kind) !== device.id
         ) {
-          this.livekitRoom
+          lkRoom
             .switchActiveDevice(kind, device.id)
-            .catch((e) =>
-              logger.error(`Failed to sync ${kind} device with LiveKit`, e),
+            .catch((e: Error) =>
+              this.logger?.error(
+                `Failed to sync ${kind} device with LiveKit`,
+                e,
+              ),
             );
         }
       });
@@ -232,21 +282,28 @@ export class PublishConnection extends Connection {
    * @private
    */
   private observeMuteStates(scope: ObservableScope): void {
+    const lkRoom = this.connection.livekitRoom;
     this.muteStates.audio.setHandler(async (desired) => {
       try {
-        await this.livekitRoom.localParticipant.setMicrophoneEnabled(desired);
+        await lkRoom.localParticipant.setMicrophoneEnabled(desired);
       } catch (e) {
-        logger.error("Failed to update LiveKit audio input mute state", e);
+        this.logger?.error(
+          "Failed to update LiveKit audio input mute state",
+          e,
+        );
       }
-      return this.livekitRoom.localParticipant.isMicrophoneEnabled;
+      return lkRoom.localParticipant.isMicrophoneEnabled;
     });
     this.muteStates.video.setHandler(async (desired) => {
       try {
-        await this.livekitRoom.localParticipant.setCameraEnabled(desired);
+        await lkRoom.localParticipant.setCameraEnabled(desired);
       } catch (e) {
-        logger.error("Failed to update LiveKit video input mute state", e);
+        this.logger?.error(
+          "Failed to update LiveKit video input mute state",
+          e,
+        );
       }
-      return this.livekitRoom.localParticipant.isCameraEnabled;
+      return lkRoom.localParticipant.isCameraEnabled;
     });
   }
 
@@ -262,37 +319,8 @@ export class PublishConnection extends Connection {
           return track instanceof LocalVideoTrack ? track : null;
         }),
       ),
+      null,
     );
-    trackProcessorSync(track$, trackerProcessorState$);
+    trackProcessorSync(scope, track$, trackerProcessorState$);
   }
-}
-
-// Generate the initial LiveKit RoomOptions based on the current media devices and processor state.
-function generateRoomOption(
-  devices: MediaDevices,
-  processorState: ProcessorState,
-  controlledAudioDevices: boolean,
-  e2eeLivekitOptions: E2EEOptions | undefined,
-): RoomOptions {
-  return {
-    ...defaultLiveKitOptions,
-    videoCaptureDefaults: {
-      ...defaultLiveKitOptions.videoCaptureDefaults,
-      deviceId: devices.videoInput.selected$.value?.id,
-      processor: processorState.processor,
-    },
-    audioCaptureDefaults: {
-      ...defaultLiveKitOptions.audioCaptureDefaults,
-      deviceId: devices.audioInput.selected$.value?.id,
-    },
-    audioOutput: {
-      // When using controlled audio devices, we don't want to set the
-      // deviceId here, because it will be set by the native app.
-      // (also the id does not need to match a browser device id)
-      deviceId: controlledAudioDevices
-        ? undefined
-        : getValue(devices.audioOutput.selected$)?.id,
-    },
-    e2ee: e2eeLivekitOptions,
-  };
 }

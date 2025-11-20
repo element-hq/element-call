@@ -78,13 +78,13 @@ const leaveRTCSession = vi.hoisted(() =>
   ),
 );
 
-vi.mock("../rtcSessionHelpers", async (importOriginal) => {
-  // TODO: perhaps there is a more elegant way to manage the type import here?
-  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  const orig = await importOriginal<typeof import("../rtcSessionHelpers")>();
-  // TODO: leaveRTCSession no longer exists! Tests need adapting.
-  return { ...orig, enterRTCSession, leaveRTCSession };
-});
+// vi.mock("../rtcSessionHelpers", async (importOriginal) => {
+//   // TODO: perhaps there is a more elegant way to manage the type import here?
+//   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+//   const orig = await importOriginal<typeof import("../rtcSessionHelpers")>();
+//   // TODO: leaveRTCSession no longer exists! Tests need adapting.
+//   return { ...orig, enterRTCSession, leaveRTCSession };
+// });
 
 let playSound: MockedFunction<
   NonNullable<ReturnType<typeof useAudioContext>>["playSound"]
@@ -346,6 +346,7 @@ test.skip("GroupCallView leaves the session when an error occurs", async () => {
 
 test.skip("GroupCallView shows errors that occur during joining", async () => {
   const user = userEvent.setup();
+  // This should not mock this error that deep. it should only mock the CallViewModel.
   enterRTCSession.mockRejectedValue(new MatrixRTCTransportMissingError(""));
   onTestFinished(() => {
     enterRTCSession.mockReset();

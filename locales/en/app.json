@@ -72,12 +72,22 @@
     "livekit_server_info": "LiveKit Server Info",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
-    "multi_sfu": "Multi-SFU media transport",
-    "mute_all_audio": "Mute all audio (participants, reactions, join sounds)",
-    "prefer_sticky_events": {
-      "description": "Improves reliability of calls (requires homeserver support)",
-      "label": "Prefer sticky events"
+    "matrixRTCMode": {
+      "Comptibility": {
+        "description": "Compatible with homeservers that do not support sticky events (but all other EC clients are v0.17.0 or later)",
+        "label": "Compatibility: state events & multi SFU"
+      },
+      "Legacy": {
+        "description": "Compatible with old versions of EC that do not support multi SFU",
+        "label": "Legacy: state events & oldest membership SFU"
+      },
+      "Matrix_2_0": {
+        "description": "Compatible only with homservers supporting sticky events and all EC clients v0.17.0 or later",
+        "label": "Matrix 2.0: sticky events & multi SFU"
+      },
+      "title": "MatrixRTC mode"
     },
+    "mute_all_audio": "Mute all audio (participants, reactions, join sounds)",
     "show_connection_stats": "Show connection statistics",
     "url_params": "URL parameters"
   },

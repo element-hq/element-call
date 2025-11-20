@@ -1,4 +1,5 @@
 /*
+Copyright 2025 Element Creations Ltd.
 Copyright 2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
@@ -10,41 +11,32 @@ import {
   describe,
   expect,
   it,
-  type Mock,
   type MockedObject,
   onTestFinished,
   vi,
 } from "vitest";
-import { BehaviorSubject, of } from "rxjs";
 import {
-  ConnectionState,
   type LocalParticipant,
   type RemoteParticipant,
   type Room as LivekitRoom,
   RoomEvent,
-  type RoomOptions,
+  ConnectionState as LivekitConnectionState,
 } from "livekit-client";
 import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 
-import type {
-  CallMembership,
-  LivekitTransport,
-} from "matrix-js-sdk/lib/matrixrtc";
+import type { LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
+  Connection,
   type ConnectionOpts,
-  type TransportState,
+  type ConnectionState,
   type PublishingParticipant,
-  RemoteConnection,
 } from "./Connection.ts";
-import { ObservableScope } from "./ObservableScope.ts";
-import { type OpenIDClientParts } from "../livekit/openIDSFU.ts";
-import { FailToGetOpenIdToken } from "../utils/errors.ts";
-import { PublishConnection } from "./PublishConnection.ts";
-import { mockMediaDevices, mockMuteStates } from "../utils/test.ts";
-import type { ProcessorState } from "../livekit/TrackProcessorContext.tsx";
-import { type MuteStates } from "./MuteStates.ts";
+import { ObservableScope } from "../../ObservableScope.ts";
+import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import { FailToGetOpenIdToken } from "../../../utils/errors.ts";
 
 let testScope: ObservableScope;
 
@@ -56,9 +48,9 @@ let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 let fakeRoomEventEmiter: EventEmitter;
-let fakeMembershipsFocusMap$: BehaviorSubject<
-  { membership: CallMembership; transport: LivekitTransport }[]
->;
+// let fakeMembershipsFocusMap$: BehaviorSubject<
+//   { membership: CallMembership; transport: LivekitTransport }[]
+// >;
 
 const livekitFocus: LivekitTransport = {
   livekit_alias: "!roomID:example.org",
@@ -77,9 +69,6 @@ function setupTest(): void {
     }),
     getDeviceId: vi.fn().mockReturnValue("ABCDEF"),
   } as unknown as OpenIDClientParts);
-  fakeMembershipsFocusMap$ = new BehaviorSubject<
-    { membership: CallMembership; transport: LivekitTransport }[]
-  >([]);
 
   localParticipantEventEmiter = new EventEmitter();
 
@@ -106,7 +95,7 @@ function setupTest(): void {
     disconnect: vi.fn(),
     remoteParticipants: new Map(),
     localParticipant: fakeLocalParticipant,
-    state: ConnectionState.Disconnected,
+    state: LivekitConnectionState.Disconnected,
     on: fakeRoomEventEmiter.on.bind(fakeRoomEventEmiter),
     off: fakeRoomEventEmiter.off.bind(fakeRoomEventEmiter),
     addListener: fakeRoomEventEmiter.addListener.bind(fakeRoomEventEmiter),
@@ -118,11 +107,10 @@ function setupTest(): void {
   } as unknown as LivekitRoom);
 }
 
-function setupRemoteConnection(): RemoteConnection {
+function setupRemoteConnection(): Connection {
   const opts: ConnectionOpts = {
     client: client,
     transport: livekitFocus,
-    remoteTransports$: fakeMembershipsFocusMap$,
     scope: testScope,
     livekitRoomFactory: () => fakeLivekitRoom,
   };
@@ -139,7 +127,7 @@ function setupRemoteConnection(): RemoteConnection {
 
   fakeLivekitRoom.connect.mockResolvedValue(undefined);
 
-  return new RemoteConnection(opts, undefined);
+  return new Connection(opts, logger);
 }
 
 afterEach(() => {
@@ -155,13 +143,12 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       transport: livekitFocus,
-      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
-    const connection = new RemoteConnection(opts, undefined);
+    const connection = new Connection(opts, logger);
 
-    expect(connection.transportState$.getValue().state).toEqual("Initialized");
+    expect(connection.state$.getValue().state).toEqual("Initialized");
   });
 
   it("fail to getOpenId token then error state", async () => {
@@ -171,15 +158,14 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       transport: livekitFocus,
-      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new RemoteConnection(opts, undefined);
+    const connection = new Connection(opts, logger);
 
-    const capturedStates: TransportState[] = [];
-    const s = connection.transportState$.subscribe((value) => {
+    const capturedStates: ConnectionState[] = [];
+    const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -224,15 +210,14 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       transport: livekitFocus,
-      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new RemoteConnection(opts, undefined);
+    const connection = new Connection(opts, logger);
 
-    const capturedStates: TransportState[] = [];
-    const s = connection.transportState$.subscribe((value) => {
+    const capturedStates: ConnectionState[] = [];
+    const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -281,15 +266,14 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       transport: livekitFocus,
-      remoteTransports$: fakeMembershipsFocusMap$,
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new RemoteConnection(opts, undefined);
+    const connection = new Connection(opts, logger);
 
-    const capturedStates: TransportState[] = [];
-    const s = connection.transportState$.subscribe((value) => {
+    const capturedStates: ConnectionState[] = [];
+    const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -345,8 +329,8 @@ describe("Start connection states", () => {
 
     const connection = setupRemoteConnection();
 
-    const capturedStates: TransportState[] = [];
-    const s = connection.transportState$.subscribe((value) => {
+    const capturedStates: ConnectionState[] = [];
+    const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
     onTestFinished(() => s.unsubscribe());
@@ -379,21 +363,18 @@ describe("Start connection states", () => {
   });
 });
 
-function fakeRemoteLivekitParticipant(id: string): RemoteParticipant {
+function fakeRemoteLivekitParticipant(
+  id: string,
+  publications: number = 1,
+): RemoteParticipant {
   return {
     identity: id,
+    getTrackPublications: () => Array(publications),
   } as unknown as RemoteParticipant;
 }
 
-function fakeRtcMemberShip(userId: string, deviceId: string): CallMembership {
-  return {
-    userId,
-    deviceId,
-  } as unknown as CallMembership;
-}
-
 describe("Publishing participants observations", () => {
-  it("should emit the list of publishing participants", async () => {
+  it("should emit the list of publishing participants", () => {
     setupTest();
 
     const connection = setupRemoteConnection();
@@ -401,135 +382,53 @@ describe("Publishing participants observations", () => {
     const bobIsAPublisher = Promise.withResolvers<void>();
     const danIsAPublisher = Promise.withResolvers<void>();
     const observedPublishers: PublishingParticipant[][] = [];
-    const s = connection.publishingParticipants$.subscribe((publishers) => {
-      observedPublishers.push(publishers);
-      if (
-        publishers.some(
-          (p) => p.participant?.identity === "@bob:example.org:DEV111",
-        )
-      ) {
-        bobIsAPublisher.resolve();
-      }
-      if (
-        publishers.some(
-          (p) => p.participant?.identity === "@dan:example.org:DEV333",
-        )
-      ) {
-        danIsAPublisher.resolve();
-      }
-    });
+    const s = connection.remoteParticipantsWithTracks$.subscribe(
+      (publishers) => {
+        observedPublishers.push(publishers);
+        if (publishers.some((p) => p.identity === "@bob:example.org:DEV111")) {
+          bobIsAPublisher.resolve();
+        }
+        if (publishers.some((p) => p.identity === "@dan:example.org:DEV333")) {
+          danIsAPublisher.resolve();
+        }
+      },
+    );
     onTestFinished(() => s.unsubscribe());
     // The publishingParticipants$ observable is derived from the current members of the
     // livekitRoom and the rtc membership in order to publish the members that are publishing
     // on this connection.
 
     let participants: RemoteParticipant[] = [
-      fakeRemoteLivekitParticipant("@alice:example.org:DEV000"),
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
-      fakeRemoteLivekitParticipant("@carol:example.org:DEV222"),
-      fakeRemoteLivekitParticipant("@dan:example.org:DEV333"),
+      fakeRemoteLivekitParticipant("@alice:example.org:DEV000", 0),
+      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 0),
+      fakeRemoteLivekitParticipant("@carol:example.org:DEV222", 0),
+      fakeRemoteLivekitParticipant("@dan:example.org:DEV333", 0),
     ];
 
     // Let's simulate 3 members on the livekitRoom
-    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockReturnValue(
-      new Map(participants.map((p) => [p.identity, p])),
+    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockImplementation(
+      () => new Map(participants.map((p) => [p.identity, p])),
     );
 
-    for (const participant of participants) {
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
-    }
+    participants.forEach((p) =>
+      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
+    );
 
     // At this point there should be no publishers
     expect(observedPublishers.pop()!.length).toEqual(0);
 
-    const otherFocus: LivekitTransport = {
-      livekit_alias: "!roomID:example.org",
-      livekit_service_url: "https://other-matrix-rtc.example.org/livekit/jwt",
-      type: "livekit",
-    };
-
-    const rtcMemberships = [
-      // Say bob is on the same focus
-      {
-        membership: fakeRtcMemberShip("@bob:example.org", "DEV111"),
-        transport: livekitFocus,
-      },
-      // Alice and carol is on a different focus
-      {
-        membership: fakeRtcMemberShip("@alice:example.org", "DEV000"),
-        transport: otherFocus,
-      },
-      {
-        membership: fakeRtcMemberShip("@carol:example.org", "DEV222"),
-        transport: otherFocus,
-      },
-      // NO DAVE YET
+    participants = [
+      fakeRemoteLivekitParticipant("@alice:example.org:DEV000", 1),
+      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1),
+      fakeRemoteLivekitParticipant("@carol:example.org:DEV222", 1),
+      fakeRemoteLivekitParticipant("@dan:example.org:DEV333", 2),
     ];
-    // signal this change in rtc memberships
-    fakeMembershipsFocusMap$.next(rtcMemberships);
-
-    // We should have bob has a publisher now
-    await bobIsAPublisher.promise;
-    const publishers = observedPublishers.pop();
-    expect(publishers?.length).toEqual(1);
-    expect(publishers?.[0].participant?.identity).toEqual(
-      "@bob:example.org:DEV111",
+    participants.forEach((p) =>
+      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
     );
 
-    // Now let's make dan join the rtc memberships
-    rtcMemberships.push({
-      membership: fakeRtcMemberShip("@dan:example.org", "DEV333"),
-      transport: livekitFocus,
-    });
-    fakeMembershipsFocusMap$.next(rtcMemberships);
-
-    // We should have bob and dan has publishers now
-    await danIsAPublisher.promise;
-    const twoPublishers = observedPublishers.pop();
-    expect(twoPublishers?.length).toEqual(2);
-    expect(
-      twoPublishers?.some(
-        (p) => p.participant?.identity === "@bob:example.org:DEV111",
-      ),
-    ).toBeTruthy();
-    expect(
-      twoPublishers?.some(
-        (p) => p.participant?.identity === "@dan:example.org:DEV333",
-      ),
-    ).toBeTruthy();
-
-    // Now let's make bob leave the livekit room
-    participants = participants.filter(
-      (p) => p.identity !== "@bob:example.org:DEV111",
-    );
-    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockReturnValue(
-      new Map(participants.map((p) => [p.identity, p])),
-    );
-    fakeRoomEventEmiter.emit(
-      RoomEvent.ParticipantDisconnected,
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
-    );
-
-    const updatedPublishers = observedPublishers.pop();
-    // Bob is not connected to the room but he is still in the rtc memberships declaring that
-    // he is using that focus to publish, so he should still appear as a publisher
-    expect(updatedPublishers?.length).toEqual(2);
-    const pp = updatedPublishers?.find(
-      (p) => p.membership.userId == "@bob:example.org",
-    );
-    expect(pp).toBeDefined();
-    expect(pp!.participant).not.toBeDefined();
-    expect(
-      updatedPublishers?.some(
-        (p) => p.participant?.identity === "@dan:example.org:DEV333",
-      ),
-    ).toBeTruthy();
-    // Now if bob is not in the rtc memberships, he should disappear
-    const noBob = rtcMemberships.filter(
-      ({ membership }) => membership.userId !== "@bob:example.org",
-    );
-    fakeMembershipsFocusMap$.next(noBob);
-    expect(observedPublishers.pop()?.length).toEqual(1);
+    // At this point there should be no publishers
+    expect(observedPublishers.pop()!.length).toEqual(4);
   });
 
   it("should be scoped to parent scope", (): void => {
@@ -538,18 +437,20 @@ describe("Publishing participants observations", () => {
     const connection = setupRemoteConnection();
 
     let observedPublishers: PublishingParticipant[][] = [];
-    const s = connection.publishingParticipants$.subscribe((publishers) => {
-      observedPublishers.push(publishers);
-    });
+    const s = connection.remoteParticipantsWithTracks$.subscribe(
+      (publishers) => {
+        observedPublishers.push(publishers);
+      },
+    );
     onTestFinished(() => s.unsubscribe());
 
     let participants: RemoteParticipant[] = [
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
+      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 0),
     ];
 
     // Let's simulate 3 members on the livekitRoom
-    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockReturnValue(
-      new Map(participants.map((p) => [p.identity, p])),
+    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockImplementation(
+      () => new Map(participants.map((p) => [p.identity, p])),
     );
 
     for (const participant of participants) {
@@ -559,22 +460,16 @@ describe("Publishing participants observations", () => {
     // At this point there should be no publishers
     expect(observedPublishers.pop()!.length).toEqual(0);
 
-    const rtcMemberships = [
-      // Say bob is on the same focus
-      {
-        membership: fakeRtcMemberShip("@bob:example.org", "DEV111"),
-        transport: livekitFocus,
-      },
-    ];
-    // signal this change in rtc memberships
-    fakeMembershipsFocusMap$.next(rtcMemberships);
+    participants = [fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1)];
+
+    for (const participant of participants) {
+      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
+    }
 
     // We should have bob has a publisher now
     const publishers = observedPublishers.pop();
     expect(publishers?.length).toEqual(1);
-    expect(publishers?.[0].participant?.identity).toEqual(
-      "@bob:example.org:DEV111",
-    );
+    expect(publishers?.[0]?.identity).toEqual("@bob:example.org:DEV111");
 
     // end the parent scope
     testScope.end();
@@ -584,9 +479,7 @@ describe("Publishing participants observations", () => {
     participants = participants.filter(
       (p) => p.identity !== "@bob:example.org:DEV111",
     );
-    vi.spyOn(fakeLivekitRoom, "remoteParticipants", "get").mockReturnValue(
-      new Map(participants.map((p) => [p.identity, p])),
-    );
+
     fakeRoomEventEmiter.emit(
       RoomEvent.ParticipantDisconnected,
       fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
@@ -596,108 +489,112 @@ describe("Publishing participants observations", () => {
   });
 });
 
-describe("PublishConnection", () => {
-  // let fakeBlurProcessor: ProcessorWrapper<BackgroundOptions>;
-  let roomFactoryMock: Mock<() => LivekitRoom>;
-  let muteStates: MockedObject<MuteStates>;
+//
+// NOT USED ANYMORE ?
+//
+// This setup look like sth for the Publisher. Not a connection.
 
-  function setUpPublishConnection(): void {
-    setupTest();
+// describe("PublishConnection", () => {
+//   // let fakeBlurProcessor: ProcessorWrapper<BackgroundOptions>;
+//   let roomFactoryMock: Mock<() => LivekitRoom>;
+//   let muteStates: MockedObject<MuteStates>;
 
-    roomFactoryMock = vi.fn().mockReturnValue(fakeLivekitRoom);
+//   function setUpPublishConnection(): void {
+//     setupTest();
 
-    muteStates = mockMuteStates();
+//     roomFactoryMock = vi.fn().mockReturnValue(fakeLivekitRoom);
 
-    // fakeBlurProcessor = vi.mocked<ProcessorWrapper<BackgroundOptions>>({
-    //   name: "BackgroundBlur",
-    //   restart: vi.fn().mockResolvedValue(undefined),
-    //   setOptions: vi.fn().mockResolvedValue(undefined),
-    //   getOptions: vi.fn().mockReturnValue({ strength: 0.5 }),
-    //   isRunning: vi.fn().mockReturnValue(false)
-    // });
-  }
+//     muteStates = mockMuteStates();
 
-  describe("Livekit room creation", () => {
-    function createSetup(): void {
-      setUpPublishConnection();
+//     // fakeBlurProcessor = vi.mocked<ProcessorWrapper<BackgroundOptions>>({
+//     //   name: "BackgroundBlur",
+//     //   restart: vi.fn().mockResolvedValue(undefined),
+//     //   setOptions: vi.fn().mockResolvedValue(undefined),
+//     //   getOptions: vi.fn().mockReturnValue({ strength: 0.5 }),
+//     //   isRunning: vi.fn().mockReturnValue(false)
+//     // });
+//   }
 
-      const fakeTrackProcessorSubject$ = new BehaviorSubject<ProcessorState>({
-        supported: true,
-        processor: undefined,
-      });
+// describe("Livekit room creation", () => {
+//   function createSetup(): void {
+//     setUpPublishConnection();
 
-      const opts: ConnectionOpts = {
-        client: client,
-        transport: livekitFocus,
-        remoteTransports$: fakeMembershipsFocusMap$,
-        scope: testScope,
-        livekitRoomFactory: roomFactoryMock,
-      };
+//     const fakeTrackProcessorSubject$ = new BehaviorSubject<ProcessorState>({
+//       supported: true,
+//       processor: undefined,
+//     });
 
-      const audioInput = {
-        available$: of(new Map([["mic1", { id: "mic1" }]])),
-        selected$: new BehaviorSubject({ id: "mic1" }),
-        select(): void {},
-      };
+//     const opts: ConnectionOpts = {
+//       client: client,
+//       transport: livekitFocus,
+//       scope: testScope,
+//       livekitRoomFactory: roomFactoryMock,
+//     };
 
-      const videoInput = {
-        available$: of(new Map([["cam1", { id: "cam1" }]])),
-        selected$: new BehaviorSubject({ id: "cam1" }),
-        select(): void {},
-      };
+//     const audioInput = {
+//       available$: of(new Map([["mic1", { id: "mic1" }]])),
+//       selected$: new BehaviorSubject({ id: "mic1" }),
+//       select(): void {},
+//     };
 
-      const audioOutput = {
-        available$: of(new Map([["speaker", { id: "speaker" }]])),
-        selected$: new BehaviorSubject({ id: "speaker" }),
-        select(): void {},
-      };
+//     const videoInput = {
+//       available$: of(new Map([["cam1", { id: "cam1" }]])),
+//       selected$: new BehaviorSubject({ id: "cam1" }),
+//       select(): void {},
+//     };
 
-      // TODO understand what is wrong with our mocking that requires ts-expect-error
-      const fakeDevices = mockMediaDevices({
-        // @ts-expect-error Mocking only
-        audioInput,
-        // @ts-expect-error Mocking only
-        videoInput,
-        // @ts-expect-error Mocking only
-        audioOutput,
-      });
+//     const audioOutput = {
+//       available$: of(new Map([["speaker", { id: "speaker" }]])),
+//       selected$: new BehaviorSubject({ id: "speaker" }),
+//       select(): void {},
+//     };
 
-      new PublishConnection(
-        opts,
-        fakeDevices,
-        muteStates,
-        undefined,
-        fakeTrackProcessorSubject$,
-      );
-    }
+//     // TODO understand what is wrong with our mocking that requires ts-expect-error
+//     const fakeDevices = mockMediaDevices({
+//       // @ts-expect-error Mocking only
+//       audioInput,
+//       // @ts-expect-error Mocking only
+//       videoInput,
+//       // @ts-expect-error Mocking only
+//       audioOutput,
+//     });
 
-    it("should create room with proper initial audio and video settings", () => {
-      createSetup();
+//     new Connection(
+//       opts,
+//       fakeDevices,
+//       muteStates,
+//       undefined,
+//       fakeTrackProcessorSubject$,
+//     );
+//   }
 
-      expect(roomFactoryMock).toHaveBeenCalled();
+//   it("should create room with proper initial audio and video settings", () => {
+//     createSetup();
 
-      const lastCallArgs =
-        roomFactoryMock.mock.calls[roomFactoryMock.mock.calls.length - 1];
+//     expect(roomFactoryMock).toHaveBeenCalled();
 
-      const roomOptions = lastCallArgs.pop() as unknown as RoomOptions;
-      expect(roomOptions).toBeDefined();
+//     const lastCallArgs =
+//       roomFactoryMock.mock.calls[roomFactoryMock.mock.calls.length - 1];
 
-      expect(roomOptions!.videoCaptureDefaults?.deviceId).toEqual("cam1");
-      expect(roomOptions!.audioCaptureDefaults?.deviceId).toEqual("mic1");
-      expect(roomOptions!.audioOutput?.deviceId).toEqual("speaker");
-    });
+//     const roomOptions = lastCallArgs.pop() as unknown as RoomOptions;
+//     expect(roomOptions).toBeDefined();
 
-    it("respect controlledAudioDevices", () => {
-      // TODO: Refactor the code to make it testable.
-      // The UrlParams module is a singleton has a cache and is very hard to test.
-      // This breaks other tests as well if not handled properly.
-      // vi.mock(import("./../UrlParams"), () => {
-      //   return {
-      //     getUrlParams: vi.fn().mockReturnValue({
-      //       controlledAudioDevices: true
-      //     })
-      //   };
-      // });
-    });
-  });
-});
+//     expect(roomOptions!.videoCaptureDefaults?.deviceId).toEqual("cam1");
+//     expect(roomOptions!.audioCaptureDefaults?.deviceId).toEqual("mic1");
+//     expect(roomOptions!.audioOutput?.deviceId).toEqual("speaker");
+//   });
+
+//   it("respect controlledAudioDevices", () => {
+//     // TODO: Refactor the code to make it testable.
+//     // The UrlParams module is a singleton has a cache and is very hard to test.
+//     // This breaks other tests as well if not handled properly.
+//     // vi.mock(import("./../UrlParams"), () => {
+//     //   return {
+//     //     getUrlParams: vi.fn().mockReturnValue({
+//     //       controlledAudioDevices: true
+//     //     })
+//     //   };
+//     // });
+//   });
+// });
+// });

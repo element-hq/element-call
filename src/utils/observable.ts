@@ -20,10 +20,12 @@ import {
   takeWhile,
   tap,
   withLatestFrom,
+  BehaviorSubject,
+  type OperatorFunction,
 } from "rxjs";
 
 import { type Behavior } from "../state/Behavior";
-import { ObservableScope } from "../state/ObservableScope";
+import { Epoch, ObservableScope } from "../state/ObservableScope";
 
 const nothing = Symbol("nothing");
 
@@ -119,70 +121,156 @@ export function pauseWhen<T>(pause$: Behavior<boolean>) {
     );
 }
 
+interface ItemHandle<Data, Item> {
+  scope: ObservableScope;
+  data$: BehaviorSubject<Data>;
+  item: Item;
+}
+
 /**
- * Maps a changing input value to an output value consisting of items that have
- * automatically generated ObservableScopes tied to a key. Items will be
- * automatically created when their key is requested for the first time, reused
- * when the same key is requested at a later time, and destroyed (have their
- * scope ended) when the key is no longer requested.
+ * Maps a changing input value to a collection of items that each capture some
+ * dynamic data and are tied to a key. Items will be automatically created when
+ * their key is requested for the first time, reused when the same key is
+ * requested at a later time, and destroyed (have their scope ended) when the
+ * key is no longer requested.
  *
  * @param input$ The input value to be mapped.
- * @param project A function mapping input values to output values. This
- *   function receives an additional callback `createOrGet` which can be used
- *   within the function body to request that an item be generated for a certain
- *   key. The caller provides a factory which will be used to create the item if
- *   it is being requested for the first time. Otherwise, the item previously
- *   existing under that key will be returned.
+ * @param generator A generator function yielding a tuple of keys and the
+ *   currently associated data for each item that it wants to exist.
+ * @param factory A function constructing an individual item, given the item's key,
+ *   dynamic data, and an automatically managed ObservableScope for the item.
  */
-export function generateKeyed$<In, Item, Out>(
-  input$: Observable<In>,
-  project: (
-    input: In,
-    createOrGet: (
-      key: string,
-      factory: (scope: ObservableScope) => Item,
-    ) => Item,
-  ) => Out,
-): Observable<Out> {
-  return input$.pipe(
-    // Keep track of the existing items over time, so we can reuse them
-    scan<
-      In,
-      {
-        items: Map<string, { item: Item; scope: ObservableScope }>;
-        output: Out;
-      },
-      { items: Map<string, { item: Item; scope: ObservableScope }> }
-    >(
-      (state, data) => {
-        const nextItems = new Map<
-          string,
-          { item: Item; scope: ObservableScope }
-        >();
+export function generateItems<
+  Input,
+  Keys extends [unknown, ...unknown[]],
+  Data,
+  Item,
+>(
+  generator: (
+    input: Input,
+  ) => Generator<{ keys: readonly [...Keys]; data: Data }, void, void>,
+  factory: (
+    scope: ObservableScope,
+    data$: Behavior<Data>,
+    ...keys: Keys
+  ) => Item,
+): OperatorFunction<Input, Item[]> {
+  return generateItemsInternal(generator, factory, (items) => items);
+}
 
-        const output = project(data, (key, factory) => {
-          let item = state.items.get(key);
-          if (item === undefined) {
-            // First time requesting the key; create the item
-            const scope = new ObservableScope();
-            item = { item: factory(scope), scope };
-          }
-          nextItems.set(key, item);
-          return item.item;
-        });
-
-        // Destroy all items that are no longer being requested
-        for (const [key, { scope }] of state.items)
-          if (!nextItems.has(key)) scope.end();
-
-        return { items: nextItems, output };
-      },
-      { items: new Map() },
-    ),
-    finalizeValue((state) => {
-      // Destroy all remaining items when no longer subscribed
-      for (const { scope } of state.items.values()) scope.end();
-    }),
-    map(({ output }) => output),
+/**
+ * Same as generateItems, but preserves epoch data.
+ */
+export function generateItemsWithEpoch<
+  Input,
+  Keys extends [unknown, ...unknown[]],
+  Data,
+  Item,
+>(
+  generator: (
+    input: Input,
+  ) => Generator<{ keys: readonly [...Keys]; data: Data }, void, void>,
+  factory: (
+    scope: ObservableScope,
+    data$: Behavior<Data>,
+    ...keys: Keys
+  ) => Item,
+): OperatorFunction<Epoch<Input>, Epoch<Item[]>> {
+  return generateItemsInternal(
+    function* (input) {
+      yield* generator(input.value);
+    },
+    factory,
+    (items, input) => new Epoch(items, input.epoch),
   );
+}
+
+function generateItemsInternal<
+  Input,
+  Keys extends [unknown, ...unknown[]],
+  Data,
+  Item,
+  Output,
+>(
+  generator: (
+    input: Input,
+  ) => Generator<{ keys: readonly [...Keys]; data: Data }, void, void>,
+  factory: (
+    scope: ObservableScope,
+    data$: Behavior<Data>,
+    ...keys: Keys
+  ) => Item,
+  project: (items: Item[], input: Input) => Output,
+): OperatorFunction<Input, Output> {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  return (input$) =>
+    input$.pipe(
+      // Keep track of the existing items over time, so they can persist
+      scan<
+        Input,
+        {
+          map: Map<any, any>;
+          items: Set<ItemHandle<Data, Item>>;
+          input: Input;
+        },
+        { map: Map<any, any>; items: Set<ItemHandle<Data, Item>> }
+      >(
+        ({ map: prevMap, items: prevItems }, input) => {
+          const nextMap = new Map();
+          const nextItems = new Set<ItemHandle<Data, Item>>();
+
+          for (const { keys, data } of generator(input)) {
+            // Disable type checks for a second to grab the item out of a nested map
+            let i: any = prevMap;
+            for (const key of keys) i = i?.get(key);
+            let item = i as ItemHandle<Data, Item> | undefined;
+
+            if (item === undefined) {
+              // First time requesting the key; create the item
+              const scope = new ObservableScope();
+              const data$ = new BehaviorSubject(data);
+              item = { scope, data$, item: factory(scope, data$, ...keys) };
+            } else {
+              item.data$.next(data);
+            }
+
+            // Likewise, disable type checks to insert the item in the nested map
+            let m: Map<any, any> = nextMap;
+            for (let i = 0; i < keys.length - 1; i++) {
+              let inner = m.get(keys[i]);
+              if (inner === undefined) {
+                inner = new Map();
+                m.set(keys[i], inner);
+              }
+              m = inner;
+            }
+            const finalKey = keys[keys.length - 1];
+            if (m.has(finalKey))
+              throw new Error(
+                `Keys must be unique (tried to generate multiple items for key ${keys})`,
+              );
+            m.set(keys[keys.length - 1], item);
+            nextItems.add(item);
+          }
+
+          // Destroy all items that are no longer being requested
+          for (const item of prevItems)
+            if (!nextItems.has(item)) item.scope.end();
+
+          return { map: nextMap, items: nextItems, input };
+        },
+        { map: new Map(), items: new Set() },
+      ),
+      finalizeValue(({ items }) => {
+        // Destroy all remaining items when no longer subscribed
+        for (const { scope } of items) scope.end();
+      }),
+      map(({ items, input }) =>
+        project(
+          [...items].map(({ item }) => item),
+          input,
+        ),
+      ),
+    );
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 }
