@@ -50,5 +50,6 @@
 
     "plugins": [{ "name": "typescript-eslint-language-service" }]
   },
-  "include": ["./src/**/*.ts", "./src/**/*.tsx", "./playwright/**/*.ts"]
+  "include": ["./src/**/*.ts", "./src/**/*.tsx", "./playwright/**/*.ts"],
+  "exclude": ["**.test.ts"]
 }

@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { type ReactNode } from "react";
 
 import styles from "./ReactionsOverlay.module.css";
-import { type CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { useBehavior } from "../useBehavior";
 
 export function ReactionsOverlay({ vm }: { vm: CallViewModel }): ReactNode {

@@ -6,25 +6,32 @@ Please see LICENSE in the repository root for full details.
 */
 import { map, type Observable, of, type SchedulerLike } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
-import { expect, type MockedObject, onTestFinished, vi, vitest } from "vitest";
 import {
-  type RoomMember,
-  type Room as MatrixRoom,
+  expect,
+  type MockedObject,
+  type MockInstance,
+  onTestFinished,
+  vi,
+  vitest,
+} from "vitest";
+import {
   MatrixEvent,
+  type Room as MatrixRoom,
   type Room,
+  type RoomMember,
   TypedEventEmitter,
 } from "matrix-js-sdk";
 import {
   CallMembership,
-  type Transport,
+  type LivekitFocusSelection,
+  type LivekitTransport,
+  type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
   MembershipManagerEvent,
   type SessionMembershipData,
   Status,
-  type LivekitFocusSelection,
-  type MatrixRTCSession,
-  type LivekitTransport,
+  type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import {
@@ -78,11 +85,11 @@ export interface OurRunHelpers extends RunHelpers {
    * diagram.
    */
   schedule: (marbles: string, actions: Record<string, () => void>) => void;
-  behavior<T = string>(
+  behavior: <T>(
     marbles: string,
     values?: { [marble: string]: T },
     error?: unknown,
-  ): Behavior<T>;
+  ) => Behavior<T>;
   scope: ObservableScope;
 }
 
@@ -106,7 +113,7 @@ export function withTestScheduler(
   continuation: (helpers: OurRunHelpers) => void,
 ): void {
   const scheduler = new TestScheduler((actual, expected) => {
-    expect(actual).deep.equals(expected);
+    expect(actual).toStrictEqual(expected);
   });
   const scope = new ObservableScope();
   // we set the test scheduler as a global so that you can watch it in a debugger
@@ -187,6 +194,29 @@ export const exampleTransport: LivekitTransport = {
   livekit_alias: "!alias:example.org",
 };
 
+export function mockCallMembership(
+  userId: string,
+  deviceId: string,
+  transport?: Transport,
+): CallMembership {
+  const t = transport ?? transportForUser(userId);
+  return {
+    userId: userId,
+    deviceId: deviceId,
+    getTransport: vi.fn().mockReturnValue(t),
+    transports: [t],
+  } as unknown as CallMembership;
+}
+
+function transportForUser(userId: string): Transport {
+  const domain = userId.split(":")[1];
+  return {
+    type: "livekit",
+    livekit_service_url: `https://lk.${domain}`,
+    livekit_alias: `!alias:${domain}`,
+  };
+}
+
 export function mockRtcMembership(
   user: string | RoomMember,
   deviceId: string,
@@ -246,6 +276,7 @@ export function mockLivekitRoom(
   }: { remoteParticipants$?: Observable<RemoteParticipant[]> } = {},
 ): LivekitRoom {
   const livekitRoom = {
+    options: {},
     ...mockEmitter(),
     ...room,
   } as Partial<LivekitRoom> as LivekitRoom;
@@ -268,6 +299,7 @@ export function mockLocalParticipant(
   return {
     isLocal: true,
     trackPublications: new Map(),
+    unpublishTracks: async () => Promise.resolve(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
     ...mockEmitter(),
@@ -281,18 +313,20 @@ export function createLocalMedia(
   localParticipant: LocalParticipant,
   mediaDevices: MediaDevices,
 ): LocalUserMediaViewModel {
+  const member = mockMatrixRoomMember(localRtcMember, roomMember);
   return new LocalUserMediaViewModel(
     testScope(),
     "local",
-    mockMatrixRoomMember(localRtcMember, roomMember),
+    member.userId,
     constant(localParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
-    mockLivekitRoom({ localParticipant }),
-    "https://rtc-example.org",
+    constant(mockLivekitRoom({ localParticipant })),
+    constant("https://rtc-example.org"),
     mediaDevices,
-    constant(roomMember.rawDisplayName ?? "nodisplayname"),
+    constant(member.rawDisplayName ?? "nodisplayname"),
+    constant(member.getMxcAvatarUrl()),
     constant(null),
     constant(null),
   );
@@ -306,6 +340,8 @@ export function mockRemoteParticipant(
     setVolume() {},
     getTrackPublication: () =>
       ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
+    // this will only get used for `getTrackPublications().length`
+    getTrackPublications: () => [0],
     ...mockEmitter(),
     ...participant,
   } as RemoteParticipant;
@@ -316,31 +352,38 @@ export function createRemoteMedia(
   roomMember: Partial<RoomMember>,
   participant: Partial<RemoteParticipant>,
 ): RemoteUserMediaViewModel {
+  const member = mockMatrixRoomMember(localRtcMember, roomMember);
   const remoteParticipant = mockRemoteParticipant(participant);
   return new RemoteUserMediaViewModel(
     testScope(),
     "remote",
-    mockMatrixRoomMember(localRtcMember, roomMember),
+    member.userId,
     of(remoteParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
-    mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
-    "https://rtc-example.org",
+    constant(
+      mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
+    ),
+    constant("https://rtc-example.org"),
     constant(false),
-    constant(roomMember.rawDisplayName ?? "nodisplayname"),
+    constant(member.rawDisplayName ?? "nodisplayname"),
+    constant(member.getMxcAvatarUrl()),
     constant(null),
     constant(null),
   );
 }
 
-export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
-  vi.spyOn(Config, "get").mockReturnValue({
+export function mockConfig(
+  config: Partial<ResolvedConfigOptions> = {},
+): MockInstance<() => ResolvedConfigOptions> {
+  const spy = vi.spyOn(Config, "get").mockReturnValue({
     ...DEFAULT_CONFIG,
     ...config,
   });
   // simulate loading the config
   vi.spyOn(Config, "init").mockResolvedValue(void 0);
+  return spy;
 }
 
 export class MockRTCSession extends TypedEventEmitter<

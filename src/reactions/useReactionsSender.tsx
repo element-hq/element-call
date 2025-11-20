@@ -20,7 +20,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { useClientState } from "../ClientContext";
 import { ElementCallReactionEventType, type ReactionOption } from ".";
-import { type CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { useBehavior } from "../useBehavior";
 
 interface ReactionsSenderContextType {

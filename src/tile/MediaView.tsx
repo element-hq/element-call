@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import { type RoomMember } from "matrix-js-sdk";
 import { type FC, type ComponentProps, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
@@ -32,12 +31,13 @@ interface Props extends ComponentProps<typeof animated.div> {
   video: TrackReferenceOrPlaceholder | undefined;
   videoFit: "cover" | "contain";
   mirror: boolean;
-  member: RoomMember;
+  userId: string;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
+  mxcAvatarUrl: string | undefined;
   focusable: boolean;
   primaryButton?: ReactNode;
   raisedHandTime?: Date;
@@ -59,11 +59,12 @@ export const MediaView: FC<Props> = ({
   video,
   videoFit,
   mirror,
-  member,
+  userId,
   videoEnabled,
   unencryptedWarning,
   nameTagLeadingIcon,
   displayName,
+  mxcAvatarUrl,
   focusable,
   primaryButton,
   encryptionStatus,
@@ -94,10 +95,10 @@ export const MediaView: FC<Props> = ({
     >
       <div className={styles.bg}>
         <Avatar
-          id={member?.userId ?? displayName}
+          id={userId}
           name={displayName}
           size={avatarSize}
-          src={member?.getMxcAvatarUrl()}
+          src={mxcAvatarUrl}
           className={styles.avatar}
           style={{ display: video && videoEnabled ? "none" : "initial" }}
         />

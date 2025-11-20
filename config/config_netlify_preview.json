@@ -18,7 +18,7 @@
     "api_host": "https://posthog-element-call.element.io"
   },
   "rageshake": {
-    "submit_url": "https://element.io/bugreports/submit"
+    "submit_url": "https://rageshakes.element.io/api/submit"
   },
   "sentry": {
     "environment": "netlify-pr-preview",

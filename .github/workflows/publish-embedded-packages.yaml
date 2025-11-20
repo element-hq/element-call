@@ -85,7 +85,7 @@ jobs:
         run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
       - name: Upload
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@aec2ec56f94eb8180ceec724245f64ef008b89f5 # v2
+        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2
         with:
           files: |
             ${{ env.FILENAME_PREFIX }}.tar.gz
@@ -100,7 +100,7 @@ jobs:
       ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
     permissions:
       contents: read
-      id-token: write # required for the provenance flag on npm publish
+      id-token: write # Allow npm to authenticate as a trusted publisher
     steps:
       - name: Checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -126,8 +126,6 @@ jobs:
           npm version ${{ needs.versioning.outputs.PREFIXED_VERSION }} --no-git-tag-version
           echo "ARTIFACT_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
           npm publish --provenance --access public --tag ${{ needs.versioning.outputs.TAG }} ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
 
       - id: artifact_version
         name: Output artifact version
@@ -264,7 +262,7 @@ jobs:
           echo "iOS: ${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}"
       - name: Add release notes
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@aec2ec56f94eb8180ceec724245f64ef008b89f5 # v2
+        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2
         with:
           append_body: true
           body: |

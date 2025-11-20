@@ -5,15 +5,18 @@ Copyright 2025 Element Creations Ltd.
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, expect } from "vitest";
+import { it, vi, expect } from "vitest";
 import EventEmitter from "events";
 
+// import * as ComponentsCore from "@livekit/components-core";
+import { withCallViewModel } from "./CallViewModel/CallViewModelTestUtils.ts";
+import { type CallViewModel } from "./CallViewModel/CallViewModel.ts";
 import { constant } from "./Behavior.ts";
-import { withCallViewModel } from "./CallViewModel.test.ts";
 import { aliceParticipant, localRtcMember } from "../utils/test-fixtures.ts";
 import { ElementWidgetActions, widget } from "../widget.ts";
 import { E2eeType } from "../e2ee/e2eeType.ts";
-import { type CallViewModel } from "./CallViewModel.ts";
+
+vi.mock("@livekit/components-core", { spy: true });
 
 vi.mock("../widget", () => ({
   ElementWidgetActions: {
@@ -31,7 +34,7 @@ vi.mock("../widget", () => ({
   },
 }));
 
-test("expect leave when ElementWidgetActions.HangupCall is called", async () => {
+it("expect leave when ElementWidgetActions.HangupCall is called", async () => {
   const pr = Promise.withResolvers<string>();
   withCallViewModel(
     {

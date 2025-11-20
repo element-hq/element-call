@@ -136,8 +136,8 @@ handle @jwt_service {
   reverse_proxy http://[::1]:8080 {
     header_up Host {host}
     header_up X-Forwarded-Server {host}
-    header_up X-Real-IP {remote_addr}
-    header_up X-Forwarded-For {remote_addr}
+    header_up X-Real-IP {remote_host}
+    header_up X-Forwarded-For {remote_host}
   }
 }
 
@@ -146,8 +146,8 @@ handle {
   reverse_proxy http://localhost:7880 {
     header_up Host {host}
     header_up X-Forwarded-Server {host}
-    header_up X-Real-IP {remote_addr}
-    header_up X-Forwarded-For {remote_addr}
+    header_up X-Real-IP {remote_host}
+    header_up X-Forwarded-For {remote_host}
   }
 }
 ```

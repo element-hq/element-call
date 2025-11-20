@@ -58,7 +58,9 @@ interface TileProps {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
+  focusUrl: string | undefined;
   displayName: string;
+  mxcAvatarUrl: string | undefined;
   showSpeakingIndicators: boolean;
   focusable: boolean;
 }
@@ -81,7 +83,9 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   menuStart,
   menuEnd,
   className,
+  focusUrl,
   displayName,
+  mxcAvatarUrl,
   focusable,
   ...props
 }) => {
@@ -144,8 +148,8 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const tile = (
     <MediaView
       ref={ref}
-      video={video}
-      member={vm.member}
+      video={video ?? undefined}
+      userId={vm.userId}
       unencryptedWarning={unencryptedWarning}
       encryptionStatus={encryptionStatus}
       videoEnabled={videoEnabled}
@@ -164,6 +168,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
         />
       }
       displayName={displayName}
+      mxcAvatarUrl={mxcAvatarUrl}
       focusable={focusable}
       primaryButton={
         primaryButton ?? (
@@ -190,7 +195,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       currentReaction={reaction ?? undefined}
       raisedHandOnClick={raisedHandOnClick}
       localParticipant={vm.local}
-      focusUrl={vm.focusURL}
+      focusUrl={focusUrl}
       audioStreamStats={audioStreamStats}
       videoStreamStats={videoStreamStats}
       {...props}
@@ -359,7 +364,9 @@ export const GridTile: FC<GridTileProps> = ({
   const ourRef = useRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
   const media = useBehavior(vm.media$);
+  const focusUrl = useBehavior(media.focusUrl$);
   const displayName = useBehavior(media.displayName$);
+  const mxcAvatarUrl = useBehavior(media.mxcAvatarUrl$);
 
   if (media instanceof LocalUserMediaViewModel) {
     return (
@@ -367,7 +374,9 @@ export const GridTile: FC<GridTileProps> = ({
         ref={ref}
         vm={media}
         onOpenProfile={onOpenProfile}
+        focusUrl={focusUrl}
         displayName={displayName}
+        mxcAvatarUrl={mxcAvatarUrl}
         {...props}
       />
     );
@@ -376,7 +385,9 @@ export const GridTile: FC<GridTileProps> = ({
       <RemoteUserMediaTile
         ref={ref}
         vm={media}
+        focusUrl={focusUrl}
         displayName={displayName}
+        mxcAvatarUrl={mxcAvatarUrl}
         {...props}
       />
     );
