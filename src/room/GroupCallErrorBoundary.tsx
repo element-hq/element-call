@@ -22,6 +22,7 @@ import {
   WebBrowserIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { Button } from "@vector-im/compound-web";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   ConnectionLostError,
@@ -33,7 +34,6 @@ import {
 import { FullScreenView } from "../FullScreenView.tsx";
 import { ErrorView } from "../ErrorView.tsx";
 import { type WidgetHelpers } from "../widget.ts";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 export type CallErrorRecoveryAction = "reconnect"; // | "retry" ;
 
