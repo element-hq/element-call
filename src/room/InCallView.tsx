@@ -266,7 +266,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const sharingScreen = useBehavior(vm.sharingScreen$);
 
   const ringOverlay = useBehavior(vm.ringOverlay$);
-  const fatalCallError = useBehavior(vm.configError$);
+  const fatalCallError = useBehavior(vm.fatalError$);
   // Stop the rendering and throw for the error boundary
   if (fatalCallError) throw fatalCallError;
 

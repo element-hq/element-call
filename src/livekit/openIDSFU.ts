@@ -21,7 +21,14 @@ export type OpenIDClientParts = Pick<
   MatrixClient,
   "getOpenIdToken" | "getDeviceId"
 >;
-
+/**
+ *
+ * @param client
+ * @param serviceUrl
+ * @param matrixRoomId
+ * @returns
+ * @throws FailToGetOpenIdToken
+ */
 export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
   serviceUrl: string,

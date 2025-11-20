@@ -41,7 +41,10 @@ import {
   timer,
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  type LivekitTransport,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
 
 import {
@@ -95,7 +98,10 @@ import {
 import { type ElementCallError } from "../../utils/errors.ts";
 import { type ObservableScope } from "../ObservableScope.ts";
 import {
+  createHomeserverConnected$,
   createLocalMembership$,
+  enterRTCSession,
+  LivekitState,
   type LocalMemberConnectionState,
 } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
@@ -120,6 +126,8 @@ import {
   createMatrixMemberMetadata$,
   createRoomMembers$,
 } from "./remoteMembers/MatrixMemberMetadata.ts";
+import { Publisher } from "./localMember/Publisher.ts";
+import { type Connection } from "./remoteMembers/Connection.ts";
 
 const logger = rootLogger.getChild("[CallViewModel]");
 //TODO
@@ -230,7 +238,7 @@ export interface CallViewModel {
    * This is a fatal error that prevents the call from being created/joined.
    * Should render a blocking error screen.
    */
-  configError$: Behavior<ElementCallError | null>;
+  fatalError$: Behavior<ElementCallError | null>;
 
   // participants and counts
   /**
@@ -446,15 +454,31 @@ export function createCallViewModel$(
 
   const localMembership = createLocalMembership$({
     scope: scope,
+    homeserverConnected$: createHomeserverConnected$(
+      scope,
+      matrixRoom,
+      matrixRTCSession,
+    ),
     muteStates: muteStates,
-    mediaDevices: mediaDevices,
+    joinMatrixRTC: async (transport: LivekitTransport) => {
+      return enterRTCSession(
+        matrixRTCSession,
+        transport,
+        connectOptions$.value,
+      );
+    },
+    createPublisherFactory: (connection: Connection) => {
+      return new Publisher(
+        scope,
+        connection,
+        mediaDevices,
+        muteStates,
+        trackProcessorState$,
+      );
+    },
     connectionManager: connectionManager,
     matrixRTCSession: matrixRTCSession,
-    matrixRoom: matrixRoom,
     localTransport$: localTransport$,
-    trackProcessorState$: trackProcessorState$,
-    widget,
-    options: connectOptions$,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
@@ -1442,7 +1466,14 @@ export function createCallViewModel$(
     hoverScreen: (): void => screenHover$.next(),
     unhoverScreen: (): void => screenUnhover$.next(),
 
-    configError$: localMembership.configError$,
+    fatalError$: scope.behavior(
+      localMembership.connectionState.livekit$.pipe(
+        filter((v) => v.state === LivekitState.Error),
+        map((s) => s.error),
+      ),
+      null,
+    ),
+
     participantCount$: participantCount$,
     audioParticipants$: audioParticipants$,
 
