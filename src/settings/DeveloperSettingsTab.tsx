@@ -49,9 +49,14 @@ import { useUrlParams } from "../UrlParams";
 interface Props {
   client: MatrixClient;
   livekitRooms?: { room: LivekitRoom; url: string; isLocal?: boolean }[];
+  env: ImportMetaEnv;
 }
 
-export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
+export const DeveloperSettingsTab: FC<Props> = ({
+  client,
+  livekitRooms,
+  env,
+}) => {
   const { t } = useTranslation();
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
   const [debugTileLayout, setDebugTileLayout] = useSetting(
@@ -320,7 +325,7 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
         </>
       ))}
       <p>{t("developer_mode.environment_variables")}</p>
-      <pre>{JSON.stringify(import.meta.env, null, 2)}</pre>
+      <pre>{JSON.stringify(env, null, 2)}</pre>
       <p>{t("developer_mode.url_params")}</p>
       <pre>{JSON.stringify(urlParams, null, 2)}</pre>
     </Form>
