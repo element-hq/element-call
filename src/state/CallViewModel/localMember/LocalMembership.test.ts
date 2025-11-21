@@ -36,16 +36,6 @@ const MATRIX_RTC_MODE = MatrixRTCMode.Legacy;
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("../../../UrlParams", () => ({ getUrlParams }));
 
-// vi.mock("../../../widget", async (importOriginal) => ({
-//   ...(await importOriginal()),
-//   widget: {
-//     api: {
-//       setAlwaysOnScreen: (): void => {},
-//       transport: { send: vi.fn(), reply: vi.fn(), stop: vi.fn() },
-//     },
-//     lazyActions: new EventEmitter(),
-//   },
-// }));
 describe("LocalMembership", () => {
   describe("enterRTCSession", () => {
     it("It joins the correct Session", async () => {

@@ -97,8 +97,8 @@ import {
 } from "../layout-types.ts";
 import { type ElementCallError } from "../../utils/errors.ts";
 import { type ObservableScope } from "../ObservableScope.ts";
+import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
 import {
-  createHomeserverConnected$,
   createLocalMembership$,
   enterRTCSession,
   LivekitState,
@@ -365,9 +365,9 @@ export function createCallViewModel$(
   reactionsSubject$: Observable<Record<string, ReactionInfo>>,
   trackProcessorState$: Behavior<ProcessorState>,
 ): CallViewModel {
-  const userId = matrixRoom.client.getUserId()!;
-  const deviceId = matrixRoom.client.getDeviceId()!;
-
+  const client = matrixRoom.client;
+  const userId = client.getUserId()!;
+  const deviceId = client.getDeviceId()!;
   const livekitKeyProvider = getE2eeKeyProvider(
     options.encryptionSystem,
     matrixRTCSession,
@@ -401,7 +401,7 @@ export function createCallViewModel$(
   const localTransport$ = createLocalTransport$({
     scope: scope,
     memberships$: memberships$,
-    client: matrixRoom.client,
+    client,
     roomId: matrixRoom.roomId,
     useOldestMember$: scope.behavior(
       matrixRTCMode.value$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
@@ -409,7 +409,7 @@ export function createCallViewModel$(
   });
 
   const connectionFactory = new ECConnectionFactory(
-    matrixRoom.client,
+    client,
     mediaDevices,
     trackProcessorState$,
     livekitKeyProvider,
@@ -456,7 +456,7 @@ export function createCallViewModel$(
     scope: scope,
     homeserverConnected$: createHomeserverConnected$(
       scope,
-      matrixRoom,
+      client,
       matrixRTCSession,
     ),
     muteStates: muteStates,
