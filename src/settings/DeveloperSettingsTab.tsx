@@ -11,8 +11,8 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useState,
   useId,
+  useState,
 } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -21,6 +21,7 @@ import {
 } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
+  Button,
   Root as Form,
   Heading,
   HelpMessage,
@@ -38,6 +39,7 @@ import {
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   matrixRTCMode as matrixRTCModeSetting,
+  customLivekitUrl as customLivekitUrlSetting,
   MatrixRTCMode,
 } from "./settings";
 import type { Room as LivekitRoom } from "livekit-client";
@@ -84,6 +86,12 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
   const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
     alwaysShowIphoneEarpieceSetting,
   );
+
+  const [customLivekitUrl, setCustomLivekitUrl] = useSetting(
+    customLivekitUrlSetting,
+  );
+  const [customLivekitUrlTextBuffer, setCustomLivekitUrlTextBuffer] =
+    useState("");
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
@@ -199,6 +207,48 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRooms }) => {
             [setAlwaysShowIphoneEarpiece],
           )}
         />{" "}
+      </FieldRow>
+      {/*// TODO this feels a bit off... There has to be better way to create the desired look.
+        Also the indent should be further to the left...*/}
+      <InlineField
+        name={t("developer_mode.custom_livekit_url")}
+        control={<></>}
+      >
+        <Label>{t("developer_mode.custom_livekit_url")}</Label>
+        <HelpMessage>
+          {customLivekitUrl === null
+            ? "Use Default"
+            : `Current:${customLivekitUrl}`}
+        </HelpMessage>
+      </InlineField>
+      <FieldRow>
+        <InputField
+          id="customLivekitUrl"
+          type="text"
+          label={t("developer_mode.custom_livekit_url")}
+          value={customLivekitUrlTextBuffer}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setCustomLivekitUrlTextBuffer(event.target.value);
+            },
+            [setCustomLivekitUrlTextBuffer],
+          )}
+        />
+        <Button
+          onClick={useCallback(
+            (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+              e.preventDefault();
+              setCustomLivekitUrl(
+                customLivekitUrlTextBuffer === ""
+                  ? null
+                  : customLivekitUrlTextBuffer,
+              );
+            },
+            [setCustomLivekitUrl, customLivekitUrlTextBuffer],
+          )}
+        >
+          {t("developer_mode.update")}
+        </Button>
       </FieldRow>
       <Heading as="h3" type="body" weight="semibold" size="lg">
         {t("developer_mode.matrixRTCMode.title")}

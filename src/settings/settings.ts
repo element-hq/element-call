@@ -134,3 +134,8 @@ export const matrixRTCMode = new Setting<MatrixRTCMode>(
   "matrix-rtc-mode",
   MatrixRTCMode.Legacy,
 );
+
+export const customLivekitUrl = new Setting<string | null>(
+  "custom-livekit-url",
+  null,
+);
