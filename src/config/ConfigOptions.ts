@@ -122,7 +122,7 @@ export interface ConfigOptions {
     delayed_leave_event_delay_ms?: number;
 
     /**
-     * The time (in milliseconds) after which a we consider a delayed event restart http request to have failed.
+     * The time (in milliseconds) after which we consider a delayed event restart http request to have failed.
      * Setting this to a lower value will result in more frequent retries but also a higher chance of failiour.
      *
      * In the presence of network packet loss (hurting TCP connections), the custom delayedEventRestartLocalTimeoutMs

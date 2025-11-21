@@ -54,7 +54,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
   widget,
 }: ErrorPageProps): ReactElement => {
   const { t } = useTranslation();
-  logger.log("Error boundary caught:", error);
+  logger.error("Error boundary caught:", error);
   let icon: ComponentType<SVGAttributes<SVGElement>>;
   switch (error.category) {
     case ErrorCategory.CONFIGURATION_ISSUE:

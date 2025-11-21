@@ -13,8 +13,6 @@ import {
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
-  MembershipManagerEvent,
-  Status,
   type LivekitTransport,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -23,17 +21,14 @@ import {
   catchError,
   combineLatest,
   distinctUntilChanged,
-  fromEvent,
   map,
   type Observable,
   of,
   scan,
-  startWith,
   switchMap,
   tap,
 } from "rxjs";
-import { logger, type Logger } from "matrix-js-sdk/lib/logger";
-import { ClientEvent, type Room, SyncState } from "matrix-js-sdk";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager";
@@ -185,11 +180,17 @@ export const createLocalMembership$ = ({
   const localTransport$ = scope.behavior(
     localTransportCanThrow$.pipe(
       catchError((e: unknown) => {
+        let error: ElementCallError;
         if (e instanceof ElementCallError) {
-          state.livekit$.next({ state: LivekitState.Error, error: e });
+          error = e;
         } else {
-          logger.error("Unknown error from localTransport$", e);
+          error = new UnknownCallError(
+            e instanceof Error
+              ? e
+              : new Error("Unknown error from localTransport"),
+          );
         }
+        state.livekit$.next({ state: LivekitState.Error, error });
         return of(null);
       }),
     ),
@@ -238,7 +239,7 @@ export const createLocalMembership$ = ({
   localConnection$.pipe(scope.bind()).subscribe((connection) => {
     if (connection !== null && publisher$.value === null) {
       // TODO looks strange to not change publisher if connection changes.
-      // @valere will take care of this!
+      // @toger5 will take care of this!
       publisher$.next(createPublisherFactory(connection));
     }
   });
@@ -492,7 +493,7 @@ export const createLocalMembership$ = ({
   const sharingScreen$ = scope.behavior(
     localConnection$.pipe(
       switchMap((c) =>
-        c !== null && c.livekitRoom
+        c !== null
           ? observeSharingScreen$(c.livekitRoom.localParticipant)
           : of(false),
       ),
@@ -614,45 +615,4 @@ export async function enterRTCSession(
   if (widget) {
     await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
   }
-}
-
-/**
- * Whether we are connected to the MatrixRTC session.
- */
-export function createHomeserverConnected$(
-  scope: ObservableScope,
-  matrixRoom: Room,
-  matrixRTCSession: MatrixRTCSession,
-): Behavior<boolean> {
-  return scope.behavior(
-    // To consider ourselves connected to MatrixRTC, we check the following:
-    and$(
-      // The client is connected to the sync loop
-      (
-        fromEvent(matrixRoom.client, ClientEvent.Sync) as Observable<
-          [SyncState]
-        >
-      ).pipe(
-        startWith([matrixRoom.client.getSyncState()]),
-        map(([state]) => state === SyncState.Syncing),
-      ),
-      // Room state observed by session says we're connected
-      fromEvent(matrixRTCSession, MembershipManagerEvent.StatusChanged).pipe(
-        startWith(null),
-        map(() => matrixRTCSession.membershipStatus === Status.Connected),
-      ),
-      // Also watch out for warnings that we've likely hit a timeout and our
-      // delayed leave event is being sent (this condition is here because it
-      // provides an earlier warning than the sync loop timeout, and we wouldn't
-      // see the actual leave event until we reconnect to the sync loop)
-      fromEvent(matrixRTCSession, MembershipManagerEvent.ProbablyLeft).pipe(
-        startWith(null),
-        map(() => matrixRTCSession.probablyLeft !== true),
-      ),
-    ).pipe(
-      tap((connected) => {
-        logger.info(`Homeserver connected update: ${connected}`);
-      }),
-    ),
-  );
 }
