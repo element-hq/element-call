@@ -209,7 +209,11 @@ export const SettingsModal: FC<Props> = ({
     key: "developer",
     name: t("settings.developer_tab_title"),
     content: (
-      <DeveloperSettingsTab client={client} livekitRooms={livekitRooms} />
+      <DeveloperSettingsTab
+        env={import.meta.env}
+        client={client}
+        livekitRooms={livekitRooms}
+      />
     ),
   };
 
