@@ -21,7 +21,7 @@ import {
 } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
-  Button,
+  EditInPlace,
   Root as Form,
   Heading,
   HelpMessage,
@@ -114,7 +114,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
   }, [livekitRooms]);
 
   return (
-    <Form>
+    <Form onSubmit={(e) => e.preventDefault()}>
       <p>
         {t("developer_mode.hostname", {
           hostname: window.location.hostname || "unknown",
@@ -213,48 +213,43 @@ export const DeveloperSettingsTab: FC<Props> = ({
           )}
         />{" "}
       </FieldRow>
-      {/*// TODO this feels a bit off... There has to be better way to create the desired look.
-        Also the indent should be further to the left...*/}
-      <InlineField
-        name={t("developer_mode.custom_livekit_url")}
-        control={<></>}
-      >
-        <Label>{t("developer_mode.custom_livekit_url")}</Label>
-        <HelpMessage>
-          {customLivekitUrl === null
-            ? "Use Default"
-            : `Current:${customLivekitUrl}`}
-        </HelpMessage>
-      </InlineField>
-      <FieldRow>
-        <InputField
-          id="customLivekitUrl"
-          type="text"
-          label={t("developer_mode.custom_livekit_url")}
-          value={customLivekitUrlTextBuffer}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setCustomLivekitUrlTextBuffer(event.target.value);
-            },
-            [setCustomLivekitUrlTextBuffer],
-          )}
-        />
-        <Button
-          onClick={useCallback(
-            (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-              e.preventDefault();
-              setCustomLivekitUrl(
-                customLivekitUrlTextBuffer === ""
-                  ? null
-                  : customLivekitUrlTextBuffer,
-              );
-            },
-            [setCustomLivekitUrl, customLivekitUrlTextBuffer],
-          )}
-        >
-          {t("developer_mode.update")}
-        </Button>
-      </FieldRow>
+      <EditInPlace
+        onSubmit={(e) => e.preventDefault()}
+        helpLabel={
+          customLivekitUrl === null
+            ? t("developer_mode.custom_livekit_url.from_config")
+            : t("developer_mode.custom_livekit_url.current_url") +
+              customLivekitUrl
+        }
+        label={t("developer_mode.custom_livekit_url.label")}
+        saveButtonLabel={t("developer_mode.custom_livekit_url.save")}
+        savingLabel={t("developer_mode.custom_livekit_url.saving")}
+        cancelButtonLabel={t("developer_mode.custom_livekit_url.reset")}
+        onSave={useCallback(
+          (e: React.FormEvent<HTMLFormElement>) => {
+            // e.preventDefault();
+            setCustomLivekitUrl(
+              customLivekitUrlTextBuffer === ""
+                ? null
+                : customLivekitUrlTextBuffer,
+            );
+          },
+          [setCustomLivekitUrl, customLivekitUrlTextBuffer],
+        )}
+        onChange={useCallback(
+          (event: ChangeEvent<HTMLInputElement>): void => {
+            setCustomLivekitUrlTextBuffer(event.target.value);
+          },
+          [setCustomLivekitUrlTextBuffer],
+        )}
+        onCancel={useCallback(
+          (e: React.FormEvent<HTMLFormElement>) => {
+            // e.preventDefault();
+            setCustomLivekitUrl(null);
+          },
+          [setCustomLivekitUrl],
+        )}
+      />
       <Heading as="h3" type="body" weight="semibold" size="lg">
         {t("developer_mode.matrixRTCMode.title")}
       </Heading>
