@@ -190,14 +190,11 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </div>
        
     </div>
-    <div
-      class="_inline-field_19upo_32"
+    <form
+      class="_root_19upo_16"
     >
       <div
-        class="_inline-field-control_19upo_44"
-      />
-      <div
-        class="_inline-field-body_19upo_38"
+        class="_field_19upo_26"
       >
         <label
           class="_label_19upo_59"
@@ -205,42 +202,25 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         >
           Custom Livekit-url
         </label>
+        <div
+          class="_controls_17lij_8"
+        >
+          <input
+            aria-describedby="radix-«r7»"
+            class="_control_sqdq4_10"
+            id="radix-«r6»"
+            name="input"
+            title=""
+          />
+        </div>
         <span
           class="_message_19upo_85 _help-message_19upo_91"
           id="radix-«r7»"
         >
-          Use Default
+          Currently, no overwrite is set. Url from well-known or config is used.
         </span>
       </div>
-    </div>
-    <div
-      class="fieldRow"
-    >
-      <div
-        class="field inputField"
-      >
-        <input
-          aria-describedby="«r8»"
-          id="customLivekitUrl"
-          type="text"
-          value=""
-        />
-        <label
-          for="customLivekitUrl"
-        >
-          Custom Livekit-url
-        </label>
-      </div>
-      <button
-        class="_button_vczzf_8"
-        data-kind="primary"
-        data-size="lg"
-        role="button"
-        tabindex="0"
-      >
-        Update
-      </button>
-    </div>
+    </form>
     <h3
       class="_typography_6v6n8_153 _font-body-lg-semibold_6v6n8_74"
     >
@@ -256,10 +236,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
           class="_container_1e0uz_10"
         >
           <input
-            aria-describedby="radix-«ra» radix-«rc» radix-«re»"
+            aria-describedby="radix-«r9» radix-«rb» radix-«rd»"
             checked=""
             class="_input_1e0uz_18"
-            id="radix-«r9»"
+            id="radix-«r8»"
             name="«r0»"
             title=""
             type="radio"
@@ -275,13 +255,13 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       >
         <label
           class="_label_19upo_59"
-          for="radix-«r9»"
+          for="radix-«r8»"
         >
           Legacy: state events & oldest membership SFU
         </label>
         <span
           class="_message_19upo_85 _help-message_19upo_91"
-          id="radix-«ra»"
+          id="radix-«r9»"
         >
           Compatible with old versions of EC that do not support multi SFU
         </span>
@@ -297,9 +277,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
           class="_container_1e0uz_10"
         >
           <input
-            aria-describedby="radix-«ra» radix-«rc» radix-«re»"
+            aria-describedby="radix-«r9» radix-«rb» radix-«rd»"
             class="_input_1e0uz_18"
-            id="radix-«rb»"
+            id="radix-«ra»"
             name="«r0»"
             title=""
             type="radio"
@@ -315,13 +295,13 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       >
         <label
           class="_label_19upo_59"
-          for="radix-«rb»"
+          for="radix-«ra»"
         >
           Compatibility: state events & multi SFU
         </label>
         <span
           class="_message_19upo_85 _help-message_19upo_91"
-          id="radix-«rc»"
+          id="radix-«rb»"
         >
           Compatible with homeservers that do not support sticky events (but all other EC clients are v0.17.0 or later)
         </span>
@@ -337,9 +317,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
           class="_container_1e0uz_10"
         >
           <input
-            aria-describedby="radix-«ra» radix-«rc» radix-«re»"
+            aria-describedby="radix-«r9» radix-«rb» radix-«rd»"
             class="_input_1e0uz_18"
-            id="radix-«rd»"
+            id="radix-«rc»"
             name="«r0»"
             title=""
             type="radio"
@@ -355,13 +335,13 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       >
         <label
           class="_label_19upo_59"
-          for="radix-«rd»"
+          for="radix-«rc»"
         >
           Matrix 2.0: sticky events & multi SFU
         </label>
         <span
           class="_message_19upo_85 _help-message_19upo_91"
-          id="radix-«re»"
+          id="radix-«rd»"
         >
           Compatible only with homservers supporting sticky events and all EC clients v0.17.0 or later
         </span>

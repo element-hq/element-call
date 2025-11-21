@@ -64,7 +64,14 @@
   "developer_mode": {
     "always_show_iphone_earpiece": "Show iPhone earpiece option on all platforms",
     "crypto_version": "Crypto version: {{version}}",
-    "custom_livekit_url": "Custom Livekit-url",
+    "custom_livekit_url": {
+      "current_url": "Overwrite: ",
+      "from_config": "Currently, no overwrite is set. Url from well-known or config is used.",
+      "label": "Custom Livekit-url",
+      "reset": "Reset overwrite",
+      "save": "Save",
+      "saving": "Saving..."
+    },
     "debug_tile_layout_label": "Debug tile layout",
     "device_id": "Device ID: {{id}}",
     "duplicate_tiles_label": "Number of additional tile copies per participant",
@@ -90,7 +97,6 @@
     },
     "mute_all_audio": "Mute all audio (participants, reactions, join sounds)",
     "show_connection_stats": "Show connection statistics",
-    "update": "Update",
     "url_params": "URL parameters"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
