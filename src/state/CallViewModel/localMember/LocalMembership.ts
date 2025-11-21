@@ -10,6 +10,7 @@ import {
   type Participant,
   ParticipantEvent,
   type LocalParticipant,
+  type ScreenShareCaptureOptions,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
@@ -516,27 +517,37 @@ export const createLocalMembership$ = ({
     ),
   );
 
-  const toggleScreenSharing =
+  let toggleScreenSharing = null;
+  if (
     "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
     !getUrlParams().hideScreensharing
-      ? (): void =>
-          // If a connection is ready, toggle screen sharing.
-          // We deliberately do nothing in the case of a null connection because
-          // it looks nice for the call control buttons to all become available
-          // at once upon joining the call, rather than introducing a disabled
-          // state. The user can just click again.
-          // We also allow screen sharing to be toggled even if the connection
-          // is still initializing or publishing tracks, because there's no
-          // technical reason to disallow this. LiveKit will publish if it can.
-          void localConnection$.value?.livekitRoom.localParticipant
-            .setScreenShareEnabled(!sharingScreen$.value, {
-              audio: true,
-              selfBrowserSurface: "include",
-              surfaceSwitching: "include",
-              systemAudio: "include",
-            })
-            .catch(logger.error)
-      : null;
+  ) {
+    toggleScreenSharing = (): void => {
+      const screenshareSettings: ScreenShareCaptureOptions = {
+        audio: true,
+        selfBrowserSurface: "include",
+        surfaceSwitching: "include",
+        systemAudio: "include",
+      };
+      const targetScreenshareState = !sharingScreen$.value;
+      logger.info(
+        `toggleScreenSharing called. Switching ${
+          targetScreenshareState ? "On" : "Off"
+        }`,
+      );
+      // If a connection is ready, toggle screen sharing.
+      // We deliberately do nothing in the case of a null connection because
+      // it looks nice for the call control buttons to all become available
+      // at once upon joining the call, rather than introducing a disabled
+      // state. The user can just click again.
+      // We also allow screen sharing to be toggled even if the connection
+      // is still initializing or publishing tracks, because there's no
+      // technical reason to disallow this. LiveKit will publish if it can.
+      localConnection$.value?.livekitRoom.localParticipant
+        .setScreenShareEnabled(targetScreenshareState, screenshareSettings)
+        .catch(logger.error);
+    };
+  }
 
   const participant$ = scope.behavior(
     localConnection$.pipe(map((c) => c?.livekitRoom.localParticipant ?? null)),
