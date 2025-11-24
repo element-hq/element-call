@@ -96,7 +96,10 @@ export const DeveloperSettingsTab: FC<Props> = ({
     customLivekitUrlSetting,
   );
   const [customLivekitUrlTextBuffer, setCustomLivekitUrlTextBuffer] =
-    useState("");
+    useState(customLivekitUrl);
+  useEffect(() => {
+    setCustomLivekitUrlTextBuffer(customLivekitUrl);
+  }, [customLivekitUrl]);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
@@ -114,7 +117,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
   }, [livekitRooms]);
 
   return (
-    <Form onSubmit={(e) => e.preventDefault()}>
+    <>
       <p>
         {t("developer_mode.hostname", {
           hostname: window.location.hostname || "unknown",
@@ -227,7 +230,6 @@ export const DeveloperSettingsTab: FC<Props> = ({
         cancelButtonLabel={t("developer_mode.custom_livekit_url.reset")}
         onSave={useCallback(
           (e: React.FormEvent<HTMLFormElement>) => {
-            // e.preventDefault();
             setCustomLivekitUrl(
               customLivekitUrlTextBuffer === ""
                 ? null
@@ -236,6 +238,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
           },
           [setCustomLivekitUrl, customLivekitUrlTextBuffer],
         )}
+        value={customLivekitUrlTextBuffer ?? ""}
         onChange={useCallback(
           (event: ChangeEvent<HTMLInputElement>): void => {
             setCustomLivekitUrlTextBuffer(event.target.value);
@@ -244,7 +247,6 @@ export const DeveloperSettingsTab: FC<Props> = ({
         )}
         onCancel={useCallback(
           (e: React.FormEvent<HTMLFormElement>) => {
-            // e.preventDefault();
             setCustomLivekitUrl(null);
           },
           [setCustomLivekitUrl],
@@ -253,52 +255,54 @@ export const DeveloperSettingsTab: FC<Props> = ({
       <Heading as="h3" type="body" weight="semibold" size="lg">
         {t("developer_mode.matrixRTCMode.title")}
       </Heading>
-      <InlineField
-        name={matrixRTCModeRadioGroup}
-        control={
-          <RadioControl
-            checked={matrixRTCMode === MatrixRTCMode.Legacy}
-            value={MatrixRTCMode.Legacy}
-            onChange={onMatrixRTCModeChange}
-          />
-        }
-      >
-        <Label>{t("developer_mode.matrixRTCMode.Legacy.label")}</Label>
-        <HelpMessage>
-          {t("developer_mode.matrixRTCMode.Legacy.description")}
-        </HelpMessage>
-      </InlineField>
-      <InlineField
-        name={matrixRTCModeRadioGroup}
-        control={
-          <RadioControl
-            checked={matrixRTCMode === MatrixRTCMode.Compatibil}
-            value={MatrixRTCMode.Compatibil}
-            onChange={onMatrixRTCModeChange}
-          />
-        }
-      >
-        <Label>{t("developer_mode.matrixRTCMode.Comptibility.label")}</Label>
-        <HelpMessage>
-          {t("developer_mode.matrixRTCMode.Comptibility.description")}
-        </HelpMessage>
-      </InlineField>
-      <InlineField
-        name={matrixRTCModeRadioGroup}
-        control={
-          <RadioControl
-            checked={matrixRTCMode === MatrixRTCMode.Matrix_2_0}
-            value={MatrixRTCMode.Matrix_2_0}
-            disabled={!stickyEventsSupported}
-            onChange={onMatrixRTCModeChange}
-          />
-        }
-      >
-        <Label>{t("developer_mode.matrixRTCMode.Matrix_2_0.label")}</Label>
-        <HelpMessage>
-          {t("developer_mode.matrixRTCMode.Matrix_2_0.description")}
-        </HelpMessage>
-      </InlineField>
+      <Form>
+        <InlineField
+          name={matrixRTCModeRadioGroup}
+          control={
+            <RadioControl
+              checked={matrixRTCMode === MatrixRTCMode.Legacy}
+              value={MatrixRTCMode.Legacy}
+              onChange={onMatrixRTCModeChange}
+            />
+          }
+        >
+          <Label>{t("developer_mode.matrixRTCMode.Legacy.label")}</Label>
+          <HelpMessage>
+            {t("developer_mode.matrixRTCMode.Legacy.description")}
+          </HelpMessage>
+        </InlineField>
+        <InlineField
+          name={matrixRTCModeRadioGroup}
+          control={
+            <RadioControl
+              checked={matrixRTCMode === MatrixRTCMode.Compatibil}
+              value={MatrixRTCMode.Compatibil}
+              onChange={onMatrixRTCModeChange}
+            />
+          }
+        >
+          <Label>{t("developer_mode.matrixRTCMode.Comptibility.label")}</Label>
+          <HelpMessage>
+            {t("developer_mode.matrixRTCMode.Comptibility.description")}
+          </HelpMessage>
+        </InlineField>
+        <InlineField
+          name={matrixRTCModeRadioGroup}
+          control={
+            <RadioControl
+              checked={matrixRTCMode === MatrixRTCMode.Matrix_2_0}
+              value={MatrixRTCMode.Matrix_2_0}
+              disabled={!stickyEventsSupported}
+              onChange={onMatrixRTCModeChange}
+            />
+          }
+        >
+          <Label>{t("developer_mode.matrixRTCMode.Matrix_2_0.label")}</Label>
+          <HelpMessage>
+            {t("developer_mode.matrixRTCMode.Matrix_2_0.description")}
+          </HelpMessage>
+        </InlineField>
+      </Form>
       {livekitRooms?.map((livekitRoom) => (
         <>
           <h3>
@@ -323,6 +327,6 @@ export const DeveloperSettingsTab: FC<Props> = ({
       <pre>{JSON.stringify(env, null, 2)}</pre>
       <p>{t("developer_mode.url_params")}</p>
       <pre>{JSON.stringify(urlParams, null, 2)}</pre>
-    </Form>
+    </>
   );
 };
