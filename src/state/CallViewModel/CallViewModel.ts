@@ -251,6 +251,8 @@ export interface CallViewModel {
   participantCount$: Behavior<number>;
   /** Participants sorted by livekit room so they can be used in the audio rendering */
   audioParticipants$: Behavior<AudioLivekitItem[]>;
+  /** use the layout instead, this is just for the godot export. */
+  userMedia$: Behavior<UserMedia[]>;
   /** List of participants raising their hand */
   handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
   /** List of reactions. Keys are: membership.membershipId (currently predefined as: `${membershipEvent.userId}:${membershipEvent.deviceId}`)*/
@@ -1495,6 +1497,7 @@ export function createCallViewModel$(
     spotlight$: spotlight$,
     pip$: pip$,
     layout$: layout$,
+    userMedia$,
     tileStoreGeneration$: tileStoreGeneration$,
     showSpotlightIndicators$: showSpotlightIndicators$,
     showSpeakingIndicators$: showSpeakingIndicators$,

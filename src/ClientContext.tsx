@@ -358,7 +358,7 @@ export type InitResult = {
   passwordlessUser: boolean;
 };
 
-async function loadClient(): Promise<InitResult | null> {
+export async function loadClient(): Promise<InitResult | null> {
   if (widget) {
     // We're inside a widget, so let's engage *matryoshka mode*
     logger.log("Using a matryoshka client");

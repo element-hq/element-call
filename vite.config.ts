@@ -7,14 +7,17 @@ Please see LICENSE in the repository root for full details.
 
 import {
   loadEnv,
+  PluginOption,
   searchForWorkspaceRoot,
   type ConfigEnv,
   type UserConfig,
 } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
 import { createHtmlPlugin } from "vite-plugin-html";
+
 import { codecovVitePlugin } from "@codecov/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+
 import react from "@vitejs/plugin-react";
 import { realpathSync } from "fs";
 import * as fs from "node:fs";
@@ -24,30 +27,20 @@ import * as fs from "node:fs";
 export default ({
   mode,
   packageType,
-}: ConfigEnv & { packageType?: "full" | "embedded" }): UserConfig => {
+}: ConfigEnv & { packageType?: "full" | "embedded" | "godot" }): UserConfig => {
   const env = loadEnv(mode, process.cwd());
   // Environment variables with the VITE_ prefix are accessible at runtime.
   // So, we set this to allow for build/package specific behavior.
   // In future we might be able to do what is needed via code splitting at
   // build time.
   process.env.VITE_PACKAGE = packageType ?? "full";
-  const plugins = [
+  const plugins: PluginOption[] = [
     react(),
     svgrPlugin({
       svgrOptions: {
         // This enables ref forwarding on SVGR components, which is needed, for
         // example, to make tooltips on icons work
         ref: true,
-      },
-    }),
-
-    createHtmlPlugin({
-      entry: "src/main.tsx",
-      inject: {
-        data: {
-          brand: env.VITE_PRODUCT_NAME || "Element Call",
-          packageType: process.env.VITE_PACKAGE,
-        },
       },
     }),
 
@@ -72,6 +65,18 @@ export default ({
       }),
     );
   }
+
+  plugins.push(
+    createHtmlPlugin({
+      entry: packageType === "godot" ? "godot/main.ts" : "src/main.tsx",
+      inject: {
+        data: {
+          brand: env.VITE_PRODUCT_NAME || "Element Call",
+          packageType: process.env.VITE_PACKAGE,
+        },
+      },
+    }),
+  );
 
   // The crypto WASM module is imported dynamically. Since it's common
   // for developers to use a linked copy of matrix-js-sdk or Rust
@@ -120,10 +125,15 @@ export default ({
             // Default naming fallback
             return "assets/[name]-[hash][extname]";
           },
-          manualChunks: {
-            // we should be able to remove this one https://github.com/matrix-org/matrix-rust-sdk-crypto-wasm/pull/167 lands
-            "matrix-sdk-crypto-wasm": ["@matrix-org/matrix-sdk-crypto-wasm"],
-          },
+          manualChunks:
+            packageType !== "godot"
+              ? {
+                  // we should be able to remove this one https://github.com/matrix-org/matrix-rust-sdk-crypto-wasm/pull/167 lands
+                  "matrix-sdk-crypto-wasm": [
+                    "@matrix-org/matrix-sdk-crypto-wasm",
+                  ],
+                }
+              : undefined,
         },
       },
     },
