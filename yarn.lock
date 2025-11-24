@@ -7571,6 +7571,7 @@ __metadata:
     vite: "npm:^7.0.0"
     vite-plugin-generate-file: "npm:^0.3.0"
     vite-plugin-html: "npm:^3.2.2"
+    vite-plugin-singlefile: "npm:^2.3.0"
     vite-plugin-svgr: "npm:^4.0.0"
     vitest: "npm:^3.0.0"
     vitest-axe: "npm:^1.0.0-pre.3"
@@ -13963,6 +13964,18 @@ __metadata:
   peerDependencies:
     vite: ">=2.0.0"
   checksum: 10c0/34628f44f07a9656875c66ba0c4dbe6be39646c50f961cb771179b930dd5727281836ee4293d7e89fe36043703a0ff40df06b15b90260d48a642420e008eb76a
+  languageName: node
+  linkType: hard
+
+"vite-plugin-singlefile@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "vite-plugin-singlefile@npm:2.3.0"
+  dependencies:
+    micromatch: "npm:^4.0.8"
+  peerDependencies:
+    rollup: ^4.44.1
+    vite: ^5.4.11 || ^6.0.0 || ^7.0.0
+  checksum: 10c0/d6ebb545d749b228bbd8fd8746a954f09d000dd69d200a651358e74136947b932f7f869536e1698e0d81e2f0694357c8bec3a957101a7e77d0d3c40193eb4cf1
   languageName: node
   linkType: hard
 

@@ -13,6 +13,8 @@
     "build:embedded": "yarn build:full --config vite-embedded.config.js",
     "build:embedded:production": "yarn build:embedded",
     "build:embedded:development": "yarn build:embedded --mode development",
+    "build:godot": "yarn build:full --config vite-godot.config.js",
+    "build:godot:development": "yarn build:godot --mode development",
     "serve": "vite preview",
     "prettier:check": "prettier -c .",
     "prettier:format": "prettier -w .",
@@ -133,6 +135,7 @@
     "vite": "^7.0.0",
     "vite-plugin-generate-file": "^0.3.0",
     "vite-plugin-html": "^3.2.2",
+    "vite-plugin-singlefile": "^2.3.0",
     "vite-plugin-svgr": "^4.0.0",
     "vitest": "^3.0.0",
     "vitest-axe": "^1.0.0-pre.3"
