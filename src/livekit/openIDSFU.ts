@@ -21,7 +21,16 @@ export type OpenIDClientParts = Pick<
   MatrixClient,
   "getOpenIdToken" | "getDeviceId"
 >;
-
+/**
+ * Gets a bearer token from the homeserver and then use it to authenticate
+ * to the matrix RTC backend in order to get acces to the SFU.
+ * It has built-in retry for calls to the homeserver with a backoff policy.
+ * @param client
+ * @param serviceUrl
+ * @param matrixRoomId
+ * @returns Object containing the token information
+ * @throws FailToGetOpenIdToken
+ */
 export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
   serviceUrl: string,

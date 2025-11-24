@@ -79,6 +79,13 @@ export async function flushPromises(): Promise<void> {
   await new Promise<void>((resolve) => window.setTimeout(resolve));
 }
 
+export type NodeEventHandler = (...args: unknown[]) => void;
+
+export interface NodeStyleEventEmitter {
+  addListener(eventName: string | symbol, handler: NodeEventHandler): this;
+  removeListener(eventName: string | symbol, handler: NodeEventHandler): this;
+}
+
 export interface OurRunHelpers extends RunHelpers {
   /**
    * Schedules a sequence of actions to happen, as described by a marble

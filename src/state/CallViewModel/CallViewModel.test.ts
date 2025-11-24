@@ -6,8 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, onTestFinished, it, describe, expect } from "vitest";
-import EventEmitter from "events";
+import { test, vi, onTestFinished, it, describe } from "vitest";
 import {
   BehaviorSubject,
   combineLatest,
@@ -19,12 +18,11 @@ import {
   of,
   switchMap,
 } from "rxjs";
-import { SyncState, type MatrixClient } from "matrix-js-sdk";
+import { SyncState } from "matrix-js-sdk";
 import {
   ConnectionState,
   type LocalTrackPublication,
   type RemoteParticipant,
-  type Room as LivekitRoom,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
 import {
@@ -36,27 +34,18 @@ import {
   type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
-import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
-import { createCallViewModel$ } from "./CallViewModel";
 import { type Layout } from "../layout-types.ts";
 import {
   mockLocalParticipant,
-  mockMatrixRoom,
   mockMatrixRoomMember,
   mockRemoteParticipant,
   withTestScheduler,
   mockRtcMembership,
-  MockRTCSession,
-  mockMediaDevices,
-  mockMuteStates,
-  mockConfig,
   testScope,
-  mockLivekitRoom,
   exampleTransport,
 } from "../../utils/test.ts";
 import { E2eeType } from "../../e2ee/e2eeType.ts";
-import type { RaisedHandInfo, ReactionInfo } from "../../reactions/index.ts";
 import {
   aliceId,
   aliceParticipant,
@@ -71,10 +60,6 @@ import {
 import { MediaDevices } from "../MediaDevices.ts";
 import { getValue } from "../../utils/observable.ts";
 import { type Behavior, constant } from "../Behavior.ts";
-import {
-  type ElementCallError,
-  MatrixRTCTransportMissingError,
-} from "../../utils/errors.ts";
 import { withCallViewModel } from "./CallViewModelTestUtils.ts";
 
 vi.mock("rxjs", async (importOriginal) => ({
@@ -245,71 +230,6 @@ function mockRingEvent(
 const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 
 describe("CallViewModel", () => {
-  // TODO: Restore this test. It requires makeTransport to not be mocked, unlike
-  // the rest of the tests in this file… what do we do?
-  it.skip("test missing RTC config error", async () => {
-    const rtcMemberships$ = new BehaviorSubject<CallMembership[]>([]);
-    const emitter = new EventEmitter();
-    const client = vi.mocked<MatrixClient>({
-      on: emitter.on.bind(emitter),
-      off: emitter.off.bind(emitter),
-      getSyncState: vi.fn().mockReturnValue(SyncState.Syncing),
-      getUserId: vi.fn().mockReturnValue("@user:localhost"),
-      getUser: vi.fn().mockReturnValue(null),
-      getDeviceId: vi.fn().mockReturnValue("DEVICE"),
-      credentials: {
-        userId: "@user:localhost",
-      },
-      getCrypto: vi.fn().mockReturnValue(undefined),
-      getDomain: vi.fn().mockReturnValue("example.org"),
-    } as unknown as MatrixClient);
-
-    const matrixRoom = mockMatrixRoom({
-      roomId: "!myRoomId:example.com",
-      client,
-      getMember: vi.fn().mockReturnValue(undefined),
-    });
-
-    const fakeRtcSession = new MockRTCSession(matrixRoom).withMemberships(
-      rtcMemberships$,
-    );
-
-    mockConfig({});
-
-    vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({});
-
-    const callVM = createCallViewModel$(
-      testScope(),
-      fakeRtcSession.asMockedSession(),
-      matrixRoom,
-      mockMediaDevices({}),
-      mockMuteStates(),
-      {
-        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-        autoLeaveWhenOthersLeft: false,
-        livekitRoomFactory: (): LivekitRoom =>
-          mockLivekitRoom({
-            localParticipant,
-            disconnect: async () => Promise.resolve(),
-            setE2EEEnabled: async () => Promise.resolve(),
-          }),
-      },
-      new BehaviorSubject({} as Record<string, RaisedHandInfo>),
-      new BehaviorSubject({} as Record<string, ReactionInfo>),
-      constant({ processor: undefined, supported: false }),
-    );
-
-    const failPromise = Promise.withResolvers<ElementCallError>();
-    callVM.configError$.subscribe((error) => {
-      if (error) {
-        failPromise.resolve(error);
-      }
-    });
-
-    const error = await failPromise.promise;
-    expect(error).toBeInstanceOf(MatrixRTCTransportMissingError);
-  });
-
   test("participants are retained during a focus switch", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       // Participants disappear on frame 2 and come back on frame 3

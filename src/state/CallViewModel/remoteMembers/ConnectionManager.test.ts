@@ -11,7 +11,7 @@ import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type Participant as LivekitParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { Epoch, ObservableScope } from "../../ObservableScope.ts";
+import { Epoch, mapEpoch, ObservableScope } from "../../ObservableScope.ts";
 import {
   createConnectionManager$,
   type ConnectionManagerData,
@@ -73,7 +73,7 @@ afterEach(() => {
 describe("connections$ stream", () => {
   test("Should create and start new connections for each transports", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
-      const { connections$ } = createConnectionManager$({
+      const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
         inputTransports$: behavior("a", {
@@ -82,7 +82,9 @@ describe("connections$ stream", () => {
         logger: logger,
       });
 
-      expectObservable(connections$).toBe("a", {
+      expectObservable(
+        connectionManagerData$.pipe(mapEpoch((d) => d.getConnections())),
+      ).toBe("a", {
         a: expect.toSatisfy((e: Epoch<Connection[]>) => {
           const connections = e.value;
           expect(connections.length).toBe(2);
@@ -110,7 +112,7 @@ describe("connections$ stream", () => {
 
   test("Should start connection only once", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
-      const { connections$ } = createConnectionManager$({
+      const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
         inputTransports$: behavior("abcdef", {
@@ -124,7 +126,9 @@ describe("connections$ stream", () => {
         logger: logger,
       });
 
-      expectObservable(connections$).toBe("xxxxxa", {
+      expectObservable(
+        connectionManagerData$.pipe(mapEpoch((d) => d.getConnections())),
+      ).toBe("xxxxxa", {
         x: expect.anything(),
         a: expect.toSatisfy((e: Epoch<Connection[]>) => {
           const connections = e.value;
@@ -153,7 +157,7 @@ describe("connections$ stream", () => {
 
   test("Should cleanup connections when not needed anymore", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
-      const { connections$ } = createConnectionManager$({
+      const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
         inputTransports$: behavior("abc", {
@@ -164,7 +168,9 @@ describe("connections$ stream", () => {
         logger: logger,
       });
 
-      expectObservable(connections$).toBe("xab", {
+      expectObservable(
+        connectionManagerData$.pipe(mapEpoch((d) => d.getConnections())),
+      ).toBe("xab", {
         x: expect.anything(),
         a: expect.toSatisfy((e: Epoch<Connection[]>) => {
           const connections = e.value;

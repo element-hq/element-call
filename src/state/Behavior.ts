@@ -16,7 +16,10 @@ import { BehaviorSubject } from "rxjs";
  * distinction between Behaviors and Observables, see
  * https://monoid.dk/post/behaviors-and-streams-why-both/.
  */
-export type Behavior<T> = Omit<BehaviorSubject<T>, "next" | "observers">;
+export type Behavior<T> = Omit<
+  BehaviorSubject<T>,
+  "next" | "observers" | "error"
+>;
 
 /**
  * Creates a Behavior which never changes in value.
