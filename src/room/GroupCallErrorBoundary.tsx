@@ -22,6 +22,7 @@ import {
   WebBrowserIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { Button } from "@vector-im/compound-web";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   ConnectionLostError,
@@ -53,7 +54,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
   widget,
 }: ErrorPageProps): ReactElement => {
   const { t } = useTranslation();
-
+  logger.error("Error boundary caught:", error);
   let icon: ComponentType<SVGAttributes<SVGElement>>;
   switch (error.category) {
     case ErrorCategory.CONFIGURATION_ISSUE:

@@ -1,0 +1,411 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
+<div>
+  <p>
+    Hostname: localhost
+  </p>
+  <p>
+    Element Call version: dev
+  </p>
+  <p>
+    Crypto version: crypto-1.0.0
+  </p>
+  <p>
+    Matrix ID: @alice:example.org
+  </p>
+  <p>
+    Device ID: DEVICE123
+  </p>
+  <div
+    class="fieldRow"
+  >
+    <div
+      class="field inputField"
+    >
+      <input
+        aria-describedby="«r1»"
+        id="duplicateTiles"
+        min="0"
+        type="number"
+        value="0"
+      />
+      <label
+        for="duplicateTiles"
+      >
+        Number of additional tile copies per participant
+      </label>
+    </div>
+  </div>
+  <div
+    class="fieldRow"
+  >
+    <div
+      class="field checkboxField"
+    >
+      <input
+        aria-describedby="«r2»"
+        id="debugTileLayout"
+        type="checkbox"
+      />
+      <label
+        for="debugTileLayout"
+      >
+        <div
+          class="checkbox"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Debug tile layout
+      </label>
+    </div>
+  </div>
+  <div
+    class="fieldRow"
+  >
+    <div
+      class="field checkboxField"
+    >
+      <input
+        aria-describedby="«r3»"
+        id="showConnectionStats"
+        type="checkbox"
+      />
+      <label
+        for="showConnectionStats"
+      >
+        <div
+          class="checkbox"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Show connection statistics
+      </label>
+    </div>
+  </div>
+  <div
+    class="fieldRow"
+  >
+    <div
+      class="field checkboxField"
+    >
+      <input
+        aria-describedby="«r4»"
+        id="muteAllAudio"
+        type="checkbox"
+      />
+      <label
+        for="muteAllAudio"
+      >
+        <div
+          class="checkbox"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Mute all audio (participants, reactions, join sounds)
+      </label>
+    </div>
+  </div>
+   
+  <div
+    class="fieldRow"
+  >
+    <div
+      class="field checkboxField"
+    >
+      <input
+        aria-describedby="«r5»"
+        id="alwaysShowIphoneEarpiece"
+        type="checkbox"
+      />
+      <label
+        for="alwaysShowIphoneEarpiece"
+      >
+        <div
+          class="checkbox"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Show iPhone earpiece option on all platforms
+      </label>
+    </div>
+     
+  </div>
+  <form
+    class="_root_19upo_16"
+  >
+    <div
+      class="_field_19upo_26"
+    >
+      <label
+        class="_label_19upo_59"
+        for="radix-«r6»"
+      >
+        Custom Livekit-url
+      </label>
+      <div
+        class="_controls_17lij_8"
+      >
+        <input
+          aria-describedby="radix-«r7»"
+          class="_control_sqdq4_10"
+          id="radix-«r6»"
+          name="input"
+          title=""
+          value=""
+        />
+      </div>
+      <span
+        class="_message_19upo_85 _help-message_19upo_91"
+        id="radix-«r7»"
+      >
+        Currently, no overwrite is set. Url from well-known or config is used.
+      </span>
+    </div>
+  </form>
+  <h3
+    class="_typography_6v6n8_153 _font-body-lg-semibold_6v6n8_74"
+  >
+    MatrixRTC mode
+  </h3>
+  <form
+    class="_root_19upo_16"
+  >
+    <div
+      class="_inline-field_19upo_32"
+    >
+      <div
+        class="_inline-field-control_19upo_44"
+      >
+        <div
+          class="_container_1e0uz_10"
+        >
+          <input
+            aria-describedby="radix-«r9» radix-«rb» radix-«rd»"
+            checked=""
+            class="_input_1e0uz_18"
+            id="radix-«r8»"
+            name="«r0»"
+            title=""
+            type="radio"
+            value="legacy"
+          />
+          <div
+            class="_ui_1e0uz_19"
+          />
+        </div>
+      </div>
+      <div
+        class="_inline-field-body_19upo_38"
+      >
+        <label
+          class="_label_19upo_59"
+          for="radix-«r8»"
+        >
+          Legacy: state events & oldest membership SFU
+        </label>
+        <span
+          class="_message_19upo_85 _help-message_19upo_91"
+          id="radix-«r9»"
+        >
+          Compatible with old versions of EC that do not support multi SFU
+        </span>
+      </div>
+    </div>
+    <div
+      class="_inline-field_19upo_32"
+    >
+      <div
+        class="_inline-field-control_19upo_44"
+      >
+        <div
+          class="_container_1e0uz_10"
+        >
+          <input
+            aria-describedby="radix-«r9» radix-«rb» radix-«rd»"
+            class="_input_1e0uz_18"
+            id="radix-«ra»"
+            name="«r0»"
+            title=""
+            type="radio"
+            value="compatibil"
+          />
+          <div
+            class="_ui_1e0uz_19"
+          />
+        </div>
+      </div>
+      <div
+        class="_inline-field-body_19upo_38"
+      >
+        <label
+          class="_label_19upo_59"
+          for="radix-«ra»"
+        >
+          Compatibility: state events & multi SFU
+        </label>
+        <span
+          class="_message_19upo_85 _help-message_19upo_91"
+          id="radix-«rb»"
+        >
+          Compatible with homeservers that do not support sticky events (but all other EC clients are v0.17.0 or later)
+        </span>
+      </div>
+    </div>
+    <div
+      class="_inline-field_19upo_32"
+    >
+      <div
+        class="_inline-field-control_19upo_44"
+      >
+        <div
+          class="_container_1e0uz_10"
+        >
+          <input
+            aria-describedby="radix-«r9» radix-«rb» radix-«rd»"
+            class="_input_1e0uz_18"
+            id="radix-«rc»"
+            name="«r0»"
+            title=""
+            type="radio"
+            value="matrix_2_0"
+          />
+          <div
+            class="_ui_1e0uz_19"
+          />
+        </div>
+      </div>
+      <div
+        class="_inline-field-body_19upo_38"
+      >
+        <label
+          class="_label_19upo_59"
+          for="radix-«rc»"
+        >
+          Matrix 2.0: sticky events & multi SFU
+        </label>
+        <span
+          class="_message_19upo_85 _help-message_19upo_91"
+          id="radix-«rd»"
+        >
+          Compatible only with homservers supporting sticky events and all EC clients v0.17.0 or later
+        </span>
+      </div>
+    </div>
+  </form>
+  <h3>
+    LiveKit SFU: wss://local-sfu.example.org
+  </h3>
+  <p>
+    ws-url: 
+    wss://local-sfu.example.org/
+  </p>
+  <p>
+    LiveKit Server Info
+    (
+    local
+    )
+  </p>
+  <pre
+    class="pre"
+  >
+    {
+  "region": "local",
+  "version": "1.2.3"
+}
+    local-metadata
+  </pre>
+  <h3>
+    LiveKit SFU: wss://remote-sfu.example.org
+  </h3>
+  <p>
+    LiveKit Server Info
+    (
+    remote
+    )
+  </p>
+  <pre
+    class="pre"
+  >
+    {
+  "region": "remote",
+  "version": "4.5.6"
+}
+    remote-metadata
+  </pre>
+  <p>
+    Environment variables
+  </p>
+  <pre>
+    {
+  "MY_MOCK_ENV": 10,
+  "ENV": "test"
+}
+  </pre>
+  <p>
+    URL parameters
+  </p>
+  <pre>
+    {
+  "mocked": true,
+  "answer": 42
+}
+  </pre>
+</div>
+`;

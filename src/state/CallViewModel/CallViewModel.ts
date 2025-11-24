@@ -41,7 +41,10 @@ import {
   timer,
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  type LivekitTransport,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
 
 import {
@@ -94,8 +97,11 @@ import {
 } from "../layout-types.ts";
 import { type ElementCallError } from "../../utils/errors.ts";
 import { type ObservableScope } from "../ObservableScope.ts";
+import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
 import {
   createLocalMembership$,
+  enterRTCSession,
+  LivekitState,
   type LocalMemberConnectionState,
 } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
@@ -120,6 +126,8 @@ import {
   createMatrixMemberMetadata$,
   createRoomMembers$,
 } from "./remoteMembers/MatrixMemberMetadata.ts";
+import { Publisher } from "./localMember/Publisher.ts";
+import { type Connection } from "./remoteMembers/Connection.ts";
 
 const logger = rootLogger.getChild("[CallViewModel]");
 //TODO
@@ -230,7 +238,7 @@ export interface CallViewModel {
    * This is a fatal error that prevents the call from being created/joined.
    * Should render a blocking error screen.
    */
-  configError$: Behavior<ElementCallError | null>;
+  fatalError$: Behavior<ElementCallError | null>;
 
   // participants and counts
   /**
@@ -357,9 +365,9 @@ export function createCallViewModel$(
   reactionsSubject$: Observable<Record<string, ReactionInfo>>,
   trackProcessorState$: Behavior<ProcessorState>,
 ): CallViewModel {
-  const userId = matrixRoom.client.getUserId()!;
-  const deviceId = matrixRoom.client.getDeviceId()!;
-
+  const client = matrixRoom.client;
+  const userId = client.getUserId()!;
+  const deviceId = client.getDeviceId()!;
   const livekitKeyProvider = getE2eeKeyProvider(
     options.encryptionSystem,
     matrixRTCSession,
@@ -393,7 +401,7 @@ export function createCallViewModel$(
   const localTransport$ = createLocalTransport$({
     scope: scope,
     memberships$: memberships$,
-    client: matrixRoom.client,
+    client,
     roomId: matrixRoom.roomId,
     useOldestMember$: scope.behavior(
       matrixRTCMode.value$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
@@ -401,7 +409,7 @@ export function createCallViewModel$(
   });
 
   const connectionFactory = new ECConnectionFactory(
-    matrixRoom.client,
+    client,
     mediaDevices,
     trackProcessorState$,
     livekitKeyProvider,
@@ -446,15 +454,31 @@ export function createCallViewModel$(
 
   const localMembership = createLocalMembership$({
     scope: scope,
+    homeserverConnected$: createHomeserverConnected$(
+      scope,
+      client,
+      matrixRTCSession,
+    ),
     muteStates: muteStates,
-    mediaDevices: mediaDevices,
+    joinMatrixRTC: async (transport: LivekitTransport) => {
+      return enterRTCSession(
+        matrixRTCSession,
+        transport,
+        connectOptions$.value,
+      );
+    },
+    createPublisherFactory: (connection: Connection) => {
+      return new Publisher(
+        scope,
+        connection,
+        mediaDevices,
+        muteStates,
+        trackProcessorState$,
+      );
+    },
     connectionManager: connectionManager,
     matrixRTCSession: matrixRTCSession,
-    matrixRoom: matrixRoom,
     localTransport$: localTransport$,
-    trackProcessorState$: trackProcessorState$,
-    widget,
-    options: connectOptions$,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
@@ -1442,7 +1466,14 @@ export function createCallViewModel$(
     hoverScreen: (): void => screenHover$.next(),
     unhoverScreen: (): void => screenUnhover$.next(),
 
-    configError$: localMembership.configError$,
+    fatalError$: scope.behavior(
+      localMembership.connectionState.livekit$.pipe(
+        filter((v) => v.state === LivekitState.Error),
+        map((s) => s.error),
+      ),
+      null,
+    ),
+
     participantCount$: participantCount$,
     audioParticipants$: audioParticipants$,
 

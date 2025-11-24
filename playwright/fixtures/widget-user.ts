@@ -159,7 +159,11 @@ export const widgetTest = test.extend<MyFixtures>({
     } = await registerUser(browser, userB);
 
     // Invite the second user
-    await ewPage1.getByRole("button", { name: "Add", exact: true }).click();
+    await ewPage1
+      .getByRole("navigation", { name: "Room list" })
+      .getByRole("button", { name: "New conversation" })
+      .click();
+
     await ewPage1.getByRole("menuitem", { name: "New Room" }).click();
     await ewPage1.getByRole("textbox", { name: "Name" }).fill("Welcome Room");
     await ewPage1.getByRole("button", { name: "Create room" }).click();

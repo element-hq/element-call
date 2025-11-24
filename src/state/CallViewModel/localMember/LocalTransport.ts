@@ -13,32 +13,39 @@ import {
   isLivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
-import { combineLatest, distinctUntilChanged, first, from, map } from "rxjs";
-import { logger } from "matrix-js-sdk/lib/logger";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  first,
+  from,
+  map,
+  switchMap,
+} from "rxjs";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
 import { type Behavior } from "../../Behavior.ts";
 import { type Epoch, type ObservableScope } from "../../ObservableScope.ts";
 import { Config } from "../../../config/Config.ts";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors.ts";
-import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
+import {
+  getSFUConfigWithOpenID,
+  type OpenIDClientParts,
+} from "../../../livekit/openIDSFU.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
+import { customLivekitUrl } from "../../../settings/settings.ts";
+
+const logger = rootLogger.getChild("[LocalTransport]");
 
 /*
- * - get well known
- * - get oldest membership
- * - get transport to use
- * - get openId + jwt token
- * - wait for createTrack() call
- *    - create tracks
- * - wait for join() call
- *   - Publisher.publishTracks()
- *   - send join state/sticky event
+ * It figures out “which LiveKit focus URL/alias the local user should use,”
+ * optionally aligning with the oldest member, and ensures the SFU path is primed
+ * before advertising that choice.
  */
 interface Props {
   scope: ObservableScope;
   memberships$: Behavior<Epoch<CallMembership[]>>;
-  client: MatrixClient;
+  client: Pick<MatrixClient, "getDomain"> & OpenIDClientParts;
   roomId: string;
   useOldestMember$: Behavior<boolean>;
 }
@@ -49,6 +56,8 @@ interface Props {
  *
  * @prop useOldestMember Whether to use the same transport as the oldest member.
  * This will only update once the first oldest member appears. Will not recompute if the oldest member leaves.
+ *
+ * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
  */
 export const createLocalTransport$ = ({
   scope,
@@ -75,16 +84,20 @@ export const createLocalTransport$ = ({
   /**
    * The transport that we would personally prefer to publish on (if not for the
    * transport preferences of others, perhaps).
+   *
+   * @throws
    */
   const preferredTransport$: Behavior<LivekitTransport | null> = scope.behavior(
-    from(makeTransport(client, roomId)),
+    customLivekitUrl.value$.pipe(
+      switchMap((customUrl) => from(makeTransport(client, roomId, customUrl))),
+    ),
     null,
   );
 
   /**
-   * The transport we should advertise in our MatrixRTC membership.
+   * The chosen transport we should advertise in our MatrixRTC membership.
    */
-  const advertisedTransport$ = scope.behavior(
+  return scope.behavior(
     combineLatest([
       useOldestMember$,
       oldestMemberTransport$,
@@ -98,82 +111,78 @@ export const createLocalTransport$ = ({
       distinctUntilChanged(areLivekitTransportsEqual),
     ),
   );
-  return advertisedTransport$;
 };
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
-async function makeTransportInternal(
-  client: MatrixClient,
+/**
+ *
+ * @param client
+ * @param roomId
+ * @returns
+ * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
+ */
+async function makeTransport(
+  client: Pick<MatrixClient, "getDomain"> & OpenIDClientParts,
   roomId: string,
+  urlFromDevSettings: string | null,
 ): Promise<LivekitTransport> {
-  logger.log("Searching for a preferred transport");
+  let transport: LivekitTransport | undefined;
+  logger.trace("Searching for a preferred transport");
   //TODO refactor this to use the jwt service returned alias.
   const livekitAlias = roomId;
-  // TODO-MULTI-SFU: Either remove this dev tool or make it more official
-  const urlFromStorage =
-    localStorage.getItem("robin-matrixrtc-auth") ??
-    localStorage.getItem("timo-focus-url");
-  if (urlFromStorage !== null) {
+
+  // DEVTOOL: Highest priority: Load from devtool setting
+  if (urlFromDevSettings !== null) {
     const transportFromStorage: LivekitTransport = {
       type: "livekit",
-      livekit_service_url: urlFromStorage,
+      livekit_service_url: urlFromDevSettings,
       livekit_alias: livekitAlias,
     };
-    logger.log(
-      "Using LiveKit transport from local storage: ",
+    logger.info(
+      "Using LiveKit transport from dev tools: ",
       transportFromStorage,
     );
-    return transportFromStorage;
+    transport = transportFromStorage;
   }
 
-  // Prioritize the .well-known/matrix/client, if available, over the configured SFU
+  // WELL_KNOWN: Prioritize the .well-known/matrix/client, if available, over the configured SFU
   const domain = client.getDomain();
-  if (domain) {
+  if (domain && transport === undefined) {
     // we use AutoDiscovery instead of relying on the MatrixClient having already
     // been fully configured and started
     const wellKnownFoci = (await AutoDiscovery.getRawClientConfig(domain))?.[
       FOCI_WK_KEY
     ];
     if (Array.isArray(wellKnownFoci)) {
-      const transport: LivekitTransportConfig | undefined = wellKnownFoci.find(
-        (f) => f && isLivekitTransportConfig(f),
-      );
-      if (transport !== undefined) {
-        logger.log("Using LiveKit transport from .well-known: ", transport);
-        return { ...transport, livekit_alias: livekitAlias };
+      const wellKnownTransport: LivekitTransportConfig | undefined =
+        wellKnownFoci.find((f) => f && isLivekitTransportConfig(f));
+      if (wellKnownTransport !== undefined) {
+        logger.info("Using LiveKit transport from .well-known: ", transport);
+        transport = { ...wellKnownTransport, livekit_alias: livekitAlias };
       }
     }
   }
 
+  // CONFIG: Least prioritized; Load from config file
   const urlFromConf = Config.get().livekit?.livekit_service_url;
-  if (urlFromConf) {
+  if (urlFromConf && transport === undefined) {
     const transportFromConf: LivekitTransport = {
       type: "livekit",
       livekit_service_url: urlFromConf,
       livekit_alias: livekitAlias,
     };
-    logger.log("Using LiveKit transport from config: ", transportFromConf);
-    return transportFromConf;
+    logger.info("Using LiveKit transport from config: ", transportFromConf);
+    transport = transportFromConf;
   }
 
-  throw new MatrixRTCTransportMissingError(domain ?? "");
-}
+  if (!transport) throw new MatrixRTCTransportMissingError(domain ?? ""); // this will call the jwt/sfu/get endpoint to pre create the livekit room.
 
-async function makeTransport(
-  client: MatrixClient,
-  roomId: string,
-): Promise<LivekitTransport> {
-  const transport = await makeTransportInternal(client, roomId);
-  // this will call the jwt/sfu/get endpoint to pre create the livekit room.
-  try {
-    await getSFUConfigWithOpenID(
-      client,
-      transport.livekit_service_url,
-      transport.livekit_alias,
-    );
-  } catch (e) {
-    logger.warn(`Failed to get SFU config for transport: ${e}`);
-  }
+  await getSFUConfigWithOpenID(
+    client,
+    transport.livekit_service_url,
+    transport.livekit_alias,
+  );
+
   return transport;
 }

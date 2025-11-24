@@ -64,6 +64,14 @@
   "developer_mode": {
     "always_show_iphone_earpiece": "Show iPhone earpiece option on all platforms",
     "crypto_version": "Crypto version: {{version}}",
+    "custom_livekit_url": {
+      "current_url": "Currently set to: ",
+      "from_config": "Currently, no overwrite is set. Url from well-known or config is used.",
+      "label": "Custom Livekit-url",
+      "reset": "Reset overwrite",
+      "save": "Save",
+      "saving": "Saving..."
+    },
     "debug_tile_layout_label": "Debug tile layout",
     "device_id": "Device ID: {{id}}",
     "duplicate_tiles_label": "Number of additional tile copies per participant",

@@ -159,6 +159,7 @@ export const GroupCallView: FC<Props> = ({
     };
   }, [rtcSession]);
 
+  // TODO move this into the callViewModel LocalMembership.ts
   useTypedEventEmitter(
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
