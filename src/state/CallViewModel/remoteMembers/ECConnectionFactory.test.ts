@@ -102,7 +102,7 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
             available$: constant(new Map<never, never>()),
             selected$: constant({ id: "DEV00", virtualEarpiece: false }),
             select: () => {},
-          }
+          },
         }),
         new BehaviorSubject<ProcessorState>({
           supported: true,
