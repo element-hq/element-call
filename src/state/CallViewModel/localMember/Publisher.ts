@@ -14,6 +14,7 @@ import {
   ConnectionState as LivekitConnectionState,
 } from "livekit-client";
 import {
+  BehaviorSubject,
   map,
   NEVER,
   type Observable,
@@ -33,6 +34,7 @@ import { getUrlParams } from "../../../UrlParams.ts";
 import { observeTrackReference$ } from "../../MediaViewModel.ts";
 import { type Connection } from "../remoteMembers/Connection.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
+import { FailToStartLivekitConnection } from "../../../utils/errors.ts";
 
 /**
  * A wrapper for a Connection object.
@@ -40,7 +42,6 @@ import { type ObservableScope } from "../../ObservableScope.ts";
  * The Publisher is also responsible for creating the media tracks.
  */
 export class Publisher {
-  public tracks: LocalTrack<Track.Kind>[] = [];
   /**
    * Creates a new Publisher.
    * @param scope - The observable scope to use for managing the publisher.
@@ -81,6 +82,9 @@ export class Publisher {
     });
   }
 
+  private _tracks$ = new BehaviorSubject<LocalTrack<Track.Kind>[]>([]);
+  public tracks$ = this._tracks$ as Behavior<LocalTrack<Track.Kind>[]>;
+
   /**
    * Start the connection to LiveKit and publish local tracks.
    *
@@ -94,50 +98,36 @@ export class Publisher {
    * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
    * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
    */
-  public async createAndSetupTracks(): Promise<LocalTrack[]> {
+  public async createAndSetupTracks(): Promise<void> {
     const lkRoom = this.connection.livekitRoom;
     // Observe mute state changes and update LiveKit microphone/camera states accordingly
     this.observeMuteStates(this.scope);
 
-    // TODO: This should be an autostarted connection no need to start here. just check the connection state.
-    // TODO: This will fetch the JWT token. Perhaps we could keep it preloaded
-    // instead? This optimization would only be safe for a publish connection,
-    // because we don't want to leak the user's intent to perhaps join a call to
-    // remote servers before they actually commit to it.
-    // const { promise, resolve, reject } = Promise.withResolvers<void>();
-    // const sub = this.connection.state$.subscribe((s) => {
-    //   if (s.state === "FailedToStart") {
-    //     reject(new Error("Disconnected from LiveKit server"));
-    //   } else if (s.state === "ConnectedToLkRoom") {
-    //     resolve();
-    //   }
-    // });
-    // try {
-    //   await promise;
-    // } catch (e) {
-    //   throw e;
-    // } finally {
-    //   sub.unsubscribe();
-    // }
     // TODO-MULTI-SFU: Prepublish a microphone track
     const audio = this.muteStates.audio.enabled$.value;
     const video = this.muteStates.video.enabled$.value;
     // createTracks throws if called with audio=false and video=false
     if (audio || video) {
       // TODO this can still throw errors? It will also prompt for permissions if not already granted
-      this.tracks =
-        (await lkRoom.localParticipant
-          .createTracks({
-            audio,
-            video,
-          })
-          .catch((error) => {
-            this.logger?.error("Failed to create tracks", error);
-          })) ?? [];
+      return lkRoom.localParticipant
+        .createTracks({
+          audio,
+          video,
+        })
+        .then((tracks) => {
+          this._tracks$.next(tracks);
+        });
     }
-    return this.tracks;
+    throw Error("audio and video is false");
   }
 
+  private _publishing$ = new BehaviorSubject<boolean>(false);
+  public publishing$ = this.scope.behavior(this._publishing$);
+  /**
+   *
+   * @returns
+   * @throws ElementCallError
+   */
   public async startPublishing(): Promise<LocalTrack[]> {
     const lkRoom = this.connection.livekitRoom;
     const { promise, resolve, reject } = Promise.withResolvers<void>();
@@ -147,7 +137,7 @@ export class Publisher {
           resolve();
           break;
         case "FailedToStart":
-          reject(new Error("Failed to connect to LiveKit server"));
+          reject(new FailToStartLivekitConnection());
           break;
         default:
           this.logger?.info("waiting for connection: ", s.state);
@@ -160,7 +150,7 @@ export class Publisher {
     } finally {
       sub.unsubscribe();
     }
-    for (const track of this.tracks) {
+    for (const track of this.tracks$.value) {
       // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
       // with a timeout.
       await lkRoom.localParticipant.publishTrack(track).catch((error) => {
@@ -169,7 +159,8 @@ export class Publisher {
 
       // TODO: check if the connection is still active? and break the loop if not?
     }
-    return this.tracks;
+    this._publishing$.next(true);
+    return this.tracks$.value;
   }
 
   public async stopPublishing(): Promise<void> {
@@ -185,6 +176,15 @@ export class Publisher {
     };
     localParticipant.trackPublications.forEach(addToTracksIfDefined);
     await localParticipant.unpublishTracks(tracks);
+    this._publishing$.next(false);
+  }
+
+  /**
+   * Stops all tracks that are currently running
+   */
+  public stopTracks(): void {
+    this.tracks$.value.forEach((t) => t.stop());
+    this._tracks$.next([]);
   }
 
   /// Private methods
