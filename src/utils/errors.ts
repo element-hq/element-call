@@ -13,6 +13,8 @@ export enum ErrorCode {
    */
   MISSING_MATRIX_RTC_TRANSPORT = "MISSING_MATRIX_RTC_TRANSPORT",
   CONNECTION_LOST_ERROR = "CONNECTION_LOST_ERROR",
+  INTERNAL_MEMBERSHIP_MANAGER = "INTERNAL_MEMBERSHIP_MANAGER",
+  FAILED_TO_START_LIVEKIT = "FAILED_TO_START_LIVEKIT",
   /** LiveKit indicates that the server has hit its track limits */
   INSUFFICIENT_CAPACITY_ERROR = "INSUFFICIENT_CAPACITY_ERROR",
   E2EE_NOT_SUPPORTED = "E2EE_NOT_SUPPORTED",
@@ -27,6 +29,7 @@ export enum ErrorCategory {
   NETWORK_CONNECTIVITY = "NETWORK_CONNECTIVITY",
   CLIENT_CONFIGURATION = "CLIENT_CONFIGURATION",
   UNKNOWN = "UNKNOWN",
+  SYSTEM_FAILURE = "SYSTEM_FAILURE",
   // SYSTEM_FAILURE / FEDERATION_FAILURE ..
 }
 
@@ -83,6 +86,18 @@ export class ConnectionLostError extends ElementCallError {
   }
 }
 
+export class MembershipManagerError extends ElementCallError {
+  public constructor(error: Error) {
+    super(
+      t("error.membership_manager"),
+      ErrorCode.INTERNAL_MEMBERSHIP_MANAGER,
+      ErrorCategory.SYSTEM_FAILURE,
+      t("error.membership_manager_description"),
+      error,
+    );
+  }
+}
+
 export class E2EENotSupportedError extends ElementCallError {
   public constructor() {
     super(
@@ -116,6 +131,17 @@ export class FailToGetOpenIdToken extends ElementCallError {
       undefined,
       // Properly set it as a cause for a better reporting on sentry
       error,
+    );
+  }
+}
+
+export class FailToStartLivekitConnection extends ElementCallError {
+  public constructor() {
+    super(
+      t("error.failed_to_start_livekit"),
+      ErrorCode.FAILED_TO_START_LIVEKIT,
+      ErrorCategory.NETWORK_CONNECTIVITY,
+      undefined,
     );
   }
 }

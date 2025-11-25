@@ -102,7 +102,6 @@ import {
   createLocalMembership$,
   enterRTCSession,
   LivekitState,
-  type LocalMemberConnectionState,
 } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import {
@@ -202,7 +201,7 @@ export interface CallViewModel {
   hangup: () => void;
 
   // joining
-  join: () => LocalMemberConnectionState;
+  join: () => void;
 
   // screen sharing
   /**
@@ -572,15 +571,6 @@ export function createCallViewModel$(
     ),
   );
 
-  // CODESMELL?
-  // This is functionally the same Observable as leave$, except here it's
-  // hoisted to the top of the class. This enables the cyclic dependency between
-  // leave$ -> autoLeave$ -> callPickupState$ -> livekitConnectionState$ ->
-  // localConnection$ -> transports$ -> joined$ -> leave$.
-  const leaveHoisted$ = new Subject<
-    "user" | "timeout" | "decline" | "allOthersLeft"
-  >();
-
   /**
    * Whether various media/event sources should pretend to be disconnected from
    * all network input, even if their connection still technically works.
@@ -840,10 +830,7 @@ export function createCallViewModel$(
     merge(
       autoLeave$,
       merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
-    ).pipe(
-      scope.share,
-      tap((reason) => leaveHoisted$.next(reason)),
-    );
+    ).pipe(scope.share);
 
   const spotlightSpeaker$ = scope.behavior<UserMediaViewModel | null>(
     userMedia$.pipe(
@@ -1448,16 +1435,13 @@ export function createCallViewModel$(
   // reassigned here to make it publicly accessible
   const toggleScreenSharing = localMembership.toggleScreenSharing;
 
-  const join = localMembership.requestConnect;
-  // TODO-MULTI-SFU: Use this view model for the lobby as well, and only call this once 'join' is clicked?
-  join();
   return {
     autoLeave$: autoLeave$,
     callPickupState$: callPickupState$,
     ringOverlay$: ringOverlay$,
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
-    join: join,
+    join: localMembership.requestConnect,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
 
