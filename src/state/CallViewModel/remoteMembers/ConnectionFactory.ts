@@ -41,8 +41,10 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param client - The OpenID client parts for authentication, needed to get openID and JWT tokens.
    * @param devices - Used for video/audio out/in capture options.
    * @param processorState$ - Effects like background blur (only for publishing connection?)
-   * @param e2eeLivekitOptions - The E2EE options to use for the LiveKit Room.
+   * @param livekitKeyProvider
    * @param controlledAudioDevices - Option to indicate whether audio output device is controlled externally (native mobile app).
+   * @param echoCancellation - Whether to enable echo cancellation for audio capture.
+   * @param noiseSuppression - Whether to enable noise suppression for audio capture.
    * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
    */
   public constructor(
@@ -52,6 +54,8 @@ export class ECConnectionFactory implements ConnectionFactory {
     livekitKeyProvider: BaseKeyProvider | undefined,
     private controlledAudioDevices: boolean,
     livekitRoomFactory?: () => LivekitRoom,
+    echoCancellation: boolean = true,
+    noiseSuppression: boolean = true,
   ) {
     const defaultFactory = (): LivekitRoom =>
       new LivekitRoom(
@@ -65,6 +69,8 @@ export class ECConnectionFactory implements ConnectionFactory {
             worker: new E2EEWorker(),
           },
           this.controlledAudioDevices,
+          echoCancellation,
+          noiseSuppression,
         ),
       );
     this.livekitRoomFactory = livekitRoomFactory ?? defaultFactory;
@@ -95,6 +101,8 @@ function generateRoomOption(
   processorState: ProcessorState,
   e2eeLivekitOptions: E2EEOptions | undefined,
   controlledAudioDevices: boolean,
+  echoCancellation: boolean,
+  noiseSuppression: boolean,
 ): RoomOptions {
   return {
     ...defaultLiveKitOptions,
@@ -106,6 +114,8 @@ function generateRoomOption(
     audioCaptureDefaults: {
       ...defaultLiveKitOptions.audioCaptureDefaults,
       deviceId: devices.audioInput.selected$.value?.id,
+      echoCancellation,
+      noiseSuppression,
     },
     audioOutput: {
       // When using controlled audio devices, we don't want to set the

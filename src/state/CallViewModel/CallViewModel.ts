@@ -415,6 +415,8 @@ export function createCallViewModel$(
     livekitKeyProvider,
     getUrlParams().controlledAudioDevices,
     options.livekitRoomFactory,
+    getUrlParams().echoCancellation,
+    getUrlParams().noiseSuppression,
   );
 
   const connectionManager = createConnectionManager$({
