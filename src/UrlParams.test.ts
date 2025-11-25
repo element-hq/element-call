@@ -339,18 +339,19 @@ describe("UrlParams", () => {
     });
 
     it("is parsed", () => {
-      expect(computeUrlParams("?intent=start_call&noiseSuppression=true").noiseSuppression).toBe(
-        true,
-      );
-      expect(computeUrlParams("?intent=start_call&noiseSuppression&bar=foo").noiseSuppression).toBe(
-        true,
-      );
+      expect(
+        computeUrlParams("?intent=start_call&noiseSuppression=true")
+          .noiseSuppression,
+      ).toBe(true);
+      expect(
+        computeUrlParams("?intent=start_call&noiseSuppression&bar=foo")
+          .noiseSuppression,
+      ).toBe(true);
       expect(computeUrlParams("?noiseSuppression=false").noiseSuppression).toBe(
         false,
       );
     });
   });
-
 
   describe("echoCancellation", () => {
     it("defaults to true", () => {
