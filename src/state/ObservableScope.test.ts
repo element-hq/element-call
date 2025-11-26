@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { BehaviorSubject, combineLatest, Subject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -100,5 +100,54 @@ describe("Epoch", () => {
     s$.next(3);
     s$.next(3);
     s$.complete();
+  });
+});
+
+describe("Reconcile", () => {
+  it("should wait for cleanup to complete before processing next Value", async () => {
+    vi.useFakeTimers();
+
+    const scope = new ObservableScope();
+    const cleanUp1 = Promise.withResolvers<void>();
+    const cleanUp2 = vi.fn();
+
+    const behavior$ = new BehaviorSubject<number>(1);
+    let lastProcessed = 0;
+
+    scope.reconcile<number>(
+      behavior$,
+      async (value: number): Promise<(() => Promise<void>) | void> => {
+        lastProcessed = value;
+        if (value === 1) {
+          return Promise.resolve(async (): Promise<void> => cleanUp1.promise);
+        } else if (value === 2) {
+          return Promise.resolve(async (): Promise<void> => {
+            cleanUp2();
+            return Promise.resolve(undefined);
+          });
+        }
+        return Promise.resolve();
+      },
+    );
+
+    // behavior$.next(1);
+    await vi.advanceTimersByTimeAsync(200);
+    behavior$.next(2);
+    await vi.advanceTimersByTimeAsync(300);
+
+    await vi.runAllTimersAsync();
+
+    // Should not have processed 2 yet because cleanup of 1 is pending
+    expect(lastProcessed).toBe(1);
+    cleanUp1.resolve();
+    // await flushPromises();
+
+    await vi.runAllTimersAsync();
+    // Now 2 should be processed
+    expect(lastProcessed).toBe(2);
+
+    scope.end();
+    await vi.runAllTimersAsync();
+    expect(cleanUp2).toHaveBeenCalled();
   });
 });
