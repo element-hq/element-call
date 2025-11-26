@@ -18,7 +18,9 @@ import {
   share,
   take,
   takeUntil,
+  tap,
 } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "./Behavior";
 
@@ -154,6 +156,17 @@ export class ObservableScope {
           }
         })();
       });
+  }
+
+  public unTestedMethod$<T>(input$: Behavior<T>): Observable<T> {
+    // This method is intentionally left untested.
+    return input$.pipe(
+      map((value) => value),
+      distinctUntilChanged(),
+      tap((value) => {
+        logger.log(`Value changed: ${value}`);
+      }),
+    );
   }
 
   /**
