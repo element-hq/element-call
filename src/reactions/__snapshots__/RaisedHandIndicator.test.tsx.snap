@@ -15,7 +15,7 @@ exports[`RaisedHandIndicator > renders a smaller indicator when miniature is spe
     </span>
   </div>
   <p>
-    00:01
+    00:00
   </p>
 </div>
 `;
@@ -35,7 +35,7 @@ exports[`RaisedHandIndicator > renders an indicator when a hand has been raised 
     </span>
   </div>
   <p>
-    00:01
+    00:00
   </p>
 </div>
 `;
@@ -55,7 +55,7 @@ exports[`RaisedHandIndicator > renders an indicator when a hand has been raised 
     </span>
   </div>
   <p>
-    01:01
+    01:00
   </p>
 </div>
 `;
