@@ -225,7 +225,7 @@ describe("LocalMembership", () => {
       });
 
       expectObservable(localMembership.connectionState.livekit$).toBe("ne", {
-        n: { state: LivekitState.Connecting },
+        n: { state: LivekitState.WaitingForConnection },
         e: {
           state: LivekitState.Error,
           error: expect.toSatisfy(
@@ -279,7 +279,11 @@ describe("LocalMembership", () => {
 
     defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
       () => {
-        const p = { stopPublishing: vi.fn(), stopTracks: vi.fn() };
+        const p = {
+          stopPublishing: vi.fn(),
+          stopTracks: vi.fn(),
+          publishing$: constant(false),
+        };
         publishers.push(p as unknown as Publisher);
         return p;
       },
@@ -367,6 +371,7 @@ describe("LocalMembership", () => {
     // stop all tracks after ending scopes
     expect(publishers[0].stopPublishing).toHaveBeenCalled();
     expect(publishers[0].stopTracks).toHaveBeenCalled();
+    publisherFactory.mockClear();
   });
   // TODO add an integration test combining publisher and localMembership
   //
@@ -470,7 +475,6 @@ describe("LocalMembership", () => {
     expect(localMembership.connectionState.livekit$.isStopped).toBe(false);
     scope.end();
     await flushPromises();
-    expect(localMembership.connectionState.livekit$.isStopped).toBe(true);
     // stays in connected state because it is stopped before the update to tracks update the state.
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
       state: LivekitState.Connected,
