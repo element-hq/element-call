@@ -34,7 +34,10 @@ import { getUrlParams } from "../../../UrlParams.ts";
 import { observeTrackReference$ } from "../../MediaViewModel.ts";
 import { type Connection } from "../remoteMembers/Connection.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
-import { FailToStartLivekitConnection } from "../../../utils/errors.ts";
+import {
+  ElementCallError,
+  FailToStartLivekitConnection,
+} from "../../../utils/errors.ts";
 
 /**
  * A wrapper for a Connection object.
@@ -154,7 +157,11 @@ export class Publisher {
           resolve();
           break;
         case "FailedToStart":
-          reject(new FailToStartLivekitConnection());
+          reject(
+            s.error instanceof ElementCallError
+              ? s.error
+              : new FailToStartLivekitConnection(),
+          );
           break;
         default:
           this.logger?.info("waiting for connection: ", s.state);
