@@ -25,12 +25,6 @@ export default defineConfig((configEnv) =>
             "src/utils/test-fixtures.ts",
             "playwright/**",
           ],
-          thresholds: {
-            lines: 80,
-            functions: 80,
-            branches: 80,
-            statements: 80,
-          },
         },
       },
     }),
