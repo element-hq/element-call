@@ -117,10 +117,6 @@ export class ObservableScope {
    * values may be skipped.
    *
    * Basically, this is like React's useEffect but async and for Behaviors.
-   *
-   * @arg value$ - The Behavior to track.
-   * @arg callback - Called whenever the value must be handled. May return a clean-up function
-   *
    */
   public reconcile<T>(
     value$: Behavior<T>,
@@ -225,7 +221,6 @@ export class Epoch<T> {
     this.value = value;
     this.epoch = epoch ?? 0;
   }
-
   /**
    * Maps the value inside the epoch to a new value while keeping the epoch number.
    * # usage
