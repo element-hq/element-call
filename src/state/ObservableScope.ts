@@ -80,11 +80,8 @@ export class ObservableScope {
       error(err: unknown) {
         subject$.error(err);
       },
-      complete() {
-        subject$.complete();
-      },
     });
-    if (subject$.value === nothing && !subject$.isStopped)
+    if (subject$.value === nothing)
       throw new Error("Behavior failed to synchronously emit an initial value");
     return subject$ as Behavior<T>;
   }
