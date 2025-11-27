@@ -13,7 +13,6 @@ coverage:
         informational: true
     patch:
       default:
-        # Encourage (but don't enforce) 80% coverage on all lines that a PR
+        # Enforce 80% coverage on all lines that a PR
         # touches
         target: 80%
-        informational: true
