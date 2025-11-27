@@ -108,7 +108,7 @@
     "connection_lost_description": "You were disconnected from the call.",
     "e2ee_unsupported": "Incompatible browser",
     "e2ee_unsupported_description": "Your web browser does not support encrypted calls. Supported browsers include Chrome, Safari, and Firefox 117+.",
-    "failed_to_start_livekit": "Failed to start Livekit",
+    "failed_to_start_livekit": "Failed to start Livekit connection",
     "generic": "Something went wrong",
     "generic_description": "Submitting debug logs will help us track down the problem.",
     "insufficient_capacity": "Insufficient capacity",

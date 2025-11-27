@@ -483,4 +483,5 @@ describe("LocalMembership", () => {
     expect(publishers[0].stopPublishing).toHaveBeenCalled();
     expect(publishers[0].stopTracks).toHaveBeenCalled();
   });
+  // TODO add tests for matrix local matrix participation.
 });
