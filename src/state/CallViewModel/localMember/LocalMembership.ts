@@ -22,10 +22,12 @@ import {
   catchError,
   combineLatest,
   distinctUntilChanged,
+  from,
   map,
   type Observable,
   of,
   scan,
+  startWith,
   switchMap,
   tap,
 } from "rxjs";
@@ -54,13 +56,13 @@ export enum LivekitState {
   Error = "error",
   /** Not even a transport is available to the LocalMembership */
   WaitingForTransport = "waiting_for_transport",
-  /** A transport is and we are loading the connection based on the transport */
-  Connecting = "connecting",
-  InitialisingPublisher = "uninitialized",
+  /** A connection appeared so we can initialise the publisher */
+  WaitingForConnection = "waiting_for_connection",
+  /** Connection and transport arrived, publisher Initialized */
   Initialized = "Initialized",
   CreatingTracks = "creating_tracks",
   ReadyToPublish = "ready_to_publish",
-  WaitingToPublish = "publishing",
+  WaitingToPublish = "waiting_to_publish",
   Connected = "connected",
   Disconnected = "disconnected",
   Disconnecting = "disconnecting",
@@ -69,8 +71,7 @@ export enum LivekitState {
 type LocalMemberLivekitState =
   | { state: LivekitState.Error; error: ElementCallError }
   | { state: LivekitState.WaitingForTransport }
-  | { state: LivekitState.Connecting }
-  | { state: LivekitState.InitialisingPublisher }
+  | { state: LivekitState.WaitingForConnection }
   | { state: LivekitState.Initialized }
   | { state: LivekitState.CreatingTracks }
   | { state: LivekitState.ReadyToPublish }
@@ -163,12 +164,10 @@ export const createLocalMembership$ = ({
    * Callback to toggle screen sharing. If null, screen sharing is not possible.
    */
   toggleScreenSharing: (() => void) | null;
+  tracks$: Behavior<LocalTrack[]>;
   participant$: Behavior<LocalParticipant | null>;
   connection$: Behavior<Connection | null>;
   homeserverConnected$: Behavior<boolean>;
-  // deprecated fields
-  /** @deprecated use state instead*/
-  connected$: Behavior<boolean>;
   // this needs to be discussed
   /** @deprecated use state instead*/
   reconnecting$: Behavior<boolean>;
@@ -217,20 +216,19 @@ export const createLocalMembership$ = ({
     ),
   );
 
+  const localConnectionState$ = localConnection$.pipe(
+    switchMap((connection) => (connection ? connection.state$ : of(null))),
+  );
+
   // /**
   //  * Whether we are "fully" connected to the call. Accounts for both the
   //  * connection to the MatrixRTC session and the LiveKit publish connection.
   //  */
-  // // TODO use this in combination with the MemberState.
   const connected$ = scope.behavior(
     and$(
       homeserverConnected$,
-      localConnection$.pipe(
-        switchMap((c) =>
-          c
-            ? c.state$.pipe(map((state) => state.state === "ConnectedToLkRoom"))
-            : of(false),
-        ),
+      localConnectionState$.pipe(
+        map((state) => (state ? state.state === "ConnectedToLkRoom" : false)),
       ),
     ),
   );
@@ -259,7 +257,7 @@ export const createLocalMembership$ = ({
 
   // This should be used in a combineLatest with publisher$ to connect.
   // to make it possible to call startTracks before the preferredTransport$ has resolved.
-  const trackStartRequested$ = new BehaviorSubject(false);
+  const trackStartRequested = Promise.withResolvers<void>();
 
   // This should be used in a combineLatest with publisher$ to connect.
   // to make it possible to call startTracks before the preferredTransport$ has resolved.
@@ -273,19 +271,21 @@ export const createLocalMembership$ = ({
    * Extract the tracks from the published. Also reacts to changing publishers.
    */
   const tracks$ = scope.behavior(
-    publisher$.pipe(switchMap((p) => (p ? p.tracks$ : constant([])))),
+    publisher$.pipe(switchMap((p) => (p?.tracks$ ? p.tracks$ : constant([])))),
   );
   const publishing$ = scope.behavior(
-    publisher$.pipe(switchMap((p) => (p ? p.publishing$ : constant(false)))),
+    publisher$.pipe(
+      switchMap((p) => (p?.publishing$ ? p.publishing$ : constant(false))),
+    ),
   );
 
   const startTracks = (): Behavior<LocalTrack[]> => {
-    trackStartRequested$.next(true);
+    trackStartRequested.resolve();
     return tracks$;
   };
 
   const requestConnect = (): void => {
-    trackStartRequested$.next(true);
+    trackStartRequested.resolve();
     connectRequested$.next(true);
   };
 
@@ -310,37 +310,18 @@ export const createLocalMembership$ = ({
     });
   });
 
-  // const mutestate= publisher$.pipe(switchMap((publisher) => {
-  //   return publisher.muteState$
-  // });
-
-  // For each publisher create the descired tracks
-  // If we recreate a new publisher we remember the trackStartRequested$ value and immediately create the tracks
-  // THIS might be fine without a reconcile. There is no cleanup needed. We always get a working publisher
-  // track start request can than just toggle the tracks.
-  // TODO does this need `reconcile` to make sure we wait for createAndSetupTracks before we stop tracks?
-  combineLatest([publisher$, trackStartRequested$]).subscribe(
-    ([publisher, shouldStartTracks]) => {
-      if (publisher && shouldStartTracks) {
-        publisher.createAndSetupTracks().catch(
-          // TODO make this set some error state
-          (e) => logger.error(e),
-        );
-      } else if (publisher) {
-        publisher.stopTracks();
-      }
-    },
-  );
-
   // Use reconcile here to not run concurrent createAndSetupTracks calls
   // `tracks$` will update once they are ready.
   scope.reconcile(
-    scope.behavior(combineLatest([publisher$, trackStartRequested$])),
-    async ([publisher, shouldStartTracks]) => {
-      if (publisher && shouldStartTracks) {
+    scope.behavior(
+      combineLatest([publisher$, tracks$, from(trackStartRequested.promise)]),
+      null,
+    ),
+    async (valueIfReady) => {
+      if (!valueIfReady) return;
+      const [publisher, tracks] = valueIfReady;
+      if (publisher && tracks.length === 0) {
         await publisher.createAndSetupTracks().catch((e) => logger.error(e));
-      } else if (publisher) {
-        publisher.stopTracks();
       }
     },
   );
@@ -349,8 +330,7 @@ export const createLocalMembership$ = ({
   scope.reconcile(
     scope.behavior(combineLatest([publisher$, tracks$, connectRequested$])),
     async ([publisher, tracks, shouldConnect]) => {
-      if (shouldConnect === publisher?.publishing$.value)
-        return Promise.resolve();
+      if (shouldConnect === publisher?.publishing$.value) return;
       if (tracks.length !== 0 && shouldConnect) {
         try {
           await publisher?.startPublishing();
@@ -374,46 +354,53 @@ export const createLocalMembership$ = ({
       logger.error("Multiple Livkit Errors:", e);
     else fatalLivekitError$.next(e);
   };
-  const livekitState$: Observable<LocalMemberLivekitState> = combineLatest([
-    publisher$,
-    localTransport$,
-    localConnection$,
-    tracks$,
-    publishing$,
-    connectRequested$,
-    trackStartRequested$,
-    fatalLivekitError$,
-  ]).pipe(
-    map(
-      ([
-        publisher,
-        localTransport,
-        localConnection,
-        tracks,
-        publishing,
-        shouldConnect,
-        shouldStartTracks,
-        error,
-      ]) => {
-        // read this:
-        // if(!<A>) return {state: ...}
-        // if(!<B>) return {state: <MyState>}
-        //
-        // as:
-        // We do have <A> but not yet <B> so we are in <MyState>
-        if (error !== null) return { state: LivekitState.Error, error };
-        const hasTracks = tracks.length > 0;
-        if (!localTransport) return { state: LivekitState.WaitingForTransport };
-        if (!localConnection) return { state: LivekitState.Connecting };
-        if (!publisher) return { state: LivekitState.InitialisingPublisher };
-        if (!shouldStartTracks) return { state: LivekitState.Initialized };
-        if (!hasTracks) return { state: LivekitState.CreatingTracks };
-        if (!shouldConnect) return { state: LivekitState.ReadyToPublish };
-        if (!publishing) return { state: LivekitState.WaitingToPublish };
-        return { state: LivekitState.Connected };
-      },
+  const livekitState$: Behavior<LocalMemberLivekitState> = scope.behavior(
+    combineLatest([
+      publisher$,
+      localTransport$,
+      tracks$.pipe(
+        tap((t) => {
+          logger.info("tracks$: ", t);
+        }),
+      ),
+      publishing$,
+      connectRequested$,
+      from(trackStartRequested.promise).pipe(
+        map(() => true),
+        startWith(false),
+      ),
+      fatalLivekitError$,
+    ]).pipe(
+      map(
+        ([
+          publisher,
+          localTransport,
+          tracks,
+          publishing,
+          shouldConnect,
+          shouldStartTracks,
+          error,
+        ]) => {
+          // read this:
+          // if(!<A>) return {state: ...}
+          // if(!<B>) return {state: <MyState>}
+          //
+          // as:
+          // We do have <A> but not yet <B> so we are in <MyState>
+          if (error !== null) return { state: LivekitState.Error, error };
+          const hasTracks = tracks.length > 0;
+          if (!localTransport)
+            return { state: LivekitState.WaitingForTransport };
+          if (!publisher) return { state: LivekitState.WaitingForConnection };
+          if (!shouldStartTracks) return { state: LivekitState.Initialized };
+          if (!hasTracks) return { state: LivekitState.CreatingTracks };
+          if (!shouldConnect) return { state: LivekitState.ReadyToPublish };
+          if (!publishing) return { state: LivekitState.WaitingToPublish };
+          return { state: LivekitState.Connected };
+        },
+      ),
+      distinctUntilChanged(deepCompare),
     ),
-    distinctUntilChanged(deepCompare),
   );
 
   const fatalMatrixError$ = new BehaviorSubject<ElementCallError | null>(null);
@@ -577,15 +564,15 @@ export const createLocalMembership$ = ({
     requestConnect,
     requestDisconnect,
     connectionState: {
-      livekit$: scope.behavior(livekitState$),
+      livekit$: livekitState$,
       matrix$: matrixState$,
     },
+    tracks$,
+    participant$,
     homeserverConnected$,
-    connected$,
     reconnecting$,
     sharingScreen$,
     toggleScreenSharing,
-    participant$,
     connection$: localConnection$,
   };
 };

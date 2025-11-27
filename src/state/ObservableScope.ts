@@ -80,8 +80,11 @@ export class ObservableScope {
       error(err: unknown) {
         subject$.error(err);
       },
+      complete() {
+        subject$.complete();
+      },
     });
-    if (subject$.value === nothing)
+    if (subject$.value === nothing && !subject$.isStopped)
       throw new Error("Behavior failed to synchronously emit an initial value");
     return subject$ as Behavior<T>;
   }
@@ -125,11 +128,11 @@ export class ObservableScope {
     let latestValue: T | typeof nothing = nothing;
     let reconcilePromise: Promise<void> | undefined = undefined;
     let cleanUp: (() => Promise<void>) | void = undefined;
+    let prevVal: T | typeof nothing = nothing;
 
     // While this loop runs it will process the latest from `value$` until it caught up with the updates.
     // It might skip updates from `value$` and only process the newest value after callback has resolved.
     const reconcileLoop = async (): Promise<void> => {
-      let prevVal: T | typeof nothing = nothing;
       while (latestValue !== prevVal) {
         await cleanUp?.(); // Call the previous value's clean-up handler
         prevVal = latestValue;

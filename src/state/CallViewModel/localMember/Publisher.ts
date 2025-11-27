@@ -15,6 +15,7 @@ import {
 } from "livekit-client";
 import {
   BehaviorSubject,
+  combineLatest,
   map,
   NEVER,
   type Observable,
@@ -80,6 +81,23 @@ export class Publisher {
       );
       void this.stopPublishing();
     });
+
+    // TODO move mute state handling here using reconcile (instead of inside the mute state class)
+    // this.scope.reconcile(
+    //   this.scope.behavior(
+    //     combineLatest([this.muteStates.video.enabled$, this.tracks$]),
+    //   ),
+    //   async ([videoEnabled, tracks]) => {
+    //     const track = tracks.find((t) => t.kind == Track.Kind.Video);
+    //     if (!track) return;
+
+    //     if (videoEnabled) {
+    //       await track.unmute();
+    //     } else {
+    //       await track.mute();
+    //     }
+    //   },
+    // );
   }
 
   private _tracks$ = new BehaviorSubject<LocalTrack<Track.Kind>[]>([]);
