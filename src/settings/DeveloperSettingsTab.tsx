@@ -41,6 +41,7 @@ import {
   matrixRTCMode as matrixRTCModeSetting,
   customLivekitUrl as customLivekitUrlSetting,
   MatrixRTCMode,
+  useSettingWithLastUpdateReason,
 } from "./settings";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
@@ -92,9 +93,8 @@ export const DeveloperSettingsTab: FC<Props> = ({
     alwaysShowIphoneEarpieceSetting,
   );
 
-  const [customLivekitUrl, setCustomLivekitUrl] = useSetting(
-    customLivekitUrlSetting,
-  );
+  const [customLivekitUrl, setCustomLivekitUrl, customLivekitUrlUpdateReason] =
+    useSettingWithLastUpdateReason(customLivekitUrlSetting);
   const [customLivekitUrlTextBuffer, setCustomLivekitUrlTextBuffer] =
     useState(customLivekitUrl);
   useEffect(() => {
@@ -220,7 +220,8 @@ export const DeveloperSettingsTab: FC<Props> = ({
         onSubmit={(e) => e.preventDefault()}
         helpLabel={
           customLivekitUrl === null
-            ? t("developer_mode.custom_livekit_url.from_config")
+            ? t("developer_mode.custom_livekit_url.from_config") +
+              (customLivekitUrlUpdateReason ?? "")
             : t("developer_mode.custom_livekit_url.current_url") +
               customLivekitUrl
         }
