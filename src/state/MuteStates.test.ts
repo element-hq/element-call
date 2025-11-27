@@ -170,6 +170,13 @@ describe("MuteStates", () => {
       constant(true),
     );
 
+    let latestSyncedState: boolean | null = null;
+    muteStates.video.setHandler(async (enabled: boolean): Promise<boolean> => {
+      logger.info(`Video mute state set to: ${enabled}`);
+      latestSyncedState = enabled;
+      return Promise.resolve(enabled);
+    });
+
     let lastVideoEnabled: boolean = false;
     muteStates.video.enabled$.subscribe((enabled) => {
       lastVideoEnabled = enabled;
@@ -186,5 +193,20 @@ describe("MuteStates", () => {
     await flushPromises();
     // Video should be automatically muted
     expect(lastVideoEnabled).toBe(false);
+    expect(latestSyncedState).toBe(false);
+
+    // Try to switch to speaker
+    audioOutputDevice.select("0000");
+    await flushPromises();
+    // TODO I'd expect it to go back to previous state (enabled)??
+    // But maybe not? If you move the phone away from your ear you may not want it
+    // to automatically enable video?
+    expect(lastVideoEnabled).toBe(false);
+
+    // But yet it can be unmuted now
+    expect(muteStates.video.setEnabled$.value).toBeDefined();
+    muteStates.video.setEnabled$.value?.(true);
+    await flushPromises();
+    expect(lastVideoEnabled).toBe(true);
   });
 });

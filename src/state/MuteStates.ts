@@ -72,8 +72,6 @@ export class MuteState<Label, Selected> {
 
   private readonly data$ = this.scope.behavior<MuteStateData>(
     this.devicesConnected$.pipe(
-      // this.device.available$.pipe(
-      //   map((available) => available.size > 0),
       distinctUntilChanged(),
       withLatestFrom(
         this.enabledByDefault$,
@@ -85,6 +83,11 @@ export class MuteState<Label, Selected> {
             logger.info(
               `MuteState: devices connected: ${devicesConnected}, disabling`,
             );
+            // We need to sync the mute state with the handler
+            // to ensure nothing is beeing published.
+            this.handler$.value(false).catch((err) => {
+              logger.error("MuteState-disable: handler error", err);
+            });
             return { enabled$: of(false), set: null, toggle: null };
           }
 
