@@ -79,7 +79,7 @@ test("Should show error screen if call creation is restricted", async ({
 }) => {
   test.skip(
     browserName === "firefox",
-    "The test to check the video visibility is not working in Firefox CI environment. looks like video is disabled?",
+    "The is test is not working on firefox CI environment.",
   );
   await page.goto("/");
 

@@ -56,7 +56,7 @@ export class Publisher {
    */
   public constructor(
     private scope: ObservableScope,
-    private connection: Connection,
+    private connection: Pick<Connection, "livekitRoom" | "state$">, //setE2EEEnabled,
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
     trackerProcessorState$: Behavior<ProcessorState>,
@@ -160,7 +160,7 @@ export class Publisher {
           reject(
             s.error instanceof ElementCallError
               ? s.error
-              : new FailToStartLivekitConnection(),
+              : new FailToStartLivekitConnection(s.error.message),
           );
           break;
         default:
@@ -180,17 +180,16 @@ export class Publisher {
       // with a timeout.
       await lkRoom.localParticipant.publishTrack(track).catch((error) => {
         this.logger?.error("Failed to publish track", error);
+        throw new FailToStartLivekitConnection(
+          error instanceof Error ? error.message : error,
+        );
       });
-
-      // TODO: check if the connection is still active? and break the loop if not?
     }
     this._publishing$.next(true);
     return this.tracks$.value;
   }
 
   public async stopPublishing(): Promise<void> {
-    // TODO-MULTI-SFU: Move these calls back to ObservableScope.onEnd once scope
-    // actually has the right lifetime
     this.muteStates.audio.unsetHandler();
     this.muteStates.video.unsetHandler();
 
@@ -246,6 +245,9 @@ export class Publisher {
           // the process of being restarted.
           activeMicTrack.mediaStreamTrack.readyState !== "ended"
         ) {
+          this.logger?.info(
+            "Restarting audio device track due to active media device changed (workaroundRestartAudioInputTrackChrome)",
+          );
           // Restart the track, which will cause Livekit to do another
           // getUserMedia() call with deviceId: default to get the *new* default device.
           // Note that room.switchActiveDevice() won't work: Livekit will ignore it because
