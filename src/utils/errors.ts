@@ -136,12 +136,12 @@ export class FailToGetOpenIdToken extends ElementCallError {
 }
 
 export class FailToStartLivekitConnection extends ElementCallError {
-  public constructor() {
+  public constructor(e?: string) {
     super(
       t("error.failed_to_start_livekit"),
       ErrorCode.FAILED_TO_START_LIVEKIT,
       ErrorCategory.NETWORK_CONNECTIVITY,
-      undefined,
+      e,
     );
   }
 }
