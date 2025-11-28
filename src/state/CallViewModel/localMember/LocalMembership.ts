@@ -335,7 +335,6 @@ export const createLocalMembership$ = ({
         try {
           await publisher?.startPublishing();
         } catch (error) {
-          // will take care of "FailedToStartLk" errors.
           setLivekitError(error as ElementCallError);
         }
       } else if (tracks.length !== 0 && !shouldConnect) {

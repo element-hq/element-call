@@ -174,6 +174,7 @@ export class Publisher {
     } finally {
       sub.unsubscribe();
     }
+
     for (const track of this.tracks$.value) {
       // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
       // with a timeout.

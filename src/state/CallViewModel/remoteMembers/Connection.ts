@@ -110,7 +110,6 @@ export class Connection {
    * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
    * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
    */
-  // TODO dont make this throw and instead store a connection error state in this class?
   // TODO consider an autostart pattern...
   public async start(): Promise<void> {
     this.logger.debug("Starting Connection");
