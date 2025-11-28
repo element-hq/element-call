@@ -191,4 +191,49 @@ describe("Reconcile", () => {
     expect(setup).not.toHaveBeenCalledWith(2);
     expect(setup).not.toHaveBeenCalledWith(3);
   });
+
+  it("should wait for setup to complete before starting cleanup", async () => {
+    vi.useFakeTimers();
+    const scope = new ObservableScope();
+    const behavior$ = new BehaviorSubject<number>(0);
+
+    const setup = vi
+      .fn()
+      .mockImplementation(async (n: number) => await sleep(3000));
+
+    const cleanupLock = Promise.withResolvers();
+    const cleanup = vi
+      .fn()
+      .mockImplementation(async (n: number) => await cleanupLock.promise);
+
+    scope.reconcile(behavior$, async (value) => {
+      await setup(value);
+      return async (): Promise<void> => {
+        await cleanup(value);
+      };
+    });
+
+    await vi.advanceTimersByTimeAsync(500);
+    // Setup for 0 should be in progress
+    expect(setup).toHaveBeenCalledTimes(1);
+
+    behavior$.next(1);
+    await vi.advanceTimersByTimeAsync(500);
+
+    // Should not have started setup for 1 yet
+    expect(setup).not.toHaveBeenCalledWith(1);
+    // Should not have called cleanup yet, because the setup for 0 is not done
+    expect(cleanup).toHaveBeenCalledTimes(0);
+
+    // Let setup for 0 finish
+    await vi.advanceTimersByTimeAsync(2500 + 100);
+    // Now cleanup for 0 should have started
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    expect(cleanup).toHaveBeenCalledWith(0);
+
+    cleanupLock.resolve(undefined);
+    await vi.advanceTimersByTimeAsync(100);
+    // Now setup for 1 should have started
+    expect(setup).toHaveBeenCalledWith(1);
+  });
 });
