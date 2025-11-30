@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Godot MatrixRTC Widget</title>
+    <meta charset="utf-8" />
+    <script type="module">
+      import { createMatrixRTCSdk } from "http://localhost:8123/matrixrtc-ec-godot.js";
+
+      try {
+        console.log("Hello from index.html");
+        try {
+          window.matrixRTCSdk = await createMatrixRTCSdk();
+          console.info("createMatrixRTCSdk was created!");
+        } catch (e) {
+          console.error("createMatrixRTCSdk", e);
+        }
+
+        // const sdk = window.matrixRTCSdk;
+        console.info("matrixRTCSdk join ", window.matrixRTCSdk);
+        await window.matrixRTCSdk.join();
+        console.info("matrixRTCSdk joined ");
+
+        // sdk.data$.subscribe((data) => {
+        //   console.log(data);
+        //   const div = document.getElementById("data");
+        //   div.appendChild(document.createTextNode(data));
+        //   // TODO forward to godot
+        // });
+        // var engine = new Engine($GODOT_CONFIG);
+        // engine.startGame();
+      } catch (e) {
+        console.error("catchALL,", e);
+      }
+    </script>
+    <!--<script src="$GODOT_URL"></script>-->
+  </head>
+  <body>
+    <button onclick="window.matrixRTCSdk.leave();">Leave</button>
+    <!--<button onclick="window.matrixRTCSdk.sendData({prop: 'Hello, world!'});">
+      Send Text
+    </button>-->
+    <div id="data"></div>
+    <canvas id="canvas"></canvas>
+  </body>
+</html>
