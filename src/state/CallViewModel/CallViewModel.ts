@@ -12,6 +12,7 @@ import {
   ExternalE2EEKeyProvider,
   type Room as LivekitRoom,
   type RoomOptions,
+  type LocalParticipant as LocalLivekitParticipant,
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
@@ -174,10 +175,17 @@ interface LayoutScanState {
 }
 
 type MediaItem = UserMedia | ScreenShare;
-type AudioLivekitItem = {
+export type LivekitRoomItem = {
   livekitRoom: LivekitRoom;
   participants: string[];
   url: string;
+};
+
+export type LocalMatrixLivekitMember = Pick<
+  MatrixLivekitMember,
+  "userId" | "membership$" | "connection$"
+> & {
+  participant$: Behavior<LocalLivekitParticipant | null>;
 };
 
 /**
@@ -197,8 +205,11 @@ export interface CallViewModel {
   callPickupState$: Behavior<
     "unknown" | "ringing" | "timeout" | "decline" | "success" | null
   >;
+  /** Observable that emits when the user should leave the call (hangup pressed, widget action, error).
+   * THIS DOES NOT LEAVE THE CALL YET. The only way to leave the call (send the hangup event) is by ending the scope.
+   */
   leave$: Observable<"user" | AutoLeaveReason>;
-  /** Call to initiate hangup. Use in conbination with connectino state track the async hangup process. */
+  /** Call to initiate hangup. Use in conbination with reconnectino state track the async hangup process. */
   hangup: () => void;
 
   // joining
@@ -250,9 +261,10 @@ export interface CallViewModel {
    */
   participantCount$: Behavior<number>;
   /** Participants sorted by livekit room so they can be used in the audio rendering */
-  audioParticipants$: Behavior<AudioLivekitItem[]>;
+  livekitRoomItems$: Behavior<LivekitRoomItem[]>;
   /** use the layout instead, this is just for the godot export. */
   userMedia$: Behavior<UserMedia[]>;
+  localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null>;
   /** List of participants raising their hand */
   handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
   /** List of reactions. Keys are: membership.membershipId (currently predefined as: `${membershipEvent.userId}:${membershipEvent.deviceId}`)*/
@@ -503,14 +515,14 @@ export function createCallViewModel$(
     userId: userId,
   };
 
-  const localMatrixLivekitMember$: Behavior<MatrixLivekitMember | null> =
+  const localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null> =
     scope.behavior(
       localRtcMembership$.pipe(
         switchMap((membership) => {
           if (!membership) return of(null);
           return of(
             // casting is save here since we know that localRtcMembership$ is !== null since we reached this case.
-            localMatrixLivekitMemberUninitialized as MatrixLivekitMember,
+            localMatrixLivekitMemberUninitialized as LocalMatrixLivekitMember,
           );
         }),
       ),
@@ -621,7 +633,7 @@ export function createCallViewModel$(
         return a$;
       }),
       map((members) =>
-        members.reduce<AudioLivekitItem[]>((acc, curr) => {
+        members.reduce<LivekitRoomItem[]>((acc, curr) => {
           if (!curr) return acc;
 
           const existing = acc.find((item) => item.url === curr.url);
@@ -1477,7 +1489,7 @@ export function createCallViewModel$(
     ),
 
     participantCount$: participantCount$,
-    audioParticipants$: audioParticipants$,
+    livekitRoomItems$: audioParticipants$,
 
     handsRaised$: handsRaised$,
     reactions$: reactions$,
@@ -1498,6 +1510,7 @@ export function createCallViewModel$(
     pip$: pip$,
     layout$: layout$,
     userMedia$,
+    localMatrixLivekitMember$,
     tileStoreGeneration$: tileStoreGeneration$,
     showSpotlightIndicators$: showSpotlightIndicators$,
     showSpeakingIndicators$: showSpeakingIndicators$,

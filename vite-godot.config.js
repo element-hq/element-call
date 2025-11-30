@@ -6,8 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { defineConfig, mergeConfig } from "vite";
-import { viteSingleFile } from "vite-plugin-singlefile";
 import fullConfig from "./vite.config";
+import nodePolyfills from "vite-plugin-node-stdlib-browser";
 
 const base = "./";
 
@@ -27,6 +27,7 @@ export default defineConfig((env) =>
           fileName: "matrixrtc-ec-godot",
         },
       },
+      plugins: [nodePolyfills()],
     }),
   ),
 );
