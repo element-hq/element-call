@@ -584,7 +584,6 @@ export function createCallViewModel$(
   // in a split-brained state.
   // DISCUSSION own membership manager ALSO this probably can be simplifis
   const reconnecting$ = localMembership.reconnecting$;
-  const pretendToBeDisconnected$ = reconnecting$;
 
   const audioParticipants$ = scope.behavior(
     matrixLivekitMembers$.pipe(
@@ -633,7 +632,7 @@ export function createCallViewModel$(
   );
 
   const handsRaised$ = scope.behavior(
-    handsRaisedSubject$.pipe(pauseWhen(pretendToBeDisconnected$)),
+    handsRaisedSubject$.pipe(pauseWhen(reconnecting$)),
   );
 
   const reactions$ = scope.behavior(
@@ -646,7 +645,7 @@ export function createCallViewModel$(
           ]),
         ),
       ),
-      pauseWhen(pretendToBeDisconnected$),
+      pauseWhen(reconnecting$),
     ),
   );
 
@@ -737,7 +736,7 @@ export function createCallViewModel$(
             livekitRoom$,
             focusUrl$,
             mediaDevices,
-            pretendToBeDisconnected$,
+            reconnecting$,
             displayName$,
             matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
             handsRaised$.pipe(map((v) => v[participantId]?.time ?? null)),
