@@ -27,7 +27,7 @@ import {
 import {
   createLocalMembership$,
   enterRTCSession,
-  LivekitState,
+  RTCBackendState,
 } from "./LocalMembership";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors";
 import { Epoch, ObservableScope } from "../../ObservableScope";
@@ -225,9 +225,9 @@ describe("LocalMembership", () => {
       });
 
       expectObservable(localMembership.connectionState.livekit$).toBe("ne", {
-        n: { state: LivekitState.WaitingForConnection },
+        n: { state: RTCBackendState.WaitingForConnection },
         e: {
-          state: LivekitState.Error,
+          state: RTCBackendState.Error,
           error: expect.toSatisfy(
             (e) => e instanceof MatrixRTCTransportMissingError,
           ),
@@ -428,17 +428,17 @@ describe("LocalMembership", () => {
 
     await flushPromises();
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: LivekitState.WaitingForTransport,
+      state: RTCBackendState.WaitingForTransport,
     });
     localTransport$.next(aTransport);
     await flushPromises();
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: LivekitState.WaitingForConnection,
+      state: RTCBackendState.WaitingForConnection,
     });
     connectionManagerData$.next(new Epoch(connectionManagerData));
     await flushPromises();
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: LivekitState.Initialized,
+      state: RTCBackendState.Initialized,
     });
     expect(publisherFactory).toHaveBeenCalledOnce();
     expect(localMembership.tracks$.value.length).toBe(0);
@@ -449,12 +449,12 @@ describe("LocalMembership", () => {
 
     await flushPromises();
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: LivekitState.CreatingTracks,
+      state: RTCBackendState.CreatingTracks,
     });
     createTrackResolver.resolve();
     await flushPromises();
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: LivekitState.ReadyToPublish,
+      state: RTCBackendState.ReadyToPublish,
     });
 
     // -------
@@ -462,13 +462,13 @@ describe("LocalMembership", () => {
     // -------
 
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: LivekitState.WaitingToPublish,
+      state: RTCBackendState.WaitingToPublish,
     });
 
     publishResolver.resolve();
     await flushPromises();
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: LivekitState.Connected,
+      state: RTCBackendState.Connected,
     });
     expect(publishers[0].stopPublishing).not.toHaveBeenCalled();
 
@@ -477,7 +477,7 @@ describe("LocalMembership", () => {
     await flushPromises();
     // stays in connected state because it is stopped before the update to tracks update the state.
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: LivekitState.Connected,
+      state: RTCBackendState.Connected,
     });
     // stop all tracks after ending scopes
     expect(publishers[0].stopPublishing).toHaveBeenCalled();

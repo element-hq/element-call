@@ -16,6 +16,7 @@ import {
 } from "vitest";
 import { ConnectionState as LivekitConenctionState } from "livekit-client";
 import { type BehaviorSubject } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { ObservableScope } from "../../ObservableScope";
 import { constant } from "../../Behavior";
@@ -70,6 +71,7 @@ describe("Publisher", () => {
       mockMediaDevices({}),
       muteStates,
       constant({ supported: false, processor: undefined }),
+      logger,
     );
 
     // should do nothing if no tracks have been created yet.

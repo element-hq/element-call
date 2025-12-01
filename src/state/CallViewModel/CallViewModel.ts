@@ -101,7 +101,7 @@ import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts
 import {
   createLocalMembership$,
   enterRTCSession,
-  LivekitState,
+  RTCBackendState,
 } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import {
@@ -473,6 +473,9 @@ export function createCallViewModel$(
         mediaDevices,
         muteStates,
         trackProcessorState$,
+        logger.getChild(
+          "[Publisher" + connection.transport.livekit_service_url + "]",
+        ),
       );
     },
     connectionManager: connectionManager,
@@ -664,7 +667,7 @@ export function createCallViewModel$(
           { value: matrixLivekitMembers },
           duplicateTiles,
         ]) {
-          let localParticipantId = undefined;
+          let localParticipantId: string | undefined = undefined;
           // add local member if available
           if (localMatrixLivekitMember) {
             const { userId, participant$, connection$, membership$ } =
@@ -1452,7 +1455,7 @@ export function createCallViewModel$(
 
     fatalError$: scope.behavior(
       localMembership.connectionState.livekit$.pipe(
-        filter((v) => v.state === LivekitState.Error),
+        filter((v) => v.state === RTCBackendState.Error),
         map((s) => s.error),
       ),
       null,
