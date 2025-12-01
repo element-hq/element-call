@@ -146,6 +146,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       reactionsReader.reactions$,
       scope.behavior(trackProcessorState$),
     );
+    // TODO move this somewhere else once we use the callViewModel in the lobby as well!
+    vm.join();
     setVm(vm);
 
     vm.leave$.pipe(scope.bind()).subscribe(props.onLeft);

@@ -16,9 +16,9 @@ import {
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
+  BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
-  EMPTY,
   filter,
   fromEvent,
   map,
@@ -29,7 +29,6 @@ import {
   pairwise,
   race,
   scan,
-  skip,
   skipWhile,
   startWith,
   Subject,
@@ -102,8 +101,8 @@ import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts
 import {
   createLocalMembership$,
   enterRTCSession,
-  LivekitState,
-  type LocalMemberConnectionState,
+  LocalMemberConnectionState,
+  RTCBackendState,
 } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import {
@@ -213,7 +212,7 @@ export interface CallViewModel {
   hangup: () => void;
 
   // joining
-  join: () => LocalMemberConnectionState;
+  join: () => void;
 
   // screen sharing
   /**
@@ -359,6 +358,15 @@ export interface CallViewModel {
   // in a split-brained state.
   // DISCUSSION own membership manager ALSO this probably can be simplifis
   reconnecting$: Behavior<boolean>;
+
+  /**
+   * Shortcut for not requireing to parse and combine connectionState.matrix and connectionState.livekit
+   */
+  connected$: Behavior<boolean>;
+  /**
+   *
+   */
+  connectionState: LocalMemberConnectionState;
 }
 /**
  * A view model providing all the application logic needed to show the in-call
@@ -590,27 +598,6 @@ export function createCallViewModel$(
     ),
   );
 
-  // CODESMELL?
-  // This is functionally the same Observable as leave$, except here it's
-  // hoisted to the top of the class. This enables the cyclic dependency between
-  // leave$ -> autoLeave$ -> callPickupState$ -> livekitConnectionState$ ->
-  // localConnection$ -> transports$ -> joined$ -> leave$.
-  const leaveHoisted$ = new Subject<
-    "user" | "timeout" | "decline" | "allOthersLeft"
-  >();
-
-  /**
-   * Whether various media/event sources should pretend to be disconnected from
-   * all network input, even if their connection still technically works.
-   */
-  // We do this when the app is in the 'reconnecting' state, because it might be
-  // that the LiveKit connection is still functional while the homeserver is
-  // down, for example, and we want to avoid making people worry that the app is
-  // in a split-brained state.
-  // DISCUSSION own membership manager ALSO this probably can be simplifis
-  const reconnecting$ = localMembership.reconnecting$;
-  const pretendToBeDisconnected$ = reconnecting$;
-
   const livekitRoomItems$ = scope.behavior(
     matrixLivekitMembers$.pipe(
       tap((val) => {
@@ -667,7 +654,7 @@ export function createCallViewModel$(
   );
 
   const handsRaised$ = scope.behavior(
-    handsRaisedSubject$.pipe(pauseWhen(pretendToBeDisconnected$)),
+    handsRaisedSubject$.pipe(pauseWhen(localMembership.reconnecting$)),
   );
 
   const reactions$ = scope.behavior(
@@ -680,7 +667,7 @@ export function createCallViewModel$(
           ]),
         ),
       ),
-      pauseWhen(pretendToBeDisconnected$),
+      pauseWhen(localMembership.reconnecting$),
     ),
   );
 
@@ -701,7 +688,7 @@ export function createCallViewModel$(
           { value: matrixLivekitMembers },
           duplicateTiles,
         ]) {
-          let localParticipantId = undefined;
+          let localParticipantId: string | undefined = undefined;
           // add local member if available
           if (localMatrixLivekitMember) {
             const { userId, participant$, connection$, membership$ } =
@@ -771,7 +758,7 @@ export function createCallViewModel$(
             livekitRoom$,
             focusUrl$,
             mediaDevices,
-            pretendToBeDisconnected$,
+            localMembership.reconnecting$,
             displayName$,
             matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
             handsRaised$.pipe(map((v) => v[participantId]?.time ?? null)),
@@ -867,10 +854,7 @@ export function createCallViewModel$(
     merge(
       autoLeave$,
       merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
-    ).pipe(
-      scope.share,
-      tap((reason) => leaveHoisted$.next(reason)),
-    );
+    ).pipe(scope.share);
 
   const spotlightSpeaker$ = scope.behavior<UserMediaViewModel | null>(
     userMedia$.pipe(
@@ -1019,7 +1003,14 @@ export function createCallViewModel$(
     spotlightExpandedToggle$.pipe(accumulate(false, (expanded) => !expanded)),
   );
 
-  const gridModeUserSelection$ = new Subject<GridMode>();
+  const gridModeUserSelection$ = new BehaviorSubject<GridMode>("grid");
+
+  // Callback to set the grid mode desired by the user.
+  // Notice that this is only a preference, the actual grid mode can be overridden
+  // if there is a remote screen share active.
+  const setGridMode = (value: GridMode): void => {
+    gridModeUserSelection$.next(value);
+  };
   /**
    * The layout mode of the media tile grid.
    */
@@ -1028,27 +1019,33 @@ export function createCallViewModel$(
     // automatically switch to spotlight mode and reset when screen sharing ends
     scope.behavior<GridMode>(
       gridModeUserSelection$.pipe(
-        switchMap((userSelection) =>
-          (userSelection === "spotlight"
-            ? EMPTY
-            : combineLatest([hasRemoteScreenShares$, windowMode$]).pipe(
-                skip(userSelection === null ? 0 : 1),
-                map(
-                  ([hasScreenShares, windowMode]): GridMode =>
-                    hasScreenShares || windowMode === "flat"
-                      ? "spotlight"
-                      : "grid",
-                ),
-              )
-          ).pipe(startWith(userSelection ?? "grid")),
-        ),
+        switchMap((userSelection): Observable<GridMode> => {
+          if (userSelection === "spotlight") {
+            // If already in spotlight mode, stay there
+            return of("spotlight");
+          } else {
+            // Otherwise, check if there is a remote screen share active
+            // as this could force us into spotlight mode.
+            return combineLatest([hasRemoteScreenShares$, windowMode$]).pipe(
+              map(([hasScreenShares, windowMode]): GridMode => {
+                const isFlatMode = windowMode === "flat";
+                if (hasScreenShares || isFlatMode) {
+                  logger.debug(
+                    `Forcing spotlight mode, hasScreenShares=${hasScreenShares} windowMode=${windowMode}`,
+                  );
+                  // override to spotlight mode
+                  return "spotlight";
+                } else {
+                  // respect user choice
+                  return "grid";
+                }
+              }),
+            );
+          }
+        }),
       ),
       "grid",
     );
-
-  const setGridMode = (value: GridMode): void => {
-    gridModeUserSelection$.next(value);
-  };
 
   const gridLayoutMedia$: Observable<GridLayoutMedia> = combineLatest(
     [grid$, spotlight$],
@@ -1475,18 +1472,15 @@ export function createCallViewModel$(
   // reassigned here to make it publicly accessible
   const toggleScreenSharing = localMembership.toggleScreenSharing;
 
-  const join = localMembership.requestConnect;
-  // TODO-MULTI-SFU: Use this view model for the lobby as well, and only call this once 'join' is clicked?
-  join();
   return {
-    autoLeave$: autoLeave$,
-    callPickupState$: callPickupState$,
-    ringOverlay$: ringOverlay$,
-    leave$: leave$,
+    autoLeave$,
+    callPickupState$,
+    ringOverlay$,
+    leave$,
     hangup: (): void => userHangup$.next(),
-    join: join,
-    toggleScreenSharing: toggleScreenSharing,
-    sharingScreen$: sharingScreen$,
+    join: localMembership.requestConnect,
+    toggleScreenSharing,
+    sharingScreen$,
 
     tapScreen: (): void => screenTap$.next(),
     tapControls: (): void => controlsTap$.next(),
@@ -1495,32 +1489,32 @@ export function createCallViewModel$(
 
     fatalError$: scope.behavior(
       localMembership.connectionState.livekit$.pipe(
-        filter((v) => v.state === LivekitState.Error),
+        filter((v) => v.state === RTCBackendState.Error),
         map((s) => s.error),
       ),
       null,
     ),
 
-    participantCount$: participantCount$,
+    participantCount$,
     livekitRoomItems$,
-    handsRaised$: handsRaised$,
-    reactions$: reactions$,
-    joinSoundEffect$: joinSoundEffect$,
-    leaveSoundEffect$: leaveSoundEffect$,
-    newHandRaised$: newHandRaised$,
-    newScreenShare$: newScreenShare$,
-    audibleReactions$: audibleReactions$,
-    visibleReactions$: visibleReactions$,
+    handsRaised$,
+    reactions$,
+    joinSoundEffect$,
+    leaveSoundEffect$,
+    newHandRaised$,
+    newScreenShare$,
+    audibleReactions$,
+    visibleReactions$,
 
-    windowMode$: windowMode$,
-    spotlightExpanded$: spotlightExpanded$,
-    toggleSpotlightExpanded$: toggleSpotlightExpanded$,
-    gridMode$: gridMode$,
-    setGridMode: setGridMode,
-    grid$: grid$,
-    spotlight$: spotlight$,
-    pip$: pip$,
-    layout$: layout$,
+    windowMode$,
+    spotlightExpanded$,
+    toggleSpotlightExpanded$,
+    gridMode$,
+    setGridMode,
+    grid$,
+    spotlight$,
+    pip$,
+    layout$,
     userMedia$,
     localMatrixLivekitMember$,
     matrixLivekitMembers$: scope.behavior(
@@ -1532,14 +1526,16 @@ export function createCallViewModel$(
         }),
       ),
     ),
-    tileStoreGeneration$: tileStoreGeneration$,
-    showSpotlightIndicators$: showSpotlightIndicators$,
-    showSpeakingIndicators$: showSpeakingIndicators$,
-    showHeader$: showHeader$,
-    showFooter$: showFooter$,
-    earpieceMode$: earpieceMode$,
-    audioOutputSwitcher$: audioOutputSwitcher$,
-    reconnecting$: reconnecting$,
+    tileStoreGeneration$,
+    showSpotlightIndicators$,
+    showSpeakingIndicators$,
+    showHeader$,
+    showFooter$,
+    earpieceMode$,
+    audioOutputSwitcher$,
+    reconnecting$: localMembership.reconnecting$,
+    connected$: localMembership.connected$,
+    connectionState: localMembership.connectionState,
   };
 }
 
