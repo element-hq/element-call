@@ -19,7 +19,7 @@ import {
   RoomEvent,
 } from "livekit-client";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, map, type Observable } from "rxjs";
+import { BehaviorSubject, map } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -54,7 +54,7 @@ export type ConnectionState =
   | { state: "ConnectingToLkRoom" }
   | {
       state: "ConnectedToLkRoom";
-      livekitConnectionState$: Observable<LivekitConenctionState>;
+      livekitConnectionState$: Behavior<LivekitConenctionState>;
     }
   | { state: "FailedToStart"; error: Error }
   | { state: "Stopped" };
@@ -81,6 +81,8 @@ export class Connection {
   public readonly transport: LivekitTransport;
 
   public readonly livekitRoom: LivekitRoom;
+
+  private scope: ObservableScope;
 
   /**
    * An observable of the participants that are publishing on this connection. (Excluding our local participant)
@@ -154,7 +156,9 @@ export class Connection {
 
       this._state$.next({
         state: "ConnectedToLkRoom",
-        livekitConnectionState$: connectionStateObserver(this.livekitRoom),
+        livekitConnectionState$: this.scope.behavior(
+          connectionStateObserver(this.livekitRoom),
+        ),
       });
     } catch (error) {
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
@@ -209,6 +213,7 @@ export class Connection {
     );
     const { transport, client, scope } = opts;
 
+    this.scope = scope;
     this.livekitRoom = opts.livekitRoomFactory();
     this.transport = transport;
     this.client = client;
