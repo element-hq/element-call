@@ -7547,7 +7547,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "npm:39.2.0"
+    matrix-js-sdk: "npm:^39.2.0"
     matrix-widget-api: "npm:^1.14.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -10352,7 +10352,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@npm:39.2.0":
+"matrix-js-sdk@npm:^39.2.0":
   version: 39.2.0
   resolution: "matrix-js-sdk@npm:39.2.0"
   dependencies:
