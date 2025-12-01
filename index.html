@@ -43,15 +43,5 @@
     <% if (packageType !== "full") { %>
     <div id="root"></div>
     <% } %>
-
-    <!-- Godot export -->
-    <% if (packageType === "godot") { %>
-    <canvas id="canvas"></canvas>
-    <script src="$GODOT_URL"></script>
-    <script>
-      var engine = new Engine($GODOT_CONFIG);
-      engine.startGame();
-    </script>
-    <% } %>
   </body>
 </html>

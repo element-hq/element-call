@@ -27,7 +27,7 @@ import * as fs from "node:fs";
 export default ({
   mode,
   packageType,
-}: ConfigEnv & { packageType?: "full" | "embedded" | "godot" }): UserConfig => {
+}: ConfigEnv & { packageType?: "full" | "embedded" | "sdk" }): UserConfig => {
   const env = loadEnv(mode, process.cwd());
   // Environment variables with the VITE_ prefix are accessible at runtime.
   // So, we set this to allow for build/package specific behavior.
@@ -68,7 +68,7 @@ export default ({
 
   plugins.push(
     createHtmlPlugin({
-      entry: packageType === "godot" ? "godot/main.ts" : "src/main.tsx",
+      entry: packageType === "sdk" ? "sdk/main.ts" : "src/main.tsx",
       inject: {
         data: {
           brand: env.VITE_PRODUCT_NAME || "Element Call",
@@ -126,7 +126,7 @@ export default ({
             return "assets/[name]-[hash][extname]";
           },
           manualChunks:
-            packageType !== "godot"
+            packageType !== "sdk"
               ? {
                   // we should be able to remove this one https://github.com/matrix-org/matrix-rust-sdk-crypto-wasm/pull/167 lands
                   "matrix-sdk-crypto-wasm": [
