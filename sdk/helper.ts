@@ -5,6 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+/**
+ * This file contains helper functions and types for the MatrixRTC SDK.
+ */
+
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { scan } from "rxjs";
 

@@ -262,8 +262,8 @@ export interface CallViewModel {
   participantCount$: Behavior<number>;
   /** Participants sorted by livekit room so they can be used in the audio rendering */
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
-  /** use the layout instead, this is just for the godot export. */
   userMedia$: Behavior<UserMedia[]>;
+  /** use the layout instead, this is just for the sdk export. */
   matrixLivekitMembers$: Behavior<MatrixLivekitMember[]>;
   localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null>;
   /** List of participants raising their hand */

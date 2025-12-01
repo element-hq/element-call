@@ -54,7 +54,7 @@
     "./src/**/*.ts",
     "./src/**/*.tsx",
     "./playwright/**/*.ts",
-    "./godot/**/*.ts"
+    "./sdk/**/*.ts"
   ],
   "exclude": ["**.test.ts"]
 }

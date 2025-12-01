@@ -14,17 +14,17 @@ const base = "./";
 // Config for embedded deployments (possibly hosted under a non-root path)
 export default defineConfig((env) =>
   mergeConfig(
-    fullConfig({ ...env, packageType: "godot" }),
+    fullConfig({ ...env, packageType: "sdk" }),
     defineConfig({
       base, // Use relative URLs to allow the app to be hosted under any path
       // publicDir: false, // Don't serve the public directory which only contains the favicon
       build: {
         manifest: true,
         lib: {
-          entry: "./godot/main.ts",
-          name: "matrixrtc-ec-godot",
+          entry: "./sdk/main.ts",
+          name: "matrixrtc-sdk",
           // the proper extensions will be added
-          fileName: "matrixrtc-ec-godot",
+          fileName: "matrixrtc-sdk",
         },
       },
       plugins: [nodePolyfills()],

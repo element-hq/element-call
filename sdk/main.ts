@@ -5,7 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-// import { type InitResult } from "../src/ClientContext";
+/**
+ * This file is the entrypoint for the sdk build of element call: `yarn build:sdk`
+ * use in widgets.
+ * It exposes the `createMatrixRTCSdk` which creates the `MatrixRTCSdk` interface (see below) that
+ * can be used to join a rtc session and exchange realtime data.
+ * It takes care of all the tricky bits:
+ *  - sending delayed events
+ *  - finding the right sfu
+ *  - handling the media stream
+ *  - sending join/leave state or sticky events
+ *  - setting up encryption and scharing keys
+ */
+
 import { map, type Observable, of, Subject, switchMap, tap } from "rxjs";
 import { MatrixRTCSessionEvent } from "matrix-js-sdk/lib/matrixrtc";
 import { type TextStreamInfo } from "livekit-client/dist/src/room/types";
@@ -40,6 +52,7 @@ interface MatrixRTCSdk {
   members$: Behavior<MatrixLivekitMember[]>;
   sendData?: (data: unknown) => Promise<void>;
 }
+
 export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
   logger.info("Hello");
   const client = await widget.client;
