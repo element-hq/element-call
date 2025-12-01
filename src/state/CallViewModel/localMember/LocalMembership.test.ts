@@ -12,29 +12,42 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { describe, expect, it, vi } from "vitest";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
-import { map } from "rxjs";
+import { BehaviorSubject, map, of } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
+import {
+  ConnectionState as LivekitConnectionState,
+  type LocalParticipant,
+  type LocalTrack,
+} from "livekit-client";
 
 import { MatrixRTCMode } from "../../../settings/settings";
 import {
+  flushPromises,
   mockConfig,
+  mockLivekitRoom,
   mockMuteStates,
   withTestScheduler,
 } from "../../../utils/test";
 import {
   createLocalMembership$,
   enterRTCSession,
-  LivekitState,
+  RTCBackendState,
 } from "./LocalMembership";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors";
-import { Epoch } from "../../ObservableScope";
+import { Epoch, ObservableScope } from "../../ObservableScope";
 import { constant } from "../../Behavior";
 import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
+import { type Connection } from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
 
 const MATRIX_RTC_MODE = MatrixRTCMode.Legacy;
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("../../../UrlParams", () => ({ getUrlParams }));
+vi.mock("@livekit/components-core", () => ({
+  observeParticipantEvents: vi
+    .fn()
+    .mockReturnValue(of({ isScreenShareEnabled: false })),
+}));
 
 describe("LocalMembership", () => {
   describe("enterRTCSession", () => {
@@ -183,7 +196,7 @@ describe("LocalMembership", () => {
       processor: undefined,
     }),
     logger: logger,
-    createPublisherFactory: (): Publisher => ({}) as unknown as Publisher,
+    createPublisherFactory: vi.fn(),
     joinMatrixRTC: async (): Promise<void> => {},
     homeserverConnected$: constant(true),
   };
@@ -216,9 +229,9 @@ describe("LocalMembership", () => {
       });
 
       expectObservable(localMembership.connectionState.livekit$).toBe("ne", {
-        n: { state: LivekitState.Uninitialized },
+        n: { state: RTCBackendState.WaitingForConnection },
         e: {
-          state: LivekitState.Error,
+          state: RTCBackendState.Error,
           error: expect.toSatisfy(
             (e) => e instanceof MatrixRTCTransportMissingError,
           ),
@@ -226,4 +239,254 @@ describe("LocalMembership", () => {
       });
     });
   });
+
+  const aTransport = {
+    livekit_service_url: "a",
+  } as LivekitTransport;
+  const bTransport = {
+    livekit_service_url: "b",
+  } as LivekitTransport;
+
+  const connectionManagerData = new ConnectionManagerData();
+
+  connectionManagerData.add(
+    {
+      livekitRoom: mockLivekitRoom({
+        localParticipant: {
+          isScreenShareEnabled: false,
+          trackPublications: [],
+        } as unknown as LocalParticipant,
+      }),
+      state$: constant({
+        state: "ConnectedToLkRoom",
+        livekitConnectionState$: constant(LivekitConnectionState.Connected),
+      }),
+      transport: aTransport,
+    } as unknown as Connection,
+    [],
+  );
+  connectionManagerData.add(
+    {
+      state$: constant({
+        state: "ConnectedToLkRoom",
+      }),
+      transport: bTransport,
+    } as unknown as Connection,
+    [],
+  );
+
+  it("recreates publisher if new connection is used and ENDS always unpublish and end tracks", async () => {
+    const scope = new ObservableScope();
+
+    const localTransport$ = new BehaviorSubject(aTransport);
+
+    const publishers: Publisher[] = [];
+
+    defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
+      () => {
+        const p = {
+          stopPublishing: vi.fn(),
+          stopTracks: vi.fn(),
+          publishing$: constant(false),
+        };
+        publishers.push(p as unknown as Publisher);
+        return p;
+      },
+    );
+    const publisherFactory =
+      defaultCreateLocalMemberValues.createPublisherFactory as ReturnType<
+        typeof vi.fn
+      >;
+
+    createLocalMembership$({
+      scope,
+      ...defaultCreateLocalMemberValues,
+      connectionManager: {
+        connectionManagerData$: constant(new Epoch(connectionManagerData)),
+      },
+      localTransport$,
+    });
+    await flushPromises();
+    localTransport$.next(bTransport);
+    await flushPromises();
+    expect(publisherFactory).toHaveBeenCalledTimes(2);
+    expect(publishers.length).toBe(2);
+    // stop the first Publisher and let the second one life.
+    expect(publishers[0].stopTracks).toHaveBeenCalled();
+    expect(publishers[1].stopTracks).not.toHaveBeenCalled();
+    expect(publishers[0].stopPublishing).toHaveBeenCalled();
+    expect(publishers[1].stopPublishing).not.toHaveBeenCalled();
+    expect(publisherFactory.mock.calls[0][0].transport).toBe(aTransport);
+    expect(publisherFactory.mock.calls[1][0].transport).toBe(bTransport);
+    scope.end();
+    await flushPromises();
+    // stop all tracks after ending scopes
+    expect(publishers[1].stopPublishing).toHaveBeenCalled();
+    expect(publishers[1].stopTracks).toHaveBeenCalled();
+
+    defaultCreateLocalMemberValues.createPublisherFactory.mockReset();
+  });
+
+  it("only start tracks if requested", async () => {
+    const scope = new ObservableScope();
+
+    const localTransport$ = new BehaviorSubject(aTransport);
+
+    const publishers: Publisher[] = [];
+
+    const tracks$ = new BehaviorSubject<LocalTrack[]>([]);
+    const publishing$ = new BehaviorSubject<boolean>(false);
+    defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
+      () => {
+        const p = {
+          stopPublishing: vi.fn(),
+          stopTracks: vi.fn(),
+          createAndSetupTracks: vi.fn().mockImplementation(async () => {
+            tracks$.next([{}, {}] as LocalTrack[]);
+            return Promise.resolve();
+          }),
+          tracks$,
+          publishing$,
+        };
+        publishers.push(p as unknown as Publisher);
+        return p;
+      },
+    );
+    const publisherFactory =
+      defaultCreateLocalMemberValues.createPublisherFactory as ReturnType<
+        typeof vi.fn
+      >;
+
+    const localMembership = createLocalMembership$({
+      scope,
+      ...defaultCreateLocalMemberValues,
+      connectionManager: {
+        connectionManagerData$: constant(new Epoch(connectionManagerData)),
+      },
+      localTransport$,
+    });
+    await flushPromises();
+    expect(publisherFactory).toHaveBeenCalledOnce();
+    expect(localMembership.tracks$.value.length).toBe(0);
+    localMembership.startTracks();
+    await flushPromises();
+    expect(localMembership.tracks$.value.length).toBe(2);
+    scope.end();
+    await flushPromises();
+    // stop all tracks after ending scopes
+    expect(publishers[0].stopPublishing).toHaveBeenCalled();
+    expect(publishers[0].stopTracks).toHaveBeenCalled();
+    publisherFactory.mockClear();
+  });
+  // TODO add an integration test combining publisher and localMembership
+  //
+  it("tracks livekit state correctly", async () => {
+    const scope = new ObservableScope();
+
+    const localTransport$ = new BehaviorSubject<null | LivekitTransport>(null);
+    const connectionManagerData$ = new BehaviorSubject<
+      Epoch<ConnectionManagerData>
+    >(new Epoch(new ConnectionManagerData()));
+    const publishers: Publisher[] = [];
+
+    const tracks$ = new BehaviorSubject<LocalTrack[]>([]);
+    const publishing$ = new BehaviorSubject<boolean>(false);
+    const createTrackResolver = Promise.withResolvers<void>();
+    const publishResolver = Promise.withResolvers<void>();
+    defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
+      () => {
+        const p = {
+          stopPublishing: vi.fn(),
+          stopTracks: vi.fn().mockImplementation(() => {
+            logger.info("stopTracks");
+            tracks$.next([]);
+          }),
+          createAndSetupTracks: vi.fn().mockImplementation(async () => {
+            await createTrackResolver.promise;
+            tracks$.next([{}, {}] as LocalTrack[]);
+          }),
+          startPublishing: vi.fn().mockImplementation(async () => {
+            await publishResolver.promise;
+            publishing$.next(true);
+          }),
+          tracks$,
+          publishing$,
+        };
+        publishers.push(p as unknown as Publisher);
+        return p;
+      },
+    );
+
+    const publisherFactory =
+      defaultCreateLocalMemberValues.createPublisherFactory as ReturnType<
+        typeof vi.fn
+      >;
+
+    const localMembership = createLocalMembership$({
+      scope,
+      ...defaultCreateLocalMemberValues,
+      connectionManager: {
+        connectionManagerData$,
+      },
+      localTransport$,
+    });
+
+    await flushPromises();
+    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
+      state: RTCBackendState.WaitingForTransport,
+    });
+    localTransport$.next(aTransport);
+    await flushPromises();
+    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
+      state: RTCBackendState.WaitingForConnection,
+    });
+    connectionManagerData$.next(new Epoch(connectionManagerData));
+    await flushPromises();
+    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
+      state: RTCBackendState.Initialized,
+    });
+    expect(publisherFactory).toHaveBeenCalledOnce();
+    expect(localMembership.tracks$.value.length).toBe(0);
+
+    // -------
+    localMembership.startTracks();
+    // -------
+
+    await flushPromises();
+    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
+      state: RTCBackendState.CreatingTracks,
+    });
+    createTrackResolver.resolve();
+    await flushPromises();
+    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
+      state: RTCBackendState.ReadyToPublish,
+    });
+
+    // -------
+    localMembership.requestConnect();
+    // -------
+
+    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
+      state: RTCBackendState.WaitingToPublish,
+    });
+
+    publishResolver.resolve();
+    await flushPromises();
+    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
+      state: RTCBackendState.Connected,
+    });
+    expect(publishers[0].stopPublishing).not.toHaveBeenCalled();
+
+    expect(localMembership.connectionState.livekit$.isStopped).toBe(false);
+    scope.end();
+    await flushPromises();
+    // stays in connected state because it is stopped before the update to tracks update the state.
+    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
+      state: RTCBackendState.Connected,
+    });
+    // stop all tracks after ending scopes
+    expect(publishers[0].stopPublishing).toHaveBeenCalled();
+    expect(publishers[0].stopTracks).toHaveBeenCalled();
+  });
+  // TODO add tests for matrix local matrix participation.
 });

@@ -100,8 +100,7 @@ import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts
 import {
   createLocalMembership$,
   enterRTCSession,
-  LivekitState,
-  type LocalMemberConnectionState,
+  RTCBackendState,
 } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import {
@@ -201,7 +200,7 @@ export interface CallViewModel {
   hangup: () => void;
 
   // joining
-  join: () => LocalMemberConnectionState;
+  join: () => void;
 
   // screen sharing
   /**
@@ -473,6 +472,9 @@ export function createCallViewModel$(
         mediaDevices,
         muteStates,
         trackProcessorState$,
+        logger.getChild(
+          "[Publisher" + connection.transport.livekit_service_url + "]",
+        ),
       );
     },
     connectionManager: connectionManager,
@@ -571,15 +573,6 @@ export function createCallViewModel$(
     ),
   );
 
-  // CODESMELL?
-  // This is functionally the same Observable as leave$, except here it's
-  // hoisted to the top of the class. This enables the cyclic dependency between
-  // leave$ -> autoLeave$ -> callPickupState$ -> livekitConnectionState$ ->
-  // localConnection$ -> transports$ -> joined$ -> leave$.
-  const leaveHoisted$ = new Subject<
-    "user" | "timeout" | "decline" | "allOthersLeft"
-  >();
-
   /**
    * Whether various media/event sources should pretend to be disconnected from
    * all network input, even if their connection still technically works.
@@ -590,7 +583,6 @@ export function createCallViewModel$(
   // in a split-brained state.
   // DISCUSSION own membership manager ALSO this probably can be simplifis
   const reconnecting$ = localMembership.reconnecting$;
-  const pretendToBeDisconnected$ = reconnecting$;
 
   const audioParticipants$ = scope.behavior(
     matrixLivekitMembers$.pipe(
@@ -639,7 +631,7 @@ export function createCallViewModel$(
   );
 
   const handsRaised$ = scope.behavior(
-    handsRaisedSubject$.pipe(pauseWhen(pretendToBeDisconnected$)),
+    handsRaisedSubject$.pipe(pauseWhen(reconnecting$)),
   );
 
   const reactions$ = scope.behavior(
@@ -652,7 +644,7 @@ export function createCallViewModel$(
           ]),
         ),
       ),
-      pauseWhen(pretendToBeDisconnected$),
+      pauseWhen(reconnecting$),
     ),
   );
 
@@ -673,7 +665,7 @@ export function createCallViewModel$(
           { value: matrixLivekitMembers },
           duplicateTiles,
         ]) {
-          let localParticipantId = undefined;
+          let localParticipantId: string | undefined = undefined;
           // add local member if available
           if (localMatrixLivekitMember) {
             const { userId, participant$, connection$, membership$ } =
@@ -743,7 +735,7 @@ export function createCallViewModel$(
             livekitRoom$,
             focusUrl$,
             mediaDevices,
-            pretendToBeDisconnected$,
+            reconnecting$,
             displayName$,
             matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
             handsRaised$.pipe(map((v) => v[participantId]?.time ?? null)),
@@ -839,10 +831,7 @@ export function createCallViewModel$(
     merge(
       autoLeave$,
       merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
-    ).pipe(
-      scope.share,
-      tap((reason) => leaveHoisted$.next(reason)),
-    );
+    ).pipe(scope.share);
 
   const spotlightSpeaker$ = scope.behavior<UserMediaViewModel | null>(
     userMedia$.pipe(
@@ -1460,16 +1449,13 @@ export function createCallViewModel$(
   // reassigned here to make it publicly accessible
   const toggleScreenSharing = localMembership.toggleScreenSharing;
 
-  const join = localMembership.requestConnect;
-  // TODO-MULTI-SFU: Use this view model for the lobby as well, and only call this once 'join' is clicked?
-  join();
   return {
     autoLeave$: autoLeave$,
     callPickupState$: callPickupState$,
     ringOverlay$: ringOverlay$,
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
-    join: join,
+    join: localMembership.requestConnect,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
 
@@ -1480,7 +1466,7 @@ export function createCallViewModel$(
 
     fatalError$: scope.behavior(
       localMembership.connectionState.livekit$.pipe(
-        filter((v) => v.state === LivekitState.Error),
+        filter((v) => v.state === RTCBackendState.Error),
         map((s) => s.error),
       ),
       null,
