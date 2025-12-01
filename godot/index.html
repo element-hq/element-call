@@ -20,7 +20,7 @@
         await window.matrixRTCSdk.join();
         console.info("matrixRTCSdk joined ");
 
-        // sdk.data$.subscribe((data) => {
+        // window.matrixRTCSdk.data$.subscribe((data) => {
         //   console.log(data);
         //   const div = document.getElementById("data");
         //   div.appendChild(document.createTextNode(data));
@@ -36,9 +36,9 @@
   </head>
   <body>
     <button onclick="window.matrixRTCSdk.leave();">Leave</button>
-    <!--<button onclick="window.matrixRTCSdk.sendData({prop: 'Hello, world!'});">
+    <button onclick="window.matrixRTCSdk.sendData({prop: 'Hello, world!'});">
       Send Text
-    </button>-->
+    </button>
     <div id="data"></div>
     <canvas id="canvas"></canvas>
   </body>

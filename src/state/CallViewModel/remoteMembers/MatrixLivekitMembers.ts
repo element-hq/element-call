@@ -61,12 +61,12 @@ export function createMatrixLivekitMembers$({
   scope,
   membershipsWithTransport$,
   connectionManager,
-}: Props): Behavior<Epoch<MatrixLivekitMember[]>> {
+}: Props): { matrixLivekitMembers$: Behavior<Epoch<MatrixLivekitMember[]>> } {
   /**
    * Stream of all the call members and their associated livekit data (if available).
    */
 
-  return scope.behavior(
+  const matrixLivekitMembers$ = scope.behavior(
     combineLatest([
       membershipsWithTransport$,
       connectionManager.connectionManagerData$,
@@ -91,7 +91,7 @@ export function createMatrixLivekitMembers$({
             const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
 
             const participants = transport
-              ? managerData.getParticipantForTransport(transport)
+              ? managerData.getParticipantsForTransport(transport)
               : [];
             const participant =
               participants.find((p) => p.identity == participantId) ?? null;
@@ -121,6 +121,11 @@ export function createMatrixLivekitMembers$({
       ),
     ),
   );
+  return {
+    matrixLivekitMembers$,
+    // TODO add only publishing participants... maybe. disucss at least
+    // scope.behavior(matrixLivekitMembers$.pipe(map((items) => items.value.map((i)=>{ i.}))))
+  };
 }
 
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)

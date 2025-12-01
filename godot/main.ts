@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 // import { type InitResult } from "../src/ClientContext";
-import { map, type Observable, of, Subject, switchMap } from "rxjs";
+import { map, type Observable, of, Subject, switchMap, tap } from "rxjs";
 import { MatrixRTCSessionEvent } from "matrix-js-sdk/lib/matrixrtc";
 import { type TextStreamInfo } from "livekit-client/dist/src/room/types";
 import {
@@ -36,7 +36,7 @@ interface MatrixRTCSdk {
   /** @throws on leave errors */
   leave: () => void;
   data$: Observable<{ sender: string; data: string }>;
-  sendData?: (data: Record<string, unknown>) => Promise<void>;
+  sendData?: (data: unknown) => Promise<void>;
 }
 export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
   logger.info("Hello");
@@ -67,97 +67,115 @@ export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
   // create data listener
   const data$ = new Subject<{ sender: string; data: string }>();
 
-  // const lkTextStreamHandlerFunction = async (
-  //   reader: TextStreamReader,
-  //   participantInfo: { identity: string },
-  //   livekitRoom: LivekitRoom,
-  // ): Promise<void> => {
-  //   const info = reader.info;
-  //   console.log(
-  //     `Received text stream from ${participantInfo.identity}\n` +
-  //       `  Topic: ${info.topic}\n` +
-  //       `  Timestamp: ${info.timestamp}\n` +
-  //       `  ID: ${info.id}\n` +
-  //       `  Size: ${info.size}`, // Optional, only available if the stream was sent with `sendText`
-  //   );
+  const lkTextStreamHandlerFunction = async (
+    reader: TextStreamReader,
+    participantInfo: { identity: string },
+    livekitRoom: LivekitRoom,
+  ): Promise<void> => {
+    const info = reader.info;
+    logger.info(
+      `Received text stream from ${participantInfo.identity}\n` +
+        `  Topic: ${info.topic}\n` +
+        `  Timestamp: ${info.timestamp}\n` +
+        `  ID: ${info.id}\n` +
+        `  Size: ${info.size}`, // Optional, only available if the stream was sent with `sendText`
+    );
 
-  //   const participants = callViewModel.livekitRoomItems$.value.find(
-  //     (i) => i.livekitRoom === livekitRoom,
-  //   )?.participants;
-  //   if (participants && participants.includes(participantInfo.identity)) {
-  //     const text = await reader.readAll();
-  //     console.log(`Received text: ${text}`);
-  //     data$.next({ sender: participantInfo.identity, data: text });
-  //   } else {
-  //     logger.warn(
-  //       "Received text from unknown participant",
-  //       participantInfo.identity,
-  //     );
-  //   }
-  // };
+    const participants = callViewModel.livekitRoomItems$.value.find(
+      (i) => i.livekitRoom === livekitRoom,
+    )?.participants;
+    if (participants && participants.includes(participantInfo.identity)) {
+      const text = await reader.readAll();
+      logger.info(`Received text: ${text}`);
+      data$.next({ sender: participantInfo.identity, data: text });
+    } else {
+      logger.warn(
+        "Received text from unknown participant",
+        participantInfo.identity,
+      );
+    }
+  };
 
-  // const livekitRoomItemsSub = callViewModel.livekitRoomItems$
-  //   .pipe(currentAndPrev)
-  //   .subscribe({
-  //     next: ({ prev, current }) => {
-  //       const prevRooms = prev.map((i) => i.livekitRoom);
-  //       const currentRooms = current.map((i) => i.livekitRoom);
-  //       const addedRooms = currentRooms.filter((r) => !prevRooms.includes(r));
-  //       const removedRooms = prevRooms.filter((r) => !currentRooms.includes(r));
-  //       addedRooms.forEach((r) =>
-  //         r.registerTextStreamHandler(
-  //           TEXT_LK_TOPIC,
-  //           (reader, participantInfo) =>
-  //             void lkTextStreamHandlerFunction(reader, participantInfo, r),
-  //         ),
-  //       );
-  //       removedRooms.forEach((r) =>
-  //         r.unregisterTextStreamHandler(TEXT_LK_TOPIC),
-  //       );
-  //     },
-  //     complete: () => {
-  //       logger.info("Livekit room items subscription completed");
-  //       for (const item of callViewModel.livekitRoomItems$.value) {
-  //         logger.info("unregistering room item from room", item.url);
-  //         item.livekitRoom.unregisterTextStreamHandler(TEXT_LK_TOPIC);
-  //       }
-  //     },
-  //   });
+  const livekitRoomItemsSub = callViewModel.livekitRoomItems$
+    .pipe(
+      tap((beforecurrentAndPrev) => {
+        logger.info(
+          `LiveKit room items updated: ${beforecurrentAndPrev.length}`,
+          beforecurrentAndPrev,
+        );
+      }),
+      currentAndPrev,
+      tap((aftercurrentAndPrev) => {
+        logger.info(
+          `LiveKit room items updated: ${aftercurrentAndPrev.current.length}, ${aftercurrentAndPrev.prev.length}`,
+          aftercurrentAndPrev,
+        );
+      }),
+    )
+    .subscribe({
+      next: ({ prev, current }) => {
+        const prevRooms = prev.map((i) => i.livekitRoom);
+        const currentRooms = current.map((i) => i.livekitRoom);
+        const addedRooms = currentRooms.filter((r) => !prevRooms.includes(r));
+        const removedRooms = prevRooms.filter((r) => !currentRooms.includes(r));
+        addedRooms.forEach((r) => {
+          logger.info(`Registering text stream handler for room `);
+          r.registerTextStreamHandler(
+            TEXT_LK_TOPIC,
+            (reader, participantInfo) =>
+              void lkTextStreamHandlerFunction(reader, participantInfo, r),
+          );
+        });
+        removedRooms.forEach((r) => {
+          logger.info(`Unregistering text stream handler for room `);
+          r.unregisterTextStreamHandler(TEXT_LK_TOPIC);
+        });
+      },
+      complete: () => {
+        logger.info("Livekit room items subscription completed");
+        for (const item of callViewModel.livekitRoomItems$.value) {
+          logger.info("unregistering room item from room", item.url);
+          item.livekitRoom.unregisterTextStreamHandler(TEXT_LK_TOPIC);
+        }
+      },
+    });
 
   // create sendData function
-  // const sendFn: Behavior<(data: string) => Promise<TextStreamInfo>> =
-  //   scope.behavior(
-  //     callViewModel.localMatrixLivekitMember$.pipe(
-  //       switchMap((m) => {
-  //         if (!m)
-  //           return of((data: string): never => {
-  //             throw Error("local membership not yet ready.");
-  //           });
-  //         return m.participant$.pipe(
-  //           map((p) => {
-  //             if (p === null) {
-  //               return (data: string): never => {
-  //                 throw Error("local participant not yet ready to send data.");
-  //               };
-  //             } else {
-  //               return async (data: string): Promise<TextStreamInfo> =>
-  //                 p.sendText(data, { topic: TEXT_LK_TOPIC });
-  //             }
-  //           }),
-  //         );
-  //       }),
-  //     ),
-  //   );
+  const sendFn: Behavior<(data: string) => Promise<TextStreamInfo>> =
+    scope.behavior(
+      callViewModel.localmatrixLivekitMembers$.pipe(
+        switchMap((m) => {
+          if (!m)
+            return of((data: string): never => {
+              throw Error("local membership not yet ready.");
+            });
+          return m.participant$.pipe(
+            map((p) => {
+              if (p === null) {
+                return (data: string): never => {
+                  throw Error("local participant not yet ready to send data.");
+                };
+              } else {
+                return async (data: string): Promise<TextStreamInfo> =>
+                  p.sendText(data, { topic: TEXT_LK_TOPIC });
+              }
+            }),
+          );
+        }),
+      ),
+    );
 
-  // const sendData = async (data: Record<string, unknown>): Promise<void> => {
-  //   const dataString = JSON.stringify(data);
-  //   try {
-  //     const info = await sendFn.value(dataString);
-  //     logger.info(`Sent text with stream ID: ${info.id}`);
-  //   } catch (e) {
-  //     console.error("failed sending: ", dataString, e);
-  //   }
-  // };
+  const sendData = async (data: unknown): Promise<void> => {
+    const dataString = JSON.stringify(data);
+    logger.info("try sending: ", dataString);
+    try {
+      await Promise.resolve();
+      const info = await sendFn.value(dataString);
+      logger.info(`Sent text with stream ID: ${info.id}`);
+    } catch (e) {
+      logger.error("failed sending: ", dataString, e);
+    }
+  };
 
   // after hangup gets called
   const leaveSubs = callViewModel.leave$.subscribe(() => {
@@ -202,9 +220,9 @@ export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
     leave: (): void => {
       callViewModel.hangup();
       leaveSubs.unsubscribe();
-      // livekitRoomItemsSub.unsubscribe();
+      livekitRoomItemsSub.unsubscribe();
     },
     data$,
-    // sendData,
+    sendData,
   };
 }

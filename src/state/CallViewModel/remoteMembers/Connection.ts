@@ -19,7 +19,7 @@ import {
   RoomEvent,
 } from "livekit-client";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, map, type Observable } from "rxjs";
+import { BehaviorSubject, type Observable } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -146,6 +146,10 @@ export class Connection {
         transport: this.transport,
         livekitConnectionState$: connectionStateObserver(this.livekitRoom),
       });
+      this.logger.info(
+        "Connected to LiveKit room",
+        this.transport.livekit_service_url,
+      );
     } catch (error) {
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
       this._state$.next({
@@ -189,9 +193,7 @@ export class Connection {
    * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
    * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
    */
-  public readonly remoteParticipantsWithTracks$: Behavior<
-    PublishingParticipant[]
-  >;
+  public readonly remoteParticipants$: Behavior<PublishingParticipant[]>;
 
   /**
    * The media transport to connect to.
@@ -213,7 +215,7 @@ export class Connection {
   public constructor(opts: ConnectionOpts, logger: Logger) {
     this.logger = logger.getChild("[Connection]");
     this.logger.info(
-      `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
+      `Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
     );
     const { transport, client, scope } = opts;
 
@@ -223,20 +225,21 @@ export class Connection {
 
     // REMOTE participants with track!!!
     // this.remoteParticipantsWithTracks$
-    this.remoteParticipantsWithTracks$ = scope.behavior(
+    this.remoteParticipants$ = scope.behavior(
       // only tracks remote participants
       connectedParticipantsObserver(this.livekitRoom, {
         additionalRoomEvents: [
           RoomEvent.TrackPublished,
           RoomEvent.TrackUnpublished,
         ],
-      }).pipe(
-        map((participants) => {
-          return participants.filter(
-            (participant) => participant.getTrackPublications().length > 0,
-          );
-        }),
-      ),
+      }),
+      // .pipe(
+      //   map((participants) => {
+      //     return participants.filter(
+      //       (participant) => participant.getTrackPublications().length > 0,
+      //     );
+      //   }),
+      // )
       [],
     );
 
