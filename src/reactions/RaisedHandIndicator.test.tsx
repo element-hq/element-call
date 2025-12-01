@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render, configure } from "@testing-library/react";
 
 import { RaisedHandIndicator } from "./RaisedHandIndicator";
@@ -15,6 +15,13 @@ configure({
 });
 
 describe("RaisedHandIndicator", () => {
+  const fixedTime = new Date("2025-01-01T12:00:00.000Z");
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(fixedTime);
+  });
+
   test("renders nothing when no hand has been raised", () => {
     const { container } = render(<RaisedHandIndicator />);
     expect(container.firstChild).toBeNull();
