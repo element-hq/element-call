@@ -992,6 +992,13 @@ export function createCallViewModel$(
   );
 
   const gridModeUserSelection$ = new BehaviorSubject<GridMode>("grid");
+
+  // Callback to set the grid mode desired by the user.
+  // Notice that this is only a preference, the actual grid mode can be overridden
+  // if there is a remote screen share active.
+  const setGridMode = (value: GridMode): void => {
+    gridModeUserSelection$.next(value);
+  };
   /**
    * The layout mode of the media tile grid.
    */
@@ -1027,10 +1034,6 @@ export function createCallViewModel$(
       ),
       "grid",
     );
-
-  const setGridMode = (value: GridMode): void => {
-    gridModeUserSelection$.next(value);
-  };
 
   const gridLayoutMedia$: Observable<GridLayoutMedia> = combineLatest(
     [grid$, spotlight$],
