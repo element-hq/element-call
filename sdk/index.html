@@ -8,59 +8,60 @@
       import { createMatrixRTCSdk } from "http://localhost:8123/matrixrtc-sdk.js";
 
       try {
-        console.log("Hello from index.html");
-        try {
-          window.matrixRTCSdk = await createMatrixRTCSdk();
-          console.info("createMatrixRTCSdk was created!");
-        } catch (e) {
-          console.error("createMatrixRTCSdk", e);
-        }
-
-        // const sdk = window.matrixRTCSdk;
-        console.info("matrixRTCSdk join ", window.matrixRTCSdk);
-        await window.matrixRTCSdk.join();
-        console.info("matrixRTCSdk joined ");
-
-        const div = document.getElementById("data");
-        div.innerHTML = "<h3>Data:</h3>";
-
-        window.matrixRTCSdk.data$.subscribe((data) => {
-          const child = document.createElement("p");
-          child.innerHTML = JSON.stringify(data);
-          div.appendChild(child);
-          // TODO forward to godot
-        });
-
-        window.matrixRTCSdk.members$.subscribe((memberObjects) => {
-          console.info("members changed", memberObjects);
-
-          // reset div
-          const div = document.getElementById("members");
-          div.innerHTML = "<h3>Members:</h3>";
-
-          // create member list
-          const members = memberObjects.map((member) => member.userId);
-          console.info("members changed", members);
-          for (const m of members) {
-            console.info("member", m);
-            const child = document.createElement("p");
-            child.innerHTML = m;
-            div.appendChild(child);
-          }
-          // TODO forward to godot
-        });
-
-        // TODO use it as godot HTML template
-        // var engine = new Engine($GODOT_CONFIG);
-        // engine.startGame();
+        window.matrixRTCSdk = await createMatrixRTCSdk();
+        console.info("createMatrixRTCSdk was created!");
       } catch (e) {
-        console.error("catchALL,", e);
+        console.error("createMatrixRTCSdk", e);
       }
+
+      const sdk = window.matrixRTCSdk;
+      console.info("matrixRTCSdk join ", sdk);
+      await sdk.join();
+      console.info("matrixRTCSdk joined ");
+
+      const div = document.getElementById("data");
+      div.innerHTML = "<h3>Data:</h3>";
+
+      sdk.data$.subscribe((data) => {
+        const child = document.createElement("p");
+        child.innerHTML = JSON.stringify(data);
+        div.appendChild(child);
+        // TODO forward to godot
+      });
+
+      sdk.members$.subscribe((memberObjects) => {
+        console.info("members changed", memberObjects);
+
+        // reset div
+        const div = document.getElementById("members");
+        div.innerHTML = "<h3>Members:</h3>";
+
+        // create member list
+        const members = memberObjects.map((member) => member.userId);
+        console.info("members changed", members);
+        for (const m of members) {
+          console.info("member", m);
+          const child = document.createElement("p");
+          child.innerHTML = m;
+          div.appendChild(child);
+        }
+        // TODO forward to godot
+      });
+      sdk.connected$.subscribe((connected) => {
+        console.info("connected changed", connected);
+        const div = document.getElementById("connect_status");
+        div.innerHTML = connected ? "Connected" : "Disconnected";
+      });
+
+      // TODO use it as godot HTML template
+      // var engine = new Engine($GODOT_CONFIG);
+      // engine.startGame();
     </script>
     <!--// TODO use it as godot HTML template-->
     <!--<script src="$GODOT_URL"></script>-->
   </head>
   <body>
+    <div id="connect_status"></div>
     <button onclick="window.matrixRTCSdk.leave();">Leave</button>
     <button onclick="window.matrixRTCSdk.sendData({prop: 'Hello, world!'});">
       Send Text
