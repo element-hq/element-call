@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { expect, test, afterEach } from "vitest";
+import { expect, test, afterEach, vi } from "vitest";
 import { act } from "react";
 
 import { showReactions } from "../settings/settings";
@@ -19,6 +19,8 @@ import {
   bobRtcMember,
 } from "../utils/test-fixtures";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
+
+vi.mock("livekit-client/e2ee-worker?worker");
 
 afterEach(() => {
   showReactions.setValue(showReactions.defaultValue);

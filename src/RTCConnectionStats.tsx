@@ -19,10 +19,26 @@ import mediaViewStyles from "../src/tile/MediaView.module.css";
 interface Props {
   audio?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   video?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
+  focusUrl?: string;
 }
 
+const extractDomain = (url: string): string => {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.hostname; // Returns "kdk.cpm"
+  } catch (error) {
+    console.error("Invalid URL:", error);
+    return url;
+  }
+};
+
 // This is only used in developer mode for debugging purposes, so we don't need full localization
-export const RTCConnectionStats: FC<Props> = ({ audio, video, ...rest }) => {
+export const RTCConnectionStats: FC<Props> = ({
+  audio,
+  video,
+  focusUrl,
+  ...rest
+}) => {
   const [showModal, setShowModal] = useState(false);
   const [modalContents, setModalContents] = useState<
     "video" | "audio" | "none"
@@ -55,6 +71,13 @@ export const RTCConnectionStats: FC<Props> = ({ audio, video, ...rest }) => {
           </pre>
         </div>
       </Modal>
+      {focusUrl && (
+        <div>
+          <Text as="span" size="xs" title="focusURL">
+            &nbsp;{extractDomain(focusUrl)}
+          </Text>
+        </div>
+      )}
       {audio && (
         <div>
           <Button

@@ -40,6 +40,11 @@ test("Start a new call then leave and show the feedback screen", async ({
   // The tooltip with the name should be visible
   await expect(page.getByTestId("name_tag")).toContainText("John Doe");
 
+  // Resize the window to resemble a small mobile phone
+  await page.setViewportSize({ width: 350, height: 660 });
+  // We should still be able to send reactions at this screen size
+  await expect(page.getByRole("button", { name: "Reactions" })).toBeVisible();
+
   // leave the call
   await page.getByTestId("incall_leave").click();
   await expect(page.getByRole("heading")).toContainText(

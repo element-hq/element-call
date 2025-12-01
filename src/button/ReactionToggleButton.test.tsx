@@ -6,21 +6,22 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { act, render } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { userEvent } from "@testing-library/user-event";
 import { type ReactNode } from "react";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { ReactionToggleButton } from "./ReactionToggleButton";
 import { ElementCallReactionEventType } from "../reactions";
-import { type CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local, localRtcMember } from "../utils/test-fixtures";
 import { type MockRTCSession } from "../utils/test";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 
-const localIdent = `${localRtcMember.sender}:${localRtcMember.deviceId}`;
+vi.mock("livekit-client/e2ee-worker?worker");
+
+const localIdent = `${localRtcMember.userId}:${localRtcMember.deviceId}`;
 
 function TestComponent({
   rtcSession,
@@ -33,7 +34,7 @@ function TestComponent({
     <TooltipProvider>
       <ReactionsSenderProvider
         vm={vm}
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
+        rtcSession={rtcSession.asMockedSession()}
       >
         <ReactionToggleButton vm={vm} identifier={localIdent} />
       </ReactionsSenderProvider>

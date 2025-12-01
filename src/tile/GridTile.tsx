@@ -58,8 +58,11 @@ interface TileProps {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
+  focusUrl: string | undefined;
   displayName: string;
+  mxcAvatarUrl: string | undefined;
   showSpeakingIndicators: boolean;
+  focusable: boolean;
 }
 
 interface UserMediaTileProps extends TileProps {
@@ -80,7 +83,10 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   menuStart,
   menuEnd,
   className,
+  focusUrl,
   displayName,
+  mxcAvatarUrl,
+  focusable,
   ...props
 }) => {
   const { toggleRaisedHand } = useReactionsSender();
@@ -142,8 +148,8 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const tile = (
     <MediaView
       ref={ref}
-      video={video}
-      member={vm.member}
+      video={video ?? undefined}
+      userId={vm.userId}
       unencryptedWarning={unencryptedWarning}
       encryptionStatus={encryptionStatus}
       videoEnabled={videoEnabled}
@@ -162,6 +168,8 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
         />
       }
       displayName={displayName}
+      mxcAvatarUrl={mxcAvatarUrl}
+      focusable={focusable}
       primaryButton={
         primaryButton ?? (
           <Menu
@@ -169,7 +177,10 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
             onOpenChange={setMenuOpen}
             title={displayName}
             trigger={
-              <button aria-label={t("common.options")}>
+              <button
+                aria-label={t("common.options")}
+                tabIndex={focusable ? undefined : -1}
+              >
                 <OverflowHorizontalIcon aria-hidden width={20} height={20} />
               </button>
             }
@@ -184,6 +195,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       currentReaction={reaction ?? undefined}
       raisedHandOnClick={raisedHandOnClick}
       localParticipant={vm.local}
+      focusUrl={focusUrl}
       audioStreamStats={audioStreamStats}
       videoStreamStats={videoStreamStats}
       {...props}
@@ -208,6 +220,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
   ref,
   vm,
   onOpenProfile,
+  focusable,
   ...props
 }) => {
   const { t } = useTranslation();
@@ -236,6 +249,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
             className={styles.switchCamera}
             aria-label={t("switch_camera")}
             onClick={switchCamera}
+            tabIndex={focusable ? undefined : -1}
           >
             <SwitchCameraSolidIcon aria-hidden width={20} height={20} />
           </button>
@@ -258,6 +272,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
           />
         )
       }
+      focusable={focusable}
       {...props}
     />
   );
@@ -337,6 +352,7 @@ interface GridTileProps {
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicators: boolean;
+  focusable: boolean;
 }
 
 export const GridTile: FC<GridTileProps> = ({
@@ -348,7 +364,9 @@ export const GridTile: FC<GridTileProps> = ({
   const ourRef = useRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
   const media = useBehavior(vm.media$);
+  const focusUrl = useBehavior(media.focusUrl$);
   const displayName = useBehavior(media.displayName$);
+  const mxcAvatarUrl = useBehavior(media.mxcAvatarUrl$);
 
   if (media instanceof LocalUserMediaViewModel) {
     return (
@@ -356,7 +374,9 @@ export const GridTile: FC<GridTileProps> = ({
         ref={ref}
         vm={media}
         onOpenProfile={onOpenProfile}
+        focusUrl={focusUrl}
         displayName={displayName}
+        mxcAvatarUrl={mxcAvatarUrl}
         {...props}
       />
     );
@@ -365,7 +385,9 @@ export const GridTile: FC<GridTileProps> = ({
       <RemoteUserMediaTile
         ref={ref}
         vm={media}
+        focusUrl={focusUrl}
         displayName={displayName}
+        mxcAvatarUrl={mxcAvatarUrl}
         {...props}
       />
     );

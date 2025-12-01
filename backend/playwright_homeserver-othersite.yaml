@@ -1,0 +1,81 @@
+server_name: "synapse.othersite.m.localhost"
+public_baseurl: https://synapse.othersite.m.localhost/
+
+pid_file: /data/homeserver.pid
+
+listeners:
+  - port: 18008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation, openid]
+        compress: false
+
+database:
+  name: sqlite3
+  args:
+    database: /data/homeserver.db
+
+media_store_path: /data/media_store
+signing_key_path: "/data/SERVERNAME.signing.key"
+
+# Due to custom TLS certificate with domains
+# - m.localhost, localhost
+# - *.m.localhost
+# - *.othersite.m.localhost
+# we disable certificate verification to allow for federation.
+# WARNING: DO NOT USE IN PRODUCTION!!!
+federation_verify_certificates: false
+ip_range_blacklist: []
+trusted_key_servers:
+  - server_name: "synapse.m.localhost"
+    accept_keys_insecurely: true
+
+experimental_features:
+  # MSC3266: Room summary API. Used for knocking over federation
+  msc3266_enabled: true
+  # MSC4222 needed for syncv2 state_after. This allow clients to
+  # correctly track the state of the room.
+  msc4222_enabled: true
+
+# The maximum allowed duration by which sent events can be delayed, as
+# per MSC4140. Must be a positive value if set.  Defaults to no
+# duration (null), which disallows sending delayed events.
+max_event_delay_duration: 24h
+
+# Required for Element Call in Single Page Mode due to on-the-fly user registration
+enable_registration: true
+enable_registration_without_verification: true
+
+report_stats: false
+serve_server_wellknown: true
+
+# Ratelimiting settings for client actions (registration, login, messaging).
+#
+# Each ratelimiting configuration is made of two parameters:
+#   - per_second: number of requests a client can send per second.
+#   - burst_count: number of requests a client can send before being throttled.
+
+rc_message:
+  per_second: 10000
+  burst_count: 10000
+
+rc_delayed_event_mgmt:
+  per_second: 10000
+  burst_count: 10000
+
+rc_login:
+  address:
+    per_second: 10000
+    burst_count: 10000
+  account:
+    per_second: 10000
+    burst_count: 10000
+  failed_attempts:
+    per_second: 10000
+    burst_count: 10000
+
+rc_registration:
+  per_second: 10000
+  burst_count: 10000

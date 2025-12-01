@@ -14,7 +14,7 @@ import { fillGaps } from "../utils/iter";
 import { debugTileLayout } from "../settings/settings";
 
 function debugEntries(entries: GridTileData[]): string[] {
-  return entries.map((e) => e.media.member?.rawDisplayName ?? "[👻]");
+  return entries.map((e) => e.media.displayName$.value);
 }
 
 let DEBUG_ENABLED = false;
@@ -44,10 +44,6 @@ class SpotlightTileData {
     this.maximised$ = new BehaviorSubject(maximised);
     this.vm = new SpotlightTileViewModel(this.media$, this.maximised$);
   }
-
-  public destroy(): void {
-    this.vm.destroy();
-  }
 }
 
 class GridTileData {
@@ -65,14 +61,10 @@ class GridTileData {
     this.media$ = new BehaviorSubject(media);
     this.vm = new GridTileViewModel(this.media$);
   }
-
-  public destroy(): void {
-    this.vm.destroy();
-  }
 }
 
 /**
- * A collection of tiles to be mapped to a layout.
+ * An immutable collection of tiles to be mapped to a layout.
  */
 export class TileStore {
   private constructor(
@@ -118,10 +110,11 @@ export class TileStore {
  */
 export class TileStoreBuilder {
   private spotlight: SpotlightTileData | null = null;
-  private readonly prevSpotlightSpeaker =
+  private readonly prevSpotlightSpeaker: UserMediaViewModel | null =
     this.prevSpotlight?.media.length === 1 &&
-    "speaking" in this.prevSpotlight.media[0] &&
-    this.prevSpotlight.media[0];
+    "speaking$" in this.prevSpotlight.media[0]
+      ? this.prevSpotlight.media[0]
+      : null;
 
   private readonly prevGridByMedia: Map<
     MediaViewModel,
@@ -163,7 +156,7 @@ export class TileStoreBuilder {
   public registerSpotlight(media: MediaViewModel[], maximised: boolean): void {
     if (DEBUG_ENABLED)
       logger.debug(
-        `[TileStore, ${this.generation}] register spotlight: ${media.map((m) => m.member?.rawDisplayName ?? "[👻]")}`,
+        `[TileStore, ${this.generation}] register spotlight: ${media.map((m) => m.displayName$.value)}`,
       );
 
     if (this.spotlight !== null) throw new Error("Spotlight already set");
@@ -187,7 +180,7 @@ export class TileStoreBuilder {
   public registerGridTile(media: UserMediaViewModel): void {
     if (DEBUG_ENABLED)
       logger.debug(
-        `[TileStore, ${this.generation}] register grid tile: ${media.member?.rawDisplayName ?? "[👻]"}`,
+        `[TileStore, ${this.generation}] register grid tile: ${media.displayName$.value}`,
       );
 
     if (this.spotlight !== null) {
@@ -201,8 +194,9 @@ export class TileStoreBuilder {
       if (
         media === this.prevSpotlightSpeaker &&
         this.spotlight.media.length === 1 &&
-        "speaking" in this.spotlight.media[0] &&
-        this.prevSpotlightSpeaker !== this.spotlight.media[0]
+        "speaking$" in this.spotlight.media[0] &&
+        this.prevSpotlightSpeaker !==
+          (this.spotlight.media[0] satisfies UserMediaViewModel)
       ) {
         const prev = this.prevGridByMedia.get(this.spotlight.media[0]);
         if (prev !== undefined) {
@@ -261,6 +255,33 @@ export class TileStoreBuilder {
   }
 
   /**
+   * Sets up a PiP tile for the given media. This is a special kind of grid tile
+   * that is expected to stand on its own and switch between speakers, so this
+   * method will more eagerly try to reuse an existing tile, replacing its
+   * media, than registerGridTile would.
+   */
+  public registerPipTile(media: UserMediaViewModel): void {
+    if (DEBUG_ENABLED)
+      logger.debug(
+        `[TileStore, ${this.generation}] register PiP tile: ${media.displayName$.value}`,
+      );
+
+    // If there is a single grid tile that we can reuse
+    if (this.prevGrid.length === 1) {
+      const entry = this.prevGrid[0];
+      this.stationaryGridEntries[0] = entry;
+      // Do the media swap
+      entry.media = media;
+      this.prevGridByMedia.delete(entry.media);
+      this.prevGridByMedia.set(media, [entry, 0]);
+    } else {
+      this.visibleGridEntries.push(new GridTileData(media));
+    }
+
+    this.numGridEntries++;
+  }
+
+  /**
    * Constructs a new collection of all registered tiles, transferring ownership
    * of the tiles to the new collection. Any tiles present in the previous
    * collection but not the new collection will be destroyed.
@@ -287,13 +308,6 @@ export class TileStoreBuilder {
         `[TileStore, ${this.generation}] result: ${debugEntries(grid)}`,
       );
     }
-
-    // Destroy unused tiles
-    if (this.spotlight === null && this.prevSpotlight !== null)
-      this.prevSpotlight.destroy();
-    const gridEntries = new Set(grid);
-    for (const entry of this.prevGrid)
-      if (!gridEntries.has(entry)) entry.destroy();
 
     return this.construct(this.spotlight, grid);
   }

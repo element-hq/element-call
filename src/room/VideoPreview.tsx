@@ -13,7 +13,6 @@ import { useTranslation } from "react-i18next";
 
 import { TileAvatar } from "../tile/TileAvatar";
 import styles from "./VideoPreview.module.css";
-import { type MuteStates } from "./MuteStates";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 export type MatrixInfo = {
@@ -29,14 +28,14 @@ export type MatrixInfo = {
 
 interface Props {
   matrixInfo: MatrixInfo;
-  muteStates: MuteStates;
+  videoEnabled: boolean;
   videoTrack: LocalVideoTrack | null;
   children: ReactNode;
 }
 
 export const VideoPreview: FC<Props> = ({
   matrixInfo,
-  muteStates,
+  videoEnabled,
   videoTrack,
   children,
 }) => {
@@ -56,8 +55,8 @@ export const VideoPreview: FC<Props> = ({
   }, [videoTrack]);
 
   const cameraIsStarting = useMemo(
-    () => muteStates.video.enabled && !videoTrack,
-    [muteStates.video.enabled, videoTrack],
+    () => videoEnabled && !videoTrack,
+    [videoEnabled, videoTrack],
   );
 
   return (
@@ -76,7 +75,7 @@ export const VideoPreview: FC<Props> = ({
         tabIndex={-1}
         disablePictureInPicture
       />
-      {(!muteStates.video.enabled || cameraIsStarting) && (
+      {(!videoEnabled || cameraIsStarting) && (
         <>
           <div className={styles.avatarContainer}>
             {cameraIsStarting && (

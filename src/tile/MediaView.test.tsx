@@ -45,8 +45,10 @@ describe("MediaView", () => {
     mirror: false,
     unencryptedWarning: false,
     video: trackReference,
-    member: undefined,
+    userId: "@alice:example.com",
+    mxcAvatarUrl: undefined,
     localParticipant: false,
+    focusable: true,
   };
 
   test("is accessible", async () => {
@@ -58,9 +60,9 @@ describe("MediaView", () => {
     test("neither video nor avatar are shown", () => {
       render(<MediaView {...baseProps} video={trackReferencePlaceholder} />);
       expect(screen.queryByTestId("video")).toBeNull();
-      expect(screen.queryAllByRole("img", { name: "some name" }).length).toBe(
-        0,
-      );
+      expect(
+        screen.queryAllByRole("img", { name: "@alice:example.com" }).length,
+      ).toBe(0);
     });
   });
 
@@ -69,14 +71,18 @@ describe("MediaView", () => {
       render(
         <MediaView {...baseProps} video={undefined} localParticipant={true} />,
       );
-      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
+      expect(
+        screen.getByRole("img", { name: "@alice:example.com" }),
+      ).toBeVisible();
       expect(screen.queryAllByText("Waiting for media...").length).toBe(0);
     });
     it("shows avatar and label for remote user", () => {
       render(
         <MediaView {...baseProps} video={undefined} localParticipant={false} />,
       );
-      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
+      expect(
+        screen.getByRole("img", { name: "@alice:example.com" }),
+      ).toBeVisible();
       expect(screen.getByText("Waiting for media...")).toBeVisible();
     });
   });
@@ -130,7 +136,9 @@ describe("MediaView", () => {
           <MediaView {...baseProps} videoEnabled={false} />
         </TooltipProvider>,
       );
-      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
+      expect(
+        screen.getByRole("img", { name: "@alice:example.com" }),
+      ).toBeVisible();
       expect(screen.getByTestId("video")).not.toBeVisible();
     });
   });

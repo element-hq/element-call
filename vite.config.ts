@@ -97,6 +97,9 @@ export default ({
         cert: fs.readFileSync("./backend/dev_tls_m.localhost.crt"),
       },
     },
+    worker: {
+      format: "es",
+    },
     build: {
       minify: mode === "production" ? true : false,
       sourcemap: true,

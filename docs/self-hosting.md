@@ -126,6 +126,32 @@ server {
 }
 ```
 
+Or Using Caddy, you can achieve this by:
+
+```caddy configuration file
+# Route for lk-jwt-service with livekit/jwt prefix
+@jwt_service path /livekit/jwt/sfu/get /livekit/jwt/healthz
+handle @jwt_service {
+  uri strip_prefix /livekit/jwt
+  reverse_proxy http://[::1]:8080 {
+    header_up Host {host}
+    header_up X-Forwarded-Server {host}
+    header_up X-Real-IP {remote_host}
+    header_up X-Forwarded-For {remote_host}
+  }
+}
+
+# Default route for livekit
+handle {
+  reverse_proxy http://localhost:7880 {
+    header_up Host {host}
+    header_up X-Forwarded-Server {host}
+    header_up X-Real-IP {remote_host}
+    header_up X-Forwarded-For {remote_host}
+  }
+}
+```
+
 #### MatrixRTC backend announcement
 
 > [!IMPORTANT]
@@ -214,7 +240,7 @@ server {
 There are currently two different config files. `.env` holds variables that are
 used at build time, while `public/config.json` holds variables that are used at
 runtime. Documentation and default values for `public/config.json` can be found
-in [ConfigOptions.ts](src/config/ConfigOptions.ts).
+in [ConfigOptions.ts](../src/config/ConfigOptions.ts).
 
 > [!CAUTION]
 > Please note configuring MatrixRTC backend via `config.json` of
@@ -257,6 +283,7 @@ self-hosters and developers working with Element Call.
 - [MatrixRTC with Synology Container Manager (Docker)](https://ztfr.de/matrixrtc-with-synology-container-manager-docker/)
 - [Encrypted & Scalable Video Calls: How to deploy an Element Call backend with Synapse Using Docker-Compose](https://willlewis.co.uk/blog/posts/deploy-element-call-backend-with-synapse-and-docker-compose/)
 - [Element Call einrichten: Verschlüsselte Videoanrufe mit Element X und Matrix Synapse](https://www.cleveradmin.de/blog/2025/04/matrixrtc-element-call-backend-einrichten/)
+- [MatrixRTC Back-End for Synapse with Docker Compose and Traefik](https://forge.avontech.net/kstro1/matrixrtc-docker-traefik/)
 
 ## 🛠️ Tools
 

@@ -27,7 +27,6 @@ import { useObservableRef } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
-import { type RoomMember } from "matrix-js-sdk";
 
 import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
 import FullScreenMinimiseIcon from "../icons/FullScreenMinimise.svg?react";
@@ -55,10 +54,13 @@ interface SpotlightItemBaseProps {
   targetHeight: number;
   video: TrackReferenceOrPlaceholder | undefined;
   videoEnabled: boolean;
-  member: RoomMember | undefined;
+  userId: string;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
+  focusUrl: string | undefined;
   displayName: string;
+  mxcAvatarUrl: string | undefined;
+  focusable: boolean;
   "aria-hidden"?: boolean;
   localParticipant: boolean;
 }
@@ -112,6 +114,7 @@ interface SpotlightItemProps {
   vm: MediaViewModel;
   targetWidth: number;
   targetHeight: number;
+  focusable: boolean;
   intersectionObserver$: Observable<IntersectionObserver>;
   /**
    * Whether this item should act as a scroll snapping point.
@@ -125,13 +128,16 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   vm,
   targetWidth,
   targetHeight,
+  focusable,
   intersectionObserver$,
   snap,
   "aria-hidden": ariaHidden,
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
+  const focusUrl = useBehavior(vm.focusUrl$);
   const displayName = useBehavior(vm.displayName$);
+  const mxcAvatarUrl = useBehavior(vm.mxcAvatarUrl$);
   const video = useBehavior(vm.video$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
   const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
@@ -158,11 +164,14 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     className: classNames(styles.item, { [styles.snap]: snap }),
     targetWidth,
     targetHeight,
-    video,
+    video: video ?? undefined,
     videoEnabled,
-    member: vm.member,
+    userId: vm.userId,
     unencryptedWarning,
+    focusUrl,
     displayName,
+    mxcAvatarUrl,
+    focusable,
     encryptionStatus,
     "aria-hidden": ariaHidden,
     localParticipant: vm.local,
@@ -185,6 +194,7 @@ interface Props {
   targetWidth: number;
   targetHeight: number;
   showIndicators: boolean;
+  focusable: boolean;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
 }
@@ -197,6 +207,7 @@ export const SpotlightTile: FC<Props> = ({
   targetWidth,
   targetHeight,
   showIndicators,
+  focusable = true,
   className,
   style,
 }) => {
@@ -293,6 +304,7 @@ export const SpotlightTile: FC<Props> = ({
           className={classNames(styles.advance, styles.back)}
           aria-label={t("common.back")}
           onClick={onBackClick}
+          tabIndex={focusable ? undefined : -1}
         >
           <ChevronLeftIcon aria-hidden width={24} height={24} />
         </button>
@@ -304,6 +316,7 @@ export const SpotlightTile: FC<Props> = ({
             vm={vm}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
+            focusable={focusable}
             intersectionObserver$={intersectionObserver$}
             // This is how we get the container to scroll to the right media
             // when the previous/next buttons are clicked: we temporarily
@@ -319,6 +332,7 @@ export const SpotlightTile: FC<Props> = ({
           className={classNames(styles.expand)}
           aria-label={"maximise"}
           onClick={onToggleFullscreen}
+          tabIndex={focusable ? undefined : -1}
         >
           <FullScreenIcon aria-hidden width={20} height={20} />
         </button>
@@ -330,6 +344,7 @@ export const SpotlightTile: FC<Props> = ({
               expanded ? t("video_tile.collapse") : t("video_tile.expand")
             }
             onClick={onToggleExpanded}
+            tabIndex={focusable ? undefined : -1}
           >
             <ToggleExpandIcon aria-hidden width={20} height={20} />
           </button>
@@ -341,6 +356,7 @@ export const SpotlightTile: FC<Props> = ({
           className={classNames(styles.advance, styles.next)}
           aria-label={t("common.next")}
           onClick={onNextClick}
+          tabIndex={focusable ? undefined : -1}
         >
           <ChevronRightIcon aria-hidden width={24} height={24} />
         </button>

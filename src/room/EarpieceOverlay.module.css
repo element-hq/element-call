@@ -34,7 +34,6 @@
 
 .overlay[data-show="false"] {
   animation: fade-out 130ms forwards;
-  content-visibility: hidden;
   pointer-events: none;
 }
 

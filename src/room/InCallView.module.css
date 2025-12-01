@@ -108,13 +108,6 @@ Please see LICENSE in the repository root for full details.
 }
 
 @media (max-width: 370px) {
-  .raiseHand {
-    display: none;
-  }
-}
-
-@media (max-width: 340px) {
-  .invite,
   .shareScreen {
     display: none;
   }
@@ -123,6 +116,13 @@ Please see LICENSE in the repository root for full details.
     .footer {
       display: none;
     }
+  }
+}
+
+@media (max-width: 320px) {
+  .invite,
+  .raiseHand {
+    display: none;
   }
 }
 

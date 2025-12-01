@@ -17,8 +17,8 @@ import {
   mockLocalParticipant,
   mockMediaDevices,
   mockRtcMembership,
-  withLocalMedia,
-  withRemoteMedia,
+  createLocalMedia,
+  createRemoteMedia,
   withTestScheduler,
 } from "../utils/test";
 import { getValue } from "../utils/observable";
@@ -42,92 +42,89 @@ vi.mock("../Platform", () => ({
 
 const rtcMembership = mockRtcMembership("@alice:example.org", "AAAA");
 
-test("control a participant's volume", async () => {
+test("control a participant's volume", () => {
   const setVolumeSpy = vi.fn();
-  await withRemoteMedia(rtcMembership, {}, { setVolume: setVolumeSpy }, (vm) =>
-    withTestScheduler(({ expectObservable, schedule }) => {
-      schedule("-ab---c---d|", {
-        a() {
-          // Try muting by toggling
-          vm.toggleLocallyMuted();
-          expect(setVolumeSpy).toHaveBeenLastCalledWith(0);
-        },
-        b() {
-          // Try unmuting by dragging the slider back up
-          vm.setLocalVolume(0.6);
-          vm.setLocalVolume(0.8);
-          vm.commitLocalVolume();
-          expect(setVolumeSpy).toHaveBeenCalledWith(0.6);
-          expect(setVolumeSpy).toHaveBeenLastCalledWith(0.8);
-        },
-        c() {
-          // Try muting by dragging the slider back down
-          vm.setLocalVolume(0.2);
-          vm.setLocalVolume(0);
-          vm.commitLocalVolume();
-          expect(setVolumeSpy).toHaveBeenCalledWith(0.2);
-          expect(setVolumeSpy).toHaveBeenLastCalledWith(0);
-        },
-        d() {
-          // Try unmuting by toggling
-          vm.toggleLocallyMuted();
-          // The volume should return to the last non-zero committed volume
-          expect(setVolumeSpy).toHaveBeenLastCalledWith(0.8);
-        },
-      });
-      expectObservable(vm.localVolume$).toBe("ab(cd)(ef)g", {
-        a: 1,
-        b: 0,
-        c: 0.6,
-        d: 0.8,
-        e: 0.2,
-        f: 0,
-        g: 0.8,
-      });
-    }),
-  );
+  const vm = createRemoteMedia(rtcMembership, {}, { setVolume: setVolumeSpy });
+  withTestScheduler(({ expectObservable, schedule }) => {
+    schedule("-ab---c---d|", {
+      a() {
+        // Try muting by toggling
+        vm.toggleLocallyMuted();
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(0);
+      },
+      b() {
+        // Try unmuting by dragging the slider back up
+        vm.setLocalVolume(0.6);
+        vm.setLocalVolume(0.8);
+        vm.commitLocalVolume();
+        expect(setVolumeSpy).toHaveBeenCalledWith(0.6);
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(0.8);
+      },
+      c() {
+        // Try muting by dragging the slider back down
+        vm.setLocalVolume(0.2);
+        vm.setLocalVolume(0);
+        vm.commitLocalVolume();
+        expect(setVolumeSpy).toHaveBeenCalledWith(0.2);
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(0);
+      },
+      d() {
+        // Try unmuting by toggling
+        vm.toggleLocallyMuted();
+        // The volume should return to the last non-zero committed volume
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(0.8);
+      },
+    });
+    expectObservable(vm.localVolume$).toBe("ab(cd)(ef)g", {
+      a: 1,
+      b: 0,
+      c: 0.6,
+      d: 0.8,
+      e: 0.2,
+      f: 0,
+      g: 0.8,
+    });
+  });
 });
 
-test("toggle fit/contain for a participant's video", async () => {
-  await withRemoteMedia(rtcMembership, {}, {}, (vm) =>
-    withTestScheduler(({ expectObservable, schedule }) => {
-      schedule("-ab|", {
-        a: () => vm.toggleFitContain(),
-        b: () => vm.toggleFitContain(),
-      });
-      expectObservable(vm.cropVideo$).toBe("abc", {
-        a: true,
-        b: false,
-        c: true,
-      });
-    }),
-  );
+test("toggle fit/contain for a participant's video", () => {
+  const vm = createRemoteMedia(rtcMembership, {}, {});
+  withTestScheduler(({ expectObservable, schedule }) => {
+    schedule("-ab|", {
+      a: () => vm.toggleFitContain(),
+      b: () => vm.toggleFitContain(),
+    });
+    expectObservable(vm.cropVideo$).toBe("abc", {
+      a: true,
+      b: false,
+      c: true,
+    });
+  });
 });
 
-test("local media remembers whether it should always be shown", async () => {
-  await withLocalMedia(
+test("local media remembers whether it should always be shown", () => {
+  const vm1 = createLocalMedia(
     rtcMembership,
     {},
     mockLocalParticipant({}),
     mockMediaDevices({}),
-    (vm) =>
-      withTestScheduler(({ expectObservable, schedule }) => {
-        schedule("-a|", { a: () => vm.setAlwaysShow(false) });
-        expectObservable(vm.alwaysShow$).toBe("ab", { a: true, b: false });
-      }),
   );
+  withTestScheduler(({ expectObservable, schedule }) => {
+    schedule("-a|", { a: () => vm1.setAlwaysShow(false) });
+    expectObservable(vm1.alwaysShow$).toBe("ab", { a: true, b: false });
+  });
+
   // Next local media should start out *not* always shown
-  await withLocalMedia(
+  const vm2 = createLocalMedia(
     rtcMembership,
     {},
     mockLocalParticipant({}),
     mockMediaDevices({}),
-    (vm) =>
-      withTestScheduler(({ expectObservable, schedule }) => {
-        schedule("-a|", { a: () => vm.setAlwaysShow(true) });
-        expectObservable(vm.alwaysShow$).toBe("ab", { a: false, b: true });
-      }),
   );
+  withTestScheduler(({ expectObservable, schedule }) => {
+    schedule("-a|", { a: () => vm2.setAlwaysShow(true) });
+    expectObservable(vm2.alwaysShow$).toBe("ab", { a: false, b: true });
+  });
 });
 
 test("switch cameras", async () => {
@@ -164,7 +161,7 @@ test("switch cameras", async () => {
 
   const selectVideoInput = vi.fn();
 
-  await withLocalMedia(
+  const vm = createLocalMedia(
     rtcMembership,
     {},
     mockLocalParticipant({
@@ -179,27 +176,26 @@ test("switch cameras", async () => {
         select: selectVideoInput,
       },
     }),
-    async (vm) => {
-      // Switch to back camera
-      getValue(vm.switchCamera$)!();
-      expect(restartTrack).toHaveBeenCalledExactlyOnceWith({
-        facingMode: "environment",
-      });
-      await waitFor(() => {
-        expect(selectVideoInput).toHaveBeenCalledTimes(1);
-        expect(selectVideoInput).toHaveBeenCalledWith("back camera");
-      });
-      expect(deviceId).toBe("back camera");
-
-      // Switch to front camera
-      getValue(vm.switchCamera$)!();
-      expect(restartTrack).toHaveBeenCalledTimes(2);
-      expect(restartTrack).toHaveBeenLastCalledWith({ facingMode: "user" });
-      await waitFor(() => {
-        expect(selectVideoInput).toHaveBeenCalledTimes(2);
-        expect(selectVideoInput).toHaveBeenLastCalledWith("front camera");
-      });
-      expect(deviceId).toBe("front camera");
-    },
   );
+
+  // Switch to back camera
+  getValue(vm.switchCamera$)!();
+  expect(restartTrack).toHaveBeenCalledExactlyOnceWith({
+    facingMode: "environment",
+  });
+  await waitFor(() => {
+    expect(selectVideoInput).toHaveBeenCalledTimes(1);
+    expect(selectVideoInput).toHaveBeenCalledWith("back camera");
+  });
+  expect(deviceId).toBe("back camera");
+
+  // Switch to front camera
+  getValue(vm.switchCamera$)!();
+  expect(restartTrack).toHaveBeenCalledTimes(2);
+  expect(restartTrack).toHaveBeenLastCalledWith({ facingMode: "user" });
+  await waitFor(() => {
+    expect(selectVideoInput).toHaveBeenCalledTimes(2);
+    expect(selectVideoInput).toHaveBeenLastCalledWith("front camera");
+  });
+  expect(deviceId).toBe("front camera");
 });

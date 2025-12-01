@@ -8,7 +8,10 @@ Please see LICENSE in the repository root for full details.
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type RTCNotificationType } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  type RTCCallIntent,
+  type RTCNotificationType,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { pickBy } from "lodash-es";
 
 import { Config } from "./config/Config";
@@ -26,7 +29,9 @@ export enum UserIntent {
   StartNewCall = "start_call",
   JoinExistingCall = "join_existing",
   StartNewCallDM = "start_call_dm",
+  StartNewCallDMVoice = "start_call_dm_voice",
   JoinExistingCallDM = "join_existing_dm",
+  JoinExistingCallDMVoice = "join_existing_dm_voice",
   Unknown = "unknown",
 }
 
@@ -216,6 +221,27 @@ export interface UrlConfiguration {
    * This is one part to make the call matrixRTC session behave like a telephone call.
    */
   autoLeaveWhenOthersLeft: boolean;
+
+  /**
+   * If the client should behave like it is awaiting an answer if a notification was sent (wait for call pick up).
+   * This is a no-op if not combined with sendNotificationType.
+   *
+   * This entails:
+   *  - show ui that it is awaiting an answer
+   *  - play a sound that indicates that it is awaiting an answer
+   *  - auto-dismiss the call widget once the notification lifetime expires on the receivers side.
+   */
+  waitForCallPickup: boolean;
+
+  callIntent?: RTCCallIntent;
+}
+interface IntentAndPlatformDerivedConfiguration {
+  defaultAudioEnabled?: boolean;
+  defaultVideoEnabled?: boolean;
+}
+interface IntentAndPlatformDerivedConfiguration {
+  defaultAudioEnabled?: boolean;
+  defaultVideoEnabled?: boolean;
 }
 
 // If you need to add a new flag to this interface, prefer a name that describes
@@ -223,7 +249,10 @@ export interface UrlConfiguration {
 // the situations that call for this behavior ('isEmbedded'). This makes it
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
-export interface UrlParams extends UrlProperties, UrlConfiguration {}
+export interface UrlParams
+  extends UrlProperties,
+    UrlConfiguration,
+    IntentAndPlatformDerivedConfiguration {}
 
 // This is here as a stopgap, but what would be far nicer is a function that
 // takes a UrlParams and returns a query string. That would enable us to
@@ -299,8 +328,14 @@ class ParamParser {
   }
 }
 
+let urlParamCache: {
+  search?: string;
+  hash?: string;
+  params?: UrlParams;
+} = {};
+
 /**
- * Gets the app parameters for the current URL.
+ * Gets the url params and loads them from a cache if already computed.
  * @param search The URL search string
  * @param hash The URL hash
  * @returns The app parameters encoded in the URL
@@ -309,6 +344,26 @@ export const getUrlParams = (
   search = window.location.search,
   hash = window.location.hash,
 ): UrlParams => {
+  if (
+    urlParamCache.search === search &&
+    urlParamCache.hash === hash &&
+    urlParamCache.params
+  ) {
+    return urlParamCache.params;
+  }
+  const params = computeUrlParams(search, hash);
+  urlParamCache = { search, hash, params };
+
+  return params;
+};
+
+/**
+ * Gets the app parameters for the current URL.
+ * @param search The URL search string
+ * @param hash The URL hash
+ * @returns The app parameters encoded in the URL
+ */
+export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   const parser = new ParamParser(search, hash);
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
@@ -332,11 +387,10 @@ export const getUrlParams = (
     ? UserIntent.Unknown
     : (parser.getEnumParam("intent", UserIntent) ?? UserIntent.Unknown);
   // Here we only use constants and `platform` to determine the intent preset.
-  let intentPreset: UrlConfiguration;
-  const inAppDefault = {
+  let intentPreset: UrlConfiguration = {
     confineToRoom: true,
     appPrompt: false,
-    preload: true,
+    preload: false,
     header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
     showControls: true,
     hideScreensharing: false,
@@ -345,35 +399,38 @@ export const getUrlParams = (
     controlledAudioDevices: platform === "desktop" ? false : true,
     skipLobby: true,
     returnToLobby: false,
-    sendNotificationType: "notification" as RTCNotificationType,
+    sendNotificationType: "notification",
     autoLeaveWhenOthersLeft: false,
+    waitForCallPickup: false,
   };
   switch (intent) {
     case UserIntent.StartNewCall:
-      intentPreset = {
-        ...inAppDefault,
-        skipLobby: true,
-      };
+      intentPreset.skipLobby = false;
+      intentPreset.callIntent = "video";
       break;
     case UserIntent.JoinExistingCall:
-      intentPreset = {
-        ...inAppDefault,
-        skipLobby: false,
-      };
+      // On desktop this will be overridden based on which button was used to join the call
+      intentPreset.skipLobby = false;
+      intentPreset.callIntent = "video";
       break;
+    case UserIntent.StartNewCallDMVoice:
+      intentPreset.callIntent = "audio";
+    // Fall through
     case UserIntent.StartNewCallDM:
-      intentPreset = {
-        ...inAppDefault,
-        skipLobby: true,
-        autoLeaveWhenOthersLeft: true,
-      };
+      intentPreset.skipLobby = true;
+      intentPreset.sendNotificationType = "ring";
+      intentPreset.autoLeaveWhenOthersLeft = true;
+      intentPreset.waitForCallPickup = true;
+      intentPreset.callIntent = intentPreset.callIntent ?? "video";
       break;
+    case UserIntent.JoinExistingCallDMVoice:
+      intentPreset.callIntent = "audio";
+    // Fall through
     case UserIntent.JoinExistingCallDM:
-      intentPreset = {
-        ...inAppDefault,
-        skipLobby: true,
-        autoLeaveWhenOthersLeft: true,
-      };
+      // On desktop this will be overridden based on which button was used to join the call
+      intentPreset.skipLobby = true;
+      intentPreset.autoLeaveWhenOthersLeft = true;
+      intentPreset.callIntent = intentPreset.callIntent ?? "video";
       break;
     // Non widget usecase defaults
     default:
@@ -391,7 +448,31 @@ export const getUrlParams = (
         returnToLobby: false,
         sendNotificationType: undefined,
         autoLeaveWhenOthersLeft: false,
+        waitForCallPickup: false,
       };
+  }
+
+  const intentAndPlatformDerivedConfiguration: IntentAndPlatformDerivedConfiguration =
+    {};
+  // Desktop also includes web. Its anything that is not mobile.
+  const desktopMobile = platform === "desktop" ? "desktop" : "mobile";
+  switch (desktopMobile) {
+    case "desktop":
+    case "mobile":
+      switch (intent) {
+        case UserIntent.StartNewCall:
+        case UserIntent.JoinExistingCall:
+        case UserIntent.StartNewCallDM:
+        case UserIntent.JoinExistingCallDM:
+          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
+          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = true;
+          break;
+        case UserIntent.StartNewCallDMVoice:
+        case UserIntent.JoinExistingCallDMVoice:
+          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
+          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = false;
+          break;
+      }
   }
 
   const properties: UrlProperties = {
@@ -442,13 +523,29 @@ export const getUrlParams = (
       "ring",
       "notification",
     ]),
+    waitForCallPickup: parser.getFlag("waitForCallPickup"),
     autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
   };
+
+  // Log the final configuration for debugging purposes.
+  // This will only log when the cache is not yet set.
+  logger.info(
+    "UrlParams: final set of url params\n",
+    "intent:",
+    intent,
+    "\nproperties:",
+    properties,
+    "configuration:",
+    configuration,
+    "intentAndPlatformDerivedConfiguration:",
+    intentAndPlatformDerivedConfiguration,
+  );
 
   return {
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
+    ...intentAndPlatformDerivedConfiguration,
   };
 };
 

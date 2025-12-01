@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import { type RoomMember } from "matrix-js-sdk";
 import { type FC, type ComponentProps, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
@@ -32,12 +31,14 @@ interface Props extends ComponentProps<typeof animated.div> {
   video: TrackReferenceOrPlaceholder | undefined;
   videoFit: "cover" | "contain";
   mirror: boolean;
-  member: RoomMember | undefined;
+  userId: string;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
+  mxcAvatarUrl: string | undefined;
+  focusable: boolean;
   primaryButton?: ReactNode;
   raisedHandTime?: Date;
   currentReaction?: ReactionOption;
@@ -45,6 +46,8 @@ interface Props extends ComponentProps<typeof animated.div> {
   localParticipant: boolean;
   audioStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
+  // The focus url, mainly for debugging purposes
+  focusUrl?: string;
 }
 
 export const MediaView: FC<Props> = ({
@@ -56,11 +59,13 @@ export const MediaView: FC<Props> = ({
   video,
   videoFit,
   mirror,
-  member,
+  userId,
   videoEnabled,
   unencryptedWarning,
   nameTagLeadingIcon,
   displayName,
+  mxcAvatarUrl,
+  focusable,
   primaryButton,
   encryptionStatus,
   raisedHandTime,
@@ -69,6 +74,7 @@ export const MediaView: FC<Props> = ({
   localParticipant,
   audioStreamStats,
   videoStreamStats,
+  focusUrl,
   ...props
 }) => {
   const { t } = useTranslation();
@@ -89,10 +95,10 @@ export const MediaView: FC<Props> = ({
     >
       <div className={styles.bg}>
         <Avatar
-          id={member?.userId ?? displayName}
+          id={userId}
           name={displayName}
           size={avatarSize}
-          src={member?.getMxcAvatarUrl()}
+          src={mxcAvatarUrl}
           className={styles.avatar}
           style={{ display: video && videoEnabled ? "none" : "initial" }}
         />
@@ -114,6 +120,7 @@ export const MediaView: FC<Props> = ({
             miniature={avatarSize < 96}
             showTimer={handRaiseTimerVisible}
             onClick={raisedHandOnClick}
+            tabIndex={focusable ? undefined : -1}
           />
           {currentReaction && (
             <ReactionIndicator
@@ -131,6 +138,7 @@ export const MediaView: FC<Props> = ({
           <RTCConnectionStats
             audio={audioStreamStats}
             video={videoStreamStats}
+            focusUrl={focusUrl}
           />
         )}
         {/* TODO: Bring this back once encryption status is less broken */}
@@ -164,6 +172,7 @@ export const MediaView: FC<Props> = ({
               label={t("common.unencrypted")}
               placement="bottom"
               isTriggerInteractive={false}
+              nonInteractiveTriggerTabIndex={focusable ? undefined : -1}
             >
               <ErrorSolidIcon
                 width={20}

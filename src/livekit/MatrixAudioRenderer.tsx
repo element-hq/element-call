@@ -6,15 +6,16 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { getTrackReferenceId } from "@livekit/components-core";
+import { type Room as LivekitRoom } from "livekit-client";
 import { type RemoteAudioTrack, Track } from "livekit-client";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   useTracks,
   AudioTrack,
   type AudioTrackProps,
 } from "@livekit/components-react";
-import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { type ParticipantId } from "matrix-js-sdk/lib/matrixrtc";
 
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
@@ -22,11 +23,16 @@ import * as controls from "../controls";
 
 export interface MatrixAudioRendererProps {
   /**
-   * The list of participants to render audio for.
-   * This list needs to be composed based on the matrixRTC members so that we do not play audio from users
-   * that are not expected to be in the rtc session.
+   * The service URL of the LiveKit room.
    */
-  members: CallMembership[];
+  url: string;
+  livekitRoom: LivekitRoom;
+  /**
+   * The list of participant identities to render audio for.
+   * This list needs to be composed based on the matrixRTC members so that we do not play audio from users
+   * that are not expected to be in the rtc session (local user is excluded).
+   */
+  validIdentities: ParticipantId[];
   /**
    * If set to `true`, mutes all audio tracks rendered by the component.
    * @remarks
@@ -35,9 +41,9 @@ export interface MatrixAudioRendererProps {
   muted?: boolean;
 }
 
+const prefixedLogger = logger.getChild("[MatrixAudioRenderer]");
 /**
- * The `MatrixAudioRenderer` component is a drop-in solution for adding audio to your LiveKit app.
- * It takes care of handling remote participants’ audio tracks and makes sure that microphones and screen share are audible.
+ * Takes care of handling remote participants’ audio tracks and makes sure that microphones and screen share are audible.
  *
  * It also takes care of the earpiece audio configuration for iOS devices.
  * This is done by using the WebAudio API to create a stereo pan effect that mimics the earpiece audio.
@@ -49,35 +55,12 @@ export interface MatrixAudioRendererProps {
  * ```
  * @public
  */
-export function MatrixAudioRenderer({
-  members,
+export function LivekitRoomAudioRenderer({
+  url,
+  livekitRoom,
+  validIdentities,
   muted,
 }: MatrixAudioRendererProps): ReactNode {
-  const validIdentities = useMemo(
-    () =>
-      new Set(members?.map((member) => `${member.sender}:${member.deviceId}`)),
-    [members],
-  );
-
-  const loggedInvalidIdentities = useRef(new Set<string>());
-
-  /**
-   * Log an invalid livekit track identity.
-   * A invalid identity is one that does not match any of the matrix rtc members.
-   *
-   * @param identity The identity of the track that is invalid
-   * @param validIdentities The list of valid identities
-   */
-  const logInvalid = (identity: string, validIdentities: Set<string>): void => {
-    if (loggedInvalidIdentities.current.has(identity)) return;
-    logger.warn(
-      `[MatrixAudioRenderer] Audio track ${identity} has no matching matrix call member`,
-      `current members: ${Array.from(validIdentities.values())}`,
-      `track will not get rendered`,
-    );
-    loggedInvalidIdentities.current.add(identity);
-  };
-
   const tracks = useTracks(
     [
       Track.Source.Microphone,
@@ -87,25 +70,25 @@ export function MatrixAudioRenderer({
     {
       updateOnlyOn: [],
       onlySubscribed: true,
+      room: livekitRoom,
     },
-  ).filter((ref) => {
-    const isValid = validIdentities?.has(ref.participant.identity);
-    if (!isValid && !ref.participant.isLocal)
-      logInvalid(ref.participant.identity, validIdentities);
-    return (
-      !ref.participant.isLocal &&
-      ref.publication.kind === Track.Kind.Audio &&
-      isValid
-    );
-  });
-  useEffect(() => {
-    if (!tracks.some((t) => !validIdentities.has(t.participant.identity))) {
-      logger.debug(
-        `[MatrixAudioRenderer] All audio tracks have a matching matrix call member identity.`,
-      );
-      loggedInvalidIdentities.current.clear();
-    }
-  }, [tracks, validIdentities]);
+  )
+    // Only keep audio tracks
+    .filter((ref) => ref.publication.kind === Track.Kind.Audio)
+    // Only keep tracks from participants that are in the validIdentities list
+    .filter((ref) => {
+      const isValid = validIdentities.includes(ref.participant.identity);
+      if (!isValid) {
+        // Log that there is an invalid identity, that means that someone is publishing audio that is not expected to be in the call.
+        prefixedLogger.warn(
+          `Audio track ${ref.participant.identity} from ${url} has no matching matrix call member`,
+          `current members: ${validIdentities.join()}`,
+          `track will not get rendered`,
+        );
+        return false;
+      }
+      return true;
+    });
 
   // This component is also (in addition to the "only play audio for connected members" logic above)
   // responsible for mimicking earpiece audio on iPhones.

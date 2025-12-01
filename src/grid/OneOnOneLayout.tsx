@@ -9,7 +9,7 @@ import { type ReactNode, useCallback, useMemo } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
-import { type OneOnOneLayout as OneOnOneLayoutModel } from "../state/CallViewModel";
+import { type OneOnOneLayout as OneOnOneLayoutModel } from "../state/layout-types.ts";
 import { type CallLayout, arrangeTiles } from "./CallLayout";
 import styles from "./OneOnOneLayout.module.css";
 import { type DragCallback, useUpdateLayout } from "./Grid";

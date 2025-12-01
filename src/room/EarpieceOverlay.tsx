@@ -20,7 +20,7 @@ interface Props {
 export const EarpieceOverlay: FC<Props> = ({ show, onBackToVideoPressed }) => {
   const { t } = useTranslation();
   return (
-    <div className={styles.overlay} data-show={show}>
+    <div className={styles.overlay} data-show={show} aria-hidden={!show}>
       <BigIcon className={styles.icon}>
         <VoiceCallIcon aria-hidden />
       </BigIcon>

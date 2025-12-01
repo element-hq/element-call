@@ -9,16 +9,15 @@ import {
   mockRtcMembership,
   mockMatrixRoomMember,
   mockRemoteParticipant,
-  mockLocalParticipant,
 } from "./test";
 
-export const localRtcMember = mockRtcMembership("@carol:example.org", "1111");
+export const localRtcMember = mockRtcMembership("@local:example.org", "1111");
 export const localRtcMemberDevice2 = mockRtcMembership(
-  "@carol:example.org",
+  "@local:example.org",
   "2222",
 );
 export const local = mockMatrixRoomMember(localRtcMember);
-export const localParticipant = mockLocalParticipant({ identity: "" });
+// export const localParticipant = mockLocalParticipant({ identity: "" });
 export const localId = `${local.userId}:${localRtcMember.deviceId}`;
 
 export const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
@@ -38,7 +37,6 @@ export const aliceDoppelganger = mockMatrixRoomMember(
     rawDisplayName: "Alice",
   },
 );
-export const aliceDoppelgangerId = `${aliceDoppelganger.userId}:${aliceDoppelgangerRtcMember.deviceId}`;
 
 export const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
 export const bob = mockMatrixRoomMember(bobRtcMember, {
@@ -56,10 +54,8 @@ export const bobZeroWidthSpace = mockMatrixRoomMember(
     rawDisplayName: "Bo\u200bb",
   },
 );
-export const bobZeroWidthSpaceId = `${bobZeroWidthSpace.userId}:${bobZeroWidthSpaceRtcMember.deviceId}`;
 
 export const daveRTLRtcMember = mockRtcMembership("@dave2:example.org", "DDDD");
 export const daveRTL = mockMatrixRoomMember(daveRTLRtcMember, {
   rawDisplayName: "\u202eevaD",
 });
-export const daveRTLId = `${daveRTL.userId}:${daveRTLRtcMember.deviceId}`;

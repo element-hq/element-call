@@ -22,6 +22,7 @@ import {
   WebBrowserIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { Button } from "@vector-im/compound-web";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   ConnectionLostError,
@@ -36,7 +37,9 @@ import { type WidgetHelpers } from "../widget.ts";
 
 export type CallErrorRecoveryAction = "reconnect"; // | "retry" ;
 
-export type RecoveryActionHandler = (action: CallErrorRecoveryAction) => void;
+export type RecoveryActionHandler = (
+  action: CallErrorRecoveryAction,
+) => Promise<void>;
 
 interface ErrorPageProps {
   error: ElementCallError;
@@ -51,7 +54,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
   widget,
 }: ErrorPageProps): ReactElement => {
   const { t } = useTranslation();
-
+  logger.error("Error boundary caught:", error);
   let icon: ComponentType<SVGAttributes<SVGElement>>;
   switch (error.category) {
     case ErrorCategory.CONFIGURATION_ISSUE:
@@ -71,7 +74,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
   if (error instanceof ConnectionLostError) {
     actions.push({
       label: t("call_ended_view.reconnect_button"),
-      onClick: () => recoveryActionHandler("reconnect"),
+      onClick: () => void recoveryActionHandler("reconnect"),
     });
   }
 
@@ -131,9 +134,9 @@ export const GroupCallErrorBoundary = ({
           widget={widget ?? null}
           error={callError}
           resetError={resetError}
-          recoveryActionHandler={(action: CallErrorRecoveryAction) => {
+          recoveryActionHandler={async (action: CallErrorRecoveryAction) => {
+            await recoveryActionHandler(action);
             resetError();
-            recoveryActionHandler(action);
           }}
         />
       );

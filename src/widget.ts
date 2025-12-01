@@ -116,6 +116,7 @@ export const widget = ((): WidgetHelpers | null => {
         EventType.Reaction,
         EventType.RoomRedaction,
         ElementCallReactionEventType,
+        EventType.RTCDecline,
       ];
 
       const sendState = [

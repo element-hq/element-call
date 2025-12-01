@@ -43,6 +43,29 @@ module.exports = {
     // To encourage good usage of RxJS:
     "rxjs/no-exposed-subjects": "error",
     "rxjs/finnish": ["error", { names: { "^this$": false } }],
+    "no-restricted-imports": [
+      "error",
+      {
+        paths: ["matrix-widget-api", "matrix-js-sdk"].flatMap((lib) =>
+          ["src", "src/", "src/index", "lib", "lib/", "lib/index"]
+            .map((path) => `${lib}/${path}`)
+            .map((name) => ({ name, message: `Please use ${lib} instead` })),
+        ),
+        patterns: [
+          ...["matrix-widget-api"].map((lib) => ({
+            group: ["src", "src/", "src/**", "lib", "lib/", "lib/**"].map(
+              (path) => `${lib}/${path}`,
+            ),
+            message: `Please use ${lib} instead`,
+          })),
+          // XXX: We use /lib in lots of places, so allow for now.
+          ...["matrix-js-sdk"].map((lib) => ({
+            group: ["src", "src/", "src/**"].map((path) => `${lib}/${path}`),
+            message: `Please use ${lib} instead`,
+          })),
+        ],
+      },
+    ],
   },
   overrides: [
     {

@@ -33,7 +33,7 @@ import {
   ReactionsRowSize,
 } from "../reactions";
 import { Modal } from "../Modal";
-import { type CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { useBehavior } from "../useBehavior";
 
 interface InnerButtonProps extends ComponentPropsWithoutRef<"button"> {
