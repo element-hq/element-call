@@ -28,6 +28,7 @@ import {
   InlineField,
   Label,
   RadioControl,
+  Text,
 } from "@vector-im/compound-web";
 
 import { FieldRow, InputField } from "../input/Input";
@@ -41,11 +42,11 @@ import {
   matrixRTCMode as matrixRTCModeSetting,
   customLivekitUrl as customLivekitUrlSetting,
   MatrixRTCMode,
-  useSettingWithLastUpdateReason,
 } from "./settings";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
+import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 
 interface Props {
   client: MatrixClient;
@@ -93,8 +94,11 @@ export const DeveloperSettingsTab: FC<Props> = ({
     alwaysShowIphoneEarpieceSetting,
   );
 
-  const [customLivekitUrl, setCustomLivekitUrl, customLivekitUrlUpdateReason] =
-    useSettingWithLastUpdateReason(customLivekitUrlSetting);
+  const [customLivekitUrlUpdateError, setCustomLivekitUrlUpdateError] =
+    useState<string | null>(null);
+  const [customLivekitUrl, setCustomLivekitUrl] = useSetting(
+    customLivekitUrlSetting,
+  );
   const [customLivekitUrlTextBuffer, setCustomLivekitUrlTextBuffer] =
     useState(customLivekitUrl);
   useEffect(() => {
@@ -217,11 +221,11 @@ export const DeveloperSettingsTab: FC<Props> = ({
         />{" "}
       </FieldRow>
       <EditInPlace
+        serverInvalid={customLivekitUrlUpdateError !== null}
         onSubmit={(e) => e.preventDefault()}
         helpLabel={
           customLivekitUrl === null
-            ? t("developer_mode.custom_livekit_url.from_config") +
-              (customLivekitUrlUpdateReason ?? "")
+            ? t("developer_mode.custom_livekit_url.from_config")
             : t("developer_mode.custom_livekit_url.current_url") +
               customLivekitUrl
         }
@@ -230,14 +234,36 @@ export const DeveloperSettingsTab: FC<Props> = ({
         savingLabel={t("developer_mode.custom_livekit_url.saving")}
         cancelButtonLabel={t("developer_mode.custom_livekit_url.reset")}
         onSave={useCallback(
-          (e: React.FormEvent<HTMLFormElement>) => {
-            setCustomLivekitUrl(
-              customLivekitUrlTextBuffer === ""
-                ? null
-                : customLivekitUrlTextBuffer,
-            );
+          async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+            if (
+              customLivekitUrlTextBuffer === "" ||
+              customLivekitUrlTextBuffer === null
+            ) {
+              setCustomLivekitUrl(null);
+              return Promise.resolve();
+            }
+
+            try {
+              logger.debug("try setting");
+              await getSFUConfigWithOpenID(
+                client,
+                customLivekitUrlTextBuffer,
+                "Test-room-alias-" + Date.now().toString() + client.getUserId(),
+              );
+              logger.debug("done setting! Success");
+              setCustomLivekitUrlUpdateError(null);
+              setCustomLivekitUrl(customLivekitUrlTextBuffer);
+            } catch (e) {
+              logger.error("failed setting", e);
+              setCustomLivekitUrlUpdateError("invalid URL (did not update)");
+              // automatically unset the error after 4 seconds (2 seconds will be for the save label)
+              setTimeout(() => {
+                logger.debug("unsetting error");
+                setCustomLivekitUrlUpdateError(null);
+              }, 2000);
+            }
           },
-          [setCustomLivekitUrl, customLivekitUrlTextBuffer],
+          [customLivekitUrlTextBuffer, setCustomLivekitUrl, client],
         )}
         value={customLivekitUrlTextBuffer ?? ""}
         onChange={useCallback(
@@ -252,7 +278,13 @@ export const DeveloperSettingsTab: FC<Props> = ({
           },
           [setCustomLivekitUrl],
         )}
-      />
+      >
+        {customLivekitUrlUpdateError !== null && (
+          <Text size="sm" priority="low">
+            {customLivekitUrlUpdateError}
+          </Text>
+        )}
+      </EditInPlace>
       <Heading as="h3" type="body" weight="semibold" size="lg">
         {t("developer_mode.matrixRTCMode.title")}
       </Heading>
