@@ -13,6 +13,7 @@ import {
   type BaseKeyProvider,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
+// imported as inline to support worker when loaded from a cdn (cross domain)
 import E2EEWorker from "livekit-client/e2ee-worker?worker&inline";
 
 import { type ObservableScope } from "../../ObservableScope.ts";

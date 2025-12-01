@@ -4,6 +4,7 @@
     <title>Godot MatrixRTC Widget</title>
     <meta charset="utf-8" />
     <script type="module">
+      // TODO use the url where the matrixrtc-ec-godot.js file from dist is hosted
       import { createMatrixRTCSdk } from "http://localhost:8123/matrixrtc-ec-godot.js";
 
       try {
@@ -20,18 +21,43 @@
         await window.matrixRTCSdk.join();
         console.info("matrixRTCSdk joined ");
 
-        // window.matrixRTCSdk.data$.subscribe((data) => {
-        //   console.log(data);
-        //   const div = document.getElementById("data");
-        //   div.appendChild(document.createTextNode(data));
-        //   // TODO forward to godot
-        // });
+        const div = document.getElementById("data");
+        div.innerHTML = "<h3>Data:</h3>";
+
+        window.matrixRTCSdk.data$.subscribe((data) => {
+          const child = document.createElement("p");
+          child.innerHTML = JSON.stringify(data);
+          div.appendChild(child);
+          // TODO forward to godot
+        });
+
+        window.matrixRTCSdk.members$.subscribe((memberObjects) => {
+          console.info("members changed", memberObjects);
+
+          // reset div
+          const div = document.getElementById("members");
+          div.innerHTML = "<h3>Members:</h3>";
+
+          // create member list
+          const members = memberObjects.map((member) => member.userId);
+          console.info("members changed", members);
+          for (const m of members) {
+            console.info("member", m);
+            const child = document.createElement("p");
+            child.innerHTML = m;
+            div.appendChild(child);
+          }
+          // TODO forward to godot
+        });
+
+        // TODO use it as godot HTML template
         // var engine = new Engine($GODOT_CONFIG);
         // engine.startGame();
       } catch (e) {
         console.error("catchALL,", e);
       }
     </script>
+    <!--// TODO use it as godot HTML template-->
     <!--<script src="$GODOT_URL"></script>-->
   </head>
   <body>
@@ -39,6 +65,7 @@
     <button onclick="window.matrixRTCSdk.sendData({prop: 'Hello, world!'});">
       Send Text
     </button>
+    <div id="members"></div>
     <div id="data"></div>
     <canvas id="canvas"></canvas>
   </body>
