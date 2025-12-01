@@ -62,19 +62,6 @@ export function useSetting<T>(setting: Setting<T>): [T, (value: T) => void] {
   return [useBehavior(setting.value$), setting.setValue];
 }
 
-/**
- * React hook that returns a settings's current value and a setter.
- */
-export function useSettingWithLastUpdateReason<T>(
-  setting: Setting<T>,
-): [T, (value: T) => void, string | null] {
-  return [
-    useBehavior(setting.value$),
-    setting.setValue,
-    useBehavior(setting.lastUpdateReason$),
-  ];
-}
-
 // null = undecided
 export const optInAnalytics = new Setting<boolean | null>(
   "opt-in-analytics",
