@@ -309,7 +309,7 @@ export function mockLocalParticipant(
     isLocal: true,
     trackPublications: new Map(),
     publishTrack: vi.fn(),
-    unpublishTracks: vi.fn(),
+    unpublishTracks: vi.fn().mockResolvedValue([]),
     createTracks: vi.fn(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,

@@ -14,7 +14,11 @@ import { describe, expect, it, vi } from "vitest";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { BehaviorSubject, map, of } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type LocalParticipant, type LocalTrack } from "livekit-client";
+import {
+  ConnectionState as LivekitConnectionState,
+  type LocalParticipant,
+  type LocalTrack,
+} from "livekit-client";
 
 import { MatrixRTCMode } from "../../../settings/settings";
 import {
@@ -255,6 +259,7 @@ describe("LocalMembership", () => {
       }),
       state$: constant({
         state: "ConnectedToLkRoom",
+        livekitConnectionState$: constant(LivekitConnectionState.Connected),
       }),
       transport: aTransport,
     } as unknown as Connection,
