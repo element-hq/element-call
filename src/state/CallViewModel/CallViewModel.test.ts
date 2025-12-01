@@ -267,7 +267,7 @@ describe("CallViewModel", () => {
     });
   });
 
-  it.skip("screen sharing activates spotlight layout", () => {
+  test("screen sharing activates spotlight layout", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Start with no screen shares, then have Alice and Bob share their screens,
       // then return to no screen shares, then have just Alice share for a bit

@@ -15,9 +15,9 @@ import {
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
+  BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
-  EMPTY,
   filter,
   fromEvent,
   map,
@@ -28,7 +28,6 @@ import {
   pairwise,
   race,
   scan,
-  skip,
   skipWhile,
   startWith,
   Subject,
@@ -992,7 +991,14 @@ export function createCallViewModel$(
     spotlightExpandedToggle$.pipe(accumulate(false, (expanded) => !expanded)),
   );
 
-  const gridModeUserSelection$ = new Subject<GridMode>();
+  const gridModeUserSelection$ = new BehaviorSubject<GridMode>("grid");
+
+  // Callback to set the grid mode desired by the user.
+  // Notice that this is only a preference, the actual grid mode can be overridden
+  // if there is a remote screen share active.
+  const setGridMode = (value: GridMode): void => {
+    gridModeUserSelection$.next(value);
+  };
   /**
    * The layout mode of the media tile grid.
    */
@@ -1001,27 +1007,33 @@ export function createCallViewModel$(
     // automatically switch to spotlight mode and reset when screen sharing ends
     scope.behavior<GridMode>(
       gridModeUserSelection$.pipe(
-        switchMap((userSelection) =>
-          (userSelection === "spotlight"
-            ? EMPTY
-            : combineLatest([hasRemoteScreenShares$, windowMode$]).pipe(
-                skip(userSelection === null ? 0 : 1),
-                map(
-                  ([hasScreenShares, windowMode]): GridMode =>
-                    hasScreenShares || windowMode === "flat"
-                      ? "spotlight"
-                      : "grid",
-                ),
-              )
-          ).pipe(startWith(userSelection ?? "grid")),
-        ),
+        switchMap((userSelection): Observable<GridMode> => {
+          if (userSelection === "spotlight") {
+            // If already in spotlight mode, stay there
+            return of("spotlight");
+          } else {
+            // Otherwise, check if there is a remote screen share active
+            // as this could force us into spotlight mode.
+            return combineLatest([hasRemoteScreenShares$, windowMode$]).pipe(
+              map(([hasScreenShares, windowMode]): GridMode => {
+                const isFlatMode = windowMode === "flat";
+                if (hasScreenShares || isFlatMode) {
+                  logger.debug(
+                    `Forcing spotlight mode, hasScreenShares=${hasScreenShares} windowMode=${windowMode}`,
+                  );
+                  // override to spotlight mode
+                  return "spotlight";
+                } else {
+                  // respect user choice
+                  return "grid";
+                }
+              }),
+            );
+          }
+        }),
       ),
       "grid",
     );
-
-  const setGridMode = (value: GridMode): void => {
-    gridModeUserSelection$.next(value);
-  };
 
   const gridLayoutMedia$: Observable<GridLayoutMedia> = combineLatest(
     [grid$, spotlight$],
