@@ -235,14 +235,14 @@ export const createLocalMembership$ = ({
   const connected$ = scope.behavior(
     and$(
       homeserverConnected$.pipe(
-        tap((v) => logger.info("matrix: Connected state changed", v)),
+        tap((v) => logger.debug("matrix: Connected state changed", v)),
       ),
       localConnectionState$.pipe(
         switchMap((state) => {
-          logger.info("livekit: Connected state changed", state);
+          logger.debug("livekit: Connected state changed", state);
           if (!state) return of(false);
           if (state.state === "ConnectedToLkRoom") {
-            logger.info(
+            logger.debug(
               "livekit: Connected state changed (inner livekitConnectionState$)",
               state.livekitConnectionState$.value,
             );
@@ -253,7 +253,7 @@ export const createLocalMembership$ = ({
           return of(false);
         }),
       ),
-    ).pipe(tap((v) => logger.info("combined: Connected state changed", v))),
+    ).pipe(tap((v) => logger.debug("combined: Connected state changed", v))),
   );
 
   // MATRIX RELATED
