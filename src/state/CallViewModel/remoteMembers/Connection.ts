@@ -19,7 +19,7 @@ import {
   RoomEvent,
 } from "livekit-client";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, type Observable } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -50,16 +50,14 @@ export interface ConnectionOpts {
 
 export type ConnectionState =
   | { state: "Initialized" }
-  | { state: "FetchingConfig"; transport: LivekitTransport }
-  | { state: "ConnectingToLkRoom"; transport: LivekitTransport }
-  | { state: "PublishingTracks"; transport: LivekitTransport }
-  | { state: "FailedToStart"; error: Error; transport: LivekitTransport }
+  | { state: "FetchingConfig" }
+  | { state: "ConnectingToLkRoom" }
   | {
       state: "ConnectedToLkRoom";
-      livekitConnectionState$: Observable<LivekitConenctionState>;
-      transport: LivekitTransport;
+      livekitConnectionState$: Behavior<LivekitConenctionState>;
     }
-  | { state: "Stopped"; transport: LivekitTransport };
+  | { state: "FailedToStart"; error: Error }
+  | { state: "Stopped" };
 
 /**
  * A connection to a Matrix RTC LiveKit backend.
@@ -76,6 +74,22 @@ export class Connection {
    * The current state of the connection to the media transport.
    */
   public readonly state$: Behavior<ConnectionState> = this._state$;
+
+  /**
+   * The media transport to connect to.
+   */
+  public readonly transport: LivekitTransport;
+
+  public readonly livekitRoom: LivekitRoom;
+
+  private scope: ObservableScope;
+
+  /**
+   * An observable of the participants that are publishing on this connection. (Excluding our local participant)
+   * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
+   * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
+   */
+  public readonly remoteParticipants$: Behavior<PublishingParticipant[]>;
 
   /**
    * Whether the connection has been stopped.
@@ -96,7 +110,6 @@ export class Connection {
    * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
    * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
    */
-  // TODO dont make this throw and instead store a connection error state in this class?
   // TODO consider an autostart pattern...
   public async start(): Promise<void> {
     this.logger.debug("Starting Connection");
@@ -104,7 +117,6 @@ export class Connection {
     try {
       this._state$.next({
         state: "FetchingConfig",
-        transport: this.transport,
       });
       const { url, jwt } = await this.getSFUConfigWithOpenID();
       // If we were stopped while fetching the config, don't proceed to connect
@@ -112,7 +124,6 @@ export class Connection {
 
       this._state$.next({
         state: "ConnectingToLkRoom",
-        transport: this.transport,
       });
       try {
         await this.livekitRoom.connect(url, jwt);
@@ -143,8 +154,9 @@ export class Connection {
 
       this._state$.next({
         state: "ConnectedToLkRoom",
-        transport: this.transport,
-        livekitConnectionState$: connectionStateObserver(this.livekitRoom),
+        livekitConnectionState$: this.scope.behavior(
+          connectionStateObserver(this.livekitRoom),
+        ),
       });
       this.logger.info(
         "Connected to LiveKit room",
@@ -155,7 +167,6 @@ export class Connection {
       this._state$.next({
         state: "FailedToStart",
         error: error instanceof Error ? error : new Error(`${error}`),
-        transport: this.transport,
       });
       throw error;
     }
@@ -183,26 +194,11 @@ export class Connection {
     await this.livekitRoom.disconnect();
     this._state$.next({
       state: "Stopped",
-      transport: this.transport,
     });
     this.stopped = true;
   }
 
-  /**
-   * An observable of the participants that are publishing on this connection. (Excluding our local participant)
-   * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
-   * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
-   */
-  public readonly remoteParticipants$: Behavior<PublishingParticipant[]>;
-
-  /**
-   * The media transport to connect to.
-   */
-  public readonly transport: LivekitTransport;
-
   private readonly client: OpenIDClientParts;
-  public readonly livekitRoom: LivekitRoom;
-
   private readonly logger: Logger;
 
   /**
@@ -219,6 +215,7 @@ export class Connection {
     );
     const { transport, client, scope } = opts;
 
+    this.scope = scope;
     this.livekitRoom = opts.livekitRoomFactory();
     this.transport = transport;
     this.client = client;

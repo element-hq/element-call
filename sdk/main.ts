@@ -50,6 +50,8 @@ interface MatrixRTCSdk {
   leave: () => void;
   data$: Observable<{ sender: string; data: string }>;
   members$: Behavior<MatrixLivekitMember[]>;
+  /** Use the LocalMemberConnectionState returned from `join` for a more detailed connection state  */
+  connected$: Behavior<boolean>;
   sendData?: (data: unknown) => Promise<void>;
 }
 
@@ -230,7 +232,8 @@ export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
     join: (): LocalMemberConnectionState => {
       // first lets try making the widget sticky
       tryMakeSticky();
-      return callViewModel.join();
+      callViewModel.join();
+      return callViewModel.connectionState;
     },
     leave: (): void => {
       callViewModel.hangup();
@@ -238,6 +241,7 @@ export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
       livekitRoomItemsSub.unsubscribe();
     },
     data$,
+    connected$: callViewModel.connected$,
     members$: callViewModel.matrixLivekitMembers$,
     sendData,
   };

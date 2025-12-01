@@ -284,6 +284,8 @@ export function mockLivekitRoom(
 ): LivekitRoom {
   const livekitRoom = {
     options: {},
+    setE2EEEnabled: vi.fn(),
+
     ...mockEmitter(),
     ...room,
   } as Partial<LivekitRoom> as LivekitRoom;
@@ -306,7 +308,9 @@ export function mockLocalParticipant(
   return {
     isLocal: true,
     trackPublications: new Map(),
-    unpublishTracks: async () => Promise.resolve(),
+    publishTrack: vi.fn(),
+    unpublishTracks: vi.fn().mockResolvedValue([]),
+    createTracks: vi.fn(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
     ...mockEmitter(),
