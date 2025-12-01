@@ -382,17 +382,15 @@ describe("Publishing participants observations", () => {
     const bobIsAPublisher = Promise.withResolvers<void>();
     const danIsAPublisher = Promise.withResolvers<void>();
     const observedPublishers: PublishingParticipant[][] = [];
-    const s = connection.remoteParticipantsWithTracks$.subscribe(
-      (publishers) => {
-        observedPublishers.push(publishers);
-        if (publishers.some((p) => p.identity === "@bob:example.org:DEV111")) {
-          bobIsAPublisher.resolve();
-        }
-        if (publishers.some((p) => p.identity === "@dan:example.org:DEV333")) {
-          danIsAPublisher.resolve();
-        }
-      },
-    );
+    const s = connection.remoteParticipants$.subscribe((publishers) => {
+      observedPublishers.push(publishers);
+      if (publishers.some((p) => p.identity === "@bob:example.org:DEV111")) {
+        bobIsAPublisher.resolve();
+      }
+      if (publishers.some((p) => p.identity === "@dan:example.org:DEV333")) {
+        danIsAPublisher.resolve();
+      }
+    });
     onTestFinished(() => s.unsubscribe());
     // The publishingParticipants$ observable is derived from the current members of the
     // livekitRoom and the rtc membership in order to publish the members that are publishing
@@ -437,11 +435,9 @@ describe("Publishing participants observations", () => {
     const connection = setupRemoteConnection();
 
     let observedPublishers: PublishingParticipant[][] = [];
-    const s = connection.remoteParticipantsWithTracks$.subscribe(
-      (publishers) => {
-        observedPublishers.push(publishers);
-      },
-    );
+    const s = connection.remoteParticipants$.subscribe((publishers) => {
+      observedPublishers.push(publishers);
+    });
     onTestFinished(() => s.unsubscribe());
 
     let participants: RemoteParticipant[] = [

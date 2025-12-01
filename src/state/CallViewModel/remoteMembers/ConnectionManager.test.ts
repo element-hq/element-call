@@ -289,47 +289,47 @@ describe("connectionManagerData$ stream", () => {
         a: expect.toSatisfy((e) => {
           const data: ConnectionManagerData = e.value;
           expect(data.getConnections().length).toBe(2);
-          expect(data.getParticipantForTransport(TRANSPORT_1).length).toBe(0);
-          expect(data.getParticipantForTransport(TRANSPORT_2).length).toBe(0);
+          expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(0);
+          expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(0);
           return true;
         }),
         b: expect.toSatisfy((e) => {
           const data: ConnectionManagerData = e.value;
           expect(data.getConnections().length).toBe(2);
-          expect(data.getParticipantForTransport(TRANSPORT_1).length).toBe(1);
-          expect(data.getParticipantForTransport(TRANSPORT_2).length).toBe(0);
-          expect(data.getParticipantForTransport(TRANSPORT_1)[0].identity).toBe(
-            "user1A",
-          );
+          expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(1);
+          expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(0);
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_1)[0].identity,
+          ).toBe("user1A");
           return true;
         }),
         c: expect.toSatisfy((e) => {
           const data: ConnectionManagerData = e.value;
           expect(data.getConnections().length).toBe(2);
-          expect(data.getParticipantForTransport(TRANSPORT_1).length).toBe(1);
-          expect(data.getParticipantForTransport(TRANSPORT_2).length).toBe(1);
-          expect(data.getParticipantForTransport(TRANSPORT_1)[0].identity).toBe(
-            "user1A",
-          );
-          expect(data.getParticipantForTransport(TRANSPORT_2)[0].identity).toBe(
-            "user2A",
-          );
+          expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(1);
+          expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(1);
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_1)[0].identity,
+          ).toBe("user1A");
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_2)[0].identity,
+          ).toBe("user2A");
           return true;
         }),
         d: expect.toSatisfy((e) => {
           const data: ConnectionManagerData = e.value;
           expect(data.getConnections().length).toBe(2);
-          expect(data.getParticipantForTransport(TRANSPORT_1).length).toBe(2);
-          expect(data.getParticipantForTransport(TRANSPORT_2).length).toBe(1);
-          expect(data.getParticipantForTransport(TRANSPORT_1)[0].identity).toBe(
-            "user1A",
-          );
-          expect(data.getParticipantForTransport(TRANSPORT_1)[1].identity).toBe(
-            "user1B",
-          );
-          expect(data.getParticipantForTransport(TRANSPORT_2)[0].identity).toBe(
-            "user2A",
-          );
+          expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(2);
+          expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(1);
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_1)[0].identity,
+          ).toBe("user1A");
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_1)[1].identity,
+          ).toBe("user1B");
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_2)[0].identity,
+          ).toBe("user2A");
           return true;
         }),
       });

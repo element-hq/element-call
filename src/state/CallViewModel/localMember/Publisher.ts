@@ -56,15 +56,15 @@ export class Publisher {
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
     trackerProcessorState$: Behavior<ProcessorState>,
-    private logger?: Logger,
+    private logger: Logger,
   ) {
-    this.logger?.info("[PublishConnection] Create LiveKit room");
+    this.logger.info("[PublishConnection] Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
 
     const room = connection.livekitRoom;
 
     room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {
-      this.logger?.error("Failed to set E2EE enabled on room", e);
+      this.logger.error("Failed to set E2EE enabled on room", e);
     });
 
     // Setup track processor syncing (blur)
@@ -74,7 +74,7 @@ export class Publisher {
 
     this.workaroundRestartAudioInputTrackChrome(devices, scope);
     this.scope.onEnd(() => {
-      this.logger?.info(
+      this.logger.info(
         "[PublishConnection] Scope ended -> stop publishing all tracks",
       );
       void this.stopPublishing();
@@ -132,13 +132,14 @@ export class Publisher {
             video,
           })
           .catch((error) => {
-            this.logger?.error("Failed to create tracks", error);
+            this.logger.error("Failed to create tracks", error);
           })) ?? [];
     }
     return this.tracks;
   }
 
   public async startPublishing(): Promise<LocalTrack[]> {
+    this.logger.info("Start publishing");
     const lkRoom = this.connection.livekitRoom;
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     const sub = this.connection.state$.subscribe((s) => {
@@ -150,7 +151,7 @@ export class Publisher {
           reject(new Error("Failed to connect to LiveKit server"));
           break;
         default:
-          this.logger?.info("waiting for connection: ", s.state);
+          this.logger.info("waiting for connection: ", s.state);
       }
     });
     try {
@@ -160,12 +161,14 @@ export class Publisher {
     } finally {
       sub.unsubscribe();
     }
+    this.logger.info("publish ", this.tracks.length, "tracks");
     for (const track of this.tracks) {
       // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
       // with a timeout.
       await lkRoom.localParticipant.publishTrack(track).catch((error) => {
-        this.logger?.error("Failed to publish track", error);
+        this.logger.error("Failed to publish track", error);
       });
+      this.logger.info("published track ", track.kind, track.id);
 
       // TODO: check if the connection is still active? and break the loop if not?
     }
@@ -229,7 +232,7 @@ export class Publisher {
             .getTrackPublication(Track.Source.Microphone)
             ?.audioTrack?.restartTrack()
             .catch((e) => {
-              this.logger?.error(`Failed to restart audio device track`, e);
+              this.logger.error(`Failed to restart audio device track`, e);
             });
         }
       });
@@ -249,7 +252,7 @@ export class Publisher {
       selected$.pipe(scope.bind()).subscribe((device) => {
         if (lkRoom.state != LivekitConnectionState.Connected) return;
         // if (this.connectionState$.value !== ConnectionState.Connected) return;
-        this.logger?.info(
+        this.logger.info(
           "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
           lkRoom.getActiveDevice(kind),
           " !== ",
@@ -262,7 +265,7 @@ export class Publisher {
           lkRoom
             .switchActiveDevice(kind, device.id)
             .catch((e: Error) =>
-              this.logger?.error(
+              this.logger.error(
                 `Failed to sync ${kind} device with LiveKit`,
                 e,
               ),
@@ -287,10 +290,7 @@ export class Publisher {
       try {
         await lkRoom.localParticipant.setMicrophoneEnabled(desired);
       } catch (e) {
-        this.logger?.error(
-          "Failed to update LiveKit audio input mute state",
-          e,
-        );
+        this.logger.error("Failed to update LiveKit audio input mute state", e);
       }
       return lkRoom.localParticipant.isMicrophoneEnabled;
     });
@@ -298,10 +298,7 @@ export class Publisher {
       try {
         await lkRoom.localParticipant.setCameraEnabled(desired);
       } catch (e) {
-        this.logger?.error(
-          "Failed to update LiveKit video input mute state",
-          e,
-        );
+        this.logger.error("Failed to update LiveKit video input mute state", e);
       }
       return lkRoom.localParticipant.isCameraEnabled;
     });

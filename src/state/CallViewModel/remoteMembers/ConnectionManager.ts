@@ -24,7 +24,10 @@ import { type ConnectionFactory } from "./ConnectionFactory.ts";
 export class ConnectionManagerData {
   private readonly store: Map<
     string,
-    [Connection, (LocalParticipant | RemoteParticipant)[]]
+    {
+      connection: Connection;
+      participants: (LocalParticipant | RemoteParticipant)[];
+    }
   > = new Map();
 
   public constructor() {}
@@ -36,9 +39,9 @@ export class ConnectionManagerData {
     const key = this.getKey(connection.transport);
     const existing = this.store.get(key);
     if (!existing) {
-      this.store.set(key, [connection, participants]);
+      this.store.set(key, { connection, participants });
     } else {
-      existing[1].push(...participants);
+      existing.participants.push(...participants);
     }
   }
 
@@ -47,25 +50,26 @@ export class ConnectionManagerData {
   }
 
   public getConnections(): Connection[] {
-    return Array.from(this.store.values()).map(([connection]) => connection);
+    return Array.from(this.store.values()).map(({ connection }) => connection);
   }
 
   public getConnectionForTransport(
     transport: LivekitTransport,
   ): Connection | null {
-    return this.store.get(this.getKey(transport))?.[0] ?? null;
+    return this.store.get(this.getKey(transport))?.connection ?? null;
   }
 
-  public getParticipantForTransport(
+  public getParticipantsForTransport(
     transport: LivekitTransport,
   ): (LocalParticipant | RemoteParticipant)[] {
     const key = transport.livekit_service_url + "|" + transport.livekit_alias;
     const existing = this.store.get(key);
     if (existing) {
-      return existing[1];
+      return existing.participants;
     }
     return [];
   }
+
   /**
    * Get all connections where the given participant is publishing.
    * In theory, there could be several connections where the same participant is publishing but with
@@ -76,8 +80,12 @@ export class ConnectionManagerData {
     participantId: ParticipantId,
   ): Connection[] {
     const connections: Connection[] = [];
-    for (const [connection, participants] of this.store.values()) {
-      if (participants.some((p) => p.identity === participantId)) {
+    for (const { connection, participants } of this.store.values()) {
+      if (
+        participants.some(
+          (participant) => participant?.identity === participantId,
+        )
+      ) {
         connections.push(connection);
       }
     }
@@ -183,23 +191,24 @@ export function createConnectionManager$({
         const epoch = connections.epoch;
 
         // Map the connections to list of {connection, participants}[]
-        const listOfConnectionsWithPublishingParticipants =
-          connections.value.map((connection) => {
-            return connection.remoteParticipantsWithTracks$.pipe(
+        const listOfConnectionsWithParticipants = connections.value.map(
+          (connection) => {
+            return connection.remoteParticipants$.pipe(
               map((participants) => ({
                 connection,
                 participants,
               })),
             );
-          });
+          },
+        );
 
         // probably not required
-        if (listOfConnectionsWithPublishingParticipants.length === 0) {
+        if (listOfConnectionsWithParticipants.length === 0) {
           return of(new Epoch(new ConnectionManagerData(), epoch));
         }
 
         // combineLatest the several streams into a single stream with the ConnectionManagerData
-        return combineLatest(listOfConnectionsWithPublishingParticipants).pipe(
+        return combineLatest(listOfConnectionsWithParticipants).pipe(
           map(
             (lists) =>
               new Epoch(

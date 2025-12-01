@@ -264,7 +264,7 @@ export interface CallViewModel {
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
   /** use the layout instead, this is just for the godot export. */
   userMedia$: Behavior<UserMedia[]>;
-  localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null>;
+  localmatrixLivekitMembers$: Behavior<LocalMatrixLivekitMember | null>;
   /** List of participants raising their hand */
   handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
   /** List of reactions. Keys are: membership.membershipId (currently predefined as: `${membershipEvent.userId}:${membershipEvent.deviceId}`)*/
@@ -449,7 +449,7 @@ export function createCallViewModel$(
     logger: logger,
   });
 
-  const matrixLivekitMembers$ = createMatrixLivekitMembers$({
+  const { matrixLivekitMembers$ } = createMatrixLivekitMembers$({
     scope: scope,
     membershipsWithTransport$:
       membershipsAndTransports.membershipsWithTransport$,
@@ -515,7 +515,7 @@ export function createCallViewModel$(
     userId: userId,
   };
 
-  const localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null> =
+  const localmatrixLivekitMembers$: Behavior<LocalMatrixLivekitMember | null> =
     scope.behavior(
       localRtcMembership$.pipe(
         switchMap((membership) => {
@@ -607,8 +607,11 @@ export function createCallViewModel$(
   const reconnecting$ = localMembership.reconnecting$;
   const pretendToBeDisconnected$ = reconnecting$;
 
-  const audioParticipants$ = scope.behavior(
+  const livekitRoomItems$ = scope.behavior(
     matrixLivekitMembers$.pipe(
+      tap((val) => {
+        logger.debug("matrixLivekitMembers$ updated", val.value);
+      }),
       switchMap((membersWithEpoch) => {
         const members = membersWithEpoch.value;
         const a$ = combineLatest(
@@ -649,6 +652,12 @@ export function createCallViewModel$(
           return acc;
         }, []),
       ),
+      tap((val) => {
+        logger.debug(
+          "livekitRoomItems$ updated",
+          val.map((v) => v.url),
+        );
+      }),
     ),
     [],
   );
@@ -676,7 +685,7 @@ export function createCallViewModel$(
    */
   const userMedia$ = scope.behavior<UserMedia[]>(
     combineLatest([
-      localMatrixLivekitMember$,
+      localmatrixLivekitMembers$,
       matrixLivekitMembers$,
       duplicateTiles.value$,
     ]).pipe(
@@ -1489,8 +1498,7 @@ export function createCallViewModel$(
     ),
 
     participantCount$: participantCount$,
-    livekitRoomItems$: audioParticipants$,
-
+    livekitRoomItems$,
     handsRaised$: handsRaised$,
     reactions$: reactions$,
     joinSoundEffect$: joinSoundEffect$,
@@ -1510,7 +1518,7 @@ export function createCallViewModel$(
     pip$: pip$,
     layout$: layout$,
     userMedia$,
-    localMatrixLivekitMember$,
+    localmatrixLivekitMembers$,
     tileStoreGeneration$: tileStoreGeneration$,
     showSpotlightIndicators$: showSpotlightIndicators$,
     showSpeakingIndicators$: showSpeakingIndicators$,
