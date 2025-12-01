@@ -30,12 +30,14 @@ import {
   widget,
 } from "./helper";
 import { ElementWidgetActions } from "../src/widget";
+import { type MatrixLivekitMember } from "../src/state/CallViewModel/remoteMembers/MatrixLivekitMembers";
 
 interface MatrixRTCSdk {
   join: () => LocalMemberConnectionState;
   /** @throws on leave errors */
   leave: () => void;
   data$: Observable<{ sender: string; data: string }>;
+  members$: Behavior<MatrixLivekitMember[]>;
   sendData?: (data: unknown) => Promise<void>;
 }
 export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
@@ -143,7 +145,7 @@ export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
   // create sendData function
   const sendFn: Behavior<(data: string) => Promise<TextStreamInfo>> =
     scope.behavior(
-      callViewModel.localmatrixLivekitMembers$.pipe(
+      callViewModel.localMatrixLivekitMember$.pipe(
         switchMap((m) => {
           if (!m)
             return of((data: string): never => {
@@ -223,6 +225,7 @@ export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
       livekitRoomItemsSub.unsubscribe();
     },
     data$,
+    members$: callViewModel.matrixLivekitMembers$,
     sendData,
   };
 }

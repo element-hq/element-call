@@ -58,7 +58,7 @@ export class Publisher {
     trackerProcessorState$: Behavior<ProcessorState>,
     private logger: Logger,
   ) {
-    this.logger.info("[PublishConnection] Create LiveKit room");
+    this.logger.info("Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
 
     const room = connection.livekitRoom;
@@ -74,9 +74,7 @@ export class Publisher {
 
     this.workaroundRestartAudioInputTrackChrome(devices, scope);
     this.scope.onEnd(() => {
-      this.logger.info(
-        "[PublishConnection] Scope ended -> stop publishing all tracks",
-      );
+      this.logger.info("Scope ended -> stop publishing all tracks");
       void this.stopPublishing();
     });
   }

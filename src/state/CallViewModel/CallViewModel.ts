@@ -264,7 +264,8 @@ export interface CallViewModel {
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
   /** use the layout instead, this is just for the godot export. */
   userMedia$: Behavior<UserMedia[]>;
-  localmatrixLivekitMembers$: Behavior<LocalMatrixLivekitMember | null>;
+  matrixLivekitMembers$: Behavior<MatrixLivekitMember[]>;
+  localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null>;
   /** List of participants raising their hand */
   handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
   /** List of reactions. Keys are: membership.membershipId (currently predefined as: `${membershipEvent.userId}:${membershipEvent.deviceId}`)*/
@@ -446,7 +447,7 @@ export function createCallViewModel$(
         },
       ),
     ),
-    logger: logger,
+    logger,
   });
 
   const { matrixLivekitMembers$ } = createMatrixLivekitMembers$({
@@ -488,6 +489,9 @@ export function createCallViewModel$(
         mediaDevices,
         muteStates,
         trackProcessorState$,
+        logger.getChild(
+          "[Publisher " + connection.transport.livekit_service_url + "]",
+        ),
       );
     },
     connectionManager: connectionManager,
@@ -515,7 +519,7 @@ export function createCallViewModel$(
     userId: userId,
   };
 
-  const localmatrixLivekitMembers$: Behavior<LocalMatrixLivekitMember | null> =
+  const localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null> =
     scope.behavior(
       localRtcMembership$.pipe(
         switchMap((membership) => {
@@ -685,7 +689,7 @@ export function createCallViewModel$(
    */
   const userMedia$ = scope.behavior<UserMedia[]>(
     combineLatest([
-      localmatrixLivekitMembers$,
+      localMatrixLivekitMember$,
       matrixLivekitMembers$,
       duplicateTiles.value$,
     ]).pipe(
@@ -1518,7 +1522,16 @@ export function createCallViewModel$(
     pip$: pip$,
     layout$: layout$,
     userMedia$,
-    localmatrixLivekitMembers$,
+    localMatrixLivekitMember$,
+    matrixLivekitMembers$: scope.behavior(
+      matrixLivekitMembers$.pipe(
+        // TODO flatten this so its not a obs of obs.
+        map((members) => members.value),
+        tap((v) => {
+          logger.debug("matrixLivekitMembers$ updated (exported)", v);
+        }),
+      ),
+    ),
     tileStoreGeneration$: tileStoreGeneration$,
     showSpotlightIndicators$: showSpotlightIndicators$,
     showSpeakingIndicators$: showSpeakingIndicators$,
