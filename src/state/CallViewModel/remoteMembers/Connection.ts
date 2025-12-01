@@ -221,7 +221,7 @@ export class Connection {
     this.client = client;
 
     // REMOTE participants with track!!!
-    // this.remoteParticipantsWithTracks$
+    // this.remoteParticipants$
     this.remoteParticipants$ = scope.behavior(
       // only tracks remote participants
       connectedParticipantsObserver(this.livekitRoom, {
