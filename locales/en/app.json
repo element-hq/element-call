@@ -72,7 +72,6 @@
       "save": "Save",
       "saving": "Saving..."
     },
-    "custom_url_update_reason_invalid": "Auto reset, custom url was invalid!",
     "debug_tile_layout_label": "Debug tile layout",
     "device_id": "Device ID: {{id}}",
     "duplicate_tiles_label": "Number of additional tile copies per participant",
