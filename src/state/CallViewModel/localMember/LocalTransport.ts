@@ -23,7 +23,6 @@ import {
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
-import { t } from "i18next";
 
 import { type Behavior } from "../../Behavior.ts";
 import { type Epoch, type ObservableScope } from "../../ObservableScope.ts";
@@ -179,25 +178,11 @@ async function makeTransport(
 
   if (!transport) throw new MatrixRTCTransportMissingError(domain ?? ""); // this will call the jwt/sfu/get endpoint to pre create the livekit room.
 
-  try {
-    await getSFUConfigWithOpenID(
-      client,
-      transport.livekit_service_url,
-      transport.livekit_alias,
-    );
-  } catch (e) {
-    if (urlFromDevSettings !== undefined) {
-      logger.error(
-        "Failed to get SFU config with dev settings overwrite, Resetting dev settings",
-      );
-      customLivekitUrl.setValue(
-        null,
-        `\n${t("developer_mode.custom_url_update_reason_invalid")}`,
-      );
-    } else {
-      throw e;
-    }
-  }
+  await getSFUConfigWithOpenID(
+    client,
+    transport.livekit_service_url,
+    transport.livekit_alias,
+  );
 
   return transport;
 }
