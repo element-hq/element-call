@@ -101,7 +101,7 @@ import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts
 import {
   createLocalMembership$,
   enterRTCSession,
-  LocalMemberConnectionState,
+  type LocalMemberConnectionState,
   RTCBackendState,
 } from "./localMember/LocalMembership.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";

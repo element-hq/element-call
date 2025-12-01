@@ -412,8 +412,10 @@ describe("Publishing participants observations", () => {
       fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
     );
 
-    // At this point there should be no publishers
-    expect(observedPublishers.pop()!.length).toEqual(0);
+    // At this point there should be ~~no~~ publishers
+    // We do have publisher now, since we do not filter for publishers anymore (to also have participants with only data tracks)
+    // The filtering we do is just based on the matrixRTC member events.
+    expect(observedPublishers.pop()!.length).toEqual(4);
 
     participants = [
       fakeRemoteLivekitParticipant("@alice:example.org:DEV000", 1),
@@ -453,8 +455,10 @@ describe("Publishing participants observations", () => {
       fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
     }
 
-    // At this point there should be no publishers
-    expect(observedPublishers.pop()!.length).toEqual(0);
+    // At this point there should be ~~no~~ publishers
+    // We do have publisher now, since we do not filter for publishers anymore (to also have participants with only data tracks)
+    // The filtering we do is just based on the matrixRTC member events.
+    expect(observedPublishers.pop()!.length).toEqual(1);
 
     participants = [fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1)];
 
