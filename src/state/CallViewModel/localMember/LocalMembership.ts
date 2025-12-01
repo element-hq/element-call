@@ -11,6 +11,7 @@ import {
   ParticipantEvent,
   type LocalParticipant,
   type ScreenShareCaptureOptions,
+  ConnectionState,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
@@ -52,7 +53,7 @@ import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import { type Connection } from "../remoteMembers/Connection.ts";
 
-export enum LivekitState {
+export enum RTCBackendState {
   Error = "error",
   /** Not even a transport is available to the LocalMembership */
   WaitingForTransport = "waiting_for_transport",
@@ -68,17 +69,17 @@ export enum LivekitState {
   Disconnecting = "disconnecting",
 }
 
-type LocalMemberLivekitState =
-  | { state: LivekitState.Error; error: ElementCallError }
-  | { state: LivekitState.WaitingForTransport }
-  | { state: LivekitState.WaitingForConnection }
-  | { state: LivekitState.Initialized }
-  | { state: LivekitState.CreatingTracks }
-  | { state: LivekitState.ReadyToPublish }
-  | { state: LivekitState.WaitingToPublish }
-  | { state: LivekitState.Connected }
-  | { state: LivekitState.Disconnected }
-  | { state: LivekitState.Disconnecting };
+type LocalMemberRtcBackendState =
+  | { state: RTCBackendState.Error; error: ElementCallError }
+  | { state: RTCBackendState.WaitingForTransport }
+  | { state: RTCBackendState.WaitingForConnection }
+  | { state: RTCBackendState.Initialized }
+  | { state: RTCBackendState.CreatingTracks }
+  | { state: RTCBackendState.ReadyToPublish }
+  | { state: RTCBackendState.WaitingToPublish }
+  | { state: RTCBackendState.Connected }
+  | { state: RTCBackendState.Disconnected }
+  | { state: RTCBackendState.Disconnecting };
 
 export enum MatrixState {
   WaitingForTransport = "waiting_for_transport",
@@ -98,7 +99,7 @@ type LocalMemberMatrixState =
   | { state: MatrixState.Error; error: Error };
 
 export interface LocalMemberConnectionState {
-  livekit$: Behavior<LocalMemberLivekitState>;
+  livekit$: Behavior<LocalMemberRtcBackendState>;
   matrix$: Behavior<LocalMemberMatrixState>;
 }
 
@@ -155,8 +156,15 @@ export const createLocalMembership$ = ({
   muteStates,
   matrixRTCSession,
 }: Props): {
-  requestConnect: () => void;
+  /**
+   * This starts audio and video tracks. They will be reused when calling `requestConnect`.
+   */
   startTracks: () => Behavior<LocalTrack[]>;
+  /**
+   * This sets a inner state (shouldConnect) to true and instructs the js-sdk and livekit to keep the user
+   * connected to matrix and livekit.
+   */
+  requestConnect: () => void;
   requestDisconnect: () => void;
   connectionState: LocalMemberConnectionState;
   sharingScreen$: Behavior<boolean>;
@@ -228,7 +236,15 @@ export const createLocalMembership$ = ({
     and$(
       homeserverConnected$,
       localConnectionState$.pipe(
-        map((state) => (state ? state.state === "ConnectedToLkRoom" : false)),
+        switchMap((state) => {
+          if (!state) return of(false);
+          if (state.state === "ConnectedToLkRoom") {
+            state.livekitConnectionState$.pipe(
+              map((lkState) => lkState === ConnectionState.Connected),
+            );
+          }
+          return of(false);
+        }),
       ),
     ),
   );
@@ -274,9 +290,7 @@ export const createLocalMembership$ = ({
     publisher$.pipe(switchMap((p) => (p?.tracks$ ? p.tracks$ : constant([])))),
   );
   const publishing$ = scope.behavior(
-    publisher$.pipe(
-      switchMap((p) => (p?.publishing$ ? p.publishing$ : constant(false))),
-    ),
+    publisher$.pipe(switchMap((p) => p?.publishing$ ?? constant(false))),
   );
 
   const startTracks = (): Behavior<LocalTrack[]> => {
@@ -353,7 +367,7 @@ export const createLocalMembership$ = ({
       logger.error("Multiple Livkit Errors:", e);
     else fatalLivekitError$.next(e);
   };
-  const livekitState$: Behavior<LocalMemberLivekitState> = scope.behavior(
+  const livekitState$: Behavior<LocalMemberRtcBackendState> = scope.behavior(
     combineLatest([
       publisher$,
       localTransport$,
@@ -386,16 +400,17 @@ export const createLocalMembership$ = ({
           //
           // as:
           // We do have <A> but not yet <B> so we are in <MyState>
-          if (error !== null) return { state: LivekitState.Error, error };
+          if (error !== null) return { state: RTCBackendState.Error, error };
           const hasTracks = tracks.length > 0;
           if (!localTransport)
-            return { state: LivekitState.WaitingForTransport };
-          if (!publisher) return { state: LivekitState.WaitingForConnection };
-          if (!shouldStartTracks) return { state: LivekitState.Initialized };
-          if (!hasTracks) return { state: LivekitState.CreatingTracks };
-          if (!shouldConnect) return { state: LivekitState.ReadyToPublish };
-          if (!publishing) return { state: LivekitState.WaitingToPublish };
-          return { state: LivekitState.Connected };
+            return { state: RTCBackendState.WaitingForTransport };
+          if (!publisher)
+            return { state: RTCBackendState.WaitingForConnection };
+          if (!shouldStartTracks) return { state: RTCBackendState.Initialized };
+          if (!hasTracks) return { state: RTCBackendState.CreatingTracks };
+          if (!shouldConnect) return { state: RTCBackendState.ReadyToPublish };
+          if (!publishing) return { state: RTCBackendState.WaitingToPublish };
+          return { state: RTCBackendState.Connected };
         },
       ),
       distinctUntilChanged(deepCompare),
@@ -526,7 +541,7 @@ export const createLocalMembership$ = ({
     ),
   );
 
-  let toggleScreenSharing = null;
+  let toggleScreenSharing: (() => void) | null = null;
   if (
     "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
     !getUrlParams().hideScreensharing
