@@ -92,7 +92,6 @@ interface Props {
 }
 // TODO - write test for scopes (do we really need to bind scope)
 export interface IConnectionManager {
-  transports$: Behavior<Epoch<LivekitTransport[]>>;
   connectionManagerData$: Behavior<Epoch<ConnectionManagerData>>;
 }
 /**
@@ -216,7 +215,7 @@ export function createConnectionManager$({
     new Epoch(new ConnectionManagerData()),
   );
 
-  return { transports$, connectionManagerData$ };
+  return { connectionManagerData$ };
 }
 
 function removeDuplicateTransports(

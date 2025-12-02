@@ -44,12 +44,12 @@ import {
   Track,
 } from "livekit-client";
 import { randomUUID } from "crypto";
-import {
-  type RoomAndToDeviceEvents,
-  type RoomAndToDeviceEventsHandlerMap,
-} from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import { type TrackReference } from "@livekit/components-core";
 import EventEmitter from "events";
+import {
+  type KeyTransportEvents,
+  type KeyTransportEventsHandlerMap,
+} from "matrix-js-sdk/lib/matrixrtc/IKeyTransport";
 
 import {
   LocalUserMediaViewModel,
@@ -284,6 +284,8 @@ export function mockLivekitRoom(
 ): LivekitRoom {
   const livekitRoom = {
     options: {},
+    setE2EEEnabled: vi.fn(),
+
     ...mockEmitter(),
     ...room,
   } as Partial<LivekitRoom> as LivekitRoom;
@@ -306,7 +308,9 @@ export function mockLocalParticipant(
   return {
     isLocal: true,
     trackPublications: new Map(),
-    unpublishTracks: async () => Promise.resolve(),
+    publishTrack: vi.fn(),
+    unpublishTracks: vi.fn().mockResolvedValue([]),
+    createTracks: vi.fn(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
     ...mockEmitter(),
@@ -394,9 +398,9 @@ export function mockConfig(
 }
 
 export class MockRTCSession extends TypedEventEmitter<
-  MatrixRTCSessionEvent | RoomAndToDeviceEvents | MembershipManagerEvent,
-  MatrixRTCSessionEventHandlerMap &
-    RoomAndToDeviceEventsHandlerMap &
+  MatrixRTCSessionEvent | MembershipManagerEvent | KeyTransportEvents,
+  KeyTransportEventsHandlerMap &
+    MatrixRTCSessionEventHandlerMap &
     MembershipManagerEventHandlerMap
 > {
   public asMockedSession(): MockedObject<MatrixRTCSession> {

@@ -193,7 +193,7 @@ describe("Start connection states", () => {
     capturedState = capturedStates.pop();
     if (capturedState!.state === "FailedToStart") {
       expect(capturedState!.error.message).toEqual("Something went wrong");
-      expect(capturedState!.transport.livekit_alias).toEqual(
+      expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
@@ -249,7 +249,7 @@ describe("Start connection states", () => {
       expect(capturedState?.error.message).toContain(
         "SFU Config fetch failed with exception Error",
       );
-      expect(capturedState?.transport.livekit_alias).toEqual(
+      expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
@@ -313,7 +313,7 @@ describe("Start connection states", () => {
       expect(capturedState.error.message).toContain(
         "Failed to connect to livekit",
       );
-      expect(capturedState.transport.livekit_alias).toEqual(
+      expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
