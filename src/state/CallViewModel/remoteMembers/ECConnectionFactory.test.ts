@@ -20,10 +20,9 @@ import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx"
 import { constant } from "../../Behavior";
 
 // At the top of your test file, after imports
-vi.mock("livekit-client", async () => {
-  const actual = await vi.importActual("livekit-client");
+vi.mock("livekit-client", async (importOriginal) => {
   return {
-    ...actual,
+    ...(await importOriginal()),
     Room: vi.fn().mockImplementation(function (this: LivekitRoom, options) {
       const emitter = new EventEmitter();
       return {
