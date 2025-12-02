@@ -147,6 +147,8 @@ export interface CallViewModelOptions {
   livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
   /** Optional behavior overriding the local connection state, mainly for testing purposes. */
   connectionState$?: Behavior<ConnectionState>;
+  /** Optional behavior overriding the computed window size, mainly for testing purposes. */
+  windowSize$?: Behavior<{ width: number; height: number }>;
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -949,11 +951,19 @@ export function createCallViewModel$(
 
   const pipEnabled$ = scope.behavior(setPipEnabled$, false);
 
+  const windowSize$ =
+    options.windowSize$ ??
+    scope.behavior<{ width: number; height: number }>(
+      fromEvent(window, "resize").pipe(
+        startWith(null),
+        map(() => ({ width: window.innerWidth, height: window.innerHeight })),
+      ),
+    );
+
+  // A guess at what the window's mode should be based on its size and shape.
   const naturalWindowMode$ = scope.behavior<WindowMode>(
-    fromEvent(window, "resize").pipe(
-      map(() => {
-        const height = window.innerHeight;
-        const width = window.innerWidth;
+    windowSize$.pipe(
+      map(({ width, height }) => {
         if (height <= 400 && width <= 340) return "pip";
         // Our layouts for flat windows are better at adapting to a small width
         // than our layouts for narrow windows are at adapting to a small height,
@@ -963,7 +973,6 @@ export function createCallViewModel$(
         return "normal";
       }),
     ),
-    "normal",
   );
 
   /**
