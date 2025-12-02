@@ -61,7 +61,7 @@ export class MuteState<Label, Selected> {
     this.handler$.next(defaultHandler);
   }
 
-  private readonly devicesConnected$ = combineLatest([
+  private readonly canControlDevices$ = combineLatest([
     this.device.available$,
     this.forceMute$,
   ]).pipe(
@@ -71,17 +71,17 @@ export class MuteState<Label, Selected> {
   );
 
   private readonly data$ = this.scope.behavior<MuteStateData>(
-    this.devicesConnected$.pipe(
+    this.canControlDevices$.pipe(
       distinctUntilChanged(),
       withLatestFrom(
         this.enabledByDefault$,
-        (devicesConnected, enabledByDefault) => {
+        (canControlDevices, enabledByDefault) => {
           logger.info(
-            `MuteState: devices connected: ${devicesConnected}, enabled by default: ${enabledByDefault}`,
+            `MuteState: canControlDevices: ${canControlDevices}, enabled by default: ${enabledByDefault}`,
           );
-          if (!devicesConnected) {
+          if (!canControlDevices) {
             logger.info(
-              `MuteState: devices connected: ${devicesConnected}, disabling`,
+              `MuteState: devices connected: ${canControlDevices}, disabling`,
             );
             // We need to sync the mute state with the handler
             // to ensure nothing is beeing published.
