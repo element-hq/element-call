@@ -160,7 +160,7 @@ export class Publisher {
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     const sub = this.connection.state$.subscribe((s) => {
       switch (s.state) {
-        case "ConnectedToLkRoom":
+        case LivekitConnectionState.Connected:
           resolve();
           break;
         case "FailedToStart":

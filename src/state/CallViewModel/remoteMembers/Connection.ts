@@ -12,7 +12,7 @@ import {
 } from "@livekit/components-core";
 import {
   ConnectionError,
-  type ConnectionState as LivekitConenctionState,
+  type ConnectionState as LivekitConnectionState,
   type Room as LivekitRoom,
   type LocalParticipant,
   type RemoteParticipant,
@@ -47,17 +47,17 @@ export interface ConnectionOpts {
   /** Optional factory to create the LiveKit room, mainly for testing purposes. */
   livekitRoomFactory: () => LivekitRoom;
 }
-
+export enum ConnectionAdditionalState {
+  Initialized = "Initialized",
+  FetchingConfig = "FetchingConfig",
+  // FailedToStart = "FailedToStart",
+  Stopped = "Stopped",
+  ConnectingToLkRoom = "ConnectingToLkRoom",
+}
 export type ConnectionState =
-  | { state: "Initialized" }
-  | { state: "FetchingConfig" }
-  | { state: "ConnectingToLkRoom" }
-  | {
-      state: "ConnectedToLkRoom";
-      livekitConnectionState$: Behavior<LivekitConenctionState>;
-    }
-  | { state: "FailedToStart"; error: Error }
-  | { state: "Stopped" };
+  | { state: ConnectionAdditionalState }
+  | { state: LivekitConnectionState }
+  | { state: "FailedToStart"; error: Error };
 
 /**
  * A connection to a Matrix RTC LiveKit backend.
@@ -67,7 +67,7 @@ export type ConnectionState =
 export class Connection {
   // Private Behavior
   private readonly _state$ = new BehaviorSubject<ConnectionState>({
-    state: "Initialized",
+    state: ConnectionAdditionalState.Initialized,
   });
 
   /**
@@ -118,14 +118,14 @@ export class Connection {
     this.stopped = false;
     try {
       this._state$.next({
-        state: "FetchingConfig",
+        state: ConnectionAdditionalState.FetchingConfig,
       });
       const { url, jwt } = await this.getSFUConfigWithOpenID();
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
       this._state$.next({
-        state: "ConnectingToLkRoom",
+        state: ConnectionAdditionalState.ConnectingToLkRoom,
       });
       try {
         await this.livekitRoom.connect(url, jwt);
@@ -154,12 +154,13 @@ export class Connection {
       // If we were stopped while connecting, don't proceed to update state.
       if (this.stopped) return;
 
-      this._state$.next({
-        state: "ConnectedToLkRoom",
-        livekitConnectionState$: this.scope.behavior(
-          connectionStateObserver(this.livekitRoom),
-        ),
-      });
+      connectionStateObserver(this.livekitRoom)
+        .pipe(this.scope.bind())
+        .subscribe((lkState) => {
+          this._state$.next({
+            state: lkState,
+          });
+        });
     } catch (error) {
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
       this._state$.next({
@@ -191,7 +192,7 @@ export class Connection {
     if (this.stopped) return;
     await this.livekitRoom.disconnect();
     this._state$.next({
-      state: "Stopped",
+      state: ConnectionAdditionalState.Stopped,
     });
     this.stopped = true;
   }
