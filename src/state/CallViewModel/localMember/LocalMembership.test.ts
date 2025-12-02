@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  Status,
   type LivekitTransport,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -51,7 +52,7 @@ vi.mock("@livekit/components-core", () => ({
 
 describe("LocalMembership", () => {
   describe("enterRTCSession", () => {
-    it("It joins the correct Session", async () => {
+    it("It joins the correct Session", () => {
       const focusFromOlderMembership = {
         type: "livekit",
         livekit_service_url: "http://my-oldest-member-service-url.com",
@@ -107,7 +108,7 @@ describe("LocalMembership", () => {
         joinRoomSession: vi.fn(),
       }) as unknown as MatrixRTCSession;
 
-      await enterRTCSession(
+      enterRTCSession(
         mockedSession,
         {
           livekit_alias: "roomId",
@@ -136,7 +137,7 @@ describe("LocalMembership", () => {
       );
     });
 
-    it("It should not fail with configuration error if homeserver config has livekit url but not fallback", async () => {
+    it("It should not fail with configuration error if homeserver config has livekit url but not fallback", () => {
       mockConfig({});
       vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({
         "org.matrix.msc4143.rtc_foci": [
@@ -165,7 +166,7 @@ describe("LocalMembership", () => {
         joinRoomSession: vi.fn(),
       }) as unknown as MatrixRTCSession;
 
-      await enterRTCSession(
+      enterRTCSession(
         mockedSession,
         {
           livekit_alias: "roomId",
@@ -190,7 +191,6 @@ describe("LocalMembership", () => {
       leaveRoomSession: () => {},
     } as unknown as MatrixRTCSession,
     muteStates: mockMuteStates(),
-    isHomeserverConnected: constant(true),
     trackProcessorState$: constant({
       supported: false,
       processor: undefined,
@@ -198,7 +198,10 @@ describe("LocalMembership", () => {
     logger: logger,
     createPublisherFactory: vi.fn(),
     joinMatrixRTC: async (): Promise<void> => {},
-    homeserverConnected$: constant(true),
+    homeserverConnected: {
+      combined$: constant(true),
+      rtsSession$: constant(Status.Connected),
+    },
   };
 
   it("throws error on missing RTC config error", () => {
@@ -258,8 +261,7 @@ describe("LocalMembership", () => {
         } as unknown as LocalParticipant,
       }),
       state$: constant({
-        state: "ConnectedToLkRoom",
-        livekitConnectionState$: constant(LivekitConnectionState.Connected),
+        state: LivekitConnectionState.Connected,
       }),
       transport: aTransport,
     } as unknown as Connection,
@@ -268,7 +270,7 @@ describe("LocalMembership", () => {
   connectionManagerData.add(
     {
       state$: constant({
-        state: "ConnectedToLkRoom",
+        state: LivekitConnectionState.Connected,
       }),
       transport: bTransport,
     } as unknown as Connection,
@@ -443,7 +445,7 @@ describe("LocalMembership", () => {
     connectionManagerData$.next(new Epoch(connectionManagerData));
     await flushPromises();
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.Initialized,
+      state: LivekitConnectionState.Connected,
     });
     expect(publisherFactory).toHaveBeenCalledOnce();
     expect(localMembership.tracks$.value.length).toBe(0);
@@ -473,7 +475,7 @@ describe("LocalMembership", () => {
     publishResolver.resolve();
     await flushPromises();
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.Connected,
+      state: RTCBackendState.ConnectedAndPublishing,
     });
     expect(publishers[0].stopPublishing).not.toHaveBeenCalled();
 
@@ -482,7 +484,7 @@ describe("LocalMembership", () => {
     await flushPromises();
     // stays in connected state because it is stopped before the update to tracks update the state.
     expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.Connected,
+      state: RTCBackendState.ConnectedAndPublishing,
     });
     // stop all tracks after ending scopes
     expect(publishers[0].stopPublishing).toHaveBeenCalled();

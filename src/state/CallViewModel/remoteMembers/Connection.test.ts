@@ -125,7 +125,10 @@ function setupRemoteConnection(): Connection {
     };
   });
 
-  fakeLivekitRoom.connect.mockResolvedValue(undefined);
+  fakeLivekitRoom.connect.mockImplementation(async (): Promise<void> => {
+    fakeLivekitRoom.state = LivekitConnectionState.Connected;
+    return Promise.resolve();
+  });
 
   return new Connection(opts, logger);
 }
@@ -309,7 +312,7 @@ describe("Start connection states", () => {
 
     capturedState = capturedStates.pop();
 
-    if (capturedState && capturedState?.state === "FailedToStart") {
+    if (capturedState && capturedState.state === "FailedToStart") {
       expect(capturedState.error.message).toContain(
         "Failed to connect to livekit",
       );
@@ -345,7 +348,7 @@ describe("Start connection states", () => {
     const connectingState = capturedStates.shift();
     expect(connectingState?.state).toEqual("ConnectingToLkRoom");
     const connectedState = capturedStates.shift();
-    expect(connectedState?.state).toEqual("ConnectedToLkRoom");
+    expect(connectedState?.state).toEqual("connected");
   });
 
   it("shutting down the scope should stop the connection", async () => {

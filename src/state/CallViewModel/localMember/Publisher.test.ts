@@ -53,8 +53,7 @@ describe("Publisher", () => {
     scope = new ObservableScope();
     connection = {
       state$: constant({
-        state: "ConnectedToLkRoom",
-        livekitConnectionState$: constant(LivekitConenctionState.Connected),
+        state: LivekitConenctionState.Connected,
       }),
       livekitRoom: mockLivekitRoom({
         localParticipant: mockLocalParticipant({}),
