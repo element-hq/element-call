@@ -9,9 +9,8 @@ import {
   BehaviorSubject,
   combineLatest,
   map,
-  switchMap,
   type Observable,
-  of,
+  scan,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -51,33 +50,61 @@ export function createLayoutModeSwitch(
     // If the user hasn't selected spotlight and somebody starts screen sharing,
     // automatically switch to spotlight mode and reset when screen sharing ends
     scope.behavior<GridMode>(
-      gridModeUserSelection$.pipe(
-        switchMap((userSelection): Observable<GridMode> => {
-          if (userSelection === "spotlight") {
-            // If already in spotlight mode, stay there
-            return of("spotlight");
-          } else {
-            // Otherwise, check if there is a remote screen share active
-            // as this could force us into spotlight mode.
-            return combineLatest([hasRemoteScreenShares$, windowMode$]).pipe(
-              map(([hasScreenShares, windowMode]): GridMode => {
-                // TODO: strange that we do that for flat mode but not for other modes?
-                // TODO: Why is this not handled in layoutMedia$ like other window modes?
-                const isFlatMode = windowMode === "flat";
-                if (hasScreenShares || isFlatMode) {
-                  logger.debug(
-                    `Forcing spotlight mode, hasScreenShares=${hasScreenShares} windowMode=${windowMode}`,
-                  );
-                  // override to spotlight mode
-                  return "spotlight";
-                } else {
-                  // respect user choice
-                  return "grid";
-                }
-              }),
-            );
-          }
-        }),
+      combineLatest([
+        gridModeUserSelection$,
+        hasRemoteScreenShares$,
+        windowMode$,
+      ]).pipe(
+        // Scan to keep track if we have auto-switched already or not.
+        // To allow the user to override the auto-switch by selecting grid mode again.
+        scan<
+          [GridMode, boolean, WindowMode],
+          { mode: GridMode; hasAutoSwitched: boolean }
+        >(
+          (acc, [userSelection, hasScreenShares, windowMode]) => {
+            const isFlatMode = windowMode === "flat";
+
+            // Always force spotlight in flat mode, grid layout is not supported
+            // in that mode.
+            // TODO: strange that we do that for flat mode but not for other modes?
+            // TODO: Why is this not handled in layoutMedia$ like other window modes?
+            if (isFlatMode) {
+              logger.debug(`Forcing spotlight mode, windowMode=${windowMode}`);
+              return {
+                mode: "spotlight",
+                hasAutoSwitched: acc.hasAutoSwitched,
+              };
+            }
+
+            // User explicitly chose spotlight.
+            // Respect that choice.
+            if (userSelection === "spotlight") {
+              return {
+                mode: "spotlight",
+                hasAutoSwitched: acc.hasAutoSwitched,
+              };
+            }
+
+            // User has chosen grid mode. If a screen share starts, we will
+            // auto-switch to spotlight mode for better experience.
+            // But we only do it once, if the user switches back to grid mode,
+            // we respect that choice until they explicitly change it again.
+            if (hasScreenShares && !acc.hasAutoSwitched) {
+              logger.debug(
+                `Auto-switching to spotlight mode, hasScreenShares=${hasScreenShares}`,
+              );
+              return { mode: "spotlight", hasAutoSwitched: true };
+            }
+
+            // Respect user's grid choice
+            // XXX If we want to allow switching automatically again after we can
+            // return hasAutoSwitched: false here instead of keeping the previous value.
+            return { mode: "grid", hasAutoSwitched: acc.hasAutoSwitched };
+          },
+          // initial value
+          { mode: "grid", hasAutoSwitched: false },
+        ),
+        map(({ mode }) => mode),
       ),
       "grid",
     );
