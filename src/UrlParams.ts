@@ -233,6 +233,17 @@ export interface UrlConfiguration {
    */
   waitForCallPickup: boolean;
 
+  /**
+   * Whether to enable echo cancellation for audio capture.
+   * Defaults to true.
+   */
+  echoCancellation?: boolean;
+  /**
+   * Whether to enable noise suppression for audio capture.
+   * Defaults to true.
+   */
+  noiseSuppression?: boolean;
+
   callIntent?: RTCCallIntent;
 }
 interface IntentAndPlatformDerivedConfiguration {
@@ -525,6 +536,8 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     ]),
     waitForCallPickup: parser.getFlag("waitForCallPickup"),
     autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
+    noiseSuppression: parser.getFlagParam("noiseSuppression", true),
+    echoCancellation: parser.getFlagParam("echoCancellation", true),
   };
 
   // Log the final configuration for debugging purposes.
