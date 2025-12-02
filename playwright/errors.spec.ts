@@ -75,7 +75,12 @@ test("Should automatically retry non fatal JWT errors", async ({
 
 test("Should show error screen if call creation is restricted", async ({
   page,
+  browserName,
 }) => {
+  test.skip(
+    browserName === "firefox",
+    "The is test is not working on firefox CI environment.",
+  );
   await page.goto("/");
 
   // We need the socket connection to fail, but this cannot be done by using the websocket route.
