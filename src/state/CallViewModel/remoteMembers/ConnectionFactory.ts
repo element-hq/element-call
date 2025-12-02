@@ -7,10 +7,11 @@ Please see LICENSE in the repository root for full details.
 
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
-  type E2EEOptions,
   Room as LivekitRoom,
   type RoomOptions,
   type BaseKeyProvider,
+  type E2EEManagerOptions,
+  type BaseE2EEManager,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
