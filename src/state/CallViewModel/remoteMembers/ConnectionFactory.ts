@@ -59,19 +59,19 @@ export class ECConnectionFactory implements ConnectionFactory {
   ) {
     const defaultFactory = (): LivekitRoom =>
       new LivekitRoom(
-        generateRoomOption(
-          this.devices,
-          this.processorState$.value,
-          livekitKeyProvider && {
+        generateRoomOption({
+          devices: this.devices,
+          processorState: this.processorState$.value,
+          e2eeLivekitOptions: livekitKeyProvider && {
             keyProvider: livekitKeyProvider,
             // It's important that every room use a separate E2EE worker.
             // They get confused if given streams from multiple rooms.
             worker: new E2EEWorker(),
           },
-          this.controlledAudioDevices,
+          controlledAudioDevices: this.controlledAudioDevices,
           echoCancellation,
           noiseSuppression,
-        ),
+        }),
       );
     this.livekitRoomFactory = livekitRoomFactory ?? defaultFactory;
   }
@@ -96,14 +96,24 @@ export class ECConnectionFactory implements ConnectionFactory {
 /**
  *  Generate the initial LiveKit RoomOptions based on the current media devices and processor state.
  */
-function generateRoomOption(
-  devices: MediaDevices,
-  processorState: ProcessorState,
-  e2eeLivekitOptions: E2EEOptions | undefined,
-  controlledAudioDevices: boolean,
-  echoCancellation: boolean,
-  noiseSuppression: boolean,
-): RoomOptions {
+function generateRoomOption({
+  devices,
+  processorState,
+  e2eeLivekitOptions,
+  controlledAudioDevices,
+  echoCancellation,
+  noiseSuppression,
+}: {
+  devices: MediaDevices;
+  processorState: ProcessorState;
+  e2eeLivekitOptions:
+    | E2EEManagerOptions
+    | { e2eeManager: BaseE2EEManager }
+    | undefined;
+  controlledAudioDevices: boolean;
+  echoCancellation: boolean;
+  noiseSuppression: boolean;
+}): RoomOptions {
   return {
     ...defaultLiveKitOptions,
     videoCaptureDefaults: {
