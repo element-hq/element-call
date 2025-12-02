@@ -2,7 +2,7 @@
   position: fixed;
   z-index: var(--call-view-overlay-layer);
   inset: 0;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -12,6 +12,7 @@
 @keyframes fade-in {
   from {
     opacity: 0;
+    display: flex;
   }
   to {
     opacity: 1;
