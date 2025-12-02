@@ -82,7 +82,7 @@ test("Should switch to spotlight mode when there is a remote screen share", () =
   });
 });
 
-test.fails("Can manually force grid when there is a screenshare", () => {
+test("Can manually force grid when there is a screenshare", () => {
   withTestScheduler(({ cold, behavior, expectObservable, schedule }): void => {
     const { gridMode$, setGridMode } = createLayoutModeSwitch(
       scope,
@@ -95,6 +95,29 @@ test.fails("Can manually force grid when there is a screenshare", () => {
     });
 
     expectObservable(gridMode$).toBe("ggsg", {
+      g: "grid",
+      s: "spotlight",
+    });
+  });
+});
+
+test("Should not auto-switch after manually selected grid", () => {
+  withTestScheduler(({ cold, behavior, expectObservable, schedule }): void => {
+    const { gridMode$, setGridMode } = createLayoutModeSwitch(
+      scope,
+      behavior("n", { n: "normal" }),
+      cold("-ft-ft", { f: false, t: true }),
+    );
+
+    schedule("---g", {
+      g: () => setGridMode("grid"),
+    });
+
+    const expectation = "ggsg";
+    // If we did not respect manual selection, the expectation would be:
+    // const expectation = "ggsg-s";
+
+    expectObservable(gridMode$).toBe(expectation, {
       g: "grid",
       s: "spotlight",
     });
