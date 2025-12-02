@@ -18,12 +18,25 @@ Please see LICENSE in the repository root for full details.
  *  - setting up encryption and scharing keys
  */
 
-import { map, type Observable, of, Subject, switchMap, tap } from "rxjs";
-import { MatrixRTCSessionEvent } from "matrix-js-sdk/lib/matrixrtc";
-import { type TextStreamInfo } from "livekit-client/dist/src/room/types";
+import {
+  combineLatest,
+  map,
+  type Observable,
+  of,
+  shareReplay,
+  Subject,
+  switchMap,
+  tap,
+} from "rxjs";
+import {
+  type CallMembership,
+  MatrixRTCSessionEvent,
+} from "matrix-js-sdk/lib/matrixrtc";
 import {
   type Room as LivekitRoom,
   type TextStreamReader,
+  type LocalParticipant,
+  type RemoteParticipant,
 } from "livekit-client";
 
 import { type Behavior, constant } from "../src/state/Behavior";
@@ -42,14 +55,23 @@ import {
   widget,
 } from "./helper";
 import { ElementWidgetActions } from "../src/widget";
-import { type MatrixLivekitMember } from "../src/state/CallViewModel/remoteMembers/MatrixLivekitMembers";
+import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
 
 interface MatrixRTCSdk {
   join: () => LocalMemberConnectionState;
   /** @throws on leave errors */
   leave: () => void;
   data$: Observable<{ sender: string; data: string }>;
-  members$: Behavior<MatrixLivekitMember[]>;
+  /**
+   * flattened list of members
+   */
+  members$: Behavior<
+    {
+      connection: Connection | null;
+      membership: CallMembership;
+      participant: LocalParticipant | RemoteParticipant | null;
+    }[]
+  >;
   /** Use the LocalMemberConnectionState returned from `join` for a more detailed connection state  */
   connected$: Behavior<boolean>;
   sendData?: (data: unknown) => Promise<void>;
@@ -242,7 +264,30 @@ export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
     },
     data$,
     connected$: callViewModel.connected$,
-    members$: callViewModel.matrixLivekitMembers$,
+    members$: scope.behavior(
+      callViewModel.matrixLivekitMembers$.pipe(
+        switchMap((members) => {
+          const listOfMemberObservables = members.map((member) =>
+            combineLatest([
+              member.connection$,
+              member.membership$,
+              member.participant$,
+            ]).pipe(
+              map(([connection, membership, participant]) => ({
+                connection,
+                membership,
+                participant,
+              })),
+              // using shareReplay instead of a Behavior here because the behavior would need
+              // a tricky scope.end() setup.
+              shareReplay({ bufferSize: 1, refCount: true }),
+            ),
+          );
+          return combineLatest(listOfMemberObservables);
+        }),
+      ),
+      [],
+    ),
     sendData,
   };
 }

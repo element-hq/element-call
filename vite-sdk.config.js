@@ -6,26 +6,27 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { defineConfig, mergeConfig } from "vite";
-import fullConfig from "./vite.config";
+import nodePolyfills from "vite-plugin-node-stdlib-browser";
 
 const base = "./";
 
 // Config for embedded deployments (possibly hosted under a non-root path)
-export default defineConfig((env) =>
+export default defineConfig(() =>
   mergeConfig(
-    fullConfig({ ...env, packageType: "sdk" }),
     defineConfig({
+      worker: { format: "es" },
       base, // Use relative URLs to allow the app to be hosted under any path
-      // publicDir: false, // Don't serve the public directory which only contains the favicon
       build: {
+        sourcemap: true,
         manifest: true,
         lib: {
+          formats: ["es"],
           entry: "./sdk/main.ts",
-          name: "matrixrtc-sdk",
-          // the proper extensions will be added
+          name: "MatrixrtcSdk",
           fileName: "matrixrtc-sdk",
         },
       },
+      plugins: [nodePolyfills()],
     }),
   ),
 );

@@ -1519,7 +1519,6 @@ export function createCallViewModel$(
     localMatrixLivekitMember$,
     matrixLivekitMembers$: scope.behavior(
       matrixLivekitMembers$.pipe(
-        // TODO flatten this so its not a obs of obs.
         map((members) => members.value),
         tap((v) => {
           logger.debug("matrixLivekitMembers$ updated (exported)", v);
