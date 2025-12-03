@@ -12,7 +12,6 @@
 @keyframes fade-in {
   from {
     opacity: 0;
-    display: flex;
   }
   to {
     opacity: 1;
@@ -20,6 +19,7 @@
 }
 
 .overlay[data-show="true"] {
+  display: flex;
   animation: fade-in 200ms;
 }
 
@@ -29,7 +29,6 @@
   }
   to {
     opacity: 0;
-    display: none;
   }
 }
 
