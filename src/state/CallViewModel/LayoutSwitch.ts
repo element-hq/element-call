@@ -59,7 +59,13 @@ export function createLayoutModeSwitch(
         // To allow the user to override the auto-switch by selecting grid mode again.
         scan<
           [GridMode, boolean, WindowMode],
-          { mode: GridMode; hasAutoSwitched: boolean }
+          {
+            mode: GridMode;
+            /** Remember if the change was user driven or not */
+            hasAutoSwitched: boolean;
+            /** To know if it is new screen share or an already handled */
+            prevShare: boolean;
+          }
         >(
           (acc, [userSelection, hasScreenShares, windowMode]) => {
             const isFlatMode = windowMode === "flat";
@@ -73,6 +79,7 @@ export function createLayoutModeSwitch(
               return {
                 mode: "spotlight",
                 hasAutoSwitched: acc.hasAutoSwitched,
+                prevShare: hasScreenShares,
               };
             }
 
@@ -82,6 +89,7 @@ export function createLayoutModeSwitch(
               return {
                 mode: "spotlight",
                 hasAutoSwitched: acc.hasAutoSwitched,
+                prevShare: hasScreenShares,
               };
             }
 
@@ -89,20 +97,26 @@ export function createLayoutModeSwitch(
             // auto-switch to spotlight mode for better experience.
             // But we only do it once, if the user switches back to grid mode,
             // we respect that choice until they explicitly change it again.
-            if (hasScreenShares && !acc.hasAutoSwitched) {
-              logger.debug(
-                `Auto-switching to spotlight mode, hasScreenShares=${hasScreenShares}`,
-              );
-              return { mode: "spotlight", hasAutoSwitched: true };
+            const isNewShare = hasScreenShares && !acc.prevShare;
+            if (isNewShare && !acc.hasAutoSwitched) {
+              return {
+                mode: "spotlight",
+                hasAutoSwitched: true,
+                prevShare: true,
+              };
             }
 
             // Respect user's grid choice
             // XXX If we want to forbid switching automatically again after we can
             // return hasAutoSwitched: acc.hasAutoSwitched here instead of setting to false.
-            return { mode: "grid", hasAutoSwitched: false };
+            return {
+              mode: "grid",
+              hasAutoSwitched: false,
+              prevShare: hasScreenShares,
+            };
           },
           // initial value
-          { mode: "grid", hasAutoSwitched: false },
+          { mode: "grid", hasAutoSwitched: false, prevShare: false },
         ),
         map(({ mode }) => mode),
       ),
