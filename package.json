@@ -137,7 +137,6 @@
     "vite-plugin-generate-file": "^0.3.0",
     "vite-plugin-html": "^3.2.2",
     "vite-plugin-node-stdlib-browser": "^0.2.1",
-    "vite-plugin-singlefile": "^2.3.0",
     "vite-plugin-svgr": "^4.0.0",
     "vitest": "^3.0.0",
     "vitest-axe": "^1.0.0-pre.3"
