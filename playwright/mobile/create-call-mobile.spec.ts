@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { expect, test } from "@playwright/test";
 
-import { mobileTest } from "./fixture-mobile-create.ts";
+import { mobileTest } from "../fixtures/fixture-mobile-create.ts";
 
 test("@mobile Start a new call then leave and show the feedback screen", async ({
   page,
