@@ -97,9 +97,9 @@ export function createLayoutModeSwitch(
             }
 
             // Respect user's grid choice
-            // XXX If we want to allow switching automatically again after we can
-            // return hasAutoSwitched: false here instead of keeping the previous value.
-            return { mode: "grid", hasAutoSwitched: acc.hasAutoSwitched };
+            // XXX If we want to forbid switching automatically again after we can
+            // return hasAutoSwitched: acc.hasAutoSwitched here instead of setting to false.
+            return { mode: "grid", hasAutoSwitched: false };
           },
           // initial value
           { mode: "grid", hasAutoSwitched: false },
