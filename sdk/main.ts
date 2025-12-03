@@ -39,6 +39,9 @@ import {
   type RemoteParticipant,
 } from "livekit-client";
 
+// TODO how can this get fixed? to just be part of `livekit-client`
+// Can this be done in the tsconfig.json
+import { type TextStreamInfo } from "../node_modules/livekit-client/dist/src/room/types";
 import { type Behavior, constant } from "../src/state/Behavior";
 import { createCallViewModel$ } from "../src/state/CallViewModel/CallViewModel";
 import { ObservableScope } from "../src/state/ObservableScope";
