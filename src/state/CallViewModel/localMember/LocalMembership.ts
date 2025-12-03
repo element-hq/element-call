@@ -221,30 +221,6 @@ export const createLocalMembership$ = ({
     switchMap((connection) => (connection ? connection.state$ : of(null))),
   );
 
-  // /**
-  //  * Whether we are "fully" connected to the call. Accounts for both the
-  //  * connection to the MatrixRTC session and the LiveKit publish connection.
-  //  */
-  // TODO remove this and just make it one single check of livekitConnectionState$
-  // const connected$ = scope.behavior(
-  //   localConnectionState$.pipe(
-  //     switchMap((state) => {
-  //       logger.debug("livekit: Connected state changed", state);
-  //       if (!state) return of(false);
-  //       if (state.state === "ConnectedToLkRoom") {
-  //         logger.debug(
-  //           "livekit: Connected state changed (inner livekitConnectionState$)",
-  //           state.livekitConnectionState$.value,
-  //         );
-  //         return state.livekitConnectionState$.pipe(
-  //           map((lkState) => lkState === ConnectionState.Connected),
-  //         );
-  //       }
-  //       return of(false);
-  //     }),
-  //   ),
-  // );
-
   // MATRIX RELATED
 
   const reconnecting$ = scope.behavior(
@@ -365,7 +341,6 @@ export const createLocalMembership$ = ({
         map(() => true),
         startWith(false),
       ),
-      // TODO use local connection state here to give the full pciture of the livekit state!
       fatalLivekitError$,
     ]).pipe(
       map(

@@ -151,6 +151,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     setVm(vm);
 
     vm.leave$.pipe(scope.bind()).subscribe(props.onLeft);
+
     return (): void => {
       scope.end();
     };

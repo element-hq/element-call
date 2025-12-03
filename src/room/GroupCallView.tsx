@@ -314,6 +314,7 @@ export const GroupCallView: FC<Props> = ({
 
   const navigate = useNavigate();
 
+  // TODO split this into leave and onDisconnect
   const onLeft = useCallback(
     (
       reason: "timeout" | "user" | "allOthersLeft" | "decline" | "error",
