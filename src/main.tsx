@@ -16,6 +16,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
+  LogLevel,
   setLogExtension as setLKLogExtension,
   setLogLevel as setLKLogLevel,
 } from "livekit-client";
@@ -25,6 +26,7 @@ import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 import { AppViewModel } from "./state/AppViewModel";
 import { globalScope } from "./state/ObservableScope";
+import { Config } from "./config/Config.ts";
 
 window.setLKLogLevel = setLKLogLevel;
 
@@ -32,6 +34,29 @@ initRageshake().catch((e) => {
   logger.error("Failed to initialize rageshake", e);
 });
 setLKLogLevel("info");
+
+// Initialize config and set LiveKit log level accordingly
+// dev/test deployments can set the log level more verbose via config to help debugging
+Config.init()
+  .then(() => {
+    const LKLogsMapping = {
+      trace: LogLevel.trace,
+      debug: LogLevel.debug,
+      info: LogLevel.info,
+      warn: LogLevel.warn,
+      error: LogLevel.error,
+      silent: LogLevel.silent,
+    };
+    // const logLevelConfig = Config.get().logging?.livekit_log_level;
+    // DO NOT COMMIT: temporarily hardcode until we add this to config options
+    const logLevelConfig = "debug";
+
+    setLKLogLevel(LKLogsMapping[logLevelConfig ?? "info"] ?? LogLevel.info);
+  })
+  .catch((e) => {
+    logger.error("Failed to initialize config for livekit log level", e);
+  });
+
 setLKLogExtension((level, msg, context) => {
   // we pass a synthetic logger name of "livekit" to the rageshake to make it easier to read
   global.mx_rage_logger.log(level, "livekit", msg, context);

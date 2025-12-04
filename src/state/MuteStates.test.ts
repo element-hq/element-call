@@ -49,6 +49,7 @@ describe("MuteState", () => {
     } as unknown as MediaDevice<DeviceLabel, SelectedDevice>;
 
     const muteState = new MuteState(
+      "test-mutestate",
       testScope,
       deviceStub,
       constant(true),

@@ -52,12 +52,14 @@ export class MuteState<Label, Selected> {
   private readonly handler$ = new BehaviorSubject(defaultHandler);
 
   public setHandler(handler: Handler): void {
+    logger.debug(`MuteState[${this.description}]: setting handler`);
     if (this.handler$.value !== defaultHandler)
       throw new Error("Multiple mute state handlers are not supported");
     this.handler$.next(handler);
   }
 
   public unsetHandler(): void {
+    logger.debug(`MuteState[${this.description}]: removing handler`);
     this.handler$.next(defaultHandler);
   }
 
@@ -77,16 +79,19 @@ export class MuteState<Label, Selected> {
         this.enabledByDefault$,
         (canControlDevices, enabledByDefault) => {
           logger.info(
-            `MuteState: canControlDevices: ${canControlDevices}, enabled by default: ${enabledByDefault}`,
+            `MuteState[${this.description}]: canControlDevices: ${canControlDevices}, enabled by default: ${enabledByDefault}`,
           );
           if (!canControlDevices) {
             logger.info(
-              `MuteState: devices connected: ${canControlDevices}, disabling`,
+              `MuteState[${this.description}]: devices connected: ${canControlDevices}, disabling`,
             );
             // We need to sync the mute state with the handler
             // to ensure nothing is beeing published.
             this.handler$.value(false).catch((err) => {
-              logger.error("MuteState-disable: handler error", err);
+              logger.error(
+                "MuteState[${this.description}] disable: handler error",
+                err,
+              );
             });
             return { enabled$: of(false), set: null, toggle: null };
           }
@@ -102,12 +107,18 @@ export class MuteState<Label, Selected> {
             let syncing = false;
 
             const sync = async (): Promise<void> => {
-              if (enabled === latestDesired) syncing = false;
-              else {
+              if (enabled === latestDesired) {
+                syncing = false;
+              } else {
                 const previouslyEnabled = enabled;
                 enabled = await firstValueFrom(
                   this.handler$.pipe(
-                    switchMap(async (handler) => handler(latestDesired)),
+                    switchMap(async (handler) => {
+                      logger.debug(
+                        `MuteState[${this.description}]: syncing to ${latestDesired}`,
+                      );
+                      return handler(latestDesired);
+                    }),
                   ),
                 );
                 if (enabled === previouslyEnabled) {
@@ -117,7 +128,10 @@ export class MuteState<Label, Selected> {
                   syncing = true;
                   sync().catch((err) => {
                     // TODO: better error handling
-                    logger.error("MuteState: handler error", err);
+                    logger.error(
+                      "MuteState[${this.description}]: handler error",
+                      err,
+                    );
                   });
                 }
               }
@@ -129,7 +143,10 @@ export class MuteState<Label, Selected> {
                 syncing = true;
                 sync().catch((err) => {
                   // TODO: better error handling
-                  logger.error("MuteState: handler error", err);
+                  logger.error(
+                    "MuteState[${this.description}]: handler error",
+                    err,
+                  );
                 });
               }
             });
@@ -158,6 +175,8 @@ export class MuteState<Label, Selected> {
   );
 
   public constructor(
+    // A description for logging purposes
+    private readonly description: string,
     private readonly scope: ObservableScope,
     private readonly device: MediaDevice<Label, Selected>,
     private readonly joined$: Observable<boolean>,
@@ -189,6 +208,7 @@ export class MuteStates {
   );
 
   public readonly audio = new MuteState(
+    "audio-mutestate",
     this.scope,
     this.mediaDevices.audioInput,
     this.joined$,
@@ -196,6 +216,7 @@ export class MuteStates {
     constant(false),
   );
   public readonly video = new MuteState(
+    "video-mutestate",
     this.scope,
     this.mediaDevices.videoInput,
     this.joined$,

@@ -168,6 +168,15 @@ export interface ResolvedConfigOptions extends ConfigOptions {
     enable_video: boolean;
   };
   app_prompt: boolean;
+  logging?: {
+    livekit_log_level?:
+      | "trace"
+      | "debug"
+      | "info"
+      | "warn"
+      | "error"
+      | "silent";
+  };
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
@@ -186,4 +195,7 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
     enable_video: true,
   },
   app_prompt: true,
+  logging: {
+    livekit_log_level: "info",
+  },
 };

@@ -45,14 +45,16 @@ import {
  * The Publisher is also responsible for creating the media tracks.
  */
 export class Publisher {
+  private readonly logger: Logger;
+
   /**
    * Creates a new Publisher.
    * @param scope - The observable scope to use for managing the publisher.
    * @param connection - The connection to use for publishing.
    * @param devices - The media devices to use for audio and video input.
    * @param muteStates - The mute states for audio and video.
-   * @param e2eeLivekitOptions - The E2EE options to use for the LiveKit room. Use to share the same key provider across connections!.
    * @param trackerProcessorState$ - The processor state for the video track processor (e.g. background blur).
+   * @param logger - the parent logger
    */
   public constructor(
     private scope: ObservableScope,
@@ -60,8 +62,9 @@ export class Publisher {
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
     trackerProcessorState$: Behavior<ProcessorState>,
-    private logger: Logger,
+    logger: Logger,
   ) {
+    this.logger = logger.getChild(`[Publisher]`);
     this.logger.info("Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
 
@@ -149,6 +152,7 @@ export class Publisher {
 
   private _publishing$ = new BehaviorSubject<boolean>(false);
   public publishing$ = this.scope.behavior(this._publishing$);
+
   /**
    *
    * @returns
@@ -233,6 +237,7 @@ export class Publisher {
    * Stops all tracks that are currently running
    */
   public stopTracks(): void {
+    this.logger.debug("stopTracks called");
     this.tracks$.value.forEach((t) => t.stop());
     this._tracks$.next([]);
   }
@@ -337,6 +342,7 @@ export class Publisher {
   private observeMuteStates(scope: ObservableScope): void {
     const lkRoom = this.connection.livekitRoom;
     this.muteStates.audio.setHandler(async (desired) => {
+      this.logger.debug(`Syncing LiveKit audio mute state to ${desired}`);
       try {
         await lkRoom.localParticipant.setMicrophoneEnabled(desired);
       } catch (e) {
@@ -345,6 +351,7 @@ export class Publisher {
       return lkRoom.localParticipant.isMicrophoneEnabled;
     });
     this.muteStates.video.setHandler(async (desired) => {
+      this.logger.debug(`Syncing LiveKit video mute state to ${desired}`);
       try {
         await lkRoom.localParticipant.setCameraEnabled(desired);
       } catch (e) {

@@ -477,9 +477,7 @@ export function createCallViewModel$(
         mediaDevices,
         muteStates,
         trackProcessorState$,
-        logger.getChild(
-          "[Publisher" + connection.transport.livekit_service_url + "]",
-        ),
+        logger.getChild(`[${connection.transport.livekit_service_url}]`),
       );
     },
     connectionManager: connectionManager,
