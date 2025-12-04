@@ -19,7 +19,7 @@ export interface SFUConfig {
 // The bits we need from MatrixClient
 export type OpenIDClientParts = Pick<
   MatrixClient,
-  "getOpenIdToken" | "getDeviceId"
+  "getOpenIdToken" | "getDeviceId" | "baseUrl" | "getUserId"
 >;
 /**
  * Gets a bearer token from the homeserver and then use it to authenticate
@@ -73,9 +73,17 @@ async function getLiveKitJWT(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        room: roomName,
+        room_id: roomName,
+        slot_id: "m.call#ROOM",
         openid_token: openIDToken,
-        device_id: client.getDeviceId(),
+        member: {
+          id: (client.getUserId() ?? "") + client.getDeviceId(),
+          claimed_user_id: client.getUserId(),
+          claimed_device_id: client.getDeviceId(),
+        },
+        delay_id: "12345",
+        delay_timeout: 10000,
+        delay_cs_api_url: client.baseUrl
       }),
     });
     if (!res.ok) {
