@@ -15,9 +15,9 @@ export interface MobileCreateFixtures {
 }
 
 export const mobileTest = test.extend<MobileCreateFixtures>({
-  asMobile: async ({ browser }, puse) => {
+  asMobile: async ({ browser }, pUse) => {
     const fixtures = await createCallAndInvite(browser);
-    await puse({
+    await pUse({
       creatorPage: fixtures.page,
       inviteLink: fixtures.inviteLink,
     });
