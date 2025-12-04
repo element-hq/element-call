@@ -144,6 +144,23 @@ test("Should switch back to grid mode when the remote screen share ends", () => 
   });
 });
 
+test("can auto-switch to spotlight again after first screen share ends", () => {
+  withTestScheduler(({ cold, behavior, expectObservable }): void => {
+    const shareMarble = "ftft";
+    const gridsMarble = "gsgs";
+    const { gridMode$ } = createLayoutModeSwitch(
+      scope,
+      behavior("n", { n: "normal" }),
+      cold(shareMarble, { f: false, t: true }),
+    );
+
+    expectObservable(gridMode$).toBe(gridsMarble, {
+      g: "grid",
+      s: "spotlight",
+    });
+  });
+});
+
 test("can switch manually to grid after screen share while manually in spotlight", () => {
   withTestScheduler(({ cold, behavior, schedule, expectObservable }): void => {
     // Initially, no one is sharing. Then the user manually switches to

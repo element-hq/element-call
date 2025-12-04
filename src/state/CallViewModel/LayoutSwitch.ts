@@ -64,10 +64,10 @@ export function createLayoutModeSwitch(
             /** Remember if the change was user driven or not */
             hasAutoSwitched: boolean;
             /** To know if it is new screen share or an already handled */
-            prevShare: boolean;
+            hasScreenShares: boolean;
           }
         >(
-          (acc, [userSelection, hasScreenShares, windowMode]) => {
+          (prev, [userSelection, hasScreenShares, windowMode]) => {
             const isFlatMode = windowMode === "flat";
 
             // Always force spotlight in flat mode, grid layout is not supported
@@ -78,8 +78,8 @@ export function createLayoutModeSwitch(
               logger.debug(`Forcing spotlight mode, windowMode=${windowMode}`);
               return {
                 mode: "spotlight",
-                hasAutoSwitched: acc.hasAutoSwitched,
-                prevShare: hasScreenShares,
+                hasAutoSwitched: prev.hasAutoSwitched,
+                hasScreenShares,
               };
             }
 
@@ -88,8 +88,8 @@ export function createLayoutModeSwitch(
             if (userSelection === "spotlight") {
               return {
                 mode: "spotlight",
-                hasAutoSwitched: acc.hasAutoSwitched,
-                prevShare: hasScreenShares,
+                hasAutoSwitched: prev.hasAutoSwitched,
+                hasScreenShares,
               };
             }
 
@@ -97,12 +97,12 @@ export function createLayoutModeSwitch(
             // auto-switch to spotlight mode for better experience.
             // But we only do it once, if the user switches back to grid mode,
             // we respect that choice until they explicitly change it again.
-            const isNewShare = hasScreenShares && !acc.prevShare;
-            if (isNewShare && !acc.hasAutoSwitched) {
+            const isNewShare = hasScreenShares && !prev.hasScreenShares;
+            if (isNewShare && !prev.hasAutoSwitched) {
               return {
                 mode: "spotlight",
                 hasAutoSwitched: true,
-                prevShare: true,
+                hasScreenShares: true,
               };
             }
 
@@ -112,11 +112,11 @@ export function createLayoutModeSwitch(
             return {
               mode: "grid",
               hasAutoSwitched: false,
-              prevShare: hasScreenShares,
+              hasScreenShares,
             };
           },
           // initial value
-          { mode: "grid", hasAutoSwitched: false, prevShare: false },
+          { mode: "grid", hasAutoSwitched: false, hasScreenShares: false },
         ),
         map(({ mode }) => mode),
       ),
