@@ -502,6 +502,48 @@ describe("CallViewModel", () => {
     });
   });
 
+  test("layout reacts to window size", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      const windowSizeInputMarbles = "abc";
+      const expectedLayoutMarbles = " abc";
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant]),
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          windowSize$: behavior(windowSizeInputMarbles, {
+            a: { width: 300, height: 600 }, // Start very narrow, like a phone
+            b: { width: 1000, height: 800 }, // Go to normal desktop window size
+            c: { width: 200, height: 180 }, // Go to PiP size
+          }),
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                // This is the expected one-on-one layout for a narrow window
+                type: "spotlight-expanded",
+                spotlight: [`${aliceId}:0`],
+                pip: `${localId}:0`,
+              },
+              b: {
+                // In a larger window, expect the normal one-on-one layout
+                type: "one-on-one",
+                local: `${localId}:0`,
+                remote: `${aliceId}:0`,
+              },
+              c: {
+                // In a PiP-sized window, we of course expect a PiP layout
+                type: "pip",
+                spotlight: [`${aliceId}:0`],
+              },
+            },
+          );
+        },
+      );
+    });
+  });
+
   test("spotlight speakers swap places", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Go immediately into spotlight mode for the test
