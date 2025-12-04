@@ -53,6 +53,9 @@ import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import { type Connection } from "../remoteMembers/Connection.ts";
 
+import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts"
+import { type MatrixClient } from "matrix-js-sdk";
+
 export enum RTCBackendState {
   Error = "error",
   /** Not even a transport is available to the LocalMembership */
@@ -585,14 +588,21 @@ export const createLocalMembership$ = ({
 
     // UNSAVE. Arbitrary change some types to read properties we should not have access to (private)
     // TODO this is bad and we need a proper solution to expose the delayId (or let the js-sdk take care of delegating the delayed event)
+
     const sessionWithAccessToPrivateMembers = matrixRTCSession as unknown as {
-      membershipManager: { state: { delayId: string } };
+      membershipManager: { state: { delayId: string } },
+      room: { client: MatrixClient, roomId: string } ;
     };
-    const delayId =
-      sessionWithAccessToPrivateMembers.membershipManager.state.delayId;
-    logger.debug("delayId is available", delayId);
-    // call
-    void passDelayIdToJWT(delayId);
+
+    const delayId = sessionWithAccessToPrivateMembers.membershipManager.state.delayId;
+    const roomId = sessionWithAccessToPrivateMembers.room.roomId
+    const mxClient = sessionWithAccessToPrivateMembers.room.client
+    const serviceUrl = localConnection$?.value?.transport?.livekit_service_url
+  
+    //logger.debug("delayId is available", serviceUrl, delayId, roomId, mxClient);
+    if (serviceUrl) {
+        void getJWTTokenWithDelaydEventDelegation(serviceUrl, delayId, mxClient, roomId, logger);
+    }
   });
 
   return {
@@ -689,13 +699,22 @@ export async function enterRTCSession(
   }
 }
 
-async function passDelayIdToJWT(delayId: string): Promise<void> {
-  // CHANGE ME!
-  // try{
-  //   await fetch(sth using delayId)
-  // }catch(error){
-  //   // at a minimum log the error (maybe we can do sth smarter)
-  //   logger.error(error);
-  // }
-  return Promise.resolve();
+async function getJWTTokenWithDelaydEventDelegation(
+  serviceUrl: string,
+  delayId: string,
+  client: MatrixClient,
+  matrixRoomId: string,
+  logger: Logger,
+): Promise<void> {
+  try {
+    const sfuConfig = await getSFUConfigWithOpenID(
+      client,
+      serviceUrl,
+      matrixRoomId,
+      delayId,
+    );
+    logger.debug("SFU Config retrieved successfully with delayId:", delayId, sfuConfig);
+  } catch (error) {
+    logger.error("Failed to get SFU config with OpenID:", error);
+  }
 }
