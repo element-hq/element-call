@@ -35,6 +35,7 @@ export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
   serviceUrl: string,
   matrixRoomId: string,
+  delayId: string,
 ): Promise<SFUConfig> {
   let openIdToken: IOpenIDToken;
   try {
@@ -54,6 +55,7 @@ export async function getSFUConfigWithOpenID(
     serviceUrl,
     matrixRoomId,
     openIdToken,
+    delayId,
   );
   logger.info(`Got JWT from call's active focus URL.`);
 
@@ -65,26 +67,31 @@ async function getLiveKitJWT(
   livekitServiceURL: string,
   roomName: string,
   openIDToken: IOpenIDToken,
+  delayId: string,
 ): Promise<SFUConfig> {
   try {
+    let body = {
+      room_id: roomName,
+      slot_id: "m.call#ROOM",
+      openid_token: openIDToken,
+      member: {
+        id: (client.getUserId() ?? "") + client.getDeviceId(),
+        claimed_user_id: client.getUserId(),
+        claimed_device_id: client.getDeviceId(),
+      }
+    };
+    if (delayId) {
+      body = {
+        ...body,
+        ...{delay_id: delayId, delay_timeout: 10000, delay_cs_api_url: client.baseUrl}
+      }
+    };
     const res = await fetch(livekitServiceURL + "/sfu/get", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        room_id: roomName,
-        slot_id: "m.call#ROOM",
-        openid_token: openIDToken,
-        member: {
-          id: (client.getUserId() ?? "") + client.getDeviceId(),
-          claimed_user_id: client.getUserId(),
-          claimed_device_id: client.getDeviceId(),
-        },
-        delay_id: "12345",
-        delay_timeout: 10000,
-        delay_cs_api_url: client.baseUrl
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) {
       throw new Error("SFU Config fetch failed with status code " + res.status);
