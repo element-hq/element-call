@@ -15,7 +15,6 @@ import {
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
-  BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
   filter,
@@ -127,6 +126,7 @@ import {
 } from "./remoteMembers/MatrixMemberMetadata.ts";
 import { Publisher } from "./localMember/Publisher.ts";
 import { type Connection } from "./remoteMembers/Connection.ts";
+import { createLayoutModeSwitch } from "./LayoutSwitch.ts";
 
 const logger = rootLogger.getChild("[CallViewModel]");
 //TODO
@@ -148,6 +148,8 @@ export interface CallViewModelOptions {
   livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
   /** Optional behavior overriding the local connection state, mainly for testing purposes. */
   connectionState$?: Behavior<ConnectionState>;
+  /** Optional behavior overriding the computed window size, mainly for testing purposes. */
+  windowSize$?: Behavior<{ width: number; height: number }>;
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -344,6 +346,7 @@ export interface CallViewModel {
   // DISCUSSION own membership manager ALSO this probably can be simplifis
   reconnecting$: Behavior<boolean>;
 }
+
 /**
  * A view model providing all the application logic needed to show the in-call
  * UI (may eventually be expanded to cover the lobby and feedback screens in the
@@ -414,6 +417,8 @@ export function createCallViewModel$(
     livekitKeyProvider,
     getUrlParams().controlledAudioDevices,
     options.livekitRoomFactory,
+    getUrlParams().echoCancellation,
+    getUrlParams().noiseSuppression,
   );
 
   const connectionManager = createConnectionManager$({
@@ -950,11 +955,19 @@ export function createCallViewModel$(
 
   const pipEnabled$ = scope.behavior(setPipEnabled$, false);
 
+  const windowSize$ =
+    options.windowSize$ ??
+    scope.behavior<{ width: number; height: number }>(
+      fromEvent(window, "resize").pipe(
+        startWith(null),
+        map(() => ({ width: window.innerWidth, height: window.innerHeight })),
+      ),
+    );
+
+  // A guess at what the window's mode should be based on its size and shape.
   const naturalWindowMode$ = scope.behavior<WindowMode>(
-    fromEvent(window, "resize").pipe(
-      map(() => {
-        const height = window.innerHeight;
-        const width = window.innerWidth;
+    windowSize$.pipe(
+      map(({ width, height }) => {
         if (height <= 400 && width <= 340) return "pip";
         // Our layouts for flat windows are better at adapting to a small width
         // than our layouts for narrow windows are at adapting to a small height,
@@ -964,7 +977,6 @@ export function createCallViewModel$(
         return "normal";
       }),
     ),
-    "normal",
   );
 
   /**
@@ -981,49 +993,11 @@ export function createCallViewModel$(
     spotlightExpandedToggle$.pipe(accumulate(false, (expanded) => !expanded)),
   );
 
-  const gridModeUserSelection$ = new BehaviorSubject<GridMode>("grid");
-
-  // Callback to set the grid mode desired by the user.
-  // Notice that this is only a preference, the actual grid mode can be overridden
-  // if there is a remote screen share active.
-  const setGridMode = (value: GridMode): void => {
-    gridModeUserSelection$.next(value);
-  };
-  /**
-   * The layout mode of the media tile grid.
-   */
-  const gridMode$ =
-    // If the user hasn't selected spotlight and somebody starts screen sharing,
-    // automatically switch to spotlight mode and reset when screen sharing ends
-    scope.behavior<GridMode>(
-      gridModeUserSelection$.pipe(
-        switchMap((userSelection): Observable<GridMode> => {
-          if (userSelection === "spotlight") {
-            // If already in spotlight mode, stay there
-            return of("spotlight");
-          } else {
-            // Otherwise, check if there is a remote screen share active
-            // as this could force us into spotlight mode.
-            return combineLatest([hasRemoteScreenShares$, windowMode$]).pipe(
-              map(([hasScreenShares, windowMode]): GridMode => {
-                const isFlatMode = windowMode === "flat";
-                if (hasScreenShares || isFlatMode) {
-                  logger.debug(
-                    `Forcing spotlight mode, hasScreenShares=${hasScreenShares} windowMode=${windowMode}`,
-                  );
-                  // override to spotlight mode
-                  return "spotlight";
-                } else {
-                  // respect user choice
-                  return "grid";
-                }
-              }),
-            );
-          }
-        }),
-      ),
-      "grid",
-    );
+  const { setGridMode, gridMode$ } = createLayoutModeSwitch(
+    scope,
+    windowMode$,
+    hasRemoteScreenShares$,
+  );
 
   const gridLayoutMedia$: Observable<GridLayoutMedia> = combineLatest(
     [grid$, spotlight$],
