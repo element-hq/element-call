@@ -52,61 +52,64 @@ test("@mobile Start a new call then leave and show the feedback screen", async (
   ).toBeVisible();
 });
 
-mobileTest("Start a new call as widget", async ({ asMobile, browser }) => {
-  test.slow(); // Triples the timeout
-  const { creatorPage, inviteLink } = asMobile;
+mobileTest(
+  "Test earpiece overlay in controlledAudioDevices mode",
+  async ({ asMobile, browser }) => {
+    test.slow(); // Triples the timeout
+    const { creatorPage, inviteLink } = asMobile;
 
-  // test("Show earpiece overlay when output is earpiece", async ({ browser }) => {
-  // Use reduce motion to disable animations that are making the tests a bit flaky
+    // ========
+    // ACT: The other user use the invite link to join the call as a guest
+    // ========
+    const guestInviteeContext = await browser.newContext({
+      reducedMotion: "reduce",
+    });
+    const guestPage = await guestInviteeContext.newPage();
+    await guestPage.goto(inviteLink + "&controlledAudioDevices=true");
 
-  // ========
-  // ACT: The other user use the invite link to join the call as a guest
-  // ========
-  const guestInviteeContext = await browser.newContext({
-    reducedMotion: "reduce",
-  });
-  const guestPage = await guestInviteeContext.newPage();
-  await guestPage.goto(inviteLink + "&controlledAudioDevices=true");
+    await guestPage
+      .getByRole("button", { name: "Continue in browser" })
+      .click();
 
-  await guestPage.getByRole("button", { name: "Continue in browser" }).click();
+    await guestPage.getByTestId("joincall_displayName").fill("Invitee");
+    await expect(guestPage.getByTestId("joincall_joincall")).toBeVisible();
+    await guestPage.getByTestId("joincall_joincall").click();
+    await guestPage.getByTestId("lobby_joinCall").click();
 
-  await guestPage.getByTestId("joincall_displayName").fill("Invitee");
-  await expect(guestPage.getByTestId("joincall_joincall")).toBeVisible();
-  await guestPage.getByTestId("joincall_joincall").click();
-  await guestPage.getByTestId("lobby_joinCall").click();
+    // ========
+    // ASSERT: check that there are two members in the call
+    // ========
 
-  // ========
-  // ASSERT: check that there are two members in the call
-  // ========
+    // There should be two participants now
+    await expect(
+      guestPage.getByTestId("roomHeader_participants_count"),
+    ).toContainText("2");
+    expect(await guestPage.getByTestId("videoTile").count()).toBe(2);
 
-  // There should be two participants now
-  await expect(
-    guestPage.getByTestId("roomHeader_participants_count"),
-  ).toContainText("2");
-  expect(await guestPage.getByTestId("videoTile").count()).toBe(2);
+    // Same in creator page
+    await expect(
+      creatorPage.getByTestId("roomHeader_participants_count"),
+    ).toContainText("2");
+    expect(await creatorPage.getByTestId("videoTile").count()).toBe(2);
 
-  // Same in creator page
-  await expect(
-    creatorPage.getByTestId("roomHeader_participants_count"),
-  ).toContainText("2");
-  expect(await creatorPage.getByTestId("videoTile").count()).toBe(2);
+    // TEST: control audio devices from the invitee page
 
-  // TEST: control audio devices from the invitee page
+    await guestPage.evaluate(() => {
+      window.controls.setAvailableAudioDevices([
+        { id: "speaker", name: "Speaker", isSpeaker: true },
+        { id: "earpiece", name: "Handset", isEarpiece: true },
+        { id: "headphones", name: "Headphones" },
+      ]);
+      window.controls.setAudioDevice("earpiece");
+    });
+    await expect(
+      guestPage.getByRole("heading", { name: "Handset Mode" }),
+    ).toBeVisible();
+    await expect(
+      guestPage.getByRole("button", { name: "Back to Speaker Mode" }),
+    ).toBeVisible();
 
-  await guestPage.evaluate(() => {
-    window.controls.setAvailableAudioDevices([
-      { id: "speaker", name: "Speaker", isSpeaker: true },
-      { id: "earpiece", name: "Handset", isEarpiece: true },
-      { id: "headphones", name: "Headphones" },
-    ]);
-    window.controls.setAudioDevice("earpiece");
-  });
-  await expect(
-    guestPage.getByRole("heading", { name: "Handset Mode" }),
-  ).toBeVisible();
-  await expect(
-    guestPage.getByRole("button", { name: "Back to Speaker Mode" }),
-  ).toBeVisible();
-
-  // await guestPage.pause();
-});
+    // Should auto-mute the video when earpiece is selected
+    await expect(guestPage.getByTestId("incall_videomute")).toBeDisabled();
+  },
+);
