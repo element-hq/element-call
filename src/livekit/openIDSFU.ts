@@ -69,23 +69,34 @@ async function getLiveKitJWT(
   openIDToken: IOpenIDToken,
   delayId: string,
 ): Promise<SFUConfig> {
+  // TODO: rawId is missing a random component
+  // Note This random component needs to be stored/present during the lifetime this MatrixRTC client
+  let rawId = (client.getUserId() ?? "") + client.getDeviceId()
+  
+  const utf8 = new TextEncoder().encode(rawId);
+  let idHashed = await crypto.subtle.digest('SHA-256', utf8).then((hashBuffer) => {
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(bytes => bytes.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+  });
+  
+  let body = {
+    room_id: roomName,
+    slot_id: "m.call#ROOM",
+    openid_token: openIDToken,
+    member: {
+      id: idHashed,
+      claimed_user_id: client.getUserId(),
+      claimed_device_id: client.getDeviceId(),
+    }
+  };
+  if (delayId) {
+    body = {
+      ...body,
+      ...{delay_id: delayId, delay_timeout: 10000, delay_cs_api_url: client.baseUrl}
+    }
+  };
   try {
-    let body = {
-      room_id: roomName,
-      slot_id: "m.call#ROOM",
-      openid_token: openIDToken,
-      member: {
-        id: (client.getUserId() ?? "") + client.getDeviceId(),
-        claimed_user_id: client.getUserId(),
-        claimed_device_id: client.getDeviceId(),
-      }
-    };
-    if (delayId) {
-      body = {
-        ...body,
-        ...{delay_id: delayId, delay_timeout: 10000, delay_cs_api_url: client.baseUrl}
-      }
-    };
     const res = await fetch(livekitServiceURL + "/get_token", {
       method: "POST",
       headers: {
