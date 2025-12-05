@@ -10,6 +10,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 
 import { FailToGetOpenIdToken } from "../utils/errors";
 import { doNetworkOperationWithRetry } from "../utils/matrix";
+import { Config } from "../config/Config.ts";
 
 export interface SFUConfig {
   url: string;
@@ -79,7 +80,7 @@ async function getLiveKitJWT(
     const hashHex = hashArray.map(bytes => bytes.toString(16).padStart(2, '0')).join('');
     return hashHex;
   });
-  
+
   let body = {
     room_id: roomName,
     slot_id: "m.call#ROOM",
@@ -90,12 +91,16 @@ async function getLiveKitJWT(
       claimed_device_id: client.getDeviceId(),
     }
   };
+  
   if (delayId) {
+    const { features, matrix_rtc_session: matrixRtcSessionConfig } = Config.get();
+    const delay_timeout_ms = matrixRtcSessionConfig?.delayed_leave_event_delay_ms ?? 10000
     body = {
       ...body,
-      ...{delay_id: delayId, delay_timeout: 10000, delay_cs_api_url: client.baseUrl}
+      ...{delay_id: delayId, delay_timeout: delay_timeout_ms, delay_cs_api_url: client.baseUrl}
     }
   };
+
   try {
     const res = await fetch(livekitServiceURL + "/get_token", {
       method: "POST",
