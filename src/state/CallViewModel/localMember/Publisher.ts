@@ -191,10 +191,14 @@ export class Publisher {
       // or only use the low level create/publish APIs and have our own pending publication protection.
       // Maybe we could change the livekit api to pre-load tracks without publishing them yet?
       // Are we sure this is needed at all? What are the gains?
-      const isEnabled =
-        track.kind === Track.Kind.Audio
-          ? this.muteStates.audio.enabled$.value
-          : this.muteStates.video.enabled$.value;
+      let isEnabled: boolean;
+      if (track.kind === Track.Kind.Audio) {
+        isEnabled = this.muteStates.audio.enabled$.value;
+      } else if (track.kind === Track.Kind.Video) {
+        isEnabled = this.muteStates.video.enabled$.value;
+      } else {
+        throw new Error("Unsupported track kind " + track.kind);
+      }
 
       if (!isEnabled) {
         // TODO should we also drop it?

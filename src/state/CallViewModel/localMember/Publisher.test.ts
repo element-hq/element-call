@@ -98,14 +98,19 @@ describe("Publisher", () => {
 
     (
       connection.livekitRoom.localParticipant.createTracks as Mock
-    ).mockResolvedValue([{}, {}]);
+    ).mockResolvedValue([
+      {
+        kind: "audio",
+        mute: vi.fn(),
+      },
+    ]);
 
     await expect(publisher.createAndSetupTracks()).resolves.not.toThrow();
     expect(
       connection.livekitRoom.localParticipant.createTracks,
     ).toHaveBeenCalledOnce();
 
-    // failiour due to localParticipant.publishTrack
+    // failure due to localParticipant.publishTrack
     (
       connection.livekitRoom.localParticipant.publishTrack as Mock
     ).mockRejectedValue(Error("testError"));
@@ -114,7 +119,7 @@ describe("Publisher", () => {
       new FailToStartLivekitConnection("testError"),
     );
 
-    // does not try other conenction after the first one failed
+    // does not try other connection after the first one failed
     expect(
       connection.livekitRoom.localParticipant.publishTrack,
     ).toHaveBeenCalledTimes(1);
@@ -145,7 +150,7 @@ describe("Publisher", () => {
 
     expect(
       connection.livekitRoom.localParticipant.publishTrack,
-    ).toHaveBeenCalledTimes(3);
+    ).toHaveBeenCalledTimes(2);
   });
 });
 
