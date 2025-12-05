@@ -21,6 +21,7 @@ import {
 } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
+  Button,
   EditInPlace,
   Root as Form,
   Heading,
@@ -115,6 +116,12 @@ export const DeveloperSettingsTab: FC<Props> = ({
     }
     return null;
   }, [livekitRooms]);
+
+  const [crashMe, setCrashMe] = useState(false);
+
+  if (crashMe) {
+    throw new Error("CrashMe");
+  }
 
   return (
     <>
@@ -327,6 +334,13 @@ export const DeveloperSettingsTab: FC<Props> = ({
       <pre>{JSON.stringify(env, null, 2)}</pre>
       <p>{t("developer_mode.url_params")}</p>
       <pre>{JSON.stringify(urlParams, null, 2)}</pre>
+      <Button
+        onClick={() => {
+          setCrashMe(true);
+        }}
+      >
+        CrashMe
+      </Button>
     </>
   );
 };
