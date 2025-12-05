@@ -12,7 +12,7 @@ import {
 } from "@livekit/components-core";
 import {
   ConnectionError,
-  type ConnectionState as LivekitConnectionState,
+  ConnectionState as LivekitConnectionState,
   type Room as LivekitRoom,
   type LocalParticipant,
   type RemoteParticipant,
@@ -47,17 +47,24 @@ export interface ConnectionOpts {
   /** Optional factory to create the LiveKit room, mainly for testing purposes. */
   livekitRoomFactory: () => LivekitRoom;
 }
-export enum ConnectionAdditionalState {
+export class FailedToStartError extends Error {
+  public constructor(message: string) {
+    super(message);
+    this.name = "FailedToStartError";
+  }
+}
+
+export enum ConnectionState {
   Initialized = "Initialized",
   FetchingConfig = "FetchingConfig",
-  // FailedToStart = "FailedToStart",
   Stopped = "Stopped",
   ConnectingToLkRoom = "ConnectingToLkRoom",
+  LivekitDisconnected = "disconnected",
+  LivekitConnecting = "connecting",
+  LivekitConnected = "connected",
+  LivekitReconnecting = "reconnecting",
+  LivekitSignalReconnecting = "signalReconnecting",
 }
-export type ConnectionState =
-  | { state: ConnectionAdditionalState }
-  | { state: LivekitConnectionState }
-  | { state: "FailedToStart"; error: Error };
 
 /**
  * A connection to a Matrix RTC LiveKit backend.
@@ -66,14 +73,15 @@ export type ConnectionState =
  */
 export class Connection {
   // Private Behavior
-  private readonly _state$ = new BehaviorSubject<ConnectionState>({
-    state: ConnectionAdditionalState.Initialized,
-  });
+  private readonly _state$ = new BehaviorSubject<
+    ConnectionState | FailedToStartError
+  >(ConnectionState.Initialized);
 
   /**
    * The current state of the connection to the media transport.
    */
-  public readonly state$: Behavior<ConnectionState> = this._state$;
+  public readonly state$: Behavior<ConnectionState | FailedToStartError> =
+    this._state$;
 
   /**
    * The media transport to connect to.
@@ -117,16 +125,12 @@ export class Connection {
     this.logger.debug("Starting Connection");
     this.stopped = false;
     try {
-      this._state$.next({
-        state: ConnectionAdditionalState.FetchingConfig,
-      });
+      this._state$.next(ConnectionState.FetchingConfig);
       const { url, jwt } = await this.getSFUConfigWithOpenID();
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
-      this._state$.next({
-        state: ConnectionAdditionalState.ConnectingToLkRoom,
-      });
+      this._state$.next(ConnectionState.ConnectingToLkRoom);
       try {
         await this.livekitRoom.connect(url, jwt);
       } catch (e) {
@@ -157,9 +161,8 @@ export class Connection {
       connectionStateObserver(this.livekitRoom)
         .pipe(this.scope.bind())
         .subscribe((lkState) => {
-          this._state$.next({
-            state: lkState,
-          });
+          // It si save to cast lkState to ConnectionState as they are fully overlapping.
+          this._state$.next(lkState as unknown as ConnectionState);
         });
     } catch (error) {
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
