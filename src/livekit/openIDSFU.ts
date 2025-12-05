@@ -86,7 +86,7 @@ async function getLiveKitJWT(
         ...{delay_id: delayId, delay_timeout: 10000, delay_cs_api_url: client.baseUrl}
       }
     };
-    const res = await fetch(livekitServiceURL + "/sfu/get", {
+    const res = await fetch(livekitServiceURL + "/get_token", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
