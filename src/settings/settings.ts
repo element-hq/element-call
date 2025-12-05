@@ -1,4 +1,5 @@
 /*
+Copyright (C) 2025 Element Creations Ltd
 Copyright 2024 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
@@ -104,6 +105,11 @@ export const showHandRaisedTimer = new Setting<boolean>(
 );
 
 export const showReactions = new Setting<boolean>("reactions-show", true);
+
+export const enableKeyboardShortcuts = new Setting<boolean>(
+  "keyboard-shortcuts",
+  true,
+);
 
 export const playReactionsSound = new Setting<boolean>(
   "reactions-play-sound",

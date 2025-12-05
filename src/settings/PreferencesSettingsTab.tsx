@@ -1,4 +1,5 @@
 /*
+Copyright (C) 2025 Element Creations Ltd
 Copyright 2024 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
@@ -15,6 +16,7 @@ import {
   showReactions as showReactionsSetting,
   playReactionsSound as playReactionsSoundSetting,
   developerMode as developerModeSetting,
+  enableKeyboardShortcuts as enableKeyboardShortcutsSetting,
   useSetting,
 } from "./settings";
 
@@ -39,6 +41,10 @@ export const PreferencesSettingsTab: FC = () => {
 
   const [developerMode, setDeveloperMode] = useSetting(developerModeSetting);
 
+  const [enableKeyboardShortcuts, setEnableKeyboardShortcuts] = useSetting(
+    enableKeyboardShortcutsSetting,
+  );
+
   return (
     <div>
       <Text>{t("settings.preferences_tab.introduction")}</Text>
@@ -62,6 +68,18 @@ export const PreferencesSettingsTab: FC = () => {
           type="checkbox"
           checked={showReactions}
           onChange={(e) => onChangeSetting(e, setShowReactions)}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="enableKeyboardShortcuts"
+          label={t("settings.preferences_tab.enable_keyboard_shortcuts_label")}
+          description={t(
+            "settings.preferences_tab.enable_keyboard_shortcuts_description",
+          )}
+          type="checkbox"
+          checked={enableKeyboardShortcuts}
+          onChange={(e) => onChangeSetting(e, setEnableKeyboardShortcuts)}
         />
       </FieldRow>
       <FieldRow>

@@ -1,4 +1,5 @@
 /*
+Copyright (C) 2025 Element Creations Ltd
 Copyright 2022-2024 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
@@ -13,6 +14,7 @@ import {
   ReactionSet,
   ReactionsRowSize,
 } from "./reactions";
+import { enableKeyboardShortcuts, useSetting } from "./settings/settings";
 
 /**
  * Determines whether focus is in the same part of the tree as the given
@@ -35,6 +37,7 @@ export function useCallViewKeyboardShortcuts(
   sendReaction: (reaction: ReactionOption) => void,
   toggleHandRaised: () => void,
 ): void {
+  const [shortcutsEnabled] = useSetting(enableKeyboardShortcuts);
   const spacebarHeld = useRef(false);
 
   // These event handlers are set on the window because we want users to be able
@@ -45,6 +48,7 @@ export function useCallViewKeyboardShortcuts(
     "keydown",
     useCallback(
       (event: KeyboardEvent) => {
+        if (!shortcutsEnabled) return;
         if (focusElement.current === null) return;
         if (!mayReceiveKeyEvents(focusElement.current)) return;
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
@@ -77,6 +81,7 @@ export function useCallViewKeyboardShortcuts(
         setAudioEnabled,
         sendReaction,
         toggleHandRaised,
+        shortcutsEnabled,
       ],
     ),
     // Because this is set on the window, to prevent shortcuts from activating
@@ -90,6 +95,7 @@ export function useCallViewKeyboardShortcuts(
     "keyup",
     useCallback(
       (event: KeyboardEvent) => {
+        if (!shortcutsEnabled) return;
         if (focusElement.current === null) return;
         if (!mayReceiveKeyEvents(focusElement.current)) return;
 
@@ -98,7 +104,7 @@ export function useCallViewKeyboardShortcuts(
           setAudioEnabled?.(false);
         }
       },
-      [focusElement, setAudioEnabled],
+      [shortcutsEnabled, focusElement, setAudioEnabled],
     ),
   );
 
@@ -106,10 +112,11 @@ export function useCallViewKeyboardShortcuts(
     window,
     "blur",
     useCallback(() => {
+      if (!shortcutsEnabled) return;
       if (spacebarHeld.current) {
         spacebarHeld.current = false;
         setAudioEnabled?.(true);
       }
-    }, [setAudioEnabled, spacebarHeld]),
+    }, [setAudioEnabled, spacebarHeld, shortcutsEnabled]),
   );
 }
