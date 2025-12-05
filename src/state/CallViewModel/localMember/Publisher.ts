@@ -144,6 +144,7 @@ export class Publisher {
           this.logger.error("Failed to create tracks", error);
         });
     }
+    // TODO why throw here? should we just do nothing?
     throw Error("audio and video is false");
   }
 
@@ -184,16 +185,32 @@ export class Publisher {
 
     for (const track of this.tracks$.value) {
       this.logger.info("publish ", this.tracks$.value.length, "tracks");
-      // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
-      // with a timeout.
-      await lkRoom.localParticipant.publishTrack(track).catch((error) => {
-        this.logger.error("Failed to publish track", error);
-        throw new FailToStartLivekitConnection(
-          error instanceof Error ? error.message : error,
-        );
-      });
-      this.logger.info("published track ", track.kind, track.id);
 
+      // XXXX: Patch: Check if the track has been muted manually before publishing
+      // This is only a patch, the proper way would be to use livekit high-level enabled/disabled APIs
+      // or only use the low level create/publish APIs and have our own pending publication protection.
+      // Maybe we could change the livekit api to pre-load tracks without publishing them yet?
+      // Are we sure this is needed at all? What are the gains?
+      const isEnabled =
+        track.kind === Track.Kind.Audio
+          ? this.muteStates.audio.enabled$.value
+          : this.muteStates.video.enabled$.value;
+
+      if (!isEnabled) {
+        // TODO should we also drop it?
+        // I believe the high-level LiveKit APIs will recreate a track?
+        await track.mute();
+      } else {
+        // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
+        // with a timeout.
+        await lkRoom.localParticipant.publishTrack(track).catch((error) => {
+          this.logger.error("Failed to publish track", error);
+          throw new FailToStartLivekitConnection(
+            error instanceof Error ? error.message : error,
+          );
+        });
+        this.logger.info("published track ", track.kind, track.id);
+      }
       // TODO: check if the connection is still active? and break the loop if not?
     }
     this._publishing$.next(true);

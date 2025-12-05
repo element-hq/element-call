@@ -149,9 +149,7 @@ describe("Publisher", () => {
   });
 });
 
-
 describe("Bug fix", () => {
-
   // There is a race condition when creating and publishing tracks while the mute state changes.
   // This race condition could cause tracks to be published even though they are muted at the
   // beginning of a call coming from lobby.
@@ -162,7 +160,7 @@ describe("Bug fix", () => {
   // If in the middle of that process the mute state changes:
   //  - the `setMicrophoneEnabled` will be no-op because it is not aware of our created track and can't see any pending publication
   //  - If start publication is requested it will publish the track even though there was a mute request.
-  it.fails("wrongly publish tracks while muted", async () => {
+  it("wrongly publish tracks while muted", async () => {
     const audioEnabled$ = new BehaviorSubject(true);
     const muteStates = {
       audio: {
