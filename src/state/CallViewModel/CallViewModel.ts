@@ -452,14 +452,18 @@ export function createCallViewModel$(
 
   const localMembership = createLocalMembership$({
     scope: scope,
-    homeserverConnected: createHomeserverConnected$(
+    homeserverConnected$: createHomeserverConnected$(
       scope,
       client,
       matrixRTCSession,
     ),
     muteStates: muteStates,
-    joinMatrixRTC: (transport: LivekitTransport) => {
-      enterRTCSession(matrixRTCSession, transport, connectOptions$.value);
+    joinMatrixRTC: async (transport: LivekitTransport) => {
+      return enterRTCSession(
+        matrixRTCSession,
+        transport,
+        connectOptions$.value,
+      );
     },
     createPublisherFactory: (connection: Connection) => {
       return new Publisher(
@@ -569,6 +573,17 @@ export function createCallViewModel$(
     ),
   );
 
+  /**
+   * Whether various media/event sources should pretend to be disconnected from
+   * all network input, even if their connection still technically works.
+   */
+  // We do this when the app is in the 'reconnecting' state, because it might be
+  // that the LiveKit connection is still functional while the homeserver is
+  // down, for example, and we want to avoid making people worry that the app is
+  // in a split-brained state.
+  // DISCUSSION own membership manager ALSO this probably can be simplifis
+  const reconnecting$ = localMembership.reconnecting$;
+
   const audioParticipants$ = scope.behavior(
     matrixLivekitMembers$.pipe(
       switchMap((membersWithEpoch) => {
@@ -616,7 +631,7 @@ export function createCallViewModel$(
   );
 
   const handsRaised$ = scope.behavior(
-    handsRaisedSubject$.pipe(pauseWhen(localMembership.reconnecting$)),
+    handsRaisedSubject$.pipe(pauseWhen(reconnecting$)),
   );
 
   const reactions$ = scope.behavior(
@@ -629,7 +644,7 @@ export function createCallViewModel$(
           ]),
         ),
       ),
-      pauseWhen(localMembership.reconnecting$),
+      pauseWhen(reconnecting$),
     ),
   );
 
@@ -720,7 +735,7 @@ export function createCallViewModel$(
             livekitRoom$,
             focusUrl$,
             mediaDevices,
-            localMembership.reconnecting$,
+            reconnecting$,
             displayName$,
             matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
             handsRaised$.pipe(map((v) => v[participantId]?.time ?? null)),
@@ -812,17 +827,11 @@ export function createCallViewModel$(
           }),
         );
 
-  const shouldLeave$: Observable<
-    "user" | "timeout" | "decline" | "allOthersLeft"
-  > = merge(
-    autoLeave$,
-    merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
-  ).pipe(scope.share);
-
-  shouldLeave$.pipe(scope.bind()).subscribe((reason) => {
-    logger.info(`Call left due to ${reason}`);
-    localMembership.requestDisconnect();
-  });
+  const leave$: Observable<"user" | "timeout" | "decline" | "allOthersLeft"> =
+    merge(
+      autoLeave$,
+      merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
+    ).pipe(scope.share);
 
   const spotlightSpeaker$ = scope.behavior<UserMediaViewModel | null>(
     userMedia$.pipe(
@@ -1444,7 +1453,7 @@ export function createCallViewModel$(
     autoLeave$: autoLeave$,
     callPickupState$: callPickupState$,
     ringOverlay$: ringOverlay$,
-    leave$: shouldLeave$,
+    leave$: leave$,
     hangup: (): void => userHangup$.next(),
     join: localMembership.requestConnect,
     toggleScreenSharing: toggleScreenSharing,
@@ -1491,7 +1500,7 @@ export function createCallViewModel$(
     showFooter$: showFooter$,
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
-    reconnecting$: localMembership.reconnecting$,
+    reconnecting$: reconnecting$,
   };
 }
 
