@@ -30,7 +30,9 @@ import {
 } from "rxjs";
 import {
   type CallMembership,
+  MatrixRTCSession,
   MatrixRTCSessionEvent,
+  SlotDescription,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   type Room as LivekitRoom,
@@ -80,7 +82,10 @@ interface MatrixRTCSdk {
   sendData?: (data: unknown) => Promise<void>;
 }
 
-export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
+export async function createMatrixRTCSdk(
+  application: string = "m.call",
+  id: string = "",
+): Promise<MatrixRTCSdk> {
   logger.info("Hello");
   const client = await widget.client;
   logger.info("client created");
@@ -93,7 +98,10 @@ export async function createMatrixRTCSdk(): Promise<MatrixRTCSdk> {
 
   const mediaDevices = new MediaDevices(scope);
   const muteStates = new MuteStates(scope, mediaDevices, constant(true));
-  const rtcSession = client.matrixRTC.getRoomSession(room);
+  const rtcSession = new MatrixRTCSession(client, room, {
+    application,
+    id,
+  });
   const callViewModel = createCallViewModel$(
     scope,
     rtcSession,

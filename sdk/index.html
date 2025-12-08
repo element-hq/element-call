@@ -8,7 +8,9 @@
       import { createMatrixRTCSdk } from "http://localhost:8123/matrixrtc-sdk.js";
 
       try {
-        window.matrixRTCSdk = await createMatrixRTCSdk();
+        window.matrixRTCSdk = await createMatrixRTCSdk(
+          "com.github.toger5.godot-game",
+        );
         console.info("createMatrixRTCSdk was created!");
       } catch (e) {
         console.error("createMatrixRTCSdk", e);
