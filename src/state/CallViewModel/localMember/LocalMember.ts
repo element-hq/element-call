@@ -11,7 +11,6 @@ import {
   ParticipantEvent,
   type LocalParticipant,
   type ScreenShareCaptureOptions,
-  ConnectionState as LivekitConnectionState,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
@@ -36,61 +35,65 @@ import {
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
-import { constant, type Behavior } from "../../Behavior";
-import { type IConnectionManager } from "../remoteMembers/ConnectionManager";
-import { type ObservableScope } from "../../ObservableScope";
-import { type Publisher } from "./Publisher";
-import { type MuteStates } from "../../MuteStates";
+import { constant, type Behavior } from "../../Behavior.ts";
+import { type IConnectionManager } from "../remoteMembers/ConnectionManager.ts";
+import { type ObservableScope } from "../../ObservableScope.ts";
+import { type Publisher } from "./Publisher.ts";
+import { type MuteStates } from "../../MuteStates.ts";
 import {
   ElementCallError,
   MembershipManagerError,
   UnknownCallError,
-} from "../../../utils/errors";
-import { ElementWidgetActions, widget } from "../../../widget";
+} from "../../../utils/errors.ts";
+import { ElementWidgetActions, widget } from "../../../widget.ts";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
 import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import {
-  type ConnectionState,
+  ConnectionState,
   type Connection,
+  type FailedToStartError,
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 
-export enum RTCBackendState {
-  Error = "error",
+export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
-  WaitingForTransport = "waiting_for_transport",
-  /** A connection appeared so we can initialise the publisher */
-  WaitingForConnection = "waiting_for_connection",
-  /** Implies lk connection is connected */
-  CreatingTracks = "creating_tracks",
-  /** Implies lk connection is connected */
-  ReadyToPublish = "ready_to_publish",
-  /** Implies lk connection is connected */
-  WaitingToPublish = "waiting_to_publish",
-  /** Implies lk connection is connected */
-  ConnectedAndPublishing = "fully_connected",
+  Waiting = "transport_waiting",
 }
 
-type LocalMemberRTCBackendState =
-  | { state: RTCBackendState.Error; error: ElementCallError }
-  | { state: Exclude<RTCBackendState, RTCBackendState.Error> }
-  | ConnectionState;
-
-export enum MatrixAdditionalState {
-  WaitingForTransport = "waiting_for_transport",
+export enum PublishState {
+  WaitingForUser = "publish_waiting_for_user",
+  /** Implies lk connection is connected */
+  Starting = "publish_start_publishing",
+  /** Implies lk connection is connected */
+  Publishing = "publish_publishing",
 }
 
-type LocalMemberMatrixState =
-  | { state: MatrixAdditionalState.WaitingForTransport }
-  | { state: "Error"; error: Error }
-  | { state: RTCSessionStatus };
-
-export interface LocalMemberConnectionState {
-  livekit$: Behavior<LocalMemberRTCBackendState>;
-  matrix$: Behavior<LocalMemberMatrixState>;
+export enum TrackState {
+  /** The track is waiting for user input to create tracks (waiting to call `startTracks()`) */
+  WaitingForUser = "tracks_waiting_for_user",
+  /** Implies lk connection is connected */
+  Creating = "tracks_creating",
+  /** Implies lk connection is connected */
+  Ready = "tracks_ready",
 }
+
+export type LocalMemberMediaState =
+  | {
+      tracks: TrackState;
+      connection: ConnectionState | FailedToStartError;
+    }
+  | PublishState
+  | ElementCallError;
+export type LocalMemberMatrixState = Error | RTCSessionStatus;
+export type LocalMemberState =
+  | ElementCallError
+  | TransportState.Waiting
+  | {
+      media: LocalMemberMediaState;
+      matrix: LocalMemberMatrixState;
+    };
 
 /*
  * - get well known
@@ -146,16 +149,16 @@ export const createLocalMembership$ = ({
   matrixRTCSession,
 }: Props): {
   /**
-   * This starts audio and video tracks. They will be reused when calling `requestConnect`.
+   * This starts audio and video tracks. They will be reused when calling `requestPublish`.
    */
   startTracks: () => Behavior<LocalTrack[]>;
   /**
-   * This sets a inner state (shouldConnect) to true and instructs the js-sdk and livekit to keep the user
+   * This sets a inner state (shouldPublish) to true and instructs the js-sdk and livekit to keep the user
    * connected to matrix and livekit.
    */
-  requestConnect: () => void;
+  requestJoinAndPublish: () => void;
   requestDisconnect: () => void;
-  connectionState: LocalMemberConnectionState;
+  localMemberState$: Behavior<LocalMemberState>;
   sharingScreen$: Behavior<boolean>;
   /**
    * Callback to toggle screen sharing. If null, screen sharing is not possible.
@@ -164,11 +167,11 @@ export const createLocalMembership$ = ({
   tracks$: Behavior<LocalTrack[]>;
   participant$: Behavior<LocalParticipant | null>;
   connection$: Behavior<Connection | null>;
-  /** Shorthand for connectionState.matrix.state === Status.Reconnecting
+  /** Shorthand for homeserverConnected.rtcSession === Status.Reconnecting
    * Direct translation to the js-sdk membership manager connection `Status`.
    */
   reconnecting$: Behavior<boolean>;
-  /** Shorthand for connectionState.matrix.state === Status.Disconnected
+  /** Shorthand for homeserverConnected.rtcSession === Status.Disconnected
    * Direct translation to the js-sdk membership manager connection `Status`.
    */
   disconnected$: Behavior<boolean>;
@@ -190,7 +193,7 @@ export const createLocalMembership$ = ({
               : new Error("Unknown error from localTransport"),
           );
         }
-        setLivekitError(error);
+        setTransportError(error);
         return of(null);
       }),
     ),
@@ -223,19 +226,13 @@ export const createLocalMembership$ = ({
 
   // MATRIX RELATED
 
-  const reconnecting$ = scope.behavior(
-    homeserverConnected.rtsSession$.pipe(
-      map((sessionStatus) => sessionStatus === RTCSessionStatus.Reconnecting),
-    ),
-  );
-
   // This should be used in a combineLatest with publisher$ to connect.
   // to make it possible to call startTracks before the preferredTransport$ has resolved.
   const trackStartRequested = Promise.withResolvers<void>();
 
   // This should be used in a combineLatest with publisher$ to connect.
   // to make it possible to call startTracks before the preferredTransport$ has resolved.
-  const connectRequested$ = new BehaviorSubject(false);
+  const joinAndPublishRequested$ = new BehaviorSubject(false);
 
   /**
    * The publisher is stored in here an abstracts creating and publishing tracks.
@@ -256,13 +253,13 @@ export const createLocalMembership$ = ({
     return tracks$;
   };
 
-  const requestConnect = (): void => {
+  const requestJoinAndPublish = (): void => {
     trackStartRequested.resolve();
-    connectRequested$.next(true);
+    joinAndPublishRequested$.next(true);
   };
 
   const requestDisconnect = (): void => {
-    connectRequested$.next(false);
+    joinAndPublishRequested$.next(false);
   };
 
   // Take care of the publisher$
@@ -300,112 +297,129 @@ export const createLocalMembership$ = ({
 
   // Based on `connectRequested$` we start publishing tracks. (once they are there!)
   scope.reconcile(
-    scope.behavior(combineLatest([publisher$, tracks$, connectRequested$])),
-    async ([publisher, tracks, shouldConnect]) => {
-      if (shouldConnect === publisher?.publishing$.value) return;
-      if (tracks.length !== 0 && shouldConnect) {
+    scope.behavior(
+      combineLatest([publisher$, tracks$, joinAndPublishRequested$]),
+    ),
+    async ([publisher, tracks, shouldJoinAndPublish]) => {
+      if (shouldJoinAndPublish === publisher?.publishing$.value) return;
+      if (tracks.length !== 0 && shouldJoinAndPublish) {
         try {
           await publisher?.startPublishing();
         } catch (error) {
-          setLivekitError(error as ElementCallError);
+          setMediaError(error as ElementCallError);
         }
-      } else if (tracks.length !== 0 && !shouldConnect) {
+      } else if (tracks.length !== 0 && !shouldJoinAndPublish) {
         try {
           await publisher?.stopPublishing();
         } catch (error) {
-          setLivekitError(new UnknownCallError(error as Error));
+          setMediaError(new UnknownCallError(error as Error));
         }
       }
     },
   );
 
-  const fatalLivekitError$ = new BehaviorSubject<ElementCallError | null>(null);
-  const setLivekitError = (e: ElementCallError): void => {
-    if (fatalLivekitError$.value !== null)
-      logger.error("Multiple Livkit Errors:", e);
-    else fatalLivekitError$.next(e);
+  const fatalMediaError$ = new BehaviorSubject<ElementCallError | null>(null);
+  const setMediaError = (e: ElementCallError): void => {
+    if (fatalMediaError$.value !== null)
+      logger.error("Multiple Media Errors:", e);
+    else fatalMediaError$.next(e);
   };
-  const livekitState$: Behavior<LocalMemberRTCBackendState> = scope.behavior(
+
+  const fatalTransportError$ = new BehaviorSubject<ElementCallError | null>(
+    null,
+  );
+  const setTransportError = (e: ElementCallError): void => {
+    if (fatalTransportError$.value !== null)
+      logger.error("Multiple Transport Errors:", e);
+    else fatalTransportError$.next(e);
+  };
+
+  const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
     combineLatest([
       localConnectionState$,
-      publisher$,
       localTransport$,
-      tracks$.pipe(
-        tap((t) => {
-          logger.info("tracks$: ", t);
-        }),
-      ),
+      tracks$,
       publishing$,
-      connectRequested$,
+      joinAndPublishRequested$,
       from(trackStartRequested.promise).pipe(
         map(() => true),
         startWith(false),
       ),
-      fatalLivekitError$,
     ]).pipe(
       map(
         ([
           localConnectionState,
-          publisher,
           localTransport,
           tracks,
           publishing,
-          shouldConnect,
+          shouldPublish,
           shouldStartTracks,
-          error,
         ]) => {
-          // read this:
-          // if(!<A>) return {state: ...}
-          // if(!<B>) return {state: <MyState>}
-          //
-          // as:
-          // We do have <A> but not yet <B> so we are in <MyState>
-          if (error !== null) return { state: RTCBackendState.Error, error };
+          if (!localTransport) return null;
           const hasTracks = tracks.length > 0;
-          if (!localTransport)
-            return { state: RTCBackendState.WaitingForTransport };
-          if (!localConnectionState)
-            return { state: RTCBackendState.WaitingForConnection };
+          let trackState: TrackState = TrackState.WaitingForUser;
+          if (hasTracks && shouldStartTracks) trackState = TrackState.Ready;
+          if (!hasTracks && shouldStartTracks) trackState = TrackState.Creating;
+
           if (
-            localConnectionState.state !== LivekitConnectionState.Connected ||
-            !publisher
+            localConnectionState !== ConnectionState.LivekitConnected ||
+            trackState !== TrackState.Ready
           )
-            // pass through the localConnectionState while we do not yet have a publisher or the state
-            // of the connection is not yet connected
-            return { state: localConnectionState.state };
-          if (!shouldStartTracks)
-            return { state: LivekitConnectionState.Connected };
-          if (!hasTracks) return { state: RTCBackendState.CreatingTracks };
-          if (!shouldConnect) return { state: RTCBackendState.ReadyToPublish };
-          if (!publishing) return { state: RTCBackendState.WaitingToPublish };
-          return { state: RTCBackendState.ConnectedAndPublishing };
+            return {
+              connection: localConnectionState,
+              tracks: trackState,
+            };
+          if (!shouldPublish) return PublishState.WaitingForUser;
+          if (!publishing) return PublishState.Starting;
+          return PublishState.Publishing;
         },
       ),
       distinctUntilChanged(deepCompare),
     ),
   );
-
   const fatalMatrixError$ = new BehaviorSubject<ElementCallError | null>(null);
   const setMatrixError = (e: ElementCallError): void => {
     if (fatalMatrixError$.value !== null)
       logger.error("Multiple Matrix Errors:", e);
     else fatalMatrixError$.next(e);
   };
-  const matrixState$: Behavior<LocalMemberMatrixState> = scope.behavior(
-    combineLatest([localTransport$, homeserverConnected.rtsSession$]).pipe(
-      map(([localTransport, rtcSessionStatus]) => {
-        if (!localTransport)
-          return { state: MatrixAdditionalState.WaitingForTransport };
-        return { state: rtcSessionStatus };
-      }),
+
+  const localMemberState$ = scope.behavior<LocalMemberState>(
+    combineLatest([
+      mediaState$,
+      homeserverConnected.rtsSession$,
+      fatalMatrixError$,
+      fatalTransportError$,
+      fatalMediaError$,
+    ]).pipe(
+      map(
+        ([
+          mediaState,
+          rtcSessionStatus,
+          matrixError,
+          transportError,
+          mediaError,
+        ]) => {
+          if (transportError !== null) return transportError;
+          // `mediaState` will be 'null' until the transport appears.
+          if (mediaState && rtcSessionStatus)
+            return {
+              matrix: matrixError ?? rtcSessionStatus,
+              media: mediaError ?? mediaState,
+            };
+          else {
+            return TransportState.Waiting;
+          }
+        },
+      ),
     ),
   );
 
   // inform the widget about the connect and disconnect intent from the user.
   scope
-    .behavior(connectRequested$.pipe(pairwise(), scope.bind()), [
+    .behavior(joinAndPublishRequested$.pipe(pairwise(), scope.bind()), [
       undefined,
-      connectRequested$.value,
+      joinAndPublishRequested$.value,
     ])
     .subscribe(([prev, current]) => {
       if (!widget) return;
@@ -434,7 +448,7 @@ export const createLocalMembership$ = ({
 
   // Keep matrix rtc session in sync with localTransport$, connectRequested$
   scope.reconcile(
-    scope.behavior(combineLatest([localTransport$, connectRequested$])),
+    scope.behavior(combineLatest([localTransport$, joinAndPublishRequested$])),
     async ([transport, shouldConnect]) => {
       if (!transport) return;
       // if shouldConnect=false we will do the disconnect as the cleanup from the previous reconcile iteration.
@@ -555,21 +569,19 @@ export const createLocalMembership$ = ({
 
   return {
     startTracks,
-    requestConnect,
+    requestJoinAndPublish,
     requestDisconnect,
-    connectionState: {
-      livekit$: livekitState$,
-      matrix$: matrixState$,
-    },
+    localMemberState$,
     tracks$,
     participant$,
-    reconnecting$,
+    reconnecting$: scope.behavior(
+      homeserverConnected.rtsSession$.pipe(
+        map((sessionStatus) => sessionStatus === RTCSessionStatus.Reconnecting),
+      ),
+    ),
     disconnected$: scope.behavior(
-      matrixState$.pipe(
-        map(
-          (sessionStatus) =>
-            sessionStatus.state === RTCSessionStatus.Disconnected,
-        ),
+      homeserverConnected.rtsSession$.pipe(
+        map((state) => state === RTCSessionStatus.Disconnected),
       ),
     ),
     sharingScreen$,

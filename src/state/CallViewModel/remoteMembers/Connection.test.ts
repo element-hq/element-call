@@ -30,8 +30,8 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import type { LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   Connection,
+  ConnectionState,
   type ConnectionOpts,
-  type ConnectionState,
   type PublishingParticipant,
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
@@ -151,7 +151,7 @@ describe("Start connection states", () => {
     };
     const connection = new Connection(opts, logger);
 
-    expect(connection.state$.getValue().state).toEqual("Initialized");
+    expect(connection.state$.getValue()).toEqual("Initialized");
   });
 
   it("fail to getOpenId token then error state", async () => {
@@ -167,7 +167,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -187,22 +187,20 @@ describe("Start connection states", () => {
 
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
-    expect(capturedState!.state).toEqual("FetchingConfig");
+    expect(capturedState!).toEqual("FetchingConfig");
 
     deferred.reject(new FailToGetOpenIdToken(new Error("Failed to get token")));
 
     await vi.runAllTimersAsync();
 
     capturedState = capturedStates.pop();
-    if (capturedState!.state === "FailedToStart") {
-      expect(capturedState!.error.message).toEqual("Something went wrong");
+    if (capturedState instanceof Error) {
+      expect(capturedState.message).toEqual("Something went wrong");
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
-      expect.fail(
-        "Expected FailedToStart state but got " + capturedState?.state,
-      );
+      expect.fail("Expected FailedToStart state but got " + capturedState);
     }
   });
 
@@ -219,7 +217,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -241,24 +239,22 @@ describe("Start connection states", () => {
 
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
-    expect(capturedState?.state).toEqual("FetchingConfig");
+    expect(capturedState).toEqual(ConnectionState.FetchingConfig);
 
     deferredSFU.resolve();
     await vi.runAllTimersAsync();
 
     capturedState = capturedStates.pop();
 
-    if (capturedState?.state === "FailedToStart") {
-      expect(capturedState?.error.message).toContain(
+    if (capturedState instanceof Error) {
+      expect(capturedState.message).toContain(
         "SFU Config fetch failed with exception Error",
       );
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
-      expect.fail(
-        "Expected FailedToStart state but got " + capturedState?.state,
-      );
+      expect.fail("Expected FailedToStart state but got " + capturedState);
     }
   });
 
@@ -275,7 +271,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -305,17 +301,15 @@ describe("Start connection states", () => {
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
 
-    expect(capturedState?.state).toEqual("FetchingConfig");
+    expect(capturedState).toEqual(ConnectionState.FetchingConfig);
 
     deferredSFU.resolve();
     await vi.runAllTimersAsync();
 
     capturedState = capturedStates.pop();
 
-    if (capturedState && capturedState.state === "FailedToStart") {
-      expect(capturedState.error.message).toContain(
-        "Failed to connect to livekit",
-      );
+    if (capturedState instanceof Error) {
+      expect(capturedState.message).toContain("Failed to connect to livekit");
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
@@ -332,7 +326,7 @@ describe("Start connection states", () => {
 
     const connection = setupRemoteConnection();
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -342,13 +336,13 @@ describe("Start connection states", () => {
     await vi.runAllTimersAsync();
 
     const initialState = capturedStates.shift();
-    expect(initialState?.state).toEqual("Initialized");
+    expect(initialState).toEqual(ConnectionState.Initialized);
     const fetchingState = capturedStates.shift();
-    expect(fetchingState?.state).toEqual("FetchingConfig");
+    expect(fetchingState).toEqual(ConnectionState.FetchingConfig);
     const connectingState = capturedStates.shift();
-    expect(connectingState?.state).toEqual("ConnectingToLkRoom");
+    expect(connectingState).toEqual(ConnectionState.ConnectingToLkRoom);
     const connectedState = capturedStates.shift();
-    expect(connectedState?.state).toEqual("connected");
+    expect(connectedState).toEqual(ConnectionState.LivekitConnected);
   });
 
   it("shutting down the scope should stop the connection", async () => {

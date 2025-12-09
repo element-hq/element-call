@@ -94,14 +94,13 @@ import {
   type SpotlightLandscapeLayoutMedia,
   type SpotlightPortraitLayoutMedia,
 } from "../layout-types.ts";
-import { type ElementCallError } from "../../utils/errors.ts";
+import { ElementCallError } from "../../utils/errors.ts";
 import { type ObservableScope } from "../ObservableScope.ts";
 import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
 import {
   createLocalMembership$,
   enterRTCSession,
-  RTCBackendState,
-} from "./localMember/LocalMembership.ts";
+} from "./localMember/LocalMember.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import {
   createMemberships$,
@@ -452,13 +451,13 @@ export function createCallViewModel$(
 
   const localMembership = createLocalMembership$({
     scope: scope,
-    homeserverConnected$: createHomeserverConnected$(
+    homeserverConnected: createHomeserverConnected$(
       scope,
       client,
       matrixRTCSession,
     ),
     muteStates: muteStates,
-    joinMatrixRTC: async (transport: LivekitTransport) => {
+    joinMatrixRTC: (transport: LivekitTransport) => {
       return enterRTCSession(
         matrixRTCSession,
         transport,
@@ -1455,7 +1454,7 @@ export function createCallViewModel$(
     ringOverlay$: ringOverlay$,
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
-    join: localMembership.requestConnect,
+    join: localMembership.requestJoinAndPublish,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
 
@@ -1465,9 +1464,8 @@ export function createCallViewModel$(
     unhoverScreen: (): void => screenUnhover$.next(),
 
     fatalError$: scope.behavior(
-      localMembership.connectionState.livekit$.pipe(
-        filter((v) => v.state === RTCBackendState.Error),
-        map((s) => s.error),
+      localMembership.localMemberState$.pipe(
+        filter((v) => v instanceof ElementCallError),
       ),
       null,
     ),

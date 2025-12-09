@@ -52,9 +52,7 @@ describe("Publisher", () => {
     } as unknown as MuteStates;
     scope = new ObservableScope();
     connection = {
-      state$: constant({
-        state: LivekitConenctionState.Connected,
-      }),
+      state$: constant(LivekitConenctionState.Connected),
       livekitRoom: mockLivekitRoom({
         localParticipant: mockLocalParticipant({}),
       }),
@@ -110,15 +108,14 @@ describe("Publisher", () => {
 
     // failiour due to connection.state$
     const beforeState = connection.state$.value;
-    (connection.state$ as BehaviorSubject<ConnectionState>).next({
-      state: "FailedToStart",
-      error: Error("testStartError"),
-    });
+    (connection.state$ as BehaviorSubject<Error>).next(Error("testStartError"));
 
     await expect(publisher.startPublishing()).rejects.toThrow(
       new FailToStartLivekitConnection("testStartError"),
     );
-    (connection.state$ as BehaviorSubject<ConnectionState>).next(beforeState);
+    (connection.state$ as BehaviorSubject<ConnectionState | Error>).next(
+      beforeState,
+    );
 
     // does not try other conenction after the first one failed
     expect(
