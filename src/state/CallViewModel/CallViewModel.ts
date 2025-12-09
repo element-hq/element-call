@@ -56,7 +56,7 @@ import { accumulate, generateItems, pauseWhen } from "../../utils/observable";
 import {
   duplicateTiles,
   MatrixRTCMode,
-  matrixRTCMode,
+  matrixRTCMode as matrixRTCModeSetting,
   playReactionsSound,
   showReactions,
 } from "../../settings/settings";
@@ -149,6 +149,8 @@ export interface CallViewModelOptions {
   connectionState$?: Behavior<ConnectionState>;
   /** Optional behavior overriding the computed window size, mainly for testing purposes. */
   windowSize$?: Behavior<{ width: number; height: number }>;
+  /** Optional behavior overriding the MatrixRTC mode, mainly for testing purposes. */
+  matrixRTCMode$?: Behavior<MatrixRTCMode>;
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -399,13 +401,15 @@ export function createCallViewModel$(
     memberships$,
   );
 
+  const matrixRTCMode$ = options.matrixRTCMode$ ?? matrixRTCModeSetting.value$;
+
   const localTransport$ = createLocalTransport$({
     scope: scope,
     memberships$: memberships$,
     client,
     roomId: matrixRoom.roomId,
     useOldestMember$: scope.behavior(
-      matrixRTCMode.value$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
+      matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
     ),
   });
 
@@ -446,7 +450,7 @@ export function createCallViewModel$(
   });
 
   const connectOptions$ = scope.behavior(
-    matrixRTCMode.value$.pipe(
+    matrixRTCMode$.pipe(
       map((mode) => ({
         encryptMedia: livekitKeyProvider !== undefined,
         // TODO. This might need to get called again on each change of matrixRTCMode...
