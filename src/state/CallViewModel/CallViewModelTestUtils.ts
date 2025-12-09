@@ -53,6 +53,7 @@ import {
 import { type Behavior, constant } from "../Behavior";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { type MediaDevices } from "../MediaDevices";
+import { type MatrixRTCMode } from "../../settings/settings";
 
 mockConfig({
   livekit: { livekit_service_url: "http://my-default-service-url.com" },
@@ -80,117 +81,126 @@ export interface CallViewModelInputs {
 
 const localParticipant = mockLocalParticipant({ identity: "" });
 
-export function withCallViewModel(
-  {
-    remoteParticipants$ = constant([]),
-    rtcMembers$ = constant([localRtcMember]),
-    livekitConnectionState$: connectionState$ = constant(
-      ConnectionState.Connected,
-    ),
-    speaking = new Map(),
-    mediaDevices = mockMediaDevices({}),
-    initialSyncState = SyncState.Syncing,
-    windowSize$ = constant({ width: 1000, height: 800 }),
-  }: Partial<CallViewModelInputs> = {},
-  continuation: (
-    vm: CallViewModel,
-    rtcSession: MockRTCSession,
-    subjects: { raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>> },
-    setSyncState: (value: SyncState) => void,
-  ) => void,
-  options: CallViewModelOptions = {
-    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    autoLeaveWhenOthersLeft: false,
-  },
-): void {
-  let syncState = initialSyncState;
-  const setSyncState = (value: SyncState): void => {
-    const prev = syncState;
-    syncState = value;
-    room.client.emit(ClientEvent.Sync, value, prev);
-  };
-  const room = mockMatrixRoom({
-    client: new (class extends EventEmitter {
-      public getUserId(): string | undefined {
-        return localRtcMember.userId;
-      }
+export function withCallViewModel(mode: MatrixRTCMode) {
+  return (
+    {
+      remoteParticipants$ = constant([]),
+      rtcMembers$ = constant([localRtcMember]),
+      livekitConnectionState$: connectionState$ = constant(
+        ConnectionState.Connected,
+      ),
+      speaking = new Map(),
+      mediaDevices = mockMediaDevices({}),
+      initialSyncState = SyncState.Syncing,
+      windowSize$ = constant({ width: 1000, height: 800 }),
+    }: Partial<CallViewModelInputs> = {},
+    continuation: (
+      vm: CallViewModel,
+      rtcSession: MockRTCSession,
+      subjects: {
+        raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>>;
+      },
+      setSyncState: (value: SyncState) => void,
+    ) => void,
+    options: CallViewModelOptions = {
+      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      autoLeaveWhenOthersLeft: false,
+    },
+  ): void => {
+    let syncState = initialSyncState;
+    const setSyncState = (value: SyncState): void => {
+      const prev = syncState;
+      syncState = value;
+      room.client.emit(ClientEvent.Sync, value, prev);
+    };
+    const room = mockMatrixRoom({
+      client: new (class extends EventEmitter {
+        public getUserId(): string | undefined {
+          return localRtcMember.userId;
+        }
 
-      public getDeviceId(): string {
-        return localRtcMember.deviceId;
-      }
+        public getDeviceId(): string {
+          return localRtcMember.deviceId;
+        }
 
-      public getDomain(): string {
-        return "example.com";
-      }
+        public getDomain(): string {
+          return "example.com";
+        }
 
-      public getSyncState(): SyncState {
-        return syncState;
-      }
-    })() as Partial<MatrixClient> as MatrixClient,
-    getMembers: () => Array.from(roomMembers.values()),
-    getMembersWithMembership: () => Array.from(roomMembers.values()),
-  });
-  const rtcSession = new MockRTCSession(room, []).withMemberships(rtcMembers$);
-  const participantsSpy = vi
-    .spyOn(ComponentsCore, "connectedParticipantsObserver")
-    .mockReturnValue(remoteParticipants$);
-  const mediaSpy = vi
-    .spyOn(ComponentsCore, "observeParticipantMedia")
-    .mockImplementation((p) =>
-      of({ participant: p } as Partial<
-        ComponentsCore.ParticipantMedia<LocalParticipant>
-      > as ComponentsCore.ParticipantMedia<LocalParticipant>),
+        public getSyncState(): SyncState {
+          return syncState;
+        }
+      })() as Partial<MatrixClient> as MatrixClient,
+      getMembers: () => Array.from(roomMembers.values()),
+      getMembersWithMembership: () => Array.from(roomMembers.values()),
+    });
+    const rtcSession = new MockRTCSession(room, []).withMemberships(
+      rtcMembers$,
     );
-  const eventsSpy = vi
-    .spyOn(ComponentsCore, "observeParticipantEvents")
-    .mockImplementation((p, ...eventTypes) => {
-      if (eventTypes.includes(ParticipantEvent.IsSpeakingChanged)) {
-        return (speaking.get(p) ?? of(false)).pipe(
-          map((s): Participant => ({ ...p, isSpeaking: s }) as Participant),
-        );
-      } else {
-        return of(p);
-      }
+    const participantsSpy = vi
+      .spyOn(ComponentsCore, "connectedParticipantsObserver")
+      .mockReturnValue(remoteParticipants$);
+    const mediaSpy = vi
+      .spyOn(ComponentsCore, "observeParticipantMedia")
+      .mockImplementation((p) =>
+        of({ participant: p } as Partial<
+          ComponentsCore.ParticipantMedia<LocalParticipant>
+        > as ComponentsCore.ParticipantMedia<LocalParticipant>),
+      );
+    const eventsSpy = vi
+      .spyOn(ComponentsCore, "observeParticipantEvents")
+      .mockImplementation((p, ...eventTypes) => {
+        if (eventTypes.includes(ParticipantEvent.IsSpeakingChanged)) {
+          return (speaking.get(p) ?? of(false)).pipe(
+            map((s): Participant => ({ ...p, isSpeaking: s }) as Participant),
+          );
+        } else {
+          return of(p);
+        }
+      });
+
+    const roomEventSelectorSpy = vi
+      .spyOn(ComponentsCore, "roomEventSelector")
+      .mockImplementation((_room, _eventType) => of());
+    const muteStates = mockMuteStates();
+    const raisedHands$ = new BehaviorSubject<Record<string, RaisedHandInfo>>(
+      {},
+    );
+    const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
+
+    const vm = createCallViewModel$(
+      testScope(),
+      rtcSession.asMockedSession(),
+      room,
+      mediaDevices,
+      muteStates,
+      {
+        ...options,
+        livekitRoomFactory: (): LivekitRoom =>
+          mockLivekitRoom({
+            localParticipant,
+            disconnect: async () => Promise.resolve(),
+            setE2EEEnabled: async () => Promise.resolve(),
+          }),
+        connectionState$,
+        windowSize$,
+        matrixRTCMode$: constant(mode),
+      },
+      raisedHands$,
+      reactions$,
+      new BehaviorSubject<ProcessorState>({
+        processor: undefined,
+        supported: undefined,
+      }),
+    );
+
+    onTestFinished(() => {
+      participantsSpy.mockRestore();
+      mediaSpy.mockRestore();
+      eventsSpy.mockRestore();
+      roomEventSelectorSpy.mockRestore();
     });
 
-  const roomEventSelectorSpy = vi
-    .spyOn(ComponentsCore, "roomEventSelector")
-    .mockImplementation((_room, _eventType) => of());
-  const muteStates = mockMuteStates();
-  const raisedHands$ = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
-  const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
-
-  const vm = createCallViewModel$(
-    testScope(),
-    rtcSession.asMockedSession(),
-    room,
-    mediaDevices,
-    muteStates,
-    {
-      ...options,
-      livekitRoomFactory: (): LivekitRoom =>
-        mockLivekitRoom({
-          localParticipant,
-          disconnect: async () => Promise.resolve(),
-          setE2EEEnabled: async () => Promise.resolve(),
-        }),
-      connectionState$,
-      windowSize$,
-    },
-    raisedHands$,
-    reactions$,
-    new BehaviorSubject<ProcessorState>({
-      processor: undefined,
-      supported: undefined,
-    }),
-  );
-
-  onTestFinished(() => {
-    participantsSpy.mockRestore();
-    mediaSpy.mockRestore();
-    eventsSpy.mockRestore();
-    roomEventSelectorSpy.mockRestore();
-  });
-
-  continuation(vm, rtcSession, { raisedHands$: raisedHands$ }, setSyncState);
+    continuation(vm, rtcSession, { raisedHands$: raisedHands$ }, setSyncState);
+  };
 }
