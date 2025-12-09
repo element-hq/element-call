@@ -32,7 +32,10 @@ import {
 } from "../../../livekit/TrackProcessorContext.tsx";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { observeTrackReference$ } from "../../MediaViewModel.ts";
-import { type Connection } from "../remoteMembers/Connection.ts";
+import {
+  ConnectionState,
+  type Connection,
+} from "../remoteMembers/Connection.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
 import {
   ElementCallError,
@@ -158,20 +161,17 @@ export class Publisher {
     this.logger.debug("startPublishing called");
     const lkRoom = this.connection.livekitRoom;
     const { promise, resolve, reject } = Promise.withResolvers<void>();
-    const sub = this.connection.state$.subscribe((s) => {
-      switch (s.state) {
-        case LivekitConnectionState.Connected:
-          resolve();
-          break;
-        case "FailedToStart":
-          reject(
-            s.error instanceof ElementCallError
-              ? s.error
-              : new FailToStartLivekitConnection(s.error.message),
-          );
-          break;
-        default:
-          this.logger.info("waiting for connection: ", s.state);
+    const sub = this.connection.state$.subscribe((state) => {
+      if (state instanceof Error) {
+        const error =
+          state instanceof ElementCallError
+            ? state
+            : new FailToStartLivekitConnection(state.message);
+        reject(error);
+      } else if (state === ConnectionState.LivekitConnected) {
+        resolve();
+      } else {
+        this.logger.info("waiting for connection: ", state);
       }
     });
     try {

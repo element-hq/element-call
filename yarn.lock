@@ -10353,8 +10353,8 @@ __metadata:
   linkType: hard
 
 "matrix-js-sdk@npm:^39.2.0":
-  version: 39.2.0
-  resolution: "matrix-js-sdk@npm:39.2.0"
+  version: 39.3.0
+  resolution: "matrix-js-sdk@npm:39.3.0"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.3.0"
@@ -10370,7 +10370,7 @@ __metadata:
     sdp-transform: "npm:^3.0.0"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/f8b5261de2744305330ba3952821ca9303698170bfd3a0ff8a767b9286d4e8d4ed5aaf6fbaf8a1e8ff9dbd859102a2a47d882787e2da3b3078965bec00157959
+  checksum: 10c0/031c9ec042e00c32dc531f82fc59c64cc25fb665abfc642b1f0765c530d60684f8bd63daf0cdd0dbe96b4f87ea3f4148f9d3f024a59d57eceaec1ce5d0164755
   languageName: node
   linkType: hard
 

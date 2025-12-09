@@ -12,7 +12,6 @@ import {
 } from "@livekit/components-core";
 import {
   ConnectionError,
-  ConnectionState as LivekitConnectionState,
   type Room as LivekitRoom,
   type LocalParticipant,
   type RemoteParticipant,
@@ -55,14 +54,21 @@ export class FailedToStartError extends Error {
 }
 
 export enum ConnectionState {
+  /** The start state of a connection. It has been created but nothing has loaded yet. */
   Initialized = "Initialized",
+  /** `start` has been called on the connection. It aquires the jwt info to conenct to the LK Room  */
   FetchingConfig = "FetchingConfig",
   Stopped = "Stopped",
   ConnectingToLkRoom = "ConnectingToLkRoom",
+  /** The same as ConnectionState.Disconnected from `livekit-client` */
   LivekitDisconnected = "disconnected",
+  /** The same as ConnectionState.Connecting from `livekit-client` */
   LivekitConnecting = "connecting",
+  /** The same as ConnectionState.Connected from `livekit-client` */
   LivekitConnected = "connected",
+  /** The same as ConnectionState.Reconnecting from `livekit-client` */
   LivekitReconnecting = "reconnecting",
+  /** The same as ConnectionState.SignalReconnecting from `livekit-client` */
   LivekitSignalReconnecting = "signalReconnecting",
 }
 
@@ -73,15 +79,14 @@ export enum ConnectionState {
  */
 export class Connection {
   // Private Behavior
-  private readonly _state$ = new BehaviorSubject<
-    ConnectionState | FailedToStartError
-  >(ConnectionState.Initialized);
+  private readonly _state$ = new BehaviorSubject<ConnectionState | Error>(
+    ConnectionState.Initialized,
+  );
 
   /**
    * The current state of the connection to the media transport.
    */
-  public readonly state$: Behavior<ConnectionState | FailedToStartError> =
-    this._state$;
+  public readonly state$: Behavior<ConnectionState | Error> = this._state$;
 
   /**
    * The media transport to connect to.
@@ -161,15 +166,12 @@ export class Connection {
       connectionStateObserver(this.livekitRoom)
         .pipe(this.scope.bind())
         .subscribe((lkState) => {
-          // It si save to cast lkState to ConnectionState as they are fully overlapping.
+          // It is save to cast lkState to ConnectionState as they are fully overlapping.
           this._state$.next(lkState as unknown as ConnectionState);
         });
     } catch (error) {
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
-      this._state$.next({
-        state: "FailedToStart",
-        error: error instanceof Error ? error : new Error(`${error}`),
-      });
+      this._state$.next(error instanceof Error ? error : new Error(`${error}`));
       throw error;
     }
   }
@@ -194,9 +196,7 @@ export class Connection {
     );
     if (this.stopped) return;
     await this.livekitRoom.disconnect();
-    this._state$.next({
-      state: ConnectionAdditionalState.Stopped,
-    });
+    this._state$.next(ConnectionState.Stopped);
     this.stopped = true;
   }
 
