@@ -60,11 +60,7 @@ export class ConnectionManagerData {
     transport: LivekitTransport,
   ): (LocalParticipant | RemoteParticipant)[] {
     const key = transport.livekit_service_url + "|" + transport.livekit_alias;
-    const existing = this.store.get(key);
-    if (existing) {
-      return existing[1];
-    }
-    return [];
+    return this.store.get(key)?.[1] ?? [];
   }
   /**
    * Get all connections where the given participant is publishing.
