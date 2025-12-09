@@ -110,6 +110,7 @@ import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
 import { createConnectionManager$ } from "./remoteMembers/ConnectionManager.ts";
 import {
   createMatrixLivekitMembers$,
+  type TaggedParticipant,
   type MatrixLivekitMember,
 } from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
@@ -504,23 +505,28 @@ export function createCallViewModel$(
     ),
   );
 
-  const localMatrixLivekitMember$ = scope.behavior<MatrixLivekitMember | null>(
-    localRtcMembership$.pipe(
-      generateItems(
-        // Generate a local member when membership is non-null
-        function* (membership) {
-          if (membership !== null) yield { keys: ["local"], data: membership };
-        },
-        (_scope, membership$) => ({
-          membership$,
-          participant$: localMembership.participant$,
-          connection$: localMembership.connection$,
-          userId,
-        }),
+  const localMatrixLivekitMember$ =
+    scope.behavior<MatrixLivekitMember<"local"> | null>(
+      localRtcMembership$.pipe(
+        generateItems(
+          // Generate a local member when membership is non-null
+          function* (membership) {
+            if (membership !== null)
+              yield { keys: ["local"], data: membership };
+          },
+          (_scope, membership$) => ({
+            membership$,
+            participant: {
+              type: "local" as const,
+              value$: localMembership.participant$,
+            },
+            connection$: localMembership.connection$,
+            userId,
+          }),
+        ),
+        map(([localMember]) => localMember ?? null),
       ),
-      map(([localMember]) => localMember ?? null),
-    ),
-  );
+    );
 
   // ------------------------------------------------------------------------
   // callLifecycle
@@ -597,7 +603,7 @@ export function createCallViewModel$(
         const members = membersWithEpoch.value;
         const a$ = combineLatest(
           members.map((member) =>
-            combineLatest([member.connection$, member.participant$]).pipe(
+            combineLatest([member.connection$, member.participant.value$]).pipe(
               map(([connection, participant]) => {
                 // do not render audio for local participant
                 if (!connection || !participant || participant.isLocal)
@@ -675,8 +681,10 @@ export function createCallViewModel$(
           let localParticipantId: string | undefined = undefined;
           // add local member if available
           if (localMatrixLivekitMember) {
-            const { userId, participant$, connection$, membership$ } =
+            const { userId, connection$, membership$ } =
               localMatrixLivekitMember;
+            const participant: TaggedParticipant =
+              localMatrixLivekitMember.participant; // Widen the type
             localParticipantId = `${userId}:${membership$.value.deviceId}`; // should be membership$.value.membershipID which is not optional
             // const participantId = membership$.value.membershipID;
             if (localParticipantId) {
@@ -686,7 +694,7 @@ export function createCallViewModel$(
                     dup,
                     localParticipantId,
                     userId,
-                    participant$,
+                    participant,
                     connection$,
                   ],
                   data: undefined,
@@ -697,7 +705,7 @@ export function createCallViewModel$(
           // add remote members that are available
           for (const {
             userId,
-            participant$,
+            participant,
             connection$,
             membership$,
           } of matrixLivekitMembers) {
@@ -706,7 +714,7 @@ export function createCallViewModel$(
             // const participantId = membership$.value?.identity;
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
-                keys: [dup, participantId, userId, participant$, connection$],
+                keys: [dup, participantId, userId, participant, connection$],
                 data: undefined,
               };
             }
