@@ -323,12 +323,14 @@ export const createLocalMembership$ = ({
   //  - overwrite current publisher
   scope.reconcile(localConnection$, async (connection) => {
     if (connection !== null) {
-      publisher$.next(createPublisherFactory(connection));
+      const publisher = createPublisherFactory(connection);
+      publisher$.next(publisher);
+      // Clean-up callback
+      return Promise.resolve(async (): Promise<void> => {
+        await publisher.stopPublishing();
+        publisher.stopTracks();
+      });
     }
-    return Promise.resolve(async (): Promise<void> => {
-      await publisher$?.value?.stopPublishing();
-      publisher$?.value?.stopTracks();
-    });
   });
 
   // Use reconcile here to not run concurrent createAndSetupTracks calls
