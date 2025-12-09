@@ -504,25 +504,23 @@ export function createCallViewModel$(
     ),
   );
 
-  const localMatrixLivekitMemberUninitialized = {
-    membership$: localRtcMembership$,
-    participant$: localMembership.participant$,
-    connection$: localMembership.connection$,
-    userId: userId,
-  };
-
-  const localMatrixLivekitMember$: Behavior<MatrixLivekitMember | null> =
-    scope.behavior(
-      localRtcMembership$.pipe(
-        switchMap((membership) => {
-          if (!membership) return of(null);
-          return of(
-            // casting is save here since we know that localRtcMembership$ is !== null since we reached this case.
-            localMatrixLivekitMemberUninitialized as MatrixLivekitMember,
-          );
+  const localMatrixLivekitMember$ = scope.behavior<MatrixLivekitMember | null>(
+    localRtcMembership$.pipe(
+      generateItems(
+        // Generate a local member when membership is non-null
+        function* (membership) {
+          if (membership !== null) yield { keys: ["local"], data: membership };
+        },
+        (_scope, membership$) => ({
+          membership$,
+          participant$: localMembership.participant$,
+          connection$: localMembership.connection$,
+          userId,
         }),
       ),
-    );
+      map(([localMember]) => localMember ?? null),
+    ),
+  );
 
   // ------------------------------------------------------------------------
   // callLifecycle
