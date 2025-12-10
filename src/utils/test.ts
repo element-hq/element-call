@@ -362,6 +362,12 @@ export function createRemoteMedia(
   rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
   participant: RemoteParticipant | null,
+  livekitRoom: LivekitRoom | undefined = mockLivekitRoom(
+    {},
+    {
+      remoteParticipants$: of(participant ? [participant] : []),
+    },
+  ),
 ): RemoteUserMediaViewModel {
   const member = mockMatrixRoomMember(rtcMember, roomMember);
   return new RemoteUserMediaViewModel(
@@ -372,14 +378,7 @@ export function createRemoteMedia(
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
-    constant(
-      mockLivekitRoom(
-        {},
-        {
-          remoteParticipants$: of(participant ? [participant] : []),
-        },
-      ),
-    ),
+    constant(livekitRoom),
     constant("https://rtc-example.org"),
     constant(false),
     constant(member.rawDisplayName ?? "nodisplayname"),

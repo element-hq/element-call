@@ -226,3 +226,13 @@ test("remote media is not in waiting state when participant is connected with no
   );
   expect(vm.waitingForMedia$.value).toBe(false);
 });
+
+test("remote media is not in waiting state when user does not intend to publish anywhere", () => {
+  const vm = createRemoteMedia(
+    rtcMembership,
+    {},
+    mockRemoteParticipant({}),
+    undefined, // No room (no advertised transport)
+  );
+  expect(vm.waitingForMedia$.value).toBe(false);
+});
