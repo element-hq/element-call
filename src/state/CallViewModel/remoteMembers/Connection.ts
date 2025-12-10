@@ -150,7 +150,8 @@ export class Connection {
             throw new InsufficientCapacityError();
           }
           if (e.status === 404) {
-            // error msg is "Could not establish signal connection: requested room does not exist"
+            // error msg is "Failed to create call"
+            // error description is "Call creation might be restricted to authorized users only. Try again later, or contact your server admin if the problem persists."
             // The room does not exist. There are two different modes of operation for the SFU:
             // - the room is created on the fly when connecting (livekit `auto_create` option)
             // - Only authorized users can create rooms, so the room must exist before connecting (done by the auth jwt service)
@@ -172,6 +173,7 @@ export class Connection {
     } catch (error) {
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
       this._state$.next(error instanceof Error ? error : new Error(`${error}`));
+      // Its okay to ignore the throw. The error is part of the state.
       throw error;
     }
   }

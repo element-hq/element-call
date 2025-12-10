@@ -42,6 +42,7 @@ import { type Publisher } from "./Publisher.ts";
 import { type MuteStates } from "../../MuteStates.ts";
 import {
   ElementCallError,
+  FailToStartLivekitConnection,
   MembershipManagerError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
@@ -56,6 +57,7 @@ import {
   type FailedToStartError,
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
+import { and$ } from "../../../utils/observable.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -86,13 +88,12 @@ export type LocalMemberMediaState =
     }
   | PublishState
   | ElementCallError;
-export type LocalMemberMatrixState = Error | RTCSessionStatus;
 export type LocalMemberState =
   | ElementCallError
   | TransportState.Waiting
   | {
       media: LocalMemberMediaState;
-      matrix: LocalMemberMatrixState;
+      matrix: ElementCallError | RTCSessionStatus;
     };
 
 /*
@@ -220,10 +221,6 @@ export const createLocalMembership$ = ({
     ),
   );
 
-  const localConnectionState$ = localConnection$.pipe(
-    switchMap((connection) => (connection ? connection.state$ : of(null))),
-  );
-
   // MATRIX RELATED
 
   // This should be used in a combineLatest with publisher$ to connect.
@@ -308,23 +305,27 @@ export const createLocalMembership$ = ({
         try {
           await publisher?.startPublishing();
         } catch (error) {
-          setMediaError(error as ElementCallError);
+          const message =
+            error instanceof Error ? error.message : String(error);
+          setPublishError(new FailToStartLivekitConnection(message));
         }
       } else if (tracks.length !== 0 && !shouldJoinAndPublish) {
         try {
           await publisher?.stopPublishing();
         } catch (error) {
-          setMediaError(new UnknownCallError(error as Error));
+          setPublishError(new UnknownCallError(error as Error));
         }
       }
     },
   );
 
-  const fatalMediaError$ = new BehaviorSubject<ElementCallError | null>(null);
-  const setMediaError = (e: ElementCallError): void => {
-    if (fatalMediaError$.value !== null)
-      logger.error("Multiple Media Errors:", e);
-    else fatalMediaError$.next(e);
+  // STATE COMPUTATION
+
+  // These are non fatal since we can join a room and concume media even though publishing failed.
+  const publishError$ = new BehaviorSubject<ElementCallError | null>(null);
+  const setPublishError = (e: ElementCallError): void => {
+    if (publishError$.value !== null) logger.error("Multiple Media Errors:", e);
+    else publishError$.next(e);
   };
 
   const fatalTransportError$ = new BehaviorSubject<ElementCallError | null>(
@@ -335,6 +336,10 @@ export const createLocalMembership$ = ({
       logger.error("Multiple Transport Errors:", e);
     else fatalTransportError$.next(e);
   };
+
+  const localConnectionState$ = localConnection$.pipe(
+    switchMap((connection) => (connection ? connection.state$ : of(null))),
+  );
 
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
     combineLatest([
@@ -392,26 +397,51 @@ export const createLocalMembership$ = ({
       homeserverConnected.rtsSession$,
       fatalMatrixError$,
       fatalTransportError$,
-      fatalMediaError$,
+      publishError$,
     ]).pipe(
       map(
         ([
           mediaState,
           rtcSessionStatus,
-          matrixError,
-          transportError,
-          mediaError,
+          fatalMatrixError,
+          fatalTransportError,
+          publishError,
         ]) => {
-          if (transportError !== null) return transportError;
-          // `mediaState` will be 'null' until the transport appears.
+          if (fatalTransportError !== null) return fatalTransportError;
+          // `mediaState` will be 'null' until the transport/connection appears.
           if (mediaState && rtcSessionStatus)
             return {
-              matrix: matrixError ?? rtcSessionStatus,
-              media: mediaError ?? mediaState,
+              matrix: fatalMatrixError ?? rtcSessionStatus,
+              media: publishError ?? mediaState,
             };
           return TransportState.Waiting;
         },
       ),
+    ),
+  );
+
+  /**
+   * Whether we are "fully" connected to the call. Accounts for both the
+   * connection to the MatrixRTC session and the LiveKit publish connection.
+   */
+  const matrixAndLivekitConnected$ = scope.behavior(
+    and$(
+      homeserverConnected.combined$,
+      localConnectionState$.pipe(
+        map((state) => state === ConnectionState.LivekitConnected),
+      ),
+    ).pipe(
+      tap((v) => logger.debug("livekit+matrix: Connected state changed", v)),
+    ),
+  );
+
+  /**
+   * Whether we should tell the user that we're reconnecting to the call.
+   */
+  const reconnecting$ = scope.behavior(
+    matrixAndLivekitConnected$.pipe(
+      pairwise(),
+      map(([prev, current]) => prev === true && current === false),
     ),
   );
 
@@ -576,15 +606,7 @@ export const createLocalMembership$ = ({
     localMemberState$,
     tracks$,
     participant$,
-    reconnecting$: scope.behavior(
-      localMemberState$.pipe(
-        map((state) => {
-          if (typeof state === "object" && "matrix" in state)
-            return state.matrix === RTCSessionStatus.Reconnecting;
-          return false;
-        }),
-      ),
-    ),
+    reconnecting$,
     disconnected$: scope.behavior(
       homeserverConnected.rtsSession$.pipe(
         map((state) => state === RTCSessionStatus.Disconnected),
