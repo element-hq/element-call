@@ -36,7 +36,10 @@ import {
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
-import { FailToGetOpenIdToken } from "../../../utils/errors.ts";
+import {
+  ElementCallError,
+  FailToGetOpenIdToken,
+} from "../../../utils/errors.ts";
 
 let testScope: ObservableScope;
 
@@ -246,8 +249,11 @@ describe("Start connection states", () => {
 
     capturedState = capturedStates.pop();
 
-    if (capturedState instanceof Error) {
-      expect(capturedState.message).toContain(
+    if (
+      capturedState instanceof ElementCallError &&
+      capturedState.cause instanceof Error
+    ) {
+      expect(capturedState.cause.message).toContain(
         "SFU Config fetch failed with exception Error",
       );
       expect(connection.transport.livekit_alias).toEqual(
@@ -308,8 +314,13 @@ describe("Start connection states", () => {
 
     capturedState = capturedStates.pop();
 
-    if (capturedState instanceof Error) {
-      expect(capturedState.message).toContain("Failed to connect to livekit");
+    if (
+      capturedState instanceof ElementCallError &&
+      capturedState.cause instanceof Error
+    ) {
+      expect(capturedState.cause.message).toContain(
+        "Failed to connect to livekit",
+      );
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
