@@ -428,7 +428,7 @@ export function createCallViewModel$(
       combineLatest(
         [
           localTransport$.pipe(
-            catchError((e) => {
+            catchError((e: unknown) => {
               logger.info(
                 "dont pass local transport to createConnectionManager$. localTransport$ threw an error",
                 e,
