@@ -407,9 +407,7 @@ export const createLocalMembership$ = ({
               matrix: matrixError ?? rtcSessionStatus,
               media: mediaError ?? mediaState,
             };
-          else {
-            return TransportState.Waiting;
-          }
+          return TransportState.Waiting;
         },
       ),
     ),
@@ -423,19 +421,21 @@ export const createLocalMembership$ = ({
     ])
     .subscribe(([prev, current]) => {
       if (!widget) return;
+      // JOIN prev=false (was left) => current-true (now joiend)
       if (!prev && current) {
-        try {
-          void widget.api.transport.send(ElementWidgetActions.JoinCall, {});
-        } catch (e) {
-          logger.error("Failed to send join action", e);
-        }
+        widget.api.transport
+          .send(ElementWidgetActions.JoinCall, {})
+          .catch((e) => {
+            logger.error("Failed to send join action", e);
+          });
       }
+      // LEAVE prev=false (was joined) => current-true (now left)
       if (prev && !current) {
-        try {
-          void widget?.api.transport.send(ElementWidgetActions.HangupCall, {});
-        } catch (e) {
-          logger.error("Failed to send hangup action", e);
-        }
+        widget.api.transport
+          .send(ElementWidgetActions.HangupCall, {})
+          .catch((e) => {
+            logger.error("Failed to send hangup action", e);
+          });
       }
     });
 
@@ -575,8 +575,12 @@ export const createLocalMembership$ = ({
     tracks$,
     participant$,
     reconnecting$: scope.behavior(
-      homeserverConnected.rtsSession$.pipe(
-        map((sessionStatus) => sessionStatus === RTCSessionStatus.Reconnecting),
+      localMemberState$.pipe(
+        map((state) => {
+          if (typeof state === "object" && "matrix" in state)
+            return state.matrix === RTCSessionStatus.Reconnecting;
+          return false;
+        }),
       ),
     ),
     disconnected$: scope.behavior(
