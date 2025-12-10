@@ -247,9 +247,8 @@ export class PosthogAnalytics {
           // wins, and the first writer will send tracking with an ID that doesn't match the one on the server
           // until the next time account data is refreshed and this function is called (most likely on next
           // page load). This will happen pretty infrequently, so we can tolerate the possibility.
-          const accountDataAnalyticsId = analyticsIdGenerator();
-          await this.setAccountAnalyticsId(accountDataAnalyticsId);
-          analyticsID = await this.hashedEcAnalyticsId(accountDataAnalyticsId);
+          analyticsID = analyticsIdGenerator();
+          await this.setAccountAnalyticsId(analyticsID);
         }
       } catch (e) {
         // The above could fail due to network requests, but not essential to starting the application,
@@ -270,37 +269,14 @@ export class PosthogAnalytics {
 
   private async getAnalyticsId(): Promise<string | null> {
     const client: MatrixClient = window.matrixclient;
-    let accountAnalyticsId: string | null;
     if (widget) {
-      accountAnalyticsId = getUrlParams().posthogUserId;
+      return getUrlParams().posthogUserId;
     } else {
       const accountData = await client.getAccountDataFromServer(
         PosthogAnalytics.ANALYTICS_EVENT_TYPE,
       );
-      accountAnalyticsId = accountData?.id ?? null;
+      return accountData?.id ?? null;
     }
-    if (accountAnalyticsId) {
-      // we dont just use the element web analytics ID because that would allow to associate
-      // users between the two posthog instances. By using a hash from the username and the element web analytics id
-      // it is not possible to conclude the element web posthog user id from the element call user id and vice versa.
-      return await this.hashedEcAnalyticsId(accountAnalyticsId);
-    }
-    return null;
-  }
-
-  private async hashedEcAnalyticsId(
-    accountAnalyticsId: string,
-  ): Promise<string> {
-    const client: MatrixClient = window.matrixclient;
-    const posthogIdMaterial = "ec" + accountAnalyticsId + client.getUserId();
-    const bufferForPosthogId = await crypto.subtle.digest(
-      "sha-256",
-      new TextEncoder().encode(posthogIdMaterial),
-    );
-    const view = new Int32Array(bufferForPosthogId);
-    return Array.from(view)
-      .map((b) => Math.abs(b).toString(16).padStart(2, "0"))
-      .join("");
   }
 
   private async setAccountAnalyticsId(analyticsID: string): Promise<void> {
