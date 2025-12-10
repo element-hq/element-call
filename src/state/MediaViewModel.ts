@@ -7,8 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type AudioSource,
-  type TrackReferenceOrPlaceholder,
   type VideoSource,
+  type TrackReference,
   observeParticipantEvents,
   observeParticipantMedia,
   roomEventSelector,
@@ -33,7 +33,6 @@ import {
   type Observable,
   Subject,
   combineLatest,
-  distinctUntilKeyChanged,
   filter,
   fromEvent,
   interval,
@@ -60,14 +59,11 @@ import { type ObservableScope } from "./ObservableScope";
 export function observeTrackReference$(
   participant: Participant,
   source: Track.Source,
-): Observable<TrackReferenceOrPlaceholder> {
+): Observable<TrackReference | undefined> {
   return observeParticipantMedia(participant).pipe(
-    map(() => ({
-      participant: participant,
-      publication: participant.getTrackPublication(source),
-      source,
-    })),
-    distinctUntilKeyChanged("publication"),
+    map(() => participant.getTrackPublication(source)),
+    distinctUntilChanged(),
+    map((publication) => publication && { participant, publication, source }),
   );
 }
 
@@ -226,7 +222,7 @@ abstract class BaseMediaViewModel {
   /**
    * The LiveKit video track for this media.
    */
-  public readonly video$: Behavior<TrackReferenceOrPlaceholder | null>;
+  public readonly video$: Behavior<TrackReference | undefined>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
@@ -241,10 +237,12 @@ abstract class BaseMediaViewModel {
 
   private observeTrackReference$(
     source: Track.Source,
-  ): Behavior<TrackReferenceOrPlaceholder | null> {
+  ): Behavior<TrackReference | undefined> {
     return this.scope.behavior(
       this.participant$.pipe(
-        switchMap((p) => (!p ? of(null) : observeTrackReference$(p, source))),
+        switchMap((p) =>
+          !p ? of(undefined) : observeTrackReference$(p, source),
+        ),
       ),
     );
   }
@@ -281,8 +279,8 @@ abstract class BaseMediaViewModel {
         [audio$, this.video$],
         (a, v) =>
           encryptionSystem.kind !== E2eeType.NONE &&
-          (a?.publication?.isEncrypted === false ||
-            v?.publication?.isEncrypted === false),
+          (a?.publication.isEncrypted === false ||
+            v?.publication.isEncrypted === false),
       ),
     );
 
@@ -471,7 +469,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   private readonly videoTrack$: Observable<LocalVideoTrack | null> =
     this.video$.pipe(
       switchMap((v) => {
-        const track = v?.publication?.track;
+        const track = v?.publication.track;
         if (!(track instanceof LocalVideoTrack)) return of(null);
         return merge(
           // Watch for track restarts because they indicate a camera switch.
