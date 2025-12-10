@@ -7,34 +7,17 @@
   align-items: center;
   justify-content: center;
   gap: var(--cpd-space-2x);
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  transition: opacity 200ms;
 }
 
 .overlay[data-show="true"] {
-  animation: fade-in 200ms;
-}
-
-@keyframes fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    display: none;
-  }
+  opacity: 1;
 }
 
 .overlay[data-show="false"] {
-  animation: fade-out 130ms forwards;
+  opacity: 0;
   pointer-events: none;
+  transition-duration: 130ms;
 }
 
 .overlay::before {

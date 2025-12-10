@@ -27,7 +27,7 @@ import { ElementWidgetActions, widget } from "../widget";
 import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
 import { type ObservableScope } from "./ObservableScope";
-import { type Behavior } from "./Behavior";
+import { type Behavior, constant } from "./Behavior";
 
 interface MuteStateData {
   enabled$: Observable<boolean>;
@@ -38,31 +38,58 @@ interface MuteStateData {
 export type Handler = (desired: boolean) => Promise<boolean>;
 const defaultHandler: Handler = async (desired) => Promise.resolve(desired);
 
-class MuteState<Label, Selected> {
+/**
+ * Internal class - exported only for testing purposes.
+ * Do not use directly outside of tests.
+ */
+export class MuteState<Label, Selected> {
+  // TODO: rewrite this to explain behavior, it is not understandable, and cannot add logging
   private readonly enabledByDefault$ =
     this.enabledByConfig && !getUrlParams().skipLobby
       ? this.joined$.pipe(map((isJoined) => !isJoined))
       : of(false);
 
   private readonly handler$ = new BehaviorSubject(defaultHandler);
+
   public setHandler(handler: Handler): void {
     if (this.handler$.value !== defaultHandler)
       throw new Error("Multiple mute state handlers are not supported");
     this.handler$.next(handler);
   }
+
   public unsetHandler(): void {
     this.handler$.next(defaultHandler);
   }
 
+  private readonly canControlDevices$ = combineLatest([
+    this.device.available$,
+    this.forceMute$,
+  ]).pipe(
+    map(([available, forceMute]) => {
+      return !forceMute && available.size > 0;
+    }),
+  );
+
   private readonly data$ = this.scope.behavior<MuteStateData>(
-    this.device.available$.pipe(
-      map((available) => available.size > 0),
+    this.canControlDevices$.pipe(
       distinctUntilChanged(),
       withLatestFrom(
         this.enabledByDefault$,
-        (devicesConnected, enabledByDefault) => {
-          if (!devicesConnected)
+        (canControlDevices, enabledByDefault) => {
+          logger.info(
+            `MuteState: canControlDevices: ${canControlDevices}, enabled by default: ${enabledByDefault}`,
+          );
+          if (!canControlDevices) {
+            logger.info(
+              `MuteState: devices connected: ${canControlDevices}, disabling`,
+            );
+            // We need to sync the mute state with the handler
+            // to ensure nothing is beeing published.
+            this.handler$.value(false).catch((err) => {
+              logger.error("MuteState-disable: handler error", err);
+            });
             return { enabled$: of(false), set: null, toggle: null };
+          }
 
           // Assume the default value only once devices are actually connected
           let enabled = enabledByDefault;
@@ -135,21 +162,45 @@ class MuteState<Label, Selected> {
     private readonly device: MediaDevice<Label, Selected>,
     private readonly joined$: Observable<boolean>,
     private readonly enabledByConfig: boolean,
+    /**
+     * An optional observable which, when it emits `true`, will force the mute.
+     * Used for video to stop camera when earpiece mode is on.
+     * @private
+     */
+    private readonly forceMute$: Observable<boolean>,
   ) {}
 }
 
 export class MuteStates {
+  /**
+   *  True if the selected audio output device is an earpiece.
+   *  Used to force-disable video when on earpiece.
+   */
+  private readonly isEarpiece$ = combineLatest(
+    this.mediaDevices.audioOutput.available$,
+    this.mediaDevices.audioOutput.selected$,
+  ).pipe(
+    map(([available, selected]) => {
+      if (!selected?.id) return false;
+      const device = available.get(selected.id);
+      logger.info(`MuteStates: selected audio output device:`, device);
+      return device?.type === "earpiece";
+    }),
+  );
+
   public readonly audio = new MuteState(
     this.scope,
     this.mediaDevices.audioInput,
     this.joined$,
     Config.get().media_devices.enable_audio,
+    constant(false),
   );
   public readonly video = new MuteState(
     this.scope,
     this.mediaDevices.videoInput,
     this.joined$,
     Config.get().media_devices.enable_video,
+    this.isEarpiece$,
   );
 
   public constructor(
