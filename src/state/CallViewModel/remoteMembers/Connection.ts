@@ -177,7 +177,11 @@ export class Connection {
     } catch (error) {
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
       this._state$.next(
-        error instanceof ElementCallError ? error : new UnknownCallError(error),
+        error instanceof ElementCallError
+          ? error
+          : error instanceof Error
+            ? new UnknownCallError(error)
+            : new UnknownCallError(new Error(`${error}`)),
       );
       // Its okay to ignore the throw. The error is part of the state.
       throw error;
