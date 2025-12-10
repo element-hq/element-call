@@ -10,7 +10,7 @@ import {
   type LivekitTransport,
   type ParticipantId,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, combineLatest, map, of, switchMap, tap } from "rxjs";
+import { combineLatest, map, of, switchMap, tap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
 
@@ -55,11 +55,7 @@ export class ConnectionManagerData {
     transport: LivekitTransport,
   ): RemoteParticipant[] {
     const key = transport.livekit_service_url + "|" + transport.livekit_alias;
-    const existing = this.store.get(key);
-    if (existing) {
-      return existing[1];
-    }
-    return [];
+    return this.store.get(key)?.[1] ?? [];
   }
   /**
    * Get all connections where the given participant is publishing.
@@ -110,9 +106,6 @@ export function createConnectionManager$({
   logger: parentLogger,
 }: Props): IConnectionManager {
   const logger = parentLogger.getChild("[ConnectionManager]");
-
-  const running$ = new BehaviorSubject(true);
-  scope.onEnd(() => running$.next(false));
   // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
 
   /**
@@ -124,10 +117,7 @@ export function createConnectionManager$({
    * externally this is modified via `registerTransports()`.
    */
   const transports$ = scope.behavior(
-    combineLatest([running$, inputTransports$]).pipe(
-      map(([running, transports]) =>
-        transports.mapInner((transport) => (running ? transport : [])),
-      ),
+    inputTransports$.pipe(
       map((transports) => transports.mapInner(removeDuplicateTransports)),
       tap(({ value: transports }) => {
         logger.trace(
