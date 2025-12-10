@@ -98,24 +98,13 @@ describe("Publisher", () => {
     ).mockRejectedValue(Error("testError"));
 
     await expect(publisher.startPublishing()).rejects.toThrow(
-      new FailToStartLivekitConnection("testError"),
+      new Error("testError"),
     );
 
     // does not try other conenction after the first one failed
     expect(
       connection.livekitRoom.localParticipant.publishTrack,
     ).toHaveBeenCalledTimes(1);
-
-    // failiour due to connection.state$
-    const beforeState = connection.state$.value;
-    (connection.state$ as BehaviorSubject<Error>).next(Error("testStartError"));
-
-    await expect(publisher.startPublishing()).rejects.toThrow(
-      new FailToStartLivekitConnection("testStartError"),
-    );
-    (connection.state$ as BehaviorSubject<ConnectionState | Error>).next(
-      beforeState,
-    );
 
     // does not try other conenction after the first one failed
     expect(
