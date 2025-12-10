@@ -26,12 +26,8 @@ import {
   mockMediaDevices,
 } from "../../../utils/test";
 import { Publisher } from "./Publisher";
-import {
-  type Connection,
-  type ConnectionState,
-} from "../remoteMembers/Connection";
+import { type Connection } from "../remoteMembers/Connection";
 import { type MuteStates } from "../../MuteStates";
-import { FailToStartLivekitConnection } from "../../../utils/errors";
 
 describe("Publisher", () => {
   let scope: ObservableScope;
