@@ -443,6 +443,7 @@ export const createLocalMembership$ = ({
       pairwise(),
       map(([prev, current]) => prev === true && current === false),
     ),
+    false,
   );
 
   // inform the widget about the connect and disconnect intent from the user.
