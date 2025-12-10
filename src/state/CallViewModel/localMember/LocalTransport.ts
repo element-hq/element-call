@@ -85,7 +85,7 @@ export const createLocalTransport$ = ({
    * The transport that we would personally prefer to publish on (if not for the
    * transport preferences of others, perhaps).
    *
-   * @throws
+   * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
    */
   const preferredTransport$: Behavior<LivekitTransport | null> = scope.behavior(
     customLivekitUrl.value$.pipe(

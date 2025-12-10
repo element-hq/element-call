@@ -324,17 +324,23 @@ export const createLocalMembership$ = ({
   // These are non fatal since we can join a room and concume media even though publishing failed.
   const publishError$ = new BehaviorSubject<ElementCallError | null>(null);
   const setPublishError = (e: ElementCallError): void => {
-    if (publishError$.value !== null) logger.error("Multiple Media Errors:", e);
-    else publishError$.next(e);
+    if (publishError$.value !== null) {
+      logger.error("Multiple Media Errors:", e);
+    } else {
+      publishError$.next(e);
+    }
   };
 
   const fatalTransportError$ = new BehaviorSubject<ElementCallError | null>(
     null,
   );
+
   const setTransportError = (e: ElementCallError): void => {
-    if (fatalTransportError$.value !== null)
+    if (fatalTransportError$.value !== null) {
       logger.error("Multiple Transport Errors:", e);
-    else fatalTransportError$.next(e);
+    } else {
+      fatalTransportError$.next(e);
+    }
   };
 
   const localConnectionState$ = localConnection$.pipe(
@@ -386,9 +392,11 @@ export const createLocalMembership$ = ({
   );
   const fatalMatrixError$ = new BehaviorSubject<ElementCallError | null>(null);
   const setMatrixError = (e: ElementCallError): void => {
-    if (fatalMatrixError$.value !== null)
+    if (fatalMatrixError$.value !== null) {
       logger.error("Multiple Matrix Errors:", e);
-    else fatalMatrixError$.next(e);
+    } else {
+      fatalMatrixError$.next(e);
+    }
   };
 
   const localMemberState$ = scope.behavior<LocalMemberState>(

@@ -127,6 +127,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const mediaDevices = useMediaDevices();
   const trackProcessorState$ = useTrackProcessorObservable$();
   useEffect(() => {
+    logger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
     const reactionsReader = new ReactionsReader(scope, props.rtcSession);
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
@@ -153,6 +154,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     vm.leave$.pipe(scope.bind()).subscribe(props.onLeft);
 
     return (): void => {
+      logger.info("END CALL VIEW SCOPE");
       scope.end();
     };
   }, [
@@ -271,7 +273,10 @@ export const InCallView: FC<InCallViewProps> = ({
   const ringOverlay = useBehavior(vm.ringOverlay$);
   const fatalCallError = useBehavior(vm.fatalError$);
   // Stop the rendering and throw for the error boundary
-  if (fatalCallError) throw fatalCallError;
+  if (fatalCallError) {
+    logger.debug("fatalCallError stop rendering", fatalCallError);
+    throw fatalCallError;
+  }
 
   // We need to set the proper timings on the animation based upon the sound length.
   const ringDuration = pickupPhaseAudio?.soundDuration["waiting"] ?? 1;

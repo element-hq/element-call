@@ -15,6 +15,7 @@ import {
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
+  catchError,
   combineLatest,
   distinctUntilChanged,
   filter,
@@ -425,7 +426,18 @@ export function createCallViewModel$(
     connectionFactory: connectionFactory,
     inputTransports$: scope.behavior(
       combineLatest(
-        [localTransport$, membershipsAndTransports.transports$],
+        [
+          localTransport$.pipe(
+            catchError((e) => {
+              logger.info(
+                "dont pass local transport to createConnectionManager$. localTransport$ threw an error",
+                e,
+              );
+              return of(null);
+            }),
+          ),
+          membershipsAndTransports.transports$,
+        ],
         (localTransport, transports) => {
           const localTransportAsArray = localTransport ? [localTransport] : [];
           return transports.mapInner((transports) => [
@@ -1461,6 +1473,7 @@ export function createCallViewModel$(
     fatalError$: scope.behavior(
       errors$.pipe(
         map((errors) => {
+          logger.debug("errors$ to compute any fatal errors:", errors);
           return (
             errors?.transportError ??
             errors?.matrixError ??

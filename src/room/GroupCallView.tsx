@@ -446,6 +446,7 @@ export const GroupCallView: FC<Props> = ({
 
   let body: ReactNode;
   if (externalError) {
+    logger.debug("External error occurred:", externalError);
     // If an error was recorded within this component but outside
     // GroupCallErrorBoundary, create a component that rethrows the error from
     // within the error boundary, so it can be handled uniformly
