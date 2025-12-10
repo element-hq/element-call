@@ -29,8 +29,10 @@ import {
 import { type Behavior } from "../../Behavior.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
 import {
+  ElementCallError,
   InsufficientCapacityError,
   SFURoomCreationRestrictedError,
+  UnknownCallError,
 } from "../../../utils/errors.ts";
 
 export type PublishingParticipant = LocalParticipant | RemoteParticipant;
@@ -79,9 +81,9 @@ export enum ConnectionState {
  */
 export class Connection {
   // Private Behavior
-  private readonly _state$ = new BehaviorSubject<ConnectionState | Error>(
-    ConnectionState.Initialized,
-  );
+  private readonly _state$ = new BehaviorSubject<
+    ConnectionState | ElementCallError
+  >(ConnectionState.Initialized);
 
   /**
    * The current state of the connection to the media transport.
@@ -131,6 +133,8 @@ export class Connection {
     this.stopped = false;
     try {
       this._state$.next(ConnectionState.FetchingConfig);
+      // We should already have this information after creating the localTransport.
+      // It would probably be better to forward this here.
       const { url, jwt } = await this.getSFUConfigWithOpenID();
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
@@ -172,7 +176,9 @@ export class Connection {
         });
     } catch (error) {
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
-      this._state$.next(error instanceof Error ? error : new Error(`${error}`));
+      this._state$.next(
+        error instanceof ElementCallError ? error : new UnknownCallError(error),
+      );
       // Its okay to ignore the throw. The error is part of the state.
       throw error;
     }
