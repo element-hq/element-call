@@ -319,12 +319,12 @@ export function mockLocalParticipant(
 }
 
 export function createLocalMedia(
-  localRtcMember: CallMembership,
+  rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
   localParticipant: LocalParticipant,
   mediaDevices: MediaDevices,
 ): LocalUserMediaViewModel {
-  const member = mockMatrixRoomMember(localRtcMember, roomMember);
+  const member = mockMatrixRoomMember(rtcMember, roomMember);
   return new LocalUserMediaViewModel(
     testScope(),
     "local",
@@ -359,22 +359,26 @@ export function mockRemoteParticipant(
 }
 
 export function createRemoteMedia(
-  localRtcMember: CallMembership,
+  rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
-  participant: Partial<RemoteParticipant>,
+  participant: RemoteParticipant | null,
 ): RemoteUserMediaViewModel {
-  const member = mockMatrixRoomMember(localRtcMember, roomMember);
-  const remoteParticipant = mockRemoteParticipant(participant);
+  const member = mockMatrixRoomMember(rtcMember, roomMember);
   return new RemoteUserMediaViewModel(
     testScope(),
     "remote",
     member.userId,
-    of(remoteParticipant),
+    constant(participant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
     constant(
-      mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
+      mockLivekitRoom(
+        {},
+        {
+          remoteParticipants$: of(participant ? [participant] : []),
+        },
+      ),
     ),
     constant("https://rtc-example.org"),
     constant(false),

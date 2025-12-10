@@ -268,7 +268,7 @@ abstract class BaseMediaViewModel {
     encryptionSystem: EncryptionSystem,
     audioSource: AudioSource,
     videoSource: VideoSource,
-    livekitRoom$: Behavior<LivekitRoom | undefined>,
+    protected readonly livekitRoom$: Behavior<LivekitRoom | undefined>,
     public readonly focusUrl$: Behavior<string | undefined>,
     public readonly displayName$: Behavior<string>,
     public readonly mxcAvatarUrl$: Behavior<string | undefined>,
@@ -596,6 +596,14 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
  * A remote participant's user media.
  */
 export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
+  /**
+   * Whether we are waiting for this user's LiveKit participant to exist. This
+   * could be because either we or the remote party are still connecting.
+   */
+  public readonly waitingForMedia$ = this.scope.behavior<boolean>(
+    this.participant$.pipe(map((participant) => participant === null)),
+  );
+
   // This private field is used to override the value from the superclass
   private __speaking$: Behavior<boolean>;
   public get speaking$(): Behavior<boolean> {

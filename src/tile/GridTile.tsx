@@ -69,6 +69,7 @@ interface UserMediaTileProps extends TileProps {
   vm: UserMediaViewModel;
   mirror: boolean;
   locallyMuted: boolean;
+  waitingForMedia?: boolean;
   primaryButton?: ReactNode;
   menuStart?: ReactNode;
   menuEnd?: ReactNode;
@@ -79,6 +80,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   vm,
   showSpeakingIndicators,
   locallyMuted,
+  waitingForMedia,
   primaryButton,
   menuStart,
   menuEnd,
@@ -194,7 +196,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       raisedHandTime={handRaised ?? undefined}
       currentReaction={reaction ?? undefined}
       raisedHandOnClick={raisedHandOnClick}
-      localParticipant={vm.local}
+      waitingForMedia={waitingForMedia}
       focusUrl={focusUrl}
       audioStreamStats={audioStreamStats}
       videoStreamStats={videoStreamStats}
@@ -290,6 +292,7 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
   ...props
 }) => {
   const { t } = useTranslation();
+  const waitingForMedia = useBehavior(vm.waitingForMedia$);
   const locallyMuted = useBehavior(vm.locallyMuted$);
   const localVolume = useBehavior(vm.localVolume$);
   const onSelectMute = useCallback(
@@ -311,6 +314,7 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
     <UserMediaTile
       ref={ref}
       vm={vm}
+      waitingForMedia={waitingForMedia}
       locallyMuted={locallyMuted}
       mirror={false}
       menuStart={

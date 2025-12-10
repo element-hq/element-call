@@ -20,6 +20,7 @@ import {
   createLocalMedia,
   createRemoteMedia,
   withTestScheduler,
+  mockRemoteParticipant,
 } from "../utils/test";
 import { getValue } from "../utils/observable";
 import { constant } from "./Behavior";
@@ -44,7 +45,11 @@ const rtcMembership = mockRtcMembership("@alice:example.org", "AAAA");
 
 test("control a participant's volume", () => {
   const setVolumeSpy = vi.fn();
-  const vm = createRemoteMedia(rtcMembership, {}, { setVolume: setVolumeSpy });
+  const vm = createRemoteMedia(
+    rtcMembership,
+    {},
+    mockRemoteParticipant({ setVolume: setVolumeSpy }),
+  );
   withTestScheduler(({ expectObservable, schedule }) => {
     schedule("-ab---c---d|", {
       a() {
@@ -88,7 +93,7 @@ test("control a participant's volume", () => {
 });
 
 test("toggle fit/contain for a participant's video", () => {
-  const vm = createRemoteMedia(rtcMembership, {}, {});
+  const vm = createRemoteMedia(rtcMembership, {}, mockRemoteParticipant({}));
   withTestScheduler(({ expectObservable, schedule }) => {
     schedule("-ab|", {
       a: () => vm.toggleFitContain(),
@@ -198,4 +203,26 @@ test("switch cameras", async () => {
     expect(selectVideoInput).toHaveBeenLastCalledWith("front camera");
   });
   expect(deviceId).toBe("front camera");
+});
+
+test("remote media is in waiting state when participant has not yet connected", () => {
+  const vm = createRemoteMedia(rtcMembership, {}, null); // null participant
+  expect(vm.waitingForMedia$.value).toBe(true);
+});
+
+test("remote media is not in waiting state when participant is connected", () => {
+  const vm = createRemoteMedia(rtcMembership, {}, mockRemoteParticipant({}));
+  expect(vm.waitingForMedia$.value).toBe(false);
+});
+
+test("remote media is not in waiting state when participant is connected with no publications", () => {
+  const vm = createRemoteMedia(
+    rtcMembership,
+    {},
+    mockRemoteParticipant({
+      getTrackPublication: () => undefined,
+      getTrackPublications: () => [],
+    }),
+  );
+  expect(vm.waitingForMedia$.value).toBe(false);
 });
