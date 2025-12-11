@@ -126,8 +126,16 @@ async function registerUser(
     page.getByRole("heading", { name: `Welcome ${username}` }),
   ).toBeVisible();
 
+  await page.pause();
+  const browserUnsupportedToast = page
+    .getByText("Element does not support this browser")
+    .locator("..")
+    .locator("..");
+
   // Dismiss incompatible browser toast
-  const dismissButton = page.getByRole("button", { name: "Dismiss" });
+  const dismissButton = browserUnsupportedToast.getByRole("button", {
+    name: "Dismiss",
+  });
   try {
     await expect(dismissButton).toBeVisible({ timeout: 700 });
     await dismissButton.click();

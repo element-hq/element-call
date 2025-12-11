@@ -24,7 +24,7 @@ import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable } from "observable-hooks";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   VoiceCallSolidIcon,
   VolumeOnSolidIcon,
@@ -108,6 +108,8 @@ import ringtoneOgg from "../sound/ringtone.ogg?url";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
+
+const logger = rootLogger.getChild("[InCallView]");
 
 const maxTapDurationMs = 400;
 
