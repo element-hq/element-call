@@ -108,7 +108,7 @@ export function createMatrixLivekitMembers$({
         // Each update where the key of the generator array do not change will result in updates to the `data$` observable in the factory.
         (scope, data$, participantId, userId) => {
           logger.debug(
-            `Updating data$ for participantId: ${participantId}, userId: ${userId}`,
+            `Generating member for participantId: ${participantId}, userId: ${userId}`,
           );
           // will only get called once per `participantId, userId` pair.
           // updates to data$ and as a result to displayName$ and mxcAvatarUrl$ are more frequent.

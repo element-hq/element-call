@@ -7,10 +7,11 @@ Please see LICENSE in the repository root for full details.
 
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
-  type E2EEOptions,
   Room as LivekitRoom,
   type RoomOptions,
   type BaseKeyProvider,
+  type E2EEManagerOptions,
+  type BaseE2EEManager,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 // imported as inline to support worker when loaded from a cdn (cross domain)
@@ -42,8 +43,10 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param client - The OpenID client parts for authentication, needed to get openID and JWT tokens.
    * @param devices - Used for video/audio out/in capture options.
    * @param processorState$ - Effects like background blur (only for publishing connection?)
-   * @param e2eeLivekitOptions - The E2EE options to use for the LiveKit Room.
+   * @param livekitKeyProvider
    * @param controlledAudioDevices - Option to indicate whether audio output device is controlled externally (native mobile app).
+   * @param echoCancellation - Whether to enable echo cancellation for audio capture.
+   * @param noiseSuppression - Whether to enable noise suppression for audio capture.
    * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
    */
   public constructor(
@@ -53,20 +56,24 @@ export class ECConnectionFactory implements ConnectionFactory {
     livekitKeyProvider: BaseKeyProvider | undefined,
     private controlledAudioDevices: boolean,
     livekitRoomFactory?: () => LivekitRoom,
+    echoCancellation: boolean = true,
+    noiseSuppression: boolean = true,
   ) {
     const defaultFactory = (): LivekitRoom =>
       new LivekitRoom(
-        generateRoomOption(
-          this.devices,
-          this.processorState$.value,
-          livekitKeyProvider && {
+        generateRoomOption({
+          devices: this.devices,
+          processorState: this.processorState$.value,
+          e2eeLivekitOptions: livekitKeyProvider && {
             keyProvider: livekitKeyProvider,
             // It's important that every room use a separate E2EE worker.
             // They get confused if given streams from multiple rooms.
             worker: new E2EEWorker(),
           },
-          this.controlledAudioDevices,
-        ),
+          controlledAudioDevices: this.controlledAudioDevices,
+          echoCancellation,
+          noiseSuppression,
+        }),
       );
     this.livekitRoomFactory = livekitRoomFactory ?? defaultFactory;
   }
@@ -91,12 +98,24 @@ export class ECConnectionFactory implements ConnectionFactory {
 /**
  *  Generate the initial LiveKit RoomOptions based on the current media devices and processor state.
  */
-function generateRoomOption(
-  devices: MediaDevices,
-  processorState: ProcessorState,
-  e2eeLivekitOptions: E2EEOptions | undefined,
-  controlledAudioDevices: boolean,
-): RoomOptions {
+function generateRoomOption({
+  devices,
+  processorState,
+  e2eeLivekitOptions,
+  controlledAudioDevices,
+  echoCancellation,
+  noiseSuppression,
+}: {
+  devices: MediaDevices;
+  processorState: ProcessorState;
+  e2eeLivekitOptions:
+    | E2EEManagerOptions
+    | { e2eeManager: BaseE2EEManager }
+    | undefined;
+  controlledAudioDevices: boolean;
+  echoCancellation: boolean;
+  noiseSuppression: boolean;
+}): RoomOptions {
   return {
     ...defaultLiveKitOptions,
     videoCaptureDefaults: {
@@ -107,6 +126,8 @@ function generateRoomOption(
     audioCaptureDefaults: {
       ...defaultLiveKitOptions.audioCaptureDefaults,
       deviceId: devices.audioInput.selected$.value?.id,
+      echoCancellation,
+      noiseSuppression,
     },
     audioOutput: {
       // When using controlled audio devices, we don't want to set the
