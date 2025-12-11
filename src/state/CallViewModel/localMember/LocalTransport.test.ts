@@ -11,11 +11,12 @@ import {
   describe,
   expect,
   it,
-  MockedObject,
+  type MockedObject,
   vi,
 } from "vitest";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, lastValueFrom } from "rxjs";
+import fetchMock from "fetch-mock";
 
 import { mockConfig, flushPromises } from "../../../utils/test";
 import { createLocalTransport$ } from "./LocalTransport";
@@ -27,7 +28,6 @@ import {
 } from "../../../utils/errors";
 import * as openIDSFU from "../../../livekit/openIDSFU";
 import { customLivekitUrl } from "../../../settings/settings";
-import fetchMock from "fetch-mock";
 
 describe("LocalTransport", () => {
   let scope: ObservableScope;
@@ -188,6 +188,20 @@ describe("LocalTransport", () => {
         type: "livekit",
       });
     });
+    it("fails fast if the openID request fails for backend config", async () => {
+      localTransportOpts.client._unstable_getRTCTransports.mockResolvedValue([
+        { type: "livekit", livekit_service_url: "https://lk.example.org" },
+      ]);
+      openIdResolver.reject(
+        new FailToGetOpenIdToken(new Error("Test driven error")),
+      );
+      try {
+        await lastValueFrom(createLocalTransport$(localTransportOpts));
+        throw Error("Expected test to throw");
+      } catch (ex) {
+        expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
+      }
+    });
     it("supports getting transport via well-known", async () => {
       localTransportOpts.client.getDomain.mockReturnValue("example.org");
       fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
@@ -206,27 +220,43 @@ describe("LocalTransport", () => {
       });
       expect(fetchMock.done()).toEqual(true);
     });
-  });
-
-  it("throws if no options are available", async () => {
-    const localTransport$ = createLocalTransport$({
-      scope,
-      roomId: "!room:example.org",
-      useOldestMember$: constant(false),
-      memberships$: constant(new Epoch<CallMembership[]>([])),
-      client: {
-        getDomain: () => "",
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        _unstable_getRTCTransports: async () => Promise.resolve([]),
-        // These won't be called in this error path but satisfy the type
-        getOpenIdToken: vi.fn(),
-        getDeviceId: vi.fn(),
-      },
+    it("fails fast if the openId request fails for the well-known config", async () => {
+      localTransportOpts.client.getDomain.mockReturnValue("example.org");
+      fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
+        "org.matrix.msc4143.rtc_foci": [
+          { type: "livekit", livekit_service_url: "https://lk.example.org" },
+        ],
+      });
+      openIdResolver.reject(
+        new FailToGetOpenIdToken(new Error("Test driven error")),
+      );
+      try {
+        await lastValueFrom(createLocalTransport$(localTransportOpts));
+        throw Error("Expected test to throw");
+      } catch (ex) {
+        expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
+      }
     });
-    await flushPromises();
+    it("throws if no options are available", async () => {
+      const localTransport$ = createLocalTransport$({
+        scope,
+        roomId: "!room:example.org",
+        useOldestMember$: constant(false),
+        memberships$: constant(new Epoch<CallMembership[]>([])),
+        client: {
+          getDomain: () => "",
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          _unstable_getRTCTransports: async () => Promise.resolve([]),
+          // These won't be called in this error path but satisfy the type
+          getOpenIdToken: vi.fn(),
+          getDeviceId: vi.fn(),
+        },
+      });
+      await flushPromises();
 
-    expect(() => localTransport$.value).toThrow(
-      new MatrixRTCTransportMissingError(""),
-    );
+      expect(() => localTransport$.value).toThrow(
+        new MatrixRTCTransportMissingError(""),
+      );
+    });
   });
 });
