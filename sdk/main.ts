@@ -32,7 +32,6 @@ import {
   type CallMembership,
   MatrixRTCSession,
   MatrixRTCSessionEvent,
-  SlotDescription,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   type Room as LivekitRoom,
@@ -98,10 +97,13 @@ export async function createMatrixRTCSdk(
 
   const mediaDevices = new MediaDevices(scope);
   const muteStates = new MuteStates(scope, mediaDevices, constant(true));
-  const rtcSession = new MatrixRTCSession(client, room, {
-    application,
-    id,
-  });
+  const slot = { application, id };
+  const rtcSession = new MatrixRTCSession(
+    client,
+    room,
+    MatrixRTCSession.sessionMembershipsForSlot(room, slot),
+    slot,
+  );
   const callViewModel = createCallViewModel$(
     scope,
     rtcSession,
