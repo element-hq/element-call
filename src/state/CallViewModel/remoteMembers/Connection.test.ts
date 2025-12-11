@@ -50,11 +50,6 @@ let fakeLivekitRoom: MockedObject<LivekitRoom>;
 let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
-let fakeRoomEventEmiter: EventEmitter;
-// let fakeMembershipsFocusMap$: BehaviorSubject<
-//   { membership: CallMembership; transport: LivekitTransport }[]
-// >;
-
 const livekitFocus: LivekitTransport = {
   livekit_alias: "!roomID:example.org",
   livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
@@ -91,22 +86,25 @@ function setupTest(): void {
       localParticipantEventEmiter,
     ),
   } as unknown as LocalParticipant);
-  fakeRoomEventEmiter = new EventEmitter();
 
+  const fakeRoomEventEmitter = new EventEmitter();
   fakeLivekitRoom = vi.mocked<LivekitRoom>({
     connect: vi.fn(),
     disconnect: vi.fn(),
     remoteParticipants: new Map(),
     localParticipant: fakeLocalParticipant,
     state: LivekitConnectionState.Disconnected,
-    on: fakeRoomEventEmiter.on.bind(fakeRoomEventEmiter),
-    off: fakeRoomEventEmiter.off.bind(fakeRoomEventEmiter),
-    addListener: fakeRoomEventEmiter.addListener.bind(fakeRoomEventEmiter),
+    on: fakeRoomEventEmitter.on.bind(fakeRoomEventEmitter),
+    off: fakeRoomEventEmitter.off.bind(fakeRoomEventEmitter),
+    addListener: fakeRoomEventEmitter.addListener.bind(fakeRoomEventEmitter),
     removeListener:
-      fakeRoomEventEmiter.removeListener.bind(fakeRoomEventEmiter),
+      fakeRoomEventEmitter.removeListener.bind(fakeRoomEventEmitter),
     removeAllListeners:
-      fakeRoomEventEmiter.removeAllListeners.bind(fakeRoomEventEmiter),
+      fakeRoomEventEmitter.removeAllListeners.bind(fakeRoomEventEmitter),
     setE2EEEnabled: vi.fn().mockResolvedValue(undefined),
+    emit: (eventName: string | symbol, ...args: unknown[]) => {
+      fakeRoomEventEmitter.emit(eventName, ...args);
+    },
   } as unknown as LivekitRoom);
 }
 
@@ -129,7 +127,13 @@ function setupRemoteConnection(): Connection {
   });
 
   fakeLivekitRoom.connect.mockImplementation(async (): Promise<void> => {
+    const changeEv = RoomEvent.ConnectionStateChanged;
+
+    fakeLivekitRoom.state = LivekitConnectionState.Connecting;
+    fakeLivekitRoom.emit(changeEv, fakeLivekitRoom.state);
     fakeLivekitRoom.state = LivekitConnectionState.Connected;
+    fakeLivekitRoom.emit(changeEv, fakeLivekitRoom.state);
+
     return Promise.resolve();
   });
 
@@ -350,8 +354,10 @@ describe("Start connection states", () => {
     expect(initialState).toEqual(ConnectionState.Initialized);
     const fetchingState = capturedStates.shift();
     expect(fetchingState).toEqual(ConnectionState.FetchingConfig);
+    const disconnectedState = capturedStates.shift();
+    expect(disconnectedState).toEqual(ConnectionState.LivekitDisconnected);
     const connectingState = capturedStates.shift();
-    expect(connectingState).toEqual(ConnectionState.ConnectingToLkRoom);
+    expect(connectingState).toEqual(ConnectionState.LivekitConnecting);
     const connectedState = capturedStates.shift();
     expect(connectedState).toEqual(ConnectionState.LivekitConnected);
   });
@@ -419,7 +425,7 @@ describe("Publishing participants observations", () => {
     );
 
     participants.forEach((p) =>
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
     );
 
     // At this point there should be no publishers
@@ -432,7 +438,7 @@ describe("Publishing participants observations", () => {
       fakeRemoteLivekitParticipant("@dan:example.org:DEV333", 2),
     ];
     participants.forEach((p) =>
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
     );
 
     // At this point there should be no publishers
@@ -462,7 +468,7 @@ describe("Publishing participants observations", () => {
     );
 
     for (const participant of participants) {
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, participant);
     }
 
     // At this point there should be no publishers
@@ -471,7 +477,7 @@ describe("Publishing participants observations", () => {
     participants = [fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1)];
 
     for (const participant of participants) {
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, participant);
     }
 
     // We should have bob has a publisher now
@@ -488,7 +494,7 @@ describe("Publishing participants observations", () => {
       (p) => p.identity !== "@bob:example.org:DEV111",
     );
 
-    fakeRoomEventEmiter.emit(
+    fakeLivekitRoom.emit(
       RoomEvent.ParticipantDisconnected,
       fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
     );
