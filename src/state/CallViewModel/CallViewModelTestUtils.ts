@@ -75,6 +75,7 @@ export interface CallViewModelInputs {
   speaking: Map<Participant, Observable<boolean>>;
   mediaDevices: MediaDevices;
   initialSyncState: SyncState;
+  windowSize$: Behavior<{ width: number; height: number }>;
 }
 
 const localParticipant = mockLocalParticipant({ identity: "" });
@@ -89,6 +90,7 @@ export function withCallViewModel(
     speaking = new Map(),
     mediaDevices = mockMediaDevices({}),
     initialSyncState = SyncState.Syncing,
+    windowSize$ = constant({ width: 1000, height: 800 }),
   }: Partial<CallViewModelInputs> = {},
   continuation: (
     vm: CallViewModel,
@@ -173,6 +175,7 @@ export function withCallViewModel(
           setE2EEEnabled: async () => Promise.resolve(),
         }),
       connectionState$,
+      windowSize$,
     },
     raisedHands$,
     reactions$,

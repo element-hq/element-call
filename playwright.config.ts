@@ -38,6 +38,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
+      testIgnore: "**/mobile/**",
       use: {
         ...devices["Desktop Chrome"],
         permissions: [
@@ -56,9 +57,9 @@ export default defineConfig({
         },
       },
     },
-
     {
       name: "firefox",
+      testIgnore: "**/mobile/**",
       use: {
         ...devices["Desktop Firefox"],
         ignoreHTTPSErrors: true,
@@ -67,6 +68,27 @@ export default defineConfig({
             "permissions.default.microphone": 1,
             "permissions.default.camera": 1,
           },
+        },
+      },
+    },
+    {
+      name: "mobile",
+      testMatch: "**/mobile/**",
+      use: {
+        ...devices["Pixel 7"],
+        ignoreHTTPSErrors: true,
+        permissions: [
+          "clipboard-write",
+          "clipboard-read",
+          "microphone",
+          "camera",
+        ],
+        launchOptions: {
+          args: [
+            "--use-fake-ui-for-media-stream",
+            "--use-fake-device-for-media-stream",
+            "--mute-audio",
+          ],
         },
       },
     },
