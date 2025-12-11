@@ -111,17 +111,7 @@ async function registerUser(
   await page.getByRole("textbox", { name: "Confirm password" }).click();
   await page.getByRole("textbox", { name: "Confirm password" }).fill(PASSWORD);
   await page.getByRole("button", { name: "Register" }).click();
-  const continueButton = page.getByRole("button", { name: "Continue" });
-  try {
-    await expect(continueButton).toBeVisible({ timeout: 700 });
-    // why do we need to put in the passwor if there is a continue button?
-    await page
-      .getByRole("textbox", { name: "Password", exact: true })
-      .fill(PASSWORD);
-    await continueButton.click();
-  } catch {
-    // continueButton not visible, continue as normal
-  }
+
   await expect(
     page.getByRole("heading", { name: `Welcome ${username}` }),
   ).toBeVisible();
