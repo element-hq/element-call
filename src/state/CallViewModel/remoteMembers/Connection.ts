@@ -18,7 +18,7 @@ import {
   RoomEvent,
 } from "livekit-client";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, map } from "rxjs";
+import { BehaviorSubject, map, skip, skipWhile } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -61,7 +61,6 @@ export enum ConnectionState {
   /** `start` has been called on the connection. It aquires the jwt info to conenct to the LK Room  */
   FetchingConfig = "FetchingConfig",
   Stopped = "Stopped",
-  ConnectingToLkRoom = "ConnectingToLkRoom",
   /** The same as ConnectionState.Disconnected from `livekit-client` */
   LivekitDisconnected = "disconnected",
   /** The same as ConnectionState.Connecting from `livekit-client` */
@@ -139,7 +138,17 @@ export class Connection {
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
-      this._state$.next(ConnectionState.ConnectingToLkRoom);
+      // Setup observer once we are done with getSFUConfigWithOpenID
+      connectionStateObserver(this.livekitRoom)
+        .pipe(
+          this.scope.bind(),
+          map((s) => s as unknown as ConnectionState),
+        )
+        .subscribe((lkState) => {
+          // It is save to cast lkState to ConnectionState as they are fully overlapping.
+          this._state$.next(lkState);
+        });
+
       try {
         await this.livekitRoom.connect(url, jwt);
       } catch (e) {
@@ -167,13 +176,6 @@ export class Connection {
       }
       // If we were stopped while connecting, don't proceed to update state.
       if (this.stopped) return;
-
-      connectionStateObserver(this.livekitRoom)
-        .pipe(this.scope.bind())
-        .subscribe((lkState) => {
-          // It is save to cast lkState to ConnectionState as they are fully overlapping.
-          this._state$.next(lkState as unknown as ConnectionState);
-        });
     } catch (error) {
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
       this._state$.next(
