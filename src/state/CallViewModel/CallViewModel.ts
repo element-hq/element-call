@@ -15,6 +15,7 @@ import {
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
+  catchError,
   combineLatest,
   distinctUntilChanged,
   filter,
@@ -93,14 +94,14 @@ import {
   type SpotlightLandscapeLayoutMedia,
   type SpotlightPortraitLayoutMedia,
 } from "../layout-types.ts";
-import { type ElementCallError } from "../../utils/errors.ts";
+import { ElementCallError } from "../../utils/errors.ts";
 import { type ObservableScope } from "../ObservableScope.ts";
 import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
 import {
   createLocalMembership$,
   enterRTCSession,
-  RTCBackendState,
-} from "./localMember/LocalMembership.ts";
+  TransportState,
+} from "./localMember/LocalMember.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import {
   createMemberships$,
@@ -425,7 +426,18 @@ export function createCallViewModel$(
     connectionFactory: connectionFactory,
     inputTransports$: scope.behavior(
       combineLatest(
-        [localTransport$, membershipsAndTransports.transports$],
+        [
+          localTransport$.pipe(
+            catchError((e: unknown) => {
+              logger.info(
+                "dont pass local transport to createConnectionManager$. localTransport$ threw an error",
+                e,
+              );
+              return of(null);
+            }),
+          ),
+          membershipsAndTransports.transports$,
+        ],
         (localTransport, transports) => {
           const localTransportAsArray = localTransport ? [localTransport] : [];
           return transports.mapInner((transports) => [
@@ -457,13 +469,13 @@ export function createCallViewModel$(
 
   const localMembership = createLocalMembership$({
     scope: scope,
-    homeserverConnected$: createHomeserverConnected$(
+    homeserverConnected: createHomeserverConnected$(
       scope,
       client,
       matrixRTCSession,
     ),
     muteStates: muteStates,
-    joinMatrixRTC: async (transport: LivekitTransport) => {
+    joinMatrixRTC: (transport: LivekitTransport) => {
       return enterRTCSession(
         matrixRTCSession,
         transport,
@@ -578,17 +590,6 @@ export function createCallViewModel$(
     ),
   );
 
-  /**
-   * Whether various media/event sources should pretend to be disconnected from
-   * all network input, even if their connection still technically works.
-   */
-  // We do this when the app is in the 'reconnecting' state, because it might be
-  // that the LiveKit connection is still functional while the homeserver is
-  // down, for example, and we want to avoid making people worry that the app is
-  // in a split-brained state.
-  // DISCUSSION own membership manager ALSO this probably can be simplifis
-  const reconnecting$ = localMembership.reconnecting$;
-
   const audioParticipants$ = scope.behavior(
     matrixLivekitMembers$.pipe(
       switchMap((membersWithEpoch) => {
@@ -636,7 +637,7 @@ export function createCallViewModel$(
   );
 
   const handsRaised$ = scope.behavior(
-    handsRaisedSubject$.pipe(pauseWhen(reconnecting$)),
+    handsRaisedSubject$.pipe(pauseWhen(localMembership.reconnecting$)),
   );
 
   const reactions$ = scope.behavior(
@@ -649,7 +650,7 @@ export function createCallViewModel$(
           ]),
         ),
       ),
-      pauseWhen(reconnecting$),
+      pauseWhen(localMembership.reconnecting$),
     ),
   );
 
@@ -740,7 +741,7 @@ export function createCallViewModel$(
             livekitRoom$,
             focusUrl$,
             mediaDevices,
-            reconnecting$,
+            localMembership.reconnecting$,
             displayName$,
             matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
             handsRaised$.pipe(map((v) => v[participantId]?.time ?? null)),
@@ -1423,13 +1424,44 @@ export function createCallViewModel$(
   // reassigned here to make it publicly accessible
   const toggleScreenSharing = localMembership.toggleScreenSharing;
 
+  const errors$ = scope.behavior<{
+    transportError?: ElementCallError;
+    matrixError?: ElementCallError;
+    connectionError?: ElementCallError;
+    publishError?: ElementCallError;
+  } | null>(
+    localMembership.localMemberState$.pipe(
+      map((value) => {
+        const returnObject: {
+          transportError?: ElementCallError;
+          matrixError?: ElementCallError;
+          connectionError?: ElementCallError;
+          publishError?: ElementCallError;
+        } = {};
+        if (value instanceof ElementCallError) return { transportError: value };
+        if (value === TransportState.Waiting) return null;
+        if (value.matrix instanceof ElementCallError)
+          returnObject.matrixError = value.matrix;
+        if (value.media instanceof ElementCallError)
+          returnObject.publishError = value.media;
+        else if (
+          typeof value.media === "object" &&
+          value.media.connection instanceof ElementCallError
+        )
+          returnObject.connectionError = value.media.connection;
+        return returnObject;
+      }),
+    ),
+    null,
+  );
+
   return {
     autoLeave$: autoLeave$,
     callPickupState$: callPickupState$,
     ringOverlay$: ringOverlay$,
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
-    join: localMembership.requestConnect,
+    join: localMembership.requestJoinAndPublish,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
 
@@ -1439,9 +1471,17 @@ export function createCallViewModel$(
     unhoverScreen: (): void => screenUnhover$.next(),
 
     fatalError$: scope.behavior(
-      localMembership.connectionState.livekit$.pipe(
-        filter((v) => v.state === RTCBackendState.Error),
-        map((s) => s.error),
+      errors$.pipe(
+        map((errors) => {
+          logger.debug("errors$ to compute any fatal errors:", errors);
+          return (
+            errors?.transportError ??
+            errors?.matrixError ??
+            errors?.connectionError ??
+            null
+          );
+        }),
+        filter((error) => error !== null),
       ),
       null,
     ),
@@ -1474,7 +1514,7 @@ export function createCallViewModel$(
     showFooter$: showFooter$,
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
-    reconnecting$: reconnecting$,
+    reconnecting$: localMembership.reconnecting$,
   };
 }
 
