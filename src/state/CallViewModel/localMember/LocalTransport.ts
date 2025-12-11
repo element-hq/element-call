@@ -27,7 +27,10 @@ import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { type Behavior } from "../../Behavior.ts";
 import { type Epoch, type ObservableScope } from "../../ObservableScope.ts";
 import { Config } from "../../../config/Config.ts";
-import { MatrixRTCTransportMissingError } from "../../../utils/errors.ts";
+import {
+  FailToGetOpenIdToken,
+  MatrixRTCTransportMissingError,
+} from "../../../utils/errors.ts";
 import {
   getSFUConfigWithOpenID,
   type OpenIDClientParts,
@@ -169,6 +172,10 @@ async function makeTransport(
             livekit_alias: livekitAlias,
           };
         } catch (ex) {
+          if (ex instanceof FailToGetOpenIdToken) {
+            // Explictly throw these
+            throw ex;
+          }
           logger.debug(
             `Could not use SFU service "${potentialTransport.livekit_service_url}" as SFU`,
             ex,
@@ -193,6 +200,8 @@ async function makeTransport(
       if (ex instanceof MatrixError && ex.httpStatus === 404) {
         // Expected, this is an unstable endpoint and it's not required.
         logger.debug("Backend does not provide any RTC transports", ex);
+      } else if (ex instanceof FailToGetOpenIdToken) {
+        throw ex;
       } else {
         // We got an error that wasn't just missing support for the feature, so log it loudly.
         logger.error(
@@ -233,6 +242,9 @@ async function makeTransport(
       logger.info("Using config SFU", selectedTransport);
       return selectedTransport;
     } catch (ex) {
+      if (ex instanceof FailToGetOpenIdToken) {
+        throw ex;
+      }
       logger.error("Failed to validate config SFU", ex);
     }
   }

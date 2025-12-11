@@ -32,7 +32,8 @@ describe("LocalTransport", () => {
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         getDomain: () => "",
-        _unstable_getRTCTransports: async () => [],
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        _unstable_getRTCTransports: async () => Promise.resolve([]),
         // These won't be called in this error path but satisfy the type
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
@@ -68,7 +69,8 @@ describe("LocalTransport", () => {
       client: {
         // Use empty domain to skip .well-known and use config directly
         getDomain: () => "",
-        _unstable_getRTCTransports: async () => [],
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        _unstable_getRTCTransports: async () => Promise.resolve([]),
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
       },
@@ -105,7 +107,8 @@ describe("LocalTransport", () => {
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         getDomain: () => "",
-        _unstable_getRTCTransports: async () => [],
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        _unstable_getRTCTransports: async () => Promise.resolve([]),
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
       },
@@ -141,7 +144,8 @@ describe("LocalTransport", () => {
       memberships$,
       client: {
         getDomain: () => "",
-        _unstable_getRTCTransports: async () => [],
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        _unstable_getRTCTransports: async () => Promise.resolve([]),
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
       },
