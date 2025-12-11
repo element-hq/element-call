@@ -32,6 +32,7 @@ describe("LocalTransport", () => {
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         getDomain: () => "",
+        _unstable_getRTCTransports: async () => [],
         // These won't be called in this error path but satisfy the type
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
@@ -67,6 +68,7 @@ describe("LocalTransport", () => {
       client: {
         // Use empty domain to skip .well-known and use config directly
         getDomain: () => "",
+        _unstable_getRTCTransports: async () => [],
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
       },
@@ -103,6 +105,7 @@ describe("LocalTransport", () => {
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         getDomain: () => "",
+        _unstable_getRTCTransports: async () => [],
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
       },
@@ -138,6 +141,7 @@ describe("LocalTransport", () => {
       memberships$,
       client: {
         getDomain: () => "",
+        _unstable_getRTCTransports: async () => [],
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
       },
