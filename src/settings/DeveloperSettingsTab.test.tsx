@@ -79,6 +79,7 @@ describe("DeveloperSettingsTab", () => {
     const { container } = render(
       <DeveloperSettingsTab
         client={client}
+        roomId={"#room:example.org"}
         livekitRooms={livekitRooms}
         env={{ MY_MOCK_ENV: 10, ENV: "test" } as unknown as ImportMetaEnv}
       />,

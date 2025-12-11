@@ -22,13 +22,13 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   EditInPlace,
+  ErrorMessage,
   Root as Form,
   Heading,
   HelpMessage,
   InlineField,
   Label,
   RadioControl,
-  Text,
 } from "@vector-im/compound-web";
 
 import { FieldRow, InputField } from "../input/Input";
@@ -50,6 +50,7 @@ import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 
 interface Props {
   client: MatrixClient;
+  roomId: string;
   livekitRooms?: { room: LivekitRoom; url: string; isLocal?: boolean }[];
   env: ImportMetaEnv;
 }
@@ -57,6 +58,7 @@ interface Props {
 export const DeveloperSettingsTab: FC<Props> = ({
   client,
   livekitRooms,
+  roomId,
   env,
 }) => {
   const { t } = useTranslation();
@@ -221,7 +223,6 @@ export const DeveloperSettingsTab: FC<Props> = ({
         />{" "}
       </FieldRow>
       <EditInPlace
-        serverInvalid={customLivekitUrlUpdateError !== null}
         onSubmit={(e) => e.preventDefault()}
         helpLabel={
           customLivekitUrl === null
@@ -240,30 +241,22 @@ export const DeveloperSettingsTab: FC<Props> = ({
               customLivekitUrlTextBuffer === null
             ) {
               setCustomLivekitUrl(null);
-              return Promise.resolve();
+              return;
             }
 
             try {
-              logger.debug("try setting");
               await getSFUConfigWithOpenID(
                 client,
                 customLivekitUrlTextBuffer,
-                "Test-room-alias-" + Date.now().toString() + client.getUserId(),
+                roomId,
               );
-              logger.debug("done setting! Success");
               setCustomLivekitUrlUpdateError(null);
               setCustomLivekitUrl(customLivekitUrlTextBuffer);
-            } catch (e) {
-              logger.error("failed setting", e);
+            } catch {
               setCustomLivekitUrlUpdateError("invalid URL (did not update)");
-              // automatically unset the error after 4 seconds (2 seconds will be for the save label)
-              setTimeout(() => {
-                logger.debug("unsetting error");
-                setCustomLivekitUrlUpdateError(null);
-              }, 2000);
             }
           },
-          [customLivekitUrlTextBuffer, setCustomLivekitUrl, client],
+          [customLivekitUrlTextBuffer, setCustomLivekitUrl, client, roomId],
         )}
         value={customLivekitUrlTextBuffer ?? ""}
         onChange={useCallback(
@@ -278,11 +271,10 @@ export const DeveloperSettingsTab: FC<Props> = ({
           },
           [setCustomLivekitUrl],
         )}
+        serverInvalid={customLivekitUrlUpdateError !== null}
       >
         {customLivekitUrlUpdateError !== null && (
-          <Text size="sm" priority="low">
-            {customLivekitUrlUpdateError}
-          </Text>
+          <ErrorMessage>{customLivekitUrlUpdateError}</ErrorMessage>
         )}
       </EditInPlace>
       <Heading as="h3" type="body" weight="semibold" size="lg">
