@@ -79,9 +79,9 @@ export const LobbyView: FC<Props> = ({
   waitingForInvite,
 }) => {
   useEffect(() => {
-    logger.info("[Lifecycle] GroupCallView Component mounted");
+    logger.info("[Lifecycle] LobbyView Component mounted");
     return (): void => {
-      logger.info("[Lifecycle] GroupCallView Component unmounted");
+      logger.info("[Lifecycle] LobbyView Component unmounted");
     };
   }, []);
 

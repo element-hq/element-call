@@ -34,10 +34,6 @@ import { getUrlParams } from "../../../UrlParams.ts";
 import { observeTrackReference$ } from "../../MediaViewModel.ts";
 import { type Connection } from "../remoteMembers/Connection.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
-import {
-  ElementCallError,
-  FailToStartLivekitConnection,
-} from "../../../utils/errors.ts";
 
 /**
  * A wrapper for a Connection object.
@@ -157,30 +153,29 @@ export class Publisher {
   public async startPublishing(): Promise<LocalTrack[]> {
     this.logger.debug("startPublishing called");
     const lkRoom = this.connection.livekitRoom;
-    const { promise, resolve, reject } = Promise.withResolvers<void>();
-    const sub = this.connection.state$.subscribe((s) => {
-      switch (s.state) {
-        case "ConnectedToLkRoom":
-          resolve();
-          break;
-        case "FailedToStart":
-          reject(
-            s.error instanceof ElementCallError
-              ? s.error
-              : new FailToStartLivekitConnection(s.error.message),
-          );
-          break;
-        default:
-          this.logger.info("waiting for connection: ", s.state);
-      }
-    });
-    try {
-      await promise;
-    } catch (e) {
-      throw e;
-    } finally {
-      sub.unsubscribe();
-    }
+
+    // we do not need to do this since lk will wait in `localParticipant.publishTrack`
+    // const { promise, resolve, reject } = Promise.withResolvers<void>();
+    // const sub = this.connection.state$.subscribe((state) => {
+    //   if (state instanceof Error) {
+    //     const error =
+    //       state instanceof ElementCallError
+    //         ? state
+    //         : new FailToStartLivekitConnection(state.message);
+    //     reject(error);
+    //   } else if (state === ConnectionState.LivekitConnected) {
+    //     resolve();
+    //   } else {
+    //     this.logger.info("waiting for connection: ", state);
+    //   }
+    // });
+    // try {
+    //   await promise;
+    // } catch (e) {
+    //   throw e;
+    // } finally {
+    //   sub.unsubscribe();
+    // }
 
     for (const track of this.tracks$.value) {
       this.logger.info("publish ", this.tracks$.value.length, "tracks");
@@ -188,9 +183,10 @@ export class Publisher {
       // with a timeout.
       await lkRoom.localParticipant.publishTrack(track).catch((error) => {
         this.logger.error("Failed to publish track", error);
-        throw new FailToStartLivekitConnection(
-          error instanceof Error ? error.message : error,
-        );
+        // throw new FailToStartLivekitConnection(
+        //   error instanceof Error ? error.message : error,
+        // );
+        throw error;
       });
       this.logger.info("published track ", track.kind, track.id);
 

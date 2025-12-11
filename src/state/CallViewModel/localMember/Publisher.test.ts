@@ -26,12 +26,8 @@ import {
   mockMediaDevices,
 } from "../../../utils/test";
 import { Publisher } from "./Publisher";
-import {
-  type Connection,
-  type ConnectionState,
-} from "../remoteMembers/Connection";
+import { type Connection } from "../remoteMembers/Connection";
 import { type MuteStates } from "../../MuteStates";
-import { FailToStartLivekitConnection } from "../../../utils/errors";
 
 describe("Publisher", () => {
   let scope: ObservableScope;
@@ -52,10 +48,7 @@ describe("Publisher", () => {
     } as unknown as MuteStates;
     scope = new ObservableScope();
     connection = {
-      state$: constant({
-        state: "ConnectedToLkRoom",
-        livekitConnectionState$: constant(LivekitConenctionState.Connected),
-      }),
+      state$: constant(LivekitConenctionState.Connected),
       livekitRoom: mockLivekitRoom({
         localParticipant: mockLocalParticipant({}),
       }),
@@ -101,25 +94,13 @@ describe("Publisher", () => {
     ).mockRejectedValue(Error("testError"));
 
     await expect(publisher.startPublishing()).rejects.toThrow(
-      new FailToStartLivekitConnection("testError"),
+      new Error("testError"),
     );
 
     // does not try other conenction after the first one failed
     expect(
       connection.livekitRoom.localParticipant.publishTrack,
     ).toHaveBeenCalledTimes(1);
-
-    // failiour due to connection.state$
-    const beforeState = connection.state$.value;
-    (connection.state$ as BehaviorSubject<ConnectionState>).next({
-      state: "FailedToStart",
-      error: Error("testStartError"),
-    });
-
-    await expect(publisher.startPublishing()).rejects.toThrow(
-      new FailToStartLivekitConnection("testStartError"),
-    );
-    (connection.state$ as BehaviorSubject<ConnectionState>).next(beforeState);
 
     // does not try other conenction after the first one failed
     expect(
