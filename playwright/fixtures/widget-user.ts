@@ -126,7 +126,6 @@ async function registerUser(
     page.getByRole("heading", { name: `Welcome ${username}` }),
   ).toBeVisible();
 
-  await page.pause();
   const browserUnsupportedToast = page
     .getByText("Element does not support this browser")
     .locator("..")
