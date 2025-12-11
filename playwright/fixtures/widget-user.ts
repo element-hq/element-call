@@ -113,7 +113,8 @@ async function registerUser(
   await page.getByRole("button", { name: "Register" }).click();
   const continueButton = page.getByRole("button", { name: "Continue" });
   try {
-    await expect(continueButton).toBeVisible({ timeout: 5000 });
+    await expect(continueButton).toBeVisible({ timeout: 700 });
+    // why do we need to put in the passwor if there is a continue button?
     await page
       .getByRole("textbox", { name: "Password", exact: true })
       .fill(PASSWORD);
@@ -124,6 +125,16 @@ async function registerUser(
   await expect(
     page.getByRole("heading", { name: `Welcome ${username}` }),
   ).toBeVisible();
+
+  // Dismiss incompatible browser toast
+  const dismissButton = page.getByRole("button", { name: "Dismiss" });
+  try {
+    await expect(dismissButton).toBeVisible({ timeout: 700 });
+    await dismissButton.click();
+  } catch {
+    // dismissButton not visible, continue as normal
+  }
+
   await setDevToolElementCallDevUrl(page);
 
   const clientHandle = await page.evaluateHandle(() =>
