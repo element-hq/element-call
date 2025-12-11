@@ -124,9 +124,10 @@ const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
  * validating auth against the service to ensure it's correct.
  * Prefers in order:
  *
- * 1. The transports returned via the homeserver.
- * 2. The transports returned via .well-known.
- * 3. The transport configured in Element Call's config.
+ * 1. The `urlFromDevSettings` value. If this cannot be validated, the function will throw.
+ * 2. The transports returned via the homeserver.
+ * 3. The transports returned via .well-known.
+ * 4. The transport configured in Element Call's config.
  *
  * @param client The authenticated Matrix client for the current user
  * @param roomId The ID of the room to be connected to.
@@ -142,6 +143,14 @@ async function makeTransport(
 ): Promise<LivekitTransport> {
   logger.trace("Searching for a preferred transport");
   const livekitAlias = roomId;
+
+  // We will call `getSFUConfigWithOpenID` once per transport here as it's our
+  // only mechanism of valiation. This means we will also ask the
+  // homeserver for a OpenID token a few times. Since OpenID tokens are single
+  // use we don't want to risk any issues by re-using a token.
+  //
+  // If the OpenID request were to fail then it's acceptable for us to fail
+  // this function early, as we assume the homeserver has got some problems.
 
   // DEVTOOL: Highest priority: Load from devtool setting
   if (urlFromDevSettings !== null) {
