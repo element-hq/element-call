@@ -87,8 +87,13 @@ export function createMatrixLivekitMembers$({
         // Each change in the keys (new key, missing key) will result in a call to the factory function.
         function* ([membershipsWithTransports, managerData]) {
           for (const { membership, transport } of membershipsWithTransports) {
-            // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
-            const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
+            // membership.membershipID will default to `${membership.userId}:${membership.deviceId}` if undefined.
+            // membership.membershipID will be set to sessionEvent.content.membershipID (stateEvents)
+            // or matrixRTCEvent.content.member.id (stickyEvents)
+            // On top of that session memebrship events from v0.17.0 upwards are going to be sent with `${membership.userId}:${membership.deviceId}`
+            // And sticky event rtc memberships are might be sent with a UUID. This is why this has to be fetched from the memerbship because the
+            // previous hardcoded rule `${membership.userId}:${membership.deviceId}` does not apply to matrix2.0 events.
+            const participantId = membership.membershipID;
 
             const participants = transport
               ? managerData.getParticipantForTransport(transport)
