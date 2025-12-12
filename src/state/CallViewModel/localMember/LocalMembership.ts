@@ -6,12 +6,13 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type LocalTrack,
   type Participant,
   ParticipantEvent,
   type LocalParticipant,
   type ScreenShareCaptureOptions,
   ConnectionState,
+  RoomEvent,
+  MediaDeviceFailure,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
@@ -24,6 +25,7 @@ import {
   combineLatest,
   distinctUntilChanged,
   from,
+  fromEvent,
   map,
   type Observable,
   of,
@@ -61,9 +63,9 @@ export enum RTCBackendState {
   WaitingForConnection = "waiting_for_connection",
   /** Connection and transport arrived, publisher Initialized */
   Initialized = "Initialized",
-  CreatingTracks = "creating_tracks",
+  // CreatingTracks = "creating_tracks",
   ReadyToPublish = "ready_to_publish",
-  WaitingToPublish = "waiting_to_publish",
+  // WaitingToPublish = "waiting_to_publish",
   Connected = "connected",
   Disconnected = "disconnected",
   Disconnecting = "disconnecting",
@@ -74,9 +76,9 @@ type LocalMemberRtcBackendState =
   | { state: RTCBackendState.WaitingForTransport }
   | { state: RTCBackendState.WaitingForConnection }
   | { state: RTCBackendState.Initialized }
-  | { state: RTCBackendState.CreatingTracks }
+  // | { state: RTCBackendState.CreatingTracks }
   | { state: RTCBackendState.ReadyToPublish }
-  | { state: RTCBackendState.WaitingToPublish }
+  // | { state: RTCBackendState.WaitingToPublish }
   | { state: RTCBackendState.Connected }
   | { state: RTCBackendState.Disconnected }
   | { state: RTCBackendState.Disconnecting };
@@ -159,7 +161,7 @@ export const createLocalMembership$ = ({
   /**
    * This starts audio and video tracks. They will be reused when calling `requestConnect`.
    */
-  startTracks: () => Behavior<LocalTrack[]>;
+  startTracks: () => Behavior<void>;
   /**
    * This sets a inner state (shouldConnect) to true and instructs the js-sdk and livekit to keep the user
    * connected to matrix and livekit.
@@ -172,7 +174,7 @@ export const createLocalMembership$ = ({
    * Callback to toggle screen sharing. If null, screen sharing is not possible.
    */
   toggleScreenSharing: (() => void) | null;
-  tracks$: Behavior<LocalTrack[]>;
+  // tracks$: Behavior<LocalTrack[]>;
   participant$: Behavior<LocalParticipant | null>;
   connection$: Behavior<Connection | null>;
   homeserverConnected$: Behavior<boolean>;
@@ -223,6 +225,33 @@ export const createLocalMembership$ = ({
       }),
     ),
   );
+
+  // Tracks error that happen when creating the local tracks.
+  const mediaErrors$ = localConnection$.pipe(
+    switchMap((connection) => {
+      if (!connection) {
+        return of(null);
+      } else {
+        return fromEvent(
+          connection.livekitRoom,
+          RoomEvent.MediaDevicesError,
+          (error: Error) => {
+            return MediaDeviceFailure.getFailure(error) ?? null;
+          },
+        );
+      }
+    }),
+  );
+
+  mediaErrors$.pipe(scope.bind()).subscribe((error) => {
+    if (error) {
+      logger.error(`Failed to create local tracks:`, error);
+      // TODO is it fatal? Do we need to create a new Specialized Error?
+      setMatrixError(
+        new UnknownCallError(new Error(`Media device error: ${error}`)),
+      );
+    }
+  });
 
   const localConnectionState$ = localConnection$.pipe(
     switchMap((connection) => (connection ? connection.state$ : of(null))),
@@ -293,16 +322,16 @@ export const createLocalMembership$ = ({
   /**
    * Extract the tracks from the published. Also reacts to changing publishers.
    */
-  const tracks$ = scope.behavior(
-    publisher$.pipe(switchMap((p) => (p?.tracks$ ? p.tracks$ : constant([])))),
-  );
-  const publishing$ = scope.behavior(
-    publisher$.pipe(switchMap((p) => p?.publishing$ ?? constant(false))),
-  );
+  // const tracks$ = scope.behavior(
+  //   publisher$.pipe(switchMap((p) => (p?.tracks$ ? p.tracks$ : constant([])))),
+  // );
+  // const publishing$ = scope.behavior(
+  //   publisher$.pipe(switchMap((p) => p?.publishing$ ?? constant(false))),
+  // );
 
-  const startTracks = (): Behavior<LocalTrack[]> => {
+  const startTracks = (): Behavior<void> => {
     trackStartRequested.resolve();
-    return tracks$;
+    return constant(undefined);
   };
 
   const requestConnect = (): void => {
@@ -327,7 +356,7 @@ export const createLocalMembership$ = ({
     }
     return Promise.resolve(async (): Promise<void> => {
       await publisher$?.value?.stopPublishing();
-      publisher$?.value?.stopTracks();
+      await publisher$?.value?.stopTracks();
     });
   });
 
@@ -335,13 +364,16 @@ export const createLocalMembership$ = ({
   // `tracks$` will update once they are ready.
   scope.reconcile(
     scope.behavior(
-      combineLatest([publisher$, tracks$, from(trackStartRequested.promise)]),
+      combineLatest([
+        publisher$ /*, tracks$*/,
+        from(trackStartRequested.promise),
+      ]),
       null,
     ),
     async (valueIfReady) => {
       if (!valueIfReady) return;
-      const [publisher, tracks] = valueIfReady;
-      if (publisher && tracks.length === 0) {
+      const [publisher] = valueIfReady;
+      if (publisher) {
         await publisher.createAndSetupTracks().catch((e) => logger.error(e));
       }
     },
@@ -349,22 +381,23 @@ export const createLocalMembership$ = ({
 
   // Based on `connectRequested$` we start publishing tracks. (once they are there!)
   scope.reconcile(
-    scope.behavior(combineLatest([publisher$, tracks$, connectRequested$])),
-    async ([publisher, tracks, shouldConnect]) => {
-      if (shouldConnect === publisher?.publishing$.value) return;
-      if (tracks.length !== 0 && shouldConnect) {
+    scope.behavior(combineLatest([publisher$, connectRequested$])),
+    async ([publisher, shouldConnect]) => {
+      if (shouldConnect) {
         try {
           await publisher?.startPublishing();
         } catch (error) {
           setLivekitError(error as ElementCallError);
         }
-      } else if (tracks.length !== 0 && !shouldConnect) {
-        try {
-          await publisher?.stopPublishing();
-        } catch (error) {
-          setLivekitError(new UnknownCallError(error as Error));
-        }
       }
+      // XXX Why is that?
+      // else {
+      //   try {
+      //     await publisher?.stopPublishing();
+      //   } catch (error) {
+      //     setLivekitError(new UnknownCallError(error as Error));
+      //   }
+      // }
     },
   );
 
@@ -378,12 +411,12 @@ export const createLocalMembership$ = ({
     combineLatest([
       publisher$,
       localTransport$,
-      tracks$.pipe(
-        tap((t) => {
-          logger.info("tracks$: ", t);
-        }),
-      ),
-      publishing$,
+      // tracks$.pipe(
+      //   tap((t) => {
+      //     logger.info("tracks$: ", t);
+      //   }),
+      // ),
+      // publishing$,
       connectRequested$,
       from(trackStartRequested.promise).pipe(
         map(() => true),
@@ -395,8 +428,8 @@ export const createLocalMembership$ = ({
         ([
           publisher,
           localTransport,
-          tracks,
-          publishing,
+          // tracks,
+          // publishing,
           shouldConnect,
           shouldStartTracks,
           error,
@@ -408,15 +441,15 @@ export const createLocalMembership$ = ({
           // as:
           // We do have <A> but not yet <B> so we are in <MyState>
           if (error !== null) return { state: RTCBackendState.Error, error };
-          const hasTracks = tracks.length > 0;
+          // const hasTracks = tracks.length > 0;
           if (!localTransport)
             return { state: RTCBackendState.WaitingForTransport };
           if (!publisher)
             return { state: RTCBackendState.WaitingForConnection };
           if (!shouldStartTracks) return { state: RTCBackendState.Initialized };
-          if (!hasTracks) return { state: RTCBackendState.CreatingTracks };
+          // if (!hasTracks) return { state: RTCBackendState.CreatingTracks };
           if (!shouldConnect) return { state: RTCBackendState.ReadyToPublish };
-          if (!publishing) return { state: RTCBackendState.WaitingToPublish };
+          // if (!publishing) return { state: RTCBackendState.WaitingToPublish };
           return { state: RTCBackendState.Connected };
         },
       ),
@@ -588,7 +621,7 @@ export const createLocalMembership$ = ({
       livekit$: livekitState$,
       matrix$: matrixState$,
     },
-    tracks$,
+    // tracks$,
     participant$,
     homeserverConnected$,
     reconnecting$,
