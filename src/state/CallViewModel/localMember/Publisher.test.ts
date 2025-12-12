@@ -22,7 +22,7 @@ import { constant } from "../../Behavior";
 import {
   flushPromises,
   mockLivekitRoom,
-  mockMediaDevices
+  mockMediaDevices,
 } from "../../../utils/test";
 import { Publisher } from "./Publisher";
 import { type Connection } from "../remoteMembers/Connection";
