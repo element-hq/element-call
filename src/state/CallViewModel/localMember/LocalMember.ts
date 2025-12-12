@@ -68,8 +68,8 @@ export enum TransportState {
 
 export enum PublishState {
   WaitingForUser = "publish_waiting_for_user",
-  /** Implies lk connection is connected */
-  Starting = "publish_start_publishing",
+  // /** Implies lk connection is connected */
+  // Starting = "publish_start_publishing",
   /** Implies lk connection is connected */
   Publishing = "publish_publishing",
 }
@@ -79,8 +79,8 @@ export enum PublishState {
 export enum TrackState {
   /** The track is waiting for user input to create tracks (waiting to call `startTracks()`) */
   WaitingForUser = "tracks_waiting_for_user",
-  /** Implies lk connection is connected */
-  Creating = "tracks_creating",
+  // /** Implies lk connection is connected */
+  // Creating = "tracks_creating",
   /** Implies lk connection is connected */
   Ready = "tracks_ready",
 }
