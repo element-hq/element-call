@@ -10,7 +10,6 @@ import {
   ParticipantEvent,
   type LocalParticipant,
   type ScreenShareCaptureOptions,
-  ConnectionState,
   RoomEvent,
   MediaDeviceFailure,
 } from "livekit-client";
@@ -329,11 +328,10 @@ export const createLocalMembership$ = ({
   // Based on `connectRequested$` we start publishing tracks. (once they are there!)
   scope.reconcile(
     scope.behavior(
-      combineLatest([publisher$, tracks$, joinAndPublishRequested$]),
+      combineLatest([publisher$, joinAndPublishRequested$]),
     ),
-    async ([publisher, tracks, shouldJoinAndPublish]) => {
-      if (shouldJoinAndPublish === publisher?.publishing$.value) return;
-      if (tracks.length !== 0 && shouldJoinAndPublish) {
+    async ([publisher, shouldJoinAndPublish]) => {
+      if (shouldJoinAndPublish) {
         try {
           await publisher?.startPublishing();
         } catch (error) {
@@ -341,7 +339,7 @@ export const createLocalMembership$ = ({
             error instanceof Error ? error.message : String(error);
           setPublishError(new FailToStartLivekitConnection(message));
         }
-      } else if (tracks.length !== 0 && !shouldJoinAndPublish) {
+      } else {
         try {
           await publisher?.stopPublishing();
         } catch (error) {
@@ -391,15 +389,6 @@ export const createLocalMembership$ = ({
     combineLatest([
       localConnectionState$,
       localTransport$,
-      // tracks$.pipe(
-      //   tap((t) => {
-      //     logger.info("tracks$: ", t);
-      //   }),
-      // ),
-      // publishing$,
-      connectRequested$,
-      tracks$,
-      publishing$,
       joinAndPublishRequested$,
       from(trackStartRequested.promise).pipe(
         map(() => true),
@@ -410,16 +399,17 @@ export const createLocalMembership$ = ({
         ([
           localConnectionState,
           localTransport,
-          tracks,
-          publishing,
+          // tracks,
+          // publishing,
           shouldPublish,
           shouldStartTracks,
         ]) => {
           if (!localTransport) return null;
-          const hasTracks = tracks.length > 0;
-          let trackState: TrackState = TrackState.WaitingForUser;
-          if (hasTracks && shouldStartTracks) trackState = TrackState.Ready;
-          if (!hasTracks && shouldStartTracks) trackState = TrackState.Creating;
+          // const hasTracks = tracks.length > 0;
+          // let trackState: TrackState = TrackState.WaitingForUser;
+          // if (hasTracks && shouldStartTracks) trackState = TrackState.Ready;
+          // if (!hasTracks && shouldStartTracks) trackState = TrackState.Creating;
+          const trackState: TrackState = shouldStartTracks ? TrackState.Ready : TrackState.WaitingForUser;
 
           if (
             localConnectionState !== ConnectionState.LivekitConnected ||
@@ -430,7 +420,7 @@ export const createLocalMembership$ = ({
               tracks: trackState,
             };
           if (!shouldPublish) return PublishState.WaitingForUser;
-          if (!publishing) return PublishState.Starting;
+          // if (!publishing) return PublishState.Starting;
           return PublishState.Publishing;
         },
       ),
@@ -660,7 +650,6 @@ export const createLocalMembership$ = ({
     requestJoinAndPublish,
     requestDisconnect,
     localMemberState$,
-    tracks$,
     participant$,
     reconnecting$,
     disconnected$: scope.behavior(
