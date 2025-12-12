@@ -303,7 +303,7 @@ export const createLocalMembership$ = ({
       // Clean-up callback
       return Promise.resolve(async (): Promise<void> => {
         await publisher.stopPublishing();
-        publisher.stopTracks();
+        await publisher.stopTracks();
       });
     }
   });
