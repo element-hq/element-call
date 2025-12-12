@@ -74,6 +74,8 @@ export enum PublishState {
   Publishing = "publish_publishing",
 }
 
+// TODO not sure how to map that correctly with the
+// new publisher that does not manage tracks itself anymore
 export enum TrackState {
   /** The track is waiting for user input to create tracks (waiting to call `startTracks()`) */
   WaitingForUser = "tracks_waiting_for_user",
@@ -244,7 +246,7 @@ export const createLocalMembership$ = ({
     if (error) {
       logger.error(`Failed to create local tracks:`, error);
       setMatrixError(
-      // TODO is it fatal? Do we need to create a new Specialized Error?
+        // TODO is it fatal? Do we need to create a new Specialized Error?
         new UnknownCallError(new Error(`Media device error: ${error}`)),
       );
     }
@@ -327,11 +329,11 @@ export const createLocalMembership$ = ({
 
   // Based on `connectRequested$` we start publishing tracks. (once they are there!)
   scope.reconcile(
-    scope.behavior(
-      combineLatest([publisher$, joinAndPublishRequested$]),
-    ),
+    scope.behavior(combineLatest([publisher$, joinAndPublishRequested$])),
     async ([publisher, shouldJoinAndPublish]) => {
-      if (shouldJoinAndPublish) {
+      // Get the current publishing state to avoid redundant calls.
+      const isPublishing = publisher?.shouldPublish === true;
+      if (shouldJoinAndPublish && !isPublishing) {
         try {
           await publisher?.startPublishing();
         } catch (error) {
@@ -339,7 +341,7 @@ export const createLocalMembership$ = ({
             error instanceof Error ? error.message : String(error);
           setPublishError(new FailToStartLivekitConnection(message));
         }
-      } else {
+      } else if (isPublishing) {
         try {
           await publisher?.stopPublishing();
         } catch (error) {
@@ -409,7 +411,9 @@ export const createLocalMembership$ = ({
           // let trackState: TrackState = TrackState.WaitingForUser;
           // if (hasTracks && shouldStartTracks) trackState = TrackState.Ready;
           // if (!hasTracks && shouldStartTracks) trackState = TrackState.Creating;
-          const trackState: TrackState = shouldStartTracks ? TrackState.Ready : TrackState.WaitingForUser;
+          const trackState: TrackState = shouldStartTracks
+            ? TrackState.Ready
+            : TrackState.WaitingForUser;
 
           if (
             localConnectionState !== ConnectionState.LivekitConnected ||
