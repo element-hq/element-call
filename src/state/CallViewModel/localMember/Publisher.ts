@@ -152,32 +152,14 @@ export class Publisher {
       }
       return;
     };
-
-    // We cannot just wait because this call could wait for the track to be
-    // published (and not just created), which we don't want yet.
-    // Notice it will wait for that only the first time, when tracks are created, the
-    // later calls will be instant :/
-    enableTracks()
-      .then(() => {
-        // At this point, LiveKit will have created & published the tracks as soon as possible
-        // but we want to control when tracks are published.
-        // We cannot just mute the tracks, even if this will effectively stop the publishing,
-        // it would also prevent the user from seeing their own video/audio preview.
-        // So for that we use pauseUpStream():  Stops sending media to the server by replacing
-        // the sender track with null, but keeps the local MediaStreamTrack active.
-        // The user can still see/hear themselves locally, but remote participants see nothing
-        if (!this.shouldPublish) {
-          this.pauseUpstreams(lkRoom, [
-            Track.Source.Microphone,
-            Track.Source.Camera,
-          ]).catch((e) => {
-            this.logger.error(`Failed to pause upstreams`, e);
-          });
-        }
-      })
-      .catch((e: Error) => {
-        this.logger.error(`Failed to enable camera and microphone`, e);
-      });
+    // We don't await enableTracks, because livekit could block until the tracks
+    // are fully published, and not only that they are created.
+    // We don't have control on that, localParticipant creates and publishes the tracks
+    // asap.
+    // We are using the `ParticipantEvent.LocalTrackPublished` to be notified
+    // when tracks are actually published, and at that point
+    // we can pause upstream if needed (depending on if startPublishing has been called).
+    void enableTracks();
 
     return Promise.resolve();
   }
