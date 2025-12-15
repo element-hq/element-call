@@ -23,6 +23,7 @@ import {
 
 import {
   exampleTransport,
+  mockComputeLivekitParticipantIdentity$,
   mockMatrixRoomMember,
   mockRtcMembership,
 } from "../utils/test";
@@ -47,6 +48,13 @@ vitest.mock("../rtcSessionHelpers", async (importOriginal) => ({
   ...(await importOriginal()),
   makeTransport: (): [LivekitTransport] => [exampleTransport],
 }));
+vitest.mock(
+  import("../state/CallViewModel/remoteMembers/LivekitParticipantIdentity.ts"),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    computeLivekitParticipantIdentity$: mockComputeLivekitParticipantIdentity$,
+  }),
+);
 
 afterEach(() => {
   vitest.clearAllMocks();

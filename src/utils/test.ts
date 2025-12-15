@@ -15,6 +15,7 @@ import {
   vitest,
 } from "vitest";
 import {
+  encodeUnpaddedBase64,
   MatrixEvent,
   type Room as MatrixRoom,
   type Room,
@@ -43,13 +44,14 @@ import {
   type Room as LivekitRoom,
   Track,
 } from "livekit-client";
-import { randomUUID } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { type TrackReference } from "@livekit/components-core";
 import EventEmitter from "events";
 import {
   type KeyTransportEvents,
   type KeyTransportEventsHandlerMap,
 } from "matrix-js-sdk/lib/matrixrtc/IKeyTransport";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import {
   LocalUserMediaViewModel,
@@ -522,3 +524,27 @@ export function mockMuteStates(
   const observableScope = new ObservableScope();
   return new MuteStates(observableScope, mockMediaDevices({}), joined$);
 }
+
+export const mockComputeLivekitParticipantIdentity$ = (
+  membership: CallMembershipIdentityParts,
+  kind: "rtc" | "session",
+): Observable<string> => {
+  function sha256(commitmentStr: string): string {
+    return encodeUnpaddedBase64(
+      createHash("sha256").update(commitmentStr, "utf8").digest(),
+    );
+  }
+  let hash;
+  switch (kind) {
+    case "rtc": {
+      hash = sha256(
+        `${membership.userId}|${membership.deviceId}|${membership.memberId}`,
+      );
+      break;
+    }
+    case "session":
+    default:
+      hash = `${membership.userId}:${membership.deviceId}`;
+  }
+  return of(hash);
+};
