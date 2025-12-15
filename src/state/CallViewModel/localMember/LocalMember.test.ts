@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  Status as RTCMemberStatus,
   type LivekitTransport,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -14,11 +15,7 @@ import { describe, expect, it, vi } from "vitest";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { BehaviorSubject, map, of } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
-import {
-  ConnectionState as LivekitConnectionState,
-  type LocalParticipant,
-  type LocalTrack,
-} from "livekit-client";
+import { type LocalParticipant, type LocalTrack } from "livekit-client";
 
 import { MatrixRTCMode } from "../../../settings/settings";
 import {
@@ -29,15 +26,17 @@ import {
   withTestScheduler,
 } from "../../../utils/test";
 import {
+  TransportState,
   createLocalMembership$,
   enterRTCSession,
-  RTCBackendState,
-} from "./LocalMembership";
+  PublishState,
+  TrackState,
+} from "./LocalMember";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors";
 import { Epoch, ObservableScope } from "../../ObservableScope";
 import { constant } from "../../Behavior";
 import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
-import { type Connection } from "../remoteMembers/Connection";
+import { ConnectionState, type Connection } from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
 
 const MATRIX_RTC_MODE = MatrixRTCMode.Legacy;
@@ -51,7 +50,7 @@ vi.mock("@livekit/components-core", () => ({
 
 describe("LocalMembership", () => {
   describe("enterRTCSession", () => {
-    it("It joins the correct Session", async () => {
+    it("It joins the correct Session", () => {
       const focusFromOlderMembership = {
         type: "livekit",
         livekit_service_url: "http://my-oldest-member-service-url.com",
@@ -107,7 +106,7 @@ describe("LocalMembership", () => {
         joinRoomSession: vi.fn(),
       }) as unknown as MatrixRTCSession;
 
-      await enterRTCSession(
+      enterRTCSession(
         mockedSession,
         {
           livekit_alias: "roomId",
@@ -136,7 +135,7 @@ describe("LocalMembership", () => {
       );
     });
 
-    it("It should not fail with configuration error if homeserver config has livekit url but not fallback", async () => {
+    it("It should not fail with configuration error if homeserver config has livekit url but not fallback", () => {
       mockConfig({});
       vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({
         "org.matrix.msc4143.rtc_foci": [
@@ -165,7 +164,7 @@ describe("LocalMembership", () => {
         joinRoomSession: vi.fn(),
       }) as unknown as MatrixRTCSession;
 
-      await enterRTCSession(
+      enterRTCSession(
         mockedSession,
         {
           livekit_alias: "roomId",
@@ -190,7 +189,6 @@ describe("LocalMembership", () => {
       leaveRoomSession: () => {},
     } as unknown as MatrixRTCSession,
     muteStates: mockMuteStates(),
-    isHomeserverConnected: constant(true),
     trackProcessorState$: constant({
       supported: false,
       processor: undefined,
@@ -198,20 +196,20 @@ describe("LocalMembership", () => {
     logger: logger,
     createPublisherFactory: vi.fn(),
     joinMatrixRTC: async (): Promise<void> => {},
-    homeserverConnected$: constant(true),
+    homeserverConnected: {
+      combined$: constant(true),
+      rtsSession$: constant(RTCMemberStatus.Connected),
+    },
   };
 
   it("throws error on missing RTC config error", () => {
     withTestScheduler(({ scope, hot, expectObservable }) => {
-      const goodTransport = {
-        livekit_service_url: "other",
-      } as LivekitTransport;
-
-      const localTransport$ = scope.behavior<LivekitTransport>(
+      const localTransport$ = scope.behavior<null | LivekitTransport>(
         hot("1ms #", {}, new MatrixRTCTransportMissingError("domain.com")),
-        goodTransport,
+        null,
       );
 
+      // we do not need any connection data since we want to fail before reaching that.
       const mockConnectionManager = {
         transports$: scope.behavior(
           localTransport$.pipe(map((t) => new Epoch([t]))),
@@ -227,15 +225,11 @@ describe("LocalMembership", () => {
         connectionManager: mockConnectionManager,
         localTransport$,
       });
+      localMembership.requestJoinAndPublish();
 
-      expectObservable(localMembership.connectionState.livekit$).toBe("ne", {
-        n: { state: RTCBackendState.WaitingForConnection },
-        e: {
-          state: RTCBackendState.Error,
-          error: expect.toSatisfy(
-            (e) => e instanceof MatrixRTCTransportMissingError,
-          ),
-        },
+      expectObservable(localMembership.localMemberState$).toBe("ne", {
+        n: TransportState.Waiting,
+        e: expect.toSatisfy((e) => e instanceof MatrixRTCTransportMissingError),
       });
     });
   });
@@ -247,33 +241,24 @@ describe("LocalMembership", () => {
     livekit_service_url: "b",
   } as LivekitTransport;
 
-  const connectionManagerData = new ConnectionManagerData();
-
-  connectionManagerData.add(
-    {
-      livekitRoom: mockLivekitRoom({
-        localParticipant: {
-          isScreenShareEnabled: false,
-          trackPublications: [],
-        } as unknown as LocalParticipant,
-      }),
-      state$: constant({
-        state: "ConnectedToLkRoom",
-        livekitConnectionState$: constant(LivekitConnectionState.Connected),
-      }),
-      transport: aTransport,
-    } as unknown as Connection,
-    [],
-  );
-  connectionManagerData.add(
-    {
-      state$: constant({
-        state: "ConnectedToLkRoom",
-      }),
-      transport: bTransport,
-    } as unknown as Connection,
-    [],
-  );
+  const connectionTransportAConnected = {
+    livekitRoom: mockLivekitRoom({
+      localParticipant: {
+        isScreenShareEnabled: false,
+        trackPublications: [],
+      } as unknown as LocalParticipant,
+    }),
+    state$: constant(ConnectionState.LivekitConnected),
+    transport: aTransport,
+  } as unknown as Connection;
+  const connectionTransportAConnecting = {
+    ...connectionTransportAConnected,
+    state$: constant(ConnectionState.LivekitConnecting),
+  } as unknown as Connection;
+  const connectionTransportBConnected = {
+    state$: constant(ConnectionState.LivekitConnected),
+    transport: bTransport,
+  } as unknown as Connection;
 
   it("recreates publisher if new connection is used and ENDS always unpublish and end tracks", async () => {
     const scope = new ObservableScope();
@@ -298,6 +283,9 @@ describe("LocalMembership", () => {
         typeof vi.fn
       >;
 
+    const connectionManagerData = new ConnectionManagerData();
+    connectionManagerData.add(connectionTransportAConnected, []);
+    connectionManagerData.add(connectionTransportBConnected, []);
     createLocalMembership$({
       scope,
       ...defaultCreateLocalMemberValues,
@@ -357,6 +345,9 @@ describe("LocalMembership", () => {
         typeof vi.fn
       >;
 
+    const connectionManagerData = new ConnectionManagerData();
+    connectionManagerData.add(connectionTransportAConnected, []);
+    // connectionManagerData.add(connectionTransportB, []);
     const localMembership = createLocalMembership$({
       scope,
       ...defaultCreateLocalMemberValues,
@@ -383,10 +374,11 @@ describe("LocalMembership", () => {
   it("tracks livekit state correctly", async () => {
     const scope = new ObservableScope();
 
+    const connectionManagerData = new ConnectionManagerData();
     const localTransport$ = new BehaviorSubject<null | LivekitTransport>(null);
-    const connectionManagerData$ = new BehaviorSubject<
-      Epoch<ConnectionManagerData>
-    >(new Epoch(new ConnectionManagerData()));
+    const connectionManagerData$ = new BehaviorSubject(
+      new Epoch(connectionManagerData),
+    );
     const publishers: Publisher[] = [];
 
     const tracks$ = new BehaviorSubject<LocalTrack[]>([]);
@@ -432,19 +424,45 @@ describe("LocalMembership", () => {
     });
 
     await flushPromises();
-    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.WaitingForTransport,
-    });
+    expect(localMembership.localMemberState$.value).toStrictEqual(
+      TransportState.Waiting,
+    );
     localTransport$.next(aTransport);
     await flushPromises();
-    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.WaitingForConnection,
+    expect(localMembership.localMemberState$.value).toStrictEqual({
+      matrix: RTCMemberStatus.Connected,
+      media: { connection: null, tracks: TrackState.WaitingForUser },
     });
-    connectionManagerData$.next(new Epoch(connectionManagerData));
+
+    const connectionManagerData2 = new ConnectionManagerData();
+    connectionManagerData2.add(
+      // clone because we will mutate this later.
+      { ...connectionTransportAConnecting } as unknown as Connection,
+      [],
+    );
+
+    connectionManagerData$.next(new Epoch(connectionManagerData2));
     await flushPromises();
-    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.Initialized,
+    expect(localMembership.localMemberState$.value).toStrictEqual({
+      matrix: RTCMemberStatus.Connected,
+      media: {
+        connection: ConnectionState.LivekitConnecting,
+        tracks: TrackState.WaitingForUser,
+      },
     });
+
+    (
+      connectionManagerData2.getConnectionForTransport(aTransport)!
+        .state$ as BehaviorSubject<ConnectionState>
+    ).next(ConnectionState.LivekitConnected);
+    expect(localMembership.localMemberState$.value).toStrictEqual({
+      matrix: RTCMemberStatus.Connected,
+      media: {
+        connection: ConnectionState.LivekitConnected,
+        tracks: TrackState.WaitingForUser,
+      },
+    });
+
     expect(publisherFactory).toHaveBeenCalledOnce();
     expect(localMembership.tracks$.value.length).toBe(0);
 
@@ -453,37 +471,46 @@ describe("LocalMembership", () => {
     // -------
 
     await flushPromises();
-    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.CreatingTracks,
+    expect(localMembership.localMemberState$.value).toStrictEqual({
+      matrix: RTCMemberStatus.Connected,
+      media: {
+        tracks: TrackState.Creating,
+        connection: ConnectionState.LivekitConnected,
+      },
     });
     createTrackResolver.resolve();
     await flushPromises();
-    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.ReadyToPublish,
-    });
+    expect(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (localMembership.localMemberState$.value as any).media,
+    ).toStrictEqual(PublishState.WaitingForUser);
 
     // -------
-    localMembership.requestConnect();
+    localMembership.requestJoinAndPublish();
     // -------
 
-    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.WaitingToPublish,
-    });
+    expect(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (localMembership.localMemberState$.value as any).media,
+    ).toStrictEqual(PublishState.Starting);
 
     publishResolver.resolve();
     await flushPromises();
-    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.Connected,
-    });
+    expect(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (localMembership.localMemberState$.value as any).media,
+    ).toStrictEqual(PublishState.Publishing);
+
     expect(publishers[0].stopPublishing).not.toHaveBeenCalled();
 
-    expect(localMembership.connectionState.livekit$.isStopped).toBe(false);
+    expect(localMembership.localMemberState$.isStopped).toBe(false);
     scope.end();
     await flushPromises();
     // stays in connected state because it is stopped before the update to tracks update the state.
-    expect(localMembership.connectionState.livekit$.value).toStrictEqual({
-      state: RTCBackendState.Connected,
-    });
+    expect(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (localMembership.localMemberState$.value as any).media,
+    ).toStrictEqual(PublishState.Publishing);
     // stop all tracks after ending scopes
     expect(publishers[0].stopPublishing).toHaveBeenCalled();
     expect(publishers[0].stopTracks).toHaveBeenCalled();
