@@ -53,11 +53,15 @@ import {
   ScreenShareViewModel,
   type UserMediaViewModel,
 } from "../MediaViewModel";
-import { accumulate, generateItems, pauseWhen } from "../../utils/observable";
+import {
+  accumulate,
+  filterBehavior,
+  generateItems,
+  pauseWhen,
+} from "../../utils/observable";
 import {
   duplicateTiles,
   MatrixRTCMode,
-  matrixRTCMode,
   playReactionsSound,
   showReactions,
 } from "../../settings/settings";
@@ -111,7 +115,8 @@ import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
 import { createConnectionManager$ } from "./remoteMembers/ConnectionManager.ts";
 import {
   createMatrixLivekitMembers$,
-  type MatrixLivekitMember,
+  type TaggedParticipant,
+  type LocalMatrixLivekitMember,
 } from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
   type AutoLeaveReason,
@@ -150,6 +155,8 @@ export interface CallViewModelOptions {
   connectionState$?: Behavior<ConnectionState>;
   /** Optional behavior overriding the computed window size, mainly for testing purposes. */
   windowSize$?: Behavior<{ width: number; height: number }>;
+  /** The version & compatibility mode of MatrixRTC that we should use. */
+  matrixRTCMode$: Behavior<MatrixRTCMode>;
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -406,7 +413,7 @@ export function createCallViewModel$(
     client,
     roomId: matrixRoom.roomId,
     useOldestMember$: scope.behavior(
-      matrixRTCMode.value$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
+      options.matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
     ),
   });
 
@@ -458,7 +465,7 @@ export function createCallViewModel$(
   });
 
   const connectOptions$ = scope.behavior(
-    matrixRTCMode.value$.pipe(
+    options.matrixRTCMode$.pipe(
       map((mode) => ({
         encryptMedia: livekitKeyProvider !== undefined,
         // TODO. This might need to get called again on each change of matrixRTCMode...
@@ -512,22 +519,21 @@ export function createCallViewModel$(
     ),
   );
 
-  const localMatrixLivekitMemberUninitialized = {
-    membership$: localRtcMembership$,
-    participant$: localMembership.participant$,
-    connection$: localMembership.connection$,
-    userId: userId,
-  };
-
-  const localMatrixLivekitMember$: Behavior<MatrixLivekitMember | null> =
+  const localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null> =
     scope.behavior(
       localRtcMembership$.pipe(
-        switchMap((membership) => {
-          if (!membership) return of(null);
-          return of(
-            // casting is save here since we know that localRtcMembership$ is !== null since we reached this case.
-            localMatrixLivekitMemberUninitialized as MatrixLivekitMember,
-          );
+        filterBehavior((membership) => membership !== null),
+        map((membership$) => {
+          if (membership$ === null) return null;
+          return {
+            membership$,
+            participant: {
+              type: "local" as const,
+              value$: localMembership.participant$,
+            },
+            connection$: localMembership.connection$,
+            userId,
+          };
         }),
       ),
     );
@@ -596,7 +602,7 @@ export function createCallViewModel$(
         const members = membersWithEpoch.value;
         const a$ = combineLatest(
           members.map((member) =>
-            combineLatest([member.connection$, member.participant$]).pipe(
+            combineLatest([member.connection$, member.participant.value$]).pipe(
               map(([connection, participant]) => {
                 // do not render audio for local participant
                 if (!connection || !participant || participant.isLocal)
@@ -674,7 +680,7 @@ export function createCallViewModel$(
           let localParticipantId: string | undefined = undefined;
           // add local member if available
           if (localMatrixLivekitMember) {
-            const { userId, participant$, connection$, membership$ } =
+            const { userId, participant, connection$, membership$ } =
               localMatrixLivekitMember;
             localParticipantId = `${userId}:${membership$.value.deviceId}`; // should be membership$.value.membershipID which is not optional
             // const participantId = membership$.value.membershipID;
@@ -685,7 +691,7 @@ export function createCallViewModel$(
                     dup,
                     localParticipantId,
                     userId,
-                    participant$,
+                    participant satisfies TaggedParticipant as TaggedParticipant, // Widen the type safely
                     connection$,
                   ],
                   data: undefined,
@@ -696,7 +702,7 @@ export function createCallViewModel$(
           // add remote members that are available
           for (const {
             userId,
-            participant$,
+            participant,
             connection$,
             membership$,
           } of matrixLivekitMembers) {
@@ -705,7 +711,7 @@ export function createCallViewModel$(
             // const participantId = membership$.value?.identity;
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
-                keys: [dup, participantId, userId, participant$, connection$],
+                keys: [dup, participantId, userId, participant, connection$],
                 data: undefined,
               };
             }
@@ -717,7 +723,7 @@ export function createCallViewModel$(
           dup,
           participantId,
           userId,
-          participant$,
+          participant,
           connection$,
         ) => {
           const livekitRoom$ = scope.behavior(
@@ -736,7 +742,7 @@ export function createCallViewModel$(
             scope,
             `${participantId}:${dup}`,
             userId,
-            participant$,
+            participant,
             options.encryptionSystem,
             livekitRoom$,
             focusUrl$,

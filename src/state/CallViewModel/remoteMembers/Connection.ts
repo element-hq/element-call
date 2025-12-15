@@ -13,7 +13,6 @@ import {
 import {
   ConnectionError,
   type Room as LivekitRoom,
-  type LocalParticipant,
   type RemoteParticipant,
   RoomEvent,
 } from "livekit-client";
@@ -34,8 +33,6 @@ import {
   SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
-
-export type PublishingParticipant = LocalParticipant | RemoteParticipant;
 
 export interface ConnectionOpts {
   /** The media transport to connect to. */
@@ -103,9 +100,7 @@ export class Connection {
    * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
    * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
    */
-  public readonly remoteParticipantsWithTracks$: Behavior<
-    PublishingParticipant[]
-  >;
+  public readonly remoteParticipantsWithTracks$: Behavior<RemoteParticipant[]>;
 
   /**
    * Whether the connection has been stopped.
