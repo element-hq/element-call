@@ -22,8 +22,8 @@ import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 
-import { InCallView } from "./InCallView";
 import {
+  mockComputeLivekitParticipantIdentity$,
   mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
@@ -34,6 +34,7 @@ import {
   mockRtcMembership,
   type MockRTCSession,
 } from "../utils/test";
+import { InCallView } from "./InCallView";
 import { E2eeType } from "../e2ee/e2eeType";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local } from "../utils/test-fixtures";
@@ -61,6 +62,13 @@ vi.mock("../livekit/MatrixAudioRenderer");
 vi.mock("react-use-measure", () => ({
   default: (): [() => void, object] => [(): void => {}, {}],
 }));
+vi.mock(
+  import("../state/CallViewModel/remoteMembers/LivekitParticipantIdentity.ts"),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    computeLivekitParticipantIdentity$: mockComputeLivekitParticipantIdentity$,
+  }),
+);
 
 const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
 const localParticipant = mockLocalParticipant({

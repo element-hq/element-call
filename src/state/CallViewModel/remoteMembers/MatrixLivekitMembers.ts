@@ -15,15 +15,13 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map, switchMap } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import { sha256 } from "matrix-js-sdk/lib/digest";
-import { encodeUnpaddedBase64Url } from "matrix-js-sdk";
-import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
 import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
+import { computeLivekitParticipantIdentity$ } from "./LivekitParticipantIdentity";
 
 const logger = rootLogger.getChild("[MatrixLivekitMembers]");
 
@@ -73,25 +71,28 @@ export function createMatrixLivekitMembers$({
    */
   const membershipsWithTransportAndLivekitIdentity$ =
     membershipsWithTransport$.pipe(
-      switchMap(async (membershipsWithTransport) => {
+      switchMap((membershipsWithTransport) => {
         const { value, epoch } = membershipsWithTransport;
         const membershipsWithTransportAndLkIdentityPromises = value.map(
-          async (obj) => {
-            return computeLivekitParticipantIdentity(
+          (obj) => {
+            return computeLivekitParticipantIdentity$(
               obj.membership,
               obj.membership.kind,
             );
           },
         );
-        const identities = await Promise.all(
+        return combineLatest(
           membershipsWithTransportAndLkIdentityPromises,
+        ).pipe(
+          map((identities) => {
+            const membershipsWithTransportAndLkIdentity = value.map(
+              ({ transport, membership }, index) => {
+                return { transport, membership, identity: identities[index] };
+              },
+            );
+            return new Epoch(membershipsWithTransportAndLkIdentity, epoch);
+          }),
         );
-        const membershipsWithTransportAndLkIdentity = value.map(
-          ({ transport, membership }, index) => {
-            return { transport, membership, identity: identities[index] };
-          },
-        );
-        return new Epoch(membershipsWithTransportAndLkIdentity, epoch);
       }),
     );
 
@@ -163,43 +164,4 @@ export function areLivekitTransportsEqual(
   // It is only needed in case the livekit authorization service is not behaving as expected (or custom implementation)
   if (!t1 && !t2) return true;
   return false;
-}
-
-const livekitParticipantIdentityCache = new Map<string, string>();
-
-/**
- * The string that is computed based on the membership and used for the computing the hash.
- * `${userId}:${deviceId}:${membershipID}`
- * as the direct imput for: await sha256(input)
- */
-export const livekitIdentityInput = ({
-  userId,
-  deviceId,
-  memberId,
-}: CallMembershipIdentityParts): string => `${userId}|${deviceId}|${memberId}`;
-
-export async function computeLivekitParticipantIdentity(
-  membership: CallMembershipIdentityParts,
-  kind: "rtc" | "session",
-): Promise<string> {
-  switch (kind) {
-    case "rtc": {
-      const input = livekitIdentityInput(membership);
-      if (livekitParticipantIdentityCache.size > 400)
-        // prevent memory leaks in a stupid/simple way
-        livekitParticipantIdentityCache.clear();
-      // TODO use non deprecated memberId
-      if (livekitParticipantIdentityCache.has(input))
-        return livekitParticipantIdentityCache.get(input)!;
-      else {
-        const hashBuffer = await sha256(input);
-        const hashedString = encodeUnpaddedBase64Url(hashBuffer);
-        livekitParticipantIdentityCache.set(input, hashedString);
-        return hashedString;
-      }
-    }
-    case "session":
-    default:
-      return `${membership.userId}:${membership.deviceId}`;
-  }
 }

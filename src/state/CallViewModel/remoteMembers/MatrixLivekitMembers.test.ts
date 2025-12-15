@@ -28,7 +28,6 @@ import {
   flushPromises,
   mockCallMembership,
   mockRemoteParticipant,
-  withTestScheduler,
 } from "../../../utils/test.ts";
 import { type Connection } from "./Connection.ts";
 import { constant } from "../../Behavior.ts";
