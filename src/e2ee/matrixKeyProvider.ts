@@ -11,6 +11,12 @@ import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
+
+import {
+  computeLivekitParticipantIdentity,
+  livekitIdentityInput,
+} from "../state/CallViewModel/remoteMembers/MatrixLivekitMembers";
 
 export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
@@ -42,31 +48,46 @@ export class MatrixKeyProvider extends BaseKeyProvider {
   private onEncryptionKeyChanged = (
     encryptionKey: Uint8Array,
     encryptionKeyIndex: number,
-    participantId: string,
+    membership: CallMembershipIdentityParts,
   ): void => {
-    crypto.subtle
-      .importKey("raw", encryptionKey, "HKDF", false, [
+    const unhashedIdentity = livekitIdentityInput(membership);
+
+    // This is the only way we can get the kind of the membership event we just received the key for.
+    // best case we want to recompute this once the memberships change (you can receive the key before the participant...)
+    //
+    // TODO change this to `?? "rtc"` for newer versions.
+    const kind =
+      this.rtcSession?.memberships.find(
+        (m) =>
+          m.userId === membership.userId &&
+          m.deviceId === membership.deviceId &&
+          m.memberId === membership.memberId,
+      )?.kind ?? "session";
+
+    Promise.all([
+      crypto.subtle.importKey("raw", encryptionKey, "HKDF", false, [
         "deriveBits",
         "deriveKey",
-      ])
-      .then(
-        (keyMaterial) => {
-          this.onSetEncryptionKey(
-            keyMaterial,
-            participantId,
-            encryptionKeyIndex,
-          );
+      ]),
+      computeLivekitParticipantIdentity(membership, kind),
+    ]).then(
+      ([keyMaterial, livekitParticipantId]) => {
+        this.onSetEncryptionKey(
+          keyMaterial,
+          livekitParticipantId,
+          encryptionKeyIndex,
+        );
 
-          logger.debug(
-            `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
-          );
-        },
-        (e) => {
-          logger.error(
-            `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
-            e,
-          );
-        },
-      );
+        logger.debug(
+          `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${livekitParticipantId} (before hash: ${unhashedIdentity}) encryptionKeyIndex=${encryptionKeyIndex}`,
+        );
+      },
+      (e) => {
+        logger.error(
+          `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId before hash=${unhashedIdentity} encryptionKeyIndex=${encryptionKeyIndex}`,
+          e,
+        );
+      },
+    );
   };
 }

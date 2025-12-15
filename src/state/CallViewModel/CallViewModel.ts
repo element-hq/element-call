@@ -591,10 +591,9 @@ export function createCallViewModel$(
 
   const audioParticipants$ = scope.behavior(
     matrixLivekitMembers$.pipe(
-      switchMap((membersWithEpoch) => {
-        const members = membersWithEpoch.value;
+      switchMap((members) => {
         const a$ = combineLatest(
-          members.map((member) =>
+          members.value.map((member) =>
             combineLatest([member.connection$, member.participant$]).pipe(
               map(([connection, participant]) => {
                 // do not render audio for local participant
@@ -667,22 +666,22 @@ export function createCallViewModel$(
       generateItems(
         function* ([
           localMatrixLivekitMember,
-          { value: matrixLivekitMembers },
+          matrixLivekitMembers,
           duplicateTiles,
         ]) {
-          let localParticipantId: string | undefined = undefined;
+          let localUserMediaId: string | undefined = undefined;
           // add local member if available
           if (localMatrixLivekitMember) {
             const { userId, participant$, connection$, membership$ } =
               localMatrixLivekitMember;
-            localParticipantId = `${userId}:${membership$.value.deviceId}`; // should be membership$.value.membershipID which is not optional
-            // const participantId = membership$.value.membershipID;
-            if (localParticipantId) {
+            localUserMediaId = `${userId}:${membership$.value.deviceId}`; // should be membership$.value.membershipID which is not optional
+
+            if (localUserMediaId) {
               for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
                 yield {
                   keys: [
                     dup,
-                    localParticipantId,
+                    localUserMediaId,
                     userId,
                     participant$,
                     connection$,
@@ -698,13 +697,13 @@ export function createCallViewModel$(
             participant$,
             connection$,
             membership$,
-          } of matrixLivekitMembers) {
-            const participantId = `${userId}:${membership$.value.deviceId}`;
-            if (participantId === localParticipantId) continue;
+          } of matrixLivekitMembers.value) {
+            const userMediaId = `${userId}:${membership$.value.deviceId}`;
+            if (userMediaId === localUserMediaId) continue;
             // const participantId = membership$.value?.identity;
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
-                keys: [dup, participantId, userId, participant$, connection$],
+                keys: [dup, userMediaId, userId, participant$, connection$],
                 data: undefined,
               };
             }

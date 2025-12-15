@@ -6,10 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type LivekitTransport,
-  type ParticipantId,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, map, of, switchMap, tap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
@@ -62,24 +59,8 @@ export class ConnectionManagerData {
     const key = transport.livekit_service_url + "|" + transport.livekit_alias;
     return this.store.get(key)?.[1] ?? [];
   }
-  /**
-   * Get all connections where the given participant is publishing.
-   * In theory, there could be several connections where the same participant is publishing but with
-   * only well behaving clients a participant should only be publishing on a single connection.
-   * @param participantId
-   */
-  public getConnectionsForParticipant(
-    participantId: ParticipantId,
-  ): Connection[] {
-    const connections: Connection[] = [];
-    for (const [connection, participants] of this.store.values()) {
-      if (participants.some((p) => p.identity === participantId)) {
-        connections.push(connection);
-      }
-    }
-    return connections;
-  }
 }
+
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
@@ -202,7 +183,7 @@ export function createConnectionManager$({
         );
       }),
     ),
-    new Epoch(new ConnectionManagerData()),
+    new Epoch(new ConnectionManagerData(), -1),
   );
 
   return { connectionManagerData$ };
