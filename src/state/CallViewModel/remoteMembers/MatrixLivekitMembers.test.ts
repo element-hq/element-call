@@ -15,7 +15,7 @@ import { combineLatest, map, type Observable } from "rxjs";
 
 import { type IConnectionManager } from "./ConnectionManager.ts";
 import {
-  type MatrixLivekitMember,
+  type RemoteMatrixLivekitMember,
   createMatrixLivekitMembers$,
 } from "./MatrixLivekitMembers.ts";
 import {
@@ -100,7 +100,7 @@ test("should signal participant not yet connected to livekit", () => {
     });
 
     expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
-      a: expect.toSatisfy((data: MatrixLivekitMember<"remote">[]) => {
+      a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
         expect(data.length).toEqual(1);
         expectObservable(data[0].membership$).toBe("a", {
           a: bobMembership,
@@ -180,7 +180,7 @@ test("should signal participant on a connection that is publishing", () => {
     });
 
     expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
-      a: expect.toSatisfy((data: MatrixLivekitMember<"remote">[]) => {
+      a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
         expect(data.length).toEqual(1);
         expectObservable(data[0].membership$).toBe("a", {
           a: bobMembership,
@@ -231,7 +231,7 @@ test("should signal participant on a connection that is not publishing", () => {
     });
 
     expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
-      a: expect.toSatisfy((data: MatrixLivekitMember<"remote">[]) => {
+      a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
         expect(data.length).toEqual(1);
         expectObservable(data[0].membership$).toBe("a", {
           a: bobMembership,
@@ -296,7 +296,7 @@ describe("Publication edge case", () => {
       expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe(
         "a",
         {
-          a: expect.toSatisfy((data: MatrixLivekitMember<"remote">[]) => {
+          a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
             expect(data.length).toEqual(2);
             expectObservable(data[0].membership$).toBe("a", {
               a: bobMembership,
@@ -362,7 +362,7 @@ describe("Publication edge case", () => {
       expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe(
         "a",
         {
-          a: expect.toSatisfy((data: MatrixLivekitMember<"remote">[]) => {
+          a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
             expect(data.length).toEqual(2);
             expectObservable(data[0].membership$).toBe("a", {
               a: bobMembership,
