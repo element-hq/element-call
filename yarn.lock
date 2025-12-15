@@ -2795,10 +2795,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/matrix-sdk-crypto-wasm@npm:^15.3.0":
-  version: 15.3.0
-  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:15.3.0"
-  checksum: 10c0/45628f36b7b0e54a8777ae67a7233dbdf3e3cf14e0d95d21f62f89a7ea7e3f907232f1eb7b1262193b1e227759fad47af829dcccc103ded89011f13c66f01d76
+"@matrix-org/matrix-sdk-crypto-wasm@npm:^16.0.0":
+  version: 16.0.0
+  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:16.0.0"
+  checksum: 10c0/13b4ede3e618da819957abff778afefcf3baf9a2faac04a36bb5a07a44fae2ea05fbfa072eb3408d48b2b7b9aaf27242ce52c594c8ce9bf1fb8b3aade2832be1
   languageName: node
   linkType: hard
 
@@ -6571,24 +6571,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.30001688":
-  version: 1.0.30001701
-  resolution: "caniuse-lite@npm:1.0.30001701"
-  checksum: 10c0/a814bd4dd8b49645ca51bc6ee42120660a36394bb54eb6084801d3f2bbb9471e5e1a9a8a25f44f83086a032d46e66b33031e2aa345f699b90a7e84a9836b819c
-  languageName: node
-  linkType: hard
-
-"caniuse-lite@npm:^1.0.30001702":
-  version: 1.0.30001720
-  resolution: "caniuse-lite@npm:1.0.30001720"
-  checksum: 10c0/ba9f963364ec4bfc8359d15d7e2cf365185fa1fddc90b4f534c71befedae9b3dd0cd2583a25ffc168a02d7b61b6c18b59bda0a1828ea2a5250fd3e35c2c049e9
-  languageName: node
-  linkType: hard
-
-"caniuse-lite@npm:^1.0.30001726":
-  version: 1.0.30001726
-  resolution: "caniuse-lite@npm:1.0.30001726"
-  checksum: 10c0/2c5f91da7fd9ebf8c6b432818b1498ea28aca8de22b30dafabe2a2a6da1e014f10e67e14f8e68e872a0867b6b4cd6001558dde04e3ab9770c9252ca5c8849d0e
+"caniuse-lite@npm:^1.0.30001688, caniuse-lite@npm:^1.0.30001702, caniuse-lite@npm:^1.0.30001726":
+  version: 1.0.30001760
+  resolution: "caniuse-lite@npm:1.0.30001760"
+  checksum: 10c0/cee26dff5c5b15ba073ab230200e43c0d4e88dc3bac0afe0c9ab963df70aaa876c3e513dde42a027f317136bf6e274818d77b073708b74c5807dfad33c029d3c
   languageName: node
   linkType: hard
 
@@ -7547,7 +7533,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "npm:^39.2.0"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=toger5/use-membershipID-for-session-state-events&commit=f5f1b8efb46b3d55a7eebfabb4a61496640b8b00"
     matrix-widget-api: "npm:^1.14.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -10352,12 +10338,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@npm:^39.2.0":
-  version: 39.2.0
-  resolution: "matrix-js-sdk@npm:39.2.0"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/use-membershipID-for-session-state-events&commit=f5f1b8efb46b3d55a7eebfabb4a61496640b8b00":
+  version: 39.3.0
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=f5f1b8efb46b3d55a7eebfabb4a61496640b8b00"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^15.3.0"
+    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^16.0.0"
     another-json: "npm:^0.2.0"
     bs58: "npm:^6.0.0"
     content-type: "npm:^1.0.4"
@@ -10370,7 +10356,7 @@ __metadata:
     sdp-transform: "npm:^3.0.0"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/f8b5261de2744305330ba3952821ca9303698170bfd3a0ff8a767b9286d4e8d4ed5aaf6fbaf8a1e8ff9dbd859102a2a47d882787e2da3b3078965bec00157959
+  checksum: 10c0/9607b0c063c873a24c1a2d05cc7500d60c32556ec82b666ebaae5c5e829faf5bb7639780efddea7211e6b9873098bd53b97656f041e932e8b0de0c208ccabbff
   languageName: node
   linkType: hard
 

@@ -13,8 +13,11 @@ import {
   type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, filter, map } from "rxjs";
+import { combineLatest, filter, map, switchMap } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { sha256 } from "matrix-js-sdk/lib/digest";
+import { encodeUnpaddedBase64Url } from "matrix-js-sdk";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
@@ -63,63 +66,88 @@ export function createMatrixLivekitMembers$({
   connectionManager,
 }: Props): Behavior<Epoch<MatrixLivekitMember[]>> {
   /**
+   * This internal observable is used to compute the async sha256 hash of the user's identity.
+   * a promise is treated like an observable. So we can switchMap on the promise from the identity computation.
+   * The last update to `membershipsWithTransport$` will always be the last promise we pass to switchMap.
+   * So we will eventually always end up with the latest memberships and their identities.
+   */
+  const membershipsWithTransportAndLivekitIdentity$ =
+    membershipsWithTransport$.pipe(
+      switchMap(async (membershipsWithTransport) => {
+        const { value, epoch } = membershipsWithTransport;
+        const membershipsWithTransportAndLkIdentityPromises = value.map(
+          async (obj) => {
+            return computeLivekitParticipantIdentity(
+              obj.membership,
+              obj.membership.kind,
+            );
+          },
+        );
+        const identities = await Promise.all(
+          membershipsWithTransportAndLkIdentityPromises,
+        );
+        const membershipsWithTransportAndLkIdentity = value.map(
+          ({ transport, membership }, index) => {
+            return { transport, membership, identity: identities[index] };
+          },
+        );
+        return new Epoch(membershipsWithTransportAndLkIdentity, epoch);
+      }),
+    );
+
+  /**
    * Stream of all the call members and their associated livekit data (if available).
    */
-
   return scope.behavior(
     combineLatest([
-      membershipsWithTransport$,
+      membershipsWithTransportAndLivekitIdentity$,
       connectionManager.connectionManagerData$,
     ]).pipe(
       filter((values) =>
         values.every((value) => value.epoch === values[0].epoch),
       ),
-      map(
-        ([
-          { value: membershipsWithTransports, epoch },
-          { value: managerData },
-        ]) =>
-          new Epoch([membershipsWithTransports, managerData] as const, epoch),
-      ),
+      map(([x, y]) => new Epoch([x.value, y.value] as const, x.epoch)),
       generateItemsWithEpoch(
         // Generator function.
         // creates an array of `{key, data}[]`
         // Each change in the keys (new key, missing key) will result in a call to the factory function.
-        function* ([membershipsWithTransports, managerData]) {
-          for (const { membership, transport } of membershipsWithTransports) {
-            // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
-            const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
-
+        function* ([membershipsWithTransportAndLivekitIdentity, managerData]) {
+          for (const {
+            membership,
+            transport,
+            identity,
+          } of membershipsWithTransportAndLivekitIdentity) {
             const participants = transport
               ? managerData.getParticipantForTransport(transport)
               : [];
             const participant =
-              participants.find((p) => p.identity == participantId) ?? null;
+              participants.find((p) => p.identity == identity) ?? null;
             const connection = transport
               ? managerData.getConnectionForTransport(transport)
               : null;
 
             yield {
-              keys: [participantId, membership.userId],
+              keys: [identity, membership.userId, membership.deviceId],
               data: { membership, participant, connection },
             };
           }
         },
         // Each update where the key of the generator array do not change will result in updates to the `data$` observable in the factory.
-        (scope, data$, participantId, userId) => {
+        (scope, data$, identity, userId, deviceId) => {
           logger.debug(
-            `Generating member for participantId: ${participantId}, userId: ${userId}`,
+            `Generating member for livekitIdentity: ${identity}, userId:deviceId: ${userId}${deviceId}`,
           );
           // will only get called once per `participantId, userId` pair.
           // updates to data$ and as a result to displayName$ and mxcAvatarUrl$ are more frequent.
           return {
-            participantId,
+            identity,
             userId,
             ...scope.splitBehavior(data$),
           };
         },
       ),
     ),
+    new Epoch([], -1),
   );
 }
 
@@ -135,4 +163,43 @@ export function areLivekitTransportsEqual(
   // It is only needed in case the livekit authorization service is not behaving as expected (or custom implementation)
   if (!t1 && !t2) return true;
   return false;
+}
+
+const livekitParticipantIdentityCache = new Map<string, string>();
+
+/**
+ * The string that is computed based on the membership and used for the computing the hash.
+ * `${userId}:${deviceId}:${membershipID}`
+ * as the direct imput for: await sha256(input)
+ */
+export const livekitIdentityInput = ({
+  userId,
+  deviceId,
+  memberId,
+}: CallMembershipIdentityParts): string => `${userId}|${deviceId}|${memberId}`;
+
+export async function computeLivekitParticipantIdentity(
+  membership: CallMembershipIdentityParts,
+  kind: "rtc" | "session",
+): Promise<string> {
+  switch (kind) {
+    case "rtc": {
+      const input = livekitIdentityInput(membership);
+      if (livekitParticipantIdentityCache.size > 400)
+        // prevent memory leaks in a stupid/simple way
+        livekitParticipantIdentityCache.clear();
+      // TODO use non deprecated memberId
+      if (livekitParticipantIdentityCache.has(input))
+        return livekitParticipantIdentityCache.get(input)!;
+      else {
+        const hashBuffer = await sha256(input);
+        const hashedString = encodeUnpaddedBase64Url(hashBuffer);
+        livekitParticipantIdentityCache.set(input, hashedString);
+        return hashedString;
+      }
+    }
+    case "session":
+    default:
+      return `${membership.userId}:${membership.deviceId}`;
+  }
 }

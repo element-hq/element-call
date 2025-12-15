@@ -1248,9 +1248,6 @@ describe("CallViewModel", () => {
             y: () => {
               rtcSession.membershipStatus = Status.Connected;
             },
-            n: () => {
-              rtcSession.membershipStatus = Status.Reconnecting;
-            },
           });
           schedule(probablyLeftMarbles, {
             y: () => {

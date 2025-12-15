@@ -15,7 +15,6 @@ import {
   type AudioTrackProps,
 } from "@livekit/components-react";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type ParticipantId } from "matrix-js-sdk/lib/matrixrtc";
 
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
@@ -32,7 +31,7 @@ export interface MatrixAudioRendererProps {
    * This list needs to be composed based on the matrixRTC members so that we do not play audio from users
    * that are not expected to be in the rtc session (local user is excluded).
    */
-  validIdentities: ParticipantId[];
+  validIdentities: string[];
   /**
    * If set to `true`, mutes all audio tracks rendered by the component.
    * @remarks
