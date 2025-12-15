@@ -102,11 +102,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       },
       setSyncState: (value: SyncState) => void,
     ) => void,
-    options: CallViewModelOptions = {
-      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-      autoLeaveWhenOthersLeft: false,
-      matrixRTCMode$: constant(mode),
-    },
+    options: Partial<CallViewModelOptions> = {},
   ): void => {
     let syncState = initialSyncState;
     const setSyncState = (value: SyncState): void => {
@@ -176,7 +172,8 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       mediaDevices,
       muteStates,
       {
-        ...options,
+        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        autoLeaveWhenOthersLeft: false,
         livekitRoomFactory: (): LivekitRoom =>
           mockLivekitRoom({
             localParticipant,
@@ -185,6 +182,8 @@ export function withCallViewModel(mode: MatrixRTCMode) {
           }),
         connectionState$,
         windowSize$,
+        matrixRTCMode$: constant(mode),
+        ...options,
       },
       raisedHands$,
       reactions$,
