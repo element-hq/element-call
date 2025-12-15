@@ -37,6 +37,7 @@ import {
 import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "../state/Behavior";
+import { MatrixRTCMode } from "../settings/settings";
 
 mockConfig({ livekit: { livekit_service_url: "https://example.com" } });
 
@@ -162,6 +163,7 @@ export function getBasicCallViewModelEnvironment(
           setE2EEEnabled: async () => Promise.resolve(),
         }),
       connectionState$: constant(ConnectionState.Connected),
+      matrixRTCMode$: constant(MatrixRTCMode.Legacy),
       ...callViewModelOptions,
     },
     handRaisedSubject$,
