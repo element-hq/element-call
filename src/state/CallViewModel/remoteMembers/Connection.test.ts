@@ -32,7 +32,6 @@ import {
   Connection,
   ConnectionState,
   type ConnectionOpts,
-  type PublishingParticipant,
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
@@ -395,7 +394,7 @@ describe("Publishing participants observations", () => {
 
     const bobIsAPublisher = Promise.withResolvers<void>();
     const danIsAPublisher = Promise.withResolvers<void>();
-    const observedPublishers: PublishingParticipant[][] = [];
+    const observedPublishers: RemoteParticipant[][] = [];
     const s = connection.remoteParticipantsWithTracks$.subscribe(
       (publishers) => {
         observedPublishers.push(publishers);
@@ -408,7 +407,7 @@ describe("Publishing participants observations", () => {
       },
     );
     onTestFinished(() => s.unsubscribe());
-    // The publishingParticipants$ observable is derived from the current members of the
+    // The remoteParticipants$ observable is derived from the current members of the
     // livekitRoom and the rtc membership in order to publish the members that are publishing
     // on this connection.
 
@@ -450,7 +449,7 @@ describe("Publishing participants observations", () => {
 
     const connection = setupRemoteConnection();
 
-    let observedPublishers: PublishingParticipant[][] = [];
+    let observedPublishers: RemoteParticipant[][] = [];
     const s = connection.remoteParticipantsWithTracks$.subscribe(
       (publishers) => {
         observedPublishers.push(publishers);
