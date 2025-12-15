@@ -52,7 +52,12 @@ import {
   ScreenShareViewModel,
   type UserMediaViewModel,
 } from "../MediaViewModel";
-import { accumulate, generateItems, pauseWhen } from "../../utils/observable";
+import {
+  accumulate,
+  filterBehavior,
+  generateItems,
+  pauseWhen,
+} from "../../utils/observable";
 import {
   duplicateTiles,
   MatrixRTCMode,
@@ -505,16 +510,13 @@ export function createCallViewModel$(
     ),
   );
 
-  const localMatrixLivekitMember$ =
-    scope.behavior<MatrixLivekitMember<"local"> | null>(
+  const localMatrixLivekitMember$: Behavior<MatrixLivekitMember<"local"> | null> =
+    scope.behavior(
       localRtcMembership$.pipe(
-        generateItems(
-          // Generate a local member when membership is non-null
-          function* (membership) {
-            if (membership !== null)
-              yield { keys: ["local"], data: membership };
-          },
-          (_scope, membership$) => ({
+        filterBehavior((membership) => membership !== null),
+        map((membership$) => {
+          if (membership$ === null) return null;
+          return {
             membership$,
             participant: {
               type: "local" as const,
@@ -522,9 +524,8 @@ export function createCallViewModel$(
             },
             connection$: localMembership.connection$,
             userId,
-          }),
-        ),
-        map(([localMember]) => localMember ?? null),
+          };
+        }),
       ),
     );
 
