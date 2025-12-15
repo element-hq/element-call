@@ -946,11 +946,12 @@ export function createCallViewModel$(
     ),
   );
 
-  const hasRemoteScreenShares$: Observable<boolean> = spotlight$.pipe(
-    map((spotlight) =>
-      spotlight.some((vm) => !vm.local && vm instanceof ScreenShareViewModel),
+  const hasRemoteScreenShares$ = scope.behavior<boolean>(
+    spotlight$.pipe(
+      map((spotlight) =>
+        spotlight.some((vm) => !vm.local && vm instanceof ScreenShareViewModel),
+      ),
     ),
-    distinctUntilChanged(),
   );
 
   const pipEnabled$ = scope.behavior(setPipEnabled$, false);

@@ -107,3 +107,26 @@ test("auto-switches to spotlight when in flat window mode", () =>
     windowMode: "      nNf",
     expectedGridMode: "g-s",
   }));
+
+test("allows switching modes manually when in flat window mode", () =>
+  testLayoutSwitch({
+    // Window becomes flat, then user switches to grid and back.
+    // Finally the window returns to a normal shape.
+    windowMode: "      nf--n",
+    userSelection: "   --gs",
+    expectedGridMode: "gsgsg",
+  }));
+
+test("stays in spotlight while there are screen shares even when window mode changes", () =>
+  testLayoutSwitch({
+    windowMode: "      nfn",
+    hasScreenShares: " y",
+    expectedGridMode: "s",
+  }));
+
+test("ignores end of screen share until window mode returns to normal", () =>
+  testLayoutSwitch({
+    windowMode: "      nf-n",
+    hasScreenShares: " y-n",
+    expectedGridMode: "s--g",
+  }));
