@@ -30,12 +30,15 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import type { LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   Connection,
+  ConnectionState,
   type ConnectionOpts,
-  type ConnectionState,
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
-import { FailToGetOpenIdToken } from "../../../utils/errors.ts";
+import {
+  ElementCallError,
+  FailToGetOpenIdToken,
+} from "../../../utils/errors.ts";
 
 let testScope: ObservableScope;
 
@@ -45,11 +48,6 @@ let fakeLivekitRoom: MockedObject<LivekitRoom>;
 
 let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
-
-let fakeRoomEventEmiter: EventEmitter;
-// let fakeMembershipsFocusMap$: BehaviorSubject<
-//   { membership: CallMembership; transport: LivekitTransport }[]
-// >;
 
 const livekitFocus: LivekitTransport = {
   livekit_alias: "!roomID:example.org",
@@ -87,22 +85,25 @@ function setupTest(): void {
       localParticipantEventEmiter,
     ),
   } as unknown as LocalParticipant);
-  fakeRoomEventEmiter = new EventEmitter();
 
+  const fakeRoomEventEmitter = new EventEmitter();
   fakeLivekitRoom = vi.mocked<LivekitRoom>({
     connect: vi.fn(),
     disconnect: vi.fn(),
     remoteParticipants: new Map(),
     localParticipant: fakeLocalParticipant,
     state: LivekitConnectionState.Disconnected,
-    on: fakeRoomEventEmiter.on.bind(fakeRoomEventEmiter),
-    off: fakeRoomEventEmiter.off.bind(fakeRoomEventEmiter),
-    addListener: fakeRoomEventEmiter.addListener.bind(fakeRoomEventEmiter),
+    on: fakeRoomEventEmitter.on.bind(fakeRoomEventEmitter),
+    off: fakeRoomEventEmitter.off.bind(fakeRoomEventEmitter),
+    addListener: fakeRoomEventEmitter.addListener.bind(fakeRoomEventEmitter),
     removeListener:
-      fakeRoomEventEmiter.removeListener.bind(fakeRoomEventEmiter),
+      fakeRoomEventEmitter.removeListener.bind(fakeRoomEventEmitter),
     removeAllListeners:
-      fakeRoomEventEmiter.removeAllListeners.bind(fakeRoomEventEmiter),
+      fakeRoomEventEmitter.removeAllListeners.bind(fakeRoomEventEmitter),
     setE2EEEnabled: vi.fn().mockResolvedValue(undefined),
+    emit: (eventName: string | symbol, ...args: unknown[]) => {
+      fakeRoomEventEmitter.emit(eventName, ...args);
+    },
   } as unknown as LivekitRoom);
 }
 
@@ -124,7 +125,16 @@ function setupRemoteConnection(): Connection {
     };
   });
 
-  fakeLivekitRoom.connect.mockResolvedValue(undefined);
+  fakeLivekitRoom.connect.mockImplementation(async (): Promise<void> => {
+    const changeEv = RoomEvent.ConnectionStateChanged;
+
+    fakeLivekitRoom.state = LivekitConnectionState.Connecting;
+    fakeLivekitRoom.emit(changeEv, fakeLivekitRoom.state);
+    fakeLivekitRoom.state = LivekitConnectionState.Connected;
+    fakeLivekitRoom.emit(changeEv, fakeLivekitRoom.state);
+
+    return Promise.resolve();
+  });
 
   return new Connection(opts, logger);
 }
@@ -147,7 +157,7 @@ describe("Start connection states", () => {
     };
     const connection = new Connection(opts, logger);
 
-    expect(connection.state$.getValue().state).toEqual("Initialized");
+    expect(connection.state$.getValue()).toEqual("Initialized");
   });
 
   it("fail to getOpenId token then error state", async () => {
@@ -163,7 +173,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -183,22 +193,20 @@ describe("Start connection states", () => {
 
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
-    expect(capturedState!.state).toEqual("FetchingConfig");
+    expect(capturedState!).toEqual("FetchingConfig");
 
     deferred.reject(new FailToGetOpenIdToken(new Error("Failed to get token")));
 
     await vi.runAllTimersAsync();
 
     capturedState = capturedStates.pop();
-    if (capturedState!.state === "FailedToStart") {
-      expect(capturedState!.error.message).toEqual("Something went wrong");
+    if (capturedState instanceof Error) {
+      expect(capturedState.message).toEqual("Something went wrong");
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
-      expect.fail(
-        "Expected FailedToStart state but got " + capturedState?.state,
-      );
+      expect.fail("Expected FailedToStart state but got " + capturedState);
     }
   });
 
@@ -215,7 +223,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -237,24 +245,25 @@ describe("Start connection states", () => {
 
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
-    expect(capturedState?.state).toEqual("FetchingConfig");
+    expect(capturedState).toEqual(ConnectionState.FetchingConfig);
 
     deferredSFU.resolve();
     await vi.runAllTimersAsync();
 
     capturedState = capturedStates.pop();
 
-    if (capturedState?.state === "FailedToStart") {
-      expect(capturedState?.error.message).toContain(
+    if (
+      capturedState instanceof ElementCallError &&
+      capturedState.cause instanceof Error
+    ) {
+      expect(capturedState.cause.message).toContain(
         "SFU Config fetch failed with exception Error",
       );
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
-      expect.fail(
-        "Expected FailedToStart state but got " + capturedState?.state,
-      );
+      expect.fail("Expected FailedToStart state but got " + capturedState);
     }
   });
 
@@ -271,7 +280,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -301,15 +310,18 @@ describe("Start connection states", () => {
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
 
-    expect(capturedState?.state).toEqual("FetchingConfig");
+    expect(capturedState).toEqual(ConnectionState.FetchingConfig);
 
     deferredSFU.resolve();
     await vi.runAllTimersAsync();
 
     capturedState = capturedStates.pop();
 
-    if (capturedState && capturedState?.state === "FailedToStart") {
-      expect(capturedState.error.message).toContain(
+    if (
+      capturedState instanceof ElementCallError &&
+      capturedState.cause instanceof Error
+    ) {
+      expect(capturedState.cause.message).toContain(
         "Failed to connect to livekit",
       );
       expect(connection.transport.livekit_alias).toEqual(
@@ -328,7 +340,7 @@ describe("Start connection states", () => {
 
     const connection = setupRemoteConnection();
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -338,13 +350,15 @@ describe("Start connection states", () => {
     await vi.runAllTimersAsync();
 
     const initialState = capturedStates.shift();
-    expect(initialState?.state).toEqual("Initialized");
+    expect(initialState).toEqual(ConnectionState.Initialized);
     const fetchingState = capturedStates.shift();
-    expect(fetchingState?.state).toEqual("FetchingConfig");
+    expect(fetchingState).toEqual(ConnectionState.FetchingConfig);
+    const disconnectedState = capturedStates.shift();
+    expect(disconnectedState).toEqual(ConnectionState.LivekitDisconnected);
     const connectingState = capturedStates.shift();
-    expect(connectingState?.state).toEqual("ConnectingToLkRoom");
+    expect(connectingState).toEqual(ConnectionState.LivekitConnecting);
     const connectedState = capturedStates.shift();
-    expect(connectedState?.state).toEqual("ConnectedToLkRoom");
+    expect(connectedState).toEqual(ConnectionState.LivekitConnected);
   });
 
   it("shutting down the scope should stop the connection", async () => {
@@ -410,7 +424,7 @@ describe("Publishing participants observations", () => {
     );
 
     participants.forEach((p) =>
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
     );
 
     // At this point there should be no publishers
@@ -423,7 +437,7 @@ describe("Publishing participants observations", () => {
       fakeRemoteLivekitParticipant("@dan:example.org:DEV333", 2),
     ];
     participants.forEach((p) =>
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
     );
 
     // At this point there should be no publishers
@@ -453,7 +467,7 @@ describe("Publishing participants observations", () => {
     );
 
     for (const participant of participants) {
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, participant);
     }
 
     // At this point there should be no publishers
@@ -462,7 +476,7 @@ describe("Publishing participants observations", () => {
     participants = [fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1)];
 
     for (const participant of participants) {
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, participant);
     }
 
     // We should have bob has a publisher now
@@ -479,7 +493,7 @@ describe("Publishing participants observations", () => {
       (p) => p.identity !== "@bob:example.org:DEV111",
     );
 
-    fakeRoomEventEmiter.emit(
+    fakeLivekitRoom.emit(
       RoomEvent.ParticipantDisconnected,
       fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
     );
