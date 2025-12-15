@@ -29,7 +29,7 @@ import { type ProcessorState } from "../../../livekit/TrackProcessorContext.tsx"
 import {
   areLivekitTransportsEqual,
   createMatrixLivekitMembers$,
-  type MatrixLivekitMember,
+  type RemoteMatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
 import { createConnectionManager$ } from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
@@ -132,7 +132,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
     });
 
     expectObservable(matrixLivekitItems$).toBe(vMarble, {
-      a: expect.toSatisfy((e: Epoch<MatrixLivekitMember<"remote">[]>) => {
+      a: expect.toSatisfy((e: Epoch<RemoteMatrixLivekitMember[]>) => {
         const items = e.value;
         expect(items.length).toBe(1);
         const item = items[0]!;
@@ -152,7 +152,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
         });
         return true;
       }),
-      b: expect.toSatisfy((e: Epoch<MatrixLivekitMember<"remote">[]>) => {
+      b: expect.toSatisfy((e: Epoch<RemoteMatrixLivekitMember[]>) => {
         const items = e.value;
         expect(items.length).toBe(2);
 
@@ -189,7 +189,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
         }
         return true;
       }),
-      c: expect.toSatisfy((e: Epoch<MatrixLivekitMember<"remote">[]>) => {
+      c: expect.toSatisfy((e: Epoch<RemoteMatrixLivekitMember[]>) => {
         const items = e.value;
         expect(items.length).toBe(3);
 

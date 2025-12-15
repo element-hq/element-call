@@ -116,7 +116,7 @@ import { createConnectionManager$ } from "./remoteMembers/ConnectionManager.ts";
 import {
   createMatrixLivekitMembers$,
   type TaggedParticipant,
-  type MatrixLivekitMember,
+  type LocalMatrixLivekitMember,
 } from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
   type AutoLeaveReason,
@@ -510,7 +510,7 @@ export function createCallViewModel$(
     ),
   );
 
-  const localMatrixLivekitMember$: Behavior<MatrixLivekitMember<"local"> | null> =
+  const localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null> =
     scope.behavior(
       localRtcMembership$.pipe(
         filterBehavior((membership) => membership !== null),
@@ -682,10 +682,8 @@ export function createCallViewModel$(
           let localParticipantId: string | undefined = undefined;
           // add local member if available
           if (localMatrixLivekitMember) {
-            const { userId, connection$, membership$ } =
+            const { userId, participant, connection$, membership$ } =
               localMatrixLivekitMember;
-            const participant: TaggedParticipant =
-              localMatrixLivekitMember.participant; // Widen the type
             localParticipantId = `${userId}:${membership$.value.deviceId}`; // should be membership$.value.membershipID which is not optional
             // const participantId = membership$.value.membershipID;
             if (localParticipantId) {
@@ -695,7 +693,7 @@ export function createCallViewModel$(
                     dup,
                     localParticipantId,
                     userId,
-                    participant,
+                    participant satisfies TaggedParticipant as TaggedParticipant, // Widen the type safely
                     connection$,
                   ],
                   data: undefined,
@@ -727,7 +725,7 @@ export function createCallViewModel$(
           dup,
           participantId,
           userId,
-          participant$,
+          participant,
           connection$,
         ) => {
           const livekitRoom$ = scope.behavior(
@@ -746,7 +744,7 @@ export function createCallViewModel$(
             scope,
             `${participantId}:${dup}`,
             userId,
-            participant$,
+            participant,
             options.encryptionSystem,
             livekitRoom$,
             focusUrl$,
