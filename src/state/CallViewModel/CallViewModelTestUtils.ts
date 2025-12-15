@@ -105,6 +105,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     options: CallViewModelOptions = {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       autoLeaveWhenOthersLeft: false,
+      matrixRTCMode$: constant(mode),
     },
   ): void => {
     let syncState = initialSyncState;
@@ -184,7 +185,6 @@ export function withCallViewModel(mode: MatrixRTCMode) {
           }),
         connectionState$,
         windowSize$,
-        matrixRTCMode$: constant(mode),
       },
       raisedHands$,
       reactions$,
