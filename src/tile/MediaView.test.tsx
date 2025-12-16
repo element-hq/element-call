@@ -47,7 +47,6 @@ describe("MediaView", () => {
     video: trackReference,
     userId: "@alice:example.com",
     mxcAvatarUrl: undefined,
-    localParticipant: false,
     focusable: true,
   };
 
@@ -66,24 +65,13 @@ describe("MediaView", () => {
     });
   });
 
-  describe("with no participant", () => {
-    it("shows avatar for local user", () => {
-      render(
-        <MediaView {...baseProps} video={undefined} localParticipant={true} />,
-      );
+  describe("with no video", () => {
+    it("shows avatar", () => {
+      render(<MediaView {...baseProps} video={undefined} />);
       expect(
         screen.getByRole("img", { name: "@alice:example.com" }),
       ).toBeVisible();
-      expect(screen.queryAllByText("Waiting for media...").length).toBe(0);
-    });
-    it("shows avatar and label for remote user", () => {
-      render(
-        <MediaView {...baseProps} video={undefined} localParticipant={false} />,
-      );
-      expect(
-        screen.getByRole("img", { name: "@alice:example.com" }),
-      ).toBeVisible();
-      expect(screen.getByText("Waiting for media...")).toBeVisible();
+      expect(screen.queryByTestId("video")).toBe(null);
     });
   });
 
@@ -91,6 +79,22 @@ describe("MediaView", () => {
     test("is shown with name", () => {
       render(<MediaView {...baseProps} displayName="Bob" />);
       expect(screen.getByTestId("name_tag")).toHaveTextContent("Bob");
+    });
+  });
+
+  describe("waitingForMedia", () => {
+    test("defaults to false", () => {
+      render(<MediaView {...baseProps} />);
+      expect(screen.queryAllByText("Waiting for media...").length).toBe(0);
+    });
+    test("shows and is accessible", async () => {
+      const { container } = render(
+        <TooltipProvider>
+          <MediaView {...baseProps} waitingForMedia={true} />
+        </TooltipProvider>,
+      );
+      expect(await axe(container)).toHaveNoViolations();
+      expect(screen.getByText("Waiting for media...")).toBeVisible();
     });
   });
 

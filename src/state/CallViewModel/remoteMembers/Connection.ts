@@ -13,9 +13,7 @@ import {
 import {
   ConnectionError,
   type Room as LivekitRoom,
-  type LocalParticipant,
   type RemoteParticipant,
-  RoomEvent,
 } from "livekit-client";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, map } from "rxjs";
@@ -34,8 +32,6 @@ import {
   SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
-
-export type PublishingParticipant = LocalParticipant | RemoteParticipant;
 
 export interface ConnectionOpts {
   /** The media transport to connect to. */
@@ -99,13 +95,13 @@ export class Connection {
   private scope: ObservableScope;
 
   /**
-   * An observable of the participants that are publishing on this connection. (Excluding our local participant)
-   * This is derived from `participantsIncludingSubscribers$` and `remoteTransports$`.
-   * It filters the participants to only those that are associated with a membership that claims to publish on this connection.
+   * The remote LiveKit participants that are visible on this connection.
+   *
+   * Note that this may include participants that are connected only to
+   * subscribe, or publishers that are otherwise unattested in MatrixRTC state.
+   * It is therefore more low-level than what should be presented to the user.
    */
-  public readonly remoteParticipantsWithTracks$: Behavior<
-    PublishingParticipant[]
-  >;
+  public readonly remoteParticipants$: Behavior<RemoteParticipant[]>;
 
   /**
    * Whether the connection has been stopped.
@@ -236,23 +232,9 @@ export class Connection {
     this.transport = transport;
     this.client = client;
 
-    // REMOTE participants with track!!!
-    // this.remoteParticipantsWithTracks$
-    this.remoteParticipantsWithTracks$ = scope.behavior(
-      // only tracks remote participants
-      connectedParticipantsObserver(this.livekitRoom, {
-        additionalRoomEvents: [
-          RoomEvent.TrackPublished,
-          RoomEvent.TrackUnpublished,
-        ],
-      }).pipe(
-        map((participants) => {
-          return participants.filter(
-            (participant) => participant.getTrackPublications().length > 0,
-          );
-        }),
-      ),
-      [],
+    this.remoteParticipants$ = scope.behavior(
+      // Only tracks remote participants
+      connectedParticipantsObserver(this.livekitRoom),
     );
 
     scope.onEnd(() => {

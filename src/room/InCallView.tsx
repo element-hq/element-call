@@ -88,6 +88,7 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
+  matrixRTCMode as matrixRTCModeSetting,
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
@@ -144,6 +145,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         encryptionSystem: props.e2eeSystem,
         autoLeaveWhenOthersLeft,
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
+        matrixRTCMode$: matrixRTCModeSetting.value$,
       },
       reactionsReader.raisedHands$,
       reactionsReader.reactions$,

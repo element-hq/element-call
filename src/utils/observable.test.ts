@@ -5,11 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { test } from "vitest";
-import { Subject } from "rxjs";
+import { expect, test } from "vitest";
+import { type Observable, of, Subject, switchMap } from "rxjs";
 
 import { withTestScheduler } from "./test";
-import { generateItems, pauseWhen } from "./observable";
+import { filterBehavior, generateItems, pauseWhen } from "./observable";
+import { type Behavior } from "../state/Behavior";
 
 test("pauseWhen", () => {
   withTestScheduler(({ behavior, expectObservable }) => {
@@ -70,5 +71,33 @@ test("generateItems", () => {
     expectObservable(scope2$).toBe(scope2Marbles);
     expectObservable(scope3$).toBe(scope3Marbles);
     expectObservable(scope4$).toBe(scope4Marbles);
+  });
+});
+
+test("filterBehavior", () => {
+  withTestScheduler(({ behavior, expectObservable }) => {
+    // Filtering the input should segment it into 2 modes of non-null behavior.
+    const inputMarbles = "   abcxabx";
+    const filteredMarbles = "a--xa-x";
+
+    const input$ = behavior(inputMarbles, {
+      a: "a",
+      b: "b",
+      c: "c",
+      x: null,
+    });
+    const filtered$: Observable<Behavior<string> | null> = input$.pipe(
+      filterBehavior((value) => typeof value === "string"),
+    );
+
+    expectObservable(filtered$).toBe(filteredMarbles, {
+      a: expect.any(Object),
+      x: null,
+    });
+    expectObservable(
+      filtered$.pipe(
+        switchMap((value$) => (value$ === null ? of(null) : value$)),
+      ),
+    ).toBe(inputMarbles, { a: "a", b: "b", c: "c", x: null });
   });
 });
