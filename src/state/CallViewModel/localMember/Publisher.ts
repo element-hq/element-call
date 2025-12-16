@@ -358,7 +358,7 @@ export class Publisher {
     const track$ = scope.behavior(
       observeTrackReference$(room.localParticipant, Track.Source.Camera).pipe(
         map((trackRef) => {
-          const track = trackRef?.publication?.track;
+          const track = trackRef?.publication.track;
           return track instanceof LocalVideoTrack ? track : null;
         }),
       ),
