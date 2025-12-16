@@ -37,7 +37,7 @@ import {
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
-import { constant, type Behavior } from "../../Behavior.ts";
+import { type Behavior } from "../../Behavior.ts";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { type Publisher } from "./Publisher.ts";
@@ -68,6 +68,8 @@ export enum TransportState {
 
 export enum PublishState {
   WaitingForUser = "publish_waiting_for_user",
+  // XXX: This state is removed for now since we do not have full control over
+  // track publication anymore with the publisher abstraction, might come back in the future?
   // /** Implies lk connection is connected */
   // Starting = "publish_start_publishing",
   /** Implies lk connection is connected */
@@ -79,6 +81,8 @@ export enum PublishState {
 export enum TrackState {
   /** The track is waiting for user input to create tracks (waiting to call `startTracks()`) */
   WaitingForUser = "tracks_waiting_for_user",
+  // XXX: This state is removed for now since we do not have full control over
+  // track creation anymore with the publisher abstraction, might come back in the future?
   // /** Implies lk connection is connected */
   // Creating = "tracks_creating",
   /** Implies lk connection is connected */
@@ -154,9 +158,10 @@ export const createLocalMembership$ = ({
   matrixRTCSession,
 }: Props): {
   /**
-   * This starts audio and video tracks. They will be reused when calling `requestPublish`.
+   * This request to start audio and video tracks.
+   * Can be called early to pre-emptively get media permissions and start devices.
    */
-  startTracks: () => Behavior<void>;
+  startTracks: () => void;
   /**
    * This sets a inner state (shouldPublish) to true and instructs the js-sdk and livekit to keep the user
    * connected to matrix and livekit.
@@ -265,19 +270,10 @@ export const createLocalMembership$ = ({
    * The publisher is stored in here an abstracts creating and publishing tracks.
    */
   const publisher$ = new BehaviorSubject<Publisher | null>(null);
-  /**
-   * Extract the tracks from the published. Also reacts to changing publishers.
-   */
-  // const tracks$ = scope.behavior(
-  //   publisher$.pipe(switchMap((p) => (p?.tracks$ ? p.tracks$ : constant([])))),
-  // );
-  // const publishing$ = scope.behavior(
-  //   publisher$.pipe(switchMap((p) => p?.publishing$ ?? constant(false))),
-  // );
 
-  const startTracks = (): Behavior<void> => {
+  const startTracks = (): void => {
     trackStartRequested.resolve();
-    return constant(undefined);
+    // This used to return the tracks, but now they are only accessible via the publisher.
   };
 
   const requestJoinAndPublish = (): void => {
@@ -348,14 +344,6 @@ export const createLocalMembership$ = ({
           setPublishError(new UnknownCallError(error as Error));
         }
       }
-      // XXX Why is that?
-      // else {
-      //   try {
-      //     await publisher?.stopPublishing();
-      //   } catch (error) {
-      //     setLivekitError(new UnknownCallError(error as Error));
-      //   }
-      // }
     },
   );
 
@@ -401,16 +389,10 @@ export const createLocalMembership$ = ({
         ([
           localConnectionState,
           localTransport,
-          // tracks,
-          // publishing,
           shouldPublish,
           shouldStartTracks,
         ]) => {
           if (!localTransport) return null;
-          // const hasTracks = tracks.length > 0;
-          // let trackState: TrackState = TrackState.WaitingForUser;
-          // if (hasTracks && shouldStartTracks) trackState = TrackState.Ready;
-          // if (!hasTracks && shouldStartTracks) trackState = TrackState.Creating;
           const trackState: TrackState = shouldStartTracks
             ? TrackState.Ready
             : TrackState.WaitingForUser;

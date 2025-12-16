@@ -97,7 +97,7 @@ export class Publisher {
   // it would also prevent the user from seeing their own video/audio preview.
   // So for that we use pauseUpStream():  Stops sending media to the server by replacing
   // the sender track with null, but keeps the local MediaStreamTrack active.
-  // The user can still see/hear themselves locally, but remote participants see nothing
+  // The user can still see/hear themselves locally, but remote participants see nothing.
   private onLocalTrackPublished(
     localTrackPublication: LocalTrackPublication,
   ): void {
@@ -128,6 +128,15 @@ export class Publisher {
     }
   }
   /**
+   * Create and setup local audio and video tracks based on the current mute states.
+   * It creates the tracks only if audio and/or video is enabled, to avoid unnecessary
+   * permission prompts.
+   *
+   * It also observes mute state changes to update LiveKit microphone/camera states accordingly.
+   * If a track is not created initially because disabled, it will be created when unmuting.
+   *
+   * This call is not blocking anymore, instead callers can listen to the
+   * `RoomEvent.MediaDevicesError` event in the LiveKit room to be notified of any errors.
    *
    */
   public async createAndSetupTracks(): Promise<void> {
@@ -141,25 +150,21 @@ export class Publisher {
     const audio = this.muteStates.audio.enabled$.value;
     const video = this.muteStates.video.enabled$.value;
 
-    const enableTracks = async (): Promise<void> => {
-      if (audio && video) {
-        // Enable both at once in order to have a single permission prompt!
-        await lkRoom.localParticipant.enableCameraAndMicrophone();
-      } else if (audio) {
-        await lkRoom.localParticipant.setMicrophoneEnabled(true);
-      } else if (video) {
-        await lkRoom.localParticipant.setCameraEnabled(true);
-      }
-      return;
-    };
-    // We don't await enableTracks, because livekit could block until the tracks
+    // We don't await the creation, because livekit could block until the tracks
     // are fully published, and not only that they are created.
     // We don't have control on that, localParticipant creates and publishes the tracks
     // asap.
     // We are using the `ParticipantEvent.LocalTrackPublished` to be notified
     // when tracks are actually published, and at that point
     // we can pause upstream if needed (depending on if startPublishing has been called).
-    void enableTracks();
+    if (audio && video) {
+      // Enable both at once in order to have a single permission prompt!
+      void lkRoom.localParticipant.enableCameraAndMicrophone();
+    } else if (audio) {
+      void lkRoom.localParticipant.setMicrophoneEnabled(true);
+    } else if (video) {
+      void lkRoom.localParticipant.setCameraEnabled(true);
+    }
 
     return Promise.resolve();
   }
@@ -233,6 +238,8 @@ export class Publisher {
   public async stopPublishing(): Promise<void> {
     this.logger.debug("stopPublishing called");
     this.shouldPublish = false;
+    // Pause upstream will stop sending media to the server, while keeping
+    // the local MediaStreamTrack active, so the user can still see themselves.
     await this.pauseUpstreams(this.connection.livekitRoom, [
       Track.Source.Microphone,
       Track.Source.Camera,
