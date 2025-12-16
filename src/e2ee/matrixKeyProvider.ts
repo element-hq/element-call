@@ -12,11 +12,12 @@ import {
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
+import { firstValueFrom } from "rxjs";
 
 import {
-  computeLivekitParticipantIdentity,
+  computeLivekitParticipantIdentity$,
   livekitIdentityInput,
-} from "../state/CallViewModel/remoteMembers/MatrixLivekitMembers";
+} from "../state/CallViewModel/remoteMembers/LivekitParticipantIdentity";
 
 export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
@@ -69,7 +70,7 @@ export class MatrixKeyProvider extends BaseKeyProvider {
         "deriveBits",
         "deriveKey",
       ]),
-      computeLivekitParticipantIdentity(membership, kind),
+      firstValueFrom(computeLivekitParticipantIdentity$(membership, kind)),
     ]).then(
       ([keyMaterial, livekitParticipantId]) => {
         this.onSetEncryptionKey(

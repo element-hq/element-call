@@ -14,7 +14,7 @@ import { BehaviorSubject, combineLatest, map, type Observable } from "rxjs";
 
 import { type IConnectionManager } from "./ConnectionManager.ts";
 import {
-  type MatrixLivekitMember,
+  type RemoteMatrixLivekitMember,
   createMatrixLivekitMembers$,
 } from "./MatrixLivekitMembers.ts";
 import {
@@ -102,10 +102,10 @@ test("should signal participant not yet connected to livekit", async () => {
 
   await flushPromises();
   expect(matrixLivekitMember$.value.value).toSatisfy(
-    (data: MatrixLivekitMember[]) => {
+    (data: RemoteMatrixLivekitMember[]) => {
       expect(data.length).toEqual(1);
       expect(data[0].membership$.value).toBe(bobMembership);
-      expect(data[0].participant$.value).toBe(null);
+      expect(data[0].participant.value$.value).toBe(null);
       expect(data[0].connection$.value).toBe(null);
       return true;
     },
@@ -171,10 +171,10 @@ test("should signal participant on a connection that is publishing", async () =>
 
   await flushPromises();
   expect(matrixLivekitMember$.value.value).toSatisfy(
-    (data: MatrixLivekitMember[]) => {
+    (data: RemoteMatrixLivekitMember[]) => {
       expect(data.length).toEqual(1);
       expect(data[0].membership$.value).toBe(bobMembership);
-      expect(data[0].participant$.value).toSatisfy((participant) => {
+      expect(data[0].participant.value$.value).toSatisfy((participant) => {
         expect(participant).toBeDefined();
         expect(participant!.identity).toEqual(bobParticipantId);
         return true;
@@ -210,10 +210,10 @@ test("should signal participant on a connection that is not publishing", async (
   });
   await flushPromises();
   expect(matrixLivekitMember$.value.value).toSatisfy(
-    (data: MatrixLivekitMember[]) => {
+    (data: RemoteMatrixLivekitMember[]) => {
       expect(data.length).toEqual(1);
       expect(data[0].membership$.value).toBe(bobMembership);
-      expect(data[0].participant$.value).toBe(null);
+      expect(data[0].participant.value$.value).toBe(null);
       expect(data[0].connection$.value).toBe(connection);
       return true;
     },
@@ -258,11 +258,11 @@ describe("Publication edge case", () => {
     });
     await flushPromises();
     expect(matrixLivekitMember$.value.value).toSatisfy(
-      (data: MatrixLivekitMember[]) => {
+      (data: RemoteMatrixLivekitMember[]) => {
         expect(data.length).toEqual(2);
         expect(data[0].membership$.value).toBe(bobMembership);
         expect(data[0].connection$.value).toBe(connectionA);
-        expect(data[0].participant$.value).toSatisfy((participant) => {
+        expect(data[0].participant.value$.value).toSatisfy((participant) => {
           expect(participant).toBeDefined();
           expect(participant!.identity).toEqual(bobParticipantId);
           return true;
@@ -317,11 +317,11 @@ test("bob is publishing in the wrong connection", async () => {
 
   await flushPromises();
   expect(matrixLivekitMember$.value.value).toSatisfy(
-    (data: MatrixLivekitMember[]) => {
+    (data: RemoteMatrixLivekitMember[]) => {
       expect(data.length).toEqual(2);
       expect(data[0].membership$.value).toBe(bobMembership);
       expect(data[0].connection$.value).toBe(connectionA);
-      expect(data[0].participant$.value).toBe(null);
+      expect(data[0].participant.value$.value).toBe(null);
       return true;
     },
   );

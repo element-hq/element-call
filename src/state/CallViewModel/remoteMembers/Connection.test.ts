@@ -32,7 +32,6 @@ import {
   Connection,
   ConnectionState,
   type ConnectionOpts,
-  type PublishingParticipant,
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
@@ -40,6 +39,7 @@ import {
   ElementCallError,
   FailToGetOpenIdToken,
 } from "../../../utils/errors.ts";
+import { mockRemoteParticipant } from "../../../utils/test.ts";
 
 let testScope: ObservableScope;
 
@@ -377,46 +377,32 @@ describe("Start connection states", () => {
   });
 });
 
-function fakeRemoteLivekitParticipant(
-  id: string,
-  publications: number = 1,
-): RemoteParticipant {
-  return {
-    identity: id,
-    getTrackPublications: () => Array(publications),
-  } as unknown as RemoteParticipant;
-}
-
-describe("Publishing participants observations", () => {
-  it("should emit the list of publishing participants", () => {
+describe("remote participants", () => {
+  it("emits the list of remote participants", () => {
     setupTest();
 
     const connection = setupRemoteConnection();
 
-    const bobIsAPublisher = Promise.withResolvers<void>();
-    const danIsAPublisher = Promise.withResolvers<void>();
-    const observedPublishers: PublishingParticipant[][] = [];
-    const s = connection.remoteParticipantsWithTracks$.subscribe(
-      (publishers) => {
-        observedPublishers.push(publishers);
-        if (publishers.some((p) => p.identity === "@bob:example.org:DEV111")) {
-          bobIsAPublisher.resolve();
-        }
-        if (publishers.some((p) => p.identity === "@dan:example.org:DEV333")) {
-          danIsAPublisher.resolve();
-        }
-      },
-    );
+    const observedParticipants: RemoteParticipant[][] = [];
+    const s = connection.remoteParticipants$.subscribe((participants) => {
+      observedParticipants.push(participants);
+    });
     onTestFinished(() => s.unsubscribe());
-    // The publishingParticipants$ observable is derived from the current members of the
+    // The remoteParticipants$ observable is derived from the current members of the
     // livekitRoom and the rtc membership in order to publish the members that are publishing
     // on this connection.
 
-    let participants: RemoteParticipant[] = [
-      fakeRemoteLivekitParticipant("@alice:example.org:DEV000", 0),
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 0),
-      fakeRemoteLivekitParticipant("@carol:example.org:DEV222", 0),
-      fakeRemoteLivekitParticipant("@dan:example.org:DEV333", 0),
+    const participants: RemoteParticipant[] = [
+      mockRemoteParticipant({ identity: "@alice:example.org:DEV000" }),
+      mockRemoteParticipant({ identity: "@bob:example.org:DEV111" }),
+      mockRemoteParticipant({ identity: "@carol:example.org:DEV222" }),
+      // Mock Dan to have no published tracks. We want him to still show show up
+      // in the participants list.
+      mockRemoteParticipant({
+        identity: "@dan:example.org:DEV333",
+        getTrackPublication: () => undefined,
+        getTrackPublications: () => [],
+      }),
     ];
 
     // Let's simulate 3 members on the livekitRoom
@@ -428,21 +414,8 @@ describe("Publishing participants observations", () => {
       fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
     );
 
-    // At this point there should be no publishers
-    expect(observedPublishers.pop()!.length).toEqual(0);
-
-    participants = [
-      fakeRemoteLivekitParticipant("@alice:example.org:DEV000", 1),
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1),
-      fakeRemoteLivekitParticipant("@carol:example.org:DEV222", 1),
-      fakeRemoteLivekitParticipant("@dan:example.org:DEV333", 2),
-    ];
-    participants.forEach((p) =>
-      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
-    );
-
-    // At this point there should be no publishers
-    expect(observedPublishers.pop()!.length).toEqual(4);
+    // All remote participants should be present
+    expect(observedParticipants.pop()!.length).toEqual(4);
   });
 
   it("should be scoped to parent scope", (): void => {
@@ -450,16 +423,14 @@ describe("Publishing participants observations", () => {
 
     const connection = setupRemoteConnection();
 
-    let observedPublishers: PublishingParticipant[][] = [];
-    const s = connection.remoteParticipantsWithTracks$.subscribe(
-      (publishers) => {
-        observedPublishers.push(publishers);
-      },
-    );
+    let observedParticipants: RemoteParticipant[][] = [];
+    const s = connection.remoteParticipants$.subscribe((participants) => {
+      observedParticipants.push(participants);
+    });
     onTestFinished(() => s.unsubscribe());
 
     let participants: RemoteParticipant[] = [
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 0),
+      mockRemoteParticipant({ identity: "@bob:example.org:DEV111" }),
     ];
 
     // Let's simulate 3 members on the livekitRoom
@@ -471,35 +442,26 @@ describe("Publishing participants observations", () => {
       fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, participant);
     }
 
-    // At this point there should be no publishers
-    expect(observedPublishers.pop()!.length).toEqual(0);
-
-    participants = [fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1)];
-
-    for (const participant of participants) {
-      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, participant);
-    }
-
-    // We should have bob has a publisher now
-    const publishers = observedPublishers.pop();
-    expect(publishers?.length).toEqual(1);
-    expect(publishers?.[0]?.identity).toEqual("@bob:example.org:DEV111");
+    // We should have bob as a participant now
+    const ps = observedParticipants.pop();
+    expect(ps?.length).toEqual(1);
+    expect(ps?.[0]?.identity).toEqual("@bob:example.org:DEV111");
 
     // end the parent scope
     testScope.end();
-    observedPublishers = [];
+    observedParticipants = [];
 
-    // SHOULD NOT emit any more publishers as the scope is ended
+    // SHOULD NOT emit any more participants as the scope is ended
     participants = participants.filter(
       (p) => p.identity !== "@bob:example.org:DEV111",
     );
 
     fakeLivekitRoom.emit(
       RoomEvent.ParticipantDisconnected,
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
+      mockRemoteParticipant({ identity: "@bob:example.org:DEV111" }),
     );
 
-    expect(observedPublishers.length).toEqual(0);
+    expect(observedParticipants.length).toEqual(0);
   });
 });
 
