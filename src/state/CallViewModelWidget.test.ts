@@ -15,6 +15,7 @@ import { constant } from "./Behavior.ts";
 import { aliceParticipant, localRtcMember } from "../utils/test-fixtures.ts";
 import { ElementWidgetActions, widget } from "../widget.ts";
 import { E2eeType } from "../e2ee/e2eeType.ts";
+import { MatrixRTCMode } from "../settings/settings.ts";
 
 vi.mock("@livekit/components-core", { spy: true });
 
@@ -34,36 +35,43 @@ vi.mock("../widget", () => ({
   },
 }));
 
-it("expect leave when ElementWidgetActions.HangupCall is called", async () => {
-  const pr = Promise.withResolvers<string>();
-  withCallViewModel(
-    {
-      remoteParticipants$: constant([aliceParticipant]),
-      rtcMembers$: constant([localRtcMember]),
-    },
-    (vm: CallViewModel) => {
-      vm.leave$.subscribe((s: string) => {
-        pr.resolve(s);
-      });
+it.each([
+  [MatrixRTCMode.Legacy],
+  [MatrixRTCMode.Compatibil],
+  [MatrixRTCMode.Matrix_2_0],
+])(
+  "expect leave when ElementWidgetActions.HangupCall is called (%s mode)",
+  async (mode) => {
+    const pr = Promise.withResolvers<string>();
+    withCallViewModel(mode)(
+      {
+        remoteParticipants$: constant([aliceParticipant]),
+        rtcMembers$: constant([localRtcMember]),
+      },
+      (vm: CallViewModel) => {
+        vm.leave$.subscribe((s: string) => {
+          pr.resolve(s);
+        });
 
-      widget!.lazyActions!.emit(
-        ElementWidgetActions.HangupCall,
-        new CustomEvent(ElementWidgetActions.HangupCall, {
-          detail: {
-            action: "im.vector.hangup",
-            api: "toWidget",
-            data: {},
-            requestId: "widgetapi-1761237395918",
-            widgetId: "mrUjS9T6uKUOWHMxXvLbSv0F",
-          },
-        }),
-      );
-    },
-    {
-      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    },
-  );
+        widget!.lazyActions!.emit(
+          ElementWidgetActions.HangupCall,
+          new CustomEvent(ElementWidgetActions.HangupCall, {
+            detail: {
+              action: "im.vector.hangup",
+              api: "toWidget",
+              data: {},
+              requestId: "widgetapi-1761237395918",
+              widgetId: "mrUjS9T6uKUOWHMxXvLbSv0F",
+            },
+          }),
+        );
+      },
+      {
+        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      },
+    );
 
-  const source = await pr.promise;
-  expect(source).toBe("user");
-});
+    const source = await pr.promise;
+    expect(source).toBe("user");
+  },
+);
