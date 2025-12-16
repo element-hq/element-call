@@ -30,6 +30,13 @@ import * as openIDSFU from "../../../livekit/openIDSFU";
 import { customLivekitUrl } from "../../../settings/settings";
 
 describe("LocalTransport", () => {
+  const openIdResponse: openIDSFU.SFUConfig = {
+    url: "https://lk.example.org",
+    jwt: "jwt",
+    livekitAlias: "!example_room_id",
+    livekitIdentity: "@lk_user:ABCDEF",
+  };
+
   let scope: ObservableScope;
   beforeEach(() => {
     scope = new ObservableScope();
@@ -53,7 +60,7 @@ describe("LocalTransport", () => {
     const errors: Error[] = [];
     const localTransport$ = createLocalTransport$({
       scope,
-      roomId: "!room:example.org",
+      roomId: "!example_room_id",
       useOldestMember$: constant(false),
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
@@ -92,7 +99,7 @@ describe("LocalTransport", () => {
 
     const localTransport$ = createLocalTransport$({
       scope,
-      roomId: "!room:example.org",
+      roomId: "!example_room_id",
       useOldestMember$: constant(true),
       memberships$,
       client: {
@@ -104,12 +111,12 @@ describe("LocalTransport", () => {
       },
     });
 
-    openIdResolver.resolve?.({ url: "https://lk.example.org", jwt: "jwt" });
+    openIdResolver.resolve?.(openIdResponse);
     expect(localTransport$.value).toBe(null);
     await flushPromises();
     // final
     expect(localTransport$.value).toStrictEqual({
-      livekit_alias: "!room:example.org",
+      livekit_alias: "!example_room_id",
       livekit_service_url: "https://lk.example.org",
       type: "livekit",
     });
@@ -127,7 +134,7 @@ describe("LocalTransport", () => {
       customLivekitUrl.setValue(customLivekitUrl.defaultValue);
       localTransportOpts = {
         scope,
-        roomId: "!room:example.org",
+        roomId: "!example_room_id",
         useOldestMember$: constant(false),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {
@@ -153,11 +160,11 @@ describe("LocalTransport", () => {
         livekit: { livekit_service_url: "https://lk.example.org" },
       });
       const localTransport$ = createLocalTransport$(localTransportOpts);
-      openIdResolver.resolve?.({ url: "https://lk.example.org", jwt: "jwt" });
+      openIdResolver.resolve?.(openIdResponse);
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        livekit_alias: "!room:example.org",
+        livekit_alias: "!example_room_id",
         livekit_service_url: "https://lk.example.org",
         type: "livekit",
       });
@@ -165,11 +172,11 @@ describe("LocalTransport", () => {
     it("supports getting transport via user settings", async () => {
       customLivekitUrl.setValue("https://lk.example.org");
       const localTransport$ = createLocalTransport$(localTransportOpts);
-      openIdResolver.resolve?.({ url: "https://lk.example.org", jwt: "jwt" });
+      openIdResolver.resolve?.(openIdResponse);
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        livekit_alias: "!room:example.org",
+        livekit_alias: "!example_room_id",
         livekit_service_url: "https://lk.example.org",
         type: "livekit",
       });
@@ -179,11 +186,11 @@ describe("LocalTransport", () => {
         { type: "livekit", livekit_service_url: "https://lk.example.org" },
       ]);
       const localTransport$ = createLocalTransport$(localTransportOpts);
-      openIdResolver.resolve?.({ url: "https://lk.example.org", jwt: "jwt" });
+      openIdResolver.resolve?.(openIdResponse);
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        livekit_alias: "!room:example.org",
+        livekit_alias: "!example_room_id",
         livekit_service_url: "https://lk.example.org",
         type: "livekit",
       });
@@ -210,11 +217,11 @@ describe("LocalTransport", () => {
         ],
       });
       const localTransport$ = createLocalTransport$(localTransportOpts);
-      openIdResolver.resolve?.({ url: "https://lk.example.org", jwt: "jwt" });
+      openIdResolver.resolve?.(openIdResponse);
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        livekit_alias: "!room:example.org",
+        livekit_alias: "!example_room_id",
         livekit_service_url: "https://lk.example.org",
         type: "livekit",
       });
@@ -240,7 +247,7 @@ describe("LocalTransport", () => {
     it("throws if no options are available", async () => {
       const localTransport$ = createLocalTransport$({
         scope,
-        roomId: "!room:example.org",
+        roomId: "!example_room_id",
         useOldestMember$: constant(false),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {

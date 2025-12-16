@@ -142,7 +142,6 @@ async function makeTransport(
   urlFromDevSettings: string | null,
 ): Promise<LivekitTransport> {
   logger.trace("Searching for a preferred transport");
-  const livekitAlias = roomId;
 
   // We will call `getSFUConfigWithOpenID` once per transport here as it's our
   // only mechanism of valiation. This means we will also ask the
@@ -157,11 +156,15 @@ async function makeTransport(
     logger.info("Using LiveKit transport from dev tools: ", urlFromDevSettings);
     // Validate that the SFU is up. Otherwise, we want to fail on this
     // as we don't permit other SFUs.
-    await getSFUConfigWithOpenID(client, urlFromDevSettings, livekitAlias);
+    const config = await getSFUConfigWithOpenID(
+      client,
+      urlFromDevSettings,
+      roomId,
+    );
     return {
       type: "livekit",
       livekit_service_url: urlFromDevSettings,
-      livekit_alias: livekitAlias,
+      livekit_alias: config.livekitAlias,
     };
   }
 
@@ -171,10 +174,10 @@ async function makeTransport(
     for (const potentialTransport of transports) {
       if (isLivekitTransportConfig(potentialTransport)) {
         try {
-          await getSFUConfigWithOpenID(
+          const { livekitAlias } = await getSFUConfigWithOpenID(
             client,
             potentialTransport.livekit_service_url,
-            livekitAlias,
+            roomId,
           );
           return {
             ...potentialTransport,
@@ -242,7 +245,11 @@ async function makeTransport(
   const urlFromConf = Config.get().livekit?.livekit_service_url;
   if (urlFromConf) {
     try {
-      await getSFUConfigWithOpenID(client, urlFromConf, roomId);
+      const { livekitAlias } = await getSFUConfigWithOpenID(
+        client,
+        urlFromConf,
+        roomId,
+      );
       const selectedTransport: LivekitTransport = {
         type: "livekit",
         livekit_service_url: urlFromConf,
