@@ -11,9 +11,47 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { FailToGetOpenIdToken } from "../utils/errors";
 import { doNetworkOperationWithRetry } from "../utils/matrix";
 
+/**
+ * Configuration and access tokens provided by the SFU on successful authentication.
+ */
 export interface SFUConfig {
   url: string;
   jwt: string;
+  livekitAlias: string;
+  livekitIdentity: string;
+}
+
+/**
+ * Decoded details from the JWT.
+ */
+interface SFUJWTPayload {
+  /**
+   * Expiration time for the JWT.
+   * Note: This value is in seconds since Unix epoch.
+   */
+  exp: number;
+  /**
+   * Name of the instance which authored the JWT
+   */
+  iss: string;
+  /**
+   * Time at which the JWT can start to be used.
+   * Note: This value is in seconds since Unix epoch.
+   */
+  nbf: number;
+  /**
+   * Subject. The Livekit alias in this context.
+   */
+  sub: string;
+  /**
+   * The set of permissions for the user.
+   */
+  video: {
+    canPublish: boolean;
+    canSubscribe: boolean;
+    room: string;
+    roomJoin: boolean;
+  };
 }
 
 // The bits we need from MatrixClient
@@ -57,7 +95,17 @@ export async function getSFUConfigWithOpenID(
   );
   logger.info(`Got JWT from call's active focus URL.`);
 
-  return sfuConfig;
+  // Pull the details from the JWT
+  const [, payloadStr] = sfuConfig.jwt.split(".");
+  // TODO: Prefer Uint8Array.fromBase64 when widely available
+  const payload = JSON.parse(global.atob(payloadStr)) as SFUJWTPayload;
+  return {
+    jwt: sfuConfig.jwt,
+    url: sfuConfig.url,
+    livekitAlias: payload.video.room,
+    // NOTE: Currently unused.
+    livekitIdentity: payload.sub,
+  };
 }
 
 async function getLiveKitJWT(
@@ -65,7 +113,7 @@ async function getLiveKitJWT(
   livekitServiceURL: string,
   roomName: string,
   openIDToken: IOpenIDToken,
-): Promise<SFUConfig> {
+): Promise<{ url: string; jwt: string }> {
   try {
     const res = await fetch(livekitServiceURL + "/sfu/get", {
       method: "POST",
@@ -83,6 +131,6 @@ async function getLiveKitJWT(
     }
     return await res.json();
   } catch (e) {
-    throw new Error("SFU Config fetch failed with exception " + e);
+    throw new Error("SFU Config fetch failed with exception", { cause: e });
   }
 }
