@@ -16,20 +16,7 @@ import {
 } from "vitest";
 import fetchMock from "fetch-mock";
 import { getSFUConfigWithOpenID, OpenIDClientParts } from "./openIDSFU";
-
-const jwtToken = [
-  {}, // header
-  {
-    // payload
-    sub: "@me:example.org:ABCDEF",
-    video: {
-      room: "!example_room_id",
-    },
-  },
-  {}, // signature
-]
-  .map((d) => global.btoa(JSON.stringify(d)))
-  .join(".");
+import { testJWTToken } from "../utils/test-fixtures";
 
 const sfuUrl = "https://sfu.example.org";
 
@@ -49,7 +36,7 @@ describe("getSFUConfigWithOpenID", () => {
     fetchMock.post("https://sfu.example.org/sfu/get", () => {
       return {
         status: 200,
-        body: { url: sfuUrl, jwt: jwtToken },
+        body: { url: sfuUrl, jwt: testJWTToken },
       };
     });
     const config = await getSFUConfigWithOpenID(
@@ -58,7 +45,7 @@ describe("getSFUConfigWithOpenID", () => {
       "!example_room_id",
     );
     expect(config).toEqual({
-      jwt: jwtToken,
+      jwt: testJWTToken,
       url: sfuUrl,
       livekitIdentity: "@me:example.org:ABCDEF",
       livekitAlias: "!example_room_id",
@@ -105,7 +92,7 @@ describe("getSFUConfigWithOpenID", () => {
     fetchMock.post("https://sfu.example.org/sfu/get", () => {
       return {
         status: 200,
-        body: { url: sfuUrl, jwt: jwtToken },
+        body: { url: sfuUrl, jwt: testJWTToken },
       };
     });
     const config = await getSFUConfigWithOpenID(
@@ -114,7 +101,7 @@ describe("getSFUConfigWithOpenID", () => {
       "!example_room_id",
     );
     expect(config).toEqual({
-      jwt: jwtToken,
+      jwt: testJWTToken,
       url: sfuUrl,
       livekitIdentity: "@me:example.org:ABCDEF",
       livekitAlias: "!example_room_id",
