@@ -53,6 +53,14 @@ enable_registration_without_verification: true
 report_stats: false
 serve_server_wellknown: true
 
+# Definition of MatrixRTC backend
+matrix_rtc:
+  transports:
+  - type: livekit
+    livekit_service_url: https://matrix-rtc.m.localhost/livekit/jwt"
+  - type: livekit_multi_sfu
+    livekit_service_url: https://matrix-rtc.m.localhost/livekit/jwt"
+
 # Ratelimiting settings for client actions (registration, login, messaging).
 #
 # Each ratelimiting configuration is made of two parameters:
