@@ -34,7 +34,7 @@ beforeEach(() => {
   scope = new ObservableScope();
 });
 
-// afterEach(() => scope.end());
+afterEach(() => scope.end());
 
 function createMockLocalTrack(source: Track.Source): LocalTrack {
   const track = {
