@@ -43,7 +43,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   raisedHandTime?: Date;
   currentReaction?: ReactionOption;
   raisedHandOnClick?: () => void;
-  localParticipant: boolean;
+  waitingForMedia?: boolean;
   audioStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   // The focus url, mainly for debugging purposes
@@ -71,7 +71,7 @@ export const MediaView: FC<Props> = ({
   raisedHandTime,
   currentReaction,
   raisedHandOnClick,
-  localParticipant,
+  waitingForMedia,
   audioStreamStats,
   videoStreamStats,
   focusUrl,
@@ -129,7 +129,7 @@ export const MediaView: FC<Props> = ({
             />
           )}
         </div>
-        {!video && !localParticipant && (
+        {waitingForMedia && (
           <div className={styles.status}>
             {t("video_tile.waiting_for_media")}
           </div>
