@@ -176,9 +176,9 @@ export function createMatrixLivekitMembers$({
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
 
 // TODO add this to the JS-SDK
-export function areLivekitTransportsEqual(
-  t1: LivekitTransport | null,
-  t2: LivekitTransport | null,
+export function areLivekitTransportsEqual<T extends LivekitTransport>(
+  t1: T | null,
+  t2: T | null,
 ): boolean {
   if (t1 && t2) return t1.livekit_service_url === t2.livekit_service_url;
   // In case we have different lk rooms in the same SFU (depends on the livekit authorization service)

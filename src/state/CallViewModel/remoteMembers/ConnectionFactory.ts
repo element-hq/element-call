@@ -5,7 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   Room as LivekitRoom,
   type RoomOptions,
@@ -15,6 +14,7 @@ import {
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
@@ -23,13 +23,15 @@ import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import { defaultLiveKitOptions } from "../../../livekit/options.ts";
+import { type LivekitTransportWithVersion } from "./ConnectionManager.ts";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
   createConnection(
-    transport: LivekitTransport,
+    transport: LivekitTransportWithVersion,
     scope: ObservableScope,
     logger: Logger,
+    ownMembershipIdentity: CallMembershipIdentityParts,
   ): Connection;
 }
 
@@ -77,10 +79,19 @@ export class ECConnectionFactory implements ConnectionFactory {
     this.livekitRoomFactory = livekitRoomFactory ?? defaultFactory;
   }
 
+  /**
+   *
+   * @param transport
+   * @param scope
+   * @param logger
+   * @param ownMembershipIdentity required to connect (using the jwt service) with the SFU.
+   * @returns
+   */
   public createConnection(
-    transport: LivekitTransport,
+    transport: LivekitTransportWithVersion,
     scope: ObservableScope,
     logger: Logger,
+    ownMembershipIdentity: CallMembershipIdentityParts,
   ): Connection {
     return new Connection(
       {
@@ -90,6 +101,7 @@ export class ECConnectionFactory implements ConnectionFactory {
         livekitRoomFactory: this.livekitRoomFactory,
       },
       logger,
+      ownMembershipIdentity,
     );
   }
 }

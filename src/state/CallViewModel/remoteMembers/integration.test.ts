@@ -24,6 +24,7 @@ import {
   mockCallMembership,
   mockComputeLivekitParticipantIdentity$,
   mockMediaDevices,
+  ownMemberMock,
   withTestScheduler,
 } from "../../../utils/test.ts";
 import { type ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
@@ -128,6 +129,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
       connectionFactory: ecConnectionFactory,
       inputTransports$: membershipsAndTransports.transports$,
       logger: logger,
+      ownMembershipIdentity: ownMemberMock,
     });
 
     const matrixLivekitItems$ = createMatrixLivekitMembers$({

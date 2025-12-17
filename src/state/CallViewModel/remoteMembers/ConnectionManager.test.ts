@@ -14,26 +14,29 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Epoch, mapEpoch, ObservableScope } from "../../ObservableScope.ts";
 import {
   createConnectionManager$,
+  type LivekitTransportWithVersion,
   type ConnectionManagerData,
 } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
-import { withTestScheduler } from "../../../utils/test.ts";
+import { ownMemberMock, withTestScheduler } from "../../../utils/test.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type Behavior } from "../../Behavior.ts";
 
 // Some test constants
 
-const TRANSPORT_1: LivekitTransport = {
+const TRANSPORT_1: LivekitTransportWithVersion = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
   livekit_alias: "!alias:example.org",
+  useMatrix2: false,
 };
 
-const TRANSPORT_2: LivekitTransport = {
+const TRANSPORT_2: LivekitTransportWithVersion = {
   type: "livekit",
   livekit_service_url: "https://lk.sample.com",
   livekit_alias: "!alias:sample.com",
+  useMatrix2: false,
 };
 
 let fakeConnectionFactory: ConnectionFactory;
@@ -80,6 +83,7 @@ describe("connections$ stream", () => {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
         logger: logger,
+        ownMembershipIdentity: ownMemberMock,
       });
 
       expectObservable(
@@ -124,6 +128,7 @@ describe("connections$ stream", () => {
           f: new Epoch([TRANSPORT_1, TRANSPORT_2], 5),
         }),
         logger: logger,
+        ownMembershipIdentity: ownMemberMock,
       });
 
       expectObservable(
@@ -166,6 +171,7 @@ describe("connections$ stream", () => {
           c: new Epoch([TRANSPORT_1], 2),
         }),
         logger: logger,
+        ownMembershipIdentity: ownMemberMock,
       });
 
       expectObservable(
@@ -279,6 +285,7 @@ describe("connectionManagerData$ stream", () => {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
         logger,
+        ownMembershipIdentity: ownMemberMock,
       });
 
       expectObservable(connectionManagerData$).toBe("abcd", {

@@ -23,6 +23,7 @@ import {
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type Behavior } from "../../Behavior.ts";
 import { type Epoch, type ObservableScope } from "../../ObservableScope.ts";
@@ -34,6 +35,7 @@ import {
 } from "../../../livekit/openIDSFU.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 import { customLivekitUrl } from "../../../settings/settings.ts";
+import { type LivekitTransportWithVersion } from "../remoteMembers/ConnectionManager.ts";
 
 const logger = rootLogger.getChild("[LocalTransport]");
 
@@ -44,10 +46,13 @@ const logger = rootLogger.getChild("[LocalTransport]");
  */
 interface Props {
   scope: ObservableScope;
+  ownMembershipIdentity: CallMembershipIdentityParts;
   memberships$: Behavior<Epoch<CallMembership[]>>;
-  client: Pick<MatrixClient, "getDomain"> & OpenIDClientParts;
+  client: Pick<MatrixClient, "getDomain" | "baseUrl"> & OpenIDClientParts;
   roomId: string;
   useOldestMember$: Behavior<boolean>;
+  useMatrix2$: Behavior<boolean>;
+  delayId$: Behavior<string | null>;
 }
 
 /**
@@ -62,20 +67,26 @@ interface Props {
 export const createLocalTransport$ = ({
   scope,
   memberships$,
+  ownMembershipIdentity,
   client,
   roomId,
   useOldestMember$,
-}: Props): Behavior<LivekitTransport | null> => {
+  useMatrix2$,
+  delayId$,
+}: Props): Behavior<LivekitTransportWithVersion | null> => {
   /**
    * The transport over which we should be actively publishing our media.
    * undefined when not joined.
    */
   const oldestMemberTransport$ = scope.behavior(
     memberships$.pipe(
-      map(
-        (memberships) =>
-          memberships.value[0]?.getTransport(memberships.value[0]) ?? null,
-      ),
+      map((memberships) => {
+        const oldestMember = memberships.value[0];
+        const t = oldestMember?.getTransport(memberships.value[0]);
+        if (!t) return null;
+        // Here we will use the matrix2 information from the oldest member transport.
+        return { ...t, useMatrix2: oldestMember.kind === "rtc" };
+      }),
       first((t) => t != null && isLivekitTransport(t)),
     ),
     null,
@@ -87,12 +98,24 @@ export const createLocalTransport$ = ({
    *
    * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
    */
-  const preferredTransport$: Behavior<LivekitTransport | null> = scope.behavior(
-    customLivekitUrl.value$.pipe(
-      switchMap((customUrl) => from(makeTransport(client, roomId, customUrl))),
-    ),
-    null,
-  );
+  const preferredTransport$: Behavior<LivekitTransportWithVersion | null> =
+    scope.behavior(
+      combineLatest([customLivekitUrl.value$, useMatrix2$, delayId$]).pipe(
+        switchMap(([customUrl, useMatrix2, delayId]) =>
+          from(
+            makeTransport(
+              client,
+              ownMembershipIdentity,
+              roomId,
+              customUrl,
+              useMatrix2,
+              delayId ?? undefined,
+            ),
+          ),
+        ),
+      ),
+      null,
+    );
 
   /**
    * The chosen transport we should advertise in our MatrixRTC membership.
@@ -123,10 +146,13 @@ const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
  * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
  */
 async function makeTransport(
-  client: Pick<MatrixClient, "getDomain"> & OpenIDClientParts,
+  client: Pick<MatrixClient, "getDomain" | "baseUrl"> & OpenIDClientParts,
+  membership: CallMembershipIdentityParts,
   roomId: string,
   urlFromDevSettings: string | null,
-): Promise<LivekitTransport> {
+  matrix2jwt = false,
+  delayId?: string,
+): Promise<LivekitTransportWithVersion> {
   let transport: LivekitTransport | undefined;
   logger.trace("Searching for a preferred transport");
   //TODO refactor this to use the jwt service returned alias.
@@ -176,13 +202,18 @@ async function makeTransport(
     transport = transportFromConf;
   }
 
-  if (!transport) throw new MatrixRTCTransportMissingError(domain ?? ""); // this will call the jwt/sfu/get endpoint to pre create the livekit room.
+  if (!transport) throw new MatrixRTCTransportMissingError(domain ?? "");
 
+  // this will call the jwt/sfu/get endpoint to pre create the livekit room.
   await getSFUConfigWithOpenID(
     client,
+    membership,
     transport.livekit_service_url,
     transport.livekit_alias,
+    matrix2jwt,
+    client.baseUrl,
+    delayId,
   );
 
-  return transport;
+  return { ...transport, useMatrix2: matrix2jwt };
 }

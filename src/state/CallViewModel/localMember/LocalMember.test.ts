@@ -24,6 +24,7 @@ import {
   mockLivekitRoom,
   mockMuteStates,
   withTestScheduler,
+  ownMemberMock,
 } from "../../../utils/test";
 import {
   TransportState,
@@ -108,6 +109,7 @@ describe("LocalMembership", () => {
 
       enterRTCSession(
         mockedSession,
+        ownMemberMock,
         {
           livekit_alias: "roomId",
           livekit_service_url: "http://my-well-known-service-url.com",
@@ -166,6 +168,7 @@ describe("LocalMembership", () => {
 
       enterRTCSession(
         mockedSession,
+        ownMemberMock,
         {
           livekit_alias: "roomId",
           livekit_service_url: "http://my-well-known-service-url.com",

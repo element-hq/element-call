@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import {
   type CallMembership,
   isLivekitTransport,
-  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -21,15 +20,18 @@ import {
   type ObservableScope,
 } from "./ObservableScope";
 import { type Behavior } from "./Behavior";
+import { type LivekitTransportWithVersion } from "./CallViewModel/remoteMembers/ConnectionManager";
 
 export const membershipsAndTransports$ = (
   scope: ObservableScope,
   memberships$: Behavior<Epoch<CallMembership[]>>,
 ): {
   membershipsWithTransport$: Behavior<
-    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
+    Epoch<
+      { membership: CallMembership; transport?: LivekitTransportWithVersion }[]
+    >
   >;
-  transports$: Behavior<Epoch<LivekitTransport[]>>;
+  transports$: Behavior<Epoch<LivekitTransportWithVersion[]>>;
 } => {
   /**
    * Lists the transports used by ourselves, plus all other MatrixRTC session
@@ -47,7 +49,12 @@ export const membershipsAndTransports$ = (
           const transport = membership.getTransport(oldestMembership);
           return {
             membership,
-            transport: isLivekitTransport(transport) ? transport : undefined,
+            transport: isLivekitTransport(transport)
+              ? {
+                  ...transport,
+                  useMatrix2: membership.kind === "rtc",
+                }
+              : undefined,
           };
         });
       }),

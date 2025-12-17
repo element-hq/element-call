@@ -27,7 +27,6 @@ import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import type { LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   Connection,
   ConnectionState,
@@ -39,7 +38,8 @@ import {
   ElementCallError,
   FailToGetOpenIdToken,
 } from "../../../utils/errors.ts";
-import { mockRemoteParticipant } from "../../../utils/test.ts";
+import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
+import { type LivekitTransportWithVersion } from "./ConnectionManager.ts";
 
 let testScope: ObservableScope;
 
@@ -50,10 +50,11 @@ let fakeLivekitRoom: MockedObject<LivekitRoom>;
 let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
-const livekitFocus: LivekitTransport = {
+const livekitFocus: LivekitTransportWithVersion = {
   livekit_alias: "!roomID:example.org",
   livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
   type: "livekit",
+  useMatrix2: false,
 };
 
 function setupTest(): void {
@@ -137,7 +138,7 @@ function setupRemoteConnection(): Connection {
     return Promise.resolve();
   });
 
-  return new Connection(opts, logger);
+  return new Connection(opts, logger, ownMemberMock);
 }
 
 afterEach(() => {
@@ -156,7 +157,7 @@ describe("Start connection states", () => {
       scope: testScope,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
-    const connection = new Connection(opts, logger);
+    const connection = new Connection(opts, logger, ownMemberMock);
 
     expect(connection.state$.getValue()).toEqual("Initialized");
   });
@@ -172,7 +173,7 @@ describe("Start connection states", () => {
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new Connection(opts, logger);
+    const connection = new Connection(opts, logger, ownMemberMock);
 
     const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
@@ -222,7 +223,7 @@ describe("Start connection states", () => {
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new Connection(opts, logger);
+    const connection = new Connection(opts, logger, ownMemberMock);
 
     const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
@@ -279,7 +280,7 @@ describe("Start connection states", () => {
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new Connection(opts, logger);
+    const connection = new Connection(opts, logger, ownMemberMock);
 
     const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
