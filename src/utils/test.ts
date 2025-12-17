@@ -25,7 +25,6 @@ import {
 import {
   CallMembership,
   type LivekitFocusSelection,
-  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
@@ -67,6 +66,7 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { type Behavior, constant } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
 import { MuteStates } from "../state/MuteStates";
+import { type LivekitTransportWithVersion } from "../state/CallViewModel/remoteMembers/ConnectionManager";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -197,10 +197,11 @@ export function mockEmitter<T>(): EmitterMock<T> {
   };
 }
 
-export const exampleTransport: LivekitTransport = {
+export const exampleTransport: LivekitTransportWithVersion = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
   livekit_alias: "!alias:example.org",
+  useMatrix2: false,
 };
 
 export function mockCallMembership(
@@ -256,6 +257,11 @@ export function mockRtcMembership(
   return cms;
 }
 
+export const ownMemberMock: CallMembershipIdentityParts = {
+  userId: "@alice:example.org",
+  deviceId: "DEVICE",
+  memberId: "@alice:example.org:DEVICE",
+};
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
 // rather simple, but if one util to mock a member is good enough for us, maybe
 // it's useful for matrix-js-sdk consumers in general.

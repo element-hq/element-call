@@ -18,6 +18,7 @@ import {
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, map } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import {
   getSFUConfigWithOpenID,
@@ -35,7 +36,7 @@ import {
 
 export interface ConnectionOpts {
   /** The media transport to connect to. */
-  transport: LivekitTransport;
+  transport: LivekitTransport & { useMatrix2: boolean };
   /** The Matrix client to use for OpenID and SFU config requests. */
   client: OpenIDClientParts;
   /** The observable scope to use for this connection. */
@@ -88,7 +89,7 @@ export class Connection {
   /**
    * The media transport to connect to.
    */
-  public readonly transport: LivekitTransport;
+  public readonly transport: LivekitTransport & { useMatrix2: boolean };
 
   public readonly livekitRoom: LivekitRoom;
 
@@ -189,9 +190,18 @@ export class Connection {
   protected async getSFUConfigWithOpenID(): Promise<SFUConfig> {
     return await getSFUConfigWithOpenID(
       this.client,
+      this.ownMembershipIdentity,
       this.transport.livekit_service_url,
       this.transport.livekit_alias,
+      this.transport.useMatrix2,
     );
+    // client: OpenIDClientParts,
+    // membership: CallMembershipIdentityParts,
+    // serviceUrl: string,
+    // livekitRoomAlias: string,
+    // matrix2jwt: boolean,
+    // delayEndpointBaseUrl?: string,
+    // delayId?: string,
   }
 
   /**
@@ -220,7 +230,11 @@ export class Connection {
    *
    * @param logger
    */
-  public constructor(opts: ConnectionOpts, logger: Logger) {
+  public constructor(
+    opts: ConnectionOpts,
+    logger: Logger,
+    private ownMembershipIdentity: CallMembershipIdentityParts,
+  ) {
     this.logger = logger.getChild("[Connection]");
     this.logger.info(
       `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,

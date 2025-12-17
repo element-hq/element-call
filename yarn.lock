@@ -10338,9 +10338,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/use-membershipID-for-session-state-events&commit=f5f1b8efb46b3d55a7eebfabb4a61496640b8b00":
-  version: 39.3.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=f5f1b8efb46b3d55a7eebfabb4a61496640b8b00"
+"matrix-js-sdk@portal:/Users/timo/Projects/matrix-js-sdk::locator=element-call%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "matrix-js-sdk@portal:/Users/timo/Projects/matrix-js-sdk::locator=element-call%40workspace%3A."
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^16.0.0"
@@ -10356,9 +10356,8 @@ __metadata:
     sdp-transform: "npm:^3.0.0"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/9607b0c063c873a24c1a2d05cc7500d60c32556ec82b666ebaae5c5e829faf5bb7639780efddea7211e6b9873098bd53b97656f041e932e8b0de0c208ccabbff
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "matrix-widget-api@npm:^1.14.0":
   version: 1.15.0

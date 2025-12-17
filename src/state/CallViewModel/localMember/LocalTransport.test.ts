@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject } from "rxjs";
 
-import { mockConfig, flushPromises } from "../../../utils/test";
+import { mockConfig, flushPromises, ownMemberMock } from "../../../utils/test";
 import { createLocalTransport$ } from "./LocalTransport";
 import { constant } from "../../Behavior";
 import { Epoch, ObservableScope } from "../../ObservableScope";
@@ -32,10 +32,14 @@ describe("LocalTransport", () => {
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         getDomain: () => "",
+        baseUrl: "example.org",
         // These won't be called in this error path but satisfy the type
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
       },
+      ownMembershipIdentity: ownMemberMock,
+      useMatrix2$: constant(false),
+      delayId$: constant("delay_id_mock"),
     });
     await flushPromises();
 
@@ -65,11 +69,15 @@ describe("LocalTransport", () => {
       useOldestMember$: constant(false),
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
+        baseUrl: "https://lk.example.org",
         // Use empty domain to skip .well-known and use config directly
         getDomain: () => "",
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
       },
+      ownMembershipIdentity: ownMemberMock,
+      useMatrix2$: constant(false),
+      delayId$: constant("delay_id_mock"),
     });
     localTransport$.subscribe(
       (o) => observations.push(o),
@@ -105,7 +113,11 @@ describe("LocalTransport", () => {
         getDomain: () => "",
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
+        baseUrl: "https://lk.example.org",
       },
+      ownMembershipIdentity: ownMemberMock,
+      useMatrix2$: constant(false),
+      delayId$: constant("delay_id_mock"),
     });
 
     openIdResolver.resolve?.({ url: "https://lk.example.org", jwt: "jwt" });
@@ -140,7 +152,11 @@ describe("LocalTransport", () => {
         getDomain: () => "",
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
+        baseUrl: "https://lk.example.org",
       },
+      ownMembershipIdentity: ownMemberMock,
+      useMatrix2$: constant(false),
+      delayId$: constant("delay_id_mock"),
     });
 
     openIdResolver.resolve?.({ url: "https://lk.example.org", jwt: "jwt" });

@@ -34,6 +34,7 @@ import {
 } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { constant, type Behavior } from "../../Behavior.ts";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager.ts";
@@ -657,6 +658,7 @@ interface EnterRTCSessionOptions {
 // Exported for unit testing
 export function enterRTCSession(
   rtcSession: MatrixRTCSession,
+  ownMembershipIdentity: CallMembershipIdentityParts,
   transport: LivekitTransport,
   { encryptMedia, matrixRTCMode }: EnterRTCSessionOptions,
 ): void {
@@ -674,7 +676,8 @@ export function enterRTCSession(
   const multiSFU = matrixRTCMode !== MatrixRTCMode.Legacy;
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   // TODO where/how do we track errors originating from the ongoing rtcSession?
-  rtcSession.joinRoomSession(
+  rtcSession.joinRTCSession(
+    ownMembershipIdentity,
     multiSFU ? [] : [transport],
     multiSFU ? transport : undefined,
     {

@@ -41,10 +41,12 @@ import {
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
+  MembershipManagerEvent,
   type LivekitTransport,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import {
   LocalUserMediaViewModel,
@@ -98,7 +100,7 @@ import {
   type SpotlightLandscapeLayoutMedia,
   type SpotlightPortraitLayoutMedia,
 } from "../layout-types.ts";
-import { ElementCallError } from "../../utils/errors.ts";
+import { ElementCallError, UnknownCallError } from "../../utils/errors.ts";
 import { type ObservableScope } from "../ObservableScope.ts";
 import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
 import {
@@ -375,8 +377,11 @@ export function createCallViewModel$(
   trackProcessorState$: Behavior<ProcessorState>,
 ): CallViewModel {
   const client = matrixRoom.client;
-  const userId = client.getUserId()!;
-  const deviceId = client.getDeviceId()!;
+  const userId = client.getUserId();
+  const deviceId = client.getDeviceId();
+  if (!(userId && deviceId))
+    throw new UnknownCallError(new Error("userId and deviceId are required"));
+
   const livekitKeyProvider = getE2eeKeyProvider(
     options.encryptionSystem,
     matrixRTCSession,
@@ -407,10 +412,29 @@ export function createCallViewModel$(
     memberships$,
   );
 
+  const ownMembershipIdentity: CallMembershipIdentityParts = {
+    userId,
+    deviceId,
+    memberId: `${userId}:${deviceId}`,
+  };
+
   const localTransport$ = createLocalTransport$({
     scope: scope,
     memberships$: memberships$,
+    ownMembershipIdentity,
     client,
+    useMatrix2$: scope.behavior(
+      options.matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Matrix_2_0)),
+    ),
+    delayId$: scope.behavior(
+      (
+        fromEvent(
+          matrixRTCSession,
+          MembershipManagerEvent.DelayIdChanged,
+        ) as Observable<string | undefined>
+      ).pipe(map((v) => v ?? null)),
+      matrixRTCSession.delayId ?? null,
+    ),
     roomId: matrixRoom.roomId,
     useOldestMember$: scope.behavior(
       options.matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
@@ -455,6 +479,7 @@ export function createCallViewModel$(
       ),
     ),
     logger: logger,
+    ownMembershipIdentity,
   });
 
   const matrixLivekitMembers$ = createMatrixLivekitMembers$({
@@ -485,6 +510,7 @@ export function createCallViewModel$(
     joinMatrixRTC: (transport: LivekitTransport) => {
       return enterRTCSession(
         matrixRTCSession,
+        ownMembershipIdentity,
         transport,
         connectOptions$.value,
       );
