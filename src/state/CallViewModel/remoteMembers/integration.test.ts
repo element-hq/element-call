@@ -22,7 +22,6 @@ import { ECConnectionFactory } from "./ConnectionFactory.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
 import {
   mockCallMembership,
-  mockComputeLivekitParticipantIdentity$,
   mockMediaDevices,
   ownMemberMock,
   withTestScheduler,
@@ -44,11 +43,6 @@ let mockClient: OpenIDClientParts;
 let lkRoomFactory: () => LivekitRoom;
 
 const createdMockLivekitRooms: Map<string, LivekitRoom> = new Map();
-
-vi.mock(import("./LivekitParticipantIdentity.ts"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  computeLivekitParticipantIdentity$: mockComputeLivekitParticipantIdentity$,
-}));
 
 beforeEach(() => {
   testScope = new ObservableScope();

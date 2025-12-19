@@ -252,7 +252,8 @@ export function mockRtcMembership(
     content: data,
   });
 
-  const cms = new CallMembership(event, data);
+  const membershipData = CallMembership.membershipDataFromMatrixEvent(event);
+  const cms = new CallMembership(event, membershipData, "xx");
   vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
   return cms;
 }

@@ -44,7 +44,6 @@ import {
   mockRtcMembership,
   testScope,
   exampleTransport,
-  mockComputeLivekitParticipantIdentity$,
 } from "../../utils/test.ts";
 import { E2eeType } from "../../e2ee/e2eeType.ts";
 import {
@@ -85,14 +84,6 @@ vi.mock(
     ...(await importOriginal()),
     makeTransport: async (): Promise<LivekitTransport> =>
       Promise.resolve(exampleTransport),
-  }),
-);
-
-vi.mock(
-  import("./remoteMembers/LivekitParticipantIdentity.ts"),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    computeLivekitParticipantIdentity$: mockComputeLivekitParticipantIdentity$,
   }),
 );
 
