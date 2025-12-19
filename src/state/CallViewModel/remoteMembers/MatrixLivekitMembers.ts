@@ -10,7 +10,7 @@ import {
   type LivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, filter, map, switchMap } from "rxjs";
+import { combineLatest, filter, map } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
@@ -18,7 +18,6 @@ import { type IConnectionManager } from "./ConnectionManager";
 import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
-import { computeLivekitParticipantIdentity$ } from "./LivekitParticipantIdentity";
 
 const logger = rootLogger.getChild("[MatrixLivekitMembers]");
 
@@ -83,44 +82,11 @@ export function createMatrixLivekitMembers$({
   connectionManager,
 }: Props): Behavior<Epoch<RemoteMatrixLivekitMember[]>> {
   /**
-   * This internal observable is used to compute the async sha256 hash of the user's identity.
-   * a promise is treated like an observable. So we can switchMap on the promise from the identity computation.
-   * The last update to `membershipsWithTransport$` will always be the last promise we pass to switchMap.
-   * So we will eventually always end up with the latest memberships and their identities.
-   */
-  const membershipsWithTransportAndLivekitIdentity$ =
-    membershipsWithTransport$.pipe(
-      switchMap((membershipsWithTransport) => {
-        const { value, epoch } = membershipsWithTransport;
-        const membershipsWithTransportAndLkIdentityPromises = value.map(
-          (obj) => {
-            return computeLivekitParticipantIdentity$(
-              obj.membership,
-              obj.membership.kind,
-            );
-          },
-        );
-        return combineLatest(
-          membershipsWithTransportAndLkIdentityPromises,
-        ).pipe(
-          map((identities) => {
-            const membershipsWithTransportAndLkIdentity = value.map(
-              ({ transport, membership }, index) => {
-                return { transport, membership, identity: identities[index] };
-              },
-            );
-            return new Epoch(membershipsWithTransportAndLkIdentity, epoch);
-          }),
-        );
-      }),
-    );
-
-  /**
    * Stream of all the call members and their associated livekit data (if available).
    */
   return scope.behavior(
     combineLatest([
-      membershipsWithTransportAndLivekitIdentity$,
+      membershipsWithTransport$,
       connectionManager.connectionManagerData$,
     ]).pipe(
       filter((values) =>
@@ -131,37 +97,34 @@ export function createMatrixLivekitMembers$({
         // Generator function.
         // creates an array of `{key, data}[]`
         // Each change in the keys (new key, missing key) will result in a call to the factory function.
-        function* ([membershipsWithTransportAndLivekitIdentity, managerData]) {
-          for (const {
-            membership,
-            transport,
-            identity,
-          } of membershipsWithTransportAndLivekitIdentity) {
+        function* ([membershipsWithTransport, managerData]) {
+          for (const { membership, transport } of membershipsWithTransport) {
             const participants = transport
               ? managerData.getParticipantForTransport(transport)
               : [];
             const participant =
-              participants.find((p) => p.identity == identity) ?? null;
+              participants.find(
+                (p) => p.identity == membership.rtcBackendIdentity,
+              ) ?? null;
             const connection = transport
               ? managerData.getConnectionForTransport(transport)
               : null;
 
             yield {
-              keys: [identity, membership.userId, membership.deviceId],
+              keys: [membership.userId, membership.deviceId],
               data: { membership, participant, connection },
             };
           }
         },
         // Each update where the key of the generator array do not change will result in updates to the `data$` observable in the factory.
-        (scope, data$, identity, userId, deviceId) => {
+        (scope, data$, userId, deviceId) => {
           logger.debug(
-            `Generating member for livekitIdentity: ${identity}, userId:deviceId: ${userId}${deviceId}`,
+            `Generating member for livekitIdentity: ${data$.value.membership.rtcBackendIdentity}, userId:deviceId: ${userId}${deviceId}`,
           );
           const { participant$, ...rest } = scope.splitBehavior(data$);
           // will only get called once per `participantId, userId` pair.
           // updates to data$ and as a result to displayName$ and mxcAvatarUrl$ are more frequent.
           return {
-            identity,
             userId,
             participant: { type: "remote" as const, value$: participant$ },
             ...rest,
