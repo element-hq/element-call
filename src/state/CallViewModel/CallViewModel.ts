@@ -1503,7 +1503,7 @@ export function createCallViewModel$(
       ),
       null,
     ),
-    participantCount$: participantCount,
+    participantCount$: participantCount$,
     handsRaised$: handsRaised$,
     reactions$: reactions$,
     joinSoundEffect$: joinSoundEffect$,
