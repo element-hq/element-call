@@ -15,7 +15,7 @@ import { combineLatest, map, type Observable } from "rxjs";
 
 import { type IConnectionManager } from "./ConnectionManager.ts";
 import {
-  type MatrixLivekitMember,
+  type RemoteMatrixLivekitMember,
   createMatrixLivekitMembers$,
 } from "./MatrixLivekitMembers.ts";
 import {
@@ -99,24 +99,21 @@ test("should signal participant not yet connected to livekit", () => {
       } as unknown as IConnectionManager,
     });
 
-    expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
-      "a",
-      {
-        a: expect.toSatisfy((data: MatrixLivekitMember[]) => {
-          expect(data.length).toEqual(1);
-          expectObservable(data[0].membership$).toBe("a", {
-            a: bobMembership,
-          });
-          expectObservable(data[0].participant$).toBe("a", {
-            a: null,
-          });
-          expectObservable(data[0].connection$).toBe("a", {
-            a: null,
-          });
-          return true;
-        }),
-      },
-    );
+    expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
+      a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
+        expect(data.length).toEqual(1);
+        expectObservable(data[0].membership$).toBe("a", {
+          a: bobMembership,
+        });
+        expectObservable(data[0].participant.value$).toBe("a", {
+          a: null,
+        });
+        expectObservable(data[0].connection$).toBe("a", {
+          a: null,
+        });
+        return true;
+      }),
+    });
   });
 });
 
@@ -182,28 +179,25 @@ test("should signal participant on a connection that is publishing", () => {
       } as unknown as IConnectionManager,
     });
 
-    expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
-      "a",
-      {
-        a: expect.toSatisfy((data: MatrixLivekitMember[]) => {
-          expect(data.length).toEqual(1);
-          expectObservable(data[0].membership$).toBe("a", {
-            a: bobMembership,
-          });
-          expectObservable(data[0].participant$).toBe("a", {
-            a: expect.toSatisfy((participant) => {
-              expect(participant).toBeDefined();
-              expect(participant!.identity).toEqual(bobParticipantId);
-              return true;
-            }),
-          });
-          expectObservable(data[0].connection$).toBe("a", {
-            a: connection,
-          });
-          return true;
-        }),
-      },
-    );
+    expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
+      a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
+        expect(data.length).toEqual(1);
+        expectObservable(data[0].membership$).toBe("a", {
+          a: bobMembership,
+        });
+        expectObservable(data[0].participant.value$).toBe("a", {
+          a: expect.toSatisfy((participant) => {
+            expect(participant).toBeDefined();
+            expect(participant!.identity).toEqual(bobParticipantId);
+            return true;
+          }),
+        });
+        expectObservable(data[0].connection$).toBe("a", {
+          a: connection,
+        });
+        return true;
+      }),
+    });
   });
 });
 
@@ -236,24 +230,21 @@ test("should signal participant on a connection that is not publishing", () => {
       } as unknown as IConnectionManager,
     });
 
-    expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
-      "a",
-      {
-        a: expect.toSatisfy((data: MatrixLivekitMember[]) => {
-          expect(data.length).toEqual(1);
-          expectObservable(data[0].membership$).toBe("a", {
-            a: bobMembership,
-          });
-          expectObservable(data[0].participant$).toBe("a", {
-            a: null,
-          });
-          expectObservable(data[0].connection$).toBe("a", {
-            a: connection,
-          });
-          return true;
-        }),
-      },
-    );
+    expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
+      a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
+        expect(data.length).toEqual(1);
+        expectObservable(data[0].membership$).toBe("a", {
+          a: bobMembership,
+        });
+        expectObservable(data[0].participant.value$).toBe("a", {
+          a: null,
+        });
+        expectObservable(data[0].connection$).toBe("a", {
+          a: connection,
+        });
+        return true;
+      }),
+    });
   });
 });
 
@@ -305,7 +296,7 @@ describe("Publication edge case", () => {
       expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
         "a",
         {
-          a: expect.toSatisfy((data: MatrixLivekitMember[]) => {
+          a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
             expect(data.length).toEqual(2);
             expectObservable(data[0].membership$).toBe("a", {
               a: bobMembership,
@@ -314,7 +305,7 @@ describe("Publication edge case", () => {
               // The real connection should be from transportA as per the membership
               a: connectionA,
             });
-            expectObservable(data[0].participant$).toBe("a", {
+            expectObservable(data[0].participant.value$).toBe("a", {
               a: expect.toSatisfy((participant) => {
                 expect(participant).toBeDefined();
                 expect(participant!.identity).toEqual(bobParticipantId);
@@ -371,7 +362,7 @@ describe("Publication edge case", () => {
       expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
         "a",
         {
-          a: expect.toSatisfy((data: MatrixLivekitMember[]) => {
+          a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
             expect(data.length).toEqual(2);
             expectObservable(data[0].membership$).toBe("a", {
               a: bobMembership,
@@ -380,7 +371,7 @@ describe("Publication edge case", () => {
               // The real connection should be from transportA as per the membership
               a: connectionA,
             });
-            expectObservable(data[0].participant$).toBe("a", {
+            expectObservable(data[0].participant.value$).toBe("a", {
               // No participant as Bob is not publishing on his membership transport
               a: null,
             });

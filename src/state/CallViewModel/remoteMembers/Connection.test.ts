@@ -30,13 +30,16 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import type { LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   Connection,
+  ConnectionState,
   type ConnectionOpts,
-  type ConnectionState,
-  type PublishingParticipant,
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
-import { FailToGetOpenIdToken } from "../../../utils/errors.ts";
+import {
+  ElementCallError,
+  FailToGetOpenIdToken,
+} from "../../../utils/errors.ts";
+import { mockRemoteParticipant } from "../../../utils/test.ts";
 
 let testScope: ObservableScope;
 
@@ -46,11 +49,6 @@ let fakeLivekitRoom: MockedObject<LivekitRoom>;
 
 let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
-
-let fakeRoomEventEmiter: EventEmitter;
-// let fakeMembershipsFocusMap$: BehaviorSubject<
-//   { membership: CallMembership; transport: LivekitTransport }[]
-// >;
 
 const livekitFocus: LivekitTransport = {
   livekit_alias: "!roomID:example.org",
@@ -88,22 +86,25 @@ function setupTest(): void {
       localParticipantEventEmiter,
     ),
   } as unknown as LocalParticipant);
-  fakeRoomEventEmiter = new EventEmitter();
 
+  const fakeRoomEventEmitter = new EventEmitter();
   fakeLivekitRoom = vi.mocked<LivekitRoom>({
     connect: vi.fn(),
     disconnect: vi.fn(),
     remoteParticipants: new Map(),
     localParticipant: fakeLocalParticipant,
     state: LivekitConnectionState.Disconnected,
-    on: fakeRoomEventEmiter.on.bind(fakeRoomEventEmiter),
-    off: fakeRoomEventEmiter.off.bind(fakeRoomEventEmiter),
-    addListener: fakeRoomEventEmiter.addListener.bind(fakeRoomEventEmiter),
+    on: fakeRoomEventEmitter.on.bind(fakeRoomEventEmitter),
+    off: fakeRoomEventEmitter.off.bind(fakeRoomEventEmitter),
+    addListener: fakeRoomEventEmitter.addListener.bind(fakeRoomEventEmitter),
     removeListener:
-      fakeRoomEventEmiter.removeListener.bind(fakeRoomEventEmiter),
+      fakeRoomEventEmitter.removeListener.bind(fakeRoomEventEmitter),
     removeAllListeners:
-      fakeRoomEventEmiter.removeAllListeners.bind(fakeRoomEventEmiter),
+      fakeRoomEventEmitter.removeAllListeners.bind(fakeRoomEventEmitter),
     setE2EEEnabled: vi.fn().mockResolvedValue(undefined),
+    emit: (eventName: string | symbol, ...args: unknown[]) => {
+      fakeRoomEventEmitter.emit(eventName, ...args);
+    },
   } as unknown as LivekitRoom);
 }
 
@@ -125,7 +126,16 @@ function setupRemoteConnection(): Connection {
     };
   });
 
-  fakeLivekitRoom.connect.mockResolvedValue(undefined);
+  fakeLivekitRoom.connect.mockImplementation(async (): Promise<void> => {
+    const changeEv = RoomEvent.ConnectionStateChanged;
+
+    fakeLivekitRoom.state = LivekitConnectionState.Connecting;
+    fakeLivekitRoom.emit(changeEv, fakeLivekitRoom.state);
+    fakeLivekitRoom.state = LivekitConnectionState.Connected;
+    fakeLivekitRoom.emit(changeEv, fakeLivekitRoom.state);
+
+    return Promise.resolve();
+  });
 
   return new Connection(opts, logger);
 }
@@ -148,7 +158,7 @@ describe("Start connection states", () => {
     };
     const connection = new Connection(opts, logger);
 
-    expect(connection.state$.getValue().state).toEqual("Initialized");
+    expect(connection.state$.getValue()).toEqual("Initialized");
   });
 
   it("fail to getOpenId token then error state", async () => {
@@ -164,7 +174,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -184,22 +194,20 @@ describe("Start connection states", () => {
 
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
-    expect(capturedState!.state).toEqual("FetchingConfig");
+    expect(capturedState!).toEqual("FetchingConfig");
 
     deferred.reject(new FailToGetOpenIdToken(new Error("Failed to get token")));
 
     await vi.runAllTimersAsync();
 
     capturedState = capturedStates.pop();
-    if (capturedState!.state === "FailedToStart") {
-      expect(capturedState!.error.message).toEqual("Something went wrong");
+    if (capturedState instanceof Error) {
+      expect(capturedState.message).toEqual("Something went wrong");
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
-      expect.fail(
-        "Expected FailedToStart state but got " + capturedState?.state,
-      );
+      expect.fail("Expected FailedToStart state but got " + capturedState);
     }
   });
 
@@ -216,7 +224,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -238,24 +246,25 @@ describe("Start connection states", () => {
 
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
-    expect(capturedState?.state).toEqual("FetchingConfig");
+    expect(capturedState).toEqual(ConnectionState.FetchingConfig);
 
     deferredSFU.resolve();
     await vi.runAllTimersAsync();
 
     capturedState = capturedStates.pop();
 
-    if (capturedState?.state === "FailedToStart") {
-      expect(capturedState?.error.message).toContain(
+    if (
+      capturedState instanceof ElementCallError &&
+      capturedState.cause instanceof Error
+    ) {
+      expect(capturedState.cause.message).toContain(
         "SFU Config fetch failed with exception Error",
       );
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
       );
     } else {
-      expect.fail(
-        "Expected FailedToStart state but got " + capturedState?.state,
-      );
+      expect.fail("Expected FailedToStart state but got " + capturedState);
     }
   });
 
@@ -272,7 +281,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -302,15 +311,18 @@ describe("Start connection states", () => {
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
 
-    expect(capturedState?.state).toEqual("FetchingConfig");
+    expect(capturedState).toEqual(ConnectionState.FetchingConfig);
 
     deferredSFU.resolve();
     await vi.runAllTimersAsync();
 
     capturedState = capturedStates.pop();
 
-    if (capturedState && capturedState?.state === "FailedToStart") {
-      expect(capturedState.error.message).toContain(
+    if (
+      capturedState instanceof ElementCallError &&
+      capturedState.cause instanceof Error
+    ) {
+      expect(capturedState.cause.message).toContain(
         "Failed to connect to livekit",
       );
       expect(connection.transport.livekit_alias).toEqual(
@@ -329,7 +341,7 @@ describe("Start connection states", () => {
 
     const connection = setupRemoteConnection();
 
-    const capturedStates: ConnectionState[] = [];
+    const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -339,13 +351,15 @@ describe("Start connection states", () => {
     await vi.runAllTimersAsync();
 
     const initialState = capturedStates.shift();
-    expect(initialState?.state).toEqual("Initialized");
+    expect(initialState).toEqual(ConnectionState.Initialized);
     const fetchingState = capturedStates.shift();
-    expect(fetchingState?.state).toEqual("FetchingConfig");
+    expect(fetchingState).toEqual(ConnectionState.FetchingConfig);
+    const disconnectedState = capturedStates.shift();
+    expect(disconnectedState).toEqual(ConnectionState.LivekitDisconnected);
     const connectingState = capturedStates.shift();
-    expect(connectingState?.state).toEqual("ConnectingToLkRoom");
+    expect(connectingState).toEqual(ConnectionState.LivekitConnecting);
     const connectedState = capturedStates.shift();
-    expect(connectedState?.state).toEqual("ConnectedToLkRoom");
+    expect(connectedState).toEqual(ConnectionState.LivekitConnected);
   });
 
   it("shutting down the scope should stop the connection", async () => {
@@ -363,44 +377,32 @@ describe("Start connection states", () => {
   });
 });
 
-function fakeRemoteLivekitParticipant(
-  id: string,
-  publications: number = 1,
-): RemoteParticipant {
-  return {
-    identity: id,
-    getTrackPublications: () => Array(publications),
-  } as unknown as RemoteParticipant;
-}
-
-describe("Publishing participants observations", () => {
-  it("should emit the list of publishing participants", () => {
+describe("remote participants", () => {
+  it("emits the list of remote participants", () => {
     setupTest();
 
     const connection = setupRemoteConnection();
 
-    const bobIsAPublisher = Promise.withResolvers<void>();
-    const danIsAPublisher = Promise.withResolvers<void>();
-    const observedPublishers: PublishingParticipant[][] = [];
-    const s = connection.remoteParticipants$.subscribe((publishers) => {
-      observedPublishers.push(publishers);
-      if (publishers.some((p) => p.identity === "@bob:example.org:DEV111")) {
-        bobIsAPublisher.resolve();
-      }
-      if (publishers.some((p) => p.identity === "@dan:example.org:DEV333")) {
-        danIsAPublisher.resolve();
-      }
+    const observedParticipants: RemoteParticipant[][] = [];
+    const s = connection.remoteParticipants$.subscribe((participants) => {
+      observedParticipants.push(participants);
     });
     onTestFinished(() => s.unsubscribe());
-    // The publishingParticipants$ observable is derived from the current members of the
+    // The remoteParticipants$ observable is derived from the current members of the
     // livekitRoom and the rtc membership in order to publish the members that are publishing
     // on this connection.
 
-    let participants: RemoteParticipant[] = [
-      fakeRemoteLivekitParticipant("@alice:example.org:DEV000", 0),
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 0),
-      fakeRemoteLivekitParticipant("@carol:example.org:DEV222", 0),
-      fakeRemoteLivekitParticipant("@dan:example.org:DEV333", 0),
+    const participants: RemoteParticipant[] = [
+      mockRemoteParticipant({ identity: "@alice:example.org:DEV000" }),
+      mockRemoteParticipant({ identity: "@bob:example.org:DEV111" }),
+      mockRemoteParticipant({ identity: "@carol:example.org:DEV222" }),
+      // Mock Dan to have no published tracks. We want him to still show show up
+      // in the participants list.
+      mockRemoteParticipant({
+        identity: "@dan:example.org:DEV333",
+        getTrackPublication: () => undefined,
+        getTrackPublications: () => [],
+      }),
     ];
 
     // Let's simulate 3 members on the livekitRoom
@@ -409,9 +411,10 @@ describe("Publishing participants observations", () => {
     );
 
     participants.forEach((p) =>
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
     );
 
+<<<<<<< HEAD
     // At this point there should be ~~no~~ publishers
     // We do have publisher now, since we do not filter for publishers anymore (to also have participants with only data tracks)
     // The filtering we do is just based on the matrixRTC member events.
@@ -429,6 +432,10 @@ describe("Publishing participants observations", () => {
 
     // At this point there should be no publishers
     expect(observedPublishers.pop()!.length).toEqual(4);
+=======
+    // All remote participants should be present
+    expect(observedParticipants.pop()!.length).toEqual(4);
+>>>>>>> livekit
   });
 
   it("should be scoped to parent scope", (): void => {
@@ -436,14 +443,20 @@ describe("Publishing participants observations", () => {
 
     const connection = setupRemoteConnection();
 
+<<<<<<< HEAD
     let observedPublishers: PublishingParticipant[][] = [];
     const s = connection.remoteParticipants$.subscribe((publishers) => {
       observedPublishers.push(publishers);
+=======
+    let observedParticipants: RemoteParticipant[][] = [];
+    const s = connection.remoteParticipants$.subscribe((participants) => {
+      observedParticipants.push(participants);
+>>>>>>> livekit
     });
     onTestFinished(() => s.unsubscribe());
 
     let participants: RemoteParticipant[] = [
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 0),
+      mockRemoteParticipant({ identity: "@bob:example.org:DEV111" }),
     ];
 
     // Let's simulate 3 members on the livekitRoom
@@ -452,9 +465,10 @@ describe("Publishing participants observations", () => {
     );
 
     for (const participant of participants) {
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, participant);
     }
 
+<<<<<<< HEAD
     // At this point there should be ~~no~~ publishers
     // We do have publisher now, since we do not filter for publishers anymore (to also have participants with only data tracks)
     // The filtering we do is just based on the matrixRTC member events.
@@ -470,22 +484,28 @@ describe("Publishing participants observations", () => {
     const publishers = observedPublishers.pop();
     expect(publishers?.length).toEqual(1);
     expect(publishers?.[0]?.identity).toEqual("@bob:example.org:DEV111");
+=======
+    // We should have bob as a participant now
+    const ps = observedParticipants.pop();
+    expect(ps?.length).toEqual(1);
+    expect(ps?.[0]?.identity).toEqual("@bob:example.org:DEV111");
+>>>>>>> livekit
 
     // end the parent scope
     testScope.end();
-    observedPublishers = [];
+    observedParticipants = [];
 
-    // SHOULD NOT emit any more publishers as the scope is ended
+    // SHOULD NOT emit any more participants as the scope is ended
     participants = participants.filter(
       (p) => p.identity !== "@bob:example.org:DEV111",
     );
 
-    fakeRoomEventEmiter.emit(
+    fakeLivekitRoom.emit(
       RoomEvent.ParticipantDisconnected,
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111"),
+      mockRemoteParticipant({ identity: "@bob:example.org:DEV111" }),
     );
 
-    expect(observedPublishers.length).toEqual(0);
+    expect(observedParticipants.length).toEqual(0);
   });
 });
 

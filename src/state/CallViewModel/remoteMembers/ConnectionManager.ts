@@ -6,13 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type LivekitTransport,
-  type ParticipantId,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, map, of, switchMap, tap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
-import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
+import { type RemoteParticipant } from "livekit-client";
 
 import { type Behavior } from "../../Behavior.ts";
 import { type Connection } from "./Connection.ts";
@@ -22,20 +19,12 @@ import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 
 export class ConnectionManagerData {
-  private readonly store: Map<
-    string,
-    {
-      connection: Connection;
-      participants: (LocalParticipant | RemoteParticipant)[];
-    }
-  > = new Map();
+  private readonly store: Map<string, [Connection, RemoteParticipant[]]> =
+    new Map();
 
   public constructor() {}
 
-  public add(
-    connection: Connection,
-    participants: (LocalParticipant | RemoteParticipant)[],
-  ): void {
+  public add(connection: Connection, participants: RemoteParticipant[]): void {
     const key = this.getKey(connection.transport);
     const existing = this.store.get(key);
     if (!existing) {
@@ -61,7 +50,7 @@ export class ConnectionManagerData {
 
   public getParticipantsForTransport(
     transport: LivekitTransport,
-  ): (LocalParticipant | RemoteParticipant)[] {
+  ): RemoteParticipant[] {
     const key = transport.livekit_service_url + "|" + transport.livekit_alias;
     const existing = this.store.get(key);
     if (existing) {
@@ -69,39 +58,20 @@ export class ConnectionManagerData {
     }
     return [];
   }
-
-  /**
-   * Get all connections where the given participant is publishing.
-   * In theory, there could be several connections where the same participant is publishing but with
-   * only well behaving clients a participant should only be publishing on a single connection.
-   * @param participantId
-   */
-  public getConnectionsForParticipant(
-    participantId: ParticipantId,
-  ): Connection[] {
-    const connections: Connection[] = [];
-    for (const { connection, participants } of this.store.values()) {
-      if (
-        participants.some(
-          (participant) => participant?.identity === participantId,
-        )
-      ) {
-        connections.push(connection);
-      }
-    }
-    return connections;
-  }
 }
+
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
   inputTransports$: Behavior<Epoch<LivekitTransport[]>>;
   logger: Logger;
 }
+
 // TODO - write test for scopes (do we really need to bind scope)
 export interface IConnectionManager {
   connectionManagerData$: Behavior<Epoch<ConnectionManagerData>>;
 }
+
 /**
  * Crete a `ConnectionManager`
  * @param scope the observable scope used by this object.
@@ -184,7 +154,7 @@ export function createConnectionManager$({
         const epoch = connections.epoch;
 
         // Map the connections to list of {connection, participants}[]
-        const listOfConnectionsWithParticipants = connections.value.map(
+        const listOfConnectionsWithRemoteParticipants = connections.value.map(
           (connection) => {
             return connection.remoteParticipants$.pipe(
               map((participants) => ({
@@ -196,12 +166,16 @@ export function createConnectionManager$({
         );
 
         // probably not required
+<<<<<<< HEAD
         if (listOfConnectionsWithParticipants.length === 0) {
+=======
+        if (listOfConnectionsWithRemoteParticipants.length === 0) {
+>>>>>>> livekit
           return of(new Epoch(new ConnectionManagerData(), epoch));
         }
 
         // combineLatest the several streams into a single stream with the ConnectionManagerData
-        return combineLatest(listOfConnectionsWithParticipants).pipe(
+        return combineLatest(listOfConnectionsWithRemoteParticipants).pipe(
           map(
             (lists) =>
               new Epoch(
