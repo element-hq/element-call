@@ -50,7 +50,6 @@ import { getUrlParams } from "../src/UrlParams";
 import { MuteStates } from "../src/state/MuteStates";
 import { MediaDevices } from "../src/state/MediaDevices";
 import { E2eeType } from "../src/e2ee/e2eeType";
-import { type LocalMemberConnectionState } from "../src/state/CallViewModel/localMember/LocalMembership";
 import {
   currentAndPrev,
   logger,
@@ -62,7 +61,11 @@ import { ElementWidgetActions } from "../src/widget";
 import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
 
 interface MatrixRTCSdk {
-  join: () => LocalMemberConnectionState;
+  /**
+   * observe connected$ to track the state.
+   * @returns
+   */
+  join: () => void;
   /** @throws on leave errors */
   leave: () => void;
   data$: Observable<{ sender: string; data: string }>;
@@ -201,7 +204,7 @@ export async function createMatrixRTCSdk(
             return of((data: string): never => {
               throw Error("local membership not yet ready.");
             });
-          return m.participant$.pipe(
+          return m.participant.value$.pipe(
             map((p) => {
               if (p === null) {
                 return (data: string): never => {
@@ -264,11 +267,10 @@ export async function createMatrixRTCSdk(
   logger.info("createMatrixRTCSdk done");
 
   return {
-    join: (): LocalMemberConnectionState => {
+    join: (): void => {
       // first lets try making the widget sticky
       tryMakeSticky();
       callViewModel.join();
-      return callViewModel.connectionState;
     },
     leave: (): void => {
       callViewModel.hangup();
@@ -284,7 +286,7 @@ export async function createMatrixRTCSdk(
             combineLatest([
               member.connection$,
               member.membership$,
-              member.participant$,
+              member.participant.value$,
             ]).pipe(
               map(([connection, membership, participant]) => ({
                 connection,

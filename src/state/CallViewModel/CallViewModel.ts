@@ -12,7 +12,6 @@ import {
   ExternalE2EEKeyProvider,
   type Room as LivekitRoom,
   type RoomOptions,
-  type LocalParticipant as LocalLivekitParticipant,
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
@@ -81,7 +80,7 @@ import {
 } from "../../reactions";
 import { shallowEquals } from "../../utils/array";
 import { type MediaDevices } from "../MediaDevices";
-import { type Behavior } from "../Behavior";
+import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
@@ -105,9 +104,8 @@ import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts
 import {
   createLocalMembership$,
   enterRTCSession,
-  type LocalMemberConnectionState,
-  RTCBackendState,
-} from "./localMember/LocalMembership.ts";
+  TransportState,
+} from "./localMember/LocalMember.ts";
 import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
 import {
   createMemberships$,
@@ -119,6 +117,7 @@ import {
   createMatrixLivekitMembers$,
   type TaggedParticipant,
   type LocalMatrixLivekitMember,
+  type RemoteMatrixLivekitMember,
 } from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
   type AutoLeaveReason,
@@ -158,7 +157,7 @@ export interface CallViewModelOptions {
   /** Optional behavior overriding the computed window size, mainly for testing purposes. */
   windowSize$?: Behavior<{ width: number; height: number }>;
   /** The version & compatibility mode of MatrixRTC that we should use. */
-  matrixRTCMode$: Behavior<MatrixRTCMode>;
+  matrixRTCMode$?: Behavior<MatrixRTCMode>;
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -188,13 +187,6 @@ export type LivekitRoomItem = {
   livekitRoom: LivekitRoom;
   participants: string[];
   url: string;
-};
-
-export type LocalMatrixLivekitMember = Pick<
-  MatrixLivekitMember,
-  "userId" | "membership$" | "connection$"
-> & {
-  participant$: Behavior<LocalLivekitParticipant | null>;
 };
 
 /**
@@ -273,7 +265,7 @@ export interface CallViewModel {
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
   userMedia$: Behavior<UserMedia[]>;
   /** use the layout instead, this is just for the sdk export. */
-  matrixLivekitMembers$: Behavior<MatrixLivekitMember[]>;
+  matrixLivekitMembers$: Behavior<RemoteMatrixLivekitMember[]>;
   localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null>;
   /** List of participants raising their hand */
   handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
@@ -357,26 +349,15 @@ export interface CallViewModel {
     switch: () => void;
   } | null>;
 
-  // connection state
   /**
-   * Whether various media/event sources should pretend to be disconnected from
-   * all network input, even if their connection still technically works.
+   * Whether the app is currently reconnecting to the LiveKit server and/or setting the matrix rtc room state.
    */
-  // We do this when the app is in the 'reconnecting' state, because it might be
-  // that the LiveKit connection is still functional while the homeserver is
-  // down, for example, and we want to avoid making people worry that the app is
-  // in a split-brained state.
-  // DISCUSSION own membership manager ALSO this probably can be simplifis
   reconnecting$: Behavior<boolean>;
 
   /**
    * Shortcut for not requireing to parse and combine connectionState.matrix and connectionState.livekit
    */
   connected$: Behavior<boolean>;
-  /**
-   *
-   */
-  connectionState: LocalMemberConnectionState;
 }
 
 /**
@@ -406,6 +387,8 @@ export function createCallViewModel$(
     options.encryptionSystem,
     matrixRTCSession,
   );
+  const matrixRTCMode$ =
+    options.matrixRTCMode$ ?? constant(MatrixRTCMode.Legacy);
 
   // Each hbar seperates a block of input variables required for the CallViewModel to function.
   // The outputs of this block is written under the hbar.
@@ -438,7 +421,7 @@ export function createCallViewModel$(
     client,
     roomId: matrixRoom.roomId,
     useOldestMember$: scope.behavior(
-      options.matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
+      matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
     ),
   });
 
@@ -482,7 +465,7 @@ export function createCallViewModel$(
     logger,
   });
 
-  const { matrixLivekitMembers$ } = createMatrixLivekitMembers$({
+  const matrixLivekitMembers$ = createMatrixLivekitMembers$({
     scope: scope,
     membershipsWithTransport$:
       membershipsAndTransports.membershipsWithTransport$,
@@ -490,7 +473,7 @@ export function createCallViewModel$(
   });
 
   const connectOptions$ = scope.behavior(
-    options.matrixRTCMode$.pipe(
+    matrixRTCMode$.pipe(
       map((mode) => ({
         encryptMedia: livekitKeyProvider !== undefined,
         // TODO. This might need to get called again on each change of matrixRTCMode...
@@ -1527,17 +1510,6 @@ export function createCallViewModel$(
       null,
     ),
 
-    participantCount$,
-    livekitRoomItems$,
-    handsRaised$,
-    reactions$,
-    joinSoundEffect$,
-    leaveSoundEffect$,
-    newHandRaised$,
-    newScreenShare$,
-    audibleReactions$,
-    visibleReactions$,
-
     handsRaised$: handsRaised$,
     reactions$: reactions$,
     joinSoundEffect$: joinSoundEffect$,
@@ -1546,7 +1518,6 @@ export function createCallViewModel$(
     newScreenShare$: newScreenShare$,
     audibleReactions$: audibleReactions$,
     visibleReactions$: visibleReactions$,
-
     windowMode$: windowMode$,
     spotlightExpanded$: spotlightExpanded$,
     toggleSpotlightExpanded$: toggleSpotlightExpanded$,
@@ -1574,6 +1545,9 @@ export function createCallViewModel$(
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
     reconnecting$: localMembership.reconnecting$,
+    participantCount$,
+    livekitRoomItems$,
+    connected$: localMembership.connected$,
   };
 }
 

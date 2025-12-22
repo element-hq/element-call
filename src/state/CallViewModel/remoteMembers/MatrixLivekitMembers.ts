@@ -85,7 +85,7 @@ export function createMatrixLivekitMembers$({
    * Stream of all the call members and their associated livekit data (if available).
    */
 
-  const matrixLivekitMembers$ = scope.behavior(
+  return scope.behavior(
     combineLatest([
       membershipsWithTransport$,
       connectionManager.connectionManagerData$,
@@ -142,11 +142,6 @@ export function createMatrixLivekitMembers$({
       ),
     ),
   );
-  return {
-    matrixLivekitMembers$,
-    // TODO add only publishing participants... maybe. disucss at least
-    // scope.behavior(matrixLivekitMembers$.pipe(map((items) => items.value.map((i)=>{ i.}))))
-  };
 }
 
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
