@@ -19,8 +19,10 @@ import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 
 export class ConnectionManagerData {
-  private readonly store: Map<string, [Connection, RemoteParticipant[]]> =
-    new Map();
+  private readonly store: Map<
+    string,
+    { connection: Connection; participants: RemoteParticipant[] }
+  > = new Map();
 
   public constructor() {}
 
@@ -166,11 +168,8 @@ export function createConnectionManager$({
         );
 
         // probably not required
-<<<<<<< HEAD
-        if (listOfConnectionsWithParticipants.length === 0) {
-=======
+
         if (listOfConnectionsWithRemoteParticipants.length === 0) {
->>>>>>> livekit
           return of(new Epoch(new ConnectionManagerData(), epoch));
         }
 

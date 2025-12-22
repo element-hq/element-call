@@ -392,7 +392,7 @@ describe("remote participants", () => {
     // livekitRoom and the rtc membership in order to publish the members that are publishing
     // on this connection.
 
-    const participants: RemoteParticipant[] = [
+    let participants: RemoteParticipant[] = [
       mockRemoteParticipant({ identity: "@alice:example.org:DEV000" }),
       mockRemoteParticipant({ identity: "@bob:example.org:DEV111" }),
       mockRemoteParticipant({ identity: "@carol:example.org:DEV222" }),
@@ -414,28 +414,23 @@ describe("remote participants", () => {
       fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
     );
 
-<<<<<<< HEAD
     // At this point there should be ~~no~~ publishers
     // We do have publisher now, since we do not filter for publishers anymore (to also have participants with only data tracks)
     // The filtering we do is just based on the matrixRTC member events.
-    expect(observedPublishers.pop()!.length).toEqual(4);
+    expect(observedParticipants.pop()!.length).toEqual(4);
 
     participants = [
-      fakeRemoteLivekitParticipant("@alice:example.org:DEV000", 1),
-      fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1),
-      fakeRemoteLivekitParticipant("@carol:example.org:DEV222", 1),
-      fakeRemoteLivekitParticipant("@dan:example.org:DEV333", 2),
+      mockRemoteParticipant({ identity: "@alice:example.org:DEV000" }),
+      mockRemoteParticipant({ identity: "@bob:example.org:DEV111" }),
+      mockRemoteParticipant({ identity: "@carol:example.org:DEV222" }),
+      mockRemoteParticipant({ identity: "@dan:example.org:DEV333" }),
     ];
     participants.forEach((p) =>
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, p),
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
     );
 
     // At this point there should be no publishers
-    expect(observedPublishers.pop()!.length).toEqual(4);
-=======
-    // All remote participants should be present
     expect(observedParticipants.pop()!.length).toEqual(4);
->>>>>>> livekit
   });
 
   it("should be scoped to parent scope", (): void => {
@@ -443,15 +438,9 @@ describe("remote participants", () => {
 
     const connection = setupRemoteConnection();
 
-<<<<<<< HEAD
-    let observedPublishers: PublishingParticipant[][] = [];
-    const s = connection.remoteParticipants$.subscribe((publishers) => {
-      observedPublishers.push(publishers);
-=======
     let observedParticipants: RemoteParticipant[][] = [];
     const s = connection.remoteParticipants$.subscribe((participants) => {
       observedParticipants.push(participants);
->>>>>>> livekit
     });
     onTestFinished(() => s.unsubscribe());
 
@@ -468,28 +457,10 @@ describe("remote participants", () => {
       fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, participant);
     }
 
-<<<<<<< HEAD
-    // At this point there should be ~~no~~ publishers
-    // We do have publisher now, since we do not filter for publishers anymore (to also have participants with only data tracks)
-    // The filtering we do is just based on the matrixRTC member events.
-    expect(observedPublishers.pop()!.length).toEqual(1);
-
-    participants = [fakeRemoteLivekitParticipant("@bob:example.org:DEV111", 1)];
-
-    for (const participant of participants) {
-      fakeRoomEventEmiter.emit(RoomEvent.ParticipantConnected, participant);
-    }
-
-    // We should have bob has a publisher now
-    const publishers = observedPublishers.pop();
-    expect(publishers?.length).toEqual(1);
-    expect(publishers?.[0]?.identity).toEqual("@bob:example.org:DEV111");
-=======
     // We should have bob as a participant now
     const ps = observedParticipants.pop();
     expect(ps?.length).toEqual(1);
     expect(ps?.[0]?.identity).toEqual("@bob:example.org:DEV111");
->>>>>>> livekit
 
     // end the parent scope
     testScope.end();
