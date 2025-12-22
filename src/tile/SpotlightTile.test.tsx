@@ -17,6 +17,7 @@ import {
   mockRtcMembership,
   createLocalMedia,
   createRemoteMedia,
+  mockRemoteParticipant,
 } from "../utils/test";
 import { SpotlightTileViewModel } from "../state/TileViewModel";
 import { constant } from "../state/Behavior";
@@ -33,7 +34,7 @@ test("SpotlightTile is accessible", async () => {
       rawDisplayName: "Alice",
       getMxcAvatarUrl: () => "mxc://adfsg",
     },
-    {},
+    mockRemoteParticipant({}),
   );
 
   const vm2 = createLocalMedia(

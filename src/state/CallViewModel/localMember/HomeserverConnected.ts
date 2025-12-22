@@ -25,6 +25,11 @@ import { type NodeStyleEventEmitter } from "../../../utils/test";
  */
 const logger = rootLogger.getChild("[HomeserverConnected]");
 
+export interface HomeserverConnected {
+  combined$: Behavior<boolean>;
+  rtsSession$: Behavior<Status>;
+}
+
 /**
  * Behavior representing whether we consider ourselves connected to the Matrix homeserver
  * for the purposes of a MatrixRTC session.
@@ -39,7 +44,7 @@ export function createHomeserverConnected$(
   client: NodeStyleEventEmitter & Pick<MatrixClient, "getSyncState">,
   matrixRTCSession: NodeStyleEventEmitter &
     Pick<MatrixRTCSession, "membershipStatus" | "probablyLeft">,
-): Behavior<boolean> {
+): HomeserverConnected {
   const syncing$ = (
     fromEvent(client, ClientEvent.Sync) as Observable<[SyncState]>
   ).pipe(
@@ -47,12 +52,15 @@ export function createHomeserverConnected$(
     map(([state]) => state === SyncState.Syncing),
   );
 
-  const membershipConnected$ = fromEvent(
-    matrixRTCSession,
-    MembershipManagerEvent.StatusChanged,
-  ).pipe(
-    startWith(null),
-    map(() => matrixRTCSession.membershipStatus === Status.Connected),
+  const rtsSession$ = scope.behavior<Status>(
+    fromEvent(matrixRTCSession, MembershipManagerEvent.StatusChanged).pipe(
+      map(() => matrixRTCSession.membershipStatus ?? Status.Unknown),
+    ),
+    Status.Unknown,
+  );
+
+  const membershipConnected$ = rtsSession$.pipe(
+    map((status) => status === Status.Connected),
   );
 
   // This is basically notProbablyLeft$
@@ -71,15 +79,13 @@ export function createHomeserverConnected$(
     map(() => matrixRTCSession.probablyLeft !== true),
   );
 
-  const connectedCombined$ = and$(
-    syncing$,
-    membershipConnected$,
-    certainlyConnected$,
-  ).pipe(
-    tap((connected) => {
-      logger.info(`Homeserver connected update: ${connected}`);
-    }),
+  const combined$ = scope.behavior(
+    and$(syncing$, membershipConnected$, certainlyConnected$).pipe(
+      tap((connected) => {
+        logger.info(`Homeserver connected update: ${connected}`);
+      }),
+    ),
   );
 
-  return scope.behavior(connectedCombined$);
+  return { combined$, rtsSession$ };
 }

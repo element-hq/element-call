@@ -60,7 +60,8 @@ import {
 import { MediaDevices } from "../MediaDevices.ts";
 import { getValue } from "../../utils/observable.ts";
 import { type Behavior, constant } from "../Behavior.ts";
-import { withCallViewModel } from "./CallViewModelTestUtils.ts";
+import { withCallViewModel as withCallViewModelInMode } from "./CallViewModelTestUtils.ts";
+import { MatrixRTCMode } from "../../settings/settings.ts";
 
 vi.mock("rxjs", async (importOriginal) => ({
   ...(await importOriginal()),
@@ -229,7 +230,13 @@ function mockRingEvent(
 // need a value to fill in for them when emitting notifications
 const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 
-describe("CallViewModel", () => {
+describe.each([
+  [MatrixRTCMode.Legacy],
+  [MatrixRTCMode.Compatibil],
+  [MatrixRTCMode.Matrix_2_0],
+])("CallViewModel (%s mode)", (mode) => {
+  const withCallViewModel = withCallViewModelInMode(mode);
+
   test("participants are retained during a focus switch", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       // Participants disappear on frame 2 and come back on frame 3
