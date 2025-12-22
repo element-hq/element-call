@@ -649,12 +649,6 @@ export function createCallViewModel$(
           return acc;
         }, []),
       ),
-      tap((val) => {
-        logger.debug(
-          "livekitRoomItems$ updated",
-          val.map((v) => v.url),
-        );
-      }),
     ),
     [],
   );
@@ -1480,10 +1474,10 @@ export function createCallViewModel$(
   );
 
   return {
-    autoLeave$,
-    callPickupState$,
-    ringOverlay$,
-    leave$,
+    autoLeave$: autoLeave$,
+    callPickupState$: callPickupState$,
+    ringOverlay$: ringOverlay$,
+    leave$: leave$,
     hangup: (): void => userHangup$.next(),
     join: localMembership.requestJoinAndPublish,
     toggleScreenSharing: toggleScreenSharing,
@@ -1509,7 +1503,7 @@ export function createCallViewModel$(
       ),
       null,
     ),
-
+    participantCount$: participantCount,
     handsRaised$: handsRaised$,
     reactions$: reactions$,
     joinSoundEffect$: joinSoundEffect$,
@@ -1518,6 +1512,7 @@ export function createCallViewModel$(
     newScreenShare$: newScreenShare$,
     audibleReactions$: audibleReactions$,
     visibleReactions$: visibleReactions$,
+
     windowMode$: windowMode$,
     spotlightExpanded$: spotlightExpanded$,
     toggleSpotlightExpanded$: toggleSpotlightExpanded$,
@@ -1545,7 +1540,6 @@ export function createCallViewModel$(
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
     reconnecting$: localMembership.reconnecting$,
-    participantCount$,
     livekitRoomItems$,
     connected$: localMembership.connected$,
   };
