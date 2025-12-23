@@ -14,7 +14,8 @@ import {
   type BaseE2EEManager,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
-import E2EEWorker from "livekit-client/e2ee-worker?worker";
+// imported as inline to support worker when loaded from a cdn (cross domain)
+import E2EEWorker from "livekit-client/e2ee-worker?worker&inline";
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";

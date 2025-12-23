@@ -110,7 +110,7 @@ export function createMatrixLivekitMembers$({
             const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
 
             const participants = transport
-              ? managerData.getParticipantForTransport(transport)
+              ? managerData.getParticipantsForTransport(transport)
               : [];
             const participant =
               participants.find((p) => p.identity == participantId) ?? null;
