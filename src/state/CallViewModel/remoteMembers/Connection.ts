@@ -223,7 +223,7 @@ export class Connection {
   public constructor(opts: ConnectionOpts, logger: Logger) {
     this.logger = logger.getChild("[Connection]");
     this.logger.info(
-      `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
+      `Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
     );
     const { transport, client, scope } = opts;
 

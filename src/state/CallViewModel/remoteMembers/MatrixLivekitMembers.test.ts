@@ -91,7 +91,7 @@ test("should signal participant not yet connected to livekit", () => {
       }),
     );
 
-    const matrixLivekitMember$ = createMatrixLivekitMembers$({
+    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
       connectionManager: {
@@ -99,21 +99,24 @@ test("should signal participant not yet connected to livekit", () => {
       } as unknown as IConnectionManager,
     });
 
-    expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
-      a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
-        expect(data.length).toEqual(1);
-        expectObservable(data[0].membership$).toBe("a", {
-          a: bobMembership,
-        });
-        expectObservable(data[0].participant.value$).toBe("a", {
-          a: null,
-        });
-        expectObservable(data[0].connection$).toBe("a", {
-          a: null,
-        });
-        return true;
-      }),
-    });
+    expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
+      "a",
+      {
+        a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
+          expect(data.length).toEqual(1);
+          expectObservable(data[0].membership$).toBe("a", {
+            a: bobMembership,
+          });
+          expectObservable(data[0].participant.value$).toBe("a", {
+            a: null,
+          });
+          expectObservable(data[0].connection$).toBe("a", {
+            a: null,
+          });
+          return true;
+        }),
+      },
+    );
   });
 });
 
@@ -171,7 +174,7 @@ test("should signal participant on a connection that is publishing", () => {
       }),
     );
 
-    const matrixLivekitMember$ = createMatrixLivekitMembers$({
+    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
       connectionManager: {
@@ -179,25 +182,28 @@ test("should signal participant on a connection that is publishing", () => {
       } as unknown as IConnectionManager,
     });
 
-    expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
-      a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
-        expect(data.length).toEqual(1);
-        expectObservable(data[0].membership$).toBe("a", {
-          a: bobMembership,
-        });
-        expectObservable(data[0].participant.value$).toBe("a", {
-          a: expect.toSatisfy((participant) => {
-            expect(participant).toBeDefined();
-            expect(participant!.identity).toEqual(bobParticipantId);
-            return true;
-          }),
-        });
-        expectObservable(data[0].connection$).toBe("a", {
-          a: connection,
-        });
-        return true;
-      }),
-    });
+    expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
+      "a",
+      {
+        a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
+          expect(data.length).toEqual(1);
+          expectObservable(data[0].membership$).toBe("a", {
+            a: bobMembership,
+          });
+          expectObservable(data[0].participant.value$).toBe("a", {
+            a: expect.toSatisfy((participant) => {
+              expect(participant).toBeDefined();
+              expect(participant!.identity).toEqual(bobParticipantId);
+              return true;
+            }),
+          });
+          expectObservable(data[0].connection$).toBe("a", {
+            a: connection,
+          });
+          return true;
+        }),
+      },
+    );
   });
 });
 
@@ -222,7 +228,7 @@ test("should signal participant on a connection that is not publishing", () => {
       }),
     );
 
-    const matrixLivekitMember$ = createMatrixLivekitMembers$({
+    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
       connectionManager: {
@@ -230,21 +236,24 @@ test("should signal participant on a connection that is not publishing", () => {
       } as unknown as IConnectionManager,
     });
 
-    expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe("a", {
-      a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
-        expect(data.length).toEqual(1);
-        expectObservable(data[0].membership$).toBe("a", {
-          a: bobMembership,
-        });
-        expectObservable(data[0].participant.value$).toBe("a", {
-          a: null,
-        });
-        expectObservable(data[0].connection$).toBe("a", {
-          a: connection,
-        });
-        return true;
-      }),
-    });
+    expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
+      "a",
+      {
+        a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
+          expect(data.length).toEqual(1);
+          expectObservable(data[0].membership$).toBe("a", {
+            a: bobMembership,
+          });
+          expectObservable(data[0].participant.value$).toBe("a", {
+            a: null,
+          });
+          expectObservable(data[0].connection$).toBe("a", {
+            a: connection,
+          });
+          return true;
+        }),
+      },
+    );
   });
 });
 
@@ -283,7 +292,7 @@ describe("Publication edge case", () => {
         }),
       );
 
-      const matrixLivekitMember$ = createMatrixLivekitMembers$({
+      const matrixLivekitMembers$ = createMatrixLivekitMembers$({
         scope: testScope,
         membershipsWithTransport$: testScope.behavior(
           membershipsWithTransport$,
@@ -293,7 +302,7 @@ describe("Publication edge case", () => {
         } as unknown as IConnectionManager,
       });
 
-      expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe(
+      expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
         "a",
         {
           a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
@@ -349,7 +358,7 @@ describe("Publication edge case", () => {
         }),
       );
 
-      const matrixLivekitMember$ = createMatrixLivekitMembers$({
+      const matrixLivekitMembers$ = createMatrixLivekitMembers$({
         scope: testScope,
         membershipsWithTransport$: testScope.behavior(
           membershipsWithTransport$,
@@ -359,7 +368,7 @@ describe("Publication edge case", () => {
         } as unknown as IConnectionManager,
       });
 
-      expectObservable(matrixLivekitMember$.pipe(map((e) => e.value))).toBe(
+      expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
         "a",
         {
           a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {

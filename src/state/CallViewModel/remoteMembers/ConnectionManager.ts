@@ -19,8 +19,10 @@ import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 
 export class ConnectionManagerData {
-  private readonly store: Map<string, [Connection, RemoteParticipant[]]> =
-    new Map();
+  private readonly store: Map<
+    string,
+    { connection: Connection; participants: RemoteParticipant[] }
+  > = new Map();
 
   public constructor() {}
 
@@ -28,9 +30,9 @@ export class ConnectionManagerData {
     const key = this.getKey(connection.transport);
     const existing = this.store.get(key);
     if (!existing) {
-      this.store.set(key, [connection, participants]);
+      this.store.set(key, { connection, participants });
     } else {
-      existing[1].push(...participants);
+      existing.participants.push(...participants);
     }
   }
 
@@ -39,20 +41,24 @@ export class ConnectionManagerData {
   }
 
   public getConnections(): Connection[] {
-    return Array.from(this.store.values()).map(([connection]) => connection);
+    return Array.from(this.store.values()).map(({ connection }) => connection);
   }
 
   public getConnectionForTransport(
     transport: LivekitTransport,
   ): Connection | null {
-    return this.store.get(this.getKey(transport))?.[0] ?? null;
+    return this.store.get(this.getKey(transport))?.connection ?? null;
   }
 
-  public getParticipantForTransport(
+  public getParticipantsForTransport(
     transport: LivekitTransport,
   ): RemoteParticipant[] {
     const key = transport.livekit_service_url + "|" + transport.livekit_alias;
-    return this.store.get(key)?.[1] ?? [];
+    const existing = this.store.get(key);
+    if (existing) {
+      return existing.participants;
+    }
+    return [];
   }
 }
 
@@ -162,6 +168,7 @@ export function createConnectionManager$({
         );
 
         // probably not required
+
         if (listOfConnectionsWithRemoteParticipants.length === 0) {
           return of(new Epoch(new ConnectionManagerData(), epoch));
         }

@@ -177,14 +177,18 @@ export const createLocalMembership$ = ({
   // tracks$: Behavior<LocalTrack[]>;
   participant$: Behavior<LocalParticipant | null>;
   connection$: Behavior<Connection | null>;
-  /** Shorthand for homeserverConnected.rtcSession === Status.Reconnecting
-   * Direct translation to the js-sdk membership manager connection `Status`.
+  /**
+   * Tracks the homserver and livekit connected state and based on that computes reconnecting.
    */
   reconnecting$: Behavior<boolean>;
   /** Shorthand for homeserverConnected.rtcSession === Status.Disconnected
    * Direct translation to the js-sdk membership manager connection `Status`.
    */
   disconnected$: Behavior<boolean>;
+  /**
+   * Fully connected
+   */
+  connected$: Behavior<boolean>;
 } => {
   const logger = parentLogger.getChild("[LocalMembership]");
   logger.debug(`Creating local membership..`);
@@ -638,6 +642,7 @@ export const createLocalMembership$ = ({
     localMemberState$,
     participant$,
     reconnecting$,
+    connected$: matrixAndLivekitConnected$,
     disconnected$: scope.behavior(
       homeserverConnected.rtsSession$.pipe(
         map((state) => state === RTCSessionStatus.Disconnected),
