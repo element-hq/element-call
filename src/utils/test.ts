@@ -320,6 +320,8 @@ export function mockLocalParticipant(
     publishTrack: vi.fn(),
     unpublishTracks: vi.fn().mockResolvedValue([]),
     createTracks: vi.fn(),
+    setMicrophoneEnabled: vi.fn(),
+    setCameraEnabled: vi.fn(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
     ...mockEmitter(),
