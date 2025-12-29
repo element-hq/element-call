@@ -124,14 +124,14 @@ test("bob, carl, then bob joining no tracks yet", () => {
       logger: logger,
     });
 
-    const matrixLivekitItems$ = createMatrixLivekitMembers$({
+    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$:
         membershipsAndTransports.membershipsWithTransport$,
       connectionManager,
     });
 
-    expectObservable(matrixLivekitItems$).toBe(vMarble, {
+    expectObservable(matrixLivekitMembers$).toBe(vMarble, {
       a: expect.toSatisfy((e: Epoch<RemoteMatrixLivekitMember[]>) => {
         const items = e.value;
         expect(items.length).toBe(1);

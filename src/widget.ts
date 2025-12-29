@@ -64,6 +64,12 @@ export const widget = ((): WidgetHelpers | null => {
   try {
     const { widgetId, parentUrl } = getUrlParams();
 
+    const { roomId, userId, deviceId, baseUrl, e2eEnabled, allowIceFallback } =
+      getUrlParams();
+    if (!roomId) throw new Error("Room ID must be supplied");
+    if (!userId) throw new Error("User ID must be supplied");
+    if (!deviceId) throw new Error("Device ID must be supplied");
+    if (!baseUrl) throw new Error("Base URL must be supplied");
     if (widgetId && parentUrl) {
       const parentOrigin = new URL(parentUrl).origin;
       logger.info("Widget API is available");
@@ -91,19 +97,6 @@ export const widget = ((): WidgetHelpers | null => {
       // all requests through the host client via the widget API)
       // We need to do this now rather than later because it has capabilities to
       // request, and is responsible for starting the transport (should it be?)
-
-      const {
-        roomId,
-        userId,
-        deviceId,
-        baseUrl,
-        e2eEnabled,
-        allowIceFallback,
-      } = getUrlParams();
-      if (!roomId) throw new Error("Room ID must be supplied");
-      if (!userId) throw new Error("User ID must be supplied");
-      if (!deviceId) throw new Error("Device ID must be supplied");
-      if (!baseUrl) throw new Error("Base URL must be supplied");
 
       // These are all the event types the app uses
       const sendEvent = [
