@@ -28,11 +28,12 @@ import {
 } from "../../../utils/errors";
 import * as openIDSFU from "../../../livekit/openIDSFU";
 import { customLivekitUrl } from "../../../settings/settings";
+import { testJWTToken } from "../../../utils/test-fixtures";
 
 describe("LocalTransport", () => {
   const openIdResponse: openIDSFU.SFUConfig = {
     url: "https://lk.example.org",
-    jwt: "jwt",
+    jwt: testJWTToken,
     livekitAlias: "!example_room_id",
     livekitIdentity: "@lk_user:ABCDEF",
   };
