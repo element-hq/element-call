@@ -33,6 +33,7 @@ import {
 } from "./MatrixLivekitMembers.ts";
 import { createConnectionManager$ } from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
+import { testJWTToken } from "../../../utils/test-fixtures.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
 
@@ -85,7 +86,7 @@ beforeEach(() => {
       status: 200,
       body: {
         url: `wss://${domain}/livekit/sfu`,
-        jwt: "ATOKEN",
+        jwt: testJWTToken,
       },
     };
   });

@@ -39,6 +39,7 @@ import {
   ElementCallError,
   FailToGetOpenIdToken,
 } from "../../../utils/errors.ts";
+import { testJWTToken } from "../../../utils/test-fixtures.ts";
 import { mockRemoteParticipant } from "../../../utils/test.ts";
 
 let testScope: ObservableScope;
@@ -121,7 +122,7 @@ function setupRemoteConnection(): Connection {
       status: 200,
       body: {
         url: "wss://matrix-rtc.m.localhost/livekit/sfu",
-        jwt: "ATOKEN",
+        jwt: testJWTToken,
       },
     };
   });
@@ -258,7 +259,7 @@ describe("Start connection states", () => {
       capturedState.cause instanceof Error
     ) {
       expect(capturedState.cause.message).toContain(
-        "SFU Config fetch failed with exception Error",
+        "SFU Config fetch failed with exception",
       );
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
@@ -294,7 +295,7 @@ describe("Start connection states", () => {
         status: 200,
         body: {
           url: "wss://matrix-rtc.m.localhost/livekit/sfu",
-          jwt: "ATOKEN",
+          jwt: testJWTToken,
         },
       };
     });
