@@ -35,7 +35,6 @@ import {
 } from "../../../livekit/openIDSFU.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 import { customLivekitUrl } from "../../../settings/settings.ts";
-import { type LivekitTransportWithVersion } from "../remoteMembers/ConnectionManager.ts";
 
 const logger = rootLogger.getChild("[LocalTransport]");
 
@@ -51,7 +50,7 @@ interface Props {
   client: Pick<MatrixClient, "getDomain" | "baseUrl"> & OpenIDClientParts;
   roomId: string;
   useOldestMember$: Behavior<boolean>;
-  useMatrix2$: Behavior<boolean>;
+  useOldJwtEndpoint$: Behavior<boolean>;
   delayId$: Behavior<string | null>;
 }
 
@@ -62,6 +61,11 @@ interface Props {
  * @prop useOldestMember Whether to use the same transport as the oldest member.
  * This will only update once the first oldest member appears. Will not recompute if the oldest member leaves.
  *
+ * @prop useOldJwtEndpoint$ Whether to set forceOldJwtEndpoint the use the old JWT endpoint.
+ * This is used when the connection manager needs to know if it has to use the legacy endpoint which implies a string concatenated rtcBackendIdentity.
+ * (which is expected for non sticky event based rtc member events)
+ * @returns Behavior<(LivekitTransport & { forceOldJwtEndpoint: boolean }) | null> The `forceOldJwtEndpoint` field is added to let the connection EncryptionManager
+ * know that this transport is for the local member and it IS RELEVANT which jwt endpoint to use. (for the local member transport, we need to know which jwt endpoint to use)
  * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
  */
 export const createLocalTransport$ = ({
@@ -71,21 +75,20 @@ export const createLocalTransport$ = ({
   client,
   roomId,
   useOldestMember$,
-  useMatrix2$,
+  useOldJwtEndpoint$,
   delayId$,
-}: Props): Behavior<LivekitTransportWithVersion | null> => {
+}: Props): Behavior<LivekitTransport | null> => {
   /**
    * The transport over which we should be actively publishing our media.
    * undefined when not joined.
    */
   const oldestMemberTransport$ = scope.behavior(
-    memberships$.pipe(
-      map((memberships) => {
+    combineLatest([memberships$, useOldJwtEndpoint$]).pipe(
+      map(([memberships, forceOldJwtEndpoint]) => {
         const oldestMember = memberships.value[0];
-        const t = oldestMember?.getTransport(memberships.value[0]);
-        if (!t) return null;
-        // Here we will use the matrix2 information from the oldest member transport.
-        return { ...t, useMatrix2: oldestMember.kind === "rtc" };
+        const transport = oldestMember?.getTransport(memberships.value[0]);
+        if (!transport) return null;
+        return { ...transport, forceOldJwtEndpoint };
       }),
       first((t) => t != null && isLivekitTransport(t)),
     ),
@@ -98,24 +101,23 @@ export const createLocalTransport$ = ({
    *
    * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
    */
-  const preferredTransport$: Behavior<LivekitTransportWithVersion | null> =
-    scope.behavior(
-      combineLatest([customLivekitUrl.value$, useMatrix2$, delayId$]).pipe(
-        switchMap(([customUrl, useMatrix2, delayId]) =>
-          from(
-            makeTransport(
-              client,
-              ownMembershipIdentity,
-              roomId,
-              customUrl,
-              useMatrix2,
-              delayId ?? undefined,
-            ),
+  const preferredTransport$: Behavior<LivekitTransport | null> = scope.behavior(
+    combineLatest([customLivekitUrl.value$, delayId$, useOldJwtEndpoint$]).pipe(
+      switchMap(([customUrl, delayId, forceOldJwtEndpoint]) =>
+        from(
+          makeTransport(
+            client,
+            ownMembershipIdentity,
+            roomId,
+            customUrl,
+            forceOldJwtEndpoint,
+            delayId ?? undefined,
           ),
         ),
       ),
-      null,
-    );
+    ),
+    null,
+  );
 
   /**
    * The chosen transport we should advertise in our MatrixRTC membership.
@@ -131,7 +133,7 @@ export const createLocalTransport$ = ({
           ? (oldestMemberTransport ?? preferredTransport)
           : preferredTransport,
       ),
-      distinctUntilChanged(areLivekitTransportsEqual),
+      distinctUntilChanged((t1, t2) => areLivekitTransportsEqual(t1, t2)),
     ),
   );
 };
@@ -142,6 +144,8 @@ const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
  *
  * @param client
  * @param roomId
+ * @param useMatrix2 This implies using the matrix2 jwt endpoint (including delayed event delegation of the jwt token)
+ * @param delayId
  * @returns
  * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
  */
@@ -150,9 +154,9 @@ async function makeTransport(
   membership: CallMembershipIdentityParts,
   roomId: string,
   urlFromDevSettings: string | null,
-  matrix2jwt = false,
+  forceOldJwtEndpoint: boolean,
   delayId?: string,
-): Promise<LivekitTransportWithVersion> {
+): Promise<LivekitTransport & { forceOldJwtEndpoint: boolean }> {
   let transport: LivekitTransport | undefined;
   logger.trace("Searching for a preferred transport");
   //TODO refactor this to use the jwt service returned alias.
@@ -209,11 +213,12 @@ async function makeTransport(
     client,
     membership,
     transport.livekit_service_url,
+    forceOldJwtEndpoint,
     transport.livekit_alias,
-    matrix2jwt,
     client.baseUrl,
     delayId,
+    logger,
   );
 
-  return { ...transport, useMatrix2: matrix2jwt };
+  return { ...transport, forceOldJwtEndpoint };
 }

@@ -7533,7 +7533,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=toger5/use-membershipID-for-session-state-events&commit=8cea2c05839ebcaa90945504a453b9b1e1092fc4"
+    matrix-js-sdk: "github:matrix-org/matrix-js-sdk#head=toger5/use-membershipID-for-session-state-events&commit=6f0815930a008eff8f86e6e5748d447be0e7c25e"
     matrix-widget-api: "npm:^1.14.0"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -10338,9 +10338,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/use-membershipID-for-session-state-events&commit=8cea2c05839ebcaa90945504a453b9b1e1092fc4":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#head=toger5/use-membershipID-for-session-state-events&commit=6f0815930a008eff8f86e6e5748d447be0e7c25e":
   version: 39.4.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=8cea2c05839ebcaa90945504a453b9b1e1092fc4"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=6f0815930a008eff8f86e6e5748d447be0e7c25e"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^16.0.0"
@@ -10356,7 +10356,7 @@ __metadata:
     sdp-transform: "npm:^3.0.0"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/2375dd3d9191f78fe589b0d3170f3da7792ed469a81d3ba3cd12f4915fd33a859f8af3491edb9cf0cdaa1f881a3ea7c1bf7539e850ad0360ec9981271f462c81
+  checksum: 10c0/a5a904a79f3660d1f6fe217195e662adf82af4a445681e47f292772d9d4d63ce60aaca209f40c41e2d659bee2b17cd5b3345bbad77795032057f2c0e3129cc77
   languageName: node
   linkType: hard
 

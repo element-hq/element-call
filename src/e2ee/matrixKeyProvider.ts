@@ -11,6 +11,7 @@ import {
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 const logger = rootLogger.getChild("[MatrixKeyProvider]");
 
 export class MatrixKeyProvider extends BaseKeyProvider {
@@ -43,6 +44,7 @@ export class MatrixKeyProvider extends BaseKeyProvider {
   private onEncryptionKeyChanged = (
     encryptionKey: Uint8Array,
     encryptionKeyIndex: number,
+    membershipParts: CallMembershipIdentityParts,
     rtcBackendIdentity: string,
   ): void => {
     crypto.subtle
@@ -59,12 +61,12 @@ export class MatrixKeyProvider extends BaseKeyProvider {
           );
 
           logger.debug(
-            `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${membershipFull.rtcBackendIdentity} (before hash: ${membershipFull.userId}) encryptionKeyIndex=${encryptionKeyIndex}`,
+            `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${rtcBackendIdentity} (before hash: ${membershipParts.userId}) encryptionKeyIndex=${encryptionKeyIndex}`,
           );
         },
         (e) => {
           logger.error(
-            `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId before hash=${membershipFull.userId} encryptionKeyIndex=${encryptionKeyIndex}`,
+            `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId before hash=${membershipParts.userId} encryptionKeyIndex=${encryptionKeyIndex}`,
             e,
           );
         },

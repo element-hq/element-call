@@ -6,8 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type IOpenIDToken, type MatrixClient } from "matrix-js-sdk";
-import { logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import { FailToGetOpenIdToken } from "../utils/errors";
 import { doNetworkOperationWithRetry } from "../utils/matrix";
@@ -28,8 +28,17 @@ export type OpenIDClientParts = Pick<
  * to the matrix RTC backend in order to get acces to the SFU.
  * It has built-in retry for calls to the homeserver with a backoff policy.
  * @param client
+ * @param membership
  * @param serviceUrl
- * @param matrixRoomId
+ * @param forceOldEndpoint This will use the old jwt endpoint which will create the rtc backend identity based on string concatination
+ * instead of a hash.
+ * This function by default uses whatever is possible with the current jwt service installed next to the SFU.
+ * For remote connections this does not matter, since we will not publish there we can rely on the newest option.
+ * For our own connection we can only use the hashed version if we also send the new matrix2.0 sticky events.
+ * @param livekitRoomAlias
+ * @param delayEndpointBaseUrl
+ * @param delayId
+ * @param logger
  * @returns Object containing the token information
  * @throws FailToGetOpenIdToken
  */
@@ -37,10 +46,11 @@ export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
   membership: CallMembershipIdentityParts,
   serviceUrl: string,
+  forceOldJwtEndpoint: boolean,
   livekitRoomAlias: string,
-  matrix2jwt: boolean,
   delayEndpointBaseUrl?: string,
   delayId?: string,
+  logger?: Logger,
 ): Promise<SFUConfig> {
   let openIdToken: IOpenIDToken;
   try {
@@ -52,26 +62,35 @@ export async function getSFUConfigWithOpenID(
       error instanceof Error ? error : new Error("Unknown error"),
     );
   }
-  logger.debug("Got openID token", openIdToken);
+  logger?.debug("Got openID token", openIdToken);
 
-  logger.info(`Trying to get JWT for focus ${serviceUrl}...`);
+  logger?.info(`Trying to get JWT for focus ${serviceUrl}...`);
   const args: [CallMembershipIdentityParts, string, string, IOpenIDToken] = [
     membership,
     serviceUrl,
     livekitRoomAlias,
     openIdToken,
   ];
-  if (matrix2jwt) {
+  try {
+    // we do not want to try the old endpoint, since we are not sending the new matrix2.0 sticky events (no hashed identity in the event)
+    if (forceOldJwtEndpoint) throw new Error("Force old jwt endpoint");
+    if (!delayId)
+      throw new Error("No delayId, Won't try matrix 2.0 jwt endpoint.");
+
     const sfuConfig = await getLiveKitJWTWithDelayDelegation(
       ...args,
       delayEndpointBaseUrl,
       delayId,
     );
-    logger.info(`Got JWT from call's active focus URL.`);
+    logger?.info(`Got JWT from call's active focus URL.`);
     return sfuConfig;
-  } else {
+  } catch (e) {
+    logger?.warn(
+      `Failed fetching jwt with matrix 2.0 endpoint (retry with legacy)`,
+      e,
+    );
     const sfuConfig = await getLiveKitJWT(...args);
-    logger.info(`Got JWT from call's active focus URL.`);
+    logger?.info(`Got JWT from call's active focus URL.`);
     return sfuConfig;
   }
 }

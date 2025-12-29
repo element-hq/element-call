@@ -38,7 +38,7 @@ describe("LocalTransport", () => {
         getDeviceId: vi.fn(),
       },
       ownMembershipIdentity: ownMemberMock,
-      useMatrix2$: constant(false),
+      useOldJwtEndpoint$: constant(false),
       delayId$: constant("delay_id_mock"),
     });
     await flushPromises();
@@ -76,7 +76,7 @@ describe("LocalTransport", () => {
         getDeviceId: vi.fn(),
       },
       ownMembershipIdentity: ownMemberMock,
-      useMatrix2$: constant(false),
+      useOldJwtEndpoint$: constant(false),
       delayId$: constant("delay_id_mock"),
     });
     localTransport$.subscribe(
@@ -116,7 +116,7 @@ describe("LocalTransport", () => {
         baseUrl: "https://lk.example.org",
       },
       ownMembershipIdentity: ownMemberMock,
-      useMatrix2$: constant(false),
+      useOldJwtEndpoint$: constant(false),
       delayId$: constant("delay_id_mock"),
     });
 
@@ -155,7 +155,7 @@ describe("LocalTransport", () => {
         baseUrl: "https://lk.example.org",
       },
       ownMembershipIdentity: ownMemberMock,
-      useMatrix2$: constant(false),
+      useOldJwtEndpoint$: constant(false),
       delayId$: constant("delay_id_mock"),
     });
 
