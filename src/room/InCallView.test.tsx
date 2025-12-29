@@ -23,7 +23,6 @@ import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 
 import {
-  mockComputeLivekitParticipantIdentity$,
   mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
@@ -62,13 +61,6 @@ vi.mock("../livekit/MatrixAudioRenderer");
 vi.mock("react-use-measure", () => ({
   default: (): [() => void, object] => [(): void => {}, {}],
 }));
-vi.mock(
-  import("../state/CallViewModel/remoteMembers/LivekitParticipantIdentity.ts"),
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    computeLivekitParticipantIdentity$: mockComputeLivekitParticipantIdentity$,
-  }),
-);
 
 const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
 const localParticipant = mockLocalParticipant({

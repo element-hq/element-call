@@ -35,8 +35,10 @@ import {
 } from "../../../utils/errors.ts";
 
 export interface ConnectionOpts {
+  /** Whether we always try to connect to this connection via the legacy jwt endpoint. (no hash identity) */
+  forceOldJwtEndpoint?: boolean;
   /** The media transport to connect to. */
-  transport: LivekitTransport & { useMatrix2: boolean };
+  transport: LivekitTransport;
   /** The Matrix client to use for OpenID and SFU config requests. */
   client: OpenIDClientParts;
   /** The observable scope to use for this connection. */
@@ -89,7 +91,7 @@ export class Connection {
   /**
    * The media transport to connect to.
    */
-  public readonly transport: LivekitTransport & { useMatrix2: boolean };
+  public readonly transport: LivekitTransport;
 
   public readonly livekitRoom: LivekitRoom;
 
@@ -192,16 +194,14 @@ export class Connection {
       this.client,
       this.ownMembershipIdentity,
       this.transport.livekit_service_url,
+      this.forceOldJwtEndpoint,
       this.transport.livekit_alias,
-      this.transport.useMatrix2,
+      // For the remote members we intentionally do not pass a delayEndpointBaseUrl.
+      undefined,
+      // and no delayId.
+      undefined,
+      this.logger,
     );
-    // client: OpenIDClientParts,
-    // membership: CallMembershipIdentityParts,
-    // serviceUrl: string,
-    // livekitRoomAlias: string,
-    // matrix2jwt: boolean,
-    // delayEndpointBaseUrl?: string,
-    // delayId?: string,
   }
 
   /**
@@ -222,7 +222,7 @@ export class Connection {
 
   private readonly client: OpenIDClientParts;
   private readonly logger: Logger;
-
+  private readonly forceOldJwtEndpoint: boolean;
   /**
    * Creates a new connection to a matrix RTC LiveKit backend.
    *
@@ -235,6 +235,7 @@ export class Connection {
     logger: Logger,
     private ownMembershipIdentity: CallMembershipIdentityParts,
   ) {
+    this.forceOldJwtEndpoint = opts.forceOldJwtEndpoint ?? false;
     this.logger = logger.getChild("[Connection]");
     this.logger.info(
       `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,

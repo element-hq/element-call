@@ -7,21 +7,17 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, map, of, switchMap, tap } from "rxjs";
+import { combineLatest, map, of, switchMap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import { type Behavior } from "../../Behavior.ts";
+import { constant, type Behavior } from "../../Behavior.ts";
 import { type Connection } from "./Connection.ts";
 import { Epoch, type ObservableScope } from "../../ObservableScope.ts";
 import { generateItemsWithEpoch } from "../../../utils/observable.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
-
-export type LivekitTransportWithVersion = LivekitTransport & {
-  useMatrix2: boolean;
-};
 
 export class ConnectionManagerData {
   private readonly store: Map<string, [Connection, RemoteParticipant[]]> =
@@ -64,7 +60,9 @@ export class ConnectionManagerData {
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
-  inputTransports$: Behavior<Epoch<LivekitTransportWithVersion[]>>;
+  localTransport$: Behavior<LivekitTransport | null>;
+  remoteTransports$: Behavior<Epoch<LivekitTransport[]>>;
+  forceOldJwtEndpointForLocalTransport$?: Behavior<boolean>;
   logger: Logger;
   ownMembershipIdentity: CallMembershipIdentityParts;
 }
@@ -91,12 +89,28 @@ export interface IConnectionManager {
 export function createConnectionManager$({
   scope,
   connectionFactory,
-  inputTransports$,
+  localTransport$,
+  remoteTransports$,
+  forceOldJwtEndpointForLocalTransport$ = constant(false),
   logger: parentLogger,
   ownMembershipIdentity,
 }: Props): IConnectionManager {
   const logger = parentLogger.getChild("[ConnectionManager]");
   // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
+
+  const allInputTransports$ = combineLatest([
+    localTransport$,
+    remoteTransports$,
+  ]).pipe(
+    map(([localTransport, transports]) => {
+      const localTransportAsArray = localTransport ? [localTransport] : [];
+      return transports.mapInner((transports) => [
+        ...localTransportAsArray,
+        ...transports,
+      ]);
+    }),
+    map((transports) => transports.mapInner(removeDuplicateTransports)),
+  );
 
   /**
    * All transports currently managed by the ConnectionManager.
@@ -106,14 +120,32 @@ export function createConnectionManager$({
    * It is build based on the list of subscribed transports (`transportsSubscriptions$`).
    * externally this is modified via `registerTransports()`.
    */
-  const transports$ = scope.behavior(
-    inputTransports$.pipe(
-      map((transports) => transports.mapInner(removeDuplicateTransports)),
-      tap(({ value: transports }) => {
-        logger.trace(
-          `Managing transports: ${transports.map((t) => t.livekit_service_url).join(", ")}`,
-        );
-      }),
+  const transportsWithJwtTag$ = scope.behavior(
+    combineLatest([
+      allInputTransports$,
+      localTransport$,
+      forceOldJwtEndpointForLocalTransport$,
+    ]).pipe(
+      map(
+        ([
+          transports,
+          localTransport,
+          forceOldJwtEndpointForLocalTransport,
+        ]) => {
+          // nmodify only the local transport with forceOldJwtEndpointForLocalTransport
+          const index = transports.value.findIndex((t) =>
+            areLivekitTransportsEqual(localTransport, t),
+          );
+          transports.value[index].forceOldJwtEndpoint =
+            forceOldJwtEndpointForLocalTransport;
+          logger.trace(
+            `Managing transports: ${transports.value.map((t) => t.livekit_service_url).join(", ")}`,
+          );
+          return transports as Epoch<
+            (LivekitTransport & { forceOldJwtEndpoint?: boolean })[]
+          >;
+        },
+      ),
     ),
   );
 
@@ -121,7 +153,7 @@ export function createConnectionManager$({
    * Connections for each transport in use by one or more session members.
    */
   const connections$ = scope.behavior(
-    transports$.pipe(
+    transportsWithJwtTag$.pipe(
       generateItemsWithEpoch(
         function* (transports) {
           for (const transport of transports)
@@ -129,23 +161,23 @@ export function createConnectionManager$({
               keys: [
                 transport.livekit_service_url,
                 transport.livekit_alias,
-                transport.useMatrix2,
+                transport.forceOldJwtEndpoint,
               ],
               data: undefined,
             };
         },
-        (scope, _data$, serviceUrl, alias, useMatrix2) => {
+        (scope, _data$, serviceUrl, alias, forceOldJwtEndpoint) => {
           logger.debug(`Creating connection to ${serviceUrl} (${alias})`);
           const connection = connectionFactory.createConnection(
             {
               type: "livekit",
               livekit_service_url: serviceUrl,
               livekit_alias: alias,
-              useMatrix2,
             },
             scope,
             logger,
             ownMembershipIdentity,
+            forceOldJwtEndpoint,
           );
           // Start the connection immediately
           // Use connection state to track connection progress

@@ -13,11 +13,7 @@ import fetchMock from "fetch-mock";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import {
-  type Epoch,
-  ObservableScope,
-  trackEpoch,
-} from "../../ObservableScope.ts";
+import { type Epoch, ObservableScope, trackEpoch } from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
 import {
@@ -34,6 +30,7 @@ import {
 } from "./MatrixLivekitMembers.ts";
 import { createConnectionManager$ } from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
+import { constant } from "../../Behavior.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
 
@@ -121,7 +118,8 @@ test("bob, carl, then bob joining no tracks yet", () => {
     const connectionManager = createConnectionManager$({
       scope: testScope,
       connectionFactory: ecConnectionFactory,
-      inputTransports$: membershipsAndTransports.transports$,
+      localTransport$: constant(null),
+      remoteTransports$: membershipsAndTransports.transports$,
       logger: logger,
       ownMembershipIdentity: ownMemberMock,
     });

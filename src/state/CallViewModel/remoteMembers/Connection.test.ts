@@ -26,6 +26,7 @@ import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc/LivekitTransport";
 
 import {
   Connection,
@@ -39,7 +40,6 @@ import {
   FailToGetOpenIdToken,
 } from "../../../utils/errors.ts";
 import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
-import { type LivekitTransportWithVersion } from "./ConnectionManager.ts";
 
 let testScope: ObservableScope;
 
@@ -50,7 +50,7 @@ let fakeLivekitRoom: MockedObject<LivekitRoom>;
 let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
-const livekitFocus: LivekitTransportWithVersion = {
+const livekitFocus: LivekitTransport = {
   livekit_alias: "!roomID:example.org",
   livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
   type: "livekit",

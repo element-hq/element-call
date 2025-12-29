@@ -15,6 +15,7 @@ import {
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc/LivekitTransport";
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
@@ -23,15 +24,15 @@ import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import { defaultLiveKitOptions } from "../../../livekit/options.ts";
-import { type LivekitTransportWithVersion } from "./ConnectionManager.ts";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
   createConnection(
-    transport: LivekitTransportWithVersion,
+    transport: LivekitTransport,
     scope: ObservableScope,
     logger: Logger,
     ownMembershipIdentity: CallMembershipIdentityParts,
+    forceOldJwtEndpoint?: boolean,
   ): Connection;
 }
 
@@ -88,10 +89,11 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @returns
    */
   public createConnection(
-    transport: LivekitTransportWithVersion,
+    transport: LivekitTransport,
     scope: ObservableScope,
     logger: Logger,
     ownMembershipIdentity: CallMembershipIdentityParts,
+    forceOldJwtEndpoint?: boolean,
   ): Connection {
     return new Connection(
       {
@@ -99,6 +101,7 @@ export class ECConnectionFactory implements ConnectionFactory {
         client: this.client,
         scope: scope,
         livekitRoomFactory: this.livekitRoomFactory,
+        forceOldJwtEndpoint,
       },
       logger,
       ownMembershipIdentity,

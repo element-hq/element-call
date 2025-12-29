@@ -25,6 +25,7 @@ import {
 import {
   CallMembership,
   type LivekitFocusSelection,
+  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
@@ -66,7 +67,6 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { type Behavior, constant } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
 import { MuteStates } from "../state/MuteStates";
-import { type LivekitTransportWithVersion } from "../state/CallViewModel/remoteMembers/ConnectionManager";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -197,11 +197,10 @@ export function mockEmitter<T>(): EmitterMock<T> {
   };
 }
 
-export const exampleTransport: LivekitTransportWithVersion = {
+export const exampleTransport: LivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
   livekit_alias: "!alias:example.org",
-  useMatrix2: false,
 };
 
 export function mockCallMembership(

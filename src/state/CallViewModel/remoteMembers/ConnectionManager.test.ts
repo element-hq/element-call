@@ -14,29 +14,26 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Epoch, mapEpoch, ObservableScope } from "../../ObservableScope.ts";
 import {
   createConnectionManager$,
-  type LivekitTransportWithVersion,
   type ConnectionManagerData,
 } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { ownMemberMock, withTestScheduler } from "../../../utils/test.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
-import { type Behavior } from "../../Behavior.ts";
+import { constant, type Behavior } from "../../Behavior.ts";
 
 // Some test constants
 
-const TRANSPORT_1: LivekitTransportWithVersion = {
+const TRANSPORT_1: LivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
   livekit_alias: "!alias:example.org",
-  useMatrix2: false,
 };
 
-const TRANSPORT_2: LivekitTransportWithVersion = {
+const TRANSPORT_2: LivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.sample.com",
   livekit_alias: "!alias:sample.com",
-  useMatrix2: false,
 };
 
 let fakeConnectionFactory: ConnectionFactory;
@@ -79,7 +76,8 @@ describe("connections$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        inputTransports$: behavior("a", {
+        localTransport$: constant(null),
+        remoteTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
         logger: logger,
@@ -119,7 +117,8 @@ describe("connections$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        inputTransports$: behavior("abcdef", {
+        localTransport$: constant(null),
+        remoteTransports$: behavior("abcdef", {
           a: new Epoch([TRANSPORT_1], 0),
           b: new Epoch([TRANSPORT_1], 1),
           c: new Epoch([TRANSPORT_1], 2),
@@ -165,7 +164,8 @@ describe("connections$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        inputTransports$: behavior("abc", {
+        localTransport$: constant(null),
+        remoteTransports$: behavior("abc", {
           a: new Epoch([TRANSPORT_1], 0),
           b: new Epoch([TRANSPORT_1, TRANSPORT_2], 1),
           c: new Epoch([TRANSPORT_1], 2),
@@ -281,7 +281,8 @@ describe("connectionManagerData$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        inputTransports$: behavior("a", {
+        localTransport$: constant(null),
+        remoteTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
         logger,

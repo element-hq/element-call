@@ -415,17 +415,18 @@ export function createCallViewModel$(
   const ownMembershipIdentity: CallMembershipIdentityParts = {
     userId,
     deviceId,
+    // TODO look into this!!!
     memberId: `${userId}:${deviceId}`,
   };
 
+  const useOldJwtEndpoint$ = scope.behavior(
+    options.matrixRTCMode$.pipe(map((v) => v !== MatrixRTCMode.Matrix_2_0)),
+  );
   const localTransport$ = createLocalTransport$({
     scope: scope,
     memberships$: memberships$,
     ownMembershipIdentity,
     client,
-    useMatrix2$: scope.behavior(
-      options.matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Matrix_2_0)),
-    ),
     delayId$: scope.behavior(
       (
         fromEvent(
@@ -436,6 +437,7 @@ export function createCallViewModel$(
       matrixRTCSession.delayId ?? null,
     ),
     roomId: matrixRoom.roomId,
+    useOldJwtEndpoint$,
     useOldestMember$: scope.behavior(
       options.matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
     ),
@@ -455,29 +457,19 @@ export function createCallViewModel$(
   const connectionManager = createConnectionManager$({
     scope: scope,
     connectionFactory: connectionFactory,
-    inputTransports$: scope.behavior(
-      combineLatest(
-        [
-          localTransport$.pipe(
-            catchError((e: unknown) => {
-              logger.info(
-                "dont pass local transport to createConnectionManager$. localTransport$ threw an error",
-                e,
-              );
-              return of(null);
-            }),
-          ),
-          membershipsAndTransports.transports$,
-        ],
-        (localTransport, transports) => {
-          const localTransportAsArray = localTransport ? [localTransport] : [];
-          return transports.mapInner((transports) => [
-            ...localTransportAsArray,
-            ...transports,
-          ]);
-        },
+    localTransport$: scope.behavior(
+      localTransport$.pipe(
+        catchError((e: unknown) => {
+          logger.info(
+            "could not pass local transport to createConnectionManager$. localTransport$ threw an error",
+            e,
+          );
+          return of(null);
+        }),
       ),
     ),
+    remoteTransports$: membershipsAndTransports.transports$,
+    forceOldJwtEndpointForLocalTransport$: useOldJwtEndpoint$,
     logger: logger,
     ownMembershipIdentity,
   });

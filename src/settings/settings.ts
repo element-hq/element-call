@@ -127,6 +127,12 @@ export const alwaysShowIphoneEarpiece = new Setting<boolean>(
 export enum MatrixRTCMode {
   Legacy = "legacy",
   Compatibil = "compatibil",
+  /** This implies using
+   *  - sticky events
+   *  - hashed RTC backend identity
+   *  - the new endpoint for the jwt token on the local membership (remote memberships will always try the new jwt endpoint first -> then the legacy one)
+   *  - use the hashed identity for the local membership
+   */
   Matrix_2_0 = "matrix_2_0",
 }
 
