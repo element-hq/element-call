@@ -15,7 +15,8 @@ import {
   vitest,
 } from "vitest";
 import fetchMock from "fetch-mock";
-import { getSFUConfigWithOpenID, OpenIDClientParts } from "./openIDSFU";
+
+import { getSFUConfigWithOpenID, type OpenIDClientParts } from "./openIDSFU";
 import { testJWTToken } from "../utils/test-fixtures";
 
 const sfuUrl = "https://sfu.example.org";
@@ -50,7 +51,7 @@ describe("getSFUConfigWithOpenID", () => {
       livekitIdentity: "@me:example.org:ABCDEF",
       livekitAlias: "!example_room_id",
     });
-    await fetchMock.flush();
+    void (await fetchMock.flush());
   });
   it("should fail if the SFU errors", async () => {
     fetchMock.post("https://sfu.example.org/sfu/get", () => {
@@ -69,7 +70,7 @@ describe("getSFUConfigWithOpenID", () => {
       expect(((ex as Error).cause as Error).message).toEqual(
         "SFU Config fetch failed with status code 500",
       );
-      await fetchMock.flush();
+      void (await fetchMock.flush());
       return;
     }
     expect.fail("Expected test to throw;");
@@ -82,12 +83,12 @@ describe("getSFUConfigWithOpenID", () => {
       if (count < 2) {
         throw Error("Test failure");
       }
-      return {
+      return Promise.resolve({
         token_type: "Bearer",
         access_token: "foobar",
         matrix_server_name: "example.org",
         expires_in: 30,
-      };
+      });
     });
     fetchMock.post("https://sfu.example.org/sfu/get", () => {
       return {
@@ -106,6 +107,6 @@ describe("getSFUConfigWithOpenID", () => {
       livekitIdentity: "@me:example.org:ABCDEF",
       livekitAlias: "!example_room_id",
     });
-    await fetchMock.flush();
+    void (await fetchMock.flush());
   });
 });
