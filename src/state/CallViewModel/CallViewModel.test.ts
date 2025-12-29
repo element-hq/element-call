@@ -1256,7 +1256,9 @@ describe.each([
               rtcSession.membershipStatus = Status.Connected;
             },
             n: () => {
-              rtcSession.membershipStatus = Status.Reconnecting;
+              // NOTE: This was removed in https://github.com/matrix-org/matrix-js-sdk/pull/5103 accidentally.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              rtcSession.membershipStatus = "Reconnecting" as any;
             },
           });
           schedule(probablyLeftMarbles, {
