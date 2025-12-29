@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { expect, test } from "@playwright/test";
+
 import { createJTWToken } from "./fixtures/jwt-token";
 
 test("Should show error screen if fails to get JWT token", async ({ page }) => {
