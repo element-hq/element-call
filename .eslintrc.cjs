@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 `;
 
 module.exports = {
-  plugins: ["matrix-org", "rxjs"],
+  plugins: ["matrix-org", "rxjs", "jsdoc"],
   extends: [
     "plugin:matrix-org/react",
     "plugin:matrix-org/a11y",
@@ -26,6 +26,13 @@ module.exports = {
     node: true,
   },
   rules: {
+    "jsdoc/no-types": "error",
+    "jsdoc/empty-tags": "error",
+    "jsdoc/check-property-names": "error",
+    "jsdoc/check-values": "error",
+    "jsdoc/check-param-names": "warn",
+    // "jsdoc/require-param": "warn",
+    "jsdoc/require-param-description": "warn",
     "matrix-org/require-copyright-header": ["error", COPYRIGHT_HEADER],
     "jsx-a11y/media-has-caption": "off",
     "react/display-name": "error",
@@ -75,6 +82,17 @@ module.exports = {
         "no-console": ["error"],
       },
     },
+    {
+      files: ["**/*.test.ts", "**/*.test.tsx", "**/test.ts", "**/test.tsx", "**/test-**"],
+      rules: {
+        "jsdoc/no-types": "off",
+        "jsdoc/empty-tags": "off",
+        "jsdoc/check-property-names": "off",
+        "jsdoc/check-values": "off",
+        "jsdoc/check-param-names": "off",
+        "jsdoc/require-param-description": "off",
+      }
+    }
   ],
   settings: {
     react: {
