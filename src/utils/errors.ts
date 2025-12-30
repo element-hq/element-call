@@ -86,7 +86,6 @@ export class MatrixRTCTransportMissingError extends ElementCallError {
  * Error indicating that the connection to the call was lost and could not be re-established.
  */
 export class ConnectionLostError extends ElementCallError {
-
   public constructor() {
     super(
       t("error.connection_lost"),
@@ -102,7 +101,6 @@ export class ConnectionLostError extends ElementCallError {
  * operation to fail.
  */
 export class MembershipManagerError extends ElementCallError {
-
   /**
    * Creates an instance of MembershipManagerError.
    *
@@ -123,7 +121,6 @@ export class MembershipManagerError extends ElementCallError {
  * Error indicating that end-to-end encryption is not supported in the current environment.
  */
 export class E2EENotSupportedError extends ElementCallError {
-
   public constructor() {
     super(
       t("error.e2ee_unsupported"),
@@ -138,7 +135,6 @@ export class E2EENotSupportedError extends ElementCallError {
  * Error indicating an unknown issue occurred during a call operation.
  */
 export class UnknownCallError extends ElementCallError {
-
   /**
    * Creates an instance of UnknownCallError.
    * @param error - The underlying error that caused the unknown issue.
@@ -179,7 +175,6 @@ export class FailToGetOpenIdToken extends ElementCallError {
  * Error indicating a failure to start publishing on a LiveKit connection.
  */
 export class FailToStartLivekitConnection extends ElementCallError {
-
   /**
    * Creates an instance of FailToStartLivekitConnection.
    * @param e - An optional error message providing additional context.

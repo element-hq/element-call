@@ -83,7 +83,13 @@ module.exports = {
       },
     },
     {
-      files: ["**/*.test.ts", "**/*.test.tsx", "**/test.ts", "**/test.tsx", "**/test-**"],
+      files: [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/test.ts",
+        "**/test.tsx",
+        "**/test-**",
+      ],
       rules: {
         "jsdoc/no-types": "off",
         "jsdoc/empty-tags": "off",
@@ -91,8 +97,8 @@ module.exports = {
         "jsdoc/check-values": "off",
         "jsdoc/check-param-names": "off",
         "jsdoc/require-param-description": "off",
-      }
-    }
+      },
+    },
   ],
   settings: {
     react: {
