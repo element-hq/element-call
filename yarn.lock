@@ -2486,7 +2486,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/dom@npm:1.6.13, @floating-ui/dom@npm:^1.0.0":
+"@floating-ui/core@npm:^1.7.3":
+  version: 1.7.3
+  resolution: "@floating-ui/core@npm:1.7.3"
+  dependencies:
+    "@floating-ui/utils": "npm:^0.2.10"
+  checksum: 10c0/edfc23800122d81df0df0fb780b7328ae6c5f00efbb55bd48ea340f4af8c5b3b121ceb4bb81220966ab0f87b443204d37105abdd93d94846468be3243984144c
+  languageName: node
+  linkType: hard
+
+"@floating-ui/dom@npm:1.7.4":
+  version: 1.7.4
+  resolution: "@floating-ui/dom@npm:1.7.4"
+  dependencies:
+    "@floating-ui/core": "npm:^1.7.3"
+    "@floating-ui/utils": "npm:^0.2.10"
+  checksum: 10c0/da6166c25f9b0729caa9f498685a73a0e28251613b35d27db8de8014bc9d045158a23c092b405321a3d67c2064909b6e2a7e6c1c9cc0f62967dca5779f5aef30
+  languageName: node
+  linkType: hard
+
+"@floating-ui/dom@npm:^1.0.0":
   version: 1.6.13
   resolution: "@floating-ui/dom@npm:1.6.13"
   dependencies:
@@ -2519,6 +2538,13 @@ __metadata:
     react: ">=17.0.0"
     react-dom: ">=17.0.0"
   checksum: 10c0/9ebc4e82af905cfafeb5cde1dfbc15a2541d4eaaf1e13fb6b8acbb9f0c3535a7c331b8dee3ab5bb03acb21716ee2ab155629a6c14c3227cf959bf8ad92594539
+  languageName: node
+  linkType: hard
+
+"@floating-ui/utils@npm:^0.2.10":
+  version: 0.2.10
+  resolution: "@floating-ui/utils@npm:0.2.10"
+  checksum: 10c0/e9bc2a1730ede1ee25843937e911ab6e846a733a4488623cd353f94721b05ec2c9ec6437613a2ac9379a94c2fd40c797a2ba6fa1df2716f5ce4aa6ddb1cf9ea4
   languageName: node
   linkType: hard
 
@@ -2738,25 +2764,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/components-core@npm:0.12.11, @livekit/components-core@npm:^0.12.0":
-  version: 0.12.11
-  resolution: "@livekit/components-core@npm:0.12.11"
+"@livekit/components-core@npm:0.12.12, @livekit/components-core@npm:^0.12.0":
+  version: 0.12.12
+  resolution: "@livekit/components-core@npm:0.12.12"
   dependencies:
-    "@floating-ui/dom": "npm:1.6.13"
+    "@floating-ui/dom": "npm:1.7.4"
     loglevel: "npm:1.9.1"
     rxjs: "npm:7.8.2"
   peerDependencies:
     livekit-client: ^2.15.14
     tslib: ^2.6.2
-  checksum: 10c0/9c2ac3d30bb8cc9067ae0b2049784f81e90e57df9eabf7edbaf3c8ceb65a63f644a4e6abeb6cc38d3ebe52663d8dbb88535e01a965011f365d5ae1f3daf86052
+  checksum: 10c0/788ae01fa6c58a0edbd629f4195f2f3a7bc94660d2fb729af8b27cab2b151abe36cd0a666989811c6187e51d32c847119853010a82be55844750ab3978079c38
   languageName: node
   linkType: hard
 
 "@livekit/components-react@npm:^2.0.0":
-  version: 2.9.16
-  resolution: "@livekit/components-react@npm:2.9.16"
+  version: 2.9.17
+  resolution: "@livekit/components-react@npm:2.9.17"
   dependencies:
-    "@livekit/components-core": "npm:0.12.11"
+    "@livekit/components-core": "npm:0.12.12"
     clsx: "npm:2.1.1"
     events: "npm:^3.3.0"
     jose: "npm:^6.0.12"
@@ -2770,7 +2796,7 @@ __metadata:
   peerDependenciesMeta:
     "@livekit/krisp-noise-filter":
       optional: true
-  checksum: 10c0/4ba4ff473c5a29d3107412733a6676a3b708d70684ed463e9b34cda26abb3d2f317c2828a52e730837b756de9df3fc248260d6f390aedebfb6ec96ef63c7b151
+  checksum: 10c0/ba64ada37d4b3ce4d5ee7c5b2a6bddbffc17c2e641e95881aac9f02b4ff7428105e0a372d364e50ff124e988b7426d322d94caabdb55b634aebf0144d7e37f99
   languageName: node
   linkType: hard
 
