@@ -423,7 +423,8 @@ export function createCallViewModel$(
   const ownMembershipIdentity: CallMembershipIdentityParts = {
     userId,
     deviceId,
-    // TODO look into this!!!
+    // This will eventually become the salt for the hash endpoint.
+    // For now we keep it as the user+device string since it is expected by non matrix matrixRTCMode === Legacy.
     memberId: `${userId}:${deviceId}`,
   };
 

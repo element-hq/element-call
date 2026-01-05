@@ -795,7 +795,6 @@ export const InCallView: FC<InCallViewProps> = ({
           onTouchEnd={onControlsTouchEnd}
         />
       )}
-      {!showControls && <div className={styles.layout} />}
     </div>
   );
 
