@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { type Participant as LivekitParticipant } from "livekit-client";
+import { type RemoteParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Epoch, mapEpoch, ObservableScope } from "../../ObservableScope.ts";
@@ -52,7 +52,7 @@ beforeEach(() => {
       (transport: LivekitTransport, scope: ObservableScope) => {
         const mockConnection = {
           transport,
-          remoteParticipantsWithTracks$: new BehaviorSubject([]),
+          remoteParticipants$: new BehaviorSubject([]),
         } as unknown as Connection;
         vi.mocked(mockConnection).start = vi.fn();
         vi.mocked(mockConnection).stop = vi.fn();
@@ -200,24 +200,21 @@ describe("connections$ stream", () => {
 });
 
 describe("connectionManagerData$ stream", () => {
-  // Used in test to control fake connections' remoteParticipantsWithTracks$ streams
-  let fakePublishingParticipantsStreams: Map<
-    string,
-    Behavior<LivekitParticipant[]>
-  >;
+  // Used in test to control fake connections' remoteParticipants$ streams
+  let fakeRemoteParticipantsStreams: Map<string, Behavior<RemoteParticipant[]>>;
 
   function keyForTransport(transport: LivekitTransport): string {
     return `${transport.livekit_service_url}|${transport.livekit_alias}`;
   }
 
   beforeEach(() => {
-    fakePublishingParticipantsStreams = new Map();
+    fakeRemoteParticipantsStreams = new Map();
 
-    function getPublishingParticipantsFor(
+    function getRemoteParticipantsFor(
       transport: LivekitTransport,
-    ): Behavior<LivekitParticipant[]> {
+    ): Behavior<RemoteParticipant[]> {
       return (
-        fakePublishingParticipantsStreams.get(keyForTransport(transport)) ??
+        fakeRemoteParticipantsStreams.get(keyForTransport(transport)) ??
         new BehaviorSubject([])
       );
     }
@@ -227,13 +224,12 @@ describe("connectionManagerData$ stream", () => {
       .fn()
       .mockImplementation(
         (transport: LivekitTransport, scope: ObservableScope) => {
-          const fakePublishingParticipants$ = new BehaviorSubject<
-            LivekitParticipant[]
+          const fakeRemoteParticipants$ = new BehaviorSubject<
+            RemoteParticipant[]
           >([]);
           const mockConnection = {
             transport,
-            remoteParticipantsWithTracks$:
-              getPublishingParticipantsFor(transport),
+            remoteParticipants$: getRemoteParticipantsFor(transport),
           } as unknown as Connection;
           vi.mocked(mockConnection).start = vi.fn();
           vi.mocked(mockConnection).stop = vi.fn();
@@ -242,36 +238,36 @@ describe("connectionManagerData$ stream", () => {
             void mockConnection.stop();
           });
 
-          fakePublishingParticipantsStreams.set(
+          fakeRemoteParticipantsStreams.set(
             keyForTransport(transport),
-            fakePublishingParticipants$,
+            fakeRemoteParticipants$,
           );
           return mockConnection;
         },
       );
   });
 
-  test("Should report connections with the publishing participants", () => {
+  test("Should report connections with the remote participants", () => {
     withTestScheduler(({ expectObservable, schedule, behavior }) => {
       // Setup the fake participants streams behavior
       // ==============================
-      fakePublishingParticipantsStreams.set(
+      fakeRemoteParticipantsStreams.set(
         keyForTransport(TRANSPORT_1),
         behavior("oa-b", {
           o: [],
-          a: [{ identity: "user1A" } as LivekitParticipant],
+          a: [{ identity: "user1A" } as RemoteParticipant],
           b: [
-            { identity: "user1A" } as LivekitParticipant,
-            { identity: "user1B" } as LivekitParticipant,
+            { identity: "user1A" } as RemoteParticipant,
+            { identity: "user1B" } as RemoteParticipant,
           ],
         }),
       );
 
-      fakePublishingParticipantsStreams.set(
+      fakeRemoteParticipantsStreams.set(
         keyForTransport(TRANSPORT_2),
         behavior("o-a", {
           o: [],
-          a: [{ identity: "user2A" } as LivekitParticipant],
+          a: [{ identity: "user2A" } as RemoteParticipant],
         }),
       );
       // ==============================
@@ -289,47 +285,47 @@ describe("connectionManagerData$ stream", () => {
         a: expect.toSatisfy((e) => {
           const data: ConnectionManagerData = e.value;
           expect(data.getConnections().length).toBe(2);
-          expect(data.getParticipantForTransport(TRANSPORT_1).length).toBe(0);
-          expect(data.getParticipantForTransport(TRANSPORT_2).length).toBe(0);
+          expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(0);
+          expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(0);
           return true;
         }),
         b: expect.toSatisfy((e) => {
           const data: ConnectionManagerData = e.value;
           expect(data.getConnections().length).toBe(2);
-          expect(data.getParticipantForTransport(TRANSPORT_1).length).toBe(1);
-          expect(data.getParticipantForTransport(TRANSPORT_2).length).toBe(0);
-          expect(data.getParticipantForTransport(TRANSPORT_1)[0].identity).toBe(
-            "user1A",
-          );
+          expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(1);
+          expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(0);
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_1)[0].identity,
+          ).toBe("user1A");
           return true;
         }),
         c: expect.toSatisfy((e) => {
           const data: ConnectionManagerData = e.value;
           expect(data.getConnections().length).toBe(2);
-          expect(data.getParticipantForTransport(TRANSPORT_1).length).toBe(1);
-          expect(data.getParticipantForTransport(TRANSPORT_2).length).toBe(1);
-          expect(data.getParticipantForTransport(TRANSPORT_1)[0].identity).toBe(
-            "user1A",
-          );
-          expect(data.getParticipantForTransport(TRANSPORT_2)[0].identity).toBe(
-            "user2A",
-          );
+          expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(1);
+          expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(1);
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_1)[0].identity,
+          ).toBe("user1A");
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_2)[0].identity,
+          ).toBe("user2A");
           return true;
         }),
         d: expect.toSatisfy((e) => {
           const data: ConnectionManagerData = e.value;
           expect(data.getConnections().length).toBe(2);
-          expect(data.getParticipantForTransport(TRANSPORT_1).length).toBe(2);
-          expect(data.getParticipantForTransport(TRANSPORT_2).length).toBe(1);
-          expect(data.getParticipantForTransport(TRANSPORT_1)[0].identity).toBe(
-            "user1A",
-          );
-          expect(data.getParticipantForTransport(TRANSPORT_1)[1].identity).toBe(
-            "user1B",
-          );
-          expect(data.getParticipantForTransport(TRANSPORT_2)[0].identity).toBe(
-            "user2A",
-          );
+          expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(2);
+          expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(1);
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_1)[0].identity,
+          ).toBe("user1A");
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_1)[1].identity,
+          ).toBe("user1B");
+          expect(
+            data.getParticipantsForTransport(TRANSPORT_2)[0].identity,
+          ).toBe("user2A");
           return true;
         }),
       });

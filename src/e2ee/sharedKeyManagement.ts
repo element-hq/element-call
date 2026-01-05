@@ -34,8 +34,8 @@ const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
 /**
- * An upto-date shared key for the room. Either from local storage or the value from `setInitialValue`.
- * @param roomId
+ * An up-to-date shared key for the room. Either from local storage or the value from `setInitialValue`.
+ * @param roomId The room ID we want the shared key for.
  * @param setInitialValue The value we get from the URL. The hook will overwrite the local storage value with this.
  * @returns [roomSharedKey, setRoomSharedKey] like a react useState hook.
  */

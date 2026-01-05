@@ -12,7 +12,11 @@ import { axe } from "vitest-axe";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { GridTile } from "./GridTile";
-import { mockRtcMembership, createRemoteMedia } from "../utils/test";
+import {
+  mockRtcMembership,
+  createRemoteMedia,
+  mockRemoteParticipant,
+} from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
@@ -31,11 +35,11 @@ test("GridTile is accessible", async () => {
       rawDisplayName: "Alice",
       getMxcAvatarUrl: () => "mxc://adfsg",
     },
-    {
+    mockRemoteParticipant({
       setVolume() {},
       getTrackPublication: () =>
         ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
-    },
+    }),
   );
 
   const fakeRtcSession = {

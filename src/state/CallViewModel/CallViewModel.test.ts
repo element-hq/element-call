@@ -60,7 +60,8 @@ import {
 import { MediaDevices } from "../MediaDevices.ts";
 import { getValue } from "../../utils/observable.ts";
 import { type Behavior, constant } from "../Behavior.ts";
-import { withCallViewModel } from "./CallViewModelTestUtils.ts";
+import { withCallViewModel as withCallViewModelInMode } from "./CallViewModelTestUtils.ts";
+import { MatrixRTCMode } from "../../settings/settings.ts";
 
 vi.mock("rxjs", async (importOriginal) => ({
   ...(await importOriginal()),
@@ -229,7 +230,13 @@ function mockRingEvent(
 // need a value to fill in for them when emitting notifications
 const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 
-describe("CallViewModel", () => {
+describe.each([
+  [MatrixRTCMode.Legacy],
+  [MatrixRTCMode.Compatibil],
+  [MatrixRTCMode.Matrix_2_0],
+])("CallViewModel (%s mode)", (mode) => {
+  const withCallViewModel = withCallViewModelInMode(mode);
+
   test("participants are retained during a focus switch", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       // Participants disappear on frame 2 and come back on frame 3
@@ -267,7 +274,7 @@ describe("CallViewModel", () => {
     });
   });
 
-  it.skip("screen sharing activates spotlight layout", () => {
+  test("screen sharing activates spotlight layout", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Start with no screen shares, then have Alice and Bob share their screens,
       // then return to no screen shares, then have just Alice share for a bit
@@ -494,6 +501,48 @@ describe("CallViewModel", () => {
                   `${bobId}:0`,
                   `${aliceId}:0`,
                 ],
+              },
+            },
+          );
+        },
+      );
+    });
+  });
+
+  test("layout reacts to window size", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      const windowSizeInputMarbles = "abc";
+      const expectedLayoutMarbles = " abc";
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant]),
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          windowSize$: behavior(windowSizeInputMarbles, {
+            a: { width: 300, height: 600 }, // Start very narrow, like a phone
+            b: { width: 1000, height: 800 }, // Go to normal desktop window size
+            c: { width: 200, height: 180 }, // Go to PiP size
+          }),
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                // This is the expected one-on-one layout for a narrow window
+                type: "spotlight-expanded",
+                spotlight: [`${aliceId}:0`],
+                pip: `${localId}:0`,
+              },
+              b: {
+                // In a larger window, expect the normal one-on-one layout
+                type: "one-on-one",
+                local: `${localId}:0`,
+                remote: `${aliceId}:0`,
+              },
+              c: {
+                // In a PiP-sized window, we of course expect a PiP layout
+                type: "pip",
+                spotlight: [`${aliceId}:0`],
               },
             },
           );
@@ -1207,7 +1256,9 @@ describe("CallViewModel", () => {
               rtcSession.membershipStatus = Status.Connected;
             },
             n: () => {
-              rtcSession.membershipStatus = Status.Reconnecting;
+              // NOTE: This was removed in https://github.com/matrix-org/matrix-js-sdk/pull/5103 accidentally.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              rtcSession.membershipStatus = "Reconnecting" as any;
             },
           });
           schedule(probablyLeftMarbles, {
