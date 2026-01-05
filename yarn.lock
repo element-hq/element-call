@@ -3228,15 +3228,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/track-processors@npm:^0.7.0":
-  version: 0.7.0
-  resolution: "@livekit/track-processors@npm:0.7.0"
+"@livekit/track-processors@npm:^0.6.0 || ^0.7.1":
+  version: 0.6.1
+  resolution: "@livekit/track-processors@npm:0.6.1"
   dependencies:
     "@mediapipe/tasks-vision": "npm:0.10.14"
   peerDependencies:
     "@types/dom-mediacapture-transform": ^0.1.9
     livekit-client: ^1.12.0 || ^2.1.0
-  checksum: 10c0/4c1ec427586e885c44d2865a98008b563d002b1b98d117383637a696597d71a0ff64d8a5bcba48033298e5c2cbaa9e357481e8a4a182982a355eb9e0eeb87643
+  checksum: 10c0/80f54663c7e13de299de9e2565b6cbd2ba74ea0a4a8adf8a366e8cfd0e19dedfb9d699899137f1a6133414f28779877eeb3200074c03893bc63aeb0d8c912a91
   languageName: node
   linkType: hard
 
@@ -8316,7 +8316,7 @@ __metadata:
     "@livekit/components-core": "npm:^0.12.0"
     "@livekit/components-react": "npm:^2.0.0"
     "@livekit/protocol": "npm:^1.42.2"
-    "@livekit/track-processors": "npm:^0.7.0"
+    "@livekit/track-processors": "npm:^0.6.0 || ^0.7.1"
     "@mediapipe/tasks-vision": "npm:^0.10.18"
     "@opentelemetry/api": "npm:^1.4.0"
     "@opentelemetry/core": "npm:^2.0.0"
