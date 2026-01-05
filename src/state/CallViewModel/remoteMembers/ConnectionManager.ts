@@ -6,13 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type LivekitTransport,
-  type ParticipantId,
-} from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, combineLatest, map, of, switchMap, tap } from "rxjs";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { combineLatest, map, of, switchMap, tap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
-import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
+import { type RemoteParticipant } from "livekit-client";
 
 import { type Behavior } from "../../Behavior.ts";
 import { type Connection } from "./Connection.ts";
@@ -24,21 +21,18 @@ import { type ConnectionFactory } from "./ConnectionFactory.ts";
 export class ConnectionManagerData {
   private readonly store: Map<
     string,
-    [Connection, (LocalParticipant | RemoteParticipant)[]]
+    { connection: Connection; participants: RemoteParticipant[] }
   > = new Map();
 
   public constructor() {}
 
-  public add(
-    connection: Connection,
-    participants: (LocalParticipant | RemoteParticipant)[],
-  ): void {
+  public add(connection: Connection, participants: RemoteParticipant[]): void {
     const key = this.getKey(connection.transport);
     const existing = this.store.get(key);
     if (!existing) {
-      this.store.set(key, [connection, participants]);
+      this.store.set(key, { connection, participants });
     } else {
-      existing[1].push(...participants);
+      existing.participants.push(...participants);
     }
   }
 
@@ -47,59 +41,46 @@ export class ConnectionManagerData {
   }
 
   public getConnections(): Connection[] {
-    return Array.from(this.store.values()).map(([connection]) => connection);
+    return Array.from(this.store.values()).map(({ connection }) => connection);
   }
 
   public getConnectionForTransport(
     transport: LivekitTransport,
   ): Connection | null {
-    return this.store.get(this.getKey(transport))?.[0] ?? null;
+    return this.store.get(this.getKey(transport))?.connection ?? null;
   }
 
-  public getParticipantForTransport(
+  public getParticipantsForTransport(
     transport: LivekitTransport,
-  ): (LocalParticipant | RemoteParticipant)[] {
+  ): RemoteParticipant[] {
     const key = transport.livekit_service_url + "|" + transport.livekit_alias;
     const existing = this.store.get(key);
     if (existing) {
-      return existing[1];
+      return existing.participants;
     }
     return [];
   }
-  /**
-   * Get all connections where the given participant is publishing.
-   * In theory, there could be several connections where the same participant is publishing but with
-   * only well behaving clients a participant should only be publishing on a single connection.
-   * @param participantId
-   */
-  public getConnectionsForParticipant(
-    participantId: ParticipantId,
-  ): Connection[] {
-    const connections: Connection[] = [];
-    for (const [connection, participants] of this.store.values()) {
-      if (participants.some((p) => p.identity === participantId)) {
-        connections.push(connection);
-      }
-    }
-    return connections;
-  }
 }
+
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
   inputTransports$: Behavior<Epoch<LivekitTransport[]>>;
   logger: Logger;
 }
+
 // TODO - write test for scopes (do we really need to bind scope)
 export interface IConnectionManager {
-  transports$: Behavior<Epoch<LivekitTransport[]>>;
   connectionManagerData$: Behavior<Epoch<ConnectionManagerData>>;
 }
+
 /**
  * Crete a `ConnectionManager`
- * @param scope the observable scope used by this object.
- * @param connectionFactory used to create new connections.
- * @param _transportsSubscriptions$ A list of Behaviors each containing a LIST of LivekitTransport.
+ * @param props - Configuration object
+ * @param props.scope - The observable scope used by this object
+ * @param props.connectionFactory - Used to create new connections
+ * @param props.inputTransports$ - A list of Behaviors each containing a LIST of LivekitTransport.
+ * @param props.logger - The logger to use
  *   Each of these behaviors can be interpreted as subscribed list of transports.
  *
  *   Using `registerTransports` independent external modules can control what connections
@@ -116,9 +97,6 @@ export function createConnectionManager$({
   logger: parentLogger,
 }: Props): IConnectionManager {
   const logger = parentLogger.getChild("[ConnectionManager]");
-
-  const running$ = new BehaviorSubject(true);
-  scope.onEnd(() => running$.next(false));
   // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
 
   /**
@@ -130,10 +108,7 @@ export function createConnectionManager$({
    * externally this is modified via `registerTransports()`.
    */
   const transports$ = scope.behavior(
-    combineLatest([running$, inputTransports$]).pipe(
-      map(([running, transports]) =>
-        transports.mapInner((transport) => (running ? transport : [])),
-      ),
+    inputTransports$.pipe(
       map((transports) => transports.mapInner(removeDuplicateTransports)),
       tap(({ value: transports }) => {
         logger.trace(
@@ -183,23 +158,25 @@ export function createConnectionManager$({
         const epoch = connections.epoch;
 
         // Map the connections to list of {connection, participants}[]
-        const listOfConnectionsWithPublishingParticipants =
-          connections.value.map((connection) => {
-            return connection.remoteParticipantsWithTracks$.pipe(
+        const listOfConnectionsWithRemoteParticipants = connections.value.map(
+          (connection) => {
+            return connection.remoteParticipants$.pipe(
               map((participants) => ({
                 connection,
                 participants,
               })),
             );
-          });
+          },
+        );
 
         // probably not required
-        if (listOfConnectionsWithPublishingParticipants.length === 0) {
+
+        if (listOfConnectionsWithRemoteParticipants.length === 0) {
           return of(new Epoch(new ConnectionManagerData(), epoch));
         }
 
         // combineLatest the several streams into a single stream with the ConnectionManagerData
-        return combineLatest(listOfConnectionsWithPublishingParticipants).pipe(
+        return combineLatest(listOfConnectionsWithRemoteParticipants).pipe(
           map(
             (lists) =>
               new Epoch(
@@ -216,7 +193,7 @@ export function createConnectionManager$({
     new Epoch(new ConnectionManagerData()),
   );
 
-  return { transports$, connectionManagerData$ };
+  return { connectionManagerData$ };
 }
 
 function removeDuplicateTransports(

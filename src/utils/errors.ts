@@ -13,6 +13,8 @@ export enum ErrorCode {
    */
   MISSING_MATRIX_RTC_TRANSPORT = "MISSING_MATRIX_RTC_TRANSPORT",
   CONNECTION_LOST_ERROR = "CONNECTION_LOST_ERROR",
+  INTERNAL_MEMBERSHIP_MANAGER = "INTERNAL_MEMBERSHIP_MANAGER",
+  FAILED_TO_START_LIVEKIT = "FAILED_TO_START_LIVEKIT",
   /** LiveKit indicates that the server has hit its track limits */
   INSUFFICIENT_CAPACITY_ERROR = "INSUFFICIENT_CAPACITY_ERROR",
   E2EE_NOT_SUPPORTED = "E2EE_NOT_SUPPORTED",
@@ -27,6 +29,7 @@ export enum ErrorCategory {
   NETWORK_CONNECTIVITY = "NETWORK_CONNECTIVITY",
   CLIENT_CONFIGURATION = "CLIENT_CONFIGURATION",
   UNKNOWN = "UNKNOWN",
+  SYSTEM_FAILURE = "SYSTEM_FAILURE",
   // SYSTEM_FAILURE / FEDERATION_FAILURE ..
 }
 
@@ -54,9 +57,16 @@ export class ElementCallError extends Error {
   }
 }
 
+/**
+ * Configuration problem due to no MatrixRTC backend/SFU is exposed via .well-known and no fallback configured.
+ */
 export class MatrixRTCTransportMissingError extends ElementCallError {
   public domain: string;
 
+  /**
+   * Creates an instance of MatrixRTCTransportMissingError.
+   * @param domain - The domain where the MatrixRTC transport is missing.
+   */
   public constructor(domain: string) {
     super(
       t("error.call_is_not_supported"),
@@ -72,6 +82,9 @@ export class MatrixRTCTransportMissingError extends ElementCallError {
   }
 }
 
+/**
+ * Error indicating that the connection to the call was lost and could not be re-established.
+ */
 export class ConnectionLostError extends ElementCallError {
   public constructor() {
     super(
@@ -83,6 +96,30 @@ export class ConnectionLostError extends ElementCallError {
   }
 }
 
+/**
+ * Error indicating a failure in the membership manager causing the join call
+ * operation to fail.
+ */
+export class MembershipManagerError extends ElementCallError {
+  /**
+   * Creates an instance of MembershipManagerError.
+   *
+   * @param error - The underlying error that caused the membership manager failure.
+   */
+  public constructor(error: Error) {
+    super(
+      t("error.membership_manager"),
+      ErrorCode.INTERNAL_MEMBERSHIP_MANAGER,
+      ErrorCategory.SYSTEM_FAILURE,
+      t("error.membership_manager_description"),
+      error,
+    );
+  }
+}
+
+/**
+ * Error indicating that end-to-end encryption is not supported in the current environment.
+ */
 export class E2EENotSupportedError extends ElementCallError {
   public constructor() {
     super(
@@ -94,7 +131,14 @@ export class E2EENotSupportedError extends ElementCallError {
   }
 }
 
+/**
+ * Error indicating an unknown issue occurred during a call operation.
+ */
 export class UnknownCallError extends ElementCallError {
+  /**
+   * Creates an instance of UnknownCallError.
+   * @param error - The underlying error that caused the unknown issue.
+   */
   public constructor(error: Error) {
     super(
       t("error.generic"),
@@ -107,7 +151,14 @@ export class UnknownCallError extends ElementCallError {
   }
 }
 
+/**
+ * Error indicating a failure to obtain an OpenID token.
+ */
 export class FailToGetOpenIdToken extends ElementCallError {
+  /**
+   * Creates an instance of FailToGetOpenIdToken.
+   * @param error - The underlying error that caused the failure.
+   */
   public constructor(error: Error) {
     super(
       t("error.generic"),
@@ -120,6 +171,27 @@ export class FailToGetOpenIdToken extends ElementCallError {
   }
 }
 
+/**
+ * Error indicating a failure to start publishing on a LiveKit connection.
+ */
+export class FailToStartLivekitConnection extends ElementCallError {
+  /**
+   * Creates an instance of FailToStartLivekitConnection.
+   * @param e - An optional error message providing additional context.
+   */
+  public constructor(e?: string) {
+    super(
+      t("error.failed_to_start_livekit"),
+      ErrorCode.FAILED_TO_START_LIVEKIT,
+      ErrorCategory.NETWORK_CONNECTIVITY,
+      e,
+    );
+  }
+}
+
+/**
+ * Error indicating that a LiveKit's server has hit its track limits.
+ */
 export class InsufficientCapacityError extends ElementCallError {
   public constructor() {
     super(
@@ -131,6 +203,10 @@ export class InsufficientCapacityError extends ElementCallError {
   }
 }
 
+/**
+ * Error indicating that room creation is restricted by the SFU.
+ * Only authorized users can create rooms, so the room must exist before connecting (done by the auth jwt service)
+ */
 export class SFURoomCreationRestrictedError extends ElementCallError {
   public constructor() {
     super(

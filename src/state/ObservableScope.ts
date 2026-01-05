@@ -123,8 +123,22 @@ export class ObservableScope {
     callback: (value: T) => Promise<(() => Promise<void>) | void>,
   ): void {
     let latestValue: T | typeof nothing = nothing;
-    let reconciledValue: T | typeof nothing = nothing;
+    let reconcilePromise: Promise<void> | undefined = undefined;
     let cleanUp: (() => Promise<void>) | void = undefined;
+    let prevVal: T | typeof nothing = nothing;
+
+    // While this loop runs it will process the latest from `value$` until it caught up with the updates.
+    // It might skip updates from `value$` and only process the newest value after callback has resolved.
+    const reconcileLoop = async (): Promise<void> => {
+      while (latestValue !== prevVal) {
+        await cleanUp?.(); // Call the previous value's clean-up handler
+        prevVal = latestValue;
+
+        if (latestValue !== nothing) cleanUp = await callback(latestValue); // Sync current value...
+        // `latestValue` might have gotten updated during the `await callback`. That is why we loop here
+      }
+    };
+
     value$
       .pipe(
         catchError(() => EMPTY), // Ignore errors
@@ -132,23 +146,15 @@ export class ObservableScope {
         endWith(nothing), // Clean up when the scope ends
       )
       .subscribe((value) => {
-        void (async (): Promise<void> => {
-          if (latestValue === nothing) {
-            latestValue = value;
-            while (latestValue !== reconciledValue) {
-              await cleanUp?.(); // Call the previous value's clean-up handler
-              reconciledValue = latestValue;
-              if (latestValue !== nothing)
-                cleanUp = await callback(latestValue); // Sync current value
-            }
-            // Reset to signal that reconciliation is done for now
-            latestValue = nothing;
-          } else {
-            // There's already an instance of the above 'while' loop running
-            // concurrently. Just update the latest value and let it be handled.
-            latestValue = value;
-          }
-        })();
+        // Always track the latest value! The `reconcileLoop` will run until it "processed" the "last" `latestValue`.
+        latestValue = value;
+        // There's already an instance of the below 'reconcileLoop' loop running
+        // concurrently. So lets let the loop handle it. NEVER instanciate two `reconcileLoop`s.
+        if (reconcilePromise) return;
+
+        reconcilePromise = reconcileLoop().finally(() => {
+          reconcilePromise = undefined;
+        });
       });
   }
 

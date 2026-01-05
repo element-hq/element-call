@@ -27,6 +27,7 @@ import type { ReactionOption } from "../reactions";
 import { observeSpeaker$ } from "./observeSpeaker.ts";
 import { generateItems } from "../utils/observable.ts";
 import { ScreenShare } from "./ScreenShare.ts";
+import { type TaggedParticipant } from "./CallViewModel/remoteMembers/MatrixLivekitMembers.ts";
 
 /**
  * Sorting bins defining the order in which media tiles appear in the layout.
@@ -68,39 +69,45 @@ enum SortingBin {
  * for inclusion in the call layout and tracks associated screen shares.
  */
 export class UserMedia {
-  public readonly vm: UserMediaViewModel = this.participant$.value?.isLocal
-    ? new LocalUserMediaViewModel(
-        this.scope,
-        this.id,
-        this.userId,
-        this.participant$ as Behavior<LocalParticipant | null>,
-        this.encryptionSystem,
-        this.livekitRoom$,
-        this.focusUrl$,
-        this.mediaDevices,
-        this.displayName$,
-        this.mxcAvatarUrl$,
-        this.scope.behavior(this.handRaised$),
-        this.scope.behavior(this.reaction$),
-      )
-    : new RemoteUserMediaViewModel(
-        this.scope,
-        this.id,
-        this.userId,
-        this.participant$ as Behavior<RemoteParticipant | null>,
-        this.encryptionSystem,
-        this.livekitRoom$,
-        this.focusUrl$,
-        this.pretendToBeDisconnected$,
-        this.displayName$,
-        this.mxcAvatarUrl$,
-        this.scope.behavior(this.handRaised$),
-        this.scope.behavior(this.reaction$),
-      );
+  public readonly vm: UserMediaViewModel =
+    this.participant.type === "local"
+      ? new LocalUserMediaViewModel(
+          this.scope,
+          this.id,
+          this.userId,
+          this.participant.value$,
+          this.encryptionSystem,
+          this.livekitRoom$,
+          this.focusUrl$,
+          this.mediaDevices,
+          this.displayName$,
+          this.mxcAvatarUrl$,
+          this.scope.behavior(this.handRaised$),
+          this.scope.behavior(this.reaction$),
+        )
+      : new RemoteUserMediaViewModel(
+          this.scope,
+          this.id,
+          this.userId,
+          this.participant.value$,
+          this.encryptionSystem,
+          this.livekitRoom$,
+          this.focusUrl$,
+          this.pretendToBeDisconnected$,
+          this.displayName$,
+          this.mxcAvatarUrl$,
+          this.scope.behavior(this.handRaised$),
+          this.scope.behavior(this.reaction$),
+        );
 
   private readonly speaker$ = this.scope.behavior(
     observeSpeaker$(this.vm.speaking$),
   );
+
+  // TypeScript needs this widening of the type to happen in a separate statement
+  private readonly participant$: Behavior<
+    LocalParticipant | RemoteParticipant | null
+  > = this.participant.value$;
 
   /**
    * All screen share media associated with this user media.
@@ -184,9 +191,7 @@ export class UserMedia {
     private readonly scope: ObservableScope,
     public readonly id: string,
     private readonly userId: string,
-    private readonly participant$: Behavior<
-      LocalParticipant | RemoteParticipant | null
-    >,
+    private readonly participant: TaggedParticipant,
     private readonly encryptionSystem: EncryptionSystem,
     private readonly livekitRoom$: Behavior<LivekitRoom | undefined>,
     private readonly focusUrl$: Behavior<string | undefined>,
