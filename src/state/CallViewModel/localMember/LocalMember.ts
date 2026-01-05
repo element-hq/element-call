@@ -6,15 +6,16 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type LocalTrack,
   type Participant,
   ParticipantEvent,
   type LocalParticipant,
   type ScreenShareCaptureOptions,
-  ConnectionState,
+  RoomEvent,
+  MediaDeviceFailure,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
+  Status as RTCSessionStatus,
   type LivekitTransport,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -24,10 +25,11 @@ import {
   combineLatest,
   distinctUntilChanged,
   from,
+  fromEvent,
   map,
   type Observable,
   of,
-  scan,
+  pairwise,
   startWith,
   switchMap,
   tap,
@@ -35,73 +37,72 @@ import {
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
-import { constant, type Behavior } from "../../Behavior";
-import { type IConnectionManager } from "../remoteMembers/ConnectionManager";
-import { ObservableScope } from "../../ObservableScope";
-import { type Publisher } from "./Publisher";
-import { type MuteStates } from "../../MuteStates";
-import { and$ } from "../../../utils/observable";
+import { type Behavior } from "../../Behavior.ts";
+import { type IConnectionManager } from "../remoteMembers/ConnectionManager.ts";
+import { type ObservableScope } from "../../ObservableScope.ts";
+import { type Publisher } from "./Publisher.ts";
+import { type MuteStates } from "../../MuteStates.ts";
 import {
   ElementCallError,
+  FailToStartLivekitConnection,
   MembershipManagerError,
   UnknownCallError,
-} from "../../../utils/errors";
-import { ElementWidgetActions, widget } from "../../../widget";
+} from "../../../utils/errors.ts";
+import { ElementWidgetActions, widget } from "../../../widget.ts";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
 import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
-import { type Connection } from "../remoteMembers/Connection.ts";
+import {
+  ConnectionState,
+  type Connection,
+  type FailedToStartError,
+} from "../remoteMembers/Connection.ts";
+import { type HomeserverConnected } from "./HomeserverConnected.ts";
+import { and$ } from "../../../utils/observable.ts";
 
-export enum RTCBackendState {
-  Error = "error",
+export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
-  WaitingForTransport = "waiting_for_transport",
-  /** A connection appeared so we can initialise the publisher */
-  WaitingForConnection = "waiting_for_connection",
-  /** Connection and transport arrived, publisher Initialized */
-  Initialized = "Initialized",
-  CreatingTracks = "creating_tracks",
-  ReadyToPublish = "ready_to_publish",
-  WaitingToPublish = "waiting_to_publish",
-  Connected = "connected",
-  Disconnected = "disconnected",
-  Disconnecting = "disconnecting",
+  Waiting = "transport_waiting",
 }
 
-type LocalMemberRtcBackendState =
-  | { state: RTCBackendState.Error; error: ElementCallError }
-  | { state: RTCBackendState.WaitingForTransport }
-  | { state: RTCBackendState.WaitingForConnection }
-  | { state: RTCBackendState.Initialized }
-  | { state: RTCBackendState.CreatingTracks }
-  | { state: RTCBackendState.ReadyToPublish }
-  | { state: RTCBackendState.WaitingToPublish }
-  | { state: RTCBackendState.Connected }
-  | { state: RTCBackendState.Disconnected }
-  | { state: RTCBackendState.Disconnecting };
-
-export enum MatrixState {
-  WaitingForTransport = "waiting_for_transport",
-  Ready = "ready",
-  Connecting = "connecting",
-  Connected = "connected",
-  Disconnected = "disconnected",
-  Error = "Error",
+export enum PublishState {
+  WaitingForUser = "publish_waiting_for_user",
+  // XXX: This state is removed for now since we do not have full control over
+  // track publication anymore with the publisher abstraction, might come back in the future?
+  // /** Implies lk connection is connected */
+  // Starting = "publish_start_publishing",
+  /** Implies lk connection is connected */
+  Publishing = "publish_publishing",
 }
 
-type LocalMemberMatrixState =
-  | { state: MatrixState.Connected }
-  | { state: MatrixState.WaitingForTransport }
-  | { state: MatrixState.Ready }
-  | { state: MatrixState.Connecting }
-  | { state: MatrixState.Disconnected }
-  | { state: MatrixState.Error; error: Error };
-
-export interface LocalMemberConnectionState {
-  livekit$: Behavior<LocalMemberRtcBackendState>;
-  matrix$: Behavior<LocalMemberMatrixState>;
+// TODO not sure how to map that correctly with the
+// new publisher that does not manage tracks itself anymore
+export enum TrackState {
+  /** The track is waiting for user input to create tracks (waiting to call `startTracks()`) */
+  WaitingForUser = "tracks_waiting_for_user",
+  // XXX: This state is removed for now since we do not have full control over
+  // track creation anymore with the publisher abstraction, might come back in the future?
+  // /** Implies lk connection is connected */
+  // Creating = "tracks_creating",
+  /** Implies lk connection is connected */
+  Ready = "tracks_ready",
 }
+
+export type LocalMemberMediaState =
+  | {
+      tracks: TrackState;
+      connection: ConnectionState | FailedToStartError;
+    }
+  | PublishState
+  | ElementCallError;
+export type LocalMemberState =
+  | ElementCallError
+  | TransportState.Waiting
+  | {
+      media: LocalMemberMediaState;
+      matrix: ElementCallError | RTCSessionStatus;
+    };
 
 /*
  * - get well known
@@ -122,8 +123,8 @@ interface Props {
   muteStates: MuteStates;
   connectionManager: IConnectionManager;
   createPublisherFactory: (connection: Connection) => Publisher;
-  joinMatrixRTC: (transport: LivekitTransport) => Promise<void>;
-  homeserverConnected$: Behavior<boolean>;
+  joinMatrixRTC: (transport: LivekitTransport) => void;
+  homeserverConnected: HomeserverConnected;
   localTransport$: Behavior<LivekitTransport | null>;
   matrixRTCSession: Pick<
     MatrixRTCSession,
@@ -137,7 +138,16 @@ interface Props {
  * We want
  *  - a publisher
  *  -
- * @param param0
+ * @param props The properties required to create the local membership.
+ * @param props.scope The observable scope to use.
+ * @param props.connectionManager The connection manager to get connections from.
+ * @param props.createPublisherFactory Factory to create a publisher once we have a connection.
+ * @param props.joinMatrixRTC Callback to join the matrix RTC session once we have a transport.
+ * @param props.homeserverConnected The homeserver connected state.
+ * @param props.localTransport$ The local transport to use for publishing.
+ * @param props.logger The logger to use.
+ * @param props.muteStates The mute states for video and audio.
+ * @param props.matrixRTCSession The matrix RTC session to join.
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
  *  - connected$: the current connection state. Including matrix server and livekit server connection. (only considering the livekit server we are using for our own media publication)
@@ -149,7 +159,7 @@ export const createLocalMembership$ = ({
   scope,
   connectionManager,
   localTransport$: localTransportCanThrow$,
-  homeserverConnected$,
+  homeserverConnected,
   createPublisherFactory,
   joinMatrixRTC,
   logger: parentLogger,
@@ -157,28 +167,37 @@ export const createLocalMembership$ = ({
   matrixRTCSession,
 }: Props): {
   /**
-   * This starts audio and video tracks. They will be reused when calling `requestConnect`.
+   * This request to start audio and video tracks.
+   * Can be called early to pre-emptively get media permissions and start devices.
    */
-  startTracks: () => Behavior<LocalTrack[]>;
+  startTracks: () => void;
   /**
-   * This sets a inner state (shouldConnect) to true and instructs the js-sdk and livekit to keep the user
+   * This sets a inner state (shouldPublish) to true and instructs the js-sdk and livekit to keep the user
    * connected to matrix and livekit.
    */
-  requestConnect: () => void;
+  requestJoinAndPublish: () => void;
   requestDisconnect: () => void;
-  connectionState: LocalMemberConnectionState;
+  localMemberState$: Behavior<LocalMemberState>;
   sharingScreen$: Behavior<boolean>;
   /**
    * Callback to toggle screen sharing. If null, screen sharing is not possible.
    */
   toggleScreenSharing: (() => void) | null;
-  tracks$: Behavior<LocalTrack[]>;
+  // tracks$: Behavior<LocalTrack[]>;
   participant$: Behavior<LocalParticipant | null>;
   connection$: Behavior<Connection | null>;
-  homeserverConnected$: Behavior<boolean>;
-  // this needs to be discussed
-  /** @deprecated use state instead*/
+  /**
+   * Tracks the homserver and livekit connected state and based on that computes reconnecting.
+   */
   reconnecting$: Behavior<boolean>;
+  /** Shorthand for homeserverConnected.rtcSession === Status.Disconnected
+   * Direct translation to the js-sdk membership manager connection `Status`.
+   */
+  disconnected$: Behavior<boolean>;
+  /**
+   * Fully connected
+   */
+  connected$: Behavior<boolean>;
 } => {
   const logger = parentLogger.getChild("[LocalMembership]");
   logger.debug(`Creating local membership..`);
@@ -197,7 +216,7 @@ export const createLocalMembership$ = ({
               : new Error("Unknown error from localTransport"),
           );
         }
-        setLivekitError(error);
+        setTransportError(error);
         return of(null);
       }),
     ),
@@ -224,59 +243,33 @@ export const createLocalMembership$ = ({
     ),
   );
 
-  const localConnectionState$ = localConnection$.pipe(
-    switchMap((connection) => (connection ? connection.state$ : of(null))),
+  // Tracks error that happen when creating the local tracks.
+  const mediaErrors$ = localConnection$.pipe(
+    switchMap((connection) => {
+      if (!connection) {
+        return of(null);
+      } else {
+        return fromEvent(
+          connection.livekitRoom,
+          RoomEvent.MediaDevicesError,
+          (error: Error) => {
+            return MediaDeviceFailure.getFailure(error) ?? null;
+          },
+        );
+      }
+    }),
   );
 
-  // /**
-  //  * Whether we are "fully" connected to the call. Accounts for both the
-  //  * connection to the MatrixRTC session and the LiveKit publish connection.
-  //  */
-  const connected$ = scope.behavior(
-    and$(
-      homeserverConnected$.pipe(
-        tap((v) => logger.debug("matrix: Connected state changed", v)),
-      ),
-      localConnectionState$.pipe(
-        switchMap((state) => {
-          logger.debug("livekit: Connected state changed", state);
-          if (!state) return of(false);
-          if (state.state === "ConnectedToLkRoom") {
-            logger.debug(
-              "livekit: Connected state changed (inner livekitConnectionState$)",
-              state.livekitConnectionState$.value,
-            );
-            return state.livekitConnectionState$.pipe(
-              map((lkState) => lkState === ConnectionState.Connected),
-            );
-          }
-          return of(false);
-        }),
-      ),
-    ).pipe(tap((v) => logger.debug("combined: Connected state changed", v))),
-  );
-
+  mediaErrors$.pipe(scope.bind()).subscribe((error) => {
+    if (error) {
+      logger.error(`Failed to create local tracks:`, error);
+      setMatrixError(
+        // TODO is it fatal? Do we need to create a new Specialized Error?
+        new UnknownCallError(new Error(`Media device error: ${error}`)),
+      );
+    }
+  });
   // MATRIX RELATED
-
-  // /**
-  //  * Whether we should tell the user that we're reconnecting to the call.
-  //  */
-  // DISCUSSION is there a better way to do this?
-  // sth that is more deriectly implied from the membership manager of the js sdk. (fromEvent(matrixRTCSession, Reconnecting)) ??? or similar
-  const reconnecting$ = scope.behavior(
-    connected$.pipe(
-      // We are reconnecting if we previously had some successful initial
-      // connection but are now disconnected
-      scan(
-        ({ connectedPreviously }, connectedNow) => ({
-          connectedPreviously: connectedPreviously || connectedNow,
-          reconnecting: connectedPreviously && !connectedNow,
-        }),
-        { connectedPreviously: false, reconnecting: false },
-      ),
-      map(({ reconnecting }) => reconnecting),
-    ),
-  );
 
   // This should be used in a combineLatest with publisher$ to connect.
   // to make it possible to call startTracks before the preferredTransport$ has resolved.
@@ -284,34 +277,25 @@ export const createLocalMembership$ = ({
 
   // This should be used in a combineLatest with publisher$ to connect.
   // to make it possible to call startTracks before the preferredTransport$ has resolved.
-  const connectRequested$ = new BehaviorSubject(false);
+  const joinAndPublishRequested$ = new BehaviorSubject(false);
 
   /**
    * The publisher is stored in here an abstracts creating and publishing tracks.
    */
   const publisher$ = new BehaviorSubject<Publisher | null>(null);
-  /**
-   * Extract the tracks from the published. Also reacts to changing publishers.
-   */
-  const tracks$ = scope.behavior(
-    publisher$.pipe(switchMap((p) => (p?.tracks$ ? p.tracks$ : constant([])))),
-  );
-  const publishing$ = scope.behavior(
-    publisher$.pipe(switchMap((p) => p?.publishing$ ?? constant(false))),
-  );
 
-  const startTracks = (): Behavior<LocalTrack[]> => {
+  const startTracks = (): void => {
     trackStartRequested.resolve();
-    return tracks$;
+    // This used to return the tracks, but now they are only accessible via the publisher.
   };
 
-  const requestConnect = (): void => {
+  const requestJoinAndPublish = (): void => {
     trackStartRequested.resolve();
-    connectRequested$.next(true);
+    joinAndPublishRequested$.next(true);
   };
 
   const requestDisconnect = (): void => {
-    connectRequested$.next(false);
+    joinAndPublishRequested$.next(false);
   };
 
   // Take care of the publisher$
@@ -323,25 +307,30 @@ export const createLocalMembership$ = ({
   //  - overwrite current publisher
   scope.reconcile(localConnection$, async (connection) => {
     if (connection !== null) {
-      publisher$.next(createPublisherFactory(connection));
+      const publisher = createPublisherFactory(connection);
+      publisher$.next(publisher);
+      // Clean-up callback
+      return Promise.resolve(async (): Promise<void> => {
+        await publisher.stopPublishing();
+        await publisher.stopTracks();
+      });
     }
-    return Promise.resolve(async (): Promise<void> => {
-      await publisher$?.value?.stopPublishing();
-      publisher$?.value?.stopTracks();
-    });
   });
 
   // Use reconcile here to not run concurrent createAndSetupTracks calls
   // `tracks$` will update once they are ready.
   scope.reconcile(
     scope.behavior(
-      combineLatest([publisher$, tracks$, from(trackStartRequested.promise)]),
+      combineLatest([
+        publisher$ /*, tracks$*/,
+        from(trackStartRequested.promise),
+      ]),
       null,
     ),
     async (valueIfReady) => {
       if (!valueIfReady) return;
-      const [publisher, tracks] = valueIfReady;
-      if (publisher && tracks.length === 0) {
+      const [publisher] = valueIfReady;
+      if (publisher) {
         await publisher.createAndSetupTracks().catch((e) => logger.error(e));
       }
     },
@@ -349,140 +338,215 @@ export const createLocalMembership$ = ({
 
   // Based on `connectRequested$` we start publishing tracks. (once they are there!)
   scope.reconcile(
-    scope.behavior(combineLatest([publisher$, tracks$, connectRequested$])),
-    async ([publisher, tracks, shouldConnect]) => {
-      if (shouldConnect === publisher?.publishing$.value) return;
-      if (tracks.length !== 0 && shouldConnect) {
+    scope.behavior(combineLatest([publisher$, joinAndPublishRequested$])),
+    async ([publisher, shouldJoinAndPublish]) => {
+      // Get the current publishing state to avoid redundant calls.
+      const isPublishing = publisher?.shouldPublish === true;
+      if (shouldJoinAndPublish && !isPublishing) {
         try {
           await publisher?.startPublishing();
         } catch (error) {
-          setLivekitError(error as ElementCallError);
+          const message =
+            error instanceof Error ? error.message : String(error);
+          setPublishError(new FailToStartLivekitConnection(message));
         }
-      } else if (tracks.length !== 0 && !shouldConnect) {
+      } else if (isPublishing) {
         try {
           await publisher?.stopPublishing();
         } catch (error) {
-          setLivekitError(new UnknownCallError(error as Error));
+          setPublishError(new UnknownCallError(error as Error));
         }
       }
     },
   );
 
-  const fatalLivekitError$ = new BehaviorSubject<ElementCallError | null>(null);
-  const setLivekitError = (e: ElementCallError): void => {
-    if (fatalLivekitError$.value !== null)
-      logger.error("Multiple Livkit Errors:", e);
-    else fatalLivekitError$.next(e);
+  // STATE COMPUTATION
+
+  // These are non fatal since we can join a room and concume media even though publishing failed.
+  const publishError$ = new BehaviorSubject<ElementCallError | null>(null);
+  const setPublishError = (e: ElementCallError): void => {
+    if (publishError$.value !== null) {
+      logger.error("Multiple Media Errors:", e);
+    } else {
+      publishError$.next(e);
+    }
   };
-  const livekitState$: Behavior<LocalMemberRtcBackendState> = scope.behavior(
+
+  const fatalTransportError$ = new BehaviorSubject<ElementCallError | null>(
+    null,
+  );
+
+  const setTransportError = (e: ElementCallError): void => {
+    if (fatalTransportError$.value !== null) {
+      logger.error("Multiple Transport Errors:", e);
+    } else {
+      fatalTransportError$.next(e);
+    }
+  };
+
+  const localConnectionState$ = localConnection$.pipe(
+    switchMap((connection) => (connection ? connection.state$ : of(null))),
+  );
+
+  const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
     combineLatest([
-      publisher$,
+      localConnectionState$,
       localTransport$,
-      tracks$.pipe(
-        tap((t) => {
-          logger.info("tracks$: ", t);
-        }),
-      ),
-      publishing$,
-      connectRequested$,
+      joinAndPublishRequested$,
       from(trackStartRequested.promise).pipe(
         map(() => true),
         startWith(false),
       ),
-      fatalLivekitError$,
     ]).pipe(
       map(
         ([
-          publisher,
+          localConnectionState,
           localTransport,
-          tracks,
-          publishing,
-          shouldConnect,
+          shouldPublish,
           shouldStartTracks,
-          error,
         ]) => {
-          // read this:
-          // if(!<A>) return {state: ...}
-          // if(!<B>) return {state: <MyState>}
-          //
-          // as:
-          // We do have <A> but not yet <B> so we are in <MyState>
-          if (error !== null) return { state: RTCBackendState.Error, error };
-          const hasTracks = tracks.length > 0;
-          if (!localTransport)
-            return { state: RTCBackendState.WaitingForTransport };
-          if (!publisher)
-            return { state: RTCBackendState.WaitingForConnection };
-          if (!shouldStartTracks) return { state: RTCBackendState.Initialized };
-          if (!hasTracks) return { state: RTCBackendState.CreatingTracks };
-          if (!shouldConnect) return { state: RTCBackendState.ReadyToPublish };
-          if (!publishing) return { state: RTCBackendState.WaitingToPublish };
-          return { state: RTCBackendState.Connected };
+          if (!localTransport) return null;
+          const trackState: TrackState = shouldStartTracks
+            ? TrackState.Ready
+            : TrackState.WaitingForUser;
+
+          if (
+            localConnectionState !== ConnectionState.LivekitConnected ||
+            trackState !== TrackState.Ready
+          )
+            return {
+              connection: localConnectionState,
+              tracks: trackState,
+            };
+          if (!shouldPublish) return PublishState.WaitingForUser;
+          // if (!publishing) return PublishState.Starting;
+          return PublishState.Publishing;
         },
       ),
       distinctUntilChanged(deepCompare),
     ),
   );
-
   const fatalMatrixError$ = new BehaviorSubject<ElementCallError | null>(null);
   const setMatrixError = (e: ElementCallError): void => {
-    if (fatalMatrixError$.value !== null)
+    if (fatalMatrixError$.value !== null) {
       logger.error("Multiple Matrix Errors:", e);
-    else fatalMatrixError$.next(e);
+    } else {
+      fatalMatrixError$.next(e);
+    }
   };
-  const matrixState$: Behavior<LocalMemberMatrixState> = scope.behavior(
+
+  const localMemberState$ = scope.behavior<LocalMemberState>(
     combineLatest([
-      localTransport$,
-      connectRequested$,
-      homeserverConnected$,
+      mediaState$,
+      homeserverConnected.rtsSession$,
+      fatalMatrixError$,
+      fatalTransportError$,
+      publishError$,
     ]).pipe(
-      map(([localTransport, connectRequested, homeserverConnected]) => {
-        if (!localTransport) return { state: MatrixState.WaitingForTransport };
-        if (!connectRequested) return { state: MatrixState.Ready };
-        if (!homeserverConnected) return { state: MatrixState.Connecting };
-        return { state: MatrixState.Connected };
-      }),
+      map(
+        ([
+          mediaState,
+          rtcSessionStatus,
+          fatalMatrixError,
+          fatalTransportError,
+          publishError,
+        ]) => {
+          if (fatalTransportError !== null) return fatalTransportError;
+          // `mediaState` will be 'null' until the transport/connection appears.
+          if (mediaState && rtcSessionStatus)
+            return {
+              matrix: fatalMatrixError ?? rtcSessionStatus,
+              media: publishError ?? mediaState,
+            };
+          return TransportState.Waiting;
+        },
+      ),
     ),
   );
 
-  // Keep matrix rtc session in sync with localTransport$, connectRequested$ and muteStates.video.enabled$
+  /**
+   * Whether we are "fully" connected to the call. Accounts for both the
+   * connection to the MatrixRTC session and the LiveKit publish connection.
+   */
+  const matrixAndLivekitConnected$ = scope.behavior(
+    and$(
+      homeserverConnected.combined$,
+      localConnectionState$.pipe(
+        map((state) => state === ConnectionState.LivekitConnected),
+      ),
+    ).pipe(
+      tap((v) => logger.debug("livekit+matrix: Connected state changed", v)),
+    ),
+  );
+
+  /**
+   * Whether we should tell the user that we're reconnecting to the call.
+   */
+  const reconnecting$ = scope.behavior(
+    matrixAndLivekitConnected$.pipe(
+      pairwise(),
+      map(([prev, current]) => prev === true && current === false),
+    ),
+    false,
+  );
+
+  // inform the widget about the connect and disconnect intent from the user.
+  scope
+    .behavior(joinAndPublishRequested$.pipe(pairwise(), scope.bind()), [
+      undefined,
+      joinAndPublishRequested$.value,
+    ])
+    .subscribe(([prev, current]) => {
+      if (!widget) return;
+      // JOIN prev=false (was left) => current-true (now joiend)
+      if (!prev && current) {
+        widget.api.transport
+          .send(ElementWidgetActions.JoinCall, {})
+          .catch((e) => {
+            logger.error("Failed to send join action", e);
+          });
+      }
+      // LEAVE prev=false (was joined) => current-true (now left)
+      if (prev && !current) {
+        widget.api.transport
+          .send(ElementWidgetActions.HangupCall, {})
+          .catch((e) => {
+            logger.error("Failed to send hangup action", e);
+          });
+      }
+    });
+
+  combineLatest([muteStates.video.enabled$, homeserverConnected.combined$])
+    .pipe(scope.bind())
+    .subscribe(([videoEnabled, connected]) => {
+      if (!connected) return;
+      void matrixRTCSession.updateCallIntent(videoEnabled ? "video" : "audio");
+    });
+
+  // Keep matrix rtc session in sync with localTransport$, connectRequested$
   scope.reconcile(
-    scope.behavior(combineLatest([localTransport$, connectRequested$])),
+    scope.behavior(combineLatest([localTransport$, joinAndPublishRequested$])),
     async ([transport, shouldConnect]) => {
+      if (!transport) return;
+      // if shouldConnect=false we will do the disconnect as the cleanup from the previous reconcile iteration.
       if (!shouldConnect) return;
 
-      if (!transport) return;
       try {
-        await joinMatrixRTC(transport);
+        joinMatrixRTC(transport);
       } catch (error) {
         logger.error("Error entering RTC session", error);
         if (error instanceof Error)
           setMatrixError(new MembershipManagerError(error));
       }
 
-      // Update our member event when our mute state changes.
-      const callIntentScope = new ObservableScope();
-      // because this uses its own scope, we can start another reconciliation for the duration of one connection.
-      callIntentScope.reconcile(
-        muteStates.video.enabled$,
-        async (videoEnabled) =>
-          matrixRTCSession.updateCallIntent(videoEnabled ? "video" : "audio"),
-      );
-
-      return async (): Promise<void> => {
-        callIntentScope.end();
+      return Promise.resolve(async (): Promise<void> => {
         try {
-          // Update matrixRTCSession to allow udpating the transport without leaving the session!
-          await matrixRTCSession.leaveRoomSession();
+          // TODO Update matrixRTCSession to allow udpating the transport without leaving the session!
+          await matrixRTCSession.leaveRoomSession(1000);
         } catch (e) {
           logger.error("Error leaving RTC session", e);
         }
-        try {
-          await widget?.api.transport.send(ElementWidgetActions.HangupCall, {});
-        } catch (e) {
-          logger.error("Failed to send hangup action", e);
-        }
-      };
+      });
     },
   );
 
@@ -497,7 +561,7 @@ export const createLocalMembership$ = ({
   // pause tracks during the initial joining sequence too until we're sure
   // that our own media is displayed on screen.
   // TODO refactor this based no livekitState$
-  combineLatest([participant$, homeserverConnected$])
+  combineLatest([participant$, homeserverConnected.combined$])
     .pipe(scope.bind())
     .subscribe(([participant, connected]) => {
       if (!participant) return;
@@ -582,16 +646,17 @@ export const createLocalMembership$ = ({
 
   return {
     startTracks,
-    requestConnect,
+    requestJoinAndPublish,
     requestDisconnect,
-    connectionState: {
-      livekit$: livekitState$,
-      matrix$: matrixState$,
-    },
-    tracks$,
+    localMemberState$,
     participant$,
-    homeserverConnected$,
     reconnecting$,
+    connected$: matrixAndLivekitConnected$,
+    disconnected$: scope.behavior(
+      homeserverConnected.rtsSession$.pipe(
+        map((state) => state === RTCSessionStatus.Disconnected),
+      ),
+    ),
     sharingScreen$,
     toggleScreenSharing,
     connection$: localConnection$,
@@ -620,17 +685,19 @@ interface EnterRTCSessionOptions {
  *      - Delay events management
  *      - Handles retries (fails only after several attempts)
  *
- * @param rtcSession
- * @param transport
- * @param options
+ * @param rtcSession - The MatrixRTCSession to join.
+ * @param transport - The LivekitTransport to use for this session.
+ * @param options - Options for entering the RTC session.
+ * @param options.encryptMedia - Whether to encrypt media.
+ * @param options.matrixRTCMode - The Matrix RTC mode to use.
  * @throws If the widget could not send ElementWidgetActions.JoinCall action.
  */
 // Exported for unit testing
-export async function enterRTCSession(
+export function enterRTCSession(
   rtcSession: MatrixRTCSession,
   transport: LivekitTransport,
   { encryptMedia, matrixRTCMode }: EnterRTCSessionOptions,
-): Promise<void> {
+): void {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
@@ -669,7 +736,4 @@ export async function enterRTCSession(
       unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
     },
   );
-  if (widget) {
-    await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
-  }
 }

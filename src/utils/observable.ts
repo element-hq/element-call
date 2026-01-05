@@ -22,6 +22,7 @@ import {
   withLatestFrom,
   BehaviorSubject,
   type OperatorFunction,
+  distinctUntilChanged,
 } from "rxjs";
 
 import { type Behavior } from "../state/Behavior";
@@ -134,7 +135,6 @@ interface ItemHandle<Data, Item> {
  * requested at a later time, and destroyed (have their scope ended) when the
  * key is no longer requested.
  *
- * @param input$ The input value to be mapped.
  * @param generator A generator function yielding a tuple of keys and the
  *   currently associated data for each item that it wants to exist.
  * @param factory A function constructing an individual item, given the item's key,
@@ -183,6 +183,28 @@ export function generateItemsWithEpoch<
     factory,
     (items, input) => new Epoch(items, input.epoch),
   );
+}
+
+/**
+ * Segments a behavior into periods during which its value matches the filter
+ * (outputting a behavior with a narrowed type) and periods during which it does
+ * not match (outputting null).
+ */
+export function filterBehavior<T, S extends T>(
+  predicate: (value: T) => value is S,
+): OperatorFunction<T, Behavior<S> | null> {
+  return (input$) =>
+    input$.pipe(
+      scan<T, BehaviorSubject<S> | null>((acc$, input) => {
+        if (predicate(input)) {
+          const output$ = acc$ ?? new BehaviorSubject(input);
+          output$.next(input);
+          return output$;
+        }
+        return null;
+      }, null),
+      distinctUntilChanged(),
+    );
 }
 
 function generateItemsInternal<

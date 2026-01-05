@@ -67,7 +67,6 @@ const CONFIG_JSON = {
 
 /**
  * Set the Element Call URL in the dev tool settings using `window.mxSettingsStore` via `page.evaluate`.
- * @param page
  */
 const setDevToolElementCallDevUrl = process.env.USE_DOCKER
   ? async (page: Page): Promise<void> => {
@@ -111,19 +110,27 @@ async function registerUser(
   await page.getByRole("textbox", { name: "Confirm password" }).click();
   await page.getByRole("textbox", { name: "Confirm password" }).fill(PASSWORD);
   await page.getByRole("button", { name: "Register" }).click();
-  const continueButton = page.getByRole("button", { name: "Continue" });
-  try {
-    await expect(continueButton).toBeVisible({ timeout: 5000 });
-    await page
-      .getByRole("textbox", { name: "Password", exact: true })
-      .fill(PASSWORD);
-    await continueButton.click();
-  } catch {
-    // continueButton not visible, continue as normal
-  }
+
   await expect(
     page.getByRole("heading", { name: `Welcome ${username}` }),
   ).toBeVisible();
+
+  const browserUnsupportedToast = page
+    .getByText("Element does not support this browser")
+    .locator("..")
+    .locator("..");
+
+  // Dismiss incompatible browser toast
+  const dismissButton = browserUnsupportedToast.getByRole("button", {
+    name: "Dismiss",
+  });
+  try {
+    await expect(dismissButton).toBeVisible({ timeout: 700 });
+    await dismissButton.click();
+  } catch {
+    // dismissButton not visible, continue as normal
+  }
+
   await setDevToolElementCallDevUrl(page);
 
   const clientHandle = await page.evaluateHandle(() =>

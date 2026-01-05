@@ -6,15 +6,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 import {
+  ConnectionState as LivekitConnectionState,
+  type LocalTrackPublication,
   LocalVideoTrack,
+  ParticipantEvent,
   type Room as LivekitRoom,
   Track,
-  type LocalTrack,
-  type LocalTrackPublication,
-  ConnectionState as LivekitConnectionState,
 } from "livekit-client";
 import {
-  BehaviorSubject,
   map,
   NEVER,
   type Observable,
@@ -34,10 +33,6 @@ import { getUrlParams } from "../../../UrlParams.ts";
 import { observeTrackReference$ } from "../../MediaViewModel.ts";
 import { type Connection } from "../remoteMembers/Connection.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
-import {
-  ElementCallError,
-  FailToStartLivekitConnection,
-} from "../../../utils/errors.ts";
 
 /**
  * A wrapper for a Connection object.
@@ -46,13 +41,20 @@ import {
  */
 export class Publisher {
   /**
+   * By default, livekit will start publishing tracks as soon as they are created.
+   * In the matrix RTC world, we want to control when tracks are published based
+   * on whether the user is part of the RTC session or not.
+   */
+  public shouldPublish = false;
+
+  /**
    * Creates a new Publisher.
    * @param scope - The observable scope to use for managing the publisher.
    * @param connection - The connection to use for publishing.
    * @param devices - The media devices to use for audio and video input.
    * @param muteStates - The mute states for audio and video.
-   * @param e2eeLivekitOptions - The E2EE options to use for the LiveKit room. Use to share the same key provider across connections!.
    * @param trackerProcessorState$ - The processor state for the video track processor (e.g. background blur).
+   * @param logger - The logger to use for logging :D.
    */
   public constructor(
     private scope: ObservableScope,
@@ -62,7 +64,6 @@ export class Publisher {
     trackerProcessorState$: Behavior<ProcessorState>,
     private logger: Logger,
   ) {
-    this.logger.info("Create LiveKit room");
     const { controlledAudioDevices } = getUrlParams();
 
     const room = connection.livekitRoom;
@@ -80,161 +81,185 @@ export class Publisher {
     this.scope.onEnd(() => {
       this.logger.info("Scope ended -> stop publishing all tracks");
       void this.stopPublishing();
+      muteStates.audio.unsetHandler();
+      muteStates.video.unsetHandler();
     });
 
-    // TODO move mute state handling here using reconcile (instead of inside the mute state class)
-    // this.scope.reconcile(
-    //   this.scope.behavior(
-    //     combineLatest([this.muteStates.video.enabled$, this.tracks$]),
-    //   ),
-    //   async ([videoEnabled, tracks]) => {
-    //     const track = tracks.find((t) => t.kind == Track.Kind.Video);
-    //     if (!track) return;
-
-    //     if (videoEnabled) {
-    //       await track.unmute();
-    //     } else {
-    //       await track.mute();
-    //     }
-    //   },
-    // );
+    this.connection.livekitRoom.localParticipant.on(
+      ParticipantEvent.LocalTrackPublished,
+      this.onLocalTrackPublished.bind(this),
+    );
   }
 
-  private _tracks$ = new BehaviorSubject<LocalTrack<Track.Kind>[]>([]);
-  public tracks$ = this._tracks$ as Behavior<LocalTrack<Track.Kind>[]>;
-
+  // LiveKit will publish the tracks as soon as they are created
+  // but we want to control when tracks are published.
+  // We cannot just mute the tracks, even if this will effectively stop the publishing,
+  // it would also prevent the user from seeing their own video/audio preview.
+  // So for that we use pauseUpStream():  Stops sending media to the server by replacing
+  // the sender track with null, but keeps the local MediaStreamTrack active.
+  // The user can still see/hear themselves locally, but remote participants see nothing.
+  private onLocalTrackPublished(
+    localTrackPublication: LocalTrackPublication,
+  ): void {
+    this.logger.info("Local track published", localTrackPublication);
+    const lkRoom = this.connection.livekitRoom;
+    if (!this.shouldPublish) {
+      this.pauseUpstreams(lkRoom, [localTrackPublication.source]).catch((e) => {
+        this.logger.error(`Failed to pause upstreams`, e);
+      });
+    }
+    // also check the mute state and apply it
+    if (localTrackPublication.source === Track.Source.Microphone) {
+      const enabled = this.muteStates.audio.enabled$.value;
+      lkRoom.localParticipant.setMicrophoneEnabled(enabled).catch((e) => {
+        this.logger.error(
+          `Failed to enable microphone track, enabled:${enabled}`,
+          e,
+        );
+      });
+    } else if (localTrackPublication.source === Track.Source.Camera) {
+      const enabled = this.muteStates.video.enabled$.value;
+      lkRoom.localParticipant.setCameraEnabled(enabled).catch((e) => {
+        this.logger.error(
+          `Failed to enable camera track, enabled:${enabled}`,
+          e,
+        );
+      });
+    }
+  }
   /**
-   * Start the connection to LiveKit and publish local tracks.
+   * Create and setup local audio and video tracks based on the current mute states.
+   * It creates the tracks only if audio and/or video is enabled, to avoid unnecessary
+   * permission prompts.
    *
-   * This will:
-   * wait for the connection to be ready.
-   // * 1. Request an OpenId token `request_token` (allows matrix users to verify their identity with a third-party service.)
-   // * 2. Use this token to request the SFU config to the MatrixRtc authentication service.
-   // * 3. Connect to the configured LiveKit room.
-   // * 4. Create local audio and video tracks based on the current mute states and publish them to the room.
+   * It also observes mute state changes to update LiveKit microphone/camera states accordingly.
+   * If a track is not created initially because disabled, it will be created when unmuting.
    *
-   * @throws {InsufficientCapacityError} if the LiveKit server indicates that it has insufficient capacity to accept the connection.
-   * @throws {SFURoomCreationRestrictedError} if the LiveKit server indicates that the room does not exist and cannot be created.
+   * This call is not blocking anymore, instead callers can listen to the
+   * `RoomEvent.MediaDevicesError` event in the LiveKit room to be notified of any errors.
+   *
    */
   public async createAndSetupTracks(): Promise<void> {
     this.logger.debug("createAndSetupTracks called");
     const lkRoom = this.connection.livekitRoom;
     // Observe mute state changes and update LiveKit microphone/camera states accordingly
-    this.observeMuteStates(this.scope);
+    this.observeMuteStates();
 
-    // TODO-MULTI-SFU: Prepublish a microphone track
+    // Check if audio and/or video is enabled. We only create tracks if enabled,
+    // because it could prompt for permission, and we don't want to do that unnecessarily.
     const audio = this.muteStates.audio.enabled$.value;
     const video = this.muteStates.video.enabled$.value;
-    // createTracks throws if called with audio=false and video=false
-    if (audio || video) {
-      // TODO this can still throw errors? It will also prompt for permissions if not already granted
-      return lkRoom.localParticipant
-        .createTracks({
-          audio,
-          video,
-        })
-        .then((tracks) => {
-          this.logger.info(
-            "created track",
-            tracks.map((t) => t.kind + ", " + t.id),
-          );
-          this._tracks$.next(tracks);
-        })
-        .catch((error) => {
-          this.logger.error("Failed to create tracks", error);
-        });
+
+    // We don't await the creation, because livekit could block until the tracks
+    // are fully published, and not only that they are created.
+    // We don't have control on that, localParticipant creates and publishes the tracks
+    // asap.
+    // We are using the `ParticipantEvent.LocalTrackPublished` to be notified
+    // when tracks are actually published, and at that point
+    // we can pause upstream if needed (depending on if startPublishing has been called).
+    if (audio && video) {
+      // Enable both at once in order to have a single permission prompt!
+      void lkRoom.localParticipant.enableCameraAndMicrophone();
+    } else if (audio) {
+      void lkRoom.localParticipant.setMicrophoneEnabled(true);
+    } else if (video) {
+      void lkRoom.localParticipant.setCameraEnabled(true);
     }
-    throw Error("audio and video is false");
+
+    return Promise.resolve();
   }
 
-  private _publishing$ = new BehaviorSubject<boolean>(false);
-  public publishing$ = this.scope.behavior(this._publishing$);
+  private async pauseUpstreams(
+    lkRoom: LivekitRoom,
+    sources: Track.Source[],
+  ): Promise<void> {
+    for (const source of sources) {
+      const track = lkRoom.localParticipant.getTrackPublication(source)?.track;
+      if (track) {
+        await track.pauseUpstream();
+      } else {
+        this.logger.warn(
+          `No track found for source ${source} to pause upstream`,
+        );
+      }
+    }
+  }
+
+  private async resumeUpstreams(
+    lkRoom: LivekitRoom,
+    sources: Track.Source[],
+  ): Promise<void> {
+    for (const source of sources) {
+      const track = lkRoom.localParticipant.getTrackPublication(source)?.track;
+      if (track) {
+        await track.resumeUpstream();
+      } else {
+        this.logger.warn(
+          `No track found for source ${source} to resume upstream`,
+        );
+      }
+    }
+  }
+
   /**
    *
+   * Request to publish local tracks to the LiveKit room.
+   * This will wait for the connection to be ready before publishing.
+   * Livekit also have some local retry logic for publishing tracks.
+   * Can be called multiple times, localparticipant manages the state of published tracks (or pending publications).
+   *
    * @returns
-   * @throws ElementCallError
    */
-  public async startPublishing(): Promise<LocalTrack[]> {
+  public async startPublishing(): Promise<void> {
+    if (this.shouldPublish) {
+      this.logger.debug(`Already publishing, ignoring startPublishing call`);
+      return;
+    }
+    this.shouldPublish = true;
     this.logger.debug("startPublishing called");
+
     const lkRoom = this.connection.livekitRoom;
-    const { promise, resolve, reject } = Promise.withResolvers<void>();
-    const sub = this.connection.state$.subscribe((s) => {
-      switch (s.state) {
-        case "ConnectedToLkRoom":
-          resolve();
-          break;
-        case "FailedToStart":
-          reject(
-            s.error instanceof ElementCallError
-              ? s.error
-              : new FailToStartLivekitConnection(s.error.message),
-          );
-          break;
-        default:
-          this.logger.info("waiting for connection: ", s.state);
-      }
-    });
+
+    // Resume upstream for both audio and video tracks
+    // We need to call it explicitly because call setTrackEnabled does not always
+    // resume upstream. It will only if you switch the track from disabled to enabled,
+    // but if the track is already enabled but upstream is paused, it won't resume it.
+    // TODO what about screen share?
     try {
-      await promise;
+      await this.resumeUpstreams(lkRoom, [
+        Track.Source.Microphone,
+        Track.Source.Camera,
+      ]);
     } catch (e) {
-      throw e;
-    } finally {
-      sub.unsubscribe();
+      this.logger.error(`Failed to resume upstreams`, e);
     }
-
-    for (const track of this.tracks$.value) {
-      this.logger.info("publish ", this.tracks$.value.length, "tracks");
-      // TODO: handle errors? Needs the signaling connection to be up, but it has some retries internally
-      // with a timeout.
-      await lkRoom.localParticipant.publishTrack(track).catch((error) => {
-        this.logger.error("Failed to publish track", error);
-        throw new FailToStartLivekitConnection(
-          error instanceof Error ? error.message : error,
-        );
-      });
-      this.logger.info("published track ", track.kind, track.id);
-
-      // TODO: check if the connection is still active? and break the loop if not?
-    }
-    this._publishing$.next(true);
-    return this.tracks$.value;
   }
 
   public async stopPublishing(): Promise<void> {
     this.logger.debug("stopPublishing called");
-    // TODO-MULTI-SFU: Move these calls back to ObservableScope.onEnd once scope
-    // actually has the right lifetime
-    this.muteStates.audio.unsetHandler();
-    this.muteStates.video.unsetHandler();
-
-    const localParticipant = this.connection.livekitRoom.localParticipant;
-    const tracks: LocalTrack[] = [];
-    const addToTracksIfDefined = (p: LocalTrackPublication): void => {
-      if (p.track !== undefined) tracks.push(p.track);
-    };
-    localParticipant.trackPublications.forEach(addToTracksIfDefined);
-    this.logger.debug(
-      "list of tracks to unpublish:",
-      tracks.map((t) => t.kind + ", " + t.id),
-      "start unpublishing now",
-    );
-    await localParticipant.unpublishTracks(tracks).catch((error) => {
-      this.logger.error("Failed to unpublish tracks", error);
-      throw error;
-    });
-    this.logger.debug(
-      "unpublished tracks",
-      tracks.map((t) => t.kind + ", " + t.id),
-    );
-    this._publishing$.next(false);
+    this.shouldPublish = false;
+    // Pause upstream will stop sending media to the server, while keeping
+    // the local MediaStreamTrack active, so the user can still see themselves.
+    await this.pauseUpstreams(this.connection.livekitRoom, [
+      Track.Source.Microphone,
+      Track.Source.Camera,
+      Track.Source.ScreenShare,
+    ]);
   }
 
-  /**
-   * Stops all tracks that are currently running
-   */
-  public stopTracks(): void {
-    this.tracks$.value.forEach((t) => t.stop());
-    this._tracks$.next([]);
+  public async stopTracks(): Promise<void> {
+    const lkRoom = this.connection.livekitRoom;
+    for (const source of [
+      Track.Source.Microphone,
+      Track.Source.Camera,
+      Track.Source.ScreenShare,
+    ]) {
+      const localPub = lkRoom.localParticipant.getTrackPublication(source);
+      if (localPub?.track) {
+        // stops and unpublishes the track
+        await lkRoom.localParticipant.unpublishTrack(localPub!.track, true);
+      }
+    }
   }
 
   /// Private methods
@@ -331,22 +356,35 @@ export class Publisher {
 
   /**
    * Observe changes in the mute states and update the LiveKit room accordingly.
-   * @param scope
    * @private
    */
-  private observeMuteStates(scope: ObservableScope): void {
+  private observeMuteStates(): void {
     const lkRoom = this.connection.livekitRoom;
-    this.muteStates.audio.setHandler(async (desired) => {
+    this.muteStates.audio.setHandler(async (enable) => {
       try {
-        await lkRoom.localParticipant.setMicrophoneEnabled(desired);
+        this.logger.debug(
+          `handler: Setting LiveKit microphone enabled: ${enable}`,
+        );
+        await lkRoom.localParticipant.setMicrophoneEnabled(enable);
+        // Unmute will restart the track if it was paused upstream,
+        // but until explicitly requested, we want to keep it paused.
+        if (!this.shouldPublish && enable) {
+          await this.pauseUpstreams(lkRoom, [Track.Source.Microphone]);
+        }
       } catch (e) {
         this.logger.error("Failed to update LiveKit audio input mute state", e);
       }
       return lkRoom.localParticipant.isMicrophoneEnabled;
     });
-    this.muteStates.video.setHandler(async (desired) => {
+    this.muteStates.video.setHandler(async (enable) => {
       try {
-        await lkRoom.localParticipant.setCameraEnabled(desired);
+        this.logger.debug(`handler: Setting LiveKit camera enabled: ${enable}`);
+        await lkRoom.localParticipant.setCameraEnabled(enable);
+        // Unmute will restart the track if it was paused upstream,
+        // but until explicitly requested, we want to keep it paused.
+        if (!this.shouldPublish && enable) {
+          await this.pauseUpstreams(lkRoom, [Track.Source.Camera]);
+        }
       } catch (e) {
         this.logger.error("Failed to update LiveKit video input mute state", e);
       }
@@ -362,7 +400,7 @@ export class Publisher {
     const track$ = scope.behavior(
       observeTrackReference$(room.localParticipant, Track.Source.Camera).pipe(
         map((trackRef) => {
-          const track = trackRef?.publication?.track;
+          const track = trackRef?.publication.track;
           return track instanceof LocalVideoTrack ? track : null;
         }),
       ),
