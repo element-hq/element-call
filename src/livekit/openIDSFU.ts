@@ -13,9 +13,47 @@ import { FailToGetOpenIdToken } from "../utils/errors";
 import { doNetworkOperationWithRetry } from "../utils/matrix";
 import { Config } from "../config/Config";
 
+/**
+ * Configuration and access tokens provided by the SFU on successful authentication.
+ */
 export interface SFUConfig {
   url: string;
   jwt: string;
+  livekitAlias: string;
+  livekitIdentity: string;
+}
+
+/**
+ * Decoded details from the JWT.
+ */
+interface SFUJWTPayload {
+  /**
+   * Expiration time for the JWT.
+   * Note: This value is in seconds since Unix epoch.
+   */
+  exp: number;
+  /**
+   * Name of the instance which authored the JWT
+   */
+  iss: string;
+  /**
+   * Time at which the JWT can start to be used.
+   * Note: This value is in seconds since Unix epoch.
+   */
+  nbf: number;
+  /**
+   * Subject. The Livekit alias in this context.
+   */
+  sub: string;
+  /**
+   * The set of permissions for the user.
+   */
+  video: {
+    canPublish: boolean;
+    canSubscribe: boolean;
+    room: string;
+    roomJoin: boolean;
+  };
 }
 
 // The bits we need from MatrixClient
@@ -27,15 +65,15 @@ export type OpenIDClientParts = Pick<
  * Gets a bearer token from the homeserver and then use it to authenticate
  * to the matrix RTC backend in order to get acces to the SFU.
  * It has built-in retry for calls to the homeserver with a backoff policy.
- * @param client
+ * @param client The Matrix client
  * @param membership
- * @param serviceUrl
+ * @param serviceUrl The URL of the livekit SFU service
  * @param forceOldEndpoint This will use the old jwt endpoint which will create the rtc backend identity based on string concatination
  * instead of a hash.
  * This function by default uses whatever is possible with the current jwt service installed next to the SFU.
  * For remote connections this does not matter, since we will not publish there we can rely on the newest option.
  * For our own connection we can only use the hashed version if we also send the new matrix2.0 sticky events.
- * @param livekitRoomAlias
+ * @param roomId The room id used in the jwt request. This is NOT the livekit_alias. The jwt service will provide the alias. It maps matrix room ids <-> Livekit aliases.
  * @param delayEndpointBaseUrl
  * @param delayId
  * @param logger
@@ -47,7 +85,7 @@ export async function getSFUConfigWithOpenID(
   membership: CallMembershipIdentityParts,
   serviceUrl: string,
   forceOldJwtEndpoint: boolean,
-  livekitRoomAlias: string,
+  roomId: string,
   delayEndpointBaseUrl?: string,
   delayId?: string,
   logger?: Logger,
@@ -68,39 +106,49 @@ export async function getSFUConfigWithOpenID(
   const args: [CallMembershipIdentityParts, string, string, IOpenIDToken] = [
     membership,
     serviceUrl,
-    livekitRoomAlias,
+    roomId,
     openIdToken,
   ];
+
+  let sfuConfig: { url: string; jwt: string };
   try {
     // we do not want to try the old endpoint, since we are not sending the new matrix2.0 sticky events (no hashed identity in the event)
     if (forceOldJwtEndpoint) throw new Error("Force old jwt endpoint");
     if (!delayId)
       throw new Error("No delayId, Won't try matrix 2.0 jwt endpoint.");
 
-    const sfuConfig = await getLiveKitJWTWithDelayDelegation(
+    sfuConfig = await getLiveKitJWTWithDelayDelegation(
       ...args,
       delayEndpointBaseUrl,
       delayId,
     );
     logger?.info(`Got JWT from call's active focus URL.`);
-    return sfuConfig;
   } catch (e) {
     logger?.warn(
       `Failed fetching jwt with matrix 2.0 endpoint (retry with legacy)`,
       e,
     );
-    const sfuConfig = await getLiveKitJWT(...args);
+    sfuConfig = await getLiveKitJWT(...args);
     logger?.info(`Got JWT from call's active focus URL.`);
-    return sfuConfig;
-  }
+  } // Pull the details from the JWT
+  const [, payloadStr] = sfuConfig.jwt.split(".");
+
+  const payload = JSON.parse(global.atob(payloadStr)) as SFUJWTPayload;
+  return {
+    jwt: sfuConfig.jwt,
+    url: sfuConfig.url,
+    livekitAlias: payload.video.room,
+    // NOTE: Currently unused.
+    livekitIdentity: payload.sub,
+  };
 }
 
 async function getLiveKitJWT(
   membership: CallMembershipIdentityParts,
   livekitServiceURL: string,
-  livekitRoomAlias: string,
+  matrixRoomId: string,
   openIDToken: IOpenIDToken,
-): Promise<SFUConfig> {
+): Promise<{ url: string; jwt: string }> {
   try {
     const res = await fetch(livekitServiceURL + "/sfu/get", {
       method: "POST",
@@ -108,7 +156,8 @@ async function getLiveKitJWT(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        room: livekitRoomAlias,
+        // This is the actual livekit room alias. For the legacy jwt endpoint simply the room id was used.
+        room: matrixRoomId,
         openid_token: openIDToken,
         device_id: membership.deviceId,
       }),
@@ -118,22 +167,22 @@ async function getLiveKitJWT(
     }
     return await res.json();
   } catch (e) {
-    throw new Error("SFU Config fetch failed with exception " + e);
+    throw new Error("SFU Config fetch failed with exception", { cause: e });
   }
 }
 
 export async function getLiveKitJWTWithDelayDelegation(
   membership: CallMembershipIdentityParts,
   livekitServiceURL: string,
-  livekitRoomAlias: string,
+  matrixRoomId: string,
   openIDToken: IOpenIDToken,
   delayEndpointBaseUrl?: string,
   delayId?: string,
-): Promise<SFUConfig> {
+): Promise<{ url: string; jwt: string }> {
   const { userId, deviceId, memberId } = membership;
 
   const body = {
-    room_id: livekitRoomAlias,
+    room_id: matrixRoomId,
     slot_id: "m.call#ROOM",
     openid_token: openIDToken,
     member: {

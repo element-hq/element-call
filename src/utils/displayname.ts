@@ -77,6 +77,13 @@ export function shouldDisambiguate(
   );
 }
 
+/**
+ * Calculates a display name for a member, optionally disambiguating it.
+ * @param member - The member to calculate the display name for.
+ * @param member.rawDisplayName - The raw display name of the member
+ * @param member.userId - The user ID of the member
+ * @param disambiguate - Whether to disambiguate the display name.
+ */
 export function calculateDisplayName(
   member: { rawDisplayName?: string; userId: string },
   disambiguate: boolean,

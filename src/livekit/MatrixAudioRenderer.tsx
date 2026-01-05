@@ -165,7 +165,11 @@ interface StereoPanAudioTrackProps {
  * It main purpose is to remount the AudioTrack component when switching from
  * audioContext to normal audio playback.
  * As of now the AudioTrack component does not support adding audio nodes while being mounted.
- * @param param0
+ * @param props The component props
+ * @param props.trackRef The track reference
+ * @param props.muted If the track should be muted
+ * @param props.audioContext The audio context to use
+ * @param props.audioNodes The audio nodes to use
  * @returns
  */
 function AudioTrackWithAudioNodes({

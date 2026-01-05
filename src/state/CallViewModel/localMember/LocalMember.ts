@@ -139,7 +139,16 @@ interface Props {
  * We want
  *  - a publisher
  *  -
- * @param param0
+ * @param props The properties required to create the local membership.
+ * @param props.scope The observable scope to use.
+ * @param props.connectionManager The connection manager to get connections from.
+ * @param props.createPublisherFactory Factory to create a publisher once we have a connection.
+ * @param props.joinMatrixRTC Callback to join the matrix RTC session once we have a transport.
+ * @param props.homeserverConnected The homeserver connected state.
+ * @param props.localTransport$ The local transport to use for publishing.
+ * @param props.logger The logger to use.
+ * @param props.muteStates The mute states for video and audio.
+ * @param props.matrixRTCSession The matrix RTC session to join.
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
  *  - connected$: the current connection state. Including matrix server and livekit server connection. (only considering the livekit server we are using for our own media publication)
@@ -178,14 +187,18 @@ export const createLocalMembership$ = ({
   // tracks$: Behavior<LocalTrack[]>;
   participant$: Behavior<LocalParticipant | null>;
   connection$: Behavior<Connection | null>;
-  /** Shorthand for homeserverConnected.rtcSession === Status.Reconnecting
-   * Direct translation to the js-sdk membership manager connection `Status`.
+  /**
+   * Tracks the homserver and livekit connected state and based on that computes reconnecting.
    */
   reconnecting$: Behavior<boolean>;
   /** Shorthand for homeserverConnected.rtcSession === Status.Disconnected
    * Direct translation to the js-sdk membership manager connection `Status`.
    */
   disconnected$: Behavior<boolean>;
+  /**
+   * Fully connected
+   */
+  connected$: Behavior<boolean>;
 } => {
   const logger = parentLogger.getChild("[LocalMembership]");
   logger.debug(`Creating local membership..`);
@@ -639,6 +652,7 @@ export const createLocalMembership$ = ({
     localMemberState$,
     participant$,
     reconnecting$,
+    connected$: matrixAndLivekitConnected$,
     disconnected$: scope.behavior(
       homeserverConnected.rtsSession$.pipe(
         map((state) => state === RTCSessionStatus.Disconnected),
@@ -672,9 +686,11 @@ interface EnterRTCSessionOptions {
  *      - Delay events management
  *      - Handles retries (fails only after several attempts)
  *
- * @param rtcSession
- * @param transport
- * @param options
+ * @param rtcSession - The MatrixRTCSession to join.
+ * @param transport - The LivekitTransport to use for this session.
+ * @param options - Options for entering the RTC session.
+ * @param options.encryptMedia - Whether to encrypt media.
+ * @param options.matrixRTCMode - The Matrix RTC mode to use.
  * @throws If the widget could not send ElementWidgetActions.JoinCall action.
  */
 // Exported for unit testing

@@ -228,7 +228,7 @@ export class Connection {
    *
    * @param opts - Connection options {@link ConnectionOpts}.
    *
-   * @param logger
+   * @param logger - The logger to use.
    */
   public constructor(
     opts: ConnectionOpts,
@@ -238,7 +238,7 @@ export class Connection {
     this.forceOldJwtEndpoint = opts.forceOldJwtEndpoint ?? false;
     this.logger = logger.getChild("[Connection]");
     this.logger.info(
-      `[Connection] Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
+      `Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
     );
     const { transport, client, scope } = opts;
 

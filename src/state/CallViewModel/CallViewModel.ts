@@ -82,7 +82,7 @@ import {
 } from "../../reactions";
 import { shallowEquals } from "../../utils/array";
 import { type MediaDevices } from "../MediaDevices";
-import { type Behavior } from "../Behavior";
+import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
@@ -119,6 +119,7 @@ import {
   createMatrixLivekitMembers$,
   type TaggedParticipant,
   type LocalMatrixLivekitMember,
+  type RemoteMatrixLivekitMember,
 } from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
   type AutoLeaveReason,
@@ -158,7 +159,7 @@ export interface CallViewModelOptions {
   /** Optional behavior overriding the computed window size, mainly for testing purposes. */
   windowSize$?: Behavior<{ width: number; height: number }>;
   /** The version & compatibility mode of MatrixRTC that we should use. */
-  matrixRTCMode$: Behavior<MatrixRTCMode>;
+  matrixRTCMode$?: Behavior<MatrixRTCMode>;
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -184,7 +185,7 @@ interface LayoutScanState {
 }
 
 type MediaItem = UserMedia | ScreenShare;
-type AudioLivekitItem = {
+export type LivekitRoomItem = {
   livekitRoom: LivekitRoom;
   participants: string[];
   url: string;
@@ -207,8 +208,11 @@ export interface CallViewModel {
   callPickupState$: Behavior<
     "unknown" | "ringing" | "timeout" | "decline" | "success" | null
   >;
+  /** Observable that emits when the user should leave the call (hangup pressed, widget action, error).
+   * THIS DOES NOT LEAVE THE CALL YET. The only way to leave the call (send the hangup event) is by ending the scope.
+   */
   leave$: Observable<"user" | AutoLeaveReason>;
-  /** Call to initiate hangup. Use in conbination with connectino state track the async hangup process. */
+  /** Call to initiate hangup. Use in conbination with reconnectino state track the async hangup process. */
   hangup: () => void;
 
   // joining
@@ -260,7 +264,11 @@ export interface CallViewModel {
    */
   participantCount$: Behavior<number>;
   /** Participants sorted by livekit room so they can be used in the audio rendering */
-  audioParticipants$: Behavior<AudioLivekitItem[]>;
+  livekitRoomItems$: Behavior<LivekitRoomItem[]>;
+  userMedia$: Behavior<UserMedia[]>;
+  /** use the layout instead, this is just for the sdk export. */
+  matrixLivekitMembers$: Behavior<RemoteMatrixLivekitMember[]>;
+  localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null>;
   /** List of participants raising their hand */
   handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
   /** List of reactions. Keys are: membership.membershipId (currently predefined as: `${membershipEvent.userId}:${membershipEvent.deviceId}`)*/
@@ -343,17 +351,15 @@ export interface CallViewModel {
     switch: () => void;
   } | null>;
 
-  // connection state
   /**
-   * Whether various media/event sources should pretend to be disconnected from
-   * all network input, even if their connection still technically works.
+   * Whether the app is currently reconnecting to the LiveKit server and/or setting the matrix rtc room state.
    */
-  // We do this when the app is in the 'reconnecting' state, because it might be
-  // that the LiveKit connection is still functional while the homeserver is
-  // down, for example, and we want to avoid making people worry that the app is
-  // in a split-brained state.
-  // DISCUSSION own membership manager ALSO this probably can be simplifis
   reconnecting$: Behavior<boolean>;
+
+  /**
+   * Shortcut for not requireing to parse and combine connectionState.matrix and connectionState.livekit
+   */
+  connected$: Behavior<boolean>;
 }
 
 /**
@@ -386,6 +392,8 @@ export function createCallViewModel$(
     options.encryptionSystem,
     matrixRTCSession,
   );
+  const matrixRTCMode$ =
+    options.matrixRTCMode$ ?? constant(MatrixRTCMode.Legacy);
 
   // Each hbar seperates a block of input variables required for the CallViewModel to function.
   // The outputs of this block is written under the hbar.
@@ -420,7 +428,7 @@ export function createCallViewModel$(
   };
 
   const useOldJwtEndpoint$ = scope.behavior(
-    options.matrixRTCMode$.pipe(map((v) => v !== MatrixRTCMode.Matrix_2_0)),
+    matrixRTCMode$.pipe(map((v) => v !== MatrixRTCMode.Matrix_2_0)),
   );
   const localTransport$ = createLocalTransport$({
     scope: scope,
@@ -439,7 +447,7 @@ export function createCallViewModel$(
     roomId: matrixRoom.roomId,
     useOldJwtEndpoint$,
     useOldestMember$: scope.behavior(
-      options.matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
+      matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
     ),
   });
 
@@ -482,7 +490,7 @@ export function createCallViewModel$(
   });
 
   const connectOptions$ = scope.behavior(
-    options.matrixRTCMode$.pipe(
+    matrixRTCMode$.pipe(
       map((mode) => ({
         encryptMedia: livekitKeyProvider !== undefined,
         // TODO. This might need to get called again on each change of matrixRTCMode...
@@ -515,7 +523,7 @@ export function createCallViewModel$(
         muteStates,
         trackProcessorState$,
         logger.getChild(
-          "[Publisher" + connection.transport.livekit_service_url + "]",
+          "[Publisher " + connection.transport.livekit_service_url + "]",
         ),
       );
     },
@@ -614,7 +622,7 @@ export function createCallViewModel$(
     ),
   );
 
-  const audioParticipants$ = scope.behavior(
+  const livekitRoomItems$ = scope.behavior(
     matrixLivekitMembers$.pipe(
       switchMap((members) => {
         const a$ = combineLatest(
@@ -639,7 +647,7 @@ export function createCallViewModel$(
         return a$;
       }),
       map((members) =>
-        members.reduce<AudioLivekitItem[]>((acc, curr) => {
+        members.reduce<LivekitRoomItem[]>((acc, curr) => {
           if (!curr) return acc;
 
           const existing = acc.find((item) => item.url === curr.url);
@@ -1509,10 +1517,7 @@ export function createCallViewModel$(
       ),
       null,
     ),
-
     participantCount$: participantCount$,
-    audioParticipants$: audioParticipants$,
-
     handsRaised$: handsRaised$,
     reactions$: reactions$,
     joinSoundEffect$: joinSoundEffect$,
@@ -1531,6 +1536,16 @@ export function createCallViewModel$(
     spotlight$: spotlight$,
     pip$: pip$,
     layout$: layout$,
+    userMedia$,
+    localMatrixLivekitMember$,
+    matrixLivekitMembers$: scope.behavior(
+      matrixLivekitMembers$.pipe(
+        map((members) => members.value),
+        tap((v) => {
+          logger.debug("matrixLivekitMembers$ updated (exported)", v);
+        }),
+      ),
+    ),
     tileStoreGeneration$: tileStoreGeneration$,
     showSpotlightIndicators$: showSpotlightIndicators$,
     showSpeakingIndicators$: showSpeakingIndicators$,
@@ -1539,6 +1554,8 @@ export function createCallViewModel$(
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
     reconnecting$: localMembership.reconnecting$,
+    livekitRoomItems$,
+    connected$: localMembership.connected$,
   };
 }
 

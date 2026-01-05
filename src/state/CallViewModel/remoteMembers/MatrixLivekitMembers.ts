@@ -100,7 +100,7 @@ export function createMatrixLivekitMembers$({
         function* ([membershipsWithTransport, managerData]) {
           for (const { membership, transport } of membershipsWithTransport) {
             const participants = transport
-              ? managerData.getParticipantForTransport(transport)
+              ? managerData.getParticipantsForTransport(transport)
               : [];
             const participant =
               participants.find(

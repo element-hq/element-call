@@ -39,6 +39,7 @@ import {
   ElementCallError,
   FailToGetOpenIdToken,
 } from "../../../utils/errors.ts";
+import { testJWTToken } from "../../../utils/test-fixtures.ts";
 import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
 
 let testScope: ObservableScope;
@@ -122,7 +123,7 @@ function setupRemoteConnection(): Connection {
       status: 200,
       body: {
         url: "wss://matrix-rtc.m.localhost/livekit/sfu",
-        jwt: "ATOKEN",
+        jwt: testJWTToken,
       },
     };
   });
@@ -259,7 +260,7 @@ describe("Start connection states", () => {
       capturedState.cause instanceof Error
     ) {
       expect(capturedState.cause.message).toContain(
-        "SFU Config fetch failed with exception Error",
+        "SFU Config fetch failed with exception",
       );
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
@@ -295,7 +296,7 @@ describe("Start connection states", () => {
         status: 200,
         body: {
           url: "wss://matrix-rtc.m.localhost/livekit/sfu",
-          jwt: "ATOKEN",
+          jwt: testJWTToken,
         },
       };
     });
@@ -393,7 +394,7 @@ describe("remote participants", () => {
     // livekitRoom and the rtc membership in order to publish the members that are publishing
     // on this connection.
 
-    const participants: RemoteParticipant[] = [
+    let participants: RemoteParticipant[] = [
       mockRemoteParticipant({ identity: "@alice:example.org:DEV000" }),
       mockRemoteParticipant({ identity: "@bob:example.org:DEV111" }),
       mockRemoteParticipant({ identity: "@carol:example.org:DEV222" }),
@@ -415,7 +416,22 @@ describe("remote participants", () => {
       fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
     );
 
-    // All remote participants should be present
+    // At this point there should be ~~no~~ publishers
+    // We do have publisher now, since we do not filter for publishers anymore (to also have participants with only data tracks)
+    // The filtering we do is just based on the matrixRTC member events.
+    expect(observedParticipants.pop()!.length).toEqual(4);
+
+    participants = [
+      mockRemoteParticipant({ identity: "@alice:example.org:DEV000" }),
+      mockRemoteParticipant({ identity: "@bob:example.org:DEV111" }),
+      mockRemoteParticipant({ identity: "@carol:example.org:DEV222" }),
+      mockRemoteParticipant({ identity: "@dan:example.org:DEV333" }),
+    ];
+    participants.forEach((p) =>
+      fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, p),
+    );
+
+    // At this point there should be no publishers
     expect(observedParticipants.pop()!.length).toEqual(4);
   });
 
