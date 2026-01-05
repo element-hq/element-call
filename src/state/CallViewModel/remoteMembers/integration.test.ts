@@ -13,7 +13,11 @@ import fetchMock from "fetch-mock";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { type Epoch, ObservableScope, trackEpoch } from "../../ObservableScope.ts";
+import {
+  type Epoch,
+  ObservableScope,
+  trackEpoch,
+} from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
 import {
@@ -31,6 +35,7 @@ import {
 import { createConnectionManager$ } from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 import { constant } from "../../Behavior.ts";
+import { testJWTToken } from "../../../utils/test-fixtures.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
 
@@ -83,7 +88,7 @@ beforeEach(() => {
       status: 200,
       body: {
         url: `wss://${domain}/livekit/sfu`,
-        jwt: "ATOKEN",
+        jwt: testJWTToken,
       },
     };
   });
@@ -124,14 +129,14 @@ test("bob, carl, then bob joining no tracks yet", () => {
       ownMembershipIdentity: ownMemberMock,
     });
 
-    const matrixLivekitItems$ = createMatrixLivekitMembers$({
+    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$:
         membershipsAndTransports.membershipsWithTransport$,
       connectionManager,
     });
 
-    expectObservable(matrixLivekitItems$).toBe(vMarble, {
+    expectObservable(matrixLivekitMembers$).toBe(vMarble, {
       a: expect.toSatisfy((e: Epoch<RemoteMatrixLivekitMember[]>) => {
         const items = e.value;
         expect(items.length).toBe(1);

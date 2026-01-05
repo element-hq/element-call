@@ -249,7 +249,7 @@ describe("Publication edge case", () => {
       constant(connectionWithPublisher),
     );
 
-    const matrixLivekitMember$ = createMatrixLivekitMembers$({
+    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
       connectionManager: {
@@ -257,7 +257,7 @@ describe("Publication edge case", () => {
       } as unknown as IConnectionManager,
     });
     await flushPromises();
-    expect(matrixLivekitMember$.value.value).toSatisfy(
+    expect(matrixLivekitMembers$.value.value).toSatisfy(
       (data: RemoteMatrixLivekitMember[]) => {
         expect(data.length).toEqual(2);
         expect(data[0].membership$.value).toBe(bobMembership);
