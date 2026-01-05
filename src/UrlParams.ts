@@ -261,7 +261,8 @@ interface IntentAndPlatformDerivedConfiguration {
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
 export interface UrlParams
-  extends UrlProperties,
+  extends
+    UrlProperties,
     UrlConfiguration,
     IntentAndPlatformDerivedConfiguration {}
 
