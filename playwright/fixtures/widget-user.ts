@@ -67,7 +67,6 @@ const CONFIG_JSON = {
 
 /**
  * Set the Element Call URL in the dev tool settings using `window.mxSettingsStore` via `page.evaluate`.
- * @param page
  */
 const setDevToolElementCallDevUrl = process.env.USE_DOCKER
   ? async (page: Page): Promise<void> => {

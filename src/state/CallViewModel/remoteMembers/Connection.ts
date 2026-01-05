@@ -218,7 +218,7 @@ export class Connection {
    *
    * @param opts - Connection options {@link ConnectionOpts}.
    *
-   * @param logger
+   * @param logger - The logger to use.
    */
   public constructor(opts: ConnectionOpts, logger: Logger) {
     this.logger = logger.getChild("[Connection]");

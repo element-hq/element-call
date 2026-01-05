@@ -95,6 +95,7 @@
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-deprecate": "^0.8.2",
     "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsdoc": "^61.5.0",
     "eslint-plugin-jsx-a11y": "^6.5.1",
     "eslint-plugin-matrix-org": "2.1.0",
     "eslint-plugin-react": "^7.29.4",

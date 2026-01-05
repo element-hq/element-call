@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 /**
  * Finds a media device with label matching 'deviceName'
  * @param deviceName The label of the device to look for
+ * @param kind The kind of media device to look for
  * @param devices The list of devices to search
  * @returns A matching media device or undefined if no matching device was found
  */
