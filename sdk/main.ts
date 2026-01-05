@@ -101,12 +101,7 @@ export async function createMatrixRTCSdk(
   const mediaDevices = new MediaDevices(scope);
   const muteStates = new MuteStates(scope, mediaDevices, constant(true));
   const slot = { application, id };
-  const rtcSession = new MatrixRTCSession(
-    client,
-    room,
-    MatrixRTCSession.sessionMembershipsForSlot(room, slot),
-    slot,
-  );
+  const rtcSession = new MatrixRTCSession(client, room, slot);
   const callViewModel = createCallViewModel$(
     scope,
     rtcSession,

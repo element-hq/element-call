@@ -49,6 +49,8 @@ describe("LocalTransport", () => {
       useOldestMember$: constant(false),
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        _unstable_getRTCTransports: async () => Promise.resolve([]),
         getDomain: () => "",
         baseUrl: "example.org",
         // These won't be called in this error path but satisfy the type
@@ -130,6 +132,8 @@ describe("LocalTransport", () => {
       useOldestMember$: constant(false),
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        _unstable_getRTCTransports: async () => Promise.resolve([]),
         getDomain: () => "",
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
@@ -140,7 +144,12 @@ describe("LocalTransport", () => {
       delayId$: constant("delay_id_mock"),
     });
 
-    openIdResolver.resolve?.({ url: "https://lk.example.org", jwt: "jwt" });
+    openIdResolver.resolve?.({
+      url: "https://lk.example.org",
+      jwt: "jwt",
+      livekitAlias: "!room:example.org",
+      livekitIdentity: ownMemberMock.userId + ":" + ownMemberMock.deviceId,
+    });
     expect(localTransport$.value).toBe(null);
     await flushPromises();
     // final
@@ -203,11 +212,15 @@ describe("LocalTransport", () => {
       mockConfig({});
       customLivekitUrl.setValue(customLivekitUrl.defaultValue);
       localTransportOpts = {
+        ownMembershipIdentity: ownMemberMock,
         scope,
         roomId: "!example_room_id",
         useOldestMember$: constant(false),
+        useOldJwtEndpoint$: constant(false),
+        delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {
+          baseUrl: "https://example.org",
           getDomain: vi.fn().mockReturnValue(""),
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: vi.fn().mockResolvedValue([]),
@@ -317,11 +330,15 @@ describe("LocalTransport", () => {
     it("throws if no options are available", async () => {
       const localTransport$ = createLocalTransport$({
         scope,
+        ownMembershipIdentity: ownMemberMock,
         roomId: "!example_room_id",
         useOldestMember$: constant(false),
+        useOldJwtEndpoint$: constant(false),
+        delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {
           getDomain: () => "",
+          baseUrl: "https://example.org",
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: async () => Promise.resolve([]),
           // These won't be called in this error path but satisfy the type
