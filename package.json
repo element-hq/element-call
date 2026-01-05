@@ -123,7 +123,7 @@
     "qrcode": "^1.5.4",
     "react": "19",
     "react-dom": "19",
-    "react-i18next": "^16.0.0",
+    "react-i18next": "^16.0.0 <16.1.0",
     "react-router-dom": "^7.0.0",
     "react-use-measure": "^2.1.1",
     "rxjs": "^7.8.1",
