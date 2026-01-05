@@ -40,7 +40,7 @@ export class MatrixKeyProvider extends BaseKeyProvider {
   }
 
   private onEncryptionKeyChanged = (
-    encryptionKey: Uint8Array,
+    encryptionKey: Uint8Array<ArrayBuffer>,
     encryptionKeyIndex: number,
     participantId: string,
   ): void => {
