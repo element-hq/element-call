@@ -67,7 +67,7 @@ export type OpenIDClientParts = Pick<
  * to the matrix RTC backend in order to get acces to the SFU.
  * It has built-in retry for calls to the homeserver with a backoff policy.
  * @param client The Matrix client
- * @param membership
+ * @param membership Our own membership identity parts used to send to jwt service.
  * @param serviceUrl The URL of the livekit SFU service
  * @param forceOldJwtEndpoint This will use the old jwt endpoint which will create the rtc backend identity based on string concatination
  * instead of a hash.
@@ -75,9 +75,9 @@ export type OpenIDClientParts = Pick<
  * For remote connections this does not matter, since we will not publish there we can rely on the newest option.
  * For our own connection we can only use the hashed version if we also send the new matrix2.0 sticky events.
  * @param roomId The room id used in the jwt request. This is NOT the livekit_alias. The jwt service will provide the alias. It maps matrix room ids <-> Livekit aliases.
- * @param delayEndpointBaseUrl
- * @param delayId
- * @param logger
+ * @param delayEndpointBaseUrl The URL of the matrix homeserver.
+ * @param delayId The delay id used for the jwt service to manage.
+ * @param logger optional logger.
  * @returns Object containing the token information
  * @throws FailToGetOpenIdToken
  */

@@ -31,8 +31,8 @@ export interface ConnectionFactory {
   createConnection(
     transport: LivekitTransport,
     scope: ObservableScope,
-    logger: Logger,
     ownMembershipIdentity: CallMembershipIdentityParts,
+    logger: Logger,
     forceOldJwtEndpoint?: boolean,
   ): Connection;
 }
@@ -83,17 +83,18 @@ export class ECConnectionFactory implements ConnectionFactory {
 
   /**
    *
-   * @param transport
-   * @param scope
-   * @param logger
+   * @param transport The transport to use for this connection.
+   * @param scope The observable scope (used for clean-up)
    * @param ownMembershipIdentity required to connect (using the jwt service) with the SFU.
+   * @param logger The logger instance to use for this connection.
+   * @param forceOldJwtEndpoint Use the old JWT endpoint independent of what the sfu supports.
    * @returns
    */
   public createConnection(
     transport: LivekitTransport,
     scope: ObservableScope,
-    logger: Logger,
     ownMembershipIdentity: CallMembershipIdentityParts,
+    logger: Logger,
     forceOldJwtEndpoint?: boolean,
   ): Connection {
     return new Connection(

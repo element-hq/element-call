@@ -159,10 +159,12 @@ const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
  * 4. The transport configured in Element Call's config.
  *
  * @param client The authenticated Matrix client for the current user
+ * @param membership The membership identity of the user.
  * @param roomId The ID of the room to be connected to.
  * @param urlFromDevSettings Override URL provided by the user's local config.
- * @param useMatrix2 This implies using the matrix2 jwt endpoint (including delayed event delegation of the jwt token)
- * @param delayId
+ * @param forceOldJwtEndpoint Whether to force the old JWT endpoint (not hashing the backendIdentity).
+ * @param delayId the delay id passed to the jwt service.
+ *
  * @returns A fully validated transport config.
  * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
  */

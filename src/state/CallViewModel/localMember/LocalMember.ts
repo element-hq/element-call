@@ -687,10 +687,9 @@ interface EnterRTCSessionOptions {
  *      - Handles retries (fails only after several attempts)
  *
  * @param rtcSession - The MatrixRTCSession to join.
+ * @param ownMembershipIdentity - Options for entering the RTC session.
  * @param transport - The LivekitTransport to use for this session.
- * @param options - Options for entering the RTC session.
- * @param options.encryptMedia - Whether to encrypt media.
- * @param options.matrixRTCMode - The Matrix RTC mode to use.
+ * @param options - `encryptMedia`: Whether to encrypt media `matrixRTCMode`: The Matrix RTC mode to use.
  * @throws If the widget could not send ElementWidgetActions.JoinCall action.
  */
 // Exported for unit testing
@@ -698,8 +697,9 @@ export function enterRTCSession(
   rtcSession: MatrixRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
   transport: LivekitTransport,
-  { encryptMedia, matrixRTCMode }: EnterRTCSessionOptions,
+  options: EnterRTCSessionOptions,
 ): void {
+  const { encryptMedia, matrixRTCMode } = options;
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 

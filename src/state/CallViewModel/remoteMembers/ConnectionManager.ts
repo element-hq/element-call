@@ -83,8 +83,12 @@ export interface IConnectionManager {
  * @param props - Configuration object
  * @param props.scope - The observable scope used by this object
  * @param props.connectionFactory - Used to create new connections
- * @param props.inputTransports$ - A list of Behaviors each containing a LIST of LivekitTransport.
- * @param props.logger - The logger to use
+ * @param props.localTransport$ - The local transport to use. (deduplicated with remoteTransports$)
+ * @param props.remoteTransports$ - All other transports. The connection manager will create connections for each transport. (deduplicated with localTransport$)
+ * @param props.ownMembershipIdentity - The own membership identity to use.
+ * @param props.logger - The logger to use.
+ * @param props.forceOldJwtEndpointForLocalTransport$ - Use the old JWT endpoint independent of what the sfu supports. Only applies for localTransport$.
+ *
  *   Each of these behaviors can be interpreted as subscribed list of transports.
  *
  *   Using `registerTransports` independent external modules can control what connections
@@ -183,8 +187,8 @@ export function createConnectionManager$({
               livekit_alias: alias,
             },
             scope,
-            logger,
             ownMembershipIdentity,
+            logger,
             forceOldJwtEndpoint,
           );
           // Start the connection immediately

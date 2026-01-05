@@ -79,8 +79,8 @@ describe("ECConnectionFactory - Audio inputs options", () => {
       ecConnectionFactory.createConnection(
         exampleTransport,
         testScope,
-        logger,
         ownMemberMock,
+        logger,
       );
 
       // Check if Room was constructed with expected options
@@ -125,8 +125,8 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
       ecConnectionFactory.createConnection(
         exampleTransport,
         testScope,
-        logger,
         ownMemberMock,
+        logger,
       );
 
       // Check if Room was constructed with expected options
