@@ -180,6 +180,26 @@ async function makeTransport(
 ): Promise<LivekitTransport & { forceOldJwtEndpoint: boolean }> {
   logger.trace("Searching for a preferred transport");
 
+  async function doOpenIdAndJWTFromUrl(
+    url: string,
+  ): Promise<LivekitTransport & { forceOldJwtEndpoint: boolean }> {
+    const { livekitAlias } = await getSFUConfigWithOpenID(
+      client,
+      membership,
+      url,
+      forceOldJwtEndpoint,
+      roomId,
+      client.baseUrl,
+      delayId,
+      logger,
+    );
+    return {
+      type: "livekit",
+      livekit_service_url: url,
+      livekit_alias: livekitAlias,
+      forceOldJwtEndpoint,
+    };
+  }
   // We will call `getSFUConfigWithOpenID` once per transport here as it's our
   // only mechanism of valiation. This means we will also ask the
   // homeserver for a OpenID token a few times. Since OpenID tokens are single
@@ -190,26 +210,11 @@ async function makeTransport(
 
   // DEVTOOL: Highest priority: Load from devtool setting
   if (urlFromDevSettings !== null) {
-    logger.info("Using LiveKit transport from dev tools: ", urlFromDevSettings);
     // Validate that the SFU is up. Otherwise, we want to fail on this
     // as we don't permit other SFUs.
     // This will call the jwt/sfu/get endpoint to pre create the livekit room.
-    const { livekitAlias } = await getSFUConfigWithOpenID(
-      client,
-      membership,
-      urlFromDevSettings,
-      forceOldJwtEndpoint,
-      roomId,
-      client.baseUrl,
-      delayId,
-      logger,
-    );
-    return {
-      type: "livekit",
-      livekit_service_url: urlFromDevSettings,
-      livekit_alias: livekitAlias,
-      forceOldJwtEndpoint,
-    };
+    logger.info("Using LiveKit transport from dev tools: ", urlFromDevSettings);
+    return await doOpenIdAndJWTFromUrl(urlFromDevSettings);
   }
 
   async function getFirstUsableTransport(
@@ -219,22 +224,9 @@ async function makeTransport(
       if (isLivekitTransportConfig(potentialTransport)) {
         try {
           // This will call the jwt/sfu/get endpoint to pre create the livekit room.
-          const { livekitAlias } = await getSFUConfigWithOpenID(
-            client,
-            membership,
+          return await doOpenIdAndJWTFromUrl(
             potentialTransport.livekit_service_url,
-            forceOldJwtEndpoint,
-            roomId,
-            client.baseUrl,
-            delayId,
-            logger,
           );
-
-          return {
-            ...potentialTransport,
-            livekit_alias: livekitAlias,
-            forceOldJwtEndpoint,
-          };
         } catch (ex) {
           if (ex instanceof FailToGetOpenIdToken) {
             // Explictly throw these
@@ -298,23 +290,8 @@ async function makeTransport(
   if (urlFromConf) {
     try {
       // This will call the jwt/sfu/get endpoint to pre create the livekit room.
-      const { livekitAlias } = await getSFUConfigWithOpenID(
-        client,
-        membership,
-        urlFromConf,
-        forceOldJwtEndpoint,
-        roomId,
-        client.baseUrl,
-        delayId,
-        logger,
-      );
-      const selectedTransport: LivekitTransport = {
-        type: "livekit",
-        livekit_service_url: urlFromConf,
-        livekit_alias: livekitAlias,
-      };
-      logger.info("Using config SFU", selectedTransport);
-      return { ...selectedTransport, forceOldJwtEndpoint };
+      logger.info("Using config SFU", urlFromConf);
+      return await doOpenIdAndJWTFromUrl(urlFromConf);
     } catch (ex) {
       if (ex instanceof FailToGetOpenIdToken) {
         throw ex;
