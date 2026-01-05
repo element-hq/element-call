@@ -135,10 +135,10 @@ export class ReactionsReader {
   }
 
   /**
-   * Fetchest any hand wave reactions by the given sender on the given
+   * Fetches any hand wave reactions by the given sender on the given
    * membership event.
-   * @param membershipEventId
-   * @param expectedSender
+   * @param membershipEventId - The user membership event id.
+   * @param expectedSender - The expected sender of the reaction.
    * @returns A MatrixEvent if one was found.
    */
   private getLastReactionEvent(

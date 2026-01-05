@@ -43,11 +43,11 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param client - The OpenID client parts for authentication, needed to get openID and JWT tokens.
    * @param devices - Used for video/audio out/in capture options.
    * @param processorState$ - Effects like background blur (only for publishing connection?)
-   * @param livekitKeyProvider
+   * @param livekitKeyProvider - Optional key provider for end-to-end encryption.
    * @param controlledAudioDevices - Option to indicate whether audio output device is controlled externally (native mobile app).
+   * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
    * @param echoCancellation - Whether to enable echo cancellation for audio capture.
    * @param noiseSuppression - Whether to enable noise suppression for audio capture.
-   * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
    */
   public constructor(
     private client: OpenIDClientParts,

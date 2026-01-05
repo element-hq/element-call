@@ -76,9 +76,11 @@ export interface IConnectionManager {
 
 /**
  * Crete a `ConnectionManager`
- * @param scope the observable scope used by this object.
- * @param connectionFactory used to create new connections.
- * @param _transportsSubscriptions$ A list of Behaviors each containing a LIST of LivekitTransport.
+ * @param props - Configuration object
+ * @param props.scope - The observable scope used by this object
+ * @param props.connectionFactory - Used to create new connections
+ * @param props.inputTransports$ - A list of Behaviors each containing a LIST of LivekitTransport.
+ * @param props.logger - The logger to use
  *   Each of these behaviors can be interpreted as subscribed list of transports.
  *
  *   Using `registerTransports` independent external modules can control what connections
