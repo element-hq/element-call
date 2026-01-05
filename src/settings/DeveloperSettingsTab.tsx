@@ -50,7 +50,7 @@ import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 
 interface Props {
   client: MatrixClient;
-  roomId: string;
+  roomId?: string;
   livekitRooms?: { room: LivekitRoom; url: string; isLocal?: boolean }[];
   env: ImportMetaEnv;
 }
@@ -237,6 +237,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
         onSave={useCallback(
           async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
             if (
+              roomId === undefined ||
               customLivekitUrlTextBuffer === "" ||
               customLivekitUrlTextBuffer === null
             ) {
