@@ -16,7 +16,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import * as Sentry from "@sentry/react";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
-import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill";
+import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill.js";
 import {
   useLocation,
   useNavigationType,
@@ -121,7 +121,7 @@ export class Initializer {
     }
 
     if (shouldPolyfillDurationFormat()) {
-      polyfills.push(import("@formatjs/intl-durationformat/polyfill-force"));
+      polyfills.push(import("@formatjs/intl-durationformat/polyfill-force.js"));
     }
 
     await Promise.all(polyfills);

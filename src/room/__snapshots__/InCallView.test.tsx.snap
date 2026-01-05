@@ -34,7 +34,7 @@ exports[`InCallView > rendering > renders 1`] = `
               tabindex="0"
             >
               <svg
-                aria-labelledby="«r0»"
+                aria-labelledby="_r_0_"
                 class="lock"
                 data-encrypted="false"
                 fill="currentColor"
@@ -286,7 +286,7 @@ exports[`InCallView > rendering > renders 1`] = `
       >
         <button
           aria-disabled="true"
-          aria-labelledby="«r8»"
+          aria-labelledby="_r_8_"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="primary"
           data-size="lg"
@@ -309,7 +309,7 @@ exports[`InCallView > rendering > renders 1`] = `
         </button>
         <button
           aria-disabled="true"
-          aria-labelledby="«rd»"
+          aria-labelledby="_r_d_"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="primary"
           data-size="lg"
@@ -331,7 +331,7 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-labelledby="«ri»"
+          aria-labelledby="_r_i_"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="secondary"
           data-size="lg"
@@ -352,7 +352,7 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-labelledby="«rn»"
+          aria-labelledby="_r_n_"
           class="_button_vczzf_8 endCall _has-icon_vczzf_57 _icon-only_vczzf_50 _destructive_vczzf_107"
           data-kind="primary"
           data-size="lg"
@@ -378,7 +378,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="toggle layout"
       >
         <input
-          aria-labelledby="«rs»"
+          aria-labelledby="_r_s_"
           name="layout"
           type="radio"
           value="spotlight"
@@ -396,7 +396,7 @@ exports[`InCallView > rendering > renders 1`] = `
           />
         </svg>
         <input
-          aria-labelledby="«r11»"
+          aria-labelledby="_r_11_"
           checked=""
           name="layout"
           type="radio"
