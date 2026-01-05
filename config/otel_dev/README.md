@@ -1,6 +1,7 @@
 # OpenTelemetry Collector for development
 
 ## Edit:
+
 Open telemetry has been removed in: https://github.com/element-hq/element-call/pull/3586
 Check this PR to get back the implementation or to use it as reference to add it back.
 
