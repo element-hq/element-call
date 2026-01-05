@@ -61,12 +61,12 @@ export class MatrixKeyProvider extends BaseKeyProvider {
           );
 
           logger.debug(
-            `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${rtcBackendIdentity} (before hash: ${membershipParts.userId}) encryptionKeyIndex=${encryptionKeyIndex}`,
+            `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${rtcBackendIdentity} (before hash: ${membershipParts.userId}:${membershipParts.deviceId}) encryptionKeyIndex=${encryptionKeyIndex}`,
           );
         },
         (e) => {
           logger.error(
-            `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId before hash=${membershipParts.userId} encryptionKeyIndex=${encryptionKeyIndex}`,
+            `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId before hash=${membershipParts.userId}:${membershipParts.deviceId} encryptionKeyIndex=${encryptionKeyIndex}`,
             e,
           );
         },
