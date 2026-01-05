@@ -18,6 +18,7 @@ import fetchMock from "fetch-mock";
 
 import { getSFUConfigWithOpenID, type OpenIDClientParts } from "./openIDSFU";
 import { testJWTToken } from "../utils/test-fixtures";
+import { ownMemberMock } from "../utils/test";
 
 const sfuUrl = "https://sfu.example.org";
 
@@ -42,7 +43,9 @@ describe("getSFUConfigWithOpenID", () => {
     });
     const config = await getSFUConfigWithOpenID(
       matrixClient,
+      ownMemberMock,
       "https://sfu.example.org",
+      false,
       "!example_room_id",
     );
     expect(config).toEqual({
@@ -63,7 +66,9 @@ describe("getSFUConfigWithOpenID", () => {
     try {
       await getSFUConfigWithOpenID(
         matrixClient,
+        ownMemberMock,
         "https://sfu.example.org",
+        false,
         "!example_room_id",
       );
     } catch (ex) {
@@ -98,7 +103,9 @@ describe("getSFUConfigWithOpenID", () => {
     });
     const config = await getSFUConfigWithOpenID(
       matrixClient,
+      ownMemberMock,
       "https://sfu.example.org",
+      false,
       "!example_room_id",
     );
     expect(config).toEqual({
