@@ -178,11 +178,7 @@ export const GroupCallView: FC<Props> = ({
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(room);
   const roomAvatar = useRoomAvatar(room);
-  const {
-    perParticipantE2EE,
-    returnToLobby,
-    password: passwordFromUrl,
-  } = useUrlParams();
+  const { returnToLobby, password: passwordFromUrl } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
 
   // Save the password once we start the groupCallView
@@ -303,7 +299,6 @@ export const GroupCallView: FC<Props> = ({
     rtcSession,
     preload,
     skipLobby,
-    perParticipantE2EE,
     mediaDevices,
     latestMuteStates,
     setJoined,

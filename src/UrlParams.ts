@@ -189,11 +189,6 @@ export interface UrlConfiguration {
    * user's homeserver doesn't provide any.
    */
   allowIceFallback: boolean;
-
-  /**
-   * Whether the app should use per participant keys for E2EE.
-   */
-  perParticipantE2EE: boolean;
   /**
    * Whether the global JS controls for audio output devices should be enabled,
    * allowing the list of output devices to be controlled by the app hosting
@@ -406,7 +401,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     showControls: true,
     hideScreensharing: false,
     allowIceFallback: true,
-    perParticipantE2EE: true,
     controlledAudioDevices: platform === "desktop" ? false : true,
     skipLobby: true,
     returnToLobby: false,
@@ -453,7 +447,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
         showControls: true,
         hideScreensharing: false,
         allowIceFallback: false,
-        perParticipantE2EE: false,
         controlledAudioDevices: false,
         skipLobby: false,
         returnToLobby: false,
@@ -524,7 +517,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     showControls: parser.getFlag("showControls"),
     hideScreensharing: parser.getFlag("hideScreensharing"),
     allowIceFallback: parser.getFlag("allowIceFallback"),
-    perParticipantE2EE: parser.getFlag("perParticipantE2EE"),
     controlledAudioDevices: parser.getFlag("controlledAudioDevices"),
     skipLobby: isWidget ? parser.getFlag("skipLobby") : false,
     // In SPA mode the user should always exit to the home screen when hanging
