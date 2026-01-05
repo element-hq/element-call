@@ -135,7 +135,6 @@ interface ItemHandle<Data, Item> {
  * requested at a later time, and destroyed (have their scope ended) when the
  * key is no longer requested.
  *
- * @param input$ The input value to be mapped.
  * @param generator A generator function yielding a tuple of keys and the
  *   currently associated data for each item that it wants to exist.
  * @param factory A function constructing an individual item, given the item's key,

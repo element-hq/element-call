@@ -81,7 +81,7 @@ export interface Props {
   localUser: { deviceId: string; userId: string };
 }
 /**
- * @returns {callPickupState$, autoLeave$}
+ * @returns two observables:
  * `callPickupState$` The current call pickup state of the call.
  *  - "unknown": The client has not yet sent the notification event. We don't know if it will because it first needs to send its own membership.
  *     Then we can conclude if we were the first one to join or not.
