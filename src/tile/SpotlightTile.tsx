@@ -70,8 +70,7 @@ interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
   videoFit: "contain" | "cover";
 }
 
-interface SpotlightLocalUserMediaItemProps
-  extends SpotlightUserMediaItemBaseProps {
+interface SpotlightLocalUserMediaItemProps extends SpotlightUserMediaItemBaseProps {
   vm: LocalUserMediaViewModel;
 }
 
@@ -85,8 +84,7 @@ const SpotlightLocalUserMediaItem: FC<SpotlightLocalUserMediaItemProps> = ({
 
 SpotlightLocalUserMediaItem.displayName = "SpotlightLocalUserMediaItem";
 
-interface SpotlightRemoteUserMediaItemProps
-  extends SpotlightUserMediaItemBaseProps {
+interface SpotlightRemoteUserMediaItemProps extends SpotlightUserMediaItemBaseProps {
   vm: RemoteUserMediaViewModel;
 }
 
