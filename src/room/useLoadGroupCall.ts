@@ -232,7 +232,7 @@ export const useLoadGroupCall = (
       });
     };
 
-    const fetchOrCreateRoom = async (): Promise<Room> => {
+    const fetchRoom = async (): Promise<Room> => {
       let room: Room | null = null;
       if (roomIdOrAlias[0] === "#") {
         const alias = roomIdOrAlias;
@@ -330,8 +330,8 @@ export const useLoadGroupCall = (
       return room;
     };
 
-    const fetchOrCreateGroupCall = async (): Promise<MatrixRTCSession> => {
-      const room = await fetchOrCreateRoom();
+    const fetchGroupCall = async (): Promise<MatrixRTCSession> => {
+      const room = await fetchRoom();
       activeRoom.current = room;
       logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
 
@@ -369,7 +369,7 @@ export const useLoadGroupCall = (
     if (state.kind === "loading") {
       logger.log("Start loading group call");
       waitForClientSyncing()
-        .then(fetchOrCreateGroupCall)
+        .then(fetchGroupCall)
         .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
         .then(observeMyMembership)
         .catch((error) => setState({ kind: "failed", error }));
