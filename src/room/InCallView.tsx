@@ -48,7 +48,6 @@ import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
-import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
@@ -114,8 +113,10 @@ const logger = rootLogger.getChild("[InCallView]");
 
 const maxTapDurationMs = 400;
 
-export interface ActiveCallProps
-  extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {
+export interface ActiveCallProps extends Omit<
+  InCallViewProps,
+  "vm" | "livekitRoom" | "connState"
+> {
   e2eeSystem: EncryptionSystem;
   // TODO refactor those reasons into an enum
   onLeft: (
@@ -189,7 +190,6 @@ export interface InCallViewProps {
   matrixRoom: MatrixRoom;
   muteStates: MuteStates;
   header: HeaderStyle;
-  otelGroupCallMembership?: OTelGroupCallMembership;
   onShareClick: (() => void) | null;
 }
 

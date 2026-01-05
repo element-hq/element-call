@@ -200,8 +200,11 @@ interface Drag {
 
 export type DragCallback = (drag: Drag) => void;
 
-interface LayoutMemoProps<LayoutModel, TileModel, R extends HTMLElement>
-  extends LayoutProps<LayoutModel, TileModel, R> {
+interface LayoutMemoProps<
+  LayoutModel,
+  TileModel,
+  R extends HTMLElement,
+> extends LayoutProps<LayoutModel, TileModel, R> {
   Layout: ComponentType<LayoutProps<LayoutModel, TileModel, R>>;
 }
 
