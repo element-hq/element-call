@@ -143,7 +143,7 @@ export class Publisher {
     this.logger.debug("createAndSetupTracks called");
     const lkRoom = this.connection.livekitRoom;
     // Observe mute state changes and update LiveKit microphone/camera states accordingly
-    this.observeMuteStates(this.scope);
+    this.observeMuteStates();
 
     // Check if audio and/or video is enabled. We only create tracks if enabled,
     // because it could prompt for permission, and we don't want to do that unnecessarily.
@@ -356,10 +356,9 @@ export class Publisher {
 
   /**
    * Observe changes in the mute states and update the LiveKit room accordingly.
-   * @param scope
    * @private
    */
-  private observeMuteStates(scope: ObservableScope): void {
+  private observeMuteStates(): void {
     const lkRoom = this.connection.livekitRoom;
     this.muteStates.audio.setHandler(async (enable) => {
       try {

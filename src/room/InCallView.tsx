@@ -48,7 +48,6 @@ import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
-import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
@@ -189,7 +188,6 @@ export interface InCallViewProps {
   matrixRoom: MatrixRoom;
   muteStates: MuteStates;
   header: HeaderStyle;
-  otelGroupCallMembership?: OTelGroupCallMembership;
   onShareClick: (() => void) | null;
 }
 
