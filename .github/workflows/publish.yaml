@@ -61,6 +61,7 @@ jobs:
       docker_tags: |
         type=sha,format=short,event=branch
         type=raw,value=${{ github.event.release.tag_name }}
+        type=raw,value=latest
       # Like before, using ${{ env.VERSION }} above doesn't work
   add_docker_release_note:
     needs: publish_docker
