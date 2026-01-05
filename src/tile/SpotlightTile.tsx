@@ -38,6 +38,7 @@ import {
   type MediaViewModel,
   ScreenShareViewModel,
   type UserMediaViewModel,
+  type RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
 import { useMergedRefs } from "../useMergedRefs";
@@ -84,6 +85,21 @@ const SpotlightLocalUserMediaItem: FC<SpotlightLocalUserMediaItemProps> = ({
 
 SpotlightLocalUserMediaItem.displayName = "SpotlightLocalUserMediaItem";
 
+interface SpotlightRemoteUserMediaItemProps
+  extends SpotlightUserMediaItemBaseProps {
+  vm: RemoteUserMediaViewModel;
+}
+
+const SpotlightRemoteUserMediaItem: FC<SpotlightRemoteUserMediaItemProps> = ({
+  vm,
+  ...props
+}) => {
+  const waitingForMedia = useBehavior(vm.waitingForMedia$);
+  return (
+    <MediaView waitingForMedia={waitingForMedia} mirror={false} {...props} />
+  );
+};
+
 interface SpotlightUserMediaItemProps extends SpotlightItemBaseProps {
   vm: UserMediaViewModel;
 }
@@ -103,7 +119,7 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
   return vm instanceof LocalUserMediaViewModel ? (
     <SpotlightLocalUserMediaItem vm={vm} {...baseProps} />
   ) : (
-    <MediaView mirror={false} {...baseProps} />
+    <SpotlightRemoteUserMediaItem vm={vm} {...baseProps} />
   );
 };
 

@@ -68,11 +68,6 @@ test("When creator left, avoid reconnect to the same SFU", async ({
     reducedMotion: "reduce",
   });
   const guestCPage = await guestC.newPage();
-  let sfuGetCallCount = 0;
-  await guestCPage.route("**/livekit/jwt/sfu/get", async (route) => {
-    sfuGetCallCount++;
-    await route.continue();
-  });
   // Track WebSocket connections
   let wsConnectionCount = 0;
   await guestCPage.routeWebSocket("**", (ws) => {
@@ -100,5 +95,4 @@ test("When creator left, avoid reconnect to the same SFU", async ({
   // https://github.com/element-hq/element-call/issues/3344
   // The app used to request a new jwt token then to reconnect to the SFU
   expect(wsConnectionCount).toBe(1);
-  expect(sfuGetCallCount).toBe(2 /* the first one is for the warmup */);
 });

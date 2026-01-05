@@ -7,6 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { expect, test } from "@playwright/test";
 
+import { createJTWToken } from "./fixtures/jwt-token";
+
 test("Should show error screen if fails to get JWT token", async ({ page }) => {
   await page.goto("/");
 
@@ -93,7 +95,7 @@ test("Should show error screen if call creation is restricted", async ({
         contentType: "application/json",
         body: JSON.stringify({
           url: "wss://badurltotricktest/livekit/sfu",
-          jwt: "FAKE",
+          jwt: createJTWToken("@fake:user", "!fake:room"),
         }),
       }),
   );

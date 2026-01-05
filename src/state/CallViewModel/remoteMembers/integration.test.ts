@@ -29,10 +29,11 @@ import { type ProcessorState } from "../../../livekit/TrackProcessorContext.tsx"
 import {
   areLivekitTransportsEqual,
   createMatrixLivekitMembers$,
-  type MatrixLivekitMember,
+  type RemoteMatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
 import { createConnectionManager$ } from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
+import { testJWTToken } from "../../../utils/test-fixtures.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
 
@@ -85,7 +86,7 @@ beforeEach(() => {
       status: 200,
       body: {
         url: `wss://${domain}/livekit/sfu`,
-        jwt: "ATOKEN",
+        jwt: testJWTToken,
       },
     };
   });
@@ -124,15 +125,15 @@ test("bob, carl, then bob joining no tracks yet", () => {
       logger: logger,
     });
 
-    const matrixLivekitItems$ = createMatrixLivekitMembers$({
+    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$:
         membershipsAndTransports.membershipsWithTransport$,
       connectionManager,
     });
 
-    expectObservable(matrixLivekitItems$).toBe(vMarble, {
-      a: expect.toSatisfy((e: Epoch<MatrixLivekitMember[]>) => {
+    expectObservable(matrixLivekitMembers$).toBe(vMarble, {
+      a: expect.toSatisfy((e: Epoch<RemoteMatrixLivekitMember[]>) => {
         const items = e.value;
         expect(items.length).toBe(1);
         const item = items[0]!;
@@ -147,12 +148,12 @@ test("bob, carl, then bob joining no tracks yet", () => {
             ),
           ),
         });
-        expectObservable(item.participant$).toBe("a", {
+        expectObservable(item.participant.value$).toBe("a", {
           a: null,
         });
         return true;
       }),
-      b: expect.toSatisfy((e: Epoch<MatrixLivekitMember[]>) => {
+      b: expect.toSatisfy((e: Epoch<RemoteMatrixLivekitMember[]>) => {
         const items = e.value;
         expect(items.length).toBe(2);
 
@@ -161,7 +162,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
           expectObservable(item.membership$).toBe("a", {
             a: bobMembership,
           });
-          expectObservable(item.participant$).toBe("a", {
+          expectObservable(item.participant.value$).toBe("a", {
             a: null,
           });
         }
@@ -172,7 +173,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
           expectObservable(item.membership$).toBe("a", {
             a: carlMembership,
           });
-          expectObservable(item.participant$).toBe("a", {
+          expectObservable(item.participant.value$).toBe("a", {
             a: null,
           });
           expectObservable(item.connection$).toBe("a", {
@@ -189,7 +190,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
         }
         return true;
       }),
-      c: expect.toSatisfy((e: Epoch<MatrixLivekitMember[]>) => {
+      c: expect.toSatisfy((e: Epoch<RemoteMatrixLivekitMember[]>) => {
         const items = e.value;
         expect(items.length).toBe(3);
 
@@ -216,7 +217,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
               return true;
             }),
           });
-          expectObservable(item.participant$).toBe("a", {
+          expectObservable(item.participant.value$).toBe("a", {
             a: null,
           });
         }

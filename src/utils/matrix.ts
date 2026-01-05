@@ -188,7 +188,6 @@ function fullAliasFromRoomName(roomName: string, client: MatrixClient): string {
  * Applies some basic sanitisation to a room name that the user
  * has given us
  * @param input The room name from the user
- * @param client A matrix client object
  */
 export function sanitiseRoomNameInput(input: string): string {
   // check to see if the user has entered a fully qualified room
@@ -304,8 +303,9 @@ export async function createRoom(
 /**
  * Returns an absolute URL to that will load Element Call with the given room
  * @param roomId ID of the room
- * @param roomName Name of the room
  * @param encryptionSystem what encryption (or EncryptionSystem.Unencrypted) the room uses
+ * @param roomName Name of the room
+ * @param viaServers Optional list of servers to include as 'via' parameters in the URL
  */
 export function getAbsoluteRoomUrl(
   roomId: string,
@@ -321,8 +321,9 @@ export function getAbsoluteRoomUrl(
 /**
  * Returns a relative URL to that will load Element Call with the given room
  * @param roomId ID of the room
- * @param roomName Name of the room
  * @param encryptionSystem what encryption (or EncryptionSystem.Unencrypted) the room uses
+ * @param roomName Name of the room
+ * @param viaServers Optional list of servers to include as 'via' parameters in the URL
  */
 export function getRelativeRoomUrl(
   roomId: string,

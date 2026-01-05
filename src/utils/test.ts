@@ -44,12 +44,12 @@ import {
   Track,
 } from "livekit-client";
 import { randomUUID } from "crypto";
-import {
-  type RoomAndToDeviceEvents,
-  type RoomAndToDeviceEventsHandlerMap,
-} from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import { type TrackReference } from "@livekit/components-core";
 import EventEmitter from "events";
+import {
+  type KeyTransportEvents,
+  type KeyTransportEventsHandlerMap,
+} from "matrix-js-sdk/lib/matrixrtc/IKeyTransport";
 
 import {
   LocalUserMediaViewModel,
@@ -311,6 +311,8 @@ export function mockLocalParticipant(
     publishTrack: vi.fn(),
     unpublishTracks: vi.fn().mockResolvedValue([]),
     createTracks: vi.fn(),
+    setMicrophoneEnabled: vi.fn(),
+    setCameraEnabled: vi.fn(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
     ...mockEmitter(),
@@ -319,12 +321,12 @@ export function mockLocalParticipant(
 }
 
 export function createLocalMedia(
-  localRtcMember: CallMembership,
+  rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
   localParticipant: LocalParticipant,
   mediaDevices: MediaDevices,
 ): LocalUserMediaViewModel {
-  const member = mockMatrixRoomMember(localRtcMember, roomMember);
+  const member = mockMatrixRoomMember(rtcMember, roomMember);
   return new LocalUserMediaViewModel(
     testScope(),
     "local",
@@ -359,23 +361,26 @@ export function mockRemoteParticipant(
 }
 
 export function createRemoteMedia(
-  localRtcMember: CallMembership,
+  rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
-  participant: Partial<RemoteParticipant>,
+  participant: RemoteParticipant | null,
+  livekitRoom: LivekitRoom | undefined = mockLivekitRoom(
+    {},
+    {
+      remoteParticipants$: of(participant ? [participant] : []),
+    },
+  ),
 ): RemoteUserMediaViewModel {
-  const member = mockMatrixRoomMember(localRtcMember, roomMember);
-  const remoteParticipant = mockRemoteParticipant(participant);
+  const member = mockMatrixRoomMember(rtcMember, roomMember);
   return new RemoteUserMediaViewModel(
     testScope(),
     "remote",
     member.userId,
-    of(remoteParticipant),
+    constant(participant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
-    constant(
-      mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
-    ),
+    constant(livekitRoom),
     constant("https://rtc-example.org"),
     constant(false),
     constant(member.rawDisplayName ?? "nodisplayname"),
@@ -398,9 +403,9 @@ export function mockConfig(
 }
 
 export class MockRTCSession extends TypedEventEmitter<
-  MatrixRTCSessionEvent | RoomAndToDeviceEvents | MembershipManagerEvent,
-  MatrixRTCSessionEventHandlerMap &
-    RoomAndToDeviceEventsHandlerMap &
+  MatrixRTCSessionEvent | MembershipManagerEvent | KeyTransportEvents,
+  KeyTransportEventsHandlerMap &
+    MatrixRTCSessionEventHandlerMap &
     MembershipManagerEventHandlerMap
 > {
   public asMockedSession(): MockedObject<MatrixRTCSession> {
