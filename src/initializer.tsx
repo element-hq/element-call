@@ -16,7 +16,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import * as Sentry from "@sentry/react";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
-import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill";
+import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill.js";
 import {
   useLocation,
   useNavigationType,
@@ -26,7 +26,6 @@ import {
 
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
-import { ElementCallOpenTelemetry } from "./otel/otel";
 import { platform } from "./Platform";
 import { isFailure } from "./utils/fetch";
 
@@ -101,7 +100,6 @@ enum LoadState {
 class DependencyLoadStates {
   public config: LoadState = LoadState.None;
   public sentry: LoadState = LoadState.None;
-  public openTelemetry: LoadState = LoadState.None;
 
   public allDepsAreLoaded(): boolean {
     return !Object.values(this).some((s) => s !== LoadState.Loaded);
@@ -123,7 +121,7 @@ export class Initializer {
     }
 
     if (shouldPolyfillDurationFormat()) {
-      polyfills.push(import("@formatjs/intl-durationformat/polyfill-force"));
+      polyfills.push(import("@formatjs/intl-durationformat/polyfill-force.js"));
     }
 
     await Promise.all(polyfills);
@@ -264,15 +262,6 @@ export class Initializer {
       // Sentry is now 'loadeed' (even if we actually skipped starting
       // it due to to not being configured)
       this.loadStates.sentry = LoadState.Loaded;
-    }
-
-    // OpenTelemetry (also only after config loaded)
-    if (
-      this.loadStates.openTelemetry === LoadState.None &&
-      this.loadStates.config === LoadState.Loaded
-    ) {
-      ElementCallOpenTelemetry.globalInit();
-      this.loadStates.openTelemetry = LoadState.Loaded;
     }
 
     if (this.loadStates.allDepsAreLoaded()) {
