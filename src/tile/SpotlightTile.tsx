@@ -10,6 +10,7 @@ import {
   type FC,
   type Ref,
   type RefAttributes,
+  type ReactNode,
   useCallback,
   useEffect,
   useRef,
@@ -20,6 +21,13 @@ import {
   CollapseIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  MicOnSolidIcon,
+  MicOffSolidIcon,
+  MicOffIcon,
+  VolumeOffSolidIcon,
+  OverflowHorizontalIcon,
+  VolumeOnIcon,
+  VolumeOffIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
 import { type Observable, map } from "rxjs";
@@ -47,6 +55,10 @@ import { useLatest } from "../useLatest";
 import { type SpotlightTileViewModel } from "../state/TileViewModel";
 import { useBehavior } from "../useBehavior";
 
+import { Menu, ToggleMenuItem, ContextMenu, MenuItem } from "@vector-im/compound-web";
+import { Slider } from "../Slider";
+import gridStyles from "../tile/GridTile.module.css";
+
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
   className?: string;
@@ -63,14 +75,16 @@ interface SpotlightItemBaseProps {
   mxcAvatarUrl: string | undefined;
   focusable: boolean;
   "aria-hidden"?: boolean;
-  localParticipant: boolean;
+  primaryButton?: ReactNode;
+  nameTagLeadingIcon?: ReactNode;
 }
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
   videoFit: "contain" | "cover";
 }
 
-interface SpotlightLocalUserMediaItemProps extends SpotlightUserMediaItemBaseProps {
+interface SpotlightLocalUserMediaItemProps
+  extends SpotlightUserMediaItemBaseProps {
   vm: LocalUserMediaViewModel;
 }
 
@@ -84,7 +98,8 @@ const SpotlightLocalUserMediaItem: FC<SpotlightLocalUserMediaItemProps> = ({
 
 SpotlightLocalUserMediaItem.displayName = "SpotlightLocalUserMediaItem";
 
-interface SpotlightRemoteUserMediaItemProps extends SpotlightUserMediaItemBaseProps {
+interface SpotlightRemoteUserMediaItemProps
+  extends SpotlightUserMediaItemBaseProps {
   vm: RemoteUserMediaViewModel;
 }
 
@@ -100,24 +115,151 @@ const SpotlightRemoteUserMediaItem: FC<SpotlightRemoteUserMediaItemProps> = ({
 
 interface SpotlightUserMediaItemProps extends SpotlightItemBaseProps {
   vm: UserMediaViewModel;
+  hasScreenShare: boolean;
 }
 
 const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
   vm,
+  hasScreenShare,
   ...props
 }) => {
+  const { t } = useTranslation();
   const cropVideo = useBehavior(vm.cropVideo$);
+
+  // Menu open state for the spotlight overflow menu
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const hasLocalVolume = "localVolume$" in vm;
+  const locallyMuted =
+    "locallyMuted$" in vm ? useBehavior((vm as RemoteUserMediaViewModel).locallyMuted$) : false;
+  const audioEnabled = useBehavior(vm.audioEnabled$);
+  const AudioIcon = locallyMuted
+    ? VolumeOffSolidIcon
+    : audioEnabled
+    ? MicOnSolidIcon
+    : MicOffSolidIcon;
+  const audioIconLabel = locallyMuted
+    ? t("video_tile.muted_for_me")
+    : audioEnabled
+    ? t("microphone_on")
+    : t("microphone_off");
+
+  // If we have a localVolume$, read it for the slider
+  const localVolume = hasLocalVolume ? useBehavior((vm as any).localVolume$) as number : undefined;
+
+  const onSelectFitContain = useCallback(
+    (e: Event) => {
+      e.preventDefault?.();
+      vm.toggleFitContain();
+    },
+    [vm],
+  );
+
+  const onSelectMuteForMe = useCallback(
+    (e: Event) => {
+      e.preventDefault?.();
+      if ("toggleLocallyMuted" in vm) (vm as RemoteUserMediaViewModel).toggleLocallyMuted();
+    },
+    [vm],
+  );
+
+  const onVolumeChange = useCallback(
+    (value: number) => {
+      if ("setLocalVolume" in vm) (vm as any).setLocalVolume(value);
+    },
+    [vm],
+  );
+
+  const onVolumeCommit = useCallback(() => {
+    if ("commitLocalVolume" in vm) (vm as any).commitLocalVolume();
+  }, [vm]);
+
+  // Menu contents (similar to GridTile, plus slider when no screenshare present)
+  const menuContent = (
+    <>
+      {"toggleLocallyMuted" in vm ? (
+        <ToggleMenuItem
+          Icon={MicOffIcon}
+          label={t("video_tile.mute_for_me")}
+          checked={locallyMuted}
+          onSelect={onSelectMuteForMe}
+        />
+      ) : null}
+      <ToggleMenuItem
+        Icon={ExpandIcon}
+        label={t("video_tile.change_fit_contain")}
+        checked={cropVideo}
+        onSelect={onSelectFitContain}
+      />
+      {/* If there is no screenshare in the spotlight and this view model exposes a volume control,
+          show the same slider used elsewhere in the app so styling is consistent. */}
+      {!hasScreenShare && hasLocalVolume ? (
+        <MenuItem as="div" Icon={locallyMuted ? VolumeOffIcon : VolumeOnIcon} label={null} onSelect={null}>
+          <Slider
+            className={gridStyles.volumeSlider}
+            label={t("video_tile.volume")}
+            value={localVolume ?? 1}
+            onValueChange={onVolumeChange}
+            onValueCommit={onVolumeCommit}
+            min={0}
+            max={1}
+            step={0.01}
+          />
+        </MenuItem>
+      ) : null}
+    </>
+  );
+
+  // Overflow button menu (button in corner) — ensure it overlays other buttons
+  const overflow = (
+    <Menu
+      title={props.displayName}
+      open={menuOpen}
+      onOpenChange={setMenuOpen}
+      trigger={
+        <button
+          aria-label={t("common.options")}
+          tabIndex={props.focusable ? undefined : -1}
+          style={{ position: "relative", zIndex: 9999 }}
+        >
+          <OverflowHorizontalIcon aria-hidden width={20} height={20} />
+        </button>
+      }
+      side="left"
+      align="start"
+    >
+      {menuContent}
+    </Menu>
+  );
 
   const baseProps: SpotlightUserMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
     videoFit: cropVideo ? "cover" : "contain",
     ...props,
+    nameTagLeadingIcon: (
+      <AudioIcon
+        width={20}
+        height={20}
+        aria-label={audioIconLabel}
+        data-muted={locallyMuted || !audioEnabled}
+      />
+    ),
+    primaryButton: overflow,
   };
 
-  return vm instanceof LocalUserMediaViewModel ? (
-    <SpotlightLocalUserMediaItem vm={vm} {...baseProps} />
-  ) : (
-    <SpotlightRemoteUserMediaItem vm={vm} {...baseProps} />
+  // Create the tile element (local or remote) then wrap it in a ContextMenu
+  const tileElement =
+    vm instanceof LocalUserMediaViewModel ? (
+      <SpotlightLocalUserMediaItem vm={vm} {...baseProps} />
+    ) : (
+      <SpotlightRemoteUserMediaItem vm={vm} {...baseProps} />
+    );
+
+  // Wrap with ContextMenu to support right-click/contextmenu across the tile
+  return (
+    <ContextMenu title={props.displayName} trigger={tileElement} hasAccessibleAlternative>
+      {menuContent}
+    </ContextMenu>
   );
 };
 
@@ -135,6 +277,7 @@ interface SpotlightItemProps {
    */
   snap: boolean;
   "aria-hidden"?: boolean;
+  hasScreenShare: boolean;
 }
 
 const SpotlightItem: FC<SpotlightItemProps> = ({
@@ -146,7 +289,10 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   intersectionObserver$,
   snap,
   "aria-hidden": ariaHidden,
+  hasScreenShare,
 }) => {
+  const { t } = useTranslation(); // <-- needed for menu labels used below
+
   const ourRef = useRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
   const focusUrl = useBehavior(vm.focusUrl$);
@@ -188,13 +334,97 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     focusable,
     encryptionStatus,
     "aria-hidden": ariaHidden,
-    localParticipant: vm.local,
   };
 
+  // If this is a screen share, we wrap MediaView with a ContextMenu and provide
+  // optional audio controls if the view model exposes them.
+  if (vm instanceof ScreenShareViewModel) {
+    // Detect presence of volume/mute API on the view model
+    const hasToggleLocallyMuted = "toggleLocallyMuted" in vm;
+    const hasLocalVolume = "localVolume$" in vm;
+    const hasLocallyMuted$ = "locallyMuted$" in vm;
+
+    // read observable values if present
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const localVolume = hasLocalVolume ? useBehavior((vm as any).localVolume$) as number : undefined;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const locallyMuted = hasLocallyMuted$ ? useBehavior((vm as any).locallyMuted$) as boolean : localVolume === 0;
+
+    const onSelectMuteForMe = useCallback(
+      (e: Event) => {
+        e.preventDefault?.();
+        if (hasToggleLocallyMuted) (vm as any).toggleLocallyMuted();
+      },
+      [vm, hasToggleLocallyMuted],
+    );
+
+    // Handlers for slider
+    const onVolumeChange = (value: number) => {
+      if ("setLocalVolume" in vm) (vm as any).setLocalVolume(value);
+    };
+    const onVolumeCommit = () => {
+      if ("commitLocalVolume" in vm) (vm as any).commitLocalVolume();
+    };
+
+    // Build menu content: mute toggle and volume slider if available
+    const VolumeIcon = locallyMuted ? VolumeOffIcon : VolumeOnIcon;
+
+    const menuContent = (
+      <>
+        {hasToggleLocallyMuted ? (
+          <ToggleMenuItem
+            Icon={MicOffIcon}
+            label={t("video_tile.mute_for_me")}
+            checked={locallyMuted}
+            onSelect={onSelectMuteForMe}
+          />
+        ) : null}
+        {hasLocalVolume ? (
+          // Use the same structure as GridTile — wrap Slider in MenuItem as="div"
+          <MenuItem as="div" Icon={VolumeIcon} label={null} onSelect={null}>
+            <Slider
+              className={gridStyles.volumeSlider}
+              label={t("video_tile.volume")}
+              value={localVolume ?? 1}
+              onValueChange={onVolumeChange}
+              onValueCommit={onVolumeCommit}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+          </MenuItem>
+        ) : null}
+      </>
+    );
+
+    const tileElement = (
+      <MediaView
+        videoFit="contain"
+        mirror={false}
+        {...baseProps}
+        // For screen-shares show the audio icon in the name tag if available
+        nameTagLeadingIcon={
+          hasLocallyMuted$
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (locallyMuted ? <VolumeOffSolidIcon width={20} height={20} /> : <MicOnSolidIcon width={20} height={20} />)
+            : undefined
+        }
+        // If the view model exposes a primaryButton-like overflow we won't add one
+      />
+    );
+
+    return (
+      <ContextMenu title={displayName} trigger={tileElement} hasAccessibleAlternative>
+        {menuContent}
+      </ContextMenu>
+    );
+  }
+
   return vm instanceof ScreenShareViewModel ? (
+    // unreachable now, but kept for clarity
     <MediaView videoFit="contain" mirror={false} {...baseProps} />
   ) : (
-    <SpotlightUserMediaItem vm={vm} {...baseProps} />
+    <SpotlightUserMediaItem vm={vm} hasScreenShare={hasScreenShare} {...baseProps} />
   );
 };
 
@@ -236,6 +466,9 @@ export const SpotlightTile: FC<Props> = ({
   const visibleIndex = media.findIndex((vm) => vm.id === visibleId);
   const canGoBack = visibleIndex > 0;
   const canGoToNext = visibleIndex !== -1 && visibleIndex < media.length - 1;
+
+  // Determine whether any screen sharing is present in this spotlight.
+  const hasScreenShare = media.some((m) => m instanceof ScreenShareViewModel);
 
   const isFullscreen = useCallback((): boolean => {
     const rootElement = document.body;
@@ -338,13 +571,14 @@ export const SpotlightTile: FC<Props> = ({
             // that we want to bring into view
             snap={scrollToId === null || scrollToId === vm.id}
             aria-hidden={(scrollToId ?? visibleId) !== vm.id}
+            hasScreenShare={hasScreenShare}
           />
         ))}
       </div>
       <div className={styles.bottomRightButtons}>
         <button
           className={classNames(styles.expand)}
-          aria-label={"maximise"}
+          aria-label={t("video_tile.maximise" as any) ?? "maximise"}
           onClick={onToggleFullscreen}
           tabIndex={focusable ? undefined : -1}
         >
