@@ -284,7 +284,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
             name="_r_0_"
             title=""
             type="radio"
-            value="compatibil"
+            value="compatibility"
           />
           <div
             class="_ui_1e0uz_19"
