@@ -105,35 +105,42 @@ export async function getSFUConfigWithOpenID(
 
   logger?.info(`Trying to get JWT for focus ${serviceUrl}...`);
 
-  let sfuConfig: { url: string; jwt: string };
-  try {
-    // we do not want to try the old endpoint, since we are not sending the new matrix2.0 sticky events (no hashed identity in the event)
-    if (forceOldJwtEndpoint) throw new Error("Force old jwt endpoint");
-    if (!delayId)
-      throw new Error("No delayId, Won't try matrix 2.0 jwt endpoint.");
+  let sfuConfig: { url: string; jwt: string } | undefined;
 
-    sfuConfig = await getLiveKitJWTWithDelayDelegation(
-      membership,
-      serviceUrl,
-      roomId,
-      openIdToken,
-      delayEndpointBaseUrl,
-      delayId,
-    );
-    logger?.info(`Got JWT from call's active focus URL.`);
-  } catch (e) {
-    logger?.warn(
-      `Failed fetching jwt with matrix 2.0 endpoint (retry with legacy)`,
-      e,
-    );
+  // If forceOldJwtEndpoint is set we indicate that we do not want to try the new endpoint,
+  // since we are not sending the new matrix2.0 sticky events (no hashed identity in the event)
+  if (forceOldJwtEndpoint === false) {
+    try {
+      sfuConfig = await getLiveKitJWTWithDelayDelegation(
+        membership,
+        serviceUrl,
+        roomId,
+        openIdToken,
+        delayEndpointBaseUrl,
+        delayId,
+      );
+      logger?.info(`Got JWT from call's active focus URL.`);
+    } catch (e) {
+      sfuConfig = undefined;
+      logger?.warn(
+        `Failed fetching jwt with matrix 2.0 endpoint (retry with legacy)`,
+        e,
+      );
+      logger?.info(`Got JWT from call's active focus URL.`);
+    }
+  }
+
+  // Either forceOldJwtEndpoint = true or getLiveKitJWTWithDelayDelegation throws -> reset sfuConfig = undefined
+  if (sfuConfig === undefined) {
     sfuConfig = await getLiveKitJWT(
       membership.deviceId,
       serviceUrl,
       roomId,
       openIdToken,
     );
-    logger?.info(`Got JWT from call's active focus URL.`);
-  } // Pull the details from the JWT
+  }
+
+  // Pull the details from the JWT
   const [, payloadStr] = sfuConfig.jwt.split(".");
   // TODO: Prefer Uint8Array.fromBase64 when widely available
   const payload = JSON.parse(global.atob(payloadStr)) as SFUJWTPayload;
