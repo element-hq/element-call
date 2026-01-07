@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  HTTPError,
   retryNetworkOperation,
   type IOpenIDToken,
   type MatrixClient,
@@ -116,17 +115,15 @@ export async function getSFUConfigWithOpenID(
   // since we are not sending the new matrix2.0 sticky events (no hashed identity in the event)
   if (forceOldJwtEndpoint === false) {
     try {
-      await retryNetworkOperation(4, async () => {
-        sfuConfig = await getLiveKitJWTWithDelayDelegation(
-          membership,
-          serviceUrl,
-          roomId,
-          openIdToken,
-          delayEndpointBaseUrl,
-          delayId,
-        );
-        logger?.info(`Got JWT from call's active focus URL.`);
-      });
+      sfuConfig = await getLiveKitJWTWithDelayDelegation(
+        membership,
+        serviceUrl,
+        roomId,
+        openIdToken,
+        delayEndpointBaseUrl,
+        delayId,
+      );
+      logger?.info(`Got JWT from call's active focus URL.`);
     } catch (e) {
       if (e instanceof NotSupportedError) {
         logger?.warn(
@@ -146,14 +143,13 @@ export async function getSFUConfigWithOpenID(
   // DEPRECATED
   // Either forceOldJwtEndpoint = true or getLiveKitJWTWithDelayDelegation throws -> reset sfuConfig = undefined
   if (sfuConfig === undefined) {
-    await retryNetworkOperation(4, async () => {
-      sfuConfig = await getLiveKitJWT(
-        membership.deviceId,
-        serviceUrl,
-        roomId,
-        openIdToken,
-      );
-    });
+    sfuConfig = await getLiveKitJWT(
+      membership.deviceId,
+      serviceUrl,
+      roomId,
+      openIdToken,
+    );
+
     logger?.info(`Got JWT from call's active focus URL.`);
   }
 
@@ -175,25 +171,33 @@ export async function getSFUConfigWithOpenID(
     livekitIdentity: payload.sub,
   };
 }
-
+const RETRIES = 4;
 async function getLiveKitJWT(
   deviceId: string,
   livekitServiceURL: string,
   matrixRoomId: string,
   openIDToken: IOpenIDToken,
 ): Promise<{ url: string; jwt: string }> {
-  const res = await fetch(livekitServiceURL + "/sfu/get", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      // This is the actual livekit room alias. For the legacy jwt endpoint simply the room id was used.
-      room: matrixRoomId,
-      openid_token: openIDToken,
-      device_id: deviceId,
-    }),
+  let res: Response | undefined;
+  await retryNetworkOperation(RETRIES, async () => {
+    res = await fetch(livekitServiceURL + "/sfu/get", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        // This is the actual livekit room alias. For the legacy jwt endpoint simply the room id was used.
+        room: matrixRoomId,
+        openid_token: openIDToken,
+        device_id: deviceId,
+      }),
+    });
   });
+  if (!res) {
+    throw new Error(
+      `Network error while connecting to jwt service after ${RETRIES} retries`,
+    );
+  }
   if (!res.ok) {
     throw new Error("SFU Config fetch failed with status code " + res.status);
   }
@@ -240,13 +244,23 @@ export async function getLiveKitJWTWithDelayDelegation(
     };
   }
 
-  const res = await fetch(livekitServiceURL + "/get_token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ ...body, ...bodyDalayParts }),
+  let res: Response | undefined;
+
+  await retryNetworkOperation(RETRIES, async () => {
+    res = await fetch(livekitServiceURL + "/get_token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ...body, ...bodyDalayParts }),
+    });
   });
+
+  if (!res) {
+    throw new Error(
+      `Network error while connecting to jwt service after ${RETRIES} retries`,
+    );
+  }
   if (!res.ok) {
     const msg = "SFU Config fetch failed with status code " + res.status;
     if (res.status === 404) {
