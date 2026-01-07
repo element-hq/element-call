@@ -15,7 +15,6 @@ import {
   vitest,
 } from "vitest";
 import {
-  encodeUnpaddedBase64,
   MatrixEvent,
   type Room as MatrixRoom,
   type Room,
@@ -44,7 +43,7 @@ import {
   type Room as LivekitRoom,
   Track,
 } from "livekit-client";
-import { createHash, randomUUID } from "crypto";
+import { randomUUID } from "crypto";
 import { type TrackReference } from "@livekit/components-core";
 import EventEmitter from "events";
 import {
