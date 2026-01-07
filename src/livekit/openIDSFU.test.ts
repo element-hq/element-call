@@ -107,7 +107,6 @@ describe("getSFUConfigWithOpenID", () => {
         "mock_delay_id",
       );
     } catch (ex) {
-      logger.info(ex);
       expect(((ex as Error).cause as Error).message).toEqual(
         "SFU Config fetch failed with status code 500",
       );
