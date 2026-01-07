@@ -26,7 +26,7 @@ import {
 import { ConnectionManagerData } from "./ConnectionManager.ts";
 import {
   flushPromises,
-  mockCallMembership,
+  mockRtcMembership,
   mockRemoteParticipant,
 } from "../../../utils/test.ts";
 import { type Connection } from "./Connection.ts";
@@ -49,12 +49,12 @@ const transportB: LivekitTransport = {
   livekit_alias: "!alias:sample.com",
 };
 
-const bobMembership = mockCallMembership(
+const bobMembership = mockRtcMembership(
   "@bob:example.org",
   "DEV000",
   transportA,
 );
-const carlMembership = mockCallMembership(
+const carlMembership = mockRtcMembership(
   "@carl:sample.com",
   "DEV111",
   transportB,
