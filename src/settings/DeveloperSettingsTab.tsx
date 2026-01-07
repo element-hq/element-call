@@ -275,8 +275,8 @@ export const DeveloperSettingsTab: FC<Props> = ({
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Compatibil}
-              value={MatrixRTCMode.Compatibil}
+              checked={matrixRTCMode === MatrixRTCMode.Compatibility}
+              value={MatrixRTCMode.Compatibility}
               onChange={onMatrixRTCModeChange}
             />
           }

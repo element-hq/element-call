@@ -429,7 +429,11 @@ export function createCallViewModel$(
   };
 
   const useOldJwtEndpoint$ = scope.behavior(
-    matrixRTCMode$.pipe(map((v) => v !== MatrixRTCMode.Matrix_2_0)),
+    matrixRTCMode$.pipe(
+      map(
+        (v) => v === MatrixRTCMode.Legacy || v === MatrixRTCMode.Compatibility,
+      ),
+    ),
   );
 
   const localTransport$ = createLocalTransport$({
