@@ -49,16 +49,12 @@ const transportB: LivekitTransport = {
   livekit_alias: "!alias:sample.com",
 };
 
-const bobMembership = mockRtcMembership(
-  "@bob:example.org",
-  "DEV000",
-  transportA,
-);
-const carlMembership = mockRtcMembership(
-  "@carl:sample.com",
-  "DEV111",
-  transportB,
-);
+const bobMembership = mockRtcMembership("@bob:example.org", "DEV000", {
+  fociPreferred: [transportA],
+});
+const carlMembership = mockRtcMembership("@carl:sample.com", "DEV111", {
+  fociPreferred: [transportB],
+});
 
 beforeEach(() => {
   testScope = new ObservableScope();
