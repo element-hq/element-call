@@ -68,11 +68,10 @@ interface Props {
  * @prop useOldestMember Whether to use the same transport as the oldest member.
  * This will only update once the first oldest member appears. Will not recompute if the oldest member leaves.
  *
- * @prop useOldJwtEndpoint$ Whether to set forceOldJwtEndpoint the use the old JWT endpoint.
+ * @prop useOldJwtEndpoint$ Whether to set forceOldJwtEndpoint on the returned transport and to use the old JWT endpoint.
  * This is used when the connection manager needs to know if it has to use the legacy endpoint which implies a string concatenated rtcBackendIdentity.
  * (which is expected for non sticky event based rtc member events)
- * @returns Behavior<(LivekitTransport & { forceOldJwtEndpoint: boolean }) | null> The `forceOldJwtEndpoint` field is added to let the connection EncryptionManager
- * know that this transport is for the local member and it IS RELEVANT which jwt endpoint to use. (for the local member transport, we need to know which jwt endpoint to use)
+ * @returns The local transport. It will be created using the correct sfu endpoint based on the useOldJwtEndpoint$ value.
  * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
  */
 export const createLocalTransport$ = ({
@@ -84,9 +83,7 @@ export const createLocalTransport$ = ({
   useOldestMember$,
   useOldJwtEndpoint$,
   delayId$,
-}: Props): Behavior<
-  (LivekitTransport & { forceOldJwtEndpoint: boolean }) | null
-> => {
+}: Props): Behavior<LivekitTransport | null> => {
   /**
    * The transport over which we should be actively publishing our media.
    * undefined when not joined.
@@ -97,7 +94,7 @@ export const createLocalTransport$ = ({
         const oldestMember = memberships.value[0];
         const transport = oldestMember?.getTransport(memberships.value[0]);
         if (!transport) return null;
-        return { ...transport, forceOldJwtEndpoint };
+        return transport;
       }),
       first((t) => t != null && isLivekitTransport(t)),
     ),
@@ -181,12 +178,10 @@ async function makeTransport(
   urlFromDevSettings: string | null,
   forceOldJwtEndpoint: boolean,
   delayId?: string,
-): Promise<LivekitTransport & { forceOldJwtEndpoint: boolean }> {
+): Promise<LivekitTransport> {
   logger.trace("Searching for a preferred transport");
 
-  async function doOpenIdAndJWTFromUrl(
-    url: string,
-  ): Promise<LivekitTransport & { forceOldJwtEndpoint: boolean }> {
+  async function doOpenIdAndJWTFromUrl(url: string): Promise<LivekitTransport> {
     const { livekitAlias } = await getSFUConfigWithOpenID(
       client,
       membership,
@@ -201,7 +196,6 @@ async function makeTransport(
       type: "livekit",
       livekit_service_url: url,
       livekit_alias: livekitAlias,
-      forceOldJwtEndpoint,
     };
   }
   // We will call `getSFUConfigWithOpenID` once per transport here as it's our
@@ -223,7 +217,7 @@ async function makeTransport(
 
   async function getFirstUsableTransport(
     transports: Transport[],
-  ): Promise<(LivekitTransport & { forceOldJwtEndpoint: boolean }) | null> {
+  ): Promise<LivekitTransport | null> {
     for (const potentialTransport of transports) {
       if (isLivekitTransportConfig(potentialTransport)) {
         try {
