@@ -154,7 +154,6 @@ describe("LocalTransport", () => {
     await flushPromises();
     // final
     expect(localTransport$.value).toStrictEqual({
-      forceOldJwtEndpoint: false,
       livekit_alias: "!room:example.org",
       livekit_service_url: "https://lk.example.org",
       type: "livekit",
@@ -196,7 +195,6 @@ describe("LocalTransport", () => {
     await flushPromises();
     // final
     expect(localTransport$.value).toStrictEqual({
-      forceOldJwtEndpoint: false,
       livekit_alias: "!example_room_id",
       livekit_service_url: "https://lk.example.org",
       type: "livekit",
@@ -249,7 +247,6 @@ describe("LocalTransport", () => {
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        forceOldJwtEndpoint: false,
         livekit_alias: "!example_room_id",
         livekit_service_url: "https://lk.example.org",
         type: "livekit",
@@ -262,7 +259,6 @@ describe("LocalTransport", () => {
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        forceOldJwtEndpoint: false,
         livekit_alias: "!example_room_id",
         livekit_service_url: "https://lk.example.org",
         type: "livekit",
@@ -277,7 +273,6 @@ describe("LocalTransport", () => {
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        forceOldJwtEndpoint: false,
         livekit_alias: "!example_room_id",
         livekit_service_url: "https://lk.example.org",
         type: "livekit",
@@ -309,7 +304,6 @@ describe("LocalTransport", () => {
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        forceOldJwtEndpoint: false,
         livekit_alias: "!example_room_id",
         livekit_service_url: "https://lk.example.org",
         type: "livekit",
