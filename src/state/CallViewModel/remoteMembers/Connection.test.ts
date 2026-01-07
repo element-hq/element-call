@@ -259,7 +259,7 @@ describe("Start connection states", () => {
       capturedState.cause instanceof Error
     ) {
       expect(capturedState.cause.message).toContain(
-        "SFU Config fetch failed with exception",
+        "SFU Config fetch failed with status code 500",
       );
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,

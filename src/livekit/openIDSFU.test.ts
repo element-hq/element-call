@@ -74,7 +74,7 @@ describe("getSFUConfigWithOpenID", () => {
         "!example_room_id",
       );
     } catch (ex) {
-      expect(((ex as Error).cause as Error).message).toEqual(
+      expect((ex as Error).message).toEqual(
         "SFU Config fetch failed with status code 500",
       );
       void (await fetchMock.flush());
@@ -107,7 +107,7 @@ describe("getSFUConfigWithOpenID", () => {
         "mock_delay_id",
       );
     } catch (ex) {
-      expect(((ex as Error).cause as Error).message).toEqual(
+      expect((ex as Error).message).toEqual(
         "SFU Config fetch failed with status code 500",
       );
       void (await fetchMock.flush());
@@ -160,7 +160,7 @@ describe("getSFUConfigWithOpenID", () => {
         "mock_delay_id",
       );
     } catch (ex) {
-      expect(((ex as Error).cause as Error).message).toEqual(
+      expect((ex as Error).message).toEqual(
         "SFU Config fetch failed with status code 500",
       );
       void (await fetchMock.flush());
