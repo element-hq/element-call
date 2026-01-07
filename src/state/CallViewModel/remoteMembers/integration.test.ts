@@ -21,8 +21,8 @@ import {
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
 import {
-  mockCallMembership,
   mockMediaDevices,
+  mockRtcMembership,
   ownMemberMock,
   withTestScheduler,
 } from "../../../utils/test.ts";
@@ -101,9 +101,9 @@ afterEach(() => {
 
 test("bob, carl, then bob joining no tracks yet", () => {
   withTestScheduler(({ expectObservable, behavior, scope }) => {
-    const bobMembership = mockCallMembership("@bob:example.com", "BDEV000");
-    const carlMembership = mockCallMembership("@carl:example.com", "CDEV000");
-    const daveMembership = mockCallMembership("@dave:foo.bar", "DDEV000");
+    const bobMembership = mockRtcMembership("@bob:example.com", "BDEV000");
+    const carlMembership = mockRtcMembership("@carl:example.com", "CDEV000");
+    const daveMembership = mockRtcMembership("@dave:foo.bar", "DDEV000");
 
     const eMarble = "abc";
     const vMarble = "abc";

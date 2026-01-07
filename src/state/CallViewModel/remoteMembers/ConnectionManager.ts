@@ -144,12 +144,14 @@ export function createConnectionManager$({
           localTransport,
           forceOldJwtEndpointForLocalTransport,
         ]) => {
-          // nmodify only the local transport with forceOldJwtEndpointForLocalTransport
+          // modify only the local transport with forceOldJwtEndpointForLocalTransport
           const index = transports.value.findIndex((t) =>
             areLivekitTransportsEqual(localTransport, t),
           );
-          transports.value[index].forceOldJwtEndpoint =
-            forceOldJwtEndpointForLocalTransport;
+          if (index !== -1) {
+            transports.value[index].forceOldJwtEndpoint =
+              forceOldJwtEndpointForLocalTransport;
+          }
           logger.trace(
             `Managing transports: ${transports.value.map((t) => t.livekit_service_url).join(", ")}`,
           );

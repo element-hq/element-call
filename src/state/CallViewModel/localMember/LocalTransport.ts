@@ -84,7 +84,9 @@ export const createLocalTransport$ = ({
   useOldestMember$,
   useOldJwtEndpoint$,
   delayId$,
-}: Props): Behavior<LivekitTransport | null> => {
+}: Props): Behavior<
+  (LivekitTransport & { forceOldJwtEndpoint: boolean }) | null
+> => {
   /**
    * The transport over which we should be actively publishing our media.
    * undefined when not joined.
@@ -108,7 +110,7 @@ export const createLocalTransport$ = ({
    *
    * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
    */
-  const preferredTransport$: Behavior<LivekitTransport | null> = scope.behavior(
+  const preferredTransport$ = scope.behavior(
     combineLatest([customLivekitUrl.value$, delayId$, useOldJwtEndpoint$]).pipe(
       switchMap(([customUrl, delayId, forceOldJwtEndpoint]) =>
         from(

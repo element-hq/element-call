@@ -104,7 +104,7 @@ describe("LocalMembership", () => {
         getOldestMembership: vi.fn().mockReturnValue({
           getPreferredFoci: vi.fn().mockReturnValue([focusFromOlderMembership]),
         }),
-        joinRoomSession: vi.fn(),
+        joinRTCSession: vi.fn(),
       }) as unknown as MatrixRTCSession;
 
       enterRTCSession(
@@ -121,7 +121,12 @@ describe("LocalMembership", () => {
         },
       );
 
-      expect(mockedSession.joinRoomSession).toHaveBeenLastCalledWith(
+      expect(mockedSession.joinRTCSession).toHaveBeenLastCalledWith(
+        {
+          deviceId: "DEVICE",
+          memberId: "@alice:example.org:DEVICE",
+          userId: "@alice:example.org",
+        },
         [
           {
             livekit_alias: "roomId",
@@ -163,7 +168,7 @@ describe("LocalMembership", () => {
         },
         memberships: [],
         getFocusInUse: vi.fn(),
-        joinRoomSession: vi.fn(),
+        joinRTCSession: vi.fn(),
       }) as unknown as MatrixRTCSession;
 
       enterRTCSession(
