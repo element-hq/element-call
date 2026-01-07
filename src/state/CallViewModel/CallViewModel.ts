@@ -431,6 +431,7 @@ export function createCallViewModel$(
   const useOldJwtEndpoint$ = scope.behavior(
     matrixRTCMode$.pipe(map((v) => v !== MatrixRTCMode.Matrix_2_0)),
   );
+
   const localTransport$ = createLocalTransport$({
     scope: scope,
     memberships$: memberships$,

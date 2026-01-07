@@ -55,7 +55,6 @@ const livekitFocus: LivekitTransport = {
   livekit_alias: "!roomID:example.org",
   livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
   type: "livekit",
-  useMatrix2: false,
 };
 
 function setupTest(): void {
