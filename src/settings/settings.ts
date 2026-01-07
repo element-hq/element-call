@@ -126,7 +126,7 @@ export const alwaysShowIphoneEarpiece = new Setting<boolean>(
 
 export enum MatrixRTCMode {
   Legacy = "legacy",
-  Compatibil = "compatibil",
+  Compatibility = "compatibility",
   /** This implies using
    *  - sticky events
    *  - hashed RTC backend identity

@@ -235,7 +235,7 @@ const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 
 describe.each([
   [MatrixRTCMode.Legacy],
-  [MatrixRTCMode.Compatibil],
+  [MatrixRTCMode.Compatibility],
   [MatrixRTCMode.Matrix_2_0],
 ])("CallViewModel (%s mode)", (mode) => {
   const withCallViewModel = withCallViewModelInMode(mode);

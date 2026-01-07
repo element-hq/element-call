@@ -711,7 +711,9 @@ export function enterRTCSession(
   const useDeviceSessionMemberEvents =
     features?.feature_use_device_session_member_events;
   const { sendNotificationType: notificationType, callIntent } = getUrlParams();
-  const multiSFU = matrixRTCMode !== MatrixRTCMode.Legacy;
+  const multiSFU =
+    matrixRTCMode === MatrixRTCMode.Compatibility ||
+    matrixRTCMode === MatrixRTCMode.Matrix_2_0;
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   // TODO where/how do we track errors originating from the ongoing rtcSession?
   rtcSession.joinRTCSession(
