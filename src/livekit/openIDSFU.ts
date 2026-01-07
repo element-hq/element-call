@@ -5,7 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type IOpenIDToken, type MatrixClient } from "matrix-js-sdk";
+import {
+  HTTPError,
+  retryNetworkOperation,
+  type IOpenIDToken,
+  type MatrixClient,
+} from "matrix-js-sdk";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
@@ -111,33 +116,49 @@ export async function getSFUConfigWithOpenID(
   // since we are not sending the new matrix2.0 sticky events (no hashed identity in the event)
   if (forceOldJwtEndpoint === false) {
     try {
-      sfuConfig = await getLiveKitJWTWithDelayDelegation(
-        membership,
-        serviceUrl,
-        roomId,
-        openIdToken,
-        delayEndpointBaseUrl,
-        delayId,
-      );
-      logger?.info(`Got JWT from call's active focus URL.`);
+      await retryNetworkOperation(4, async () => {
+        sfuConfig = await getLiveKitJWTWithDelayDelegation(
+          membership,
+          serviceUrl,
+          roomId,
+          openIdToken,
+          delayEndpointBaseUrl,
+          delayId,
+        );
+        logger?.info(`Got JWT from call's active focus URL.`);
+      });
     } catch (e) {
-      sfuConfig = undefined;
-      logger?.warn(
-        `Failed fetching jwt with matrix 2.0 endpoint (retry with legacy)`,
-        e,
-      );
-      logger?.info(`Got JWT from call's active focus URL.`);
+      if (e instanceof NotSupportedError) {
+        logger?.warn(
+          `Failed fetching jwt with matrix 2.0 endpoint (retry with legacy) Not supported`,
+          e,
+        );
+        sfuConfig = undefined;
+      } else {
+        logger?.warn(
+          `Failed fetching jwt with matrix 2.0 endpoint other issues -> not going to try with legacy endpoint`,
+          e,
+        );
+      }
     }
   }
 
+  // DEPRECATED
   // Either forceOldJwtEndpoint = true or getLiveKitJWTWithDelayDelegation throws -> reset sfuConfig = undefined
   if (sfuConfig === undefined) {
-    sfuConfig = await getLiveKitJWT(
-      membership.deviceId,
-      serviceUrl,
-      roomId,
-      openIdToken,
-    );
+    await retryNetworkOperation(4, async () => {
+      sfuConfig = await getLiveKitJWT(
+        membership.deviceId,
+        serviceUrl,
+        roomId,
+        openIdToken,
+      );
+    });
+    logger?.info(`Got JWT from call's active focus URL.`);
+  }
+
+  if (!sfuConfig) {
+    throw new Error("No `sfuConfig` after trying with old and new endpoints");
   }
 
   // Pull the details from the JWT
@@ -161,25 +182,28 @@ async function getLiveKitJWT(
   matrixRoomId: string,
   openIDToken: IOpenIDToken,
 ): Promise<{ url: string; jwt: string }> {
-  try {
-    const res = await fetch(livekitServiceURL + "/sfu/get", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // This is the actual livekit room alias. For the legacy jwt endpoint simply the room id was used.
-        room: matrixRoomId,
-        openid_token: openIDToken,
-        device_id: deviceId,
-      }),
-    });
-    if (!res.ok) {
-      throw new Error("SFU Config fetch failed with status code " + res.status);
-    }
-    return await res.json();
-  } catch (e) {
-    throw new Error("SFU Config fetch failed with exception", { cause: e });
+  const res = await fetch(livekitServiceURL + "/sfu/get", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      // This is the actual livekit room alias. For the legacy jwt endpoint simply the room id was used.
+      room: matrixRoomId,
+      openid_token: openIDToken,
+      device_id: deviceId,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error("SFU Config fetch failed with status code " + res.status);
+  }
+  return await res.json();
+}
+
+class NotSupportedError extends Error {
+  public constructor(message: string) {
+    super(message);
+    this.name = "NotSupported";
   }
 }
 
@@ -216,19 +240,20 @@ export async function getLiveKitJWTWithDelayDelegation(
     };
   }
 
-  try {
-    const res = await fetch(livekitServiceURL + "/get_token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ...body, ...bodyDalayParts }),
-    });
-    if (!res.ok) {
-      throw new Error("SFU Config fetch failed with status code " + res.status);
+  const res = await fetch(livekitServiceURL + "/get_token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ...body, ...bodyDalayParts }),
+  });
+  if (!res.ok) {
+    const msg = "SFU Config fetch failed with status code " + res.status;
+    if (res.status === 404) {
+      throw new NotSupportedError(msg);
+    } else {
+      throw new Error(msg);
     }
-    return await res.json();
-  } catch (e) {
-    throw new Error("SFU Config fetch failed with exception " + e);
   }
+  return await res.json();
 }
