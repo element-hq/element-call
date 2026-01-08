@@ -24,7 +24,6 @@ import {
 
 import { type MediaDevices, type MediaDevice } from "../state/MediaDevices";
 import { ElementWidgetActions, widget } from "../widget";
-import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
 import { type ObservableScope } from "./ObservableScope";
 import { type Behavior, constant } from "./Behavior";
@@ -192,14 +191,14 @@ export class MuteStates {
     this.scope,
     this.mediaDevices.audioInput,
     this.joined$,
-    Config.get().media_devices.enable_audio,
+    true,
     constant(false),
   );
   public readonly video = new MuteState(
     this.scope,
     this.mediaDevices.videoInput,
     this.joined$,
-    Config.get().media_devices.enable_video,
+    true,
     this.isEarpiece$,
   );
 

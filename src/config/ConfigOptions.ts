@@ -163,10 +163,6 @@ export interface ResolvedConfigOptions extends ConfigOptions {
     };
   };
   ssla: string;
-  media_devices: {
-    enable_audio: boolean;
-    enable_video: boolean;
-  };
   app_prompt: boolean;
 }
 
@@ -181,9 +177,5 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
     feature_use_device_session_member_events: true,
   },
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
-  media_devices: {
-    enable_audio: true,
-    enable_video: true,
-  },
   app_prompt: true,
 };
