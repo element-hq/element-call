@@ -110,20 +110,6 @@ export function createConnectionManager$({
   const logger = parentLogger.getChild("[ConnectionManager]");
   // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
 
-  const allInputTransports$ = combineLatest([
-    localTransport$,
-    remoteTransports$,
-  ]).pipe(
-    map(([localTransport, transports]) => {
-      const localTransportAsArray = localTransport ? [localTransport] : [];
-      return transports.mapInner((transports) => [
-        ...localTransportAsArray,
-        ...transports,
-      ]);
-    }),
-    map((transports) => transports.mapInner(removeDuplicateTransports)),
-  );
-
   /**
    * All transports currently managed by the ConnectionManager.
    *
@@ -134,30 +120,38 @@ export function createConnectionManager$({
    */
   const transportsWithJwtTag$ = scope.behavior(
     combineLatest([
-      allInputTransports$,
+      remoteTransports$,
       localTransport$,
       forceOldJwtEndpointForLocalTransport$,
     ]).pipe(
+      // combine local and remote transports into one transport array
+      // and set the forceOldJwtEndpoint property on the local transport
       map(
         ([
-          transports,
+          remoteTransports,
           localTransport,
           forceOldJwtEndpointForLocalTransport,
         ]) => {
-          // modify only the local transport with forceOldJwtEndpointForLocalTransport
-          const index = transports.value.findIndex((t) =>
-            areLivekitTransportsEqual(localTransport, t),
-          );
-          if (index !== -1) {
-            transports.value[index].forceOldJwtEndpoint =
-              forceOldJwtEndpointForLocalTransport;
+          let localTransportAsArray: (LivekitTransport & {
+            forceOldJwtEndpoint: boolean;
+          })[] = [];
+          if (localTransport) {
+            localTransportAsArray = [
+              {
+                ...localTransport,
+                forceOldJwtEndpoint: forceOldJwtEndpointForLocalTransport,
+              },
+            ];
           }
-          logger.trace(
-            `Managing transports: ${transports.value.map((t) => t.livekit_service_url).join(", ")}`,
+          return new Epoch(
+            removeDuplicateTransports([
+              ...localTransportAsArray,
+              ...remoteTransports.value,
+            ]) as (LivekitTransport & {
+              forceOldJwtEndpoint?: boolean;
+            })[],
+            remoteTransports.epoch,
           );
-          return transports as Epoch<
-            (LivekitTransport & { forceOldJwtEndpoint?: boolean })[]
-          >;
         },
       ),
     ),
@@ -181,7 +175,9 @@ export function createConnectionManager$({
             };
         },
         (scope, _data$, serviceUrl, alias, forceOldJwtEndpoint) => {
-          logger.debug(`Creating connection to ${serviceUrl} (${alias})`);
+          logger.debug(
+            `Creating connection to ${serviceUrl} (${alias}, forceOldJwtEndpoint: ${forceOldJwtEndpoint})`,
+          );
           const connection = connectionFactory.createConnection(
             {
               type: "livekit",
