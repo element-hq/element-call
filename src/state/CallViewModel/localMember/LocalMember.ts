@@ -552,7 +552,12 @@ export const createLocalMembership$ = ({
   );
 
   const participant$ = scope.behavior(
-    localConnection$.pipe(map((c) => c?.livekitRoom?.localParticipant ?? null)),
+    localConnection$.pipe(
+      map((c) => c?.livekitRoom?.localParticipant ?? null),
+      tap((p) => {
+        logger.debug("participant$ updated:", p?.identity);
+      }),
+    ),
   );
 
   // Pause upstream of all local media tracks when we're disconnected from

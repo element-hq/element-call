@@ -133,7 +133,8 @@ export async function getSFUConfigWithOpenID(
         sfuConfig = undefined;
       } else {
         logger?.warn(
-          `Failed fetching jwt with matrix 2.0 endpoint other issues -> not going to try with legacy endpoint`,
+          `Failed fetching jwt with matrix 2.0 endpoint other issues ->`,
+          `(not going to try with legacy endpoint: forceOldJwtEndpoint is set to false, we did not get a not supported error from the sfu)`,
           e,
         );
       }
@@ -234,7 +235,7 @@ export async function getLiveKitJWTWithDelayDelegation(
 
   let bodyDalayParts = {};
   // Also check for empty string
-  if (delayId && delayEndpointBaseUrl) {
+  if (delayId && delayEndpointBaseUrl && false) {
     const delayTimeoutMs =
       Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms ?? 1000;
     bodyDalayParts = {
