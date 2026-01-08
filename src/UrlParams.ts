@@ -246,10 +246,7 @@ export interface UrlConfiguration {
 
   callIntent?: RTCCallIntent;
 }
-interface IntentAndPlatformDerivedConfiguration {
-  defaultAudioEnabled?: boolean;
-  defaultVideoEnabled?: boolean;
-}
+
 interface IntentAndPlatformDerivedConfiguration {
   defaultAudioEnabled?: boolean;
   defaultVideoEnabled?: boolean;
