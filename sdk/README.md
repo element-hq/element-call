@@ -38,7 +38,7 @@ To create a widget see the example `index.html` file in this folder. And add it 
 ### url parameters
 
 The url parameters are needed to pass initial data to the widget. They will automatically be used
-but the matrixRTCSdk to start the postmessage widget api (communication between the client (e.g. Element Web) and the widget)
+by the matrixRTCSdk to start the postmessage widget api (communication between the client (e.g. Element Web) and the widget)
 
 ```
 widgetId = $matrix_widget_id
