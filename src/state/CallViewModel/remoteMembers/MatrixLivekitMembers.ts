@@ -92,7 +92,7 @@ export function createMatrixLivekitMembers$({
       filter((values) =>
         values.every((value) => value.epoch === values[0].epoch),
       ),
-      map(([x, y]) => new Epoch([x.value, y.value] as const, x.epoch)),
+      map(([ms, data]) => new Epoch([ms.value, data.value] as const, ms.epoch)),
       generateItemsWithEpoch(
         // Generator function.
         // creates an array of `{key, data}[]`
