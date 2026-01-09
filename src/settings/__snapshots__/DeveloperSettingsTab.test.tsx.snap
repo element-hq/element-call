@@ -349,46 +349,78 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </div>
     </div>
   </form>
-  <h3>
-    LiveKit SFU: wss://local-sfu.example.org
-  </h3>
-  <p>
-    ws-url: 
-    wss://local-sfu.example.org/
-  </p>
-  <p>
-    LiveKit Server Info
-    (
-    local
-    )
-  </p>
-  <pre
-    class="pre"
+  <div
+    class="livekit_room_box"
   >
-    {
+    <h4>
+      LiveKit SFU: wss://local-sfu.example.org
+    </h4>
+    <p>
+      ws-url: 
+      wss://local-sfu.example.org/
+    </p>
+    <p>
+      LiveKit Server Info
+      (
+      local
+      )
+    </p>
+    <pre
+      class="pre"
+    >
+      {
   "region": "local",
   "version": "1.2.3"
 }
-    local-metadata
-  </pre>
-  <h3>
-    LiveKit SFU: wss://remote-sfu.example.org
-  </h3>
-  <p>
-    LiveKit Server Info
-    (
-    remote
-    )
-  </p>
-  <pre
-    class="pre"
+      local-metadata
+    </pre>
+    <p>
+      Local Participant
+    </p>
+    <pre
+      class="pre"
+    >
+      localParticipantIdentity
+    </pre>
+    <p>
+      Remote Participants
+    </p>
+    <ul />
+  </div>
+  <div
+    class="livekit_room_box"
   >
-    {
+    <h4>
+      LiveKit SFU: wss://remote-sfu.example.org
+    </h4>
+    <p>
+      LiveKit Server Info
+      (
+      remote
+      )
+    </p>
+    <pre
+      class="pre"
+    >
+      {
   "region": "remote",
   "version": "4.5.6"
 }
-    remote-metadata
-  </pre>
+      remote-metadata
+    </pre>
+    <p>
+      Local Participant
+    </p>
+    <pre
+      class="pre"
+    >
+      localParticipantIdentity
+    </pre>
+    <p>
+      Remote Participants
+    </p>
+    <ul />
+  </div>
   <p>
     Environment variables
   </p>

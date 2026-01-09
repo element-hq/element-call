@@ -154,9 +154,17 @@ describe("LocalTransport", () => {
     await flushPromises();
     // final
     expect(localTransport$.value).toStrictEqual({
-      livekit_alias: "!room:example.org",
-      livekit_service_url: "https://lk.example.org",
-      type: "livekit",
+      transport: {
+        livekit_alias: "!room:example.org",
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
+      },
+      sfuConfig: {
+        jwt: "jwt",
+        livekitAlias: "!room:example.org",
+        livekitIdentity: "@alice:example.org:DEVICE",
+        url: "https://lk.example.org",
+      },
     });
   });
 
@@ -195,9 +203,17 @@ describe("LocalTransport", () => {
     await flushPromises();
     // final
     expect(localTransport$.value).toStrictEqual({
-      livekit_alias: "!example_room_id",
-      livekit_service_url: "https://lk.example.org",
-      type: "livekit",
+      transport: {
+        livekit_alias: "!example_room_id",
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
+      },
+      sfuConfig: {
+        jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
+        livekitAlias: "!example_room_id",
+        livekitIdentity: "@lk_user:ABCDEF",
+        url: "https://lk.example.org",
+      },
     });
   });
 
@@ -247,9 +263,17 @@ describe("LocalTransport", () => {
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        livekit_alias: "!example_room_id",
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
+        transport: {
+          livekit_alias: "!example_room_id",
+          livekit_service_url: "https://lk.example.org",
+          type: "livekit",
+        },
+        sfuConfig: {
+          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
+          livekitAlias: "!example_room_id",
+          livekitIdentity: "@lk_user:ABCDEF",
+          url: "https://lk.example.org",
+        },
       });
     });
     it("supports getting transport via user settings", async () => {
@@ -259,9 +283,17 @@ describe("LocalTransport", () => {
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        livekit_alias: "!example_room_id",
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
+        transport: {
+          livekit_alias: "!example_room_id",
+          livekit_service_url: "https://lk.example.org",
+          type: "livekit",
+        },
+        sfuConfig: {
+          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
+          livekitAlias: "!example_room_id",
+          livekitIdentity: "@lk_user:ABCDEF",
+          url: "https://lk.example.org",
+        },
       });
     });
     it("supports getting transport via backend", async () => {
@@ -273,9 +305,17 @@ describe("LocalTransport", () => {
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        livekit_alias: "!example_room_id",
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
+        transport: {
+          livekit_alias: "!example_room_id",
+          livekit_service_url: "https://lk.example.org",
+          type: "livekit",
+        },
+        sfuConfig: {
+          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
+          livekitAlias: "!example_room_id",
+          livekitIdentity: "@lk_user:ABCDEF",
+          url: "https://lk.example.org",
+        },
       });
     });
     it("fails fast if the openID request fails for backend config", async () => {
@@ -304,9 +344,17 @@ describe("LocalTransport", () => {
       expect(localTransport$.value).toBe(null);
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
-        livekit_alias: "!example_room_id",
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
+        transport: {
+          livekit_alias: "!example_room_id",
+          livekit_service_url: "https://lk.example.org",
+          type: "livekit",
+        },
+        sfuConfig: {
+          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
+          livekitAlias: "!example_room_id",
+          livekitIdentity: "@lk_user:ABCDEF",
+          url: "https://lk.example.org",
+        },
       });
       expect(fetchMock.done()).toEqual(true);
     });
