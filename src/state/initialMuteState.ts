@@ -5,6 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { logger } from "matrix-js-sdk/lib/logger";
+
 import { type UrlParams } from "../UrlParams.ts";
 
 /**
@@ -20,6 +22,10 @@ export function calculateInitialMuteState(
   isDevBuild: boolean = import.meta.env.DEV,
 ): { audioEnabled: boolean; videoEnabled: boolean } {
   const { skipLobby, callIntent } = urlParams;
+
+  logger.debug(
+    `calculateInitialMuteState: skipLobby=${skipLobby}, callIntent=${callIntent}, hostname=${hostname}, isDevBuild=${isDevBuild}`,
+  );
 
   const isTrustedHost =
     packageType == "embedded" ||
