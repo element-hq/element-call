@@ -19,18 +19,18 @@ export function calculateInitialMuteState(
   urlParams: Pick<UrlParams, "skipLobby" | "callIntent">,
   packageType: "full" | "embedded",
   hostname: string | undefined = undefined,
-  isDevBuild: boolean = import.meta.env.DEV,
+  trustLocalhost: boolean = import.meta.env.DEV || !!process.env.CI,
 ): { audioEnabled: boolean; videoEnabled: boolean } {
   const { skipLobby, callIntent } = urlParams;
 
   logger.debug(
-    `calculateInitialMuteState: skipLobby=${skipLobby}, callIntent=${callIntent}, hostname=${hostname}, isDevBuild=${isDevBuild}`,
+    `calculateInitialMuteState: skipLobby=${skipLobby}, callIntent=${callIntent}, hostname=${hostname}, isDevBuild=${trustLocalhost}`,
   );
 
   const isTrustedHost =
     packageType == "embedded" ||
     // Trust local hosts in dev mode to make local testing easier
-    (hostname == "localhost" && isDevBuild);
+    (hostname == "localhost" && trustLocalhost);
 
   if (skipLobby && !isTrustedHost) {
     // If host not trusted and lobby skipped, default to muted to protect user privacy.
