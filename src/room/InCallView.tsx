@@ -113,8 +113,10 @@ const logger = rootLogger.getChild("[InCallView]");
 
 const maxTapDurationMs = 400;
 
-export interface ActiveCallProps
-  extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {
+export interface ActiveCallProps extends Omit<
+  InCallViewProps,
+  "vm" | "livekitRoom" | "connState"
+> {
   e2eeSystem: EncryptionSystem;
   // TODO refactor those reasons into an enum
   onLeft: (
@@ -793,7 +795,6 @@ export const InCallView: FC<InCallViewProps> = ({
           onTouchEnd={onControlsTouchEnd}
         />
       )}
-      {!showControls && <div className={styles.layout} />}
     </div>
   );
 
