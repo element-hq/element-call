@@ -8267,6 +8267,7 @@ __metadata:
     typescript: "npm:^5.8.3"
     typescript-eslint-language-service: "npm:^5.0.5"
     unique-names-generator: "npm:^4.6.0"
+    uuid: "npm:^13.0.0"
     vaul: "npm:^1.0.0"
     vite: "npm:^7.0.0"
     vite-plugin-generate-file: "npm:^0.3.0"
@@ -15214,7 +15215,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:13":
+"uuid@npm:13, uuid@npm:^13.0.0":
   version: 13.0.0
   resolution: "uuid@npm:13.0.0"
   bin:
