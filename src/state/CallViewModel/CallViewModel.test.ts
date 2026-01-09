@@ -78,11 +78,14 @@ vi.mock("../e2ee/matrixKeyProvider");
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("../UrlParams", () => ({ getUrlParams }));
 
-vi.mock("../rtcSessionHelpers", async (importOriginal) => ({
-  ...(await importOriginal()),
-  makeTransport: async (): Promise<LivekitTransport> =>
-    Promise.resolve(exampleTransport),
-}));
+vi.mock(
+  "../state/CallViewModel/localMember/localTransport",
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    makeTransport: async (): Promise<LivekitTransport> =>
+      Promise.resolve(exampleTransport),
+  }),
+);
 
 const yesNo = {
   y: true,
@@ -232,7 +235,7 @@ const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 
 describe.each([
   [MatrixRTCMode.Legacy],
-  [MatrixRTCMode.Compatibil],
+  [MatrixRTCMode.Compatibility],
   [MatrixRTCMode.Matrix_2_0],
 ])("CallViewModel (%s mode)", (mode) => {
   const withCallViewModel = withCallViewModelInMode(mode);
@@ -1254,11 +1257,6 @@ describe.each([
           schedule(membershipStatusMarbles, {
             y: () => {
               rtcSession.membershipStatus = Status.Connected;
-            },
-            n: () => {
-              // NOTE: This was removed in https://github.com/matrix-org/matrix-js-sdk/pull/5103 accidentally.
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              rtcSession.membershipStatus = "Reconnecting" as any;
             },
           });
           schedule(probablyLeftMarbles, {
