@@ -124,9 +124,9 @@ import {
 } from "./remoteMembers/ConnectionManager.ts";
 import {
   createMatrixLivekitMembers$,
-  type TaggedParticipant,
   type LocalMatrixLivekitMember,
   type RemoteMatrixLivekitMember,
+  type MatrixLivekitMember,
 } from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
   type AutoLeaveReason,
@@ -717,62 +717,38 @@ export function createCallViewModel$(
           matrixLivekitMembers,
           duplicateTiles,
         ]) {
-          let localUserMediaId: string | undefined = undefined;
-          // add local member if available
-          if (localMatrixLivekitMember) {
-            const { userId, participant, connection$, membership$ } =
-              localMatrixLivekitMember;
+          const computeMediaId = (m: MatrixLivekitMember): string =>
+            `${m.userId}:${m.membership$.value.deviceId}`;
 
-            localUserMediaId = `${userId}:${membership$.value.deviceId}`;
+          const localUserMediaId = localMatrixLivekitMember
+            ? computeMediaId(localMatrixLivekitMember)
+            : undefined;
+
+          const localAsArray = localMatrixLivekitMember
+            ? [localMatrixLivekitMember]
+            : [];
+          const remoteWithoutLocal = matrixLivekitMembers.value.filter(
+            (m) => computeMediaId(m) !== localUserMediaId,
+          );
+          const allMatrixLivekitMembers = [
+            ...localAsArray,
+            ...remoteWithoutLocal,
+          ];
+
+          for (const matrixLivekitMember of allMatrixLivekitMembers) {
+            const { userId, participant, connection$, membership$ } =
+              matrixLivekitMember;
+            const memb = membership$.value;
+            const mediaId = computeMediaId(matrixLivekitMember);
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
-                keys: [
-                  dup,
-                  localUserMediaId,
-                  userId,
-                  participant satisfies TaggedParticipant as TaggedParticipant, // Widen the type safely
-                  connection$,
-                  membership$.value,
-                ],
-                data: undefined,
-              };
-            }
-          }
-          // add remote members that are available
-          for (const {
-            userId,
-            participant,
-            connection$,
-            membership$,
-          } of matrixLivekitMembers.value) {
-            const userMediaId = `${userId}:${membership$.value.deviceId}`;
-            // skip local user as we added them manually before
-            if (userMediaId === localUserMediaId) continue;
-            for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
-              yield {
-                keys: [
-                  dup,
-                  userMediaId,
-                  userId,
-                  participant,
-                  connection$,
-                  membership$.value,
-                ],
+                keys: [dup, mediaId, userId, participant, connection$, memb],
                 data: undefined,
               };
             }
           }
         },
-        (
-          scope,
-          _data$,
-          dup,
-          userMediaId,
-          userId,
-          participant,
-          connection$,
-          membership,
-        ) => {
+        (scope, _, dup, mediaId, userId, participant, connection$, memb) => {
           const livekitRoom$ = scope.behavior(
             connection$.pipe(map((c) => c?.livekitRoom)),
           );
@@ -787,9 +763,9 @@ export function createCallViewModel$(
 
           return new UserMedia(
             scope,
-            `${userMediaId}:${dup}`,
+            `${mediaId}:${dup}`,
             userId,
-            membership,
+            memb,
             participant,
             options.encryptionSystem,
             livekitRoom$,
@@ -798,8 +774,8 @@ export function createCallViewModel$(
             localMembership.reconnecting$,
             displayName$,
             matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
-            handsRaised$.pipe(map((v) => v[userMediaId]?.time ?? null)),
-            reactions$.pipe(map((v) => v[userMediaId] ?? undefined)),
+            handsRaised$.pipe(map((v) => v[mediaId]?.time ?? null)),
+            reactions$.pipe(map((v) => v[mediaId] ?? undefined)),
           );
         },
       ),
