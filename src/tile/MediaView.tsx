@@ -18,7 +18,11 @@ import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
 import { type EncryptionStatus } from "../state/MediaViewModel";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
-import { showHandRaisedTimer, useSetting } from "../settings/settings";
+import {
+  showConnectionStats,
+  showHandRaisedTimer,
+  useSetting,
+} from "../settings/settings";
 import { type ReactionOption } from "../reactions";
 import { ReactionIndicator } from "../reactions/ReactionIndicator";
 import { RTCConnectionStats } from "../RTCConnectionStats";
@@ -81,6 +85,7 @@ export const MediaView: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
+  const [showConnectioStats] = useSetting(showConnectionStats);
 
   const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
 
@@ -134,6 +139,7 @@ export const MediaView: FC<Props> = ({
         {waitingForMedia && (
           <div className={styles.status}>
             {t("video_tile.waiting_for_media")}
+            {showConnectioStats ? " " + rtcBackendIdentity : ""}
           </div>
         )}
         {(audioStreamStats || videoStreamStats) && (
