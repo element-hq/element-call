@@ -67,8 +67,8 @@ export default defineConfig({
           firefoxUserPrefs: {
             "permissions.default.microphone": 1,
             "permissions.default.camera": 1,
-            "media.navigator.streams.fake": true,
-            "media.navigator.permission.disabled": true,
+            // "media.navigator.streams.fake": true,
+            // "media.navigator.permission.disabled": true,
           },
         },
       },
