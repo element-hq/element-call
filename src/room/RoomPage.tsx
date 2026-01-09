@@ -20,8 +20,6 @@ import {
   CheckIcon,
   UnknownSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
-import { useObservable } from "observable-hooks";
-import { map } from "rxjs";
 
 import { useClientLegacy } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
@@ -44,10 +42,12 @@ import { ErrorView } from "../ErrorView";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { MuteStates } from "../state/MuteStates";
 import { ObservableScope } from "../state/ObservableScope";
+import { calculateInitialMuteState } from "../state/initialMuteState.ts";
 
 export const RoomPage: FC = () => {
+  const urlParams = useUrlParams();
   const { confineToRoom, appPrompt, preload, header, displayName, skipLobby } =
-    useUrlParams();
+    urlParams;
   const { t } = useTranslation();
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
 
@@ -68,15 +68,12 @@ export const RoomPage: FC = () => {
 
   const devices = useMediaDevices();
   const [muteStates, setMuteStates] = useState<MuteStates | null>(null);
-  const joined$ = useObservable(
-    (inputs$) => inputs$.pipe(map(([joined]) => joined)),
-    [joined],
-  );
+
   useEffect(() => {
     const scope = new ObservableScope();
-    setMuteStates(new MuteStates(scope, devices, joined$));
+    setMuteStates(new MuteStates(scope, devices, calculateInitialMuteState(urlParams, import.meta.env.VITE_PACKAGE, window.location.hostname)));
     return (): void => scope.end();
-  }, [devices, joined$]);
+  }, [devices, urlParams]);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as

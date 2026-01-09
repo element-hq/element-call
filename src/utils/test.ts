@@ -525,5 +525,5 @@ export function mockMuteStates(
   joined$: Observable<boolean> = of(true),
 ): MuteStates {
   const observableScope = new ObservableScope();
-  return new MuteStates(observableScope, mockMediaDevices({}), joined$);
+  return new MuteStates(observableScope, mockMediaDevices({}), { audioEnabled: false, videoEnabled: false });
 }

@@ -51,7 +51,6 @@ describe("MuteState", () => {
     const muteState = new MuteState(
       testScope,
       deviceStub,
-      constant(true),
       true,
       forceMute$,
     );
@@ -166,8 +165,10 @@ describe("MuteStates", () => {
     const muteStates = new MuteStates(
       testScope,
       mediaDevices,
-      // consider joined
-      constant(true),
+      {
+        audioEnabled: false,
+        videoEnabled: false,
+      }
     );
 
     let latestSyncedState: boolean | null = null;

@@ -256,8 +256,6 @@ describe("UrlParams", () => {
       skipLobby: false,
       returnToLobby: false,
       sendNotificationType: "notification",
-      defaultAudioEnabled: true,
-      defaultVideoEnabled: true,
     });
     it("use no-intent-defaults with unknown intent", () => {
       expect(computeUrlParams()).toMatchObject(noIntentDefaults);
@@ -395,8 +393,6 @@ describe("UrlParams", () => {
         expect.any(Object),
         "configuration:",
         expect.any(Object),
-        "intentAndPlatformDerivedConfiguration:",
-        {},
       );
     });
   });
