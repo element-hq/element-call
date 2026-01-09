@@ -71,7 +71,17 @@ export const RoomPage: FC = () => {
 
   useEffect(() => {
     const scope = new ObservableScope();
-    setMuteStates(new MuteStates(scope, devices, calculateInitialMuteState(urlParams, import.meta.env.VITE_PACKAGE, window.location.hostname)));
+    setMuteStates(
+      new MuteStates(
+        scope,
+        devices,
+        calculateInitialMuteState(
+          urlParams,
+          import.meta.env.VITE_PACKAGE,
+          window.location.hostname,
+        ),
+      ),
+    );
     return (): void => scope.end();
   }, [devices, urlParams]);
 

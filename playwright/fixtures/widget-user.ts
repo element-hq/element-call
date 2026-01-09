@@ -176,7 +176,6 @@ export const widgetTest = test.extend<MyFixtures>({
       .click();
 
     if (callType === "room") {
-
       await ewPage1.getByRole("menuitem", { name: "New Room" }).click();
       await ewPage1.getByRole("textbox", { name: "Name" }).fill("Welcome Room");
       await ewPage1.getByRole("button", { name: "Create room" }).click();
@@ -206,28 +205,35 @@ export const widgetTest = test.extend<MyFixtures>({
       await ewPage2.getByRole("option", { name: "Welcome Room" }).click();
       await ewPage2.getByRole("button", { name: "Accept" }).click();
       await expect(
-        ewPage2.getByRole("main").getByRole("heading", { name: "Welcome Room" }),
+        ewPage2
+          .getByRole("main")
+          .getByRole("heading", { name: "Welcome Room" }),
       ).toBeVisible();
     } else if (callType === "dm") {
       await ewPage1.getByRole("menuitem", { name: "Start chat" }).click();
-      await ewPage1.getByRole('textbox', { name: 'Search' }).click();
-      await ewPage1.getByRole('textbox', { name: 'Search' }).fill(whistlerMxId);
+      await ewPage1.getByRole("textbox", { name: "Search" }).click();
+      await ewPage1.getByRole("textbox", { name: "Search" }).fill(whistlerMxId);
       await ewPage1.getByRole("button", { name: "Go" }).click();
 
       // Wait and send the first message to create the DM
-      await expect(ewPage1.getByText(/Send your first message to invite/)).toBeVisible();
+      await expect(
+        ewPage1.getByText(/Send your first message to invite/),
+      ).toBeVisible();
 
-      await ewPage1.locator('.mx_BasicMessageComposer_input > div').click();
-      await ewPage1.getByRole('textbox', { name: 'Send a message…' }).fill('Hello!');
+      await ewPage1.locator(".mx_BasicMessageComposer_input > div").click();
+      await ewPage1
+        .getByRole("textbox", { name: "Send a message…" })
+        .fill("Hello!");
       await ewPage1.getByRole("button", { name: "Send message" }).click();
 
-      await expect(ewPage1.getByText('This is the beginning of your')).toBeVisible();
-
+      await expect(
+        ewPage1.getByText("This is the beginning of your"),
+      ).toBeVisible();
 
       // Accept the DM invite from brooks
       // This how playwright record selects the DM invite in the room list
-      await ewPage2.getByRole('option', { name: 'Open room' }).click();
-      await ewPage2.getByRole('button', { name: 'Start chatting' }).click();
+      await ewPage2.getByRole("option", { name: "Open room" }).click();
+      await ewPage2.getByRole("button", { name: "Start chatting" }).click();
     }
 
     // Renamed use to pUse, as a workaround for eslint error that was thinking this use was a react use.
@@ -236,13 +242,13 @@ export const widgetTest = test.extend<MyFixtures>({
         mxId: brooksMxId,
         page: ewPage1,
         clientHandle: brooksClientHandle,
-        displayName: brooksDisplayName
+        displayName: brooksDisplayName,
       },
       whistler: {
         mxId: whistlerMxId,
         page: ewPage2,
         clientHandle: whistlerClientHandle,
-        displayName: whistlerDisplayName
+        displayName: whistlerDisplayName,
       },
     });
   },
