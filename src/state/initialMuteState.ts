@@ -24,7 +24,7 @@ export function calculateInitialMuteState(
   const { skipLobby, callIntent } = urlParams;
 
   logger.debug(
-    `calculateInitialMuteState: skipLobby=${skipLobby}, callIntent=${callIntent}, hostname=${hostname}, isDevBuild=${trustLocalhost}`,
+    `calculateInitialMuteState: skipLobby=${skipLobby}, callIntent=${callIntent}, hostname=${hostname}, trustLocalhost=${trustLocalhost}`,
   );
 
   const isTrustedHost =
