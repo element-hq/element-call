@@ -164,6 +164,9 @@ export interface ResolvedConfigOptions extends ConfigOptions {
   };
   ssla: string;
   app_prompt: boolean;
+  // For privacy reasons when lobby is skipped we do not unmute by default on full builds
+  // but for development builds we want to unmute by default to speed up testing.
+  trust_localhost_for_mute_state: boolean;
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
@@ -178,4 +181,5 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
   },
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
   app_prompt: true,
+  trust_localhost_for_mute_state: false,
 };

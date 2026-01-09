@@ -19,7 +19,7 @@ export function calculateInitialMuteState(
   urlParams: Pick<UrlParams, "skipLobby" | "callIntent">,
   packageType: "full" | "embedded",
   hostname: string | undefined = undefined,
-  trustLocalhost: boolean = import.meta.env.DEV,
+  trustLocalhost: boolean = false,
 ): { audioEnabled: boolean; videoEnabled: boolean } {
   const { skipLobby, callIntent } = urlParams;
 

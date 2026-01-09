@@ -79,6 +79,7 @@ export const RoomPage: FC = () => {
           urlParams,
           import.meta.env.VITE_PACKAGE,
           window.location.hostname,
+          Config.get().trust_localhost_for_mute_state,
         ),
       ),
     );
