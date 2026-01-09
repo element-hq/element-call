@@ -29,6 +29,7 @@ import {
   Label,
   RadioControl,
 } from "@vector-im/compound-web";
+import { type Room as LivekitRoom } from "livekit-client";
 
 import { FieldRow, InputField } from "../input/Input";
 import {
@@ -42,7 +43,6 @@ import {
   customLivekitUrl as customLivekitUrlSetting,
   MatrixRTCMode,
 } from "./settings";
-import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
 
@@ -275,8 +275,8 @@ export const DeveloperSettingsTab: FC<Props> = ({
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Compatibil}
-              value={MatrixRTCMode.Compatibil}
+              checked={matrixRTCMode === MatrixRTCMode.Compatibility}
+              value={MatrixRTCMode.Compatibility}
               onChange={onMatrixRTCModeChange}
             />
           }
@@ -304,12 +304,12 @@ export const DeveloperSettingsTab: FC<Props> = ({
         </InlineField>
       </Form>
       {livekitRooms?.map((livekitRoom) => (
-        <>
-          <h3>
+        <div className={styles.livekit_room_box}>
+          <h4>
             {t("developer_mode.livekit_sfu", {
               url: livekitRoom.url || "unknown",
             })}
-          </h3>
+          </h4>
           {livekitRoom.isLocal && <p>ws-url: {localSfuUrl?.href}</p>}
           <p>
             {t("developer_mode.livekit_server_info")}(
@@ -321,7 +321,19 @@ export const DeveloperSettingsTab: FC<Props> = ({
               : "undefined"}
             {livekitRoom.room.metadata}
           </pre>
-        </>
+          <p>Local Participant</p>
+          <pre className={styles.pre}>
+            {livekitRoom.room.localParticipant.identity}
+          </pre>
+          <p>Remote Participants</p>
+          <ul>
+            {Array.from(livekitRoom.room.remoteParticipants.keys()).map(
+              (id) => (
+                <li key={id}>{id}</li>
+              ),
+            )}
+          </ul>
+        </div>
       ))}
       <p>{t("developer_mode.environment_variables")}</p>
       <pre>{JSON.stringify(env, null, 2)}</pre>
