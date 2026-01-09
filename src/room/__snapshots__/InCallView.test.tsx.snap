@@ -286,6 +286,7 @@ exports[`InCallView > rendering > renders 1`] = `
       >
         <button
           aria-disabled="true"
+          aria-label="Unmute microphone"
           aria-labelledby="_r_8_"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="primary"
@@ -309,6 +310,7 @@ exports[`InCallView > rendering > renders 1`] = `
         </button>
         <button
           aria-disabled="true"
+          aria-label="Start video"
           aria-labelledby="_r_d_"
           class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
           data-kind="primary"
@@ -352,6 +354,7 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
+          aria-label="End call"
           aria-labelledby="_r_n_"
           class="_button_vczzf_8 endCall _has-icon_vczzf_57 _icon-only_vczzf_50 _destructive_vczzf_107"
           data-kind="primary"
