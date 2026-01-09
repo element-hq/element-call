@@ -724,6 +724,7 @@ export function createCallViewModel$(
               localMatrixLivekitMember;
 
             localUserMediaId = `${userId}:${membership$.value.deviceId}`;
+            const rtcBackendIdentity = membership$.value.rtcBackendIdentity;
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
                 keys: [
@@ -732,7 +733,7 @@ export function createCallViewModel$(
                   userId,
                   participant satisfies TaggedParticipant as TaggedParticipant, // Widen the type safely
                   connection$,
-                  membership$.value,
+                  rtcBackendIdentity,
                 ],
                 data: undefined,
               };
@@ -746,8 +747,10 @@ export function createCallViewModel$(
             membership$,
           } of matrixLivekitMembers.value) {
             const userMediaId = `${userId}:${membership$.value.deviceId}`;
+            const rtcBackendIdentity = membership$.value.rtcBackendIdentity;
             // skip local user as we added them manually before
             if (userMediaId === localUserMediaId) continue;
+
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
                 keys: [
@@ -756,7 +759,7 @@ export function createCallViewModel$(
                   userId,
                   participant,
                   connection$,
-                  membership$.value,
+                  rtcBackendIdentity,
                 ],
                 data: undefined,
               };
@@ -771,7 +774,7 @@ export function createCallViewModel$(
           userId,
           participant,
           connection$,
-          membership,
+          rtcBackendIdentity,
         ) => {
           const livekitRoom$ = scope.behavior(
             connection$.pipe(map((c) => c?.livekitRoom)),
@@ -789,7 +792,7 @@ export function createCallViewModel$(
             scope,
             `${userMediaId}:${dup}`,
             userId,
-            membership,
+            rtcBackendIdentity,
             participant,
             options.encryptionSystem,
             livekitRoom$,
