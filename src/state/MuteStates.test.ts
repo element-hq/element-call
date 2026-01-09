@@ -48,12 +48,7 @@ describe("MuteState", () => {
       select(): void {},
     } as unknown as MediaDevice<DeviceLabel, SelectedDevice>;
 
-    const muteState = new MuteState(
-      testScope,
-      deviceStub,
-      true,
-      forceMute$,
-    );
+    const muteState = new MuteState(testScope, deviceStub, true, forceMute$);
     let lastEnabled: boolean = false;
     muteState.enabled$.subscribe((enabled) => {
       lastEnabled = enabled;
@@ -162,14 +157,10 @@ describe("MuteStates", () => {
       videoInput: aVideoInput(),
       // other devices are not relevant for this test
     });
-    const muteStates = new MuteStates(
-      testScope,
-      mediaDevices,
-      {
-        audioEnabled: false,
-        videoEnabled: false,
-      }
-    );
+    const muteStates = new MuteStates(testScope, mediaDevices, {
+      audioEnabled: false,
+      videoEnabled: false,
+    });
 
     let latestSyncedState: boolean | null = null;
     muteStates.video.setHandler(async (enabled: boolean): Promise<boolean> => {

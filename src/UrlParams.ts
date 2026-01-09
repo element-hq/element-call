@@ -252,10 +252,7 @@ export interface UrlConfiguration {
 // the situations that call for this behavior ('isEmbedded'). This makes it
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
-export interface UrlParams
-  extends
-    UrlProperties,
-    UrlConfiguration {}
+export interface UrlParams extends UrlProperties, UrlConfiguration {}
 
 // This is here as a stopgap, but what would be far nicer is a function that
 // takes a UrlParams and returns a query string. That would enable us to

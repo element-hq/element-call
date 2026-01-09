@@ -99,7 +99,10 @@ export async function createMatrixRTCSdk(
   if (room === null) throw Error("could not get room from client");
 
   const mediaDevices = new MediaDevices(scope);
-  const muteStates = new MuteStates(scope, mediaDevices, { audioEnabled: true, videoEnabled: true });
+  const muteStates = new MuteStates(scope, mediaDevices, {
+    audioEnabled: true,
+    videoEnabled: true,
+  });
   const slot = { application, id };
   const rtcSession = new MatrixRTCSession(
     client,

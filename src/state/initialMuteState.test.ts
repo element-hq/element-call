@@ -10,7 +10,6 @@ import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
 
 import { calculateInitialMuteState } from "./initialMuteState";
 
-
 test.each<{
   callIntent: RTCCallIntent;
   packageType: "full" | "embedded";
@@ -69,7 +68,6 @@ test.each<{
   },
 );
 
-
 test.each<{
   isDevBuild: boolean;
   currentHost: string;
@@ -78,11 +76,14 @@ test.each<{
   { isDevBuild: true, currentHost: "localhost", expectedEnabled: true },
   { isDevBuild: false, currentHost: "localhost", expectedEnabled: false },
   { isDevBuild: true, currentHost: "call.example.com", expectedEnabled: false },
-  { isDevBuild: false, currentHost: "call.example.com", expectedEnabled: false },
-])
-("Should trust localhost domain when in dev mode isDevBuild($isDevBuild) host($currentHost)", (
-  {isDevBuild, currentHost, expectedEnabled}
-) => {
+  {
+    isDevBuild: false,
+    currentHost: "call.example.com",
+    expectedEnabled: false,
+  },
+])(
+  "Should trust localhost domain when in dev mode isDevBuild($isDevBuild) host($currentHost)",
+  ({ isDevBuild, currentHost, expectedEnabled }) => {
     const { audioEnabled, videoEnabled } = calculateInitialMuteState(
       { skipLobby: true, callIntent: "video" },
       "full",
@@ -92,4 +93,5 @@ test.each<{
 
     expect(audioEnabled).toBe(expectedEnabled);
     expect(videoEnabled).toBe(expectedEnabled);
-});
+  },
+);
