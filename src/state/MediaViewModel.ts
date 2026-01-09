@@ -44,7 +44,6 @@ import {
   throttleTime,
   distinctUntilChanged,
 } from "rxjs";
-import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 
 import { alwaysShowSelf } from "../settings/settings";
 import { showConnectionStats } from "../settings/settings";
@@ -258,7 +257,7 @@ abstract class BaseMediaViewModel {
      * The Matrix user to which this media belongs.
      */
     public readonly userId: string,
-    public readonly rtcMembership: CallMembership,
+    public readonly rtcBackendIdentity: string,
     // We don't necessarily have a participant if a user connects via MatrixRTC but not (yet) through
     // livekit.
     protected readonly participant$: Observable<
@@ -404,13 +403,11 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
    */
   public readonly cropVideo$: Behavior<boolean> = this._cropVideo$;
 
-  public readonly rtcBackendIdentity = this.rtcMembership.rtcBackendIdentity;
-
   public constructor(
     scope: ObservableScope,
     id: string,
     userId: string,
-    rtcMembership: CallMembership,
+    rtcBackendIdentity: string,
     participant$: Observable<LocalParticipant | RemoteParticipant | null>,
     encryptionSystem: EncryptionSystem,
     livekitRoom$: Behavior<LivekitRoom | undefined>,
@@ -424,7 +421,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       scope,
       id,
       userId,
-      rtcMembership,
+      rtcBackendIdentity,
       participant$,
       encryptionSystem,
       Track.Source.Microphone,
@@ -550,7 +547,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     scope: ObservableScope,
     id: string,
     userId: string,
-    rtcMembership: CallMembership,
+    rtcBackendIdentity: string,
     participant$: Behavior<LocalParticipant | null>,
     encryptionSystem: EncryptionSystem,
     livekitRoom$: Behavior<LivekitRoom | undefined>,
@@ -565,7 +562,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
       scope,
       id,
       userId,
-      rtcMembership,
+      rtcBackendIdentity,
       participant$,
       encryptionSystem,
       livekitRoom$,
@@ -679,7 +676,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     scope: ObservableScope,
     id: string,
     userId: string,
-    rtcMembership: CallMembership,
+    rtcBackendIdentity: string,
     participant$: Observable<RemoteParticipant | null>,
     encryptionSystem: EncryptionSystem,
     livekitRoom$: Behavior<LivekitRoom | undefined>,
@@ -694,7 +691,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
       scope,
       id,
       userId,
-      rtcMembership,
+      rtcBackendIdentity,
       participant$,
       encryptionSystem,
       livekitRoom$,
@@ -782,7 +779,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
     scope: ObservableScope,
     id: string,
     userId: string,
-    rtcMembership: CallMembership,
+    rtcBackendIdentity: string,
     participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom$: Behavior<LivekitRoom | undefined>,
@@ -796,7 +793,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
       scope,
       id,
       userId,
-      rtcMembership,
+      rtcBackendIdentity,
       participant$,
       encryptionSystem,
       Track.Source.ScreenShareAudio,

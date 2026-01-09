@@ -738,17 +738,17 @@ export function createCallViewModel$(
           for (const matrixLivekitMember of allMatrixLivekitMembers) {
             const { userId, participant, connection$, membership$ } =
               matrixLivekitMember;
-            const memb = membership$.value;
+            const rtcId = membership$.value.rtcBackendIdentity; // rtcBackendIdentity
             const mediaId = computeMediaId(matrixLivekitMember);
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
-                keys: [dup, mediaId, userId, participant, connection$, memb],
+                keys: [dup, mediaId, userId, participant, connection$, rtcId],
                 data: undefined,
               };
             }
           }
         },
-        (scope, _, dup, mediaId, userId, participant, connection$, memb) => {
+        (scope, _, dup, mediaId, userId, participant, connection$, rtcId) => {
           const livekitRoom$ = scope.behavior(
             connection$.pipe(map((c) => c?.livekitRoom)),
           );
@@ -765,7 +765,7 @@ export function createCallViewModel$(
             scope,
             `${mediaId}:${dup}`,
             userId,
-            memb,
+            rtcId,
             participant,
             options.encryptionSystem,
             livekitRoom$,
