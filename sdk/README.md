@@ -11,10 +11,12 @@ This folder contains an example index.html file that showcases the sdk in use (h
 ## Getting started
 
 To get started run
+
 ```
 yarn
 yarn build:sdk
 ```
+
 in the repository root.
 
 It will create a `dist` folder containing the compiled js file.
@@ -22,6 +24,7 @@ It will create a `dist` folder containing the compiled js file.
 This file needs to be hosted. Locally (via `npx serve -l 81234 --cors`) or on a remote server.
 
 Now you just need to add the widget to element web via:
+
 ```
 /addwidget http://localhost:3000?widgetId=$matrix_widget_id&perParticipantE2EE=true&userId=$matrix_user_id&deviceId=$org.matrix.msc3819.matrix_device_id&baseUrl=$org.matrix.msc4039.matrix_base_url&roomId=$matrix_room_id
 ```
@@ -33,6 +36,7 @@ To create a widget see the example `index.html` file in this folder. And add it 
 `/addwidget <widgetUrl>` (see **url parameters** for more details on `<widgetUrl>`)
 
 ### url parameters
+
 The url parameters are needed to pass initial data to the widget. They will automatically be used
 but the matrixRTCSdk to start the postmessage widget api (communication between the client (e.g. Element Web) and the widget)
 
