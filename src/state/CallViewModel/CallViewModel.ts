@@ -47,6 +47,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
+import { v4 as uuidv4 } from "uuid";
 
 import {
   LocalUserMediaViewModel,
@@ -430,9 +431,8 @@ export function createCallViewModel$(
   const ownMembershipIdentity: CallMembershipIdentityParts = {
     userId,
     deviceId,
-    // This will eventually become the salt for the hash endpoint.
-    // For now we keep it as the user+device string since it is expected by non matrix matrixRTCMode === Legacy.
-    memberId: `${userId}:${deviceId}`,
+    // This will only be consumed by the sticky membership manager. So it has no impact on legacy calls.
+    memberId: uuidv4(),
   };
 
   const localTransport$ = createLocalTransport$({
@@ -722,22 +722,20 @@ export function createCallViewModel$(
           if (localMatrixLivekitMember) {
             const { userId, participant, connection$, membership$ } =
               localMatrixLivekitMember;
-            localUserMediaId = `${userId}:${membership$.value.deviceId}`; // should be membership$.value.membershipID which is not optional
 
-            if (localUserMediaId) {
-              for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
-                yield {
-                  keys: [
-                    dup,
-                    localUserMediaId,
-                    userId,
-                    participant satisfies TaggedParticipant as TaggedParticipant, // Widen the type safely
-                    connection$,
-                    membership$.value,
-                  ],
-                  data: undefined,
-                };
-              }
+            localUserMediaId = `${userId}:${membership$.value.deviceId}`;
+            for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
+              yield {
+                keys: [
+                  dup,
+                  localUserMediaId,
+                  userId,
+                  participant satisfies TaggedParticipant as TaggedParticipant, // Widen the type safely
+                  connection$,
+                  membership$.value,
+                ],
+                data: undefined,
+              };
             }
           }
           // add remote members that are available
@@ -748,8 +746,8 @@ export function createCallViewModel$(
             membership$,
           } of matrixLivekitMembers.value) {
             const userMediaId = `${userId}:${membership$.value.deviceId}`;
+            // skip local user as we added them manually before
             if (userMediaId === localUserMediaId) continue;
-            // const participantId = membership$.value?.identity;
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
                 keys: [
@@ -769,7 +767,7 @@ export function createCallViewModel$(
           scope,
           _data$,
           dup,
-          participantId,
+          userMediaId,
           userId,
           participant,
           connection$,
@@ -789,7 +787,7 @@ export function createCallViewModel$(
 
           return new UserMedia(
             scope,
-            `${participantId}:${dup}`,
+            `${userMediaId}:${dup}`,
             userId,
             membership,
             participant,
@@ -800,8 +798,8 @@ export function createCallViewModel$(
             localMembership.reconnecting$,
             displayName$,
             matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
-            handsRaised$.pipe(map((v) => v[participantId]?.time ?? null)),
-            reactions$.pipe(map((v) => v[participantId] ?? undefined)),
+            handsRaised$.pipe(map((v) => v[userMediaId]?.time ?? null)),
+            reactions$.pipe(map((v) => v[userMediaId] ?? undefined)),
           );
         },
       ),
