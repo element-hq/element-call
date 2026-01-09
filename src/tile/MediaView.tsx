@@ -138,9 +138,8 @@ export const MediaView: FC<Props> = ({
         </div>
         {waitingForMedia && (
           <div className={styles.status}>
-            {t("video_tile.waiting_for_media") + showConnectioStats
-              ? " " + rtcBackendIdentity
-              : ""}
+            {t("video_tile.waiting_for_media")}
+            {showConnectioStats ? " " + rtcBackendIdentity : ""}
           </div>
         )}
         {(audioStreamStats || videoStreamStats) && (
