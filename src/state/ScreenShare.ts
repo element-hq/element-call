@@ -10,6 +10,7 @@ import {
   type RemoteParticipant,
   type Room as LivekitRoom,
 } from "livekit-client";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc/CallMembership";
 
 import { type ObservableScope } from "./ObservableScope.ts";
 import { ScreenShareViewModel } from "./MediaViewModel.ts";
@@ -28,6 +29,7 @@ export class ScreenShare {
     private readonly scope: ObservableScope,
     id: string,
     userId: string,
+    rtcMember: CallMembership,
     participant: LocalParticipant | RemoteParticipant,
     encryptionSystem: EncryptionSystem,
     livekitRoom$: Behavior<LivekitRoom | undefined>,
@@ -40,6 +42,7 @@ export class ScreenShare {
       this.scope,
       id,
       userId,
+      rtcMember,
       of(participant),
       encryptionSystem,
       livekitRoom$,

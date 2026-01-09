@@ -20,7 +20,10 @@ import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc/LivekitTransp
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
-import type { OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import type {
+  OpenIDClientParts,
+  SFUConfig,
+} from "../../../livekit/openIDSFU.ts";
 import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
@@ -29,11 +32,11 @@ import { defaultLiveKitOptions } from "../../../livekit/options.ts";
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
   createConnection(
-    transport: LivekitTransport,
     scope: ObservableScope,
+    transport: LivekitTransport,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
-    forceOldJwtEndpoint?: boolean,
+    sfuConfig?: SFUConfig,
   ): Connection;
 }
 
@@ -83,30 +86,30 @@ export class ECConnectionFactory implements ConnectionFactory {
 
   /**
    *
-   * @param transport The transport to use for this connection.
    * @param scope The observable scope (used for clean-up)
+   * @param transport The transport to use for this connection.
    * @param ownMembershipIdentity required to connect (using the jwt service) with the SFU.
    * @param logger The logger instance to use for this connection.
-   * @param forceOldJwtEndpoint Use the old JWT endpoint independent of what the sfu supports.
+   * @param sfuConfig optional config in case we already have a token for this connection.
    * @returns
    */
   public createConnection(
-    transport: LivekitTransport,
     scope: ObservableScope,
+    transport: LivekitTransport,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
-    forceOldJwtEndpoint?: boolean,
+    sfuConfig?: SFUConfig,
   ): Connection {
     return new Connection(
       {
+        existingSFUConfig: sfuConfig,
         transport,
         client: this.client,
         scope: scope,
         livekitRoomFactory: this.livekitRoomFactory,
-        forceOldJwtEndpoint,
+        ownMembershipIdentity,
       },
       logger,
-      ownMembershipIdentity,
     );
   }
 }

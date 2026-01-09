@@ -108,13 +108,19 @@ import {
   enterRTCSession,
   TransportState,
 } from "./localMember/LocalMember.ts";
-import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
+import {
+  createLocalTransport$,
+  JwtEndpointVersion,
+} from "./localMember/LocalTransport.ts";
 import {
   createMemberships$,
   membershipsAndTransports$,
 } from "../SessionBehaviors.ts";
 import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
-import { createConnectionManager$ } from "./remoteMembers/ConnectionManager.ts";
+import {
+  type ConnectionManagerData,
+  createConnectionManager$,
+} from "./remoteMembers/ConnectionManager.ts";
 import {
   createMatrixLivekitMembers$,
   type TaggedParticipant,
@@ -263,6 +269,7 @@ export interface CallViewModel {
    *    multiple devices.
    */
   participantCount$: Behavior<number>;
+  allConnections$: Behavior<ConnectionManagerData>;
   /** Participants sorted by livekit room so they can be used in the audio rendering */
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
   userMedia$: Behavior<UserMedia[]>;
@@ -428,14 +435,6 @@ export function createCallViewModel$(
     memberId: `${userId}:${deviceId}`,
   };
 
-  const useOldJwtEndpoint$ = scope.behavior(
-    matrixRTCMode$.pipe(
-      map(
-        (v) => v === MatrixRTCMode.Legacy || v === MatrixRTCMode.Compatibility,
-      ),
-    ),
-  );
-
   const localTransport$ = createLocalTransport$({
     scope: scope,
     memberships$: memberships$,
@@ -451,7 +450,15 @@ export function createCallViewModel$(
       matrixRTCSession.delayId ?? null,
     ),
     roomId: matrixRoom.roomId,
-    useOldJwtEndpoint$,
+    forceJwtEndpoint$: scope.behavior(
+      matrixRTCMode$.pipe(
+        map((v) =>
+          v === MatrixRTCMode.Matrix_2_0
+            ? JwtEndpointVersion.Matrix_2_0
+            : JwtEndpointVersion.Legacy,
+        ),
+      ),
+    ),
     useOldestMember$: scope.behavior(
       matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
     ),
@@ -483,7 +490,6 @@ export function createCallViewModel$(
       ),
     ),
     remoteTransports$: membershipsAndTransports.transports$,
-    forceOldJwtEndpointForLocalTransport$: useOldJwtEndpoint$,
     logger: logger,
     ownMembershipIdentity,
   });
@@ -628,6 +634,9 @@ export function createCallViewModel$(
     ),
   );
 
+  const allConnections$ = scope.behavior(
+    connectionManager.connectionManagerData$.pipe(map((d) => d.value)),
+  );
   const livekitRoomItems$ = scope.behavior(
     matrixLivekitMembers$.pipe(
       switchMap((members) => {
@@ -724,6 +733,7 @@ export function createCallViewModel$(
                     userId,
                     participant satisfies TaggedParticipant as TaggedParticipant, // Widen the type safely
                     connection$,
+                    membership$.value,
                   ],
                   data: undefined,
                 };
@@ -742,7 +752,14 @@ export function createCallViewModel$(
             // const participantId = membership$.value?.identity;
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
-                keys: [dup, userMediaId, userId, participant, connection$],
+                keys: [
+                  dup,
+                  userMediaId,
+                  userId,
+                  participant,
+                  connection$,
+                  membership$.value,
+                ],
                 data: undefined,
               };
             }
@@ -756,6 +773,7 @@ export function createCallViewModel$(
           userId,
           participant,
           connection$,
+          membership,
         ) => {
           const livekitRoom$ = scope.behavior(
             connection$.pipe(map((c) => c?.livekitRoom)),
@@ -773,6 +791,7 @@ export function createCallViewModel$(
             scope,
             `${participantId}:${dup}`,
             userId,
+            membership,
             participant,
             options.encryptionSystem,
             livekitRoom$,
@@ -1523,6 +1542,7 @@ export function createCallViewModel$(
       ),
       null,
     ),
+    allConnections$,
     participantCount$: participantCount$,
     handsRaised$: handsRaised$,
     reactions$: reactions$,

@@ -46,6 +46,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   waitingForMedia?: boolean;
   audioStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
+  rtcBackendIdentity?: string;
   // The focus url, mainly for debugging purposes
   focusUrl?: string;
 }
@@ -74,6 +75,7 @@ export const MediaView: FC<Props> = ({
   waitingForMedia,
   audioStreamStats,
   videoStreamStats,
+  rtcBackendIdentity,
   focusUrl,
   ...props
 }) => {
@@ -135,11 +137,14 @@ export const MediaView: FC<Props> = ({
           </div>
         )}
         {(audioStreamStats || videoStreamStats) && (
-          <RTCConnectionStats
-            audio={audioStreamStats}
-            video={videoStreamStats}
-            focusUrl={focusUrl}
-          />
+          <>
+            <RTCConnectionStats
+              audio={audioStreamStats}
+              video={videoStreamStats}
+              focusUrl={focusUrl}
+              rtcBackendIdentity={rtcBackendIdentity}
+            />
+          </>
         )}
         {/* TODO: Bring this back once encryption status is less broken */}
         {/*encryptionStatus !== EncryptionStatus.Okay && (

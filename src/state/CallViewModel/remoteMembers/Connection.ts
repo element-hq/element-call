@@ -33,10 +33,21 @@ import {
   SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
+import { type JwtEndpointVersion } from "../localMember/LocalTransport.ts";
 
 export interface ConnectionOpts {
-  /** Whether we always try to connect to this connection via the legacy jwt endpoint. (no hash identity) */
-  forceOldJwtEndpoint?: boolean;
+  /**
+   * For the local transport we already do know the jwt token and url. We can reuse it.
+   * On top the local transport will send additional data to the jwt server to use delayed event delegation.
+   */
+  existingSFUConfig?: SFUConfig;
+  /**
+   * For local connections that use the oldest member pattern. here we have not prefetched the sfuConfig
+   * and hence we need to let the connection do the jwt token fetching.
+   */
+  forceJwtEndpoint?: JwtEndpointVersion;
+  /** The identity parts to use on this connection */
+  ownMembershipIdentity: CallMembershipIdentityParts;
   /** The media transport to connect to. */
   transport: LivekitTransport;
   /** The Matrix client to use for OpenID and SFU config requests. */
@@ -132,8 +143,10 @@ export class Connection {
     try {
       this._state$.next(ConnectionState.FetchingConfig);
       // We should already have this information after creating the localTransport.
-      // It would probably be better to forward this here.
-      const { url, jwt } = await this.getSFUConfigWithOpenID();
+      // only call getSFUConfigWithOpenID for connections where we do not have a token yet. (existingJwtTokenData === undefined)
+      const { url, jwt } =
+        this.existingSFUConfig ??
+        (await this.getSFUConfigForRemoteConnection());
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
@@ -189,17 +202,16 @@ export class Connection {
     }
   }
 
-  protected async getSFUConfigWithOpenID(): Promise<SFUConfig> {
+  protected async getSFUConfigForRemoteConnection(): Promise<SFUConfig> {
+    // This will only be called for sfu's where we do not publish ourselves.
+    // For the local connection we will use the existingJwtTokenData
     return await getSFUConfigWithOpenID(
       this.client,
       this.ownMembershipIdentity,
       this.transport.livekit_service_url,
-      this.forceOldJwtEndpoint,
       this.transport.livekit_alias,
-      // For the remote members we intentionally do not pass a delayEndpointBaseUrl.
-      undefined,
-      // and no delayId.
-      undefined,
+      // dont pass any custom opts for the subscribe only connections
+      {},
       this.logger,
     );
   }
@@ -222,7 +234,8 @@ export class Connection {
 
   private readonly client: OpenIDClientParts;
   private readonly logger: Logger;
-  private readonly forceOldJwtEndpoint: boolean;
+  private readonly ownMembershipIdentity: CallMembershipIdentityParts;
+  private readonly existingSFUConfig?: SFUConfig;
   /**
    * Creates a new connection to a matrix RTC LiveKit backend.
    *
@@ -230,12 +243,9 @@ export class Connection {
    *
    * @param logger - The logger to use.
    */
-  public constructor(
-    opts: ConnectionOpts,
-    logger: Logger,
-    private ownMembershipIdentity: CallMembershipIdentityParts,
-  ) {
-    this.forceOldJwtEndpoint = opts.forceOldJwtEndpoint ?? false;
+  public constructor(opts: ConnectionOpts, logger: Logger) {
+    this.ownMembershipIdentity = opts.ownMembershipIdentity;
+    this.existingSFUConfig = opts.existingSFUConfig;
     this.logger = logger.getChild("[Connection]");
     this.logger.info(
       `Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,

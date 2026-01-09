@@ -334,6 +334,7 @@ export function createLocalMedia(
     testScope(),
     "local",
     member.userId,
+    rtcMember,
     constant(localParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
@@ -379,6 +380,7 @@ export function createRemoteMedia(
     testScope(),
     "remote",
     member.userId,
+    rtcMember,
     constant(participant),
     {
       kind: E2eeType.PER_PARTICIPANT,

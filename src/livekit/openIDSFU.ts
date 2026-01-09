@@ -13,9 +13,13 @@ import {
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import { FailToGetOpenIdToken } from "../utils/errors";
+import {
+  FailToGetOpenIdToken,
+  NoMatrix2AuthorizationService,
+} from "../utils/errors";
 import { doNetworkOperationWithRetry } from "../utils/matrix";
 import { Config } from "../config/Config";
+import { JwtEndpointVersion } from "../state/CallViewModel/localMember/LocalTransport";
 
 /**
  * Configuration and access tokens provided by the SFU on successful authentication.
@@ -73,14 +77,15 @@ export type OpenIDClientParts = Pick<
  * @param client The Matrix client
  * @param membership Our own membership identity parts used to send to jwt service.
  * @param serviceUrl The URL of the livekit SFU service
- * @param forceOldJwtEndpoint This will use the old jwt endpoint which will create the rtc backend identity based on string concatination
+ * @param roomId The room id used in the jwt request. This is NOT the livekit_alias. The jwt service will provide the alias. It maps matrix room ids <-> Livekit aliases.
+ * @param opts Additional options to modify which endpoint with which data will be used to aquire the jwt token.
+ * @param opts.forceJwtEndpoint This will use the old jwt endpoint which will create the rtc backend identity based on string concatination
  * instead of a hash.
  * This function by default uses whatever is possible with the current jwt service installed next to the SFU.
  * For remote connections this does not matter, since we will not publish there we can rely on the newest option.
  * For our own connection we can only use the hashed version if we also send the new matrix2.0 sticky events.
- * @param roomId The room id used in the jwt request. This is NOT the livekit_alias. The jwt service will provide the alias. It maps matrix room ids <-> Livekit aliases.
- * @param delayEndpointBaseUrl The URL of the matrix homeserver.
- * @param delayId The delay id used for the jwt service to manage.
+ * @param opts.delayEndpointBaseUrl The URL of the matrix homeserver.
+ * @param opts.delayId The delay id used for the jwt service to manage.
  * @param logger optional logger.
  * @returns Object containing the token information
  * @throws FailToGetOpenIdToken
@@ -89,10 +94,12 @@ export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
   membership: CallMembershipIdentityParts,
   serviceUrl: string,
-  forceOldJwtEndpoint: boolean,
   roomId: string,
-  delayEndpointBaseUrl?: string,
-  delayId?: string,
+  opts?: {
+    forceJwtEndpoint?: JwtEndpointVersion;
+    delayEndpointBaseUrl?: string;
+    delayId?: string;
+  },
   logger?: Logger,
 ): Promise<SFUConfig> {
   let openIdToken: IOpenIDToken;
@@ -113,15 +120,21 @@ export async function getSFUConfigWithOpenID(
 
   // If forceOldJwtEndpoint is set we indicate that we do not want to try the new endpoint,
   // since we are not sending the new matrix2.0 sticky events (no hashed identity in the event)
-  if (forceOldJwtEndpoint === false) {
+  if (
+    // we do not force anything. Try with new first (remote connections)
+    !opts?.forceJwtEndpoint ||
+    // we do force the matrix2.0 endpoint
+    (opts?.forceJwtEndpoint &&
+      opts?.forceJwtEndpoint === JwtEndpointVersion.Matrix_2_0)
+  ) {
     try {
       sfuConfig = await getLiveKitJWTWithDelayDelegation(
         membership,
         serviceUrl,
         roomId,
         openIdToken,
-        delayEndpointBaseUrl,
-        delayId,
+        opts?.delayEndpointBaseUrl,
+        opts?.delayId,
       );
       logger?.info(`Got JWT from call's active focus URL.`);
     } catch (e) {
@@ -137,12 +150,16 @@ export async function getSFUConfigWithOpenID(
           `(not going to try with legacy endpoint: forceOldJwtEndpoint is set to false, we did not get a not supported error from the sfu)`,
           e,
         );
+        // Make this throw a hard error in case we force the matrix2.0 endpoint.
+        if (opts?.forceJwtEndpoint === JwtEndpointVersion.Matrix_2_0)
+          throw new NoMatrix2AuthorizationService(e as Error);
       }
     }
   }
 
   // DEPRECATED
-  // Either forceOldJwtEndpoint = true or getLiveKitJWTWithDelayDelegation throws -> reset sfuConfig = undefined
+  // here we either have a sfuConfig or we alredy exited becuause of `if (opts?.forceEndpoint === MatrixRTCMode.Matrix_2_0) throw e;`
+  // The only case we can get into this if is, if `opts?.forceEndpoint !== MatrixRTCMode.Matrix_2_0`
   if (sfuConfig === undefined) {
     sfuConfig = await getLiveKitJWT(
       membership.deviceId,
@@ -235,7 +252,7 @@ export async function getLiveKitJWTWithDelayDelegation(
 
   let bodyDalayParts = {};
   // Also check for empty string
-  if (delayId && delayEndpointBaseUrl && false) {
+  if (delayId && delayEndpointBaseUrl) {
     const delayTimeoutMs =
       Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms ?? 1000;
     bodyDalayParts = {

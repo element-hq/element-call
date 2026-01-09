@@ -39,6 +39,7 @@ import { constant } from "../../Behavior";
 import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
 import { ConnectionState, type Connection } from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
+import { type LocalTransportWithSFUConfig } from "./LocalTransport";
 
 const MATRIX_RTC_MODE = MatrixRTCMode.Legacy;
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
@@ -212,10 +213,11 @@ describe("LocalMembership", () => {
 
   it("throws error on missing RTC config error", () => {
     withTestScheduler(({ scope, hot, expectObservable }) => {
-      const localTransport$ = scope.behavior<null | LivekitTransport>(
-        hot("1ms #", {}, new MatrixRTCTransportMissingError("domain.com")),
-        null,
-      );
+      const localTransport$ =
+        scope.behavior<null | LocalTransportWithSFUConfig>(
+          hot("1ms #", {}, new MatrixRTCTransportMissingError("domain.com")),
+          null,
+        );
 
       // we do not need any connection data since we want to fail before reaching that.
       const mockConnectionManager = {
@@ -243,11 +245,23 @@ describe("LocalMembership", () => {
   });
 
   const aTransport = {
-    livekit_service_url: "a",
-  } as LivekitTransport;
+    transport: {
+      livekit_service_url: "a",
+    } as LivekitTransport,
+    sfuConfig: {
+      url: "sfu-url",
+      jwt: "sfu-token",
+    },
+  } as LocalTransportWithSFUConfig;
   const bTransport = {
-    livekit_service_url: "b",
-  } as LivekitTransport;
+    transport: {
+      livekit_service_url: "b",
+    } as LivekitTransport,
+    sfuConfig: {
+      url: "sfu-url",
+      jwt: "sfu-token",
+    },
+  } as LocalTransportWithSFUConfig;
 
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
@@ -391,7 +405,8 @@ describe("LocalMembership", () => {
     const scope = new ObservableScope();
 
     const connectionManagerData = new ConnectionManagerData();
-    const localTransport$ = new BehaviorSubject<null | LivekitTransport>(null);
+    const localTransport$ =
+      new BehaviorSubject<null | LocalTransportWithSFUConfig>(null);
     const connectionManagerData$ = new BehaviorSubject(
       new Epoch(connectionManagerData),
     );
@@ -468,7 +483,7 @@ describe("LocalMembership", () => {
     });
 
     (
-      connectionManagerData2.getConnectionForTransport(aTransport)!
+      connectionManagerData2.getConnectionForTransport(aTransport.transport)!
         .state$ as BehaviorSubject<ConnectionState>
     ).next(ConnectionState.LivekitConnected);
     expect(localMembership.localMemberState$.value).toStrictEqual({

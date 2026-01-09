@@ -19,7 +19,7 @@ import { BehaviorSubject, lastValueFrom } from "rxjs";
 import fetchMock from "fetch-mock";
 
 import { mockConfig, flushPromises, ownMemberMock } from "../../../utils/test";
-import { createLocalTransport$ } from "./LocalTransport";
+import { createLocalTransport$, JwtEndpointVersion } from "./LocalTransport";
 import { constant } from "../../Behavior";
 import { Epoch, ObservableScope } from "../../ObservableScope";
 import {
@@ -58,7 +58,7 @@ describe("LocalTransport", () => {
         getDeviceId: vi.fn(),
       },
       ownMembershipIdentity: ownMemberMock,
-      useOldJwtEndpoint$: constant(false),
+      forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
       delayId$: constant("delay_id_mock"),
     });
     await flushPromises();
@@ -98,7 +98,7 @@ describe("LocalTransport", () => {
         getDeviceId: vi.fn(),
       },
       ownMembershipIdentity: ownMemberMock,
-      useOldJwtEndpoint$: constant(false),
+      forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
       delayId$: constant("delay_id_mock"),
     });
     localTransport$.subscribe(
@@ -140,7 +140,7 @@ describe("LocalTransport", () => {
         baseUrl: "https://lk.example.org",
       },
       ownMembershipIdentity: ownMemberMock,
-      useOldJwtEndpoint$: constant(false),
+      forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
       delayId$: constant("delay_id_mock"),
     });
 
@@ -186,7 +186,7 @@ describe("LocalTransport", () => {
         baseUrl: "https://lk.example.org",
       },
       ownMembershipIdentity: ownMemberMock,
-      useOldJwtEndpoint$: constant(false),
+      forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
       delayId$: constant("delay_id_mock"),
     });
 
@@ -216,7 +216,7 @@ describe("LocalTransport", () => {
         scope,
         roomId: "!example_room_id",
         useOldestMember$: constant(false),
-        useOldJwtEndpoint$: constant(false),
+        forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
         delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {
@@ -333,7 +333,7 @@ describe("LocalTransport", () => {
         ownMembershipIdentity: ownMemberMock,
         roomId: "!example_room_id",
         useOldestMember$: constant(false),
-        useOldJwtEndpoint$: constant(false),
+        forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
         delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {

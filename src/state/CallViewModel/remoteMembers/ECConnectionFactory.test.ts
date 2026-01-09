@@ -77,8 +77,8 @@ describe("ECConnectionFactory - Audio inputs options", () => {
         noise,
       );
       ecConnectionFactory.createConnection(
-        exampleTransport,
         testScope,
+        exampleTransport,
         ownMemberMock,
         logger,
       );
@@ -123,8 +123,8 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
         false,
       );
       ecConnectionFactory.createConnection(
-        exampleTransport,
         testScope,
+        exampleTransport,
         ownMemberMock,
         logger,
       );

@@ -13,6 +13,7 @@ import {
   type Room as LivekitRoom,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc/CallMembership";
 
 import { type ObservableScope } from "./ObservableScope.ts";
 import {
@@ -75,6 +76,7 @@ export class UserMedia {
           this.scope,
           this.id,
           this.userId,
+          this.rtcMembership,
           this.participant.value$,
           this.encryptionSystem,
           this.livekitRoom$,
@@ -89,6 +91,7 @@ export class UserMedia {
           this.scope,
           this.id,
           this.userId,
+          this.rtcMembership,
           this.participant.value$,
           this.encryptionSystem,
           this.livekitRoom$,
@@ -140,6 +143,7 @@ export class UserMedia {
                     scope,
                     `${this.id}:${key}`,
                     this.userId,
+                    this.rtcMembership,
                     p,
                     this.encryptionSystem,
                     this.livekitRoom$,
@@ -191,6 +195,8 @@ export class UserMedia {
     private readonly scope: ObservableScope,
     public readonly id: string,
     private readonly userId: string,
+    // TODO evaluate if this should just be the rtcBackendIdentity
+    private readonly rtcMembership: CallMembership,
     private readonly participant: TaggedParticipant,
     private readonly encryptionSystem: EncryptionSystem,
     private readonly livekitRoom$: Behavior<LivekitRoom | undefined>,

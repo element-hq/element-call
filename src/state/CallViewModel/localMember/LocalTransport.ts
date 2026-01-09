@@ -31,9 +31,11 @@ import { Config } from "../../../config/Config.ts";
 import {
   FailToGetOpenIdToken,
   MatrixRTCTransportMissingError,
+  NoMatrix2AuthorizationService,
 } from "../../../utils/errors.ts";
 import {
   getSFUConfigWithOpenID,
+  type SFUConfig,
   type OpenIDClientParts,
 } from "../../../livekit/openIDSFU.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
@@ -57,8 +59,23 @@ interface Props {
     OpenIDClientParts;
   roomId: string;
   useOldestMember$: Behavior<boolean>;
-  useOldJwtEndpoint$: Behavior<boolean>;
+  forceJwtEndpoint$: Behavior<JwtEndpointVersion>;
   delayId$: Behavior<string | null>;
+}
+
+export enum JwtEndpointVersion {
+  Legacy = "legacy",
+  Matrix_2_0 = "matrix_2_0",
+}
+
+export interface LocalTransportWithSFUConfig {
+  transport: LivekitTransport;
+  sfuConfig: SFUConfig;
+}
+export function isLocalTransportWithSFUConfig(
+  obj: LivekitTransport | LocalTransportWithSFUConfig,
+): obj is LocalTransportWithSFUConfig {
+  return "transport" in obj && "sfuConfig" in obj;
 }
 
 /**
@@ -81,22 +98,40 @@ export const createLocalTransport$ = ({
   client,
   roomId,
   useOldestMember$,
-  useOldJwtEndpoint$,
+  forceJwtEndpoint$,
   delayId$,
-}: Props): Behavior<LivekitTransport | null> => {
+}: Props): Behavior<LocalTransportWithSFUConfig | null> => {
   /**
    * The transport over which we should be actively publishing our media.
    * undefined when not joined.
    */
   const oldestMemberTransport$ = scope.behavior(
-    combineLatest([memberships$, useOldJwtEndpoint$]).pipe(
-      map(([memberships, forceOldJwtEndpoint]) => {
+    combineLatest([memberships$]).pipe(
+      map(([memberships]) => {
         const oldestMember = memberships.value[0];
         const transport = oldestMember?.getTransport(memberships.value[0]);
         if (!transport) return null;
         return transport;
       }),
       first((t) => t != null && isLivekitTransport(t)),
+      switchMap((transport) => {
+        // Get the open jwt token to connect to the sfu
+        const computeLocalTransportWithSFUConfig =
+          async (): Promise<LocalTransportWithSFUConfig> => {
+            return {
+              transport,
+              sfuConfig: await getSFUConfigWithOpenID(
+                client,
+                ownMembershipIdentity,
+                transport.livekit_service_url,
+                roomId,
+                { forceJwtEndpoint: JwtEndpointVersion.Legacy },
+                logger,
+              ),
+            };
+          };
+        return from(computeLocalTransportWithSFUConfig());
+      }),
     ),
     null,
   );
@@ -108,19 +143,29 @@ export const createLocalTransport$ = ({
    * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
    */
   const preferredTransport$ = scope.behavior(
-    combineLatest([customLivekitUrl.value$, delayId$, useOldJwtEndpoint$]).pipe(
-      switchMap(([customUrl, delayId, forceOldJwtEndpoint]) =>
-        from(
+    // preferredTransport$ (used for multi sfu) needs to know if we are using the old or new
+    // jwt endpoint (`get_token` vs `sfu/get`) based on that the jwt endpoint will compute the rtcBackendIdentity
+    // differently. (sha(`${userId}|${deviceId}|${memberId}`) vs `${userId}|${deviceId}|${memberId}`)
+    // When using sticky events (we need to use the new endpoint).
+    combineLatest([customLivekitUrl.value$, delayId$, forceJwtEndpoint$]).pipe(
+      switchMap(([customUrl, delayId, forceEndpoint]) => {
+        logger.info(
+          "Creating preferred transport based on: ",
+          customUrl,
+          delayId,
+          forceEndpoint,
+        );
+        return from(
           makeTransport(
             client,
             ownMembershipIdentity,
             roomId,
             customUrl,
-            forceOldJwtEndpoint,
+            forceEndpoint,
             delayId ?? undefined,
           ),
-        ),
-      ),
+        );
+      }),
     ),
     null,
   );
@@ -139,7 +184,9 @@ export const createLocalTransport$ = ({
           ? (oldestMemberTransport ?? preferredTransport)
           : preferredTransport,
       ),
-      distinctUntilChanged((t1, t2) => areLivekitTransportsEqual(t1, t2)),
+      distinctUntilChanged((t1, t2) =>
+        areLivekitTransportsEqual(t1?.transport ?? null, t2?.transport ?? null),
+      ),
     ),
   );
 };
@@ -161,7 +208,10 @@ const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
  * @param membership The membership identity of the user.
  * @param roomId The ID of the room to be connected to.
  * @param urlFromDevSettings Override URL provided by the user's local config.
- * @param forceOldJwtEndpoint Whether to force the old JWT endpoint (not hashing the backendIdentity).
+ * @param forceJwtEndpoint Whether to force a specific JWT endpoint
+ *  - `Legacy` / `Matrix_2_0`
+ *  - `get_token` / `sfu/get`
+ *  -  not hashing / hashing the backendIdentity
  * @param delayId the delay id passed to the jwt service.
  *
  * @returns A fully validated transport config.
@@ -176,26 +226,33 @@ async function makeTransport(
   membership: CallMembershipIdentityParts,
   roomId: string,
   urlFromDevSettings: string | null,
-  forceOldJwtEndpoint: boolean,
+  forceJwtEndpoint: JwtEndpointVersion,
   delayId?: string,
-): Promise<LivekitTransport> {
+): Promise<LocalTransportWithSFUConfig> {
   logger.trace("Searching for a preferred transport");
 
-  async function doOpenIdAndJWTFromUrl(url: string): Promise<LivekitTransport> {
-    const { livekitAlias } = await getSFUConfigWithOpenID(
+  async function doOpenIdAndJWTFromUrl(
+    url: string,
+  ): Promise<LocalTransportWithSFUConfig> {
+    const sfuConfig = await getSFUConfigWithOpenID(
       client,
       membership,
       url,
-      forceOldJwtEndpoint,
       roomId,
-      client.baseUrl,
-      delayId,
+      {
+        forceJwtEndpoint: forceJwtEndpoint,
+        delayEndpointBaseUrl: client.baseUrl,
+        delayId,
+      },
       logger,
     );
     return {
-      type: "livekit",
-      livekit_service_url: url,
-      livekit_alias: livekitAlias,
+      transport: {
+        type: "livekit",
+        livekit_service_url: url,
+        livekit_alias: sfuConfig.livekitAlias,
+      },
+      sfuConfig,
     };
   }
   // We will call `getSFUConfigWithOpenID` once per transport here as it's our
@@ -217,7 +274,7 @@ async function makeTransport(
 
   async function getFirstUsableTransport(
     transports: Transport[],
-  ): Promise<LivekitTransport | null> {
+  ): Promise<LocalTransportWithSFUConfig | null> {
     for (const potentialTransport of transports) {
       if (isLivekitTransportConfig(potentialTransport)) {
         try {
@@ -226,8 +283,11 @@ async function makeTransport(
             potentialTransport.livekit_service_url,
           );
         } catch (ex) {
+          // Explictly throw these
           if (ex instanceof FailToGetOpenIdToken) {
-            // Explictly throw these
+            throw ex;
+          }
+          if (ex instanceof NoMatrix2AuthorizationService) {
             throw ex;
           }
           logger.debug(

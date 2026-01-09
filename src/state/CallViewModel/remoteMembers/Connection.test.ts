@@ -114,6 +114,7 @@ function setupRemoteConnection(): Connection {
     client: client,
     transport: livekitFocus,
     scope: testScope,
+    ownMembershipIdentity: ownMemberMock,
     livekitRoomFactory: () => fakeLivekitRoom,
   };
 
@@ -138,7 +139,7 @@ function setupRemoteConnection(): Connection {
     return Promise.resolve();
   });
 
-  return new Connection(opts, logger, ownMemberMock);
+  return new Connection(opts, logger);
 }
 
 afterEach(() => {
@@ -155,9 +156,10 @@ describe("Start connection states", () => {
       client: client,
       transport: livekitFocus,
       scope: testScope,
+      ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
-    const connection = new Connection(opts, logger, ownMemberMock);
+    const connection = new Connection(opts, logger);
 
     expect(connection.state$.getValue()).toEqual("Initialized");
   });
@@ -170,10 +172,11 @@ describe("Start connection states", () => {
       client: client,
       transport: livekitFocus,
       scope: testScope,
+      ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new Connection(opts, logger, ownMemberMock);
+    const connection = new Connection(opts, logger);
 
     const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
@@ -220,10 +223,11 @@ describe("Start connection states", () => {
       client: client,
       transport: livekitFocus,
       scope: testScope,
+      ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new Connection(opts, logger, ownMemberMock);
+    const connection = new Connection(opts, logger);
 
     const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {
@@ -277,10 +281,11 @@ describe("Start connection states", () => {
       client: client,
       transport: livekitFocus,
       scope: testScope,
+      ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
-    const connection = new Connection(opts, logger, ownMemberMock);
+    const connection = new Connection(opts, logger);
 
     const capturedStates: (ConnectionState | Error)[] = [];
     const s = connection.state$.subscribe((value) => {

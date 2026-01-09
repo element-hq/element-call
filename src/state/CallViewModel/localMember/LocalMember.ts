@@ -61,6 +61,7 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { and$ } from "../../../utils/observable.ts";
+import { type LocalTransportWithSFUConfig } from "./LocalTransport.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -126,7 +127,7 @@ interface Props {
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (transport: LivekitTransport) => void;
   homeserverConnected: HomeserverConnected;
-  localTransport$: Behavior<LivekitTransport | null>;
+  localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
@@ -234,7 +235,9 @@ export const createLocalMembership$ = ({
           return null;
         }
 
-        return connectionData.getConnectionForTransport(localTransport);
+        return connectionData.getConnectionForTransport(
+          localTransport.transport,
+        );
       }),
       tap((connection) => {
         logger.info(
@@ -533,7 +536,7 @@ export const createLocalMembership$ = ({
       if (!shouldConnect) return;
 
       try {
-        joinMatrixRTC(transport);
+        joinMatrixRTC(transport.transport);
       } catch (error) {
         logger.error("Error entering RTC session", error);
         if (error instanceof Error)
