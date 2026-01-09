@@ -51,6 +51,7 @@ import { type GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactionsSender } from "../reactions/useReactionsSender";
 import { useBehavior } from "../useBehavior";
+import { showConnectionStats } from "../settings/settings";
 
 interface TileProps {
   ref?: Ref<HTMLDivElement>;
