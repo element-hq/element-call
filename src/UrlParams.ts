@@ -247,11 +247,6 @@ export interface UrlConfiguration {
   callIntent?: RTCCallIntent;
 }
 
-interface IntentAndPlatformDerivedConfiguration {
-  defaultAudioEnabled?: boolean;
-  defaultVideoEnabled?: boolean;
-}
-
 // If you need to add a new flag to this interface, prefer a name that describes
 // a specific behavior (such as 'confineToRoom'), rather than one that describes
 // the situations that call for this behavior ('isEmbedded'). This makes it
@@ -260,8 +255,7 @@ interface IntentAndPlatformDerivedConfiguration {
 export interface UrlParams
   extends
     UrlProperties,
-    UrlConfiguration,
-    IntentAndPlatformDerivedConfiguration {}
+    UrlConfiguration {}
 
 // This is here as a stopgap, but what would be far nicer is a function that
 // takes a UrlParams and returns a query string. That would enable us to
@@ -461,29 +455,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
       };
   }
 
-  const intentAndPlatformDerivedConfiguration: IntentAndPlatformDerivedConfiguration =
-    {};
-  // Desktop also includes web. Its anything that is not mobile.
-  const desktopMobile = platform === "desktop" ? "desktop" : "mobile";
-  switch (desktopMobile) {
-    case "desktop":
-    case "mobile":
-      switch (intent) {
-        case UserIntent.StartNewCall:
-        case UserIntent.JoinExistingCall:
-        case UserIntent.StartNewCallDM:
-        case UserIntent.JoinExistingCallDM:
-          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
-          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = true;
-          break;
-        case UserIntent.StartNewCallDMVoice:
-        case UserIntent.JoinExistingCallDMVoice:
-          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
-          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = false;
-          break;
-      }
-  }
-
   const properties: UrlProperties = {
     widgetId,
     parentUrl,
@@ -548,15 +519,12 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     properties,
     "configuration:",
     configuration,
-    "intentAndPlatformDerivedConfiguration:",
-    intentAndPlatformDerivedConfiguration,
   );
 
   return {
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
-    ...intentAndPlatformDerivedConfiguration,
   };
 };
 

@@ -35,6 +35,7 @@ export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
     <Tooltip label={label}>
       <CpdButton
         iconOnly
+        aria-label={label}
         Icon={Icon}
         kind={muted ? "primary" : "secondary"}
         {...props}
@@ -58,6 +59,7 @@ export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
     <Tooltip label={label}>
       <CpdButton
         iconOnly
+        aria-label={label}
         Icon={Icon}
         kind={muted ? "primary" : "secondary"}
         {...props}
@@ -102,6 +104,7 @@ export const EndCallButton: FC<ComponentPropsWithoutRef<"button">> = ({
       <CpdButton
         className={classNames(className, styles.endCall)}
         iconOnly
+        aria-label={t("hangup_button_label")}
         Icon={EndCallIcon}
         destructive
         {...props}
