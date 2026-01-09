@@ -19,6 +19,7 @@ export enum ErrorCode {
   INSUFFICIENT_CAPACITY_ERROR = "INSUFFICIENT_CAPACITY_ERROR",
   E2EE_NOT_SUPPORTED = "E2EE_NOT_SUPPORTED",
   OPEN_ID_ERROR = "OPEN_ID_ERROR",
+  NO_MATRIX_2_AUTHORIZATION_SERVICE = "NO_MATRIX_2_0_AUTHORIZATION_SERVICE",
   SFU_ERROR = "SFU_ERROR",
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
@@ -165,6 +166,23 @@ export class FailToGetOpenIdToken extends ElementCallError {
       ErrorCode.OPEN_ID_ERROR,
       ErrorCategory.CONFIGURATION_ISSUE,
       undefined,
+      // Properly set it as a cause for a better reporting on sentry
+      error,
+    );
+  }
+}
+
+export class NoMatrix2AuthorizationService extends ElementCallError {
+  /**
+   * Creates an instance of NoMatrix2_0AuthorizationService.
+   * @param error - The underlying error that caused the failure.
+   */
+  public constructor(error: Error) {
+    super(
+      t("error.generic"),
+      ErrorCode.NO_MATRIX_2_AUTHORIZATION_SERVICE,
+      ErrorCategory.CONFIGURATION_ISSUE,
+      t("error.no_matrix_2_authorization_service"),
       // Properly set it as a cause for a better reporting on sentry
       error,
     );

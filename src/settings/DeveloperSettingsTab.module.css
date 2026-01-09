@@ -8,3 +8,14 @@ Please see LICENSE in the repository root for full details.
 pre {
   font-size: var(--font-size-micro);
 }
+
+.livekit_room_box {
+  border: 3px solid var(--cpd-color-bg-subtle-secondary);
+  border-radius: var(--cpd-space-8x);
+  padding: var(--cpd-space-4x);
+  margin-bottom: var(--cpd-space-4x);
+  margin-top: var(--cpd-space-4x);
+  li {
+    font-size: var(--font-size-micro);
+  }
+}

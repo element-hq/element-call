@@ -113,10 +113,8 @@ const logger = rootLogger.getChild("[InCallView]");
 
 const maxTapDurationMs = 400;
 
-export interface ActiveCallProps extends Omit<
-  InCallViewProps,
-  "vm" | "livekitRoom" | "connState"
-> {
+export interface ActiveCallProps
+  extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {
   e2eeSystem: EncryptionSystem;
   // TODO refactor those reasons into an enum
   onLeft: (
@@ -798,6 +796,8 @@ export const InCallView: FC<InCallViewProps> = ({
     </div>
   );
 
+  const allConnections = useBehavior(vm.allConnections$);
+
   return (
     <div
       className={styles.inRoom}
@@ -836,8 +836,14 @@ export const InCallView: FC<InCallViewProps> = ({
             onDismiss={closeSettings}
             tab={settingsTab}
             onTabChange={setSettingsTab}
-            // TODO expose correct data to setttings modal
-            livekitRooms={[]}
+            livekitRooms={allConnections
+              .getConnections()
+              .map((connectionItem) => ({
+                room: connectionItem.livekitRoom,
+                // TODO compute is local or tag it in the livekit room items already
+                isLocal: undefined,
+                url: connectionItem.transport.livekit_service_url,
+              }))}
           />
         </>
       )}

@@ -46,7 +46,6 @@ describe("getSFUConfigWithOpenID", () => {
       matrixClient,
       ownMemberMock,
       "https://sfu.example.org",
-      false,
       "!example_room_id",
     );
     expect(config).toEqual({
@@ -70,7 +69,6 @@ describe("getSFUConfigWithOpenID", () => {
         matrixClient,
         ownMemberMock,
         "https://sfu.example.org",
-        false,
         "!example_room_id",
       );
     } catch (ex) {
@@ -101,10 +99,11 @@ describe("getSFUConfigWithOpenID", () => {
         matrixClient,
         ownMemberMock,
         "https://sfu.example.org",
-        false,
         "!example_room_id",
-        "https://matrix.homeserverserver.org",
-        "mock_delay_id",
+        {
+          delayEndpointBaseUrl: "https://matrix.homeserverserver.org",
+          delayId: "mock_delay_id",
+        },
       );
     } catch (ex) {
       expect((ex as Error).message).toEqual(
@@ -154,10 +153,11 @@ describe("getSFUConfigWithOpenID", () => {
         matrixClient,
         ownMemberMock,
         "https://sfu.example.org",
-        false,
         "!example_room_id",
-        "https://matrix.homeserverserver.org",
-        "mock_delay_id",
+        {
+          delayEndpointBaseUrl: "https://matrix.homeserverserver.org",
+          delayId: "mock_delay_id",
+        },
       );
     } catch (ex) {
       expect((ex as Error).message).toEqual(
@@ -203,7 +203,6 @@ describe("getSFUConfigWithOpenID", () => {
       matrixClient,
       ownMemberMock,
       "https://sfu.example.org",
-      false,
       "!example_room_id",
     );
     expect(config).toEqual({

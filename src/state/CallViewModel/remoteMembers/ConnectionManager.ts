@@ -12,12 +12,17 @@ import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import { constant, type Behavior } from "../../Behavior.ts";
+import { type Behavior } from "../../Behavior.ts";
 import { type Connection } from "./Connection.ts";
 import { Epoch, type ObservableScope } from "../../ObservableScope.ts";
 import { generateItemsWithEpoch } from "../../../utils/observable.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
+import {
+  isLocalTransportWithSFUConfig,
+  type LocalTransportWithSFUConfig,
+} from "../localMember/LocalTransport.ts";
+import { type SFUConfig } from "../../../livekit/openIDSFU.ts";
 
 export class ConnectionManagerData {
   private readonly store: Map<
@@ -66,9 +71,9 @@ export class ConnectionManagerData {
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
-  localTransport$: Behavior<LivekitTransport | null>;
+  localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
   remoteTransports$: Behavior<Epoch<LivekitTransport[]>>;
-  forceOldJwtEndpointForLocalTransport$?: Behavior<boolean>;
+
   logger: Logger;
   ownMembershipIdentity: CallMembershipIdentityParts;
 }
@@ -87,7 +92,7 @@ export interface IConnectionManager {
  * @param props.remoteTransports$ - All other transports. The connection manager will create connections for each transport. (deduplicated with localTransport$)
  * @param props.ownMembershipIdentity - The own membership identity to use.
  * @param props.logger - The logger to use.
- * @param props.forceOldJwtEndpointForLocalTransport$ - Use the old JWT endpoint independent of what the sfu supports. Only applies for localTransport$.
+
  *
  *   Each of these behaviors can be interpreted as subscribed list of transports.
  *
@@ -103,7 +108,6 @@ export function createConnectionManager$({
   connectionFactory,
   localTransport$,
   remoteTransports$,
-  forceOldJwtEndpointForLocalTransport$ = constant(false),
   logger: parentLogger,
   ownMembershipIdentity,
 }: Props): IConnectionManager {
@@ -118,42 +122,35 @@ export function createConnectionManager$({
    * It is build based on the list of subscribed transports (`transportsSubscriptions$`).
    * externally this is modified via `registerTransports()`.
    */
-  const transportsWithJwtTag$ = scope.behavior(
-    combineLatest([
-      remoteTransports$,
-      localTransport$,
-      forceOldJwtEndpointForLocalTransport$,
-    ]).pipe(
-      // combine local and remote transports into one transport array
+  const localAndRemoteTransports$: Behavior<
+    Epoch<(LivekitTransport | LocalTransportWithSFUConfig)[]>
+  > = scope.behavior(
+    combineLatest([remoteTransports$, localTransport$]).pipe(
+      // Combine local and remote transports into one transport array
       // and set the forceOldJwtEndpoint property on the local transport
-      map(
-        ([
-          remoteTransports,
-          localTransport,
-          forceOldJwtEndpointForLocalTransport,
-        ]) => {
-          let localTransportAsArray: (LivekitTransport & {
-            forceOldJwtEndpoint: boolean;
-          })[] = [];
-          if (localTransport) {
-            localTransportAsArray = [
-              {
-                ...localTransport,
-                forceOldJwtEndpoint: forceOldJwtEndpointForLocalTransport,
-              },
-            ];
-          }
-          return new Epoch(
-            removeDuplicateTransports([
-              ...localTransportAsArray,
-              ...remoteTransports.value,
-            ]) as (LivekitTransport & {
-              forceOldJwtEndpoint?: boolean;
-            })[],
-            remoteTransports.epoch,
-          );
-        },
-      ),
+      map(([remoteTransports, localTransport]) => {
+        let localTransportAsArray: LocalTransportWithSFUConfig[] = [];
+        if (localTransport) {
+          localTransportAsArray = [localTransport];
+        }
+        const dedupedRemote = removeDuplicateTransports(remoteTransports.value);
+        const remoteWithoutLocal = dedupedRemote.filter(
+          (transport) =>
+            !localTransportAsArray.find((l) =>
+              areLivekitTransportsEqual(l.transport, transport),
+            ),
+        );
+        logger.debug(
+          "remoteWithoutLocal",
+          remoteWithoutLocal,
+          "localTransportAsArray",
+          localTransportAsArray,
+        );
+        return new Epoch(
+          [...localTransportAsArray, ...remoteWithoutLocal],
+          remoteTransports.epoch,
+        );
+      }),
     ),
   );
 
@@ -161,33 +158,51 @@ export function createConnectionManager$({
    * Connections for each transport in use by one or more session members.
    */
   const connections$ = scope.behavior(
-    transportsWithJwtTag$.pipe(
+    localAndRemoteTransports$.pipe(
       generateItemsWithEpoch(
         function* (transports) {
-          for (const transport of transports)
-            yield {
-              keys: [
-                transport.livekit_service_url,
-                transport.livekit_alias,
-                transport.forceOldJwtEndpoint,
-              ],
-              data: undefined,
-            };
+          for (const transportWithOrWithoutSfuConfig of transports) {
+            if (
+              isLocalTransportWithSFUConfig(transportWithOrWithoutSfuConfig)
+            ) {
+              // This is the local transport only the `LocalTransportWithSFUConfig` has a `sfuConfig` field
+              const { transport, sfuConfig } = transportWithOrWithoutSfuConfig;
+              yield {
+                keys: [
+                  transport.livekit_service_url,
+                  transport.livekit_alias,
+                  sfuConfig,
+                ],
+                data: undefined,
+              };
+            } else {
+              const transport = transportWithOrWithoutSfuConfig;
+              yield {
+                keys: [
+                  transport.livekit_service_url,
+                  transport.livekit_alias,
+                  undefined as undefined | SFUConfig,
+                ],
+                data: undefined,
+              };
+            }
+          }
         },
-        (scope, _data$, serviceUrl, alias, forceOldJwtEndpoint) => {
+        (scope, _data$, serviceUrl, alias, sfuConfig) => {
           logger.debug(
-            `Creating connection to ${serviceUrl} (${alias}, forceOldJwtEndpoint: ${forceOldJwtEndpoint})`,
+            `Creating connection to ${serviceUrl} (${alias}, withSfuConfig (local connection?): ${JSON.stringify(sfuConfig) ?? "no config->remote connection"})`,
           );
+
           const connection = connectionFactory.createConnection(
+            scope,
             {
               type: "livekit",
               livekit_service_url: serviceUrl,
               livekit_alias: alias,
             },
-            scope,
             ownMembershipIdentity,
             logger,
-            forceOldJwtEndpoint,
+            sfuConfig,
           );
           // Start the connection immediately
           // Use connection state to track connection progress
