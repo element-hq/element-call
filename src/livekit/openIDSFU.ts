@@ -118,15 +118,14 @@ export async function getSFUConfigWithOpenID(
 
   let sfuConfig: { url: string; jwt: string } | undefined;
 
-  // If forceOldJwtEndpoint is set we indicate that we do not want to try the new endpoint,
-  // since we are not sending the new matrix2.0 sticky events (no hashed identity in the event)
-  if (
-    // we do not force anything. Try with new first (remote connections)
-    !opts?.forceJwtEndpoint ||
-    // we do force the matrix2.0 endpoint
-    (opts?.forceJwtEndpoint &&
-      opts?.forceJwtEndpoint === JwtEndpointVersion.Matrix_2_0)
-  ) {
+  const tryBothJwtEndpoints = opts?.forceJwtEndpoint === undefined; // This is for SFUs where we do not publish.
+
+  const forceMatrix2Jwt =
+    opts?.forceJwtEndpoint === JwtEndpointVersion.Matrix_2_0;
+
+  // We want to start using the new endpoint (with optional delay delegation)
+  // if we can use both or if we are forced to use the new one.
+  if (tryBothJwtEndpoints || forceMatrix2Jwt) {
     try {
       sfuConfig = await getLiveKitJWTWithDelayDelegation(
         membership,
@@ -151,15 +150,16 @@ export async function getSFUConfigWithOpenID(
           e,
         );
         // Make this throw a hard error in case we force the matrix2.0 endpoint.
-        if (opts?.forceJwtEndpoint === JwtEndpointVersion.Matrix_2_0)
+        if (forceMatrix2Jwt)
           throw new NoMatrix2AuthorizationService(e as Error);
+        // NEVER get bejond this point if we forceMatrix2 and it failed!
       }
     }
   }
 
   // DEPRECATED
-  // here we either have a sfuConfig or we alredy exited becuause of `if (opts?.forceEndpoint === MatrixRTCMode.Matrix_2_0) throw e;`
-  // The only case we can get into this if is, if `opts?.forceEndpoint !== MatrixRTCMode.Matrix_2_0`
+  // here we either have a sfuConfig or we alredy exited because of `if (forceMatrix2) throw ...`
+  // The only case we can get into this condition is, if `forceMatrix2` is `false`
   if (sfuConfig === undefined) {
     sfuConfig = await getLiveKitJWT(
       membership.deviceId,
@@ -167,7 +167,6 @@ export async function getSFUConfigWithOpenID(
       roomId,
       openIdToken,
     );
-
     logger?.info(`Got JWT from call's active focus URL.`);
   }
 
