@@ -271,7 +271,7 @@ describe("LocalMembership", () => {
       } as unknown as LocalParticipant,
     }),
     state$: constant(ConnectionState.LivekitConnected),
-    transport: aTransport,
+    transport: aTransport.transport,
   } as unknown as Connection;
   const connectionTransportAConnecting = {
     ...connectionTransportAConnected,
@@ -280,11 +280,11 @@ describe("LocalMembership", () => {
   } as unknown as Connection;
   const connectionTransportBConnected = {
     state$: constant(ConnectionState.LivekitConnected),
-    transport: bTransport,
+    transport: bTransport.transport,
     livekitRoom: mockLivekitRoom({}),
   } as unknown as Connection;
 
-  it("recreates publisher if new connection is used and ENDS always unpublish and end tracks", async () => {
+  it("recreates publisher if new connection is used, always unpublish and end tracks", async () => {
     const scope = new ObservableScope();
 
     const localTransport$ = new BehaviorSubject(aTransport);
@@ -332,8 +332,12 @@ describe("LocalMembership", () => {
     expect(publishers[1].stopTracks).not.toHaveBeenCalled();
     expect(publishers[0].stopPublishing).toHaveBeenCalled();
     expect(publishers[1].stopPublishing).not.toHaveBeenCalled();
-    expect(publisherFactory.mock.calls[0][0].transport).toBe(aTransport);
-    expect(publisherFactory.mock.calls[1][0].transport).toBe(bTransport);
+    expect(publisherFactory.mock.calls[0][0].transport).toBe(
+      aTransport.transport,
+    );
+    expect(publisherFactory.mock.calls[1][0].transport).toBe(
+      bTransport.transport,
+    );
     scope.end();
     await flushPromises();
     // stop all tracks after ending scopes
