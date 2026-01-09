@@ -234,12 +234,12 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         class="_inline-field-control_19upo_44"
       >
         <div
-          class="_container_1e0uz_10"
+          class="_container_1qhtc_10"
         >
           <input
             aria-describedby="radix-_r_9_ radix-_r_b_ radix-_r_d_"
             checked=""
-            class="_input_1e0uz_18"
+            class="_input_1qhtc_18"
             id="radix-_r_8_"
             name="_r_0_"
             title=""
@@ -247,7 +247,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
             value="legacy"
           />
           <div
-            class="_ui_1e0uz_19"
+            class="_ui_1qhtc_19"
           />
         </div>
       </div>
@@ -275,11 +275,11 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         class="_inline-field-control_19upo_44"
       >
         <div
-          class="_container_1e0uz_10"
+          class="_container_1qhtc_10"
         >
           <input
             aria-describedby="radix-_r_9_ radix-_r_b_ radix-_r_d_"
-            class="_input_1e0uz_18"
+            class="_input_1qhtc_18"
             id="radix-_r_a_"
             name="_r_0_"
             title=""
@@ -287,7 +287,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
             value="compatibil"
           />
           <div
-            class="_ui_1e0uz_19"
+            class="_ui_1qhtc_19"
           />
         </div>
       </div>
@@ -315,11 +315,11 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         class="_inline-field-control_19upo_44"
       >
         <div
-          class="_container_1e0uz_10"
+          class="_container_1qhtc_10"
         >
           <input
             aria-describedby="radix-_r_9_ radix-_r_b_ radix-_r_d_"
-            class="_input_1e0uz_18"
+            class="_input_1qhtc_18"
             id="radix-_r_c_"
             name="_r_0_"
             title=""
@@ -327,7 +327,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
             value="matrix_2_0"
           />
           <div
-            class="_ui_1e0uz_19"
+            class="_ui_1qhtc_19"
           />
         </div>
       </div>
