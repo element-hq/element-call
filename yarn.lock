@@ -2903,16 +2903,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/dom@npm:1.6.13, @floating-ui/dom@npm:^1.0.0":
-  version: 1.6.13
-  resolution: "@floating-ui/dom@npm:1.6.13"
-  dependencies:
-    "@floating-ui/core": "npm:^1.6.0"
-    "@floating-ui/utils": "npm:^0.2.9"
-  checksum: 10c0/272242d2eb6238ffcee0cb1f3c66e0eafae804d5d7b449db5ecf904bc37d31ad96cf575a9e650b93c1190f64f49a684b1559d10e05ed3ec210628b19116991a9
-  languageName: node
-  linkType: hard
-
 "@floating-ui/dom@npm:1.7.4":
   version: 1.7.4
   resolution: "@floating-ui/dom@npm:1.7.4"
@@ -2920,6 +2910,16 @@ __metadata:
     "@floating-ui/core": "npm:^1.7.3"
     "@floating-ui/utils": "npm:^0.2.10"
   checksum: 10c0/da6166c25f9b0729caa9f498685a73a0e28251613b35d27db8de8014bc9d045158a23c092b405321a3d67c2064909b6e2a7e6c1c9cc0f62967dca5779f5aef30
+  languageName: node
+  linkType: hard
+
+"@floating-ui/dom@npm:^1.0.0":
+  version: 1.6.13
+  resolution: "@floating-ui/dom@npm:1.6.13"
+  dependencies:
+    "@floating-ui/core": "npm:^1.6.0"
+    "@floating-ui/utils": "npm:^0.2.9"
+  checksum: 10c0/272242d2eb6238ffcee0cb1f3c66e0eafae804d5d7b449db5ecf904bc37d31ad96cf575a9e650b93c1190f64f49a684b1559d10e05ed3ec210628b19116991a9
   languageName: node
   linkType: hard
 
@@ -3213,21 +3213,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/components-core@npm:0.12.11":
-  version: 0.12.11
-  resolution: "@livekit/components-core@npm:0.12.11"
-  dependencies:
-    "@floating-ui/dom": "npm:1.6.13"
-    loglevel: "npm:1.9.1"
-    rxjs: "npm:7.8.2"
-  peerDependencies:
-    livekit-client: ^2.15.14
-    tslib: ^2.6.2
-  checksum: 10c0/9c2ac3d30bb8cc9067ae0b2049784f81e90e57df9eabf7edbaf3c8ceb65a63f644a4e6abeb6cc38d3ebe52663d8dbb88535e01a965011f365d5ae1f3daf86052
-  languageName: node
-  linkType: hard
-
-"@livekit/components-core@npm:^0.12.0":
+"@livekit/components-core@npm:0.12.12, @livekit/components-core@npm:^0.12.0":
   version: 0.12.12
   resolution: "@livekit/components-core@npm:0.12.12"
   dependencies:
@@ -3242,10 +3228,10 @@ __metadata:
   linkType: hard
 
 "@livekit/components-react@npm:^2.0.0":
-  version: 2.9.16
-  resolution: "@livekit/components-react@npm:2.9.16"
+  version: 2.9.17
+  resolution: "@livekit/components-react@npm:2.9.17"
   dependencies:
-    "@livekit/components-core": "npm:0.12.11"
+    "@livekit/components-core": "npm:0.12.12"
     clsx: "npm:2.1.1"
     events: "npm:^3.3.0"
     jose: "npm:^6.0.12"
@@ -3259,7 +3245,7 @@ __metadata:
   peerDependenciesMeta:
     "@livekit/krisp-noise-filter":
       optional: true
-  checksum: 10c0/4ba4ff473c5a29d3107412733a6676a3b708d70684ed463e9b34cda26abb3d2f317c2828a52e730837b756de9df3fc248260d6f390aedebfb6ec96ef63c7b151
+  checksum: 10c0/ba64ada37d4b3ce4d5ee7c5b2a6bddbffc17c2e641e95881aac9f02b4ff7428105e0a372d364e50ff124e988b7426d322d94caabdb55b634aebf0144d7e37f99
   languageName: node
   linkType: hard
 
