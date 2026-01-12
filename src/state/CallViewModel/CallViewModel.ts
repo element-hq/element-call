@@ -47,7 +47,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
-import { randomUUID } from "crypto";
+import { v4 as uuidv4 } from "uuid";
 
 import {
   LocalUserMediaViewModel,
@@ -432,7 +432,7 @@ export function createCallViewModel$(
     userId,
     deviceId,
     // This will only be consumed by the sticky membership manager. So it has no impact on legacy calls.
-    memberId: randomUUID(),
+    memberId: uuidv4(),
   };
 
   const localTransport$ = createLocalTransport$({
