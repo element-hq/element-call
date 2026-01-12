@@ -104,12 +104,7 @@ export async function createMatrixRTCSdk(
     videoEnabled: true,
   });
   const slot = { application, id };
-  const rtcSession = new MatrixRTCSession(
-    client,
-    room,
-    MatrixRTCSession.sessionMembershipsForSlot(room, slot),
-    slot,
-  );
+  const rtcSession = new MatrixRTCSession(client, room, slot);
   const callViewModel = createCallViewModel$(
     scope,
     rtcSession,

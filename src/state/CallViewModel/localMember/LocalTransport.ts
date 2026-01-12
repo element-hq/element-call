@@ -23,6 +23,7 @@ import {
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type Behavior } from "../../Behavior.ts";
 import { type Epoch, type ObservableScope } from "../../ObservableScope.ts";
@@ -30,9 +31,11 @@ import { Config } from "../../../config/Config.ts";
 import {
   FailToGetOpenIdToken,
   MatrixRTCTransportMissingError,
+  NoMatrix2AuthorizationService,
 } from "../../../utils/errors.ts";
 import {
   getSFUConfigWithOpenID,
+  type SFUConfig,
   type OpenIDClientParts,
 } from "../../../livekit/openIDSFU.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
@@ -47,11 +50,32 @@ const logger = rootLogger.getChild("[LocalTransport]");
  */
 interface Props {
   scope: ObservableScope;
+  ownMembershipIdentity: CallMembershipIdentityParts;
   memberships$: Behavior<Epoch<CallMembership[]>>;
-  client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports"> &
+  client: Pick<
+    MatrixClient,
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
+  > &
     OpenIDClientParts;
   roomId: string;
   useOldestMember$: Behavior<boolean>;
+  forceJwtEndpoint$: Behavior<JwtEndpointVersion>;
+  delayId$: Behavior<string | null>;
+}
+
+export enum JwtEndpointVersion {
+  Legacy = "legacy",
+  Matrix_2_0 = "matrix_2_0",
+}
+
+export interface LocalTransportWithSFUConfig {
+  transport: LivekitTransport;
+  sfuConfig: SFUConfig;
+}
+export function isLocalTransportWithSFUConfig(
+  obj: LivekitTransport | LocalTransportWithSFUConfig,
+): obj is LocalTransportWithSFUConfig {
+  return "transport" in obj && "sfuConfig" in obj;
 }
 
 /**
@@ -61,26 +85,53 @@ interface Props {
  * @prop useOldestMember Whether to use the same transport as the oldest member.
  * This will only update once the first oldest member appears. Will not recompute if the oldest member leaves.
  *
+ * @prop useOldJwtEndpoint$ Whether to set forceOldJwtEndpoint on the returned transport and to use the old JWT endpoint.
+ * This is used when the connection manager needs to know if it has to use the legacy endpoint which implies a string concatenated rtcBackendIdentity.
+ * (which is expected for non sticky event based rtc member events)
+ * @returns The local transport. It will be created using the correct sfu endpoint based on the useOldJwtEndpoint$ value.
  * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
  */
 export const createLocalTransport$ = ({
   scope,
   memberships$,
+  ownMembershipIdentity,
   client,
   roomId,
   useOldestMember$,
-}: Props): Behavior<LivekitTransport | null> => {
+  forceJwtEndpoint$,
+  delayId$,
+}: Props): Behavior<LocalTransportWithSFUConfig | null> => {
   /**
    * The transport over which we should be actively publishing our media.
    * undefined when not joined.
    */
   const oldestMemberTransport$ = scope.behavior(
-    memberships$.pipe(
-      map(
-        (memberships) =>
-          memberships.value[0]?.getTransport(memberships.value[0]) ?? null,
-      ),
+    combineLatest([memberships$]).pipe(
+      map(([memberships]) => {
+        const oldestMember = memberships.value[0];
+        const transport = oldestMember?.getTransport(memberships.value[0]);
+        if (!transport) return null;
+        return transport;
+      }),
       first((t) => t != null && isLivekitTransport(t)),
+      switchMap((transport) => {
+        // Get the open jwt token to connect to the sfu
+        const computeLocalTransportWithSFUConfig =
+          async (): Promise<LocalTransportWithSFUConfig> => {
+            return {
+              transport,
+              sfuConfig: await getSFUConfigWithOpenID(
+                client,
+                ownMembershipIdentity,
+                transport.livekit_service_url,
+                roomId,
+                { forceJwtEndpoint: JwtEndpointVersion.Legacy },
+                logger,
+              ),
+            };
+          };
+        return from(computeLocalTransportWithSFUConfig());
+      }),
     ),
     null,
   );
@@ -91,9 +142,30 @@ export const createLocalTransport$ = ({
    *
    * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
    */
-  const preferredTransport$: Behavior<LivekitTransport | null> = scope.behavior(
-    customLivekitUrl.value$.pipe(
-      switchMap((customUrl) => from(makeTransport(client, roomId, customUrl))),
+  const preferredTransport$ = scope.behavior(
+    // preferredTransport$ (used for multi sfu) needs to know if we are using the old or new
+    // jwt endpoint (`get_token` vs `sfu/get`) based on that the jwt endpoint will compute the rtcBackendIdentity
+    // differently. (sha(`${userId}|${deviceId}|${memberId}`) vs `${userId}|${deviceId}|${memberId}`)
+    // When using sticky events (we need to use the new endpoint).
+    combineLatest([customLivekitUrl.value$, delayId$, forceJwtEndpoint$]).pipe(
+      switchMap(([customUrl, delayId, forceEndpoint]) => {
+        logger.info(
+          "Creating preferred transport based on: ",
+          customUrl,
+          delayId,
+          forceEndpoint,
+        );
+        return from(
+          makeTransport(
+            client,
+            ownMembershipIdentity,
+            roomId,
+            customUrl,
+            forceEndpoint,
+            delayId ?? undefined,
+          ),
+        );
+      }),
     ),
     null,
   );
@@ -112,7 +184,9 @@ export const createLocalTransport$ = ({
           ? (oldestMemberTransport ?? preferredTransport)
           : preferredTransport,
       ),
-      distinctUntilChanged(areLivekitTransportsEqual),
+      distinctUntilChanged((t1, t2) =>
+        areLivekitTransportsEqual(t1?.transport ?? null, t2?.transport ?? null),
+      ),
     ),
   );
 };
@@ -124,25 +198,63 @@ const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
  * validating auth against the service to ensure it's correct.
  * Prefers in order:
  *
+
  * 1. The `urlFromDevSettings` value. If this cannot be validated, the function will throw.
  * 2. The transports returned via the homeserver.
  * 3. The transports returned via .well-known.
  * 4. The transport configured in Element Call's config.
  *
  * @param client The authenticated Matrix client for the current user
+ * @param membership The membership identity of the user.
  * @param roomId The ID of the room to be connected to.
  * @param urlFromDevSettings Override URL provided by the user's local config.
+ * @param forceJwtEndpoint Whether to force a specific JWT endpoint
+ *  - `Legacy` / `Matrix_2_0`
+ *  - `get_token` / `sfu/get`
+ *  -  not hashing / hashing the backendIdentity
+ * @param delayId the delay id passed to the jwt service.
+ *
  * @returns A fully validated transport config.
  * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
  */
 async function makeTransport(
-  client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports"> &
+  client: Pick<
+    MatrixClient,
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
+  > &
     OpenIDClientParts,
+  membership: CallMembershipIdentityParts,
   roomId: string,
   urlFromDevSettings: string | null,
-): Promise<LivekitTransport> {
+  forceJwtEndpoint: JwtEndpointVersion,
+  delayId?: string,
+): Promise<LocalTransportWithSFUConfig> {
   logger.trace("Searching for a preferred transport");
 
+  async function doOpenIdAndJWTFromUrl(
+    url: string,
+  ): Promise<LocalTransportWithSFUConfig> {
+    const sfuConfig = await getSFUConfigWithOpenID(
+      client,
+      membership,
+      url,
+      roomId,
+      {
+        forceJwtEndpoint: forceJwtEndpoint,
+        delayEndpointBaseUrl: client.baseUrl,
+        delayId,
+      },
+      logger,
+    );
+    return {
+      transport: {
+        type: "livekit",
+        livekit_service_url: url,
+        livekit_alias: sfuConfig.livekitAlias,
+      },
+      sfuConfig,
+    };
+  }
   // We will call `getSFUConfigWithOpenID` once per transport here as it's our
   // only mechanism of valiation. This means we will also ask the
   // homeserver for a OpenID token a few times. Since OpenID tokens are single
@@ -153,39 +265,29 @@ async function makeTransport(
 
   // DEVTOOL: Highest priority: Load from devtool setting
   if (urlFromDevSettings !== null) {
-    logger.info("Using LiveKit transport from dev tools: ", urlFromDevSettings);
     // Validate that the SFU is up. Otherwise, we want to fail on this
     // as we don't permit other SFUs.
-    const config = await getSFUConfigWithOpenID(
-      client,
-      urlFromDevSettings,
-      roomId,
-    );
-    return {
-      type: "livekit",
-      livekit_service_url: urlFromDevSettings,
-      livekit_alias: config.livekitAlias,
-    };
+    // This will call the jwt/sfu/get endpoint to pre create the livekit room.
+    logger.info("Using LiveKit transport from dev tools: ", urlFromDevSettings);
+    return await doOpenIdAndJWTFromUrl(urlFromDevSettings);
   }
 
   async function getFirstUsableTransport(
     transports: Transport[],
-  ): Promise<LivekitTransport | null> {
+  ): Promise<LocalTransportWithSFUConfig | null> {
     for (const potentialTransport of transports) {
       if (isLivekitTransportConfig(potentialTransport)) {
         try {
-          const { livekitAlias } = await getSFUConfigWithOpenID(
-            client,
+          // This will call the jwt/sfu/get endpoint to pre create the livekit room.
+          return await doOpenIdAndJWTFromUrl(
             potentialTransport.livekit_service_url,
-            roomId,
           );
-          return {
-            ...potentialTransport,
-            livekit_alias: livekitAlias,
-          };
         } catch (ex) {
+          // Explictly throw these
           if (ex instanceof FailToGetOpenIdToken) {
-            // Explictly throw these
+            throw ex;
+          }
+          if (ex instanceof NoMatrix2AuthorizationService) {
             throw ex;
           }
           logger.debug(
@@ -245,18 +347,9 @@ async function makeTransport(
   const urlFromConf = Config.get().livekit?.livekit_service_url;
   if (urlFromConf) {
     try {
-      const { livekitAlias } = await getSFUConfigWithOpenID(
-        client,
-        urlFromConf,
-        roomId,
-      );
-      const selectedTransport: LivekitTransport = {
-        type: "livekit",
-        livekit_service_url: urlFromConf,
-        livekit_alias: livekitAlias,
-      };
-      logger.info("Using config SFU", selectedTransport);
-      return selectedTransport;
+      // This will call the jwt/sfu/get endpoint to pre create the livekit room.
+      logger.info("Using config SFU", urlFromConf);
+      return await doOpenIdAndJWTFromUrl(urlFromConf);
     } catch (ex) {
       if (ex instanceof FailToGetOpenIdToken) {
         throw ex;
@@ -265,5 +358,6 @@ async function makeTransport(
     }
   }
 
+  // If we do not have returned a transport by now we throw an error
   throw new MatrixRTCTransportMissingError(domain ?? "");
 }

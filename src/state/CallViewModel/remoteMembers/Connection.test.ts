@@ -26,8 +26,8 @@ import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc/LivekitTransport";
 
-import type { LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   Connection,
   ConnectionState,
@@ -40,7 +40,7 @@ import {
   FailToGetOpenIdToken,
 } from "../../../utils/errors.ts";
 import { testJWTToken } from "../../../utils/test-fixtures.ts";
-import { mockRemoteParticipant } from "../../../utils/test.ts";
+import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
 
 let testScope: ObservableScope;
 
@@ -114,6 +114,7 @@ function setupRemoteConnection(): Connection {
     client: client,
     transport: livekitFocus,
     scope: testScope,
+    ownMembershipIdentity: ownMemberMock,
     livekitRoomFactory: () => fakeLivekitRoom,
   };
 
@@ -155,6 +156,7 @@ describe("Start connection states", () => {
       client: client,
       transport: livekitFocus,
       scope: testScope,
+      ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
     const connection = new Connection(opts, logger);
@@ -170,6 +172,7 @@ describe("Start connection states", () => {
       client: client,
       transport: livekitFocus,
       scope: testScope,
+      ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
@@ -220,6 +223,7 @@ describe("Start connection states", () => {
       client: client,
       transport: livekitFocus,
       scope: testScope,
+      ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
@@ -259,7 +263,7 @@ describe("Start connection states", () => {
       capturedState.cause instanceof Error
     ) {
       expect(capturedState.cause.message).toContain(
-        "SFU Config fetch failed with exception",
+        "SFU Config fetch failed with status code 500",
       );
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
@@ -277,6 +281,7 @@ describe("Start connection states", () => {
       client: client,
       transport: livekitFocus,
       scope: testScope,
+      ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
     };
 
