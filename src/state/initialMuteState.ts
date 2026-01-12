@@ -17,24 +17,15 @@ import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
 export function calculateInitialMuteState(
   skipLobby: boolean,
   callIntent: RTCCallIntent | undefined,
-  packageType: "full" | "embedded",
-  hostname: string | undefined = undefined,
-  trustLocalhost: boolean = false,
+  isWidgetMode: boolean,
 ): { audioEnabled: boolean; videoEnabled: boolean } {
-
   logger.debug(
-    `calculateInitialMuteState: skipLobby=${skipLobby}, callIntent=${callIntent}, hostname=${hostname}, trustLocalhost=${trustLocalhost}`,
+    `calculateInitialMuteState: skipLobby=${skipLobby}, callIntent=${callIntent} isWidgetMode=${isWidgetMode}`,
   );
 
-  const isTrustedHost =
-    packageType == "embedded" ||
-    // Trust local hosts in dev mode to make local testing easier
-    (hostname == "localhost" && trustLocalhost);
-
-  if (skipLobby && !isTrustedHost) {
-    // If host not trusted and lobby skipped, default to muted to protect user privacy.
-    // This prevents users from inadvertently joining with active audio/video
-    // when browser permissions were previously granted in a different context.
+  if (skipLobby && !isWidgetMode) {
+    // If not in widget mode and lobby is skipped, default to muted to protect user privacy.
+    // In the SPA context we don't want to unmute users without giving them a chance to adjust their settings first.
     return {
       audioEnabled: false,
       videoEnabled: false,

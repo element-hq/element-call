@@ -12,21 +12,21 @@ import { calculateInitialMuteState } from "./initialMuteState";
 
 test.each<{
   callIntent: RTCCallIntent;
-  packageType: "full" | "embedded";
+  isWidgetMode: boolean;
 }>([
-  { callIntent: "audio", packageType: "full" },
-  { callIntent: "audio", packageType: "embedded" },
-  { callIntent: "video", packageType: "full" },
-  { callIntent: "video", packageType: "embedded" },
-  { callIntent: "unknown", packageType: "full" },
-  { callIntent: "unknown", packageType: "embedded" },
+  { callIntent: "audio", isWidgetMode: false },
+  { callIntent: "audio", isWidgetMode: true },
+  { callIntent: "video", isWidgetMode: false },
+  { callIntent: "video", isWidgetMode: true },
+  { callIntent: "unknown", isWidgetMode: false },
+  { callIntent: "unknown", isWidgetMode: true },
 ])(
   "Should allow to unmute on start if not skipping lobby (callIntent: $callIntent, packageType: $packageType)",
-  ({ callIntent, packageType }) => {
+  ({ callIntent, isWidgetMode }) => {
     const { audioEnabled, videoEnabled } = calculateInitialMuteState(
       false,
       callIntent,
-      packageType,
+      isWidgetMode,
     );
     expect(audioEnabled).toBe(true);
     expect(videoEnabled).toBe(callIntent !== "audio");
@@ -40,12 +40,12 @@ test.each<{
   { callIntent: "video" },
   { callIntent: "unknown" },
 ])(
-  "Should always mute on start if skipping lobby on non embedded build (callIntent: $callIntent)",
+  "Should always mute on start if skipping lobby on non widget mode (callIntent: $callIntent)",
   ({ callIntent }) => {
     const { audioEnabled, videoEnabled } = calculateInitialMuteState(
       true,
       callIntent,
-      "full",
+      false,
     );
     expect(audioEnabled).toBe(false);
     expect(videoEnabled).toBe(false);
@@ -59,43 +59,14 @@ test.each<{
   { callIntent: "video" },
   { callIntent: "unknown" },
 ])(
-  "Can start unmuted if skipping lobby on embedded build (callIntent: $callIntent)",
+  "Can start unmuted if skipping lobby on widget mode (callIntent: $callIntent)",
   ({ callIntent }) => {
     const { audioEnabled, videoEnabled } = calculateInitialMuteState(
       true,
       callIntent,
-      "embedded",
+      true,
     );
     expect(audioEnabled).toBe(true);
     expect(videoEnabled).toBe(callIntent !== "audio");
-  },
-);
-
-test.each<{
-  isDevBuild: boolean;
-  currentHost: string;
-  expectedEnabled: boolean;
-}>([
-  { isDevBuild: true, currentHost: "localhost", expectedEnabled: true },
-  { isDevBuild: false, currentHost: "localhost", expectedEnabled: false },
-  { isDevBuild: true, currentHost: "call.example.com", expectedEnabled: false },
-  {
-    isDevBuild: false,
-    currentHost: "call.example.com",
-    expectedEnabled: false,
-  },
-])(
-  "Should trust localhost domain when in dev mode isDevBuild($isDevBuild) host($currentHost)",
-  ({ isDevBuild, currentHost, expectedEnabled }) => {
-    const { audioEnabled, videoEnabled } = calculateInitialMuteState(
-      true,
-      "video",
-      "full",
-      currentHost,
-      isDevBuild,
-    );
-
-    expect(audioEnabled).toBe(expectedEnabled);
-    expect(videoEnabled).toBe(expectedEnabled);
   },
 );
