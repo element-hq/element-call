@@ -6,8 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-
-import { type UrlParams } from "../UrlParams.ts";
+import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
 
 /**
  * Calculates the initial mute state for media devices based on configuration.
@@ -16,12 +15,12 @@ import { type UrlParams } from "../UrlParams.ts";
  * This function encapsulates the logic to determine the appropriate initial state.
  */
 export function calculateInitialMuteState(
-  urlParams: Pick<UrlParams, "skipLobby" | "callIntent">,
+  skipLobby: boolean,
+  callIntent: RTCCallIntent | undefined,
   packageType: "full" | "embedded",
   hostname: string | undefined = undefined,
   trustLocalhost: boolean = false,
 ): { audioEnabled: boolean; videoEnabled: boolean } {
-  const { skipLobby, callIntent } = urlParams;
 
   logger.debug(
     `calculateInitialMuteState: skipLobby=${skipLobby}, callIntent=${callIntent}, hostname=${hostname}, trustLocalhost=${trustLocalhost}`,
