@@ -6,11 +6,13 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { BaseKeyProvider } from "livekit-client";
-import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
+const logger = rootLogger.getChild("[MatrixKeyProvider]");
 
 export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
@@ -42,7 +44,8 @@ export class MatrixKeyProvider extends BaseKeyProvider {
   private onEncryptionKeyChanged = (
     encryptionKey: Uint8Array<ArrayBuffer>,
     encryptionKeyIndex: number,
-    participantId: string,
+    membershipParts: CallMembershipIdentityParts,
+    rtcBackendIdentity: string,
   ): void => {
     crypto.subtle
       .importKey("raw", encryptionKey, "HKDF", false, [
@@ -53,17 +56,17 @@ export class MatrixKeyProvider extends BaseKeyProvider {
         (keyMaterial) => {
           this.onSetEncryptionKey(
             keyMaterial,
-            participantId,
+            rtcBackendIdentity,
             encryptionKeyIndex,
           );
 
           logger.debug(
-            `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
+            `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${rtcBackendIdentity} (before hash: ${membershipParts.userId}:${membershipParts.deviceId}) encryptionKeyIndex=${encryptionKeyIndex}`,
           );
         },
         (e) => {
           logger.error(
-            `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
+            `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId before hash=${membershipParts.userId}:${membershipParts.deviceId} encryptionKeyIndex=${encryptionKeyIndex}`,
             e,
           );
         },

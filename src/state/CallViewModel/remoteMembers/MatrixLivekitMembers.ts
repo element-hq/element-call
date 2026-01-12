@@ -84,7 +84,6 @@ export function createMatrixLivekitMembers$({
   /**
    * Stream of all the call members and their associated livekit data (if available).
    */
-
   return scope.behavior(
     combineLatest([
       membershipsWithTransport$,
@@ -93,47 +92,39 @@ export function createMatrixLivekitMembers$({
       filter((values) =>
         values.every((value) => value.epoch === values[0].epoch),
       ),
-      map(
-        ([
-          { value: membershipsWithTransports, epoch },
-          { value: managerData },
-        ]) =>
-          new Epoch([membershipsWithTransports, managerData] as const, epoch),
-      ),
+      map(([ms, data]) => new Epoch([ms.value, data.value] as const, ms.epoch)),
       generateItemsWithEpoch(
         // Generator function.
         // creates an array of `{key, data}[]`
         // Each change in the keys (new key, missing key) will result in a call to the factory function.
-        function* ([membershipsWithTransports, managerData]) {
-          for (const { membership, transport } of membershipsWithTransports) {
-            // TODO! cannot use membership.membershipID yet, Currently its hardcoded by the jwt service to
-            const participantId = /*membership.membershipID*/ `${membership.userId}:${membership.deviceId}`;
-
+        function* ([membershipsWithTransport, managerData]) {
+          for (const { membership, transport } of membershipsWithTransport) {
             const participants = transport
               ? managerData.getParticipantsForTransport(transport)
               : [];
             const participant =
-              participants.find((p) => p.identity == participantId) ?? null;
+              participants.find(
+                (p) => p.identity == membership.rtcBackendIdentity,
+              ) ?? null;
             const connection = transport
               ? managerData.getConnectionForTransport(transport)
               : null;
 
             yield {
-              keys: [participantId, membership.userId],
+              keys: [membership.userId, membership.deviceId],
               data: { membership, participant, connection },
             };
           }
         },
         // Each update where the key of the generator array do not change will result in updates to the `data$` observable in the factory.
-        (scope, data$, participantId, userId) => {
+        (scope, data$, userId, deviceId) => {
           logger.debug(
-            `Generating member for participantId: ${participantId}, userId: ${userId}`,
+            `Generating member for livekitIdentity: ${data$.value.membership.rtcBackendIdentity}, userId:deviceId: ${userId}${deviceId}`,
           );
           const { participant$, ...rest } = scope.splitBehavior(data$);
           // will only get called once per `participantId, userId` pair.
           // updates to data$ and as a result to displayName$ and mxcAvatarUrl$ are more frequent.
           return {
-            participantId,
             userId,
             participant: { type: "remote" as const, value$: participant$ },
             ...rest,
@@ -141,15 +132,16 @@ export function createMatrixLivekitMembers$({
         },
       ),
     ),
+    new Epoch([], -1),
   );
 }
 
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
 
 // TODO add this to the JS-SDK
-export function areLivekitTransportsEqual(
-  t1: LivekitTransport | null,
-  t2: LivekitTransport | null,
+export function areLivekitTransportsEqual<T extends LivekitTransport>(
+  t1: T | null,
+  t2: T | null,
 ): boolean {
   if (t1 && t2) return t1.livekit_service_url === t2.livekit_service_url;
   // In case we have different lk rooms in the same SFU (depends on the livekit authorization service)
