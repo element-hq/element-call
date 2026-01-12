@@ -77,7 +77,8 @@ export const RoomPage: FC = () => {
         scope,
         devices,
         calculateInitialMuteState(
-          urlParams,
+          urlParams.skipLobby,
+          urlParams.callIntent,
           import.meta.env.VITE_PACKAGE,
           window.location.hostname,
           Config.get().trust_localhost_for_mute_state,

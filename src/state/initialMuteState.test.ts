@@ -24,7 +24,8 @@ test.each<{
   "Should allow to unmute on start if not skipping lobby (callIntent: $callIntent, packageType: $packageType)",
   ({ callIntent, packageType }) => {
     const { audioEnabled, videoEnabled } = calculateInitialMuteState(
-      { skipLobby: false, callIntent },
+      false,
+      callIntent,
       packageType,
     );
     expect(audioEnabled).toBe(true);
@@ -42,7 +43,8 @@ test.each<{
   "Should always mute on start if skipping lobby on non embedded build (callIntent: $callIntent)",
   ({ callIntent }) => {
     const { audioEnabled, videoEnabled } = calculateInitialMuteState(
-      { skipLobby: true, callIntent },
+      true,
+      callIntent,
       "full",
     );
     expect(audioEnabled).toBe(false);
@@ -60,7 +62,8 @@ test.each<{
   "Can start unmuted if skipping lobby on embedded build (callIntent: $callIntent)",
   ({ callIntent }) => {
     const { audioEnabled, videoEnabled } = calculateInitialMuteState(
-      { skipLobby: true, callIntent },
+      true,
+      callIntent,
       "embedded",
     );
     expect(audioEnabled).toBe(true);
@@ -85,7 +88,8 @@ test.each<{
   "Should trust localhost domain when in dev mode isDevBuild($isDevBuild) host($currentHost)",
   ({ isDevBuild, currentHost, expectedEnabled }) => {
     const { audioEnabled, videoEnabled } = calculateInitialMuteState(
-      { skipLobby: true, callIntent: "video" },
+      true,
+      "video",
       "full",
       currentHost,
       isDevBuild,
