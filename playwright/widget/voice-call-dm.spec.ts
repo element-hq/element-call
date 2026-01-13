@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { expect, test } from "@playwright/test";
 
 import { widgetTest } from "../fixtures/widget-user.ts";
+import { TestHelpers } from "./test-helpers.ts";
 
 widgetTest.use({ callType: "dm" });
 
@@ -23,16 +24,7 @@ widgetTest(
 
     const { brooks, whistler } = asWidget;
 
-    await expect(
-      brooks.page.getByRole("button", { name: "Voice call" }),
-    ).toBeVisible();
-    await brooks.page.getByRole("button", { name: "Voice call" }).click();
-
-    await expect(
-      brooks.page.getByRole("menuitem", { name: "Element Call" }),
-    ).toBeVisible();
-
-    await brooks.page.getByRole("menuitem", { name: "Element Call" }).click();
+    await TestHelpers.startCallInCurrentRoom(brooks.page, true);
 
     await expect(
       brooks.page.locator('iframe[title="Element Call"]'),
@@ -123,16 +115,7 @@ widgetTest(
 
     const { brooks, whistler } = asWidget;
 
-    await expect(
-      brooks.page.getByRole("button", { name: "Video call" }),
-    ).toBeVisible();
-    await brooks.page.getByRole("button", { name: "Video call" }).click();
-
-    await expect(
-      brooks.page.getByRole("menuitem", { name: "Element Call" }),
-    ).toBeVisible();
-
-    await brooks.page.getByRole("menuitem", { name: "Element Call" }).click();
+    await TestHelpers.startCallInCurrentRoom(brooks.page, false);
 
     await expect(
       brooks.page.locator('iframe[title="Element Call"]'),
@@ -208,5 +191,50 @@ widgetTest(
       whistler.page.locator(".mx_BasicMessageComposer"),
     ).toBeVisible();
     await expect(brooks.page.locator(".mx_BasicMessageComposer")).toBeVisible();
+  },
+);
+
+widgetTest(
+  "Decline a new video call in DM as widget",
+  async ({ asWidget, browserName }) => {
+    test.skip(
+      browserName === "firefox",
+      "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
+    );
+
+    test.slow(); // Triples the timeout
+
+    const { brooks, whistler } = asWidget;
+
+    await TestHelpers.startCallInCurrentRoom(brooks.page, false);
+
+    await expect(
+      brooks.page.locator('iframe[title="Element Call"]'),
+    ).toBeVisible();
+
+    const brooksFrame = brooks.page
+      .locator('iframe[title="Element Call"]')
+      .contentFrame();
+
+    // We should show a ringing overlay, let's check for that
+    await expect(
+      brooksFrame.getByText(`Waiting for ${whistler.displayName} to join…`),
+    ).toBeVisible();
+
+    await expect(whistler.page.getByText("Incoming video call")).toBeVisible();
+    await whistler.page.getByRole("button", { name: "Decline" }).click();
+
+    await expect(
+      whistler.page.locator('iframe[title="Element Call"]'),
+    ).not.toBeVisible();
+
+    // The widget should be closed and the timeline should be back on screen
+    await expect(
+      brooks.page.locator('iframe[title="Element Call"]'),
+    ).not.toBeVisible();
+
+    await expect(
+      brooks.page.getByText("This is the beginning of your"),
+    ).toBeVisible();
   },
 );
