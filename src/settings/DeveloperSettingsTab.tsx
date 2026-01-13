@@ -48,7 +48,12 @@ import { useUrlParams } from "../UrlParams";
 
 interface Props {
   client: MatrixClient;
-  livekitRooms?: { room: LivekitRoom; url: string; isLocal?: boolean }[];
+  livekitRooms?: {
+    room: LivekitRoom;
+    url: string;
+    isLocal?: boolean;
+    livekitAlias?: string;
+  }[];
   env: ImportMetaEnv;
 }
 
@@ -310,6 +315,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
               url: livekitRoom.url || "unknown",
             })}
           </h4>
+          <p>LivekitAlias: {livekitRoom.livekitAlias}</p>
           {livekitRoom.isLocal && <p>ws-url: {localSfuUrl?.href}</p>}
           <p>
             {t("developer_mode.livekit_server_info")}(
