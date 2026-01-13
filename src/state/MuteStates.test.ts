@@ -1,5 +1,5 @@
 /*
-Copyright 2025 Element Creations Ltd.
+Copyright 2025-2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -48,13 +48,7 @@ describe("MuteState", () => {
       select(): void {},
     } as unknown as MediaDevice<DeviceLabel, SelectedDevice>;
 
-    const muteState = new MuteState(
-      testScope,
-      deviceStub,
-      constant(true),
-      true,
-      forceMute$,
-    );
+    const muteState = new MuteState(testScope, deviceStub, true, forceMute$);
     let lastEnabled: boolean = false;
     muteState.enabled$.subscribe((enabled) => {
       lastEnabled = enabled;
@@ -163,12 +157,10 @@ describe("MuteStates", () => {
       videoInput: aVideoInput(),
       // other devices are not relevant for this test
     });
-    const muteStates = new MuteStates(
-      testScope,
-      mediaDevices,
-      // consider joined
-      constant(true),
-    );
+    const muteStates = new MuteStates(testScope, mediaDevices, {
+      audioEnabled: false,
+      videoEnabled: false,
+    });
 
     let latestSyncedState: boolean | null = null;
     muteStates.video.setHandler(async (enabled: boolean): Promise<boolean> => {

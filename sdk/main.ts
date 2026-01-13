@@ -1,5 +1,5 @@
 /*
-Copyright 2025 Element Creations Ltd.
+Copyright 2025-2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -99,7 +99,10 @@ export async function createMatrixRTCSdk(
   if (room === null) throw Error("could not get room from client");
 
   const mediaDevices = new MediaDevices(scope);
-  const muteStates = new MuteStates(scope, mediaDevices, constant(true));
+  const muteStates = new MuteStates(scope, mediaDevices, {
+    audioEnabled: true,
+    videoEnabled: true,
+  });
   const slot = { application, id };
   const rtcSession = new MatrixRTCSession(client, room, slot);
   const callViewModel = createCallViewModel$(

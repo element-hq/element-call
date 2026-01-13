@@ -1,5 +1,6 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -247,21 +248,12 @@ export interface UrlConfiguration {
   callIntent?: RTCCallIntent;
 }
 
-interface IntentAndPlatformDerivedConfiguration {
-  defaultAudioEnabled?: boolean;
-  defaultVideoEnabled?: boolean;
-}
-
 // If you need to add a new flag to this interface, prefer a name that describes
 // a specific behavior (such as 'confineToRoom'), rather than one that describes
 // the situations that call for this behavior ('isEmbedded'). This makes it
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
-export interface UrlParams
-  extends
-    UrlProperties,
-    UrlConfiguration,
-    IntentAndPlatformDerivedConfiguration {}
+export interface UrlParams extends UrlProperties, UrlConfiguration {}
 
 // This is here as a stopgap, but what would be far nicer is a function that
 // takes a UrlParams and returns a query string. That would enable us to
@@ -461,29 +453,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
       };
   }
 
-  const intentAndPlatformDerivedConfiguration: IntentAndPlatformDerivedConfiguration =
-    {};
-  // Desktop also includes web. Its anything that is not mobile.
-  const desktopMobile = platform === "desktop" ? "desktop" : "mobile";
-  switch (desktopMobile) {
-    case "desktop":
-    case "mobile":
-      switch (intent) {
-        case UserIntent.StartNewCall:
-        case UserIntent.JoinExistingCall:
-        case UserIntent.StartNewCallDM:
-        case UserIntent.JoinExistingCallDM:
-          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
-          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = true;
-          break;
-        case UserIntent.StartNewCallDMVoice:
-        case UserIntent.JoinExistingCallDMVoice:
-          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
-          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = false;
-          break;
-      }
-  }
-
   const properties: UrlProperties = {
     widgetId,
     parentUrl,
@@ -548,15 +517,12 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     properties,
     "configuration:",
     configuration,
-    "intentAndPlatformDerivedConfiguration:",
-    intentAndPlatformDerivedConfiguration,
   );
 
   return {
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
-    ...intentAndPlatformDerivedConfiguration,
   };
 };
 
