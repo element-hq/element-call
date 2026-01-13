@@ -160,11 +160,11 @@ Using Haproxy, you can achieve this by:
     acl is_sfu path_beg -i /livekit/sfu/
     use_backend sfu_backend if is_sfu matrixrtc_domain
 
-    acl is_sfu_get path_beg -i /sfu/get
-    use_backend sfu_get_backend if is_sfu_get matrixrtc_domain
+    acl is_mxrtc_auth path_beg -i /sfu/get
+    use_backend mxrtc_auth_backend if is_mxrtc_auth matrixrtc_domain
 
 # Backend
-## Element call backend
+## MatrixRTC backend
 backend sfu_backend
     server livekit 127.0.0.1:7880
     http-request set-path %[path,regsub(^/livekit/sfu/,/)]
@@ -175,7 +175,7 @@ backend sfu_backend
     option http-server-close
     option http-buffer-request
 
-backend sfu_get_backend
+backend mxrtc_auth_backend
     server sfu 127.0.0.1:8070
     http-request set-header Host %[req.hdr(host)]
     timeout server 120s
