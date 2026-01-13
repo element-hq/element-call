@@ -6,15 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type Browser,
-  type Page,
-  test,
-  expect,
-  type JSHandle,
-} from "@playwright/test";
+import { type Page, test, expect, type JSHandle } from "@playwright/test";
 
 import type { MatrixClient } from "matrix-js-sdk";
+import { TestHelpers } from "../widget/test-helpers.ts";
 
 export type UserBaseFixture = {
   mxId: string;
@@ -31,9 +26,10 @@ export type BaseWidgetSetup = {
 export interface MyFixtures {
   asWidget: BaseWidgetSetup;
   callType: "room" | "dm";
+  addUser: (
+    username: string /**, homeserver: string*/,
+  ) => Promise<UserBaseFixture>;
 }
-
-const PASSWORD = "foobarbaz1!";
 
 // Minimal config.json for the local element-web instance
 const CONFIG_JSON = {
@@ -68,85 +64,6 @@ const CONFIG_JSON = {
   },
 };
 
-/**
- * Set the Element Call URL in the dev tool settings using `window.mxSettingsStore` via `page.evaluate`.
- */
-const setDevToolElementCallDevUrl = process.env.USE_DOCKER
-  ? async (page: Page): Promise<void> => {
-      await page.evaluate(() => {
-        window.mxSettingsStore.setValue(
-          "Developer.elementCallUrl",
-          null,
-          "device",
-          "http://localhost:8080/room",
-        );
-      });
-    }
-  : async (page: Page): Promise<void> => {
-      await page.evaluate(() => {
-        window.mxSettingsStore.setValue(
-          "Developer.elementCallUrl",
-          null,
-          "device",
-          "https://localhost:3000/room",
-        );
-      });
-    };
-
-/**
- * Registers a new user and returns page, clientHandle and mxId.
- */
-async function registerUser(
-  browser: Browser,
-  username: string,
-): Promise<{ page: Page; clientHandle: JSHandle<MatrixClient>; mxId: string }> {
-  const userContext = await browser.newContext({
-    reducedMotion: "reduce",
-  });
-  const page = await userContext.newPage();
-  await page.goto("http://localhost:8081/#/welcome");
-  await page.getByRole("link", { name: "Create Account" }).click();
-  await page.getByRole("textbox", { name: "Username" }).fill(username);
-  await page
-    .getByRole("textbox", { name: "Password", exact: true })
-    .fill(PASSWORD);
-  await page.getByRole("textbox", { name: "Confirm password" }).click();
-  await page.getByRole("textbox", { name: "Confirm password" }).fill(PASSWORD);
-  await page.getByRole("button", { name: "Register" }).click();
-
-  await expect(
-    page.getByRole("heading", { name: `Welcome ${username}` }),
-  ).toBeVisible();
-
-  const browserUnsupportedToast = page
-    .getByText("Element does not support this browser")
-    .locator("..")
-    .locator("..");
-
-  // Dismiss incompatible browser toast
-  const dismissButton = browserUnsupportedToast.getByRole("button", {
-    name: "Dismiss",
-  });
-  try {
-    await expect(dismissButton).toBeVisible({ timeout: 700 });
-    await dismissButton.click();
-  } catch {
-    // dismissButton not visible, continue as normal
-  }
-
-  await setDevToolElementCallDevUrl(page);
-
-  const clientHandle = await page.evaluateHandle(() =>
-    window.mxMatrixClientPeg.get(),
-  );
-  const mxId = (await clientHandle.evaluate(
-    (cli: MatrixClient) => cli.getUserId(),
-    clientHandle,
-  ))!;
-
-  return { page, clientHandle, mxId };
-}
-
 export const widgetTest = test.extend<MyFixtures>({
   // allow per-test override: `widgetTest.use({ callType: "dm" })`
   callType: ["room", { option: true }],
@@ -163,25 +80,16 @@ export const widgetTest = test.extend<MyFixtures>({
       page: ewPage1,
       clientHandle: brooksClientHandle,
       mxId: brooksMxId,
-    } = await registerUser(browser, brooksDisplayName);
+    } = await TestHelpers.registerUser(browser, brooksDisplayName);
     const {
       page: ewPage2,
       clientHandle: whistlerClientHandle,
       mxId: whistlerMxId,
-    } = await registerUser(browser, whistlerDisplayName);
+    } = await TestHelpers.registerUser(browser, whistlerDisplayName);
 
     // Invite the second user
-    await ewPage1
-      .getByRole("navigation", { name: "Room list" })
-      .getByRole("button", { name: "New conversation" })
-      .click();
-
     if (callType === "room") {
-      await ewPage1.getByRole("menuitem", { name: "New Room" }).click();
-      await ewPage1.getByRole("textbox", { name: "Name" }).fill("Welcome Room");
-      await ewPage1.getByRole("button", { name: "Create room" }).click();
-      await expect(ewPage1.getByText("You created this room.")).toBeVisible();
-      await expect(ewPage1.getByText("Encryption enabled")).toBeVisible();
+      await TestHelpers.createRoom("Welcome Room", ewPage1);
 
       await ewPage1
         .getByRole("button", { name: "Invite to this room", exact: true })
@@ -211,6 +119,11 @@ export const widgetTest = test.extend<MyFixtures>({
           .getByRole("heading", { name: "Welcome Room" }),
       ).toBeVisible();
     } else if (callType === "dm") {
+      await ewPage1
+        .getByRole("navigation", { name: "Room list" })
+        .getByRole("button", { name: "New conversation" })
+        .click();
+
       await ewPage1.getByRole("menuitem", { name: "Start chat" }).click();
       await ewPage1.getByRole("textbox", { name: "Search" }).click();
       await ewPage1.getByRole("textbox", { name: "Search" }).fill(whistlerMxId);
@@ -252,5 +165,29 @@ export const widgetTest = test.extend<MyFixtures>({
         displayName: whistlerDisplayName,
       },
     });
+  },
+
+  /**
+   * Provide a way to add additional users within a test.
+   * The returned user will be registered on the default homeserver, the name will be made unique by appending a timestamp.
+   */
+  addUser: async ({ browser }, use) => {
+    await use(
+      async (
+        username: string /**, homeserver?: string*/,
+      ): Promise<UserBaseFixture> => {
+        const uniqueSuffix = Date.now();
+        const { page, clientHandle, mxId } = await TestHelpers.registerUser(
+          browser,
+          `${username.toLowerCase()}_${uniqueSuffix}`,
+        );
+        return {
+          mxId,
+          displayName: username,
+          page,
+          clientHandle,
+        };
+      },
+    );
   },
 });

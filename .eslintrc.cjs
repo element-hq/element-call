@@ -99,6 +99,13 @@ module.exports = {
         "jsdoc/require-param-description": "off",
       },
     },
+    {
+      files: ["playwright/**"],
+      rules: {
+        // Playwright as a `use` function that has nothing to do with React hooks.
+        "react-hooks/rules-of-hooks": "off",
+      },
+    },
   ],
   settings: {
     react: {
