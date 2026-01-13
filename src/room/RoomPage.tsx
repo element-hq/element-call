@@ -1,5 +1,6 @@
 /*
 Copyright 2021-2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -20,8 +21,6 @@ import {
   CheckIcon,
   UnknownSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
-import { useObservable } from "observable-hooks";
-import { map } from "rxjs";
 
 import { useClientLegacy } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
@@ -44,10 +43,12 @@ import { ErrorView } from "../ErrorView";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { MuteStates } from "../state/MuteStates";
 import { ObservableScope } from "../state/ObservableScope";
+import { calculateInitialMuteState } from "../state/initialMuteState.ts";
 
 export const RoomPage: FC = () => {
+  const urlParams = useUrlParams();
   const { confineToRoom, appPrompt, preload, header, displayName, skipLobby } =
-    useUrlParams();
+    urlParams;
   const { t } = useTranslation();
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
 
@@ -68,15 +69,22 @@ export const RoomPage: FC = () => {
 
   const devices = useMediaDevices();
   const [muteStates, setMuteStates] = useState<MuteStates | null>(null);
-  const joined$ = useObservable(
-    (inputs$) => inputs$.pipe(map(([joined]) => joined)),
-    [joined],
-  );
+
   useEffect(() => {
     const scope = new ObservableScope();
-    setMuteStates(new MuteStates(scope, devices, joined$));
+    setMuteStates(
+      new MuteStates(
+        scope,
+        devices,
+        calculateInitialMuteState(
+          urlParams.skipLobby,
+          urlParams.callIntent,
+          widget !== null,
+        ),
+      ),
+    );
     return (): void => scope.end();
-  }, [devices, joined$]);
+  }, [devices, urlParams]);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as

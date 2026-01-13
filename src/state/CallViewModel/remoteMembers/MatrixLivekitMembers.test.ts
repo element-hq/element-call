@@ -10,8 +10,7 @@ import {
   type CallMembership,
   type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { getParticipantId } from "matrix-js-sdk/lib/matrixrtc/utils";
-import { combineLatest, map, type Observable } from "rxjs";
+import { BehaviorSubject, combineLatest, map, type Observable } from "rxjs";
 
 import { type IConnectionManager } from "./ConnectionManager.ts";
 import {
@@ -26,13 +25,17 @@ import {
 } from "../../ObservableScope.ts";
 import { ConnectionManagerData } from "./ConnectionManager.ts";
 import {
-  mockCallMembership,
+  flushPromises,
+  mockRtcMembership,
   mockRemoteParticipant,
-  withTestScheduler,
 } from "../../../utils/test.ts";
 import { type Connection } from "./Connection.ts";
+import { constant } from "../../Behavior.ts";
 
 let testScope: ObservableScope;
+
+const fallbackMemberId = (userId: string, deviceId: string): string =>
+  `${userId}:${deviceId}`;
 
 const transportA: LivekitTransport = {
   type: "livekit",
@@ -46,16 +49,12 @@ const transportB: LivekitTransport = {
   livekit_alias: "!alias:sample.com",
 };
 
-const bobMembership = mockCallMembership(
-  "@bob:example.org",
-  "DEV000",
-  transportA,
-);
-const carlMembership = mockCallMembership(
-  "@carl:sample.com",
-  "DEV111",
-  transportB,
-);
+const bobMembership = mockRtcMembership("@bob:example.org", "DEV000", {
+  fociPreferred: [transportA],
+});
+const carlMembership = mockRtcMembership("@carl:sample.com", "DEV111", {
+  fociPreferred: [transportB],
+});
 
 beforeEach(() => {
   testScope = new ObservableScope();
@@ -76,52 +75,41 @@ function epochMeWith$<T, U>(
   );
 }
 
-test("should signal participant not yet connected to livekit", () => {
-  withTestScheduler(({ behavior, expectObservable }) => {
-    const { memberships$, membershipsWithTransport$ } = fromMemberships$(
-      behavior("a", {
-        a: [bobMembership],
-      }),
-    );
+test("should signal participant not yet connected to livekit", async () => {
+  const mockedMemberships$ = new BehaviorSubject([bobMembership]);
+  const mockConnectionManagerData$ = new BehaviorSubject(
+    new ConnectionManagerData(),
+  );
+  const { memberships$, membershipsWithTransport$ } =
+    createEpochedMemberships$(mockedMemberships$);
 
-    const connectionManagerData$ = epochMeWith$(
-      memberships$,
-      behavior("a", {
-        a: new ConnectionManagerData(),
-      }),
-    );
+  const connectionManagerData$ = epochMeWith$(
+    memberships$,
+    mockConnectionManagerData$,
+  );
 
-    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
-      scope: testScope,
-      membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
-      connectionManager: {
-        connectionManagerData$: connectionManagerData$,
-      } as unknown as IConnectionManager,
-    });
-
-    expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
-      "a",
-      {
-        a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
-          expect(data.length).toEqual(1);
-          expectObservable(data[0].membership$).toBe("a", {
-            a: bobMembership,
-          });
-          expectObservable(data[0].participant.value$).toBe("a", {
-            a: null,
-          });
-          expectObservable(data[0].connection$).toBe("a", {
-            a: null,
-          });
-          return true;
-        }),
-      },
-    );
+  const matrixLivekitMember$ = createMatrixLivekitMembers$({
+    scope: testScope,
+    membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
+    connectionManager: {
+      connectionManagerData$: connectionManagerData$,
+    } as unknown as IConnectionManager,
   });
+
+  await flushPromises();
+  expect(matrixLivekitMember$.value.value).toSatisfy(
+    (data: RemoteMatrixLivekitMember[]) => {
+      expect(data.length).toEqual(1);
+      expect(data[0].membership$.value).toBe(bobMembership);
+      expect(data[0].participant.value$.value).toBe(null);
+      expect(data[0].connection$.value).toBe(null);
+      return true;
+    },
+  );
 });
 
 // Helper to create epoch'ed memberships$ and membershipsWithTransport$ from memberships observable.
-function fromMemberships$(m$: Observable<CallMembership[]>): {
+function createEpochedMemberships$(m$: Observable<CallMembership[]>): {
   memberships$: Observable<Epoch<CallMembership[]>>;
   membershipsWithTransport$: Observable<
     Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
@@ -146,32 +134,115 @@ function fromMemberships$(m$: Observable<CallMembership[]>): {
   };
 }
 
-test("should signal participant on a connection that is publishing", () => {
-  withTestScheduler(({ behavior, expectObservable }) => {
-    const bobParticipantId = getParticipantId(
+test("should signal participant on a connection that is publishing", async () => {
+  const bobParticipantId = fallbackMemberId(
+    bobMembership.userId,
+    bobMembership.deviceId,
+  );
+
+  const { memberships$, membershipsWithTransport$ } = createEpochedMemberships$(
+    constant([bobMembership]),
+  );
+
+  const connection = {
+    transport: bobMembership.getTransport(bobMembership),
+  } as unknown as Connection;
+  const dataWithPublisher = new ConnectionManagerData();
+  dataWithPublisher.add(connection, [
+    mockRemoteParticipant({ identity: bobParticipantId }),
+  ]);
+
+  const connectionManagerData$ = epochMeWith$(
+    memberships$,
+    constant(dataWithPublisher),
+  );
+
+  const matrixLivekitMember$ = createMatrixLivekitMembers$({
+    scope: testScope,
+    membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
+    connectionManager: {
+      connectionManagerData$: connectionManagerData$,
+    } as unknown as IConnectionManager,
+  });
+
+  await flushPromises();
+  expect(matrixLivekitMember$.value.value).toSatisfy(
+    (data: RemoteMatrixLivekitMember[]) => {
+      expect(data.length).toEqual(1);
+      expect(data[0].membership$.value).toBe(bobMembership);
+      expect(data[0].participant.value$.value).toSatisfy((participant) => {
+        expect(participant).toBeDefined();
+        expect(participant!.identity).toEqual(bobParticipantId);
+        return true;
+      });
+      expect(data[0].connection$.value).toBe(connection);
+      return true;
+    },
+  );
+});
+
+test("should signal participant on a connection that is not publishing", async () => {
+  const { memberships$, membershipsWithTransport$ } = createEpochedMemberships$(
+    constant([bobMembership]),
+  );
+
+  const connection = {
+    transport: bobMembership.getTransport(bobMembership),
+  } as unknown as Connection;
+  const dataWithPublisher = new ConnectionManagerData();
+  dataWithPublisher.add(connection, []);
+
+  const connectionManagerData$ = epochMeWith$(
+    memberships$,
+    constant(dataWithPublisher),
+  );
+
+  const matrixLivekitMember$ = createMatrixLivekitMembers$({
+    scope: testScope,
+    membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
+    connectionManager: {
+      connectionManagerData$: connectionManagerData$,
+    } as unknown as IConnectionManager,
+  });
+  await flushPromises();
+  expect(matrixLivekitMember$.value.value).toSatisfy(
+    (data: RemoteMatrixLivekitMember[]) => {
+      expect(data.length).toEqual(1);
+      expect(data[0].membership$.value).toBe(bobMembership);
+      expect(data[0].participant.value$.value).toBe(null);
+      expect(data[0].connection$.value).toBe(connection);
+      return true;
+    },
+  );
+});
+
+describe("Publication edge case", () => {
+  test("bob is publishing in several connections", async () => {
+    const { memberships$, membershipsWithTransport$ } =
+      createEpochedMemberships$(constant([bobMembership, carlMembership]));
+
+    const connectionWithPublisher = new ConnectionManagerData();
+    const bobParticipantId = fallbackMemberId(
       bobMembership.userId,
       bobMembership.deviceId,
     );
-
-    const { memberships$, membershipsWithTransport$ } = fromMemberships$(
-      behavior("a", {
-        a: [bobMembership],
-      }),
-    );
-
-    const connection = {
-      transport: bobMembership.getTransport(bobMembership),
+    const connectionA = {
+      transport: transportA,
     } as unknown as Connection;
-    const dataWithPublisher = new ConnectionManagerData();
-    dataWithPublisher.add(connection, [
+    const connectionB = {
+      transport: transportB,
+    } as unknown as Connection;
+
+    connectionWithPublisher.add(connectionA, [
+      mockRemoteParticipant({ identity: bobParticipantId }),
+    ]);
+    connectionWithPublisher.add(connectionB, [
       mockRemoteParticipant({ identity: bobParticipantId }),
     ]);
 
     const connectionManagerData$ = epochMeWith$(
       memberships$,
-      behavior("a", {
-        a: dataWithPublisher,
-      }),
+      constant(connectionWithPublisher),
     );
 
     const matrixLivekitMembers$ = createMatrixLivekitMembers$({
@@ -181,213 +252,73 @@ test("should signal participant on a connection that is publishing", () => {
         connectionManagerData$: connectionManagerData$,
       } as unknown as IConnectionManager,
     });
-
-    expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
-      "a",
-      {
-        a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
-          expect(data.length).toEqual(1);
-          expectObservable(data[0].membership$).toBe("a", {
-            a: bobMembership,
-          });
-          expectObservable(data[0].participant.value$).toBe("a", {
-            a: expect.toSatisfy((participant) => {
-              expect(participant).toBeDefined();
-              expect(participant!.identity).toEqual(bobParticipantId);
-              return true;
-            }),
-          });
-          expectObservable(data[0].connection$).toBe("a", {
-            a: connection,
-          });
+    await flushPromises();
+    expect(matrixLivekitMembers$.value.value).toSatisfy(
+      (data: RemoteMatrixLivekitMember[]) => {
+        expect(data.length).toEqual(2);
+        expect(data[0].membership$.value).toBe(bobMembership);
+        expect(data[0].connection$.value).toBe(connectionA);
+        expect(data[0].participant.value$.value).toSatisfy((participant) => {
+          expect(participant).toBeDefined();
+          expect(participant!.identity).toEqual(bobParticipantId);
           return true;
-        }),
+        });
+
+        return true;
       },
     );
   });
 });
 
-test("should signal participant on a connection that is not publishing", () => {
-  withTestScheduler(({ behavior, expectObservable }) => {
-    const { memberships$, membershipsWithTransport$ } = fromMemberships$(
-      behavior("a", {
-        a: [bobMembership],
-      }),
-    );
+test("bob is publishing in the wrong connection", async () => {
+  const mockedMemberships$ = new BehaviorSubject([
+    bobMembership,
+    carlMembership,
+  ]);
 
-    const connection = {
-      transport: bobMembership.getTransport(bobMembership),
-    } as unknown as Connection;
-    const dataWithPublisher = new ConnectionManagerData();
-    dataWithPublisher.add(connection, []);
+  const { memberships$, membershipsWithTransport$ } =
+    createEpochedMemberships$(mockedMemberships$);
 
-    const connectionManagerData$ = epochMeWith$(
-      memberships$,
-      behavior("a", {
-        a: dataWithPublisher,
-      }),
-    );
+  const connectionWithPublisher = new ConnectionManagerData();
 
-    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
-      scope: testScope,
-      membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
-      connectionManager: {
-        connectionManagerData$: connectionManagerData$,
-      } as unknown as IConnectionManager,
-    });
+  const bobParticipantId = fallbackMemberId(
+    bobMembership.userId,
+    bobMembership.deviceId,
+  );
+  const connectionA = { transport: transportA } as unknown as Connection;
+  const connectionB = { transport: transportB } as unknown as Connection;
 
-    expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
-      "a",
-      {
-        a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
-          expect(data.length).toEqual(1);
-          expectObservable(data[0].membership$).toBe("a", {
-            a: bobMembership,
-          });
-          expectObservable(data[0].participant.value$).toBe("a", {
-            a: null,
-          });
-          expectObservable(data[0].connection$).toBe("a", {
-            a: connection,
-          });
-          return true;
-        }),
-      },
-    );
-  });
-});
+  // Bob is not publishing on A
+  connectionWithPublisher.add(connectionA, []);
+  // Bob is publishing on B but his membership says A
+  connectionWithPublisher.add(connectionB, [
+    mockRemoteParticipant({ identity: bobParticipantId }),
+  ]);
 
-describe("Publication edge case", () => {
-  test("bob is publishing in several connections", () => {
-    withTestScheduler(({ behavior, expectObservable }) => {
-      const { memberships$, membershipsWithTransport$ } = fromMemberships$(
-        behavior("a", {
-          a: [bobMembership, carlMembership],
-        }),
-      );
+  const connectionsWithPublisher$ = new BehaviorSubject(
+    connectionWithPublisher,
+  );
+  const connectionManagerData$ = epochMeWith$(
+    memberships$,
+    connectionsWithPublisher$,
+  );
 
-      const connectionWithPublisher = new ConnectionManagerData();
-      const bobParticipantId = getParticipantId(
-        bobMembership.userId,
-        bobMembership.deviceId,
-      );
-      const connectionA = {
-        transport: transportA,
-      } as unknown as Connection;
-      const connectionB = {
-        transport: transportB,
-      } as unknown as Connection;
-
-      connectionWithPublisher.add(connectionA, [
-        mockRemoteParticipant({ identity: bobParticipantId }),
-      ]);
-      connectionWithPublisher.add(connectionB, [
-        mockRemoteParticipant({ identity: bobParticipantId }),
-      ]);
-
-      const connectionManagerData$ = epochMeWith$(
-        memberships$,
-        behavior("a", {
-          a: connectionWithPublisher,
-        }),
-      );
-
-      const matrixLivekitMembers$ = createMatrixLivekitMembers$({
-        scope: testScope,
-        membershipsWithTransport$: testScope.behavior(
-          membershipsWithTransport$,
-        ),
-        connectionManager: {
-          connectionManagerData$: connectionManagerData$,
-        } as unknown as IConnectionManager,
-      });
-
-      expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
-        "a",
-        {
-          a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
-            expect(data.length).toEqual(2);
-            expectObservable(data[0].membership$).toBe("a", {
-              a: bobMembership,
-            });
-            expectObservable(data[0].connection$).toBe("a", {
-              // The real connection should be from transportA as per the membership
-              a: connectionA,
-            });
-            expectObservable(data[0].participant.value$).toBe("a", {
-              a: expect.toSatisfy((participant) => {
-                expect(participant).toBeDefined();
-                expect(participant!.identity).toEqual(bobParticipantId);
-                return true;
-              }),
-            });
-            return true;
-          }),
-        },
-      );
-    });
+  const matrixLivekitMember$ = createMatrixLivekitMembers$({
+    scope: testScope,
+    membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
+    connectionManager: {
+      connectionManagerData$: connectionManagerData$,
+    } as unknown as IConnectionManager,
   });
 
-  test("bob is publishing in the wrong connection", () => {
-    withTestScheduler(({ behavior, expectObservable }) => {
-      const { memberships$, membershipsWithTransport$ } = fromMemberships$(
-        behavior("a", {
-          a: [bobMembership, carlMembership],
-        }),
-      );
-
-      const connectionWithPublisher = new ConnectionManagerData();
-      const bobParticipantId = getParticipantId(
-        bobMembership.userId,
-        bobMembership.deviceId,
-      );
-      const connectionA = { transport: transportA } as unknown as Connection;
-      const connectionB = { transport: transportB } as unknown as Connection;
-
-      // Bob is not publishing on A
-      connectionWithPublisher.add(connectionA, []);
-      // Bob is publishing on B but his membership says A
-      connectionWithPublisher.add(connectionB, [
-        mockRemoteParticipant({ identity: bobParticipantId }),
-      ]);
-
-      const connectionManagerData$ = epochMeWith$(
-        memberships$,
-        behavior("a", {
-          a: connectionWithPublisher,
-        }),
-      );
-
-      const matrixLivekitMembers$ = createMatrixLivekitMembers$({
-        scope: testScope,
-        membershipsWithTransport$: testScope.behavior(
-          membershipsWithTransport$,
-        ),
-        connectionManager: {
-          connectionManagerData$: connectionManagerData$,
-        } as unknown as IConnectionManager,
-      });
-
-      expectObservable(matrixLivekitMembers$.pipe(map((e) => e.value))).toBe(
-        "a",
-        {
-          a: expect.toSatisfy((data: RemoteMatrixLivekitMember[]) => {
-            expect(data.length).toEqual(2);
-            expectObservable(data[0].membership$).toBe("a", {
-              a: bobMembership,
-            });
-            expectObservable(data[0].connection$).toBe("a", {
-              // The real connection should be from transportA as per the membership
-              a: connectionA,
-            });
-            expectObservable(data[0].participant.value$).toBe("a", {
-              // No participant as Bob is not publishing on his membership transport
-              a: null,
-            });
-            return true;
-          }),
-        },
-      );
-    });
-  });
+  await flushPromises();
+  expect(matrixLivekitMember$.value.value).toSatisfy(
+    (data: RemoteMatrixLivekitMember[]) => {
+      expect(data.length).toEqual(2);
+      expect(data[0].membership$.value).toBe(bobMembership);
+      expect(data[0].connection$.value).toBe(connectionA);
+      expect(data[0].participant.value$.value).toBe(null);
+      return true;
+    },
+  );
 });

@@ -12,7 +12,6 @@ import { TooltipProvider } from "@vector-im/compound-web";
 
 import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
-// import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 import { customLivekitUrl as customLivekitUrlSetting } from "./settings";
@@ -42,6 +41,8 @@ function createMockLivekitRoom(
     serverInfo,
     metadata,
     engine: { client: { ws: { url: wsUrl } } },
+    localParticipant: { identity: "localParticipantIdentity" },
+    remoteParticipants: new Map(),
   } as unknown as LivekitRoom;
 
   return {
@@ -78,6 +79,8 @@ describe("DeveloperSettingsTab", () => {
       isLocal: false,
       url: "wss://remote-sfu.example.org",
       room: {
+        localParticipant: { identity: "localParticipantIdentity" },
+        remoteParticipants: new Map(),
         serverInfo: { region: "remote", version: "4.5.6" },
         metadata: "remote-metadata",
         engine: { client: { ws: { url: "wss://remote-sfu.example.org" } } },

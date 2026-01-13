@@ -50,6 +50,7 @@ import {
   type KeyTransportEvents,
   type KeyTransportEventsHandlerMap,
 } from "matrix-js-sdk/lib/matrixrtc/IKeyTransport";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import {
   LocalUserMediaViewModel,
@@ -201,40 +202,30 @@ export const exampleTransport: LivekitTransport = {
   livekit_alias: "!alias:example.org",
 };
 
-export function mockCallMembership(
-  userId: string,
-  deviceId: string,
-  transport?: Transport,
-): CallMembership {
-  const t = transport ?? transportForUser(userId);
-  return {
-    userId: userId,
-    deviceId: deviceId,
-    getTransport: vi.fn().mockReturnValue(t),
-    transports: [t],
-  } as unknown as CallMembership;
-}
-
-function transportForUser(userId: string): Transport {
-  const domain = userId.split(":")[1];
-  return {
-    type: "livekit",
-    livekit_service_url: `https://lk.${domain}`,
-    livekit_alias: `!alias:${domain}`,
-  };
-}
-
 export function mockRtcMembership(
   user: string | RoomMember,
   deviceId: string,
-  callId = "",
-  fociPreferred: Transport[] = [exampleTransport],
-  focusActive: LivekitFocusSelection = {
-    type: "livekit",
-    focus_selection: "oldest_membership",
+  customOverwrites?: {
+    rtcBackendIdentity?: string;
+    callId?: string;
+    fociPreferred?: Transport[];
+    focusActive?: LivekitFocusSelection;
+    membership?: Partial<SessionMembershipData>;
   },
-  membership: Partial<SessionMembershipData> = {},
 ): CallMembership {
+  // setup defaults based on overwrites and fallback values.
+  const { rtcBackendIdentity, callId, fociPreferred, focusActive, membership } =
+    {
+      fociPreferred: [exampleTransport],
+      focusActive: {
+        type: "livekit" as const,
+        focus_selection: "oldest_membership" as const,
+      },
+      callId: "",
+      membership: {},
+      ...customOverwrites,
+    };
+
   const data: SessionMembershipData = {
     application: "m.call",
     call_id: callId,
@@ -243,17 +234,29 @@ export function mockRtcMembership(
     focus_active: focusActive,
     ...membership,
   };
+  const userId = typeof user === "string" ? user : user.userId;
   const event = new MatrixEvent({
-    sender: typeof user === "string" ? user : user.userId,
+    sender: userId,
     event_id: `$-ev-${randomUUID()}:example.org`,
     content: data,
   });
 
-  const cms = new CallMembership(event, data);
+  const membershipData = CallMembership.membershipDataFromMatrixEvent(event);
+  const cms = new CallMembership(
+    event,
+    membershipData,
+    rtcBackendIdentity ?? `${userId}:${deviceId}`,
+  );
   vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
+
   return cms;
 }
 
+export const ownMemberMock: CallMembershipIdentityParts = {
+  userId: "@alice:example.org",
+  deviceId: "DEVICE",
+  memberId: "@alice:example.org:DEVICE",
+};
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
 // rather simple, but if one util to mock a member is good enough for us, maybe
 // it's useful for matrix-js-sdk consumers in general.
@@ -331,6 +334,7 @@ export function createLocalMedia(
     testScope(),
     "local",
     member.userId,
+    rtcMember.rtcBackendIdentity,
     constant(localParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
@@ -376,6 +380,7 @@ export function createRemoteMedia(
     testScope(),
     "remote",
     member.userId,
+    rtcMember.rtcBackendIdentity,
     constant(participant),
     {
       kind: E2eeType.PER_PARTICIPANT,
@@ -478,7 +483,7 @@ export class MockRTCSession extends TypedEventEmitter<
     if (value !== prev) this.emit(MembershipManagerEvent.ProbablyLeft, value);
   }
 
-  public async joinRoomSession(): Promise<void> {
+  public async joinRTCSession(): Promise<void> {
     return Promise.resolve();
   }
 }
@@ -525,5 +530,8 @@ export function mockMuteStates(
   joined$: Observable<boolean> = of(true),
 ): MuteStates {
   const observableScope = new ObservableScope();
-  return new MuteStates(observableScope, mockMediaDevices({}), joined$);
+  return new MuteStates(observableScope, mockMediaDevices({}), {
+    audioEnabled: false,
+    videoEnabled: false,
+  });
 }

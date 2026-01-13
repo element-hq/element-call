@@ -17,14 +17,16 @@ export const localRtcMemberDevice2 = mockRtcMembership(
   "2222",
 );
 export const local = mockMatrixRoomMember(localRtcMember);
-// export const localParticipant = mockLocalParticipant({ identity: "" });
+
 export const localId = `${local.userId}:${localRtcMember.deviceId}`;
 
-export const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
+export const aliceDeviceId = "AAAA";
+export const aliceUserId = "@alice:example.org";
+export const aliceId = `${aliceUserId}:${aliceDeviceId}`;
+export const aliceRtcMember = mockRtcMembership(aliceUserId, aliceDeviceId);
 export const alice = mockMatrixRoomMember(aliceRtcMember, {
   rawDisplayName: "Alice",
 });
-export const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
 export const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
 
 export const aliceDoppelgangerRtcMember = mockRtcMembership(
@@ -38,11 +40,13 @@ export const aliceDoppelganger = mockMatrixRoomMember(
   },
 );
 
-export const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
+export const bobDeviceId = "BBBB";
+export const bobUserId = "@bob:example.org";
+export const bobId = `${bobUserId}:${bobDeviceId}`;
+export const bobRtcMember = mockRtcMembership(bobUserId, bobDeviceId);
 export const bob = mockMatrixRoomMember(bobRtcMember, {
   rawDisplayName: "Bob",
 });
-export const bobId = `${bob.userId}:${bobRtcMember.deviceId}`;
 
 export const bobZeroWidthSpaceRtcMember = mockRtcMembership(
   "@bob2:example.org",

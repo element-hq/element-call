@@ -1,5 +1,12 @@
 # OpenTelemetry Collector for development
 
+## Edit:
+
+Open telemetry has been removed in: https://github.com/element-hq/element-call/pull/3586
+Check this PR to get back the implementation or to use it as reference to add it back.
+
+---
+
 This directory contains a docker compose file that starts a jaeger all-in-one instance
 with an in-memory database, along with a standalone OpenTelemetry collector that forwards
 traces into the jaeger. Jaeger has a built-in OpenTelemetry collector, but it can't be
