@@ -68,6 +68,27 @@ export enum JwtEndpointVersion {
   Matrix_2_0 = "matrix_2_0",
 }
 
+// TODO livekit_alias-cleanup
+// 1. We need to move away from transports map to connections!!!
+//
+// 2. We need to stop sending livekit_alias all together
+//
+//
+// 1.
+// Transports are just the jwt service adress but do not contain the information which room on this transport to use.
+// That requires slot and roomId.
+//
+// We need one connection per room on the transport.
+//
+// We need an object that contains:
+// transport
+// roomId
+// slotId
+//
+// To map to the connections. Prosposal: `ConnectionIdentifier`
+//
+// 2.
+// We need to make sure we do not sent livekit_alias in sticky events and that we drop all code for sending state events!
 export interface LocalTransportWithSFUConfig {
   transport: LivekitTransport;
   sfuConfig: SFUConfig;
