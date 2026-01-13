@@ -118,6 +118,14 @@ export class Connection {
   public readonly remoteParticipants$: Behavior<RemoteParticipant[]>;
 
   /**
+   * The alias of the LiveKit room.
+   */
+  public get livekitAlias(): string | undefined {
+    return this._livekitAlias;
+  }
+  private _livekitAlias?: string;
+
+  /**
    * Whether the connection has been stopped.
    * @see Connection.stop
    * */
@@ -144,9 +152,10 @@ export class Connection {
       this._state$.next(ConnectionState.FetchingConfig);
       // We should already have this information after creating the localTransport.
       // only call getSFUConfigWithOpenID for connections where we do not have a token yet. (existingJwtTokenData === undefined)
-      const { url, jwt } =
+      const { url, jwt, livekitAlias } =
         this.existingSFUConfig ??
         (await this.getSFUConfigForRemoteConnection());
+      this._livekitAlias = livekitAlias;
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
