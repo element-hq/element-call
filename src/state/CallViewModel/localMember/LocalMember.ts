@@ -36,6 +36,7 @@ import {
 } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type Behavior } from "../../Behavior.ts";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager.ts";
@@ -60,6 +61,7 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { and$ } from "../../../utils/observable.ts";
+import { type LocalTransportWithSFUConfig } from "./LocalTransport.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -125,7 +127,7 @@ interface Props {
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (transport: LivekitTransport) => void;
   homeserverConnected: HomeserverConnected;
-  localTransport$: Behavior<LivekitTransport | null>;
+  localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
@@ -233,7 +235,9 @@ export const createLocalMembership$ = ({
           return null;
         }
 
-        return connectionData.getConnectionForTransport(localTransport);
+        return connectionData.getConnectionForTransport(
+          localTransport.transport,
+        );
       }),
       tap((connection) => {
         logger.info(
@@ -532,7 +536,7 @@ export const createLocalMembership$ = ({
       if (!shouldConnect) return;
 
       try {
-        joinMatrixRTC(transport);
+        joinMatrixRTC(transport.transport);
       } catch (error) {
         logger.error("Error entering RTC session", error);
         if (error instanceof Error)
@@ -551,7 +555,12 @@ export const createLocalMembership$ = ({
   );
 
   const participant$ = scope.behavior(
-    localConnection$.pipe(map((c) => c?.livekitRoom?.localParticipant ?? null)),
+    localConnection$.pipe(
+      map((c) => c?.livekitRoom?.localParticipant ?? null),
+      tap((p) => {
+        logger.debug("participant$ updated:", p?.identity);
+      }),
+    ),
   );
 
   // Pause upstream of all local media tracks when we're disconnected from
@@ -686,18 +695,19 @@ interface EnterRTCSessionOptions {
  *      - Handles retries (fails only after several attempts)
  *
  * @param rtcSession - The MatrixRTCSession to join.
+ * @param ownMembershipIdentity - Options for entering the RTC session.
  * @param transport - The LivekitTransport to use for this session.
- * @param options - Options for entering the RTC session.
- * @param options.encryptMedia - Whether to encrypt media.
- * @param options.matrixRTCMode - The Matrix RTC mode to use.
+ * @param options - `encryptMedia`: Whether to encrypt media `matrixRTCMode`: The Matrix RTC mode to use.
  * @throws If the widget could not send ElementWidgetActions.JoinCall action.
  */
 // Exported for unit testing
 export function enterRTCSession(
   rtcSession: MatrixRTCSession,
+  ownMembershipIdentity: CallMembershipIdentityParts,
   transport: LivekitTransport,
-  { encryptMedia, matrixRTCMode }: EnterRTCSessionOptions,
+  options: EnterRTCSessionOptions,
 ): void {
+  const { encryptMedia, matrixRTCMode } = options;
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
@@ -709,10 +719,13 @@ export function enterRTCSession(
   const useDeviceSessionMemberEvents =
     features?.feature_use_device_session_member_events;
   const { sendNotificationType: notificationType, callIntent } = getUrlParams();
-  const multiSFU = matrixRTCMode !== MatrixRTCMode.Legacy;
+  const multiSFU =
+    matrixRTCMode === MatrixRTCMode.Compatibility ||
+    matrixRTCMode === MatrixRTCMode.Matrix_2_0;
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   // TODO where/how do we track errors originating from the ongoing rtcSession?
-  rtcSession.joinRoomSession(
+  rtcSession.joinRTCSession(
+    ownMembershipIdentity,
     multiSFU ? [] : [transport],
     multiSFU ? transport : undefined,
     {

@@ -17,7 +17,7 @@ exports[`InCallView > rendering > renders 1`] = `
         >
           <span
             aria-label=""
-            class="_avatar_1qbcf_8 roomAvatar _avatar-imageless_1qbcf_52"
+            class="_avatar_zysgz_8 roomAvatar _avatar-imageless_zysgz_55"
             data-color="1"
             data-type="round"
             role="img"
@@ -34,7 +34,7 @@ exports[`InCallView > rendering > renders 1`] = `
               tabindex="0"
             >
               <svg
-                aria-labelledby="«r0»"
+                aria-labelledby="_r_0_"
                 class="lock"
                 data-encrypted="false"
                 fill="currentColor"
@@ -117,7 +117,7 @@ exports[`InCallView > rendering > renders 1`] = `
       data-show="false"
     >
       <div
-        class="_content_o77nw_8 icon"
+        class="_content_1r8kr_8 icon"
         data-size="large"
       >
         <svg
@@ -159,7 +159,7 @@ exports[`InCallView > rendering > renders 1`] = `
         Only works while using app
       </p>
       <button
-        class="_button_vczzf_8"
+        class="_button_13vu4_8"
         data-kind="primary"
         data-size="sm"
         role="button"
@@ -286,8 +286,9 @@ exports[`InCallView > rendering > renders 1`] = `
       >
         <button
           aria-disabled="true"
-          aria-labelledby="«r8»"
-          class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
+          aria-label="Unmute microphone"
+          aria-labelledby="_r_8_"
+          class="_button_13vu4_8 _has-icon_13vu4_60 _icon-only_13vu4_53"
           data-kind="primary"
           data-size="lg"
           data-testid="incall_mute"
@@ -309,8 +310,9 @@ exports[`InCallView > rendering > renders 1`] = `
         </button>
         <button
           aria-disabled="true"
-          aria-labelledby="«rd»"
-          class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
+          aria-label="Start video"
+          aria-labelledby="_r_d_"
+          class="_button_13vu4_8 _has-icon_13vu4_60 _icon-only_13vu4_53"
           data-kind="primary"
           data-size="lg"
           data-testid="incall_videomute"
@@ -331,8 +333,8 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-labelledby="«ri»"
-          class="_button_vczzf_8 _has-icon_vczzf_57 _icon-only_vczzf_50"
+          aria-labelledby="_r_i_"
+          class="_button_13vu4_8 _has-icon_13vu4_60 _icon-only_13vu4_53"
           data-kind="secondary"
           data-size="lg"
           role="button"
@@ -352,8 +354,9 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-labelledby="«rn»"
-          class="_button_vczzf_8 endCall _has-icon_vczzf_57 _icon-only_vczzf_50 _destructive_vczzf_107"
+          aria-label="End call"
+          aria-labelledby="_r_n_"
+          class="_button_13vu4_8 endCall _has-icon_13vu4_60 _icon-only_13vu4_53 _destructive_13vu4_110"
           data-kind="primary"
           data-size="lg"
           data-testid="incall_leave"
@@ -378,7 +381,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="toggle layout"
       >
         <input
-          aria-labelledby="«rs»"
+          aria-labelledby="_r_s_"
           name="layout"
           type="radio"
           value="spotlight"
@@ -396,7 +399,7 @@ exports[`InCallView > rendering > renders 1`] = `
           />
         </svg>
         <input
-          aria-labelledby="«r11»"
+          aria-labelledby="_r_11_"
           checked=""
           name="layout"
           type="radio"

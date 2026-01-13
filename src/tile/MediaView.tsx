@@ -18,7 +18,11 @@ import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
 import { type EncryptionStatus } from "../state/MediaViewModel";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
-import { showHandRaisedTimer, useSetting } from "../settings/settings";
+import {
+  showConnectionStats,
+  showHandRaisedTimer,
+  useSetting,
+} from "../settings/settings";
 import { type ReactionOption } from "../reactions";
 import { ReactionIndicator } from "../reactions/ReactionIndicator";
 import { RTCConnectionStats } from "../RTCConnectionStats";
@@ -46,6 +50,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   waitingForMedia?: boolean;
   audioStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
+  rtcBackendIdentity?: string;
   // The focus url, mainly for debugging purposes
   focusUrl?: string;
 }
@@ -74,11 +79,13 @@ export const MediaView: FC<Props> = ({
   waitingForMedia,
   audioStreamStats,
   videoStreamStats,
+  rtcBackendIdentity,
   focusUrl,
   ...props
 }) => {
   const { t } = useTranslation();
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
+  const [showConnectioStats] = useSetting(showConnectionStats);
 
   const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
 
@@ -132,14 +139,18 @@ export const MediaView: FC<Props> = ({
         {waitingForMedia && (
           <div className={styles.status}>
             {t("video_tile.waiting_for_media")}
+            {showConnectioStats ? " " + rtcBackendIdentity : ""}
           </div>
         )}
         {(audioStreamStats || videoStreamStats) && (
-          <RTCConnectionStats
-            audio={audioStreamStats}
-            video={videoStreamStats}
-            focusUrl={focusUrl}
-          />
+          <>
+            <RTCConnectionStats
+              audio={audioStreamStats}
+              video={videoStreamStats}
+              focusUrl={focusUrl}
+              rtcBackendIdentity={rtcBackendIdentity}
+            />
+          </>
         )}
         {/* TODO: Bring this back once encryption status is less broken */}
         {/*encryptionStatus !== EncryptionStatus.Okay && (

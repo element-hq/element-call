@@ -18,7 +18,7 @@ import { it } from "vitest";
 import { ObservableScope } from "../../ObservableScope.ts";
 import type { Room as MatrixRoom } from "matrix-js-sdk/lib/models/room";
 import {
-  mockCallMembership,
+  mockRtcMembership,
   mockMatrixRoomMember,
   withTestScheduler,
 } from "../../../utils/test.ts";
@@ -111,7 +111,7 @@ describe("MatrixMemberMetadata", () => {
           rawDisplayName: "it's a me",
         });
         const memberships$ = behavior("a", {
-          a: [mockCallMembership("@local:example.com", "DEVICE1")],
+          a: [mockRtcMembership("@local:example.com", "DEVICE1")],
         });
         const metadataStore = createMatrixMemberMetadata$(
           testScope,
@@ -149,8 +149,8 @@ describe("MatrixMemberMetadata", () => {
       withTestScheduler(({ behavior, expectObservable }) => {
         const memberships$ = behavior("a", {
           a: [
-            mockCallMembership("@alice:example.com", "DEVICE1"),
-            mockCallMembership("@bob:example.com", "DEVICE1"),
+            mockRtcMembership("@alice:example.com", "DEVICE1"),
+            mockRtcMembership("@bob:example.com", "DEVICE1"),
           ],
         });
         const metadataStore = createMatrixMemberMetadata$(
@@ -179,7 +179,7 @@ describe("MatrixMemberMetadata", () => {
         setUpBasicRoom();
 
         const memberships$ = behavior("a", {
-          a: [mockCallMembership("@no-name:foo.bar", "D000")],
+          a: [mockRtcMembership("@no-name:foo.bar", "D000")],
         });
         const metadataStore = createMatrixMemberMetadata$(
           testScope,
@@ -201,11 +201,11 @@ describe("MatrixMemberMetadata", () => {
 
         const memberships$ = behavior("a", {
           a: [
-            mockCallMembership("@bob:example.com", "DEVICE1"),
-            mockCallMembership("@bob:example.com", "DEVICE2"),
-            mockCallMembership("@bob:foo.bar", "BOB000"),
-            mockCallMembership("@carl:example.com", "C000"),
-            mockCallMembership("@evil:example.com", "E000"),
+            mockRtcMembership("@bob:example.com", "DEVICE1"),
+            mockRtcMembership("@bob:example.com", "DEVICE2"),
+            mockRtcMembership("@bob:foo.bar", "BOB000"),
+            mockRtcMembership("@carl:example.com", "C000"),
+            mockRtcMembership("@evil:example.com", "E000"),
           ],
         });
 
@@ -233,10 +233,10 @@ describe("MatrixMemberMetadata", () => {
         setUpBasicRoom();
 
         const memberships$ = behavior("ab", {
-          a: [mockCallMembership("@bob:example.com", "DEVICE1")],
+          a: [mockRtcMembership("@bob:example.com", "DEVICE1")],
           b: [
-            mockCallMembership("@bob:example.com", "DEVICE1"),
-            mockCallMembership("@bob:foo.bar", "BOB000"),
+            mockRtcMembership("@bob:example.com", "DEVICE1"),
+            mockRtcMembership("@bob:foo.bar", "BOB000"),
           ],
         });
 
@@ -262,10 +262,10 @@ describe("MatrixMemberMetadata", () => {
 
         const memberships$ = behavior("ab", {
           a: [
-            mockCallMembership("@bob:example.com", "DEVICE1"),
-            mockCallMembership("@bob:foo.bar", "BOB000"),
+            mockRtcMembership("@bob:example.com", "DEVICE1"),
+            mockRtcMembership("@bob:foo.bar", "BOB000"),
           ],
-          b: [mockCallMembership("@bob:example.com", "DEVICE1")],
+          b: [mockRtcMembership("@bob:example.com", "DEVICE1")],
         });
 
         const metadataStore = createMatrixMemberMetadata$(
@@ -292,8 +292,8 @@ describe("MatrixMemberMetadata", () => {
 
         const memberships$ = behavior("a", {
           a: [
-            mockCallMembership("@bob:example.com", "B000"),
-            mockCallMembership("@carl:example.com", "C000"),
+            mockRtcMembership("@bob:example.com", "B000"),
+            mockRtcMembership("@carl:example.com", "C000"),
           ],
         });
         const metadataStore = createMatrixMemberMetadata$(
@@ -331,16 +331,16 @@ describe("MatrixMemberMetadata", () => {
         // - room join/leave
         // - disambiguate
         const memberships$ = behavior("ab-d", {
-          a: [mockCallMembership(CARL, "C000")],
+          a: [mockRtcMembership(CARL, "C000")],
           b: [
-            mockCallMembership(CARL, "C000"),
+            mockRtcMembership(CARL, "C000"),
             // bob joins
-            mockCallMembership(BOB, "B000"),
+            mockRtcMembership(BOB, "B000"),
           ],
           // c carl gets renamed to BOB
           d: [
             // carl leaves
-            mockCallMembership(BOB, "B000"),
+            mockRtcMembership(BOB, "B000"),
           ],
         });
         schedule("--a-", {
@@ -379,8 +379,8 @@ describe("MatrixMemberMetadata", () => {
 
     it("should disambiguate users with invisible characters", () => {
       withTestScheduler(({ behavior, expectObservable }) => {
-        const bobRtcMember = mockCallMembership("@bob:example.org", "BBBB");
-        const bobZeroWidthSpaceRtcMember = mockCallMembership(
+        const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
+        const bobZeroWidthSpaceRtcMember = mockRtcMembership(
           "@bob2:example.org",
           "BBBB",
         );
@@ -397,9 +397,9 @@ describe("MatrixMemberMetadata", () => {
         fakeMemberWith(bobZeroWidthSpace);
         fakeMemberWith({ userId: "@carol:example.org" });
         const memberships$ = behavior("ab", {
-          a: [mockCallMembership("@carol:example.org", "1111"), bobRtcMember],
+          a: [mockRtcMembership("@carol:example.org", "1111"), bobRtcMember],
           b: [
-            mockCallMembership("@carol:example.org", "1111"),
+            mockRtcMembership("@carol:example.org", "1111"),
             bobRtcMember,
             bobZeroWidthSpaceRtcMember,
           ],
@@ -450,8 +450,8 @@ describe("MatrixMemberMetadata", () => {
 
     it("should strip RTL characters from displayname", () => {
       withTestScheduler(({ behavior, expectObservable }) => {
-        const daveRtcMember = mockCallMembership("@dave:example.org", "DDDD");
-        const daveRTLRtcMember = mockCallMembership(
+        const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
+        const daveRTLRtcMember = mockRtcMembership(
           "@dave2:example.org",
           "DDDD",
         );
@@ -466,9 +466,9 @@ describe("MatrixMemberMetadata", () => {
         fakeMemberWith(daveRTL);
         fakeMemberWith(dave);
         const memberships$ = behavior("ab", {
-          a: [mockCallMembership("@carol:example.org", "DDDD")],
+          a: [mockRtcMembership("@carol:example.org", "DDDD")],
           b: [
-            mockCallMembership("@carol:example.org", "DDDD"),
+            mockRtcMembership("@carol:example.org", "DDDD"),
             daveRtcMember,
             daveRTLRtcMember,
           ],
@@ -527,8 +527,8 @@ describe("MatrixMemberMetadata", () => {
         });
         const memberships$ = behavior("a", {
           a: [
-            mockCallMembership("@local:example.com", "DEVICE1"),
-            mockCallMembership("@alice:example.com", "DEVICE1"),
+            mockRtcMembership("@local:example.com", "DEVICE1"),
+            mockRtcMembership("@alice:example.com", "DEVICE1"),
           ],
         });
         const metadataStore = createMatrixMemberMetadata$(
@@ -562,12 +562,12 @@ describe("MatrixMemberMetadata", () => {
         fakeMemberWith({ userId: "@carl:example.com" });
         fakeMemberWith({ userId: "@bob:example.com" });
         const memberships$ = behavior("ab-d", {
-          a: [mockCallMembership("@bob:example.com", "B000")],
+          a: [mockRtcMembership("@bob:example.com", "B000")],
           b: [
-            mockCallMembership("@bob:example.com", "B000"),
-            mockCallMembership("@carl:example.com", "C000"),
+            mockRtcMembership("@bob:example.com", "B000"),
+            mockRtcMembership("@carl:example.com", "C000"),
           ],
-          d: [mockCallMembership("@carl:example.com", "C000")],
+          d: [mockRtcMembership("@carl:example.com", "C000")],
         });
 
         const metadataStore = createMatrixMemberMetadata$(
