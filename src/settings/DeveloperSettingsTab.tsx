@@ -246,8 +246,15 @@ export const DeveloperSettingsTab: FC<Props> = ({
             }
 
             try {
+              const userId = client.getUserId();
+              const deviceId = client.getDeviceId();
+
+              if (userId === null || deviceId === null) {
+                throw new Error("Invalid user or device ID");
+              }
               await getSFUConfigWithOpenID(
                 client,
+                { userId, deviceId, memberId: "" },
                 customLivekitUrlTextBuffer,
                 roomId,
               );
