@@ -65,31 +65,31 @@ function createMockMatrixClient(): MatrixClient {
 }
 
 describe("DeveloperSettingsTab", () => {
-  const livekitRooms: {
-    room: LivekitRoom;
-    url: string;
-    isLocal?: boolean;
-  }[] = [
-    createMockLivekitRoom(
-      "wss://local-sfu.example.org",
-      { region: "local", version: "1.2.3" },
-      "local-metadata",
-    ),
-    {
-      isLocal: false,
-      url: "wss://remote-sfu.example.org",
-      room: {
-        localParticipant: { identity: "localParticipantIdentity" },
-        remoteParticipants: new Map(),
-        serverInfo: { region: "remote", version: "4.5.6" },
-        metadata: "remote-metadata",
-        engine: { client: { ws: { url: "wss://remote-sfu.example.org" } } },
-      } as unknown as LivekitRoom,
-    },
-  ];
-
   it("renders and matches snapshot", async () => {
     const client = createMockMatrixClient();
+
+    const livekitRooms: {
+      room: LivekitRoom;
+      url: string;
+      isLocal?: boolean;
+    }[] = [
+      createMockLivekitRoom(
+        "wss://local-sfu.example.org",
+        { region: "local", version: "1.2.3" },
+        "local-metadata",
+      ),
+      {
+        isLocal: false,
+        url: "wss://remote-sfu.example.org",
+        room: {
+          localParticipant: { identity: "localParticipantIdentity" },
+          remoteParticipants: new Map(),
+          serverInfo: { region: "remote", version: "4.5.6" },
+          metadata: "remote-metadata",
+          engine: { client: { ws: { url: "wss://remote-sfu.example.org" } } },
+        } as unknown as LivekitRoom,
+      },
+    ];
 
     const { container } = render(
       <DeveloperSettingsTab
