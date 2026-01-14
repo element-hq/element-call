@@ -9,7 +9,7 @@ Please see LICENSE in the repository root for full details.
 import { type Page, test, expect, type JSHandle } from "@playwright/test";
 
 import type { MatrixClient } from "matrix-js-sdk";
-import { TestHelpers } from "../widget/test-helpers.ts";
+import { HOST1, TestHelpers } from "../widget/test-helpers.ts";
 
 export type UserBaseFixture = {
   mxId: string;
@@ -26,9 +26,7 @@ export type BaseWidgetSetup = {
 export interface MyFixtures {
   asWidget: BaseWidgetSetup;
   callType: "room" | "dm";
-  addUser: (
-    username: string /**, homeserver: string*/,
-  ) => Promise<UserBaseFixture>;
+  addUser: (username: string, host: string) => Promise<UserBaseFixture>;
 }
 
 // Minimal config.json for the local element-web instance
@@ -174,12 +172,14 @@ export const widgetTest = test.extend<MyFixtures>({
   addUser: async ({ browser }, use) => {
     await use(
       async (
-        username: string /**, homeserver?: string*/,
+        username: string,
+        host: string = HOST1,
       ): Promise<UserBaseFixture> => {
         const uniqueSuffix = Date.now();
         const { page, clientHandle, mxId } = await TestHelpers.registerUser(
           browser,
           `${username.toLowerCase()}_${uniqueSuffix}`,
+          host,
         );
         return {
           mxId,
