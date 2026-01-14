@@ -34,7 +34,7 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
 
   for (const user of [timo, robin, halfshot, florian]) {
     // Accept the invite
-    // This doesn't super stable to get this as this super generic locator,
+    // This isn't super stable to get this as this super generic locator,
     // but it works for now.
     await expect(
       user.page.getByRole("option", { name: roomName }),
@@ -140,9 +140,6 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
 
     const videoElements = await frame.locator("video").all();
     expect(videoElements.length).toBe(5);
-    //
-    // // ONLY 4 !!!!!
-    // await expect(frame.locator('video[autoplay]')).toHaveCount(4);
 
     const blockDisplayCount = await frame
       .locator("video")
@@ -153,7 +150,9 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
           ).length,
       );
 
-    // ONLY 4!!
+    // out of 5 ONLY 4 are visible (display:block) !!
+    // XXX we need to be better at our HTML markup and accessibility, it would make
+    // this kind of stuff way easier to test if we could look out for aria attributes.
     expect(blockDisplayCount).toBe(4);
   }
 
