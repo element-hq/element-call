@@ -110,6 +110,7 @@ export const widget = ((): WidgetHelpers | null => {
         EventType.RoomRedaction,
         ElementCallReactionEventType,
         EventType.RTCDecline,
+        EventType.RTCMembership, // Send/Read the membership sticky events
       ];
 
       const sendState = [

@@ -126,7 +126,9 @@ export const createLocalTransport$ = ({
    * The transport over which we should be actively publishing our media.
    * undefined when not joined.
    */
-  const oldestMemberTransport$ = scope.behavior(
+  const oldestMemberTransport$ = scope.behavior<
+    LocalTransportWithSFUConfig | null | "fetching"
+  >(
     combineLatest([memberships$]).pipe(
       map(([memberships]) => {
         const oldestMember = memberships.value[0];
@@ -154,7 +156,7 @@ export const createLocalTransport$ = ({
         return from(computeLocalTransportWithSFUConfig());
       }),
     ),
-    null,
+    "fetching",
   );
 
   /**
@@ -202,7 +204,11 @@ export const createLocalTransport$ = ({
     ]).pipe(
       map(([useOldestMember, oldestMemberTransport, preferredTransport]) =>
         useOldestMember
-          ? (oldestMemberTransport ?? preferredTransport)
+          ? oldestMemberTransport === null
+            ? preferredTransport
+            : oldestMemberTransport === "fetching"
+              ? null
+              : oldestMemberTransport
           : preferredTransport,
       ),
       distinctUntilChanged((t1, t2) =>
