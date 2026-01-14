@@ -3286,10 +3286,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/matrix-sdk-crypto-wasm@npm:^17.0.0":
-  version: 17.0.0
-  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:17.0.0"
-  checksum: 10c0/fa97e3111099057e0953e7550d6556b6e7553f3badd5b25a6988d2fcc94d22288a27e63cb204771b74ff24388d770c83f2cf5aec583f05c6ecf46509b8020570
+"@matrix-org/matrix-sdk-crypto-wasm@npm:^16.0.0":
+  version: 16.0.0
+  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:16.0.0"
+  checksum: 10c0/13b4ede3e618da819957abff778afefcf3baf9a2faac04a36bb5a07a44fae2ea05fbfa072eb3408d48b2b7b9aaf27242ce52c594c8ce9bf1fb8b3aade2832be1
   languageName: node
   linkType: hard
 
@@ -8364,7 +8364,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "matrix-org/matrix-js-sdk#develop"
+    matrix-js-sdk: "npm:^40.0.0"
     matrix-widget-api: "npm:^1.14.0"
     node-stdlib-browser: "npm:^1.3.1"
     normalize.css: "npm:^8.0.1"
@@ -11452,12 +11452,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@matrix-org/matrix-js-sdk#develop":
-  version: 39.4.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=4d0d32307eb4f1ce1fb65080fcca704f5bdedc31"
+"matrix-js-sdk@npm:^40.0.0":
+  version: 40.0.0
+  resolution: "matrix-js-sdk@npm:40.0.0"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^17.0.0"
+    "@matrix-org/matrix-sdk-crypto-wasm": "npm:^16.0.0"
     another-json: "npm:^0.2.0"
     bs58: "npm:^6.0.0"
     content-type: "npm:^1.0.4"
@@ -11470,7 +11470,7 @@ __metadata:
     sdp-transform: "npm:^3.0.0"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/59c9d81ccf823584dc783502cb5c928562e3490c63f5ce98ee3232a603545d6278e90dc951c1fd0bae2792ba732ec5171e03596fd396bb2150d596cebb7fbac9
+  checksum: 10c0/9b67081290c5c4dce7ecab8c307471982da0dfdc97a1805fc5b44fd802d420f6dad7eb9a1bdc7338296ed404744a85585fb2f362c3d9528d35d516b465fcab5d
   languageName: node
   linkType: hard
 
