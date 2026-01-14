@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { expect, test } from "@playwright/test";
 
 import { widgetTest } from "../fixtures/widget-user.ts";
-import { TestHelpers } from "./test-helpers.ts";
+import { HOST1, TestHelpers } from "./test-helpers.ts";
 
 widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
   test.skip(
@@ -18,11 +18,11 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
 
   test.slow(); // We are registering multiple users here, give it more time
 
-  const valere = await addUser("Valere");
-  const timo = await addUser("Timo");
-  const robin = await addUser("Robin");
-  const halfshot = await addUser("Halfshot");
-  const florian = await addUser("florian");
+  const valere = await addUser("Valere", HOST1);
+  const timo = await addUser("Timo", HOST1);
+  const robin = await addUser("Robin", HOST1);
+  const halfshot = await addUser("Halfshot", HOST1);
+  const florian = await addUser("florian", HOST1);
 
   const roomName = "Group Call Room";
   await TestHelpers.createRoom(roomName, valere.page, [
