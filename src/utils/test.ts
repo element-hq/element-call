@@ -176,6 +176,7 @@ export function withTestScheduler(
 interface EmitterMock<T> {
   on: (...args: unknown[]) => T;
   off: (...args: unknown[]) => T;
+  once: (...args: unknown[]) => T;
   addListener: (...args: unknown[]) => T;
   removeListener: (...args: unknown[]) => T;
   emit: (event: string | symbol, ...args: unknown[]) => boolean;
@@ -186,6 +187,7 @@ export function mockEmitter<T>(): EmitterMock<T> {
   return {
     on: ee.on.bind(ee) as unknown as (...args: unknown[]) => T,
     off: ee.off.bind(ee) as unknown as (...args: unknown[]) => T,
+    once: ee.once.bind(ee) as unknown as (...args: unknown[]) => T,
     addListener: ee.addListener.bind(ee) as unknown as (
       ...args: unknown[]
     ) => T,

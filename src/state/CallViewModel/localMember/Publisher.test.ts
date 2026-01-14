@@ -12,6 +12,8 @@ import {
   type LocalTrack,
   type LocalTrackPublication,
   ParticipantEvent,
+  PublishTrackError,
+  RoomEvent,
   Track,
 } from "livekit-client";
 import { BehaviorSubject } from "rxjs";
@@ -356,5 +358,51 @@ describe("Bug fix", () => {
       expect(track!.mute).toHaveBeenCalled();
       expect(track!.isMuted).toBe(true);
     }
+  });
+
+  // When the connection is created, we call createAndSetupTracks immediately.
+  // But the livekit room connection is not yet established: `Connection#start` must
+  // first get the sfu config, and then connect to the livekit room.
+  // Livekit has support for this case by queuing publications until the room is connected,
+  // but this can time out if the room connection takes too long (15s)
+  it("Recovers failed publication due to room connection timeout", async () => {
+    // setLogLevel(`debug`);
+    const publisher = new Publisher(
+      scope,
+      connection,
+      mockMediaDevices({}),
+      muteStates,
+      constant({ supported: false, processor: undefined }),
+      logger,
+    );
+    audioEnabled$.next(true);
+    videoEnabled$.next(true);
+
+    const enableCameraAndMicrophoneSpy = vi.spyOn(
+      localParticipant,
+      "enableCameraAndMicrophone",
+    );
+
+    enableCameraAndMicrophoneSpy
+      .mockImplementationOnce(() => {
+        throw new PublishTrackError(
+          "publishing rejected as engine not connected within timeout",
+          408,
+        );
+      })
+      .mockImplementationOnce(async () => {
+        return Promise.resolve();
+      });
+
+    // call createAndSetupTracks which will attempt to publish and fail with the simulated timeout
+    await publisher.createAndSetupTracks();
+
+    // Now simulate the connection finally beeing connected
+    connection.livekitRoom.emit(RoomEvent.Connected);
+
+    await flushPromises();
+
+    // Should have called enableCameraAndMicrophone again to retry publication
+    expect(enableCameraAndMicrophoneSpy).toHaveBeenCalledTimes(2);
   });
 });

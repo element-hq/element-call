@@ -11,6 +11,7 @@ import {
   LocalVideoTrack,
   ParticipantEvent,
   type Room as LivekitRoom,
+  RoomEvent as LivekitRoomEvent,
   Track,
 } from "livekit-client";
 import {
@@ -89,6 +90,23 @@ export class Publisher {
       ParticipantEvent.LocalTrackPublished,
       this.onLocalTrackPublished.bind(this),
     );
+
+    this.connection.livekitRoom.once(LivekitRoomEvent.Connected, () => {
+      // When `createAndSetupTracks` is called before the connection is established,
+      // there is an internal timeout in livekit that could be triggered if it takes
+      // too long to connect.
+      // It is no-op if tracks are already created, so it is safe to call it again.
+      const audio = this.muteStates.audio.enabled$.value;
+      const video = this.muteStates.video.enabled$.value;
+      this.enableTracks(audio, video, this.connection.livekitRoom).catch(
+        (e) => {
+          this.logger.error(
+            "Failed to enable tracks after connection established",
+            e,
+          );
+        },
+      );
+    });
   }
 
   // LiveKit will publish the tracks as soon as they are created
@@ -157,16 +175,29 @@ export class Publisher {
     // We are using the `ParticipantEvent.LocalTrackPublished` to be notified
     // when tracks are actually published, and at that point
     // we can pause upstream if needed (depending on if startPublishing has been called).
-    if (audio && video) {
-      // Enable both at once in order to have a single permission prompt!
-      void lkRoom.localParticipant.enableCameraAndMicrophone();
-    } else if (audio) {
-      void lkRoom.localParticipant.setMicrophoneEnabled(true);
-    } else if (video) {
-      void lkRoom.localParticipant.setCameraEnabled(true);
-    }
+    this.enableTracks(audio, video, lkRoom).catch((e) => {
+      // If it is PublisherTrackError (408), i.e the publishing timed out,
+      // because it took too long to connet to the room, we are safe because
+      // we registered to the RoomEvent.Connected to create the tracks once connected.
+      this.logger.error("Failed to enable tracks", e);
+    });
 
     return Promise.resolve();
+  }
+
+  private async enableTracks(
+    audio: boolean,
+    video: boolean,
+    lkRoom: LivekitRoom,
+  ): Promise<void> {
+    if (audio && video) {
+      // Enable both at once in order to have a single permission prompt!
+      await lkRoom.localParticipant.enableCameraAndMicrophone();
+    } else if (audio) {
+      await lkRoom.localParticipant.setMicrophoneEnabled(true);
+    } else if (video) {
+      await lkRoom.localParticipant.setCameraEnabled(true);
+    }
   }
 
   private async pauseUpstreams(
