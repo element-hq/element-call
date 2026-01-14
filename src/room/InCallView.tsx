@@ -842,6 +842,7 @@ export const InCallView: FC<InCallViewProps> = ({
               .getConnections()
               .map((connectionItem) => ({
                 room: connectionItem.livekitRoom,
+                livekitAlias: connectionItem.livekitAlias,
                 // TODO compute is local or tag it in the livekit room items already
                 isLocal: undefined,
                 url: connectionItem.transport.livekit_service_url,
