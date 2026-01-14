@@ -435,18 +435,18 @@ export const InCallView: FC<InCallViewProps> = ({
     [vm],
   );
 
-  useEffect(() => {
-    widget?.api.transport
-      .send(
-        gridMode === "grid"
-          ? ElementWidgetActions.TileLayout
-          : ElementWidgetActions.SpotlightLayout,
-        {},
-      )
-      .catch((e) => {
-        logger.error("Failed to send layout change to widget API", e);
-      });
-  }, [gridMode]);
+  // useEffect(() => {
+  //   widget?.api.transport
+  //     .send(
+  //       gridMode === "grid"
+  //         ? ElementWidgetActions.TileLayout
+  //         : ElementWidgetActions.SpotlightLayout,
+  //       {},
+  //     )
+  //     .catch((e) => {
+  //       logger.error("Failed to send layout change to widget API", e);
+  //     });
+  // }, [gridMode]);
 
   useEffect(() => {
     if (widget) {
