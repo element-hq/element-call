@@ -280,7 +280,7 @@ async function makeTransport(
         //  - If we set it to the hased alias we get from the jwt, we will end up using the hashed alias as the body.roomId field
         //    in v0.16.0. (It will use oldest member transport. It is using the transport.livekit_alias as the body.roomId)
         //
-        // TLDR this is a temporal fild that allow for comaptibilty but the spec expects it to not exists. (but its existance also does not break anything)
+        // TLDR this is a temporal field that allow for comaptibilty but the spec expects it to not exists. (but its existance also does not break anything)
         // It is just named poorly: It was intetended to be the actual alias. But now we do pseudonymys ids so we use a hashed alias.
         livekit_alias: roomId,
       },
