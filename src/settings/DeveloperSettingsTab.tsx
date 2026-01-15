@@ -316,6 +316,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
             })}
           </h4>
           <p>LivekitAlias: {livekitRoom.livekitAlias}</p>
+          <p>connectionState (wont hot reload): {livekitRoom.room.state}</p>
           {livekitRoom.isLocal && <p>ws-url: {localSfuUrl?.href}</p>}
           <p>
             {t("developer_mode.livekit_server_info")}(

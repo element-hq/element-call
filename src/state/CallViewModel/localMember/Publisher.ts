@@ -79,10 +79,20 @@ export class Publisher {
 
     this.workaroundRestartAudioInputTrackChrome(devices, scope);
     this.scope.onEnd(() => {
-      this.logger.info("Scope ended -> stop publishing all tracks");
-      void this.stopPublishing();
       muteStates.audio.unsetHandler();
       muteStates.video.unsetHandler();
+      this.logger.info(
+        "Scope ended -> unset handler + stop publishing all tracks",
+      );
+
+      const stopAllMedia = async () => {
+        logger.info("onEnd: start stopping all media");
+        await this.stopPublishing();
+        logger.info("onEnd: stopped publishing");
+        await this.stopTracks();
+        logger.info("onEnd: stopped tracks");
+      };
+      void stopAllMedia();
     });
 
     this.connection.livekitRoom.localParticipant.on(

@@ -189,10 +189,6 @@ export function createConnectionManager$({
           }
         },
         (scope, _data$, serviceUrl, alias, sfuConfig) => {
-          logger.debug(
-            `Creating connection to ${serviceUrl} (${alias}, withSfuConfig (local connection?): ${JSON.stringify(sfuConfig) ?? "no config->remote connection"})`,
-          );
-
           const connection = connectionFactory.createConnection(
             scope,
             {
