@@ -19,6 +19,7 @@ import {
   first,
   from,
   map,
+  of,
   switchMap,
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
@@ -126,38 +127,41 @@ export const createLocalTransport$ = ({
    * The transport over which we should be actively publishing our media.
    * undefined when not joined.
    */
-  const oldestMemberTransport$ = scope.behavior<
-    LocalTransportWithSFUConfig | null | "fetching"
-  >(
-    combineLatest([memberships$]).pipe(
-      map(([memberships]) => {
-        const oldestMember = memberships.value[0];
-        const transport = oldestMember?.getTransport(memberships.value[0]);
-        if (!transport) return null;
-        return transport;
-      }),
-      first((t) => t != null && isLivekitTransport(t)),
-      switchMap((transport) => {
-        // Get the open jwt token to connect to the sfu
-        const computeLocalTransportWithSFUConfig =
-          async (): Promise<LocalTransportWithSFUConfig> => {
-            return {
-              transport,
-              sfuConfig: await getSFUConfigWithOpenID(
-                client,
-                ownMembershipIdentity,
-                transport.livekit_service_url,
-                roomId,
-                { forceJwtEndpoint: JwtEndpointVersion.Legacy },
-                logger,
-              ),
-            };
-          };
-        return from(computeLocalTransportWithSFUConfig());
-      }),
-    ),
-    "fetching",
-  );
+  const oldestMemberTransport$ =
+    scope.behavior<LocalTransportWithSFUConfig | null>(
+      combineLatest([memberships$, useOldestMember$]).pipe(
+        map(([memberships, useOldestMember]) => {
+          if (!useOldestMember) return null; // No need to do any prefetching if not using oldest member
+          const oldestMember = memberships.value[0];
+          const transport = oldestMember?.getTransport(oldestMember);
+          if (!transport) return null;
+          return transport;
+        }),
+        switchMap((transport) => {
+          if (transport !== null && isLivekitTransport(transport)) {
+            // Get the open jwt token to connect to the sfu
+            const computeLocalTransportWithSFUConfig =
+              async (): Promise<LocalTransportWithSFUConfig> => {
+                // await sleep(1000);
+                return {
+                  transport,
+                  sfuConfig: await getSFUConfigWithOpenID(
+                    client,
+                    ownMembershipIdentity,
+                    transport.livekit_service_url,
+                    roomId,
+                    { forceJwtEndpoint: JwtEndpointVersion.Legacy },
+                    logger,
+                  ),
+                };
+              };
+            return from(computeLocalTransportWithSFUConfig());
+          }
+          return of(null);
+        }),
+      ),
+      null,
+    );
 
   /**
    * The transport that we would personally prefer to publish on (if not for the
@@ -202,18 +206,23 @@ export const createLocalTransport$ = ({
       oldestMemberTransport$,
       preferredTransport$,
     ]).pipe(
-      map(([useOldestMember, oldestMemberTransport, preferredTransport]) =>
-        useOldestMember
-          ? oldestMemberTransport === null
-            ? preferredTransport
-            : oldestMemberTransport === "fetching"
-              ? null
-              : oldestMemberTransport
-          : preferredTransport,
-      ),
-      distinctUntilChanged((t1, t2) =>
-        areLivekitTransportsEqual(t1?.transport ?? null, t2?.transport ?? null),
-      ),
+      map(([useOldestMember, oldestMemberTransport, preferredTransport]) => {
+        return useOldestMember
+          ? (oldestMemberTransport ?? preferredTransport)
+          : preferredTransport;
+      }),
+      distinctUntilChanged((t1, t2) => {
+        logger.info(
+          "Local Transport Update from:",
+          t1?.transport.livekit_service_url,
+          " to ",
+          t2?.transport.livekit_service_url,
+        );
+        return areLivekitTransportsEqual(
+          t1?.transport ?? null,
+          t2?.transport ?? null,
+        );
+      }),
     ),
   );
 };
