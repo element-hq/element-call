@@ -53,6 +53,7 @@ export class TestHelpers {
     page: Page,
     audioOnly: boolean = false,
   ): Promise<void> {
+    // This is the header button that notifies about an ongoing call
     const label = audioOnly ? "Voice call started" : "Video call started";
     await expect(page.getByText(label)).toBeVisible();
     await expect(page.getByRole("button", { name: "Join" })).toBeVisible();
@@ -128,7 +129,6 @@ export class TestHelpers {
     page: Page,
     andInvite: string[] = [],
   ): Promise<void> {
-    await page.pause();
     await page
       .getByRole("navigation", { name: "Room list" })
       .getByRole("button", { name: "New conversation" })
@@ -157,6 +157,11 @@ export class TestHelpers {
     }
   }
 
+  /**
+   * Accepts a room invite using the room name.
+   * Locatest the invite in the room list.
+   *
+   */
   public static async acceptRoomInvite(
     roomName: string,
     page: Page,
