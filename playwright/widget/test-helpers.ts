@@ -98,10 +98,8 @@ export class TestHelpers {
       timeout: 15_000,
     });
 
-    // Clean up any toasts that may block the screen
-    await TestHelpers.closeNotificationToast(page);
-    // focus the user menu to avoid having hover decoration
-    await page.getByRole("button", { name: "User menu" }).focus();
+    await this.maybeDismissBrowserNotSupportedToast(page);
+    await this.maybeDismissServiceWorkerWarningToast(page);
 
     await TestHelpers.setDevToolElementCallDevUrl(page);
 
@@ -116,15 +114,42 @@ export class TestHelpers {
     return { page, clientHandle, mxId };
   }
 
-  /**
-   * Close the notification toast
-   */
-  public static async closeNotificationToast(page: Page): Promise<void> {
-    // Dismiss "Notification" toast
-    return page
-      .locator(".mx_Toast_toast", { hasText: "Notifications" })
-      .getByRole("button", { name: "Dismiss" })
-      .click();
+  private static async maybeDismissBrowserNotSupportedToast(
+    page: Page,
+  ): Promise<void> {
+    const browserUnsupportedToast = page
+      .getByText("Element does not support this browser")
+      .locator("..")
+      .locator("..");
+
+    // Dismiss incompatible browser toast
+    const dismissButton = browserUnsupportedToast.getByRole("button", {
+      name: "Dismiss",
+    });
+    try {
+      await expect(dismissButton).toBeVisible({ timeout: 700 });
+      await dismissButton.click();
+    } catch {
+      // dismissButton not visible, continue as normal
+    }
+  }
+
+  private static async maybeDismissServiceWorkerWarningToast(
+    page: Page,
+  ): Promise<void> {
+    const toast = page
+      .locator(".mx_Toast_toast")
+      .getByText("Failed to load service worker");
+
+    try {
+      await expect(toast).toBeVisible({ timeout: 700 });
+      await page
+        .locator(".mx_Toast_toast")
+        .getByRole("button", { name: "OK" })
+        .click();
+    } catch {
+      // toast not visible, continue as normal
+    }
   }
 
   public static async createRoom(
