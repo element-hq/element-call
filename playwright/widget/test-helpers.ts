@@ -81,6 +81,7 @@ export class TestHelpers {
     await page.goto(host);
     await page.getByRole("link", { name: "Create Account" }).click();
     await page.getByRole("textbox", { name: "Username" }).fill(username);
+    await page.getByRole("textbox", { name: "Password", exact: true }).click();
     await page
       .getByRole("textbox", { name: "Password", exact: true })
       .fill(PASSWORD);
@@ -97,21 +98,10 @@ export class TestHelpers {
       timeout: 15_000,
     });
 
-    const browserUnsupportedToast = page
-      .getByText("Element does not support this browser")
-      .locator("..")
-      .locator("..");
-
-    // Dismiss incompatible browser toast
-    const dismissButton = browserUnsupportedToast.getByRole("button", {
-      name: "Dismiss",
-    });
-    try {
-      await expect(dismissButton).toBeVisible({ timeout: 700 });
-      await dismissButton.click();
-    } catch {
-      // dismissButton not visible, continue as normal
-    }
+    // Clean up any toasts that may block the screen
+    await TestHelpers.closeNotificationToast(page);
+    // focus the user menu to avoid having hover decoration
+    await page.getByRole("button", { name: "User menu" }).focus();
 
     await TestHelpers.setDevToolElementCallDevUrl(page);
 
@@ -124,6 +114,17 @@ export class TestHelpers {
     ))!;
 
     return { page, clientHandle, mxId };
+  }
+
+  /**
+   * Close the notification toast
+   */
+  public static async closeNotificationToast(page: Page): Promise<void> {
+    // Dismiss "Notification" toast
+    return page
+      .locator(".mx_Toast_toast", { hasText: "Notifications" })
+      .getByRole("button", { name: "Dismiss" })
+      .click();
   }
 
   public static async createRoom(
