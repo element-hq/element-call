@@ -36,15 +36,7 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
     // Accept the invite
     // This isn't super stable to get this as this super generic locator,
     // but it works for now.
-    await expect(
-      user.page.getByRole("option", { name: roomName }),
-    ).toBeVisible();
-    await user.page.getByRole("option", { name: roomName }).click();
-    await user.page.getByRole("button", { name: "Accept" }).click();
-
-    await expect(
-      user.page.getByRole("main").getByRole("heading", { name: roomName }),
-    ).toBeVisible();
+    await TestHelpers.acceptRoomInvite(roomName, user.page);
   }
 
   // Start the call as Valere
@@ -53,24 +45,10 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
     valere.page.locator('iframe[title="Element Call"]'),
   ).toBeVisible();
 
-  await expect(
-    valere.page
-      .locator('iframe[title="Element Call"]')
-      .contentFrame()
-      .getByTestId("lobby_joinCall"),
-  ).toBeVisible();
-
-  await valere.page
-    .locator('iframe[title="Element Call"]')
-    .contentFrame()
-    .getByTestId("lobby_joinCall")
-    .click();
+  await TestHelpers.joinCallFromLobby(valere.page);
 
   for (const user of [timo, robin, halfshot, florian]) {
-    // THis is the header button that notifies about an ongoing call
-    await expect(user.page.getByText("Video call started")).toBeVisible();
-    await expect(user.page.getByRole("button", { name: "Join" })).toBeVisible();
-    await user.page.getByRole("button", { name: "Join" }).click();
+    await TestHelpers.joinCallInCurrentRoom(user.page);
   }
 
   for (const user of [timo, robin, halfshot, florian]) {
@@ -155,6 +133,4 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
     // this kind of stuff way easier to test if we could look out for aria attributes.
     expect(blockDisplayCount).toBe(4);
   }
-
-  await valere.page.pause();
 });
