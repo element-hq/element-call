@@ -527,12 +527,8 @@ export function createCallViewModel$(
         connectOptions$.value,
       );
     },
-    createPublisherFactory: (
-      scope: ObservableScope,
-      connection: Connection,
-    ) => {
+    createPublisherFactory: (connection: Connection) => {
       return new Publisher(
-        scope,
         connection,
         mediaDevices,
         muteStates,

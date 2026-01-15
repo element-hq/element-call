@@ -40,7 +40,7 @@ import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/En
 
 import { type Behavior } from "../../Behavior.ts";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager.ts";
-import { ObservableScope } from "../../ObservableScope.ts";
+import { type ObservableScope } from "../../ObservableScope.ts";
 import { type Publisher } from "./Publisher.ts";
 import { type MuteStates } from "../../MuteStates.ts";
 import {
@@ -124,10 +124,7 @@ interface Props {
   scope: ObservableScope;
   muteStates: MuteStates;
   connectionManager: IConnectionManager;
-  createPublisherFactory: (
-    scope: ObservableScope,
-    connection: Connection,
-  ) => Publisher;
+  createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (transport: LivekitTransport) => void;
   homeserverConnected: HomeserverConnected;
   localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
@@ -318,13 +315,12 @@ export const createLocalMembership$ = ({
       connection?.transport.livekit_service_url,
     );
     if (connection !== null) {
-      const scope = new ObservableScope();
-      const publisher = createPublisherFactory(scope, connection);
+      const publisher = createPublisherFactory(connection);
       publisher$.next(publisher);
-      // Clean-up callback
 
+      // Clean-up callback
       return Promise.resolve(async (): Promise<void> => {
-        scope.end();
+        await publisher.destroy();
       });
     }
   });
