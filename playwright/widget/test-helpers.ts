@@ -18,6 +18,8 @@ const PASSWORD = "foobarbaz1!";
 export const HOST1 = "https://app.m.localhost/#/welcome";
 export const HOST2 = "https://app.othersite.m.localhost/#/welcome";
 
+export type RtcMode = "legacy" | "compat" | "2_0";
+
 export class TestHelpers {
   public static async startCallInCurrentRoom(
     page: Page,
@@ -183,7 +185,7 @@ export class TestHelpers {
    */
   public static async setEmbeddedElementCallRtcMode(
     page: Page,
-    mode: "legacy" | "compat" | "2_0",
+    mode: RtcMode,
   ): Promise<void> {
     await page.getByRole("button", { name: "Video call" }).click();
     await page.getByRole("menuitem", { name: "Element Call" }).click();
@@ -197,9 +199,9 @@ export class TestHelpers {
 
     // Move to Developer tab now
     await iframe.getByRole("tab", { name: "Developer" }).click();
-    if (mode === "legacy") {
+    if (mode == "legacy") {
       await iframe.getByText("Legacy: state events").click();
-    } else if (mode === "2_0") {
+    } else if (mode == "2_0") {
       await iframe.getByText("Matrix 2.0").click();
     } else {
       // compat
