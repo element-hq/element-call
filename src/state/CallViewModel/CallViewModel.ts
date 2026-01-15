@@ -527,7 +527,10 @@ export function createCallViewModel$(
         connectOptions$.value,
       );
     },
-    createPublisherFactory: (connection: Connection) => {
+    createPublisherFactory: (
+      scope: ObservableScope,
+      connection: Connection,
+    ) => {
       return new Publisher(
         scope,
         connection,

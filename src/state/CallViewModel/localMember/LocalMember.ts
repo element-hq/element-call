@@ -40,7 +40,7 @@ import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/En
 
 import { type Behavior } from "../../Behavior.ts";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager.ts";
-import { type ObservableScope } from "../../ObservableScope.ts";
+import { ObservableScope } from "../../ObservableScope.ts";
 import { type Publisher } from "./Publisher.ts";
 import { type MuteStates } from "../../MuteStates.ts";
 import {
@@ -124,7 +124,10 @@ interface Props {
   scope: ObservableScope;
   muteStates: MuteStates;
   connectionManager: IConnectionManager;
-  createPublisherFactory: (connection: Connection) => Publisher;
+  createPublisherFactory: (
+    scope: ObservableScope,
+    connection: Connection,
+  ) => Publisher;
   joinMatrixRTC: (transport: LivekitTransport) => void;
   homeserverConnected: HomeserverConnected;
   localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
@@ -310,13 +313,18 @@ export const createLocalMembership$ = ({
   //  - destruct all current streams
   //  - overwrite current publisher
   scope.reconcile(localConnection$, async (connection) => {
+    logger.info(
+      "reconcile based on new localConnection:",
+      connection?.transport.livekit_service_url,
+    );
     if (connection !== null) {
-      const publisher = createPublisherFactory(connection);
+      const scope = new ObservableScope();
+      const publisher = createPublisherFactory(scope, connection);
       publisher$.next(publisher);
       // Clean-up callback
+
       return Promise.resolve(async (): Promise<void> => {
-        await publisher.stopPublishing();
-        await publisher.stopTracks();
+        scope.end();
       });
     }
   });
