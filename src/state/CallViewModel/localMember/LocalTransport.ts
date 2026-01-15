@@ -16,7 +16,6 @@ import { MatrixError, type MatrixClient } from "matrix-js-sdk";
 import {
   combineLatest,
   distinctUntilChanged,
-  first,
   from,
   map,
   of,

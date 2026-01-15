@@ -275,7 +275,7 @@ export class Connection {
       "[Connection " + opts.transport.livekit_service_url + "]",
     );
     this.logger.info(
-      `constructor: ${opts.transport.livekit_service_url} alias: ${opts.transport.livekit_alias} withSfuConfig?: ${sfuConfig})`,
+      `constructor: ${opts.transport.livekit_service_url} alias: ${opts.transport.livekit_alias} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
     );
     const { transport, client, scope } = opts;
 
