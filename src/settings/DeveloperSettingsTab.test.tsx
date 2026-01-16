@@ -211,6 +211,7 @@ describe("DeveloperSettingsTab", () => {
       await user.click(saveButton);
       expect(getSFUConfigWithOpenID).toHaveBeenCalledWith(
         expect.anything(),
+        expect.anything(),
         "wss://example.livekit.valid",
         "#testRoom",
       );
