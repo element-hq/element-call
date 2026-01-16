@@ -208,6 +208,13 @@ describe("Publisher", () => {
     expect(createTracksSpy).not.toHaveBeenCalled();
   });
 
+  it("should unsetHandler and stop tracks on destroy", async () => {
+    await publisher.destroy();
+    expect(publisher.stopTracks).toHaveBeenCalled();
+    expect(    this.muteStates.audio.unsetHandler();
+    this.muteStates.video.unsetHandler();).toHaveBeenCalled();
+  });
+
   it("Should minimize permission request by querying create at once", async () => {
     const enableCameraAndMicrophoneSpy = vi.spyOn(
       localParticipant,

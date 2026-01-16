@@ -429,7 +429,6 @@ describe("LocalMembership", () => {
             await publishResolver.promise;
             publishing$.next(true);
           }),
-
           publishing$,
         };
         publishers.push(p as unknown as Publisher);
