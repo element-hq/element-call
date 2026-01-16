@@ -297,11 +297,13 @@ describe("LocalMembership", () => {
         seed += 1;
         logger.info(`creating [${a}]`);
         const p = {
+          // It is enought to check if destroy is called. Destroy itself is tested in the publisher to make sure it does
+          // all the cleanup we need.
+          destroy: vi.fn(),
           stopPublishing: vi.fn().mockImplementation(() => {
             logger.info(`stopPublishing [${a}]`);
           }),
           stopTracks: vi.fn(),
-          destroy: vi.fn(),
         };
         publishers.push(p as unknown as Publisher);
         return p;
@@ -359,6 +361,8 @@ describe("LocalMembership", () => {
     defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
       () => {
         const p = {
+          // It is enought to check if destroy is called. Destroy itself is tested in the publisher to make sure it does
+          // all the cleanup we need.
           destroy: vi.fn(),
           createAndSetupTracks: vi.fn().mockImplementation(async () => {
             tracks$.next([{}, {}] as LocalTrack[]);
@@ -421,6 +425,8 @@ describe("LocalMembership", () => {
     defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
       () => {
         const p = {
+          // It is enought to check if destroy is called. Destroy itself is tested in the publisher to make sure it does
+          // all the cleanup we need.
           destroy: vi.fn(),
           createAndSetupTracks: vi.fn().mockImplementation(async () => {
             await createTrackResolver.promise;
