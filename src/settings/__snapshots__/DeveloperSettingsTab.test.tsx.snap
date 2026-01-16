@@ -360,6 +360,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       TestAlias
     </p>
     <p>
+      connectionState (wont hot reload): 
+    </p>
+    <p>
       ws-url: 
       wss://local-sfu.example.org/
     </p>
@@ -400,6 +403,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     <p>
       LivekitAlias: 
       TestAlias2
+    </p>
+    <p>
+      connectionState (wont hot reload): 
     </p>
     <p>
       LiveKit Server Info

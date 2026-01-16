@@ -301,6 +301,7 @@ describe("LocalMembership", () => {
             logger.info(`stopPublishing [${a}]`);
           }),
           stopTracks: vi.fn(),
+          destroy: vi.fn(),
         };
         publishers.push(p as unknown as Publisher);
         return p;
@@ -325,13 +326,12 @@ describe("LocalMembership", () => {
     await flushPromises();
     localTransport$.next(bTransport);
     await flushPromises();
+
     expect(publisherFactory).toHaveBeenCalledTimes(2);
     expect(publishers.length).toBe(2);
     // stop the first Publisher and let the second one life.
-    expect(publishers[0].stopTracks).toHaveBeenCalled();
-    expect(publishers[1].stopTracks).not.toHaveBeenCalled();
-    expect(publishers[0].stopPublishing).toHaveBeenCalled();
-    expect(publishers[1].stopPublishing).not.toHaveBeenCalled();
+    expect(publishers[0].destroy).toHaveBeenCalled();
+    expect(publishers[1].destroy).not.toHaveBeenCalled();
     expect(publisherFactory.mock.calls[0][0].transport).toBe(
       aTransport.transport,
     );
@@ -341,7 +341,7 @@ describe("LocalMembership", () => {
     scope.end();
     await flushPromises();
     // stop all tracks after ending scopes
-    expect(publishers[1].stopPublishing).toHaveBeenCalled();
+    expect(publishers[1].destroy).toHaveBeenCalled();
     // expect(publishers[1].stopTracks).toHaveBeenCalled();
 
     defaultCreateLocalMemberValues.createPublisherFactory.mockReset();
@@ -359,8 +359,7 @@ describe("LocalMembership", () => {
     defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
       () => {
         const p = {
-          stopPublishing: vi.fn(),
-          stopTracks: vi.fn(),
+          destroy: vi.fn(),
           createAndSetupTracks: vi.fn().mockImplementation(async () => {
             tracks$.next([{}, {}] as LocalTrack[]);
             return Promise.resolve();
@@ -395,11 +394,11 @@ describe("LocalMembership", () => {
     localMembership.startTracks();
     await flushPromises();
     expect(publishers[0].createAndSetupTracks).toHaveBeenCalled();
-    // expect(localMembership.tracks$.value.length).toBe(2);
+
     scope.end();
     await flushPromises();
     // stop all tracks after ending scopes
-    expect(publishers[0].stopPublishing).toHaveBeenCalled();
+    expect(publishers[0].destroy).toHaveBeenCalled();
     // expect(publishers[0].stopTracks).toHaveBeenCalled();
     publisherFactory.mockClear();
   });
@@ -416,27 +415,21 @@ describe("LocalMembership", () => {
     );
     const publishers: Publisher[] = [];
 
-    const tracks$ = new BehaviorSubject<LocalTrack[]>([]);
     const publishing$ = new BehaviorSubject<boolean>(false);
     const createTrackResolver = Promise.withResolvers<void>();
     const publishResolver = Promise.withResolvers<void>();
     defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
       () => {
         const p = {
-          stopPublishing: vi.fn(),
-          stopTracks: vi.fn().mockImplementation(() => {
-            logger.info("stopTracks");
-            tracks$.next([]);
-          }),
+          destroy: vi.fn(),
           createAndSetupTracks: vi.fn().mockImplementation(async () => {
             await createTrackResolver.promise;
-            tracks$.next([{}, {}] as LocalTrack[]);
           }),
           startPublishing: vi.fn().mockImplementation(async () => {
             await publishResolver.promise;
             publishing$.next(true);
           }),
-          tracks$,
+
           publishing$,
         };
         publishers.push(p as unknown as Publisher);
@@ -536,7 +529,7 @@ describe("LocalMembership", () => {
       (localMembership.localMemberState$.value as any).media,
     ).toStrictEqual(PublishState.Publishing);
 
-    expect(publishers[0].stopPublishing).not.toHaveBeenCalled();
+    expect(publishers[0].destroy).not.toHaveBeenCalled();
 
     expect(localMembership.localMemberState$.isStopped).toBe(false);
     scope.end();
@@ -547,7 +540,7 @@ describe("LocalMembership", () => {
       (localMembership.localMemberState$.value as any).media,
     ).toStrictEqual(PublishState.Publishing);
     // stop all tracks after ending scopes
-    expect(publishers[0].stopPublishing).toHaveBeenCalled();
+    expect(publishers[0].destroy).toHaveBeenCalled();
     // expect(publishers[0].stopTracks).toHaveBeenCalled();
   });
   // TODO add tests for matrix local matrix participation.
