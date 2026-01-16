@@ -106,6 +106,7 @@ export const widget = ((): WidgetHelpers | null => {
         EventType.RoomRedaction,
         ElementCallReactionEventType,
         EventType.RTCDecline,
+        EventType.RTCMembership,
       ];
 
       const sendState = [
@@ -150,6 +151,8 @@ export const widget = ((): WidgetHelpers | null => {
           turnServers: false,
           sendDelayedEvents: true,
           updateDelayedEvents: true,
+          sendSticky: true,
+          receiveSticky: true,
         },
         roomId,
         {
