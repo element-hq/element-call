@@ -310,13 +310,17 @@ export const createLocalMembership$ = ({
   //  - destruct all current streams
   //  - overwrite current publisher
   scope.reconcile(localConnection$, async (connection) => {
+    logger.info(
+      "reconcile based on new localConnection:",
+      connection?.transport.livekit_service_url,
+    );
     if (connection !== null) {
       const publisher = createPublisherFactory(connection);
       publisher$.next(publisher);
+
       // Clean-up callback
       return Promise.resolve(async (): Promise<void> => {
-        await publisher.stopPublishing();
-        await publisher.stopTracks();
+        await publisher.destroy();
       });
     }
   });
