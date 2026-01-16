@@ -207,14 +207,29 @@ export class TestHelpers {
    * Opens the widget and then goes to the settings to set the RTC mode.
    * then closes the widget lobby.
    *
+   * intended to be used before joining!
+   *
    * WORKS IF A ROOM IS CURRENTLY OPENED IN THE PAGE
    */
-  public static async setEmbeddedElementCallRtcMode(
+  public static async openWidgetSetEmbeddedElementCallRtcModeCloseWidget(
     page: Page,
     mode: RtcMode,
   ): Promise<void> {
     await page.getByRole("button", { name: "Video call" }).click();
     await page.getByRole("menuitem", { name: "Element Call" }).click();
+    await TestHelpers.setEmbeddedElementCallRtcMode(page, mode);
+    await page.getByRole("button", { name: "Close lobby" }).click();
+  }
+  /**
+   * Goes to the settings to set the RTC mode.
+   * then closes the settings modal.
+   *
+   * WORKS IF A ROOM IS CURRENTLY SHOWING THE EC WIDGET
+   */
+  public static async setEmbeddedElementCallRtcMode(
+    page: Page,
+    mode: RtcMode,
+  ): Promise<void> {
     const iframe = page.locator('iframe[title="Element Call"]').contentFrame();
 
     await iframe.getByRole("button", { name: "Settings" }).click();
@@ -234,7 +249,6 @@ export class TestHelpers {
       await iframe.getByText("Compatibility: state events").click();
     }
     await iframe.getByTestId("modal_close").click();
-    await page.getByRole("button", { name: "Close lobby" }).click();
   }
 
   /**
