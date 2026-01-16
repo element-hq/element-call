@@ -155,6 +155,16 @@ export class Connection {
       const { url, jwt, livekitAlias } =
         this.existingSFUConfig ??
         (await this.getSFUConfigForRemoteConnection());
+      this.logger.debug(
+        "Starting Connection to: ",
+        this.transport.livekit_service_url,
+        "jwt: ",
+        jwt,
+        "wss: ",
+        url,
+        "livekitAlias: ",
+        livekitAlias,
+      );
       this._livekitAlias = livekitAlias;
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
@@ -171,8 +181,11 @@ export class Connection {
         });
 
       try {
+        this.logger.info(`livekitRoom.connect ${url}`);
         await this.livekitRoom.connect(url, jwt);
+        this.logger.info(`livekitRoom.connect SUCCESS ${url}`);
       } catch (e) {
+        this.logger.info(`livekitRoom.connect FAILED ${url}`, e);
         // LiveKit uses 503 to indicate that the server has hit its track limits.
         // https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
         // It also errors with a status code of 200 (yes, really) for room
@@ -233,12 +246,15 @@ export class Connection {
    */
   public async stop(): Promise<void> {
     this.logger.debug(
-      `Stopping connection to ${this.transport.livekit_service_url}`,
+      `stop: disconnecing from lk room ${this.transport.livekit_service_url}`,
     );
     if (this.stopped) return;
     await this.livekitRoom.disconnect();
     this._state$.next(ConnectionState.Stopped);
     this.stopped = true;
+    this.logger.debug(
+      `stop: DONE disconnecing from lk room ${this.transport.livekit_service_url}`,
+    );
   }
 
   private readonly client: OpenIDClientParts;
@@ -255,9 +271,11 @@ export class Connection {
   public constructor(opts: ConnectionOpts, logger: Logger) {
     this.ownMembershipIdentity = opts.ownMembershipIdentity;
     this.existingSFUConfig = opts.existingSFUConfig;
-    this.logger = logger.getChild("[Connection]");
+    this.logger = logger.getChild(
+      "[Connection " + opts.transport.livekit_service_url + "]",
+    );
     this.logger.info(
-      `Creating new connection to ${opts.transport.livekit_service_url} ${opts.transport.livekit_alias}`,
+      `constructor: ${opts.transport.livekit_service_url} alias: ${opts.transport.livekit_alias} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
     );
     const { transport, client, scope } = opts;
 
