@@ -41,10 +41,13 @@ import {
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
+  MembershipManagerEvent,
   type LivekitTransport,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
+import { v4 as uuidv4 } from "uuid";
 
 import {
   LocalUserMediaViewModel,
@@ -98,7 +101,7 @@ import {
   type SpotlightLandscapeLayoutMedia,
   type SpotlightPortraitLayoutMedia,
 } from "../layout-types.ts";
-import { ElementCallError } from "../../utils/errors.ts";
+import { ElementCallError, UnknownCallError } from "../../utils/errors.ts";
 import { type ObservableScope } from "../ObservableScope.ts";
 import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
 import {
@@ -106,18 +109,24 @@ import {
   enterRTCSession,
   TransportState,
 } from "./localMember/LocalMember.ts";
-import { createLocalTransport$ } from "./localMember/LocalTransport.ts";
+import {
+  createLocalTransport$,
+  JwtEndpointVersion,
+} from "./localMember/LocalTransport.ts";
 import {
   createMemberships$,
   membershipsAndTransports$,
 } from "../SessionBehaviors.ts";
 import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
-import { createConnectionManager$ } from "./remoteMembers/ConnectionManager.ts";
+import {
+  type ConnectionManagerData,
+  createConnectionManager$,
+} from "./remoteMembers/ConnectionManager.ts";
 import {
   createMatrixLivekitMembers$,
-  type TaggedParticipant,
   type LocalMatrixLivekitMember,
   type RemoteMatrixLivekitMember,
+  type MatrixLivekitMember,
 } from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
   type AutoLeaveReason,
@@ -261,6 +270,7 @@ export interface CallViewModel {
    *    multiple devices.
    */
   participantCount$: Behavior<number>;
+  allConnections$: Behavior<ConnectionManagerData>;
   /** Participants sorted by livekit room so they can be used in the audio rendering */
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
   userMedia$: Behavior<UserMedia[]>;
@@ -381,8 +391,11 @@ export function createCallViewModel$(
   trackProcessorState$: Behavior<ProcessorState>,
 ): CallViewModel {
   const client = matrixRoom.client;
-  const userId = client.getUserId()!;
-  const deviceId = client.getDeviceId()!;
+  const userId = client.getUserId();
+  const deviceId = client.getDeviceId();
+  if (!(userId && deviceId))
+    throw new UnknownCallError(new Error("userId and deviceId are required"));
+
   const livekitKeyProvider = getE2eeKeyProvider(
     options.encryptionSystem,
     matrixRTCSession,
@@ -415,11 +428,37 @@ export function createCallViewModel$(
     memberships$,
   );
 
+  const ownMembershipIdentity: CallMembershipIdentityParts = {
+    userId,
+    deviceId,
+    // This will only be consumed by the sticky membership manager. So it has no impact on legacy calls.
+    memberId: uuidv4(),
+  };
+
   const localTransport$ = createLocalTransport$({
     scope: scope,
     memberships$: memberships$,
+    ownMembershipIdentity,
     client,
+    delayId$: scope.behavior(
+      (
+        fromEvent(
+          matrixRTCSession,
+          MembershipManagerEvent.DelayIdChanged,
+        ) as Observable<string | undefined>
+      ).pipe(map((v) => v ?? null)),
+      matrixRTCSession.delayId ?? null,
+    ),
     roomId: matrixRoom.roomId,
+    forceJwtEndpoint$: scope.behavior(
+      matrixRTCMode$.pipe(
+        map((v) =>
+          v === MatrixRTCMode.Matrix_2_0
+            ? JwtEndpointVersion.Matrix_2_0
+            : JwtEndpointVersion.Legacy,
+        ),
+      ),
+    ),
     useOldestMember$: scope.behavior(
       matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
     ),
@@ -439,30 +478,20 @@ export function createCallViewModel$(
   const connectionManager = createConnectionManager$({
     scope: scope,
     connectionFactory: connectionFactory,
-    inputTransports$: scope.behavior(
-      combineLatest(
-        [
-          localTransport$.pipe(
-            catchError((e: unknown) => {
-              logger.info(
-                "dont pass local transport to createConnectionManager$. localTransport$ threw an error",
-                e,
-              );
-              return of(null);
-            }),
-          ),
-          membershipsAndTransports.transports$,
-        ],
-        (localTransport, transports) => {
-          const localTransportAsArray = localTransport ? [localTransport] : [];
-          return transports.mapInner((transports) => [
-            ...localTransportAsArray,
-            ...transports,
-          ]);
-        },
+    localTransport$: scope.behavior(
+      localTransport$.pipe(
+        catchError((e: unknown) => {
+          logger.info(
+            "could not pass local transport to createConnectionManager$. localTransport$ threw an error",
+            e,
+          );
+          return of(null);
+        }),
       ),
     ),
-    logger,
+    remoteTransports$: membershipsAndTransports.transports$,
+    logger: logger,
+    ownMembershipIdentity,
   });
 
   const matrixLivekitMembers$ = createMatrixLivekitMembers$({
@@ -493,6 +522,7 @@ export function createCallViewModel$(
     joinMatrixRTC: (transport: LivekitTransport) => {
       return enterRTCSession(
         matrixRTCSession,
+        ownMembershipIdentity,
         transport,
         connectOptions$.value,
       );
@@ -604,15 +634,14 @@ export function createCallViewModel$(
     ),
   );
 
+  const allConnections$ = scope.behavior(
+    connectionManager.connectionManagerData$.pipe(map((d) => d.value)),
+  );
   const livekitRoomItems$ = scope.behavior(
     matrixLivekitMembers$.pipe(
-      tap((val) => {
-        logger.debug("matrixLivekitMembers$ updated", val.value);
-      }),
-      switchMap((membersWithEpoch) => {
-        const members = membersWithEpoch.value;
+      switchMap((members) => {
         const a$ = combineLatest(
-          members.map((member) =>
+          members.value.map((member) =>
             combineLatest([member.connection$, member.participant.value$]).pipe(
               map(([connection, participant]) => {
                 // do not render audio for local participant
@@ -685,58 +714,41 @@ export function createCallViewModel$(
       generateItems(
         function* ([
           localMatrixLivekitMember,
-          { value: matrixLivekitMembers },
+          matrixLivekitMembers,
           duplicateTiles,
         ]) {
-          let localParticipantId: string | undefined = undefined;
-          // add local member if available
-          if (localMatrixLivekitMember) {
+          const computeMediaId = (m: MatrixLivekitMember): string =>
+            `${m.userId}:${m.membership$.value.deviceId}`;
+
+          const localUserMediaId = localMatrixLivekitMember
+            ? computeMediaId(localMatrixLivekitMember)
+            : undefined;
+
+          const localAsArray = localMatrixLivekitMember
+            ? [localMatrixLivekitMember]
+            : [];
+          const remoteWithoutLocal = matrixLivekitMembers.value.filter(
+            (m) => computeMediaId(m) !== localUserMediaId,
+          );
+          const allMatrixLivekitMembers = [
+            ...localAsArray,
+            ...remoteWithoutLocal,
+          ];
+
+          for (const matrixLivekitMember of allMatrixLivekitMembers) {
             const { userId, participant, connection$, membership$ } =
-              localMatrixLivekitMember;
-            localParticipantId = `${userId}:${membership$.value.deviceId}`; // should be membership$.value.membershipID which is not optional
-            // const participantId = membership$.value.membershipID;
-            if (localParticipantId) {
-              for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
-                yield {
-                  keys: [
-                    dup,
-                    localParticipantId,
-                    userId,
-                    participant satisfies TaggedParticipant as TaggedParticipant, // Widen the type safely
-                    connection$,
-                  ],
-                  data: undefined,
-                };
-              }
-            }
-          }
-          // add remote members that are available
-          for (const {
-            userId,
-            participant,
-            connection$,
-            membership$,
-          } of matrixLivekitMembers) {
-            const participantId = `${userId}:${membership$.value.deviceId}`;
-            if (participantId === localParticipantId) continue;
-            // const participantId = membership$.value?.identity;
+              matrixLivekitMember;
+            const rtcId = membership$.value.rtcBackendIdentity; // rtcBackendIdentity
+            const mediaId = computeMediaId(matrixLivekitMember);
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
-                keys: [dup, participantId, userId, participant, connection$],
+                keys: [dup, mediaId, userId, participant, connection$, rtcId],
                 data: undefined,
               };
             }
           }
         },
-        (
-          scope,
-          _data$,
-          dup,
-          participantId,
-          userId,
-          participant,
-          connection$,
-        ) => {
+        (scope, _, dup, mediaId, userId, participant, connection$, rtcId) => {
           const livekitRoom$ = scope.behavior(
             connection$.pipe(map((c) => c?.livekitRoom)),
           );
@@ -751,8 +763,9 @@ export function createCallViewModel$(
 
           return new UserMedia(
             scope,
-            `${participantId}:${dup}`,
+            `${mediaId}:${dup}`,
             userId,
+            rtcId,
             participant,
             options.encryptionSystem,
             livekitRoom$,
@@ -761,8 +774,8 @@ export function createCallViewModel$(
             localMembership.reconnecting$,
             displayName$,
             matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
-            handsRaised$.pipe(map((v) => v[participantId]?.time ?? null)),
-            reactions$.pipe(map((v) => v[participantId] ?? undefined)),
+            handsRaised$.pipe(map((v) => v[mediaId]?.time ?? null)),
+            reactions$.pipe(map((v) => v[mediaId] ?? undefined)),
           );
         },
       ),
@@ -1503,6 +1516,7 @@ export function createCallViewModel$(
       ),
       null,
     ),
+    allConnections$,
     participantCount$: participantCount$,
     handsRaised$: handsRaised$,
     reactions$: reactions$,

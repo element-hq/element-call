@@ -3,7 +3,7 @@ networks:
 
 services:
   auth-service:
-    image: ghcr.io/element-hq/lk-jwt-service:latest-ci
+    image: ghcr.io/element-hq/lk-jwt-service:sha-f8ddd00
     pull_policy: always
     hostname: auth-server
     environment:
@@ -25,7 +25,7 @@ services:
       - ecbackend
 
   auth-service-1:
-    image: ghcr.io/element-hq/lk-jwt-service:latest-ci
+    image: ghcr.io/element-hq/lk-jwt-service:sha-f8ddd00
     pull_policy: always
     hostname: auth-server-1
     environment:
@@ -88,7 +88,7 @@ services:
 
   synapse:
     hostname: homeserver
-    image: docker.io/matrixdotorg/synapse:latest
+    image: ghcr.io/element-hq/synapse:pr-18968-dcb7678281bc02d4551043a6338fe5b7e6aa47ce
     pull_policy: always
     environment:
       - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml
@@ -106,7 +106,7 @@ services:
 
   synapse-1:
     hostname: homeserver-1
-    image: docker.io/matrixdotorg/synapse:latest
+    image: ghcr.io/element-hq/synapse:pr-18968-dcb7678281bc02d4551043a6338fe5b7e6aa47ce
     pull_policy: always
     environment:
       - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml

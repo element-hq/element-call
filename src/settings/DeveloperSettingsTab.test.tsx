@@ -7,9 +7,9 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, waitFor } from "@testing-library/react";
+import { type Room as LivekitRoom } from "livekit-client";
 
 import type { MatrixClient } from "matrix-js-sdk";
-import type { Room as LivekitRoom } from "livekit-client";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
 
 // Mock url params hook to avoid environment-dependent snapshot churn.
@@ -25,17 +25,20 @@ function createMockLivekitRoom(
   wsUrl: string,
   serverInfo: object,
   metadata: string,
-): { isLocal: boolean; url: string; room: LivekitRoom } {
+): { isLocal: boolean; url: string; room: LivekitRoom; livekitAlias: string } {
   const mockRoom = {
     serverInfo,
     metadata,
     engine: { client: { ws: { url: wsUrl } } },
+    localParticipant: { identity: "localParticipantIdentity" },
+    remoteParticipants: new Map(),
   } as unknown as LivekitRoom;
 
   return {
     isLocal: true,
     url: wsUrl,
     room: mockRoom,
+    livekitAlias: "TestAlias",
   };
 }
 
@@ -59,6 +62,7 @@ describe("DeveloperSettingsTab", () => {
       room: LivekitRoom;
       url: string;
       isLocal?: boolean;
+      livekitAlias: string;
     }[] = [
       createMockLivekitRoom(
         "wss://local-sfu.example.org",
@@ -67,8 +71,11 @@ describe("DeveloperSettingsTab", () => {
       ),
       {
         isLocal: false,
+        livekitAlias: "TestAlias2",
         url: "wss://remote-sfu.example.org",
         room: {
+          localParticipant: { identity: "localParticipantIdentity" },
+          remoteParticipants: new Map(),
           serverInfo: { region: "remote", version: "4.5.6" },
           metadata: "remote-metadata",
           engine: { client: { ws: { url: "wss://remote-sfu.example.org" } } },

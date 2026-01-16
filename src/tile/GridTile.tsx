@@ -113,6 +113,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
     },
     [vm],
   );
+  const rtcBackendIdentity = vm.rtcBackendIdentity;
   const handRaised = useBehavior(vm.handRaised$);
   const reaction = useBehavior(vm.reaction$);
 
@@ -200,6 +201,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       focusUrl={focusUrl}
       audioStreamStats={audioStreamStats}
       videoStreamStats={videoStreamStats}
+      rtcBackendIdentity={rtcBackendIdentity}
       {...props}
     />
   );

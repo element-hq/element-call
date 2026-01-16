@@ -152,6 +152,40 @@ handle {
 }
 ```
 
+Using Haproxy, you can achieve this by:
+
+```
+# Frontend
+    # Match /livekit/sfu/ path
+    acl is_sfu path_beg -i /livekit/sfu/
+    use_backend sfu_backend if is_sfu matrixrtc_domain
+
+    acl is_mxrtc_auth path_beg -i /sfu/get
+    use_backend mxrtc_auth_backend if is_mxrtc_auth matrixrtc_domain
+
+# Backend
+## MatrixRTC backend
+backend sfu_backend
+    server livekit 127.0.0.1:7880
+    http-request set-path %[path,regsub(^/livekit/sfu/,/)]
+    http-request set-header Host %[req.hdr(host)]
+    timeout server 120s
+    # WebSocket support
+    option forwardfor
+    option http-server-close
+    option http-buffer-request
+
+backend mxrtc_auth_backend
+    server sfu 127.0.0.1:8070
+    http-request set-header Host %[req.hdr(host)]
+    timeout server 120s
+    # WebSocket support
+    option forwardfor
+    option http-server-close
+    option http-buffer-request
+
+```
+
 #### MatrixRTC backend announcement
 
 > [!IMPORTANT]

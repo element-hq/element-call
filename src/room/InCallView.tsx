@@ -798,6 +798,8 @@ export const InCallView: FC<InCallViewProps> = ({
     </div>
   );
 
+  const allConnections = useBehavior(vm.allConnections$);
+
   return (
     <div
       className={styles.inRoom}
@@ -836,8 +838,15 @@ export const InCallView: FC<InCallViewProps> = ({
             onDismiss={closeSettings}
             tab={settingsTab}
             onTabChange={setSettingsTab}
-            // TODO expose correct data to setttings modal
-            livekitRooms={[]}
+            livekitRooms={allConnections
+              .getConnections()
+              .map((connectionItem) => ({
+                room: connectionItem.livekitRoom,
+                livekitAlias: connectionItem.livekitAlias,
+                // TODO compute is local or tag it in the livekit room items already
+                isLocal: undefined,
+                url: connectionItem.transport.livekit_service_url,
+              }))}
           />
         </>
       )}

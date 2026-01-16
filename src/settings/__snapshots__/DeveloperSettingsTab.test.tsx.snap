@@ -234,12 +234,12 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         class="_inline-field-control_19upo_44"
       >
         <div
-          class="_container_1e0uz_10"
+          class="_container_1qhtc_10"
         >
           <input
             aria-describedby="radix-_r_9_ radix-_r_b_ radix-_r_d_"
             checked=""
-            class="_input_1e0uz_18"
+            class="_input_1qhtc_18"
             id="radix-_r_8_"
             name="_r_0_"
             title=""
@@ -247,7 +247,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
             value="legacy"
           />
           <div
-            class="_ui_1e0uz_19"
+            class="_ui_1qhtc_19"
           />
         </div>
       </div>
@@ -275,19 +275,19 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         class="_inline-field-control_19upo_44"
       >
         <div
-          class="_container_1e0uz_10"
+          class="_container_1qhtc_10"
         >
           <input
             aria-describedby="radix-_r_9_ radix-_r_b_ radix-_r_d_"
-            class="_input_1e0uz_18"
+            class="_input_1qhtc_18"
             id="radix-_r_a_"
             name="_r_0_"
             title=""
             type="radio"
-            value="compatibil"
+            value="compatibility"
           />
           <div
-            class="_ui_1e0uz_19"
+            class="_ui_1qhtc_19"
           />
         </div>
       </div>
@@ -315,11 +315,11 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         class="_inline-field-control_19upo_44"
       >
         <div
-          class="_container_1e0uz_10"
+          class="_container_1qhtc_10"
         >
           <input
             aria-describedby="radix-_r_9_ radix-_r_b_ radix-_r_d_"
-            class="_input_1e0uz_18"
+            class="_input_1qhtc_18"
             id="radix-_r_c_"
             name="_r_0_"
             title=""
@@ -327,7 +327,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
             value="matrix_2_0"
           />
           <div
-            class="_ui_1e0uz_19"
+            class="_ui_1qhtc_19"
           />
         </div>
       </div>
@@ -349,46 +349,86 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </div>
     </div>
   </form>
-  <h3>
-    LiveKit SFU: wss://local-sfu.example.org
-  </h3>
-  <p>
-    ws-url: 
-    wss://local-sfu.example.org/
-  </p>
-  <p>
-    LiveKit Server Info
-    (
-    local
-    )
-  </p>
-  <pre
-    class="pre"
+  <div
+    class="livekit_room_box"
   >
-    {
+    <h4>
+      LiveKit SFU: wss://local-sfu.example.org
+    </h4>
+    <p>
+      LivekitAlias: 
+      TestAlias
+    </p>
+    <p>
+      ws-url: 
+      wss://local-sfu.example.org/
+    </p>
+    <p>
+      LiveKit Server Info
+      (
+      local
+      )
+    </p>
+    <pre
+      class="pre"
+    >
+      {
   "region": "local",
   "version": "1.2.3"
 }
-    local-metadata
-  </pre>
-  <h3>
-    LiveKit SFU: wss://remote-sfu.example.org
-  </h3>
-  <p>
-    LiveKit Server Info
-    (
-    remote
-    )
-  </p>
-  <pre
-    class="pre"
+      local-metadata
+    </pre>
+    <p>
+      Local Participant
+    </p>
+    <pre
+      class="pre"
+    >
+      localParticipantIdentity
+    </pre>
+    <p>
+      Remote Participants
+    </p>
+    <ul />
+  </div>
+  <div
+    class="livekit_room_box"
   >
-    {
+    <h4>
+      LiveKit SFU: wss://remote-sfu.example.org
+    </h4>
+    <p>
+      LivekitAlias: 
+      TestAlias2
+    </p>
+    <p>
+      LiveKit Server Info
+      (
+      remote
+      )
+    </p>
+    <pre
+      class="pre"
+    >
+      {
   "region": "remote",
   "version": "4.5.6"
 }
-    remote-metadata
-  </pre>
+      remote-metadata
+    </pre>
+    <p>
+      Local Participant
+    </p>
+    <pre
+      class="pre"
+    >
+      localParticipantIdentity
+    </pre>
+    <p>
+      Remote Participants
+    </p>
+    <ul />
+  </div>
   <p>
     Environment variables
   </p>
