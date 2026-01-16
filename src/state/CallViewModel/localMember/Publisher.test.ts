@@ -183,7 +183,6 @@ describe("Publisher", () => {
 
   beforeEach(() => {
     publisher = new Publisher(
-      scope,
       connection,
       mockMediaDevices({}),
       muteStates,
@@ -192,7 +191,9 @@ describe("Publisher", () => {
     );
   });
 
-  afterEach(() => {});
+  afterEach(async () => {
+    await publisher.destroy();
+  });
 
   it("Should not create tracks if started muted to avoid unneeded permission requests", async () => {
     const createTracksSpy = vi.spyOn(
@@ -267,13 +268,15 @@ describe("Publisher", () => {
     let publisher: Publisher;
     beforeEach(() => {
       publisher = new Publisher(
-        scope,
         connection,
         mockMediaDevices({}),
         muteStates,
         constant({ supported: false, processor: undefined }),
         logger,
       );
+    });
+    afterEach(async () => {
+      await publisher.destroy();
     });
 
     test.each([
@@ -320,7 +323,6 @@ describe("Bug fix", () => {
   it("wrongly publish tracks while muted", async () => {
     // setLogLevel(`debug`);
     const publisher = new Publisher(
-      scope,
       connection,
       mockMediaDevices({}),
       muteStates,
@@ -356,5 +358,6 @@ describe("Bug fix", () => {
       expect(track!.mute).toHaveBeenCalled();
       expect(track!.isMuted).toBe(true);
     }
+    await publisher.destroy();
   });
 });
