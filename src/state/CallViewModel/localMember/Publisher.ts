@@ -95,7 +95,7 @@ export class Publisher {
       await this.stopTracks();
       this.logger.info(`Done to stop tracks`);
     } catch (e) {
-      this.logger.error(`Failed to stop publishing: ${e}`);
+      this.logger.error(`Failed to stop tracks: ${e}`);
     }
   }
 
