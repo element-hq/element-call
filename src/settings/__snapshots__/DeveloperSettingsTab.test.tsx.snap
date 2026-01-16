@@ -356,6 +356,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       LiveKit SFU: wss://local-sfu.example.org
     </h4>
     <p>
+      LivekitAlias: 
+      TestAlias
+    </p>
+    <p>
       ws-url: 
       wss://local-sfu.example.org/
     </p>
@@ -393,6 +397,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     <h4>
       LiveKit SFU: wss://remote-sfu.example.org
     </h4>
+    <p>
+      LivekitAlias: 
+      TestAlias2
+    </p>
     <p>
       LiveKit Server Info
       (
