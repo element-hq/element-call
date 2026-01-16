@@ -12,7 +12,13 @@ import { SpaHelpers } from "./spa-helpers";
 test("One to One call using matrix rtc 2.0 aka sticky events", async ({
   browser,
   page,
+  browserName,
 }) => {
+  test.skip(
+    browserName === "firefox",
+    "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
+  );
+
   await page.goto("/");
 
   await SpaHelpers.createCall(page, "John Doe", "HelloCall", true, "2_0");
