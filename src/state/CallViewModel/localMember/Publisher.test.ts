@@ -183,7 +183,6 @@ describe("Publisher", () => {
 
   beforeEach(() => {
     publisher = new Publisher(
-      scope,
       connection,
       mockMediaDevices({}),
       muteStates,
@@ -192,7 +191,9 @@ describe("Publisher", () => {
     );
   });
 
-  afterEach(() => {});
+  afterEach(async () => {
+    await publisher.destroy();
+  });
 
   it("Should not create tracks if started muted to avoid unneeded permission requests", async () => {
     const createTracksSpy = vi.spyOn(
@@ -205,6 +206,38 @@ describe("Publisher", () => {
     await publisher.createAndSetupTracks();
 
     expect(createTracksSpy).not.toHaveBeenCalled();
+  });
+
+  it("should unsetHandler and stop tracks on destroy", async () => {
+    // setup all spies
+    const unsetVideoSpy = vi.spyOn(
+      (
+        publisher as unknown as {
+          muteStates: { video: { unsetHandler: () => void } };
+        }
+      ).muteStates.video,
+      "unsetHandler",
+    );
+    const unsetAudioSpy = vi.spyOn(
+      (
+        publisher as unknown as {
+          muteStates: { audio: { unsetHandler: () => void } };
+        }
+      ).muteStates.audio,
+      "unsetHandler",
+    );
+    const scopeEndSpy = vi.spyOn(
+      (publisher as unknown as { scope: { end: () => void } }).scope,
+      "end",
+    );
+    const stopTracksSpy = vi.spyOn(publisher, "stopTracks");
+    // destroy publisher
+    await publisher.destroy();
+
+    expect(stopTracksSpy).toHaveBeenCalledOnce();
+    expect(unsetVideoSpy).toHaveBeenCalledOnce();
+    expect(unsetAudioSpy).toHaveBeenCalledOnce();
+    expect(scopeEndSpy).toHaveBeenCalled();
   });
 
   it("Should minimize permission request by querying create at once", async () => {
@@ -267,13 +300,15 @@ describe("Publisher", () => {
     let publisher: Publisher;
     beforeEach(() => {
       publisher = new Publisher(
-        scope,
         connection,
         mockMediaDevices({}),
         muteStates,
         constant({ supported: false, processor: undefined }),
         logger,
       );
+    });
+    afterEach(async () => {
+      await publisher.destroy();
     });
 
     test.each([
@@ -320,7 +355,6 @@ describe("Bug fix", () => {
   it("wrongly publish tracks while muted", async () => {
     // setLogLevel(`debug`);
     const publisher = new Publisher(
-      scope,
       connection,
       mockMediaDevices({}),
       muteStates,
@@ -356,5 +390,6 @@ describe("Bug fix", () => {
       expect(track!.mute).toHaveBeenCalled();
       expect(track!.isMuted).toBe(true);
     }
+    await publisher.destroy();
   });
 });

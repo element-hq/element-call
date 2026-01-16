@@ -529,7 +529,6 @@ export function createCallViewModel$(
     },
     createPublisherFactory: (connection: Connection) => {
       return new Publisher(
-        scope,
         connection,
         mediaDevices,
         muteStates,
