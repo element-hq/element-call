@@ -209,10 +209,35 @@ describe("Publisher", () => {
   });
 
   it("should unsetHandler and stop tracks on destroy", async () => {
+    // setup all spies
+    const unsetVideoSpy = vi.spyOn(
+      (
+        publisher as unknown as {
+          muteStates: { video: { unsetHandler: () => void } };
+        }
+      ).muteStates.video,
+      "unsetHandler",
+    );
+    const unsetAudioSpy = vi.spyOn(
+      (
+        publisher as unknown as {
+          muteStates: { audio: { unsetHandler: () => void } };
+        }
+      ).muteStates.audio,
+      "unsetHandler",
+    );
+    const scopeEndSpy = vi.spyOn(
+      (publisher as unknown as { scope: { end: () => void } }).scope,
+      "end",
+    );
+    const stopTracksSpy = vi.spyOn(publisher, "stopTracks");
+    // destroy publisher
     await publisher.destroy();
-    expect(publisher.stopTracks).toHaveBeenCalled();
-    expect(    this.muteStates.audio.unsetHandler();
-    this.muteStates.video.unsetHandler();).toHaveBeenCalled();
+
+    expect(stopTracksSpy).toHaveBeenCalledOnce();
+    expect(unsetVideoSpy).toHaveBeenCalledOnce();
+    expect(unsetAudioSpy).toHaveBeenCalledOnce();
+    expect(scopeEndSpy).toHaveBeenCalled();
   });
 
   it("Should minimize permission request by querying create at once", async () => {
