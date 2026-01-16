@@ -37,8 +37,14 @@ modePairs.forEach(([rtcMode1, rtcMode2]) => {
 
       await florian.page.pause();
 
-      await TestHelpers.setEmbeddedElementCallRtcMode(florian.page, rtcMode1);
-      await TestHelpers.setEmbeddedElementCallRtcMode(timo.page, rtcMode2);
+      await TestHelpers.openWidgetSetEmbeddedElementCallRtcModeCloseWidget(
+        florian.page,
+        rtcMode1,
+      );
+      await TestHelpers.openWidgetSetEmbeddedElementCallRtcModeCloseWidget(
+        timo.page,
+        rtcMode2,
+      );
 
       await TestHelpers.startCallInCurrentRoom(florian.page, false);
       await TestHelpers.joinCallFromLobby(florian.page);
@@ -59,7 +65,7 @@ modePairs.forEach(([rtcMode1, rtcMode2]) => {
         // No one should be waiting for media
         await expect(frame.getByText("Waiting for media...")).not.toBeVisible();
 
-        // There should be 5 video elements, visible and autoplaying
+        // There should be 2 video elements, visible and autoplaying
         const videoElements = await frame.locator("video").all();
         expect(videoElements.length).toBe(2);
 
