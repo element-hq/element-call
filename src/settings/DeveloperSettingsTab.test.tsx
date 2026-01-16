@@ -36,7 +36,7 @@ function createMockLivekitRoom(
   wsUrl: string,
   serverInfo: object,
   metadata: string,
-): { isLocal: boolean; url: string; room: LivekitRoom } {
+): { isLocal: boolean; url: string; room: LivekitRoom; livekitAlias: string } {
   const mockRoom = {
     serverInfo,
     metadata,
@@ -49,6 +49,7 @@ function createMockLivekitRoom(
     isLocal: true,
     url: wsUrl,
     room: mockRoom,
+    livekitAlias: "TestAlias",
   };
 }
 
@@ -72,6 +73,7 @@ describe("DeveloperSettingsTab", () => {
       room: LivekitRoom;
       url: string;
       isLocal?: boolean;
+      livekitAlias: string;
     }[] = [
       createMockLivekitRoom(
         "wss://local-sfu.example.org",
@@ -80,6 +82,7 @@ describe("DeveloperSettingsTab", () => {
       ),
       {
         isLocal: false,
+        livekitAlias: "TestAlias2",
         url: "wss://remote-sfu.example.org",
         room: {
           localParticipant: { identity: "localParticipantIdentity" },
