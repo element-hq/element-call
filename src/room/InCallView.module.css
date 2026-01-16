@@ -51,8 +51,8 @@ Please see LICENSE in the repository root for full details.
 }
 
 .footer.hidden {
-  padding: 0;
   min-height: var(--cpd-space-6x);
+  padding: 0;
 }
 
 .footer.overlay {
