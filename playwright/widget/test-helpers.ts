@@ -248,7 +248,7 @@ export class TestHelpers {
           "Developer.elementCallUrl",
           null,
           "device",
-          "http://localhost:8080/room",
+          "https://call.m.localhost/room",
         );
       });
     } else {
