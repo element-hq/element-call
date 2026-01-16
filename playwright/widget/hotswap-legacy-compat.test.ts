@@ -27,9 +27,6 @@ import { HOST1, HOST2, TestHelpers } from "./test-helpers";
 widgetTest(
   `Test swapping publisher from ${HOST1} to ${HOST2}`,
   async ({ addUser, browserName }) => {
-    // ALWAYS SKIPT THE TEST SINCE IT IS EXPECTED TO FAIL.
-    // confirmed locally that its failing without: https://github.com/element-hq/element-call/pull/3675
-    test.skip(true);
     test.skip(
       browserName === "firefox",
       "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
