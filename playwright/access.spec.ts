@@ -7,6 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { expect, test } from "@playwright/test";
 
+import { SpaHelpers } from "./spa-helpers.ts";
+
 test("Sign up a new account, then login, then logout", async ({ browser }) => {
   const userId = `test_user-id_${Date.now()}`;
 
@@ -69,12 +71,7 @@ test("As a guest, create a call, share link and other join", async ({
   // ========
   // ARRANGE: The first user creates a call as guest, join it, then click the invite button to copy the invite link
   // ========
-  await creatorPage.getByTestId("home_callName").click();
-  await creatorPage.getByTestId("home_callName").fill("Welcome");
-  await creatorPage.getByTestId("home_displayName").click();
-  await creatorPage.getByTestId("home_displayName").fill("Inviter");
-  await creatorPage.getByTestId("home_go").click();
-  await expect(creatorPage.locator("video")).toBeVisible();
+  await SpaHelpers.createCall(creatorPage, "Inviter", "Welcome");
 
   // join
   await creatorPage.getByTestId("lobby_joinCall").click();
@@ -82,19 +79,7 @@ test("As a guest, create a call, share link and other join", async ({
   await creatorPage.getByRole("radio", { name: "Spotlight" }).check();
 
   // Get the invite link
-  await creatorPage.getByRole("button", { name: "Invite" }).click();
-  await expect(
-    creatorPage.getByRole("heading", { name: "Invite to this call" }),
-  ).toBeVisible();
-  await expect(creatorPage.getByRole("img", { name: "QR Code" })).toBeVisible();
-  await expect(creatorPage.getByTestId("modal_inviteLink")).toBeVisible();
-  await expect(creatorPage.getByTestId("modal_inviteLink")).toBeVisible();
-  await creatorPage.getByTestId("modal_inviteLink").click();
-
-  const inviteLink = (await creatorPage.evaluate(
-    "navigator.clipboard.readText()",
-  )) as string;
-  expect(inviteLink).toContain("room/#/");
+  const inviteLink = await SpaHelpers.getCallInviteLink(creatorPage);
 
   // ========
   // ACT: The other user use the invite link to join the call as a guest
@@ -103,13 +88,7 @@ test("As a guest, create a call, share link and other join", async ({
     reducedMotion: "reduce",
   });
   const guestPage = await guestInviteeContext.newPage();
-
-  await guestPage.goto(inviteLink);
-  await guestPage.getByTestId("joincall_displayName").fill("Invitee");
-  await expect(guestPage.getByTestId("joincall_joincall")).toBeVisible();
-  await guestPage.getByTestId("joincall_joincall").click();
-  await guestPage.getByTestId("lobby_joinCall").click();
-  await guestPage.getByRole("radio", { name: "Spotlight" }).check();
+  await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink);
 
   // ========
   // ASSERT: check that there are two members in the call
