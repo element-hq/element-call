@@ -200,6 +200,7 @@ export const createLocalMembership$ = ({
    * Fully connected
    */
   connected$: Behavior<boolean>;
+  internalLoggerRef: Logger;
 } => {
   const logger = parentLogger.getChild("[LocalMembership]");
   logger.debug(`Creating local membership..`);
@@ -520,12 +521,19 @@ export const createLocalMembership$ = ({
       }
     });
 
-  combineLatest([muteStates.video.enabled$, homeserverConnected.combined$])
-    .pipe(scope.bind())
-    .subscribe(([videoEnabled, connected]) => {
-      if (!connected) return;
-      void matrixRTCSession.updateCallIntent(videoEnabled ? "video" : "audio");
-    });
+  muteStates.video.enabled$.pipe(scope.bind()).subscribe((videoEnabled) => {
+    void matrixRTCSession
+      .updateCallIntent(videoEnabled ? "video" : "audio")
+      .catch((e) => {
+        if (e instanceof Error && e.message === "Not connected yet") {
+          logger.debug(
+            "'not connected yet' while updating the call intent (this is expected on startup)",
+          );
+        } else {
+          throw e;
+        }
+      });
+  });
 
   // Keep matrix rtc session in sync with localTransport$, connectRequested$
   scope.reconcile(
@@ -669,6 +677,7 @@ export const createLocalMembership$ = ({
     sharingScreen$,
     toggleScreenSharing,
     connection$: localConnection$,
+    internalLoggerRef: logger,
   };
 };
 

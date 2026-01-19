@@ -436,19 +436,6 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   useEffect(() => {
-    widget?.api.transport
-      .send(
-        gridMode === "grid"
-          ? ElementWidgetActions.TileLayout
-          : ElementWidgetActions.SpotlightLayout,
-        {},
-      )
-      .catch((e) => {
-        logger.error("Failed to send layout change to widget API", e);
-      });
-  }, [gridMode]);
-
-  useEffect(() => {
     if (widget) {
       const onTileLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
         setGridMode("grid");
