@@ -335,17 +335,22 @@ async function makeTransport(
   // MSC4143: Attempt to fetch transports from backend.
   if ("_unstable_getRTCTransports" in client) {
     try {
-      const selectedTransport = await getFirstUsableTransport(
-        await client._unstable_getRTCTransports(),
-      );
+      const transportList = await client._unstable_getRTCTransports();
+      const selectedTransport = await getFirstUsableTransport(transportList);
       if (selectedTransport) {
-        logger.info("Using backend-configured SFU", selectedTransport);
+        logger.info(
+          "Using backend-configured (client.getRTCTransports) SFU",
+          selectedTransport,
+        );
         return selectedTransport;
       }
     } catch (ex) {
       if (ex instanceof MatrixError && ex.httpStatus === 404) {
         // Expected, this is an unstable endpoint and it's not required.
-        logger.debug("Backend does not provide any RTC transports", ex);
+        // There will be expected 404 errors in the console. When we check if synapse supports the endpoint.
+        logger.debug(
+          "Matrix homeserver does not provide any RTC transports via `/rtc/transports` (will retry with well-known.)",
+        );
       } else if (ex instanceof FailToGetOpenIdToken) {
         throw ex;
       } else {
