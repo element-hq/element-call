@@ -48,6 +48,7 @@ import {
 import { type IWidgetApiRequest } from "matrix-widget-api";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { v4 as uuidv4 } from "uuid";
+import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 
 import {
   LocalUserMediaViewModel,
@@ -142,7 +143,6 @@ import {
 import { Publisher } from "./localMember/Publisher.ts";
 import { type Connection } from "./remoteMembers/Connection.ts";
 import { createLayoutModeSwitch } from "./LayoutSwitch.ts";
-import { IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 
 const logger = rootLogger.getChild("[CallViewModel]");
 //TODO
