@@ -448,15 +448,7 @@ export function createCallViewModel$(
           MembershipManagerEvent.DelayIdChanged,
           // The type of reemitted event includes the original emitted as the second arg.
         ) as Observable<[string | undefined, IMembershipManager]>
-      ).pipe(
-        map(([delayId]) => {
-          logger.debug(
-            "DelayId change emitted from matrixRTCSession: ",
-            delayId,
-          );
-          return delayId ?? null;
-        }),
-      ),
+      ).pipe(map(([delayId]) => delayId ?? null)),
       matrixRTCSession.delayId ?? null,
     ),
     roomId: matrixRoom.roomId,
