@@ -63,7 +63,6 @@ interface SpotlightItemBaseProps {
   mxcAvatarUrl: string | undefined;
   focusable: boolean;
   "aria-hidden"?: boolean;
-  localParticipant: boolean;
 }
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
@@ -188,7 +187,6 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     focusable,
     encryptionStatus,
     "aria-hidden": ariaHidden,
-    localParticipant: vm.local,
   };
 
   return vm instanceof ScreenShareViewModel ? (
