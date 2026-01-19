@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test, type Request } from "@playwright/test";
 
 import { SpaHelpers } from "./spa-helpers";
 
@@ -23,15 +23,10 @@ test("One to One call using matrix rtc 2.0 aka sticky events", async ({
 
   let androlHasSentStickyEvent = false;
 
-  await page.route(
-    "**/_matrix/client/v3/rooms/**/send/org.matrix.msc4143.rtc.member/**",
-    async (route, req) => {
-      androlHasSentStickyEvent = !!new URL(req.url()).searchParams.get(
-        "org.matrix.msc4354.sticky_duration_ms",
-      );
-      return route.continue();
-    },
-  );
+  await interceptEventSend(page, "org.matrix.msc4143.rtc.member", (req) => {
+    androlHasSentStickyEvent =
+      androlHasSentStickyEvent || isStickySend(req.url());
+  });
 
   await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
 
@@ -47,13 +42,12 @@ test("One to One call using matrix rtc 2.0 aka sticky events", async ({
 
   let pevaraHasSentStickyEvent = false;
 
-  await guestPage.route(
-    "**/_matrix/client/v3/rooms/**/send/org.matrix.msc4143.rtc.member/**",
-    async (route, req) => {
-      pevaraHasSentStickyEvent = !!new URL(req.url()).searchParams.get(
-        "org.matrix.msc4354.sticky_duration_ms",
-      );
-      return route.continue();
+  await interceptEventSend(
+    guestPage,
+    "org.matrix.msc4143.rtc.member",
+    (req) => {
+      pevaraHasSentStickyEvent =
+        pevaraHasSentStickyEvent || isStickySend(req.url());
     },
   );
 
@@ -71,3 +65,23 @@ test("One to One call using matrix rtc 2.0 aka sticky events", async ({
   expect(androlHasSentStickyEvent).toEqual(true);
   expect(pevaraHasSentStickyEvent).toEqual(true);
 });
+
+function isStickySend(url: string): boolean {
+  return !!new URL(url).searchParams.get(
+    "org.matrix.msc4354.sticky_duration_ms",
+  );
+}
+
+async function interceptEventSend(
+  page: Page,
+  eventType: string,
+  callback: (request: Request) => void,
+): Promise<void> {
+  await page.route(
+    `**/_matrix/client/v3/rooms/**/send/${eventType}/**`,
+    async (route, req) => {
+      callback(req);
+      return route.continue();
+    },
+  );
+}
