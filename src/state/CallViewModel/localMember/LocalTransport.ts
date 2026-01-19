@@ -347,10 +347,9 @@ async function makeTransport(
     } catch (ex) {
       if (ex instanceof MatrixError && ex.httpStatus === 404) {
         // Expected, this is an unstable endpoint and it's not required.
+        // There will be expected 404 errors in the console. When we check if synapse supports the endpoint.
         logger.debug(
-          "Backend does not provide any RTC transports (will retry with well-known.)",
-          "Your server admin needs to update the matrix homeserver.",
-          "(The 404 erros in the console above are expectet to check if synapse supports the endpoint.)",
+          "Matrix homeserver does not provide any RTC transports via `/rtc/transports` (will retry with well-known.)",
         );
       } else if (ex instanceof FailToGetOpenIdToken) {
         throw ex;
