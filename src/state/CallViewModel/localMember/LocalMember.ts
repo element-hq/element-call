@@ -266,11 +266,11 @@ export const createLocalMembership$ = ({
 
   mediaErrors$.pipe(scope.bind()).subscribe((error) => {
     if (error) {
+      // This is a MediaDevice error, can be PermissionDenied, NotFound, DeviceInUse, Other.
+      // Will also occurs if you cancel screen sharing browser prompt.
+      // This is not necessarily fatal, since the user might be able to join without media.
+      // XXX We might want to give some user feedback here to let them know their media is not working.
       logger.error(`Failed to create local tracks:`, error);
-      setMatrixError(
-        // TODO is it fatal? Do we need to create a new Specialized Error?
-        new UnknownCallError(new Error(`Media device error: ${error}`)),
-      );
     }
   });
   // MATRIX RELATED
