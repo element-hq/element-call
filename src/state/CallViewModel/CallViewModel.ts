@@ -48,6 +48,7 @@ import {
 import { type IWidgetApiRequest } from "matrix-widget-api";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { v4 as uuidv4 } from "uuid";
+import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 
 import {
   LocalUserMediaViewModel,
@@ -445,8 +446,9 @@ export function createCallViewModel$(
         fromEvent(
           matrixRTCSession,
           MembershipManagerEvent.DelayIdChanged,
-        ) as Observable<string | undefined>
-      ).pipe(map((v) => v ?? null)),
+          // The type of reemitted event includes the original emitted as the second arg.
+        ) as Observable<[string | undefined, IMembershipManager]>
+      ).pipe(map(([delayId]) => delayId ?? null)),
       matrixRTCSession.delayId ?? null,
     ),
     roomId: matrixRoom.roomId,
