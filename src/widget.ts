@@ -25,8 +25,6 @@ export enum ElementWidgetActions {
   JoinCall = "io.element.join",
   HangupCall = "im.vector.hangup",
   Close = "io.element.close",
-  TileLayout = "io.element.tile_layout",
-  SpotlightLayout = "io.element.spotlight_layout",
   // This can be sent as from or to widget
   // fromWidget: updates the client about the current device mute state
   // toWidget: the client requests a specific device mute configuration
@@ -83,8 +81,6 @@ export const widget = ((): WidgetHelpers | null => {
         WidgetApiToWidgetAction.ThemeChange,
         ElementWidgetActions.JoinCall,
         ElementWidgetActions.HangupCall,
-        ElementWidgetActions.TileLayout,
-        ElementWidgetActions.SpotlightLayout,
         ElementWidgetActions.DeviceMute,
       ].forEach((action) => {
         api.on(`action:${action}`, (ev: CustomEvent<IWidgetApiRequest>) => {
