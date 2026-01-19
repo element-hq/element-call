@@ -177,8 +177,11 @@ export const createLocalTransport$ = ({
       switchMap(([customUrl, delayId, forceEndpoint]) => {
         logger.info(
           "Creating preferred transport based on: ",
+          "customUrl: ",
           customUrl,
+          "delayId: ",
           delayId,
+          "forceEndpoint: ",
           forceEndpoint,
         );
         return from(

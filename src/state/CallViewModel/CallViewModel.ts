@@ -142,6 +142,7 @@ import {
 import { Publisher } from "./localMember/Publisher.ts";
 import { type Connection } from "./remoteMembers/Connection.ts";
 import { createLayoutModeSwitch } from "./LayoutSwitch.ts";
+import { IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 
 const logger = rootLogger.getChild("[CallViewModel]");
 //TODO
@@ -445,8 +446,17 @@ export function createCallViewModel$(
         fromEvent(
           matrixRTCSession,
           MembershipManagerEvent.DelayIdChanged,
-        ) as Observable<string | undefined>
-      ).pipe(map((v) => v ?? null)),
+          // The type of reemitted event includes the original emitted as the second arg.
+        ) as Observable<[string | undefined, IMembershipManager]>
+      ).pipe(
+        map(([delayId]) => {
+          logger.debug(
+            "DelayId change emitted from matrixRTCSession: ",
+            delayId,
+          );
+          return delayId ?? null;
+        }),
+      ),
       matrixRTCSession.delayId ?? null,
     ),
     roomId: matrixRoom.roomId,
