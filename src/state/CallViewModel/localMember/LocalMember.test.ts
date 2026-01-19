@@ -194,8 +194,8 @@ describe("LocalMembership", () => {
       matrixRTCMode: MatrixRTCMode.Matrix_2_0,
     }),
     matrixRTCSession: {
-      updateCallIntent: () => {},
-      leaveRoomSession: () => {},
+      updateCallIntent: vi.fn().mockReturnValue(Promise.resolve()),
+      leaveRoomSession: vi.fn(),
     } as unknown as MatrixRTCSession,
     muteStates: mockMuteStates(),
     trackProcessorState$: constant({
@@ -242,6 +242,37 @@ describe("LocalMembership", () => {
         e: expect.toSatisfy((e) => e instanceof MatrixRTCTransportMissingError),
       });
     });
+  });
+
+  it("logs if callIntent cannot be updated", async () => {
+    const scope = new ObservableScope();
+
+    const localTransport$ = new BehaviorSubject(aTransport);
+    const mockConnectionManager = {
+      transports$: constant(new Epoch([])),
+      connectionManagerData$: constant(new Epoch(new ConnectionManagerData())),
+    };
+    async function reject(): Promise<void> {
+      return Promise.reject(new Error("Not connected yet"));
+    }
+    const localMembership = createLocalMembership$({
+      scope,
+      ...defaultCreateLocalMemberValues,
+      matrixRTCSession: {
+        updateCallIntent: vi.fn().mockImplementation(reject),
+        leaveRoomSession: vi.fn(),
+      },
+      connectionManager: mockConnectionManager,
+      localTransport$,
+    });
+    const expextedLog =
+      "'not connected yet' while updating the call intent (this is expected on startup)";
+    const internalLogger = vi.spyOn(localMembership.internalLoggerRef, "debug");
+
+    await flushPromises();
+    defaultCreateLocalMemberValues.muteStates.video.setEnabled$.value?.(true);
+    expect(internalLogger).toHaveBeenCalledWith(expextedLog);
+    scope.end();
   });
 
   const aTransport = {
