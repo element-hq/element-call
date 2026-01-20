@@ -5,15 +5,21 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, type Page, test, type Request } from "@playwright/test";
+import {
+  expect,
+  type Page,
+  test,
+  type Request,
+  type Browser,
+} from "@playwright/test";
 
 import { SpaHelpers } from "./spa-helpers";
 
-test("One to One call using matrix rtc 2.0 aka sticky events", async ({
-  browser,
-  page,
-  browserName,
-}) => {
+async function setupTwoUserSpaCall(
+  browser: Browser,
+  page: Page,
+  browserName: string,
+): Promise<{ guestPage: Page }> {
   test.skip(
     browserName === "firefox",
     "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
@@ -63,13 +69,49 @@ test("One to One call using matrix rtc 2.0 aka sticky events", async ({
     "Pevara",
     "2_0",
   );
+  // Assert both sides have sent sticky membership events
+  expect(androlHasSentStickyEvent).toEqual(true);
+  expect(pevaraHasSentStickyEvent).toEqual(true);
+
+  return { guestPage };
+}
+
+test("One to One call using matrix rtc 2.0 aka sticky events", async ({
+  browser,
+  page,
+  browserName,
+}) => {
+  const { guestPage } = await setupTwoUserSpaCall(browser, page, browserName);
+
+  await SpaHelpers.expectVideoTilesCount(page, 2);
+  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+});
+
+// This issue occurs when a member leave but does not clean up their sticky event.
+// If they rejoin they will use a new stickye key (stickyKey = member.id = UUID())
+// We end up with two memberships with the same user and device id. This previously
+// was a impossible case since that would be the same state event. Now its possible.
+// We need to ALWAYS key by userId, deviceId and member.id. This test checks that.
+test("One to One rejoin after improper leave does not crash EC", async ({
+  browser,
+  page,
+  browserName,
+}) => {
+  const { guestPage } = await setupTwoUserSpaCall(browser, page, browserName);
 
   await SpaHelpers.expectVideoTilesCount(page, 2);
   await SpaHelpers.expectVideoTilesCount(guestPage, 2);
 
-  // Assert both sides have sent sticky membership events
-  expect(androlHasSentStickyEvent).toEqual(true);
-  expect(pevaraHasSentStickyEvent).toEqual(true);
+  await guestPage.reload();
+  await expect(guestPage.getByTestId("lobby_joinCall")).toBeVisible();
+
+  // Check if rejoining with the same browser context (device) breaks EC.
+  // This has happened on versions that do not consider the member.id as part of the key for a media tile.
+  await guestPage.getByTestId("lobby_joinCall").click();
+
+  // We cannot use the `expectVideoTilesCount` helper here since one of them is expected to show waiting for media
+  await expect(page.getByTestId("videoTile")).toHaveCount(3);
+  await expect(guestPage.getByTestId("videoTile")).toHaveCount(2);
 });
 
 function isStickySend(url: string): boolean {
