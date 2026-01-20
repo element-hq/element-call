@@ -111,15 +111,23 @@ export function createMatrixLivekitMembers$({
               : null;
 
             yield {
-              keys: [membership.userId, membership.deviceId],
+              // This could also just be the memberId without the other fields.
+              // In theory we should never have the same memberId for different userIds (they are UUIDs)
+              // This still makes us resilient agains someone who intentionally tries to use the same memberId.
+              // If they want to do this they would now need to also use the same sender which is impossible.
+              keys: [
+                membership.userId,
+                membership.deviceId,
+                membership.memberId,
+              ],
               data: { membership, participant, connection },
             };
           }
         },
         // Each update where the key of the generator array do not change will result in updates to the `data$` observable in the factory.
-        (scope, data$, userId, deviceId) => {
+        (scope, data$, userId, deviceId, memberId) => {
           logger.debug(
-            `Generating member for livekitIdentity: ${data$.value.membership.rtcBackendIdentity}, userId:deviceId: ${userId}${deviceId}`,
+            `Generating member for livekitIdentity: ${data$.value.membership.rtcBackendIdentity},keys userId:deviceId:memberId ${userId}:${deviceId}:${memberId}`,
           );
           const { participant$, ...rest } = scope.splitBehavior(data$);
           // will only get called once per `participantId, userId` pair.
