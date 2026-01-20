@@ -23,10 +23,15 @@ test("One to One call using matrix rtc 2.0 aka sticky events", async ({
 
   let androlHasSentStickyEvent = false;
 
-  await interceptEventSend(page, "org.matrix.msc4143.rtc.member", (req) => {
-    androlHasSentStickyEvent =
-      androlHasSentStickyEvent || isStickySend(req.url());
-  });
+  await interceptEventSend(
+    page,
+    // This room is not encrypted, so the event is sent in clear
+    "org.matrix.msc4143.rtc.member",
+    (req) => {
+      androlHasSentStickyEvent =
+        androlHasSentStickyEvent || isStickySend(req.url());
+    },
+  );
 
   await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
 
@@ -44,6 +49,7 @@ test("One to One call using matrix rtc 2.0 aka sticky events", async ({
 
   await interceptEventSend(
     guestPage,
+    // This room is not encrypted, so the event is sent in clear
     "org.matrix.msc4143.rtc.member",
     (req) => {
       pevaraHasSentStickyEvent =
