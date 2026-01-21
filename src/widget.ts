@@ -19,12 +19,14 @@ import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { ElementCallReactionEventType } from "./reactions";
+import { ElementCallTerminateEventType } from "./callTermination";
 
 // Subset of the actions in element-web
 export enum ElementWidgetActions {
   JoinCall = "io.element.join",
   HangupCall = "im.vector.hangup",
   Close = "io.element.close",
+  TerminateCall = "io.element.terminate_call",
   // This can be sent as from or to widget
   // fromWidget: updates the client about the current device mute state
   // toWidget: the client requests a specific device mute configuration
@@ -105,6 +107,7 @@ export const widget = ((): WidgetHelpers | null => {
         EventType.Reaction,
         EventType.RoomRedaction,
         ElementCallReactionEventType,
+        ElementCallTerminateEventType,
         EventType.RTCDecline,
       ];
 

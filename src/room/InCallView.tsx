@@ -34,7 +34,7 @@ import { useTranslation } from "react-i18next";
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
 import {
-  EndCallButton,
+  EndCallMenuButton,
   MicButton,
   VideoButton,
   ShareScreenButton,
@@ -90,6 +90,7 @@ import {
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
+import { CallTerminationReader } from "../callTermination/CallTerminationReader";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
@@ -119,7 +120,7 @@ export interface ActiveCallProps extends Omit<
   e2eeSystem: EncryptionSystem;
   // TODO refactor those reasons into an enum
   onLeft: (
-    reason: "user" | "timeout" | "decline" | "allOthersLeft" | "error",
+    reason: "user" | "timeout" | "decline" | "allOthersLeft" | "terminated" | "error",
   ) => void;
 }
 
@@ -133,6 +134,11 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     logger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
     const reactionsReader = new ReactionsReader(scope, props.rtcSession);
+    const terminationReader = new CallTerminationReader(
+      scope,
+      props.rtcSession,
+      props.matrixRoom.client,
+    );
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
       urlParams;
     const vm = createCallViewModel$(
@@ -149,6 +155,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       },
       reactionsReader.raisedHands$,
       reactionsReader.reactions$,
+      terminationReader.termination$,
       scope.behavior(trackProcessorState$),
     );
     // TODO move this somewhere else once we use the callViewModel in the lobby as well!
@@ -713,13 +720,13 @@ export const InCallView: FC<InCallViewProps> = ({
     );
 
   buttons.push(
-    <EndCallButton
-      key="end_call"
-      onClick={function (): void {
-        vm.hangup();
-      }}
+    <EndCallMenuButton
+      key="end_call_menu"
+      onLeave={() => vm.hangup()}
+      onTerminate={() => void vm.terminateCall()}
+      participantCount={participantCount}
       onTouchEnd={onControlsTouchEnd}
-      data-testid="incall_leave"
+      data-testid="incall_end_call_menu"
     />,
   );
   const footer = (

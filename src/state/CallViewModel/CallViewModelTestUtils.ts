@@ -15,7 +15,7 @@ import {
   type Room as LivekitRoom,
 } from "livekit-client";
 import { SyncState } from "matrix-js-sdk/lib/sync";
-import { BehaviorSubject, type Observable, map, of } from "rxjs";
+import { BehaviorSubject, type Observable, map, of, NEVER } from "rxjs";
 import { onTestFinished, vi } from "vitest";
 import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
 import EventEmitter from "events";
@@ -24,6 +24,7 @@ import * as ComponentsCore from "@livekit/components-core";
 import type { CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { type RaisedHandInfo, type ReactionInfo } from "../../reactions";
+import { type TerminationEvent } from "../../callTermination";
 import {
   type CallViewModel,
   createCallViewModel$,
@@ -164,6 +165,8 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       {},
     );
     const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
+    // Use NEVER for termination$ since we don't need to test termination in most tests
+    const termination$ = NEVER as Observable<TerminationEvent>;
 
     const vm = createCallViewModel$(
       testScope(),
@@ -187,6 +190,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       },
       raisedHands$,
       reactions$,
+      termination$,
       new BehaviorSubject<ProcessorState>({
         processor: undefined,
         supported: undefined,

@@ -1,0 +1,28 @@
+/*
+Copyright 2024-2025 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.endCallButton > svg {
+  color: var(--stopgap-color-on-solid-accent);
+}
+
+.terminateItem {
+  color: var(--cpd-color-text-critical-primary);
+}
+
+.terminateItem.confirming {
+  animation: pulse 0.5s ease-in-out infinite alternate;
+  font-weight: 600;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.7;
+  }
+}

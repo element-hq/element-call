@@ -51,6 +51,11 @@ import { v4 as uuidv4 } from "uuid";
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 
 import {
+  ElementCallTerminateEventType,
+  type CallTerminateEventContent,
+  type TerminationEvent,
+} from "../../callTermination";
+import {
   LocalUserMediaViewModel,
   type MediaViewModel,
   type RemoteUserMediaViewModel,
@@ -219,9 +224,18 @@ export interface CallViewModel {
   /** Observable that emits when the user should leave the call (hangup pressed, widget action, error).
    * THIS DOES NOT LEAVE THE CALL YET. The only way to leave the call (send the hangup event) is by ending the scope.
    */
-  leave$: Observable<"user" | AutoLeaveReason>;
+  leave$: Observable<"user" | AutoLeaveReason | "terminated">;
   /** Call to initiate hangup. Use in conbination with reconnectino state track the async hangup process. */
   hangup: () => void;
+  /**
+   * Terminate the call for all participants.
+   * This sends a termination event to the room, causing all participants to leave.
+   */
+  terminateCall: () => Promise<void>;
+  /**
+   * Observable that emits when the call is terminated by another participant.
+   */
+  terminated$: Observable<TerminationEvent>;
 
   // joining
   join: () => void;
@@ -389,6 +403,7 @@ export function createCallViewModel$(
   options: CallViewModelOptions,
   handsRaisedSubject$: Observable<Record<string, RaisedHandInfo>>,
   reactionsSubject$: Observable<Record<string, ReactionInfo>>,
+  termination$: Observable<TerminationEvent>,
   trackProcessorState$: Behavior<ProcessorState>,
 ): CallViewModel {
   const client = matrixRoom.client;
@@ -864,10 +879,11 @@ export function createCallViewModel$(
           }),
         );
 
-  const leave$: Observable<"user" | "timeout" | "decline" | "allOthersLeft"> =
+  const leave$: Observable<"user" | "timeout" | "decline" | "allOthersLeft" | "terminated"> =
     merge(
       autoLeave$,
       merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
+      termination$.pipe(map(() => "terminated" as const)),
     ).pipe(scope.share);
 
   const spotlightSpeaker$ = scope.behavior<UserMediaViewModel | null>(
@@ -1493,6 +1509,21 @@ export function createCallViewModel$(
     ringOverlay$: ringOverlay$,
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
+    terminateCall: async (): Promise<void> => {
+      logger.info("Terminating call for all participants");
+      const content: CallTerminateEventContent = {
+        terminated_by: userId,
+        timestamp: Date.now(),
+      };
+      await client.sendEvent(
+        matrixRoom.roomId,
+        ElementCallTerminateEventType as any,
+        content,
+      );
+      // Also trigger local hangup
+      userHangup$.next();
+    },
+    terminated$: termination$,
     join: localMembership.requestJoinAndPublish,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,

@@ -138,8 +138,15 @@
     "overlay_title": "Handset Mode"
   },
   "hangup_button_label": "End call",
+  "leave_call_button": "Leave call",
+  "end_call_menu_label": "End call options",
   "header_label": "Element Call Home",
   "header_participants_label": "Participants",
+  "terminate_call_button": "End for everyone",
+  "terminate_call_confirm": "End call for {{count}} people?",
+  "terminate_call_confirm_button": "End call",
+  "call_terminated_by": "{{name}} ended the call",
+  "call_terminated_title": "Call ended",
   "invite_modal": {
     "link_copied_toast": "Link copied to clipboard",
     "title": "Invite to this call"

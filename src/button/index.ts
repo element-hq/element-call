@@ -6,5 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 export * from "./Button";
+export * from "./EndCallMenuButton";
 export * from "./LinkButton";
 export * from "./ReactionToggleButton";

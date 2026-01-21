@@ -50,6 +50,7 @@ import { getUrlParams } from "../src/UrlParams";
 import { MuteStates } from "../src/state/MuteStates";
 import { MediaDevices } from "../src/state/MediaDevices";
 import { E2eeType } from "../src/e2ee/e2eeType";
+import { CallTerminationReader } from "../src/callTermination/CallTerminationReader";
 import {
   currentAndPrev,
   logger,
@@ -105,6 +106,7 @@ export async function createMatrixRTCSdk(
   });
   const slot = { application, id };
   const rtcSession = new MatrixRTCSession(client, room, slot);
+  const terminationReader = new CallTerminationReader(scope, rtcSession, client);
   const callViewModel = createCallViewModel$(
     scope,
     rtcSession,
@@ -114,6 +116,7 @@ export async function createMatrixRTCSdk(
     { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } },
     of({}),
     of({}),
+    terminationReader.termination$,
     constant({ supported: false, processor: undefined }),
   );
   logger.info("CallViewModelCreated");

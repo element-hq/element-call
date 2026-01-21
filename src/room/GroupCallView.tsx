@@ -317,10 +317,12 @@ export const GroupCallView: FC<Props> = ({
   // TODO split this into leave and onDisconnect
   const onLeft = useCallback(
     (
-      reason: "timeout" | "user" | "allOthersLeft" | "decline" | "error",
+      reason: "timeout" | "user" | "allOthersLeft" | "decline" | "terminated" | "error",
     ): void => {
       let playSound: CallEventSounds = "left";
       if (reason === "timeout" || reason === "decline") playSound = reason;
+      // For terminated calls, use the same sound as regular leave
+      if (reason === "terminated") playSound = "left";
 
       setJoined(false);
       setLeft(true);
