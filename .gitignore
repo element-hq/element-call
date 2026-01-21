@@ -30,3 +30,9 @@ yarn-error.log
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# codex
+/AGENTS.md
+/.serena/*
+CLAUDE.md
+all-close-plan.md

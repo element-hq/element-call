@@ -1,0 +1,304 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-01-21T02:48:54+0800",
+  "project": {
+    "name": "element-call",
+    "description": "基于 Matrix 协议的去中心化视频会议解决方案",
+    "repository": "https://github.com/element-hq/element-call",
+    "language": "TypeScript",
+    "framework": "React 19 + Vite 7"
+  },
+  "scan": {
+    "completedAt": "2026-01-21T02:48:54+0800",
+    "estimatedTotalFiles": 350,
+    "scannedFiles": 180,
+    "coveragePercent": 51.4,
+    "truncated": false,
+    "strategy": "module-priority"
+  },
+  "modules": [
+    {
+      "path": "src/",
+      "name": "主应用源代码",
+      "claudeMd": "src/CLAUDE.md",
+      "entry": ["src/main.tsx", "src/App.tsx"],
+      "hasTests": true,
+      "coverage": {
+        "interface": true,
+        "tests": true,
+        "dataModel": true
+      }
+    },
+    {
+      "path": "src/state/",
+      "name": "状态管理模块",
+      "claudeMd": "src/state/CLAUDE.md",
+      "entry": ["src/state/CallViewModel/CallViewModel.ts", "src/state/MediaViewModel.ts"],
+      "hasTests": true,
+      "testFiles": [
+        "src/state/CallViewModel/CallViewModel.test.ts",
+        "src/state/MediaViewModel.test.ts",
+        "src/state/MuteStates.test.ts",
+        "src/state/ObservableScope.test.ts"
+      ],
+      "coverage": {
+        "interface": true,
+        "tests": true,
+        "dataModel": true
+      }
+    },
+    {
+      "path": "src/livekit/",
+      "name": "LiveKit 集成模块",
+      "claudeMd": "src/livekit/CLAUDE.md",
+      "entry": ["src/livekit/openIDSFU.ts"],
+      "hasTests": true,
+      "testFiles": [
+        "src/livekit/openIDSFU.test.ts",
+        "src/livekit/MatrixAudioRenderer.test.tsx"
+      ],
+      "coverage": {
+        "interface": true,
+        "tests": true,
+        "dataModel": false
+      }
+    },
+    {
+      "path": "src/e2ee/",
+      "name": "端到端加密模块",
+      "claudeMd": "src/e2ee/CLAUDE.md",
+      "entry": ["src/e2ee/matrixKeyProvider.ts", "src/e2ee/e2eeType.ts"],
+      "hasTests": true,
+      "testFiles": ["src/e2ee/matrixKeyProvider.test.ts"],
+      "coverage": {
+        "interface": true,
+        "tests": true,
+        "dataModel": true
+      }
+    },
+    {
+      "path": "src/analytics/",
+      "name": "数据分析模块",
+      "claudeMd": null,
+      "entry": ["src/analytics/PosthogAnalytics.ts"],
+      "hasTests": true,
+      "testFiles": ["src/analytics/PosthogAnalytics.test.ts"],
+      "coverage": {
+        "interface": false,
+        "tests": true,
+        "dataModel": false
+      }
+    },
+    {
+      "path": "src/otel/",
+      "name": "OpenTelemetry 追踪模块",
+      "claudeMd": null,
+      "entry": ["src/otel/otel.ts"],
+      "hasTests": true,
+      "testFiles": ["src/otel/otel.test.ts", "src/otel/ObjectFlattener.test.ts"],
+      "coverage": {
+        "interface": false,
+        "tests": true,
+        "dataModel": false
+      }
+    },
+    {
+      "path": "src/room/",
+      "name": "房间视图模块",
+      "claudeMd": null,
+      "entry": ["src/room/RoomPage.tsx", "src/room/GroupCallView.tsx"],
+      "hasTests": true,
+      "testFiles": [
+        "src/room/GroupCallView.test.tsx",
+        "src/room/InCallView.test.tsx",
+        "src/room/InviteModal.test.tsx"
+      ],
+      "coverage": {
+        "interface": false,
+        "tests": true,
+        "dataModel": false
+      }
+    },
+    {
+      "path": "src/settings/",
+      "name": "设置模块",
+      "claudeMd": null,
+      "entry": ["src/settings/SettingsModal.tsx"],
+      "hasTests": true,
+      "testFiles": [
+        "src/settings/DeveloperSettingsTab.test.tsx",
+        "src/settings/submit-rageshake.test.ts"
+      ],
+      "coverage": {
+        "interface": false,
+        "tests": true,
+        "dataModel": false
+      }
+    },
+    {
+      "path": "src/reactions/",
+      "name": "表情反应模块",
+      "claudeMd": null,
+      "entry": ["src/reactions/ReactionIndicator.tsx"],
+      "hasTests": true,
+      "testFiles": [
+        "src/reactions/RaisedHandIndicator.test.tsx",
+        "src/reactions/ReactionsReader.test.tsx"
+      ],
+      "coverage": {
+        "interface": false,
+        "tests": true,
+        "dataModel": false
+      }
+    },
+    {
+      "path": "src/tile/",
+      "name": "视频瓦片模块",
+      "claudeMd": null,
+      "entry": ["src/tile/GridTile.tsx", "src/tile/SpotlightTile.tsx"],
+      "hasTests": true,
+      "testFiles": ["src/tile/GridTile.test.tsx"],
+      "coverage": {
+        "interface": false,
+        "tests": true,
+        "dataModel": false
+      }
+    },
+    {
+      "path": "playwright/",
+      "name": "E2E 测试套件",
+      "claudeMd": "playwright/CLAUDE.md",
+      "entry": ["playwright/*.spec.ts"],
+      "hasTests": true,
+      "coverage": {
+        "interface": true,
+        "tests": true,
+        "dataModel": false
+      }
+    },
+    {
+      "path": "embedded/",
+      "name": "嵌入式打包",
+      "claudeMd": null,
+      "entry": null,
+      "hasTests": false,
+      "submodules": ["embedded/android/", "embedded/ios/", "embedded/web/"],
+      "coverage": {
+        "interface": false,
+        "tests": false,
+        "dataModel": false
+      }
+    },
+    {
+      "path": "locales/",
+      "name": "国际化翻译",
+      "claudeMd": null,
+      "entry": ["locales/en/app.json"],
+      "hasTests": false,
+      "languages": 25,
+      "coverage": {
+        "interface": false,
+        "tests": false,
+        "dataModel": false
+      }
+    }
+  ],
+  "keyFiles": [
+    {
+      "path": "src/state/CallViewModel/CallViewModel.ts",
+      "description": "通话核心状态管理",
+      "importance": "critical"
+    },
+    {
+      "path": "src/state/MediaViewModel.ts",
+      "description": "媒体视图模型",
+      "importance": "critical"
+    },
+    {
+      "path": "src/livekit/openIDSFU.ts",
+      "description": "LiveKit 认证",
+      "importance": "high"
+    },
+    {
+      "path": "src/e2ee/matrixKeyProvider.ts",
+      "description": "E2EE 密钥管理",
+      "importance": "high"
+    },
+    {
+      "path": "src/main.tsx",
+      "description": "应用入口",
+      "importance": "high"
+    },
+    {
+      "path": "src/App.tsx",
+      "description": "根组件和路由",
+      "importance": "high"
+    },
+    {
+      "path": "src/room/RoomPage.tsx",
+      "description": "房间页面",
+      "importance": "medium"
+    },
+    {
+      "path": "src/widget.ts",
+      "description": "Widget API 集成",
+      "importance": "medium"
+    }
+  ],
+  "ignored": {
+    "directories": [
+      "node_modules",
+      ".git",
+      "dist",
+      ".yarn"
+    ],
+    "patterns": [
+      "*.lock",
+      "*.log",
+      "*.map"
+    ],
+    "reason": "依赖目录、构建产物和日志文件"
+  },
+  "gaps": [
+    {
+      "module": "src/analytics/",
+      "missing": ["claudeMd", "interface"]
+    },
+    {
+      "module": "src/otel/",
+      "missing": ["claudeMd", "interface"]
+    },
+    {
+      "module": "src/room/",
+      "missing": ["claudeMd", "interface"]
+    },
+    {
+      "module": "src/auth/",
+      "missing": ["claudeMd", "tests"]
+    },
+    {
+      "module": "src/home/",
+      "missing": ["claudeMd"]
+    },
+    {
+      "module": "src/grid/",
+      "missing": ["claudeMd", "tests"]
+    },
+    {
+      "module": "embedded/",
+      "missing": ["claudeMd", "tests", "interface"]
+    },
+    {
+      "module": "sdk/",
+      "missing": ["claudeMd", "interface"]
+    }
+  ],
+  "nextSteps": [
+    "为 src/analytics/ 模块创建 CLAUDE.md 文档",
+    "为 src/otel/ 模块创建 CLAUDE.md 文档",
+    "为 src/room/ 模块创建 CLAUDE.md 文档",
+    "为 src/auth/ 模块添加测试覆盖",
+    "为 embedded/ 包创建详细文档",
+    "深入扫描 sdk/ 目录结构"
+  ]
+}
