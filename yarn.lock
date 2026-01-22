@@ -8364,8 +8364,8 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "matrix-org/matrix-js-sdk#4a75d2c92f1ac7476a6d398057b91c65054f1b80"
-    matrix-widget-api: "npm:^1.14.0"
+    matrix-js-sdk: "matrix-org/matrix-js-sdk#develop"
+    matrix-widget-api: "npm:^1.16.1"
     node-stdlib-browser: "npm:^1.3.1"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -11452,9 +11452,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@matrix-org/matrix-js-sdk#4a75d2c92f1ac7476a6d398057b91c65054f1b80":
+"matrix-js-sdk@matrix-org/matrix-js-sdk#develop":
   version: 40.0.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=4a75d2c92f1ac7476a6d398057b91c65054f1b80"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=dbb2ae5c0752c28639502e93f26cb3003d0d0595"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^17.0.0"
@@ -11464,23 +11464,23 @@ __metadata:
     jwt-decode: "npm:^4.0.0"
     loglevel: "npm:^1.9.2"
     matrix-events-sdk: "npm:0.0.1"
-    matrix-widget-api: "npm:^1.14.0"
+    matrix-widget-api: "npm:^1.16.1"
     oidc-client-ts: "npm:^3.0.1"
     p-retry: "npm:7"
     sdp-transform: "npm:^3.0.0"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/4b0d970fcdd6a43a369c08ce224a7d52d30706020b30af6896e07f2335df4616c068147ae76fca46506a1c6dedadfd633d96a4c9f43ce751e2b411d2c80211d3
+  checksum: 10c0/9f97cec346e0dcce8599bc3afa1608f5166408260937f8311fa9af95b8fd2ff6d86422124fcb721fc830a3ec269389067334c344b4f512b64299561484135326
   languageName: node
   linkType: hard
 
-"matrix-widget-api@npm:^1.14.0":
-  version: 1.15.0
-  resolution: "matrix-widget-api@npm:1.15.0"
+"matrix-widget-api@npm:^1.16.1":
+  version: 1.16.1
+  resolution: "matrix-widget-api@npm:1.16.1"
   dependencies:
     "@types/events": "npm:^3.0.0"
     events: "npm:^3.2.0"
-  checksum: 10c0/1c08b5284cd98aed312d95594335e1391d937dfad70ef862a1f90fdbaaa27709e1c44dcda37f8045e4814779d8d5816d240aee396d52cfd9b37fbf243a6baf6a
+  checksum: 10c0/d88180f514104b84d3018055fc955138d65195465480a51e9afe5dbf2f3175b54e3483b4c4f1feab2dd27440f403051d9c8b293bd0532c09b136c6b23606e1ee
   languageName: node
   linkType: hard
 
