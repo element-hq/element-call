@@ -43,7 +43,8 @@ import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
-
+import { initializeWidget } from "../widget";
+initializeWidget();
 vi.hoisted(
   () =>
     (global.ImageData = class MockImageData {

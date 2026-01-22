@@ -37,6 +37,8 @@ import {
   local,
   localRtcMember,
 } from "../utils/test-fixtures";
+import { initializeWidget } from "../widget";
+initializeWidget();
 
 function TestComponent({ vm }: { vm: CallViewModel }): ReactNode {
   return (

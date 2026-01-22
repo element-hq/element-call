@@ -62,6 +62,9 @@ import { getValue } from "../../utils/observable.ts";
 import { type Behavior, constant } from "../Behavior.ts";
 import { withCallViewModel as withCallViewModelInMode } from "./CallViewModelTestUtils.ts";
 import { MatrixRTCMode } from "../../settings/settings.ts";
+import { initializeWidget } from "../../widget.ts";
+
+initializeWidget();
 
 vi.mock("rxjs", async (importOriginal) => ({
   ...(await importOriginal()),

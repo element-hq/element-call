@@ -40,6 +40,9 @@ import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
 import { ConnectionState, type Connection } from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
 import { type LocalTransportWithSFUConfig } from "./LocalTransport";
+import { initializeWidget } from "../../../widget";
+
+initializeWidget();
 
 const MATRIX_RTC_MODE = MatrixRTCMode.Legacy;
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
