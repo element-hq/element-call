@@ -8364,7 +8364,7 @@ __metadata:
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
-    matrix-js-sdk: "matrix-org/matrix-js-sdk#robin/sticky-embedded"
+    matrix-js-sdk: "matrix-org/matrix-js-sdk#develop"
     matrix-widget-api: "npm:^1.16.1"
     node-stdlib-browser: "npm:^1.3.1"
     normalize.css: "npm:^8.0.1"
@@ -11452,9 +11452,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@matrix-org/matrix-js-sdk#robin/sticky-embedded":
+"matrix-js-sdk@matrix-org/matrix-js-sdk#develop":
   version: 40.0.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=e205ce2cc689ace090f85bf74e0fd59ec00a179a"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=dbb2ae5c0752c28639502e93f26cb3003d0d0595"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^17.0.0"
@@ -11470,7 +11470,7 @@ __metadata:
     sdp-transform: "npm:^3.0.0"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/1b70a6520f034c2daa6db1d3626e116adb1f564c13bd4977f17af49e2e4e2a2ab629c77472f649962c9f301f56dd1c3b2480e6b560756f4ceed62755e1688cd6
+  checksum: 10c0/9f97cec346e0dcce8599bc3afa1608f5166408260937f8311fa9af95b8fd2ff6d86422124fcb721fc830a3ec269389067334c344b4f512b64299561484135326
   languageName: node
   linkType: hard
 
