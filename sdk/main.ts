@@ -57,7 +57,7 @@ import {
   tryMakeSticky,
   widget,
 } from "./helper";
-import { ElementWidgetActions } from "../src/widget";
+import { ElementWidgetActions, initializeWidget } from "../src/widget";
 import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
 
 interface MatrixRTCSdk {
@@ -88,7 +88,7 @@ export async function createMatrixRTCSdk(
   application: string = "m.call",
   id: string = "",
 ): Promise<MatrixRTCSdk> {
-  logger.info("Hello");
+  initializeWidget();
   const client = await widget.client;
   logger.info("client created");
   const scope = new ObservableScope();

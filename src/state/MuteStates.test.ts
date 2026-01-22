@@ -20,6 +20,8 @@ import {
 import { constant } from "./Behavior";
 import { ObservableScope } from "./ObservableScope";
 import { flushPromises, mockMediaDevices } from "../utils/test";
+import { initializeWidget } from "../widget";
+initializeWidget();
 
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("../UrlParams", () => ({ getUrlParams }));
