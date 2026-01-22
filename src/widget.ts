@@ -19,6 +19,7 @@ import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { ElementCallReactionEventType } from "./reactions";
+import { ConsoleLoggerEvent } from "./settings/rageshake";
 
 // Subset of the actions in element-web
 export enum ElementWidgetActions {
@@ -62,8 +63,15 @@ export const widget = ((): WidgetHelpers | null => {
   try {
     const { widgetId, parentUrl } = getUrlParams();
 
-    const { roomId, userId, deviceId, baseUrl, e2eEnabled, allowIceFallback } =
-      getUrlParams();
+    const {
+      roomId,
+      userId,
+      deviceId,
+      baseUrl,
+      e2eEnabled,
+      allowIceFallback,
+      widgetLogging,
+    } = getUrlParams();
     if (!roomId) throw new Error("Room ID must be supplied");
     if (!userId) throw new Error("User ID must be supplied");
     if (!deviceId) throw new Error("Device ID must be supplied");
@@ -72,6 +80,12 @@ export const widget = ((): WidgetHelpers | null => {
       const parentOrigin = new URL(parentUrl).origin;
       logger.info("Widget API is available");
       const api = new WidgetApi(widgetId, parentOrigin);
+      if (widgetLogging) {
+        // eslint-disable-next-line camelcase
+        mx_rage_logger.on(ConsoleLoggerEvent.Log, (level, args) => {
+          api.forwardLogLine(level, args);
+        });
+      }
       api.requestCapability(MatrixCapabilities.AlwaysOnScreen);
 
       // Set up the lazy action emitter, but only for select actions that we

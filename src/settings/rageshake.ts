@@ -27,10 +27,10 @@ Please see LICENSE in the repository root for full details.
 //    actually timestamps. We then purge the remaining logs. We also do this
 //    purge on startup to prevent logs from accumulating.
 
-import EventEmitter from "events";
 import { throttle } from "lodash-es";
 import { type Logger, logger } from "matrix-js-sdk/lib/logger";
 import { secureRandomString } from "matrix-js-sdk/lib/randomstring";
+import { TypedEventEmitter } from "matrix-js-sdk/lib/models/typed-event-emitter";
 import { type LoggingMethod } from "loglevel";
 
 import type loglevel from "loglevel";
@@ -46,7 +46,9 @@ const MAX_FLUSH_INTERVAL_MS = 2 * 1000;
 // only descend this far into nested object trees
 const DEPTH_LIMIT = 3;
 
-enum ConsoleLoggerEvent {
+type LogArg = Error | DOMException | object | string | undefined;
+
+export enum ConsoleLoggerEvent {
   Log = "log",
 }
 
@@ -58,13 +60,17 @@ interface LogEntry {
   index?: number;
 }
 
-class ConsoleLogger extends EventEmitter {
+interface ConsoleLoggerEventsMap {
+  [ConsoleLoggerEvent.Log]: (level: string, args: LogArg[]) => void;
+}
+
+class ConsoleLogger extends TypedEventEmitter<
+  ConsoleLoggerEvent,
+  ConsoleLoggerEventsMap
+> {
   private logs = "";
 
-  public log = (
-    level: LogLevel,
-    ...args: (Error | DOMException | object | string | undefined)[]
-  ): void => {
+  public log = (level: LogLevel, ...args: LogArg[]): void => {
     // We don't know what locale the user may be running so use ISO strings
     const ts = new Date().toISOString();
 
@@ -94,7 +100,7 @@ class ConsoleLogger extends EventEmitter {
     // http://jsperf.com/concat-vs-plus-vs-join
     this.logs += line;
 
-    this.emit(ConsoleLoggerEvent.Log);
+    this.emit(ConsoleLoggerEvent.Log, level.toString(), args);
   };
 
   /**
