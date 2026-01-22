@@ -8365,7 +8365,7 @@ __metadata:
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
     matrix-js-sdk: "matrix-org/matrix-js-sdk#4a75d2c92f1ac7476a6d398057b91c65054f1b80"
-    matrix-widget-api: "npm:^1.14.0"
+    matrix-widget-api: "matrix-org/matrix-widget-api#c227453ab63d82176bb567dd6bb205334b3ce75c"
     node-stdlib-browser: "npm:^1.3.1"
     normalize.css: "npm:^8.0.1"
     observable-hooks: "npm:^4.2.3"
@@ -11471,6 +11471,16 @@ __metadata:
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
   checksum: 10c0/4b0d970fcdd6a43a369c08ce224a7d52d30706020b30af6896e07f2335df4616c068147ae76fca46506a1c6dedadfd633d96a4c9f43ce751e2b411d2c80211d3
+  languageName: node
+  linkType: hard
+
+"matrix-widget-api@matrix-org/matrix-widget-api#c227453ab63d82176bb567dd6bb205334b3ce75c":
+  version: 1.16.1
+  resolution: "matrix-widget-api@https://github.com/matrix-org/matrix-widget-api.git#commit=c227453ab63d82176bb567dd6bb205334b3ce75c"
+  dependencies:
+    "@types/events": "npm:^3.0.0"
+    events: "npm:^3.2.0"
+  checksum: 10c0/71fcd9b9527ab836e799f2ebc330fa1603e2fbbea5e6ff968d4b6300cfd0aac5cc03097c9f9b24c1e9286cfd170149c8aa0dff9bb78f0193357229057ac4b72e
   languageName: node
   linkType: hard
 

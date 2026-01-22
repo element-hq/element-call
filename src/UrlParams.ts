@@ -246,6 +246,11 @@ export interface UrlConfiguration {
   noiseSuppression?: boolean;
 
   callIntent?: RTCCallIntent;
+
+  /**
+   * Has the parent requested we log to it?
+   */
+  widgetLogging?: boolean;
 }
 
 // If you need to add a new flag to this interface, prefer a name that describes
@@ -372,6 +377,8 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   const widgetId = parser.getParam("widgetId");
   const parentUrl = parser.getParam("parentUrl");
   const isWidget = !!widgetId && !!parentUrl;
+  const widgetLogging =
+    isWidget && parser.getFlagParam("org.matrix.mscXXXX.log_forwarding");
 
   /**
    * The user's intent with respect to the call.
@@ -403,6 +410,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     sendNotificationType: "notification",
     autoLeaveWhenOthersLeft: false,
     waitForCallPickup: false,
+    widgetLogging,
   };
   switch (intent) {
     case UserIntent.StartNewCall:
