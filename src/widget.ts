@@ -6,14 +6,17 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-import { EventType, createRoomWidgetClient } from "matrix-js-sdk";
+import {
+  EventType,
+  createRoomWidgetClient,
+  type MatrixClient,
+} from "matrix-js-sdk";
 import {
   WidgetApi,
   MatrixCapabilities,
   WidgetApiToWidgetAction,
 } from "matrix-widget-api";
 
-import type { MatrixClient } from "matrix-js-sdk";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";
@@ -55,15 +58,29 @@ export interface WidgetHelpers {
 
 /**
  * A point of access to the widget API, if the app is running as a widget. This
- * is declared and initialized on the top level because the widget messaging
+ * is initialized with `initializeWidget`. This should happen at the top level because the widget messaging
  * needs to be set up ASAP on load to ensure it doesn't miss any requests.
  */
-export const widget = ((): WidgetHelpers | null => {
-  try {
-    const { widgetId, parentUrl } = getUrlParams();
+export let widget: WidgetHelpers | null;
 
-    const { roomId, userId, deviceId, baseUrl, e2eEnabled, allowIceFallback } =
-      getUrlParams();
+/**
+ * Should be called as soon as possible on app start. (In the initilizer before react)
+ */
+// this needs to be a seperate call and cannot be done on import to allow us to spy on methods in here before
+// execution.
+export const initializeWidget = (): void => {
+  try {
+    const {
+      widgetId,
+      parentUrl,
+      roomId,
+      userId,
+      deviceId,
+      baseUrl,
+      e2eEnabled,
+      allowIceFallback,
+    } = getUrlParams();
+
     if (!roomId) throw new Error("Room ID must be supplied");
     if (!userId) throw new Error("User ID must be supplied");
     if (!deviceId) throw new Error("Device ID must be supplied");
@@ -175,14 +192,14 @@ export const widget = ((): WidgetHelpers | null => {
         return client;
       };
 
-      return { api, lazyActions, client: clientPromise() };
+      widget = { api, lazyActions, client: clientPromise() };
     } else {
       if (import.meta.env.MODE !== "test")
         logger.info("No widget API available");
-      return null;
+      widget = null;
     }
   } catch (e) {
     logger.warn("Continuing without the widget API", e);
-    return null;
+    widget = null;
   }
-})();
+};
