@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { beforeAll, describe, expect, vi, it } from "vitest";
-import { createRoomWidgetClient, EventType } from "matrix-js-sdk";
+import { createRoomWidgetClient } from "matrix-js-sdk";
 
 import { getUrlParams } from "./UrlParams";
 import { initializeWidget, widget } from "./widget";
