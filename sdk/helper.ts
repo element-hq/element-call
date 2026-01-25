@@ -12,15 +12,12 @@ Please see LICENSE in the repository root for full details.
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { scan } from "rxjs";
 
-import { widget as _widget } from "../src/widget";
+import { type WidgetHelpers } from "../src/widget";
 import { type LivekitRoomItem } from "../src/state/CallViewModel/CallViewModel";
 
 export const logger = rootLogger.getChild("[MatrixRTCSdk]");
 
-if (!_widget) throw Error("No widget. This webapp can only start as a widget");
-export const widget = _widget;
-
-export const tryMakeSticky = (): void => {
+export const tryMakeSticky = (widget: WidgetHelpers): void => {
   logger.info("try making sticky MatrixRTCSdk");
   void widget.api
     .setAlwaysOnScreen(true)
