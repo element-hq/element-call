@@ -29,7 +29,7 @@ jobs:
       pr_head_full_name: ${{ github.event.workflow_run.head_repository.full_name }}
       pr_head_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.ref }}
       deployment_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.sha || github.ref || github.head_ref }}
-      package: sdk
+      package: full
     secrets:
       ELEMENT_BOT_TOKEN: ${{ secrets.ELEMENT_BOT_TOKEN }}
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
