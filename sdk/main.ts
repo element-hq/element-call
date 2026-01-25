@@ -30,8 +30,8 @@ import {
 } from "rxjs";
 import {
   type CallMembership,
-  MatrixRTCSession,
   MatrixRTCSessionEvent,
+  MatrixRTCSessionManager,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   type Room as LivekitRoom,
@@ -87,25 +87,35 @@ export async function createMatrixRTCSdk(
   id: string = "",
   sticky: boolean = false,
 ): Promise<MatrixRTCSdk> {
+  const scope = new ObservableScope();
+
+  // widget client
   initializeWidget(application);
   const widget = _widget;
   if (!widget) throw Error("No widget. This webapp can only start as a widget");
   const client = await widget.client;
   logger.info("client created");
-  const scope = new ObservableScope();
+
+  // url params
   const { roomId } = getUrlParams();
   if (roomId === null) throw Error("could not get roomId from url params");
-
   const room = client.getRoom(roomId);
   if (room === null) throw Error("could not get room from client");
 
+  // rtc session
+  const slot = { application, id };
+  const rtcSessionManager = new MatrixRTCSessionManager(logger, client, slot);
+  rtcSessionManager.start();
+  const rtcSession = rtcSessionManager.getRoomSession(room);
+
+  // media devices
   const mediaDevices = new MediaDevices(scope);
   const muteStates = new MuteStates(scope, mediaDevices, {
     audioEnabled: false,
     videoEnabled: false,
   });
-  const slot = { application, id };
-  const rtcSession = new MatrixRTCSession(client, room, slot);
+
+  // call view model
   const callViewModel = createCallViewModel$(
     scope,
     rtcSession,
@@ -118,6 +128,7 @@ export async function createMatrixRTCSdk(
     constant({ supported: false, processor: undefined }),
   );
   logger.info("CallViewModelCreated");
+
   // create data listener
   const data$ = new Subject<{ sender: string; data: string }>();
 
