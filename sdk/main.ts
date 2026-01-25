@@ -50,14 +50,12 @@ import { getUrlParams } from "../src/UrlParams";
 import { MuteStates } from "../src/state/MuteStates";
 import { MediaDevices } from "../src/state/MediaDevices";
 import { E2eeType } from "../src/e2ee/e2eeType";
+import { currentAndPrev, logger, TEXT_LK_TOPIC, tryMakeSticky } from "./helper";
 import {
-  currentAndPrev,
-  logger,
-  TEXT_LK_TOPIC,
-  tryMakeSticky,
-  widget,
-} from "./helper";
-import { ElementWidgetActions, initializeWidget } from "../src/widget";
+  ElementWidgetActions,
+  widget as _widget,
+  initializeWidget,
+} from "../src/widget";
 import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
 
 interface MatrixRTCSdk {
@@ -87,8 +85,11 @@ interface MatrixRTCSdk {
 export async function createMatrixRTCSdk(
   application: string = "m.call",
   id: string = "",
+  sticky: boolean = false,
 ): Promise<MatrixRTCSdk> {
-  initializeWidget();
+  initializeWidget(application);
+  const widget = _widget;
+  if (!widget) throw Error("No widget. This webapp can only start as a widget");
   const client = await widget.client;
   logger.info("client created");
   const scope = new ObservableScope();
@@ -100,8 +101,8 @@ export async function createMatrixRTCSdk(
 
   const mediaDevices = new MediaDevices(scope);
   const muteStates = new MuteStates(scope, mediaDevices, {
-    audioEnabled: true,
-    videoEnabled: true,
+    audioEnabled: false,
+    videoEnabled: false,
   });
   const slot = { application, id };
   const rtcSession = new MatrixRTCSession(client, room, slot);
@@ -267,7 +268,7 @@ export async function createMatrixRTCSdk(
   return {
     join: (): void => {
       // first lets try making the widget sticky
-      tryMakeSticky();
+      if (sticky) tryMakeSticky(widget);
       callViewModel.join();
     },
     leave: (): void => {
