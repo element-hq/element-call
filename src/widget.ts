@@ -68,7 +68,7 @@ export let widget: WidgetHelpers | null;
  */
 // this needs to be a seperate call and cannot be done on import to allow us to spy on methods in here before
 // execution.
-export const initializeWidget = (): void => {
+export const initializeWidget = (rtcApplication: string = "m.call"): void => {
   try {
     const {
       widgetId,
@@ -128,8 +128,8 @@ export const initializeWidget = (): void => {
 
       const sendState = [
         userId, // Legacy call membership events
-        `_${userId}_${deviceId}_m.call`, // Session membership events
-        `${userId}_${deviceId}_m.call`, // The above with no leading underscore, for room versions whose auth rules allow it
+        `_${userId}_${deviceId}_${rtcApplication}`, // Session membership events
+        `${userId}_${deviceId}_${rtcApplication}`, // The above with no leading underscore, for room versions whose auth rules allow it
       ].map((stateKey) => ({
         eventType: EventType.GroupCallMemberPrefix,
         stateKey,
@@ -142,19 +142,7 @@ export const initializeWidget = (): void => {
         { eventType: EventType.GroupCallMemberPrefix },
       ];
 
-      const sendRecvToDevice = [
-        EventType.CallInvite,
-        EventType.CallCandidates,
-        EventType.CallAnswer,
-        EventType.CallHangup,
-        EventType.CallReject,
-        EventType.CallSelectAnswer,
-        EventType.CallNegotiate,
-        EventType.CallSDPStreamMetadataChanged,
-        EventType.CallSDPStreamMetadataChangedPrefix,
-        EventType.CallReplaces,
-        EventType.CallEncryptionKeysPrefix,
-      ];
+      const sendRecvToDevice = [EventType.CallEncryptionKeysPrefix];
 
       const client = createRoomWidgetClient(
         api,
