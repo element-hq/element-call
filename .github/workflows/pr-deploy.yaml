@@ -22,6 +22,8 @@ jobs:
 
   netlify-full:
     needs: prdetails
+    permissions:
+      deployments: write
     uses: ./.github/workflows/deploy-to-netlify.yaml
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
@@ -37,6 +39,8 @@ jobs:
 
   netlify-sdk:
     needs: prdetails
+    permissions:
+      deployments: write
     uses: ./.github/workflows/deploy-to-netlify.yaml
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
