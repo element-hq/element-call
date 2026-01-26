@@ -146,7 +146,7 @@ export async function getSFUConfigWithOpenID(
       } else {
         logger?.warn(
           `Failed fetching jwt with matrix 2.0 endpoint other issues ->`,
-          `(not going to try with legacy endpoint: forceOldJwtEndpoint is set to false, we did not get a not supported error from the sfu)`,
+          `(not going to try with legacy endpoint if forceMatrix2Jwt is set to false (it is ${forceMatrix2Jwt}), we did not get a not supported error from the sfu)`,
           e,
         );
         // Make this throw a hard error in case we force the matrix2.0 endpoint.

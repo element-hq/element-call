@@ -298,6 +298,9 @@ export async function createMatrixRTCSdk(
     data$,
     localMember$: scope.behavior(
       callViewModel.localMatrixLivekitMember$.pipe(
+        tap((member) =>
+          logger.info("localMatrixLivekitMember$ next: ", member),
+        ),
         switchMap((member) => {
           if (member === null) return of(null);
           return combineLatest([
@@ -312,6 +315,7 @@ export async function createMatrixRTCSdk(
             })),
           );
         }),
+        tap((member) => logger.info("localMember$ next: ", member)),
       ),
     ),
     connected$: callViewModel.connected$,
