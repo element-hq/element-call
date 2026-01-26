@@ -66,7 +66,7 @@ interface MatrixRTCSdk {
   join: () => void;
   /** @throws on leave errors */
   leave: () => void;
-  data$: Observable<{ sender: string; data: string }>;
+  data$: Observable<{ rtcBackendIdentity: string; data: string }>;
   /**
    * flattened list of members
    */
@@ -77,6 +77,14 @@ interface MatrixRTCSdk {
       participant: LocalParticipant | RemoteParticipant | null;
     }[]
   >;
+  /**
+   * flattened local members
+   */
+  localMember$: Behavior<{
+    connection: Connection | null;
+    membership: CallMembership;
+    participant: LocalParticipant | null;
+  } | null>;
   /** Use the LocalMemberConnectionState returned from `join` for a more detailed connection state  */
   connected$: Behavior<boolean>;
   sendData?: (data: unknown) => Promise<void>;
@@ -130,7 +138,7 @@ export async function createMatrixRTCSdk(
   logger.info("CallViewModelCreated");
 
   // create data listener
-  const data$ = new Subject<{ sender: string; data: string }>();
+  const data$ = new Subject<{ rtcBackendIdentity: string; data: string }>();
 
   const lkTextStreamHandlerFunction = async (
     reader: TextStreamReader,
@@ -152,7 +160,7 @@ export async function createMatrixRTCSdk(
     if (participants && participants.includes(participantInfo.identity)) {
       const text = await reader.readAll();
       logger.info(`Received text: ${text}`);
-      data$.next({ sender: participantInfo.identity, data: text });
+      data$.next({ rtcBackendIdentity: participantInfo.identity, data: text });
     } else {
       logger.warn(
         "Received text from unknown participant",
@@ -288,6 +296,24 @@ export async function createMatrixRTCSdk(
       livekitRoomItemsSub.unsubscribe();
     },
     data$,
+    localMember$: scope.behavior(
+      callViewModel.localMatrixLivekitMember$.pipe(
+        switchMap((member) => {
+          if (member === null) return of(null);
+          return combineLatest([
+            member.connection$,
+            member.membership$,
+            member.participant.value$,
+          ]).pipe(
+            map(([connection, membership, participant]) => ({
+              connection,
+              membership,
+              participant,
+            })),
+          );
+        }),
+      ),
+    ),
     connected$: callViewModel.connected$,
     members$: scope.behavior(
       callViewModel.matrixLivekitMembers$.pipe(
