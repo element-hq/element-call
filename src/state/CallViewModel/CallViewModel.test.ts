@@ -29,7 +29,6 @@ import {
   Status,
   type CallMembership,
   type IRTCNotificationContent,
-  type ICallNotifyContent,
   MatrixRTCSessionEvent,
   type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -231,10 +230,6 @@ function mockRingEvent(
     sender,
   } as unknown as { event_id: string } & IRTCNotificationContent;
 }
-
-// The app doesn't really care about the content of these legacy events, we just
-// need a value to fill in for them when emitting notifications
-const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 
 describe.each([
   [MatrixRTCMode.Legacy],
@@ -1109,7 +1104,6 @@ describe.each([
                 rtcSession.emit(
                   MatrixRTCSessionEvent.DidSendCallNotification,
                   mockRingEvent("$notif1", 30),
-                  mockLegacyRingEvent,
                 );
               },
             });
@@ -1151,7 +1145,6 @@ describe.each([
                 rtcSession.emit(
                   MatrixRTCSessionEvent.DidSendCallNotification,
                   mockRingEvent("$notif2", 100),
-                  mockLegacyRingEvent,
                 );
               },
               d: () => {

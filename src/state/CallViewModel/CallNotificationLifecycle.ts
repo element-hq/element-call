@@ -140,9 +140,9 @@ export function createCallNotificationLifecycle$({
     scope.behavior(
       sentCallNotification$.pipe(
         filter(
-          (newAndLegacyEvents) =>
+          (notificationEventArgs) =>
             // only care about new events (legacy do not have decline pattern)
-            newAndLegacyEvents?.[0].notification_type === "ring",
+            notificationEventArgs?.[0].notification_type === "ring",
         ),
         map((e) => e as CallNotificationWrapper),
         switchMap(([notificationEvent]) => {
