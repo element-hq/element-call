@@ -7,10 +7,9 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type CallMembership,
-  isLivekitTransport,
-  type LivekitTransport,
   isLivekitTransportConfig,
   type Transport,
+  type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { MatrixError, type MatrixClient } from "matrix-js-sdk";
 import {
@@ -57,6 +56,7 @@ interface Props {
     "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
   > &
     OpenIDClientParts;
+  // Used by the jwt service to create the livekit room and compute the livekit alias.
   roomId: string;
   useOldestMember$: Behavior<boolean>;
   forceJwtEndpoint$: Behavior<JwtEndpointVersion>;
@@ -90,11 +90,11 @@ export enum JwtEndpointVersion {
 // 2.
 // We need to make sure we do not sent livekit_alias in sticky events and that we drop all code for sending state events!
 export interface LocalTransportWithSFUConfig {
-  transport: LivekitTransport;
+  transport: LivekitTransportConfig;
   sfuConfig: SFUConfig;
 }
 export function isLocalTransportWithSFUConfig(
-  obj: LivekitTransport | LocalTransportWithSFUConfig,
+  obj: LivekitTransportConfig | LocalTransportWithSFUConfig,
 ): obj is LocalTransportWithSFUConfig {
   return "transport" in obj && "sfuConfig" in obj;
 }
@@ -137,11 +137,10 @@ export const createLocalTransport$ = ({
           return transport;
         }),
         switchMap((transport) => {
-          if (transport !== null && isLivekitTransport(transport)) {
+          if (transport !== null && isLivekitTransportConfig(transport)) {
             // Get the open jwt token to connect to the sfu
             const computeLocalTransportWithSFUConfig =
               async (): Promise<LocalTransportWithSFUConfig> => {
-                // await sleep(1000);
                 return {
                   transport,
                   sfuConfig: await getSFUConfigWithOpenID(
@@ -288,18 +287,6 @@ async function makeTransport(
       transport: {
         type: "livekit",
         livekit_service_url: url,
-        // WARNING PLS READ ME!!!
-        // This looks unintuitive especially considering that `sfuConfig.livekitAlias` exists.
-        // Why do we not use: `livekit_alias: sfuConfig.livekitAlias`
-        //
-        //  - This is going to be used for sending our state event transport (focus_preferred)
-        //  - In sticky events it is expected to NOT send this field at all. The transport is only the `type`, `livekit_service_url`
-        //  - If we set it to the hased alias we get from the jwt, we will end up using the hashed alias as the body.roomId field
-        //    in v0.16.0. (It will use oldest member transport. It is using the transport.livekit_alias as the body.roomId)
-        //
-        // TLDR this is a temporal field that allow for comaptibilty but the spec expects it to not exists. (but its existance also does not break anything)
-        // It is just named poorly: It was intetended to be the actual alias. But now we do pseudonymys ids so we use a hashed alias.
-        livekit_alias: roomId,
       },
       sfuConfig,
     };
