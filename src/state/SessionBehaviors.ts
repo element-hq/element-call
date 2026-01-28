@@ -10,6 +10,7 @@ import {
   type LivekitTransportConfig,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
+  isLivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { fromEvent } from "rxjs";
 
@@ -20,7 +21,6 @@ import {
   type ObservableScope,
 } from "./ObservableScope";
 import { type Behavior } from "./Behavior";
-import { isLivekitTransportConfig } from "../../../matrix-js-sdk/src/matrixrtc";
 
 export const membershipsAndTransports$ = (
   scope: ObservableScope,
