@@ -34,7 +34,7 @@ describe("LocalTransport", () => {
   const openIdResponse: openIDSFU.SFUConfig = {
     url: "https://lk.example.org",
     jwt: testJWTToken,
-    livekitAlias: "!example_room_id",
+    livekitAlias: "Akph4alDMhen",
     livekitIdentity: "@lk_user:ABCDEF",
   };
 
@@ -147,7 +147,7 @@ describe("LocalTransport", () => {
     openIdResolver.resolve?.({
       url: "https://lk.example.org",
       jwt: "jwt",
-      livekitAlias: "!room:example.org",
+      livekitAlias: "Akph4alDMhen",
       livekitIdentity: ownMemberMock.userId + ":" + ownMemberMock.deviceId,
     });
     expect(localTransport$.value).toBe(null);
@@ -155,13 +155,12 @@ describe("LocalTransport", () => {
     // final
     expect(localTransport$.value).toStrictEqual({
       transport: {
-        livekit_alias: "!room:example.org",
         livekit_service_url: "https://lk.example.org",
         type: "livekit",
       },
       sfuConfig: {
         jwt: "jwt",
-        livekitAlias: "!room:example.org",
+        livekitAlias: "Akph4alDMhen",
         livekitIdentity: "@alice:example.org:DEVICE",
         url: "https://lk.example.org",
       },
@@ -204,13 +203,12 @@ describe("LocalTransport", () => {
     // final
     expect(localTransport$.value).toStrictEqual({
       transport: {
-        livekit_alias: "!example_room_id",
         livekit_service_url: "https://lk.example.org",
         type: "livekit",
       },
       sfuConfig: {
         jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-        livekitAlias: "!example_room_id",
+        livekitAlias: "Akph4alDMhen",
         livekitIdentity: "@lk_user:ABCDEF",
         url: "https://lk.example.org",
       },
@@ -264,13 +262,12 @@ describe("LocalTransport", () => {
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
         transport: {
-          livekit_alias: "!example_room_id",
           livekit_service_url: "https://lk.example.org",
           type: "livekit",
         },
         sfuConfig: {
           jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "!example_room_id",
+          livekitAlias: "Akph4alDMhen",
           livekitIdentity: "@lk_user:ABCDEF",
           url: "https://lk.example.org",
         },
@@ -284,13 +281,12 @@ describe("LocalTransport", () => {
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
         transport: {
-          livekit_alias: "!example_room_id",
           livekit_service_url: "https://lk.example.org",
           type: "livekit",
         },
         sfuConfig: {
           jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "!example_room_id",
+          livekitAlias: "Akph4alDMhen",
           livekitIdentity: "@lk_user:ABCDEF",
           url: "https://lk.example.org",
         },
@@ -306,13 +302,12 @@ describe("LocalTransport", () => {
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
         transport: {
-          livekit_alias: "!example_room_id",
           livekit_service_url: "https://lk.example.org",
           type: "livekit",
         },
         sfuConfig: {
           jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "!example_room_id",
+          livekitAlias: "Akph4alDMhen",
           livekitIdentity: "@lk_user:ABCDEF",
           url: "https://lk.example.org",
         },
@@ -345,13 +340,12 @@ describe("LocalTransport", () => {
       await flushPromises();
       expect(localTransport$.value).toStrictEqual({
         transport: {
-          livekit_alias: "!example_room_id",
           livekit_service_url: "https://lk.example.org",
           type: "livekit",
         },
         sfuConfig: {
           jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "!example_room_id",
+          livekitAlias: "Akph4alDMhen",
           livekitIdentity: "@lk_user:ABCDEF",
           url: "https://lk.example.org",
         },
