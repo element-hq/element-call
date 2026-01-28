@@ -18,6 +18,7 @@ import {
   Status as RTCSessionStatus,
   type LivekitTransportConfig,
   type MatrixRTCSession,
+  type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   BehaviorSubject,
@@ -735,11 +736,25 @@ export function enterRTCSession(
   const multiSFU =
     matrixRTCMode === MatrixRTCMode.Compatibility ||
     matrixRTCMode === MatrixRTCMode.Matrix_2_0;
+
+  // For backwards compatibility with Element Call versions that do not do Matrix 2.0,
+  // we add the livekit alias to the transport.
+  let backwardCompatibleTransport: Transport;
+  if (matrixRTCMode === MatrixRTCMode.Matrix_2_0) {
+    backwardCompatibleTransport = transport;
+  } else {
+    backwardCompatibleTransport = {
+      livekit_alias: rtcSession.room.roomId,
+      ...transport,
+    };
+  }
+
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   // TODO where/how do we track errors originating from the ongoing rtcSession?
+
   rtcSession.joinRTCSession(
     ownMembershipIdentity,
-    multiSFU ? [] : [transport],
+    multiSFU ? [] : [backwardCompatibleTransport],
     multiSFU ? transport : undefined,
     {
       notificationType,
