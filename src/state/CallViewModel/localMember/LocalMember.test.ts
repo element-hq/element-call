@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   Status as RTCMemberStatus,
-  type LivekitTransport,
+  type LivekitTransportConfig,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { describe, expect, it, vi } from "vitest";
@@ -281,7 +281,7 @@ describe("LocalMembership", () => {
   const aTransport = {
     transport: {
       livekit_service_url: "a",
-    } as LivekitTransport,
+    } as LivekitTransportConfig,
     sfuConfig: {
       url: "sfu-url",
       jwt: "sfu-token",
@@ -290,7 +290,7 @@ describe("LocalMembership", () => {
   const bTransport = {
     transport: {
       livekit_service_url: "b",
-    } as LivekitTransport,
+    } as LivekitTransportConfig,
     sfuConfig: {
       url: "sfu-url",
       jwt: "sfu-token",
