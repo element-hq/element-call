@@ -468,6 +468,7 @@ export function createCallViewModel$(
 
   const connectionFactory = new ECConnectionFactory(
     client,
+    matrixRoom.roomId,
     mediaDevices,
     trackProcessorState$,
     livekitKeyProvider,
@@ -496,12 +497,13 @@ export function createCallViewModel$(
     ownMembershipIdentity,
   });
 
-  const matrixLivekitMembers$ = createMatrixLivekitMembers$({
-    scope: scope,
-    membershipsWithTransport$:
-      membershipsAndTransports.membershipsWithTransport$,
-    connectionManager: connectionManager,
-  });
+  const matrixLivekitMembers$: Behavior<Epoch<RemoteMatrixLivekitMember[]>> =
+    createMatrixLivekitMembers$({
+      scope: scope,
+      membershipsWithTransport$:
+        membershipsAndTransports.membershipsWithTransport$,
+      connectionManager: connectionManager,
+    });
 
   const connectOptions$ = scope.behavior(
     matrixRTCMode$.pipe(

@@ -7,7 +7,10 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  type LivekitTransport,
+  type LivekitTransportConfig,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { type RemoteParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -24,16 +27,14 @@ import { constant, type Behavior } from "../../Behavior.ts";
 
 // Some test constants
 
-const TRANSPORT_1: LivekitTransport = {
+const TRANSPORT_1: LivekitTransportConfig = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
-  livekit_alias: "!alias:example.org",
 };
 
-const TRANSPORT_2: LivekitTransport = {
+const TRANSPORT_2: LivekitTransportConfig = {
   type: "livekit",
   livekit_service_url: "https://lk.sample.com",
-  livekit_alias: "!alias:sample.com",
 };
 
 let fakeConnectionFactory: ConnectionFactory;
