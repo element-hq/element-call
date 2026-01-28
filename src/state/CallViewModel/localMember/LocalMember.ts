@@ -755,7 +755,7 @@ export function enterRTCSession(
   rtcSession.joinRTCSession(
     ownMembershipIdentity,
     multiSFU ? [] : [backwardCompatibleTransport],
-    multiSFU ? transport : undefined,
+    multiSFU ? backwardCompatibleTransport : undefined,
     {
       notificationType,
       callIntent,
