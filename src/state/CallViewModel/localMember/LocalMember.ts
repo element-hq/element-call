@@ -16,7 +16,7 @@ import {
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
   Status as RTCSessionStatus,
-  type LivekitTransport,
+  type LivekitTransportConfig,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
@@ -125,7 +125,7 @@ interface Props {
   muteStates: MuteStates;
   connectionManager: IConnectionManager;
   createPublisherFactory: (connection: Connection) => Publisher;
-  joinMatrixRTC: (transport: LivekitTransport) => void;
+  joinMatrixRTC: (transport: LivekitTransportConfig) => void;
   homeserverConnected: HomeserverConnected;
   localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
   matrixRTCSession: Pick<
@@ -717,7 +717,7 @@ interface EnterRTCSessionOptions {
 export function enterRTCSession(
   rtcSession: MatrixRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
-  transport: LivekitTransport,
+  transport: LivekitTransportConfig,
   options: EnterRTCSessionOptions,
 ): void {
   const { encryptMedia, matrixRTCMode } = options;
