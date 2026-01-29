@@ -65,6 +65,7 @@ describe("ECConnectionFactory - Audio inputs options", () => {
 
       const ecConnectionFactory = new ECConnectionFactory(
         mockClient,
+        "!roomid:example.org",
         mockMediaDevices({}),
         new BehaviorSubject<ProcessorState>({
           supported: true,
@@ -105,6 +106,7 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
 
       const ecConnectionFactory = new ECConnectionFactory(
         mockClient,
+        "!roomid:example.org",
         mockMediaDevices({
           audioOutput: {
             available$: constant(new Map<never, never>()),
