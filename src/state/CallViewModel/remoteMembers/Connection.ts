@@ -15,7 +15,7 @@ import {
   type Room as LivekitRoom,
   type RemoteParticipant,
 } from "livekit-client";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, map } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -49,9 +49,11 @@ export interface ConnectionOpts {
   /** The identity parts to use on this connection */
   ownMembershipIdentity: CallMembershipIdentityParts;
   /** The media transport to connect to. */
-  transport: LivekitTransport;
+  transport: LivekitTransportConfig;
   /** The Matrix client to use for OpenID and SFU config requests. */
   client: OpenIDClientParts;
+  /** The room ID this connection is associated with. */
+  roomId: string;
   /** The observable scope to use for this connection. */
   scope: ObservableScope;
 
@@ -102,7 +104,7 @@ export class Connection {
   /**
    * The media transport to connect to.
    */
-  public readonly transport: LivekitTransport;
+  public readonly transport: LivekitTransportConfig;
 
   public readonly livekitRoom: LivekitRoom;
 
@@ -130,6 +132,47 @@ export class Connection {
    * @see Connection.stop
    * */
   protected stopped = false;
+
+  // TODO: can we just keep the ConnectionOpts object instead of spreading?
+  private readonly client: OpenIDClientParts;
+  private readonly roomId: string;
+  private readonly logger: Logger;
+  private readonly ownMembershipIdentity: CallMembershipIdentityParts;
+  private readonly existingSFUConfig?: SFUConfig;
+  /**
+   * Creates a new connection to a matrix RTC LiveKit backend.
+   *
+   * @param opts - Connection options {@link ConnectionOpts}.
+   *
+   * @param logger - The logger to use.
+   */
+  public constructor(opts: ConnectionOpts, logger: Logger) {
+    this.ownMembershipIdentity = opts.ownMembershipIdentity;
+    this.existingSFUConfig = opts.existingSFUConfig;
+    this.roomId = opts.roomId;
+    this.logger = logger.getChild(
+      "[Connection " + opts.transport.livekit_service_url + "]",
+    );
+    this.logger.info(
+      `constructor: ${opts.transport.livekit_service_url} roomId: ${this.roomId} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
+    );
+    const { transport, client, scope } = opts;
+
+    this.scope = scope;
+    this.livekitRoom = opts.livekitRoomFactory();
+    this.transport = transport;
+    this.client = client;
+
+    this.remoteParticipants$ = scope.behavior(
+      // Only tracks remote participants
+      connectedParticipantsObserver(this.livekitRoom),
+    );
+
+    scope.onEnd(() => {
+      this.logger.info(`Connection scope ended, stopping connection`);
+      void this.stop();
+    });
+  }
 
   /**
    * Starts the connection.
@@ -231,7 +274,7 @@ export class Connection {
       this.client,
       this.ownMembershipIdentity,
       this.transport.livekit_service_url,
-      this.transport.livekit_alias,
+      this.roomId,
       // dont pass any custom opts for the subscribe only connections
       {},
       this.logger,
@@ -255,43 +298,5 @@ export class Connection {
     this.logger.debug(
       `stop: DONE disconnecing from lk room ${this.transport.livekit_service_url}`,
     );
-  }
-
-  private readonly client: OpenIDClientParts;
-  private readonly logger: Logger;
-  private readonly ownMembershipIdentity: CallMembershipIdentityParts;
-  private readonly existingSFUConfig?: SFUConfig;
-  /**
-   * Creates a new connection to a matrix RTC LiveKit backend.
-   *
-   * @param opts - Connection options {@link ConnectionOpts}.
-   *
-   * @param logger - The logger to use.
-   */
-  public constructor(opts: ConnectionOpts, logger: Logger) {
-    this.ownMembershipIdentity = opts.ownMembershipIdentity;
-    this.existingSFUConfig = opts.existingSFUConfig;
-    this.logger = logger.getChild(
-      "[Connection " + opts.transport.livekit_service_url + "]",
-    );
-    this.logger.info(
-      `constructor: ${opts.transport.livekit_service_url} alias: ${opts.transport.livekit_alias} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
-    );
-    const { transport, client, scope } = opts;
-
-    this.scope = scope;
-    this.livekitRoom = opts.livekitRoomFactory();
-    this.transport = transport;
-    this.client = client;
-
-    this.remoteParticipants$ = scope.behavior(
-      // Only tracks remote participants
-      connectedParticipantsObserver(this.livekitRoom),
-    );
-
-    scope.onEnd(() => {
-      this.logger.info(`Connection scope ended, stopping connection`);
-      void this.stop();
-    });
   }
 }
