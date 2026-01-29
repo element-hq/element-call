@@ -43,6 +43,8 @@ export class ConnectionManagerData {
   }
 
   private getKey(transport: LivekitTransportConfig): string {
+    // This is enough as a key because the ConnectionManager is already scoped by room.
+    // The ConnectionManager should also be scoped by slotId when we have multi-slot support.
     return transport.livekit_service_url;
   }
 
