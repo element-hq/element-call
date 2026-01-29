@@ -16,9 +16,9 @@ import {
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
   Status as RTCSessionStatus,
+  type LivekitTransport,
   type LivekitTransportConfig,
   type MatrixRTCSession,
-  type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   BehaviorSubject,
@@ -739,7 +739,7 @@ export function enterRTCSession(
 
   // For backwards compatibility with Element Call versions that do not do Matrix 2.0,
   // we add the livekit alias to the transport.
-  let backwardCompatibleTransport: Transport;
+  let backwardCompatibleTransport: LivekitTransport | LivekitTransportConfig;
   if (matrixRTCMode === MatrixRTCMode.Matrix_2_0) {
     backwardCompatibleTransport = transport;
   } else {
