@@ -7,8 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
 import {
-  type LivekitTransport,
   type CallMembership,
+  type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
@@ -62,7 +62,7 @@ export interface RemoteMatrixLivekitMember extends MatrixLivekitMember {
 interface Props {
   scope: ObservableScope;
   membershipsWithTransport$: Behavior<
-    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
+    Epoch<{ membership: CallMembership; transport?: LivekitTransportConfig }[]>
   >;
   connectionManager: IConnectionManager;
 }
@@ -147,18 +147,12 @@ export function createMatrixLivekitMembers$({
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
 
 // TODO add this to the JS-SDK
-export function areLivekitTransportsEqual<T extends LivekitTransport>(
+export function areLivekitTransportsEqual<T extends LivekitTransportConfig>(
   t1: T | null,
   t2: T | null,
 ): boolean {
-  if (t1 && t2)
-    return (
-      t1.livekit_service_url === t2.livekit_service_url &&
-      // In case we have different lk rooms in the same SFU (depends on the livekit authorization service)
-      // It is only needed in case the livekit authorization service is not behaving as expected (or custom implementation)
-      // Also LivekitTransport is planned to become a `ConnectionIdentifier` which moves this equal somewhere else.
-      t1.livekit_alias === t2.livekit_alias
-    );
-  if (!t1 && !t2) return true;
-  return false;
+  if (t1 && t2) {
+    return t1.livekit_service_url === t2.livekit_service_url;
+  }
+  return !t1 && !t2;
 }

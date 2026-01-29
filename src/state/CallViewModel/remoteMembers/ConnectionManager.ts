@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, map, of, switchMap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
@@ -42,8 +42,10 @@ export class ConnectionManagerData {
     }
   }
 
-  private getKey(transport: LivekitTransport): string {
-    return transport.livekit_service_url + "|" + transport.livekit_alias;
+  private getKey(transport: LivekitTransportConfig): string {
+    // This is enough as a key because the ConnectionManager is already scoped by room.
+    // We also do not need to consider the slotId at this point since each `MatrixRTCSession` is already scoped by `slotDescription: {id, application}`.
+    return transport.livekit_service_url;
   }
 
   public getConnections(): Connection[] {
@@ -51,15 +53,15 @@ export class ConnectionManagerData {
   }
 
   public getConnectionForTransport(
-    transport: LivekitTransport,
+    transport: LivekitTransportConfig,
   ): Connection | null {
     return this.store.get(this.getKey(transport))?.connection ?? null;
   }
 
   public getParticipantsForTransport(
-    transport: LivekitTransport,
+    transport: LivekitTransportConfig,
   ): RemoteParticipant[] {
-    const key = transport.livekit_service_url + "|" + transport.livekit_alias;
+    const key = this.getKey(transport);
     const existing = this.store.get(key);
     if (existing) {
       return existing.participants;
@@ -72,7 +74,7 @@ interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
   localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
-  remoteTransports$: Behavior<Epoch<LivekitTransport[]>>;
+  remoteTransports$: Behavior<Epoch<LivekitTransportConfig[]>>;
 
   logger: Logger;
   ownMembershipIdentity: CallMembershipIdentityParts;
@@ -123,7 +125,7 @@ export function createConnectionManager$({
    * externally this is modified via `registerTransports()`.
    */
   const localAndRemoteTransports$: Behavior<
-    Epoch<(LivekitTransport | LocalTransportWithSFUConfig)[]>
+    Epoch<(LivekitTransportConfig | LocalTransportWithSFUConfig)[]>
   > = scope.behavior(
     combineLatest([remoteTransports$, localTransport$]).pipe(
       // Combine local and remote transports into one transport array
@@ -168,19 +170,13 @@ export function createConnectionManager$({
               // This is the local transport only the `LocalTransportWithSFUConfig` has a `sfuConfig` field
               const { transport, sfuConfig } = transportWithOrWithoutSfuConfig;
               yield {
-                keys: [
-                  transport.livekit_service_url,
-                  transport.livekit_alias,
-                  sfuConfig,
-                ],
+                keys: [transport.livekit_service_url, sfuConfig],
                 data: undefined,
               };
             } else {
-              const transport = transportWithOrWithoutSfuConfig;
               yield {
                 keys: [
-                  transport.livekit_service_url,
-                  transport.livekit_alias,
+                  transportWithOrWithoutSfuConfig.livekit_service_url,
                   undefined as undefined | SFUConfig,
                 ],
                 data: undefined,
@@ -188,13 +184,12 @@ export function createConnectionManager$({
             }
           }
         },
-        (scope, _data$, serviceUrl, alias, sfuConfig) => {
+        (scope, _data$, serviceUrl, sfuConfig) => {
           const connection = connectionFactory.createConnection(
             scope,
             {
               type: "livekit",
               livekit_service_url: serviceUrl,
-              livekit_alias: alias,
             },
             ownMembershipIdentity,
             logger,
@@ -254,7 +249,7 @@ export function createConnectionManager$({
   return { connectionManagerData$ };
 }
 
-function removeDuplicateTransports<T extends LivekitTransport>(
+function removeDuplicateTransports<T extends LivekitTransportConfig>(
   transports: T[],
 ): T[] {
   return transports.reduce((acc, transport) => {
