@@ -42,7 +42,7 @@ import {
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   MembershipManagerEvent,
-  type LivekitTransport,
+  type LivekitTransportConfig,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
@@ -103,7 +103,7 @@ import {
   type SpotlightPortraitLayoutMedia,
 } from "../layout-types.ts";
 import { ElementCallError, UnknownCallError } from "../../utils/errors.ts";
-import { type ObservableScope } from "../ObservableScope.ts";
+import { type Epoch, type ObservableScope } from "../ObservableScope.ts";
 import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
 import {
   createLocalMembership$,
@@ -468,6 +468,7 @@ export function createCallViewModel$(
 
   const connectionFactory = new ECConnectionFactory(
     client,
+    matrixRoom.roomId,
     mediaDevices,
     trackProcessorState$,
     livekitKeyProvider,
@@ -496,12 +497,13 @@ export function createCallViewModel$(
     ownMembershipIdentity,
   });
 
-  const matrixLivekitMembers$ = createMatrixLivekitMembers$({
-    scope: scope,
-    membershipsWithTransport$:
-      membershipsAndTransports.membershipsWithTransport$,
-    connectionManager: connectionManager,
-  });
+  const matrixLivekitMembers$: Behavior<Epoch<RemoteMatrixLivekitMember[]>> =
+    createMatrixLivekitMembers$({
+      scope: scope,
+      membershipsWithTransport$:
+        membershipsAndTransports.membershipsWithTransport$,
+      connectionManager: connectionManager,
+    });
 
   const connectOptions$ = scope.behavior(
     matrixRTCMode$.pipe(
@@ -521,7 +523,7 @@ export function createCallViewModel$(
       matrixRTCSession,
     ),
     muteStates: muteStates,
-    joinMatrixRTC: (transport: LivekitTransport) => {
+    joinMatrixRTC: (transport: LivekitTransportConfig) => {
       return enterRTCSession(
         matrixRTCSession,
         ownMembershipIdentity,

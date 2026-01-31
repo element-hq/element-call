@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 import { type RemoteParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -24,16 +24,14 @@ import { constant, type Behavior } from "../../Behavior.ts";
 
 // Some test constants
 
-const TRANSPORT_1: LivekitTransport = {
+const TRANSPORT_1: LivekitTransportConfig = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
-  livekit_alias: "!alias:example.org",
 };
 
-const TRANSPORT_2: LivekitTransport = {
+const TRANSPORT_2: LivekitTransportConfig = {
   type: "livekit",
   livekit_service_url: "https://lk.sample.com",
-  livekit_alias: "!alias:sample.com",
 };
 
 let fakeConnectionFactory: ConnectionFactory;
@@ -49,7 +47,7 @@ beforeEach(() => {
   vi.mocked(fakeConnectionFactory).createConnection = vi
     .fn()
     .mockImplementation(
-      (scope: ObservableScope, transport: LivekitTransport) => {
+      (scope: ObservableScope, transport: LivekitTransportConfig) => {
         const mockConnection = {
           transport,
           remoteParticipants$: new BehaviorSubject([]),
@@ -209,15 +207,15 @@ describe("connectionManagerData$ stream", () => {
   // Used in test to control fake connections' remoteParticipants$ streams
   let fakeRemoteParticipantsStreams: Map<string, Behavior<RemoteParticipant[]>>;
 
-  function keyForTransport(transport: LivekitTransport): string {
-    return `${transport.livekit_service_url}|${transport.livekit_alias}`;
+  function keyForTransport(transport: LivekitTransportConfig): string {
+    return `${transport.livekit_service_url}`;
   }
 
   beforeEach(() => {
     fakeRemoteParticipantsStreams = new Map();
 
     function getRemoteParticipantsFor(
-      transport: LivekitTransport,
+      transport: LivekitTransportConfig,
     ): Behavior<RemoteParticipant[]> {
       return (
         fakeRemoteParticipantsStreams.get(keyForTransport(transport)) ??
@@ -229,7 +227,7 @@ describe("connectionManagerData$ stream", () => {
     vi.mocked(fakeConnectionFactory).createConnection = vi
       .fn()
       .mockImplementation(
-        (scope: ObservableScope, transport: LivekitTransport) => {
+        (scope: ObservableScope, transport: LivekitTransportConfig) => {
           const fakeRemoteParticipants$ = new BehaviorSubject<
             RemoteParticipant[]
           >([]);

@@ -78,8 +78,8 @@ export type OpenIDClientParts = Pick<
  * @param membership Our own membership identity parts used to send to jwt service.
  * @param serviceUrl The URL of the livekit SFU service
  * @param roomId The room id used in the jwt request. This is NOT the livekit_alias. The jwt service will provide the alias. It maps matrix room ids <-> Livekit aliases.
- * @param opts Additional options to modify which endpoint with which data will be used to aquire the jwt token.
- * @param opts.forceJwtEndpoint This will use the old jwt endpoint which will create the rtc backend identity based on string concatination
+ * @param opts Additional options to modify which endpoint with which data will be used to acquire the jwt token.
+ * @param opts.forceJwtEndpoint This will use the old jwt endpoint which will create the rtc backend identity based on string concatenation
  * instead of a hash.
  * This function by default uses whatever is possible with the current jwt service installed next to the SFU.
  * For remote connections this does not matter, since we will not publish there we can rely on the newest option.
