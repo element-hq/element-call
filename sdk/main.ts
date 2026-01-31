@@ -88,6 +88,7 @@ interface MatrixRTCSdk {
   /** Use the LocalMemberConnectionState returned from `join` for a more detailed connection state  */
   connected$: Behavior<boolean>;
   sendData?: (data: unknown) => Promise<void>;
+  sendRoomMessage?: (message: string) => Promise<void>;
 }
 
 export async function createMatrixRTCSdk(
@@ -250,6 +251,16 @@ export async function createMatrixRTCSdk(
     }
   };
 
+  const sendRoomMessage = async (message: string): Promise<void> => {
+    const messageString = JSON.stringify(message);
+    logger.info("try sending to room: ", messageString);
+    try {
+      await client.sendTextMessage(room.roomId, message);
+    } catch (e) {
+      logger.error("failed sending to room: ", messageString, e);
+    }
+  };
+
   // after hangup gets called
   const leaveSubs = callViewModel.leave$.subscribe(() => {
     const scheduleWidgetCloseOnLeave = async (): Promise<void> => {
@@ -344,5 +355,6 @@ export async function createMatrixRTCSdk(
       [],
     ),
     sendData,
+    sendRoomMessage,
   };
 }
