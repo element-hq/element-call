@@ -26,7 +26,7 @@ import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc/LivekitTransport";
+import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   Connection,
@@ -51,8 +51,9 @@ let fakeLivekitRoom: MockedObject<LivekitRoom>;
 let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
-const livekitFocus: LivekitTransport = {
-  livekit_alias: "!roomID:example.org",
+const ROOM_ID = "!roomID:example.org";
+
+const livekitFocus: LivekitTransportConfig = {
   livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
   type: "livekit",
 };
@@ -112,6 +113,7 @@ function setupTest(): void {
 function setupRemoteConnection(): Connection {
   const opts: ConnectionOpts = {
     client: client,
+    roomId: ROOM_ID,
     transport: livekitFocus,
     scope: testScope,
     ownMembershipIdentity: ownMemberMock,
@@ -154,6 +156,7 @@ describe("Start connection states", () => {
 
     const opts: ConnectionOpts = {
       client: client,
+      roomId: ROOM_ID,
       transport: livekitFocus,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -170,6 +173,7 @@ describe("Start connection states", () => {
 
     const opts: ConnectionOpts = {
       client: client,
+      roomId: ROOM_ID,
       transport: livekitFocus,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -221,6 +225,7 @@ describe("Start connection states", () => {
 
     const opts: ConnectionOpts = {
       client: client,
+      roomId: ROOM_ID,
       transport: livekitFocus,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -279,6 +284,7 @@ describe("Start connection states", () => {
 
     const opts: ConnectionOpts = {
       client: client,
+      roomId: ROOM_ID,
       transport: livekitFocus,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,

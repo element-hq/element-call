@@ -16,7 +16,7 @@ import { type Logger } from "matrix-js-sdk/lib/logger";
 // imported as inline to support worker when loaded from a cdn (cross domain)
 import E2EEWorker from "livekit-client/e2ee-worker?worker&inline";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc/LivekitTransport";
+import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
@@ -33,7 +33,7 @@ import { defaultLiveKitOptions } from "../../../livekit/options.ts";
 export interface ConnectionFactory {
   createConnection(
     scope: ObservableScope,
-    transport: LivekitTransport,
+    transport: LivekitTransportConfig,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
     sfuConfig?: SFUConfig,
@@ -47,6 +47,7 @@ export class ECConnectionFactory implements ConnectionFactory {
    * Creates a ConnectionFactory for LiveKit connections.
    *
    * @param client - The OpenID client parts for authentication, needed to get openID and JWT tokens.
+   * @param roomId - The current room ID.
    * @param devices - Used for video/audio out/in capture options.
    * @param processorState$ - Effects like background blur (only for publishing connection?)
    * @param livekitKeyProvider - Optional key provider for end-to-end encryption.
@@ -57,6 +58,7 @@ export class ECConnectionFactory implements ConnectionFactory {
    */
   public constructor(
     private client: OpenIDClientParts,
+    private readonly roomId: string,
     private devices: MediaDevices,
     private processorState$: Behavior<ProcessorState>,
     livekitKeyProvider: BaseKeyProvider | undefined,
@@ -95,7 +97,7 @@ export class ECConnectionFactory implements ConnectionFactory {
    */
   public createConnection(
     scope: ObservableScope,
-    transport: LivekitTransport,
+    transport: LivekitTransportConfig,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
     sfuConfig?: SFUConfig,
@@ -103,6 +105,7 @@ export class ECConnectionFactory implements ConnectionFactory {
     return new Connection(
       {
         existingSFUConfig: sfuConfig,
+        roomId: this.roomId,
         transport,
         client: this.client,
         scope: scope,
