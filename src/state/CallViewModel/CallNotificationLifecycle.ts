@@ -7,9 +7,9 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type CallMembership,
+  type IRTCNotificationContent,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-  type MatrixRTCSessionEventHandlerMap,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   combineLatest,
@@ -38,6 +38,7 @@ import {
 
 import { type Behavior } from "../Behavior";
 import { type Epoch, mapEpoch, type ObservableScope } from "../ObservableScope";
+
 export type AutoLeaveReason = "allOthersLeft" | "timeout" | "decline";
 export type CallPickupState =
   | "unknown"
@@ -46,9 +47,11 @@ export type CallPickupState =
   | "decline"
   | "success"
   | null;
-export type CallNotificationWrapper = Parameters<
-  MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
->;
+
+export type CallNotificationWrapper = {
+  event_id: string;
+} & IRTCNotificationContent;
+
 export function createSentCallNotification$(
   scope: ObservableScope,
   matrixRTCSession: MatrixRTCSession,
@@ -80,6 +83,7 @@ export interface Props {
   options: { waitForCallPickup?: boolean; autoLeaveWhenOthersLeft?: boolean };
   localUser: { deviceId: string; userId: string };
 }
+
 /**
  * @returns two observables:
  * `callPickupState$` The current call pickup state of the call.
@@ -140,12 +144,12 @@ export function createCallNotificationLifecycle$({
     scope.behavior(
       sentCallNotification$.pipe(
         filter(
-          (newAndLegacyEvents) =>
+          (notificationEventArgs: CallNotificationWrapper | null) =>
             // only care about new events (legacy do not have decline pattern)
-            newAndLegacyEvents?.[0].notification_type === "ring",
+            notificationEventArgs?.notification_type === "ring",
         ),
         map((e) => e as CallNotificationWrapper),
-        switchMap(([notificationEvent]) => {
+        switchMap((notificationEvent) => {
           const lifetimeMs = notificationEvent?.lifetime ?? 0;
           return concat(
             lifetimeMs === 0

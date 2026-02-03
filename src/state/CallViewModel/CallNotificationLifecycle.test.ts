@@ -5,10 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type ICallNotifyContent,
-  type IRTCNotificationContent,
-} from "matrix-js-sdk/lib/matrixrtc";
 import { describe, it } from "vitest";
 import {
   EventType,
@@ -25,23 +21,23 @@ import {
   localRtcMember,
 } from "../../utils/test-fixtures";
 import {
+  type CallNotificationWrapper,
   createCallNotificationLifecycle$,
   type Props as CallNotificationLifecycleProps,
 } from "./CallNotificationLifecycle";
 import { trackEpoch } from "../ObservableScope";
 
-const mockLegacyRingEvent = {} as { event_id: string } & ICallNotifyContent;
 function mockRingEvent(
   eventId: string,
   lifetimeMs: number | undefined,
   sender = local.userId,
-): { event_id: string } & IRTCNotificationContent {
+): CallNotificationWrapper {
   return {
     event_id: eventId,
     ...(lifetimeMs === undefined ? {} : { lifetime: lifetimeMs }),
     notification_type: "ring",
     sender,
-  } as unknown as { event_id: string } & IRTCNotificationContent;
+  } as unknown as CallNotificationWrapper;
 }
 
 describe("waitForCallPickup$", () => {
@@ -54,7 +50,7 @@ describe("waitForCallPickup$", () => {
           behavior("a", { a: [] }).pipe(trackEpoch()),
         ),
         sentCallNotification$: hot("10ms a", {
-          a: [mockRingEvent("$notif1", 30), mockLegacyRingEvent],
+          a: mockRingEvent("$notif1", 30),
         }),
         receivedDecline$: hot(""),
         options: {
@@ -86,7 +82,7 @@ describe("waitForCallPickup$", () => {
           }).pipe(trackEpoch()),
         ),
         sentCallNotification$: hot("5ms a", {
-          a: [mockRingEvent("$notif2", 100), mockLegacyRingEvent],
+          a: mockRingEvent("$notif2", 100),
         }),
         receivedDecline$: hot(""),
         options: {
@@ -115,7 +111,7 @@ describe("waitForCallPickup$", () => {
           }).pipe(trackEpoch()),
         ),
         sentCallNotification$: hot("20ms a", {
-          a: [mockRingEvent("$notif2", 50), mockLegacyRingEvent],
+          a: mockRingEvent("$notif2", 50),
         }),
         receivedDecline$: hot(""),
         options: {
@@ -142,7 +138,7 @@ describe("waitForCallPickup$", () => {
           }).pipe(trackEpoch()),
         ),
         sentCallNotification$: hot("10ms a", {
-          a: [mockRingEvent("$notif2", undefined), mockLegacyRingEvent],
+          a: mockRingEvent("$notif2", undefined),
         }),
         receivedDecline$: hot(""),
         options: {
@@ -171,7 +167,7 @@ describe("waitForCallPickup$", () => {
           }).pipe(trackEpoch()),
         ),
         sentCallNotification$: hot("10ms a", {
-          a: [mockRingEvent("$notif5", 30), mockLegacyRingEvent],
+          a: mockRingEvent("$notif5", 30),
         }),
         receivedDecline$: hot(""),
         options: {
@@ -210,7 +206,7 @@ describe("waitForCallPickup$", () => {
           }).pipe(trackEpoch()),
         ),
         sentCallNotification$: hot("10ms a", {
-          a: [mockRingEvent("$decl1", 50), mockLegacyRingEvent],
+          a: mockRingEvent("$decl1", 50),
         }),
         receivedDecline$: hot("40ms d", {
           d: [
@@ -254,7 +250,7 @@ describe("waitForCallPickup$", () => {
           }).pipe(trackEpoch()),
         ),
         sentCallNotification$: hot("10ms a", {
-          a: [mockRingEvent("$decl", 20), mockLegacyRingEvent],
+          a: mockRingEvent("$decl", 20),
         }),
         receivedDecline$: hot("40ms d", {
           d: [
@@ -305,7 +301,7 @@ describe("waitForCallPickup$", () => {
           }).pipe(trackEpoch()),
         ),
         sentCallNotification$: hot("10ms a", {
-          a: [mockRingEvent("$right", 50), mockLegacyRingEvent],
+          a: mockRingEvent("$right", 50),
         }),
         receivedDecline$: hot("20ms d", {
           d: [
