@@ -9,7 +9,6 @@ import {
   type CallMembership,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-  type MatrixRTCSessionEventHandlerMap,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   combineLatest,
@@ -34,6 +33,7 @@ import {
   EventType,
   type Room as MatrixRoom,
   RoomEvent,
+  type IRTCNotificationContent,
 } from "matrix-js-sdk";
 
 import { type Behavior } from "../Behavior";
@@ -46,9 +46,11 @@ export type CallPickupState =
   | "decline"
   | "success"
   | null;
-export type CallNotificationWrapper = Parameters<
-  MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
->;
+
+export type CallNotificationWrapper = {
+  event_id: string;
+} & IRTCNotificationContent;
+
 export function createSentCallNotification$(
   scope: ObservableScope,
   matrixRTCSession: MatrixRTCSession,
@@ -140,12 +142,12 @@ export function createCallNotificationLifecycle$({
     scope.behavior(
       sentCallNotification$.pipe(
         filter(
-          (notificationEventArgs) =>
+          (notificationEventArgs: CallNotificationWrapper | null) =>
             // only care about new events (legacy do not have decline pattern)
-            notificationEventArgs?.[0].notification_type === "ring",
+            notificationEventArgs?.notification_type === "ring",
         ),
         map((e) => e as CallNotificationWrapper),
-        switchMap(([notificationEvent]) => {
+        switchMap((notificationEvent) => {
           const lifetimeMs = notificationEvent?.lifetime ?? 0;
           return concat(
             lifetimeMs === 0
