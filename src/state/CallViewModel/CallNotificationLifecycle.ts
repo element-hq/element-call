@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type CallMembership,
+  type IRTCNotificationContent,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -33,11 +34,11 @@ import {
   EventType,
   type Room as MatrixRoom,
   RoomEvent,
-  type IRTCNotificationContent,
 } from "matrix-js-sdk";
 
 import { type Behavior } from "../Behavior";
 import { type Epoch, mapEpoch, type ObservableScope } from "../ObservableScope";
+
 export type AutoLeaveReason = "allOthersLeft" | "timeout" | "decline";
 export type CallPickupState =
   | "unknown"
@@ -82,6 +83,7 @@ export interface Props {
   options: { waitForCallPickup?: boolean; autoLeaveWhenOthersLeft?: boolean };
   localUser: { deviceId: string; userId: string };
 }
+
 /**
  * @returns two observables:
  * `callPickupState$` The current call pickup state of the call.
