@@ -11452,9 +11452,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@matrix-org/matrix-js-sdk#toger5/make-empty-string-room-m.call-constraint":
+"matrix-js-sdk@matrix-org/matrix-js-sdk#develop":
   version: 40.1.0
-  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=55cdd22d83e2d92900c4981a769ad02bb2f64451"
+  resolution: "matrix-js-sdk@https://github.com/matrix-org/matrix-js-sdk.git#commit=f2157f28bbadf2898fe21991f69ccb2af40df326"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm": "npm:^17.0.0"
@@ -11470,7 +11470,7 @@ __metadata:
     sdp-transform: "npm:^3.0.0"
     unhomoglyph: "npm:^1.0.6"
     uuid: "npm:13"
-  checksum: 10c0/23ede2482a345d0b44dff08d7f0977e99a5efa2c21e2df12f0b3543e7f5f14bf8130f2549218c4164227a3d3301cb64d8588d199845a62a283d588750dae871f
+  checksum: 10c0/d646b9214abbf0b9126760105edd9c57be7ffe8b53ae4acd5fefe841a51ad7d78fa57130922b3eac65ff2266b43f31ea60b4bdda9481e6bf8f1808d96726ed8a
   languageName: node
   linkType: hard
 
