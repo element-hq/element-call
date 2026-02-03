@@ -99,7 +99,7 @@ export async function createMatrixRTCSdk(
   const scope = new ObservableScope();
 
   // widget client
-  initializeWidget(application);
+  initializeWidget(application, true);
   const widget = _widget;
   if (!widget) throw Error("No widget. This webapp can only start as a widget");
   const client = await widget.client;

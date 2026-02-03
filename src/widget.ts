@@ -68,7 +68,10 @@ export let widget: WidgetHelpers | null;
  */
 // this needs to be a seperate call and cannot be done on import to allow us to spy on methods in here before
 // execution.
-export const initializeWidget = (rtcApplication: string = "m.call"): void => {
+export const initializeWidget = (
+  rtcApplication: string = "m.call",
+  sendRoomEvents = false,
+): void => {
   try {
     const {
       widgetId,
@@ -116,6 +119,9 @@ export const initializeWidget = (rtcApplication: string = "m.call"): void => {
         EventType.CallNotify, // Sent as a deprecated fallback
         EventType.RTCNotification,
       ];
+      if (sendRoomEvents) {
+        sendEvent.push(EventType.RoomMessage);
+      }
       const sendRecvEvent = [
         "org.matrix.rageshake_request",
         EventType.CallEncryptionKeysPrefix,
