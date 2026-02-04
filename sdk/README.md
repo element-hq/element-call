@@ -21,7 +21,7 @@ in the repository root.
 
 It will create a `dist` folder containing the compiled js file.
 
-This file needs to be hosted. Locally (via `npx serve -l 81234 --cors`) or on a remote server.
+This file needs to be hosted. Locally (via `npx serve -l 1234 --cors`) or on a remote server.
 
 Now you just need to add the widget to element web via:
 

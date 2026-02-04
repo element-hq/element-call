@@ -6,12 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { beforeAll, describe, expect, vi, it } from "vitest";
-import { createRoomWidgetClient, EventType } from "matrix-js-sdk";
+import { createRoomWidgetClient } from "matrix-js-sdk";
 
 import { getUrlParams } from "./UrlParams";
 import { initializeWidget, widget } from "./widget";
 import { Config } from "./config/Config";
-import { ElementCallReactionEventType } from "./reactions";
 
 vi.mock("matrix-js-sdk", { spy: true });
 const createRoomWidgetClientSpy = vi.mocked(createRoomWidgetClient);
@@ -35,7 +34,7 @@ vi.mock("./UrlParams", () => ({
   })),
 }));
 
-initializeWidget();
+initializeWidget("ANYRTCAPP");
 describe("widget", () => {
   beforeAll(() => {});
 
@@ -52,48 +51,39 @@ describe("widget", () => {
     expect(widget).toBeDefined();
     expect(configInitSpy).toHaveBeenCalled();
     const sendEvent = [
-      EventType.CallNotify, // Sent as a deprecated fallback
-      EventType.RTCNotification,
+      "org.matrix.msc4075.call.notify", // Sent as a deprecated fallback
+      "org.matrix.msc4075.rtc.notification",
     ];
     const sendRecvEvent = [
       "org.matrix.rageshake_request",
-      EventType.CallEncryptionKeysPrefix,
-      EventType.Reaction,
-      EventType.RoomRedaction,
-      ElementCallReactionEventType,
-      EventType.RTCDecline,
-      EventType.RTCMembership,
+      "io.element.call.encryption_keys",
+      "m.reaction",
+      "m.room.redaction",
+      "io.element.call.reaction",
+      "org.matrix.msc4310.rtc.decline",
+      "org.matrix.msc4143.rtc.member",
     ];
 
     const sendState = [
-      "myYser", // Legacy call membership events
-      `_myYser_AAAAA_m.call`, // Session membership events
-      `myYser_AAAAA_m.call`, // The above with no leading underscore, for room versions whose auth rules allow it
-    ].map((stateKey) => ({
-      eventType: EventType.GroupCallMemberPrefix,
-      stateKey,
-    }));
+      { eventType: "org.matrix.msc3401.call.member", stateKey: "myYser" }, // Legacy call membership events
+      {
+        eventType: "org.matrix.msc3401.call.member",
+        stateKey: `_myYser_AAAAA_ANYRTCAPP`,
+      }, // Session membership events
+      {
+        eventType: "org.matrix.msc3401.call.member",
+        stateKey: `myYser_AAAAA_ANYRTCAPP`,
+      }, // The above with no leading underscore, for room versions whose auth rules allow it
+    ];
     const receiveState = [
-      { eventType: EventType.RoomCreate },
-      { eventType: EventType.RoomName },
-      { eventType: EventType.RoomMember },
-      { eventType: EventType.RoomEncryption },
-      { eventType: EventType.GroupCallMemberPrefix },
+      { eventType: "m.room.create" },
+      { eventType: "m.room.name" },
+      { eventType: "m.room.member" },
+      { eventType: "m.room.encryption" },
+      { eventType: "org.matrix.msc3401.call.member" },
     ];
 
-    const sendRecvToDevice = [
-      EventType.CallInvite,
-      EventType.CallCandidates,
-      EventType.CallAnswer,
-      EventType.CallHangup,
-      EventType.CallReject,
-      EventType.CallSelectAnswer,
-      EventType.CallNegotiate,
-      EventType.CallSDPStreamMetadataChanged,
-      EventType.CallSDPStreamMetadataChangedPrefix,
-      EventType.CallReplaces,
-      EventType.CallEncryptionKeysPrefix,
-    ];
+    const sendRecvToDevice = ["io.element.call.encryption_keys"];
 
     expect(createRoomWidgetClientSpy.mock.calls[0][1]).toStrictEqual({
       sendEvent: [...sendEvent, ...sendRecvEvent],
