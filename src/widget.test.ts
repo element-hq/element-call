@@ -35,7 +35,7 @@ vi.mock("./UrlParams", () => ({
   })),
 }));
 
-initializeWidget();
+initializeWidget("ANYRTCAPP");
 describe("widget", () => {
   beforeAll(() => {});
 
@@ -66,13 +66,16 @@ describe("widget", () => {
     ];
 
     const sendState = [
-      "myYser", // Legacy call membership events
-      `_myYser_AAAAA_m.call`, // Session membership events
-      `myYser_AAAAA_m.call`, // The above with no leading underscore, for room versions whose auth rules allow it
-    ].map((stateKey) => ({
-      eventType: EventType.GroupCallMemberPrefix,
-      stateKey,
-    }));
+      { eventType: "org.matrix.msc3401.call.member", stateKey: "myYser" }, // Legacy call membership events
+      {
+        eventType: "org.matrix.msc3401.call.member",
+        stateKey: `_myYser_AAAAA_ANYRTCAPP`,
+      }, // Session membership events
+      {
+        eventType: "org.matrix.msc3401.call.member",
+        stateKey: `myYser_AAAAA_ANYRTCAPP`,
+      }, // The above with no leading underscore, for room versions whose auth rules allow it
+    ];
     const receiveState = [
       { eventType: EventType.RoomCreate },
       { eventType: EventType.RoomName },
