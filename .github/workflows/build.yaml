@@ -69,17 +69,3 @@ jobs:
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-  build_sdk_element_call:
-    # Use the embedded package vite build
-    uses: ./.github/workflows/build-element-call.yaml
-    with:
-      package: sdk
-      vite_app_version: ${{ github.event.release.tag_name || github.sha }}
-      build_mode: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'development build') && 'development' || 'production' }}
-    secrets:
-      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-      SENTRY_URL: ${{ secrets.SENTRY_URL }}
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
