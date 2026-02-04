@@ -6,6 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 /**
+ * EXPERIMENTAL
+ *
  * This file is the entrypoint for the sdk build of element call: `yarn build:sdk`
  * use in widgets.
  * It exposes the `createMatrixRTCSdk` which creates the `MatrixRTCSdk` interface (see below) that
