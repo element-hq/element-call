@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { beforeAll, describe, expect, vi, it } from "vitest";
+import { describe, expect, vi, it, beforeEach } from "vitest";
 import { createRoomWidgetClient, EventType } from "matrix-js-sdk";
 
 import { getUrlParams } from "./UrlParams";
@@ -35,11 +35,14 @@ vi.mock("./UrlParams", () => ({
   })),
 }));
 
-initializeWidget("ANYRTCAPP");
-describe("widget", () => {
-  beforeAll(() => {});
+beforeEach(() => {
+  createRoomWidgetClientSpy.mockClear();
+});
 
+describe("widget", () => {
   it("should create an embedded client with the correct params", () => {
+    initializeWidget("ANYRTCAPP");
+
     expect(getUrlParams()).toStrictEqual({
       widgetId: "id",
       parentUrl: "http://parentUrl",
@@ -126,5 +129,33 @@ describe("widget", () => {
       scheduler: expect.any(Object),
     });
     expect(createRoomWidgetClientSpy.mock.calls[0][4]).toStrictEqual(false);
+  });
+
+  it("should request send message permission if requested", () => {
+    initializeWidget("ANYRTCAPP", true);
+    expect(createRoomWidgetClientSpy).toHaveBeenLastCalledWith(
+      expect.anything(),
+      // capabilities
+      expect.objectContaining({
+        sendEvent: expect.arrayContaining(["m.room.message"]),
+      }),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it("should not request send message permission when not requested", () => {
+    initializeWidget("", false);
+    expect(createRoomWidgetClientSpy).toHaveBeenLastCalledWith(
+      expect.anything(),
+      // capabilities
+      expect.objectContaining({
+        sendEvent: expect.not.arrayContaining(["m.room.message"]),
+      }),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
   });
 });
