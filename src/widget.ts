@@ -142,19 +142,7 @@ export const initializeWidget = (): void => {
         { eventType: EventType.GroupCallMemberPrefix },
       ];
 
-      const sendRecvToDevice = [
-        EventType.CallInvite,
-        EventType.CallCandidates,
-        EventType.CallAnswer,
-        EventType.CallHangup,
-        EventType.CallReject,
-        EventType.CallSelectAnswer,
-        EventType.CallNegotiate,
-        EventType.CallSDPStreamMetadataChanged,
-        EventType.CallSDPStreamMetadataChangedPrefix,
-        EventType.CallReplaces,
-        EventType.CallEncryptionKeysPrefix,
-      ];
+      const sendRecvToDevice = [EventType.CallEncryptionKeysPrefix];
 
       const client = createRoomWidgetClient(
         api,
