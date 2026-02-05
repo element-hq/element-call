@@ -307,7 +307,7 @@ export async function createMatrixRTCSdk(
       callViewModel.join();
     },
     leave: (): void => {
-      callViewModel.hangup();
+      callViewModel.leave();
     },
     stop: (): void => {
       leaveSubs.unsubscribe();
