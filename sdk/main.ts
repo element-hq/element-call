@@ -68,6 +68,12 @@ interface MatrixRTCSdk {
   join: () => void;
   /** @throws on leave errors */
   leave: () => void;
+  /**
+   * Ends the rtc sdk. This will unsubscribe any event listeners. And end the associated scope.
+   * No updates can be received from the rtc sdk. The sdk cannot be restarted after.
+   * A new sdk needs to be created via createMatrixRTCSdk.
+   */
+  stop: () => void;
   data$: Observable<{ rtcBackendIdentity: string; data: string }>;
   /**
    * flattened list of members
@@ -290,9 +296,6 @@ export async function createMatrixRTCSdk(
 
     // schedule close first and then leave (scope.end)
     void scheduleWidgetCloseOnLeave();
-
-    // actual hangup (ending scope will send the leave event.. its kinda odd. since you might end up closing the widget too fast)
-    scope.end();
   });
 
   logger.info("createMatrixRTCSdk done");
@@ -305,8 +308,11 @@ export async function createMatrixRTCSdk(
     },
     leave: (): void => {
       callViewModel.hangup();
+    },
+    stop: (): void => {
       leaveSubs.unsubscribe();
       livekitRoomItemsSub.unsubscribe();
+      scope.end();
     },
     data$,
     localMember$: scope.behavior(
