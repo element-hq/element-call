@@ -162,6 +162,7 @@ export function createConnectionManager$({
   const connections$ = scope.behavior(
     localAndRemoteTransports$.pipe(
       generateItemsWithEpoch(
+        "ConnectionManager connections$",
         function* (transports) {
           for (const transportWithOrWithoutSfuConfig of transports) {
             if (
