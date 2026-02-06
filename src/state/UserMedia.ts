@@ -130,6 +130,7 @@ export class UserMedia {
               // MediaViewModels don't support it though since they look for a unique
               // track for the given source. So generateItems here is a bit overkill.
               generateItems(
+                `${this.id} screenShares$`,
                 function* (p) {
                   if (p.isScreenShareEnabled)
                     yield {
