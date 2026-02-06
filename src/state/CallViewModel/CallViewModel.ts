@@ -715,6 +715,7 @@ export function createCallViewModel$(
       // Generate a collection of MediaItems from the list of expected (whether
       // present or missing) LiveKit participants.
       generateItems(
+        "CallViewModel userMedia$",
         function* ([
           localMatrixLivekitMember,
           matrixLivekitMembers,
