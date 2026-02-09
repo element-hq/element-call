@@ -7,7 +7,7 @@ on:
         type: string
       package:
         type: string # This would ideally be a `choice` type, but that isn't supported yet
-        description: The package type to be built. Must be one of 'full' or 'embedded'
+        description: The package type to be built. Must be one of 'full', 'embedded', or 'sdk'
         required: true
       build_mode:
         type: string # This would ideally be a `choice` type, but that isn't supported yet
