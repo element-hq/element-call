@@ -217,15 +217,23 @@ export interface CallViewModel {
     "unknown" | "ringing" | "timeout" | "decline" | "success" | null
   >;
   /** Observable that emits when the user should leave the call (hangup pressed, widget action, error).
-   * THIS DOES NOT LEAVE THE CALL YET. The only way to leave the call (send the hangup event) is by ending the scope.
+   * THIS DOES NOT LEAVE THE CALL YET. The only way to leave the call (send the hangup event) is
+   *  - by ending the scope
+   *  - or calling requestDisconnect
+   *
+   * TODO: it seems more reasonable to add a leave() method (that calls requestDisconnect) that will then update leave$ and remove the hangup pattern
    */
   leave$: Observable<"user" | AutoLeaveReason>;
-  /** Call to initiate hangup. Use in conbination with reconnectino state track the async hangup process. */
+  /** Call to initiate hangup. Use in conbination with reconnection state track the async hangup process. */
   hangup: () => void;
 
   // joining
   join: () => void;
 
+  /**
+   * calls requestDisconnect. The async leave state can than be observed via connected$
+   */
+  leave: () => void;
   // screen sharing
   /**
    * Callback to toggle screen sharing. If null, screen sharing is not possible.
@@ -1497,6 +1505,7 @@ export function createCallViewModel$(
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
     join: localMembership.requestJoinAndPublish,
+    leave: localMembership.requestDisconnect,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
 
