@@ -444,35 +444,34 @@ export function createCallViewModel$(
     memberId: uuidv4(),
   };
 
-  const localTransport$ = createLocalTransport$({
-    scope: scope,
-    memberships$: memberships$,
-    ownMembershipIdentity,
-    client,
-    delayId$: scope.behavior(
-      (
-        fromEvent(
-          matrixRTCSession,
-          MembershipManagerEvent.DelayIdChanged,
-          // The type of reemitted event includes the original emitted as the second arg.
-        ) as Observable<[string | undefined, IMembershipManager]>
-      ).pipe(map(([delayId]) => delayId ?? null)),
-      matrixRTCSession.delayId ?? null,
-    ),
-    roomId: matrixRoom.roomId,
-    forceJwtEndpoint$: scope.behavior(
-      matrixRTCMode$.pipe(
-        map((v) =>
-          v === MatrixRTCMode.Matrix_2_0
-            ? JwtEndpointVersion.Matrix_2_0
-            : JwtEndpointVersion.Legacy,
-        ),
+  const localTransport$ = scope.behavior(
+    matrixRTCMode$.pipe(
+      map((mode) =>
+        createLocalTransport$({
+          scope: scope,
+          memberships$: memberships$,
+          ownMembershipIdentity,
+          client,
+          delayId$: scope.behavior(
+            (
+              fromEvent(
+                matrixRTCSession,
+                MembershipManagerEvent.DelayIdChanged,
+                // The type of reemitted event includes the original emitted as the second arg.
+              ) as Observable<[string | undefined, IMembershipManager]>
+            ).pipe(map(([delayId]) => delayId ?? null)),
+            matrixRTCSession.delayId ?? null,
+          ),
+          roomId: matrixRoom.roomId,
+          forceJwtEndpoint:
+            mode === MatrixRTCMode.Matrix_2_0
+              ? JwtEndpointVersion.Matrix_2_0
+              : JwtEndpointVersion.Legacy,
+          useOldestMember: mode === MatrixRTCMode.Legacy,
+        }),
       ),
     ),
-    useOldestMember$: scope.behavior(
-      matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
-    ),
-  });
+  );
 
   const connectionFactory = new ECConnectionFactory(
     client,
@@ -491,6 +490,7 @@ export function createCallViewModel$(
     connectionFactory: connectionFactory,
     localTransport$: scope.behavior(
       localTransport$.pipe(
+        switchMap((t) => t.active$),
         catchError((e: unknown) => {
           logger.info(
             "could not pass local transport to createConnectionManager$. localTransport$ threw an error",
@@ -524,13 +524,13 @@ export function createCallViewModel$(
   );
 
   const localMembership = createLocalMembership$({
-    scope: scope,
+    scope,
     homeserverConnected: createHomeserverConnected$(
       scope,
       client,
       matrixRTCSession,
     ),
-    muteStates: muteStates,
+    muteStates,
     joinMatrixRTC: (transport: LivekitTransportConfig) => {
       return enterRTCSession(
         matrixRTCSession,
@@ -550,9 +550,11 @@ export function createCallViewModel$(
         ),
       );
     },
-    connectionManager: connectionManager,
-    matrixRTCSession: matrixRTCSession,
-    localTransport$: localTransport$,
+    connectionManager,
+    matrixRTCSession,
+    localTransport$: scope.behavior(
+      localTransport$.pipe(switchMap((t) => t.advertised$)),
+    ),
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
