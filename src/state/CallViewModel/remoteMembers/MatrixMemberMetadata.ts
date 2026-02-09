@@ -65,12 +65,12 @@ export function createDMMember$(
   RoomMember,
   "userId" | "getMxcAvatarUrl" | "rawDisplayName"
 > | null> {
-  // We cannot use the normal direct check from matrix since we do not have access to the account data.
+  // We cannot use the normal direct DM check from matrix since we do not have access to the account data.
   // use primitive member count === 2 check instead.
   return scope.behavior(
     roomMembers$.pipe(
       map((membersMap) => {
-        // primitive appraoch do to no access to account data.
+        // primitive approach due to no access to account data.
         const isDM = membersMap.size === 2;
         if (!isDM) return null;
         return matrixRoom.getMember(matrixRoom.guessDMUserId());

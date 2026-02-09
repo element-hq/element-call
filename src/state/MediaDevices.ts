@@ -333,7 +333,22 @@ class ControlledAudioOutput implements MediaDevice<
         ),
       ],
       (available, preferredId) => {
-        const id = preferredId ?? available.keys().next().value;
+        // const preferredValid =
+        //   preferredId !== undefined && available.has(preferredId)
+        //     ? preferredId
+        //     : undefined;
+
+        // // Default to speaker to prohibit toggle (speaker->earpiece->speaker)
+        // //  - before we get `this.available$` we would use a non earpice (speaker)
+        // //  - once we receive the available devices, we call this method need to make sure to not select earpice.
+        // //  - the OS might select earpiece manually by calling `select` method
+        // const speakerId = [...available].find(
+        //   ([, label]) => label.type === "speaker",
+        // )?.[0];
+
+        // const id = preferredValid ?? speakerId ?? available.keys().next().value;
+        const id = preferredId;
+
         return id === undefined
           ? undefined
           : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID };

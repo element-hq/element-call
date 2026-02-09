@@ -616,8 +616,13 @@ export function createCallViewModel$(
   const ringOverlay$ = scope.behavior(
     combineLatest([noUserToCallInRoom$, dmMember$, callPickupState$]).pipe(
       map(([noUserToCallInRoom, dmMember, callPickupState]) => {
-        // No overlay if not in ringing state
-        if (callPickupState !== "ringing" || noUserToCallInRoom) return null;
+        // No overlay if:
+        if (
+          callPickupState !== "ringing" ||
+          noUserToCallInRoom ||
+          dmMember === null
+        )
+          return null;
 
         const name = dmMember ? dmMember.rawDisplayName : matrixRoom.name;
         const id = dmMember ? dmMember.userId : matrixRoom.roomId;
