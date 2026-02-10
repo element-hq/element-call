@@ -1555,7 +1555,9 @@ export function createCallViewModel$(
       matrixLivekitMembers$.pipe(
         map((members) => members.value),
         tap((v) => {
-          logger.debug("matrixLivekitMembers$ updated (exported)", v);
+          logger.debug(
+            `matrixLivekitMembers$ updated (exported) ${v.length} members`,
+          );
         }),
       ),
     ),

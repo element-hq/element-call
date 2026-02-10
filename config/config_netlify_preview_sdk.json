@@ -12,5 +12,9 @@
     "delayed_leave_event_delay_ms": 18000,
     "delayed_leave_event_restart_ms": 4000,
     "network_error_retry_ms": 100
+  },
+  "sentry": {
+    "environment": "netlify-pr-preview",
+    "DSN": "https://b1e328d49be3402ba96101338989fb35@sentry.tools.element.io/41"
   }
 }
