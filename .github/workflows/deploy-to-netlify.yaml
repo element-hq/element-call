@@ -64,6 +64,8 @@ jobs:
       - name: Add config file
         run: |
           if [ "${{ inputs.package }}" = "full" ]; then
+            curl -s "https://raw.githubusercontent.com/${{ inputs.pr_head_full_name }}/${{ inputs.pr_head_ref }}/config/config_netlify_preview.json" > webapp/config.json
+          else
             curl -s "https://raw.githubusercontent.com/${{ inputs.pr_head_full_name }}/${{ inputs.pr_head_ref }}/config/config_netlify_preview_sdk.json" > webapp/config.json
           fi
       - name: ☁️ Deploy to Netlify
