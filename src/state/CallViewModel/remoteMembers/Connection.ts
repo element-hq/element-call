@@ -154,8 +154,11 @@ export class Connection {
       "[Connection " + opts.transport.livekit_service_url + "]",
     );
     this.logger.info(
-      `constructor: ${opts.transport.livekit_service_url} roomId: ${this.roomId} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
+      `Creating connection to ${opts.transport.livekit_service_url}, jwt auth version ${opts.forceJwtEndpoint}`,
     );
+    // this.logger.info(
+    //   `constructor: ${opts.transport.livekit_service_url} roomId: ${this.roomId} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
+    // );
     const { transport, client, scope } = opts;
 
     this.scope = scope;

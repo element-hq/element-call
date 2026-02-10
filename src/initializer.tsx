@@ -224,7 +224,7 @@ export class Initializer {
           this.initStep(resolve);
         },
         (e) => {
-          logger.error("Failed to load config", e);
+          logger.error(`Failed to load config for Element Call: ${e}`);
         },
       );
     }
