@@ -166,6 +166,14 @@ export const customLivekitUrl = new Setting<string | null>(
 
 export type VideoCodec = "vp8" | "vp9" | "h264" | "av1";
 
+/**
+ * Parse a "WIDTHxHEIGHT" resolution string into numeric width and height.
+ */
+export function parseResolution(res: string): { width: number; height: number } {
+  const [w, h] = res.split("x").map(Number);
+  return { width: w, height: h };
+}
+
 export const advancedScreenShare = new Setting<boolean>(
   "advanced-screen-share",
   false,

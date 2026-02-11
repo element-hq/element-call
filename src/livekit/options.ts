@@ -108,7 +108,10 @@ function buildPublishOptions(
     stopMicTrackOnMute: false,
     videoCodec: codec,
     videoEncoding,
-    backupCodec: { codec: "vp8", encoding: videoEncoding },
+    backupCodec: {
+      codec: "vp8",
+      encoding: VideoPresets.h720.encoding,
+    },
   } as TrackPublishDefaults;
 }
 
@@ -156,6 +159,3 @@ export function getLiveKitOptions(): RoomOptions {
     return buildLiveKitOptions();
   }
 }
-
-// Keep backward-compatible export for existing consumers
-export const defaultLiveKitOptions: RoomOptions = buildLiveKitOptions();
