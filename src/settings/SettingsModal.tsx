@@ -29,6 +29,14 @@ import {
   screenShareFramerate as screenShareFramerateSetting,
   screenShareBitrate as screenShareBitrateSetting,
   screenShareCodec as screenShareCodecSetting,
+  advancedCamera as advancedCameraSetting,
+  cameraResolution as cameraResolutionSetting,
+  cameraFramerate as cameraFramerateSetting,
+  cameraBitrate as cameraBitrateSetting,
+  cameraCodec as cameraCodecSetting,
+  echoCancellationSetting,
+  noiseSuppressionSetting,
+  autoGainControlSetting,
   type VideoCodec,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
@@ -157,6 +165,8 @@ export const SettingsModal: FC<Props> = ({
             <div className={styles.volumeSlider}>
               <label>
                 {t("settings.screen_share_framerate_label", "Framerate")}
+                {": "}
+                <span className={styles.settingValue}>{framerateRaw} fps</span>
               </label>
               <Slider
                 label={t("settings.screen_share_framerate_label", "Framerate")}
@@ -172,6 +182,10 @@ export const SettingsModal: FC<Props> = ({
             <div className={styles.volumeSlider}>
               <label>
                 {t("settings.screen_share_bitrate_label", "Bitrate")}
+                {": "}
+                <span className={styles.settingValue}>
+                  {(bitrateRaw / 1_000_000).toFixed(1)} Mbps
+                </span>
               </label>
               <Slider
                 label={t("settings.screen_share_bitrate_label", "Bitrate")}
@@ -205,6 +219,177 @@ export const SettingsModal: FC<Props> = ({
             </div>
           </>
         )}
+      </>
+    );
+  };
+
+  const CameraSettings: React.FC = (): ReactNode => {
+    const [advancedEnabled, setAdvancedEnabled] = useSetting(
+      advancedCameraSetting,
+    );
+    const [resolution, setResolution] = useSetting(cameraResolutionSetting);
+    const [framerate, setFramerate] = useSetting(cameraFramerateSetting);
+    const [framerateRaw, setFramerateRaw] = useState(framerate);
+    const [bitrate, setBitrate] = useSetting(cameraBitrateSetting);
+    const [bitrateRaw, setBitrateRaw] = useState(bitrate);
+    const [codec, setCodec] = useSetting(cameraCodecSetting);
+
+    return (
+      <>
+        <h4>{t("settings.camera_header", "Camera quality")}</h4>
+        <FieldRow>
+          <InputField
+            id="advancedCamera"
+            label={t(
+              "settings.advanced_camera_label",
+              "Advanced camera settings",
+            )}
+            description={t(
+              "settings.advanced_camera_description",
+              "Configure resolution, framerate, bitrate, and codec for camera video. Changes apply on next call join.",
+            )}
+            type="checkbox"
+            checked={advancedEnabled}
+            onChange={(e): void => setAdvancedEnabled(e.target.checked)}
+          />
+        </FieldRow>
+        {advancedEnabled && (
+          <>
+            <div className={styles.volumeSlider}>
+              <label htmlFor="cameraResolution">
+                {t("settings.camera_resolution_label", "Resolution")}
+              </label>
+              <select
+                id="cameraResolution"
+                value={resolution}
+                onChange={(e): void => setResolution(e.target.value)}
+              >
+                <option value="640x360">360p</option>
+                <option value="960x540">540p</option>
+                <option value="1280x720">720p</option>
+                <option value="1920x1080">1080p</option>
+                <option value="2560x1440">1440p</option>
+              </select>
+            </div>
+            <div className={styles.volumeSlider}>
+              <label>
+                {t("settings.camera_framerate_label", "Framerate")}
+                {": "}
+                <span className={styles.settingValue}>
+                  {framerateRaw} fps
+                </span>
+              </label>
+              <Slider
+                label={t("settings.camera_framerate_label", "Framerate")}
+                value={framerateRaw}
+                onValueChange={setFramerateRaw}
+                onValueCommit={setFramerate}
+                min={5}
+                max={60}
+                step={5}
+                tooltipFormatter={(v): string => `${v} fps`}
+              />
+            </div>
+            <div className={styles.volumeSlider}>
+              <label>
+                {t("settings.camera_bitrate_label", "Bitrate")}
+                {": "}
+                <span className={styles.settingValue}>
+                  {(bitrateRaw / 1_000_000).toFixed(1)} Mbps
+                </span>
+              </label>
+              <Slider
+                label={t("settings.camera_bitrate_label", "Bitrate")}
+                value={bitrateRaw}
+                onValueChange={setBitrateRaw}
+                onValueCommit={setBitrate}
+                min={200_000}
+                max={8_000_000}
+                step={100_000}
+                tooltipFormatter={(v): string =>
+                  `${(v / 1_000_000).toFixed(1)} Mbps`
+                }
+              />
+            </div>
+            <div className={styles.volumeSlider}>
+              <label htmlFor="cameraCodec">
+                {t("settings.camera_codec_label", "Codec")}
+              </label>
+              <select
+                id="cameraCodec"
+                value={codec}
+                onChange={(e): void =>
+                  setCodec(e.target.value as VideoCodec)
+                }
+              >
+                <option value="vp8">VP8</option>
+                <option value="vp9">VP9</option>
+                <option value="h264">H.264</option>
+                <option value="av1">AV1</option>
+              </select>
+            </div>
+          </>
+        )}
+      </>
+    );
+  };
+
+  const AudioProcessingSettings: React.FC = (): ReactNode => {
+    const [echoCancellation, setEchoCancellation] = useSetting(
+      echoCancellationSetting,
+    );
+    const [noiseSuppression, setNoiseSuppression] = useSetting(
+      noiseSuppressionSetting,
+    );
+    const [autoGainControl, setAutoGainControl] = useSetting(
+      autoGainControlSetting,
+    );
+
+    return (
+      <>
+        <h4>{t("settings.audio_processing_header", "Audio processing")}</h4>
+        <p>
+          {t(
+            "settings.audio_processing_description",
+            "Changes apply on next call join.",
+          )}
+        </p>
+        <FieldRow>
+          <InputField
+            id="echoCancellation"
+            label={t(
+              "settings.echo_cancellation_label",
+              "Echo cancellation",
+            )}
+            type="checkbox"
+            checked={echoCancellation}
+            onChange={(e): void => setEchoCancellation(e.target.checked)}
+          />
+        </FieldRow>
+        <FieldRow>
+          <InputField
+            id="noiseSuppression"
+            label={t(
+              "settings.noise_suppression_label",
+              "Noise suppression",
+            )}
+            type="checkbox"
+            checked={noiseSuppression}
+            onChange={(e): void => setNoiseSuppression(e.target.checked)}
+          />
+        </FieldRow>
+        <FieldRow>
+          <InputField
+            id="autoGainControl"
+            label={t(
+              "settings.auto_gain_control_label",
+              "Automatic gain control",
+            )}
+            type="checkbox"
+            checked={autoGainControl}
+            onChange={(e): void => setAutoGainControl(e.target.checked)}
+          />
+        </FieldRow>
       </>
     );
   };
@@ -263,7 +448,13 @@ export const SettingsModal: FC<Props> = ({
           />
 
           <div className={styles.volumeSlider}>
-            <label>{t("settings.audio_tab.effect_volume_label")}</label>
+            <label>
+              {t("settings.audio_tab.effect_volume_label")}
+              {": "}
+              <span className={styles.settingValue}>
+                {Math.round(soundVolumeRaw * 100)}%
+              </span>
+            </label>
             <p>{t("settings.audio_tab.effect_volume_description")}</p>
             <Slider
               label={t("video_tile.volume")}
@@ -276,6 +467,8 @@ export const SettingsModal: FC<Props> = ({
             />
           </div>
         </Form>
+        <Separator />
+        <AudioProcessingSettings />
       </>
     ),
   };
@@ -294,6 +487,8 @@ export const SettingsModal: FC<Props> = ({
         </Form>
         <Separator />
         <BlurCheckbox />
+        <Separator />
+        <CameraSettings />
         <Separator />
         <ScreenShareSettings />
       </>

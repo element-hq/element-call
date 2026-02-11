@@ -27,10 +27,17 @@ import type {
 import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
+import { getLiveKitOptions } from "../../../livekit/options.ts";
 import {
-  defaultLiveKitOptions,
-  getLiveKitOptions,
-} from "../../../livekit/options.ts";
+  advancedCamera,
+  cameraResolution,
+  cameraFramerate,
+  cameraBitrate,
+  cameraCodec,
+  echoCancellationSetting,
+  noiseSuppressionSetting,
+  autoGainControlSetting,
+} from "../../../settings/settings.ts";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
@@ -56,8 +63,6 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param livekitKeyProvider - Optional key provider for end-to-end encryption.
    * @param controlledAudioDevices - Option to indicate whether audio output device is controlled externally (native mobile app).
    * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
-   * @param echoCancellation - Whether to enable echo cancellation for audio capture.
-   * @param noiseSuppression - Whether to enable noise suppression for audio capture.
    */
   public constructor(
     private client: OpenIDClientParts,
@@ -67,8 +72,6 @@ export class ECConnectionFactory implements ConnectionFactory {
     livekitKeyProvider: BaseKeyProvider | undefined,
     private controlledAudioDevices: boolean,
     livekitRoomFactory?: () => LivekitRoom,
-    echoCancellation: boolean = true,
-    noiseSuppression: boolean = true,
   ) {
     const defaultFactory = (): LivekitRoom =>
       new LivekitRoom(
@@ -82,8 +85,6 @@ export class ECConnectionFactory implements ConnectionFactory {
             worker: new E2EEWorker(),
           },
           controlledAudioDevices: this.controlledAudioDevices,
-          echoCancellation,
-          noiseSuppression,
         }),
       );
     this.livekitRoomFactory = livekitRoomFactory ?? defaultFactory;
@@ -122,14 +123,13 @@ export class ECConnectionFactory implements ConnectionFactory {
 
 /**
  *  Generate the initial LiveKit RoomOptions based on the current media devices and processor state.
+ *  Reads audio processing and camera quality settings directly from Settings.
  */
 function generateRoomOption({
   devices,
   processorState,
   e2eeLivekitOptions,
   controlledAudioDevices,
-  echoCancellation,
-  noiseSuppression,
 }: {
   devices: MediaDevices;
   processorState: ProcessorState;
@@ -138,22 +138,46 @@ function generateRoomOption({
     | { e2eeManager: BaseE2EEManager }
     | undefined;
   controlledAudioDevices: boolean;
-  echoCancellation: boolean;
-  noiseSuppression: boolean;
 }): RoomOptions {
   const liveKitOptions = getLiveKitOptions();
+
+  // Apply advanced camera settings if enabled
+  let videoCaptureDefaults = {
+    ...liveKitOptions.videoCaptureDefaults,
+    deviceId: devices.videoInput.selected$.value?.id,
+    processor: processorState.processor,
+  };
+  let publishDefaults = liveKitOptions.publishDefaults;
+
+  if (advancedCamera.getValue()) {
+    const resParts = cameraResolution.getValue().split("x");
+    const width = Number(resParts[0]);
+    const height = Number(resParts[1]);
+    const fps = cameraFramerate.getValue();
+    const bps = cameraBitrate.getValue();
+    const codec = cameraCodec.getValue();
+
+    videoCaptureDefaults = {
+      ...videoCaptureDefaults,
+      resolution: { width, height, frameRate: fps },
+    };
+    publishDefaults = {
+      ...publishDefaults,
+      videoEncoding: { maxBitrate: bps, maxFramerate: fps },
+      videoCodec: codec,
+    };
+  }
+
   return {
     ...liveKitOptions,
-    videoCaptureDefaults: {
-      ...liveKitOptions.videoCaptureDefaults,
-      deviceId: devices.videoInput.selected$.value?.id,
-      processor: processorState.processor,
-    },
+    videoCaptureDefaults,
+    publishDefaults,
     audioCaptureDefaults: {
       ...liveKitOptions.audioCaptureDefaults,
       deviceId: devices.audioInput.selected$.value?.id,
-      echoCancellation,
-      noiseSuppression,
+      echoCancellation: echoCancellationSetting.getValue(),
+      noiseSuppression: noiseSuppressionSetting.getValue(),
+      autoGainControl: autoGainControlSetting.getValue(),
     },
     audioOutput: {
       // When using controlled audio devices, we don't want to set the

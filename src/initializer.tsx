@@ -26,6 +26,7 @@ import {
 
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
+import { seedSettingsFromConfig } from "./settings/settings";
 import { platform } from "./Platform";
 import { isFailure } from "./utils/fetch";
 import { initializeWidget } from "./widget";
@@ -220,6 +221,7 @@ export class Initializer {
       this.loadStates.config = LoadState.Loading;
       Config.init().then(
         () => {
+          seedSettingsFromConfig(Config.get().media_quality);
           this.loadStates.config = LoadState.Loaded;
           this.initStep(resolve);
         },
