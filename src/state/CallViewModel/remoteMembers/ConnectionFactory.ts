@@ -34,6 +34,7 @@ import {
   cameraFramerate,
   cameraBitrate,
   cameraCodec,
+  parseResolution,
   echoCancellationSetting,
   noiseSuppressionSetting,
   autoGainControlSetting,
@@ -150,9 +151,7 @@ function generateRoomOption({
   let publishDefaults = liveKitOptions.publishDefaults;
 
   if (advancedCamera.getValue()) {
-    const resParts = cameraResolution.getValue().split("x");
-    const width = Number(resParts[0]);
-    const height = Number(resParts[1]);
+    const { width, height } = parseResolution(cameraResolution.getValue());
     const fps = cameraFramerate.getValue();
     const bps = cameraBitrate.getValue();
     const codec = cameraCodec.getValue();

@@ -61,6 +61,7 @@ import {
   screenShareFramerate,
   screenShareBitrate,
   screenShareCodec,
+  parseResolution,
 } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import {
@@ -659,9 +660,7 @@ export const createLocalMembership$ = ({
 
       if (advancedScreenShare.getValue()) {
         // User has advanced screen share settings enabled
-        const resParts = screenShareResolution.getValue().split("x");
-        const width = Number(resParts[0]);
-        const height = Number(resParts[1]);
+        const { width, height } = parseResolution(screenShareResolution.getValue());
         const fps = screenShareFramerate.getValue();
         const bps = screenShareBitrate.getValue();
         const codec = screenShareCodec.getValue();

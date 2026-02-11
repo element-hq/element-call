@@ -25,6 +25,7 @@ import { constant } from "../../Behavior";
 import {
   echoCancellationSetting,
   noiseSuppressionSetting,
+  autoGainControlSetting,
 } from "../../../settings/settings.ts";
 
 // At the top of your test file, after imports
@@ -105,8 +106,12 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
   test.each([{ controlled: true }, { controlled: false }])(
     "it sets controlledAudioDevice=$controlled then uses deviceId accordingly",
     ({ controlled }) => {
-      // test("it sets echoCancellation and noiseSuppression based on constructor parameters", () => {
       const RoomConstructor = vi.mocked(LivekitRoom);
+
+      // Explicitly set audio settings so the test doesn't depend on defaults
+      echoCancellationSetting.setValue(true);
+      noiseSuppressionSetting.setValue(true);
+      autoGainControlSetting.setValue(true);
 
       const ecConnectionFactory = new ECConnectionFactory(
         mockClient,
