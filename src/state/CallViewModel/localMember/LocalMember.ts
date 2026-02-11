@@ -12,6 +12,8 @@ import {
   type ScreenShareCaptureOptions,
   RoomEvent,
   MediaDeviceFailure,
+  type ScreenSharePreset,
+  VideoPreset as VideoPresetClass,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
@@ -661,6 +663,7 @@ export const createLocalMembership$ = ({
     !getUrlParams().hideScreensharing
   ) {
     toggleScreenSharing = (): void => {
+      const screenConf = Config.get().media_quality?.screen_share;
       const screenshareSettings: ScreenShareCaptureOptions = {
         // Screen share audio shouldn't have any filtering.
         // "echoCancellation" is purposely excluded, as setting it to
@@ -674,6 +677,13 @@ export const createLocalMembership$ = ({
         selfBrowserSurface: "include",
         surfaceSwitching: "include",
         systemAudio: "include",
+        ...(screenConf?.max_resolution && {
+          resolution: {
+            width: Math.round((screenConf.max_resolution * 16) / 9),
+            height: screenConf.max_resolution,
+            frameRate: screenConf.max_framerate ?? 30,
+          },
+        }),
       };
       const targetScreenshareState = !sharingScreen$.value;
       logger.info(
