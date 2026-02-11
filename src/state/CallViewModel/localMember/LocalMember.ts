@@ -10,10 +10,9 @@ import {
   ParticipantEvent,
   type LocalParticipant,
   type ScreenShareCaptureOptions,
+  type TrackPublishOptions,
   RoomEvent,
   MediaDeviceFailure,
-  type ScreenSharePreset,
-  VideoPreset as VideoPresetClass,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
@@ -55,7 +54,14 @@ import {
 import { ElementWidgetActions, widget } from "../../../widget.ts";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
-import { MatrixRTCMode } from "../../../settings/settings.ts";
+import {
+  MatrixRTCMode,
+  advancedScreenShare,
+  screenShareResolution,
+  screenShareFramerate,
+  screenShareBitrate,
+  screenShareCodec,
+} from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import {
   ConnectionState,
@@ -642,20 +648,49 @@ export const createLocalMembership$ = ({
     !getUrlParams().hideScreensharing
   ) {
     toggleScreenSharing = (): void => {
-      const screenConf = Config.get().media_quality?.screen_share;
       const screenshareSettings: ScreenShareCaptureOptions = {
         audio: true,
         selfBrowserSurface: "include",
         surfaceSwitching: "include",
         systemAudio: "include",
-        ...(screenConf?.max_resolution && {
-          resolution: {
+      };
+
+      let publishOptions: TrackPublishOptions | undefined;
+
+      if (advancedScreenShare.getValue()) {
+        // User has advanced screen share settings enabled
+        const resParts = screenShareResolution.getValue().split("x");
+        const width = Number(resParts[0]);
+        const height = Number(resParts[1]);
+        const fps = screenShareFramerate.getValue();
+        const bps = screenShareBitrate.getValue();
+        const codec = screenShareCodec.getValue();
+
+        screenshareSettings.resolution = {
+          width,
+          height,
+          frameRate: fps,
+        };
+
+        publishOptions = {
+          screenShareEncoding: {
+            maxBitrate: bps,
+            maxFramerate: fps,
+          },
+          videoCodec: codec,
+        };
+      } else {
+        // Fall back to config.json settings if available
+        const screenConf = Config.get().media_quality?.screen_share;
+        if (screenConf?.max_resolution) {
+          screenshareSettings.resolution = {
             width: Math.round((screenConf.max_resolution * 16) / 9),
             height: screenConf.max_resolution,
             frameRate: screenConf.max_framerate ?? 30,
-          },
-        }),
-      };
+          };
+        }
+      }
+
       const targetScreenshareState = !sharingScreen$.value;
       logger.info(
         `toggleScreenSharing called. Switching ${
@@ -671,7 +706,11 @@ export const createLocalMembership$ = ({
       // is still initializing or publishing tracks, because there's no
       // technical reason to disallow this. LiveKit will publish if it can.
       participant$.value
-        ?.setScreenShareEnabled(targetScreenshareState, screenshareSettings)
+        ?.setScreenShareEnabled(
+          targetScreenshareState,
+          screenshareSettings,
+          publishOptions,
+        )
         .catch(logger.error);
     };
   }
