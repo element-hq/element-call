@@ -24,6 +24,12 @@ import {
   soundEffectVolume as soundEffectVolumeSetting,
   backgroundBlur as backgroundBlurSetting,
   developerMode,
+  advancedScreenShare as advancedScreenShareSetting,
+  screenShareResolution as screenShareResolutionSetting,
+  screenShareFramerate as screenShareFramerateSetting,
+  screenShareBitrate as screenShareBitrateSetting,
+  screenShareCodec as screenShareCodecSetting,
+  type VideoCodec,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
@@ -94,6 +100,110 @@ export const SettingsModal: FC<Props> = ({
             disabled={!supported}
           />
         </FieldRow>
+      </>
+    );
+  };
+
+  const ScreenShareSettings: React.FC = (): ReactNode => {
+    const [advancedEnabled, setAdvancedEnabled] = useSetting(
+      advancedScreenShareSetting,
+    );
+    const [resolution, setResolution] = useSetting(
+      screenShareResolutionSetting,
+    );
+    const [framerate, setFramerate] = useSetting(screenShareFramerateSetting);
+    const [framerateRaw, setFramerateRaw] = useState(framerate);
+    const [bitrate, setBitrate] = useSetting(screenShareBitrateSetting);
+    const [bitrateRaw, setBitrateRaw] = useState(bitrate);
+    const [codec, setCodec] = useSetting(screenShareCodecSetting);
+
+    return (
+      <>
+        <h4>{t("settings.screen_share_header", "Screen sharing")}</h4>
+        <FieldRow>
+          <InputField
+            id="advancedScreenShare"
+            label={t(
+              "settings.advanced_screen_share_label",
+              "Advanced screen share settings",
+            )}
+            description={t(
+              "settings.advanced_screen_share_description",
+              "Configure resolution, framerate, bitrate, and codec for screen sharing",
+            )}
+            type="checkbox"
+            checked={advancedEnabled}
+            onChange={(e): void => setAdvancedEnabled(e.target.checked)}
+          />
+        </FieldRow>
+        {advancedEnabled && (
+          <>
+            <FieldRow>
+              <InputField
+                id="screenShareResolution"
+                label={t(
+                  "settings.screen_share_resolution_label",
+                  "Resolution",
+                )}
+                type="select"
+                value={resolution}
+                onChange={(e): void => setResolution(e.target.value)}
+              >
+                <option value="1024x576">576p</option>
+                <option value="1280x720">720p</option>
+                <option value="1920x1080">1080p</option>
+                <option value="2560x1440">1440p</option>
+                <option value="3840x2160">4K</option>
+              </InputField>
+            </FieldRow>
+            <div className={styles.volumeSlider}>
+              <label>
+                {t("settings.screen_share_framerate_label", "Framerate")}
+              </label>
+              <Slider
+                label={t("settings.screen_share_framerate_label", "Framerate")}
+                value={framerateRaw}
+                onValueChange={setFramerateRaw}
+                onValueCommit={setFramerate}
+                min={5}
+                max={60}
+                step={5}
+                tooltipFormatter={(v): string => `${v} fps`}
+              />
+            </div>
+            <div className={styles.volumeSlider}>
+              <label>
+                {t("settings.screen_share_bitrate_label", "Bitrate")}
+              </label>
+              <Slider
+                label={t("settings.screen_share_bitrate_label", "Bitrate")}
+                value={bitrateRaw}
+                onValueChange={setBitrateRaw}
+                onValueCommit={setBitrate}
+                min={500_000}
+                max={15_000_000}
+                step={500_000}
+                tooltipFormatter={(v): string =>
+                  `${(v / 1_000_000).toFixed(1)} Mbps`
+                }
+              />
+            </div>
+            <FieldRow>
+              <InputField
+                id="screenShareCodec"
+                label={t("settings.screen_share_codec_label", "Codec")}
+                type="select"
+                value={codec}
+                onChange={(e): void => setCodec(e.target.value as VideoCodec)}
+              >
+                <option value="vp8">VP8</option>
+                <option value="vp9">VP9</option>
+                <option value="h264">H.264</option>
+                <option value="av1">AV1</option>
+              </InputField>
+            </FieldRow>
+          </>
+        )}
       </>
     );
   };
@@ -183,6 +293,8 @@ export const SettingsModal: FC<Props> = ({
         </Form>
         <Separator />
         <BlurCheckbox />
+        <Separator />
+        <ScreenShareSettings />
       </>
     ),
   };

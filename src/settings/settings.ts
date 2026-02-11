@@ -150,3 +150,30 @@ export const customLivekitUrl = new Setting<string | null>(
   "custom-livekit-url",
   null,
 );
+
+export type VideoCodec = "vp8" | "vp9" | "h264" | "av1";
+
+export const advancedScreenShare = new Setting<boolean>(
+  "advanced-screen-share",
+  false,
+);
+
+export const screenShareResolution = new Setting<string>(
+  "screen-share-resolution",
+  "1920x1080",
+);
+
+export const screenShareFramerate = new Setting<number>(
+  "screen-share-framerate",
+  30,
+);
+
+export const screenShareBitrate = new Setting<number>(
+  "screen-share-bitrate",
+  5_000_000,
+);
+
+export const screenShareCodec = new Setting<VideoCodec>(
+  "screen-share-codec",
+  "vp9",
+);
