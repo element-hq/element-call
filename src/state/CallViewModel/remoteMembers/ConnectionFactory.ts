@@ -27,7 +27,10 @@ import type {
 import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
-import { defaultLiveKitOptions } from "../../../livekit/options.ts";
+import {
+  defaultLiveKitOptions,
+  getLiveKitOptions,
+} from "../../../livekit/options.ts";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
@@ -138,15 +141,16 @@ function generateRoomOption({
   echoCancellation: boolean;
   noiseSuppression: boolean;
 }): RoomOptions {
+  const liveKitOptions = getLiveKitOptions();
   return {
-    ...defaultLiveKitOptions,
+    ...liveKitOptions,
     videoCaptureDefaults: {
-      ...defaultLiveKitOptions.videoCaptureDefaults,
+      ...liveKitOptions.videoCaptureDefaults,
       deviceId: devices.videoInput.selected$.value?.id,
       processor: processorState.processor,
     },
     audioCaptureDefaults: {
-      ...defaultLiveKitOptions.audioCaptureDefaults,
+      ...liveKitOptions.audioCaptureDefaults,
       deviceId: devices.audioInput.selected$.value?.id,
       echoCancellation,
       noiseSuppression,

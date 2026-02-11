@@ -85,6 +85,61 @@ export interface ConfigOptions {
    */
   ssla?: string;
 
+  /**
+   * Media quality settings for video and screen sharing.
+   * These override the hardcoded LiveKit defaults.
+   */
+  media_quality?: {
+    /**
+     * Video codec preference. The server must also have the codec enabled.
+     * @default "vp8"
+     */
+    video_codec?: "vp8" | "vp9" | "h264" | "av1";
+
+    /**
+     * Camera video settings.
+     */
+    video?: {
+      /** Max resolution height in pixels (e.g. 720, 1080, 1440). @default 720 */
+      max_resolution?: number;
+      /** Max bitrate in bits per second. @default 1700000 */
+      max_bitrate?: number;
+      /** Max framerate. @default 30 */
+      max_framerate?: number;
+      /**
+       * Simulcast layers as an array of {height, bitrate} objects,
+       * ordered from lowest to highest quality.
+       * @default [{height: 180, bitrate: 160000}, {height: 360, bitrate: 450000}]
+       */
+      simulcast_layers?: Array<{
+        height: number;
+        bitrate: number;
+      }>;
+    };
+
+    /**
+     * Screen share settings.
+     */
+    screen_share?: {
+      /** Max resolution height in pixels. @default 1080 */
+      max_resolution?: number;
+      /** Max bitrate in bits per second. @default 5000000 */
+      max_bitrate?: number;
+      /** Max framerate. @default 30 */
+      max_framerate?: number;
+      /**
+       * Simulcast layers for screen sharing as an array of {height, bitrate, framerate} objects,
+       * ordered from lowest to highest quality. If omitted, LiveKit SDK defaults apply (1 extra
+       * layer at half resolution).
+       */
+      simulcast_layers?: Array<{
+        height: number;
+        bitrate: number;
+        framerate?: number;
+      }>;
+    };
+  };
+
   media_devices?: {
     /**
      * Defines whether participants should start with audio enabled by default.
