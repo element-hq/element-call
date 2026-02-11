@@ -52,3 +52,8 @@ Please see LICENSE in the repository root for full details.
   outline: none;
   border-color: var(--cpd-color-text-link-external);
 }
+
+.settingValue {
+  font-weight: normal;
+  color: var(--cpd-color-text-secondary);
+}

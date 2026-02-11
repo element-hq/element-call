@@ -22,6 +22,10 @@ import {
 } from "../../../utils/test.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import { constant } from "../../Behavior";
+import {
+  echoCancellationSetting,
+  noiseSuppressionSetting,
+} from "../../../settings/settings.ts";
 
 // At the top of your test file, after imports
 vi.mock("livekit-client", async (importOriginal) => {
@@ -58,10 +62,13 @@ describe("ECConnectionFactory - Audio inputs options", () => {
     { echo: false, noise: true },
     { echo: false, noise: false },
   ])(
-    "it sets echoCancellation=$echo and noiseSuppression=$noise based on constructor parameters",
+    "it sets echoCancellation=$echo and noiseSuppression=$noise based on settings",
     ({ echo, noise }) => {
-      // test("it sets echoCancellation and noiseSuppression based on constructor parameters", () => {
       const RoomConstructor = vi.mocked(LivekitRoom);
+
+      // Set audio processing settings
+      echoCancellationSetting.setValue(echo);
+      noiseSuppressionSetting.setValue(noise);
 
       const ecConnectionFactory = new ECConnectionFactory(
         mockClient,
@@ -73,9 +80,6 @@ describe("ECConnectionFactory - Audio inputs options", () => {
         }),
         undefined,
         false,
-        undefined,
-        echo,
-        noise,
       );
       ecConnectionFactory.createConnection(
         testScope,
@@ -120,9 +124,6 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
         }),
         undefined,
         controlled,
-        undefined,
-        false,
-        false,
       );
       ecConnectionFactory.createConnection(
         testScope,
