@@ -102,6 +102,7 @@ export default ({
   console.log("Allowed vite paths:", allow);
 
   return {
+    base: "./",
     server: {
       port: 3000,
       fs: { allow },
