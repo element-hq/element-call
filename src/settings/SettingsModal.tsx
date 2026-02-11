@@ -138,14 +138,12 @@ export const SettingsModal: FC<Props> = ({
         </FieldRow>
         {advancedEnabled && (
           <>
-            <FieldRow>
-              <InputField
+            <div className={styles.volumeSlider}>
+              <label htmlFor="screenShareResolution">
+                {t("settings.screen_share_resolution_label", "Resolution")}
+              </label>
+              <select
                 id="screenShareResolution"
-                label={t(
-                  "settings.screen_share_resolution_label",
-                  "Resolution",
-                )}
-                type="select"
                 value={resolution}
                 onChange={(e): void => setResolution(e.target.value)}
               >
@@ -154,8 +152,8 @@ export const SettingsModal: FC<Props> = ({
                 <option value="1920x1080">1080p</option>
                 <option value="2560x1440">1440p</option>
                 <option value="3840x2160">4K</option>
-              </InputField>
-            </FieldRow>
+              </select>
+            </div>
             <div className={styles.volumeSlider}>
               <label>
                 {t("settings.screen_share_framerate_label", "Framerate")}
@@ -188,20 +186,23 @@ export const SettingsModal: FC<Props> = ({
                 }
               />
             </div>
-            <FieldRow>
-              <InputField
+            <div className={styles.volumeSlider}>
+              <label htmlFor="screenShareCodec">
+                {t("settings.screen_share_codec_label", "Codec")}
+              </label>
+              <select
                 id="screenShareCodec"
-                label={t("settings.screen_share_codec_label", "Codec")}
-                type="select"
                 value={codec}
-                onChange={(e): void => setCodec(e.target.value as VideoCodec)}
+                onChange={(e): void =>
+                  setCodec(e.target.value as VideoCodec)
+                }
               >
                 <option value="vp8">VP8</option>
                 <option value="vp9">VP9</option>
                 <option value="h264">H.264</option>
                 <option value="av1">AV1</option>
-              </InputField>
-            </FieldRow>
+              </select>
+            </div>
           </>
         )}
       </>
