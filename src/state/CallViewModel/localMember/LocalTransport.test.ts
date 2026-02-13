@@ -43,10 +43,10 @@ describe("LocalTransport", () => {
   afterEach(() => scope.end());
 
   it("throws if config is missing", async () => {
-    const localTransport$ = createLocalTransport$({
+    const { advertised$, active$ } = createLocalTransport$({
       scope,
       roomId: "!room:example.org",
-      useOldestMember$: constant(false),
+      useOldestMember: false,
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -58,14 +58,15 @@ describe("LocalTransport", () => {
         getDeviceId: vi.fn(),
       },
       ownMembershipIdentity: ownMemberMock,
-      forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
+      forceJwtEndpoint: JwtEndpointVersion.Legacy,
       delayId$: constant("delay_id_mock"),
     });
     await flushPromises();
 
-    expect(() => localTransport$.value).toThrow(
+    expect(() => advertised$.value).toThrow(
       new MatrixRTCTransportMissingError(""),
     );
+    expect(() => active$.value).toThrow(new MatrixRTCTransportMissingError(""));
   });
 
   it("throws FailToGetOpenIdToken when OpenID fetch fails", async () => {
@@ -83,10 +84,10 @@ describe("LocalTransport", () => {
     );
     const observations: unknown[] = [];
     const errors: Error[] = [];
-    const localTransport$ = createLocalTransport$({
+    const { advertised$, active$ } = createLocalTransport$({
       scope,
       roomId: "!example_room_id",
-      useOldestMember$: constant(false),
+      useOldestMember: false,
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         baseUrl: "https://lk.example.org",
@@ -98,10 +99,10 @@ describe("LocalTransport", () => {
         getDeviceId: vi.fn(),
       },
       ownMembershipIdentity: ownMemberMock,
-      forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
+      forceJwtEndpoint: JwtEndpointVersion.Legacy,
       delayId$: constant("delay_id_mock"),
     });
-    localTransport$.subscribe(
+    active$.subscribe(
       (o) => observations.push(o),
       (e) => errors.push(e),
     );
@@ -111,7 +112,8 @@ describe("LocalTransport", () => {
     const expectedError = new FailToGetOpenIdToken(new Error("no openid"));
     expect(observations).toStrictEqual([null]);
     expect(errors).toStrictEqual([expectedError]);
-    expect(() => localTransport$.value).toThrow(expectedError);
+    expect(() => advertised$.value).toThrow(expectedError);
+    expect(() => active$.value).toThrow(expectedError);
   });
 
   it("emits preferred transport after OpenID resolves", async () => {
@@ -126,10 +128,10 @@ describe("LocalTransport", () => {
       openIdResolver.promise,
     );
 
-    const localTransport$ = createLocalTransport$({
+    const { advertised$, active$ } = createLocalTransport$({
       scope,
       roomId: "!room:example.org",
-      useOldestMember$: constant(false),
+      useOldestMember: false,
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -140,7 +142,7 @@ describe("LocalTransport", () => {
         baseUrl: "https://lk.example.org",
       },
       ownMembershipIdentity: ownMemberMock,
-      forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
+      forceJwtEndpoint: JwtEndpointVersion.Legacy,
       delayId$: constant("delay_id_mock"),
     });
 
@@ -150,14 +152,17 @@ describe("LocalTransport", () => {
       livekitAlias: "Akph4alDMhen",
       livekitIdentity: ownMemberMock.userId + ":" + ownMemberMock.deviceId,
     });
-    expect(localTransport$.value).toBe(null);
+    expect(advertised$.value).toBe(null);
+    expect(active$.value).toBe(null);
     await flushPromises();
     // final
-    expect(localTransport$.value).toStrictEqual({
-      transport: {
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
-      },
+    const expectedTransport = {
+      livekit_service_url: "https://lk.example.org",
+      type: "livekit",
+    };
+    expect(advertised$.value).toStrictEqual(expectedTransport);
+    expect(active$.value).toStrictEqual({
+      transport: expectedTransport,
       sfuConfig: {
         jwt: "jwt",
         livekitAlias: "Akph4alDMhen",
@@ -167,53 +172,8 @@ describe("LocalTransport", () => {
     });
   });
 
-  it("updates local transport when oldest member changes", async () => {
-    // Use config so transport discovery succeeds, but delay OpenID JWT fetch
-    mockConfig({
-      livekit: { livekit_service_url: "https://lk.example.org" },
-    });
-    const memberships$ = new BehaviorSubject(new Epoch([]));
-    const openIdResolver = Promise.withResolvers<openIDSFU.SFUConfig>();
-
-    vi.spyOn(openIDSFU, "getSFUConfigWithOpenID").mockReturnValue(
-      openIdResolver.promise,
-    );
-
-    const localTransport$ = createLocalTransport$({
-      scope,
-      roomId: "!example_room_id",
-      useOldestMember$: constant(true),
-      memberships$,
-      client: {
-        getDomain: () => "",
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        _unstable_getRTCTransports: async () => Promise.resolve([]),
-        getOpenIdToken: vi.fn(),
-        getDeviceId: vi.fn(),
-        baseUrl: "https://lk.example.org",
-      },
-      ownMembershipIdentity: ownMemberMock,
-      forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
-      delayId$: constant("delay_id_mock"),
-    });
-
-    openIdResolver.resolve?.(openIdResponse);
-    expect(localTransport$.value).toBe(null);
-    await flushPromises();
-    // final
-    expect(localTransport$.value).toStrictEqual({
-      transport: {
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
-      },
-      sfuConfig: {
-        jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-        livekitAlias: "Akph4alDMhen",
-        livekitIdentity: "@lk_user:ABCDEF",
-        url: "https://lk.example.org",
-      },
-    });
-  });
+  // TODO: This test previously didn't test what it claims to.
+  it.todo("updates local transport when oldest member changes");
 
   type LocalTransportProps = Parameters<typeof createLocalTransport$>[0];
 
@@ -229,8 +189,8 @@ describe("LocalTransport", () => {
         ownMembershipIdentity: ownMemberMock,
         scope,
         roomId: "!example_room_id",
-        useOldestMember$: constant(false),
-        forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
+        useOldestMember: false,
+        forceJwtEndpoint: JwtEndpointVersion.Legacy,
         delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {
@@ -256,15 +216,19 @@ describe("LocalTransport", () => {
       mockConfig({
         livekit: { livekit_service_url: "https://lk.example.org" },
       });
-      const localTransport$ = createLocalTransport$(localTransportOpts);
+      const { advertised$, active$ } =
+        createLocalTransport$(localTransportOpts);
       openIdResolver.resolve?.(openIdResponse);
-      expect(localTransport$.value).toBe(null);
+      expect(advertised$.value).toBe(null);
+      expect(active$.value).toBe(null);
       await flushPromises();
-      expect(localTransport$.value).toStrictEqual({
-        transport: {
-          livekit_service_url: "https://lk.example.org",
-          type: "livekit",
-        },
+      const expectedTransport = {
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
+      };
+      expect(advertised$.value).toStrictEqual(expectedTransport);
+      expect(active$.value).toStrictEqual({
+        transport: expectedTransport,
         sfuConfig: {
           jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
           livekitAlias: "Akph4alDMhen",
@@ -273,13 +237,15 @@ describe("LocalTransport", () => {
         },
       });
     });
+
     it("supports getting transport via user settings", async () => {
       customLivekitUrl.setValue("https://lk.example.org");
-      const localTransport$ = createLocalTransport$(localTransportOpts);
+      const { advertised$, active$ } =
+        createLocalTransport$(localTransportOpts);
       openIdResolver.resolve?.(openIdResponse);
-      expect(localTransport$.value).toBe(null);
+      expect(advertised$.value).toBe(null);
       await flushPromises();
-      expect(localTransport$.value).toStrictEqual({
+      expect(active$.value).toStrictEqual({
         transport: {
           livekit_service_url: "https://lk.example.org",
           type: "livekit",
@@ -292,19 +258,24 @@ describe("LocalTransport", () => {
         },
       });
     });
+
     it("supports getting transport via backend", async () => {
       localTransportOpts.client._unstable_getRTCTransports.mockResolvedValue([
         { type: "livekit", livekit_service_url: "https://lk.example.org" },
       ]);
-      const localTransport$ = createLocalTransport$(localTransportOpts);
+      const { advertised$, active$ } =
+        createLocalTransport$(localTransportOpts);
       openIdResolver.resolve?.(openIdResponse);
-      expect(localTransport$.value).toBe(null);
+      expect(advertised$.value).toBe(null);
+      expect(active$.value).toBe(null);
       await flushPromises();
-      expect(localTransport$.value).toStrictEqual({
-        transport: {
-          livekit_service_url: "https://lk.example.org",
-          type: "livekit",
-        },
+      const expectedTransport = {
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
+      };
+      expect(advertised$.value).toStrictEqual(expectedTransport);
+      expect(active$.value).toStrictEqual({
+        transport: expectedTransport,
         sfuConfig: {
           jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
           livekitAlias: "Akph4alDMhen",
@@ -313,6 +284,7 @@ describe("LocalTransport", () => {
         },
       });
     });
+
     it("fails fast if the openID request fails for backend config", async () => {
       localTransportOpts.client._unstable_getRTCTransports.mockResolvedValue([
         { type: "livekit", livekit_service_url: "https://lk.example.org" },
@@ -320,13 +292,11 @@ describe("LocalTransport", () => {
       openIdResolver.reject(
         new FailToGetOpenIdToken(new Error("Test driven error")),
       );
-      try {
-        await lastValueFrom(createLocalTransport$(localTransportOpts));
-        throw Error("Expected test to throw");
-      } catch (ex) {
-        expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
-      }
+      await expect(async () =>
+        lastValueFrom(createLocalTransport$(localTransportOpts).active$),
+      ).rejects.toThrow(expect.any(FailToGetOpenIdToken));
     });
+
     it("supports getting transport via well-known", async () => {
       localTransportOpts.client.getDomain.mockReturnValue("example.org");
       fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
@@ -334,15 +304,19 @@ describe("LocalTransport", () => {
           { type: "livekit", livekit_service_url: "https://lk.example.org" },
         ],
       });
-      const localTransport$ = createLocalTransport$(localTransportOpts);
+      const { advertised$, active$ } =
+        createLocalTransport$(localTransportOpts);
       openIdResolver.resolve?.(openIdResponse);
-      expect(localTransport$.value).toBe(null);
+      expect(advertised$.value).toBe(null);
+      expect(active$.value).toBe(null);
       await flushPromises();
-      expect(localTransport$.value).toStrictEqual({
-        transport: {
-          livekit_service_url: "https://lk.example.org",
-          type: "livekit",
-        },
+      const expectedTransport = {
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
+      };
+      expect(advertised$.value).toStrictEqual(expectedTransport);
+      expect(active$.value).toStrictEqual({
+        transport: expectedTransport,
         sfuConfig: {
           jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
           livekitAlias: "Akph4alDMhen",
@@ -352,6 +326,7 @@ describe("LocalTransport", () => {
       });
       expect(fetchMock.done()).toEqual(true);
     });
+
     it("fails fast if the openId request fails for the well-known config", async () => {
       localTransportOpts.client.getDomain.mockReturnValue("example.org");
       fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
@@ -362,20 +337,18 @@ describe("LocalTransport", () => {
       openIdResolver.reject(
         new FailToGetOpenIdToken(new Error("Test driven error")),
       );
-      try {
-        await lastValueFrom(createLocalTransport$(localTransportOpts));
-        throw Error("Expected test to throw");
-      } catch (ex) {
-        expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
-      }
+      await expect(async () =>
+        lastValueFrom(createLocalTransport$(localTransportOpts).active$),
+      ).rejects.toThrow(expect.any(FailToGetOpenIdToken));
     });
+
     it("throws if no options are available", async () => {
-      const localTransport$ = createLocalTransport$({
+      const { advertised$, active$ } = createLocalTransport$({
         scope,
         ownMembershipIdentity: ownMemberMock,
         roomId: "!example_room_id",
-        useOldestMember$: constant(false),
-        forceJwtEndpoint$: constant(JwtEndpointVersion.Legacy),
+        useOldestMember: false,
+        forceJwtEndpoint: JwtEndpointVersion.Legacy,
         delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {
@@ -390,7 +363,10 @@ describe("LocalTransport", () => {
       });
       await flushPromises();
 
-      expect(() => localTransport$.value).toThrow(
+      expect(() => advertised$.value).toThrow(
+        new MatrixRTCTransportMissingError(""),
+      );
+      expect(() => active$.value).toThrow(
         new MatrixRTCTransportMissingError(""),
       );
     });
