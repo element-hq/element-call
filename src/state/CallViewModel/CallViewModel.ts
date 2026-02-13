@@ -1554,7 +1554,15 @@ export function createCallViewModel$(
       matrixLivekitMembers$.pipe(
         map((members) => members.value),
         tap((v) => {
-          logger.debug("matrixLivekitMembers$ updated (exported)", v);
+          const listForLogs = v
+            .map(
+              (m) =>
+                m.membership$.value.userId + "|" + m.membership$.value.deviceId,
+            )
+            .join(",");
+          logger.debug(
+            `matrixLivekitMembers$ updated (exported) [${listForLogs}]`,
+          );
         }),
       ),
     ),
