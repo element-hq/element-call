@@ -213,6 +213,38 @@ export function filterBehavior<T, S extends T>(
     );
 }
 
+/**
+ * Maps a changing input value to an item whose lifetime is tied to a certain
+ * computed key. The item may capture some dynamic data from the input.
+ */
+export function generateItem<
+  Input,
+  Keys extends [unknown, ...unknown[]],
+  Data,
+  Item,
+>(
+  name: string,
+  generator: (input: Input) => { keys: readonly [...Keys]; data: Data },
+  factory: (
+    scope: ObservableScope,
+    data$: Behavior<Data>,
+    ...keys: Keys
+  ) => Item,
+): OperatorFunction<Input, Item> {
+  return (input$) =>
+    input$.pipe(
+      generateItemsInternal(
+        name,
+        function* (input) {
+          yield generator(input);
+        },
+        factory,
+        (items) => items,
+      ),
+      map(([item]) => item),
+    );
+}
+
 function generateItemsInternal<
   Input,
   Keys extends [unknown, ...unknown[]],
