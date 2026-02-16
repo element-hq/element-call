@@ -228,7 +228,6 @@ export function generateItem<
   return (input$) =>
     input$.pipe(
       generateItemsInternal(
-        name,
         function* (input) {
           yield generator(input);
         },
