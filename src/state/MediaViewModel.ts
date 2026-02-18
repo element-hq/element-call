@@ -257,7 +257,6 @@ abstract class BaseMediaViewModel {
      * The Matrix user to which this media belongs.
      */
     public readonly userId: string,
-    public readonly rtcBackendIdentity: string,
     // We don't necessarily have a participant if a user connects via MatrixRTC but not (yet) through
     // livekit.
     protected readonly participant$: Observable<
@@ -407,7 +406,10 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     scope: ObservableScope,
     id: string,
     userId: string,
-    rtcBackendIdentity: string,
+    /**
+     * The expected identity of the LiveKit participant. Exposed for debugging.
+     */
+    public readonly rtcBackendIdentity: string,
     participant$: Observable<LocalParticipant | RemoteParticipant | null>,
     encryptionSystem: EncryptionSystem,
     livekitRoom$: Behavior<LivekitRoom | undefined>,
@@ -421,7 +423,6 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       scope,
       id,
       userId,
-      rtcBackendIdentity,
       participant$,
       encryptionSystem,
       Track.Source.Microphone,
@@ -779,7 +780,6 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
     scope: ObservableScope,
     id: string,
     userId: string,
-    rtcBackendIdentity: string,
     participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom$: Behavior<LivekitRoom | undefined>,
@@ -793,7 +793,6 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
       scope,
       id,
       userId,
-      rtcBackendIdentity,
       participant$,
       encryptionSystem,
       Track.Source.ScreenShareAudio,
