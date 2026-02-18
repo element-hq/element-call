@@ -4,7 +4,7 @@ Copyright 2025 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
-import { of } from "rxjs";
+
 import {
   type LocalParticipant,
   type RemoteParticipant,
@@ -14,7 +14,7 @@ import {
 import { type ObservableScope } from "./ObservableScope.ts";
 import { ScreenShareViewModel } from "./MediaViewModel.ts";
 import type { EncryptionSystem } from "../e2ee/sharedKeyManagement.ts";
-import type { Behavior } from "./Behavior.ts";
+import { constant, type Behavior } from "./Behavior.ts";
 
 /**
  * A screen share media item to be presented in a tile. This is a thin wrapper
@@ -40,7 +40,7 @@ export class ScreenShare {
       this.scope,
       id,
       userId,
-      of(participant),
+      constant(participant),
       encryptionSystem,
       livekitRoom$,
       focusUrl$,
