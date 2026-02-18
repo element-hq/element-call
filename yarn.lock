@@ -11475,12 +11475,12 @@ __metadata:
   linkType: hard
 
 "matrix-widget-api@npm:^1.16.1":
-  version: 1.16.1
-  resolution: "matrix-widget-api@npm:1.16.1"
+  version: 1.17.0
+  resolution: "matrix-widget-api@npm:1.17.0"
   dependencies:
     "@types/events": "npm:^3.0.0"
     events: "npm:^3.2.0"
-  checksum: 10c0/d88180f514104b84d3018055fc955138d65195465480a51e9afe5dbf2f3175b54e3483b4c4f1feab2dd27440f403051d9c8b293bd0532c09b136c6b23606e1ee
+  checksum: 10c0/3651c860900149ecc2fe74640b47687bab8a347eb718a522085189e2b84efe462c9d81c1e8caff08d122f0b3e9cef8303a5802837673e5c9b465f7624c56a8f3
   languageName: node
   linkType: hard
 
