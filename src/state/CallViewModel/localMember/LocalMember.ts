@@ -62,6 +62,7 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { and$ } from "../../../utils/observable.ts";
+import { getScreenShareCaptureDefaults } from "../../../livekit/options.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -638,6 +639,7 @@ export const createLocalMembership$ = ({
   ) {
     toggleScreenSharing = (): void => {
       const screenshareSettings: ScreenShareCaptureOptions = {
+        ...getScreenShareCaptureDefaults(),
         audio: true,
         selfBrowserSurface: "include",
         surfaceSwitching: "include",

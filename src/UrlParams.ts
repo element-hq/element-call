@@ -244,6 +244,18 @@ export interface UrlConfiguration {
    * Defaults to true.
    */
   noiseSuppression?: boolean;
+  /**
+   * Screen share resolution override (e.g. "1440p", "1080p").
+   */
+  screenShareRes?: string;
+  /**
+   * Screen share framerate override in fps.
+   */
+  screenShareFps?: number;
+  /**
+   * Screen share bitrate override in bits per second.
+   */
+  screenShareBitrate?: number;
 
   callIntent?: RTCCallIntent;
 }
@@ -506,6 +518,11 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     noiseSuppression: parser.getFlagParam("noiseSuppression", true),
     echoCancellation: parser.getFlagParam("echoCancellation", true),
   };
+  const screenShareFpsRaw = parser.getParam("screenShareFps");
+  const screenShareBitrateRaw = parser.getParam("screenShareBitrate");
+  if (parser.getParam("screenShareRes")) (configuration as Record<string, unknown>).screenShareRes = parser.getParam("screenShareRes");
+  if (screenShareFpsRaw) (configuration as Record<string, unknown>).screenShareFps = Number(screenShareFpsRaw);
+  if (screenShareBitrateRaw) (configuration as Record<string, unknown>).screenShareBitrate = Number(screenShareBitrateRaw);
 
   // Log the final configuration for debugging purposes.
   // This will only log when the cache is not yet set.

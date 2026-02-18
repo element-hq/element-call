@@ -62,6 +62,22 @@ export interface ConfigOptions {
   };
 
   /**
+   * Screen share quality settings.
+   * Allows overriding the default screen share encoding (1080p30 / 5 Mbps).
+   */
+  screen_share?: {
+    /** Maximum resolution: "2160p", "1440p", "1080p", "720p", or "480p". */
+    max_resolution?: "2160p" | "1440p" | "1080p" | "720p" | "480p";
+    /** Maximum framerate in fps (e.g. 30, 60). */
+    max_framerate?: number;
+    /**
+     * Maximum bitrate in bits per second (e.g. 10000000 for 10 Mbps).
+     * If omitted, a sensible default is chosen based on the resolution.
+     */
+    max_bitrate?: number;
+  };
+
+  /**
    * TEMPORARY experimental features.
    */
   features?: {
