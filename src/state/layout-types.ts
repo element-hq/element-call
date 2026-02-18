@@ -10,6 +10,8 @@ import {
   type SpotlightTileViewModel,
 } from "./TileViewModel.ts";
 import {
+  type LocalUserMediaViewModel,
+  type RemoteUserMediaViewModel,
   type MediaViewModel,
   type UserMediaViewModel,
 } from "./MediaViewModel.ts";
@@ -40,8 +42,8 @@ export interface SpotlightExpandedLayoutMedia {
 
 export interface OneOnOneLayoutMedia {
   type: "one-on-one";
-  local: UserMediaViewModel;
-  remote: UserMediaViewModel;
+  local: LocalUserMediaViewModel;
+  remote: RemoteUserMediaViewModel;
 }
 
 export interface PipLayoutMedia {
