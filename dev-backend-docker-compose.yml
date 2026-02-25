@@ -47,7 +47,7 @@ services:
       - ecbackend
 
   livekit:
-    image: livekit/livekit-server:v1.9.4
+    image: livekit/livekit-server:v1.9.11
     pull_policy: always
     hostname: livekit-sfu
     command: --dev --config /etc/livekit.yaml
@@ -67,7 +67,7 @@ services:
       - ecbackend
 
   livekit-1:
-    image: livekit/livekit-server:v1.9.4
+    image: livekit/livekit-server:v1.9.11
     pull_policy: always
     hostname: livekit-sfu-1
     command: --dev --config /etc/livekit.yaml
@@ -88,7 +88,7 @@ services:
 
   synapse:
     hostname: homeserver
-    image: ghcr.io/element-hq/synapse:pr-18968-dcb7678281bc02d4551043a6338fe5b7e6aa47ce
+    image: ghcr.io/element-hq/synapse:latest
     pull_policy: always
     environment:
       - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml
@@ -106,7 +106,7 @@ services:
 
   synapse-1:
     hostname: homeserver-1
-    image: ghcr.io/element-hq/synapse:pr-18968-dcb7678281bc02d4551043a6338fe5b7e6aa47ce
+    image: ghcr.io/element-hq/synapse:latest
     pull_policy: always
     environment:
       - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml
