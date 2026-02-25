@@ -39,11 +39,6 @@ import {
 import { useObservableEagerState } from "observable-hooks";
 
 import styles from "./GridTile.module.css";
-import {
-  type UserMediaViewModel,
-  type LocalUserMediaViewModel,
-  type RemoteUserMediaViewModel,
-} from "../state/MediaViewModel";
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
@@ -51,6 +46,9 @@ import { type GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactionsSender } from "../reactions/useReactionsSender";
 import { useBehavior } from "../useBehavior";
+import { type LocalUserMediaViewModel } from "../state/media/LocalUserMediaViewModel";
+import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaViewModel";
+import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
 
 interface TileProps {
   ref?: Ref<HTMLDivElement>;

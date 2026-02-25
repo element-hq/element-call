@@ -32,21 +32,19 @@ import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
 import FullScreenMinimiseIcon from "../icons/FullScreenMinimise.svg?react";
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
-import {
-  type EncryptionStatus,
-  type LocalUserMediaViewModel,
-  type MediaViewModel,
-  type UserMediaViewModel,
-  type RemoteUserMediaViewModel,
-  type ScreenShareViewModel,
-  type RemoteScreenShareViewModel,
-} from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
 import { type SpotlightTileViewModel } from "../state/TileViewModel";
 import { useBehavior } from "../useBehavior";
+import { type EncryptionStatus } from "../state/media/MemberMediaViewModel";
+import { type LocalUserMediaViewModel } from "../state/media/LocalUserMediaViewModel";
+import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaViewModel";
+import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
+import { type ScreenShareViewModel } from "../state/media/ScreenShareViewModel";
+import { type RemoteScreenShareViewModel } from "../state/media/RemoteScreenShareViewModel";
+import { type MediaViewModel } from "../state/media/MediaViewModel";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;

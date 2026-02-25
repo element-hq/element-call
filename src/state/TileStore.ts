@@ -8,10 +8,11 @@ Please see LICENSE in the repository root for full details.
 import { BehaviorSubject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { type MediaViewModel, type UserMediaViewModel } from "./MediaViewModel";
 import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
 import { fillGaps } from "../utils/iter";
 import { debugTileLayout } from "../settings/settings";
+import { type MediaViewModel } from "./media/MediaViewModel";
+import { type UserMediaViewModel } from "./media/UserMediaViewModel";
 
 function debugEntries(entries: GridTileData[]): string[] {
   return entries.map((e) => e.media.displayName$.value);
