@@ -143,7 +143,6 @@ export class UserMedia {
                     scope,
                     `${this.id}:${key}`,
                     this.userId,
-                    this.rtcBackendIdentity,
                     p,
                     this.encryptionSystem,
                     this.livekitRoom$,
