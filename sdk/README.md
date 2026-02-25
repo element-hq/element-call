@@ -1,4 +1,4 @@
-# SDK mode
+# SDK mode (EXPERIMENTAL)
 
 EC can be build in sdk mode. This will result in a compiled js file that can be imported in very simple webapps.
 

@@ -11,15 +11,12 @@ import {
   type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map } from "rxjs";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
 import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
-
-const logger = rootLogger.getChild("[MatrixLivekitMembers]");
 
 interface LocalTaggedParticipant {
   type: "local";
@@ -94,9 +91,10 @@ export function createMatrixLivekitMembers$({
       ),
       map(([ms, data]) => new Epoch([ms.value, data.value] as const, ms.epoch)),
       generateItemsWithEpoch(
+        "MatrixLivekitMembers",
         // Generator function.
         // creates an array of `{key, data}[]`
-        // Each change in the keys (new key, missing key) will result in a call to the factory function.
+        // Each change in the keys (new key) will result in a call to the factory function.
         function* ([membershipsWithTransport, managerData]) {
           for (const { membership, transport } of membershipsWithTransport) {
             const participants = transport
@@ -111,26 +109,23 @@ export function createMatrixLivekitMembers$({
               : null;
 
             yield {
-              // This could also just be the memberId without the other fields.
-              // In theory we should never have the same memberId for different userIds (they are UUIDs)
-              // This still makes us resilient agains someone who intentionally tries to use the same memberId.
-              // If they want to do this they would now need to also use the same sender which is impossible.
+              // This could just be the backend identity without the other keys.
+              // The user ID, device ID, and member ID are included however so
+              // they show up in debug logs.
               keys: [
                 membership.userId,
                 membership.deviceId,
                 membership.memberId,
+                membership.rtcBackendIdentity,
               ],
               data: { membership, participant, connection },
             };
           }
         },
-        // Each update where the key of the generator array do not change will result in updates to the `data$` observable in the factory.
-        (scope, data$, userId, deviceId, memberId) => {
-          logger.debug(
-            `Generating member for livekitIdentity: ${data$.value.membership.rtcBackendIdentity},keys userId:deviceId:memberId ${userId}:${deviceId}:${memberId}`,
-          );
+        // Each update where the key of the generator array do not change will result in updates to the `data$` behavior.
+        (scope, data$, userId, _deviceId, _memberId, _rtcBackendIdentity) => {
           const { participant$, ...rest } = scope.splitBehavior(data$);
-          // will only get called once per `participantId, userId` pair.
+          // will only get called once per backend identity.
           // updates to data$ and as a result to displayName$ and mxcAvatarUrl$ are more frequent.
           return {
             userId,

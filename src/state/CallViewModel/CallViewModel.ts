@@ -60,6 +60,7 @@ import {
 import {
   accumulate,
   filterBehavior,
+  generateItem,
   generateItems,
   pauseWhen,
 } from "../../utils/observable";
@@ -217,15 +218,23 @@ export interface CallViewModel {
     "unknown" | "ringing" | "timeout" | "decline" | "success" | null
   >;
   /** Observable that emits when the user should leave the call (hangup pressed, widget action, error).
-   * THIS DOES NOT LEAVE THE CALL YET. The only way to leave the call (send the hangup event) is by ending the scope.
+   * THIS DOES NOT LEAVE THE CALL YET. The only way to leave the call (send the hangup event) is
+   *  - by ending the scope
+   *  - or calling requestDisconnect
+   *
+   * TODO: it seems more reasonable to add a leave() method (that calls requestDisconnect) that will then update leave$ and remove the hangup pattern
    */
   leave$: Observable<"user" | AutoLeaveReason>;
-  /** Call to initiate hangup. Use in conbination with reconnectino state track the async hangup process. */
+  /** Call to initiate hangup. Use in conbination with reconnection state track the async hangup process. */
   hangup: () => void;
 
   // joining
   join: () => void;
 
+  /**
+   * calls requestDisconnect. The async leave state can than be observed via connected$
+   */
+  leave: () => void;
   // screen sharing
   /**
    * Callback to toggle screen sharing. If null, screen sharing is not possible.
@@ -436,35 +445,38 @@ export function createCallViewModel$(
     memberId: uuidv4(),
   };
 
-  const localTransport$ = createLocalTransport$({
-    scope: scope,
-    memberships$: memberships$,
-    ownMembershipIdentity,
-    client,
-    delayId$: scope.behavior(
-      (
-        fromEvent(
-          matrixRTCSession,
-          MembershipManagerEvent.DelayIdChanged,
-          // The type of reemitted event includes the original emitted as the second arg.
-        ) as Observable<[string | undefined, IMembershipManager]>
-      ).pipe(map(([delayId]) => delayId ?? null)),
-      matrixRTCSession.delayId ?? null,
-    ),
-    roomId: matrixRoom.roomId,
-    forceJwtEndpoint$: scope.behavior(
-      matrixRTCMode$.pipe(
-        map((v) =>
-          v === MatrixRTCMode.Matrix_2_0
-            ? JwtEndpointVersion.Matrix_2_0
-            : JwtEndpointVersion.Legacy,
-        ),
+  const localTransport$ = scope.behavior(
+    matrixRTCMode$.pipe(
+      generateItem(
+        "CallViewModel localTransport$",
+        // Re-create LocalTransport whenever the mode changes
+        (mode) => ({ keys: [mode], data: undefined }),
+        (scope, _data$, mode) =>
+          createLocalTransport$({
+            scope: scope,
+            memberships$: memberships$,
+            ownMembershipIdentity,
+            client,
+            delayId$: scope.behavior(
+              (
+                fromEvent(
+                  matrixRTCSession,
+                  MembershipManagerEvent.DelayIdChanged,
+                  // The type of reemitted event includes the original emitted as the second arg.
+                ) as Observable<[string | undefined, IMembershipManager]>
+              ).pipe(map(([delayId]) => delayId ?? null)),
+              matrixRTCSession.delayId ?? null,
+            ),
+            roomId: matrixRoom.roomId,
+            forceJwtEndpoint:
+              mode === MatrixRTCMode.Matrix_2_0
+                ? JwtEndpointVersion.Matrix_2_0
+                : JwtEndpointVersion.Legacy,
+            useOldestMember: mode === MatrixRTCMode.Legacy,
+          }),
       ),
     ),
-    useOldestMember$: scope.behavior(
-      matrixRTCMode$.pipe(map((v) => v === MatrixRTCMode.Legacy)),
-    ),
-  });
+  );
 
   const connectionFactory = new ECConnectionFactory(
     client,
@@ -483,6 +495,7 @@ export function createCallViewModel$(
     connectionFactory: connectionFactory,
     localTransport$: scope.behavior(
       localTransport$.pipe(
+        switchMap((t) => t.active$),
         catchError((e: unknown) => {
           logger.info(
             "could not pass local transport to createConnectionManager$. localTransport$ threw an error",
@@ -516,13 +529,13 @@ export function createCallViewModel$(
   );
 
   const localMembership = createLocalMembership$({
-    scope: scope,
+    scope,
     homeserverConnected: createHomeserverConnected$(
       scope,
       client,
       matrixRTCSession,
     ),
-    muteStates: muteStates,
+    muteStates,
     joinMatrixRTC: (transport: LivekitTransportConfig) => {
       return enterRTCSession(
         matrixRTCSession,
@@ -542,9 +555,11 @@ export function createCallViewModel$(
         ),
       );
     },
-    connectionManager: connectionManager,
-    matrixRTCSession: matrixRTCSession,
-    localTransport$: localTransport$,
+    connectionManager,
+    matrixRTCSession,
+    localTransport$: scope.behavior(
+      localTransport$.pipe(switchMap((t) => t.advertised$)),
+    ),
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
@@ -715,6 +730,7 @@ export function createCallViewModel$(
       // Generate a collection of MediaItems from the list of expected (whether
       // present or missing) LiveKit participants.
       generateItems(
+        "CallViewModel userMedia$",
         function* ([
           localMatrixLivekitMember,
           matrixLivekitMembers,
@@ -1496,6 +1512,7 @@ export function createCallViewModel$(
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
     join: localMembership.requestJoinAndPublish,
+    leave: localMembership.requestDisconnect,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
 
@@ -1545,7 +1562,15 @@ export function createCallViewModel$(
       matrixLivekitMembers$.pipe(
         map((members) => members.value),
         tap((v) => {
-          logger.debug("matrixLivekitMembers$ updated (exported)", v);
+          const listForLogs = v
+            .map(
+              (m) =>
+                m.membership$.value.userId + "|" + m.membership$.value.deviceId,
+            )
+            .join(",");
+          logger.debug(
+            `matrixLivekitMembers$ updated (exported) [${listForLogs}]`,
+          );
         }),
       ),
     ),
