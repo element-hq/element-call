@@ -55,6 +55,7 @@ import { platform } from "../Platform";
 import { type MediaDevices } from "./MediaDevices";
 import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
+import { RemoteUserSetting } from "./RemoteUserSettings";
 
 export function observeTrackReference$(
   participant: Participant,
@@ -396,7 +397,6 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     return this._videoEnabled$;
   }
 
-  private readonly _cropVideo$ = new BehaviorSubject(true);
   /**
    * Whether the tile video should be contained inside the tile or be cropped to fit.
    */
@@ -418,6 +418,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     mxcAvatarUrl$: Behavior<string | undefined>,
     public readonly handRaised$: Behavior<Date | null>,
     public readonly reaction$: Behavior<ReactionOption | null>,
+    public readonly _cropVideo$ = new BehaviorSubject(true),
   ) {
     super(
       scope,
@@ -629,36 +630,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
    * The volume to which this participant's audio is set, as a scalar
    * multiplier.
    */
-  public readonly localVolume$ = this.scope.behavior<number>(
-    merge(
-      this.locallyMutedToggle$.pipe(map(() => "toggle mute" as const)),
-      this.localVolumeAdjustment$,
-      this.localVolumeCommit$.pipe(map(() => "commit" as const)),
-    ).pipe(
-      accumulate({ volume: 1, committedVolume: 1 }, (state, event) => {
-        switch (event) {
-          case "toggle mute":
-            return {
-              ...state,
-              volume: state.volume === 0 ? state.committedVolume : 0,
-            };
-          case "commit":
-            // Dragging the slider to zero should have the same effect as
-            // muting: keep the original committed volume, as if it were never
-            // dragged
-            return {
-              ...state,
-              committedVolume:
-                state.volume === 0 ? state.committedVolume : state.volume,
-            };
-          default:
-            // Volume adjustment
-            return { ...state, volume: event };
-        }
-      }),
-      map(({ volume }) => volume),
-    ),
-  );
+  public readonly localVolume$: Behavior<number>;
 
   // This private field is used to override the value from the superclass
   private __videoEnabled$: Behavior<boolean>;
@@ -669,9 +641,9 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
   /**
    * Whether this participant's audio is disabled.
    */
-  public readonly locallyMuted$ = this.scope.behavior<boolean>(
-    this.localVolume$.pipe(map((volume) => volume === 0)),
-  );
+  public readonly locallyMuted$: Behavior<boolean>;
+
+  private readonly remoteUserSetting: RemoteUserSetting;
 
   public constructor(
     scope: ObservableScope,
@@ -688,6 +660,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     handRaised$: Behavior<Date | null>,
     reaction$: Behavior<ReactionOption | null>,
   ) {
+    const remoteUserSetting = new RemoteUserSetting(userId);
     super(
       scope,
       id,
@@ -701,6 +674,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
       mxcAvatarUrl$,
       handRaised$,
       reaction$,
+      new BehaviorSubject(remoteUserSetting.cropVideo),
     );
 
     this.__speaking$ = this.scope.behavior(
@@ -709,6 +683,47 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
           disconnected ? of(false) : super.speaking$,
         ),
       ),
+    );
+
+    this.remoteUserSetting = remoteUserSetting;
+    const storedVolume = this.remoteUserSetting.getValue().volume;
+
+    this.localVolume$ = this.scope.behavior<number>(
+      merge(
+        this.locallyMutedToggle$.pipe(map(() => "toggle mute" as const)),
+        this.localVolumeAdjustment$,
+        this.localVolumeCommit$.pipe(map(() => "commit" as const)),
+      ).pipe(
+        accumulate(
+          { volume: storedVolume, committedVolume: storedVolume },
+          (state, event) => {
+            switch (event) {
+              case "toggle mute":
+                return {
+                  ...state,
+                  volume: state.volume === 0 ? state.committedVolume : 0,
+                };
+              case "commit":
+                // Dragging the slider to zero should have the same effect as
+                // muting: keep the original committed volume, as if it were never
+                // dragged
+                return {
+                  ...state,
+                  committedVolume:
+                    state.volume === 0 ? state.committedVolume : state.volume,
+                };
+              default:
+                // Volume adjustment
+                return { ...state, volume: event };
+            }
+          },
+        ),
+        map(({ volume }) => volume),
+      ),
+    );
+
+    this.locallyMuted$ = this.scope.behavior<boolean>(
+      this.localVolume$.pipe(map((volume) => volume === 0)),
     );
 
     this.__videoEnabled$ = this.scope.behavior(
@@ -729,7 +744,10 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
         switchMap((disconnected) => (disconnected ? of(0) : this.localVolume$)),
         this.scope.bind(),
       ),
-    ]).subscribe(([p, volume]) => p?.setVolume(volume));
+    ]).subscribe(([p, volume]) => {
+      p?.setVolume(volume);
+      this.remoteUserSetting.volume = volume;
+    });
   }
 
   public toggleLocallyMuted(): void {
@@ -742,6 +760,11 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
 
   public commitLocalVolume(): void {
     this.localVolumeCommit$.next();
+  }
+
+  public toggleFitContain(): void {
+    super.toggleFitContain();
+    this.remoteUserSetting.cropVideo = this._cropVideo$.value;
   }
 
   public audioStreamStats$ = combineLatest([
