@@ -8433,7 +8433,7 @@ __metadata:
     i18next-browser-languagedetector: "npm:^8.0.0"
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
-    knip: "npm:^5.27.2"
+    knip: "npm:5.82.1"
     livekit-client: "npm:^2.13.0"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
@@ -11232,9 +11232,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"knip@npm:^5.27.2":
-  version: 5.85.0
-  resolution: "knip@npm:5.85.0"
+"knip@npm:5.82.1":
+  version: 5.82.1
+  resolution: "knip@npm:5.82.1"
   dependencies:
     "@nodelib/fs.walk": "npm:^1.2.3"
     fast-glob: "npm:^3.3.3"
@@ -11254,7 +11254,7 @@ __metadata:
   bin:
     knip: bin/knip.js
     knip-bun: bin/knip-bun.js
-  checksum: 10c0/d1eb6c85bb24cd357cedf67d02f9697261b70721a59eed48bd0be716e99b86ceb3e55ee9e6cfef60110272303e2de8dc6ea0621936f9e209490eaf5c24b2697f
+  checksum: 10c0/c3bfe898fe3103bb6a59ee2ba4297f05ea4d2db474571db89ae199ebbd74eafa5061d05b3bc2c75e4ec2322ba7ffee44493c76132d3d8991fae66ba742b9ccb4
   languageName: node
   linkType: hard
 
