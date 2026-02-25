@@ -43,6 +43,8 @@ import {
   switchMap,
   throttleTime,
   distinctUntilChanged,
+  concat,
+  take,
 } from "rxjs";
 
 import { alwaysShowSelf } from "../settings/settings";
@@ -55,6 +57,7 @@ import { platform } from "../Platform";
 import { type MediaDevices } from "./MediaDevices";
 import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
+import { videoFit$, videoSizeFromParticipant$ } from "../utils/videoFit.ts";
 
 export function observeTrackReference$(
   participant: Participant,
@@ -67,6 +70,10 @@ export function observeTrackReference$(
   );
 }
 
+/**
+ * Helper function to observe the RTC stats for a given participant and track source.
+ * It polls the stats every second and emits the latest stats object.
+ */
 export function observeRtpStreamStats$(
   participant: Participant,
   source: Track.Source,
@@ -76,7 +83,9 @@ export function observeRtpStreamStats$(
 > {
   return combineLatest([
     observeTrackReference$(participant, source),
-    interval(1000).pipe(startWith(0)),
+    // This is used also for detecting video orientation,
+    // and we want that to be more responsive than the connection stats, so we poll more frequently at the start.
+    concat(interval(300).pipe(take(3)), interval(1000)).pipe(startWith(0)),
   ]).pipe(
     switchMap(async ([trackReference]) => {
       const track = trackReference?.publication?.track;
@@ -90,7 +99,6 @@ export function observeRtpStreamStats$(
       if (!report) {
         return undefined;
       }
-
       for (const v of report.values()) {
         if (v.type === type) {
           return v;
@@ -103,6 +111,13 @@ export function observeRtpStreamStats$(
   );
 }
 
+/**
+ * Helper function to observe the inbound RTP stats for a given participant and track source.
+ * To be used for remote participants' audio and video tracks.
+ * It polls the stats every second and emits the latest stats object.
+ * @param participant - The LiveKit participant whose track stats we want to observe.
+ * @param source - The source of the track (e.g. Track.Source.Camera or Track.Source.Microphone).
+ */
 export function observeInboundRtpStreamStats$(
   participant: Participant,
   source: Track.Source,
@@ -112,6 +127,13 @@ export function observeInboundRtpStreamStats$(
   );
 }
 
+/**
+ * Helper function to observe the outbound RTP stats for a given participant and track source.
+ * To be used for the local participant's audio and video tracks.
+ * It polls the stats every second and emits the latest stats object.
+ * @param participant - The LiveKit participant whose track stats we want to observe.
+ * @param source - The source of the track (e.g. Track.Source.Camera or Track.Source.Microphone).
+ */
 export function observeOutboundRtpStreamStats$(
   participant: Participant,
   source: Track.Source,
@@ -263,7 +285,6 @@ abstract class BaseMediaViewModel {
     protected readonly participant$: Observable<
       LocalParticipant | RemoteParticipant | null
     >,
-
     encryptionSystem: EncryptionSystem,
     audioSource: AudioSource,
     videoSource: VideoSource,
@@ -397,13 +418,12 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     return this._videoEnabled$;
   }
 
-  private readonly _cropVideo$ = new BehaviorSubject(true);
   /**
-   * Whether the tile video should be contained inside the tile or be cropped to fit.
+   * Whether the tile video should be contained inside the tile (video-fit contain) or be cropped to fit (video-fit cover).
    */
-  public readonly cropVideo$: Behavior<boolean> = this._cropVideo$;
+  public readonly videoFit$: Behavior<"cover" | "contain">;
 
-  public constructor(
+  protected constructor(
     scope: ObservableScope,
     id: string,
     userId: string,
@@ -443,10 +463,12 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     this._videoEnabled$ = this.scope.behavior(
       media$.pipe(map((m) => m?.cameraTrack?.isMuted === false)),
     );
-  }
 
-  public toggleFitContain(): void {
-    this._cropVideo$.next(!this._cropVideo$.value);
+    this.videoFit$ = videoFit$(
+      this.scope,
+      videoSizeFromParticipant$(participant$),
+      this.actualSize$,
+    );
   }
 
   public get local(): boolean {
@@ -456,9 +478,28 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   public abstract get audioStreamStats$(): Observable<
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >;
+
   public abstract get videoStreamStats$(): Observable<
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >;
+
+  private readonly _actualSize$ = new BehaviorSubject<
+    { width: number; height: number } | undefined
+  >(undefined);
+  public readonly actualSize$ = this._actualSize$.asObservable();
+
+  /**
+   * Set the actual dimensions of the html element.
+   * This can be used to determine the best video fit (fit to frame / keep ratio).
+   * @param width - The actual width of the html element displaying the video.
+   * @param height - The actual height of the html element displaying the video.
+   */
+  public setActualDimensions(width: number, height: number): void {
+    this._actualSize$.next({
+      width,
+      height,
+    });
+  }
 }
 
 /**
@@ -616,6 +657,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
 
   // This private field is used to override the value from the superclass
   private __speaking$: Behavior<boolean>;
+
   public get speaking$(): Behavior<boolean> {
     return this.__speaking$;
   }
@@ -661,6 +703,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
 
   // This private field is used to override the value from the superclass
   private __videoEnabled$: Behavior<boolean>;
+
   public get videoEnabled$(): Behavior<boolean> {
     return this.__videoEnabled$;
   }

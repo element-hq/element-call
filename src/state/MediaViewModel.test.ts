@@ -92,21 +92,6 @@ test("control a participant's volume", () => {
   });
 });
 
-test("toggle fit/contain for a participant's video", () => {
-  const vm = createRemoteMedia(rtcMembership, {}, mockRemoteParticipant({}));
-  withTestScheduler(({ expectObservable, schedule }) => {
-    schedule("-ab|", {
-      a: () => vm.toggleFitContain(),
-      b: () => vm.toggleFitContain(),
-    });
-    expectObservable(vm.cropVideo$).toBe("abc", {
-      a: true,
-      b: false,
-      c: true,
-    });
-  });
-});
-
 test("local media remembers whether it should always be shown", () => {
   const vm1 = createLocalMedia(
     rtcMembership,
