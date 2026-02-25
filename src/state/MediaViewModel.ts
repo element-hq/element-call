@@ -29,7 +29,6 @@ import {
 } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
-  BehaviorSubject,
   type Observable,
   Subject,
   combineLatest,
@@ -47,7 +46,7 @@ import {
 
 import { alwaysShowSelf } from "../settings/settings";
 import { showConnectionStats } from "../settings/settings";
-import { accumulate } from "../utils/observable";
+import { createToggle$ } from "../utils/observable";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { type ReactionOption } from "../reactions";
@@ -55,6 +54,7 @@ import { platform } from "../Platform";
 import { type MediaDevices } from "./MediaDevices";
 import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
+import { createVolumeControls, type VolumeControls } from "./VolumeControls";
 
 export function observeTrackReference$(
   participant: Participant,
@@ -103,21 +103,12 @@ export function observeRtpStreamStats$(
   );
 }
 
-export function observeInboundRtpStreamStats$(
+function observeInboundRtpStreamStats$(
   participant: Participant,
   source: Track.Source,
 ): Observable<RTCInboundRtpStreamStats | undefined> {
   return observeRtpStreamStats$(participant, source, "inbound-rtp").pipe(
     map((x) => x as RTCInboundRtpStreamStats | undefined),
-  );
-}
-
-export function observeOutboundRtpStreamStats$(
-  participant: Participant,
-  source: Track.Source,
-): Observable<RTCOutboundRtpStreamStats | undefined> {
-  return observeRtpStreamStats$(participant, source, "outbound-rtp").pipe(
-    map((x) => x as RTCOutboundRtpStreamStats | undefined),
   );
 }
 
@@ -218,74 +209,98 @@ export enum EncryptionStatus {
   PasswordInvalid,
 }
 
-abstract class BaseMediaViewModel {
+interface BaseMediaViewModel {
+  /**
+   * An opaque identifier for this media.
+   */
+  id: string;
+  /**
+   * The Matrix user to which this media belongs.
+   */
+  userId: string;
+  displayName$: Behavior<string>;
+  mxcAvatarUrl$: Behavior<string | undefined>;
+}
+
+type BaseMediaInputs = BaseMediaViewModel;
+
+// This function exists to strip out superfluous data from the input object
+function createBaseMedia({
+  id,
+  userId,
+  displayName$,
+  mxcAvatarUrl$,
+}: BaseMediaInputs): BaseMediaViewModel {
+  return { id, userId, displayName$, mxcAvatarUrl$ };
+}
+
+interface MemberMediaViewModel extends BaseMediaViewModel {
   /**
    * The LiveKit video track for this media.
    */
-  public readonly video$: Behavior<TrackReference | undefined>;
+  video$: Behavior<TrackReference | undefined>;
+  /**
+   * The URL of the LiveKit focus on which this member should be publishing.
+   * Exposed for debugging.
+   */
+  focusUrl$: Behavior<string | undefined>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
-  public readonly unencryptedWarning$: Behavior<boolean>;
+  unencryptedWarning$: Behavior<boolean>;
+  encryptionStatus$: Behavior<EncryptionStatus>;
+}
 
-  public readonly encryptionStatus$: Behavior<EncryptionStatus>;
+interface MemberMediaInputs extends BaseMediaViewModel {
+  participant$: Behavior<LocalParticipant | RemoteParticipant | null>;
+  livekitRoom$: Behavior<LivekitRoom | undefined>;
+  audioSource: AudioSource;
+  videoSource: VideoSource;
+  focusUrl$: Behavior<string | undefined>;
+  encryptionSystem: EncryptionSystem;
+}
 
-  /**
-   * Whether this media corresponds to the local participant.
-   */
-  public abstract readonly local: boolean;
-
-  private observeTrackReference$(
+function createMemberMedia(
+  scope: ObservableScope,
+  {
+    participant$,
+    livekitRoom$,
+    audioSource,
+    videoSource,
+    focusUrl$,
+    encryptionSystem,
+    ...inputs
+  }: MemberMediaInputs,
+): MemberMediaViewModel {
+  const trackBehavior$ = (
     source: Track.Source,
-  ): Behavior<TrackReference | undefined> {
-    return this.scope.behavior(
-      this.participant$.pipe(
+  ): Behavior<TrackReference | undefined> =>
+    scope.behavior(
+      participant$.pipe(
         switchMap((p) =>
           !p ? of(undefined) : observeTrackReference$(p, source),
         ),
       ),
     );
-  }
 
-  public constructor(
-    protected readonly scope: ObservableScope,
-    /**
-     * An opaque identifier for this media.
-     */
-    public readonly id: string,
-    /**
-     * The Matrix user to which this media belongs.
-     */
-    public readonly userId: string,
-    // We don't necessarily have a participant if a user connects via MatrixRTC but not (yet) through
-    // livekit.
-    protected readonly participant$: Behavior<
-      LocalParticipant | RemoteParticipant | null
-    >,
+  const audio$ = trackBehavior$(audioSource);
+  const video$ = trackBehavior$(videoSource);
 
-    encryptionSystem: EncryptionSystem,
-    audioSource: AudioSource,
-    videoSource: VideoSource,
-    protected readonly livekitRoom$: Behavior<LivekitRoom | undefined>,
-    public readonly focusUrl$: Behavior<string | undefined>,
-    public readonly displayName$: Behavior<string>,
-    public readonly mxcAvatarUrl$: Behavior<string | undefined>,
-  ) {
-    const audio$ = this.observeTrackReference$(audioSource);
-    this.video$ = this.observeTrackReference$(videoSource);
-
-    this.unencryptedWarning$ = this.scope.behavior(
+  return {
+    ...createBaseMedia(inputs),
+    video$,
+    focusUrl$,
+    unencryptedWarning$: scope.behavior(
       combineLatest(
-        [audio$, this.video$],
+        [audio$, video$],
         (a, v) =>
           encryptionSystem.kind !== E2eeType.NONE &&
           (a?.publication.isEncrypted === false ||
             v?.publication.isEncrypted === false),
       ),
-    );
-
-    this.encryptionStatus$ = this.scope.behavior(
-      this.participant$.pipe(
+    ),
+    encryptionStatus$: scope.behavior(
+      participant$.pipe(
         switchMap((participant): Observable<EncryptionStatus> => {
           if (!participant) {
             return of(EncryptionStatus.Connecting);
@@ -346,132 +361,149 @@ abstract class BaseMediaViewModel {
           }
         }),
       ),
-    );
-  }
+    ),
+  };
 }
 
-/**
- * Some participant's media.
- */
-export type MediaViewModel = UserMediaViewModel | ScreenShareViewModel;
-export type UserMediaViewModel =
-  | LocalUserMediaViewModel
-  | RemoteUserMediaViewModel;
+interface BaseUserMediaViewModel extends MemberMediaViewModel {
+  type: "user";
+  speaking$: Behavior<boolean>;
+  audioEnabled$: Behavior<boolean>;
+  videoEnabled$: Behavior<boolean>;
+  cropVideo$: Behavior<boolean>;
+  toggleCropVideo: () => void;
+  /**
+   * The expected identity of the LiveKit participant. Exposed for debugging.
+   */
+  rtcBackendIdentity: string;
+  handRaised$: Behavior<Date | null>;
+  reaction$: Behavior<ReactionOption | null>;
+  audioStreamStats$: Observable<
+    RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
+  >;
+  videoStreamStats$: Observable<
+    RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
+  >;
+}
 
-/**
- * Some participant's user media.
- */
-abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
-  private readonly _speaking$ = this.scope.behavior(
-    this.participant$.pipe(
-      switchMap((p) =>
-        p
-          ? observeParticipantEvents(
-              p,
-              ParticipantEvent.IsSpeakingChanged,
-            ).pipe(map((p) => p.isSpeaking))
-          : of(false),
-      ),
+interface BaseUserMediaInputs extends Omit<
+  MemberMediaInputs,
+  "audioSource" | "videoSource"
+> {
+  rtcBackendIdentity: string;
+  handRaised$: Behavior<Date | null>;
+  reaction$: Behavior<ReactionOption | null>;
+  statsType: "inbound-rtp" | "outbound-rtp";
+}
+
+function createBaseUserMedia(
+  scope: ObservableScope,
+  {
+    rtcBackendIdentity,
+    handRaised$,
+    reaction$,
+    statsType,
+    ...inputs
+  }: BaseUserMediaInputs,
+): BaseUserMediaViewModel {
+  const { participant$ } = inputs;
+  const media$ = scope.behavior(
+    participant$.pipe(
+      switchMap((p) => (p && observeParticipantMedia(p)) ?? of(undefined)),
     ),
   );
-  /**
-   * Whether the participant is speaking.
-   */
-  // Getter backed by a private field so that subclasses can override it
-  public get speaking$(): Behavior<boolean> {
-    return this._speaking$;
-  }
+  const toggleCropVideo$ = new Subject<void>();
 
-  /**
-   * Whether this participant is sending audio (i.e. is unmuted on their side).
-   */
-  public readonly audioEnabled$: Behavior<boolean>;
-
-  private readonly _videoEnabled$: Behavior<boolean>;
-  /**
-   * Whether this participant is sending video.
-   */
-  // Getter backed by a private field so that subclasses can override it
-  public get videoEnabled$(): Behavior<boolean> {
-    return this._videoEnabled$;
-  }
-
-  private readonly _cropVideo$ = new BehaviorSubject(true);
-  /**
-   * Whether the tile video should be contained inside the tile or be cropped to fit.
-   */
-  public readonly cropVideo$: Behavior<boolean> = this._cropVideo$;
-
-  public constructor(
-    scope: ObservableScope,
-    id: string,
-    userId: string,
-    /**
-     * The expected identity of the LiveKit participant. Exposed for debugging.
-     */
-    public readonly rtcBackendIdentity: string,
-    participant$: Behavior<LocalParticipant | RemoteParticipant | null>,
-    encryptionSystem: EncryptionSystem,
-    livekitRoom$: Behavior<LivekitRoom | undefined>,
-    focusUrl$: Behavior<string | undefined>,
-    displayName$: Behavior<string>,
-    mxcAvatarUrl$: Behavior<string | undefined>,
-    public readonly handRaised$: Behavior<Date | null>,
-    public readonly reaction$: Behavior<ReactionOption | null>,
-  ) {
-    super(
-      scope,
-      id,
-      userId,
-      participant$,
-      encryptionSystem,
-      Track.Source.Microphone,
-      Track.Source.Camera,
-      livekitRoom$,
-      focusUrl$,
-      displayName$,
-      mxcAvatarUrl$,
-    );
-
-    const media$ = this.scope.behavior(
+  return {
+    ...createMemberMedia(scope, {
+      ...inputs,
+      audioSource: Track.Source.Microphone,
+      videoSource: Track.Source.Camera,
+    }),
+    type: "user",
+    speaking$: scope.behavior(
       participant$.pipe(
-        switchMap((p) => (p && observeParticipantMedia(p)) ?? of(undefined)),
+        switchMap((p) =>
+          p
+            ? observeParticipantEvents(
+                p,
+                ParticipantEvent.IsSpeakingChanged,
+              ).pipe(map((p) => p.isSpeaking))
+            : of(false),
+        ),
       ),
-    );
-    this.audioEnabled$ = this.scope.behavior(
+    ),
+    audioEnabled$: scope.behavior(
       media$.pipe(map((m) => m?.microphoneTrack?.isMuted === false)),
-    );
-    this._videoEnabled$ = this.scope.behavior(
+    ),
+    videoEnabled$: scope.behavior(
       media$.pipe(map((m) => m?.cameraTrack?.isMuted === false)),
-    );
-  }
-
-  public toggleFitContain(): void {
-    this._cropVideo$.next(!this._cropVideo$.value);
-  }
-
-  public get local(): boolean {
-    return this instanceof LocalUserMediaViewModel;
-  }
-
-  public abstract get audioStreamStats$(): Observable<
-    RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
-  >;
-  public abstract get videoStreamStats$(): Observable<
-    RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
-  >;
+    ),
+    cropVideo$: createToggle$(scope, true, toggleCropVideo$),
+    toggleCropVideo: () => toggleCropVideo$.next(),
+    rtcBackendIdentity,
+    handRaised$,
+    reaction$,
+    audioStreamStats$: combineLatest([
+      participant$,
+      showConnectionStats.value$,
+    ]).pipe(
+      switchMap(([p, showConnectionStats]) => {
+        //
+        if (!p || !showConnectionStats) return of(undefined);
+        return observeRtpStreamStats$(p, Track.Source.Microphone, statsType);
+      }),
+    ),
+    videoStreamStats$: combineLatest([
+      participant$,
+      showConnectionStats.value$,
+    ]).pipe(
+      switchMap(([p, showConnectionStats]) => {
+        if (!p || !showConnectionStats) return of(undefined);
+        return observeRtpStreamStats$(p, Track.Source.Camera, statsType);
+      }),
+    ),
+  };
 }
 
-/**
- * The local participant's user media.
- */
-export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
+export interface LocalUserMediaViewModel extends BaseUserMediaViewModel {
+  local: true;
+  /**
+   * Whether the video should be mirrored.
+   */
+  mirror$: Behavior<boolean>;
+  /**
+   * Whether to show this tile in a highly visible location near the start of
+   * the grid.
+   */
+  alwaysShow$: Behavior<boolean>;
+  setAlwaysShow: (value: boolean) => void;
+  switchCamera$: Behavior<(() => void) | null>;
+}
+
+export interface LocalUserMediaInputs extends Omit<
+  BaseUserMediaInputs,
+  "statsType"
+> {
+  participant$: Behavior<LocalParticipant | null>;
+  mediaDevices: MediaDevices;
+}
+
+export function createLocalUserMedia(
+  scope: ObservableScope,
+  { mediaDevices, ...inputs }: LocalUserMediaInputs,
+): LocalUserMediaViewModel {
+  const baseUserMedia = createBaseUserMedia(scope, {
+    ...inputs,
+    statsType: "outbound-rtp",
+  });
+
   /**
    * The local video track as an observable that emits whenever the track
    * changes, the camera is switched, or the track is muted.
    */
-  private readonly videoTrack$: Observable<LocalVideoTrack | null> =
-    this.video$.pipe(
+  const videoTrack$: Observable<LocalVideoTrack | null> =
+    baseUserMedia.video$.pipe(
       switchMap((v) => {
         const track = v?.publication.track;
         if (!(track instanceof LocalVideoTrack)) return of(null);
@@ -488,35 +520,25 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
       }),
     );
 
-  /**
-   * Whether the video should be mirrored.
-   */
-  public readonly mirror$ = this.scope.behavior(
-    this.videoTrack$.pipe(
-      // Mirror only front-facing cameras (those that face the user)
-      map(
-        (track) =>
-          track !== null &&
-          facingModeFromLocalTrack(track).facingMode === "user",
+  return {
+    ...baseUserMedia,
+    local: true,
+    mirror$: scope.behavior(
+      videoTrack$.pipe(
+        // Mirror only front-facing cameras (those that face the user)
+        map(
+          (track) =>
+            track !== null &&
+            facingModeFromLocalTrack(track).facingMode === "user",
+        ),
       ),
     ),
-  );
-
-  /**
-   * Whether to show this tile in a highly visible location near the start of
-   * the grid.
-   */
-  public readonly alwaysShow$ = alwaysShowSelf.value$;
-  public readonly setAlwaysShow = alwaysShowSelf.setValue;
-
-  /**
-   * Callback for switching between the front and back cameras.
-   */
-  public readonly switchCamera$: Behavior<(() => void) | null> =
-    this.scope.behavior(
+    alwaysShow$: alwaysShowSelf.value$,
+    setAlwaysShow: alwaysShowSelf.setValue,
+    switchCamera$: scope.behavior(
       platform === "desktop"
         ? of(null)
-        : this.videoTrack$.pipe(
+        : videoTrack$.pipe(
             map((track) => {
               if (track === null) return null;
               const facingMode = facingModeFromLocalTrack(track).facingMode;
@@ -535,272 +557,157 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
                     const deviceId =
                       track.mediaStreamTrack.getSettings().deviceId;
                     if (deviceId !== undefined)
-                      this.mediaDevices.videoInput.select(deviceId);
+                      mediaDevices.videoInput.select(deviceId);
                   })
                   .catch((e) =>
                     logger.error("Failed to switch camera", facingMode, e),
                   );
             }),
           ),
-    );
-
-  public constructor(
-    scope: ObservableScope,
-    id: string,
-    userId: string,
-    rtcBackendIdentity: string,
-    participant$: Behavior<LocalParticipant | null>,
-    encryptionSystem: EncryptionSystem,
-    livekitRoom$: Behavior<LivekitRoom | undefined>,
-    focusUrl$: Behavior<string | undefined>,
-    private readonly mediaDevices: MediaDevices,
-    displayName$: Behavior<string>,
-    mxcAvatarUrl$: Behavior<string | undefined>,
-    handRaised$: Behavior<Date | null>,
-    reaction$: Behavior<ReactionOption | null>,
-  ) {
-    super(
-      scope,
-      id,
-      userId,
-      rtcBackendIdentity,
-      participant$,
-      encryptionSystem,
-      livekitRoom$,
-      focusUrl$,
-      displayName$,
-      mxcAvatarUrl$,
-      handRaised$,
-      reaction$,
-    );
-  }
-
-  public audioStreamStats$ = combineLatest([
-    this.participant$,
-    showConnectionStats.value$,
-  ]).pipe(
-    switchMap(([p, showConnectionStats]) => {
-      if (!p || !showConnectionStats) return of(undefined);
-      return observeOutboundRtpStreamStats$(p, Track.Source.Microphone);
-    }),
-  );
-
-  public videoStreamStats$ = combineLatest([
-    this.participant$,
-    showConnectionStats.value$,
-  ]).pipe(
-    switchMap(([p, showConnectionStats]) => {
-      if (!p || !showConnectionStats) return of(undefined);
-      return observeOutboundRtpStreamStats$(p, Track.Source.Camera);
-    }),
-  );
+    ),
+  };
 }
 
-/**
- * A remote participant's user media.
- */
-export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
+export interface RemoteUserMediaViewModel
+  extends BaseUserMediaViewModel, VolumeControls {
+  local: false;
   /**
    * Whether we are waiting for this user's LiveKit participant to exist. This
    * could be because either we or the remote party are still connecting.
    */
-  public readonly waitingForMedia$ = this.scope.behavior<boolean>(
-    combineLatest(
-      [this.livekitRoom$, this.participant$],
-      (livekitRoom, participant) =>
-        // If livekitRoom is undefined, the user is not attempting to publish on
-        // any transport and so we shouldn't expect a participant. (They might
-        // be a subscribe-only bot for example.)
-        livekitRoom !== undefined && participant === null,
-    ),
-  );
-
-  // This private field is used to override the value from the superclass
-  private __speaking$: Behavior<boolean>;
-  public get speaking$(): Behavior<boolean> {
-    return this.__speaking$;
-  }
-
-  private readonly locallyMutedToggle$ = new Subject<void>();
-  private readonly localVolumeAdjustment$ = new Subject<number>();
-  private readonly localVolumeCommit$ = new Subject<void>();
-
-  /**
-   * The volume to which this participant's audio is set, as a scalar
-   * multiplier.
-   */
-  public readonly localVolume$ = this.scope.behavior<number>(
-    merge(
-      this.locallyMutedToggle$.pipe(map(() => "toggle mute" as const)),
-      this.localVolumeAdjustment$,
-      this.localVolumeCommit$.pipe(map(() => "commit" as const)),
-    ).pipe(
-      accumulate({ volume: 1, committedVolume: 1 }, (state, event) => {
-        switch (event) {
-          case "toggle mute":
-            return {
-              ...state,
-              volume: state.volume === 0 ? state.committedVolume : 0,
-            };
-          case "commit":
-            // Dragging the slider to zero should have the same effect as
-            // muting: keep the original committed volume, as if it were never
-            // dragged
-            return {
-              ...state,
-              committedVolume:
-                state.volume === 0 ? state.committedVolume : state.volume,
-            };
-          default:
-            // Volume adjustment
-            return { ...state, volume: event };
-        }
-      }),
-      map(({ volume }) => volume),
-    ),
-  );
-
-  // This private field is used to override the value from the superclass
-  private __videoEnabled$: Behavior<boolean>;
-  public get videoEnabled$(): Behavior<boolean> {
-    return this.__videoEnabled$;
-  }
-
-  /**
-   * Whether this participant's audio is disabled.
-   */
-  public readonly locallyMuted$ = this.scope.behavior<boolean>(
-    this.localVolume$.pipe(map((volume) => volume === 0)),
-  );
-
-  public constructor(
-    scope: ObservableScope,
-    id: string,
-    userId: string,
-    rtcBackendIdentity: string,
-    participant$: Behavior<RemoteParticipant | null>,
-    encryptionSystem: EncryptionSystem,
-    livekitRoom$: Behavior<LivekitRoom | undefined>,
-    focusUrl$: Behavior<string | undefined>,
-    private readonly pretendToBeDisconnected$: Behavior<boolean>,
-    displayName$: Behavior<string>,
-    mxcAvatarUrl$: Behavior<string | undefined>,
-    handRaised$: Behavior<Date | null>,
-    reaction$: Behavior<ReactionOption | null>,
-  ) {
-    super(
-      scope,
-      id,
-      userId,
-      rtcBackendIdentity,
-      participant$,
-      encryptionSystem,
-      livekitRoom$,
-      focusUrl$,
-      displayName$,
-      mxcAvatarUrl$,
-      handRaised$,
-      reaction$,
-    );
-
-    this.__speaking$ = this.scope.behavior(
-      pretendToBeDisconnected$.pipe(
-        switchMap((disconnected) =>
-          disconnected ? of(false) : super.speaking$,
-        ),
-      ),
-    );
-
-    this.__videoEnabled$ = this.scope.behavior(
-      pretendToBeDisconnected$.pipe(
-        switchMap((disconnected) =>
-          disconnected ? of(false) : super.videoEnabled$,
-        ),
-      ),
-    );
-
-    // Sync the local volume with LiveKit
-    combineLatest([
-      participant$,
-      // The local volume, taking into account whether we're supposed to pretend
-      // that the audio stream is disconnected (since we don't necessarily want
-      // that to modify the UI state).
-      this.pretendToBeDisconnected$.pipe(
-        switchMap((disconnected) => (disconnected ? of(0) : this.localVolume$)),
-        this.scope.bind(),
-      ),
-    ]).subscribe(([p, volume]) => p?.setVolume(volume));
-  }
-
-  public toggleLocallyMuted(): void {
-    this.locallyMutedToggle$.next();
-  }
-
-  public setLocalVolume(value: number): void {
-    this.localVolumeAdjustment$.next(value);
-  }
-
-  public commitLocalVolume(): void {
-    this.localVolumeCommit$.next();
-  }
-
-  public audioStreamStats$ = combineLatest([
-    this.participant$,
-    showConnectionStats.value$,
-  ]).pipe(
-    switchMap(([p, showConnectionStats]) => {
-      if (!p || !showConnectionStats) return of(undefined);
-      return observeInboundRtpStreamStats$(p, Track.Source.Microphone);
-    }),
-  );
-
-  public videoStreamStats$ = combineLatest([
-    this.participant$,
-    showConnectionStats.value$,
-  ]).pipe(
-    switchMap(([p, showConnectionStats]) => {
-      if (!p || !showConnectionStats) return of(undefined);
-      return observeInboundRtpStreamStats$(p, Track.Source.Camera);
-    }),
-  );
+  waitingForMedia$: Behavior<boolean>;
 }
 
-/**
- * Some participant's screen share media.
- */
-export class ScreenShareViewModel extends BaseMediaViewModel {
+export interface RemoteUserMediaInputs extends Omit<
+  BaseUserMediaInputs,
+  "statsType"
+> {
+  participant$: Behavior<RemoteParticipant | null>;
+  pretendToBeDisconnected$: Behavior<boolean>;
+}
+
+export function createRemoteUserMedia(
+  scope: ObservableScope,
+  { pretendToBeDisconnected$, ...inputs }: RemoteUserMediaInputs,
+): RemoteUserMediaViewModel {
+  const baseUserMedia = createBaseUserMedia(scope, {
+    ...inputs,
+    statsType: "inbound-rtp",
+  });
+
+  return {
+    ...baseUserMedia,
+    ...createVolumeControls(scope, {
+      pretendToBeDisconnected$,
+      sink$: scope.behavior(
+        inputs.participant$.pipe(map((p) => (volume) => p?.setVolume(volume))),
+      ),
+    }),
+    local: false,
+    speaking$: scope.behavior(
+      pretendToBeDisconnected$.pipe(
+        switchMap((disconnected) =>
+          disconnected ? of(false) : baseUserMedia.speaking$,
+        ),
+      ),
+    ),
+    videoEnabled$: scope.behavior(
+      pretendToBeDisconnected$.pipe(
+        switchMap((disconnected) =>
+          disconnected ? of(false) : baseUserMedia.videoEnabled$,
+        ),
+      ),
+    ),
+    waitingForMedia$: scope.behavior(
+      combineLatest(
+        [inputs.livekitRoom$, inputs.participant$],
+        (livekitRoom, participant) =>
+          // If livekitRoom is undefined, the user is not attempting to publish on
+          // any transport and so we shouldn't expect a participant. (They might
+          // be a subscribe-only bot for example.)
+          livekitRoom !== undefined && participant === null,
+      ),
+    ),
+  };
+}
+
+interface BaseScreenShareViewModel extends MemberMediaViewModel {
+  type: "screen share";
+}
+
+type BaseScreenShareInputs = Omit<
+  MemberMediaInputs,
+  "audioSource" | "videoSource"
+>;
+
+function createBaseScreenShare(
+  scope: ObservableScope,
+  inputs: BaseScreenShareInputs,
+): BaseScreenShareViewModel {
+  return {
+    ...createMemberMedia(scope, {
+      ...inputs,
+      audioSource: Track.Source.ScreenShareAudio,
+      videoSource: Track.Source.ScreenShare,
+    }),
+    type: "screen share",
+  };
+}
+
+export interface LocalScreenShareViewModel extends BaseScreenShareViewModel {
+  local: true;
+}
+
+interface LocalScreenShareInputs extends BaseScreenShareInputs {
+  participant$: Behavior<LocalParticipant | null>;
+}
+
+export function createLocalScreenShare(
+  scope: ObservableScope,
+  inputs: LocalScreenShareInputs,
+): LocalScreenShareViewModel {
+  return { ...createBaseScreenShare(scope, inputs), local: true };
+}
+
+export interface RemoteScreenShareViewModel extends BaseScreenShareViewModel {
+  local: false;
   /**
    * Whether this screen share's video should be displayed.
    */
-  public readonly videoEnabled$ = this.scope.behavior(
-    this.pretendToBeDisconnected$.pipe(map((disconnected) => !disconnected)),
-  );
-
-  public constructor(
-    scope: ObservableScope,
-    id: string,
-    userId: string,
-    participant$: Behavior<LocalParticipant | RemoteParticipant>,
-    encryptionSystem: EncryptionSystem,
-    livekitRoom$: Behavior<LivekitRoom | undefined>,
-    focusUrl$: Behavior<string | undefined>,
-    private readonly pretendToBeDisconnected$: Behavior<boolean>,
-    displayName$: Behavior<string>,
-    mxcAvatarUrl$: Behavior<string | undefined>,
-    public readonly local: boolean,
-  ) {
-    super(
-      scope,
-      id,
-      userId,
-      participant$,
-      encryptionSystem,
-      Track.Source.ScreenShareAudio,
-      Track.Source.ScreenShare,
-      livekitRoom$,
-      focusUrl$,
-      displayName$,
-      mxcAvatarUrl$,
-    );
-  }
+  videoEnabled$: Behavior<boolean>;
 }
+
+interface RemoteScreenShareInputs extends BaseScreenShareInputs {
+  participant$: Behavior<RemoteParticipant | null>;
+  pretendToBeDisconnected$: Behavior<boolean>;
+}
+
+export function createRemoteScreenShare(
+  scope: ObservableScope,
+  { pretendToBeDisconnected$, ...inputs }: RemoteScreenShareInputs,
+): RemoteScreenShareViewModel {
+  return {
+    ...createBaseScreenShare(scope, inputs),
+    local: false,
+    videoEnabled$: scope.behavior(
+      pretendToBeDisconnected$.pipe(map((disconnected) => !disconnected)),
+    ),
+  };
+}
+
+/**
+ * Some participant's media.
+ */
+export type MediaViewModel = UserMediaViewModel | ScreenShareViewModel;
+/**
+ * Some participant's user media (i.e. their microphone and camera feed).
+ */
+export type UserMediaViewModel =
+  | LocalUserMediaViewModel
+  | RemoteUserMediaViewModel;
+/**
+ * Some participant's screen share media.
+ */
+export type ScreenShareViewModel =
+  | LocalScreenShareViewModel
+  | RemoteScreenShareViewModel;
