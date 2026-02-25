@@ -257,10 +257,9 @@ abstract class BaseMediaViewModel {
      * The Matrix user to which this media belongs.
      */
     public readonly userId: string,
-    public readonly rtcBackendIdentity: string,
     // We don't necessarily have a participant if a user connects via MatrixRTC but not (yet) through
     // livekit.
-    protected readonly participant$: Observable<
+    protected readonly participant$: Behavior<
       LocalParticipant | RemoteParticipant | null
     >,
 
@@ -407,8 +406,11 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     scope: ObservableScope,
     id: string,
     userId: string,
-    rtcBackendIdentity: string,
-    participant$: Observable<LocalParticipant | RemoteParticipant | null>,
+    /**
+     * The expected identity of the LiveKit participant. Exposed for debugging.
+     */
+    public readonly rtcBackendIdentity: string,
+    participant$: Behavior<LocalParticipant | RemoteParticipant | null>,
     encryptionSystem: EncryptionSystem,
     livekitRoom$: Behavior<LivekitRoom | undefined>,
     focusUrl$: Behavior<string | undefined>,
@@ -421,7 +423,6 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       scope,
       id,
       userId,
-      rtcBackendIdentity,
       participant$,
       encryptionSystem,
       Track.Source.Microphone,
@@ -677,7 +678,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     id: string,
     userId: string,
     rtcBackendIdentity: string,
-    participant$: Observable<RemoteParticipant | null>,
+    participant$: Behavior<RemoteParticipant | null>,
     encryptionSystem: EncryptionSystem,
     livekitRoom$: Behavior<LivekitRoom | undefined>,
     focusUrl$: Behavior<string | undefined>,
@@ -779,8 +780,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
     scope: ObservableScope,
     id: string,
     userId: string,
-    rtcBackendIdentity: string,
-    participant$: Observable<LocalParticipant | RemoteParticipant>,
+    participant$: Behavior<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom$: Behavior<LivekitRoom | undefined>,
     focusUrl$: Behavior<string | undefined>,
@@ -793,7 +793,6 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
       scope,
       id,
       userId,
-      rtcBackendIdentity,
       participant$,
       encryptionSystem,
       Track.Source.ScreenShareAudio,
