@@ -13,22 +13,24 @@ import {
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 
-import { type ObservableScope } from "./ObservableScope.ts";
-import {
-  createLocalScreenShare,
-  createLocalUserMedia,
-  createRemoteScreenShare,
-  createRemoteUserMedia,
-  type ScreenShareViewModel,
-  type UserMediaViewModel,
-  type LocalUserMediaInputs,
-  type RemoteUserMediaInputs,
-} from "./MediaViewModel.ts";
-import type { Behavior } from "./Behavior.ts";
-import type { MediaDevices } from "./MediaDevices.ts";
+import { type ObservableScope } from "../ObservableScope.ts";
+import type { Behavior } from "../Behavior.ts";
+import type { MediaDevices } from "../MediaDevices.ts";
 import { observeSpeaker$ } from "./observeSpeaker.ts";
-import { generateItems } from "../utils/observable.ts";
-import { type TaggedParticipant } from "./CallViewModel/remoteMembers/MatrixLivekitMembers.ts";
+import { generateItems } from "../../utils/observable.ts";
+import { type TaggedParticipant } from "../CallViewModel/remoteMembers/MatrixLivekitMembers.ts";
+import { type UserMediaViewModel } from "./UserMediaViewModel.ts";
+import { type ScreenShareViewModel } from "./ScreenShareViewModel.ts";
+import {
+  createLocalUserMedia,
+  type LocalUserMediaInputs,
+} from "./LocalUserMediaViewModel.ts";
+import {
+  createRemoteUserMedia,
+  type RemoteUserMediaInputs,
+} from "./RemoteUserMediaViewModel.ts";
+import { createLocalScreenShare } from "./LocalScreenShareViewModel.ts";
+import { createRemoteScreenShare } from "./RemoteScreenShareViewModel.ts";
 
 /**
  * Sorting bins defining the order in which media tiles appear in the layout.

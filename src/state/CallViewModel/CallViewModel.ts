@@ -51,11 +51,6 @@ import { v4 as uuidv4 } from "uuid";
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 
 import {
-  type MediaViewModel,
-  type ScreenShareViewModel,
-  type UserMediaViewModel,
-} from "../MediaViewModel";
-import {
   createToggle$,
   filterBehavior,
   generateItem,
@@ -142,9 +137,12 @@ import { type Connection } from "./remoteMembers/Connection.ts";
 import { createLayoutModeSwitch } from "./LayoutSwitch.ts";
 import {
   createWrappedUserMedia,
-  type WrappedUserMediaViewModel,
   type MediaItem,
-} from "../MediaItem.ts";
+  type WrappedUserMediaViewModel,
+} from "../media/MediaItem.ts";
+import { type ScreenShareViewModel } from "../media/ScreenShareViewModel.ts";
+import { type UserMediaViewModel } from "../media/UserMediaViewModel.ts";
+import { type MediaViewModel } from "../media/MediaViewModel.ts";
 
 const logger = rootLogger.getChild("[CallViewModel]");
 //TODO

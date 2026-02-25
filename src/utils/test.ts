@@ -52,12 +52,6 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc/IKeyTransport";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import {
-  createLocalUserMedia,
-  createRemoteUserMedia,
-  type LocalUserMediaViewModel,
-  type RemoteUserMediaViewModel,
-} from "../state/MediaViewModel";
 import { E2eeType } from "../e2ee/e2eeType";
 import {
   DEFAULT_CONFIG,
@@ -68,6 +62,14 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { type Behavior, constant } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
 import { MuteStates } from "../state/MuteStates";
+import {
+  createLocalUserMedia,
+  type LocalUserMediaViewModel,
+} from "../state/media/LocalUserMediaViewModel";
+import {
+  createRemoteUserMedia,
+  type RemoteUserMediaViewModel,
+} from "../state/media/RemoteUserMediaViewModel";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();

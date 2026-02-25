@@ -21,9 +21,8 @@ import {
   mockRemoteMedia,
   withTestScheduler,
   mockRemoteParticipant,
-} from "../utils/test";
-import { getValue } from "../utils/observable";
-import { constant } from "./Behavior";
+} from "../../utils/test";
+import { constant } from "../Behavior";
 
 global.MediaStreamTrack = class {} as unknown as {
   new (): MediaStreamTrack;
@@ -35,7 +34,7 @@ global.MediaStream = class {} as unknown as {
 };
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
-vi.mock("../Platform", () => ({
+vi.mock("../../Platform", () => ({
   get platform(): string {
     return platformMock();
   },
@@ -184,7 +183,7 @@ test("switch cameras", async () => {
   );
 
   // Switch to back camera
-  getValue(vm.switchCamera$)!();
+  vm.switchCamera$.value!();
   expect(restartTrack).toHaveBeenCalledExactlyOnceWith({
     facingMode: "environment",
   });
@@ -195,7 +194,7 @@ test("switch cameras", async () => {
   expect(deviceId).toBe("back camera");
 
   // Switch to front camera
-  getValue(vm.switchCamera$)!();
+  vm.switchCamera$.value!();
   expect(restartTrack).toHaveBeenCalledTimes(2);
   expect(restartTrack).toHaveBeenLastCalledWith({ facingMode: "user" });
   await waitFor(() => {
