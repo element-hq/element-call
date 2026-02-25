@@ -11,6 +11,7 @@ import {
   type ReactNode,
   type Ref,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -26,7 +27,6 @@ import {
   VolumeOffIcon,
   VisibilityOnIcon,
   UserProfileIcon,
-  ExpandIcon,
   VolumeOffSolidIcon,
   SwitchCameraSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
@@ -37,6 +37,7 @@ import {
   Menu,
 } from "@vector-im/compound-web";
 import { useObservableEagerState } from "observable-hooks";
+import useMeasure from "react-use-measure";
 
 import styles from "./GridTile.module.css";
 import {
@@ -105,17 +106,25 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const audioEnabled = useBehavior(vm.audioEnabled$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
   const speaking = useBehavior(vm.speaking$);
-  const cropVideo = useBehavior(vm.cropVideo$);
-  const onSelectFitContain = useCallback(
-    (e: Event) => {
-      e.preventDefault();
-      vm.toggleFitContain();
-    },
-    [vm],
-  );
+  const videoFit = useBehavior(vm.videoFit$);
+
   const rtcBackendIdentity = vm.rtcBackendIdentity;
   const handRaised = useBehavior(vm.handRaised$);
   const reaction = useBehavior(vm.reaction$);
+
+  // We need to keep track of the tile size.
+  // We use this to get the tile ratio, and compare it to the video ratio to decide
+  // whether to fit the video to frame or keep the ratio.
+  const [measureRef, bounds] = useMeasure();
+  // There is already a ref being passed in, so we need to merge it with the measureRef.
+  const tileRef = useMergedRefs(ref, measureRef);
+
+  // Whenever bounds change, inform the viewModel
+  useEffect(() => {
+    if (bounds.width > 0 && bounds.height > 0) {
+      vm.setActualDimensions(bounds.width, bounds.height);
+    }
+  }, [bounds.width, bounds.height, vm]);
 
   const AudioIcon = locallyMuted
     ? VolumeOffSolidIcon
@@ -132,12 +141,10 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const menu = (
     <>
       {menuStart}
-      <ToggleMenuItem
-        Icon={ExpandIcon}
-        label={t("video_tile.change_fit_contain")}
-        checked={cropVideo}
-        onSelect={onSelectFitContain}
-      />
+      {/*
+       No additional menu item (used to be the manual fit to frame.
+       Placeholder for future menu items that should be placed here.
+       */}
       {menuEnd}
     </>
   );
@@ -150,13 +157,13 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
 
   const tile = (
     <MediaView
-      ref={ref}
+      ref={tileRef}
       video={video}
       userId={vm.userId}
       unencryptedWarning={unencryptedWarning}
       encryptionStatus={encryptionStatus}
       videoEnabled={videoEnabled}
-      videoFit={cropVideo ? "cover" : "contain"}
+      videoFit={videoFit}
       className={classNames(className, styles.tile, {
         [styles.speaking]: showSpeaking,
         [styles.handRaised]: !showSpeaking && handRaised,

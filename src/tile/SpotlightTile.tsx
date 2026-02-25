@@ -27,6 +27,7 @@ import { useObservableRef } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
+import useMeasure from "react-use-measure";
 
 import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
 import FullScreenMinimiseIcon from "../icons/FullScreenMinimise.svg?react";
@@ -105,11 +106,11 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
   vm,
   ...props
 }) => {
-  const cropVideo = useBehavior(vm.cropVideo$);
+  const videoFit = useBehavior(vm.videoFit$);
 
   const baseProps: SpotlightUserMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
-    videoFit: cropVideo ? "cover" : "contain",
+    videoFit,
     ...props,
   };
 
@@ -147,7 +148,22 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   "aria-hidden": ariaHidden,
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
-  const ref = useMergedRefs(ourRef, theirRef);
+
+  // We need to keep track of the tile size.
+  // We use this to get the tile ratio, and compare it to the video ratio to decide
+  // whether to fit the video to frame or keep the ratio.
+  const [measureRef, bounds] = useMeasure();
+
+  // Whenever bounds change, inform the viewModel
+  useEffect(() => {
+    if (bounds.width > 0 && bounds.height > 0) {
+      if (!(vm instanceof ScreenShareViewModel)) {
+        vm.setActualDimensions(bounds.width, bounds.height);
+      }
+    }
+  }, [bounds.width, bounds.height, vm]);
+
+  const ref = useMergedRefs(ourRef, theirRef, measureRef);
   const focusUrl = useBehavior(vm.focusUrl$);
   const displayName = useBehavior(vm.displayName$);
   const mxcAvatarUrl = useBehavior(vm.mxcAvatarUrl$);
