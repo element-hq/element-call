@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type RemoteTrackPublication } from "livekit-client";
-import { test, expect } from "vitest";
+import { test, expect, beforeAll } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
@@ -27,6 +27,22 @@ global.IntersectionObserver = class MockIntersectionObserver {
   public unobserve(): void {}
   public disconnect(): void {}
 } as unknown as typeof IntersectionObserver;
+
+// Mock ResizeObserver as it is needed by the useMeasure hook used in the GridTile, but is not implemented in JSDOM.
+// We just need to mock it with empty methods as we don't need to test its functionality here.
+beforeAll(() => {
+  window.ResizeObserver = class ResizeObserver {
+    public observe(): void {
+      // do nothing
+    }
+    public unobserve(): void {
+      // do nothing
+    }
+    public disconnect(): void {
+      // do nothing
+    }
+  };
+});
 
 test("GridTile is accessible", async () => {
   const vm = createRemoteMedia(
