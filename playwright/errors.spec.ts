@@ -102,8 +102,10 @@ test("Should show error screen if call creation is restricted", async ({
 
   // Then if the socket connection fails, livekit will try to validate the token!
   // Livekit will not auto_create anymore and will return a 404 error.
+  // Note the regex is required as livekit-client is nowasays trying two
+  // differnt APIs
   await page.route(
-    "**/badurltotricktest/livekit/sfu/rtc/validate?**",
+    /.*\/badurltotricktest\/livekit\/sfu\/rtc(\/v1)?\/validate?.*/,
     async (route) =>
       await route.fulfill({
         status: 404,
