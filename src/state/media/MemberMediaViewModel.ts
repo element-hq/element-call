@@ -39,6 +39,7 @@ import { observeTrackReference$ } from "../observeTrackReference";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { observeInboundRtpStreamStats$ } from "./observeRtpStreamStats";
 
+// TODO: Encryption status is kinda broken and thus unused right now. Remove?
 export enum EncryptionStatus {
   Connecting,
   Okay,
