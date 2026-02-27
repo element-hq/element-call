@@ -12,7 +12,17 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { ClientEvent, type MatrixClient, SyncState } from "matrix-js-sdk";
-import { fromEvent, startWith, map, tap, type Observable } from "rxjs";
+import {
+  fromEvent,
+  startWith,
+  map,
+  tap,
+  switchMap,
+  timer,
+  of,
+  distinctUntilChanged,
+  type Observable,
+} from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { type ObservableScope } from "../../ObservableScope";
@@ -45,11 +55,28 @@ export function createHomeserverConnected$(
   matrixRTCSession: NodeStyleEventEmitter &
     Pick<MatrixRTCSession, "membershipStatus" | "probablyLeft">,
 ): HomeserverConnected {
-  const syncing$ = (
+  const syncingRaw$ = (
     fromEvent(client, ClientEvent.Sync) as Observable<[SyncState]>
   ).pipe(
     startWith([client.getSyncState()]),
     map(([state]) => state === SyncState.Syncing),
+    tap((v) => logger.info(`syncing$ (raw): ${v}`)),
+  );
+
+  // Sync errors are transient — the SDK auto-retries and /sync abort
+  // recoveries can take several seconds. Debounce the false→true transition
+  // with an 8s grace period so brief sync interruptions don't cascade.
+  const syncing$ = syncingRaw$.pipe(
+    switchMap((syncing) =>
+      syncing
+        ? of(true)
+        : timer(8000).pipe(
+            map(() => false),
+            startWith(true),
+          ),
+    ),
+    distinctUntilChanged(),
+    tap((v) => logger.info(`syncing$ (debounced): ${v}`)),
   );
 
   const rtsSession$ = scope.behavior<Status>(
@@ -61,6 +88,7 @@ export function createHomeserverConnected$(
 
   const membershipConnected$ = rtsSession$.pipe(
     map((status) => status === Status.Connected),
+    tap((v) => logger.info(`membershipConnected$: ${v}`)),
   );
 
   // This is basically notProbablyLeft$
@@ -77,10 +105,23 @@ export function createHomeserverConnected$(
   ).pipe(
     startWith(null),
     map(() => matrixRTCSession.probablyLeft !== true),
+    tap((v) => logger.info(`certainlyConnected$ (notProbablyLeft): ${v}`)),
   );
 
   const combined$ = scope.behavior(
     and$(syncing$, membershipConnected$, certainlyConnected$).pipe(
+      // Don't immediately report disconnection for brief hiccups.
+      // Stay "connected" during a 2s grace period so that momentary sync
+      // errors or delayed-leave-event timeouts don't flap the UI.
+      switchMap((connected) =>
+        connected
+          ? of(true)
+          : timer(2000).pipe(
+              map(() => false),
+              startWith(true),
+            ),
+      ),
+      distinctUntilChanged(),
       tap((connected) => {
         logger.info(`Homeserver connected update: ${connected}`);
       }),
