@@ -145,3 +145,16 @@ export const customLivekitUrl = new Setting<string | null>(
   "custom-livekit-url",
   null,
 );
+
+export enum ScreenShareAudioProfile {
+  Music = "music",
+  MusicStereo = "musicStereo",
+  MusicHighQuality = "musicHighQuality",
+  MusicHighQualityStereo = "musicHighQualityStereo",
+}
+
+export const screenShareAudioProfile = new Setting<ScreenShareAudioProfile>(
+  "screen-share-audio-profile",
+  ScreenShareAudioProfile.MusicHighQuality,
+);
+
