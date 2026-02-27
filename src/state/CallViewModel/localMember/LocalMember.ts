@@ -778,6 +778,9 @@ export function enterRTCSession(
         matrixRtcSessionConfig?.delayed_leave_event_restart_local_timeout_ms,
       networkErrorRetryMs: matrixRtcSessionConfig?.network_error_retry_ms,
       makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
+      useKeyDelay: matrixRtcSessionConfig?.use_key_delay_ms,
+      keyRotationGracePeriodMs:
+        matrixRtcSessionConfig?.key_rotation_grace_period_ms,
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
       useExperimentalToDeviceTransport: true,
