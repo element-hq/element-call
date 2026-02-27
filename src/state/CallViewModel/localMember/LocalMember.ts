@@ -34,6 +34,7 @@ import {
   startWith,
   switchMap,
   tap,
+  timer,
 } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
@@ -238,6 +239,7 @@ export const createLocalMembership$ = ({
 
         return connectionData.getConnectionForTransport(localTransport);
       }),
+      distinctUntilChanged(),
       tap((connection) => {
         logger.info(
           `Local connection updated: ${connection?.transport?.livekit_service_url}`,
@@ -393,6 +395,7 @@ export const createLocalMembership$ = ({
 
   const localConnectionState$ = localConnection$.pipe(
     switchMap((connection) => (connection ? connection.state$ : of(null))),
+    tap((state) => logger.debug(`localConnectionState$: ${state}`)),
   );
 
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
@@ -488,11 +491,18 @@ export const createLocalMembership$ = ({
 
   /**
    * Whether we should tell the user that we're reconnecting to the call.
+   * Debounced so that brief (<1.5s) disconnections don't flash the UI.
    */
   const reconnecting$ = scope.behavior(
     matrixAndLivekitConnected$.pipe(
-      pairwise(),
-      map(([prev, current]) => prev === true && current === false),
+      switchMap((connected) =>
+        connected
+          ? of(false)
+          : timer(1500).pipe(
+              map(() => true),
+              startWith(false),
+            ),
+      ),
     ),
     false,
   );
