@@ -20,6 +20,7 @@ import {
   CollapseIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  CloseIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
 import { type Observable, map } from "rxjs";
@@ -229,6 +230,7 @@ interface Props {
   vm: SpotlightTileViewModel;
   expanded: boolean;
   onToggleExpanded: (() => void) | null;
+  onDismissScreenShare?: (id: string) => void;
   targetWidth: number;
   targetHeight: number;
   showIndicators: boolean;
@@ -242,6 +244,7 @@ export const SpotlightTile: FC<Props> = ({
   vm,
   expanded,
   onToggleExpanded,
+  onDismissScreenShare,
   targetWidth,
   targetHeight,
   showIndicators,
@@ -366,6 +369,18 @@ export const SpotlightTile: FC<Props> = ({
         ))}
       </div>
       <div className={styles.bottomRightButtons}>
+        {onDismissScreenShare &&
+          media.find((m) => m.id === visibleId)?.type === "screen share" &&
+          !media.find((m) => m.id === visibleId)?.local && (
+            <button
+              className={classNames(styles.expand)}
+              aria-label={t("screenshare_stop_viewing")}
+              onClick={() => onDismissScreenShare(visibleId!)}
+              tabIndex={focusable ? undefined : -1}
+            >
+              <CloseIcon aria-hidden width={20} height={20} />
+            </button>
+          )}
         <button
           className={classNames(styles.expand)}
           aria-label={"maximise"}
