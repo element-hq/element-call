@@ -232,6 +232,14 @@
       "reactions_show_label": "Show reactions",
       "show_hand_raised_timer_description": "Show a timer when a participant raises their hand",
       "show_hand_raised_timer_label": "Show hand raise duration"
+    },
+    "screen_share_tab_title": "Screen share",
+    "screen_share_tab": {
+      "audio_profile_heading": "Audio quality",
+      "audio_profile_music": "Music (48 kbps)",
+      "audio_profile_music_stereo": "Music Stereo (64 kbps)",
+      "audio_profile_music_high_quality": "Music High Quality (96 kbps)",
+      "audio_profile_music_high_quality_stereo": "Music HQ Stereo (96 kbps)"
     }
   },
   "star_rating_input_label_one": "{{count}} star",
