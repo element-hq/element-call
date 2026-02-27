@@ -32,20 +32,19 @@ import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
 import FullScreenMinimiseIcon from "../icons/FullScreenMinimise.svg?react";
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
-import {
-  type EncryptionStatus,
-  LocalUserMediaViewModel,
-  type MediaViewModel,
-  ScreenShareViewModel,
-  type UserMediaViewModel,
-  type RemoteUserMediaViewModel,
-} from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
 import { type SpotlightTileViewModel } from "../state/TileViewModel";
 import { useBehavior } from "../useBehavior";
+import { type EncryptionStatus } from "../state/media/MemberMediaViewModel";
+import { type LocalUserMediaViewModel } from "../state/media/LocalUserMediaViewModel";
+import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaViewModel";
+import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
+import { type ScreenShareViewModel } from "../state/media/ScreenShareViewModel";
+import { type RemoteScreenShareViewModel } from "../state/media/RemoteScreenShareViewModel";
+import { type MediaViewModel } from "../state/media/MediaViewModel";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
@@ -54,7 +53,6 @@ interface SpotlightItemBaseProps {
   targetWidth: number;
   targetHeight: number;
   video: TrackReferenceOrPlaceholder | undefined;
-  videoEnabled: boolean;
   userId: string;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
@@ -67,6 +65,7 @@ interface SpotlightItemBaseProps {
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
   videoFit: "contain" | "cover";
+  videoEnabled: boolean;
 }
 
 interface SpotlightLocalUserMediaItemProps extends SpotlightUserMediaItemBaseProps {
@@ -106,14 +105,16 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
   ...props
 }) => {
   const cropVideo = useBehavior(vm.cropVideo$);
+  const videoEnabled = useBehavior(vm.videoEnabled$);
 
   const baseProps: SpotlightUserMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
     videoFit: cropVideo ? "cover" : "contain",
+    videoEnabled,
     ...props,
   };
 
-  return vm instanceof LocalUserMediaViewModel ? (
+  return vm.local ? (
     <SpotlightLocalUserMediaItem vm={vm} {...baseProps} />
   ) : (
     <SpotlightRemoteUserMediaItem vm={vm} {...baseProps} />
@@ -121,6 +122,31 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
 };
 
 SpotlightUserMediaItem.displayName = "SpotlightUserMediaItem";
+
+interface SpotlightScreenShareItemProps extends SpotlightItemBaseProps {
+  vm: ScreenShareViewModel;
+  videoEnabled: boolean;
+}
+
+const SpotlightScreenShareItem: FC<SpotlightScreenShareItemProps> = ({
+  vm,
+  ...props
+}) => {
+  return <MediaView videoFit="contain" mirror={false} {...props} />;
+};
+
+interface SpotlightRemoteScreenShareItemProps extends SpotlightItemBaseProps {
+  vm: RemoteScreenShareViewModel;
+}
+
+const SpotlightRemoteScreenShareItem: FC<
+  SpotlightRemoteScreenShareItemProps
+> = ({ vm, ...props }) => {
+  const videoEnabled = useBehavior(vm.videoEnabled$);
+  return (
+    <SpotlightScreenShareItem vm={vm} videoEnabled={videoEnabled} {...props} />
+  );
+};
 
 interface SpotlightItemProps {
   ref?: Ref<HTMLDivElement>;
@@ -152,7 +178,6 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   const displayName = useBehavior(vm.displayName$);
   const mxcAvatarUrl = useBehavior(vm.mxcAvatarUrl$);
   const video = useBehavior(vm.video$);
-  const videoEnabled = useBehavior(vm.videoEnabled$);
   const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
   const encryptionStatus = useBehavior(vm.encryptionStatus$);
 
@@ -178,7 +203,6 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     targetWidth,
     targetHeight,
     video: video ?? undefined,
-    videoEnabled,
     userId: vm.userId,
     unencryptedWarning,
     focusUrl,
@@ -189,10 +213,12 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     "aria-hidden": ariaHidden,
   };
 
-  return vm instanceof ScreenShareViewModel ? (
-    <MediaView videoFit="contain" mirror={false} {...baseProps} />
+  if (vm.type === "user")
+    return <SpotlightUserMediaItem vm={vm} {...baseProps} />;
+  return vm.local ? (
+    <SpotlightScreenShareItem vm={vm} videoEnabled {...baseProps} />
   ) : (
-    <SpotlightUserMediaItem vm={vm} {...baseProps} />
+    <SpotlightRemoteScreenShareItem vm={vm} {...baseProps} />
   );
 };
 

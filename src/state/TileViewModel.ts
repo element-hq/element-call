@@ -5,8 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MediaViewModel, type UserMediaViewModel } from "./MediaViewModel";
 import { type Behavior } from "./Behavior";
+import { type MediaViewModel } from "./media/MediaViewModel";
+import { type UserMediaViewModel } from "./media/UserMediaViewModel";
 
 let nextId = 0;
 function createId(): string {
