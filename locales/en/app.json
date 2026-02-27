@@ -193,6 +193,10 @@
   "room_auth_view_continue_button": "Continue",
   "room_auth_view_ssla_caption": "By clicking \"Join call now\", you agree to our <2>Software and Services License Agreement (SSLA)</2>",
   "screenshare_button_label": "Share screen",
+  "screenshare_preview_button_label": "Screen shares",
+  "screenshare_preview_panel_title": "Active screen shares",
+  "screenshare_stop_viewing": "Stop viewing",
+  "screenshare_tile_viewing": "Viewing",
   "settings": {
     "audio_tab": {
       "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play.",

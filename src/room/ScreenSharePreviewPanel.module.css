@@ -1,0 +1,70 @@
+/*
+Copyright 2026 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--cpd-space-4x);
+  padding: var(--cpd-space-4x);
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--cpd-space-3x);
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+  background: var(--cpd-color-bg-subtle-secondary);
+}
+
+.tile:hover {
+  border-color: var(--cpd-color-border-interactive-hovered);
+}
+
+.tile.accepted {
+  border-color: var(--cpd-color-border-interactive-primary);
+  box-shadow: 0 0 0 1px var(--cpd-color-border-interactive-primary);
+}
+
+.tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tileOverlay {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-2x);
+  padding: var(--cpd-space-2x) var(--cpd-space-3x);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  color: var(--cpd-color-text-on-solid-primary);
+}
+
+.tileOverlay .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cpd-space-1x);
+  padding: var(--cpd-space-1x) var(--cpd-space-2x);
+  border-radius: var(--cpd-radius-pill-effect);
+  background: var(--cpd-color-bg-action-primary-rest);
+  font-size: var(--cpd-font-size-body-xs);
+  color: var(--cpd-color-text-on-solid-primary);
+}
+
+.empty {
+  padding: var(--cpd-space-8x);
+  text-align: center;
+  color: var(--cpd-color-text-secondary);
+}
