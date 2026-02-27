@@ -15,6 +15,7 @@ import {
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
+  BehaviorSubject,
   catchError,
   combineLatest,
   distinctUntilChanged,
@@ -371,6 +372,24 @@ export interface CallViewModel {
    * Shortcut for not requireing to parse and combine connectionState.matrix and connectionState.livekit
    */
   connected$: Behavior<boolean>;
+
+  // Screen share opt-in
+  /**
+   * All active screen shares (for the preview panel).
+   */
+  screenShares$: Behavior<ScreenShareViewModel[]>;
+  /**
+   * Set of screen share IDs the user has opted into viewing.
+   */
+  acceptedScreenShareIds$: Behavior<Set<string>>;
+  /**
+   * Opt in to viewing a remote screen share.
+   */
+  acceptScreenShare: (id: string) => void;
+  /**
+   * Stop viewing a remote screen share.
+   */
+  dismissScreenShare: (id: string) => void;
 }
 
 /**
@@ -819,6 +838,51 @@ export function createCallViewModel$(
     ),
   );
 
+  // Screen share opt-in state
+  const acceptedScreenShareIds$ = new BehaviorSubject<Set<string>>(
+    new Set<string>(),
+  );
+  const acceptScreenShare = (id: string): void => {
+    const next = new Set(acceptedScreenShareIds$.value);
+    next.add(id);
+    acceptedScreenShareIds$.next(next);
+  };
+  const dismissScreenShare = (id: string): void => {
+    const next = new Set(acceptedScreenShareIds$.value);
+    next.delete(id);
+    acceptedScreenShareIds$.next(next);
+  };
+
+  // Clean up accepted IDs when screen shares disappear
+  screenShares$
+    .pipe(
+      map((shares) => new Set(shares.map((s) => s.id))),
+      scope.bind(),
+    )
+    .subscribe((activeIds) => {
+      const accepted = acceptedScreenShareIds$.value;
+      let changed = false;
+      for (const id of accepted) {
+        if (!activeIds.has(id)) {
+          accepted.delete(id);
+          changed = true;
+        }
+      }
+      if (changed) acceptedScreenShareIds$.next(new Set(accepted));
+    });
+
+  /**
+   * Screen shares the user has opted into viewing (plus local screen shares
+   * which always bypass opt-in).
+   */
+  const acceptedScreenShares$ = scope.behavior<ScreenShareViewModel[]>(
+    combineLatest([screenShares$, acceptedScreenShareIds$]).pipe(
+      map(([shares, acceptedIds]) =>
+        shares.filter((s) => s.local || acceptedIds.has(s.id)),
+      ),
+    ),
+  );
+
   const joinSoundEffect$ = userMedia$.pipe(
     pairwise(),
     filter(
@@ -932,9 +996,9 @@ export function createCallViewModel$(
   );
 
   const spotlight$ = scope.behavior<MediaViewModel[]>(
-    screenShares$.pipe(
-      switchMap((screenShares) => {
-        if (screenShares.length > 0) return of(screenShares);
+    acceptedScreenShares$.pipe(
+      switchMap((acceptedScreenShares) => {
+        if (acceptedScreenShares.length > 0) return of(acceptedScreenShares);
 
         return spotlightSpeaker$.pipe(
           map((speaker) => (speaker ? [speaker] : [])),
@@ -947,12 +1011,12 @@ export function createCallViewModel$(
   const pip$ = scope.behavior<UserMediaViewModel | undefined>(
     combineLatest([
       // TODO This also needs epoch logic to dedupe the screenshares and mediaItems emits
-      screenShares$,
+      acceptedScreenShares$,
       spotlightSpeaker$,
       mediaItems$,
     ]).pipe(
-      switchMap(([screenShares, spotlight, mediaItems]) => {
-        if (screenShares.length > 0) {
+      switchMap(([acceptedScreenShares, spotlight, mediaItems]) => {
+        if (acceptedScreenShares.length > 0) {
           return spotlightSpeaker$;
         }
         if (!spotlight || spotlight.local) {
@@ -973,11 +1037,7 @@ export function createCallViewModel$(
   );
 
   const hasRemoteScreenShares$ = scope.behavior<boolean>(
-    spotlight$.pipe(
-      map((spotlight) =>
-        spotlight.some((vm) => vm.type === "screen share" && !vm.local),
-      ),
-    ),
+    acceptedScreenShares$.pipe(map((shares) => shares.some((vm) => !vm.local))),
   );
 
   const pipEnabled$ = scope.behavior(setPipEnabled$, false);
@@ -1555,6 +1615,11 @@ export function createCallViewModel$(
     reconnecting$: localMembership.reconnecting$,
     livekitRoomItems$,
     connected$: localMembership.connected$,
+
+    screenShares$,
+    acceptedScreenShareIds$,
+    acceptScreenShare,
+    dismissScreenShare,
   };
 }
 
