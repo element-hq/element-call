@@ -37,7 +37,7 @@ import { type EncryptionSystem } from "../../e2ee/sharedKeyManagement";
 import { type ObservableScope } from "../ObservableScope";
 import { observeTrackReference$ } from "../observeTrackReference";
 import { E2eeType } from "../../e2ee/e2eeType";
-import { observeRtpStreamStats$ } from "./observeRtpStreamStats";
+import { observeInboundRtpStreamStats$ } from "./observeRtpStreamStats";
 
 export enum EncryptionStatus {
   Connecting,
@@ -179,15 +179,6 @@ export function createMemberMedia(
       ),
     ),
   };
-}
-
-function observeInboundRtpStreamStats$(
-  participant: Participant,
-  source: Track.Source,
-): Observable<RTCInboundRtpStreamStats | undefined> {
-  return observeRtpStreamStats$(participant, source, "inbound-rtp").pipe(
-    map((x) => x as RTCInboundRtpStreamStats | undefined),
-  );
 }
 
 function encryptionErrorObservable$(
