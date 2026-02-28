@@ -29,6 +29,7 @@ import {
   ExpandIcon,
   VolumeOffSolidIcon,
   SwitchCameraSolidIcon,
+  HeadphonesOffSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
   ContextMenu,
@@ -114,6 +115,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const rtcBackendIdentity = vm.rtcBackendIdentity;
   const handRaised = useBehavior(vm.handRaised$);
   const reaction = useBehavior(vm.reaction$);
+  const deafened = useBehavior(vm.deafened$);
 
   const AudioIcon = playbackMuted
     ? VolumeOffSolidIcon
@@ -160,13 +162,23 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
         [styles.handRaised]: !showSpeaking && handRaised,
       })}
       nameTagLeadingIcon={
-        <AudioIcon
-          width={20}
-          height={20}
-          aria-label={audioIconLabel}
-          data-muted={playbackMuted || !audioEnabled}
-          className={styles.muteIcon}
-        />
+        <>
+          <AudioIcon
+            width={20}
+            height={20}
+            aria-label={audioIconLabel}
+            data-muted={playbackMuted || !audioEnabled}
+            className={styles.muteIcon}
+          />
+          {deafened && (
+            <HeadphonesOffSolidIcon
+              width={20}
+              height={20}
+              aria-label={t("video_tile.deafened")}
+              className={styles.muteIcon}
+            />
+          )}
+        </>
       }
       displayName={displayName}
       mxcAvatarUrl={mxcAvatarUrl}

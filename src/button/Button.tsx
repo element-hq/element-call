@@ -17,6 +17,8 @@ import {
   EndCallIcon,
   ShareScreenSolidIcon,
   SettingsSolidIcon,
+  HeadphonesSolidIcon,
+  HeadphonesOffSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
@@ -39,6 +41,33 @@ export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
         aria-label={label}
         Icon={Icon}
         kind={muted ? "primary" : "secondary"}
+        {...props}
+      />
+    </Tooltip>
+  );
+};
+
+interface DeafenButtonProps extends ComponentPropsWithoutRef<"button"> {
+  deafened: boolean;
+}
+
+export const DeafenButton: FC<DeafenButtonProps> = ({
+  deafened,
+  ...props
+}) => {
+  const { t } = useTranslation();
+  const Icon = deafened ? HeadphonesOffSolidIcon : HeadphonesSolidIcon;
+  const label = deafened
+    ? t("undeafen_button_label")
+    : t("deafen_button_label");
+
+  return (
+    <Tooltip label={label}>
+      <CpdButton
+        iconOnly
+        aria-label={label}
+        Icon={Icon}
+        kind={deafened ? "primary" : "secondary"}
         {...props}
       />
     </Tooltip>
