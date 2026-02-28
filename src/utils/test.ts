@@ -347,6 +347,7 @@ export function mockLocalMedia(
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
     handRaised$: constant(null),
     reaction$: constant(null),
+    deafened$: constant(false),
   });
 }
 
@@ -390,6 +391,7 @@ export function mockRemoteMedia(
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
     handRaised$: constant(null),
     reaction$: constant(null),
+    deafened$: constant(false),
   });
 }
 

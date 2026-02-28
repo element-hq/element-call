@@ -187,6 +187,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       },
       raisedHands$,
       reactions$,
+      new BehaviorSubject<Record<string, never>>({}),
       new BehaviorSubject<ProcessorState>({
         processor: undefined,
         supported: undefined,
