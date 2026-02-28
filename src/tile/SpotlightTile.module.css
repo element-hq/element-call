@@ -167,3 +167,7 @@ Please see LICENSE in the repository root for full details.
 .indicators > .item[data-visible="true"] {
   background: var(--cpd-color-gray-1400);
 }
+
+.volumeSlider {
+  width: 100%;
+}

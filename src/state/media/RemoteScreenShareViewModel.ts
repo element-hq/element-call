@@ -6,10 +6,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type RemoteParticipant } from "livekit-client";
+import {
+  type RemoteAudioTrack,
+  type RemoteParticipant,
+  Track,
+} from "livekit-client";
 import { map } from "rxjs";
 
 import { type Behavior } from "../Behavior";
+import { createVolumeControls, type VolumeControls } from "../VolumeControls";
 import {
   type BaseScreenShareInputs,
   type BaseScreenShareViewModel,
@@ -17,7 +22,9 @@ import {
 } from "./ScreenShareViewModel";
 import { type ObservableScope } from "../ObservableScope";
 
-export interface RemoteScreenShareViewModel extends BaseScreenShareViewModel {
+export interface RemoteScreenShareViewModel
+  extends BaseScreenShareViewModel,
+    VolumeControls {
   local: false;
   /**
    * Whether this screen share's video should be displayed.
@@ -36,6 +43,19 @@ export function createRemoteScreenShare(
 ): RemoteScreenShareViewModel {
   return {
     ...createBaseScreenShare(scope, inputs),
+    ...createVolumeControls(scope, {
+      pretendToBeDisconnected$,
+      sink$: scope.behavior(
+        inputs.participant$.pipe(
+          map((p) => (volume: number) => {
+            const track = p?.getTrackPublication(
+              Track.Source.ScreenShareAudio,
+            )?.track as RemoteAudioTrack | undefined;
+            track?.setVolume(volume);
+          }),
+        ),
+      ),
+    }),
     local: false,
     videoEnabled$: scope.behavior(
       pretendToBeDisconnected$.pipe(map((disconnected) => !disconnected)),

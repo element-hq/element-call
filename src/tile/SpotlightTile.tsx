@@ -21,7 +21,12 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CloseIcon,
+  MicOffIcon,
+  OverflowHorizontalIcon,
+  VolumeOnIcon,
+  VolumeOffIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { Menu, MenuItem, ToggleMenuItem } from "@vector-im/compound-web";
 import { animated } from "@react-spring/web";
 import { type Observable, map } from "rxjs";
 import { useObservableRef } from "observable-hooks";
@@ -31,6 +36,7 @@ import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 
 import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
 import FullScreenMinimiseIcon from "../icons/FullScreenMinimise.svg?react";
+import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
 import { useInitial } from "../useInitial";
@@ -146,6 +152,73 @@ const SpotlightRemoteScreenShareItem: FC<
   const videoEnabled = useBehavior(vm.videoEnabled$);
   return (
     <SpotlightScreenShareItem vm={vm} videoEnabled={videoEnabled} {...props} />
+  );
+};
+
+/**
+ * Volume/mute controls for a remote screen share, rendered as a menu button
+ * in the SpotlightTile's bottom-right button bar.
+ */
+interface SpotlightScreenShareVolumeMenuProps {
+  vm: RemoteScreenShareViewModel;
+  displayName: string;
+  focusable: boolean;
+}
+
+const SpotlightScreenShareVolumeMenu: FC<
+  SpotlightScreenShareVolumeMenuProps
+> = ({ vm, displayName, focusable }) => {
+  const { t } = useTranslation();
+  const playbackMuted = useBehavior(vm.playbackMuted$);
+  const playbackVolume = useBehavior(vm.playbackVolume$);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const onSelectMute = useCallback(
+    (e: Event) => {
+      e.preventDefault();
+      vm.togglePlaybackMuted();
+    },
+    [vm],
+  );
+
+  const VolumeIcon = playbackMuted ? VolumeOffIcon : VolumeOnIcon;
+
+  return (
+    <Menu
+      open={menuOpen}
+      onOpenChange={setMenuOpen}
+      title={displayName}
+      trigger={
+        <button
+          className={styles.expand}
+          aria-label={t("common.options")}
+          tabIndex={focusable ? undefined : -1}
+        >
+          <OverflowHorizontalIcon aria-hidden width={20} height={20} />
+        </button>
+      }
+      side="left"
+      align="start"
+    >
+      <ToggleMenuItem
+        Icon={MicOffIcon}
+        label={t("video_tile.mute_for_me")}
+        checked={playbackMuted}
+        onSelect={onSelectMute}
+      />
+      {/* TODO: Figure out how to make this slider keyboard accessible */}
+      <MenuItem as="div" Icon={VolumeIcon} label={null} onSelect={null}>
+        <Slider
+          className={styles.volumeSlider}
+          label={t("video_tile.volume")}
+          value={playbackVolume}
+          onValueChange={vm.adjustPlaybackVolume}
+          onValueCommit={vm.commitPlaybackVolume}
+          min={0}
+          max={1}
+          step={0.01}
+        />
+      </MenuItem>
+    </Menu>
   );
 };
 
@@ -332,6 +405,14 @@ export const SpotlightTile: FC<Props> = ({
 
   const ToggleExpandIcon = expanded ? CollapseIcon : ExpandIcon;
 
+  const visibleVm = media.find((m) => m.id === visibleId);
+  const visibleRemoteScreenShare =
+    visibleVm &&
+    visibleVm.type === "screen share" &&
+    !visibleVm.local
+      ? visibleVm
+      : undefined;
+
   return (
     <animated.div
       ref={ref}
@@ -369,6 +450,13 @@ export const SpotlightTile: FC<Props> = ({
         ))}
       </div>
       <div className={styles.bottomRightButtons}>
+        {visibleRemoteScreenShare && (
+          <SpotlightScreenShareVolumeMenu
+            vm={visibleRemoteScreenShare}
+            displayName={visibleRemoteScreenShare.displayName$.value}
+            focusable={focusable}
+          />
+        )}
         {onDismissScreenShare &&
           media.find((m) => m.id === visibleId)?.type === "screen share" &&
           !media.find((m) => m.id === visibleId)?.local && (
