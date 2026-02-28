@@ -204,6 +204,19 @@ export const ReactionSet: ReactionOption[] = [
   },
 ];
 
+export const ElementCallDeafenedKey = "io.element.call.deafened";
+
+export interface DeafenedInfo {
+  /**
+   * Call membership event that was reacted to.
+   */
+  membershipEventId: string;
+  /**
+   * Event ID of the reaction itself.
+   */
+  reactionEventId: string;
+}
+
 export interface RaisedHandInfo {
   /**
    * Call membership event that was reacted to.
