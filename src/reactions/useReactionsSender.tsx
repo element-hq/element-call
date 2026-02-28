@@ -19,13 +19,18 @@ import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { useClientState } from "../ClientContext";
-import { ElementCallReactionEventType, type ReactionOption } from ".";
+import {
+  ElementCallDeafenedKey,
+  ElementCallReactionEventType,
+  type ReactionOption,
+} from ".";
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { useBehavior } from "../useBehavior";
 
 interface ReactionsSenderContextType {
   supportsReactions: boolean;
   toggleRaisedHand: () => Promise<void>;
+  toggleDeafened: () => Promise<void>;
   sendReaction: (reaction: ReactionOption) => Promise<void>;
 }
 
@@ -88,6 +93,15 @@ export const ReactionsSenderProvider = ({
     [myMembershipIdentifier, handsRaised],
   );
 
+  const deafened = useBehavior(vm.deafened$);
+  const myDeafened = useMemo(
+    () =>
+      myMembershipIdentifier !== undefined
+        ? deafened[myMembershipIdentifier]
+        : undefined,
+    [myMembershipIdentifier, deafened],
+  );
+
   const toggleRaisedHand = useCallback(async () => {
     if (!myMembershipIdentifier) {
       return;
@@ -131,6 +145,56 @@ export const ReactionsSenderProvider = ({
     room,
   ]);
 
+  const toggleDeafened = useCallback(async () => {
+    if (!myMembershipIdentifier) {
+      return;
+    }
+    const myDeafenedReactionId = myDeafened?.reactionEventId;
+
+    if (!myDeafenedReactionId) {
+      try {
+        if (!myMembershipEvent) {
+          throw new Error("Cannot find own membership event");
+        }
+        const reaction = await room.client.sendEvent(
+          rtcSession.room.roomId,
+          EventType.Reaction,
+          {
+            "m.relates_to": {
+              rel_type: RelationType.Annotation,
+              event_id: myMembershipEvent,
+              key: ElementCallDeafenedKey,
+            },
+          },
+        );
+        logger.debug("Sent deafen event", reaction.event_id);
+      } catch (ex) {
+        logger.error("Failed to send deafen event", ex);
+      }
+    } else {
+      try {
+        await room.client.redactEvent(
+          rtcSession.room.roomId,
+          myDeafenedReactionId,
+        );
+        logger.debug("Redacted deafen event");
+      } catch (ex) {
+        logger.error(
+          "Failed to redact deafen event",
+          myDeafenedReactionId,
+          ex,
+        );
+        throw ex;
+      }
+    }
+  }, [
+    myMembershipEvent,
+    myMembershipIdentifier,
+    myDeafened,
+    rtcSession,
+    room,
+  ]);
+
   const sendReaction = useCallback(
     async (reaction: ReactionOption) => {
       if (!myMembershipIdentifier || myReaction) {
@@ -161,6 +225,7 @@ export const ReactionsSenderProvider = ({
       value={{
         supportsReactions,
         toggleRaisedHand,
+        toggleDeafened,
         sendReaction,
       }}
     >
