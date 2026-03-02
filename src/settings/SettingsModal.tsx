@@ -24,6 +24,7 @@ import {
   soundEffectVolume as soundEffectVolumeSetting,
   backgroundBlur as backgroundBlurSetting,
   developerMode,
+  rnnoiseNoiseSuppression as rnnoiseNoiseSuppressionSetting,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
@@ -34,6 +35,7 @@ import { FieldRow, InputField } from "../input/Input";
 import { useSubmitRageshake } from "./submit-rageshake";
 import { useUrlParams } from "../UrlParams";
 import { useBehavior } from "../useBehavior";
+import { supportsRNNoiseProcessor } from "../audio/RNNoiseProcessor";
 
 type SettingsTab =
   | "audio"
@@ -91,6 +93,32 @@ export const SettingsModal: FC<Props> = ({
             type="checkbox"
             checked={!!blurActive}
             onChange={(b): void => setBlurActive(b.target.checked)}
+            disabled={!supported}
+          />
+        </FieldRow>
+      </>
+    );
+  };
+
+  const RNNoiseCheckbox: React.FC = (): ReactNode => {
+    const supported = supportsRNNoiseProcessor();
+    const [rnnoiseEnabled, setRnnoiseEnabled] = useSetting(
+      rnnoiseNoiseSuppressionSetting,
+    );
+
+    return (
+      <>
+        <h4>{t("settings.audio_tab.rnnoise_header")}</h4>
+        <FieldRow>
+          <InputField
+            id="activateRNNoiseSuppression"
+            label={t("settings.audio_tab.rnnoise_label")}
+            description={
+              supported ? "" : t("settings.audio_tab.rnnoise_not_supported")
+            }
+            type="checkbox"
+            checked={!!rnnoiseEnabled}
+            onChange={(e): void => setRnnoiseEnabled(e.target.checked)}
             disabled={!supported}
           />
         </FieldRow>
@@ -164,6 +192,8 @@ export const SettingsModal: FC<Props> = ({
               step={0.01}
             />
           </div>
+          <Separator />
+          <RNNoiseCheckbox />
         </Form>
       </>
     ),
