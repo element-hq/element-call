@@ -116,6 +116,18 @@ test.each([
     tileSize: VIDEO_480_L,
     expected: "contain",
   },
+  {
+    // Should default to cover if the initial size is 0:0.
+    // Or else it will cause a flash of "contain" mode until the real size is loaded, which can be jarring.
+    videoSize: VIDEO_480_L,
+    tileSize: { width: 0, height: 0 },
+    expected: "cover",
+  },
+  {
+    videoSize: { width: 0, height: 0 },
+    tileSize: VIDEO_480_L,
+    expected: "cover",
+  },
 ])(
   "videoFit$ returns $expected when videoSize is $videoSize and tileSize is $tileSize",
   ({ videoSize, tileSize, expected }) => {
