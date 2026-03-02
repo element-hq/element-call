@@ -5,14 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { type LocalUserMediaViewModel } from "./media/LocalUserMediaViewModel.ts";
+import { type MediaViewModel } from "./media/MediaViewModel.ts";
+import { type RemoteUserMediaViewModel } from "./media/RemoteUserMediaViewModel.ts";
+import { type UserMediaViewModel } from "./media/UserMediaViewModel.ts";
 import {
   type GridTileViewModel,
   type SpotlightTileViewModel,
 } from "./TileViewModel.ts";
-import {
-  type MediaViewModel,
-  type UserMediaViewModel,
-} from "./MediaViewModel.ts";
 
 export interface GridLayoutMedia {
   type: "grid";
@@ -40,8 +40,8 @@ export interface SpotlightExpandedLayoutMedia {
 
 export interface OneOnOneLayoutMedia {
   type: "one-on-one";
-  local: UserMediaViewModel;
-  remote: UserMediaViewModel;
+  local: LocalUserMediaViewModel;
+  remote: RemoteUserMediaViewModel;
 }
 
 export interface PipLayoutMedia {

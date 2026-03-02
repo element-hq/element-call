@@ -17,7 +17,7 @@ import { type Behavior } from "../state/Behavior.ts";
 import {
   observeInboundRtpStreamStats$,
   observeOutboundRtpStreamStats$,
-} from "../state/MediaViewModel.ts";
+} from "../state/media/observeRtpStreamStats";
 
 type Size = {
   width: number;
