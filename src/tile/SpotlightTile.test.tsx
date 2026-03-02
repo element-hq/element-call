@@ -15,8 +15,8 @@ import {
   mockLocalParticipant,
   mockMediaDevices,
   mockRtcMembership,
-  createLocalMedia,
-  createRemoteMedia,
+  mockLocalMedia,
+  mockRemoteMedia,
   mockRemoteParticipant,
 } from "../utils/test";
 import { SpotlightTileViewModel } from "../state/TileViewModel";
@@ -28,7 +28,7 @@ global.IntersectionObserver = class MockIntersectionObserver {
 } as unknown as typeof IntersectionObserver;
 
 test("SpotlightTile is accessible", async () => {
-  const vm1 = createRemoteMedia(
+  const vm1 = mockRemoteMedia(
     mockRtcMembership("@alice:example.org", "AAAA"),
     {
       rawDisplayName: "Alice",
@@ -37,7 +37,7 @@ test("SpotlightTile is accessible", async () => {
     mockRemoteParticipant({}),
   );
 
-  const vm2 = createLocalMedia(
+  const vm2 = mockLocalMedia(
     mockRtcMembership("@bob:example.org", "BBBB"),
     {
       rawDisplayName: "Bob",
