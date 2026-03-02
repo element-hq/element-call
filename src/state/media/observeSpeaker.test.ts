@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, test } from "vitest";
 
-import { withTestScheduler } from "../utils/test";
+import { withTestScheduler } from "../../utils/test";
 import { observeSpeaker$ } from "./observeSpeaker";
 
 const yesNo = {

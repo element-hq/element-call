@@ -18,7 +18,7 @@ import { TrackInfo } from "@livekit/protocol";
 import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
-import { EncryptionStatus } from "../state/MediaViewModel";
+import { EncryptionStatus } from "../state/media/MemberMediaViewModel";
 import { mockLocalParticipant } from "../utils/test";
 
 describe("MediaView", () => {

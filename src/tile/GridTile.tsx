@@ -40,11 +40,6 @@ import { useObservableEagerState } from "observable-hooks";
 import useMeasure from "react-use-measure";
 
 import styles from "./GridTile.module.css";
-import {
-  type UserMediaViewModel,
-  LocalUserMediaViewModel,
-  type RemoteUserMediaViewModel,
-} from "../state/MediaViewModel";
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
@@ -52,6 +47,9 @@ import { type GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactionsSender } from "../reactions/useReactionsSender";
 import { useBehavior } from "../useBehavior";
+import { type LocalUserMediaViewModel } from "../state/media/LocalUserMediaViewModel";
+import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaViewModel";
+import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
 
 interface TileProps {
   ref?: Ref<HTMLDivElement>;
@@ -69,7 +67,7 @@ interface TileProps {
 interface UserMediaTileProps extends TileProps {
   vm: UserMediaViewModel;
   mirror: boolean;
-  locallyMuted: boolean;
+  playbackMuted: boolean;
   waitingForMedia?: boolean;
   primaryButton?: ReactNode;
   menuStart?: ReactNode;
@@ -80,7 +78,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   ref,
   vm,
   showSpeakingIndicators,
-  locallyMuted,
+  playbackMuted,
   waitingForMedia,
   primaryButton,
   menuStart,
@@ -126,12 +124,12 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
     }
   }, [bounds.width, bounds.height, vm]);
 
-  const AudioIcon = locallyMuted
+  const AudioIcon = playbackMuted
     ? VolumeOffSolidIcon
     : audioEnabled
       ? MicOnSolidIcon
       : MicOffSolidIcon;
-  const audioIconLabel = locallyMuted
+  const audioIconLabel = playbackMuted
     ? t("video_tile.muted_for_me")
     : audioEnabled
       ? t("microphone_on")
@@ -173,7 +171,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
           width={20}
           height={20}
           aria-label={audioIconLabel}
-          data-muted={locallyMuted || !audioEnabled}
+          data-muted={playbackMuted || !audioEnabled}
           className={styles.muteIcon}
         />
       }
@@ -252,7 +250,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
     <UserMediaTile
       ref={ref}
       vm={vm}
-      locallyMuted={false}
+      playbackMuted={false}
       mirror={mirror}
       primaryButton={
         switchCamera === null ? undefined : (
@@ -302,36 +300,31 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
 }) => {
   const { t } = useTranslation();
   const waitingForMedia = useBehavior(vm.waitingForMedia$);
-  const locallyMuted = useBehavior(vm.locallyMuted$);
-  const localVolume = useBehavior(vm.localVolume$);
+  const playbackMuted = useBehavior(vm.playbackMuted$);
+  const playbackVolume = useBehavior(vm.playbackVolume$);
   const onSelectMute = useCallback(
     (e: Event) => {
       e.preventDefault();
-      vm.toggleLocallyMuted();
+      vm.togglePlaybackMuted();
     },
     [vm],
   );
-  const onChangeLocalVolume = useCallback(
-    (v: number) => vm.setLocalVolume(v),
-    [vm],
-  );
-  const onCommitLocalVolume = useCallback(() => vm.commitLocalVolume(), [vm]);
 
-  const VolumeIcon = locallyMuted ? VolumeOffIcon : VolumeOnIcon;
+  const VolumeIcon = playbackMuted ? VolumeOffIcon : VolumeOnIcon;
 
   return (
     <UserMediaTile
       ref={ref}
       vm={vm}
       waitingForMedia={waitingForMedia}
-      locallyMuted={locallyMuted}
+      playbackMuted={playbackMuted}
       mirror={false}
       menuStart={
         <>
           <ToggleMenuItem
             Icon={MicOffIcon}
             label={t("video_tile.mute_for_me")}
-            checked={locallyMuted}
+            checked={playbackMuted}
             onSelect={onSelectMute}
           />
           {/* TODO: Figure out how to make this slider keyboard accessible */}
@@ -339,9 +332,9 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
             <Slider
               className={styles.volumeSlider}
               label={t("video_tile.volume")}
-              value={localVolume}
-              onValueChange={onChangeLocalVolume}
-              onValueCommit={onCommitLocalVolume}
+              value={playbackVolume}
+              onValueChange={vm.adjustPlaybackVolume}
+              onValueCommit={vm.commitPlaybackVolume}
               min={0}
               max={1}
               step={0.01}
@@ -381,7 +374,7 @@ export const GridTile: FC<GridTileProps> = ({
   const displayName = useBehavior(media.displayName$);
   const mxcAvatarUrl = useBehavior(media.mxcAvatarUrl$);
 
-  if (media instanceof LocalUserMediaViewModel) {
+  if (media.local) {
     return (
       <LocalUserMediaTile
         ref={ref}

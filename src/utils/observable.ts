@@ -61,6 +61,20 @@ export function accumulate<State, Event>(
     events$.pipe(scan(update, initial), startWith(initial));
 }
 
+/**
+ * Given a source of toggle events, creates a Behavior whose value toggles
+ * between `true` and `false`.
+ */
+export function createToggle$(
+  scope: ObservableScope,
+  initialValue: boolean,
+  toggle$: Observable<void>,
+): Behavior<boolean> {
+  return scope.behavior(
+    toggle$.pipe(accumulate(initialValue, (state) => !state)),
+  );
+}
+
 const switchSymbol = Symbol("switch");
 
 /**
