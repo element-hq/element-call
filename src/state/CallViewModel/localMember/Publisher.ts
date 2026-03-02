@@ -61,6 +61,7 @@ export class Publisher {
   public shouldPublish = false;
 
   private readonly scope = new ObservableScope();
+  private rnnoiseOperationQueue: Promise<void> = Promise.resolve();
 
   /**
    * Creates a new Publisher.
@@ -459,21 +460,21 @@ export class Publisher {
       .pipe(
         scope.bind(),
         distinctUntilChanged(
-          ([aTrack, aEnabled, aPreset], [bTrack, bEnabled, bPreset]) => {
-            return (
-              aTrack === bTrack && aEnabled === bEnabled && aPreset === bPreset
-            );
+          ([aTrack, _aEnabled, aPreset], [bTrack, _bEnabled, bPreset]) => {
+            return aTrack === bTrack && aPreset === bPreset;
           },
         ),
       )
       .subscribe(([microphoneTrack, rnnoiseEnabled, rnnoisePreset]) => {
         if (!microphoneTrack || !supportsRNNoiseProcessor()) return;
 
-        void this.syncRNNoiseProcessor(
-          microphoneTrack,
-          rnnoiseEnabled,
-          rnnoisePreset,
-        );
+        this.enqueueRNNoiseOperation(async () => {
+          await this.syncRNNoiseProcessor(
+            microphoneTrack,
+            rnnoiseEnabled,
+            rnnoisePreset,
+          );
+        });
       });
   }
 
@@ -490,19 +491,47 @@ export class Publisher {
         )?.audioTrack;
         if (!audioTrack) return;
 
-        const { echoCancellation = true, noiseSuppression = true } =
-          getUrlParams();
-
-        void audioTrack
-          .restartTrack({
-            deviceId: devices.audioInput.selected$.value?.id,
-            echoCancellation,
-            noiseSuppression: noiseSuppression && !rnnoiseEnabled,
-          })
-          .catch((e) => {
-            this.logger.error("Failed to restart microphone track", e);
-          });
+        this.enqueueRNNoiseOperation(async () => {
+          await this.restartMicrophoneTrackForNoiseSuppressionPolicy(
+            audioTrack,
+            devices,
+            rnnoiseEnabled,
+          );
+          await this.syncRNNoiseProcessor(
+            audioTrack,
+            rnnoiseEnabled,
+            rnnoiseNoiseSuppressionPreset.getValue(),
+          );
+        });
       });
+  }
+
+  private enqueueRNNoiseOperation(operation: () => Promise<void>): void {
+    this.rnnoiseOperationQueue = this.rnnoiseOperationQueue.then(async () => {
+      try {
+        await operation();
+      } catch (e) {
+        this.logger.error("Failed to process RNNoise operation", e);
+      }
+    });
+  }
+
+  private async restartMicrophoneTrackForNoiseSuppressionPolicy(
+    audioTrack: LocalAudioTrack,
+    devices: MediaDevices,
+    rnnoiseEnabled: boolean,
+  ): Promise<void> {
+    const activeProcessor = audioTrack.getProcessor();
+    if (activeProcessor?.name === "rnnoise-noise-suppression") {
+      await audioTrack.stopProcessor();
+    }
+
+    const { echoCancellation = true, noiseSuppression = true } = getUrlParams();
+    await audioTrack.restartTrack({
+      deviceId: devices.audioInput.selected$.value?.id,
+      echoCancellation,
+      noiseSuppression: noiseSuppression && !rnnoiseEnabled,
+    });
   }
 
   private async syncRNNoiseProcessor(

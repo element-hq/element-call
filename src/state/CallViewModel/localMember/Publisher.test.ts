@@ -450,6 +450,41 @@ describe("Publisher", () => {
       );
     });
 
+    it("stops RNNoise processor before restarting microphone track when disabling RNNoise", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & {
+        stopProcessor: () => void;
+        restartTrack: (...args: unknown[]) => void;
+      };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+
+      vi.mocked(micTrack.stopProcessor).mockClear();
+      vi.mocked(micTrack.restartTrack).mockClear();
+
+      rnnoiseNoiseSuppression.setValue(false);
+      await flushPromises();
+
+      expect(micTrack.stopProcessor).toHaveBeenCalledOnce();
+      expect(micTrack.restartTrack).toHaveBeenCalledOnce();
+      expect(
+        vi.mocked(micTrack.stopProcessor).mock.invocationCallOrder[0],
+      ).toBeLessThan(
+        vi.mocked(micTrack.restartTrack).mock.invocationCallOrder[0],
+      );
+    });
+
     it("updates active RNNoise processor preset when preset setting changes", async () => {
       const micTrack = createMockLocalTrack(
         Track.Source.Microphone,
