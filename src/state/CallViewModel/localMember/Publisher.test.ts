@@ -27,6 +27,7 @@ import {
 import { Publisher } from "./Publisher";
 import { type Connection } from "../remoteMembers/Connection";
 import { type MuteStates } from "../../MuteStates";
+import { rnnoiseNoiseSuppression } from "../../../settings/settings";
 
 let scope: ObservableScope;
 
@@ -37,8 +38,12 @@ beforeEach(() => {
 afterEach(() => scope.end());
 
 function createMockLocalTrack(source: Track.Source): LocalTrack {
+  let processor: { name: string } | undefined;
+  const kind =
+    source === Track.Source.Microphone ? Track.Kind.Audio : Track.Kind.Video;
   const track = {
     source,
+    kind,
     isMuted: false,
     isUpstreamPaused: false,
   } as Partial<LocalTrack> as LocalTrack;
@@ -57,6 +62,16 @@ function createMockLocalTrack(source: Track.Source): LocalTrack {
     // @ts-expect-error - for that test we want to set isUpstreamPaused directly
     track.isUpstreamPaused = false;
   });
+  vi.mocked(track).getProcessor = vi.fn().mockImplementation(() => processor);
+  vi.mocked(track).setProcessor = vi
+    .fn()
+    .mockImplementation((nextProcessor) => {
+      processor = nextProcessor as { name: string };
+    });
+  vi.mocked(track).stopProcessor = vi.fn().mockImplementation(() => {
+    processor = undefined;
+  });
+  vi.mocked(track).restartTrack = vi.fn().mockResolvedValue(undefined);
 
   return track;
 }
@@ -96,6 +111,7 @@ let trackPublications: LocalTrackPublication[];
 let createTrackLock: Promise<void>;
 
 beforeEach(() => {
+  rnnoiseNoiseSuppression.setValue(false);
   trackPublications = [];
   audioEnabled$ = new BehaviorSubject(false);
   videoEnabled$ = new BehaviorSubject(false);
@@ -339,6 +355,95 @@ describe("Publisher", () => {
   });
 
   it("does mute unmute audio", async () => {});
+
+  describe("RNNoise", () => {
+    beforeEach(() => {
+      vi.stubGlobal("AudioWorkletNode", class AudioWorkletNode {});
+      vi.stubGlobal(
+        "MediaStreamAudioDestinationNode",
+        class MediaStreamAudioDestinationNode {},
+      );
+      vi.stubGlobal(
+        "MediaStreamAudioSourceNode",
+        class MediaStreamAudioSourceNode {},
+      );
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      rnnoiseNoiseSuppression.setValue(false);
+    });
+
+    it("enabling setting applies RNNoise processor on microphone track", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & { setProcessor: (...args: unknown[]) => void };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+
+      expect(micTrack.setProcessor).toHaveBeenCalledOnce();
+    });
+
+    it("disabling setting removes RNNoise processor on microphone track", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & {
+        setProcessor: (...args: unknown[]) => void;
+        stopProcessor: () => void;
+      };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+      rnnoiseNoiseSuppression.setValue(false);
+      await flushPromises();
+
+      expect(micTrack.setProcessor).toHaveBeenCalledOnce();
+      expect(micTrack.stopProcessor).toHaveBeenCalledOnce();
+    });
+
+    it("restarts microphone track with native noise suppression disabled when RNNoise is enabled", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & { restartTrack: (...args: unknown[]) => void };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+
+      expect(micTrack.restartTrack).toHaveBeenCalledWith(
+        expect.objectContaining({
+          noiseSuppression: false,
+        }),
+      );
+    });
+  });
 });
 
 describe("Bug fix", () => {
