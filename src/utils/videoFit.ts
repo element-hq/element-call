@@ -36,6 +36,15 @@ export function videoFit$(
         // This is a reasonable default as it will ensure the video fills the tile, even if it means cropping.
         return "cover";
       }
+      if (
+        videoSize.width === 0 ||
+        videoSize.height === 0 ||
+        tileSize.width === 0 ||
+        tileSize.height === 0
+      ) {
+        // If we have invalid sizes (e.g. width or height is 0), default to cover to avoid black bars.
+        return "cover";
+      }
       const videoAspectRatio = videoSize.width / videoSize.height;
       const tileAspectRatio = tileSize.width / tileSize.height;
 
