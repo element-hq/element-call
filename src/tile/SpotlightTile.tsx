@@ -183,7 +183,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   // Whenever bounds change, inform the viewModel
   useEffect(() => {
     if (bounds.width > 0 && bounds.height > 0) {
-      if (!(vm instanceof ScreenShareViewModel)) {
+      if (vm.type != "screen share") {
         vm.setActualDimensions(bounds.width, bounds.height);
       }
     }
