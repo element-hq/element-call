@@ -52,10 +52,6 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc/IKeyTransport";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import {
-  LocalUserMediaViewModel,
-  RemoteUserMediaViewModel,
-} from "../state/MediaViewModel";
 import { E2eeType } from "../e2ee/e2eeType";
 import {
   DEFAULT_CONFIG,
@@ -66,6 +62,14 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { type Behavior, constant } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
 import { MuteStates } from "../state/MuteStates";
+import {
+  createLocalUserMedia,
+  type LocalUserMediaViewModel,
+} from "../state/media/LocalUserMediaViewModel";
+import {
+  createRemoteUserMedia,
+  type RemoteUserMediaViewModel,
+} from "../state/media/RemoteUserMediaViewModel";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -323,30 +327,27 @@ export function mockLocalParticipant(
   } as Partial<LocalParticipant> as LocalParticipant;
 }
 
-export function createLocalMedia(
+export function mockLocalMedia(
   rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
   localParticipant: LocalParticipant,
   mediaDevices: MediaDevices,
 ): LocalUserMediaViewModel {
   const member = mockMatrixRoomMember(rtcMember, roomMember);
-  return new LocalUserMediaViewModel(
-    testScope(),
-    "local",
-    member.userId,
-    rtcMember.rtcBackendIdentity,
-    constant(localParticipant),
-    {
-      kind: E2eeType.PER_PARTICIPANT,
-    },
-    constant(mockLivekitRoom({ localParticipant })),
-    constant("https://rtc-example.org"),
+  return createLocalUserMedia(testScope(), {
+    id: "local",
+    userId: member.userId,
+    rtcBackendIdentity: rtcMember.rtcBackendIdentity,
+    participant$: constant(localParticipant),
+    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+    livekitRoom$: constant(mockLivekitRoom({ localParticipant })),
+    focusUrl$: constant("https://rtc-example.org"),
     mediaDevices,
-    constant(member.rawDisplayName ?? "nodisplayname"),
-    constant(member.getMxcAvatarUrl()),
-    constant(null),
-    constant(null),
-  );
+    displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
+    mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
+    handRaised$: constant(null),
+    reaction$: constant(null),
+  });
 }
 
 export function mockRemoteParticipant(
@@ -364,7 +365,7 @@ export function mockRemoteParticipant(
   } as RemoteParticipant;
 }
 
-export function createRemoteMedia(
+export function mockRemoteMedia(
   rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
   participant: RemoteParticipant | null,
@@ -376,23 +377,20 @@ export function createRemoteMedia(
   ),
 ): RemoteUserMediaViewModel {
   const member = mockMatrixRoomMember(rtcMember, roomMember);
-  return new RemoteUserMediaViewModel(
-    testScope(),
-    "remote",
-    member.userId,
-    rtcMember.rtcBackendIdentity,
-    constant(participant),
-    {
-      kind: E2eeType.PER_PARTICIPANT,
-    },
-    constant(livekitRoom),
-    constant("https://rtc-example.org"),
-    constant(false),
-    constant(member.rawDisplayName ?? "nodisplayname"),
-    constant(member.getMxcAvatarUrl()),
-    constant(null),
-    constant(null),
-  );
+  return createRemoteUserMedia(testScope(), {
+    id: "remote",
+    userId: member.userId,
+    rtcBackendIdentity: rtcMember.rtcBackendIdentity,
+    participant$: constant(participant),
+    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+    livekitRoom$: constant(livekitRoom),
+    focusUrl$: constant("https://rtc-example.org"),
+    pretendToBeDisconnected$: constant(false),
+    displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
+    mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
+    handRaised$: constant(null),
+    reaction$: constant(null),
+  });
 }
 
 export function mockConfig(
