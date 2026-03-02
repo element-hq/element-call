@@ -42,7 +42,6 @@ by the matrixRTCSdk to start the postmessage widget api (communication between t
 
 ```
 widgetId = $matrix_widget_id
-perParticipantE2EE = true
 userId = $matrix_user_id
 deviceId = $org.matrix.msc3819.matrix_device_id
 baseUrl = $org.matrix.msc4039.matrix_base_url
@@ -53,7 +52,7 @@ baseUrl = $org.matrix.msc4039.matrix_base_url
 Full template use as `<widgetUrl>`:
 
 ```
-http://localhost:3000?widgetId=$matrix_widget_id&perParticipantE2EE=true&userId=$matrix_user_id&deviceId=$org.matrix.msc3819.matrix_device_id&baseUrl=$org.matrix.msc4039.matrix_base_url&roomId=$matrix_room_id
+http://localhost:3000?widgetId=$matrix_widget_id&userId=$matrix_user_id&deviceId=$org.matrix.msc3819.matrix_device_id&baseUrl=$org.matrix.msc4039.matrix_base_url&roomId=$matrix_room_id
 ```
 
 the `$` prefixed variables will be replaced by EW on widget instantiation. (e.g. `$matrix_user_id` -> `@user:example.com` (url encoding will also be applied automatically by EW) -> `%40user%3Aexample.com`)
