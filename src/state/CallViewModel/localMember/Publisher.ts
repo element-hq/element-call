@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 import {
   ConnectionState as LivekitConnectionState,
+  type LocalAudioTrack,
   type LocalTrackPublication,
   LocalVideoTrack,
   ParticipantEvent,
@@ -14,9 +15,12 @@ import {
   Track,
 } from "livekit-client";
 import {
+  combineLatest,
+  distinctUntilChanged,
   map,
   NEVER,
   type Observable,
+  skip,
   type Subscription,
   switchMap,
 } from "rxjs";
@@ -33,6 +37,11 @@ import { getUrlParams } from "../../../UrlParams.ts";
 import { observeTrackReference$ } from "../../observeTrackReference";
 import { type Connection } from "../remoteMembers/Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
+import {
+  RNNoiseProcessor,
+  supportsRNNoiseProcessor,
+} from "../../../audio/RNNoiseProcessor.ts";
+import { rnnoiseNoiseSuppression } from "../../../settings/settings.ts";
 
 /**
  * A wrapper for a Connection object.
@@ -73,6 +82,8 @@ export class Publisher {
 
     // Setup track processor syncing (blur)
     this.observeTrackProcessors(this.scope, room, trackerProcessorState$);
+    this.observeRNNoiseProcessor(this.scope, room);
+    this.observeRNNoiseSettingRestart(this.scope, room, devices);
     // Observe media device changes and update LiveKit active devices accordingly
     this.observeMediaDevices(this.scope, devices, controlledAudioDevices);
 
@@ -415,5 +426,84 @@ export class Publisher {
       null,
     );
     trackProcessorSync(scope, track$, trackerProcessorState$);
+  }
+
+  private observeRNNoiseProcessor(
+    scope: ObservableScope,
+    room: LivekitRoom,
+  ): void {
+    const microphoneTrack$ = scope.behavior(
+      observeTrackReference$(
+        room.localParticipant,
+        Track.Source.Microphone,
+      ).pipe(
+        map((trackRef) => {
+          const track = trackRef?.publication.track;
+          return track?.kind === Track.Kind.Audio
+            ? (track as LocalAudioTrack)
+            : null;
+        }),
+      ),
+      null,
+    );
+
+    combineLatest([microphoneTrack$, rnnoiseNoiseSuppression.value$])
+      .pipe(
+        scope.bind(),
+        distinctUntilChanged(([aTrack, aEnabled], [bTrack, bEnabled]) => {
+          return aTrack === bTrack && aEnabled === bEnabled;
+        }),
+      )
+      .subscribe(([microphoneTrack, rnnoiseEnabled]) => {
+        if (!microphoneTrack || !supportsRNNoiseProcessor()) return;
+
+        void this.syncRNNoiseProcessor(microphoneTrack, rnnoiseEnabled);
+      });
+  }
+
+  private observeRNNoiseSettingRestart(
+    scope: ObservableScope,
+    room: LivekitRoom,
+    devices: MediaDevices,
+  ): void {
+    rnnoiseNoiseSuppression.value$
+      .pipe(scope.bind(), distinctUntilChanged(), skip(1))
+      .subscribe((rnnoiseEnabled) => {
+        const audioTrack = room.localParticipant.getTrackPublication(
+          Track.Source.Microphone,
+        )?.audioTrack;
+        if (!audioTrack) return;
+
+        const { echoCancellation = true, noiseSuppression = true } =
+          getUrlParams();
+
+        void audioTrack
+          .restartTrack({
+            deviceId: devices.audioInput.selected$.value?.id,
+            echoCancellation,
+            noiseSuppression: noiseSuppression && !rnnoiseEnabled,
+          })
+          .catch((e) => {
+            this.logger.error("Failed to restart microphone track", e);
+          });
+      });
+  }
+
+  private async syncRNNoiseProcessor(
+    microphoneTrack: LocalAudioTrack,
+    rnnoiseEnabled: boolean,
+  ): Promise<void> {
+    try {
+      const processor = microphoneTrack.getProcessor();
+      const rnnoiseActive = processor?.name === "rnnoise-noise-suppression";
+
+      if (rnnoiseEnabled && !rnnoiseActive) {
+        await microphoneTrack.setProcessor(new RNNoiseProcessor());
+      } else if (!rnnoiseEnabled && rnnoiseActive) {
+        await microphoneTrack.stopProcessor();
+      }
+    } catch (e) {
+      this.logger.error("Failed to apply RNNoise microphone processor", e);
+    }
   }
 }

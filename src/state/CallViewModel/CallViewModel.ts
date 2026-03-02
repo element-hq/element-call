@@ -61,6 +61,7 @@ import {
   duplicateTiles,
   MatrixRTCMode,
   playReactionsSound,
+  rnnoiseNoiseSuppression,
   showReactions,
 } from "../../settings/settings";
 import { isFirefox } from "../../Platform";
@@ -480,7 +481,8 @@ export function createCallViewModel$(
     getUrlParams().controlledAudioDevices,
     options.livekitRoomFactory,
     getUrlParams().echoCancellation,
-    getUrlParams().noiseSuppression,
+    (getUrlParams().noiseSuppression ?? true) &&
+      !rnnoiseNoiseSuppression.getValue(),
   );
 
   const connectionManager = createConnectionManager$({
