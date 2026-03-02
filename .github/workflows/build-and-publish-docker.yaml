@@ -20,7 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # required to upload release asset
-      packages: write
+      packages: write # needed for publishing packages to GHCR
+      id-token: write # needed for login into tailscale with GitHub OIDC Token
     steps:
       - name: Check it out
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
