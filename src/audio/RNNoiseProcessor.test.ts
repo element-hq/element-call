@@ -97,7 +97,7 @@ describe("RNNoiseProcessor", () => {
   it("initializes audio graph and exposes processed track", async () => {
     const t = createTestContext();
     vi.stubGlobal("AudioWorkletNode", vi.fn().mockReturnValue(t.workletNode));
-    const processor = new RNNoiseProcessor();
+    const processor = new RNNoiseProcessor("balanced");
 
     await processor.init({
       kind: Track.Kind.Audio,
@@ -108,6 +108,10 @@ describe("RNNoiseProcessor", () => {
     expect(t.addModule).toHaveBeenCalledWith("blob:rnnoise");
     expect(t.createSourceNode).toHaveBeenCalledOnce();
     expect(t.createDestinationNode).toHaveBeenCalledOnce();
+    expect(t.workletNode.port.postMessage).toHaveBeenCalledWith({
+      type: "preset",
+      preset: "balanced",
+    });
     expect(processor.processedTrack).toBe(t.processedTrack);
   });
 
@@ -193,5 +197,24 @@ describe("RNNoiseProcessor", () => {
       class MediaStreamAudioSourceNode {},
     );
     expect(supportsRNNoiseProcessor()).toBe(true);
+  });
+
+  it("updates worklet preset at runtime", async () => {
+    const t = createTestContext();
+    vi.stubGlobal("AudioWorkletNode", vi.fn().mockReturnValue(t.workletNode));
+    const processor = new RNNoiseProcessor();
+
+    await processor.init({
+      kind: Track.Kind.Audio,
+      track: t.track,
+      audioContext: t.audioContext,
+    });
+
+    processor.setPreset("strong");
+
+    expect(t.workletNode.port.postMessage).toHaveBeenCalledWith({
+      type: "preset",
+      preset: "strong",
+    });
   });
 });

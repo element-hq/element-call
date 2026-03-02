@@ -10,12 +10,14 @@ import type {
   Track,
   TrackProcessor,
 } from "livekit-client";
+import type { RNNoiseSuppressionPreset } from "./rnnoiseTypes";
 
 /**
  * The number of samples per frame expected by RNNoise (at 48kHz = 10ms).
  */
 const RNNOISE_SAMPLE_LENGTH = 480;
 const RNNOISE_WORKLET_NAME = "rnnoise-processor";
+const DEFAULT_RNNOISE_PRESET: RNNoiseSuppressionPreset = "conservative";
 const loadedAudioWorklets = new WeakSet<AudioContext>();
 
 /**
@@ -49,6 +51,34 @@ ${patched}
 
 const FRAME_SIZE = ${RNNOISE_SAMPLE_LENGTH};
 const RING_SIZE = FRAME_SIZE * 3; // Enough headroom for buffering
+const SAMPLE_RATE = 48000;
+const DEFAULT_PRESET = "${DEFAULT_RNNOISE_PRESET}";
+const PRESETS = {
+  conservative: {
+    maxAttenuationDb: 4,
+    openThreshold: 0.92,
+    closeThreshold: 0.60,
+    holdFrames: 12,
+    attenuateMs: 120,
+    releaseMs: 25,
+  },
+  balanced: {
+    maxAttenuationDb: 8,
+    openThreshold: 0.90,
+    closeThreshold: 0.55,
+    holdFrames: 10,
+    attenuateMs: 90,
+    releaseMs: 22,
+  },
+  strong: {
+    maxAttenuationDb: 12,
+    openThreshold: 0.88,
+    closeThreshold: 0.50,
+    holdFrames: 9,
+    attenuateMs: 70,
+    releaseMs: 18,
+  },
+};
 
 class RNNoiseWorkletProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -63,14 +93,64 @@ class RNNoiseWorkletProcessor extends AudioWorkletProcessor {
     this._inR = 0;  // input read position
     this._outW = 0; // output write position
     this._outR = 0; // output read position
+    this._currentGain = 1;
+    this._targetGain = 1;
+    this._holdFrames = 0;
+
+    this._setPreset(DEFAULT_PRESET);
 
     this._initRNNoise();
 
     this.port.onmessage = (event) => {
       if (event.data.type === 'destroy') {
         this._cleanup();
+      } else if (event.data.type === 'preset') {
+        this._setPreset(event.data.preset);
       }
     };
+  }
+
+  _smoothingStepFromMs(ms) {
+    if (ms <= 0) return 1;
+    const tau = ms / 1000;
+    return 1 - Math.exp(-1 / (SAMPLE_RATE * tau));
+  }
+
+  _setPreset(preset) {
+    if (!(preset in PRESETS)) return;
+    this._preset = preset;
+    const config = PRESETS[preset];
+    this._maxAttenuationDb = config.maxAttenuationDb;
+    this._openThreshold = config.openThreshold;
+    this._closeThreshold = config.closeThreshold;
+    this._holdFramesConfig = config.holdFrames;
+    this._attenuateStep = this._smoothingStepFromMs(config.attenuateMs);
+    this._releaseStep = this._smoothingStepFromMs(config.releaseMs);
+  }
+
+  _updateTargetGain(vadProbability) {
+    if (vadProbability >= this._openThreshold) {
+      this._holdFrames = this._holdFramesConfig;
+      this._targetGain = 1;
+      return;
+    }
+
+    if (this._holdFrames > 0) {
+      this._holdFrames -= 1;
+      this._targetGain = 1;
+      return;
+    }
+
+    const thresholdRange = this._openThreshold - this._closeThreshold;
+    const attenuationProgress = thresholdRange > 0
+      ? Math.max(
+          0,
+          Math.min(1, (this._openThreshold - vadProbability) / thresholdRange),
+        )
+      : 1;
+
+    const attenuationDb = attenuationProgress * this._maxAttenuationDb;
+    this._targetGain = Math.pow(10, -attenuationDb / 20);
   }
 
   _ringAvailable(w, r) {
@@ -120,14 +200,21 @@ class RNNoiseWorkletProcessor extends AudioWorkletProcessor {
     this._inR = (this._inR + FRAME_SIZE) % RING_SIZE;
 
     // Run RNNoise denoising (in-place)
-    this._module._rnnoise_process_frame(
+    const vadProbability = this._module._rnnoise_process_frame(
       this._state, this._pcmBuf, this._pcmBuf
     );
+    this._updateTargetGain(vadProbability);
 
-    // Copy from WASM heap to output ring buffer, scaling back to float range
+    // Copy from WASM heap to output ring buffer, scaling back to float range.
+    // Apply additional conservative attenuation between speech segments.
     for (let i = 0; i < FRAME_SIZE; i++) {
+      const smoothingStep = this._targetGain < this._currentGain
+        ? this._attenuateStep
+        : this._releaseStep;
+      this._currentGain +=
+        (this._targetGain - this._currentGain) * smoothingStep;
       this._outBuf[(this._outW + i) % RING_SIZE] =
-        this._heapF32[heapIdx + i] / 32768.0;
+        (this._heapF32[heapIdx + i] / 32768.0) * this._currentGain;
     }
     this._outW = (this._outW + FRAME_SIZE) % RING_SIZE;
   }
@@ -199,6 +286,13 @@ export class RNNoiseProcessor implements TrackProcessor<
   private destinationNode?: MediaStreamAudioDestinationNode;
   private blobUrl?: string;
   private destroyed = false;
+  private preset: RNNoiseSuppressionPreset;
+
+  public constructor(
+    preset: RNNoiseSuppressionPreset = DEFAULT_RNNOISE_PRESET,
+  ) {
+    this.preset = preset;
+  }
 
   private async ensureWorkletRegistered(
     audioContext: AudioContext,
@@ -249,6 +343,7 @@ export class RNNoiseProcessor implements TrackProcessor<
     this.sourceNode = sourceNode;
     this.workletNode = workletNode;
     this.destinationNode = destinationNode;
+    this.workletNode.port.postMessage({ type: "preset", preset: this.preset });
     this.processedTrack = destinationNode.stream.getAudioTracks()[0];
   }
 
@@ -283,5 +378,13 @@ export class RNNoiseProcessor implements TrackProcessor<
     this.destinationNode = undefined;
     this.processedTrack = undefined;
     await Promise.resolve();
+  }
+
+  public setPreset(preset: RNNoiseSuppressionPreset): void {
+    this.preset = preset;
+    this.workletNode?.port.postMessage({
+      type: "preset",
+      preset: this.preset,
+    });
   }
 }

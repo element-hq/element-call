@@ -41,7 +41,11 @@ import {
   RNNoiseProcessor,
   supportsRNNoiseProcessor,
 } from "../../../audio/RNNoiseProcessor.ts";
-import { rnnoiseNoiseSuppression } from "../../../settings/settings.ts";
+import {
+  rnnoiseNoiseSuppression,
+  rnnoiseNoiseSuppressionPreset,
+} from "../../../settings/settings.ts";
+import type { RNNoiseSuppressionPreset } from "../../../audio/rnnoiseTypes.ts";
 
 /**
  * A wrapper for a Connection object.
@@ -447,17 +451,29 @@ export class Publisher {
       null,
     );
 
-    combineLatest([microphoneTrack$, rnnoiseNoiseSuppression.value$])
+    combineLatest([
+      microphoneTrack$,
+      rnnoiseNoiseSuppression.value$,
+      rnnoiseNoiseSuppressionPreset.value$,
+    ])
       .pipe(
         scope.bind(),
-        distinctUntilChanged(([aTrack, aEnabled], [bTrack, bEnabled]) => {
-          return aTrack === bTrack && aEnabled === bEnabled;
-        }),
+        distinctUntilChanged(
+          ([aTrack, aEnabled, aPreset], [bTrack, bEnabled, bPreset]) => {
+            return (
+              aTrack === bTrack && aEnabled === bEnabled && aPreset === bPreset
+            );
+          },
+        ),
       )
-      .subscribe(([microphoneTrack, rnnoiseEnabled]) => {
+      .subscribe(([microphoneTrack, rnnoiseEnabled, rnnoisePreset]) => {
         if (!microphoneTrack || !supportsRNNoiseProcessor()) return;
 
-        void this.syncRNNoiseProcessor(microphoneTrack, rnnoiseEnabled);
+        void this.syncRNNoiseProcessor(
+          microphoneTrack,
+          rnnoiseEnabled,
+          rnnoisePreset,
+        );
       });
   }
 
@@ -492,14 +508,25 @@ export class Publisher {
   private async syncRNNoiseProcessor(
     microphoneTrack: LocalAudioTrack,
     rnnoiseEnabled: boolean,
+    rnnoisePreset: RNNoiseSuppressionPreset,
   ): Promise<void> {
     try {
       const processor = microphoneTrack.getProcessor();
       const rnnoiseActive = processor?.name === "rnnoise-noise-suppression";
+      const rnnoiseProcessor =
+        processor instanceof RNNoiseProcessor ? processor : undefined;
 
-      if (rnnoiseEnabled && !rnnoiseActive) {
-        await microphoneTrack.setProcessor(new RNNoiseProcessor());
-      } else if (!rnnoiseEnabled && rnnoiseActive) {
+      if (rnnoiseEnabled) {
+        if (rnnoiseProcessor) {
+          rnnoiseProcessor.setPreset(rnnoisePreset);
+          return;
+        }
+
+        if (rnnoiseActive) {
+          await microphoneTrack.stopProcessor();
+        }
+        await microphoneTrack.setProcessor(new RNNoiseProcessor(rnnoisePreset));
+      } else if (rnnoiseActive) {
         await microphoneTrack.stopProcessor();
       }
     } catch (e) {

@@ -27,7 +27,11 @@ import {
 import { Publisher } from "./Publisher";
 import { type Connection } from "../remoteMembers/Connection";
 import { type MuteStates } from "../../MuteStates";
-import { rnnoiseNoiseSuppression } from "../../../settings/settings";
+import {
+  rnnoiseNoiseSuppression,
+  rnnoiseNoiseSuppressionPreset,
+} from "../../../settings/settings";
+import type { RNNoiseProcessor } from "../../../audio/RNNoiseProcessor";
 
 let scope: ObservableScope;
 
@@ -112,6 +116,7 @@ let createTrackLock: Promise<void>;
 
 beforeEach(() => {
   rnnoiseNoiseSuppression.setValue(false);
+  rnnoiseNoiseSuppressionPreset.setValue("conservative");
   trackPublications = [];
   audioEnabled$ = new BehaviorSubject(false);
   videoEnabled$ = new BehaviorSubject(false);
@@ -372,6 +377,7 @@ describe("Publisher", () => {
     afterEach(() => {
       vi.unstubAllGlobals();
       rnnoiseNoiseSuppression.setValue(false);
+      rnnoiseNoiseSuppressionPreset.setValue("conservative");
     });
 
     it("enabling setting applies RNNoise processor on microphone track", async () => {
@@ -442,6 +448,32 @@ describe("Publisher", () => {
           noiseSuppression: false,
         }),
       );
+    });
+
+    it("updates active RNNoise processor preset when preset setting changes", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & { getProcessor: () => unknown };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+
+      const processor = micTrack.getProcessor() as RNNoiseProcessor;
+      const setPresetSpy = vi.spyOn(processor, "setPreset");
+
+      rnnoiseNoiseSuppressionPreset.setValue("strong");
+      await flushPromises();
+
+      expect(setPresetSpy).toHaveBeenCalledWith("strong");
     });
   });
 });

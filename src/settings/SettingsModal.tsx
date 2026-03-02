@@ -5,10 +5,24 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactNode, useEffect, useState } from "react";
+import {
+  type ChangeEvent,
+  type FC,
+  type ReactNode,
+  useEffect,
+  useId,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
-import { Button, Root as Form, Separator } from "@vector-im/compound-web";
+import {
+  Button,
+  InlineField,
+  Label,
+  RadioControl,
+  Root as Form,
+  Separator,
+} from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
 
 import { Modal } from "../Modal";
@@ -25,6 +39,7 @@ import {
   backgroundBlur as backgroundBlurSetting,
   developerMode,
   rnnoiseNoiseSuppression as rnnoiseNoiseSuppressionSetting,
+  rnnoiseNoiseSuppressionPreset as rnnoiseNoiseSuppressionPresetSetting,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
@@ -36,6 +51,10 @@ import { useSubmitRageshake } from "./submit-rageshake";
 import { useUrlParams } from "../UrlParams";
 import { useBehavior } from "../useBehavior";
 import { supportsRNNoiseProcessor } from "../audio/RNNoiseProcessor";
+import {
+  type RNNoiseSuppressionPreset,
+  rnnoiseSuppressionPresets,
+} from "../audio/rnnoiseTypes";
 
 type SettingsTab =
   | "audio"
@@ -105,6 +124,20 @@ export const SettingsModal: FC<Props> = ({
     const [rnnoiseEnabled, setRnnoiseEnabled] = useSetting(
       rnnoiseNoiseSuppressionSetting,
     );
+    const [rnnoisePreset, setRnnoisePreset] = useSetting(
+      rnnoiseNoiseSuppressionPresetSetting,
+    );
+    const rnnoisePresetGroup = useId();
+
+    const onPresetChange = (e: ChangeEvent<HTMLInputElement>): void => {
+      setRnnoisePreset(e.target.value as RNNoiseSuppressionPreset);
+    };
+
+    const presetLabelByPreset: Record<RNNoiseSuppressionPreset, string> = {
+      conservative: t("settings.audio_tab.rnnoise_preset_conservative"),
+      balanced: t("settings.audio_tab.rnnoise_preset_balanced"),
+      strong: t("settings.audio_tab.rnnoise_preset_strong"),
+    };
 
     return (
       <>
@@ -122,6 +155,27 @@ export const SettingsModal: FC<Props> = ({
             disabled={!supported}
           />
         </FieldRow>
+        {rnnoiseEnabled && (
+          <>
+            <p>{t("settings.audio_tab.rnnoise_preset_description")}</p>
+            {rnnoiseSuppressionPresets.map((preset) => (
+              <InlineField
+                key={preset}
+                name={rnnoisePresetGroup}
+                control={
+                  <RadioControl
+                    checked={rnnoisePreset === preset}
+                    value={preset}
+                    onChange={onPresetChange}
+                    disabled={!supported}
+                  />
+                }
+              >
+                <Label>{presetLabelByPreset[preset]}</Label>
+              </InlineField>
+            ))}
+          </>
+        )}
       </>
     );
   };
