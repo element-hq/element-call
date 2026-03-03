@@ -12,6 +12,7 @@ import {
   test,
   type Request,
   type Browser,
+  type ConsoleMessage,
 } from "@playwright/test";
 
 import { SpaHelpers } from "./spa-helpers";
@@ -23,6 +24,7 @@ async function setupTwoUserSpaCall(
   browser: Browser,
   page: Page,
   browserName: string,
+  callName = `HelloCall-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
 ): Promise<{ guestPage: Page }> {
   test.skip(
     browserName === "firefox",
@@ -43,7 +45,7 @@ async function setupTwoUserSpaCall(
     },
   );
 
-  await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
+  await SpaHelpers.createCall(page, "Androl", callName, true, "2_0");
 
   const inviteLink = await SpaHelpers.getCallInviteLink(page);
 
@@ -74,8 +76,8 @@ async function setupTwoUserSpaCall(
     "2_0",
   );
   // Assert both sides have sent sticky membership events
-  expect(androlHasSentStickyEvent).toEqual(true);
-  expect(pevaraHasSentStickyEvent).toEqual(true);
+  await expect.poll(() => androlHasSentStickyEvent).toBe(true);
+  await expect.poll(() => pevaraHasSentStickyEvent).toBe(true);
 
   return { guestPage };
 }
@@ -118,117 +120,140 @@ test("One to One rejoin after improper leave does not crash EC", async ({
   await expect(guestPage.getByTestId("videoTile")).toHaveCount(2);
 });
 
-test("One to One rejoin after improper leave stays stable with RNNoise enabled", async ({
-  browser,
-  page,
-  browserName,
-}) => {
-  const { guestPage } = await setupTwoUserSpaCall(browser, page, browserName);
+test.describe("RNNoise scenarios", () => {
+  test.describe.configure({ mode: "serial" });
 
-  await SpaHelpers.expectVideoTilesCount(page, 2);
-  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
-
-  const rnnoiseSupported = await enableRNNoiseInSettings(guestPage);
   test.skip(
-    !rnnoiseSupported,
-    "RNNoise is not supported in this browser environment",
+    ({ browserName }) => browserName !== "chromium",
+    "RNNoise scenarios are validated on Chromium fake-media infrastructure.",
   );
 
-  await expect
-    .poll(async () =>
-      guestPage.evaluate(() =>
-        localStorage.getItem("matrix-setting-rnnoise-noise-suppression"),
-      ),
-    )
-    .toBe("true");
+  test("One to One rejoin after improper leave stays stable with RNNoise enabled", async ({
+    browser,
+    page,
+    browserName,
+  }) => {
+    const { guestPage } = await setupTwoUserSpaCall(browser, page, browserName);
 
-  await guestPage.reload();
-  await expect(guestPage.getByTestId("lobby_joinCall")).toBeVisible();
-  await guestPage.getByTestId("lobby_joinCall").click();
+    await SpaHelpers.expectVideoTilesCount(page, 2);
+    await SpaHelpers.expectVideoTilesCount(guestPage, 2);
 
-  // Rejoin after abrupt disconnect should remain stable with RNNoise enabled.
-  await expect(page.getByTestId("videoTile")).toHaveCount(3);
-  await expect(guestPage.getByTestId("videoTile")).toHaveCount(2);
-  await expect(
-    guestPage.getByRole("button", { name: "Mute microphone" }),
-  ).toBeVisible();
-
-  await expectRNNoiseEnabledInSettings(guestPage);
-});
-
-test("One to One call stays stable when switching devices with RNNoise enabled", async ({
-  browser,
-  page,
-  browserName,
-}) => {
-  const { guestPage } = await setupTwoUserSpaCall(browser, page, browserName);
-
-  await SpaHelpers.expectVideoTilesCount(page, 2);
-  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
-
-  const rnnoiseSupported = await enableRNNoiseInSettings(guestPage);
-  test.skip(
-    !rnnoiseSupported,
-    "RNNoise is not supported in this browser environment",
-  );
-
-  await openAudioSettings(guestPage);
-  const microphoneDeviceRadios = await getDeviceSelectionRadios(
-    guestPage,
-    "Microphone",
-  );
-
-  // Some Chromium fake-device environments expose only one audio-input device,
-  // so device switching cannot be forced there. Fall back to output switching.
-  if (microphoneDeviceRadios.count < 2) {
-    const speakerDeviceRadios = await getDeviceSelectionRadios(
-      guestPage,
-      "Speaker",
+    const rnnoiseSupported = await enableRNNoiseInSettings(guestPage);
+    test.skip(
+      !rnnoiseSupported,
+      "RNNoise is not supported in this browser environment",
     );
-    expect(speakerDeviceRadios.count).toBeGreaterThan(0);
 
-    if (speakerDeviceRadios.count > 1) {
-      const selectedSpeakerBefore = await guestPage.evaluate(() =>
-        localStorage.getItem("matrix-setting-audio-output"),
-      );
-      const targetSpeakerIndex =
-        speakerDeviceRadios.firstUncheckedIndex >= 0
-          ? speakerDeviceRadios.firstUncheckedIndex
-          : 0;
-      await speakerDeviceRadios.radios.nth(targetSpeakerIndex).click();
-      await expect
-        .poll(async () =>
-          guestPage.evaluate(() =>
-            localStorage.getItem("matrix-setting-audio-output"),
-          ),
-        )
-        .not.toBe(selectedSpeakerBefore);
-    }
-  } else {
-    const selectedMicrophoneBefore = await guestPage.evaluate(() =>
-      localStorage.getItem("matrix-setting-audio-input"),
-    );
-    const targetMicrophoneIndex =
-      microphoneDeviceRadios.firstUncheckedIndex >= 0
-        ? microphoneDeviceRadios.firstUncheckedIndex
-        : 1;
-    await microphoneDeviceRadios.radios.nth(targetMicrophoneIndex).click();
     await expect
       .poll(async () =>
         guestPage.evaluate(() =>
-          localStorage.getItem("matrix-setting-audio-input"),
+          localStorage.getItem("matrix-setting-rnnoise-noise-suppression"),
         ),
       )
-      .not.toBe(selectedMicrophoneBefore);
-  }
+      .toBe("true");
 
-  await guestPage.getByTestId("modal_close").click();
-  await SpaHelpers.expectVideoTilesCount(page, 2);
-  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
-  await expect(
-    guestPage.getByRole("button", { name: "Mute microphone" }),
-  ).toBeVisible();
-  await expectRNNoiseEnabledInSettings(guestPage);
+    await guestPage.reload();
+    await expect(guestPage.getByTestId("lobby_joinCall")).toBeVisible();
+    await guestPage.getByTestId("lobby_joinCall").click();
+
+    // Rejoin after abrupt disconnect should remain stable with RNNoise enabled.
+    await expect(page.getByTestId("videoTile")).toHaveCount(3);
+    await expect(guestPage.getByTestId("videoTile")).toHaveCount(2);
+    await expect(
+      guestPage.getByRole("button", { name: "Mute microphone" }),
+    ).toBeVisible();
+
+    await expectRNNoiseEnabledInSettings(guestPage);
+  });
+
+  test("One to One call stays stable when switching devices with RNNoise enabled", async ({
+    browser,
+    page,
+    browserName,
+  }) => {
+    const { guestPage } = await setupTwoUserSpaCall(browser, page, browserName);
+
+    await SpaHelpers.expectVideoTilesCount(page, 2);
+    await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+
+    const rnnoiseSupported = await enableRNNoiseInSettings(guestPage);
+    test.skip(
+      !rnnoiseSupported,
+      "RNNoise is not supported in this browser environment",
+    );
+
+    const rnnoiseErrors: string[] = [];
+    const consoleHandler = (message: ConsoleMessage): void => {
+      if (
+        message.type() === "error" &&
+        /rnnoise|audio\s*worklet/i.test(message.text())
+      ) {
+        rnnoiseErrors.push(message.text());
+      }
+    };
+    guestPage.on("console", consoleHandler);
+
+    await openAudioSettings(guestPage);
+    const microphoneDeviceRadios = await getDeviceSelectionRadios(
+      guestPage,
+      "Microphone",
+    );
+
+    // Some Chromium fake-device environments expose only one audio-input device,
+    // so device switching cannot be forced there. Fall back to output switching.
+    if (microphoneDeviceRadios.count < 2) {
+      const speakerDeviceRadios = await getDeviceSelectionRadios(
+        guestPage,
+        "Speaker",
+      );
+      expect(speakerDeviceRadios.count).toBeGreaterThan(0);
+
+      if (speakerDeviceRadios.count > 1) {
+        const selectedSpeakerBefore = await guestPage.evaluate(() =>
+          localStorage.getItem("matrix-setting-audio-output"),
+        );
+        const targetSpeakerIndex =
+          speakerDeviceRadios.firstUncheckedIndex >= 0
+            ? speakerDeviceRadios.firstUncheckedIndex
+            : 0;
+        await speakerDeviceRadios.radios.nth(targetSpeakerIndex).click();
+        await expect
+          .poll(async () =>
+            guestPage.evaluate(() =>
+              localStorage.getItem("matrix-setting-audio-output"),
+            ),
+          )
+          .not.toBe(selectedSpeakerBefore);
+      }
+    } else {
+      const selectedMicrophoneBefore = await guestPage.evaluate(() =>
+        localStorage.getItem("matrix-setting-audio-input"),
+      );
+      const targetMicrophoneIndex =
+        microphoneDeviceRadios.firstUncheckedIndex >= 0
+          ? microphoneDeviceRadios.firstUncheckedIndex
+          : 1;
+      await microphoneDeviceRadios.radios.nth(targetMicrophoneIndex).click();
+      await expect
+        .poll(async () =>
+          guestPage.evaluate(() =>
+            localStorage.getItem("matrix-setting-audio-input"),
+          ),
+        )
+        .not.toBe(selectedMicrophoneBefore);
+    }
+
+    await guestPage.getByTestId("modal_close").click();
+    await SpaHelpers.expectVideoTilesCount(page, 2);
+    await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+    await expect(
+      guestPage.getByRole("button", { name: "Mute microphone" }),
+    ).toBeVisible();
+    await expectRNNoiseEnabledInSettings(guestPage);
+    expect(rnnoiseErrors).toEqual([]);
+
+    guestPage.off("console", consoleHandler);
+  });
 });
 
 function isStickySend(url: string): boolean {

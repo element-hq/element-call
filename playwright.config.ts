@@ -13,6 +13,8 @@ const baseURL = process.env.USE_DOCKER
   : "https://localhost:3000";
 const fakeAudioCaptureFile = process.env.PLAYWRIGHT_FAKE_AUDIO_CAPTURE_FILE;
 const fakeVideoCaptureFile = process.env.PLAYWRIGHT_FAKE_VIDEO_CAPTURE_FILE;
+const disableChromiumSandbox =
+  process.env.PLAYWRIGHT_DISABLE_CHROMIUM_SANDBOX === "1";
 
 function buildFakeMediaArgs(): string[] {
   const args = [
@@ -32,6 +34,9 @@ function buildFakeMediaArgs(): string[] {
 }
 
 const fakeMediaArgs = buildFakeMediaArgs();
+const chromiumLaunchArgs = disableChromiumSandbox
+  ? [...fakeMediaArgs, "--no-sandbox", "--disable-setuid-sandbox"]
+  : fakeMediaArgs;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -70,8 +75,9 @@ export default defineConfig({
           "camera",
         ],
         ignoreHTTPSErrors: true,
+        chromiumSandbox: !disableChromiumSandbox,
         launchOptions: {
-          args: fakeMediaArgs,
+          args: chromiumLaunchArgs,
         },
       },
     },
@@ -101,8 +107,9 @@ export default defineConfig({
           "microphone",
           "camera",
         ],
+        chromiumSandbox: !disableChromiumSandbox,
         launchOptions: {
-          args: fakeMediaArgs,
+          args: chromiumLaunchArgs,
         },
       },
     },
