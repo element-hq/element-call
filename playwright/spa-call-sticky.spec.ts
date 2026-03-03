@@ -114,6 +114,44 @@ test("One to One rejoin after improper leave does not crash EC", async ({
   await expect(guestPage.getByTestId("videoTile")).toHaveCount(2);
 });
 
+test("One to One rejoin after improper leave stays stable with RNNoise enabled", async ({
+  browser,
+  page,
+  browserName,
+}) => {
+  const { guestPage } = await setupTwoUserSpaCall(browser, page, browserName);
+
+  await SpaHelpers.expectVideoTilesCount(page, 2);
+  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+
+  const rnnoiseSupported = await enableRNNoiseInSettings(guestPage);
+  test.skip(
+    !rnnoiseSupported,
+    "RNNoise is not supported in this browser environment",
+  );
+
+  await expect
+    .poll(async () =>
+      guestPage.evaluate(() =>
+        localStorage.getItem("matrix-setting-rnnoise-noise-suppression"),
+      ),
+    )
+    .toBe("true");
+
+  await guestPage.reload();
+  await expect(guestPage.getByTestId("lobby_joinCall")).toBeVisible();
+  await guestPage.getByTestId("lobby_joinCall").click();
+
+  // Rejoin after abrupt disconnect should remain stable with RNNoise enabled.
+  await expect(page.getByTestId("videoTile")).toHaveCount(3);
+  await expect(guestPage.getByTestId("videoTile")).toHaveCount(2);
+  await expect(
+    guestPage.getByRole("button", { name: "Mute microphone" }),
+  ).toBeVisible();
+
+  await expectRNNoiseEnabledInSettings(guestPage);
+});
+
 function isStickySend(url: string): boolean {
   return !!new URL(url).searchParams.get(
     "org.matrix.msc4354.sticky_duration_ms",
@@ -132,4 +170,34 @@ async function interceptEventSend(
       return route.continue();
     },
   );
+}
+
+async function enableRNNoiseInSettings(page: Page): Promise<boolean> {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("tab", { name: "Audio" }).click();
+
+  const rnnoiseToggle = page.getByLabel(
+    "Enable enhanced noise suppression (RNNoise)",
+  );
+  await expect(rnnoiseToggle).toBeVisible();
+
+  const supported = await rnnoiseToggle.isEnabled();
+  if (supported && !(await rnnoiseToggle.isChecked())) {
+    await rnnoiseToggle.check();
+  }
+
+  await page.getByTestId("modal_close").click();
+  return supported;
+}
+
+async function expectRNNoiseEnabledInSettings(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("tab", { name: "Audio" }).click();
+
+  const rnnoiseToggle = page.getByLabel(
+    "Enable enhanced noise suppression (RNNoise)",
+  );
+  await expect(rnnoiseToggle).toBeChecked();
+
+  await page.getByTestId("modal_close").click();
 }
