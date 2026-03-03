@@ -15,9 +15,10 @@ import {
   supportsRNNoiseProcessor,
 } from "./RNNoiseProcessor";
 
-vi.mock("@jitsi/rnnoise-wasm/dist/rnnoise-sync.js?raw", () => ({
-  default:
-    "function createRNNWasmModuleSync(){}; export default createRNNWasmModuleSync;",
+const RNNOISE_WORKLET_MODULE_URL = "/assets/RNNoiseWorkletModule.js";
+
+vi.mock("./RNNoiseWorkletModule.ts?url", () => ({
+  default: "/assets/RNNoiseWorkletModule.js",
 }));
 
 type TestContext = {
@@ -203,13 +204,6 @@ function instantiateWorkletProcessor(workletCode: string): {
 describe("RNNoiseProcessor", () => {
   beforeEach(() => {
     vi.stubGlobal(
-      "URL",
-      Object.assign(URL, {
-        createObjectURL: vi.fn().mockReturnValue("blob:rnnoise"),
-        revokeObjectURL: vi.fn(),
-      }),
-    );
-    vi.stubGlobal(
       "MediaStream",
       class MediaStream {
         public constructor(_tracks?: MediaStreamTrack[]) {}
@@ -233,7 +227,7 @@ describe("RNNoiseProcessor", () => {
       audioContext: t.audioContext,
     });
 
-    expect(t.addModule).toHaveBeenCalledWith("blob:rnnoise");
+    expect(t.addModule).toHaveBeenCalledWith(RNNOISE_WORKLET_MODULE_URL);
     expect(t.createSourceNode).toHaveBeenCalledOnce();
     expect(t.createDestinationNode).toHaveBeenCalledOnce();
     expect(t.workletNode.port.postMessage).toHaveBeenCalledWith({
@@ -263,7 +257,6 @@ describe("RNNoiseProcessor", () => {
       type: "destroy",
     });
     expect(t.processedTrack.stop).toHaveBeenCalledOnce();
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:rnnoise");
     expect(processor.processedTrack).toBeUndefined();
   });
 
@@ -387,7 +380,7 @@ describe("RNNoiseProcessor", () => {
     expect(processor.processedTrack).toBeUndefined();
   });
 
-  it("releases the worklet blob URL when worklet registration fails", async () => {
+  it("propagates worklet registration failures", async () => {
     const t = createTestContext();
     const workletCtor = vi.fn().mockReturnValue(t.workletNode);
     const addModuleError = new Error("Failed to register worklet module");
@@ -404,7 +397,6 @@ describe("RNNoiseProcessor", () => {
     ).rejects.toThrow(addModuleError);
 
     expect(workletCtor).not.toHaveBeenCalled();
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:rnnoise");
   });
 
   it("restarts with the last known audio context when restart omits audioContext", async () => {

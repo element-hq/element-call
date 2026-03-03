@@ -13,6 +13,7 @@ import type {
   TrackProcessor,
 } from "livekit-client";
 import type { RNNoiseSuppressionPreset } from "./rnnoiseTypes";
+import rnnoiseWorkletModuleUrl from "./RNNoiseWorkletModule.ts?url";
 
 /**
  * The number of samples per frame expected by RNNoise (at 48kHz = 10ms).
@@ -340,7 +341,6 @@ export class RNNoiseProcessor implements TrackProcessor<
   private sourceNode?: MediaStreamAudioSourceNode;
   private workletNode?: AudioWorkletNode;
   private destinationNode?: MediaStreamAudioDestinationNode;
-  private blobUrl?: string;
   private destroyed = false;
   private preset: RNNoiseSuppressionPreset;
   private lastAudioContext?: AudioContext;
@@ -358,25 +358,8 @@ export class RNNoiseProcessor implements TrackProcessor<
       return;
     }
 
-    // Lazy-load the RNNoise sync WASM module code
-    const rnnoiseModule =
-      await import("@jitsi/rnnoise-wasm/dist/rnnoise-sync.js?raw");
-    const workletCode = createWorkletCode(
-      rnnoiseModule.default as unknown as string,
-    );
-
-    // Create a Blob URL for the AudioWorklet module.
-    const blob = new Blob([workletCode], { type: "text/javascript" });
-    const blobUrl = URL.createObjectURL(blob);
-
-    try {
-      await audioContext.audioWorklet.addModule(blobUrl);
-      loadedAudioWorklets.add(audioContext);
-      this.blobUrl = blobUrl;
-    } catch (e) {
-      URL.revokeObjectURL(blobUrl);
-      throw e;
-    }
+    await audioContext.audioWorklet.addModule(rnnoiseWorkletModuleUrl);
+    loadedAudioWorklets.add(audioContext);
   }
 
   public async init(opts: AudioProcessorOptions): Promise<void> {
@@ -447,12 +430,6 @@ export class RNNoiseProcessor implements TrackProcessor<
       this.processedTrack?.stop();
     } catch (e) {
       logger.warn("Failed to stop RNNoise processed track during destroy", e);
-    }
-
-    // Revoke the Blob URL
-    if (this.blobUrl) {
-      URL.revokeObjectURL(this.blobUrl);
-      this.blobUrl = undefined;
     }
 
     this.sourceNode = undefined;
