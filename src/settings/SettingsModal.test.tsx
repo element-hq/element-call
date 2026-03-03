@@ -165,6 +165,11 @@ describe("SettingsModal RNNoise controls", () => {
         "(Enhanced noise suppression is not supported by this browser.)",
       ),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Pick a suppression profile. Stronger modes remove more keyboard noise but can sound more processed.",
+      ),
+    ).not.toBeInTheDocument();
   });
 
   it("persists RNNoise setting when toggled", async () => {

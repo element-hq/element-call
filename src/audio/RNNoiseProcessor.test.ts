@@ -331,6 +331,19 @@ describe("RNNoiseProcessor", () => {
       "MediaStreamAudioSourceNode",
       class MediaStreamAudioSourceNode {},
     );
+    vi.stubGlobal(
+      "AudioWorklet",
+      class AudioWorkletWithoutAddModule {},
+    );
+    expect(supportsRNNoiseProcessor()).toBe(false);
+    vi.stubGlobal(
+      "AudioWorklet",
+      class AudioWorklet {
+        public addModule(): Promise<void> {
+          return Promise.resolve();
+        }
+      },
+    );
     expect(supportsRNNoiseProcessor()).toBe(true);
   });
 

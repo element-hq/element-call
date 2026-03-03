@@ -365,6 +365,14 @@ describe("Publisher", () => {
     beforeEach(() => {
       vi.stubGlobal("AudioWorkletNode", class AudioWorkletNode {});
       vi.stubGlobal(
+        "AudioWorklet",
+        class AudioWorklet {
+          public addModule(): Promise<void> {
+            return Promise.resolve();
+          }
+        },
+      );
+      vi.stubGlobal(
         "MediaStreamAudioDestinationNode",
         class MediaStreamAudioDestinationNode {},
       );
@@ -537,6 +545,7 @@ describe("Publisher", () => {
 
     it("keeps native noise suppression enabled and skips processor when RNNoise is unsupported", async () => {
       vi.stubGlobal("AudioWorkletNode", undefined);
+      vi.stubGlobal("AudioWorklet", undefined);
       vi.stubGlobal("MediaStreamAudioDestinationNode", undefined);
       vi.stubGlobal("MediaStreamAudioSourceNode", undefined);
       const micTrack = createMockLocalTrack(
