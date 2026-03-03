@@ -24,6 +24,14 @@ const DEFAULT_RNNOISE_PRESET: RNNoiseSuppressionPreset = "conservative";
 const loadedAudioWorklets = new WeakSet<AudioContext>();
 const warnedUnsupportedSampleRates = new Set<number>();
 
+type RNNoiseSupportGlobal = typeof globalThis & {
+  AudioWorklet?: {
+    prototype?: {
+      addModule?: unknown;
+    };
+  };
+};
+
 function createUnsupportedSampleRateError(sampleRate: number): Error {
   return new Error(
     `RNNoise requires an AudioContext sample rate of ${RNNOISE_REQUIRED_SAMPLE_RATE}Hz (received ${sampleRate}Hz).`,
@@ -45,10 +53,14 @@ function warnUnsupportedSampleRate(sampleRate: number): void {
  * Whether the current runtime supports the required APIs for RNNoise.
  */
 export function supportsRNNoiseProcessor(): boolean {
+  const workletPrototype = (globalThis as RNNoiseSupportGlobal).AudioWorklet
+    ?.prototype;
+
   return (
     typeof AudioWorkletNode !== "undefined" &&
     typeof MediaStreamAudioDestinationNode !== "undefined" &&
-    typeof MediaStreamAudioSourceNode !== "undefined"
+    typeof MediaStreamAudioSourceNode !== "undefined" &&
+    typeof workletPrototype?.addModule === "function"
   );
 }
 
