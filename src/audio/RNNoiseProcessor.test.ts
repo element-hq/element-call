@@ -7,8 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Track } from "livekit-client";
+import { logger } from "matrix-js-sdk/lib/logger";
 
-import { RNNoiseProcessor, supportsRNNoiseProcessor } from "./RNNoiseProcessor";
+import {
+  createRNNoiseWorkletCodeForTesting,
+  RNNoiseProcessor,
+  supportsRNNoiseProcessor,
+} from "./RNNoiseProcessor";
 
 vi.mock("@jitsi/rnnoise-wasm/dist/rnnoise-sync.js?raw", () => ({
   default:
@@ -27,7 +32,7 @@ type TestContext = {
   track: MediaStreamTrack;
 };
 
-function createTestContext(): TestContext {
+function createTestContext(sampleRate = 48000): TestContext {
   const processedTrack = { id: "processed-track" } as MediaStreamTrack;
   const sourceNode = {
     connect: vi.fn(),
@@ -50,6 +55,7 @@ function createTestContext(): TestContext {
   const createSourceNode = vi.fn().mockReturnValue(sourceNode);
   const createDestinationNode = vi.fn().mockReturnValue(destinationNode);
   const audioContext = {
+    sampleRate,
     audioWorklet: { addModule },
     createMediaStreamSource: createSourceNode,
     createMediaStreamDestination: createDestinationNode,
@@ -70,6 +76,65 @@ function createTestContext(): TestContext {
     audioContext,
     track,
   };
+}
+
+function getGeneratedWorkletCode(): string {
+  return createRNNoiseWorkletCodeForTesting(
+    "function createRNNWasmModuleSync(){}; export default createRNNWasmModuleSync;",
+  );
+}
+
+function instantiateWorkletProcessor(workletCode: string): {
+  process: (
+    inputs: Float32Array[][],
+    outputs: Float32Array[][],
+    params?: Record<string, unknown>,
+  ) => boolean;
+} {
+  let ProcessorCtor:
+    | (new () => {
+        process: (
+          inputs: Float32Array[][],
+          outputs: Float32Array[][],
+          params?: Record<string, unknown>,
+        ) => boolean;
+      })
+    | undefined;
+
+  class TestAudioWorkletProcessor {
+    public readonly port = {
+      postMessage: vi.fn(),
+      onmessage: null as ((event: MessageEvent) => void) | null,
+    };
+  }
+
+  const registerProcessor = vi.fn(
+    (
+      _name: string,
+      ctor: new () => {
+        process: (
+          inputs: Float32Array[][],
+          outputs: Float32Array[][],
+          params?: Record<string, unknown>,
+        ) => boolean;
+      },
+    ) => {
+      ProcessorCtor = ctor;
+    },
+  );
+
+  const runWorkletModule = new Function(
+    "AudioWorkletProcessor",
+    "registerProcessor",
+    workletCode,
+  );
+  runWorkletModule(TestAudioWorkletProcessor, registerProcessor);
+
+  if (!ProcessorCtor) {
+    throw new Error("Expected worklet processor to be registered.");
+  }
+
+  return new ProcessorCtor();
 }
 
 describe("RNNoiseProcessor", () => {
@@ -216,5 +281,88 @@ describe("RNNoiseProcessor", () => {
       type: "preset",
       preset: "strong",
     });
+  });
+
+  it("bypasses RNNoise for unsupported audio context sample rates", async () => {
+    const t = createTestContext(44100);
+    const workletCtor = vi.fn().mockReturnValue(t.workletNode);
+    const warningSpy = vi.spyOn(logger, "warn");
+    vi.stubGlobal("AudioWorkletNode", workletCtor);
+    const processor = new RNNoiseProcessor();
+
+    await expect(
+      processor.init({
+        kind: Track.Kind.Audio,
+        track: t.track,
+        audioContext: t.audioContext,
+      }),
+    ).rejects.toThrow("48000Hz");
+
+    expect(warningSpy).toHaveBeenCalledOnce();
+    expect(t.addModule).not.toHaveBeenCalled();
+    expect(workletCtor).not.toHaveBeenCalled();
+    expect(processor.processedTrack).toBeUndefined();
+  });
+
+  it("releases the worklet blob URL when worklet registration fails", async () => {
+    const t = createTestContext();
+    const workletCtor = vi.fn().mockReturnValue(t.workletNode);
+    const addModuleError = new Error("Failed to register worklet module");
+    t.addModule.mockRejectedValueOnce(addModuleError);
+    vi.stubGlobal("AudioWorkletNode", workletCtor);
+    const processor = new RNNoiseProcessor();
+
+    await expect(
+      processor.init({
+        kind: Track.Kind.Audio,
+        track: t.track,
+        audioContext: t.audioContext,
+      }),
+    ).rejects.toThrow(addModuleError);
+
+    expect(workletCtor).not.toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:rnnoise");
+  });
+
+  it("restarts with the last known audio context when restart omits audioContext", async () => {
+    const t = createTestContext();
+    const workletCtor = vi.fn().mockReturnValue(t.workletNode);
+    vi.stubGlobal("AudioWorkletNode", workletCtor);
+    const processor = new RNNoiseProcessor();
+
+    await processor.init({
+      kind: Track.Kind.Audio,
+      track: t.track,
+      audioContext: t.audioContext,
+    });
+
+    const restartedTrack = {
+      id: "restarted-input-track",
+      kind: Track.Kind.Audio,
+    } as MediaStreamTrack;
+    await processor.restart({
+      kind: Track.Kind.Audio,
+      track: restartedTrack,
+      // LiveKit restart paths can omit audioContext.
+      audioContext: undefined as unknown as AudioContext,
+    });
+
+    expect(t.addModule).toHaveBeenCalledOnce();
+    expect(t.createSourceNode).toHaveBeenCalledTimes(2);
+    expect(workletCtor).toHaveBeenCalledTimes(2);
+  });
+
+  it("deterministically downmixes stereo input to mono in the worklet passthrough path", () => {
+    const workletCode = getGeneratedWorkletCode();
+    const worklet = instantiateWorkletProcessor(workletCode);
+    const left = new Float32Array([1, -1, 0.5, 0]);
+    const right = new Float32Array([0, 1, -0.5, 0.5]);
+    const output = new Float32Array(left.length);
+
+    const keepProcessing = worklet.process([[left, right]], [[output]], {});
+
+    expect(keepProcessing).toBe(true);
+    expect(output).toEqual(new Float32Array([0.5, 0, 0, 0.25]));
+    expect(output).toHaveLength(left.length);
   });
 });

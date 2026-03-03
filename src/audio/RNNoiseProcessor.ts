@@ -5,6 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { logger } from "matrix-js-sdk/lib/logger";
+
 import type {
   AudioProcessorOptions,
   Track,
@@ -16,9 +18,28 @@ import type { RNNoiseSuppressionPreset } from "./rnnoiseTypes";
  * The number of samples per frame expected by RNNoise (at 48kHz = 10ms).
  */
 const RNNOISE_SAMPLE_LENGTH = 480;
+const RNNOISE_REQUIRED_SAMPLE_RATE = 48000;
 const RNNOISE_WORKLET_NAME = "rnnoise-processor";
 const DEFAULT_RNNOISE_PRESET: RNNoiseSuppressionPreset = "conservative";
 const loadedAudioWorklets = new WeakSet<AudioContext>();
+const warnedUnsupportedSampleRates = new Set<number>();
+
+function createUnsupportedSampleRateError(sampleRate: number): Error {
+  return new Error(
+    `RNNoise requires an AudioContext sample rate of ${RNNOISE_REQUIRED_SAMPLE_RATE}Hz (received ${sampleRate}Hz).`,
+  );
+}
+
+function warnUnsupportedSampleRate(sampleRate: number): void {
+  if (warnedUnsupportedSampleRates.has(sampleRate)) {
+    return;
+  }
+
+  warnedUnsupportedSampleRates.add(sampleRate);
+  logger.warn(
+    `Skipping RNNoise because AudioContext sample rate is ${sampleRate}Hz (expected ${RNNOISE_REQUIRED_SAMPLE_RATE}Hz).`,
+  );
+}
 
 /**
  * Whether the current runtime supports the required APIs for RNNoise.
@@ -51,7 +72,7 @@ ${patched}
 
 const FRAME_SIZE = ${RNNOISE_SAMPLE_LENGTH};
 const RING_SIZE = FRAME_SIZE * 3; // Enough headroom for buffering
-const SAMPLE_RATE = 48000;
+const SAMPLE_RATE = ${RNNOISE_REQUIRED_SAMPLE_RATE};
 const DEFAULT_PRESET = "${DEFAULT_RNNOISE_PRESET}";
 const PRESETS = {
   conservative: {
@@ -219,25 +240,41 @@ class RNNoiseWorkletProcessor extends AudioWorkletProcessor {
     this._outW = (this._outW + FRAME_SIZE) % RING_SIZE;
   }
 
+  _mixInputChannels(inputChannels, sampleIndex, channelCount) {
+    let mixed = 0;
+    for (let i = 0; i < channelCount; i++) {
+      const channel = inputChannels[i];
+      mixed += channel ? (channel[sampleIndex] ?? 0) : 0;
+    }
+    return mixed / channelCount;
+  }
+
   process(inputs, outputs) {
     if (this._destroyed) return false;
 
-    const input = inputs[0]?.[0];
+    const inputChannels = inputs[0];
     const output = outputs[0]?.[0];
 
-    if (!input || !output) return true;
+    if (!inputChannels?.length || !output) return true;
+
+    const blockSize = output.length;
+    const channelCount = inputChannels.length;
 
     if (!this._ready) {
-      // Pass through until RNNoise is ready
-      output.set(input);
+      // Pass through until RNNoise is ready, with deterministic stereo downmix.
+      for (let i = 0; i < blockSize; i++) {
+        output[i] = this._mixInputChannels(inputChannels, i, channelCount);
+      }
       return true;
     }
 
-    const blockSize = input.length;
-
     // Write input samples to the input ring buffer
     for (let i = 0; i < blockSize; i++) {
-      this._inBuf[this._inW] = input[i];
+      this._inBuf[this._inW] = this._mixInputChannels(
+        inputChannels,
+        i,
+        channelCount,
+      );
       this._inW = (this._inW + 1) % RING_SIZE;
     }
 
@@ -267,6 +304,12 @@ registerProcessor('${RNNOISE_WORKLET_NAME}', RNNoiseWorkletProcessor);
 `;
 }
 
+export function createRNNoiseWorkletCodeForTesting(
+  rnnoiseModuleCode: string,
+): string {
+  return createWorkletCode(rnnoiseModuleCode);
+}
+
 /**
  * A LiveKit TrackProcessor that applies RNNoise-based noise suppression
  * to a local audio track via an AudioWorklet.
@@ -287,6 +330,7 @@ export class RNNoiseProcessor implements TrackProcessor<
   private blobUrl?: string;
   private destroyed = false;
   private preset: RNNoiseSuppressionPreset;
+  private lastAudioContext?: AudioContext;
 
   public constructor(
     preset: RNNoiseSuppressionPreset = DEFAULT_RNNOISE_PRESET,
@@ -310,15 +354,26 @@ export class RNNoiseProcessor implements TrackProcessor<
 
     // Create a Blob URL for the AudioWorklet module.
     const blob = new Blob([workletCode], { type: "text/javascript" });
-    this.blobUrl = URL.createObjectURL(blob);
+    const blobUrl = URL.createObjectURL(blob);
 
-    await audioContext.audioWorklet.addModule(this.blobUrl);
-    loadedAudioWorklets.add(audioContext);
+    try {
+      await audioContext.audioWorklet.addModule(blobUrl);
+      loadedAudioWorklets.add(audioContext);
+      this.blobUrl = blobUrl;
+    } catch (e) {
+      URL.revokeObjectURL(blobUrl);
+      throw e;
+    }
   }
 
   public async init(opts: AudioProcessorOptions): Promise<void> {
     this.destroyed = false;
     const { audioContext, track } = opts;
+
+    if (audioContext.sampleRate !== RNNOISE_REQUIRED_SAMPLE_RATE) {
+      warnUnsupportedSampleRate(audioContext.sampleRate);
+      throw createUnsupportedSampleRateError(audioContext.sampleRate);
+    }
 
     await this.ensureWorkletRegistered(audioContext);
 
@@ -345,11 +400,19 @@ export class RNNoiseProcessor implements TrackProcessor<
     this.destinationNode = destinationNode;
     this.workletNode.port.postMessage({ type: "preset", preset: this.preset });
     this.processedTrack = destinationNode.stream.getAudioTracks()[0];
+    this.lastAudioContext = audioContext;
   }
 
   public async restart(opts: AudioProcessorOptions): Promise<void> {
+    const audioContext = opts.audioContext ?? this.lastAudioContext;
+    if (!audioContext) {
+      throw new Error(
+        "RNNoise restart requires an AudioContext when no previous context has been initialized.",
+      );
+    }
+
     await this.destroy();
-    await this.init(opts);
+    await this.init({ ...opts, audioContext });
   }
 
   public async destroy(): Promise<void> {
