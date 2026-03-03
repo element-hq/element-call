@@ -63,6 +63,7 @@ export class Publisher {
 
   private readonly scope = new ObservableScope();
   private rnnoiseOperationQueue: Promise<void> = Promise.resolve();
+  private rnnoisePolicySyncedTrack: LocalAudioTrack | null = null;
 
   /**
    * Creates a new Publisher.
@@ -88,7 +89,7 @@ export class Publisher {
 
     // Setup track processor syncing (blur)
     this.observeTrackProcessors(this.scope, room, trackerProcessorState$);
-    this.observeRNNoiseProcessor(this.scope, room);
+    this.observeRNNoiseProcessor(this.scope, room, devices);
     this.observeRNNoiseSettingRestart(this.scope, room, devices);
     // Observe media device changes and update LiveKit active devices accordingly
     this.observeMediaDevices(this.scope, devices, controlledAudioDevices);
@@ -437,6 +438,7 @@ export class Publisher {
   private observeRNNoiseProcessor(
     scope: ObservableScope,
     room: LivekitRoom,
+    devices: MediaDevices,
   ): void {
     const microphoneTrack$ = scope.behavior(
       observeTrackReference$(
@@ -467,9 +469,24 @@ export class Publisher {
         ),
       )
       .subscribe(([microphoneTrack, rnnoiseEnabled, rnnoisePreset]) => {
-        if (!microphoneTrack || !supportsRNNoiseProcessor()) return;
+        const rnnoiseSupported = supportsRNNoiseProcessor();
+        if (!microphoneTrack || !rnnoiseSupported) {
+          this.rnnoisePolicySyncedTrack = microphoneTrack;
+          return;
+        }
+
+        const isNewMicrophoneTrack =
+          microphoneTrack !== this.rnnoisePolicySyncedTrack;
+        this.rnnoisePolicySyncedTrack = microphoneTrack;
 
         this.enqueueRNNoiseOperation(async () => {
+          if (rnnoiseEnabled && isNewMicrophoneTrack) {
+            await this.restartMicrophoneTrackForNoiseSuppressionPolicy(
+              microphoneTrack,
+              devices,
+              rnnoiseEnabled,
+            );
+          }
           await this.syncRNNoiseProcessor(
             microphoneTrack,
             rnnoiseEnabled,
