@@ -426,6 +426,45 @@ describe("Publisher", () => {
       expect(micTrack.stopProcessor).toHaveBeenCalledOnce();
     });
 
+    it("auto-disables RNNoise when processor setup fails and falls back to native noise suppression", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & {
+        setProcessor: (...args: unknown[]) => Promise<void>;
+        restartTrack: (...args: unknown[]) => Promise<void>;
+      };
+      const processorError = new Error("RNNoise setup failed");
+      vi.mocked(micTrack.setProcessor).mockRejectedValueOnce(processorError);
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+
+      // The operation queue serializes restart/sync jobs. Flush enough microtasks
+      // to allow the fallback toggle and restart to complete.
+      for (let i = 0; i < 5; i++) {
+        await flushPromises();
+      }
+
+      expect(micTrack.setProcessor).toHaveBeenCalledOnce();
+      expect(rnnoiseNoiseSuppression.getValue()).toBe(false);
+      expect(micTrack.restartTrack).toHaveBeenCalled();
+      const restartCalls = vi.mocked(micTrack.restartTrack).mock.calls;
+      const finalRestartConfig = restartCalls[restartCalls.length - 1]?.[0] as {
+        noiseSuppression?: boolean;
+      };
+      expect(finalRestartConfig).toEqual(
+        expect.objectContaining({ noiseSuppression: true }),
+      );
+    });
+
     it("restarts microphone track with native noise suppression disabled when RNNoise is enabled", async () => {
       const micTrack = createMockLocalTrack(
         Track.Source.Microphone,

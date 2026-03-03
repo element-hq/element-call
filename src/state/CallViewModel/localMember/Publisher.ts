@@ -560,6 +560,12 @@ export class Publisher {
       }
     } catch (e) {
       this.logger.error("Failed to apply RNNoise microphone processor", e);
+      if (rnnoiseEnabled && rnnoiseNoiseSuppression.getValue()) {
+        this.logger.warn(
+          "Disabling RNNoise setting after processor setup failure",
+        );
+        rnnoiseNoiseSuppression.setValue(false);
+      }
     }
   }
 }
