@@ -241,6 +241,7 @@ class RNNoiseWorkletProcessor extends AudioWorkletProcessor {
   }
 
   _mixInputChannels(inputChannels, sampleIndex, channelCount) {
+    // RNNoise is mono-only; average all channels for deterministic downmixing.
     let mixed = 0;
     for (let i = 0; i < channelCount; i++) {
       const channel = inputChannels[i];
@@ -261,7 +262,7 @@ class RNNoiseWorkletProcessor extends AudioWorkletProcessor {
     const channelCount = inputChannels.length;
 
     if (!this._ready) {
-      // Pass through until RNNoise is ready, with deterministic stereo downmix.
+      // Pass through until RNNoise is ready, with deterministic mono downmix.
       for (let i = 0; i < blockSize; i++) {
         output[i] = this._mixInputChannels(inputChannels, i, channelCount);
       }

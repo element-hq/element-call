@@ -365,4 +365,20 @@ describe("RNNoiseProcessor", () => {
     expect(output).toEqual(new Float32Array([0.5, 0, 0, 0.25]));
     expect(output).toHaveLength(left.length);
   });
+
+  it("downmixes all input channels by averaging each sample", () => {
+    const workletCode = getGeneratedWorkletCode();
+    const worklet = instantiateWorkletProcessor(workletCode);
+    const first = new Float32Array([0.6, -0.3, 0.9]);
+    const second = new Float32Array([0.3, 0.3, -0.3]);
+    const third = new Float32Array([0, 0.6, 0]);
+    const output = new Float32Array(first.length);
+
+    worklet.process([[first, second, third]], [[output]], {});
+
+    expect(output[0]).toBeCloseTo(0.3, 6);
+    expect(output[1]).toBeCloseTo(0.2, 6);
+    expect(output[2]).toBeCloseTo(0.2, 6);
+    expect(output).toHaveLength(first.length);
+  });
 });
