@@ -431,6 +431,12 @@ export class RNNoiseProcessor implements TrackProcessor<
     this.workletNode?.disconnect();
     this.destinationNode?.disconnect();
 
+    try {
+      this.processedTrack?.stop();
+    } catch (e) {
+      logger.warn("Failed to stop RNNoise processed track during destroy", e);
+    }
+
     // Revoke the Blob URL
     if (this.blobUrl) {
       URL.revokeObjectURL(this.blobUrl);
