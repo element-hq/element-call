@@ -15,6 +15,9 @@ import {
 
 import { SpaHelpers } from "./spa-helpers";
 
+const RNNOISE_LABEL = "Enable enhanced noise suppression (RNNoise)";
+const RNNOISE_TOGGLE_SELECTOR = "#activateRNNoiseSuppression";
+
 async function setupTwoUserSpaCall(
   browser: Browser,
   page: Page,
@@ -172,18 +175,21 @@ async function interceptEventSend(
   );
 }
 
-async function enableRNNoiseInSettings(page: Page): Promise<boolean> {
+async function openAudioSettings(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("tab", { name: "Audio" }).click();
+}
 
-  const rnnoiseToggle = page.getByLabel(
-    "Enable enhanced noise suppression (RNNoise)",
-  );
-  await expect(rnnoiseToggle).toBeVisible();
+async function enableRNNoiseInSettings(page: Page): Promise<boolean> {
+  await openAudioSettings(page);
 
+  const rnnoiseLabel = page.locator("label", { hasText: RNNOISE_LABEL });
+  await expect(rnnoiseLabel).toBeVisible();
+  const rnnoiseToggle = page.locator(RNNOISE_TOGGLE_SELECTOR);
   const supported = await rnnoiseToggle.isEnabled();
   if (supported && !(await rnnoiseToggle.isChecked())) {
-    await rnnoiseToggle.check();
+    await rnnoiseLabel.click();
+    await expect(rnnoiseToggle).toBeChecked();
   }
 
   await page.getByTestId("modal_close").click();
@@ -191,12 +197,11 @@ async function enableRNNoiseInSettings(page: Page): Promise<boolean> {
 }
 
 async function expectRNNoiseEnabledInSettings(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Settings" }).click();
-  await page.getByRole("tab", { name: "Audio" }).click();
+  await openAudioSettings(page);
 
-  const rnnoiseToggle = page.getByLabel(
-    "Enable enhanced noise suppression (RNNoise)",
-  );
+  const rnnoiseLabel = page.locator("label", { hasText: RNNOISE_LABEL });
+  await expect(rnnoiseLabel).toBeVisible();
+  const rnnoiseToggle = page.locator(RNNOISE_TOGGLE_SELECTOR);
   await expect(rnnoiseToggle).toBeChecked();
 
   await page.getByTestId("modal_close").click();
