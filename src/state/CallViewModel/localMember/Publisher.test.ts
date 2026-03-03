@@ -489,6 +489,37 @@ describe("Publisher", () => {
       );
     });
 
+    it("keeps native noise suppression enabled and skips processor when RNNoise is unsupported", async () => {
+      vi.stubGlobal("AudioWorkletNode", undefined);
+      vi.stubGlobal("MediaStreamAudioDestinationNode", undefined);
+      vi.stubGlobal("MediaStreamAudioSourceNode", undefined);
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & {
+        restartTrack: (...args: unknown[]) => void;
+        setProcessor: (...args: unknown[]) => void;
+      };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+
+      expect(micTrack.setProcessor).not.toHaveBeenCalled();
+      expect(micTrack.restartTrack).toHaveBeenCalledWith(
+        expect.objectContaining({
+          noiseSuppression: true,
+        }),
+      );
+    });
+
     it("stops RNNoise processor before restarting microphone track when disabling RNNoise", async () => {
       const micTrack = createMockLocalTrack(
         Track.Source.Microphone,

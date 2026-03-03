@@ -41,6 +41,7 @@ import {
   RNNoiseProcessor,
   supportsRNNoiseProcessor,
 } from "../../../audio/RNNoiseProcessor.ts";
+import { shouldEnableNativeNoiseSuppression } from "../../../audio/noiseSuppressionPolicy.ts";
 import {
   rnnoiseNoiseSuppression,
   rnnoiseNoiseSuppressionPreset,
@@ -491,6 +492,7 @@ export class Publisher {
         )?.audioTrack;
         if (!audioTrack) return;
 
+        const rnnoiseSupported = supportsRNNoiseProcessor();
         this.enqueueRNNoiseOperation(async () => {
           await this.restartMicrophoneTrackForNoiseSuppressionPolicy(
             audioTrack,
@@ -499,7 +501,7 @@ export class Publisher {
           );
           await this.syncRNNoiseProcessor(
             audioTrack,
-            rnnoiseEnabled,
+            rnnoiseEnabled && rnnoiseSupported,
             rnnoiseNoiseSuppressionPreset.getValue(),
           );
         });
@@ -530,7 +532,11 @@ export class Publisher {
     await audioTrack.restartTrack({
       deviceId: devices.audioInput.selected$.value?.id,
       echoCancellation,
-      noiseSuppression: noiseSuppression && !rnnoiseEnabled,
+      noiseSuppression: shouldEnableNativeNoiseSuppression({
+        urlNoiseSuppression: noiseSuppression,
+        rnnoiseEnabled,
+        rnnoiseSupported: supportsRNNoiseProcessor(),
+      }),
     });
   }
 

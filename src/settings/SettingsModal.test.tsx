@@ -151,12 +151,15 @@ describe("SettingsModal RNNoise controls", () => {
 
   it("disables RNNoise when AudioWorklet support is unavailable", () => {
     vi.mocked(supportsRNNoiseProcessor).mockReturnValue(false);
+    rnnoiseNoiseSuppression.setValue(true);
 
     renderSettingsModal();
 
-    expect(
-      screen.getByLabelText("Enable enhanced noise suppression (RNNoise)"),
-    ).toBeDisabled();
+    const checkbox = screen.getByLabelText(
+      "Enable enhanced noise suppression (RNNoise)",
+    );
+    expect(checkbox).toBeDisabled();
+    expect(checkbox).not.toBeChecked();
     expect(
       screen.getByText(
         "(Enhanced noise suppression is not supported by this browser.)",

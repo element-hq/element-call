@@ -138,6 +138,7 @@ export const SettingsModal: FC<Props> = ({
       balanced: t("settings.audio_tab.rnnoise_preset_balanced"),
       strong: t("settings.audio_tab.rnnoise_preset_strong"),
     };
+    const effectiveRnnoiseEnabled = supported && !!rnnoiseEnabled;
 
     return (
       <>
@@ -150,12 +151,12 @@ export const SettingsModal: FC<Props> = ({
               supported ? "" : t("settings.audio_tab.rnnoise_not_supported")
             }
             type="checkbox"
-            checked={!!rnnoiseEnabled}
+            checked={effectiveRnnoiseEnabled}
             onChange={(e): void => setRnnoiseEnabled(e.target.checked)}
             disabled={!supported}
           />
         </FieldRow>
-        {rnnoiseEnabled && (
+        {effectiveRnnoiseEnabled && (
           <>
             <p>{t("settings.audio_tab.rnnoise_preset_description")}</p>
             {rnnoiseSuppressionPresets.map((preset) => (
