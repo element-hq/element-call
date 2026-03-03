@@ -26,14 +26,17 @@ type TestContext = {
   createDestinationNode: ReturnType<typeof vi.fn>;
   sourceNode: MediaStreamAudioSourceNode;
   destinationNode: MediaStreamAudioDestinationNode;
-  processedTrack: MediaStreamTrack;
+  processedTrack: MediaStreamTrack & { stop: ReturnType<typeof vi.fn> };
   workletNode: AudioWorkletNode;
   audioContext: AudioContext;
   track: MediaStreamTrack;
 };
 
 function createTestContext(sampleRate = 48000): TestContext {
-  const processedTrack = { id: "processed-track" } as MediaStreamTrack;
+  const processedTrack = {
+    id: "processed-track",
+    stop: vi.fn(),
+  } as unknown as MediaStreamTrack & { stop: ReturnType<typeof vi.fn> };
   const sourceNode = {
     connect: vi.fn(),
     disconnect: vi.fn(),
@@ -259,8 +262,15 @@ describe("RNNoiseProcessor", () => {
     expect(t.workletNode.port.postMessage).toHaveBeenCalledWith({
       type: "destroy",
     });
+    expect(t.processedTrack.stop).toHaveBeenCalledOnce();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:rnnoise");
     expect(processor.processedTrack).toBeUndefined();
+  });
+
+  it("destroy does not throw when no processed track exists", async () => {
+    const processor = new RNNoiseProcessor();
+
+    await expect(processor.destroy()).resolves.toBeUndefined();
   });
 
   it("restart re-initializes with a new processed track", async () => {
