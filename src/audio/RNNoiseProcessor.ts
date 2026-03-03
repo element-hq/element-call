@@ -361,7 +361,7 @@ export class RNNoiseProcessor implements TrackProcessor<
     this.preset = preset;
   }
 
-  private ensureWorkletRegistered(audioContext: AudioContext): Promise<void> {
+  private async ensureWorkletRegistered(audioContext: AudioContext): Promise<void> {
     const existing = workletRegistrations.get(audioContext);
     if (existing) return existing;
 
