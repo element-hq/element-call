@@ -500,4 +500,96 @@ describe("RNNoiseProcessor", () => {
     const strongSilenceGain = Math.pow(10, -strong.maxAttenuationDb / 20);
     expect(strongSilenceGain).toBeLessThan(balancedSilenceGain);
   });
+
+  it("init() called twice without destroy() cleans up previous nodes", async () => {
+    const first = createTestContext();
+    const second = createTestContext();
+    const workletCtor = vi
+      .fn()
+      .mockReturnValueOnce(first.workletNode)
+      .mockReturnValueOnce(second.workletNode);
+    vi.stubGlobal("AudioWorkletNode", workletCtor);
+
+    const processor = new RNNoiseProcessor();
+    await processor.init({
+      kind: Track.Kind.Audio,
+      track: first.track,
+      audioContext: first.audioContext,
+    });
+    await processor.init({
+      kind: Track.Kind.Audio,
+      track: second.track,
+      audioContext: second.audioContext,
+    });
+
+    // First nodes must have been torn down
+    expect(first.sourceNode.disconnect).toHaveBeenCalledOnce();
+    expect(first.workletNode.disconnect).toHaveBeenCalledOnce();
+    expect(first.destinationNode.disconnect).toHaveBeenCalledOnce();
+    expect(first.processedTrack.stop).toHaveBeenCalledOnce();
+
+    // Second nodes should now be active
+    expect(processor.processedTrack).toBe(second.processedTrack);
+  });
+
+  it("concurrent ensureWorkletRegistered calls only invoke addModule once", async () => {
+    const t = createTestContext();
+    // Replace the default resolved mock with a controllable promise so both
+    // init() calls are in-flight at the same time.
+    let resolveAddModule!: () => void;
+    t.addModule.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveAddModule = resolve;
+      }),
+    );
+    vi.stubGlobal("AudioWorkletNode", vi.fn().mockReturnValue(t.workletNode));
+
+    const processor1 = new RNNoiseProcessor();
+    const processor2 = new RNNoiseProcessor();
+
+    // Start both inits before either addModule resolves
+    const init1 = processor1.init({
+      kind: Track.Kind.Audio,
+      track: t.track,
+      audioContext: t.audioContext,
+    });
+    const init2 = processor2.init({
+      kind: Track.Kind.Audio,
+      track: t.track,
+      audioContext: t.audioContext,
+    });
+
+    resolveAddModule();
+    await Promise.all([init1, init2]);
+
+    expect(t.addModule).toHaveBeenCalledOnce();
+  });
+
+  it("does not expose an active graph after concurrent init and destroy", async () => {
+    const t = createTestContext();
+    let resolveAddModule!: () => void;
+    t.addModule.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveAddModule = resolve;
+      }),
+    );
+    vi.stubGlobal("AudioWorkletNode", vi.fn().mockReturnValue(t.workletNode));
+
+    const processor = new RNNoiseProcessor();
+    const initPromise = processor.init({
+      kind: Track.Kind.Audio,
+      track: t.track,
+      audioContext: t.audioContext,
+    });
+
+    // destroy() races with the in-flight init(); let destroy complete first
+    await processor.destroy();
+
+    // Now let the worklet registration resolve and init() resume
+    resolveAddModule();
+    await initPromise;
+
+    // init() must have aborted after seeing destroyed=true; no track exposed
+    expect(processor.processedTrack).toBeUndefined();
+  });
 });

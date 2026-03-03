@@ -142,6 +142,6 @@
   },
   "packageManager": "yarn@4.7.0",
   "dependencies": {
-    "@jitsi/rnnoise-wasm": "^0.2.1"
+    "@jitsi/rnnoise-wasm": "0.2.1"
   }
 }

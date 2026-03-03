@@ -1,5 +1,5 @@
 /*
-Copyright 2025 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -22,7 +22,9 @@ const RNNOISE_SAMPLE_LENGTH = 480;
 const RNNOISE_REQUIRED_SAMPLE_RATE = 48000;
 const RNNOISE_WORKLET_NAME = "rnnoise-processor";
 const DEFAULT_RNNOISE_PRESET: RNNoiseSuppressionPreset = "conservative";
-const loadedAudioWorklets = new WeakSet<AudioContext>();
+// Stores the addModule() promise per AudioContext: pending while in-flight,
+// settled (resolved) once complete, absent on failure (cleared for retry).
+const workletRegistrations = new WeakMap<AudioContext, Promise<void>>();
 const warnedUnsupportedSampleRates = new Set<number>();
 
 type RNNoiseSupportGlobal = typeof globalThis & {
@@ -66,7 +68,15 @@ export function supportsRNNoiseProcessor(): boolean {
 }
 
 /**
- * Generates the AudioWorklet processor code as a string.
+ * Generates the AudioWorklet processor code as a string, for use in tests.
+ *
+ * WARNING: This function is the **test harness** version of the worklet.
+ * The authoritative runtime implementation lives in `RNNoiseWorkletModule.ts`,
+ * which Vite compiles and loads as a separate script via the `?url` import.
+ * If the processor logic changes in `RNNoiseWorkletModule.ts` — frame size,
+ * ring buffer, preset constants, downmix algorithm, etc. — the generated
+ * code here **must be updated to match** or tests will diverge from runtime
+ * behaviour.
  *
  * The worklet loads the RNNoise WASM module synchronously (base64-inlined)
  * and processes audio in 480-sample frames. A ring buffer bridges the
@@ -351,18 +361,25 @@ export class RNNoiseProcessor implements TrackProcessor<
     this.preset = preset;
   }
 
-  private async ensureWorkletRegistered(
-    audioContext: AudioContext,
-  ): Promise<void> {
-    if (loadedAudioWorklets.has(audioContext)) {
-      return;
-    }
+  private ensureWorkletRegistered(audioContext: AudioContext): Promise<void> {
+    const existing = workletRegistrations.get(audioContext);
+    if (existing) return existing;
 
-    await audioContext.audioWorklet.addModule(rnnoiseWorkletModuleUrl);
-    loadedAudioWorklets.add(audioContext);
+    const pending = audioContext.audioWorklet.addModule(rnnoiseWorkletModuleUrl);
+    workletRegistrations.set(audioContext, pending);
+    // On failure, remove the entry so the next call can retry.
+    pending.catch(() => {
+      workletRegistrations.delete(audioContext);
+    });
+    return pending;
   }
 
   public async init(opts: AudioProcessorOptions): Promise<void> {
+    // If already initialized, tear down previous nodes before re-initializing
+    // so callers don't need to explicitly call destroy() first.
+    if (this.workletNode !== undefined) {
+      await this.destroy();
+    }
     this.destroyed = false;
     const { audioContext, track } = opts;
 
@@ -372,6 +389,9 @@ export class RNNoiseProcessor implements TrackProcessor<
     }
 
     await this.ensureWorkletRegistered(audioContext);
+
+    // A concurrent destroy() may have run while we awaited worklet registration.
+    if (this.destroyed) return;
 
     // Build the audio processing graph:
     // MediaStreamSource → AudioWorkletNode (RNNoise) → MediaStreamDestination
