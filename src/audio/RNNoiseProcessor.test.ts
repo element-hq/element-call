@@ -339,8 +339,8 @@ describe("RNNoiseProcessor", () => {
     vi.stubGlobal(
       "AudioWorklet",
       class AudioWorklet {
-        public addModule(): Promise<void> {
-          return Promise.resolve();
+        public async addModule(): Promise<void> {
+          return;
         }
       },
     );
