@@ -489,6 +489,52 @@ describe("Publisher", () => {
       );
     });
 
+    it("restarts a newly-created publisher microphone track with native suppression disabled when RNNoise is already enabled", async () => {
+      await publisher.destroy();
+      rnnoiseNoiseSuppression.setValue(true);
+
+      const freshPublisher = new Publisher(
+        connection,
+        mockMediaDevices({}),
+        muteStates,
+        constant({ supported: false, processor: undefined }),
+        logger,
+      );
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & {
+        restartTrack: (...args: unknown[]) => void;
+        setProcessor: (...args: unknown[]) => void;
+      };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      try {
+        await flushPromises();
+
+        expect(micTrack.restartTrack).toHaveBeenCalledWith(
+          expect.objectContaining({
+            noiseSuppression: false,
+          }),
+        );
+        expect(micTrack.setProcessor).toHaveBeenCalledOnce();
+        expect(
+          vi.mocked(micTrack.restartTrack).mock.invocationCallOrder[0],
+        ).toBeLessThan(
+          vi.mocked(micTrack.setProcessor).mock.invocationCallOrder[0],
+        );
+      } finally {
+        await freshPublisher.destroy();
+      }
+    });
+
     it("keeps native noise suppression enabled and skips processor when RNNoise is unsupported", async () => {
       vi.stubGlobal("AudioWorkletNode", undefined);
       vi.stubGlobal("MediaStreamAudioDestinationNode", undefined);
