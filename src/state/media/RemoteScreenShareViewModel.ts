@@ -6,8 +6,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type RemoteParticipant } from "livekit-client";
-import { map } from "rxjs";
+import { Track, type RemoteParticipant } from "livekit-client";
+import { map, of, switchMap } from "rxjs";
 
 import { type Behavior } from "../Behavior";
 import {
@@ -16,13 +16,17 @@ import {
   createBaseScreenShare,
 } from "./ScreenShareViewModel";
 import { type ObservableScope } from "../ObservableScope";
+import { createVolumeControls, type VolumeControls } from "../VolumeControls";
+import { observeTrackReference$ } from "../observeTrackReference";
 
-export interface RemoteScreenShareViewModel extends BaseScreenShareViewModel {
+export interface RemoteScreenShareViewModel
+  extends BaseScreenShareViewModel, VolumeControls {
   local: false;
   /**
    * Whether this screen share's video should be displayed.
    */
   videoEnabled$: Behavior<boolean>;
+  audioEnabled$: Behavior<boolean>;
 }
 
 export interface RemoteScreenShareInputs extends BaseScreenShareInputs {
@@ -36,9 +40,30 @@ export function createRemoteScreenShare(
 ): RemoteScreenShareViewModel {
   return {
     ...createBaseScreenShare(scope, inputs),
+    ...createVolumeControls(scope, {
+      pretendToBeDisconnected$,
+      sink$: scope.behavior(
+        inputs.participant$.pipe(
+          map(
+            (p) => (volume) =>
+              p?.setVolume(volume, Track.Source.ScreenShareAudio),
+          ),
+        ),
+      ),
+    }),
     local: false,
     videoEnabled$: scope.behavior(
       pretendToBeDisconnected$.pipe(map((disconnected) => !disconnected)),
+    ),
+    audioEnabled$: scope.behavior(
+      inputs.participant$.pipe(
+        switchMap((p) =>
+          p
+            ? observeTrackReference$(p, Track.Source.ScreenShareAudio)
+            : of(null),
+        ),
+        map(Boolean),
+      ),
     ),
   };
 }
