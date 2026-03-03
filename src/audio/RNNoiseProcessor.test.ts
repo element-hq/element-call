@@ -340,7 +340,7 @@ describe("RNNoiseProcessor", () => {
       "AudioWorklet",
       class AudioWorklet {
         public async addModule(): Promise<void> {
-          return;
+          await Promise.resolve();
         }
       },
     );
