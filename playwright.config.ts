@@ -11,6 +11,27 @@ import { defineConfig, devices } from "@playwright/test";
 const baseURL = process.env.USE_DOCKER
   ? "http://localhost:8080"
   : "https://localhost:3000";
+const fakeAudioCaptureFile = process.env.PLAYWRIGHT_FAKE_AUDIO_CAPTURE_FILE;
+const fakeVideoCaptureFile = process.env.PLAYWRIGHT_FAKE_VIDEO_CAPTURE_FILE;
+
+function buildFakeMediaArgs(): string[] {
+  const args = [
+    "--use-fake-ui-for-media-stream",
+    "--use-fake-device-for-media-stream",
+    "--mute-audio",
+  ];
+
+  if (fakeAudioCaptureFile) {
+    args.push(`--use-file-for-fake-audio-capture=${fakeAudioCaptureFile}`);
+  }
+  if (fakeVideoCaptureFile) {
+    args.push(`--use-file-for-fake-video-capture=${fakeVideoCaptureFile}`);
+  }
+
+  return args;
+}
+
+const fakeMediaArgs = buildFakeMediaArgs();
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -50,11 +71,7 @@ export default defineConfig({
         ],
         ignoreHTTPSErrors: true,
         launchOptions: {
-          args: [
-            "--use-fake-ui-for-media-stream",
-            "--use-fake-device-for-media-stream",
-            "--mute-audio",
-          ],
+          args: fakeMediaArgs,
         },
       },
     },
@@ -85,11 +102,7 @@ export default defineConfig({
           "camera",
         ],
         launchOptions: {
-          args: [
-            "--use-fake-ui-for-media-stream",
-            "--use-fake-device-for-media-stream",
-            "--mute-audio",
-          ],
+          args: fakeMediaArgs,
         },
       },
     },

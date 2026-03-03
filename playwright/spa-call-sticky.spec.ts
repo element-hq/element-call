@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   expect,
+  type Locator,
   type Page,
   test,
   type Request,
@@ -155,6 +156,81 @@ test("One to One rejoin after improper leave stays stable with RNNoise enabled",
   await expectRNNoiseEnabledInSettings(guestPage);
 });
 
+test("One to One call stays stable when switching devices with RNNoise enabled", async ({
+  browser,
+  page,
+  browserName,
+}) => {
+  const { guestPage } = await setupTwoUserSpaCall(browser, page, browserName);
+
+  await SpaHelpers.expectVideoTilesCount(page, 2);
+  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+
+  const rnnoiseSupported = await enableRNNoiseInSettings(guestPage);
+  test.skip(
+    !rnnoiseSupported,
+    "RNNoise is not supported in this browser environment",
+  );
+
+  await openAudioSettings(guestPage);
+  const microphoneDeviceRadios = await getDeviceSelectionRadios(
+    guestPage,
+    "Microphone",
+  );
+
+  // Some Chromium fake-device environments expose only one audio-input device,
+  // so device switching cannot be forced there. Fall back to output switching.
+  if (microphoneDeviceRadios.count < 2) {
+    const speakerDeviceRadios = await getDeviceSelectionRadios(
+      guestPage,
+      "Speaker",
+    );
+    expect(speakerDeviceRadios.count).toBeGreaterThan(0);
+
+    if (speakerDeviceRadios.count > 1) {
+      const selectedSpeakerBefore = await guestPage.evaluate(() =>
+        localStorage.getItem("matrix-setting-audio-output"),
+      );
+      const targetSpeakerIndex =
+        speakerDeviceRadios.firstUncheckedIndex >= 0
+          ? speakerDeviceRadios.firstUncheckedIndex
+          : 0;
+      await speakerDeviceRadios.radios.nth(targetSpeakerIndex).click();
+      await expect
+        .poll(async () =>
+          guestPage.evaluate(() =>
+            localStorage.getItem("matrix-setting-audio-output"),
+          ),
+        )
+        .not.toBe(selectedSpeakerBefore);
+    }
+  } else {
+    const selectedMicrophoneBefore = await guestPage.evaluate(() =>
+      localStorage.getItem("matrix-setting-audio-input"),
+    );
+    const targetMicrophoneIndex =
+      microphoneDeviceRadios.firstUncheckedIndex >= 0
+        ? microphoneDeviceRadios.firstUncheckedIndex
+        : 1;
+    await microphoneDeviceRadios.radios.nth(targetMicrophoneIndex).click();
+    await expect
+      .poll(async () =>
+        guestPage.evaluate(() =>
+          localStorage.getItem("matrix-setting-audio-input"),
+        ),
+      )
+      .not.toBe(selectedMicrophoneBefore);
+  }
+
+  await guestPage.getByTestId("modal_close").click();
+  await SpaHelpers.expectVideoTilesCount(page, 2);
+  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+  await expect(
+    guestPage.getByRole("button", { name: "Mute microphone" }),
+  ).toBeVisible();
+  await expectRNNoiseEnabledInSettings(guestPage);
+});
+
 function isStickySend(url: string): boolean {
   return !!new URL(url).searchParams.get(
     "org.matrix.msc4354.sticky_duration_ms",
@@ -178,6 +254,34 @@ async function interceptEventSend(
 async function openAudioSettings(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("tab", { name: "Audio" }).click();
+}
+
+async function getDeviceSelectionRadios(
+  page: Page,
+  sectionHeading: string,
+): Promise<{
+  radios: Locator;
+  count: number;
+  firstUncheckedIndex: number;
+}> {
+  const section = page
+    .locator("div")
+    .filter({
+      has: page.getByRole("heading", { name: sectionHeading, exact: true }),
+    })
+    .first();
+  const radios = section.getByRole("radio");
+  const count = await radios.count();
+  const firstUncheckedIndex = await radios.evaluateAll((nodes) =>
+    nodes.findIndex((node) => {
+      if (node instanceof HTMLInputElement) {
+        return !node.checked;
+      }
+      return node.getAttribute("aria-checked") !== "true";
+    }),
+  );
+
+  return { radios, count, firstUncheckedIndex };
 }
 
 async function enableRNNoiseInSettings(page: Page): Promise<boolean> {
