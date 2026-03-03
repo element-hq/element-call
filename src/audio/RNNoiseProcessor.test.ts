@@ -84,6 +84,66 @@ function getGeneratedWorkletCode(): string {
   );
 }
 
+type WorkletPresetConfig = {
+  maxAttenuationDb: number;
+  openThreshold: number;
+  closeThreshold: number;
+  holdFrames: number;
+  attenuateMs: number;
+  releaseMs: number;
+};
+
+function getPresetConfig(
+  workletCode: string,
+  preset: "conservative" | "balanced" | "strong",
+): WorkletPresetConfig {
+  const presetMatch = workletCode.match(
+    new RegExp(`${preset}:\\s*\\{([\\s\\S]*?)\\n\\s*\\},`),
+  );
+  if (!presetMatch) {
+    throw new Error(`Could not find ${preset} preset in worklet code.`);
+  }
+  const presetBlock = presetMatch[1];
+  const readNumber = (key: keyof WorkletPresetConfig): number => {
+    const keyMatch = presetBlock.match(new RegExp(`${key}:\\s*([0-9.]+)`));
+    if (!keyMatch) {
+      throw new Error(`Could not find ${key} in ${preset} preset.`);
+    }
+    return Number(keyMatch[1]);
+  };
+
+  return {
+    maxAttenuationDb: readNumber("maxAttenuationDb"),
+    openThreshold: readNumber("openThreshold"),
+    closeThreshold: readNumber("closeThreshold"),
+    holdFrames: readNumber("holdFrames"),
+    attenuateMs: readNumber("attenuateMs"),
+    releaseMs: readNumber("releaseMs"),
+  };
+}
+
+function expectedAttenuationDb(
+  config: WorkletPresetConfig,
+  vadProbability: number,
+): number {
+  if (vadProbability >= config.openThreshold) {
+    return 0;
+  }
+
+  const thresholdRange = config.openThreshold - config.closeThreshold;
+  const attenuationProgress =
+    thresholdRange > 0
+      ? Math.max(
+          0,
+          Math.min(
+            1,
+            (config.openThreshold - vadProbability) / thresholdRange,
+          ),
+        )
+      : 1;
+  return attenuationProgress * config.maxAttenuationDb;
+}
+
 function instantiateWorkletProcessor(workletCode: string): {
   process: (
     inputs: Float32Array[][],
@@ -380,5 +440,49 @@ describe("RNNoiseProcessor", () => {
     expect(output[1]).toBeCloseTo(0.2, 6);
     expect(output[2]).toBeCloseTo(0.2, 6);
     expect(output).toHaveLength(first.length);
+  });
+
+  it("keeps the balanced preset tuning unchanged", () => {
+    const balanced = getPresetConfig(getGeneratedWorkletCode(), "balanced");
+
+    expect(balanced).toEqual({
+      maxAttenuationDb: 8,
+      openThreshold: 0.9,
+      closeThreshold: 0.55,
+      holdFrames: 10,
+      attenuateMs: 90,
+      releaseMs: 22,
+    });
+  });
+
+  it("maps strong preset to a more aggressive profile than balanced", () => {
+    const workletCode = getGeneratedWorkletCode();
+    const balanced = getPresetConfig(workletCode, "balanced");
+    const strong = getPresetConfig(workletCode, "strong");
+
+    expect(strong.maxAttenuationDb).toBeGreaterThan(balanced.maxAttenuationDb);
+    expect(strong.openThreshold).toBeGreaterThanOrEqual(balanced.openThreshold);
+    expect(strong.closeThreshold).toBeGreaterThanOrEqual(
+      balanced.closeThreshold,
+    );
+    expect(strong.holdFrames).toBeLessThan(balanced.holdFrames);
+    expect(strong.attenuateMs).toBeLessThan(balanced.attenuateMs);
+  });
+
+  it("applies lower expected noise-floor gain on strong than balanced", () => {
+    const workletCode = getGeneratedWorkletCode();
+    const balanced = getPresetConfig(workletCode, "balanced");
+    const strong = getPresetConfig(workletCode, "strong");
+    const noiseLikeVadProbabilities = [0.2, 0.4, 0.6, 0.8];
+
+    for (const vad of noiseLikeVadProbabilities) {
+      expect(expectedAttenuationDb(strong, vad)).toBeGreaterThanOrEqual(
+        expectedAttenuationDb(balanced, vad),
+      );
+    }
+
+    const balancedSilenceGain = Math.pow(10, -balanced.maxAttenuationDb / 20);
+    const strongSilenceGain = Math.pow(10, -strong.maxAttenuationDb / 20);
+    expect(strongSilenceGain).toBeLessThan(balancedSilenceGain);
   });
 });

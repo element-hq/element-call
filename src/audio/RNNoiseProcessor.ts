@@ -92,11 +92,11 @@ const PRESETS = {
     releaseMs: 22,
   },
   strong: {
-    maxAttenuationDb: 12,
-    openThreshold: 0.88,
-    closeThreshold: 0.50,
-    holdFrames: 9,
-    attenuateMs: 70,
+    maxAttenuationDb: 16,
+    openThreshold: 0.90,
+    closeThreshold: 0.55,
+    holdFrames: 8,
+    attenuateMs: 55,
     releaseMs: 18,
   },
 };
