@@ -266,7 +266,7 @@ export const SpotlightTile: FC<Props> = ({
   const canGoBack = visibleIndex > 0;
   const canGoToNext = visibleIndex !== -1 && visibleIndex < media.length - 1;
   const currentMedia = media[visibleIndex];
-  // only "audioEnabled$" needs to checked but I wanted to be more specific just in
+  // only "audioEnabled$" needs to be checked but I wanted to be more specific just in
   // case more models are added in the future, since screen shares always have video
   const currentScreenShare =
     currentMedia &&
