@@ -255,8 +255,8 @@
     "expand": "Expand",
     "mute_for_me": "Mute for me",
     "muted_for_me": "Muted for me",
-    "volume": "Volume",
     "screen_share_volume": "Screen share volume",
+    "volume": "Volume",
     "waiting_for_media": "Waiting for media..."
   }
 }
