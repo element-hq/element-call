@@ -9,6 +9,7 @@ import { expect, onTestFinished, test, vi } from "vitest";
 import {
   type LocalTrackPublication,
   LocalVideoTrack,
+  Track,
   TrackEvent,
 } from "livekit-client";
 import { waitFor } from "@testing-library/dom";
@@ -21,6 +22,7 @@ import {
   mockRemoteMedia,
   withTestScheduler,
   mockRemoteParticipant,
+  mockRemoteScreenShare,
 } from "../../utils/test";
 import { constant } from "../Behavior";
 
@@ -77,6 +79,73 @@ test("control a participant's volume", () => {
         vm.togglePlaybackMuted();
         // The volume should return to the last non-zero committed volume
         expect(setVolumeSpy).toHaveBeenLastCalledWith(0.8);
+      },
+    });
+    expectObservable(vm.playbackVolume$).toBe("ab(cd)(ef)g", {
+      a: 1,
+      b: 0,
+      c: 0.6,
+      d: 0.8,
+      e: 0.2,
+      f: 0,
+      g: 0.8,
+    });
+  });
+});
+
+test("control a participant's screen share volume", () => {
+  const setVolumeSpy = vi.fn();
+  const vm = mockRemoteScreenShare(
+    rtcMembership,
+    {},
+    mockRemoteParticipant({ setVolume: setVolumeSpy }),
+  );
+  withTestScheduler(({ expectObservable, schedule }) => {
+    schedule("-ab---c---d|", {
+      a() {
+        // Try muting by toggling
+        vm.togglePlaybackMuted();
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(
+          0,
+          Track.Source.ScreenShareAudio,
+        );
+      },
+      b() {
+        // Try unmuting by dragging the slider back up
+        vm.adjustPlaybackVolume(0.6);
+        vm.adjustPlaybackVolume(0.8);
+        vm.commitPlaybackVolume();
+        expect(setVolumeSpy).toHaveBeenCalledWith(
+          0.6,
+          Track.Source.ScreenShareAudio,
+        );
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(
+          0.8,
+          Track.Source.ScreenShareAudio,
+        );
+      },
+      c() {
+        // Try muting by dragging the slider back down
+        vm.adjustPlaybackVolume(0.2);
+        vm.adjustPlaybackVolume(0);
+        vm.commitPlaybackVolume();
+        expect(setVolumeSpy).toHaveBeenCalledWith(
+          0.2,
+          Track.Source.ScreenShareAudio,
+        );
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(
+          0,
+          Track.Source.ScreenShareAudio,
+        );
+      },
+      d() {
+        // Try unmuting by toggling
+        vm.togglePlaybackMuted();
+        // The volume should return to the last non-zero committed volume
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(
+          0.8,
+          Track.Source.ScreenShareAudio,
+        );
       },
     });
     expectObservable(vm.playbackVolume$).toBe("ab(cd)(ef)g", {
