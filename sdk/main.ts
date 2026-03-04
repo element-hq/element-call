@@ -298,8 +298,10 @@ export async function createMatrixRTCSdk(
     void scheduleWidgetCloseOnLeave();
   });
 
-  logger.info("createMatrixRTCSdk done");
-
+  logger.info(
+    "createMatrixRTCSdk done (all listeners setup) -> sendContentLoaded",
+  );
+  await widget.api.sendContentLoaded();
   return {
     join: (): void => {
       // first lets try making the widget sticky
