@@ -266,34 +266,33 @@ export const SpotlightTile: FC<Props> = ({
   const canGoBack = visibleIndex > 0;
   const canGoToNext = visibleIndex !== -1 && visibleIndex < media.length - 1;
   const currentMedia = media[visibleIndex];
-  // isScreenShare only needs to check "audioEnabled$" but I wanted to be more specific
-  // just in case more models are added in the future, since screen shares always have video
-  const isScreenShare =
-    currentMedia != null &&
+  // only "audioEnabled$" needs to checked but I wanted to be more specific just in
+  // case more models are added in the future, since screen shares always have video
+  const currentScreenShare =
+    currentMedia &&
     "audioEnabled$" in currentMedia &&
-    "videoEnabled$" in currentMedia;
+    "videoEnabled$" in currentMedia
+      ? (currentMedia as RemoteScreenShareViewModel)
+      : null;
+
+  const isScreenShare = currentScreenShare != null;
 
   const hasAudio$ = useBehavior(
-    isScreenShare && (currentMedia as RemoteScreenShareViewModel).audioEnabled$
-      ? currentMedia.audioEnabled$
-      : constant(false),
+    currentScreenShare?.audioEnabled$ ?? constant(false),
   );
-  const isLocalScreenShare =
-    isScreenShare && (currentMedia as RemoteScreenShareViewModel)?.local;
+
+  const isLocalScreenShare = currentScreenShare?.local ?? false;
+
   const screenShareLocallyMuted = useBehavior(
-    isScreenShare &&
-      (currentMedia as RemoteScreenShareViewModel).playbackMuted$ != null
-      ? (currentMedia as RemoteScreenShareViewModel).playbackMuted$
-      : constant(false),
+    currentScreenShare?.playbackMuted$ ?? constant(false),
   );
+
   const ScreenShareVolumeIcon = screenShareLocallyMuted
     ? VolumeOffIcon
     : VolumeOnIcon;
+
   const screenShareVolume = useBehavior(
-    isScreenShare &&
-      (currentMedia as RemoteScreenShareViewModel).playbackVolume$ != null
-      ? (currentMedia as RemoteScreenShareViewModel).playbackVolume$
-      : constant(0),
+    currentScreenShare?.playbackVolume$ ?? constant(0),
   );
 
   const isFullscreen = useCallback((): boolean => {
