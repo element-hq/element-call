@@ -1271,7 +1271,7 @@ export function createCallViewModel$(
       switchMap((mode) => {
         switch (mode) {
           case "pip":
-            return of(false);
+            return of(true);
           case "normal":
           case "narrow":
             return of(true);

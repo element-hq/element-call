@@ -16,7 +16,8 @@ export function pipLayout(
   prevTiles: TileStore,
 ): [PipLayout, TileStore] {
   const update = prevTiles.from(0);
-  update.registerSpotlight(media.spotlight, true);
+  // Dont maximise in pip since we want the rounded corners and the footer
+  update.registerSpotlight(media.spotlight, false);
   const tiles = update.build();
   return [
     {
