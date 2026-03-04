@@ -269,16 +269,17 @@ export const SpotlightTile: FC<Props> = ({
   // isScreenShare only needs to check "audioEnabled$" but I wanted to be more specific
   // just in case more models are added in the future, since screen shares always have video
   const isScreenShare =
-    currentMedia &&
+    currentMedia != null &&
     "audioEnabled$" in currentMedia &&
     "videoEnabled$" in currentMedia;
 
   const hasAudio$ = useBehavior(
-    isScreenShare && currentMedia?.audioEnabled$
+    isScreenShare && (currentMedia as RemoteScreenShareViewModel).audioEnabled$
       ? currentMedia.audioEnabled$
       : constant(false),
   );
-  const isLocalScreenShare = isScreenShare && currentMedia.local;
+  const isLocalScreenShare =
+    isScreenShare && (currentMedia as RemoteScreenShareViewModel)?.local;
   const screenShareLocallyMuted = useBehavior(
     isScreenShare
       ? (currentMedia as RemoteScreenShareViewModel).playbackMuted$
