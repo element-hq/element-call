@@ -290,7 +290,7 @@ export const SpotlightTile: FC<Props> = ({
     ? VolumeOffIcon
     : VolumeOnIcon;
   const screenShareVolume = useBehavior(
-    isScreenShare
+    isScreenShare && (currentMedia as RemoteScreenShareViewModel).playbackVolume$ != null
       ? (currentMedia as RemoteScreenShareViewModel).playbackVolume$
       : constant(0),
   );
