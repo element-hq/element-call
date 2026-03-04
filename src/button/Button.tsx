@@ -23,6 +23,7 @@ import styles from "./Button.module.css";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
   muted: boolean;
+  size: "sm" | "lg";
 }
 
 export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
@@ -47,6 +48,7 @@ export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
 
 interface VideoButtonProps extends ComponentPropsWithoutRef<"button"> {
   muted: boolean;
+  size: "sm" | "lg";
 }
 
 export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
@@ -71,6 +73,7 @@ export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
 
 interface ShareScreenButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
+  size: "sm" | "lg";
 }
 
 export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
@@ -94,7 +97,11 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
   );
 };
 
-export const EndCallButton: FC<ComponentPropsWithoutRef<"button">> = ({
+interface EndCallButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size: "sm" | "lg";
+}
+
+export const EndCallButton: FC<EndCallButtonProps> = ({
   className,
   ...props
 }) => {
