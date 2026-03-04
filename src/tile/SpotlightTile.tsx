@@ -281,7 +281,8 @@ export const SpotlightTile: FC<Props> = ({
   const isLocalScreenShare =
     isScreenShare && (currentMedia as RemoteScreenShareViewModel)?.local;
   const screenShareLocallyMuted = useBehavior(
-    isScreenShare
+    isScreenShare &&
+      (currentMedia as RemoteScreenShareViewModel).playbackMuted$ != null
       ? (currentMedia as RemoteScreenShareViewModel).playbackMuted$
       : constant(false),
   );
