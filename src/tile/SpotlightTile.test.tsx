@@ -9,6 +9,7 @@ import { test, expect, vi } from "vitest";
 import { isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import userEvent from "@testing-library/user-event";
+import { TooltipProvider } from "@vector-im/compound-web";
 
 import { SpotlightTile } from "./SpotlightTile";
 import {
@@ -18,6 +19,7 @@ import {
   mockLocalMedia,
   mockRemoteMedia,
   mockRemoteParticipant,
+  mockRemoteScreenShare,
 } from "../utils/test";
 import { SpotlightTileViewModel } from "../state/TileViewModel";
 import { constant } from "../state/Behavior";
@@ -77,4 +79,95 @@ test("SpotlightTile is accessible", async () => {
   // Can toggle whether the tile is expanded
   await user.click(screen.getByRole("button", { name: "Expand" }));
   expect(toggleExpanded).toHaveBeenCalled();
+});
+
+test("Screen share volume UI is shown when screen share has audio", async () => {
+  const vm = mockRemoteScreenShare(
+    mockRtcMembership("@alice:example.org", "AAAA"),
+    {},
+    mockRemoteParticipant({}),
+  );
+
+  vi.spyOn(vm, "audioEnabled$", "get").mockReturnValue(constant(true));
+
+  const toggleExpanded = vi.fn();
+  const { container } = render(
+    <TooltipProvider>
+      <SpotlightTile
+        vm={new SpotlightTileViewModel(constant([vm]), constant(false))}
+        targetWidth={300}
+        targetHeight={200}
+        expanded={false}
+        onToggleExpanded={toggleExpanded}
+        showIndicators
+        focusable
+      />
+    </TooltipProvider>,
+  );
+
+  expect(await axe(container)).toHaveNoViolations();
+
+  // Volume menu button should exist
+  expect(screen.queryByRole("button", { name: /volume/i })).toBeInTheDocument();
+});
+
+test("Screen share volume UI is hidden when screen share has no audio", async () => {
+  const vm = mockRemoteScreenShare(
+    mockRtcMembership("@alice:example.org", "AAAA"),
+    {},
+    mockRemoteParticipant({}),
+  );
+
+  vi.spyOn(vm, "audioEnabled$", "get").mockReturnValue(constant(false));
+
+  const toggleExpanded = vi.fn();
+  const { container } = render(
+    <SpotlightTile
+      vm={new SpotlightTileViewModel(constant([vm]), constant(false))}
+      targetWidth={300}
+      targetHeight={200}
+      expanded={false}
+      onToggleExpanded={toggleExpanded}
+      showIndicators
+      focusable
+    />,
+  );
+
+  expect(await axe(container)).toHaveNoViolations();
+
+  // Volume menu button should not exist
+  expect(
+    screen.queryByRole("button", { name: /volume/i }),
+  ).not.toBeInTheDocument();
+});
+
+test("Screen share volume UI is hidden in grid mode", async () => {
+  const vm = mockRemoteScreenShare(
+    mockRtcMembership("@alice:example.org", "AAAA"),
+    {},
+    mockRemoteParticipant({}),
+  );
+
+  vi.spyOn(vm, "audioEnabled$", "get").mockReturnValue(constant(true));
+
+  const { container } = render(
+    <TooltipProvider>
+      <SpotlightTile
+        vm={new SpotlightTileViewModel(constant([vm]), constant(false))}
+        targetWidth={300}
+        targetHeight={200}
+        expanded={false}
+        onToggleExpanded={null} // Grid mode
+        showIndicators
+        focusable
+      />
+    </TooltipProvider>,
+  );
+
+  expect(await axe(container)).toHaveNoViolations();
+
+  // Volume menu button should not exist in grid mode
+  expect(
+    screen.queryByRole("button", { name: /volume/i }),
+  ).not.toBeInTheDocument();
 });
