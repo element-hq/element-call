@@ -108,6 +108,32 @@ Please see LICENSE in the repository root for full details.
   z-index: 1;
 }
 
+.volumeSlider {
+  width: 100%;
+}
+
+/* Disable the hover effect for the screen share volume menu button */
+.volumeMenuItem:hover {
+  background: transparent;
+  cursor: default;
+}
+
+.volumeMenuItem {
+  gap: var(--cpd-space-3x);
+}
+
+.menuMuteButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+}
+
+/* Make icons change color with the theme */
+.menuMuteButton > svg {
+  color: var(--cpd-color-icon-primary);
+}
+
 .expand > svg {
   display: block;
   color: var(--cpd-color-icon-primary);
