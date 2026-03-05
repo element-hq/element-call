@@ -689,7 +689,9 @@ export const createLocalMembership$ = ({
 
       if (advancedScreenShare.getValue()) {
         // User has advanced screen share settings enabled
-        const { width, height } = parseResolution(screenShareResolution.getValue());
+        const { width, height } = parseResolution(
+          screenShareResolution.getValue(),
+        );
         const fps = screenShareFramerate.getValue();
         const bps = screenShareBitrate.getValue();
         const codec = screenShareCodec.getValue();

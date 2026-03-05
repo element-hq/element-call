@@ -75,14 +75,15 @@ describe("buildLiveKitOptions", () => {
     });
   });
 
-  it("uses 720p screen share preset for low resolution", () => {
+  it("uses DEFAULT_CONFIG defaults when only resolution is set", () => {
     const opts = buildLiveKitOptions({
       screen_share: {
         max_resolution: 720,
       },
     });
+    // Bitrate and framerate fall back to DEFAULT_CONFIG, not the preset
     expect(opts.publishDefaults?.screenShareEncoding).toEqual({
-      maxBitrate: 2_000_000,
+      maxBitrate: 5_000_000,
       maxFramerate: 30,
     });
   });
@@ -155,11 +156,10 @@ describe("getLiveKitOptions", () => {
     expect(opts.publishDefaults?.videoCodec).toBe("h264");
   });
 
-  it("falls back to defaults when Config throws", () => {
+  it("throws when Config is not initialized", () => {
     vi.mocked(Config.get).mockImplementation(() => {
       throw new Error("Config not initialized");
     });
-    const opts = getLiveKitOptions();
-    expect(opts.publishDefaults?.videoCodec).toBe("vp8");
+    expect(() => getLiveKitOptions()).toThrow("Config not initialized");
   });
 });

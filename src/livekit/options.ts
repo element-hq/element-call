@@ -9,7 +9,6 @@ import {
   AudioPresets,
   DefaultReconnectPolicy,
   type RoomOptions,
-  ScreenSharePresets,
   type TrackPublishDefaults,
   type VideoPreset,
   VideoPresets,
@@ -17,7 +16,7 @@ import {
 } from "livekit-client";
 
 import { Config } from "../config/Config";
-import type { ConfigOptions } from "../config/ConfigOptions";
+import { DEFAULT_CONFIG, type ConfigOptions } from "../config/ConfigOptions";
 
 /**
  * Find the closest matching VideoPreset for a given height.
@@ -38,16 +37,15 @@ function videoPresetForHeight(height: number): VideoPreset {
 function buildPublishOptions(
   mediaQuality: ConfigOptions["media_quality"],
 ): TrackPublishDefaults {
+  const defaults = DEFAULT_CONFIG.media_quality;
   const videoConf = mediaQuality?.video;
   const screenConf = mediaQuality?.screen_share;
-  const codec = mediaQuality?.video_codec ?? "vp8";
+  const codec = mediaQuality?.video_codec ?? defaults.video_codec;
 
   // Camera video encoding
-  const videoHeight = videoConf?.max_resolution ?? 720;
-  const basePreset = videoPresetForHeight(videoHeight);
   const videoEncoding = {
-    maxBitrate: videoConf?.max_bitrate ?? basePreset.encoding.maxBitrate,
-    maxFramerate: videoConf?.max_framerate ?? basePreset.encoding.maxFramerate,
+    maxBitrate: videoConf?.max_bitrate ?? defaults.video.max_bitrate,
+    maxFramerate: videoConf?.max_framerate ?? defaults.video.max_framerate,
   };
 
   // Camera simulcast layers
@@ -59,7 +57,7 @@ function buildPublishOptions(
           Math.round((layer.height * 16) / 9),
           layer.height,
           layer.bitrate,
-          videoConf?.max_framerate ?? 30,
+          videoConf?.max_framerate ?? defaults.video.max_framerate,
         ),
     );
   } else {
@@ -67,15 +65,10 @@ function buildPublishOptions(
   }
 
   // Screen share encoding
-  const screenHeight = screenConf?.max_resolution ?? 1080;
-  const screenBasePreset =
-    screenHeight <= 720
-      ? ScreenSharePresets.h720fps30
-      : ScreenSharePresets.h1080fps30;
   const screenShareEncoding = {
-    maxBitrate: screenConf?.max_bitrate ?? screenBasePreset.encoding.maxBitrate,
+    maxBitrate: screenConf?.max_bitrate ?? defaults.screen_share.max_bitrate,
     maxFramerate:
-      screenConf?.max_framerate ?? screenBasePreset.encoding.maxFramerate,
+      screenConf?.max_framerate ?? defaults.screen_share.max_framerate,
   };
 
   // Screen share simulcast layers
@@ -122,7 +115,9 @@ function buildPublishOptions(
 export function buildLiveKitOptions(
   mediaQuality?: ConfigOptions["media_quality"],
 ): RoomOptions {
-  const videoHeight = mediaQuality?.video?.max_resolution ?? 720;
+  const videoHeight =
+    mediaQuality?.video?.max_resolution ??
+    DEFAULT_CONFIG.media_quality.video.max_resolution;
   const basePreset = videoPresetForHeight(videoHeight);
 
   return {
@@ -150,12 +145,8 @@ export function buildLiveKitOptions(
 
 /**
  * Get LiveKit options, reading from the loaded Config singleton.
- * Falls back to defaults if Config is not yet initialized.
+ * Requires Config.init() to have resolved first.
  */
 export function getLiveKitOptions(): RoomOptions {
-  try {
-    return buildLiveKitOptions(Config.get().media_quality);
-  } catch {
-    return buildLiveKitOptions();
-  }
+  return buildLiveKitOptions(Config.get().media_quality);
 }

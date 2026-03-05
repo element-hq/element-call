@@ -211,6 +211,24 @@ export interface ResolvedConfigOptions extends ConfigOptions {
     };
   };
   ssla: string;
+  media_quality: Required<
+    Pick<NonNullable<ConfigOptions["media_quality"]>, "video_codec">
+  > & {
+    video: Required<
+      Pick<
+        NonNullable<NonNullable<ConfigOptions["media_quality"]>["video"]>,
+        "max_resolution" | "max_bitrate" | "max_framerate"
+      >
+    >;
+    screen_share: Required<
+      Pick<
+        NonNullable<
+          NonNullable<ConfigOptions["media_quality"]>["screen_share"]
+        >,
+        "max_resolution" | "max_bitrate" | "max_framerate"
+      >
+    >;
+  };
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
@@ -224,4 +242,17 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
     feature_use_device_session_member_events: true,
   },
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
+  media_quality: {
+    video_codec: "vp8",
+    video: {
+      max_resolution: 720,
+      max_bitrate: 1_700_000,
+      max_framerate: 30,
+    },
+    screen_share: {
+      max_resolution: 1080,
+      max_bitrate: 5_000_000,
+      max_framerate: 30,
+    },
+  },
 };

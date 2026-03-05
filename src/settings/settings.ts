@@ -169,7 +169,10 @@ export type VideoCodec = "vp8" | "vp9" | "h264" | "av1";
 /**
  * Parse a "WIDTHxHEIGHT" resolution string into numeric width and height.
  */
-export function parseResolution(res: string): { width: number; height: number } {
+export function parseResolution(res: string): {
+  width: number;
+  height: number;
+} {
   const [w, h] = res.split("x").map(Number);
   return { width: w, height: h };
 }
@@ -209,10 +212,7 @@ export const cameraResolution = new Setting<string>(
 
 export const cameraFramerate = new Setting<number>("camera-framerate", 30);
 
-export const cameraBitrate = new Setting<number>(
-  "camera-bitrate",
-  1_700_000,
-);
+export const cameraBitrate = new Setting<number>("camera-bitrate", 1_700_000);
 
 export const cameraCodec = new Setting<VideoCodec>("camera-codec", "vp8");
 
@@ -238,19 +238,21 @@ export const autoGainControlSetting = new Setting<boolean>(
  * Only updates settings that the user hasn't explicitly set in localStorage.
  */
 export function seedSettingsFromConfig(
-  mediaQuality: {
-    video_codec?: VideoCodec;
-    video?: {
-      max_resolution?: number;
-      max_bitrate?: number;
-      max_framerate?: number;
-    };
-    screen_share?: {
-      max_resolution?: number;
-      max_bitrate?: number;
-      max_framerate?: number;
-    };
-  } | undefined,
+  mediaQuality:
+    | {
+        video_codec?: VideoCodec;
+        video?: {
+          max_resolution?: number;
+          max_bitrate?: number;
+          max_framerate?: number;
+        };
+        screen_share?: {
+          max_resolution?: number;
+          max_bitrate?: number;
+          max_framerate?: number;
+        };
+      }
+    | undefined,
 ): void {
   if (!mediaQuality) return;
 

@@ -77,7 +77,14 @@ export const Slider: FC<Props> = ({
         <Range className={styles.highlight} />
       </Track>
       {/* Note: This is expected not to be visible on mobile.*/}
-      <Tooltip placement="top" label={tooltipFormatter ? tooltipFormatter(value) : Math.round(value * 100).toString() + "%"}>
+      <Tooltip
+        placement="top"
+        label={
+          tooltipFormatter
+            ? tooltipFormatter(value)
+            : Math.round(value * 100).toString() + "%"
+        }
+      >
         <Thumb className={styles.handle} aria-label={label} />
       </Tooltip>
     </Root>
