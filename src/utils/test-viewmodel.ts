@@ -168,6 +168,7 @@ export function getBasicCallViewModelEnvironment(
     },
     handRaisedSubject$,
     reactionsSubject$,
+    new BehaviorSubject({}),
     constant({ processor: undefined, supported: false }),
   );
   return {

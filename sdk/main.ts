@@ -142,6 +142,7 @@ export async function createMatrixRTCSdk(
     { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } },
     of({}),
     of({}),
+    of({}),
     constant({ supported: false, processor: undefined }),
   );
   logger.info("CallViewModelCreated");

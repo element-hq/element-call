@@ -36,6 +36,7 @@ import LogoType from "../icons/LogoType.svg?react";
 import {
   EndCallButton,
   MicButton,
+  DeafenButton,
   VideoButton,
   ShareScreenButton,
   SettingsButton,
@@ -90,6 +91,11 @@ import {
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
+import { DeafenReader } from "../reactions/DeafenReader";
+import {
+  deafened$ as localDeafened$,
+  toggleDeafen,
+} from "../state/DeafenModel";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
@@ -133,6 +139,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     logger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
     const reactionsReader = new ReactionsReader(scope, props.rtcSession);
+    const deafenReader = new DeafenReader(scope, props.rtcSession);
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
       urlParams;
     const vm = createCallViewModel$(
@@ -149,6 +156,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       },
       reactionsReader.raisedHands$,
       reactionsReader.reactions$,
+      deafenReader.deafened$,
       scope.behavior(trackProcessorState$),
     );
     // TODO move this somewhere else once we use the callViewModel in the lobby as well!
@@ -203,8 +211,12 @@ export const InCallView: FC<InCallViewProps> = ({
   onShareClick,
 }) => {
   const { t } = useTranslation();
-  const { supportsReactions, sendReaction, toggleRaisedHand } =
-    useReactionsSender();
+  const {
+    supportsReactions,
+    sendReaction,
+    toggleRaisedHand,
+    toggleDeafened: broadcastToggleDeafened,
+  } = useReactionsSender();
 
   useWakeLock();
   // TODO-MULTI-SFU This is unused now??
@@ -248,15 +260,36 @@ export const InCallView: FC<InCallViewProps> = ({
   const toggleVideo = useBehavior(muteStates.video.toggle$);
   const setAudioEnabled = useBehavior(muteStates.audio.setEnabled$);
 
+  const deafened = useBehavior(localDeafened$);
+  const prevAudioEnabledRef = useRef(audioEnabled);
+
+  const handleToggleDeafen = useCallback(() => {
+    if (!deafened) {
+      // About to deafen: save current mic state, then mute mic
+      prevAudioEnabledRef.current = audioEnabled;
+      if (audioEnabled) {
+        setAudioEnabled?.(false);
+      }
+    } else {
+      // About to un-deafen: restore previous mic state
+      if (prevAudioEnabledRef.current) {
+        setAudioEnabled?.(true);
+      }
+    }
+    toggleDeafen();
+    void broadcastToggleDeafened();
+  }, [deafened, audioEnabled, setAudioEnabled, broadcastToggleDeafened]);
+
   // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
   // TODO: Make sure that this module is resilient when it comes to camera/microphone availability!
   useCallViewKeyboardShortcuts(
     containerRef1,
-    toggleAudio,
+    deafened ? null : toggleAudio,
     toggleVideo,
-    setAudioEnabled,
+    deafened ? null : setAudioEnabled,
     (reaction) => void sendReaction(reaction),
     () => void toggleRaisedHand(),
+    handleToggleDeafen,
   );
 
   const audioParticipants = useBehavior(vm.livekitRoomItems$);
@@ -665,11 +698,18 @@ export const InCallView: FC<InCallViewProps> = ({
   buttons.push(
     <MicButton
       key="audio"
-      muted={!audioEnabled}
-      onClick={toggleAudio ?? undefined}
+      muted={!audioEnabled || deafened}
+      onClick={deafened ? undefined : (toggleAudio ?? undefined)}
       onTouchEnd={onControlsTouchEnd}
-      disabled={toggleAudio === null}
+      disabled={toggleAudio === null || deafened}
       data-testid="incall_mute"
+    />,
+    <DeafenButton
+      key="deafen"
+      deafened={deafened}
+      onClick={handleToggleDeafen}
+      onTouchEnd={onControlsTouchEnd}
+      data-testid="incall_deafen"
     />,
     <VideoButton
       key="video"

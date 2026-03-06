@@ -34,6 +34,7 @@ export function useCallViewKeyboardShortcuts(
   setAudioEnabled: ((enabled: boolean) => void) | null,
   sendReaction: (reaction: ReactionOption) => void,
   toggleHandRaised: () => void,
+  toggleDeafen: () => void,
 ): void {
   const spacebarHeld = useRef(false);
 
@@ -65,6 +66,9 @@ export function useCallViewKeyboardShortcuts(
         } else if (event.key === "h") {
           event.preventDefault();
           toggleHandRaised();
+        } else if (event.key === "d") {
+          event.preventDefault();
+          toggleDeafen();
         } else if (KeyToReactionMap[event.key]) {
           event.preventDefault();
           sendReaction(KeyToReactionMap[event.key]);
@@ -77,6 +81,7 @@ export function useCallViewKeyboardShortcuts(
         setAudioEnabled,
         sendReaction,
         toggleHandRaised,
+        toggleDeafen,
       ],
     ),
     // Because this is set on the window, to prevent shortcuts from activating

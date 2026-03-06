@@ -43,6 +43,7 @@ const TestComponent: FC<TestComponentProps> = ({
     setAudioEnabled,
     sendReaction,
     toggleHandRaised,
+    () => {},
   );
   return (
     <div ref={ref}>

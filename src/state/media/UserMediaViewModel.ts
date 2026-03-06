@@ -54,6 +54,7 @@ export interface BaseUserMediaViewModel extends MemberMediaViewModel {
   rtcBackendIdentity: string;
   handRaised$: Behavior<Date | null>;
   reaction$: Behavior<ReactionOption | null>;
+  deafened$: Behavior<boolean>;
   audioStreamStats$: Observable<
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >;
@@ -69,6 +70,7 @@ export interface BaseUserMediaInputs extends Omit<
   rtcBackendIdentity: string;
   handRaised$: Behavior<Date | null>;
   reaction$: Behavior<ReactionOption | null>;
+  deafened$: Behavior<boolean>;
   statsType: "inbound-rtp" | "outbound-rtp";
 }
 
@@ -78,6 +80,7 @@ export function createBaseUserMedia(
     rtcBackendIdentity,
     handRaised$,
     reaction$,
+    deafened$,
     statsType,
     ...inputs
   }: BaseUserMediaInputs,
@@ -120,6 +123,7 @@ export function createBaseUserMedia(
     rtcBackendIdentity,
     handRaised$,
     reaction$,
+    deafened$,
     audioStreamStats$: combineLatest([
       participant$,
       showConnectionStats.value$,

@@ -61,6 +61,7 @@
     "username": "Username",
     "video": "Video"
   },
+  "deafen_button_label": "Deafen",
   "developer_mode": {
     "always_show_iphone_earpiece": "Show iPhone earpiece option on all platforms",
     "crypto_version": "Crypto version: {{version}}",
@@ -245,6 +246,7 @@
   "unauthenticated_view_body": "Not registered yet? <2>Create an account</2>",
   "unauthenticated_view_login_button": "Login to your account",
   "unauthenticated_view_ssla_caption": "By clicking \"Go\", you agree to our <2>Software and Services License Agreement (SSLA)</2>",
+  "undeafen_button_label": "Undeafen",
   "unmute_microphone_button_label": "Unmute microphone",
   "version": "{{productName}} version: {{version}}",
   "video_tile": {
@@ -252,6 +254,7 @@
     "camera_starting": "Video loading...",
     "change_fit_contain": "Fit to frame",
     "collapse": "Collapse",
+    "deafened": "Deafened",
     "expand": "Expand",
     "mute_for_me": "Mute for me",
     "muted_for_me": "Muted for me",

@@ -72,6 +72,7 @@ import { oneOnOneLayout } from "../OneOnOneLayout";
 import { pipLayout } from "../PipLayout";
 import { type EncryptionSystem } from "../../e2ee/sharedKeyManagement";
 import {
+  type DeafenedInfo,
   type RaisedHandInfo,
   type ReactionInfo,
   type ReactionOption,
@@ -286,6 +287,8 @@ export interface CallViewModel {
   localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null>;
   /** List of participants raising their hand */
   handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
+  /** List of deafened participants */
+  deafened$: Behavior<Record<string, DeafenedInfo>>;
   /** List of reactions. Keys are: membership.membershipId (currently predefined as: `${membershipEvent.userId}:${membershipEvent.deviceId}`)*/
   reactions$: Behavior<Record<string, ReactionOption>>;
 
@@ -391,6 +394,7 @@ export function createCallViewModel$(
   options: CallViewModelOptions,
   handsRaisedSubject$: Observable<Record<string, RaisedHandInfo>>,
   reactionsSubject$: Observable<Record<string, ReactionInfo>>,
+  deafenedSubject$: Observable<Record<string, DeafenedInfo>>,
   trackProcessorState$: Behavior<ProcessorState>,
 ): CallViewModel {
   const client = matrixRoom.client;
@@ -697,6 +701,10 @@ export function createCallViewModel$(
     handsRaisedSubject$.pipe(pauseWhen(localMembership.reconnecting$)),
   );
 
+  const deafened$ = scope.behavior(
+    deafenedSubject$.pipe(pauseWhen(localMembership.reconnecting$)),
+  );
+
   const reactions$ = scope.behavior(
     reactionsSubject$.pipe(
       map((v) =>
@@ -787,6 +795,9 @@ export function createCallViewModel$(
             ),
             reaction$: scope.behavior(
               reactions$.pipe(map((v) => v[mediaId] ?? undefined)),
+            ),
+            deafened$: scope.behavior(
+              deafened$.pipe(map((v) => v[mediaId] !== undefined)),
             ),
           }),
       ),
@@ -1514,6 +1525,7 @@ export function createCallViewModel$(
     allConnections$,
     participantCount$: participantCount$,
     handsRaised$: handsRaised$,
+    deafened$: deafened$,
     reactions$: reactions$,
     joinSoundEffect$: joinSoundEffect$,
     leaveSoundEffect$: leaveSoundEffect$,

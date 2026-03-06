@@ -10,13 +10,19 @@ import { combineLatest, startWith } from "rxjs";
 import { setAudioEnabled$ } from "../controls";
 import { muteAllAudio as muteAllAudioSetting } from "../settings/settings";
 import { globalScope } from "./ObservableScope";
+import { deafened$ } from "./DeafenModel";
 
 /**
  * This can transition into sth more complete: `GroupCallViewModel.ts`
  */
 export const muteAllAudio$ = globalScope.behavior(
   combineLatest(
-    [setAudioEnabled$.pipe(startWith(true)), muteAllAudioSetting.value$],
-    (outputEnabled, settingsMute) => !outputEnabled || settingsMute,
+    [
+      setAudioEnabled$.pipe(startWith(true)),
+      muteAllAudioSetting.value$,
+      deafened$,
+    ],
+    (outputEnabled, settingsMute, deafened) =>
+      !outputEnabled || settingsMute || deafened,
   ),
 );

@@ -60,6 +60,7 @@ test("GridTile is accessible", async () => {
   const cVm = {
     reactions$: constant({}),
     handsRaised$: constant({}),
+    deafened$: constant({}),
   } as Partial<CallViewModel> as CallViewModel;
   const { container } = render(
     <ReactionsSenderProvider vm={cVm} rtcSession={fakeRtcSession}>
