@@ -5,10 +5,25 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactNode, useEffect, useState } from "react";
+import {
+  type ChangeEvent,
+  type FC,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
-import { Button, Root as Form, Separator } from "@vector-im/compound-web";
+import {
+  Button,
+  InlineField,
+  Label,
+  RadioControl,
+  Root as Form,
+  Separator,
+} from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
 
 import { Modal } from "../Modal";
@@ -24,6 +39,8 @@ import {
   soundEffectVolume as soundEffectVolumeSetting,
   backgroundBlur as backgroundBlurSetting,
   developerMode,
+  screenShareAudioProfile as screenShareAudioProfileSetting,
+  ScreenShareAudioProfile,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
@@ -38,6 +55,7 @@ import { useBehavior } from "../useBehavior";
 type SettingsTab =
   | "audio"
   | "video"
+  | "screen_share"
   | "profile"
   | "preferences"
   | "feedback"
@@ -107,6 +125,17 @@ export const SettingsModal: FC<Props> = ({
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
   const [showDeveloperSettingsTab] = useSetting(developerMode);
 
+  const [screenShareAudioProfile, setScreenShareAudioProfile] = useSetting(
+    screenShareAudioProfileSetting,
+  );
+  const screenShareAudioProfileRadioGroup = useId();
+  const onScreenShareAudioProfileChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setScreenShareAudioProfile(e.target.value as ScreenShareAudioProfile);
+    },
+    [setScreenShareAudioProfile],
+  );
+
   const { available: isRageshakeAvailable } = useSubmitRageshake();
 
   // For controlled devices, we will not show the input section:
@@ -169,6 +198,85 @@ export const SettingsModal: FC<Props> = ({
     ),
   };
 
+  const screenShareTab: Tab<SettingsTab> = {
+    key: "screen_share",
+    name: t("settings.screen_share_tab_title"),
+    content: (
+      <>
+        <h4>{t("settings.screen_share_tab.audio_profile_heading")}</h4>
+        <Form>
+          <InlineField
+            name={screenShareAudioProfileRadioGroup}
+            control={
+              <RadioControl
+                checked={
+                  screenShareAudioProfile === ScreenShareAudioProfile.Music
+                }
+                value={ScreenShareAudioProfile.Music}
+                onChange={onScreenShareAudioProfileChange}
+              />
+            }
+          >
+            <Label>{t("settings.screen_share_tab.audio_profile_music")}</Label>
+          </InlineField>
+          <InlineField
+            name={screenShareAudioProfileRadioGroup}
+            control={
+              <RadioControl
+                checked={
+                  screenShareAudioProfile ===
+                  ScreenShareAudioProfile.MusicStereo
+                }
+                value={ScreenShareAudioProfile.MusicStereo}
+                onChange={onScreenShareAudioProfileChange}
+              />
+            }
+          >
+            <Label>
+              {t("settings.screen_share_tab.audio_profile_music_stereo")}
+            </Label>
+          </InlineField>
+          <InlineField
+            name={screenShareAudioProfileRadioGroup}
+            control={
+              <RadioControl
+                checked={
+                  screenShareAudioProfile ===
+                  ScreenShareAudioProfile.MusicHighQuality
+                }
+                value={ScreenShareAudioProfile.MusicHighQuality}
+                onChange={onScreenShareAudioProfileChange}
+              />
+            }
+          >
+            <Label>
+              {t("settings.screen_share_tab.audio_profile_music_high_quality")}
+            </Label>
+          </InlineField>
+          <InlineField
+            name={screenShareAudioProfileRadioGroup}
+            control={
+              <RadioControl
+                checked={
+                  screenShareAudioProfile ===
+                  ScreenShareAudioProfile.MusicHighQualityStereo
+                }
+                value={ScreenShareAudioProfile.MusicHighQualityStereo}
+                onChange={onScreenShareAudioProfileChange}
+              />
+            }
+          >
+            <Label>
+              {t(
+                "settings.screen_share_tab.audio_profile_music_high_quality_stereo",
+              )}
+            </Label>
+          </InlineField>
+        </Form>
+      </>
+    ),
+  };
+
   const videoTab: Tab<SettingsTab> = {
     key: "video",
     name: t("common.video"),
@@ -217,7 +325,7 @@ export const SettingsModal: FC<Props> = ({
     ),
   };
 
-  const tabs = [audioTab, videoTab];
+  const tabs = [audioTab, videoTab, screenShareTab];
   if (widget === null) tabs.push(profileTab);
   tabs.push(preferencesTab);
   if (isRageshakeAvailable || import.meta.env.VITE_PACKAGE === "full") {

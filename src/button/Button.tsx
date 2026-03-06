@@ -17,6 +17,7 @@ import {
   EndCallIcon,
   ShareScreenSolidIcon,
   SettingsSolidIcon,
+  VisibilityOnIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
@@ -125,6 +126,33 @@ export const SettingsButton: FC<ComponentPropsWithoutRef<"button">> = (
         iconOnly
         Icon={SettingsSolidIcon}
         kind="secondary"
+        {...props}
+      />
+    </Tooltip>
+  );
+};
+
+interface ScreenShareViewButtonProps extends ComponentPropsWithoutRef<"button"> {
+  count: number;
+  open: boolean;
+}
+
+export const ScreenShareViewButton: FC<ScreenShareViewButtonProps> = ({
+  count,
+  open,
+  ...props
+}) => {
+  const { t } = useTranslation();
+  const label = t("screenshare_preview_button_label");
+
+  return (
+    <Tooltip label={label}>
+      <CpdButton
+        iconOnly
+        aria-label={`${label} (${count})`}
+        aria-expanded={open}
+        Icon={VisibilityOnIcon}
+        kind={open ? "primary" : "secondary"}
         {...props}
       />
     </Tooltip>

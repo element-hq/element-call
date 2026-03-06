@@ -40,6 +40,7 @@ import {
   ShareScreenButton,
   SettingsButton,
   ReactionToggleButton,
+  ScreenShareViewButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { type HeaderStyle, useUrlParams } from "../UrlParams";
@@ -107,6 +108,8 @@ import ringtoneOgg from "../sound/ringtone.ogg?url";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
+import { ScreenSharePreviewPanel } from "./ScreenSharePreviewPanel.tsx";
+import { Modal } from "../Modal.tsx";
 
 const logger = rootLogger.getChild("[InCallView]");
 
@@ -272,6 +275,10 @@ export const InCallView: FC<InCallViewProps> = ({
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
+  const allScreenShares = useBehavior(vm.screenShares$);
+  const acceptedScreenShareIds = useBehavior(vm.acceptedScreenShareIds$);
+  const remoteScreenShareCount = allScreenShares.filter((s) => !s.local).length;
+  const [screenSharePanelOpen, setScreenSharePanelOpen] = useState(false);
 
   const ringOverlay = useBehavior(vm.ringOverlay$);
   const fatalCallError = useBehavior(vm.fatalError$);
@@ -571,6 +578,7 @@ export const InCallView: FC<InCallViewProps> = ({
             vm={model}
             expanded={spotlightExpanded}
             onToggleExpanded={onToggleExpanded}
+            onDismissScreenShare={(id) => vm.dismissScreenShare(id)}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
             showIndicators={showSpotlightIndicatorsValue}
@@ -692,6 +700,17 @@ export const InCallView: FC<InCallViewProps> = ({
       />,
     );
   }
+  if (remoteScreenShareCount > 0) {
+    buttons.push(
+      <ScreenShareViewButton
+        key="screen_share_view"
+        count={remoteScreenShareCount}
+        open={screenSharePanelOpen}
+        onClick={() => setScreenSharePanelOpen((prev) => !prev)}
+        onTouchEnd={onControlsTouchEnd}
+      />,
+    );
+  }
   if (supportsReactions) {
     buttons.push(
       <ReactionToggleButton
@@ -789,6 +808,18 @@ export const InCallView: FC<InCallViewProps> = ({
       {footer}
       {layout.type !== "pip" && (
         <>
+          <Modal
+            open={screenSharePanelOpen}
+            title={t("screenshare_preview_panel_title")}
+            onDismiss={() => setScreenSharePanelOpen(false)}
+          >
+            <ScreenSharePreviewPanel
+              screenShares={allScreenShares}
+              acceptedIds={acceptedScreenShareIds}
+              onAccept={(id) => vm.acceptScreenShare(id)}
+              onDismiss={(id) => vm.dismissScreenShare(id)}
+            />
+          </Modal>
           <RageshakeRequestModal {...rageshakeRequestModalProps} />
           <SettingsModal
             client={client}

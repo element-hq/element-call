@@ -12,6 +12,7 @@ import {
   type ScreenShareCaptureOptions,
   RoomEvent,
   MediaDeviceFailure,
+  AudioPresets,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
@@ -53,7 +54,11 @@ import {
 import { ElementWidgetActions, widget } from "../../../widget.ts";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
-import { MatrixRTCMode } from "../../../settings/settings.ts";
+import {
+  MatrixRTCMode,
+  screenShareAudioProfile,
+  ScreenShareAudioProfile,
+} from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import {
   ConnectionState,
@@ -637,12 +642,35 @@ export const createLocalMembership$ = ({
     !getUrlParams().hideScreensharing
   ) {
     toggleScreenSharing = (): void => {
+      const profile = screenShareAudioProfile.getValue();
+      const stereo =
+        profile === ScreenShareAudioProfile.MusicStereo ||
+        profile === ScreenShareAudioProfile.MusicHighQualityStereo;
+
       const screenshareSettings: ScreenShareCaptureOptions = {
-        audio: true,
+        audio: {
+          autoGainControl: false,
+          echoCancellation: false,
+          noiseSuppression: false,
+          channelCount: stereo ? 2 : 1,
+        },
         selfBrowserSurface: "include",
         surfaceSwitching: "include",
         systemAudio: "include",
       };
+
+      const profileMap = {
+        [ScreenShareAudioProfile.Music]: AudioPresets.music,
+        [ScreenShareAudioProfile.MusicStereo]: AudioPresets.musicStereo,
+        [ScreenShareAudioProfile.MusicHighQuality]:
+          AudioPresets.musicHighQuality,
+        [ScreenShareAudioProfile.MusicHighQualityStereo]:
+          AudioPresets.musicHighQualityStereo,
+      };
+      const audioPreset =
+        profileMap[screenShareAudioProfile.getValue()] ??
+        AudioPresets.musicHighQuality;
+
       const targetScreenshareState = !sharingScreen$.value;
       logger.info(
         `toggleScreenSharing called. Switching ${
@@ -658,7 +686,10 @@ export const createLocalMembership$ = ({
       // is still initializing or publishing tracks, because there's no
       // technical reason to disallow this. LiveKit will publish if it can.
       participant$.value
-        ?.setScreenShareEnabled(targetScreenshareState, screenshareSettings)
+        ?.setScreenShareEnabled(targetScreenshareState, screenshareSettings, {
+          audioPreset,
+          forceStereo: stereo,
+        })
         .catch(logger.error);
     };
   }
