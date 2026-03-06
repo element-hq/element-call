@@ -22,6 +22,8 @@ import {
   ChevronRightIcon,
   VolumeOffIcon,
   VolumeOnIcon,
+  VolumeOffSolidIcon,
+  VolumeOnSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
 import { type Observable, map } from "rxjs";
@@ -49,7 +51,7 @@ import { type ScreenShareViewModel } from "../state/media/ScreenShareViewModel";
 import { type RemoteScreenShareViewModel } from "../state/media/RemoteScreenShareViewModel";
 import { type MediaViewModel } from "../state/media/MediaViewModel";
 import { Slider } from "../Slider";
-import { constant } from "../state/Behavior";
+import { platform } from "../Platform";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
@@ -229,6 +231,73 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
 
 SpotlightItem.displayName = "SpotlightItem";
 
+interface ScreenShareVolumeButtonProps {
+  vm: RemoteScreenShareViewModel;
+}
+
+const ScreenShareVolumeButton: FC<ScreenShareVolumeButtonProps> = ({ vm }) => {
+  const { t } = useTranslation();
+
+  const audioEnabled = useBehavior(vm.audioEnabled$);
+  const playbackMuted = useBehavior(vm.playbackMuted$);
+  const playbackVolume = useBehavior(vm.playbackVolume$);
+
+  const VolumeIcon = playbackMuted ? VolumeOffIcon : VolumeOnIcon;
+  const VolumeSolidIcon = playbackMuted
+    ? VolumeOffSolidIcon
+    : VolumeOnSolidIcon;
+
+  const [volumeMenuOpen, setVolumeMenuOpen] = useState(false);
+  const onMuteButtonClick = useCallback(() => vm.togglePlaybackMuted(), [vm]);
+  const onVolumeChange = useCallback(
+    (v: number) => vm.adjustPlaybackVolume(v),
+    [vm],
+  );
+  const onVolumeCommit = useCallback(() => vm.commitPlaybackVolume(), [vm]);
+
+  return (
+    audioEnabled && (
+      <Menu
+        open={volumeMenuOpen}
+        onOpenChange={setVolumeMenuOpen}
+        title={t("video_tile.screen_share_volume")}
+        side="top"
+        align="end"
+        trigger={
+          <button
+            className={styles.expand}
+            aria-label={t("video_tile.screen_share_volume")}
+          >
+            <VolumeSolidIcon aria-hidden width={20} height={20} />
+          </button>
+        }
+      >
+        <MenuItem
+          as="div"
+          className={styles.volumeMenuItem}
+          onSelect={null}
+          label={null}
+          hideChevron={true}
+        >
+          <button className={styles.menuMuteButton} onClick={onMuteButtonClick}>
+            <VolumeIcon aria-hidden width={24} height={24} />
+          </button>
+          <Slider
+            className={styles.volumeSlider}
+            label={t("video_tile.volume")}
+            value={playbackVolume}
+            min={0}
+            max={1}
+            step={0.01}
+            onValueChange={onVolumeChange}
+            onValueCommit={onVolumeCommit}
+          />
+        </MenuItem>
+      </Menu>
+    )
+  );
+};
+
 interface Props {
   ref?: Ref<HTMLDivElement>;
   vm: SpotlightTileViewModel;
@@ -263,37 +332,9 @@ export const SpotlightTile: FC<Props> = ({
   const latestMedia = useLatest(media);
   const latestVisibleId = useLatest(visibleId);
   const visibleIndex = media.findIndex((vm) => vm.id === visibleId);
+  const visibleMedia = media.at(visibleIndex);
   const canGoBack = visibleIndex > 0;
   const canGoToNext = visibleIndex !== -1 && visibleIndex < media.length - 1;
-  const currentMedia = media[visibleIndex];
-  // only "audioEnabled$" needs to be checked but I wanted to be more specific just in
-  // case more models are added in the future, since screen shares always have video
-  const currentScreenShare =
-    currentMedia &&
-    "audioEnabled$" in currentMedia &&
-    "videoEnabled$" in currentMedia
-      ? (currentMedia as RemoteScreenShareViewModel)
-      : null;
-
-  const isScreenShare = currentScreenShare != null;
-
-  const hasAudio$ = useBehavior(
-    currentScreenShare?.audioEnabled$ ?? constant(false),
-  );
-
-  const isLocalScreenShare = currentScreenShare?.local ?? false;
-
-  const screenShareLocallyMuted = useBehavior(
-    currentScreenShare?.playbackMuted$ ?? constant(false),
-  );
-
-  const ScreenShareVolumeIcon = screenShareLocallyMuted
-    ? VolumeOffIcon
-    : VolumeOnIcon;
-
-  const screenShareVolume = useBehavior(
-    currentScreenShare?.playbackVolume$ ?? constant(0),
-  );
 
   const isFullscreen = useCallback((): boolean => {
     const rootElement = document.body;
@@ -362,7 +403,6 @@ export const SpotlightTile: FC<Props> = ({
   }, [latestVisibleId, latestMedia, setScrollToId]);
 
   const ToggleExpandIcon = expanded ? CollapseIcon : ExpandIcon;
-  const [openVolumeMenu, setOpenVolumeMenu] = useState(false);
 
   return (
     <animated.div
@@ -400,77 +440,21 @@ export const SpotlightTile: FC<Props> = ({
           />
         ))}
       </div>
-      <div className={styles.bottomRightButtons}>
-        {/*
-          Show volume slider only when the tile is a screenshare, has audio,
-          is in spotlight mode, and isn't your own screen share.
-        */}
-        {isScreenShare &&
-          hasAudio$ &&
-          onToggleExpanded &&
-          !isLocalScreenShare && (
-            <Menu
-              open={openVolumeMenu}
-              onOpenChange={setOpenVolumeMenu}
-              title={t("video_tile.screen_share_volume")}
-              side="top"
-              align="end"
-              trigger={
-                <button
-                  className={classNames(styles.expand)}
-                  aria-label={t("video_tile.screen_share_volume")}
-                >
-                  <ScreenShareVolumeIcon aria-hidden width={20} height={20} />
-                </button>
-              }
-            >
-              <MenuItem
-                as="div"
-                className={styles.volumeMenuItem}
-                onSelect={null}
-                label={null}
-                hideChevron={true}
-              >
-                <button
-                  className={styles.menuMuteButton}
-                  onClick={() => {
-                    (
-                      currentMedia as RemoteScreenShareViewModel
-                    ).togglePlaybackMuted();
-                  }}
-                >
-                  <ScreenShareVolumeIcon aria-hidden width={24} height={24} />
-                </button>
-                <Slider
-                  className={styles.volumeSlider}
-                  label={t("video_tile.volume")}
-                  value={screenShareVolume}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  onValueChange={(v) =>
-                    (
-                      currentMedia as RemoteScreenShareViewModel
-                    ).adjustPlaybackVolume(v)
-                  }
-                  onValueCommit={() =>
-                    (
-                      currentMedia as RemoteScreenShareViewModel
-                    ).commitPlaybackVolume()
-                  }
-                />
-              </MenuItem>
-            </Menu>
-          )}
-        <button
-          className={classNames(styles.expand)}
-          aria-label={"maximise"}
-          onClick={onToggleFullscreen}
-          tabIndex={focusable ? undefined : -1}
-        >
-          <FullScreenIcon aria-hidden width={20} height={20} />
-        </button>
 
+      <div className={styles.bottomRightButtons}>
+        {visibleMedia?.type === "screen share" && !visibleMedia.local && (
+          <ScreenShareVolumeButton vm={visibleMedia} />
+        )}
+        {platform === "desktop" && (
+          <button
+            className={classNames(styles.expand)}
+            aria-label={"maximise"}
+            onClick={onToggleFullscreen}
+            tabIndex={focusable ? undefined : -1}
+          >
+            <FullScreenIcon aria-hidden width={20} height={20} />
+          </button>
+        )}
         {onToggleExpanded && (
           <button
             className={classNames(styles.expand)}
