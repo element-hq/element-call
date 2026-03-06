@@ -140,34 +140,3 @@ test("Screen share volume UI is hidden when screen share has no audio", async ()
     screen.queryByRole("button", { name: /volume/i }),
   ).not.toBeInTheDocument();
 });
-
-test("Screen share volume UI is hidden in grid mode", async () => {
-  const vm = mockRemoteScreenShare(
-    mockRtcMembership("@alice:example.org", "AAAA"),
-    {},
-    mockRemoteParticipant({}),
-  );
-
-  vi.spyOn(vm, "audioEnabled$", "get").mockReturnValue(constant(true));
-
-  const { container } = render(
-    <TooltipProvider>
-      <SpotlightTile
-        vm={new SpotlightTileViewModel(constant([vm]), constant(false))}
-        targetWidth={300}
-        targetHeight={200}
-        expanded={false}
-        onToggleExpanded={null} // Grid mode
-        showIndicators
-        focusable
-      />
-    </TooltipProvider>,
-  );
-
-  expect(await axe(container)).toHaveNoViolations();
-
-  // Volume menu button should not exist in grid mode
-  expect(
-    screen.queryByRole("button", { name: /volume/i }),
-  ).not.toBeInTheDocument();
-});

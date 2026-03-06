@@ -26,6 +26,9 @@ export interface RemoteScreenShareViewModel
    * Whether this screen share's video should be displayed.
    */
   videoEnabled$: Behavior<boolean>;
+  /**
+   * Whether this screen share should be considered to have an audio track.
+   */
   audioEnabled$: Behavior<boolean>;
 }
 
