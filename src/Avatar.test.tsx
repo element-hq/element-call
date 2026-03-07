@@ -15,8 +15,12 @@ import { Avatar } from "./Avatar";
 import { mockMatrixRoomMember, mockRtcMembership } from "./utils/test";
 
 const TestComponent: FC<
-  PropsWithChildren<{ client: MatrixClient; supportsThumbnails?: boolean }>
-> = ({ client, children, supportsThumbnails }) => {
+  PropsWithChildren<{
+    client: MatrixClient;
+    supportsThumbnails?: boolean;
+    mediaProxy?: boolean;
+  }>
+> = ({ client, children, supportsThumbnails, mediaProxy }) => {
   return (
     <ClientContextProvider
       value={{
@@ -25,6 +29,7 @@ const TestComponent: FC<
         supportedFeatures: {
           reactions: true,
           thumbnails: supportsThumbnails ?? true,
+          mediaProxy: mediaProxy ?? false,
         },
         setClient: vi.fn(),
         authenticated: {

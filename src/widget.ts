@@ -93,6 +93,14 @@ export const initializeWidget = (
       logger.info("Widget API is available");
       const api = new WidgetApi(widgetId, parentOrigin);
       api.requestCapability(MatrixCapabilities.AlwaysOnScreen);
+      // asks if it wants thumbnails at all. if this
+      // is on but media proxy isn't,
+      // will try on the unathenticated media endpoint for them
+      api.requestCapability("moe.sable.thumbnails");
+      // asks if it can support authenticated thumbnails via proxy
+      // this will enable thumbnails automatically for now
+      // as that's the only thing this would be used for anyway
+      api.requestCapability("moe.sable.media_proxy");
 
       // Set up the lazy action emitter, but only for select actions that we
       // intend for the app to handle

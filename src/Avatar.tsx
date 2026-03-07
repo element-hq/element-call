@@ -46,6 +46,7 @@ export function getAvatarUrl(
   client: MatrixClient,
   mxcUrl: string | null,
   avatarSize = 96,
+  useAuthentication = true,
 ): string | null {
   const width = Math.floor(avatarSize * window.devicePixelRatio);
   const height = Math.floor(avatarSize * window.devicePixelRatio);
@@ -59,7 +60,7 @@ export function getAvatarUrl(
         resizeMethod,
         false,
         true,
-        true,
+        useAuthentication,
       )
     : null;
 }
@@ -97,21 +98,22 @@ export const Avatar: FC<Props> = ({
     }
 
     const token = client.getAccessToken();
-    if (!token) {
-      return;
-    }
-    const resolveSrc = getAvatarUrl(client, src, sizePx);
+    const useAuth = token != null || supportedFeatures.mediaProxy;
+    // if we have no auth, try to use old deprecated endpoint
+    const resolveSrc = getAvatarUrl(client, src, sizePx, useAuth);
     if (!resolveSrc) {
       setAvatarUrl(undefined);
       return;
     }
 
     let objectUrl: string | undefined;
-    fetch(resolveSrc, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    // attach token if we have one already.
+    // otherwise, we are using the unauthenticated endpoint
+    // or we are counting on the host to add it in
+    const fetchOpts: RequestInit = token
+      ? { headers: { Authorization: `Bearer ${token}` } }
+      : {};
+    fetch(resolveSrc, fetchOpts)
       .then(async (req) => req.blob())
       .then((blob) => {
         objectUrl = URL.createObjectURL(blob);
