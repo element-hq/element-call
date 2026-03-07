@@ -227,6 +227,11 @@ export const autoGainControlSetting = new Setting<boolean>(
   true,
 );
 
+export const allowPipSetting = new Setting<boolean>(
+  "allow-pip",
+  false
+);
+
 /**
  * Seed setting defaults from config.json's media_quality section.
  * Call this after Config.init() has resolved.

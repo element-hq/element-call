@@ -25,6 +25,7 @@ import {
   soundEffectVolume as soundEffectVolumeSetting,
   backgroundBlur as backgroundBlurSetting,
   developerMode,
+  allowPipSetting,
   advancedScreenShare as advancedScreenShareSetting,
   screenShareResolution as screenShareResolutionSetting,
   screenShareFramerate as screenShareFramerateSetting,
@@ -298,6 +299,28 @@ export const SettingsModal: FC<Props> = ({
     );
   };
 
+  const PipSetting: React.FC = (): ReactNode => {
+    const [allowPip, setAllowPip] = useSetting(allowPipSetting);
+
+    return (
+      <>
+        <FieldRow>
+          <InputField
+            id="allowPip"
+            label={t(
+              "settings.allow_pip_label",
+              "Allow Browser Picture In Picture",
+            )}
+            type="checkbox"
+            checked={allowPip}
+            onChange={(e): void => setAllowPip(e.target.checked)}
+          />
+        </FieldRow>
+      </>
+    );
+  };
+
+
   const devices = useMediaDevices();
   useEffect(() => {
     if (open) devices.requestDeviceNames();
@@ -382,6 +405,7 @@ export const SettingsModal: FC<Props> = ({
     name: t("common.video"),
     content: (
       <>
+        <PipSetting />
         <Form>
           <DeviceSelection
             device={devices.videoInput}
