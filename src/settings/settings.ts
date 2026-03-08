@@ -145,3 +145,8 @@ export const customLivekitUrl = new Setting<string | null>(
   "custom-livekit-url",
   null,
 );
+
+export const allowPipSetting = new Setting<boolean>(
+  "allow-pip",
+  false
+);

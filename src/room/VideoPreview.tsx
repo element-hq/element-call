@@ -11,6 +11,8 @@ import { facingModeFromLocalTrack, type LocalVideoTrack } from "livekit-client";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
+import { allowPipSetting, useSetting, } from "../settings/settings";
+
 import { TileAvatar } from "../tile/TileAvatar";
 import styles from "./VideoPreview.module.css";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
@@ -58,6 +60,7 @@ export const VideoPreview: FC<Props> = ({
     () => videoEnabled && !videoTrack,
     [videoEnabled, videoTrack],
   );
+  const [allowPip] = useSetting(allowPipSetting);
 
   return (
     <div className={classNames(styles.preview)} ref={previewRef}>
@@ -73,7 +76,7 @@ export const VideoPreview: FC<Props> = ({
         playsInline
         // There's no reason for this to be focusable
         tabIndex={-1}
-        disablePictureInPicture
+        disablePictureInPicture={!allowPip}
       />
       {(!videoEnabled || cameraIsStarting) && (
         <>
