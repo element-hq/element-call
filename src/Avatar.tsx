@@ -15,7 +15,9 @@ import {
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
 
-import { useClientState } from "./ClientContext";
+import { ClientState, useClientState } from "./ClientContext";
+import { widget } from "./widget";
+import { WidgetApi } from "matrix-widget-api";
 
 export enum Size {
   XS = "xs",
@@ -86,33 +88,17 @@ export const Avatar: FC<Props> = ({
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (clientState?.state !== "valid") {
-      return;
-    }
-    const { authenticated, supportedFeatures } = clientState;
-    const client = authenticated?.client;
-
-    if (!client || !src || !sizePx || !supportedFeatures.thumbnails) {
-      return;
-    }
-
-    const token = client.getAccessToken();
-    if (!token) {
-      return;
-    }
-    const resolveSrc = getAvatarUrl(client, src, sizePx);
-    if (!resolveSrc) {
+    if (!src) {
       setAvatarUrl(undefined);
       return;
     }
 
     let objectUrl: string | undefined;
-    fetch(resolveSrc, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then(async (req) => req.blob())
+
+    getAvatarFromServer(clientState, src, sizePx) // Try to download directly from the mxc://
+      .catch((ex) => {
+        return getAvatarFromWidget(widget?.api, src); // Fallback to trying to use the MSC4039 Widget API
+      })
       .then((blob) => {
         objectUrl = URL.createObjectURL(blob);
         setAvatarUrl(objectUrl);
@@ -140,3 +126,64 @@ export const Avatar: FC<Props> = ({
     />
   );
 };
+
+async function getAvatarFromServer(
+  clientState: ClientState | undefined,
+  src: string,
+  sizePx: number | undefined,
+): Promise<Blob> {
+  if (clientState?.state !== "valid") {
+    throw new Error("Client state must be valid");
+  }
+  if (!sizePx) {
+    throw new Error("size must be supplied");
+  }
+
+  const { authenticated, supportedFeatures } = clientState;
+  const client = authenticated?.client;
+  if (!client) {
+    throw new Error("Client must be supplied");
+  }
+  if (!supportedFeatures.thumbnails) {
+    throw new Error("Thumbnails are not supported");
+  }
+
+  const httpSrc = getAvatarUrl(client, src, sizePx);
+  if (!httpSrc) {
+    throw new Error("Failed to get http avatar URL");
+  }
+
+  const token = client.getAccessToken();
+  if (!token) {
+    throw new Error("Failed to get access token");
+  }
+
+  const request = await fetch(httpSrc, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const blob = await request.blob();
+
+  return blob;
+}
+
+async function getAvatarFromWidget(
+  api: WidgetApi | undefined,
+  src: string,
+): Promise<Blob> {
+  if (!api) {
+    throw new Error("No widget api given");
+  }
+
+  const response = await api.downloadFile(src);
+  const file = response.file;
+
+  // element-web sends a Blob, and the MSC4039 is considering changing the spec to strictly Blob, so only handling that
+  if (!(file instanceof Blob)) {
+    throw new Error("Downloaded file is not a Blob");
+  }
+
+  return file;
+}

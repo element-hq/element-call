@@ -93,6 +93,7 @@ export const initializeWidget = (
       logger.info("Widget API is available");
       const api = new WidgetApi(widgetId, parentOrigin);
       api.requestCapability(MatrixCapabilities.AlwaysOnScreen);
+      api.requestCapability(MatrixCapabilities.MSC4039DownloadFile);
 
       // Set up the lazy action emitter, but only for select actions that we
       // intend for the app to handle
