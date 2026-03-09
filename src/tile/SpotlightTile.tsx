@@ -111,12 +111,12 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
   vm,
   ...props
 }) => {
-  const cropVideo = useBehavior(vm.cropVideo$);
+  const videoFit = useBehavior(vm.videoFit$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
 
   const baseProps: SpotlightUserMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
-    videoFit: cropVideo ? "cover" : "contain",
+    videoFit,
     videoEnabled,
     ...props,
   };
@@ -158,7 +158,13 @@ const SpotlightRemoteScreenShareItem: FC<
 interface SpotlightItemProps {
   ref?: Ref<HTMLDivElement>;
   vm: MediaViewModel;
+  /**
+   * The width this tile will have once its animations have settled.
+   */
   targetWidth: number;
+  /**
+   * The height this tile will have once its animations have settled.
+   */
   targetHeight: number;
   focusable: boolean;
   intersectionObserver$: Observable<IntersectionObserver>;
@@ -180,6 +186,16 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   "aria-hidden": ariaHidden,
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
+
+  // Whenever target bounds change, inform the viewModel
+  useEffect(() => {
+    if (targetWidth > 0 && targetHeight > 0) {
+      if (vm.type != "screen share") {
+        vm.setTargetDimensions(targetWidth, targetHeight);
+      }
+    }
+  }, [targetWidth, targetHeight, vm]);
+
   const ref = useMergedRefs(ourRef, theirRef);
   const focusUrl = useBehavior(vm.focusUrl$);
   const displayName = useBehavior(vm.displayName$);

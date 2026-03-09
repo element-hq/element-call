@@ -250,7 +250,6 @@
   "video_tile": {
     "always_show": "Always show",
     "camera_starting": "Video loading...",
-    "change_fit_contain": "Fit to frame",
     "collapse": "Collapse",
     "expand": "Expand",
     "mute_for_me": "Mute for me",
