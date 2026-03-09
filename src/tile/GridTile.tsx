@@ -11,6 +11,7 @@ import {
   type ReactNode,
   type Ref,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -26,7 +27,6 @@ import {
   VolumeOffIcon,
   VisibilityOnIcon,
   UserProfileIcon,
-  ExpandIcon,
   VolumeOffSolidIcon,
   SwitchCameraSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
@@ -87,6 +87,8 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   displayName,
   mxcAvatarUrl,
   focusable,
+  targetWidth,
+  targetHeight,
   ...props
 }) => {
   const { toggleRaisedHand } = useReactionsSender();
@@ -103,17 +105,18 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const audioEnabled = useBehavior(vm.audioEnabled$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
   const speaking = useBehavior(vm.speaking$);
-  const cropVideo = useBehavior(vm.cropVideo$);
-  const onSelectFitContain = useCallback(
-    (e: Event) => {
-      e.preventDefault();
-      vm.toggleCropVideo();
-    },
-    [vm],
-  );
+  const videoFit = useBehavior(vm.videoFit$);
+
   const rtcBackendIdentity = vm.rtcBackendIdentity;
   const handRaised = useBehavior(vm.handRaised$);
   const reaction = useBehavior(vm.reaction$);
+
+  // Whenever bounds change, inform the viewModel
+  useEffect(() => {
+    if (targetWidth > 0 && targetHeight > 0) {
+      vm.setTargetDimensions(targetWidth, targetHeight);
+    }
+  }, [targetWidth, targetHeight, vm]);
 
   const AudioIcon = playbackMuted
     ? VolumeOffSolidIcon
@@ -130,12 +133,10 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const menu = (
     <>
       {menuStart}
-      <ToggleMenuItem
-        Icon={ExpandIcon}
-        label={t("video_tile.change_fit_contain")}
-        checked={cropVideo}
-        onSelect={onSelectFitContain}
-      />
+      {/*
+       No additional menu item (used to be the manual fit to frame.
+       Placeholder for future menu items that should be placed here.
+       */}
       {menuEnd}
     </>
   );
@@ -154,7 +155,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       unencryptedWarning={unencryptedWarning}
       encryptionStatus={encryptionStatus}
       videoEnabled={videoEnabled}
-      videoFit={cropVideo ? "cover" : "contain"}
+      videoFit={videoFit}
       className={classNames(className, styles.tile, {
         [styles.speaking]: showSpeaking,
         [styles.handRaised]: !showSpeaking && handRaised,
@@ -200,6 +201,8 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       audioStreamStats={audioStreamStats}
       videoStreamStats={videoStreamStats}
       rtcBackendIdentity={rtcBackendIdentity}
+      targetWidth={targetWidth}
+      targetHeight={targetHeight}
       {...props}
     />
   );
