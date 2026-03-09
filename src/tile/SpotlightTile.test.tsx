@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, expect, vi, beforeAll } from "vitest";
+import { test, expect, vi } from "vitest";
 import { isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import userEvent from "@testing-library/user-event";
@@ -26,22 +26,6 @@ global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
   public unobserve(): void {}
 } as unknown as typeof IntersectionObserver;
-
-// Mock ResizeObserver as it is needed by the useMeasure hook used in the SpotlightTile, but is not implemented in JSDOM.
-// We just need to mock it with empty methods as we don't need to test its functionality here.
-beforeAll(() => {
-  window.ResizeObserver = class ResizeObserver {
-    public observe(): void {
-      // do nothing
-    }
-    public unobserve(): void {
-      // do nothing
-    }
-    public disconnect(): void {
-      // do nothing
-    }
-  };
-});
 
 test("SpotlightTile is accessible", async () => {
   const vm1 = mockRemoteMedia(
