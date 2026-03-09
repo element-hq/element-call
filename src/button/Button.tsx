@@ -121,9 +121,10 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
   );
 };
 
-export const SettingsButton: FC<ComponentPropsWithoutRef<"button">> = (
-  props,
-) => {
+interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size: "sm" | "lg";
+}
+export const SettingsButton: FC<SettingsButtonProps> = (props) => {
   const { t } = useTranslation();
 
   return (
