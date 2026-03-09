@@ -84,7 +84,6 @@ Please see LICENSE in the repository root for full details.
 .expand {
   appearance: none;
   cursor: pointer;
-  opacity: 0;
   padding: var(--cpd-space-2x);
   border: none;
   border-radius: var(--cpd-radius-pill-effect);
@@ -148,17 +147,21 @@ Please see LICENSE in the repository root for full details.
   }
 }
 
-.expand:active {
+.expand:active, .expand[data-state="open"] {
   background: var(--cpd-color-gray-100);
 }
 
 @media (hover) {
+  .tile > div > button {
+    opacity: 0;
+  }
   .tile:hover > div > button {
     opacity: 1;
   }
 }
 
-.tile:has(:focus-visible) > div > button {
+.tile:has(:focus-visible) > div > button,
+.tile > div:has([data-state="open"]) > button {
   opacity: 1;
 }
 

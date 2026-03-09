@@ -65,6 +65,7 @@ Please see LICENSE in the repository root for full details.
 .footer.overlay.hidden {
   display: grid;
   opacity: 0;
+  pointer-events: none;
 }
 
 .footer.overlay:has(:focus-visible) {
