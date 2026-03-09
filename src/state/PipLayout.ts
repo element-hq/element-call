@@ -5,6 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { platform } from "../Platform.ts";
 import { type PipLayout, type PipLayoutMedia } from "./layout-types.ts";
 import { type TileStore } from "./TileStore";
 
@@ -16,8 +17,11 @@ export function pipLayout(
   prevTiles: TileStore,
 ): [PipLayout, TileStore] {
   const update = prevTiles.from(0);
-  // Dont maximise in pip since we want the rounded corners and the footer
-  update.registerSpotlight(media.spotlight, false);
+  // Dont maximise in pip on EW since we want the rounded corners and the footer
+  update.registerSpotlight(
+    media.spotlight,
+    platform === "desktop" ? false : true,
+  );
   const tiles = update.build();
   return [
     {
