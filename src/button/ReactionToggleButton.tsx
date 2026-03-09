@@ -166,7 +166,7 @@ export function ReactionPopupMenu({
 interface ReactionToggleButtonProps extends ComponentPropsWithoutRef<"button"> {
   identifier: string;
   vm: CallViewModel;
-  size: "sm" | "lg";
+  size?: "sm" | "lg";
 }
 
 export function ReactionToggleButton({
