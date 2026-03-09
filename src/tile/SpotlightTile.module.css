@@ -147,7 +147,8 @@ Please see LICENSE in the repository root for full details.
   }
 }
 
-.expand:active, .expand[data-state="open"] {
+.expand:active,
+.expand[data-state="open"] {
   background: var(--cpd-color-gray-100);
 }
 
