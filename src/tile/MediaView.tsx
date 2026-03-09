@@ -21,6 +21,7 @@ import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
 import {
   showConnectionStats,
   showHandRaisedTimer,
+  allowPipSetting,
   useSetting,
 } from "../settings/settings";
 import { type ReactionOption } from "../reactions";
@@ -86,6 +87,7 @@ export const MediaView: FC<Props> = ({
   const { t } = useTranslation();
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
   const [showConnectioStats] = useSetting(showConnectionStats);
+  const [allowPip] = useSetting(allowPipSetting);
 
   const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
 
@@ -114,7 +116,7 @@ export const MediaView: FC<Props> = ({
             trackRef={video}
             // There's no reason for this to be focusable
             tabIndex={-1}
-            disablePictureInPicture
+            disablePictureInPicture={!allowPip}
             style={{ display: video && videoEnabled ? "block" : "none" }}
             data-testid="video"
           />
