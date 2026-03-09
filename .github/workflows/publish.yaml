@@ -55,6 +55,7 @@ jobs:
     permissions:
       contents: write
       packages: write
+      id-token: write
     uses: ./.github/workflows/build-and-publish-docker.yaml
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
