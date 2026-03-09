@@ -36,4 +36,4 @@ Uncomment this markdown table below and edit the last line `|||`:
 - [ ] Pull request includes screenshots or videos if containing UI changes
 - [ ] Tests written for new code (and old code if feasible).
 - [ ] Linter and other CI checks pass.
-- [ ] I have licensed the changes to Element by completing the [Contributor License Agreement (CLA)](https://cla-assistant.io/element-hq/element-web)
+- [ ] I have licensed the changes to Element by completing the [Contributor License Agreement (CLA)](https://cla-assistant.io/element-hq/element-call)
