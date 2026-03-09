@@ -23,7 +23,7 @@ import styles from "./Button.module.css";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
   muted: boolean;
-  size: "sm" | "lg";
+  size?: "sm" | "lg";
 }
 
 export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
@@ -48,7 +48,7 @@ export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
 
 interface VideoButtonProps extends ComponentPropsWithoutRef<"button"> {
   muted: boolean;
-  size: "sm" | "lg";
+  size?: "sm" | "lg";
 }
 
 export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
@@ -98,7 +98,7 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
 };
 
 interface EndCallButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size: "sm" | "lg";
+  size?: "sm" | "lg";
 }
 
 export const EndCallButton: FC<EndCallButtonProps> = ({
@@ -122,7 +122,7 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
 };
 
 interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size: "sm" | "lg";
+  size?: "sm" | "lg";
 }
 export const SettingsButton: FC<SettingsButtonProps> = (props) => {
   const { t } = useTranslation();
