@@ -62,12 +62,12 @@ export interface BaseUserMediaViewModel extends MemberMediaViewModel {
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >;
   /**
-   * Set the actual dimensions of the HTML element.
+   * Set the target dimensions of the HTML element (final dimension after anim).
    * This can be used to determine the best video fit (fit to frame / keep ratio).
-   * @param width - The actual width of the HTML element displaying the video.
-   * @param height - The actual height of the HTML element displaying the video.
+   * @param targetWidth - The target width of the HTML element displaying the video.
+   * @param targetHeight - The target height of the HTML element displaying the video.
    */
-  setActualDimensions: (width: number, height: number) => void;
+  setTargetDimensions: (targetWidth: number, targetHeight: number) => void;
 }
 
 export interface BaseUserMediaInputs extends Omit<
@@ -98,7 +98,9 @@ export function createBaseUserMedia(
   );
   const toggleCropVideo$ = new Subject<void>();
 
-  const actualSize$ = new BehaviorSubject<
+  // The target size of the video element, used to determine the best video fit.
+  // The target size is the final size of the HTML element after any animations have completed.
+  const targetSize$ = new BehaviorSubject<
     { width: number; height: number } | undefined
   >(undefined);
 
@@ -130,7 +132,7 @@ export function createBaseUserMedia(
     videoFit$: videoFit$(
       scope,
       videoSizeFromParticipant$(participant$),
-      actualSize$,
+      targetSize$,
     ),
     toggleCropVideo: () => toggleCropVideo$.next(),
     rtcBackendIdentity,
@@ -155,8 +157,8 @@ export function createBaseUserMedia(
         return observeRtpStreamStats$(p, Track.Source.Camera, statsType);
       }),
     ),
-    setActualDimensions: (width: number, height: number): void => {
-      actualSize$.next({ width, height });
+    setTargetDimensions: (targetWidth: number, targetHeight: number): void => {
+      targetSize$.next({ width: targetWidth, height: targetHeight });
     },
   };
 }

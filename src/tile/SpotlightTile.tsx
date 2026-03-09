@@ -27,7 +27,6 @@ import { useObservableRef } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
-import useMeasure from "react-use-measure";
 
 import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
 import FullScreenMinimiseIcon from "../icons/FullScreenMinimise.svg?react";
@@ -152,7 +151,13 @@ const SpotlightRemoteScreenShareItem: FC<
 interface SpotlightItemProps {
   ref?: Ref<HTMLDivElement>;
   vm: MediaViewModel;
+  /**
+   * The width this tile will have once its animations have settled.
+   */
   targetWidth: number;
+  /**
+   * The height this tile will have once its animations have settled.
+   */
   targetHeight: number;
   focusable: boolean;
   intersectionObserver$: Observable<IntersectionObserver>;
@@ -175,21 +180,16 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
 
-  // We need to keep track of the tile size.
-  // We use this to get the tile ratio, and compare it to the video ratio to decide
-  // whether to fit the video to frame or keep the ratio.
-  const [measureRef, bounds] = useMeasure();
-
-  // Whenever bounds change, inform the viewModel
+  // Whenever target bounds change, inform the viewModel
   useEffect(() => {
-    if (bounds.width > 0 && bounds.height > 0) {
+    if (targetWidth > 0 && targetHeight > 0) {
       if (vm.type != "screen share") {
-        vm.setActualDimensions(bounds.width, bounds.height);
+        vm.setTargetDimensions(targetWidth, targetHeight);
       }
     }
-  }, [bounds.width, bounds.height, vm]);
+  }, [targetWidth, targetHeight, vm]);
 
-  const ref = useMergedRefs(ourRef, theirRef, measureRef);
+  const ref = useMergedRefs(ourRef, theirRef);
   const focusUrl = useBehavior(vm.focusUrl$);
   const displayName = useBehavior(vm.displayName$);
   const mxcAvatarUrl = useBehavior(vm.mxcAvatarUrl$);

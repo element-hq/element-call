@@ -37,7 +37,6 @@ import {
   Menu,
 } from "@vector-im/compound-web";
 import { useObservableEagerState } from "observable-hooks";
-import useMeasure from "react-use-measure";
 
 import styles from "./GridTile.module.css";
 import { Slider } from "../Slider";
@@ -88,6 +87,8 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   displayName,
   mxcAvatarUrl,
   focusable,
+  targetWidth,
+  targetHeight,
   ...props
 }) => {
   const { toggleRaisedHand } = useReactionsSender();
@@ -110,19 +111,12 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const handRaised = useBehavior(vm.handRaised$);
   const reaction = useBehavior(vm.reaction$);
 
-  // We need to keep track of the tile size.
-  // We use this to get the tile ratio, and compare it to the video ratio to decide
-  // whether to fit the video to frame or keep the ratio.
-  const [measureRef, bounds] = useMeasure();
-  // There is already a ref being passed in, so we need to merge it with the measureRef.
-  const tileRef = useMergedRefs(ref, measureRef);
-
   // Whenever bounds change, inform the viewModel
   useEffect(() => {
-    if (bounds.width > 0 && bounds.height > 0) {
-      vm.setActualDimensions(bounds.width, bounds.height);
+    if (targetWidth > 0 && targetHeight > 0) {
+      vm.setTargetDimensions(targetWidth, targetHeight);
     }
-  }, [bounds.width, bounds.height, vm]);
+  }, [targetWidth, targetHeight, vm]);
 
   const AudioIcon = playbackMuted
     ? VolumeOffSolidIcon
@@ -155,7 +149,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
 
   const tile = (
     <MediaView
-      ref={tileRef}
+      ref={ref}
       video={video}
       userId={vm.userId}
       unencryptedWarning={unencryptedWarning}
@@ -207,6 +201,8 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       audioStreamStats={audioStreamStats}
       videoStreamStats={videoStreamStats}
       rtcBackendIdentity={rtcBackendIdentity}
+      targetWidth={targetWidth}
+      targetHeight={targetHeight}
       {...props}
     />
   );
