@@ -24,6 +24,14 @@ type Size = {
   height: number;
 };
 
+/**
+ * Computes the appropriate video fit mode ("cover" or "contain") based on the aspect ratios of the video and the tile.
+ * - If the video and tile have the same orientation (both landscape or both portrait), we use "cover" to fill the tile, even if it means cropping.
+ * - If the video and tile have different orientations, we use "contain" to ensure the entire video is visible, even if it means letterboxing (black bars).
+ * @param scope - the ObservableScope to create the Behavior in
+ * @param videoSize$ - an Observable of the video size (width and height) or undefined if the size is not yet known (no data yet received).
+ * @param tileSize$ - an Observable of the tile size (width and height) or undefined if the size is not yet known (not yet rendered).
+ */
 export function videoFit$(
   scope: ObservableScope,
   videoSize$: Observable<Size | undefined>,
