@@ -584,8 +584,8 @@ export const InCallView: FC<InCallViewProps> = ({
           vm={layout.spotlight}
           expanded
           onToggleExpanded={null}
-          targetWidth={gridBounds.height}
-          targetHeight={gridBounds.width}
+          targetWidth={gridBounds.width}
+          targetHeight={gridBounds.height}
           showIndicators={false}
           focusable={!contentObscured}
           aria-hidden={contentObscured}
