@@ -78,7 +78,7 @@ function renderWithMockClient(
         disconnected: false,
         supportedFeatures: {
           reactions: true,
-          thumbnails: true,
+          authenticatedMedia: true,
         },
         setClient: vi.fn(),
         authenticated: {
