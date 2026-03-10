@@ -1,0 +1,15 @@
+{
+  "default_server_config": {
+    "m.homeserver": {
+      "base_url": "https://devmx.ixo.earth",
+      "server_name": "devmx.ixo.earth"
+    }
+  },
+  "brand": "Gathering",
+  "show_labs_settings": false,
+  "matrix_rtc_session": {
+    "wait_for_key_rotation_ms": 5000,
+    "delayed_leave_event_restart_ms": 4000,
+    "delayed_leave_event_delay_ms": 18000
+  }
+}

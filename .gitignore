@@ -6,11 +6,11 @@ dist-ssr
 *.local
 *.bkp
 .idea/
-public/config.json
+# public/config.json
 backend/synapse_tmp/*
 backend/synapse_tmp_othersite/*
 /coverage
-config.json
+# config.json
 
 # Yarn
 yarn-error.log
