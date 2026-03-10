@@ -19,9 +19,6 @@ export default defineConfig((env) =>
     defineConfig({
       base, // Use relative URLs to allow the app to be hosted under any path
       publicDir: false, // Don't serve the public directory which only contains the favicon
-      build: {
-        outDir: "embedded/web/dist",
-      },
       plugins: [
         generateFile([
           {
