@@ -60,7 +60,7 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
     // The only way to know if it is muted or not is to look at the data-kind attribute..
     const videoButton = frame.getByTestId("incall_videomute");
     await expect(videoButton).toBeVisible();
-    // video should be off by default in a voice call
+    // video should be on
     await expect(videoButton).toHaveAttribute("aria-label", /^Stop video$/);
   }
 
