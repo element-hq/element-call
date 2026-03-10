@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 import {
   ConnectionState as LivekitConnectionState,
+  type LocalAudioTrack,
   type LocalTrackPublication,
   LocalVideoTrack,
   ParticipantEvent,
@@ -14,9 +15,12 @@ import {
   Track,
 } from "livekit-client";
 import {
+  combineLatest,
+  distinctUntilChanged,
   map,
   NEVER,
   type Observable,
+  skip,
   type Subscription,
   switchMap,
 } from "rxjs";
@@ -33,6 +37,16 @@ import { getUrlParams } from "../../../UrlParams.ts";
 import { observeTrackReference$ } from "../../observeTrackReference";
 import { type Connection } from "../remoteMembers/Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
+import {
+  RNNoiseProcessor,
+  supportsRNNoiseProcessor,
+} from "../../../audio/RNNoiseProcessor.ts";
+import { shouldEnableNativeNoiseSuppression } from "../../../audio/noiseSuppressionPolicy.ts";
+import {
+  rnnoiseNoiseSuppression,
+  rnnoiseNoiseSuppressionPreset,
+} from "../../../settings/settings.ts";
+import type { RNNoiseSuppressionPreset } from "../../../audio/rnnoiseTypes.ts";
 
 /**
  * A wrapper for a Connection object.
@@ -48,6 +62,8 @@ export class Publisher {
   public shouldPublish = false;
 
   private readonly scope = new ObservableScope();
+  private rnnoiseOperationQueue: Promise<void> = Promise.resolve();
+  private rnnoisePolicySyncedTrack: LocalAudioTrack | null = null;
 
   /**
    * Creates a new Publisher.
@@ -73,6 +89,8 @@ export class Publisher {
 
     // Setup track processor syncing (blur)
     this.observeTrackProcessors(this.scope, room, trackerProcessorState$);
+    this.observeRNNoiseProcessor(this.scope, room, devices);
+    this.observeRNNoiseSettingRestart(this.scope, room, devices);
     // Observe media device changes and update LiveKit active devices accordingly
     this.observeMediaDevices(this.scope, devices, controlledAudioDevices);
 
@@ -415,5 +433,162 @@ export class Publisher {
       null,
     );
     trackProcessorSync(scope, track$, trackerProcessorState$);
+  }
+
+  private observeRNNoiseProcessor(
+    scope: ObservableScope,
+    room: LivekitRoom,
+    devices: MediaDevices,
+  ): void {
+    const microphoneTrack$ = scope.behavior(
+      observeTrackReference$(
+        room.localParticipant,
+        Track.Source.Microphone,
+      ).pipe(
+        map((trackRef) => {
+          const track = trackRef?.publication.track;
+          return track?.kind === Track.Kind.Audio
+            ? (track as LocalAudioTrack)
+            : null;
+        }),
+      ),
+      null,
+    );
+
+    combineLatest([
+      microphoneTrack$,
+      rnnoiseNoiseSuppression.value$,
+      rnnoiseNoiseSuppressionPreset.value$,
+    ])
+      .pipe(
+        scope.bind(),
+        distinctUntilChanged(
+          ([aTrack, _aEnabled, aPreset], [bTrack, _bEnabled, bPreset]) => {
+            return aTrack === bTrack && aPreset === bPreset;
+          },
+        ),
+      )
+      .subscribe(([microphoneTrack, rnnoiseEnabled, rnnoisePreset]) => {
+        const rnnoiseSupported = supportsRNNoiseProcessor();
+        if (!microphoneTrack || !rnnoiseSupported) {
+          this.rnnoisePolicySyncedTrack = microphoneTrack;
+          return;
+        }
+
+        const isNewMicrophoneTrack =
+          microphoneTrack !== this.rnnoisePolicySyncedTrack;
+        this.rnnoisePolicySyncedTrack = microphoneTrack;
+
+        this.enqueueRNNoiseOperation(async () => {
+          if (rnnoiseEnabled && isNewMicrophoneTrack) {
+            await this.restartMicrophoneTrackForNoiseSuppressionPolicy(
+              microphoneTrack,
+              devices,
+              rnnoiseEnabled,
+            );
+          }
+          await this.syncRNNoiseProcessor(
+            microphoneTrack,
+            rnnoiseEnabled,
+            rnnoisePreset,
+          );
+        });
+      });
+  }
+
+  private observeRNNoiseSettingRestart(
+    scope: ObservableScope,
+    room: LivekitRoom,
+    devices: MediaDevices,
+  ): void {
+    rnnoiseNoiseSuppression.value$
+      .pipe(scope.bind(), distinctUntilChanged(), skip(1))
+      .subscribe((rnnoiseEnabled) => {
+        const audioTrack = room.localParticipant.getTrackPublication(
+          Track.Source.Microphone,
+        )?.audioTrack;
+        if (!audioTrack) return;
+
+        const rnnoiseSupported = supportsRNNoiseProcessor();
+        this.enqueueRNNoiseOperation(async () => {
+          await this.restartMicrophoneTrackForNoiseSuppressionPolicy(
+            audioTrack,
+            devices,
+            rnnoiseEnabled,
+          );
+          await this.syncRNNoiseProcessor(
+            audioTrack,
+            rnnoiseEnabled && rnnoiseSupported,
+            rnnoiseNoiseSuppressionPreset.getValue(),
+          );
+        });
+      });
+  }
+
+  private enqueueRNNoiseOperation(operation: () => Promise<void>): void {
+    this.rnnoiseOperationQueue = this.rnnoiseOperationQueue.then(async () => {
+      try {
+        await operation();
+      } catch (e) {
+        this.logger.error("Failed to process RNNoise operation", e);
+      }
+    });
+  }
+
+  private async restartMicrophoneTrackForNoiseSuppressionPolicy(
+    audioTrack: LocalAudioTrack,
+    devices: MediaDevices,
+    rnnoiseEnabled: boolean,
+  ): Promise<void> {
+    const activeProcessor = audioTrack.getProcessor();
+    if (activeProcessor?.name === "rnnoise-noise-suppression") {
+      await audioTrack.stopProcessor();
+    }
+
+    const { echoCancellation = true, noiseSuppression = true } = getUrlParams();
+    await audioTrack.restartTrack({
+      deviceId: devices.audioInput.selected$.value?.id,
+      echoCancellation,
+      noiseSuppression: shouldEnableNativeNoiseSuppression({
+        urlNoiseSuppression: noiseSuppression,
+        rnnoiseEnabled,
+        rnnoiseSupported: supportsRNNoiseProcessor(),
+      }),
+    });
+  }
+
+  private async syncRNNoiseProcessor(
+    microphoneTrack: LocalAudioTrack,
+    rnnoiseEnabled: boolean,
+    rnnoisePreset: RNNoiseSuppressionPreset,
+  ): Promise<void> {
+    try {
+      const processor = microphoneTrack.getProcessor();
+      const rnnoiseActive = processor?.name === "rnnoise-noise-suppression";
+      const rnnoiseProcessor =
+        processor instanceof RNNoiseProcessor ? processor : undefined;
+
+      if (rnnoiseEnabled) {
+        if (rnnoiseProcessor) {
+          rnnoiseProcessor.setPreset(rnnoisePreset);
+          return;
+        }
+
+        if (rnnoiseActive) {
+          await microphoneTrack.stopProcessor();
+        }
+        await microphoneTrack.setProcessor(new RNNoiseProcessor(rnnoisePreset));
+      } else if (rnnoiseActive) {
+        await microphoneTrack.stopProcessor();
+      }
+    } catch (e) {
+      this.logger.error("Failed to apply RNNoise microphone processor", e);
+      if (rnnoiseEnabled && rnnoiseNoiseSuppression.getValue()) {
+        this.logger.warn(
+          "Disabling RNNoise setting after processor setup failure",
+        );
+        rnnoiseNoiseSuppression.setValue(false);
+      }
+    }
   }
 }

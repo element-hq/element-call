@@ -3195,6 +3195,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jitsi/rnnoise-wasm@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "@jitsi/rnnoise-wasm@npm:0.2.1"
+  checksum: 10c0/6e5b475b364660eb24c0fa9843a63040253c2ce4034de9313e811448f5c6dad2205a0f22d3a9ef15cbef3c808941b0681d238d53d5a853e194a4c88cdd5569b1
+  languageName: node
+  linkType: hard
+
 "@jridgewell/gen-mapping@npm:^0.3.12":
   version: 0.3.12
   resolution: "@jridgewell/gen-mapping@npm:0.3.12"
@@ -8377,6 +8384,7 @@ __metadata:
     "@fontsource/inter": "npm:^5.1.0"
     "@formatjs/intl-durationformat": "npm:^0.10.0"
     "@formatjs/intl-segmenter": "npm:^11.7.3"
+    "@jitsi/rnnoise-wasm": "npm:^0.2.1"
     "@livekit/components-core": "npm:^0.12.0"
     "@livekit/components-react": "npm:^2.0.0"
     "@livekit/protocol": "npm:^1.42.2"

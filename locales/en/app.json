@@ -196,7 +196,14 @@
   "settings": {
     "audio_tab": {
       "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play.",
-      "effect_volume_label": "Sound effect volume"
+      "effect_volume_label": "Sound effect volume",
+      "rnnoise_header": "Noise suppression",
+      "rnnoise_label": "Enable enhanced noise suppression (RNNoise)",
+      "rnnoise_not_supported": "(Enhanced noise suppression is not supported by this browser.)",
+      "rnnoise_preset_balanced": "Balanced",
+      "rnnoise_preset_conservative": "Conservative",
+      "rnnoise_preset_description": "Pick a suppression profile. Stronger modes remove more keyboard noise but can sound more processed.",
+      "rnnoise_preset_strong": "Strong"
     },
     "background_blur_header": "Background",
     "background_blur_label": "Blur the background of the video",

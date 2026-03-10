@@ -61,8 +61,11 @@ import {
   duplicateTiles,
   MatrixRTCMode,
   playReactionsSound,
+  rnnoiseNoiseSuppression,
   showReactions,
 } from "../../settings/settings";
+import { shouldEnableNativeNoiseSuppression } from "../../audio/noiseSuppressionPolicy";
+import { supportsRNNoiseProcessor } from "../../audio/RNNoiseProcessor";
 import { isFirefox } from "../../Platform";
 import { setPipEnabled$ } from "../../controls";
 import { TileStore } from "../TileStore";
@@ -480,7 +483,11 @@ export function createCallViewModel$(
     getUrlParams().controlledAudioDevices,
     options.livekitRoomFactory,
     getUrlParams().echoCancellation,
-    getUrlParams().noiseSuppression,
+    shouldEnableNativeNoiseSuppression({
+      urlNoiseSuppression: getUrlParams().noiseSuppression,
+      rnnoiseEnabled: rnnoiseNoiseSuppression.getValue(),
+      rnnoiseSupported: supportsRNNoiseProcessor(),
+    }),
   );
 
   const connectionManager = createConnectionManager$({

@@ -9,6 +9,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { BehaviorSubject } from "rxjs";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import type { RNNoiseSuppressionPreset } from "../audio/rnnoiseTypes";
 import { type Behavior } from "../state/Behavior";
 import { useBehavior } from "../useBehavior";
 
@@ -97,6 +98,15 @@ export const videoInput = new Setting<string | undefined>(
 );
 
 export const backgroundBlur = new Setting<boolean>("background-blur", false);
+export const rnnoiseNoiseSuppression = new Setting<boolean>(
+  "rnnoise-noise-suppression",
+  false,
+);
+export const rnnoiseNoiseSuppressionPreset =
+  new Setting<RNNoiseSuppressionPreset>(
+    "rnnoise-noise-suppression-preset",
+    "conservative",
+  );
 
 export const showHandRaisedTimer = new Setting<boolean>(
   "hand-raised-show-timer",

@@ -27,6 +27,11 @@ import {
 import { Publisher } from "./Publisher";
 import { type Connection } from "../remoteMembers/Connection";
 import { type MuteStates } from "../../MuteStates";
+import {
+  rnnoiseNoiseSuppression,
+  rnnoiseNoiseSuppressionPreset,
+} from "../../../settings/settings";
+import type { RNNoiseProcessor } from "../../../audio/RNNoiseProcessor";
 
 let scope: ObservableScope;
 
@@ -37,8 +42,12 @@ beforeEach(() => {
 afterEach(() => scope.end());
 
 function createMockLocalTrack(source: Track.Source): LocalTrack {
+  let processor: { name: string } | undefined;
+  const kind =
+    source === Track.Source.Microphone ? Track.Kind.Audio : Track.Kind.Video;
   const track = {
     source,
+    kind,
     isMuted: false,
     isUpstreamPaused: false,
   } as Partial<LocalTrack> as LocalTrack;
@@ -57,6 +66,16 @@ function createMockLocalTrack(source: Track.Source): LocalTrack {
     // @ts-expect-error - for that test we want to set isUpstreamPaused directly
     track.isUpstreamPaused = false;
   });
+  vi.mocked(track).getProcessor = vi.fn().mockImplementation(() => processor);
+  vi.mocked(track).setProcessor = vi
+    .fn()
+    .mockImplementation((nextProcessor) => {
+      processor = nextProcessor as { name: string };
+    });
+  vi.mocked(track).stopProcessor = vi.fn().mockImplementation(() => {
+    processor = undefined;
+  });
+  vi.mocked(track).restartTrack = vi.fn().mockResolvedValue(undefined);
 
   return track;
 }
@@ -96,6 +115,8 @@ let trackPublications: LocalTrackPublication[];
 let createTrackLock: Promise<void>;
 
 beforeEach(() => {
+  rnnoiseNoiseSuppression.setValue(false);
+  rnnoiseNoiseSuppressionPreset.setValue("conservative");
   trackPublications = [];
   audioEnabled$ = new BehaviorSubject(false);
   videoEnabled$ = new BehaviorSubject(false);
@@ -339,6 +360,282 @@ describe("Publisher", () => {
   });
 
   it("does mute unmute audio", async () => {});
+
+  describe("RNNoise", () => {
+    beforeEach(() => {
+      vi.stubGlobal("AudioWorkletNode", class AudioWorkletNode {});
+      vi.stubGlobal(
+        "AudioWorklet",
+        class AudioWorklet {
+          public async addModule(): Promise<void> {
+            await Promise.resolve();
+          }
+        },
+      );
+      vi.stubGlobal(
+        "MediaStreamAudioDestinationNode",
+        class MediaStreamAudioDestinationNode {},
+      );
+      vi.stubGlobal(
+        "MediaStreamAudioSourceNode",
+        class MediaStreamAudioSourceNode {},
+      );
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      rnnoiseNoiseSuppression.setValue(false);
+      rnnoiseNoiseSuppressionPreset.setValue("conservative");
+    });
+
+    it("enabling setting applies RNNoise processor on microphone track", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & { setProcessor: (...args: unknown[]) => void };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+
+      expect(micTrack.setProcessor).toHaveBeenCalledOnce();
+    });
+
+    it("disabling setting removes RNNoise processor on microphone track", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & {
+        setProcessor: (...args: unknown[]) => void;
+        stopProcessor: () => void;
+      };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+      rnnoiseNoiseSuppression.setValue(false);
+      await flushPromises();
+
+      expect(micTrack.setProcessor).toHaveBeenCalledOnce();
+      expect(micTrack.stopProcessor).toHaveBeenCalledOnce();
+    });
+
+    it("auto-disables RNNoise when processor setup fails and falls back to native noise suppression", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & {
+        setProcessor: (...args: unknown[]) => Promise<void>;
+        restartTrack: (...args: unknown[]) => Promise<void>;
+      };
+      const processorError = new Error("RNNoise setup failed");
+      vi.mocked(micTrack.setProcessor).mockRejectedValueOnce(processorError);
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+
+      // The operation queue serializes restart/sync jobs. Flush enough microtasks
+      // to allow the fallback toggle and restart to complete.
+      for (let i = 0; i < 5; i++) {
+        await flushPromises();
+      }
+
+      expect(micTrack.setProcessor).toHaveBeenCalledOnce();
+      expect(rnnoiseNoiseSuppression.getValue()).toBe(false);
+      expect(micTrack.restartTrack).toHaveBeenCalled();
+      const restartCalls = vi.mocked(micTrack.restartTrack).mock.calls;
+      const finalRestartConfig = restartCalls[restartCalls.length - 1]?.[0] as {
+        noiseSuppression?: boolean;
+      };
+      expect(finalRestartConfig).toEqual(
+        expect.objectContaining({ noiseSuppression: true }),
+      );
+    });
+
+    it("restarts microphone track with native noise suppression disabled when RNNoise is enabled", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & { restartTrack: (...args: unknown[]) => void };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+
+      expect(micTrack.restartTrack).toHaveBeenCalledWith(
+        expect.objectContaining({
+          noiseSuppression: false,
+        }),
+      );
+    });
+
+    it("restarts a newly-created publisher microphone track with native suppression disabled when RNNoise is already enabled", async () => {
+      await publisher.destroy();
+      rnnoiseNoiseSuppression.setValue(true);
+
+      const freshPublisher = new Publisher(
+        connection,
+        mockMediaDevices({}),
+        muteStates,
+        constant({ supported: false, processor: undefined }),
+        logger,
+      );
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & {
+        restartTrack: (...args: unknown[]) => void;
+        setProcessor: (...args: unknown[]) => void;
+      };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      try {
+        await flushPromises();
+
+        expect(micTrack.restartTrack).toHaveBeenCalledWith(
+          expect.objectContaining({
+            noiseSuppression: false,
+          }),
+        );
+        expect(micTrack.setProcessor).toHaveBeenCalledOnce();
+        expect(
+          vi.mocked(micTrack.restartTrack).mock.invocationCallOrder[0],
+        ).toBeLessThan(
+          vi.mocked(micTrack.setProcessor).mock.invocationCallOrder[0],
+        );
+      } finally {
+        await freshPublisher.destroy();
+      }
+    });
+
+    it("keeps native noise suppression enabled and skips processor when RNNoise is unsupported", async () => {
+      vi.stubGlobal("AudioWorkletNode", undefined);
+      vi.stubGlobal("AudioWorklet", undefined);
+      vi.stubGlobal("MediaStreamAudioDestinationNode", undefined);
+      vi.stubGlobal("MediaStreamAudioSourceNode", undefined);
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & {
+        restartTrack: (...args: unknown[]) => void;
+        setProcessor: (...args: unknown[]) => void;
+      };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+
+      expect(micTrack.setProcessor).not.toHaveBeenCalled();
+      expect(micTrack.restartTrack).toHaveBeenCalledWith(
+        expect.objectContaining({
+          noiseSuppression: true,
+        }),
+      );
+    });
+
+    it("stops RNNoise processor before restarting microphone track when disabling RNNoise", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & {
+        stopProcessor: () => void;
+        restartTrack: (...args: unknown[]) => void;
+      };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+
+      vi.mocked(micTrack.stopProcessor).mockClear();
+      vi.mocked(micTrack.restartTrack).mockClear();
+
+      rnnoiseNoiseSuppression.setValue(false);
+      await flushPromises();
+
+      expect(micTrack.stopProcessor).toHaveBeenCalledOnce();
+      expect(micTrack.restartTrack).toHaveBeenCalledOnce();
+      expect(
+        vi.mocked(micTrack.stopProcessor).mock.invocationCallOrder[0],
+      ).toBeLessThan(
+        vi.mocked(micTrack.restartTrack).mock.invocationCallOrder[0],
+      );
+    });
+
+    it("updates active RNNoise processor preset when preset setting changes", async () => {
+      const micTrack = createMockLocalTrack(
+        Track.Source.Microphone,
+      ) as LocalTrack & { getProcessor: () => unknown };
+      trackPublications.push({
+        source: Track.Source.Microphone,
+        track: micTrack,
+        audioTrack: micTrack,
+      } as unknown as LocalTrackPublication);
+      localParticipant.emit(
+        ParticipantEvent.LocalTrackPublished,
+        trackPublications[0],
+      );
+
+      rnnoiseNoiseSuppression.setValue(true);
+      await flushPromises();
+
+      const processor = micTrack.getProcessor() as RNNoiseProcessor;
+      const setPresetSpy = vi.spyOn(processor, "setPreset");
+
+      rnnoiseNoiseSuppressionPreset.setValue("strong");
+      await flushPromises();
+
+      expect(setPresetSpy).toHaveBeenCalledWith("strong");
+    });
+  });
 });
 
 describe("Bug fix", () => {

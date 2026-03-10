@@ -95,6 +95,7 @@ async function setRtcModeFromSettings(
   page: Page,
   mode: RtcMode,
 ): Promise<void> {
+  await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("tab", { name: "Preferences" }).click();
   await page.getByText("Developer mode", { exact: true }).check(); // Idempotent:  won't uncheck if already checked
