@@ -71,8 +71,8 @@ jobs:
       contents: write # required to upload release asset
     steps:
       - name: Determine filename
-        run: echo "FILENAME_PREFIX=element-call-embedded-${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
-      - name: 📥 Download built element-call artifact
+        run: echo "FILENAME_PREFIX=sable-call-embedded-${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
+      - name: Download built artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -105,7 +105,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: 📥 Download built element-call artifact
+      - name: Download built artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -122,6 +122,8 @@ jobs:
 
       - name: Publish npm
         working-directory: embedded/web
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm version ${{ needs.versioning.outputs.PREFIXED_VERSION }} --no-git-tag-version
           echo "ARTIFACT_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
@@ -131,124 +133,8 @@ jobs:
         name: Output artifact version
         run: echo "ARTIFACT_VERSION=${{env.ARTIFACT_VERSION}}" >> "$GITHUB_OUTPUT"
 
-  publish_android:
-    needs: [build_element_call, versioning]
-    if: always()
-    name: Publish Android AAR
-    runs-on: ubuntu-latest
-    outputs:
-      ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-
-      - name: 📥 Download built element-call artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id || github.run_id }}
-          name: build-output-embedded
-          path: embedded/android/lib/src/main/assets/element-call
-
-      - name: ☕️ Setup Java
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4
-        with:
-          distribution: "temurin"
-          java-version: "17"
-
-      - name: Get artifact version
-        # Anything that is not a final release will be tagged as a snapshot
-        run: |
-          if [[ "${{ needs.versioning.outputs.TAG }}" == "latest" ]]; then
-            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
-          elif [[ "${{ needs.versioning.outputs.TAG }}" == "rc" ]]; then
-            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
-          else
-            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}-SNAPSHOT" >> "$GITHUB_ENV"
-          fi
-
-      - name: Set version string
-        run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" embedded/android/lib/src/main/kotlin/io/element/android/call/embedded/Version.kt
-
-      - name: Publish AAR
-        working-directory: embedded/android
-        env:
-          EC_VERSION: ${{ env.ARTIFACT_VERSION }}
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_RELEASE_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_RELEASE_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
-        run: ./gradlew publishToMavenCentral --no-daemon ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
-
-      - id: artifact_version
-        name: Output artifact version
-        run: echo "ARTIFACT_VERSION=${{env.ARTIFACT_VERSION}}" >> "$GITHUB_OUTPUT"
-
-  publish_ios:
-    needs: [build_element_call, versioning]
-    if: always()
-    name: Publish SwiftPM Library
-    runs-on: ubuntu-latest
-    outputs:
-      ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          path: element-call
-
-      - name: 📥 Download built element-call artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id || github.run_id }}
-          name: build-output-embedded
-          path: element-call/embedded/ios/Sources/dist
-
-      - name: Checkout element-call-swift
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          repository: element-hq/element-call-swift
-          path: element-call-swift
-          token: ${{ secrets.SWIFT_RELEASE_TOKEN }}
-
-      - name: Copy files
-        run: rsync -a --delete --exclude .git element-call/embedded/ios/ element-call-swift
-
-      - name: Get artifact version
-        run: echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
-
-      - name: Set version string
-        run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" element-call-swift/Sources/EmbeddedElementCall/EmbeddedElementCall.swift
-
-      - name: Test build
-        working-directory: element-call-swift
-        run: swift build
-
-      - name: Commit and tag
-        working-directory: element-call-swift
-        run: |
-          git config --global user.email "ci@element.io"
-          git config --global user.name "Element CI"
-          git add -A
-          git commit -am "Release ${{ needs.versioning.outputs.PREFIXED_VERSION }}"
-          git tag -a ${{ env.ARTIFACT_VERSION }} -m "${{ github.event.release.html_url }}"
-
-      - name: Push
-        working-directory: element-call-swift
-        run: |
-          git push --tags ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
-
-      - id: artifact_version
-        name: Output artifact version
-        run: echo "ARTIFACT_VERSION=${{env.ARTIFACT_VERSION}}" >> "$GITHUB_OUTPUT"
-
   release_notes:
-    needs: [versioning, publish_npm, publish_android, publish_ios]
+    needs: [versioning, publish_npm]
     if: always()
     name: Update release notes
     runs-on: ubuntu-latest
@@ -258,8 +144,6 @@ jobs:
       - name: Log versions
         run: |
           echo "NPM: ${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}"
-          echo "Android: ${{ needs.publish_android.outputs.ARTIFACT_VERSION }}"
-          echo "iOS: ${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}"
       - name: Add release notes
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
@@ -267,27 +151,8 @@ jobs:
           append_body: true
           body: |
 
-            ## Embedded packages
-
-            This release includes the following embedded packages that allow Element Call to be used as an embedded widget
-            within another application.
-
             ### NPM
 
             ```
-            npm install @element-hq/element-call-embedded@${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}
-            ```
-
-            ### Android AAR
-
-            ```
-            dependencies {
-              implementation 'io.element.android:element-call-embedded:${{ needs.publish_android.outputs.ARTIFACT_VERSION }}'
-            }
-            ```
-
-            ### SwiftPM
-
-            ```
-            .package(url: "https://github.com/element-hq/element-call-swift.git", from: "${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}")
+            npm install @sableclient/sable-call-embedded@${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}
             ```
