@@ -17,8 +17,15 @@ import EventEmitter from "events";
 import { widget } from "./widget";
 
 const TestComponent: FC<
-  PropsWithChildren<{ client: MatrixClient; supportsThumbnails?: boolean }>
-> = ({ client, children, supportsThumbnails }) => {
+  PropsWithChildren<{
+    client: MatrixClient;
+    supportsAuthenticatedMedia?: boolean;
+  }>
+> = ({
+  client,
+  children,
+  supportsAuthenticatedMedia: supportsAuthenticatedMedia,
+}) => {
   return (
     <ClientContextProvider
       value={{
@@ -26,7 +33,7 @@ const TestComponent: FC<
         disconnected: false,
         supportedFeatures: {
           reactions: true,
-          thumbnails: supportsThumbnails ?? true,
+          authenticatedMedia: supportsAuthenticatedMedia ?? true,
         },
         setClient: vi.fn(),
         authenticated: {
@@ -81,36 +88,7 @@ test("should just render a placeholder when the user has no avatar", () => {
   expect(client.mxcUrlToHttp).toBeCalledTimes(0);
 });
 
-test("should just render a placeholder when thumbnails are not supported", () => {
-  const client = vi.mocked<MatrixClient>({
-    getAccessToken: () => "my-access-token",
-    mxcUrlToHttp: () => vi.fn(),
-  } as unknown as MatrixClient);
-
-  vi.spyOn(client, "mxcUrlToHttp");
-  const member = mockMatrixRoomMember(
-    mockRtcMembership("@alice:example.org", "AAAA"),
-    {
-      getMxcAvatarUrl: () => "mxc://example.org/alice-avatar",
-    },
-  );
-  const displayName = "Alice";
-  render(
-    <TestComponent client={client} supportsThumbnails={false}>
-      <Avatar
-        id={member.userId}
-        name={displayName}
-        size={96}
-        src={member.getMxcAvatarUrl()}
-      />
-    </TestComponent>,
-  );
-  const element = screen.getByRole("img", { name: "@alice:example.org" });
-  expect(element.tagName).toEqual("SPAN");
-  expect(client.mxcUrlToHttp).toBeCalledTimes(0);
-});
-
-test("should attempt to fetch authenticated media", async () => {
+test("should attempt to fetch authenticated media if supported", async () => {
   const expectedAuthUrl = "http://example.org/media/alice-avatar";
   const expectedObjectURL = "my-object-url";
   const accessToken = "my-access-token";
@@ -142,7 +120,7 @@ test("should attempt to fetch authenticated media", async () => {
   );
   const displayName = "Alice";
   render(
-    <TestComponent client={client}>
+    <TestComponent client={client} supportsAuthenticatedMedia={true}>
       <Avatar
         id={member.userId}
         name={displayName}
@@ -163,7 +141,7 @@ test("should attempt to fetch authenticated media", async () => {
   });
 });
 
-test("should use widget API when unable to authenticate media", async () => {
+test("should attempt to use widget API if authenticate media is not supported", async () => {
   const expectedMXCUrl = "mxc://example.org/alice-avatar";
   const expectedObjectURL = "my-object-url";
   const theBlob = new Blob([]);
@@ -188,7 +166,7 @@ test("should use widget API when unable to authenticate media", async () => {
   );
   const displayName = "Alice";
   render(
-    <TestComponent client={client}>
+    <TestComponent client={client} supportsAuthenticatedMedia={false}>
       <Avatar
         id={member.userId}
         name={displayName}
