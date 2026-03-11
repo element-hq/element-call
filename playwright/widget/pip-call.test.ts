@@ -55,7 +55,7 @@ widgetTest("Put call in PIP", async ({ addUser, browserName }) => {
   await TestHelpers.switchToRoomNamed(valere.page, "DoubleTask");
 
   // We should see the PIP overlay
-  await expect(valere.page.locator(".mx_WidgetPip_overlay")).toBeVisible();
+  await expect(valere.page.getByTestId("widget-pip-container")).toBeVisible();
 
   {
     // wait a bit so that the PIP has rendered the video
