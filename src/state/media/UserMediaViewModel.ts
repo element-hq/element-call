@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  BehaviorSubject,
   combineLatest,
   map,
   type Observable,
@@ -30,9 +31,9 @@ import {
 } from "./MemberMediaViewModel";
 import { type RemoteUserMediaViewModel } from "./RemoteUserMediaViewModel";
 import { type ObservableScope } from "../ObservableScope";
-import { createToggle$ } from "../../utils/observable";
 import { showConnectionStats } from "../../settings/settings";
 import { observeRtpStreamStats$ } from "./observeRtpStreamStats";
+import { videoFit$, videoSizeFromParticipant$ } from "../../utils/videoFit.ts";
 
 /**
  * A participant's user media (i.e. their microphone and camera feed).
@@ -46,7 +47,7 @@ export interface BaseUserMediaViewModel extends MemberMediaViewModel {
   speaking$: Behavior<boolean>;
   audioEnabled$: Behavior<boolean>;
   videoEnabled$: Behavior<boolean>;
-  cropVideo$: Behavior<boolean>;
+  videoFit$: Behavior<"cover" | "contain">;
   toggleCropVideo: () => void;
   /**
    * The expected identity of the LiveKit participant. Exposed for debugging.
@@ -60,6 +61,13 @@ export interface BaseUserMediaViewModel extends MemberMediaViewModel {
   videoStreamStats$: Observable<
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >;
+  /**
+   * Set the target dimensions of the HTML element (final dimension after anim).
+   * This can be used to determine the best video fit (fit to frame / keep ratio).
+   * @param targetWidth - The target width of the HTML element displaying the video.
+   * @param targetHeight - The target height of the HTML element displaying the video.
+   */
+  setTargetDimensions: (targetWidth: number, targetHeight: number) => void;
 }
 
 export interface BaseUserMediaInputs extends Omit<
@@ -90,6 +98,12 @@ export function createBaseUserMedia(
   );
   const toggleCropVideo$ = new Subject<void>();
 
+  // The target size of the video element, used to determine the best video fit.
+  // The target size is the final size of the HTML element after any animations have completed.
+  const targetSize$ = new BehaviorSubject<
+    { width: number; height: number } | undefined
+  >(undefined);
+
   return {
     ...createMemberMedia(scope, {
       ...inputs,
@@ -115,7 +129,11 @@ export function createBaseUserMedia(
     videoEnabled$: scope.behavior(
       media$.pipe(map((m) => m?.cameraTrack?.isMuted === false)),
     ),
-    cropVideo$: createToggle$(scope, true, toggleCropVideo$),
+    videoFit$: videoFit$(
+      scope,
+      videoSizeFromParticipant$(participant$),
+      targetSize$,
+    ),
     toggleCropVideo: () => toggleCropVideo$.next(),
     rtcBackendIdentity,
     handRaised$,
@@ -139,5 +157,8 @@ export function createBaseUserMedia(
         return observeRtpStreamStats$(p, Track.Source.Camera, statsType);
       }),
     ),
+    setTargetDimensions: (targetWidth: number, targetHeight: number): void => {
+      targetSize$.next({ width: targetWidth, height: targetHeight });
+    },
   };
 }

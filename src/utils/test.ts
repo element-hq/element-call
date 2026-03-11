@@ -70,6 +70,10 @@ import {
   createRemoteUserMedia,
   type RemoteUserMediaViewModel,
 } from "../state/media/RemoteUserMediaViewModel";
+import {
+  createRemoteScreenShare,
+  type RemoteScreenShareViewModel,
+} from "../state/media/RemoteScreenShareViewModel";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -390,6 +394,31 @@ export function mockRemoteMedia(
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
     handRaised$: constant(null),
     reaction$: constant(null),
+  });
+}
+
+export function mockRemoteScreenShare(
+  rtcMember: CallMembership,
+  roomMember: Partial<RoomMember>,
+  participant: RemoteParticipant | null,
+  livekitRoom: LivekitRoom | undefined = mockLivekitRoom(
+    {},
+    {
+      remoteParticipants$: of(participant ? [participant] : []),
+    },
+  ),
+): RemoteScreenShareViewModel {
+  const member = mockMatrixRoomMember(rtcMember, roomMember);
+  return createRemoteScreenShare(testScope(), {
+    id: "screenshare",
+    userId: member.userId,
+    participant$: constant(participant),
+    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+    livekitRoom$: constant(livekitRoom),
+    focusUrl$: constant("https://rtc-example.org"),
+    pretendToBeDisconnected$: constant(false),
+    displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
+    mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
   });
 }
 

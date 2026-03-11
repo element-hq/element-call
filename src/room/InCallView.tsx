@@ -9,8 +9,8 @@ import { IconButton, Text, Tooltip } from "@vector-im/compound-web";
 import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
-  type PointerEvent,
-  type TouchEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -109,8 +109,6 @@ import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 
 const logger = rootLogger.getChild("[InCallView]");
-
-const maxTapDurationMs = 400;
 
 export interface ActiveCallProps extends Omit<
   InCallViewProps,
@@ -334,40 +332,20 @@ export const InCallView: FC<InCallViewProps> = ({
     ) : null;
   }, [ringOverlay]);
 
-  // Ideally we could detect taps by listening for click events and checking
-  // that the pointerType of the event is "touch", but this isn't yet supported
-  // in Safari: https://developer.mozilla.org/en-US/docs/Web/API/Element/click_event#browser_compatibility
-  // Instead we have to watch for sufficiently fast touch events.
-  const touchStart = useRef<number | null>(null);
-  const onTouchStart = useCallback(() => (touchStart.current = Date.now()), []);
-  const onTouchEnd = useCallback(() => {
-    const start = touchStart.current;
-    if (start !== null && Date.now() - start <= maxTapDurationMs)
-      vm.tapScreen();
-    touchStart.current = null;
-  }, [vm]);
-  const onTouchCancel = useCallback(() => (touchStart.current = null), []);
-
-  // We also need to tell the footer controls to prevent touch events from
-  // bubbling up, or else the footer will be dismissed before a click/change
-  // event can be registered on the control
-  const onControlsTouchEnd = useCallback(
-    (e: TouchEvent) => {
-      // Somehow applying pointer-events: none to the controls when the footer
-      // is hidden is not enough to stop clicks from happening as the footer
-      // becomes visible, so we check manually whether the footer is shown
-      if (showFooter) {
-        e.stopPropagation();
-        vm.tapControls();
-      } else {
-        e.preventDefault();
-      }
+  const onViewClick = useCallback(
+    (e: ReactMouseEvent) => {
+      if (
+        (e.nativeEvent as PointerEvent).pointerType === "touch" &&
+        // If an interactive element was tapped, don't count this as a tap on the screen
+        (e.target as Element).closest?.("button, input") === null
+      )
+        vm.tapScreen();
     },
-    [vm, showFooter],
+    [vm],
   );
 
   const onPointerMove = useCallback(
-    (e: PointerEvent) => {
+    (e: ReactPointerEvent) => {
       if (e.pointerType === "mouse") vm.hoverScreen();
     },
     [vm],
@@ -606,8 +584,8 @@ export const InCallView: FC<InCallViewProps> = ({
           vm={layout.spotlight}
           expanded
           onToggleExpanded={null}
-          targetWidth={gridBounds.height}
-          targetHeight={gridBounds.width}
+          targetWidth={gridBounds.width}
+          targetHeight={gridBounds.height}
           showIndicators={false}
           focusable={!contentObscured}
           aria-hidden={contentObscured}
@@ -667,7 +645,6 @@ export const InCallView: FC<InCallViewProps> = ({
       key="audio"
       muted={!audioEnabled}
       onClick={toggleAudio ?? undefined}
-      onTouchEnd={onControlsTouchEnd}
       disabled={toggleAudio === null}
       data-testid="incall_mute"
     />,
@@ -675,7 +652,6 @@ export const InCallView: FC<InCallViewProps> = ({
       key="video"
       muted={!videoEnabled}
       onClick={toggleVideo ?? undefined}
-      onTouchEnd={onControlsTouchEnd}
       disabled={toggleVideo === null}
       data-testid="incall_videomute"
     />,
@@ -687,7 +663,6 @@ export const InCallView: FC<InCallViewProps> = ({
         className={styles.shareScreen}
         enabled={sharingScreen}
         onClick={vm.toggleScreenSharing}
-        onTouchEnd={onControlsTouchEnd}
         data-testid="incall_screenshare"
       />,
     );
@@ -699,18 +674,11 @@ export const InCallView: FC<InCallViewProps> = ({
         key="raise_hand"
         className={styles.raiseHand}
         identifier={`${client.getUserId()}:${client.getDeviceId()}`}
-        onTouchEnd={onControlsTouchEnd}
       />,
     );
   }
   if (layout.type !== "pip")
-    buttons.push(
-      <SettingsButton
-        key="settings"
-        onClick={openSettings}
-        onTouchEnd={onControlsTouchEnd}
-      />,
-    );
+    buttons.push(<SettingsButton key="settings" onClick={openSettings} />);
 
   buttons.push(
     <EndCallButton
@@ -718,7 +686,6 @@ export const InCallView: FC<InCallViewProps> = ({
       onClick={function (): void {
         vm.hangup();
       }}
-      onTouchEnd={onControlsTouchEnd}
       data-testid="incall_leave"
     />,
   );
@@ -751,7 +718,6 @@ export const InCallView: FC<InCallViewProps> = ({
           className={styles.layout}
           layout={gridMode}
           setLayout={setGridMode}
-          onTouchEnd={onControlsTouchEnd}
         />
       )}
     </div>
@@ -760,12 +726,13 @@ export const InCallView: FC<InCallViewProps> = ({
   const allConnections = useBehavior(vm.allConnections$);
 
   return (
+    // The onClick handler here exists to control the visibility of the footer,
+    // and the footer is also viewable by moving focus into it, so this is fine.
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
     <div
       className={styles.inRoom}
       ref={containerRef}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchCancel}
+      onClick={onViewClick}
       onPointerMove={onPointerMove}
       onPointerOut={onPointerOut}
     >
