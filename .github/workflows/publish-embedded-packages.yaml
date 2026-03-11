@@ -260,7 +260,9 @@ jobs:
       - name: Push
         working-directory: element-call-swift
         run: |
-          git push --tags ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+          git push "https://x-access-token:${SWIFT_RELEASE_TOKEN}@github.com/element-hq/element-call-swift.git" --tags ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+        env:
+          SWIFT_RELEASE_TOKEN: ${{ secrets.SWIFT_RELEASE_TOKEN }}
 
       - id: artifact_version
         name: Output artifact version
