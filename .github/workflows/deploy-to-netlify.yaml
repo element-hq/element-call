@@ -63,11 +63,15 @@ jobs:
 
       - name: Add config file
         run: |
-          if [ "${{ inputs.package }}" = "full" ]; then
-            curl -s "https://raw.githubusercontent.com/${{ inputs.pr_head_full_name }}/${{ inputs.pr_head_ref }}/config/config_netlify_preview.json" > webapp/config.json
+          if [ "${INPUTS_PACKAGE}" = "full" ]; then
+            curl -s "https://raw.githubusercontent.com/${INPUTS_PR_HEAD_FULL_NAME}/${INPUTS_PR_HEAD_REF}/config/config_netlify_preview.json" > webapp/config.json
           else
-            curl -s "https://raw.githubusercontent.com/${{ inputs.pr_head_full_name }}/${{ inputs.pr_head_ref }}/config/config_netlify_preview_sdk.json" > webapp/config.json
+            curl -s "https://raw.githubusercontent.com/${INPUTS_PR_HEAD_FULL_NAME}/${INPUTS_PR_HEAD_REF}/config/config_netlify_preview_sdk.json" > webapp/config.json
           fi
+        env:
+          INPUTS_PACKAGE: ${{ inputs.package }}
+          INPUTS_PR_HEAD_FULL_NAME: ${{ inputs.pr_head_full_name }}
+          INPUTS_PR_HEAD_REF: ${{ inputs.pr_head_ref }}
       - name: ☁️ Deploy to Netlify
         id: netlify
         uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654 # v3.0
