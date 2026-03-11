@@ -85,7 +85,7 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            oci-push.vpn.infra.element.io/element-web
+            oci-push.vpn.infra.element.io/element-call
           tags: ${{ inputs.docker_tags }}
           labels: |
             org.opencontainers.image.licenses=AGPL-3.0-only OR LicenseRef-Element-Commercial
