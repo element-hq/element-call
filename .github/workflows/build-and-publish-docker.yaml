@@ -68,8 +68,8 @@ jobs:
           jwtGithubAudience: https://vault.infra.ci.i.element.dev
           method: jwt
           secrets: |
-            services/<voip>-repositories/secret/data/oci.element.io username | OCI_USERNAME ;
-            services/<voip>-repositories/secret/data/oci.element.io password | OCI_PASSWORD ;
+            services/voip-repositories/secret/data/oci.element.io username | OCI_USERNAME ;
+            services/voip-repositories/secret/data/oci.element.io password | OCI_PASSWORD ;
 
       - name: Login to oci.element.io Registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
