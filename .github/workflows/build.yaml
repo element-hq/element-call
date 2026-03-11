@@ -51,6 +51,7 @@ jobs:
       packages: write
       id-token: write
     uses: ./.github/workflows/build-and-publish-docker.yaml
+    secrets: inherit
     with:
       artifact_run_id: ${{ github.run_id }}
       docker_tags: |
