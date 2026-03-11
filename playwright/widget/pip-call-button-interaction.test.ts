@@ -58,11 +58,10 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
     await expect(videoMuteButton).toBeVisible();
     await expect(audioMuteButton).toBeVisible();
 
-    // TODO once we have the EW version that supports the interactive pip element we can activate those checks
-    // await videoMuteButton.click();
-    // await audioMuteButton.click();
+    await videoMuteButton.click();
+    await audioMuteButton.click();
 
-    // await expect(videoMuteButton).toHaveCSS("disabled", "true");
-    // await expect(audioMuteButton).toHaveCSS("disabled", "true");
+    await expect(videoMuteButton).toHaveCSS("disabled", "true");
+    await expect(audioMuteButton).toHaveCSS("disabled", "true");
   }
 });
