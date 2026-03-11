@@ -23,7 +23,16 @@ jobs:
     steps:
       - name: Calculate VERSION
         # We should only use the hard coded test value for a dry run
-        run: echo "VERSION=${{ github.event_name == 'release' && github.event.release.tag_name || 'v0.0.0-pre.0' }}" >> "$GITHUB_ENV"
+        run: |
+          # Die Logik wird nun innerhalb der Shell mit den Variablen ausgeführt
+          if [ "$EVENT_NAME" = "release" ]; then
+            echo "VERSION=$RELEASE_TAG" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=v0.0.0-pre.0" >> "$GITHUB_ENV"
+          fi
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          EVENT_NAME: ${{ github.event_name }}
       - id: dry_run
         name: Set DRY_RUN
         # We perform a dry run for all events except releases.
