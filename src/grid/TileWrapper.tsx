@@ -27,7 +27,13 @@ interface Props<M, R extends HTMLElement> {
       state: Parameters<Handler<"drag", EventTypes["drag"]>>[0],
     ) => void
   > | null;
+  /**
+   * The width this tile will have once its animations have settled.
+   */
   targetWidth: number;
+  /**
+   * The width this tile will have once its animations have settled.
+   */
   targetHeight: number;
   model: M;
   Tile: ComponentType<TileProps<M, R>>;

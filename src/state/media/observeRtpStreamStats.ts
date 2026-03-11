@@ -67,3 +67,12 @@ export function observeInboundRtpStreamStats$(
     map((x) => x as RTCInboundRtpStreamStats | undefined),
   );
 }
+
+export function observeOutboundRtpStreamStats$(
+  participant: Participant,
+  source: Track.Source,
+): Observable<RTCOutboundRtpStreamStats | undefined> {
+  return observeRtpStreamStats$(participant, source, "outbound-rtp").pipe(
+    map((x) => x as RTCOutboundRtpStreamStats | undefined),
+  );
+}
