@@ -47,34 +47,22 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
 
   {
     // Check for a bug where the video had the wrong fit in PIP
-    const hangupButton = iFrame.getByRole("button", { name: "End call" });
-    const audioMuteButton = iFrame.getByTestId("incall_mute");
-    const videoMuteButton = iFrame.getByTestId("incall_videomute");
-    await expect(hangupButton).toBeVisible();
-    await expect(audioMuteButton).toBeVisible();
-    await expect(videoMuteButton).toBeVisible();
-    await expect(audioMuteButton).toHaveCSS(
-      "background-color",
-      "rgb(255, 255, 255)",
-    );
-    await expect(videoMuteButton).toHaveCSS(
-      "background-color",
-      "rgb(255, 255, 255)",
-    );
-    await videoMuteButton.click();
-    await audioMuteButton.click();
+    const hangupBtn = iFrame.getByRole("button", { name: "End call" });
+    const audioBtn = iFrame.getByTestId("incall_mute");
+    const videoBtn = iFrame.getByTestId("incall_videomute");
+    await expect(hangupBtn).toBeVisible();
+    await expect(audioBtn).toBeVisible();
+    await expect(videoBtn).toBeVisible();
+    await expect(audioBtn).toHaveAttribute("aria-label", /^Mute microphone$/);
+    await expect(videoBtn).toHaveAttribute("aria-label", /^Stop video$/);
+
+    await videoBtn.click();
+    await audioBtn.click();
+
     // stop hovering on any of the buttons
     await iFrame.getByTestId("videoTile").hover();
-    await valere.page.pause();
 
-    await expect(audioMuteButton).toHaveCSS(
-      "background-color",
-      "rgb(27, 29, 34)",
-    );
-
-    await expect(videoMuteButton).toHaveCSS(
-      "background-color",
-      "rgb(27, 29, 34)",
-    );
+    await expect(audioBtn).toHaveAttribute("aria-label", /^Unmute microphone$/);
+    await expect(videoBtn).toHaveAttribute("aria-label", /^Start video$/);
   }
 });
