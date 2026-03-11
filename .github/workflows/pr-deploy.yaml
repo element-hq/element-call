@@ -1,5 +1,7 @@
 name: Deploy previews for PRs
 on:
+  # zizmor: ignore[dangerous-triggers]
+  # Reason: This is now restricted to internal PRs only using the 'if' condition below.  
   workflow_run:
     workflows: ["Build"]
     types:
@@ -7,7 +9,14 @@ on:
 
 jobs:
   prdetails:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
+    # Logic:
+    # 1. Build must be successful
+    # 2. Event must be a pull_request
+    # 3. Head repository must be the SAME as the base repository (No Forks!)
+    if: >
+      github.event.workflow_run.conclusion == 'success' && 
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository    
     runs-on: ubuntu-latest
     outputs:
       pr_number: ${{ steps.prdetails.outputs.pr_id }}
