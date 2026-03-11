@@ -19,7 +19,7 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
   test.slow();
 
   const valere = await addUser("Valere", HOST1);
-  await valere.page.pause();
+
   const callRoom = "CallRoom";
   await TestHelpers.createRoom("CallRoom", valere.page);
 
@@ -48,20 +48,33 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
   {
     // Check for a bug where the video had the wrong fit in PIP
     const hangupButton = iFrame.getByRole("button", { name: "End call" });
-    const videoMuteButton = iFrame.getByRole("button", {
-      name: "Stop video",
-    });
-    const audioMuteButton = iFrame.getByRole("button", {
-      name: "Mute microphone",
-    });
+    const audioMuteButton = iFrame.getByTestId("incall_mute");
+    const videoMuteButton = iFrame.getByTestId("incall_videomute");
     await expect(hangupButton).toBeVisible();
-    await expect(videoMuteButton).toBeVisible();
     await expect(audioMuteButton).toBeVisible();
-
+    await expect(videoMuteButton).toBeVisible();
+    await expect(audioMuteButton).toHaveCSS(
+      "background-color",
+      "rgb(255, 255, 255)",
+    );
+    await expect(videoMuteButton).toHaveCSS(
+      "background-color",
+      "rgb(255, 255, 255)",
+    );
     await videoMuteButton.click();
     await audioMuteButton.click();
+    // stop hovering on any of the buttons
+    await iFrame.getByTestId("videoTile").hover();
+    await valere.page.pause();
 
-    await expect(videoMuteButton).toHaveCSS("disabled", "true");
-    await expect(audioMuteButton).toHaveCSS("disabled", "true");
+    await expect(audioMuteButton).toHaveCSS(
+      "background-color",
+      "rgb(27, 29, 34)",
+    );
+
+    await expect(videoMuteButton).toHaveCSS(
+      "background-color",
+      "rgb(27, 29, 34)",
+    );
   }
 });
