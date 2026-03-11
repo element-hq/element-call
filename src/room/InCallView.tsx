@@ -640,8 +640,10 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const buttons: JSX.Element[] = [];
 
+  const buttonSize = layout.type === "pip" ? "sm" : "lg";
   buttons.push(
     <MicButton
+      size={buttonSize}
       key="audio"
       muted={!audioEnabled}
       onClick={toggleAudio ?? undefined}
@@ -649,6 +651,7 @@ export const InCallView: FC<InCallViewProps> = ({
       data-testid="incall_mute"
     />,
     <VideoButton
+      size={buttonSize}
       key="video"
       muted={!videoEnabled}
       onClick={toggleVideo ?? undefined}
@@ -659,6 +662,7 @@ export const InCallView: FC<InCallViewProps> = ({
   if (vm.toggleScreenSharing !== null) {
     buttons.push(
       <ShareScreenButton
+        size={buttonSize}
         key="share_screen"
         className={styles.shareScreen}
         enabled={sharingScreen}
@@ -670,6 +674,7 @@ export const InCallView: FC<InCallViewProps> = ({
   if (supportsReactions) {
     buttons.push(
       <ReactionToggleButton
+        size={buttonSize}
         vm={vm}
         key="raise_hand"
         className={styles.raiseHand}
@@ -678,10 +683,17 @@ export const InCallView: FC<InCallViewProps> = ({
     );
   }
   if (layout.type !== "pip")
-    buttons.push(<SettingsButton key="settings" onClick={openSettings} />);
+    buttons.push(
+      <SettingsButton
+        size={buttonSize}
+        key="settings"
+        onClick={openSettings}
+      />,
+    );
 
   buttons.push(
     <EndCallButton
+      size={buttonSize}
       key="end_call"
       onClick={function (): void {
         vm.hangup();

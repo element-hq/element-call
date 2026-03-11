@@ -63,7 +63,7 @@ import {
   playReactionsSound,
   showReactions,
 } from "../../settings/settings";
-import { isFirefox } from "../../Platform";
+import { isFirefox, platform } from "../../Platform";
 import { setPipEnabled$ } from "../../controls";
 import { TileStore } from "../TileStore";
 import { gridLikeLayout } from "../GridLikeLayout";
@@ -1271,7 +1271,7 @@ export function createCallViewModel$(
       switchMap((mode) => {
         switch (mode) {
           case "pip":
-            return of(false);
+            return of(platform === "desktop" ? true : false);
           case "normal":
           case "narrow":
             return of(true);
