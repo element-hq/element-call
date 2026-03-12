@@ -34,15 +34,20 @@ export class Setting<T> {
 
     this._value$ = new BehaviorSubject(initialValue);
     this.value$ = this._value$;
+    this._lastUpdateReason$ = new BehaviorSubject<string | null>(null);
+    this.lastUpdateReason$ = this._lastUpdateReason$;
   }
 
   private readonly key: string;
 
   private readonly _value$: BehaviorSubject<T>;
+  private readonly _lastUpdateReason$: BehaviorSubject<string | null>;
   public readonly value$: Behavior<T>;
+  public readonly lastUpdateReason$: Behavior<string | null>;
 
-  public readonly setValue = (value: T): void => {
+  public readonly setValue = (value: T, reason?: string): void => {
     this._value$.next(value);
+    this._lastUpdateReason$.next(reason ?? null);
     localStorage.setItem(this.key, JSON.stringify(value));
   };
   public readonly getValue = (): T => {
