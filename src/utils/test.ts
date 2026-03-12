@@ -443,10 +443,10 @@ export class MockRTCSession extends TypedEventEmitter<
   public asMockedSession(): MockedObject<MatrixRTCSession> {
     const session = this as unknown as MockedObject<MatrixRTCSession>;
 
-    vi.mocked(session).reemitEncryptionKeys = vi
+    session.reemitEncryptionKeys = vi
       .fn<() => void>()
       .mockReturnValue(undefined);
-    vi.mocked(session).getOldestMembership = vi
+    session.getOldestMembership = vi
       .fn<() => CallMembership | undefined>()
       .mockReturnValue(this.memberships[0]);
 
