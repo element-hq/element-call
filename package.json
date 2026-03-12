@@ -138,7 +138,9 @@
   },
   "resolutions": {
     "@livekit/components-core/rxjs": "^7.8.1",
-    "@livekit/track-processors/@mediapipe/tasks-vision": "^0.10.18"
+    "@livekit/track-processors/@mediapipe/tasks-vision": "^0.10.18",
+    "minimatch": "^10.2.3",
+    "tar": "^7.5.11"
   },
   "packageManager": "yarn@4.7.0"
 }
