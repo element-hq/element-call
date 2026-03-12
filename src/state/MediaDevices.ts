@@ -15,6 +15,7 @@ import {
   Subject,
   switchMap,
   type Observable,
+  tap,
 } from "rxjs";
 import { createMediaDeviceObserver } from "@livekit/components-core";
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
@@ -34,6 +35,7 @@ import { getUrlParams } from "../UrlParams";
 import { platform } from "../Platform";
 import { switchWhen } from "../utils/observable";
 import { type Behavior, constant } from "./Behavior";
+import { AndroidControlledAudioOutput } from "./AndroidControlledAudioOutput.ts";
 
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
 // the ios swift team.
@@ -49,10 +51,18 @@ export type AudioOutputDeviceLabel =
   | { type: "earpiece" }
   | { type: "default"; name: string | null };
 
+/**
+ * Base selected-device value shared by all media kinds.
+ *
+ * `id` is the effective device identifier used by browser media APIs.
+ */
 export interface SelectedDevice {
   id: string;
 }
 
+/**
+ * Selected audio input value with audio-input-specific metadata.
+ */
 export interface SelectedAudioInputDevice extends SelectedDevice {
   /**
    * Emits whenever we think that this audio input device has logically changed
@@ -61,6 +71,9 @@ export interface SelectedAudioInputDevice extends SelectedDevice {
   hardwareDeviceChange$: Observable<void>;
 }
 
+/**
+ * Selected audio output value with output-routing-specific metadata.
+ */
 export interface SelectedAudioOutputDevice extends SelectedDevice {
   /**
    * Whether this device is a "virtual earpiece" device. If so, we should output
@@ -69,23 +82,42 @@ export interface SelectedAudioOutputDevice extends SelectedDevice {
   virtualEarpiece: boolean;
 }
 
+/**
+ * Common reactive contract for selectable input/output media devices (mic, speaker, camera).
+ *
+ * `Label` is the type used to represent a device in UI lists.
+ * `Selected` is the type used to represent the active selection for a device kind.
+ */
 export interface MediaDevice<Label, Selected> {
   /**
-   * A map from available device IDs to labels.
+   * Reactive map of currently available devices keyed by device ID.
+   *
+   * `Label` defines the UI-facing label data structure for each device type.
    */
   available$: Behavior<Map<string, Label>>;
+
   /**
-   * The selected device.
+   * The active device selection.
+   * Can be `undefined` when no device is yet selected.
+   *
+   * When defined, `Selected` contains the selected device ID plus any
+   * type-specific metadata.
    */
   selected$: Behavior<Selected | undefined>;
+
   /**
-   * Selects a new device.
+   * Requests selection of a device by ID.
+   *
+   * Implementations typically persist this preference and let `selected$`
+   * converge to the effective device (which may differ if the requested ID is
+   * unavailable).
    */
   select(id: string): void;
 }
 
 /**
  * An observable that represents if we should display the devices menu for iOS.
+ *
  * This implies the following
  *  - hide any input devices (they do not work anyhow on ios)
  *  - Show a button to show the native output picker instead.
@@ -143,19 +175,29 @@ function buildDeviceMap(
 function selectDevice$<Label>(
   available$: Observable<Map<string, Label>>,
   preferredId$: Observable<string | undefined>,
+  defaultPicker: (available: Map<string, Label>) => string | undefined = (
+    available,
+  ) => available.keys().next().value,
 ): Observable<string | undefined> {
   return combineLatest([available$, preferredId$], (available, preferredId) => {
     if (available.size) {
-      // If the preferred device is available, use it. Or if every available
-      // device ID is falsy, the browser is probably just being paranoid about
-      // fingerprinting and we should still try using the preferred device.
-      // Worst case it is not available and the browser will gracefully fall
-      // back to some other device for us when requesting the media stream.
-      // Otherwise, select the first available device.
-      return (preferredId !== undefined && available.has(preferredId)) ||
-        (available.size === 1 && available.has(""))
-        ? preferredId
-        : available.keys().next().value;
+      if (preferredId !== undefined && available.has(preferredId)) {
+        // If the preferred device is available, use it.
+        return preferredId;
+      } else if (available.size === 1 && available.has("")) {
+        // In some cases the enumerateDevices will list the devices with empty string details:
+        // `{deviceId:'', kind:'audiooutput|audioinput|videoinput', label:'', groupId:''}`
+        // This can happen when:
+        //     1. The user has not yet granted permissions to microphone/devices
+        //     2. The page is not running in a secure context (e.g. localhost or https)
+        //     3. In embedded WebViews, restrictions are often tighter, need active capture..
+        //     3. The browser is blocking access to device details for privacy reasons (?)
+        // This is most likely transitional, so keep the current device selected until we get a more accurate enumerateDevices.
+        return preferredId;
+      } else {
+        // No preferred, so pick a default.
+        return defaultPicker(available);
+      }
     }
     return undefined;
   });
@@ -251,14 +293,16 @@ class AudioOutput implements MediaDevice<
 
   public readonly selected$ = this.scope.behavior(
     selectDevice$(this.available$, audioOutputSetting.value$).pipe(
-      map((id) =>
-        id === undefined
-          ? undefined
-          : {
-              id,
-              virtualEarpiece: false,
-            },
-      ),
+      map((id) => {
+        if (id === undefined) {
+          return undefined;
+        } else {
+          return {
+            id,
+            virtualEarpiece: false,
+          };
+        }
+      }),
     ),
   );
   public select(id: string): void {
@@ -275,6 +319,11 @@ class AudioOutput implements MediaDevice<
   }
 }
 
+/**
+ * A special implementation of audio output that allows the hosting application
+ * to have more control over the device selection process. This is used when the
+ * `controlledAudioDevices` URL parameter is set, which is currently only true on mobile.
+ */
 class ControlledAudioOutput implements MediaDevice<
   AudioOutputDeviceLabel,
   SelectedAudioOutputDevice
@@ -309,8 +358,12 @@ class ControlledAudioOutput implements MediaDevice<
 
         // Create a virtual earpiece device in case a non-earpiece device is
         // designated for this purpose
-        if (iosDeviceMenu && availableRaw.some((d) => d.forEarpiece))
+        if (iosDeviceMenu && availableRaw.some((d) => d.forEarpiece)) {
+          this.logger.info(
+            `IOS Add virtual earpiece device with id ${EARPIECE_CONFIG_ID}`,
+          );
           available.set(EARPIECE_CONFIG_ID, { type: "earpiece" });
+        }
 
         return available;
       },
@@ -320,6 +373,7 @@ class ControlledAudioOutput implements MediaDevice<
   private readonly deviceSelection$ = new Subject<string>();
 
   public select(id: string): void {
+    this.logger.info(`select device: ${id}`);
     this.deviceSelection$.next(id);
   }
 
@@ -338,6 +392,10 @@ class ControlledAudioOutput implements MediaDevice<
           ? undefined
           : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID };
       },
+    ).pipe(
+      tap((selected) => {
+        this.logger.debug(`selected device: ${selected?.id}`);
+      }),
     ),
   );
 
@@ -351,23 +409,17 @@ class ControlledAudioOutput implements MediaDevice<
       // been selected - for example, Element X iOS listens to this to determine
       // whether it should enable the proximity sensor.
       if (device !== undefined) {
-        this.logger.info(
-          "[controlled-output] onAudioDeviceSelect called:",
-          device,
-        );
+        this.logger.info("onAudioDeviceSelect called:", device);
         window.controls.onAudioDeviceSelect?.(device.id);
         // Also invoke the deprecated callback for backward compatibility
         window.controls.onOutputDeviceSelect?.(device.id);
       }
     });
     this.available$.subscribe((available) => {
-      this.logger.info("[controlled-output] available devices:", available);
+      this.logger.debug("available devices:", available);
     });
     this.availableRaw$.subscribe((availableRaw) => {
-      this.logger.info(
-        "[controlled-output] available raw devices:",
-        availableRaw,
-      );
+      this.logger.debug("available raw devices:", availableRaw);
     });
   }
 }
@@ -434,7 +486,14 @@ export class MediaDevices {
     AudioOutputDeviceLabel,
     SelectedAudioOutputDevice
   > = getUrlParams().controlledAudioDevices
-    ? new ControlledAudioOutput(this.usingNames$, this.scope)
+    ? platform == "android"
+      ? new AndroidControlledAudioOutput(
+          controlledAvailableOutputDevices$,
+          this.scope,
+          getUrlParams().callIntent,
+          window.controls,
+        )
+      : new ControlledAudioOutput(this.usingNames$, this.scope)
     : new AudioOutput(this.usingNames$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
