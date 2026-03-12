@@ -79,7 +79,7 @@
     "@vector-im/compound-design-tokens": "^6.0.0",
     "@vector-im/compound-web": "^8.0.0",
     "@vitejs/plugin-react": "^4.0.1",
-    "@vitest/coverage-v8": "^3.0.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "babel-plugin-transform-vite-meta-env": "^1.0.3",
     "classnames": "^2.3.1",
     "copy-to-clipboard": "^3.3.3",
@@ -138,8 +138,7 @@
   },
   "resolutions": {
     "@livekit/components-core/rxjs": "^7.8.1",
-    "@livekit/track-processors/@mediapipe/tasks-vision": "^0.10.18",
-    "rollup": "4.59.0"
+    "@livekit/track-processors/@mediapipe/tasks-vision": "^0.10.18"
   },
   "packageManager": "yarn@4.7.0"
 }
