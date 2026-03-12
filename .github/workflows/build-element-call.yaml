@@ -45,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: "yarn install --immutable"
       - name: Build Element Call
-        run: ${{ format('yarn run build:{0}:{1}', inputs.package, inputs.build_mode) }}
+        run: yarn run build:"$PACKAGE":"$BUILD_MODE"
         env:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -54,6 +54,8 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           VITE_APP_VERSION: ${{ inputs.vite_app_version }}
           NODE_OPTIONS: "--max-old-space-size=4096"
+          PACKAGE: ${{ inputs.package }}
+          BUILD_MODE: ${{ inputs.build_mode }}
       - name: Upload Artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
