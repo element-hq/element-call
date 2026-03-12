@@ -90,11 +90,18 @@ export const testAudioContext = {
   createStereoPanner: vi.fn().mockReturnValue(panNode),
   close: vi.fn().mockResolvedValue(undefined),
 };
-export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
+
+const TestAudioContext = vi.fn(
+  class {
+    public constructor() {
+      return testAudioContext;
+    }
+  },
+);
 
 let user: UserEvent;
 beforeEach(() => {
-  vi.stubGlobal("AudioContext", TestAudioContextConstructor);
+  vi.stubGlobal("AudioContext", TestAudioContext);
   user = userEvent.setup();
 });
 
