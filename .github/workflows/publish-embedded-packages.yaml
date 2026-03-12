@@ -22,7 +22,7 @@ jobs:
       TAG: ${{ steps.tag.outputs.TAG }}
     steps:
       - name: Calculate VERSION
-        # Safely store dynamic values in environment variables 
+        # Safely store dynamic values in environment variables
         # to prevent shell injection (template-injection)
         run: |
           # The logic is executed within the shell using the env variables

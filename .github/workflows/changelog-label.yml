@@ -8,7 +8,7 @@ on:
     types: [labeled, unlabeled, opened]
 
 permissions:
-  pull-requests: read 
+  pull-requests: read
   statuses: write
 
 jobs:
