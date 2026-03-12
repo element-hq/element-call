@@ -22,9 +22,10 @@ jobs:
       TAG: ${{ steps.tag.outputs.TAG }}
     steps:
       - name: Calculate VERSION
-        # We should only use the hard coded test value for a dry run
+        # Safely store dynamic values in environment variables 
+        # to prevent shell injection (template-injection)
         run: |
-          # Die Logik wird nun innerhalb der Shell mit den Variablen ausgeführt
+          # The logic is executed within the shell using the env variables
           if [ "$EVENT_NAME" = "release" ]; then
             echo "VERSION=$RELEASE_TAG" >> "$GITHUB_ENV"
           else
