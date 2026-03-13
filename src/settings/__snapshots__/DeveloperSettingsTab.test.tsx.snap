@@ -453,5 +453,235 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
   "answer": 42
 }
   </pre>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
+  <h4>
+    Camera quality
+  </h4>
+  <div
+    class="fieldRow"
+  >
+    <div
+      class="field checkboxField"
+    >
+      <input
+        aria-describedby="_r_j_"
+        id="cameraToggle"
+        type="checkbox"
+      />
+      <label
+        for="cameraToggle"
+      >
+        <div
+          class="checkbox"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Advanced camera settings
+      </label>
+      <p
+        class="description"
+        id="_r_j_"
+      >
+        Configure resolution, framerate, bitrate, and codec for camera video. Changes apply on next call join.
+      </p>
+    </div>
+  </div>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
+  <h4>
+    Screen sharing
+  </h4>
+  <div
+    class="fieldRow"
+  >
+    <div
+      class="field checkboxField"
+    >
+      <input
+        aria-describedby="_r_k_"
+        id="screenShareToggle"
+        type="checkbox"
+      />
+      <label
+        for="screenShareToggle"
+      >
+        <div
+          class="checkbox"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Advanced screen share settings
+      </label>
+      <p
+        class="description"
+        id="_r_k_"
+      >
+        Configure resolution, framerate, bitrate, and codec for screen sharing
+      </p>
+    </div>
+  </div>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
+  <h4>
+    Audio processing
+  </h4>
+  <p>
+    Changes apply on next call join.
+  </p>
+  <div
+    class="fieldRow"
+  >
+    <div
+      class="field checkboxField"
+    >
+      <input
+        aria-describedby="_r_l_"
+        checked=""
+        id="echoCancellation"
+        type="checkbox"
+      />
+      <label
+        for="echoCancellation"
+      >
+        <div
+          class="checkbox"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Echo cancellation
+      </label>
+    </div>
+  </div>
+  <div
+    class="fieldRow"
+  >
+    <div
+      class="field checkboxField"
+    >
+      <input
+        aria-describedby="_r_m_"
+        checked=""
+        id="noiseSuppression"
+        type="checkbox"
+      />
+      <label
+        for="noiseSuppression"
+      >
+        <div
+          class="checkbox"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Noise suppression
+      </label>
+    </div>
+  </div>
+  <div
+    class="fieldRow"
+  >
+    <div
+      class="field checkboxField"
+    >
+      <input
+        aria-describedby="_r_n_"
+        checked=""
+        id="autoGainControl"
+        type="checkbox"
+      />
+      <label
+        for="autoGainControl"
+      >
+        <div
+          class="checkbox"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Automatic gain control
+      </label>
+    </div>
+  </div>
 </div>
 `;
