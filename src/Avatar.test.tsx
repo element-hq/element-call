@@ -14,7 +14,13 @@ import { ClientContextProvider } from "./ClientContext";
 import { Avatar } from "./Avatar";
 import { mockMatrixRoomMember, mockRtcMembership } from "./utils/test";
 import { widget } from "./widget";
-import { WidgetApi } from "matrix-widget-api";
+import { type FC, type PropsWithChildren } from "react";
+import { type WidgetApi } from "matrix-widget-api";
+
+import { ClientContextProvider } from "./ClientContext";
+import { Avatar } from "./Avatar";
+import { mockMatrixRoomMember, mockRtcMembership } from "./utils/test";
+import { widget } from "./widget";
 
 const TestComponent: FC<
   PropsWithChildren<{
