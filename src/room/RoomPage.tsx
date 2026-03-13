@@ -183,6 +183,7 @@ export const RoomPage: FC = () => {
               confineToRoom={confineToRoom}
               hideHeader={header !== "standard"}
               participantCount={null}
+              callParticipants={[]}
               muteStates={muteStates}
               onShareClick={null}
             />

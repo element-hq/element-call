@@ -156,6 +156,13 @@
     "join_as_guest": "Join as guest",
     "join_button": "Join call",
     "leave_button": "Back to recents",
+    "participants_in_call_one": "{{count}} participant in call: {{names}}",
+    "participants_in_call_other": "{{count}} participants in call: {{names}}",
+    "participants_in_call_overflow_one": "{{count}} participant in call: {{names}}, and {{overflowCount}} other",
+    "participants_in_call_overflow_other": "{{count}} participants in call: {{names}}, and {{overflowCount}} others",
+    "participants_overflow_count": "+{{count}}",
+    "participants_overflow_label_one": "{{count}} more participant",
+    "participants_overflow_label_other": "{{count}} more participants",
     "waiting_for_invite": "Request sent! Waiting for permission to join…"
   },
   "log_in": "Log In",

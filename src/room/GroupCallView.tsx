@@ -74,6 +74,7 @@ import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useAppBarTitle } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
+import { useCallParticipants } from "./useCallParticipants";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -211,6 +212,8 @@ export const GroupCallView: FC<Props> = ({
     () => new Set<string>(memberships.map((m) => m.userId!)).size,
     [memberships],
   );
+
+  const callParticipants = useCallParticipants(memberships, room);
 
   const mediaDevices = useMediaDevices();
   const latestMuteStates = useLatest(muteStates);
@@ -439,6 +442,7 @@ export const GroupCallView: FC<Props> = ({
         confineToRoom={confineToRoom}
         hideHeader={header === HeaderStyle.None}
         participantCount={participantCount}
+        callParticipants={callParticipants}
         onShareClick={onShareClick}
       />
     </>

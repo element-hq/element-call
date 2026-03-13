@@ -52,6 +52,8 @@ import {
 import { usePageTitle } from "../usePageTitle";
 import { getValue } from "../utils/observable";
 import { useBehavior } from "../useBehavior";
+import { CallParticipantRow } from "./CallParticipantRow";
+import { type CallParticipant } from "./useCallParticipants";
 
 interface Props {
   client: MatrixClient;
@@ -62,6 +64,7 @@ interface Props {
   confineToRoom: boolean;
   hideHeader: boolean;
   participantCount: number | null;
+  callParticipants: CallParticipant[];
   onShareClick: (() => void) | null;
   waitingForInvite?: boolean;
 }
@@ -75,6 +78,7 @@ export const LobbyView: FC<Props> = ({
   confineToRoom,
   hideHeader,
   participantCount,
+  callParticipants,
   onShareClick,
   waitingForInvite,
 }) => {
@@ -205,6 +209,9 @@ export const LobbyView: FC<Props> = ({
           </Header>
         )}
         <div className={styles.content}>
+          {callParticipants.length > 0 && (
+            <CallParticipantRow participants={callParticipants} />
+          )}
           <VideoPreview
             matrixInfo={matrixInfo}
             videoEnabled={videoEnabled}

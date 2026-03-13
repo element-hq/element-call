@@ -1,0 +1,60 @@
+/*
+Copyright 2026 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.participantRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--cpd-space-4x);
+  padding: 0 var(--cpd-space-4x);
+  max-width: 100%;
+}
+
+.participantItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cpd-space-1x);
+  width: 64px;
+}
+
+.participantName {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font: var(--cpd-font-body-sm-regular);
+  color: var(--cpd-color-text-secondary);
+}
+
+.overflowItem {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cpd-space-1x);
+  width: 64px;
+  cursor: default;
+}
+
+.overflowCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--cpd-color-bg-subtle-secondary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font: var(--cpd-font-body-md-semibold);
+  color: var(--cpd-color-text-secondary);
+}
+
+.overflowCount {
+  font: var(--cpd-font-body-sm-regular);
+  color: var(--cpd-color-text-secondary);
+}
