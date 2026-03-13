@@ -9,12 +9,6 @@ import { afterEach, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { type MatrixClient } from "matrix-js-sdk";
 import { type FC, type PropsWithChildren } from "react";
-
-import { ClientContextProvider } from "./ClientContext";
-import { Avatar } from "./Avatar";
-import { mockMatrixRoomMember, mockRtcMembership } from "./utils/test";
-import { widget } from "./widget";
-import { type FC, type PropsWithChildren } from "react";
 import { type WidgetApi } from "matrix-widget-api";
 
 import { ClientContextProvider } from "./ClientContext";
