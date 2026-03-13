@@ -110,16 +110,24 @@ export const Avatar: FC<Props> = ({
     }
 
     let objectUrl: string | undefined;
+    let stale = false;
     blob
       .then((blob) => {
+        if (stale) {
+          return;
+        }
         objectUrl = URL.createObjectURL(blob);
         setAvatarUrl(objectUrl);
       })
       .catch((ex) => {
+        if (stale) {
+          return;
+        }
         setAvatarUrl(undefined);
       });
 
     return (): void => {
+      stale = true;
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);
       }
