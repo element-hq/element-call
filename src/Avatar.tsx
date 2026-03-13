@@ -14,10 +14,10 @@ import {
 } from "react";
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
+import { type WidgetApi } from "matrix-widget-api";
 
 import { useClientState } from "./ClientContext";
 import { widget } from "./widget";
-import { WidgetApi } from "matrix-widget-api";
 
 export enum Size {
   XS = "xs",
