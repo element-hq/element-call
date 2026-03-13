@@ -13,19 +13,14 @@ import { type FC, type PropsWithChildren } from "react";
 import { ClientContextProvider } from "./ClientContext";
 import { Avatar } from "./Avatar";
 import { mockMatrixRoomMember, mockRtcMembership } from "./utils/test";
-import EventEmitter from "events";
 import { widget } from "./widget";
+import { WidgetApi } from "matrix-widget-api";
 
 const TestComponent: FC<
   PropsWithChildren<{
     client: MatrixClient;
-    supportsAuthenticatedMedia?: boolean;
   }>
-> = ({
-  client,
-  children,
-  supportsAuthenticatedMedia: supportsAuthenticatedMedia,
-}) => {
+> = ({ client, children }) => {
   return (
     <ClientContextProvider
       value={{
@@ -33,7 +28,6 @@ const TestComponent: FC<
         disconnected: false,
         supportedFeatures: {
           reactions: true,
-          authenticatedMedia: supportsAuthenticatedMedia ?? true,
         },
         setClient: vi.fn(),
         authenticated: {
@@ -51,7 +45,7 @@ const TestComponent: FC<
 
 vi.mock("./widget", () => ({
   widget: {
-    api: { downloadFile: vi.fn() },
+    api: null, // Ideally we'd only mock this in the as a widget test so the whole module is otherwise null, but just nulling `api` by default works well enough
   },
 }));
 
@@ -88,7 +82,7 @@ test("should just render a placeholder when the user has no avatar", () => {
   expect(client.mxcUrlToHttp).toBeCalledTimes(0);
 });
 
-test("should attempt to fetch authenticated media if supported", async () => {
+test("should attempt to fetch authenticated media from the server", async () => {
   const expectedAuthUrl = "http://example.org/media/alice-avatar";
   const expectedObjectURL = "my-object-url";
   const accessToken = "my-access-token";
@@ -120,7 +114,7 @@ test("should attempt to fetch authenticated media if supported", async () => {
   );
   const displayName = "Alice";
   render(
-    <TestComponent client={client} supportsAuthenticatedMedia={true}>
+    <TestComponent client={client}>
       <Avatar
         id={member.userId}
         name={displayName}
@@ -141,7 +135,7 @@ test("should attempt to fetch authenticated media if supported", async () => {
   });
 });
 
-test("should attempt to use widget API if authenticate media is not supported", async () => {
+test("should attempt to use widget API if running as a widget", async () => {
   const expectedMXCUrl = "mxc://example.org/alice-avatar";
   const expectedObjectURL = "my-object-url";
   const theBlob = new Blob([]);
@@ -157,6 +151,7 @@ test("should attempt to use widget API if authenticate media is not supported", 
     getAccessToken: () => undefined,
   } as unknown as MatrixClient);
 
+  widget!.api = { downloadFile: vi.fn() } as unknown as WidgetApi;
   vi.spyOn(widget!.api, "downloadFile").mockResolvedValue({ file: theBlob });
   const member = mockMatrixRoomMember(
     mockRtcMembership("@alice:example.org", "AAAA"),
@@ -166,7 +161,7 @@ test("should attempt to use widget API if authenticate media is not supported", 
   );
   const displayName = "Alice";
   render(
-    <TestComponent client={client} supportsAuthenticatedMedia={false}>
+    <TestComponent client={client}>
       <Avatar
         id={member.userId}
         name={displayName}

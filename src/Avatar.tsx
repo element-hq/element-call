@@ -87,23 +87,23 @@ export const Avatar: FC<Props> = ({
 
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
+  // In theory, a change in `clientState` or `sizePx` could run extra getAvatarFromWidgetAPI calls, but in practice they should be stable long before this code runs.
   useEffect(() => {
-    if (!src || clientState?.state !== "valid") {
+    if (!src) {
       setAvatarUrl(undefined);
       return;
     }
 
-    const { authenticated, supportedFeatures } = clientState;
     let blob: Promise<Blob>;
 
-    if (
-      supportedFeatures.authenticatedMedia &&
-      authenticated?.client &&
+    if (widget?.api) {
+      blob = getAvatarFromWidgetAPI(widget.api, src);
+    } else if (
+      clientState?.state === "valid" &&
+      clientState.authenticated?.client &&
       sizePx
     ) {
-      blob = getAvatarFromServer(authenticated.client, src, sizePx);
-    } else if (widget?.api) {
-      blob = getAvatarFromWidgetAPI(widget.api, src);
+      blob = getAvatarFromServer(clientState.authenticated.client, src, sizePx);
     } else {
       setAvatarUrl(undefined);
       return;

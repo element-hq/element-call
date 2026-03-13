@@ -48,7 +48,6 @@ export type ValidClientState = {
   disconnected: boolean;
   supportedFeatures: {
     reactions: boolean;
-    authenticatedMedia: boolean;
   };
   setClient: (client: MatrixClient, session: Session) => void;
 };
@@ -249,8 +248,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
   const [isDisconnected, setIsDisconnected] = useState(false);
   const [supportsReactions, setSupportsReactions] = useState(false);
-  const [supportsAuthenticatedMedia, setSupportsAuthenticatedMedia] =
-    useState(false);
 
   const state: ClientState | undefined = useMemo(() => {
     if (alreadyOpenedErr) {
@@ -276,7 +273,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       disconnected: isDisconnected,
       supportedFeatures: {
         reactions: supportsReactions,
-        authenticatedMedia: supportsAuthenticatedMedia,
       },
     };
   }, [
@@ -287,7 +283,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     setClient,
     isDisconnected,
     supportsReactions,
-    supportsAuthenticatedMedia,
   ]);
 
   const onSync = useCallback(
@@ -313,8 +308,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     }
 
     if (initClientState.widgetApi) {
-      // There is currently no way for widgets to request authenticated media directly from the server.
-      setSupportsAuthenticatedMedia(false);
       const reactSend = initClientState.widgetApi.hasCapability(
         "org.matrix.msc2762.send.event:m.reaction",
       );
@@ -336,7 +329,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       }
     } else {
       setSupportsReactions(true);
-      setSupportsAuthenticatedMedia(true);
     }
 
     return (): void => {
