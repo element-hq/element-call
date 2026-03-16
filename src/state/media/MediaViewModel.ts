@@ -7,13 +7,17 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type Behavior } from "../Behavior";
+import { type RingingMediaViewModel } from "./RingingMediaViewModel";
 import { type ScreenShareViewModel } from "./ScreenShareViewModel";
 import { type UserMediaViewModel } from "./UserMediaViewModel";
 
 /**
  * A participant's media.
  */
-export type MediaViewModel = UserMediaViewModel | ScreenShareViewModel;
+export type MediaViewModel =
+  | UserMediaViewModel
+  | ScreenShareViewModel
+  | RingingMediaViewModel;
 
 /**
  * Properties which are common to all MediaViewModels.

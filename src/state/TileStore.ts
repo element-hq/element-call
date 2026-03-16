@@ -13,6 +13,7 @@ import { fillGaps } from "../utils/iter";
 import { debugTileLayout } from "../settings/settings";
 import { type MediaViewModel } from "./media/MediaViewModel";
 import { type UserMediaViewModel } from "./media/UserMediaViewModel";
+import { type RingingMediaViewModel } from "./media/RingingMediaViewModel";
 
 function debugEntries(entries: GridTileData[]): string[] {
   return entries.map((e) => e.media.displayName$.value);
@@ -48,8 +49,10 @@ class SpotlightTileData {
 }
 
 class GridTileData {
-  private readonly media$: BehaviorSubject<UserMediaViewModel>;
-  public get media(): UserMediaViewModel {
+  private readonly media$: BehaviorSubject<
+    UserMediaViewModel | RingingMediaViewModel
+  >;
+  public get media(): UserMediaViewModel | RingingMediaViewModel {
     return this.media$.value;
   }
   public set media(value: UserMediaViewModel) {
@@ -58,7 +61,7 @@ class GridTileData {
 
   public readonly vm: GridTileViewModel;
 
-  public constructor(media: UserMediaViewModel) {
+  public constructor(media: UserMediaViewModel | RingingMediaViewModel) {
     this.media$ = new BehaviorSubject(media);
     this.vm = new GridTileViewModel(this.media$);
   }
@@ -178,7 +181,9 @@ export class TileStoreBuilder {
    * Sets up a grid tile for the given media. If this is never called for some
    * media, then that media will have no grid tile.
    */
-  public registerGridTile(media: UserMediaViewModel): void {
+  public registerGridTile(
+    media: UserMediaViewModel | RingingMediaViewModel,
+  ): void {
     if (DEBUG_ENABLED)
       logger.debug(
         `[TileStore, ${this.generation}] register grid tile: ${media.displayName$.value}`,
@@ -187,7 +192,11 @@ export class TileStoreBuilder {
     if (this.spotlight !== null) {
       // We actually *don't* want spotlight speakers to appear in both the
       // spotlight and the grid, so they're filtered out here
-      if (!media.local && this.spotlight.media.includes(media)) return;
+      if (
+        !(media.type === "user" && media.local) &&
+        this.spotlight.media.includes(media)
+      )
+        return;
       // When the spotlight speaker changes, we would see one grid tile appear
       // and another grid tile disappear. This would be an undesirable layout
       // shift, so instead what we do is take the speaker's grid tile and swap

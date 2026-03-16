@@ -194,5 +194,3 @@ export function createWrappedUserMedia(
     ),
   };
 }
-
-export type MediaItem = WrappedUserMediaViewModel | ScreenShareViewModel;
