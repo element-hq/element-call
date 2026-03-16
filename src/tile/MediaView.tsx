@@ -86,7 +86,7 @@ export const MediaView: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
-  const [showConnectioStats] = useSetting(showConnectionStats);
+  const [showConnectionStats] = useSetting(showConnectionStats);
   const [allowPip] = useSetting(allowPipSetting);
 
   const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
@@ -141,7 +141,7 @@ export const MediaView: FC<Props> = ({
         {waitingForMedia && (
           <div className={styles.status}>
             {t("video_tile.waiting_for_media")}
-            {showConnectioStats ? " " + rtcBackendIdentity : ""}
+            {showConnectionStats ? " " + rtcBackendIdentity : ""}
           </div>
         )}
         {(audioStreamStats || videoStreamStats) && (

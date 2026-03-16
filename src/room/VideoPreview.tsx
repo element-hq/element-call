@@ -80,7 +80,7 @@ export const VideoPreview: FC<Props> = ({
         playsInline
         // There's no reason for this to be focusable
         tabIndex={-1}
-        disablePictureInPicture={allowPip}
+        disablePictureInPicture={!allowPip}
       />
       {(!videoEnabled || cameraIsStarting) && (
         <>
