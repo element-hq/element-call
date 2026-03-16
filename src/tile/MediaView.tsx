@@ -19,7 +19,7 @@ import { Avatar } from "../Avatar";
 import { type EncryptionStatus } from "../state/MediaViewModel";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
 import {
-  showConnectionStats,
+  showConnectionStats as showConnectionStatsSetting,
   showHandRaisedTimer,
   allowPipSetting,
   useSetting,
@@ -86,7 +86,7 @@ export const MediaView: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
-  const [showConnectionStats] = useSetting(showConnectionStats);
+  const [showConnectionStats] = useSetting(showConnectionStatsSetting);
   const [allowPip] = useSetting(allowPipSetting);
 
   const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
