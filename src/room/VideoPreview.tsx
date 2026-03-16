@@ -11,11 +11,7 @@ import { facingModeFromLocalTrack, type LocalVideoTrack } from "livekit-client";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
-import {
-  allowPipSetting,
-  useSetting,
-} from "../settings/settings";
-
+import { allowPipSetting, useSetting } from "../settings/settings";
 import { TileAvatar } from "../tile/TileAvatar";
 import styles from "./VideoPreview.module.css";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";

@@ -71,7 +71,6 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { and$ } from "../../../utils/observable.ts";
-import { type LocalTransportWithSFUConfig } from "./LocalTransport.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -137,7 +136,7 @@ interface Props {
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (transport: LivekitTransportConfig) => void;
   homeserverConnected: HomeserverConnected;
-  localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
+  localTransport$: Behavior<LivekitTransportConfig | null>;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
@@ -156,7 +155,7 @@ interface Props {
  * @param props.createPublisherFactory Factory to create a publisher once we have a connection.
  * @param props.joinMatrixRTC Callback to join the matrix RTC session once we have a transport.
  * @param props.homeserverConnected The homeserver connected state.
- * @param props.localTransport$ The local transport to use for publishing.
+ * @param props.localTransport$ The transport to advertise in our membership.
  * @param props.logger The logger to use.
  * @param props.muteStates The mute states for video and audio.
  * @param props.matrixRTCSession The matrix RTC session to join.
@@ -246,9 +245,7 @@ export const createLocalMembership$ = ({
           return null;
         }
 
-        return connectionData.getConnectionForTransport(
-          localTransport.transport,
-        );
+        return connectionData.getConnectionForTransport(localTransport);
       }),
       tap((connection) => {
         logger.info(
@@ -558,7 +555,7 @@ export const createLocalMembership$ = ({
       if (!shouldConnect) return;
 
       try {
-        joinMatrixRTC(transport.transport);
+        joinMatrixRTC(transport);
       } catch (error) {
         logger.error("Error entering RTC session", error);
         if (error instanceof Error)
@@ -660,7 +657,9 @@ export const createLocalMembership$ = ({
 
       if (advancedScreenShare.getValue()) {
         // User has advanced screen share settings enabled
-        const { width, height } = parseResolution(screenShareResolution.getValue());
+        const { width, height } = parseResolution(
+          screenShareResolution.getValue(),
+        );
         const fps = screenShareFramerate.getValue();
         const bps = screenShareBitrate.getValue();
         const codec = screenShareCodec.getValue();

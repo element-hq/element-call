@@ -223,9 +223,7 @@ export const SettingsModal: FC<Props> = ({
               <select
                 id={`${id}Codec`}
                 value={codec}
-                onChange={(e): void =>
-                  setCodec(e.target.value as VideoCodec)
-                }
+                onChange={(e): void => setCodec(e.target.value as VideoCodec)}
               >
                 <option value="vp8">VP8</option>
                 <option value="vp9">VP9</option>
@@ -262,10 +260,7 @@ export const SettingsModal: FC<Props> = ({
         <FieldRow>
           <InputField
             id="echoCancellation"
-            label={t(
-              "settings.echo_cancellation_label",
-              "Echo cancellation",
-            )}
+            label={t("settings.echo_cancellation_label", "Echo cancellation")}
             type="checkbox"
             checked={echoCancellation}
             onChange={(e): void => setEchoCancellation(e.target.checked)}
@@ -274,10 +269,7 @@ export const SettingsModal: FC<Props> = ({
         <FieldRow>
           <InputField
             id="noiseSuppression"
-            label={t(
-              "settings.noise_suppression_label",
-              "Noise suppression",
-            )}
+            label={t("settings.noise_suppression_label", "Noise suppression")}
             type="checkbox"
             checked={noiseSuppression}
             onChange={(e): void => setNoiseSuppression(e.target.checked)}
@@ -319,7 +311,6 @@ export const SettingsModal: FC<Props> = ({
       </>
     );
   };
-
 
   const devices = useMediaDevices();
   useEffect(() => {
@@ -419,8 +410,14 @@ export const SettingsModal: FC<Props> = ({
         <MediaQualitySettings
           id="camera"
           header={t("settings.camera_header", "Camera quality")}
-          toggleLabel={t("settings.advanced_camera_label", "Advanced camera settings")}
-          description={t("settings.advanced_camera_description", "Configure resolution, framerate, bitrate, and codec for camera video. Changes apply on next call join.")}
+          toggleLabel={t(
+            "settings.advanced_camera_label",
+            "Advanced camera settings",
+          )}
+          description={t(
+            "settings.advanced_camera_description",
+            "Configure resolution, framerate, bitrate, and codec for camera video. Changes apply on next call join.",
+          )}
           toggleSetting={advancedCameraSetting}
           resolutionSetting={cameraResolutionSetting}
           framerateSetting={cameraFramerateSetting}
@@ -439,8 +436,14 @@ export const SettingsModal: FC<Props> = ({
         <MediaQualitySettings
           id="screenShare"
           header={t("settings.screen_share_header", "Screen sharing")}
-          toggleLabel={t("settings.advanced_screen_share_label", "Advanced screen share settings")}
-          description={t("settings.advanced_screen_share_description", "Configure resolution, framerate, bitrate, and codec for screen sharing")}
+          toggleLabel={t(
+            "settings.advanced_screen_share_label",
+            "Advanced screen share settings",
+          )}
+          description={t(
+            "settings.advanced_screen_share_description",
+            "Configure resolution, framerate, bitrate, and codec for screen sharing",
+          )}
           toggleSetting={advancedScreenShareSetting}
           resolutionSetting={screenShareResolutionSetting}
           framerateSetting={screenShareFramerateSetting}
@@ -485,6 +488,7 @@ export const SettingsModal: FC<Props> = ({
         env={import.meta.env}
         client={client}
         livekitRooms={livekitRooms}
+        roomId={roomId}
       />
     ),
   };

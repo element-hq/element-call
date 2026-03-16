@@ -16,7 +16,7 @@ import { ErrorSolidIcon } from "@vector-im/compound-design-tokens/assets/web/ico
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
-import { type EncryptionStatus } from "../state/MediaViewModel";
+import { type EncryptionStatus } from "../state/media/MemberMediaViewModel";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
 import {
   showConnectionStats as showConnectionStatsSetting,
@@ -144,7 +144,7 @@ export const MediaView: FC<Props> = ({
             {showConnectionStats ? " " + rtcBackendIdentity : ""}
           </div>
         )}
-        {(audioStreamStats || videoStreamStats) && (
+        {showConnectionStats && (
           <>
             <RTCConnectionStats
               audio={audioStreamStats}

@@ -1,7 +1,16 @@
 name: Prevent blocked
 on:
+  # zizmor: ignore[dangerous-triggers]
+  # Reason: This workflow does not checkout code or use secrets.
+  # It only reads labels to set a failure status on the PR.
   pull_request_target:
     types: [opened, labeled, unlabeled, synchronize]
+
+permissions:
+  pull-requests: read
+  # Required to fail the check on the PR
+  statuses: write
+
 jobs:
   prevent-blocked:
     name: Prevent blocked

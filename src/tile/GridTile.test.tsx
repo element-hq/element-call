@@ -14,7 +14,7 @@ import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { GridTile } from "./GridTile";
 import {
   mockRtcMembership,
-  createRemoteMedia,
+  mockRemoteMedia,
   mockRemoteParticipant,
 } from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
@@ -29,7 +29,7 @@ global.IntersectionObserver = class MockIntersectionObserver {
 } as unknown as typeof IntersectionObserver;
 
 test("GridTile is accessible", async () => {
-  const vm = createRemoteMedia(
+  const vm = mockRemoteMedia(
     mockRtcMembership("@alice:example.org", "AAAA"),
     {
       rawDisplayName: "Alice",

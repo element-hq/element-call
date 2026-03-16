@@ -276,4 +276,16 @@ export class TestHelpers {
       });
     }
   }
+
+  /**
+   * Switches to a room in the room list by its name.
+   * @param page - The EW page
+   * @param roomName - The name of the room to switch to
+   */
+  public static async switchToRoomNamed(
+    page: Page,
+    roomName: string,
+  ): Promise<void> {
+    await page.getByRole("option", { name: `Open room ${roomName}` }).click();
+  }
 }

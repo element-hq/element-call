@@ -20,6 +20,10 @@ import {
   CollapseIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  VolumeOffIcon,
+  VolumeOnIcon,
+  VolumeOffSolidIcon,
+  VolumeOnSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
 import { type Observable, map } from "rxjs";
@@ -27,25 +31,27 @@ import { useObservableRef } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
+import { Menu, MenuItem } from "@vector-im/compound-web";
 
 import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
 import FullScreenMinimiseIcon from "../icons/FullScreenMinimise.svg?react";
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
-import {
-  type EncryptionStatus,
-  LocalUserMediaViewModel,
-  type MediaViewModel,
-  ScreenShareViewModel,
-  type UserMediaViewModel,
-  type RemoteUserMediaViewModel,
-} from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
 import { type SpotlightTileViewModel } from "../state/TileViewModel";
 import { useBehavior } from "../useBehavior";
+import { type EncryptionStatus } from "../state/media/MemberMediaViewModel";
+import { type LocalUserMediaViewModel } from "../state/media/LocalUserMediaViewModel";
+import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaViewModel";
+import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
+import { type ScreenShareViewModel } from "../state/media/ScreenShareViewModel";
+import { type RemoteScreenShareViewModel } from "../state/media/RemoteScreenShareViewModel";
+import { type MediaViewModel } from "../state/media/MediaViewModel";
+import { Slider } from "../Slider";
+import { platform } from "../Platform";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
@@ -54,7 +60,6 @@ interface SpotlightItemBaseProps {
   targetWidth: number;
   targetHeight: number;
   video: TrackReferenceOrPlaceholder | undefined;
-  videoEnabled: boolean;
   userId: string;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
@@ -67,6 +72,7 @@ interface SpotlightItemBaseProps {
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
   videoFit: "contain" | "cover";
+  videoEnabled: boolean;
 }
 
 interface SpotlightLocalUserMediaItemProps extends SpotlightUserMediaItemBaseProps {
@@ -105,15 +111,17 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
   vm,
   ...props
 }) => {
-  const cropVideo = useBehavior(vm.cropVideo$);
+  const videoFit = useBehavior(vm.videoFit$);
+  const videoEnabled = useBehavior(vm.videoEnabled$);
 
   const baseProps: SpotlightUserMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
-    videoFit: cropVideo ? "cover" : "contain",
+    videoFit,
+    videoEnabled,
     ...props,
   };
 
-  return vm instanceof LocalUserMediaViewModel ? (
+  return vm.local ? (
     <SpotlightLocalUserMediaItem vm={vm} {...baseProps} />
   ) : (
     <SpotlightRemoteUserMediaItem vm={vm} {...baseProps} />
@@ -122,10 +130,41 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
 
 SpotlightUserMediaItem.displayName = "SpotlightUserMediaItem";
 
+interface SpotlightScreenShareItemProps extends SpotlightItemBaseProps {
+  vm: ScreenShareViewModel;
+  videoEnabled: boolean;
+}
+
+const SpotlightScreenShareItem: FC<SpotlightScreenShareItemProps> = ({
+  vm,
+  ...props
+}) => {
+  return <MediaView videoFit="contain" mirror={false} {...props} />;
+};
+
+interface SpotlightRemoteScreenShareItemProps extends SpotlightItemBaseProps {
+  vm: RemoteScreenShareViewModel;
+}
+
+const SpotlightRemoteScreenShareItem: FC<
+  SpotlightRemoteScreenShareItemProps
+> = ({ vm, ...props }) => {
+  const videoEnabled = useBehavior(vm.videoEnabled$);
+  return (
+    <SpotlightScreenShareItem vm={vm} videoEnabled={videoEnabled} {...props} />
+  );
+};
+
 interface SpotlightItemProps {
   ref?: Ref<HTMLDivElement>;
   vm: MediaViewModel;
+  /**
+   * The width this tile will have once its animations have settled.
+   */
   targetWidth: number;
+  /**
+   * The height this tile will have once its animations have settled.
+   */
   targetHeight: number;
   focusable: boolean;
   intersectionObserver$: Observable<IntersectionObserver>;
@@ -147,12 +186,21 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   "aria-hidden": ariaHidden,
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
+
+  // Whenever target bounds change, inform the viewModel
+  useEffect(() => {
+    if (targetWidth > 0 && targetHeight > 0) {
+      if (vm.type != "screen share") {
+        vm.setTargetDimensions(targetWidth, targetHeight);
+      }
+    }
+  }, [targetWidth, targetHeight, vm]);
+
   const ref = useMergedRefs(ourRef, theirRef);
   const focusUrl = useBehavior(vm.focusUrl$);
   const displayName = useBehavior(vm.displayName$);
   const mxcAvatarUrl = useBehavior(vm.mxcAvatarUrl$);
   const video = useBehavior(vm.video$);
-  const videoEnabled = useBehavior(vm.videoEnabled$);
   const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
   const encryptionStatus = useBehavior(vm.encryptionStatus$);
 
@@ -178,7 +226,6 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     targetWidth,
     targetHeight,
     video: video ?? undefined,
-    videoEnabled,
     userId: vm.userId,
     unencryptedWarning,
     focusUrl,
@@ -189,14 +236,83 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     "aria-hidden": ariaHidden,
   };
 
-  return vm instanceof ScreenShareViewModel ? (
-    <MediaView videoFit="contain" mirror={false} {...baseProps} />
+  if (vm.type === "user")
+    return <SpotlightUserMediaItem vm={vm} {...baseProps} />;
+  return vm.local ? (
+    <SpotlightScreenShareItem vm={vm} videoEnabled {...baseProps} />
   ) : (
-    <SpotlightUserMediaItem vm={vm} {...baseProps} />
+    <SpotlightRemoteScreenShareItem vm={vm} {...baseProps} />
   );
 };
 
 SpotlightItem.displayName = "SpotlightItem";
+
+interface ScreenShareVolumeButtonProps {
+  vm: RemoteScreenShareViewModel;
+}
+
+const ScreenShareVolumeButton: FC<ScreenShareVolumeButtonProps> = ({ vm }) => {
+  const { t } = useTranslation();
+
+  const audioEnabled = useBehavior(vm.audioEnabled$);
+  const playbackMuted = useBehavior(vm.playbackMuted$);
+  const playbackVolume = useBehavior(vm.playbackVolume$);
+
+  const VolumeIcon = playbackMuted ? VolumeOffIcon : VolumeOnIcon;
+  const VolumeSolidIcon = playbackMuted
+    ? VolumeOffSolidIcon
+    : VolumeOnSolidIcon;
+
+  const [volumeMenuOpen, setVolumeMenuOpen] = useState(false);
+  const onMuteButtonClick = useCallback(() => vm.togglePlaybackMuted(), [vm]);
+  const onVolumeChange = useCallback(
+    (v: number) => vm.adjustPlaybackVolume(v),
+    [vm],
+  );
+  const onVolumeCommit = useCallback(() => vm.commitPlaybackVolume(), [vm]);
+
+  return (
+    audioEnabled && (
+      <Menu
+        open={volumeMenuOpen}
+        onOpenChange={setVolumeMenuOpen}
+        title={t("video_tile.screen_share_volume")}
+        side="top"
+        align="end"
+        trigger={
+          <button
+            className={styles.expand}
+            aria-label={t("video_tile.screen_share_volume")}
+          >
+            <VolumeSolidIcon aria-hidden width={20} height={20} />
+          </button>
+        }
+      >
+        <MenuItem
+          as="div"
+          className={styles.volumeMenuItem}
+          onSelect={null}
+          label={null}
+          hideChevron={true}
+        >
+          <button className={styles.menuMuteButton} onClick={onMuteButtonClick}>
+            <VolumeIcon aria-hidden width={24} height={24} />
+          </button>
+          <Slider
+            className={styles.volumeSlider}
+            label={t("video_tile.volume")}
+            value={playbackVolume}
+            min={0}
+            max={1}
+            step={0.01}
+            onValueChange={onVolumeChange}
+            onValueCommit={onVolumeCommit}
+          />
+        </MenuItem>
+      </Menu>
+    )
+  );
+};
 
 interface Props {
   ref?: Ref<HTMLDivElement>;
@@ -232,6 +348,7 @@ export const SpotlightTile: FC<Props> = ({
   const latestMedia = useLatest(media);
   const latestVisibleId = useLatest(visibleId);
   const visibleIndex = media.findIndex((vm) => vm.id === visibleId);
+  const visibleMedia = media.at(visibleIndex);
   const canGoBack = visibleIndex > 0;
   const canGoToNext = visibleIndex !== -1 && visibleIndex < media.length - 1;
 
@@ -339,16 +456,21 @@ export const SpotlightTile: FC<Props> = ({
           />
         ))}
       </div>
-      <div className={styles.bottomRightButtons}>
-        <button
-          className={classNames(styles.expand)}
-          aria-label={"maximise"}
-          onClick={onToggleFullscreen}
-          tabIndex={focusable ? undefined : -1}
-        >
-          <FullScreenIcon aria-hidden width={20} height={20} />
-        </button>
 
+      <div className={styles.bottomRightButtons}>
+        {visibleMedia?.type === "screen share" && !visibleMedia.local && (
+          <ScreenShareVolumeButton vm={visibleMedia} />
+        )}
+        {platform === "desktop" && (
+          <button
+            className={classNames(styles.expand)}
+            aria-label={"maximise"}
+            onClick={onToggleFullscreen}
+            tabIndex={focusable ? undefined : -1}
+          >
+            <FullScreenIcon aria-hidden width={20} height={20} />
+          </button>
+        )}
         {onToggleExpanded && (
           <button
             className={classNames(styles.expand)}

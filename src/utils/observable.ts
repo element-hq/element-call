@@ -61,6 +61,20 @@ export function accumulate<State, Event>(
     events$.pipe(scan(update, initial), startWith(initial));
 }
 
+/**
+ * Given a source of toggle events, creates a Behavior whose value toggles
+ * between `true` and `false`.
+ */
+export function createToggle$(
+  scope: ObservableScope,
+  initialValue: boolean,
+  toggle$: Observable<void>,
+): Behavior<boolean> {
+  return scope.behavior(
+    toggle$.pipe(accumulate(initialValue, (state) => !state)),
+  );
+}
+
 const switchSymbol = Symbol("switch");
 
 /**
@@ -210,6 +224,38 @@ export function filterBehavior<T, S extends T>(
         return null;
       }, null),
       distinctUntilChanged(),
+    );
+}
+
+/**
+ * Maps a changing input value to an item whose lifetime is tied to a certain
+ * computed key. The item may capture some dynamic data from the input.
+ */
+export function generateItem<
+  Input,
+  Keys extends [unknown, ...unknown[]],
+  Data,
+  Item,
+>(
+  name: string,
+  generator: (input: Input) => { keys: readonly [...Keys]; data: Data },
+  factory: (
+    scope: ObservableScope,
+    data$: Behavior<Data>,
+    ...keys: Keys
+  ) => Item,
+): OperatorFunction<Input, Item> {
+  return (input$) =>
+    input$.pipe(
+      generateItemsInternal(
+        name,
+        function* (input) {
+          yield generator(input);
+        },
+        factory,
+        (items) => items,
+      ),
+      map(([item]) => item),
     );
 }
 

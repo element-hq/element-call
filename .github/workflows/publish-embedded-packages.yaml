@@ -22,8 +22,18 @@ jobs:
       TAG: ${{ steps.tag.outputs.TAG }}
     steps:
       - name: Calculate VERSION
-        # We should only use the hard coded test value for a dry run
-        run: echo "VERSION=${{ github.event_name == 'release' && github.event.release.tag_name || 'v0.0.0-pre.0' }}" >> "$GITHUB_ENV"
+        # Safely store dynamic values in environment variables
+        # to prevent shell injection (template-injection)
+        run: |
+          # The logic is executed within the shell using the env variables
+          if [ "$EVENT_NAME" = "release" ]; then
+            echo "VERSION=$RELEASE_TAG" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=v0.0.0-pre.0" >> "$GITHUB_ENV"
+          fi
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          EVENT_NAME: ${{ github.event_name }}
       - id: dry_run
         name: Set DRY_RUN
         # We perform a dry run for all events except releases.
@@ -71,7 +81,9 @@ jobs:
       contents: write # required to upload release asset
     steps:
       - name: Determine filename
-        run: echo "FILENAME_PREFIX=sable-call-embedded-${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
+        run: echo "FILENAME_PREFIX=sable-call-embedded-${NEEDS_VERSIONING_OUTPUTS_UNPREFIXED_VERSION}" >> "$GITHUB_ENV"
+        env:
+          NEEDS_VERSIONING_OUTPUTS_UNPREFIXED_VERSION: ${{ needs.versioning.outputs.UNPREFIXED_VERSION }}
       - name: Download built artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
@@ -80,9 +92,9 @@ jobs:
           name: build-output-embedded
           path: ${{ env.FILENAME_PREFIX}}
       - name: Create Tarball
-        run: tar --numeric-owner -cvzf ${{ env.FILENAME_PREFIX }}.tar.gz ${{ env.FILENAME_PREFIX }}
+        run: tar --numeric-owner -cvzf ${FILENAME_PREFIX}.tar.gz ${FILENAME_PREFIX}
       - name: Create Checksum
-        run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
+        run: find ${FILENAME_PREFIX} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${FILENAME_PREFIX}.sha256
       - name: Upload
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
@@ -104,6 +116,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
 
       - name: Download built artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -124,14 +138,16 @@ jobs:
         working-directory: embedded/web
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION: ${{ needs.versioning.outputs.PREFIXED_VERSION }}
+          NEEDS_VERSIONING_OUTPUTS_TAG: ${{ needs.versioning.outputs.TAG }}
         run: |
-          npm version ${{ needs.versioning.outputs.PREFIXED_VERSION }} --no-git-tag-version
+          npm version ${NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION} --no-git-tag-version
           echo "ARTIFACT_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
-          npm publish --provenance --access public --tag ${{ needs.versioning.outputs.TAG }} ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+          npm publish --provenance --access public --tag ${NEEDS_VERSIONING_OUTPUTS_TAG} ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
 
       - id: artifact_version
         name: Output artifact version
-        run: echo "ARTIFACT_VERSION=${{env.ARTIFACT_VERSION}}" >> "$GITHUB_OUTPUT"
+        run: echo "ARTIFACT_VERSION=${ARTIFACT_VERSION}" >> "$GITHUB_OUTPUT"
 
   release_notes:
     needs: [versioning, publish_npm]
@@ -143,7 +159,9 @@ jobs:
     steps:
       - name: Log versions
         run: |
-          echo "NPM: ${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}"
+          echo "NPM: ${NEEDS_PUBLISH_NPM_OUTPUTS_ARTIFACT_VERSION}"
+        env:
+          NEEDS_PUBLISH_NPM_OUTPUTS_ARTIFACT_VERSION: ${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}
       - name: Add release notes
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
