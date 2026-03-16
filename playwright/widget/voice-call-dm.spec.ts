@@ -34,9 +34,12 @@ widgetTest(
       .locator('iframe[title="Element Call"]')
       .contentFrame();
 
-    // We should show a ringing overlay, let's check for that
+    // We should show a ringing tile, let's check for that
     await expect(
-      brooksFrame.getByText(`Waiting for ${whistler.displayName} to join…`),
+      brooksFrame
+        .getByTestId("videoTile")
+        .filter({ has: brooksFrame.getByText(whistler.displayName) })
+        .filter({ has: brooksFrame.getByText("Calling…") }),
     ).toBeVisible();
 
     await expect(whistler.page.getByText("Incoming voice call")).toBeVisible();
@@ -125,9 +128,12 @@ widgetTest(
       .locator('iframe[title="Element Call"]')
       .contentFrame();
 
-    // We should show a ringing overlay, let's check for that
+    // We should show a ringing tile, let's check for that
     await expect(
-      brooksFrame.getByText(`Waiting for ${whistler.displayName} to join…`),
+      brooksFrame
+        .getByTestId("videoTile")
+        .filter({ has: brooksFrame.getByText(whistler.displayName) })
+        .filter({ has: brooksFrame.getByText("Calling…") }),
     ).toBeVisible();
 
     await expect(whistler.page.getByText("Incoming video call")).toBeVisible();
@@ -216,9 +222,12 @@ widgetTest(
       .locator('iframe[title="Element Call"]')
       .contentFrame();
 
-    // We should show a ringing overlay, let's check for that
+    // We should show a ringing tile, let's check for that
     await expect(
-      brooksFrame.getByText(`Waiting for ${whistler.displayName} to join…`),
+      brooksFrame
+        .getByTestId("videoTile")
+        .filter({ has: brooksFrame.getByText(whistler.displayName) })
+        .filter({ has: brooksFrame.getByText("Calling…") }),
     ).toBeVisible();
 
     await expect(whistler.page.getByText("Incoming video call")).toBeVisible();

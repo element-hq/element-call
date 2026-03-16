@@ -46,9 +46,11 @@ import {
 } from "../../utils/test.ts";
 import { E2eeType } from "../../e2ee/e2eeType.ts";
 import {
+  alice,
   aliceId,
   aliceParticipant,
   aliceRtcMember,
+  aliceUserId,
   bobId,
   bobRtcMember,
   local,
@@ -140,8 +142,8 @@ export interface SpotlightExpandedLayoutSummary {
 
 export interface OneOnOneLayoutSummary {
   type: "one-on-one";
-  local: string;
-  remote: string;
+  spotlight: string;
+  pip: string;
 }
 
 export interface PipLayoutSummary {
@@ -194,11 +196,11 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "one-on-one":
           return combineLatest(
-            [l.local.media$, l.remote.media$],
-            (local, remote) => ({
+            [l.spotlight.media$, l.pip.media$],
+            (spotlight, pip) => ({
               type: l.type,
-              local: local.id,
-              remote: remote.id,
+              spotlight: spotlight.id,
+              pip: pip.id,
             }),
           );
         case "pip":
@@ -537,8 +539,8 @@ describe.each([
               b: {
                 // In a larger window, expect the normal one-on-one layout
                 type: "one-on-one",
-                local: `${localId}:0`,
-                remote: `${aliceId}:0`,
+                pip: `${localId}:0`,
+                spotlight: `${aliceId}:0`,
               },
               c: {
                 // In a PiP-sized window, we of course expect a PiP layout
@@ -840,8 +842,8 @@ describe.each([
               },
               b: {
                 type: "one-on-one",
-                local: `${localId}:0`,
-                remote: `${aliceId}:0`,
+                pip: `${localId}:0`,
+                spotlight: `${aliceId}:0`,
               },
               c: {
                 type: "grid",
@@ -883,8 +885,8 @@ describe.each([
               },
               b: {
                 type: "one-on-one",
-                local: `${localId}:0`,
-                remote: `${aliceId}:0`,
+                pip: `${localId}:0`,
+                spotlight: `${aliceId}:0`,
               },
               c: {
                 type: "grid",
@@ -893,8 +895,8 @@ describe.each([
               },
               d: {
                 type: "one-on-one",
-                local: `${localId}:0`,
-                remote: `${daveId}:0`,
+                pip: `${localId}:0`,
+                spotlight: `${daveId}:0`,
               },
             },
           );
@@ -1087,83 +1089,81 @@ describe.each([
     });
   });
 
-  describe("waitForCallPickup$", () => {
-    it.skip("regression test: does stop ringing in case livekitConnectionState$ emits after didSendCallNotification$ has already emitted", () => {
-      withTestScheduler(({ schedule, expectObservable, behavior }) => {
-        withCallViewModel(
-          {
-            livekitConnectionState$: behavior("d 9ms c", {
-              d: ConnectionState.Disconnected,
-              c: ConnectionState.Connected,
-            }),
-          },
-          (vm, rtcSession) => {
-            // Fire a call notification IMMEDIATELY (its important for this test, that this happens before the livekitConnectionState$ emits)
-            schedule("n", {
-              n: () => {
-                rtcSession.emit(
-                  MatrixRTCSessionEvent.DidSendCallNotification,
-                  mockRingEvent("$notif1", 30),
-                );
-              },
-            });
+  test("recipient has placeholder tile while ringing or timed out", () => {
+    withTestScheduler(({ schedule, expectObservable }) => {
+      withCallViewModel(
+        {
+          roomMembers: [alice, local], // Simulate a DM
+        },
+        (vm, rtcSession) => {
+          // Fire a ringing notification
+          schedule("n", {
+            n: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                mockRingEvent("$notif1", 30),
+              );
+            },
+          });
 
-            expectObservable(vm.callPickupState$).toBe("a 9ms b 19ms c", {
-              a: "unknown",
-              b: "ringing",
-              c: "timeout",
-            });
-          },
-          {
-            waitForCallPickup: true,
-            encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-          },
-        );
-      });
+          // Should ring for 30ms and then time out
+          expectObservable(vm.ringing$).toBe("(ny) 26ms n", yesNo);
+          // Layout should show placeholder media for the participant we're
+          // ringing the entire time (even once timed out)
+          expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
+            a: {
+              type: "one-on-one",
+              spotlight: `${localId}:0`,
+              pip: `ringing:${aliceUserId}`,
+            },
+          });
+        },
+        { waitForCallPickup: true },
+      );
     });
+  });
 
-    it.skip("ringing -> unknown if we get disconnected", () => {
-      withTestScheduler(({ behavior, schedule, expectObservable }) => {
-        const connectionState$ = new BehaviorSubject(ConnectionState.Connected);
-        // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
-        withCallViewModel(
-          {
-            remoteParticipants$: behavior("a 19ms b", {
-              a: [],
-              b: [aliceParticipant],
-            }),
-            rtcMembers$: behavior("a 19ms b", {
-              a: [localRtcMember],
-              b: [localRtcMember, aliceRtcMember],
-            }),
-            livekitConnectionState$: connectionState$,
-          },
-          (vm, rtcSession) => {
-            // Notify at 5ms so we enter ringing, then get disconnected 5ms later
-            schedule("          5ms r 5ms d", {
-              r: () => {
-                rtcSession.emit(
-                  MatrixRTCSessionEvent.DidSendCallNotification,
-                  mockRingEvent("$notif2", 100),
-                );
-              },
-              d: () => {
-                connectionState$.next(ConnectionState.Disconnected);
-              },
-            });
+  test("recipient's placeholder tile is replaced by their real tile once they answer", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      withCallViewModel(
+        {
+          // Alice answers after 20ms
+          rtcMembers$: behavior("a 20ms b", {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
+          roomMembers: [alice, local], // Simulate a DM
+        },
+        (vm, rtcSession) => {
+          // Fire a ringing notification
+          schedule("n", {
+            n: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                mockRingEvent("$notif1", 30),
+              );
+            },
+          });
 
-            expectObservable(vm.callPickupState$).toBe("a 4ms b 5ms c", {
-              a: "unknown",
-              b: "ringing",
-              c: "unknown",
-            });
-          },
-          {
-            waitForCallPickup: true,
-            encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-          },
-        );
-      });
+          // Should ring until Alice joins
+          expectObservable(vm.ringing$).toBe("(ny) 17ms n", yesNo);
+          // Layout should show placeholder media for the participant we're
+          // ringing the entire time
+          expectObservable(summarizeLayout$(vm.layout$)).toBe("a 20ms b", {
+            a: {
+              type: "one-on-one",
+              spotlight: `${localId}:0`,
+              pip: `ringing:${aliceUserId}`,
+            },
+            b: {
+              type: "one-on-one",
+              spotlight: `${aliceId}:0`,
+              pip: `${localId}:0`,
+            },
+          });
+        },
+        { waitForCallPickup: true },
+      );
     });
   });
 
