@@ -13,7 +13,7 @@ import type {
   TrackProcessor,
 } from "livekit-client";
 import type { RNNoiseSuppressionPreset } from "./rnnoiseTypes";
-import rnnoiseWorkletModuleUrl from "./RNNoiseWorkletModule.ts?url";
+import rnnoiseWorkletModuleUrl from "./RNNoiseWorkletModule.ts?worker&url";
 
 /**
  * The number of samples per frame expected by RNNoise (at 48kHz = 10ms).
