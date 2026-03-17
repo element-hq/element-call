@@ -35,8 +35,6 @@ import {
   cameraBitrate,
   cameraCodec,
   parseResolution,
-  echoCancellationSetting,
-  noiseSuppressionSetting,
   autoGainControlSetting,
 } from "../../../settings/settings.ts";
 
@@ -73,6 +71,8 @@ export class ECConnectionFactory implements ConnectionFactory {
     livekitKeyProvider: BaseKeyProvider | undefined,
     private controlledAudioDevices: boolean,
     livekitRoomFactory?: () => LivekitRoom,
+    echoCancellation: boolean = true,
+    noiseSuppression: boolean = true,
   ) {
     const defaultFactory = (): LivekitRoom =>
       new LivekitRoom(
@@ -86,6 +86,8 @@ export class ECConnectionFactory implements ConnectionFactory {
             worker: new E2EEWorker(),
           },
           controlledAudioDevices: this.controlledAudioDevices,
+          echoCancellation,
+          noiseSuppression,
         }),
       );
     this.livekitRoomFactory = livekitRoomFactory ?? defaultFactory;
@@ -131,6 +133,8 @@ function generateRoomOption({
   processorState,
   e2eeLivekitOptions,
   controlledAudioDevices,
+  echoCancellation,
+  noiseSuppression,
 }: {
   devices: MediaDevices;
   processorState: ProcessorState;
@@ -139,6 +143,8 @@ function generateRoomOption({
     | { e2eeManager: BaseE2EEManager }
     | undefined;
   controlledAudioDevices: boolean;
+  echoCancellation: boolean;
+  noiseSuppression: boolean;
 }): RoomOptions {
   const liveKitOptions = getLiveKitOptions();
 
@@ -174,8 +180,8 @@ function generateRoomOption({
     audioCaptureDefaults: {
       ...liveKitOptions.audioCaptureDefaults,
       deviceId: devices.audioInput.selected$.value?.id,
-      echoCancellation: echoCancellationSetting.getValue(),
-      noiseSuppression: noiseSuppressionSetting.getValue(),
+      echoCancellation,
+      noiseSuppression,
       autoGainControl: autoGainControlSetting.getValue(),
     },
     audioOutput: {

@@ -5,10 +5,24 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactNode, useEffect, useState } from "react";
+import {
+  type ChangeEvent,
+  type FC,
+  type ReactNode,
+  useEffect,
+  useId,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
-import { Button, Root as Form, Separator } from "@vector-im/compound-web";
+import {
+  Button,
+  InlineField,
+  Label,
+  RadioControl,
+  Root as Form,
+  Separator,
+} from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
 
 import { Modal } from "../Modal";
@@ -40,6 +54,8 @@ import {
   noiseSuppressionSetting,
   autoGainControlSetting,
   type VideoCodec,
+  rnnoiseNoiseSuppression as rnnoiseNoiseSuppressionSetting,
+  rnnoiseNoiseSuppressionPreset as rnnoiseNoiseSuppressionPresetSetting,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
@@ -50,6 +66,11 @@ import { FieldRow, InputField } from "../input/Input";
 import { useSubmitRageshake } from "./submit-rageshake";
 import { useUrlParams } from "../UrlParams";
 import { useBehavior } from "../useBehavior";
+import { supportsRNNoiseProcessor } from "../audio/RNNoiseProcessor";
+import {
+  type RNNoiseSuppressionPreset,
+  rnnoiseSuppressionPresets,
+} from "../audio/rnnoiseTypes";
 
 type SettingsTab =
   | "audio"
@@ -237,6 +258,68 @@ export const SettingsModal: FC<Props> = ({
     );
   };
 
+  const RNNoiseCheckbox: React.FC = (): ReactNode => {
+    const supported = supportsRNNoiseProcessor();
+    const [rnnoiseEnabled, setRnnoiseEnabled] = useSetting(
+      rnnoiseNoiseSuppressionSetting,
+    );
+    const [rnnoisePreset, setRnnoisePreset] = useSetting(
+      rnnoiseNoiseSuppressionPresetSetting,
+    );
+    const rnnoisePresetGroup = useId();
+
+    const onPresetChange = (e: ChangeEvent<HTMLInputElement>): void => {
+      setRnnoisePreset(e.target.value as RNNoiseSuppressionPreset);
+    };
+
+    const presetLabelByPreset: Record<RNNoiseSuppressionPreset, string> = {
+      conservative: t("settings.audio_tab.rnnoise_preset_conservative"),
+      balanced: t("settings.audio_tab.rnnoise_preset_balanced"),
+      strong: t("settings.audio_tab.rnnoise_preset_strong"),
+    };
+    const effectiveRnnoiseEnabled = supported && !!rnnoiseEnabled;
+
+    return (
+      <>
+        <h4>{t("settings.audio_tab.rnnoise_header")}</h4>
+        <FieldRow>
+          <InputField
+            id="activateRNNoiseSuppression"
+            label={t("settings.audio_tab.rnnoise_label")}
+            description={
+              supported ? "" : t("settings.audio_tab.rnnoise_not_supported")
+            }
+            type="checkbox"
+            checked={effectiveRnnoiseEnabled}
+            onChange={(e): void => setRnnoiseEnabled(e.target.checked)}
+            disabled={!supported}
+          />
+        </FieldRow>
+        {effectiveRnnoiseEnabled && (
+          <>
+            <p>{t("settings.audio_tab.rnnoise_preset_description")}</p>
+            {rnnoiseSuppressionPresets.map((preset) => (
+              <InlineField
+                key={preset}
+                name={rnnoisePresetGroup}
+                control={
+                  <RadioControl
+                    checked={rnnoisePreset === preset}
+                    value={preset}
+                    onChange={onPresetChange}
+                    disabled={!supported}
+                  />
+                }
+              >
+                <Label>{presetLabelByPreset[preset]}</Label>
+              </InlineField>
+            ))}
+          </>
+        )}
+      </>
+    );
+  };
+
   const AudioProcessingSettings: React.FC = (): ReactNode => {
     const [echoCancellation, setEchoCancellation] = useSetting(
       echoCancellationSetting,
@@ -247,6 +330,9 @@ export const SettingsModal: FC<Props> = ({
     const [autoGainControl, setAutoGainControl] = useSetting(
       autoGainControlSetting,
     );
+    const [rnnoiseEnabled] = useSetting(rnnoiseNoiseSuppressionSetting);
+    const rnnoiseSupported = supportsRNNoiseProcessor();
+    const rnnoiseOverridesNative = rnnoiseEnabled && rnnoiseSupported;
 
     return (
       <>
@@ -270,9 +356,18 @@ export const SettingsModal: FC<Props> = ({
           <InputField
             id="noiseSuppression"
             label={t("settings.noise_suppression_label", "Noise suppression")}
+            description={
+              rnnoiseOverridesNative
+                ? t(
+                    "settings.noise_suppression_rnnoise_override",
+                    "Overridden by RNNoise.",
+                  )
+                : ""
+            }
             type="checkbox"
-            checked={noiseSuppression}
+            checked={!rnnoiseOverridesNative && noiseSuppression}
             onChange={(e): void => setNoiseSuppression(e.target.checked)}
+            disabled={rnnoiseOverridesNative}
           />
         </FieldRow>
         <FieldRow>
@@ -384,6 +479,8 @@ export const SettingsModal: FC<Props> = ({
               step={0.01}
             />
           </div>
+          <Separator />
+          <RNNoiseCheckbox />
         </Form>
         <Separator />
         <AudioProcessingSettings />

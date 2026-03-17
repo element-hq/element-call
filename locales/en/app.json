@@ -203,7 +203,14 @@
     "audio_processing_header": "Audio processing",
     "audio_tab": {
       "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play.",
-      "effect_volume_label": "Sound effect volume"
+      "effect_volume_label": "Sound effect volume",
+      "rnnoise_header": "Noise suppression",
+      "rnnoise_label": "Enable enhanced noise suppression (RNNoise)",
+      "rnnoise_not_supported": "(Enhanced noise suppression is not supported by this browser.)",
+      "rnnoise_preset_balanced": "Balanced",
+      "rnnoise_preset_conservative": "Conservative",
+      "rnnoise_preset_description": "Pick a suppression profile. Stronger modes remove more keyboard noise but can sound more processed.",
+      "rnnoise_preset_strong": "Strong"
     },
     "auto_gain_control_label": "Automatic gain control",
     "background_blur_header": "Background",
@@ -235,6 +242,7 @@
     "feedback_tab_title": "Feedback",
     "framerate_label": "Framerate",
     "noise_suppression_label": "Noise suppression",
+    "noise_suppression_rnnoise_override": "Overridden by RNNoise.",
     "opt_in_description": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
     "preferences_tab": {
       "developer_mode_label": "Developer mode",

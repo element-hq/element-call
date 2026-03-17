@@ -11,6 +11,32 @@ import { defineConfig, devices } from "@playwright/test";
 const baseURL = process.env.USE_DOCKER
   ? "http://localhost:8080"
   : "https://localhost:3000";
+const fakeAudioCaptureFile = process.env.PLAYWRIGHT_FAKE_AUDIO_CAPTURE_FILE;
+const fakeVideoCaptureFile = process.env.PLAYWRIGHT_FAKE_VIDEO_CAPTURE_FILE;
+const disableChromiumSandbox =
+  process.env.PLAYWRIGHT_DISABLE_CHROMIUM_SANDBOX === "1";
+
+function buildFakeMediaArgs(): string[] {
+  const args = [
+    "--use-fake-ui-for-media-stream",
+    "--use-fake-device-for-media-stream",
+    "--mute-audio",
+  ];
+
+  if (fakeAudioCaptureFile) {
+    args.push(`--use-file-for-fake-audio-capture=${fakeAudioCaptureFile}`);
+  }
+  if (fakeVideoCaptureFile) {
+    args.push(`--use-file-for-fake-video-capture=${fakeVideoCaptureFile}`);
+  }
+
+  return args;
+}
+
+const fakeMediaArgs = buildFakeMediaArgs();
+const chromiumLaunchArgs = disableChromiumSandbox
+  ? [...fakeMediaArgs, "--no-sandbox", "--disable-setuid-sandbox"]
+  : fakeMediaArgs;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -49,12 +75,9 @@ export default defineConfig({
           "camera",
         ],
         ignoreHTTPSErrors: true,
+        chromiumSandbox: !disableChromiumSandbox,
         launchOptions: {
-          args: [
-            "--use-fake-ui-for-media-stream",
-            "--use-fake-device-for-media-stream",
-            "--mute-audio",
-          ],
+          args: chromiumLaunchArgs,
         },
       },
     },
@@ -84,12 +107,9 @@ export default defineConfig({
           "microphone",
           "camera",
         ],
+        chromiumSandbox: !disableChromiumSandbox,
         launchOptions: {
-          args: [
-            "--use-fake-ui-for-media-stream",
-            "--use-fake-device-for-media-stream",
-            "--mute-audio",
-          ],
+          args: chromiumLaunchArgs,
         },
       },
     },

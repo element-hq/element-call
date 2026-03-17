@@ -59,10 +59,15 @@ import {
 } from "../../utils/observable";
 import {
   duplicateTiles,
+  echoCancellationSetting,
   MatrixRTCMode,
+  noiseSuppressionSetting,
   playReactionsSound,
+  rnnoiseNoiseSuppression,
   showReactions,
 } from "../../settings/settings";
+import { shouldEnableNativeNoiseSuppression } from "../../audio/noiseSuppressionPolicy";
+import { supportsRNNoiseProcessor } from "../../audio/RNNoiseProcessor";
 import { isFirefox, platform } from "../../Platform";
 import { setPipEnabled$ } from "../../controls";
 import { TileStore } from "../TileStore";
@@ -479,6 +484,12 @@ export function createCallViewModel$(
     livekitKeyProvider,
     getUrlParams().controlledAudioDevices,
     options.livekitRoomFactory,
+    echoCancellationSetting.getValue(),
+    shouldEnableNativeNoiseSuppression({
+      urlNoiseSuppression: noiseSuppressionSetting.getValue(),
+      rnnoiseEnabled: rnnoiseNoiseSuppression.getValue(),
+      rnnoiseSupported: supportsRNNoiseProcessor(),
+    }),
   );
 
   const connectionManager = createConnectionManager$({
