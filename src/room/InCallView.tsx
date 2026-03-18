@@ -645,7 +645,7 @@ export const InCallView: FC<InCallViewProps> = ({
     <MicButton
       size={buttonSize}
       key="audio"
-      muted={!audioEnabled}
+      enabled={audioEnabled}
       onClick={toggleAudio ?? undefined}
       disabled={toggleAudio === null}
       data-testid="incall_mute"
@@ -653,7 +653,7 @@ export const InCallView: FC<InCallViewProps> = ({
     <VideoButton
       size={buttonSize}
       key="video"
-      muted={!videoEnabled}
+      enabled={videoEnabled}
       onClick={toggleVideo ?? undefined}
       disabled={toggleVideo === null}
       data-testid="incall_videomute"
