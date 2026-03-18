@@ -254,7 +254,7 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   }
 }
 
-class AudioOutput implements MediaDevice<
+export class AudioOutput implements MediaDevice<
   AudioOutputDeviceLabel,
   SelectedAudioOutputDevice
 > {
