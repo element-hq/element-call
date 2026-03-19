@@ -13,7 +13,7 @@ import { type LocalScreenShareViewModel } from "./LocalScreenShareViewModel";
 import {
   createMemberMedia,
   type MemberMediaInputs,
-  type MemberMediaViewModel,
+  type BaseMemberMediaViewModel,
 } from "./MemberMediaViewModel";
 import { type RemoteScreenShareViewModel } from "./RemoteScreenShareViewModel";
 
@@ -27,7 +27,7 @@ export type ScreenShareViewModel =
 /**
  * Properties which are common to all ScreenShareViewModels.
  */
-export interface BaseScreenShareViewModel extends MemberMediaViewModel {
+export interface BaseScreenShareViewModel extends BaseMemberMediaViewModel {
   type: "screen share";
 }
 

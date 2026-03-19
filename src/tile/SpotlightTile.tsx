@@ -24,6 +24,9 @@ import {
   VolumeOnIcon,
   VolumeOffSolidIcon,
   VolumeOnSolidIcon,
+  VideoCallSolidIcon,
+  VoiceCallSolidIcon,
+  EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
 import { type Observable, map } from "rxjs";
@@ -43,7 +46,7 @@ import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
 import { type SpotlightTileViewModel } from "../state/TileViewModel";
 import { useBehavior } from "../useBehavior";
-import { type EncryptionStatus } from "../state/media/MemberMediaViewModel";
+import { type MemberMediaViewModel } from "../state/media/MemberMediaViewModel";
 import { type LocalUserMediaViewModel } from "../state/media/LocalUserMediaViewModel";
 import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaViewModel";
 import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
@@ -52,6 +55,7 @@ import { type RemoteScreenShareViewModel } from "../state/media/RemoteScreenShar
 import { type MediaViewModel } from "../state/media/MediaViewModel";
 import { Slider } from "../Slider";
 import { platform } from "../Platform";
+import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
@@ -59,18 +63,20 @@ interface SpotlightItemBaseProps {
   "data-id": string;
   targetWidth: number;
   targetHeight: number;
-  video: TrackReferenceOrPlaceholder | undefined;
   userId: string;
-  unencryptedWarning: boolean;
-  encryptionStatus: EncryptionStatus;
-  focusUrl: string | undefined;
   displayName: string;
   mxcAvatarUrl: string | undefined;
   focusable: boolean;
   "aria-hidden"?: boolean;
 }
 
-interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
+interface SpotlightMemberMediaItemBaseProps extends SpotlightItemBaseProps {
+  video: TrackReferenceOrPlaceholder | undefined;
+  unencryptedWarning: boolean;
+  focusUrl: string | undefined;
+}
+
+interface SpotlightUserMediaItemBaseProps extends SpotlightMemberMediaItemBaseProps {
   videoFit: "contain" | "cover";
   videoEnabled: boolean;
 }
@@ -103,21 +109,32 @@ const SpotlightRemoteUserMediaItem: FC<SpotlightRemoteUserMediaItemProps> = ({
   );
 };
 
-interface SpotlightUserMediaItemProps extends SpotlightItemBaseProps {
+interface SpotlightUserMediaItemProps extends SpotlightMemberMediaItemBaseProps {
   vm: UserMediaViewModel;
 }
 
 const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
   vm,
+  targetWidth,
+  targetHeight,
   ...props
 }) => {
   const videoFit = useBehavior(vm.videoFit$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
 
+  // Whenever target bounds change, inform the viewModel
+  useEffect(() => {
+    if (targetWidth > 0 && targetHeight > 0) {
+      vm.setTargetDimensions(targetWidth, targetHeight);
+    }
+  }, [targetWidth, targetHeight, vm]);
+
   const baseProps: SpotlightUserMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
     videoFit,
     videoEnabled,
+    targetWidth,
+    targetHeight,
     ...props,
   };
 
@@ -130,7 +147,7 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
 
 SpotlightUserMediaItem.displayName = "SpotlightUserMediaItem";
 
-interface SpotlightScreenShareItemProps extends SpotlightItemBaseProps {
+interface SpotlightScreenShareItemProps extends SpotlightMemberMediaItemBaseProps {
   vm: ScreenShareViewModel;
   videoEnabled: boolean;
 }
@@ -142,7 +159,7 @@ const SpotlightScreenShareItem: FC<SpotlightScreenShareItemProps> = ({
   return <MediaView videoFit="contain" mirror={false} {...props} />;
 };
 
-interface SpotlightRemoteScreenShareItemProps extends SpotlightItemBaseProps {
+interface SpotlightRemoteScreenShareItemProps extends SpotlightMemberMediaItemBaseProps {
   vm: RemoteScreenShareViewModel;
 }
 
@@ -152,6 +169,67 @@ const SpotlightRemoteScreenShareItem: FC<
   const videoEnabled = useBehavior(vm.videoEnabled$);
   return (
     <SpotlightScreenShareItem vm={vm} videoEnabled={videoEnabled} {...props} />
+  );
+};
+
+interface SpotlightMemberMediaItemProps extends SpotlightItemBaseProps {
+  vm: MemberMediaViewModel;
+}
+
+const SpotlightMemberMediaItem: FC<SpotlightMemberMediaItemProps> = ({
+  vm,
+  ...props
+}) => {
+  const video = useBehavior(vm.video$);
+  const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
+  const focusUrl = useBehavior(vm.focusUrl$);
+
+  const baseProps: SpotlightMemberMediaItemBaseProps &
+    RefAttributes<HTMLDivElement> = {
+    video: video ?? undefined,
+    unencryptedWarning,
+    focusUrl,
+    ...props,
+  };
+
+  if (vm.type === "user")
+    return <SpotlightUserMediaItem vm={vm} {...baseProps} />;
+  return vm.local ? (
+    <SpotlightScreenShareItem vm={vm} videoEnabled {...baseProps} />
+  ) : (
+    <SpotlightRemoteScreenShareItem vm={vm} {...baseProps} />
+  );
+};
+
+interface SpotlightRingingMediaItemProps extends SpotlightItemBaseProps {
+  vm: RingingMediaViewModel;
+}
+
+const SpotlightRingingMediaItem: FC<SpotlightRingingMediaItemProps> = ({
+  vm,
+  ...props
+}) => {
+  const { t } = useTranslation();
+  const pickupState = useBehavior(vm.pickupState$);
+  const videoEnabled = useBehavior(vm.videoEnabled$);
+
+  return (
+    <MediaView
+      video={undefined}
+      unencryptedWarning={false}
+      status={
+        pickupState === "ringing"
+          ? {
+              text: t("video_tile.calling"),
+              Icon: videoEnabled ? VideoCallSolidIcon : VoiceCallSolidIcon,
+            }
+          : { text: t("video_tile.call_ended"), Icon: EndCallIcon }
+      }
+      videoEnabled={false}
+      videoFit="cover"
+      mirror={false}
+      {...props}
+    />
   );
 };
 
@@ -187,22 +265,9 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
 
-  // Whenever target bounds change, inform the viewModel
-  useEffect(() => {
-    if (targetWidth > 0 && targetHeight > 0) {
-      if (vm.type != "screen share") {
-        vm.setTargetDimensions(targetWidth, targetHeight);
-      }
-    }
-  }, [targetWidth, targetHeight, vm]);
-
   const ref = useMergedRefs(ourRef, theirRef);
-  const focusUrl = useBehavior(vm.focusUrl$);
   const displayName = useBehavior(vm.displayName$);
   const mxcAvatarUrl = useBehavior(vm.mxcAvatarUrl$);
-  const video = useBehavior(vm.video$);
-  const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
-  const encryptionStatus = useBehavior(vm.encryptionStatus$);
 
   // Hook this item up to the intersection observer
   useEffect(() => {
@@ -225,23 +290,17 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     className: classNames(styles.item, { [styles.snap]: snap }),
     targetWidth,
     targetHeight,
-    video: video ?? undefined,
     userId: vm.userId,
-    unencryptedWarning,
-    focusUrl,
     displayName,
     mxcAvatarUrl,
     focusable,
-    encryptionStatus,
     "aria-hidden": ariaHidden,
   };
 
-  if (vm.type === "user")
-    return <SpotlightUserMediaItem vm={vm} {...baseProps} />;
-  return vm.local ? (
-    <SpotlightScreenShareItem vm={vm} videoEnabled {...baseProps} />
+  return vm.type === "ringing" ? (
+    <SpotlightRingingMediaItem vm={vm} {...baseProps} />
   ) : (
-    <SpotlightRemoteScreenShareItem vm={vm} {...baseProps} />
+    <SpotlightMemberMediaItem vm={vm} {...baseProps} />
   );
 };
 
