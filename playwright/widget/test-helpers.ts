@@ -152,6 +152,22 @@ export class TestHelpers {
     }
   }
 
+  public static async maybeDismissBackupChatsToast(page: Page): Promise<void> {
+    const toast = page
+      .locator(".mx_Toast_toast")
+      .getByRole("heading", { name: "Back up your chats" });
+
+    try {
+      await expect(toast).toBeVisible({ timeout: 700 });
+      await page
+        .locator(".mx_Toast_toast")
+        .getByRole("button", { name: "Dismiss" })
+        .click();
+    } catch {
+      // toast not visible, continue as normal
+    }
+  }
+
   public static async createRoom(
     name: string,
     page: Page,
