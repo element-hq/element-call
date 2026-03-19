@@ -27,7 +27,7 @@ import { type LocalUserMediaViewModel } from "./LocalUserMediaViewModel";
 import {
   createMemberMedia,
   type MemberMediaInputs,
-  type MemberMediaViewModel,
+  type BaseMemberMediaViewModel,
 } from "./MemberMediaViewModel";
 import { type RemoteUserMediaViewModel } from "./RemoteUserMediaViewModel";
 import { type ObservableScope } from "../ObservableScope";
@@ -42,7 +42,7 @@ export type UserMediaViewModel =
   | LocalUserMediaViewModel
   | RemoteUserMediaViewModel;
 
-export interface BaseUserMediaViewModel extends MemberMediaViewModel {
+export interface BaseUserMediaViewModel extends BaseMemberMediaViewModel {
   type: "user";
   speaking$: Behavior<boolean>;
   audioEnabled$: Behavior<boolean>;

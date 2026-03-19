@@ -16,14 +16,14 @@ export function oneOnOneLayout(
   prevTiles: TileStore,
 ): [OneOnOneLayout, TileStore] {
   const update = prevTiles.from(2);
-  update.registerGridTile(media.local);
-  update.registerGridTile(media.remote);
+  update.registerGridTile(media.pip);
+  update.registerGridTile(media.spotlight);
   const tiles = update.build();
   return [
     {
       type: media.type,
-      local: tiles.gridTilesByMedia.get(media.local)!,
-      remote: tiles.gridTilesByMedia.get(media.remote)!,
+      spotlight: tiles.gridTilesByMedia.get(media.spotlight)!,
+      pip: tiles.gridTilesByMedia.get(media.pip)!,
     },
     tiles,
   ];
