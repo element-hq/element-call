@@ -249,6 +249,8 @@
   "version": "{{productName}} version: {{version}}",
   "video_tile": {
     "always_show": "Always show",
+    "call_ended": "Call ended",
+    "calling": "Calling…",
     "camera_starting": "Video loading...",
     "collapse": "Collapse",
     "expand": "Expand",

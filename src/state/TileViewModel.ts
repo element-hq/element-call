@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type Behavior } from "./Behavior";
 import { type MediaViewModel } from "./media/MediaViewModel";
+import { type RingingMediaViewModel } from "./media/RingingMediaViewModel";
 import { type UserMediaViewModel } from "./media/UserMediaViewModel";
 
 let nextId = 0;
@@ -17,7 +18,11 @@ function createId(): string {
 export class GridTileViewModel {
   public readonly id = createId();
 
-  public constructor(public readonly media$: Behavior<UserMediaViewModel>) {}
+  public constructor(
+    public readonly media$: Behavior<
+      UserMediaViewModel | RingingMediaViewModel
+    >,
+  ) {}
 }
 
 export class SpotlightTileViewModel {
