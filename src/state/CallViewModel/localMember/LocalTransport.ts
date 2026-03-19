@@ -42,6 +42,7 @@ import {
 } from "../../../livekit/openIDSFU.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 import { customLivekitUrl } from "../../../settings/settings.ts";
+import { doNetworkOperationWithRetry } from "../../../utils/matrix.ts";
 
 const logger = rootLogger.getChild("[LocalTransport]");
 
@@ -323,7 +324,9 @@ async function makeTransport(
   forceJwtEndpoint: JwtEndpointVersion,
   delayId?: string,
 ): Promise<LocalTransportWithSFUConfig> {
-  logger.trace("Searching for a preferred transport");
+  logger.trace(
+    `Searching for a preferred transport, forceJwtEndpoint: ${forceJwtEndpoint}`,
+  );
 
   async function doOpenIdAndJWTFromUrl(
     url: string,
@@ -371,11 +374,18 @@ async function makeTransport(
     for (const potentialTransport of transports) {
       if (isLivekitTransportConfig(potentialTransport)) {
         try {
+          logger.debug(
+            `Checking auth for transport: ${potentialTransport.livekit_service_url} `,
+          );
           // This will call the jwt/sfu/get endpoint to pre create the livekit room.
           return await doOpenIdAndJWTFromUrl(
             potentialTransport.livekit_service_url,
           );
         } catch (ex) {
+          logger.error(
+            `Could not use SFU service "${potentialTransport.livekit_service_url}" as SFU`,
+            ex,
+          );
           // Explictly throw these
           if (ex instanceof FailToGetOpenIdToken) {
             throw ex;
@@ -383,11 +393,12 @@ async function makeTransport(
           if (ex instanceof NoMatrix2AuthorizationService) {
             throw ex;
           }
-          logger.debug(
-            `Could not use SFU service "${potentialTransport.livekit_service_url}" as SFU`,
-            ex,
-          );
         }
+      } else {
+        logger.debug(
+          `Unsupported transport type: ${potentialTransport.type}, skipping: `,
+          potentialTransport,
+        );
       }
     }
     return null;
@@ -396,7 +407,13 @@ async function makeTransport(
   // MSC4143: Attempt to fetch transports from backend.
   if ("_unstable_getRTCTransports" in client) {
     try {
-      const transportList = await client._unstable_getRTCTransports();
+      const transportList = await doNetworkOperationWithRetry(
+        async () => await client._unstable_getRTCTransports(),
+      );
+      logger.info(
+        `Got ${transportList.length} transports from backend-configured endpoint: `,
+        transportList,
+      );
       const selectedTransport = await getFirstUsableTransport(transportList);
       if (selectedTransport) {
         logger.info(
@@ -409,10 +426,11 @@ async function makeTransport(
       if (ex instanceof MatrixError && ex.httpStatus === 404) {
         // Expected, this is an unstable endpoint and it's not required.
         // There will be expected 404 errors in the console. When we check if synapse supports the endpoint.
-        logger.debug(
+        logger.info(
           "Matrix homeserver does not provide any RTC transports via `/rtc/transports` (will retry with well-known.)",
         );
       } else if (ex instanceof FailToGetOpenIdToken) {
+        logger.warn(`Failed to validate backend-configured SFU: ${ex}`);
         throw ex;
       } else {
         // We got an error that wasn't just missing support for the feature, so log it loudly.
@@ -427,21 +445,28 @@ async function makeTransport(
   // Legacy MSC4143 (to be removed) WELL_KNOWN: Prioritize the .well-known/matrix/client, if available.
   const domain = client.getDomain();
   if (domain) {
+    logger.debug("Fetching .well-known SFU from ", domain);
     // we use AutoDiscovery instead of relying on the MatrixClient having already
     // been fully configured and started
-    const wellKnownFoci = (await AutoDiscovery.getRawClientConfig(domain))?.[
-      FOCI_WK_KEY
-    ];
+    const wellKnown = await doNetworkOperationWithRetry(
+      async () => await AutoDiscovery.getRawClientConfig(domain),
+    );
+
+    const wellKnownFoci = wellKnown?.[FOCI_WK_KEY];
+
     const selectedTransport = Array.isArray(wellKnownFoci)
       ? await getFirstUsableTransport(wellKnownFoci)
       : null;
     if (selectedTransport) {
       logger.info("Using .well-known SFU", selectedTransport);
       return selectedTransport;
+    } else {
+      logger.info("No .well-known usable SFU found in ", wellKnown);
     }
   }
 
   // CONFIG: Least prioritized; Load from config file
+  logger.debug("Last fallback fetching SFU from config");
   const urlFromConf = Config.get().livekit?.livekit_service_url;
   if (urlFromConf) {
     try {
