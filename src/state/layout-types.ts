@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type LocalUserMediaViewModel } from "./media/LocalUserMediaViewModel.ts";
 import { type MediaViewModel } from "./media/MediaViewModel.ts";
-import { type RemoteUserMediaViewModel } from "./media/RemoteUserMediaViewModel.ts";
+import { type RingingMediaViewModel } from "./media/RingingMediaViewModel.ts";
 import { type UserMediaViewModel } from "./media/UserMediaViewModel.ts";
 import {
   type GridTileViewModel,
@@ -40,8 +40,8 @@ export interface SpotlightExpandedLayoutMedia {
 
 export interface OneOnOneLayoutMedia {
   type: "one-on-one";
-  local: LocalUserMediaViewModel;
-  remote: RemoteUserMediaViewModel;
+  spotlight: UserMediaViewModel;
+  pip: LocalUserMediaViewModel | RingingMediaViewModel;
 }
 
 export interface PipLayoutMedia {
@@ -86,8 +86,8 @@ export interface SpotlightExpandedLayout {
 
 export interface OneOnOneLayout {
   type: "one-on-one";
-  local: GridTileViewModel;
-  remote: GridTileViewModel;
+  spotlight: GridTileViewModel;
+  pip: GridTileViewModel;
 }
 
 export interface PipLayout {
