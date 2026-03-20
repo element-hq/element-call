@@ -257,8 +257,8 @@ export const createLocalTransport$ = ({
                   ownMembershipIdentity,
                   transport.livekit_service_url,
                   roomId,
-                  { forceJwtEndpoint: JwtEndpointVersion.Legacy },
                   logger,
+                  { forceJwtEndpoint: JwtEndpointVersion.Legacy },
                 ),
               });
             return from(fetchOldestMemberTransport()).pipe(startWith(null));
@@ -336,12 +336,12 @@ async function makeTransport(
       membership,
       url,
       roomId,
+      logger,
       {
         forceJwtEndpoint: forceJwtEndpoint,
         delayEndpointBaseUrl: client.baseUrl,
         delayId,
       },
-      logger,
     );
     return {
       transport: {

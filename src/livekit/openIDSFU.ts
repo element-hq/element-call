@@ -78,6 +78,7 @@ export type OpenIDClientParts = Pick<
  * @param membership Our own membership identity parts used to send to jwt service.
  * @param serviceUrl The URL of the livekit SFU service
  * @param roomId The room id used in the jwt request. This is NOT the livekit_alias. The jwt service will provide the alias. It maps matrix room ids <-> Livekit aliases.
+ * @param logger optional logger.
  * @param opts Additional options to modify which endpoint with which data will be used to acquire the jwt token.
  * @param opts.forceJwtEndpoint This will use the old jwt endpoint which will create the rtc backend identity based on string concatenation
  * instead of a hash.
@@ -86,7 +87,6 @@ export type OpenIDClientParts = Pick<
  * For our own connection we can only use the hashed version if we also send the new matrix2.0 sticky events.
  * @param opts.delayEndpointBaseUrl The URL of the matrix homeserver.
  * @param opts.delayId The delay id used for the jwt service to manage.
- * @param logger optional logger.
  * @returns Object containing the token information
  * @throws FailToGetOpenIdToken
  */
@@ -95,12 +95,12 @@ export async function getSFUConfigWithOpenID(
   membership: CallMembershipIdentityParts,
   serviceUrl: string,
   roomId: string,
+  logger: Logger,
   opts?: {
     forceJwtEndpoint?: JwtEndpointVersion;
     delayEndpointBaseUrl?: string;
     delayId?: string;
   },
-  logger?: Logger,
 ): Promise<SFUConfig> {
   let openIdToken: IOpenIDToken;
   try {
@@ -108,13 +108,12 @@ export async function getSFUConfigWithOpenID(
       client.getOpenIdToken(),
     );
   } catch (error) {
+    logger.error("Failed to get openID token", error);
     throw new FailToGetOpenIdToken(
       error instanceof Error ? error : new Error("Unknown error"),
     );
   }
-  logger?.debug("Got openID token", openIdToken);
-
-  logger?.info(`Trying to get JWT for focus ${serviceUrl}...`);
+  logger.debug("Got openID token", { ...openIdToken, access_token: "XXXXX" });
 
   let sfuConfig: { url: string; jwt: string } | undefined;
 
@@ -122,6 +121,11 @@ export async function getSFUConfigWithOpenID(
 
   const forceMatrix2Jwt =
     opts?.forceJwtEndpoint === JwtEndpointVersion.Matrix_2_0;
+
+  logger.debug(
+    `Trying to get JWT for focus ${serviceUrl} / forceMatrix2Jwt:${forceMatrix2Jwt}...`,
+    opts,
+  );
 
   // We want to start using the new endpoint (with optional delay delegation)
   // if we can use both or if we are forced to use the new one.
@@ -135,16 +139,17 @@ export async function getSFUConfigWithOpenID(
         opts?.delayEndpointBaseUrl,
         opts?.delayId,
       );
-      logger?.info(`Got JWT from call's active focus URL.`);
+      logger.info(`Got JWT from call's active focus URL.`);
     } catch (e) {
+      logger.warn(`Failed fetching jwt with matrix 2.0 endpoint`, e);
       if (e instanceof NotSupportedError) {
-        logger?.warn(
+        logger.warn(
           `Failed fetching jwt with matrix 2.0 endpoint (retry with legacy) Not supported`,
           e,
         );
         sfuConfig = undefined;
       } else {
-        logger?.warn(
+        logger.warn(
           `Failed fetching jwt with matrix 2.0 endpoint other issues ->`,
           `(not going to try with legacy endpoint: forceOldJwtEndpoint is set to false, we did not get a not supported error from the sfu)`,
           e,
@@ -161,13 +166,16 @@ export async function getSFUConfigWithOpenID(
   // here we either have a sfuConfig or we alredy exited because of `if (forceMatrix2) throw ...`
   // The only case we can get into this condition is, if `forceMatrix2` is `false`
   if (sfuConfig === undefined) {
+    logger.debug(
+      `Trying to get JWT for focus ${serviceUrl} (legacy endpoint)...`,
+    );
     sfuConfig = await getLiveKitJWT(
       membership.deviceId,
       serviceUrl,
       roomId,
       openIdToken,
     );
-    logger?.info(`Got JWT from call's active focus URL.`);
+    logger.info(`Got JWT from call's active focus URL.`);
   }
 
   if (!sfuConfig) {

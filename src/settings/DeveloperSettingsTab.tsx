@@ -262,6 +262,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
                 { userId, deviceId, memberId: "" },
                 customLivekitUrlTextBuffer,
                 roomId,
+                logger,
               );
               setCustomLivekitUrlUpdateError(null);
               setCustomLivekitUrl(customLivekitUrlTextBuffer);

@@ -275,9 +275,9 @@ export class Connection {
       this.ownMembershipIdentity,
       this.transport.livekit_service_url,
       this.roomId,
+      this.logger,
       // dont pass any custom opts for the subscribe only connections
       {},
-      this.logger,
     );
   }
 

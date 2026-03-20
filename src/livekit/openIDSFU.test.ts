@@ -15,6 +15,7 @@ import {
   vitest,
 } from "vitest";
 import fetchMock from "fetch-mock";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { getSFUConfigWithOpenID, type OpenIDClientParts } from "./openIDSFU";
 import { testJWTToken } from "../utils/test-fixtures";
@@ -47,6 +48,7 @@ describe("getSFUConfigWithOpenID", () => {
       ownMemberMock,
       "https://sfu.example.org",
       "!example_room_id",
+      logger,
     );
     expect(config).toEqual({
       jwt: testJWTToken,
@@ -70,6 +72,7 @@ describe("getSFUConfigWithOpenID", () => {
         ownMemberMock,
         "https://sfu.example.org",
         "!example_room_id",
+        logger,
       );
     } catch (ex) {
       expect((ex as Error).message).toEqual(
@@ -100,6 +103,7 @@ describe("getSFUConfigWithOpenID", () => {
         ownMemberMock,
         "https://sfu.example.org",
         "!example_room_id",
+        logger,
         {
           delayEndpointBaseUrl: "https://matrix.homeserverserver.org",
           delayId: "mock_delay_id",
@@ -154,6 +158,7 @@ describe("getSFUConfigWithOpenID", () => {
         ownMemberMock,
         "https://sfu.example.org",
         "!example_room_id",
+        logger,
         {
           delayEndpointBaseUrl: "https://matrix.homeserverserver.org",
           delayId: "mock_delay_id",
@@ -204,6 +209,7 @@ describe("getSFUConfigWithOpenID", () => {
       ownMemberMock,
       "https://sfu.example.org",
       "!example_room_id",
+      logger,
     );
     expect(config).toEqual({
       jwt: testJWTToken,

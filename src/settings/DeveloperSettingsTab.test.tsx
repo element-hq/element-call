@@ -214,6 +214,7 @@ describe("DeveloperSettingsTab", () => {
         expect.anything(),
         "wss://example.livekit.valid",
         "#testRoom",
+        expect.anything(),
       );
 
       expect(customLivekitUrlSetting.getValue()).toBe(
