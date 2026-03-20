@@ -353,7 +353,8 @@ export async function doNetworkOperationWithRetry<T>(
       return await operation();
     } catch (e) {
       currentRetryCount++;
-      const backoff = calculateRetryBackoff(e, currentRetryCount, true);
+      const backoff = calculateRetryBackoff(e, currentRetryCount,
+        false /** Do not retry CORS */);
       if (backoff < 0) {
         // Max number of retries reached, or error is not retryable. rethrow the error
         throw e;
