@@ -22,8 +22,8 @@ test("Start a new call then leave and show the feedback screen", async ({
   await expect(page.getByTestId("lobby_joinCall")).toBeVisible();
 
   // Check the button toolbar
-  // await expect(page.getByRole('button', { name: 'Mute microphone' })).toBeVisible();
-  // await expect(page.getByRole('button', { name: 'Stop video' })).toBeVisible();
+  // await expect(page.getByRole('switch', { name: 'Mute microphone' })).toBeVisible();
+  // await expect(page.getByRole('switch', { name: 'Stop video' })).toBeVisible();
   await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
   await expect(page.getByRole("button", { name: "End call" })).toBeVisible();
 
