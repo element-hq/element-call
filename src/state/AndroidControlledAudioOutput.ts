@@ -70,7 +70,9 @@ export class AndroidControlledAudioOutput implements MediaDevice<
     "[MediaDevices AndroidControlledAudioOutput]",
   );
 
-  // STATE stream: the current state of the controller, including the list of available devices and the selected device.
+  /**
+   * STATE stream: the current state of the controller, including the list of available devices and the selected device.
+   */
   private readonly controllerState$: Behavior<ControllerState>;
 
   /**
