@@ -40,26 +40,28 @@ export interface OutputDevice {
   id: string;
   name: string;
   /**
-   * Reverse engineered:
-   *  - on iOS always true if output is routed to speaker. In other case iOS on declare a `dummy` id device.
-   *    In that case then ElementCalls manually append a earpiece device with id `EARPIECE_CONFIG_ID` anb `{ type: "earpiece" }`
+   * `forEarpiece` in an iOS only flag, that will be set on the default speaker device.
+   * The default speaker device will be used for the earpiece mode by
+   * using a stereo pan and reducing the volume significantly. (in combination this is similar to a dedicated earpiece mode)
+   *  - on iOS this is true if output is routed to speaker.
+   *    In that case then ElementCalls manually appends an earpiece device with id `EARPIECE_CONFIG_ID` and `{ type: "earpiece" }`
    *  - on Android this is unused.
    */
   forEarpiece?: boolean;
   /**
-   * Reverse engineered:
+   * Is the device the OS earpiece audio configuration?
    * - on iOS always undefined
    * - on Android true for the `TYPE_BUILTIN_EARPIECE`
    */
   isEarpiece?: boolean;
   /**
-   * Reverse engineered:
+   *  Is the device the OS default speaker:
    * - on iOS always true if output is routed to speaker. In other case iOS on declare a `dummy` id device.
    * - on Android true for the `TYPE_BUILTIN_SPEAKER`
    */
   isSpeaker?: boolean;
   /**
-   * Reverse engineered:
+   * Is the device the OS default external headset (bluetooth):
    * - on iOS always undefined.
    * - on Android true for the `TYPE_BLUETOOTH_SCO`
    */
