@@ -14,7 +14,7 @@ exports[`AppBar > renders 1`] = `
       >
         <button
           aria-labelledby="_r_0_"
-          class="_icon-button_1pz9o_8"
+          class="_icon-button_1215g_8"
           data-kind="primary"
           role="button"
           style="--cpd-icon-button-size: 32px;"
