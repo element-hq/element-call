@@ -12,6 +12,7 @@ import {
   type Room,
   RoomEvent,
   Track,
+  getBrowser,
 } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -214,6 +215,33 @@ async function connectAndPublish(
   }
 }
 
+function warmUpConnection(url: string | undefined, warmupState: boolean) {
+  if (!url || getBrowser()?.name !== "Firefox" || warmupState) return;
+
+  try {
+    /**
+     * Taken from meet project https://github.com/suitenumerique/meet/blob/c09c4406319671c831f56e00c05fe376f15b61ef/src/frontend/src/features/rooms/components/Conference.tsx#L139
+     * FIREFOX + PROXY WORKAROUND:
+     *
+     * Issue: On Firefox behind proxy configurations, WebSocket signaling fails to establish.
+     * Symptom: Client receives HTTP 200 instead of expected 101 (Switching Protocols).
+     * Root Cause: Certificate/security issue where the initial request is considered unsecure.
+     *
+     * Solution: Pre-establish a WebSocket connection to the signaling server, which fails.
+     * This "primes" the connection, allowing subsequent WebSocket establishments to work correctly.
+     *
+     * Note: This issue is reproducible on LiveKit's demo app.
+     * Reference: livekit-examples/meet/issues/466
+     */
+    const ws = new WebSocket(url);
+    // 401 unauthorized response is expected
+    ws.onerror = () => ws.readyState <= 1 && ws.close();
+    return true;
+  } catch (e) {
+    console.debug("Firefox WebSocket workaround failed.", e);
+  }
+}
+
 export function useECConnectionState(
   initialDeviceId: string | undefined,
   initialAudioEnabled: boolean,
@@ -230,6 +258,9 @@ export function useECConnectionState(
   const [isInDoConnect, setIsInDoConnect] = useState(false);
   const [error, setError] = useState<ElementCallError | null>(null);
   if (error !== null) throw error;
+
+  // :TCHAP: firefox behind proxy hack
+  const [isConnectionWarmedUp, setIsConnectionWarmedUp] = useState(false);
 
   const onConnStateChanged = useCallback((state: ConnectionState) => {
     if (state == ConnectionState.Connected) setSwitchingFocus(false);
@@ -264,6 +295,8 @@ export function useECConnectionState(
     setSwitchingFocus(true);
     await livekitRoom?.disconnect();
     setIsInDoConnect(true);
+    warmUpConnection(sfuConfig?.url, isConnectionWarmedUp);
+    setIsConnectionWarmedUp(true);
     try {
       await connectAndPublish(
         livekitRoom!,
@@ -322,6 +355,8 @@ export function useECConnectionState(
       setIsInDoConnect(true);
       const abortHandle = new AbortHandle();
       abortHandlesBag.current.add(abortHandle);
+      warmUpConnection(sfuConfig?.url, isConnectionWarmedUp);
+      setIsConnectionWarmedUp(true);
       doConnect(
         livekitRoom!,
         sfuConfig!,
