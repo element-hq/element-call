@@ -45,16 +45,14 @@ widgetTest("Put call in PIP", async ({ addUser, browserName }) => {
 
   await TestHelpers.joinCallInCurrentRoom(timo.page);
 
-  {
-    const frame = timo.page
-      .locator('iframe[title="Element Call"]')
-      .contentFrame();
+  const frame = timo.page
+    .locator('iframe[title="Element Call"]')
+    .contentFrame();
 
-    const videoButton = frame.getByTestId("incall_videomute");
-    await expect(videoButton).toBeVisible();
-    // check that the video is on
-    await expect(videoButton).toHaveAttribute("aria-label", /^Stop video$/);
-  }
+  // check that the video is on
+  await expect(
+    frame.getByRole("switch", { name: "Stop video", checked: true }),
+  ).toBeVisible();
 
   // Switch to the other room, the call should go to PIP
   await TestHelpers.switchToRoomNamed(valere.page, "DoubleTask");

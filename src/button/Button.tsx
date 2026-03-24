@@ -37,9 +37,10 @@ export const MicButton: FC<MicButtonProps> = ({ enabled, ...props }) => {
     <Tooltip label={label}>
       <CpdButton
         iconOnly
-        aria-label={label}
         Icon={Icon}
         kind={enabled ? "primary" : "secondary"}
+        role="switch"
+        aria-checked={enabled}
         {...props}
       />
     </Tooltip>
@@ -62,9 +63,10 @@ export const VideoButton: FC<VideoButtonProps> = ({ enabled, ...props }) => {
     <Tooltip label={label}>
       <CpdButton
         iconOnly
-        aria-label={label}
         Icon={Icon}
         kind={enabled ? "primary" : "secondary"}
+        role="switch"
+        aria-checked={enabled}
         {...props}
       />
     </Tooltip>
@@ -91,6 +93,8 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
         iconOnly
         Icon={ShareScreenSolidIcon}
         kind={enabled ? "primary" : "secondary"}
+        role="switch"
+        aria-checked={enabled}
         {...props}
       />
     </Tooltip>
@@ -112,7 +116,6 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
       <CpdButton
         className={classNames(className, styles.endCall)}
         iconOnly
-        aria-label={t("hangup_button_label")}
         Icon={EndCallIcon}
         destructive
         {...props}

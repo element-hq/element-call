@@ -49,14 +49,17 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
 
   {
     // Check for a bug where the video had the wrong fit in PIP
-    const hangupBtn = iFrame.getByRole("button", { name: "End call" });
-    const audioBtn = iFrame.getByTestId("incall_mute");
-    const videoBtn = iFrame.getByTestId("incall_videomute");
-    await expect(hangupBtn).toBeVisible();
+    const audioBtn = iFrame.getByRole("switch", { name: /microphone/ });
+    const videoBtn = iFrame.getByRole("switch", { name: /video/ });
+    await expect(
+      iFrame.getByRole("button", { name: "End call" }),
+    ).toBeVisible();
     await expect(audioBtn).toBeVisible();
     await expect(videoBtn).toBeVisible();
-    await expect(audioBtn).toHaveAttribute("aria-label", /^Mute microphone$/);
-    await expect(videoBtn).toHaveAttribute("aria-label", /^Stop video$/);
+    await expect(audioBtn).toHaveAccessibleName("Mute microphone");
+    await expect(audioBtn).toBeChecked();
+    await expect(videoBtn).toHaveAccessibleName("Stop video");
+    await expect(videoBtn).toBeChecked();
 
     await videoBtn.click();
     await audioBtn.click();
@@ -64,7 +67,9 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
     // stop hovering on any of the buttons
     await iFrame.getByTestId("videoTile").hover();
 
-    await expect(audioBtn).toHaveAttribute("aria-label", /^Unmute microphone$/);
-    await expect(videoBtn).toHaveAttribute("aria-label", /^Start video$/);
+    await expect(audioBtn).toHaveAccessibleName("Unmute microphone");
+    await expect(audioBtn).toBeChecked();
+    await expect(videoBtn).toHaveAccessibleName("Start video");
+    await expect(videoBtn).not.toBeChecked();
   }
 });
