@@ -30,7 +30,7 @@ import { platform } from "../Platform";
 import { switchWhen } from "../utils/observable";
 import { type Behavior, constant } from "./Behavior";
 import { AndroidControlledAudioOutput } from "./AndroidControlledAudioOutput.ts";
-import { ControlledAudioOutput } from "./ControlledAudioOutput.ts";
+import { IOSControlledAudioOutput } from "./IOSControlledAudioOutput.ts";
 
 export type DeviceLabel =
   | { type: "name"; name: string }
@@ -376,7 +376,7 @@ export class MediaDevices {
           getUrlParams().callIntent,
           window.controls,
         )
-      : new ControlledAudioOutput(this.usingNames$, this.scope)
+      : new IOSControlledAudioOutput(this.usingNames$, this.scope)
     : new AudioOutput(this.usingNames$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
