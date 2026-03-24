@@ -55,13 +55,10 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
     const frame = user.page
       .locator('iframe[title="Element Call"]')
       .contentFrame();
-
     // No lobby, should start with video on
-    // The only way to know if it is muted or not is to look at the data-kind attribute..
-    const videoButton = frame.getByTestId("incall_videomute");
-    await expect(videoButton).toBeVisible();
-    // video should be on
-    await expect(videoButton).toHaveAttribute("aria-label", /^Stop video$/);
+    await expect(
+      frame.getByRole("switch", { name: "Stop video", checked: true }),
+    ).toBeVisible();
   }
 
   // We should see 5 video tiles everywhere now
@@ -101,13 +98,15 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
   const florianFrame = florian.page
     .locator('iframe[title="Element Call"]')
     .contentFrame();
-  const florianMuteButton = florianFrame.getByTestId("incall_videomute");
-  await florianMuteButton.click();
+  const florianVideoButton = florianFrame.getByRole("switch", {
+    name: /video/,
+  });
+  await expect(florianVideoButton).toHaveAccessibleName("Stop video");
+  await expect(florianVideoButton).toBeChecked();
+  await florianVideoButton.click();
   // Now the button should indicate we can start video
-  await expect(florianMuteButton).toHaveAttribute(
-    "aria-label",
-    /^Start video$/,
-  );
+  await expect(florianVideoButton).toHaveAccessibleName("Start video");
+  await expect(florianVideoButton).not.toBeChecked();
 
   // wait a bit for the state to propagate
   await valere.page.waitForTimeout(3000);
