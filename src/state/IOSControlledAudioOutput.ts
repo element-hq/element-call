@@ -31,7 +31,7 @@ const EARPIECE_CONFIG_ID = "earpiece-id";
  * to have more control over the device selection process. This is used when the
  * `controlledAudioDevices` URL parameter is set, which is currently only true on mobile.
  */
-export class ControlledAudioOutput implements MediaDevice<
+export class IOSControlledAudioOutput implements MediaDevice<
   AudioOutputDeviceLabel,
   SelectedAudioOutputDevice
 > {
