@@ -158,5 +158,5 @@ jobs:
             ### NPM
 
             ```
-            npm install @element-hq/element-call-embedded@${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}
+            npm install element-call-tchap@${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}
             ```
