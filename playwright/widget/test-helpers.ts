@@ -152,6 +152,22 @@ export class TestHelpers {
     }
   }
 
+  private static async maybeDismissKeyBackupToast(page: Page): Promise<void> {
+    const toast = page
+      .locator(".mx_Toast_toast")
+      .getByText("Back up your chats");
+
+    try {
+      await expect(toast).toBeVisible({ timeout: 700 });
+      await page
+        .locator(".mx_Toast_toast")
+        .getByRole("button", { name: "Dismiss" })
+        .click();
+    } catch {
+      // toast not visible, continue as normal
+    }
+  }
+
   public static async createRoom(
     name: string,
     page: Page,
@@ -167,6 +183,7 @@ export class TestHelpers {
     await page.getByRole("button", { name: "Create room" }).click();
     await expect(page.getByText("You created this room.")).toBeVisible();
     await expect(page.getByText("Encryption enabled")).toBeVisible();
+    await TestHelpers.maybeDismissKeyBackupToast(page);
 
     // Invite users if any
     if (andInvite.length > 0) {
@@ -201,6 +218,7 @@ export class TestHelpers {
     await expect(
       page.getByRole("main").getByRole("heading", { name: roomName }),
     ).toBeVisible();
+    await TestHelpers.maybeDismissKeyBackupToast(page);
   }
 
   /**
