@@ -66,7 +66,7 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
     await iFrame.getByTestId("videoTile").hover();
 
     await expect(audioBtn).toHaveAccessibleName("Unmute microphone");
-    await expect(audioBtn).toBeChecked();
+    await expect(audioBtn).not.toBeChecked();
     await expect(videoBtn).toHaveAccessibleName("Start video");
     await expect(videoBtn).not.toBeChecked();
   }
