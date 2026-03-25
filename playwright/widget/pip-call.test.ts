@@ -28,11 +28,6 @@ widgetTest("Put call in PIP", async ({ addUser, browserName }) => {
 
   await TestHelpers.acceptRoomInvite(callRoom, timo.page);
 
-  await TestHelpers.maybeDismissBackupChatsToast(valere.page);
-  await TestHelpers.maybeDismissBackupChatsToast(timo.page);
-
-  await valere.page.pause();
-
   await TestHelpers.switchToRoomNamed(valere.page, callRoom);
 
   // Start the call as Valere

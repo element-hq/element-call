@@ -25,8 +25,6 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
 
   await TestHelpers.createRoom("OtherRoom", valere.page);
 
-  await TestHelpers.maybeDismissBackupChatsToast(valere.page);
-
   await TestHelpers.switchToRoomNamed(valere.page, callRoom);
 
   // Start the call as Valere

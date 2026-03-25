@@ -152,7 +152,7 @@ export class TestHelpers {
     }
   }
 
-  private static async maybeDismissKeyBackupToast(page: Page): Promise<void> {
+  public static async maybeDismissKeyBackupToast(page: Page): Promise<void> {
     const toast = page
       .locator(".mx_Toast_toast")
       .getByText("Back up your chats");
