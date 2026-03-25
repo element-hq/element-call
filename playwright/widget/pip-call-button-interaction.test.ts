@@ -35,7 +35,7 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
 
   await TestHelpers.joinCallFromLobby(valere.page);
   // wait a bit so that the PIP has rendered
-  await valere.page.waitForTimeout(1000);
+  await valere.page.waitForTimeout(600);
 
   // Switch to the other room, the call should go to PIP
   await TestHelpers.switchToRoomNamed(valere.page, "OtherRoom");
@@ -66,7 +66,7 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
     await iFrame.getByTestId("videoTile").hover();
 
     await expect(audioBtn).toHaveAccessibleName("Unmute microphone");
-    await expect(audioBtn).toBeChecked();
+    await expect(audioBtn).not.toBeChecked();
     await expect(videoBtn).toHaveAccessibleName("Start video");
     await expect(videoBtn).not.toBeChecked();
   }
