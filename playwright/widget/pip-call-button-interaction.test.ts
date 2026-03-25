@@ -35,7 +35,7 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
 
   await TestHelpers.joinCallFromLobby(valere.page);
   // wait a bit so that the PIP has rendered
-  await valere.page.waitForTimeout(600);
+  await valere.page.waitForTimeout(1000);
 
   // Switch to the other room, the call should go to PIP
   await TestHelpers.switchToRoomNamed(valere.page, "OtherRoom");
