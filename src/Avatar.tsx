@@ -173,7 +173,8 @@ async function getAvatarFromServer(
   return blob;
 }
 
-async function getAvatarFromWidgetAPI(
+// export for testing
+export async function getAvatarFromWidgetAPI(
   api: WidgetApi,
   src: string,
 ): Promise<Blob> {
@@ -185,12 +186,10 @@ async function getAvatarFromWidgetAPI(
     return file;
   } else if (typeof file === "string") {
     // it is a base64 string
-    const bytes = Uint8Array.from(atob(file), (c) =>
-      c.charCodeAt(0),
-    );
+    const bytes = Uint8Array.from(atob(file), (c) => c.charCodeAt(0));
     return new Blob([bytes]);
   }
-  throw new Error("Downloaded file format is not supported: " + typeof file + "");
-
-
+  throw new Error(
+    "Downloaded file format is not supported: " + typeof file + "",
+  );
 }
