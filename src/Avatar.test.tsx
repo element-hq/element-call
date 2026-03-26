@@ -199,7 +199,7 @@ test("Supports download files as base64", async () => {
     "XzmnQI9P8QnwsO9vtqZlgIoU4g+f2/G8Q3/nVMX7dujniwEAAP//KmiQs7P8MeIAAAAASUVORK5C" +
     "YII=";
   const mockWidgetAPI = {
-    downloadFile: vi.fn().mockImplementation((contentUri) => {
+    downloadFile: vi.fn().mockImplementation(async (contentUri) => {
       if (contentUri !== expectedMXCUrl) {
         return Promise.reject(new Error("Unexpected content URI"));
       }
