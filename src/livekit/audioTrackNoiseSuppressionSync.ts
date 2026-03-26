@@ -43,7 +43,7 @@ export const audioTrackNoiseSuppressionSync = (
     noiseSuppressionLevel.value$,
   ])
     .pipe(scope.bind())
-    .subscribe(async ([audioTrack, settingEnabled, settingLevel]) => {
+    .subscribe(([audioTrack, settingEnabled, settingLevel]) => {
       try {
         // On first initialization, use URL parameters if provided, otherwise use settings
         // After that, always use settings (user can change them at runtime)
@@ -70,7 +70,7 @@ export const audioTrackNoiseSuppressionSync = (
         // Initialize transformer on first use
         if (!transformer) {
           transformer = new NoiseSuppressionTransformer();
-          await transformer.initialize(levelValue, enabledValue);
+          transformer.initialize(levelValue, enabledValue);
           logger.debug(
             "[audioTrackNoiseSuppressionSync] Transformer initialized with enabled=" +
               enabledValue +
@@ -93,10 +93,10 @@ export const audioTrackNoiseSuppressionSync = (
             logger.debug(
               "[audioTrackNoiseSuppressionSync] Setting noise suppression processor on audio track",
             );
-            await audioTrack.setProcessor(processor);
+            void audioTrack.setProcessor(processor);
           }
           // Update processor state - with small delay to ensure processor is ready
-          Promise.resolve().then(() => {
+          void Promise.resolve().then(() => {
             transformer!.setEnabled(enabledValue);
             transformer!.setSuppressionLevel(levelValue);
             logger.debug(
