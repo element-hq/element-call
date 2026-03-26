@@ -9,7 +9,10 @@ import type { LocalAudioTrack } from "livekit-client";
 import { combineLatest } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { noiseSuppressionEnabled, noiseSuppressionLevel } from "../settings/settings";
+import {
+  noiseSuppressionEnabled,
+  noiseSuppressionLevel,
+} from "../settings/settings";
 import { getUrlParams } from "../UrlParams";
 import type { Behavior } from "../state/Behavior";
 import type { ObservableScope } from "../state/ObservableScope";
@@ -78,7 +81,9 @@ export const audioTrackNoiseSuppressionSync = (
 
         const processor = transformer.getProcessor();
         if (!processor) {
-          logger.error("[audioTrackNoiseSuppressionSync] Processor not initialized");
+          logger.error(
+            "[audioTrackNoiseSuppressionSync] Processor not initialized",
+          );
           return;
         }
 
@@ -103,7 +108,9 @@ export const audioTrackNoiseSuppressionSync = (
           });
         } else {
           // Track was removed - stop processor if applicable
-          logger.debug("[audioTrackNoiseSuppressionSync] Audio track not available");
+          logger.debug(
+            "[audioTrackNoiseSuppressionSync] Audio track not available",
+          );
         }
       } catch (error) {
         logger.error("[audioTrackNoiseSuppressionSync] Error:", error);

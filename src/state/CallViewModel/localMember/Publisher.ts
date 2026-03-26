@@ -426,7 +426,10 @@ export class Publisher {
     room: LivekitRoom,
   ): void {
     const track$ = scope.behavior(
-      observeTrackReference$(room.localParticipant, Track.Source.Microphone).pipe(
+      observeTrackReference$(
+        room.localParticipant,
+        Track.Source.Microphone,
+      ).pipe(
         map((trackRef) => {
           const track = trackRef?.publication.track;
           return track instanceof LocalAudioTrack ? track : null;

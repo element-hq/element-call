@@ -104,7 +104,8 @@ export default ({
       proxy: {
         // Proxy for DeepFilterNet3 assets to avoid CORS issues during development
         "/assets/deepfilternet3": {
-          target: "https://cdn.mezon.ai/AI/models/datas/noise_suppression/deepfilternet3",
+          target:
+            "https://cdn.mezon.ai/AI/models/datas/noise_suppression/deepfilternet3",
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/assets\/deepfilternet3/, ""),
           secure: false, // Allow self-signed certs in development

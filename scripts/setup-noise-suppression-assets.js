@@ -79,7 +79,9 @@ function downloadFile(fileUrl, filePath, isOptional = false) {
         ) {
           const redirectUrl = response.headers.location;
           console.log(`  Redirected to: ${redirectUrl}`);
-          downloadFile(redirectUrl, filePath, isOptional).then(resolve).catch(reject);
+          downloadFile(redirectUrl, filePath, isOptional)
+            .then(resolve)
+            .catch(reject);
           return;
         }
 
@@ -141,7 +143,9 @@ async function main() {
     }
 
     console.log("\n✅ Asset setup complete!");
-    console.log("\nAssets are ready for bundling. Next build will include them.\n");
+    console.log(
+      "\nAssets are ready for bundling. Next build will include them.\n",
+    );
     process.exit(0);
   } catch (error) {
     console.error("\n❌ Asset setup failed:", error.message);
