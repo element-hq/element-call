@@ -8016,6 +8016,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"deepfilternet3-noise-filter@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "deepfilternet3-noise-filter@npm:1.2.1"
+  peerDependencies:
+    livekit-client: ^2.0.0
+  checksum: 10c0/db1488bd202a3e3657105c62c7070d68105029501dfd6bc393f89b7598cf4c26d97afc02caca43e6f3b7cef568a17468f17add9f1f7deb8a63a789f05108e230
+  languageName: node
+  linkType: hard
+
 "define-data-property@npm:^1.0.1, define-data-property@npm:^1.1.4":
   version: 1.1.4
   resolution: "define-data-property@npm:1.1.4"
@@ -8331,6 +8340,7 @@ __metadata:
     babel-plugin-transform-vite-meta-env: "npm:^1.0.3"
     classnames: "npm:^2.3.1"
     copy-to-clipboard: "npm:^3.3.3"
+    deepfilternet3-noise-filter: "npm:^1.2.1"
     eslint: "npm:^8.14.0"
     eslint-config-google: "npm:^0.14.0"
     eslint-config-prettier: "npm:^10.0.0"
