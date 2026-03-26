@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import type { LocalAudioTrack } from "livekit-client";
 import { combineLatest } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
+import type { LocalAudioTrack } from "livekit-client";
 import {
   noiseSuppressionEnabled,
   noiseSuppressionLevel,

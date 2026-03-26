@@ -22,10 +22,7 @@ export class NoiseSuppressionTransformer {
    * @param level - Noise reduction level (0-1)
    * @param enabled - Whether noise suppression is enabled
    */
-  public async initialize(
-    level: number = 0.75,
-    enabled: boolean = true,
-  ): Promise<void> {
+  public initialize(level: number = 0.75, enabled: boolean = true): void {
     if (this.initialized) {
       return;
     }
@@ -106,12 +103,12 @@ export class NoiseSuppressionTransformer {
     }
 
     try {
-      this.processor.setEnabled(enabled);
+      void this.processor.setEnabled(enabled);
       logger.log(
         `[NoiseSuppressionTransformer] Noise suppression ${enabled ? "enabled" : "disabled"}`,
       );
       // Log processor state for debugging
-      const processorState = (this.processor as any).enabled;
+      const processorState = (this.processor as { enabled?: boolean }).enabled;
       logger.debug(
         `[NoiseSuppressionTransformer] Processor internal state: enabled=${processorState}`,
       );
@@ -131,8 +128,8 @@ export class NoiseSuppressionTransformer {
       try {
         // Note: DeepFilterNoiseFilterProcessor may have a destroy method
         // Call it if available
-        if (typeof (this.processor as any).destroy === "function") {
-          (this.processor as any).destroy();
+        if (typeof (this.processor as { destroy?: () => void }).destroy === "function") {
+          (this.processor as { destroy: () => void }).destroy();
         }
       } catch (error) {
         logger.error("[NoiseSuppressionTransformer] Cleanup failed:", error);

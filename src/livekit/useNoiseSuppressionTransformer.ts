@@ -32,7 +32,7 @@ export const useNoiseSuppressionTransformer =
         // Initialize with current settings
         void transformerRef.current.initialize(levelValue, enabledValue);
       }
-    }, []);
+    }, [enabledValue, levelValue]);
 
     // Sync enabled state when setting changes
     useEffect(() => {
@@ -50,7 +50,7 @@ export const useNoiseSuppressionTransformer =
 
     // Cleanup on unmount
     useEffect(() => {
-      return () => {
+      return (): void => {
         if (transformerRef.current) {
           transformerRef.current.destroy();
         }

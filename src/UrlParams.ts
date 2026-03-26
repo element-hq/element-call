@@ -518,7 +518,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     noiseSuppression: parser.getFlagParam("noiseSuppression", true),
     echoCancellation: parser.getFlagParam("echoCancellation", true),
     noiseSuppressionEnabled: parser.getFlagParam("noiseSuppressionEnabled"),
-    noiseSuppressionLevel: (() => {
+    noiseSuppressionLevel: ((): number | undefined => {
       const val = parseInt(parser.getParam("noiseSuppressionLevel") ?? "", 10);
       return isNaN(val) ? undefined : val / 100;
     })(),
