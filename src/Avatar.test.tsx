@@ -199,13 +199,12 @@ test("Supports download files as base64", async () => {
     "XzmnQI9P8QnwsO9vtqZlgIoU4g+f2/G8Q3/nVMX7dujniwEAAP//KmiQs7P8MeIAAAAASUVORK5C" +
     "YII=";
   const mockWidgetAPI = {
-    downloadFile: vi.fn().mockImplementation(
-      (contentUri) => {
-        if (contentUri !== expectedMXCUrl) {
-          return Promise.reject(new Error("Unexpected content URI"));
-        }
-        return {file: expectedBase64 }
-      }),
+    downloadFile: vi.fn().mockImplementation((contentUri) => {
+      if (contentUri !== expectedMXCUrl) {
+        return Promise.reject(new Error("Unexpected content URI"));
+      }
+      return { file: expectedBase64 };
+    }),
   } as unknown as WidgetApi;
 
   const blob = await getAvatarFromWidgetAPI(mockWidgetAPI, expectedMXCUrl);
