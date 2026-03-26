@@ -128,7 +128,10 @@ export class NoiseSuppressionTransformer {
       try {
         // Note: DeepFilterNoiseFilterProcessor may have a destroy method
         // Call it if available
-        if (typeof (this.processor as { destroy?: () => void }).destroy === "function") {
+        if (
+          typeof (this.processor as { destroy?: () => void }).destroy ===
+          "function"
+        ) {
           (this.processor as { destroy: () => void }).destroy();
         }
       } catch (error) {
