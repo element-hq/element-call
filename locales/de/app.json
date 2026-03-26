@@ -177,6 +177,12 @@
     "background_blur_header": "Hintergrund",
     "background_blur_label": "Unschärfeeffekt für den Hintergrund aktivieren",
     "blur_not_supported_by_browser": "(Hintergrundunschärfe wird von diesem Gerät nicht unterstützt.)",
+    "noise_suppression_header": "Audioverarbeitung",
+    "noise_suppression_label": "Störgeräuschreduktion",
+    "noise_suppression_description": "Reduziert Hintergrundgeräusche von Ihrem Mikrofon",
+    "noise_suppression_level_label": "Niveau der Störgeräuschreduktion",
+    "noise_suppression_level_description": "Höhere Werte unterdrücken mehr Rauschen, können aber die Sprachklarheit beeinflussen",
+    "noise_suppression_level_value": "Niveau: {{level}}",
     "developer_tab_title": "Entwickler",
     "devices": {
       "camera": "Kamera",

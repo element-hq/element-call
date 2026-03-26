@@ -122,6 +122,16 @@ export const soundEffectVolume = new Setting<number>(
 
 export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);
 
+export const noiseSuppressionEnabled = new Setting<boolean>(
+  "noise-suppression-enabled",
+  true,
+);
+
+export const noiseSuppressionLevel = new Setting<number>(
+  "noise-suppression-level",
+  0.75,
+);
+
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
 
 export const alwaysShowIphoneEarpiece = new Setting<boolean>(
