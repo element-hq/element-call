@@ -34,14 +34,11 @@ export class NoiseSuppressionTransformer {
       // Clamp level between 0-1
       const clampedLevel = Math.max(0, Math.min(1, level));
 
-      // Determine asset URL based on environment
-      // In development, use local proxy to avoid CORS issues
-      // In production, use direct CDN or custom assetConfig
-      const isProduction = import.meta.env.PROD;
-      const assetUrl = isProduction
-        ? process.env.VITE_NOISE_SUPPRESSION_CDN_URL ||
-          "https://cdn.mezon.ai/AI/models/datas/noise_suppression/deepfilternet3"
-        : `${window.location.origin}/assets/deepfilternet3`;
+      // Load from bundled local assets by default (avoids CDN/CORS issues),
+      // but allow override via env var for custom deployments.
+      const assetUrl =
+        import.meta.env.VITE_NOISE_SUPPRESSION_CDN_URL ||
+        `${window.location.origin}/assets/deepfilternet3`;
 
       this.processor = new DeepFilterNoiseFilterProcessor({
         sampleRate: this.sampleRate,

@@ -7,6 +7,7 @@ dist-ssr
 *.bkp
 .idea/
 public/config.json
+public/assets/deepfilternet3
 backend/synapse_tmp/*
 backend/synapse_tmp_othersite/*
 /coverage
