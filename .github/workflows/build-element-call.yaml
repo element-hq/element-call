@@ -7,7 +7,7 @@ on:
         type: string
       package:
         type: string # This would ideally be a `choice` type, but that isn't supported yet
-        description: The package type to be built. Must be one of 'full' or 'embedded'
+        description: The package type to be built. Must be one of 'full', 'embedded', or 'sdk'
         required: true
       build_mode:
         type: string # This would ideally be a `choice` type, but that isn't supported yet
@@ -33,6 +33,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
       - name: Yarn cache
@@ -43,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: "yarn install --immutable"
       - name: Build Element Call
-        run: ${{ format('yarn run build:{0}:{1}', inputs.package, inputs.build_mode) }}
+        run: yarn run build:"$PACKAGE":"$BUILD_MODE"
         env:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -52,6 +54,8 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           VITE_APP_VERSION: ${{ inputs.vite_app_version }}
           NODE_OPTIONS: "--max-old-space-size=4096"
+          PACKAGE: ${{ inputs.package }}
+          BUILD_MODE: ${{ inputs.build_mode }}
       - name: Upload Artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

@@ -52,6 +52,11 @@ Please see LICENSE in the repository root for full details.
   pointer-events: none;
 }
 
+.translucent {
+  opacity: 50%;
+  mix-blend-mode: multiply;
+}
+
 /* CSS makes us put a condition here, even though all we want to do is
 unconditionally select the container so we can use cqmin units */
 @container mediaView (width > 0) {
@@ -71,14 +76,15 @@ unconditionally select the container so we can use cqmin units */
 
 .fg {
   position: absolute;
-  inset: var(
+  --fg-inset: var(
     --media-view-fg-inset,
     calc(var(--media-view-border-radius) - var(--cpd-space-3x))
   );
+  inset: var(--fg-inset);
   display: grid;
   grid-template-columns: 30px 1fr 30px;
   grid-template-rows: 1fr auto;
-  grid-template-areas: "reactions status ." "nameTag nameTag button";
+  grid-template-areas: "status status reactions" "nameTag nameTag button";
   gap: var(--cpd-space-1x);
   place-items: start;
 }
@@ -102,21 +108,19 @@ unconditionally select the container so we can use cqmin units */
 
 .status {
   grid-area: status;
-  justify-self: center;
-  align-self: start;
-  padding: var(--cpd-space-2x);
-  padding-block: var(--cpd-space-2x);
   color: var(--cpd-color-text-primary);
-  background-color: var(--cpd-color-bg-canvas-default);
   display: flex;
+  flex-wrap: none;
   align-items: center;
-  border-radius: var(--cpd-radius-pill-effect);
+  gap: 3px;
   user-select: none;
   overflow: hidden;
-  box-shadow: var(--small-drop-shadow);
-  box-sizing: border-box;
-  max-inline-size: 100%;
-  text-align: center;
+  margin-block-start: calc(var(--cpd-space-3x) - var(--fg-inset));
+  margin-inline-start: calc(var(--cpd-space-4x) - var(--fg-inset));
+}
+
+.status svg {
+  color: var(--cpd-color-icon-tertiary);
 }
 
 .reactions {

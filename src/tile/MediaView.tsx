@@ -7,7 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import { type FC, type ComponentProps, type ReactNode } from "react";
+import {
+  type FC,
+  type ComponentProps,
+  type ReactNode,
+  type ComponentType,
+  type SVGAttributes,
+} from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -16,10 +22,9 @@ import { ErrorSolidIcon } from "@vector-im/compound-design-tokens/assets/web/ico
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
-import { type EncryptionStatus } from "../state/MediaViewModel";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
 import {
-  showConnectionStats,
+  showConnectionStats as showConnectionStatsSetting,
   showHandRaisedTimer,
   useSetting,
 } from "../settings/settings";
@@ -38,7 +43,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   userId: string;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
-  encryptionStatus: EncryptionStatus;
+  status?: { text: string; Icon: ComponentType<SVGAttributes<SVGElement>> };
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   mxcAvatarUrl: string | undefined;
@@ -72,7 +77,7 @@ export const MediaView: FC<Props> = ({
   mxcAvatarUrl,
   focusable,
   primaryButton,
-  encryptionStatus,
+  status,
   raisedHandTime,
   currentReaction,
   raisedHandOnClick,
@@ -85,7 +90,7 @@ export const MediaView: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
-  const [showConnectioStats] = useSetting(showConnectionStats);
+  const [showConnectionStats] = useSetting(showConnectionStatsSetting);
 
   const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
 
@@ -106,7 +111,11 @@ export const MediaView: FC<Props> = ({
           name={displayName}
           size={avatarSize}
           src={mxcAvatarUrl}
-          className={styles.avatar}
+          className={classNames(styles.avatar, {
+            // When the avatar is overlaid with a status, make it translucent
+            // for readability
+            [styles.translucent]: status,
+          })}
           style={{ display: video && videoEnabled ? "none" : "initial" }}
         />
         {video?.publication !== undefined && (
@@ -139,10 +148,10 @@ export const MediaView: FC<Props> = ({
         {waitingForMedia && (
           <div className={styles.status}>
             {t("video_tile.waiting_for_media")}
-            {showConnectioStats ? " " + rtcBackendIdentity : ""}
+            {showConnectionStats ? " " + rtcBackendIdentity : ""}
           </div>
         )}
-        {(audioStreamStats || videoStreamStats) && (
+        {showConnectionStats && (
           <>
             <RTCConnectionStats
               audio={audioStreamStats}
@@ -151,6 +160,14 @@ export const MediaView: FC<Props> = ({
               rtcBackendIdentity={rtcBackendIdentity}
             />
           </>
+        )}
+        {status && (
+          <div className={styles.status}>
+            <status.Icon width={16} height={16} aria-hidden />
+            <Text as="span" size="sm" weight="medium">
+              {status.text}
+            </Text>
+          </div>
         )}
         {/* TODO: Bring this back once encryption status is less broken */}
         {/*encryptionStatus !== EncryptionStatus.Okay && (

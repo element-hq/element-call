@@ -75,7 +75,14 @@ class ConsoleLogger extends EventEmitter {
       } else if (arg instanceof Error) {
         return arg.message + (arg.stack ? `\n${arg.stack}` : "");
       } else if (typeof arg === "object") {
-        return JSON.stringify(arg, getCircularReplacer());
+        try {
+          return JSON.stringify(arg, getCircularReplacer());
+        } catch {
+          // Stringify can fail if the object has circular references or if
+          // there is a bigInt.
+          // Did happen even with our `getCircularReplacer`. In this case, just log
+          return "<$ failed to serialize object $>";
+        }
       } else {
         return arg;
       }

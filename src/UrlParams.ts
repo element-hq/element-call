@@ -473,8 +473,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     homeserver: !isWidget ? parser.getParam("homeserver") : null,
     posthogApiHost: parser.getParam("posthogApiHost"),
     posthogApiKey: parser.getParam("posthogApiKey"),
-    posthogUserId:
-      parser.getParam("posthogUserId") ?? parser.getParam("analyticsID"),
+    posthogUserId: parser.getParam("posthogUserId"),
     rageshakeSubmitUrl: parser.getParam("rageshakeSubmitUrl"),
     sentryDsn: parser.getParam("sentryDsn"),
     sentryEnvironment: parser.getParam("sentryEnvironment"),

@@ -39,7 +39,6 @@ import { constant } from "../../Behavior";
 import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
 import { ConnectionState, type Connection } from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
-import { type LocalTransportWithSFUConfig } from "./LocalTransport";
 import { initializeWidget } from "../../../widget";
 
 initializeWidget();
@@ -216,11 +215,10 @@ describe("LocalMembership", () => {
 
   it("throws error on missing RTC config error", () => {
     withTestScheduler(({ scope, hot, expectObservable }) => {
-      const localTransport$ =
-        scope.behavior<null | LocalTransportWithSFUConfig>(
-          hot("1ms #", {}, new MatrixRTCTransportMissingError("domain.com")),
-          null,
-        );
+      const localTransport$ = scope.behavior<null | LivekitTransportConfig>(
+        hot("1ms #", {}, new MatrixRTCTransportMissingError("domain.com")),
+        null,
+      );
 
       // we do not need any connection data since we want to fail before reaching that.
       const mockConnectionManager = {
@@ -279,23 +277,11 @@ describe("LocalMembership", () => {
   });
 
   const aTransport = {
-    transport: {
-      livekit_service_url: "a",
-    } as LivekitTransportConfig,
-    sfuConfig: {
-      url: "sfu-url",
-      jwt: "sfu-token",
-    },
-  } as LocalTransportWithSFUConfig;
+    livekit_service_url: "a",
+  } as LivekitTransportConfig;
   const bTransport = {
-    transport: {
-      livekit_service_url: "b",
-    } as LivekitTransportConfig,
-    sfuConfig: {
-      url: "sfu-url",
-      jwt: "sfu-token",
-    },
-  } as LocalTransportWithSFUConfig;
+    livekit_service_url: "b",
+  } as LivekitTransportConfig;
 
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
@@ -305,7 +291,7 @@ describe("LocalMembership", () => {
       } as unknown as LocalParticipant,
     }),
     state$: constant(ConnectionState.LivekitConnected),
-    transport: aTransport.transport,
+    transport: aTransport,
   } as unknown as Connection;
   const connectionTransportAConnecting = {
     ...connectionTransportAConnected,
@@ -314,7 +300,7 @@ describe("LocalMembership", () => {
   } as unknown as Connection;
   const connectionTransportBConnected = {
     state$: constant(ConnectionState.LivekitConnected),
-    transport: bTransport.transport,
+    transport: bTransport,
     livekitRoom: mockLivekitRoom({}),
   } as unknown as Connection;
 
@@ -368,12 +354,8 @@ describe("LocalMembership", () => {
     // stop the first Publisher and let the second one life.
     expect(publishers[0].destroy).toHaveBeenCalled();
     expect(publishers[1].destroy).not.toHaveBeenCalled();
-    expect(publisherFactory.mock.calls[0][0].transport).toBe(
-      aTransport.transport,
-    );
-    expect(publisherFactory.mock.calls[1][0].transport).toBe(
-      bTransport.transport,
-    );
+    expect(publisherFactory.mock.calls[0][0].transport).toBe(aTransport);
+    expect(publisherFactory.mock.calls[1][0].transport).toBe(bTransport);
     scope.end();
     await flushPromises();
     // stop all tracks after ending scopes
@@ -446,8 +428,9 @@ describe("LocalMembership", () => {
     const scope = new ObservableScope();
 
     const connectionManagerData = new ConnectionManagerData();
-    const localTransport$ =
-      new BehaviorSubject<null | LocalTransportWithSFUConfig>(null);
+    const localTransport$ = new BehaviorSubject<null | LivekitTransportConfig>(
+      null,
+    );
     const connectionManagerData$ = new BehaviorSubject(
       new Epoch(connectionManagerData),
     );
@@ -519,7 +502,7 @@ describe("LocalMembership", () => {
     });
 
     (
-      connectionManagerData2.getConnectionForTransport(aTransport.transport)!
+      connectionManagerData2.getConnectionForTransport(aTransport)!
         .state$ as BehaviorSubject<ConnectionState>
     ).next(ConnectionState.LivekitConnected);
     expect(localMembership.localMemberState$.value).toStrictEqual({
