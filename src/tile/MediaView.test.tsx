@@ -18,7 +18,6 @@ import { TrackInfo } from "@livekit/protocol";
 import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
-import { EncryptionStatus } from "../state/MediaViewModel";
 import { mockLocalParticipant } from "../utils/test";
 
 describe("MediaView", () => {
@@ -41,7 +40,6 @@ describe("MediaView", () => {
     videoFit: "contain",
     targetWidth: 300,
     targetHeight: 200,
-    encryptionStatus: EncryptionStatus.Connecting,
     mirror: false,
     unencryptedWarning: false,
     video: trackReference,

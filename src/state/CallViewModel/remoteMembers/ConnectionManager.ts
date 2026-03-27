@@ -90,7 +90,7 @@ export interface IConnectionManager {
  * @param props - Configuration object
  * @param props.scope - The observable scope used by this object
  * @param props.connectionFactory - Used to create new connections
- * @param props.localTransport$ - The local transport to use. (deduplicated with remoteTransports$)
+ * @param props.localTransport$ - The transport to publish local media on. (deduplicated with remoteTransports$)
  * @param props.remoteTransports$ - All other transports. The connection manager will create connections for each transport. (deduplicated with localTransport$)
  * @param props.ownMembershipIdentity - The own membership identity to use.
  * @param props.logger - The logger to use.
@@ -162,22 +162,23 @@ export function createConnectionManager$({
   const connections$ = scope.behavior(
     localAndRemoteTransports$.pipe(
       generateItemsWithEpoch(
+        "ConnectionManager connections$",
         function* (transports) {
-          for (const transportWithOrWithoutSfuConfig of transports) {
-            if (
-              isLocalTransportWithSFUConfig(transportWithOrWithoutSfuConfig)
-            ) {
-              // This is the local transport only the `LocalTransportWithSFUConfig` has a `sfuConfig` field
-              const { transport, sfuConfig } = transportWithOrWithoutSfuConfig;
+          for (const transport of transports) {
+            if (isLocalTransportWithSFUConfig(transport)) {
+              // This is the local transport; only the `LocalTransportWithSFUConfig` has a `sfuConfig` field.
               yield {
-                keys: [transport.livekit_service_url, sfuConfig],
+                keys: [
+                  transport.transport.livekit_service_url,
+                  transport.sfuConfig,
+                ],
                 data: undefined,
               };
             } else {
               yield {
                 keys: [
-                  transportWithOrWithoutSfuConfig.livekit_service_url,
-                  undefined as undefined | SFUConfig,
+                  transport.livekit_service_url,
+                  undefined as SFUConfig | undefined,
                 ],
                 data: undefined,
               };
@@ -193,6 +194,8 @@ export function createConnectionManager$({
             },
             ownMembershipIdentity,
             logger,
+            // TODO: This whole optional SFUConfig parameter is not particularly elegant.
+            // I would like it if connections always fetched the SFUConfig by themselves.
             sfuConfig,
           );
           // Start the connection immediately

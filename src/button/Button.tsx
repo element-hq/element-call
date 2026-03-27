@@ -22,23 +22,25 @@ import {
 import styles from "./Button.module.css";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
-  muted: boolean;
+  enabled: boolean;
+  size?: "sm" | "lg";
 }
 
-export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
+export const MicButton: FC<MicButtonProps> = ({ enabled, ...props }) => {
   const { t } = useTranslation();
-  const Icon = muted ? MicOffSolidIcon : MicOnSolidIcon;
-  const label = muted
-    ? t("unmute_microphone_button_label")
-    : t("mute_microphone_button_label");
+  const Icon = enabled ? MicOnSolidIcon : MicOffSolidIcon;
+  const label = enabled
+    ? t("mute_microphone_button_label")
+    : t("unmute_microphone_button_label");
 
   return (
     <Tooltip label={label}>
       <CpdButton
         iconOnly
-        aria-label={label}
         Icon={Icon}
-        kind={muted ? "primary" : "secondary"}
+        kind={enabled ? "primary" : "secondary"}
+        role="switch"
+        aria-checked={enabled}
         {...props}
       />
     </Tooltip>
@@ -46,23 +48,25 @@ export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
 };
 
 interface VideoButtonProps extends ComponentPropsWithoutRef<"button"> {
-  muted: boolean;
+  enabled: boolean;
+  size?: "sm" | "lg";
 }
 
-export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
+export const VideoButton: FC<VideoButtonProps> = ({ enabled, ...props }) => {
   const { t } = useTranslation();
-  const Icon = muted ? VideoCallOffSolidIcon : VideoCallSolidIcon;
-  const label = muted
-    ? t("start_video_button_label")
-    : t("stop_video_button_label");
+  const Icon = enabled ? VideoCallSolidIcon : VideoCallOffSolidIcon;
+  const label = enabled
+    ? t("stop_video_button_label")
+    : t("start_video_button_label");
 
   return (
     <Tooltip label={label}>
       <CpdButton
         iconOnly
-        aria-label={label}
         Icon={Icon}
-        kind={muted ? "primary" : "secondary"}
+        kind={enabled ? "primary" : "secondary"}
+        role="switch"
+        aria-checked={enabled}
         {...props}
       />
     </Tooltip>
@@ -71,6 +75,7 @@ export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
 
 interface ShareScreenButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
+  size: "sm" | "lg";
 }
 
 export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
@@ -88,13 +93,19 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
         iconOnly
         Icon={ShareScreenSolidIcon}
         kind={enabled ? "primary" : "secondary"}
+        role="switch"
+        aria-checked={enabled}
         {...props}
       />
     </Tooltip>
   );
 };
 
-export const EndCallButton: FC<ComponentPropsWithoutRef<"button">> = ({
+interface EndCallButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size?: "sm" | "lg";
+}
+
+export const EndCallButton: FC<EndCallButtonProps> = ({
   className,
   ...props
 }) => {
@@ -105,7 +116,6 @@ export const EndCallButton: FC<ComponentPropsWithoutRef<"button">> = ({
       <CpdButton
         className={classNames(className, styles.endCall)}
         iconOnly
-        aria-label={t("hangup_button_label")}
         Icon={EndCallIcon}
         destructive
         {...props}
@@ -114,9 +124,10 @@ export const EndCallButton: FC<ComponentPropsWithoutRef<"button">> = ({
   );
 };
 
-export const SettingsButton: FC<ComponentPropsWithoutRef<"button">> = (
-  props,
-) => {
+interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size?: "sm" | "lg";
+}
+export const SettingsButton: FC<SettingsButtonProps> = (props) => {
   const { t } = useTranslation();
 
   return (

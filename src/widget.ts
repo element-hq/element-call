@@ -68,7 +68,10 @@ export let widget: WidgetHelpers | null;
  */
 // this needs to be a seperate call and cannot be done on import to allow us to spy on methods in here before
 // execution.
-export const initializeWidget = (): void => {
+export const initializeWidget = (
+  rtcApplication: string = "m.call",
+  sendRoomEvents = false,
+): void => {
   try {
     const {
       widgetId,
@@ -90,6 +93,7 @@ export const initializeWidget = (): void => {
       logger.info("Widget API is available");
       const api = new WidgetApi(widgetId, parentOrigin);
       api.requestCapability(MatrixCapabilities.AlwaysOnScreen);
+      api.requestCapability(MatrixCapabilities.MSC4039DownloadFile);
 
       // Set up the lazy action emitter, but only for select actions that we
       // intend for the app to handle
@@ -116,6 +120,9 @@ export const initializeWidget = (): void => {
         EventType.CallNotify, // Sent as a deprecated fallback
         EventType.RTCNotification,
       ];
+      if (sendRoomEvents) {
+        sendEvent.push(EventType.RoomMessage);
+      }
       const sendRecvEvent = [
         "org.matrix.rageshake_request",
         EventType.CallEncryptionKeysPrefix,
@@ -128,8 +135,8 @@ export const initializeWidget = (): void => {
 
       const sendState = [
         userId, // Legacy call membership events
-        `_${userId}_${deviceId}_m.call`, // Session membership events
-        `${userId}_${deviceId}_m.call`, // The above with no leading underscore, for room versions whose auth rules allow it
+        `_${userId}_${deviceId}_${rtcApplication}`, // Session membership events
+        `${userId}_${deviceId}_${rtcApplication}`, // The above with no leading underscore, for room versions whose auth rules allow it
       ].map((stateKey) => ({
         eventType: EventType.GroupCallMemberPrefix,
         stateKey,

@@ -100,8 +100,16 @@ mobileTest(
         { id: "earpiece", name: "Handset", isEarpiece: true },
         { id: "headphones", name: "Headphones" },
       ]);
-      window.controls.setAudioDevice("earpiece");
     });
+
+    // Open settings to select earpiece
+    await guestPage.getByRole("button", { name: "Settings" }).click();
+    await guestPage.getByText("Handset", { exact: true }).click();
+
+    // dismiss settings
+    await guestPage.locator("#root").getByLabel("Settings").press("Escape");
+
+    await guestPage.pause();
     await expect(
       guestPage.getByRole("heading", { name: "Handset Mode" }),
     ).toBeVisible();

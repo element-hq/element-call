@@ -6,6 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 /**
+ * EXPERIMENTAL
+ *
  * This file is the entrypoint for the sdk build of element call: `yarn build:sdk`
  * use in widgets.
  * It exposes the `createMatrixRTCSdk` which creates the `MatrixRTCSdk` interface (see below) that
@@ -30,8 +32,8 @@ import {
 } from "rxjs";
 import {
   type CallMembership,
-  MatrixRTCSession,
   MatrixRTCSessionEvent,
+  MatrixRTCSessionManager,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   type Room as LivekitRoom,
@@ -50,14 +52,12 @@ import { getUrlParams } from "../src/UrlParams";
 import { MuteStates } from "../src/state/MuteStates";
 import { MediaDevices } from "../src/state/MediaDevices";
 import { E2eeType } from "../src/e2ee/e2eeType";
+import { currentAndPrev, logger, TEXT_LK_TOPIC, tryMakeSticky } from "./helper";
 import {
-  currentAndPrev,
-  logger,
-  TEXT_LK_TOPIC,
-  tryMakeSticky,
-  widget,
-} from "./helper";
-import { ElementWidgetActions, initializeWidget } from "../src/widget";
+  ElementWidgetActions,
+  widget as _widget,
+  initializeWidget,
+} from "../src/widget";
 import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
 
 interface MatrixRTCSdk {
@@ -68,7 +68,13 @@ interface MatrixRTCSdk {
   join: () => void;
   /** @throws on leave errors */
   leave: () => void;
-  data$: Observable<{ sender: string; data: string }>;
+  /**
+   * Ends the rtc sdk. This will unsubscribe any event listeners. And end the associated scope.
+   * No updates can be received from the rtc sdk. The sdk cannot be restarted after.
+   * A new sdk needs to be created via createMatrixRTCSdk.
+   */
+  stop: () => void;
+  data$: Observable<{ rtcBackendIdentity: string; data: string }>;
   /**
    * flattened list of members
    */
@@ -79,32 +85,54 @@ interface MatrixRTCSdk {
       participant: LocalParticipant | RemoteParticipant | null;
     }[]
   >;
+  /**
+   * flattened local members
+   */
+  localMember$: Behavior<{
+    connection: Connection | null;
+    membership: CallMembership;
+    participant: LocalParticipant | null;
+  } | null>;
   /** Use the LocalMemberConnectionState returned from `join` for a more detailed connection state  */
   connected$: Behavior<boolean>;
   sendData?: (data: unknown) => Promise<void>;
+  sendRoomMessage?: (message: string) => Promise<void>;
 }
 
 export async function createMatrixRTCSdk(
   application: string = "m.call",
   id: string = "",
+  sticky: boolean = false,
 ): Promise<MatrixRTCSdk> {
-  initializeWidget();
+  const scope = new ObservableScope();
+
+  // widget client
+  initializeWidget(application, true);
+  const widget = _widget;
+  if (!widget) throw Error("No widget. This webapp can only start as a widget");
   const client = await widget.client;
   logger.info("client created");
-  const scope = new ObservableScope();
+
+  // url params
   const { roomId } = getUrlParams();
   if (roomId === null) throw Error("could not get roomId from url params");
-
   const room = client.getRoom(roomId);
   if (room === null) throw Error("could not get room from client");
 
+  // rtc session
+  const slot = { application, id };
+  const rtcSessionManager = new MatrixRTCSessionManager(logger, client, slot);
+  rtcSessionManager.start();
+  const rtcSession = rtcSessionManager.getRoomSession(room);
+
+  // media devices
   const mediaDevices = new MediaDevices(scope);
   const muteStates = new MuteStates(scope, mediaDevices, {
-    audioEnabled: true,
-    videoEnabled: true,
+    audioEnabled: false,
+    videoEnabled: false,
   });
-  const slot = { application, id };
-  const rtcSession = new MatrixRTCSession(client, room, slot);
+
+  // call view model
   const callViewModel = createCallViewModel$(
     scope,
     rtcSession,
@@ -117,8 +145,9 @@ export async function createMatrixRTCSdk(
     constant({ supported: false, processor: undefined }),
   );
   logger.info("CallViewModelCreated");
+
   // create data listener
-  const data$ = new Subject<{ sender: string; data: string }>();
+  const data$ = new Subject<{ rtcBackendIdentity: string; data: string }>();
 
   const lkTextStreamHandlerFunction = async (
     reader: TextStreamReader,
@@ -140,7 +169,7 @@ export async function createMatrixRTCSdk(
     if (participants && participants.includes(participantInfo.identity)) {
       const text = await reader.readAll();
       logger.info(`Received text: ${text}`);
-      data$.next({ sender: participantInfo.identity, data: text });
+      data$.next({ rtcBackendIdentity: participantInfo.identity, data: text });
     } else {
       logger.warn(
         "Received text from unknown participant",
@@ -230,6 +259,16 @@ export async function createMatrixRTCSdk(
     }
   };
 
+  const sendRoomMessage = async (message: string): Promise<void> => {
+    const messageString = JSON.stringify(message);
+    logger.info("try sending to room: ", messageString);
+    try {
+      await client.sendTextMessage(room.roomId, message);
+    } catch (e) {
+      logger.error("failed sending to room: ", messageString, e);
+    }
+  };
+
   // after hangup gets called
   const leaveSubs = callViewModel.leave$.subscribe(() => {
     const scheduleWidgetCloseOnLeave = async (): Promise<void> => {
@@ -257,9 +296,6 @@ export async function createMatrixRTCSdk(
 
     // schedule close first and then leave (scope.end)
     void scheduleWidgetCloseOnLeave();
-
-    // actual hangup (ending scope will send the leave event.. its kinda odd. since you might end up closing the widget too fast)
-    scope.end();
   });
 
   logger.info("createMatrixRTCSdk done");
@@ -267,15 +303,40 @@ export async function createMatrixRTCSdk(
   return {
     join: (): void => {
       // first lets try making the widget sticky
-      tryMakeSticky();
+      if (sticky) tryMakeSticky(widget);
       callViewModel.join();
     },
     leave: (): void => {
-      callViewModel.hangup();
+      callViewModel.leave();
+    },
+    stop: (): void => {
       leaveSubs.unsubscribe();
       livekitRoomItemsSub.unsubscribe();
+      scope.end();
     },
     data$,
+    localMember$: scope.behavior(
+      callViewModel.localMatrixLivekitMember$.pipe(
+        tap((member) =>
+          logger.info("localMatrixLivekitMember$ next: ", member),
+        ),
+        switchMap((member) => {
+          if (member === null) return of(null);
+          return combineLatest([
+            member.connection$,
+            member.membership$,
+            member.participant.value$,
+          ]).pipe(
+            map(([connection, membership, participant]) => ({
+              connection,
+              membership,
+              participant,
+            })),
+          );
+        }),
+        tap((member) => logger.info("localMember$ next: ", member)),
+      ),
+    ),
     connected$: callViewModel.connected$,
     members$: scope.behavior(
       callViewModel.matrixLivekitMembers$.pipe(
@@ -302,5 +363,6 @@ export async function createMatrixRTCSdk(
       [],
     ),
     sendData,
+    sendRoomMessage,
   };
 }

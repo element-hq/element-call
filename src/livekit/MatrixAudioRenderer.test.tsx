@@ -30,7 +30,13 @@ import {
 } from "../utils/test";
 import { initializeWidget } from "../widget";
 initializeWidget();
-export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
+export const TestAudioContextConstructor = vi.fn(
+  class {
+    public constructor() {
+      return testAudioContext;
+    }
+  },
+);
 
 const MediaDevicesProvider = MediaDevicesContext.MediaDevicesContext.Provider;
 
