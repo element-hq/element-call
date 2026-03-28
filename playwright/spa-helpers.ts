@@ -38,6 +38,8 @@ async function createCall(
     await setRtcModeFromSettings(page, mode);
   }
 
+  await switchNoiseSuppressionFromSettings(page);
+
   if (autoJoin) {
     // Join the call
     await page.getByTestId("lobby_joinCall").click();
@@ -87,6 +89,8 @@ async function joinCallFromInviteLink(
     await setRtcModeFromSettings(page, mode);
   }
 
+  await switchNoiseSuppressionFromSettings(page);
+  
   await page.getByTestId("lobby_joinCall").click();
   await page.getByRole("radio", { name: "Spotlight" }).check();
 }
@@ -109,6 +113,23 @@ async function setRtcModeFromSettings(
     // compat
     await page.getByText("Compatibility: state events").click();
   }
+
+  await page.getByTestId("modal_close").click();
+}
+
+async function switchNoiseSuppressionFromSettings(
+  page: Page,
+): Promise<void> {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("tab", { name: "Audio" }).click();
+  await page.getByText("Noise suppression", { exact: true }).uncheck();
+  
+  // wait for short time before checking the box again
+  await page.waitForTimeout(1000);
+  await page.getByText("Noise suppression", { exact: true }).check();
+
+  // wait again for a short time
+  await page.waitForTimeout(1000);
 
   await page.getByTestId("modal_close").click();
 }
