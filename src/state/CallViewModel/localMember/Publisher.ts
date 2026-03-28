@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 import {
   ConnectionState as LivekitConnectionState,
+  LocalAudioTrack,
   type LocalTrackPublication,
   LocalVideoTrack,
   ParticipantEvent,
@@ -14,6 +15,7 @@ import {
   Track,
 } from "livekit-client";
 import {
+  combineLatest,
   map,
   NEVER,
   type Observable,
@@ -30,6 +32,19 @@ import {
   trackProcessorSync,
 } from "../../../livekit/TrackProcessorContext.tsx";
 import { getUrlParams } from "../../../UrlParams.ts";
+import {
+  vadEnabled,
+  vadPositiveThreshold,
+  vadMode,
+  vadAdvancedEnabled,
+  vadAdvancedOpenThreshold,
+  vadAdvancedCloseThreshold,
+  vadHoldTime,
+} from "../../../settings/settings.ts";
+import {
+  type TenVadParams,
+  TenVadTransformer,
+} from "../../../livekit/TenVadTransformer.ts";
 import { observeTrackReference$ } from "../../observeTrackReference";
 import { type Connection } from "../remoteMembers/Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
@@ -73,6 +88,8 @@ export class Publisher {
 
     // Setup track processor syncing (blur)
     this.observeTrackProcessors(this.scope, room, trackerProcessorState$);
+    // Setup noise gate on the local microphone track
+    this.applyTenVad(this.scope, room);
     // Observe media device changes and update LiveKit active devices accordingly
     this.observeMediaDevices(this.scope, devices, controlledAudioDevices);
 
@@ -398,6 +415,103 @@ export class Publisher {
       }
       return lkRoom.localParticipant.isCameraEnabled;
     });
+  }
+
+  private applyTenVad(scope: ObservableScope, room: LivekitRoom): void {
+    // Observe the local microphone track
+    const audioTrack$ = scope.behavior(
+      observeTrackReference$(
+        room.localParticipant,
+        Track.Source.Microphone,
+      ).pipe(
+        map((ref) => {
+          const track = ref?.publication.track;
+          return track instanceof LocalAudioTrack ? track : null;
+        }),
+      ),
+      null,
+    );
+
+    let transformer: TenVadTransformer | null = null;
+    let audioCtx: AudioContext | null = null;
+
+    const currentParams = (): TenVadParams => {
+      const isAdvanced = vadAdvancedEnabled.getValue();
+      if (isAdvanced) {
+        return {
+          vadEnabled: vadEnabled.getValue(),
+          vadPositiveThreshold: vadAdvancedOpenThreshold.getValue(),
+          vadNegativeThreshold: vadAdvancedCloseThreshold.getValue(),
+          vadMode: vadMode.getValue(),
+          holdMs: vadHoldTime.getValue(),
+        };
+      }
+      const openT = vadPositiveThreshold.getValue();
+      return {
+        vadEnabled: vadEnabled.getValue(),
+        vadPositiveThreshold: openT,
+        vadNegativeThreshold: Math.max(0, openT - 0.1),
+        vadMode: "standard",
+        holdMs: 0,
+      };
+    };
+
+    // Attach / detach processor when VAD is toggled or the track changes.
+    combineLatest([audioTrack$, vadEnabled.value$])
+      .pipe(scope.bind())
+      .subscribe(([audioTrack, vadActive]) => {
+        if (!audioTrack) return;
+        const shouldAttach = vadActive;
+        if (shouldAttach && !audioTrack.getProcessor()) {
+          const params = currentParams();
+          this.logger.info("[TenVad] attaching processor, params:", params);
+          transformer = new TenVadTransformer(params);
+          audioCtx = new AudioContext();
+          this.logger.info("[TenVad] AudioContext state before resume:", audioCtx.state);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (audioTrack as any).setAudioContext(audioCtx);
+          audioCtx.resume().then(async () => {
+            this.logger.info("[TenVad] AudioContext state after resume:", audioCtx?.state);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return audioTrack.setProcessor(transformer as any);
+          }).then(() => {
+            this.logger.info("[TenVad] setProcessor resolved");
+          }).catch((e: unknown) => {
+            this.logger.error("[TenVad] setProcessor failed", e);
+          });
+        } else if (!shouldAttach && audioTrack.getProcessor()) {
+          this.logger.info("[TenVad] removing processor");
+          void audioTrack.stopProcessor();
+          void audioCtx?.close();
+          audioCtx = null;
+          transformer = null;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (audioTrack as any).setAudioContext(undefined);
+        } else if (shouldAttach && audioTrack.getProcessor()) {
+          // Processor already attached — push updated params (e.g. vadActive toggled)
+          transformer?.updateParams(currentParams());
+        } else {
+          this.logger.info(
+            "[TenVad] tick — vadActive:", vadActive,
+            "hasProcessor:", !!audioTrack.getProcessor(),
+          );
+        }
+      });
+
+    // Push VAD param changes to the live worklet.
+    combineLatest([
+      vadEnabled.value$,
+      vadPositiveThreshold.value$,
+      vadMode.value$,
+      vadAdvancedEnabled.value$,
+      vadAdvancedOpenThreshold.value$,
+      vadAdvancedCloseThreshold.value$,
+      vadHoldTime.value$,
+    ])
+      .pipe(scope.bind())
+      .subscribe(() => {
+        transformer?.updateParams(currentParams());
+      });
   }
 
   private observeTrackProcessors(

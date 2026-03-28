@@ -129,6 +129,17 @@ export const alwaysShowIphoneEarpiece = new Setting<boolean>(
   false,
 );
 
+export const vadEnabled = new Setting<boolean>("vad-enabled", false);
+// Simple mode: single sensitivity slider (open threshold); close = open - 0.1
+export const vadPositiveThreshold = new Setting<number>("vad-positive-threshold", 0.7);
+// standard: 5ms/20ms  aggressive: 1ms/5ms  loose: 12ms/32ms
+export const vadMode = new Setting<"standard" | "aggressive" | "loose">("vad-mode", "standard");
+// Advanced settings (override simple mode when enabled)
+export const vadAdvancedEnabled = new Setting<boolean>("vad-advanced-enabled", false);
+export const vadAdvancedOpenThreshold = new Setting<number>("vad-advanced-open-threshold", 0.7);
+export const vadAdvancedCloseThreshold = new Setting<number>("vad-advanced-close-threshold", 0.6);
+export const vadHoldTime = new Setting<number>("vad-hold-time", 300);
+
 export enum MatrixRTCMode {
   Legacy = "legacy",
   Compatibility = "compatibility",

@@ -5,10 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactNode, useEffect, useState } from "react";
+import { type FC, type ReactNode, useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
-import { Button, Root as Form, Separator } from "@vector-im/compound-web";
+import {
+  Button,
+  Heading,
+  HelpMessage,
+  InlineField,
+  Label,
+  RadioControl,
+  Root as Form,
+  Separator,
+} from "@vector-im/compound-web";
 import { type Room as LivekitRoom } from "livekit-client";
 
 import { Modal } from "../Modal";
@@ -24,6 +33,13 @@ import {
   soundEffectVolume as soundEffectVolumeSetting,
   backgroundBlur as backgroundBlurSetting,
   developerMode,
+  vadEnabled as vadEnabledSetting,
+  vadPositiveThreshold as vadPositiveThresholdSetting,
+  vadMode as vadModeSetting,
+  vadAdvancedEnabled as vadAdvancedEnabledSetting,
+  vadAdvancedOpenThreshold as vadAdvancedOpenThresholdSetting,
+  vadAdvancedCloseThreshold as vadAdvancedCloseThresholdSetting,
+  vadHoldTime as vadHoldTimeSetting,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
@@ -107,6 +123,26 @@ export const SettingsModal: FC<Props> = ({
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
   const [showDeveloperSettingsTab] = useSetting(developerMode);
 
+  // Voice activity detection
+  const vadStateGroup = useId();
+  const vadModeRadioGroup = useId();
+  const [vadActive, setVadActive] = useSetting(vadEnabledSetting);
+  const [vadSensitivity, setVadSensitivity] = useSetting(vadPositiveThresholdSetting);
+  const [vadSensitivityRaw, setVadSensitivityRaw] = useState(vadSensitivity);
+  const [vadAdvanced, setVadAdvanced] = useSetting(vadAdvancedEnabledSetting);
+  const vadState = !vadActive ? "disabled" : vadAdvanced ? "advanced" : "simple";
+  const setVadState = (s: "disabled" | "simple" | "advanced"): void => {
+    setVadActive(s !== "disabled");
+    setVadAdvanced(s === "advanced");
+  };
+  const [vadModeValue, setVadModeValue] = useSetting(vadModeSetting);
+  const [vadAdvOpen, setVadAdvOpen] = useSetting(vadAdvancedOpenThresholdSetting);
+  const [vadAdvOpenRaw, setVadAdvOpenRaw] = useState(vadAdvOpen);
+  const [vadAdvClose, setVadAdvClose] = useSetting(vadAdvancedCloseThresholdSetting);
+  const [vadAdvCloseRaw, setVadAdvCloseRaw] = useState(vadAdvClose);
+  const [vadHold, setVadHold] = useSetting(vadHoldTimeSetting);
+  const [vadHoldRaw, setVadHoldRaw] = useState(vadHold);
+
   const { available: isRageshakeAvailable } = useSubmitRageshake();
 
   // For controlled devices, we will not show the input section:
@@ -165,6 +201,188 @@ export const SettingsModal: FC<Props> = ({
             />
           </div>
         </Form>
+        <div className={styles.vadSection}>
+          <Heading
+            type="body"
+            weight="semibold"
+            size="sm"
+            as="h4"
+            className={styles.vadHeading}
+          >
+            Voice Activity Detection
+          </Heading>
+          <Separator className={styles.vadSeparator} />
+          <Form>
+            <InlineField
+              name={vadStateGroup}
+              control={
+                <RadioControl
+                  checked={vadState === "disabled"}
+                  value="disabled"
+                  onChange={(): void => setVadState("disabled")}
+                />
+              }
+            >
+              <Label>Disabled</Label>
+            </InlineField>
+            <InlineField
+              name={vadStateGroup}
+              control={
+                <RadioControl
+                  checked={vadState === "simple"}
+                  value="simple"
+                  onChange={(): void => setVadState("simple")}
+                />
+              }
+            >
+              <Label>Simple</Label>
+            </InlineField>
+            <InlineField
+              name={vadStateGroup}
+              control={
+                <RadioControl
+                  checked={vadState === "advanced"}
+                  value="advanced"
+                  onChange={(): void => setVadState("advanced")}
+                />
+              }
+            >
+              <Label>Advanced</Label>
+            </InlineField>
+          </Form>
+          {vadState !== "disabled" && (
+            <>
+              {vadState === "simple" && (
+                <div className={styles.volumeSlider}>
+                  <span className={styles.sliderLabel}>
+                    Sensitivity: {Math.round(vadSensitivityRaw * 100)}%
+                  </span>
+                  <p>Higher values require more confident speech detection before opening.</p>
+                  <Slider
+                    label="VAD sensitivity"
+                    value={vadSensitivityRaw}
+                    onValueChange={setVadSensitivityRaw}
+                    onValueCommit={setVadSensitivity}
+                    min={0.1}
+                    max={1.0}
+                    step={0.05}
+                  />
+                </div>
+              )}
+              {vadState === "advanced" && (
+                <>
+                  <span className={styles.vadRampLabel}>Ramp profiles</span>
+                  <Form className={styles.vadRampForm}>
+                    <InlineField
+                      name={vadModeRadioGroup}
+                      control={
+                        <RadioControl
+                          checked={vadModeValue === "loose"}
+                          value="loose"
+                          onChange={(): void => setVadModeValue("loose")}
+                        />
+                      }
+                    >
+                      <Label>Loose</Label>
+                      <HelpMessage>256 samples / 16 ms — 12 ms open / 32 ms close ramp.</HelpMessage>
+                    </InlineField>
+                    <InlineField
+                      name={vadModeRadioGroup}
+                      control={
+                        <RadioControl
+                          checked={vadModeValue === "standard"}
+                          value="standard"
+                          onChange={(): void => setVadModeValue("standard")}
+                        />
+                      }
+                    >
+                      <Label>Standard</Label>
+                      <HelpMessage>256 samples / 16 ms — 5 ms open / 20 ms close ramp.</HelpMessage>
+                    </InlineField>
+                    <InlineField
+                      name={vadModeRadioGroup}
+                      control={
+                        <RadioControl
+                          checked={vadModeValue === "aggressive"}
+                          value="aggressive"
+                          onChange={(): void => setVadModeValue("aggressive")}
+                        />
+                      }
+                    >
+                      <Label>Aggressive</Label>
+                      <HelpMessage>160 samples / 10 ms — 1 ms open / 5 ms close ramp.</HelpMessage>
+                    </InlineField>
+                  </Form>
+                  <div className={`${styles.volumeSlider} ${styles.vadSpacedSlider}`}>
+                    <span className={styles.sliderLabel}>
+                      Open threshold: {Math.round(vadAdvOpenRaw * 100)}%
+                    </span>
+                    <p>Minimum confidence required to open the gate.</p>
+                    <Slider
+                      label="VAD open threshold"
+                      value={vadAdvOpenRaw}
+                      onValueChange={setVadAdvOpenRaw}
+                      onValueCommit={setVadAdvOpen}
+                      min={0.1}
+                      max={0.95}
+                      step={0.05}
+
+                    />
+                  </div>
+                  <div className={styles.volumeSlider}>
+                    <span className={styles.sliderLabel}>
+                      Close threshold: {Math.round(vadAdvCloseRaw * 100)}%
+                    </span>
+                    <p>Probability must drop below this to start the hold/close sequence.</p>
+                    <Slider
+                      label="VAD close threshold"
+                      value={vadAdvCloseRaw}
+                      onValueChange={setVadAdvCloseRaw}
+                      onValueCommit={setVadAdvClose}
+                      min={0.05}
+                      max={0.9}
+                      step={0.05}
+
+                    />
+                  </div>
+                  <div className={`${styles.volumeSlider} ${styles.vadSpacedSlider}`}>
+                    <span className={styles.sliderLabel}>
+                      Hold time: {vadHoldRaw} ms
+                    </span>
+                    <p>How long to keep the gate open after speech drops below the close threshold.</p>
+                    <Slider
+                      label="VAD hold time"
+                      value={vadHoldRaw}
+                      onValueChange={setVadHoldRaw}
+                      onValueCommit={setVadHold}
+                      min={0}
+                      max={2000}
+                      step={50}
+
+                    />
+                  </div>
+                  <div className={styles.restoreDefaults}>
+                    <Button
+                      kind="secondary"
+                      size="sm"
+                      onClick={(): void => {
+                        const defOpen = vadAdvancedOpenThresholdSetting.defaultValue;
+                        const defClose = vadAdvancedCloseThresholdSetting.defaultValue;
+                        const defHold = vadHoldTimeSetting.defaultValue;
+                        setVadAdvOpen(defOpen); setVadAdvOpenRaw(defOpen);
+                        setVadAdvClose(defClose); setVadAdvCloseRaw(defClose);
+                        setVadHold(defHold); setVadHoldRaw(defHold);
+                        setVadModeValue("standard");
+                      }}
+                    >
+                      Restore defaults
+                    </Button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </>
     ),
   };
