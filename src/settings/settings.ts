@@ -135,6 +135,14 @@ export const enableExtendedLivekitLogs = new Setting<boolean>(
   false,
 );
 
+export const vadEnabled = new Setting<boolean>("vad-enabled", false);
+export const vadPositiveThreshold = new Setting<number>("vad-positive-threshold", 0.7);
+export const vadMode = new Setting<"standard" | "aggressive" | "loose">("vad-mode", "standard");
+export const vadAdvancedEnabled = new Setting<boolean>("vad-advanced-enabled", false);
+export const vadAdvancedOpenThreshold = new Setting<number>("vad-advanced-open-threshold", 0.7);
+export const vadAdvancedCloseThreshold = new Setting<number>("vad-advanced-close-threshold", 0.6);
+export const vadHoldTime = new Setting<number>("vad-hold-time", 300);
+
 export const matrixRTCMode = new Setting<MatrixRTCMode>(
   "matrix-rtc-mode",
   MatrixRTCMode.Legacy,
