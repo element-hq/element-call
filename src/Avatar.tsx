@@ -136,6 +136,7 @@ export const Avatar: FC<Props> = ({
 
   return (
     <CompoundAvatar
+      key={id}
       className={className}
       id={id}
       name={name}
