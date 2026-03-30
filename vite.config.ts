@@ -66,17 +66,19 @@ export default ({
     );
   }
 
-  plugins.push(
-    createHtmlPlugin({
-      entry: "src/main.tsx",
-      inject: {
-        data: {
-          brand: env.VITE_PRODUCT_NAME || "Element Call",
-          packageType: process.env.VITE_PACKAGE,
+  if (!process.env.STORYBOOK) {
+    plugins.push(
+      createHtmlPlugin({
+        entry: "src/main.tsx",
+        inject: {
+          data: {
+            brand: env.VITE_PRODUCT_NAME || "Element Call",
+            packageType: process.env.VITE_PACKAGE,
+          },
         },
-      },
-    }),
-  );
+      }),
+    );
+  }
 
   // The crypto WASM module is imported dynamically. Since it's common
   // for developers to use a linked copy of matrix-js-sdk or Rust
