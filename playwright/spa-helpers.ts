@@ -117,9 +117,7 @@ async function setRtcModeFromSettings(
   await page.getByTestId("modal_close").click();
 }
 
-async function switchNoiseSuppressionFromSettings(
-  page: Page,
-): Promise<void> {
+async function switchNoiseSuppressionFromSettings(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("tab", { name: "Audio" }).click();
   await page.getByText("Noise suppression", { exact: true }).uncheck();
