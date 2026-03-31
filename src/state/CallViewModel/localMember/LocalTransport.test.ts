@@ -21,6 +21,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, lastValueFrom } from "rxjs";
 import fetchMock from "fetch-mock";
+import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
 import {
   mockConfig,
@@ -60,6 +61,7 @@ describe("LocalTransport", () => {
       client: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         _unstable_getRTCTransports: async () => Promise.resolve([]),
+        getAccessToken: vi.fn().mockReturnValue("access_token"),
         getDomain: () => "",
         baseUrl: "example.org",
         // These won't be called in this error path but satisfy the type
@@ -102,6 +104,7 @@ describe("LocalTransport", () => {
         baseUrl: "https://lk.example.org",
         // Use empty domain to skip .well-known and use config directly
         getDomain: () => "",
+        getAccessToken: vi.fn().mockReturnValue("access_token"),
         // eslint-disable-next-line @typescript-eslint/naming-convention
         _unstable_getRTCTransports: async () => Promise.resolve([]),
         getOpenIdToken: vi.fn(),
@@ -149,6 +152,7 @@ describe("LocalTransport", () => {
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
         baseUrl: "https://lk.example.org",
+        getAccessToken: vi.fn().mockReturnValue("access_token"),
       },
       ownMembershipIdentity: ownMemberMock,
       forceJwtEndpoint: JwtEndpointVersion.Legacy,
@@ -217,6 +221,7 @@ describe("LocalTransport", () => {
           getDomain: () => "",
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: async () => Promise.resolve([]),
+          getAccessToken: vi.fn().mockReturnValue("access_token"),
           getOpenIdToken: vi.fn(),
           getDeviceId: vi.fn(),
           baseUrl: "https://lk.example.org",
@@ -273,6 +278,7 @@ describe("LocalTransport", () => {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: async () =>
             Promise.resolve([aliceTransport]),
+          getAccessToken: vi.fn().mockReturnValue("access_token"),
           getOpenIdToken: vi.fn(),
           getDeviceId: vi.fn(),
           baseUrl: "https://lk.example.org",
@@ -323,6 +329,7 @@ describe("LocalTransport", () => {
           getDomain: vi.fn().mockReturnValue(""),
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: vi.fn().mockResolvedValue([]),
+          getAccessToken: vi.fn().mockReturnValue("access_token"),
           getOpenIdToken: vi.fn(),
           getDeviceId: vi.fn(),
         },
@@ -410,6 +417,49 @@ describe("LocalTransport", () => {
       });
     });
 
+    it("Should not call _unstable_getRTCTransports in widget mode but use well-known", async () => {
+      mockConfig({
+        livekit: { livekit_service_url: "https://do-not-use.lk.example.org" },
+      });
+
+      localTransportOpts.client.getDomain.mockReturnValue("example.org");
+
+      vi.spyOn(AutoDiscovery, "getRawClientConfig").mockImplementation(
+        async (domain) => {
+          if (domain === "example.org") {
+            return Promise.resolve({
+              "org.matrix.msc4143.rtc_foci": [
+                {
+                  type: "livekit",
+                  livekit_service_url: "https://use-me.jwt.call.example.org",
+                },
+              ],
+            });
+          }
+          return Promise.resolve({});
+        },
+      );
+
+      localTransportOpts.client.getAccessToken.mockReturnValue(null);
+      const { advertised$, active$ } =
+        createLocalTransport$(localTransportOpts);
+      openIdResolver.resolve?.(openIdResponse);
+      expect(advertised$.value).toBe(null);
+      expect(active$.value).toBe(null);
+      await flushPromises();
+
+      expect(
+        localTransportOpts.client._unstable_getRTCTransports,
+      ).not.toHaveBeenCalled();
+
+      const expectedTransport = {
+        type: "livekit",
+        livekit_service_url: "https://use-me.jwt.call.example.org",
+      };
+
+      expect(advertised$.value).toStrictEqual(expectedTransport);
+    });
+
     it("fails fast if the openID request fails for backend config", async () => {
       localTransportOpts.client._unstable_getRTCTransports.mockResolvedValue([
         { type: "livekit", livekit_service_url: "https://lk.example.org" },
@@ -481,6 +531,7 @@ describe("LocalTransport", () => {
           baseUrl: "https://example.org",
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: async () => Promise.resolve([]),
+          getAccessToken: vi.fn().mockReturnValue("access_token"),
           // These won't be called in this error path but satisfy the type
           getOpenIdToken: vi.fn(),
           getDeviceId: vi.fn(),
