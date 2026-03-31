@@ -21,7 +21,6 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, lastValueFrom } from "rxjs";
 import fetchMock from "fetch-mock";
-import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 
 import {
   mockConfig,
@@ -424,21 +423,14 @@ describe("LocalTransport", () => {
 
       localTransportOpts.client.getDomain.mockReturnValue("example.org");
 
-      vi.spyOn(AutoDiscovery, "getRawClientConfig").mockImplementation(
-        async (domain) => {
-          if (domain === "example.org") {
-            return Promise.resolve({
-              "org.matrix.msc4143.rtc_foci": [
-                {
-                  type: "livekit",
-                  livekit_service_url: "https://use-me.jwt.call.example.org",
-                },
-              ],
-            });
-          }
-          return Promise.resolve({});
-        },
-      );
+      fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
+        "org.matrix.msc4143.rtc_foci": [
+          {
+            type: "livekit",
+            livekit_service_url: "https://use-me.jwt.call.example.org",
+          },
+        ],
+      });
 
       localTransportOpts.client.getAccessToken.mockReturnValue(null);
       const { advertised$, active$ } =
