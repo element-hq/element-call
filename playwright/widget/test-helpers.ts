@@ -250,7 +250,7 @@ export class TestHelpers {
   }
 
   // TODO: Remove as soon as web merges https://github.com/element-hq/element-web/pull/32755
-  private static async dismissFileDialogPermissionIfNeeded(
+  public static async dismissFileDialogPermissionIfNeeded(
     page: Page,
   ): Promise<void> {
     const dialogHeading = page.getByRole("heading", {
