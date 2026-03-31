@@ -56,7 +56,7 @@ interface Props {
   memberships$: Behavior<Epoch<CallMembership[]>>;
   client: Pick<
     MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports" | "getAccessToken"
   > &
     OpenIDClientParts;
   // Used by the jwt service to create the livekit room and compute the livekit alias.
@@ -314,7 +314,7 @@ const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 async function makeTransport(
   client: Pick<
     MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports" | "getAccessToken"
   > &
     OpenIDClientParts,
   membership: CallMembershipIdentityParts,
@@ -371,11 +371,18 @@ async function makeTransport(
     for (const potentialTransport of transports) {
       if (isLivekitTransportConfig(potentialTransport)) {
         try {
+          logger.info(
+            `makeTransport: check transport authentication for "${potentialTransport.livekit_service_url}"`,
+          );
           // This will call the jwt/sfu/get endpoint to pre create the livekit room.
           return await doOpenIdAndJWTFromUrl(
             potentialTransport.livekit_service_url,
           );
         } catch (ex) {
+          logger.debug(
+            `makeTransport: Could not use SFU service "${potentialTransport.livekit_service_url}" as SFU`,
+            ex,
+          );
           // Explictly throw these
           if (ex instanceof FailToGetOpenIdToken) {
             throw ex;
@@ -383,24 +390,34 @@ async function makeTransport(
           if (ex instanceof NoMatrix2AuthorizationService) {
             throw ex;
           }
-          logger.debug(
-            `Could not use SFU service "${potentialTransport.livekit_service_url}" as SFU`,
-            ex,
-          );
         }
+      } else {
+        logger.info(
+          `makeTransport: "${potentialTransport.livekit_service_url}" is not a valid livekit transport  as SFU`,
+        );
       }
     }
     return null;
   }
 
   // MSC4143: Attempt to fetch transports from backend.
-  if ("_unstable_getRTCTransports" in client) {
+  // TODO: Workaround for an issue in the js-sdk RoomWidgetClient that
+  // is not yet implementing _unstable_getRTCTransports properly (via widget API new action).
+  // For now we just skip this call if we are in a widget.
+  // In widget mode the client is a `RoomWidgetClient` which has no access token (it is using the widget API).
+  // Could be removed once the js-sdk is fixed (https://github.com/matrix-org/matrix-js-sdk/issues/5245)
+  const isSPA = !!client.getAccessToken();
+  if (isSPA && "_unstable_getRTCTransports" in client) {
+    logger.info(
+      "makeTransport: First try to use getRTCTransports end point ...",
+    );
     try {
+      // TODO This should also check for server support?
       const transportList = await client._unstable_getRTCTransports();
       const selectedTransport = await getFirstUsableTransport(transportList);
       if (selectedTransport) {
         logger.info(
-          "Using backend-configured (client.getRTCTransports) SFU",
+          "makeTransport: ...Using backend-configured (client.getRTCTransports) SFU",
           selectedTransport,
         );
         return selectedTransport;
@@ -424,6 +441,10 @@ async function makeTransport(
     }
   }
 
+  logger.info(
+    `makeTransport: Trying to get transports from .well-known/matrix/client on domain ${client.getDomain()} ...`,
+  );
+
   // Legacy MSC4143 (to be removed) WELL_KNOWN: Prioritize the .well-known/matrix/client, if available.
   const domain = client.getDomain();
   if (domain) {
@@ -440,6 +461,10 @@ async function makeTransport(
       return selectedTransport;
     }
   }
+
+  logger.info(
+    `makeTransport: No valid transport found via backend or .well-known, falling back to config if available.`,
+  );
 
   // CONFIG: Least prioritized; Load from config file
   const urlFromConf = Config.get().livekit?.livekit_service_url;
