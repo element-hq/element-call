@@ -137,6 +137,7 @@ export async function getSFUConfigWithOpenID(
       );
       logger?.info(`Got JWT from call's active focus URL.`);
     } catch (e) {
+      logger?.debug(`Failed fetching jwt with matrix 2.0 endpoint:`, e);
       if (e instanceof NotSupportedError) {
         logger?.warn(
           `Failed fetching jwt with matrix 2.0 endpoint (retry with legacy) Not supported`,
