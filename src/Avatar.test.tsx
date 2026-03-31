@@ -12,7 +12,7 @@ import { type FC, type PropsWithChildren } from "react";
 import { type WidgetApi } from "matrix-widget-api";
 
 import { ClientContextProvider } from "./ClientContext";
-import { Avatar } from "./Avatar";
+import { Avatar, getAvatarFromWidgetAPI } from "./Avatar";
 import { mockMatrixRoomMember, mockRtcMembership } from "./utils/test";
 import { widget } from "./widget";
 
@@ -177,4 +177,37 @@ test("should attempt to use widget API if running as a widget", async () => {
   );
 
   expect(widget!.api.downloadFile).toBeCalledWith(expectedMXCUrl);
+});
+
+test("Supports download files as base64", async () => {
+  const expectedMXCUrl = "mxc://example.org/alice-avatar";
+  const expectedBase64 =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAADIElEQVR4nAAQA+/8ApxhEfFNuwna" +
+    "+DO1pFMx5YDg6gb8p1WFkbFSox9H6r5c8jp1gxlHXrDfA/oQFi4A0gTXH9YBNgwRm12xO68QP6lv" +
+    "ZLKH9qW1VM6kz6zA3T1Ui8J+Xbnh2BZ7oXDe/2gajzoA6j1JGotpz99xO+T2NR634Nhx3zhuera/" +
+    "UdrpMLdEpwWXLnSqZRasGsrl93FjdTwRBMaqsx6vJksnPOmV9ttbXFIOb0XDGPbVythSC2n7P/bS" +
+    "Zv0U0QqbBLk/5Wu1werYzAHiz11Bj8bEylQ92Pxvo+PwF6/KbGnIHTvGZkFzDkMnqz3g7Pw3NOSP" +
+    "oV+qfyJuSI0AeZmrPejFQ8kzBSDWO8D7lr4+6ePRBRmZtKCf+fNjSCOyb5jqwhBnD2cycbJtQQbR" +
+    "A4qdPG2ONfTPeQgi96+zT7grBI0JwvgFBceJdLJd4BX1VQIyY+j7OYueNWqEpf8iYgMj78I95eRt" +
+    "nfPLwlxhVns84iL4Yvw8jDrB9vQi8ktpsdJOMiDwKrBGD3q56COD2oIA96CCBgiro4tkvkumZSAc" +
+    "ZKXRLsziUFGytWJLaPjwnzXv2hicPy6k9AXsF3QkysOZAkB3m9XPpixhq9b0OKqV/zZx3L79o6wZ" +
+    "Dr40J7sj7f+ARd545CP01r5omHt94tbnjgA46HsM2OhP+qQ882LN+Bhscq2WSHGSHT4J9MQcsWZP" +
+    "2+N2LdPy61MN4/1++BJHmDcDLQBUEwLvjZp1fRfzxV7yirwIiOA7Vr8z+1yvS/pSkfUzkjswybOd" +
+    "M5i0I8Q69MTXAKxqtR0/tyGkfCmHfupGASp/SAT9J8f3aQV+gDbpva592v4w8Cv5EMm7CzZPwThF" +
+    "kgTChNPts7F03ccxpblfIz0EiAON1DKk71rX07BvDlLHY1ItPuqZ7hjy19jrAgl+QqEE1btHVA5R" +
+    "uAnRXpEWc6rjARlJY5G1wbMk12rrqpr8rhR3YpFgLgOx4BtQ0D/hGe7KANSGBMQojmObId0asCmd" +
+    "XzmnQI9P8QnwsO9vtqZlgIoU4g+f2/G8Q3/nVMX7dujniwEAAP//KmiQs7P8MeIAAAAASUVORK5C" +
+    "YII=";
+  const mockWidgetAPI = {
+    downloadFile: vi.fn().mockImplementation(async (contentUri) => {
+      if (contentUri !== expectedMXCUrl) {
+        return Promise.reject(new Error("Unexpected content URI"));
+      }
+      return { file: expectedBase64 };
+    }),
+  } as unknown as WidgetApi;
+
+  const blob = await getAvatarFromWidgetAPI(mockWidgetAPI, expectedMXCUrl);
+
+  expect(blob).toBeInstanceOf(Blob);
 });
