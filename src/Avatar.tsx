@@ -173,7 +173,8 @@ async function getAvatarFromServer(
   return blob;
 }
 
-async function getAvatarFromWidgetAPI(
+// export for testing
+export async function getAvatarFromWidgetAPI(
   api: WidgetApi,
   src: string,
 ): Promise<Blob> {
@@ -181,9 +182,14 @@ async function getAvatarFromWidgetAPI(
   const file = response.file;
 
   // element-web sends a Blob, and the MSC4039 is considering changing the spec to strictly Blob, so only handling that
-  if (!(file instanceof Blob)) {
-    throw new Error("Downloaded file is not a Blob");
+  if (file instanceof Blob) {
+    return file;
+  } else if (typeof file === "string") {
+    // it is a base64 string
+    const bytes = Uint8Array.from(atob(file), (c) => c.charCodeAt(0));
+    return new Blob([bytes]);
   }
-
-  return file;
+  throw new Error(
+    "Downloaded file format is not supported: " + typeof file + "",
+  );
 }
