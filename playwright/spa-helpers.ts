@@ -90,7 +90,7 @@ async function joinCallFromInviteLink(
   }
 
   await switchNoiseSuppressionFromSettings(page);
-  
+
   await page.getByTestId("lobby_joinCall").click();
   await page.getByRole("radio", { name: "Spotlight" }).check();
 }
@@ -121,7 +121,7 @@ async function switchNoiseSuppressionFromSettings(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("tab", { name: "Audio" }).click();
   await page.getByText("Noise suppression", { exact: true }).uncheck();
-  
+
   // wait for short time before checking the box again
   await page.waitForTimeout(1000);
   await page.getByText("Noise suppression", { exact: true }).check();
