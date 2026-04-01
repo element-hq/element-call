@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { expect, test } from "@playwright/test";
 
 import { widgetTest } from "../fixtures/widget-user.ts";
+import { TestHelpers } from "./test-helpers.ts";
 
 // Skip test, including Fixtures
 widgetTest.skip(
@@ -20,19 +21,7 @@ widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
 
   const { brooks, whistler } = asWidget;
 
-  await expect(
-    brooks.page.getByRole("button", { name: "Video call" }),
-  ).toBeVisible();
-  await brooks.page.getByRole("button", { name: "Video call" }).click();
-
-  await expect(
-    brooks.page.getByRole("menuitem", { name: "Legacy Call" }),
-  ).toBeVisible();
-  await expect(
-    brooks.page.getByRole("menuitem", { name: "Element Call" }),
-  ).toBeVisible();
-
-  await brooks.page.getByRole("menuitem", { name: "Element Call" }).click();
+  await TestHelpers.startCallInCurrentRoom(brooks.page, false);
 
   await expect(
     brooks.page
@@ -56,11 +45,7 @@ widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
   ).toBeVisible();
 
   // Join from the other side
-  await expect(whistler.page.getByText("Video call started")).toBeVisible();
-  await expect(
-    whistler.page.getByRole("button", { name: "Join" }),
-  ).toBeVisible();
-  await whistler.page.getByRole("button", { name: "Join" }).click();
+  await TestHelpers.joinCallInCurrentRoom(whistler.page);
 
   // Currently disabled due to recent Element Web is bypassing Lobby
   // await expect(
