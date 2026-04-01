@@ -750,6 +750,53 @@ describe.each([
     });
   });
 
+  test("PiP tile in expanded spotlight layout avoids redundantly showing local user", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      // Switch to spotlight immediately
+      const modeInputMarbles = "       s";
+      // And expand the spotlight immediately
+      const expandInputMarbles = "     a";
+      // First no one else is in the call, then Alice joins
+      const participantInputMarbles = "ab";
+      // First local user should be in the spotlight, then they appear in PiP
+      // only once Alice has joined
+      const expectedLayoutMarbles = "  ab";
+
+      withCallViewModel(
+        {
+          rtcMembers$: behavior(participantInputMarbles, {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
+        },
+        (vm) => {
+          schedule(modeInputMarbles, {
+            s: () => vm.setGridMode("spotlight"),
+          });
+          schedule(expandInputMarbles, {
+            a: () => vm.toggleSpotlightExpanded$.value!(),
+          });
+
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "spotlight-expanded",
+                spotlight: [`${localId}:0`],
+                pip: undefined,
+              },
+              b: {
+                type: "spotlight-expanded",
+                spotlight: [`${aliceId}:0`],
+                pip: `${localId}:0`,
+              },
+            },
+          );
+        },
+      );
+    });
+  });
+
   test("spotlight remembers whether it's expanded", () => {
     withTestScheduler(({ schedule, expectObservable }) => {
       // Start in spotlight mode, then switch to grid and back to spotlight a
