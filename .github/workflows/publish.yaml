@@ -42,7 +42,7 @@ jobs:
       - name: Create Checksum
         run: find ${FILENAME_PREFIX} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${FILENAME_PREFIX}.sha256
       - name: Upload
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
         with:
           files: |
             ${{ env.FILENAME_PREFIX }}.tar.gz
@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add release note
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
         with:
           append_body: true
           body: |
