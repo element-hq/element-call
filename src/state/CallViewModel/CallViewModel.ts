@@ -951,7 +951,7 @@ export function createCallViewModel$(
 
   const spotlightAndPip$ = scope.behavior<{
     spotlight: MediaViewModel[];
-    pip$: Behavior<UserMediaViewModel | undefined>;
+    pip$: Observable<UserMediaViewModel | undefined>;
   }>(
     ringingMedia$.pipe(
       switchMap((ringingMedia) => {
@@ -966,7 +966,10 @@ export function createCallViewModel$(
             return spotlightSpeaker$.pipe(
               map((speaker) => ({
                 spotlight: speaker ? [speaker] : [],
-                pip$: localUserMediaForPip$,
+                // Hide PiP if redundant (i.e. if local user is already in spotlight)
+                pip$: localUserMediaForPip$.pipe(
+                  map((m) => (m === speaker ? undefined : m)),
+                ),
               })),
             );
           }),
