@@ -13,7 +13,9 @@ import {
   type ReactNode,
   type SVGAttributes,
   useCallback,
+  useEffect,
 } from "react";
+import * as Sentry from "@sentry/react";
 import { Trans, useTranslation } from "react-i18next";
 import {
   ErrorSolidIcon,
@@ -77,6 +79,10 @@ const ErrorPage: FC<ErrorPageProps> = ({
       onClick: () => void recoveryActionHandler("reconnect"),
     });
   }
+
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
 
   return (
     <FullScreenView>
