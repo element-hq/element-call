@@ -67,8 +67,9 @@ export class MatrixRTCTransportMissingError extends ElementCallError {
   /**
    * Creates an instance of MatrixRTCTransportMissingError.
    * @param domain - The domain where the MatrixRTC transport is missing.
+   * @param cause - The underlying error that caused the missing transport.
    */
-  public constructor(domain: string) {
+  public constructor(domain: string, cause?: Error) {
     super(
       t("error.call_is_not_supported"),
       ErrorCode.MISSING_MATRIX_RTC_TRANSPORT,
@@ -78,6 +79,7 @@ export class MatrixRTCTransportMissingError extends ElementCallError {
         brand: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
         errorCode: ErrorCode.MISSING_MATRIX_RTC_TRANSPORT,
       }),
+      cause,
     );
     this.domain = domain;
   }

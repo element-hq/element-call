@@ -400,6 +400,7 @@ async function makeTransport(
     return null;
   }
 
+  let lastError: Error | undefined = undefined;
   // MSC4143: Attempt to fetch transports from backend.
   // TODO: Workaround for an issue in the js-sdk RoomWidgetClient that
   // is not yet implementing _unstable_getRTCTransports properly (via widget API new action).
@@ -423,6 +424,7 @@ async function makeTransport(
         return selectedTransport;
       }
     } catch (ex) {
+      lastError = ex as Error;
       if (ex instanceof MatrixError && ex.httpStatus === 404) {
         // Expected, this is an unstable endpoint and it's not required.
         // There will be expected 404 errors in the console. When we check if synapse supports the endpoint.
@@ -430,6 +432,7 @@ async function makeTransport(
           "Matrix homeserver does not provide any RTC transports via `/rtc/transports` (will retry with well-known.)",
         );
       } else if (ex instanceof FailToGetOpenIdToken) {
+        logger.error(`makeTransport: Failed to validate backend SFU`, ex);
         throw ex;
       } else {
         // We got an error that wasn't just missing support for the feature, so log it loudly.
@@ -453,9 +456,20 @@ async function makeTransport(
     const wellKnownFoci = (await AutoDiscovery.getRawClientConfig(domain))?.[
       FOCI_WK_KEY
     ];
-    const selectedTransport = Array.isArray(wellKnownFoci)
-      ? await getFirstUsableTransport(wellKnownFoci)
-      : null;
+    let selectedTransport: LocalTransportWithSFUConfig | null = null;
+    if (Array.isArray(wellKnownFoci)) {
+      try {
+        selectedTransport = await getFirstUsableTransport(wellKnownFoci);
+      } catch (ex) {
+        lastError = ex as Error;
+        if (ex instanceof FailToGetOpenIdToken) {
+          throw ex;
+        }
+        logger.error(`makeTransport: Failed to validate .well-known SFU`, ex);
+      }
+    } else {
+      selectedTransport = null;
+    }
     if (selectedTransport) {
       logger.info("Using .well-known SFU", selectedTransport);
       return selectedTransport;
@@ -477,10 +491,11 @@ async function makeTransport(
       if (ex instanceof FailToGetOpenIdToken) {
         throw ex;
       }
+      lastError = ex as Error;
       logger.error("Failed to validate config SFU", ex);
     }
   }
 
   // If we do not have returned a transport by now we throw an error
-  throw new MatrixRTCTransportMissingError(domain ?? "");
+  throw new MatrixRTCTransportMissingError(domain ?? "", lastError);
 }
