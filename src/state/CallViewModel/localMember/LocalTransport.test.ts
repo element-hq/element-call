@@ -19,7 +19,7 @@ import {
   type CallMembership,
   type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, lastValueFrom } from "rxjs";
+import { BehaviorSubject, filter, lastValueFrom } from "rxjs";
 import fetchMock from "fetch-mock";
 
 import {
@@ -28,7 +28,11 @@ import {
   ownMemberMock,
   mockRtcMembership,
 } from "../../../utils/test";
-import { createLocalTransport$, JwtEndpointVersion } from "./LocalTransport";
+import {
+  createLocalTransport$,
+  JwtEndpointVersion,
+  type LocalTransportWithSFUConfig,
+} from "./LocalTransport";
 import { constant } from "../../Behavior";
 import { Epoch, ObservableScope, trackEpoch } from "../../ObservableScope";
 import {
@@ -539,4 +543,72 @@ describe("LocalTransport", () => {
       );
     });
   });
+
+  it.fails(
+    "should not update advertised transport on delayID changes, but active should update",
+    async () => {
+      // For simplicity, we'll just use the config livekit
+      customLivekitUrl.setValue("https://lk.example.org");
+
+      vi.spyOn(openIDSFU, "getSFUConfigWithOpenID").mockResolvedValue(
+        openIdResponse,
+      );
+
+      const delayId$ = new BehaviorSubject<string | null>(null);
+
+      const { advertised$, active$ } = createLocalTransport$({
+        scope,
+        ownMembershipIdentity: ownMemberMock,
+        roomId: "!example_room_id",
+        // We want multi-sdu
+        useOldestMember: false,
+        forceJwtEndpoint: JwtEndpointVersion.Legacy,
+        delayId$: delayId$,
+        memberships$: constant(new Epoch<CallMembership[]>([])),
+        client: {
+          getDomain: () => "",
+          baseUrl: "https://example.org",
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          _unstable_getRTCTransports: async () => Promise.resolve([]),
+          getAccessToken: vi.fn().mockReturnValue("access_token"),
+          // These won't be called in this error path but satisfy the type
+          getOpenIdToken: vi.fn(),
+          getDeviceId: vi.fn(),
+        },
+      });
+
+      const advertisedValues: LivekitTransportConfig[] = [];
+      const activeValues: LocalTransportWithSFUConfig[] = [];
+      advertised$
+        .pipe(filter((v) => v !== null))
+        .subscribe((t) => advertisedValues.push(t));
+      active$
+        .pipe(filter((v) => v !== null))
+        .subscribe((t) => activeValues.push(t));
+
+      await flushPromises();
+
+      // we have now an active and an advertised
+      expect(advertisedValues.length).toEqual(1);
+      expect(activeValues.length).toEqual(1);
+      expect(advertisedValues[0]!.livekit_service_url).toEqual(
+        "https://lk.example.org",
+      );
+      expect(activeValues[0]!.transport.livekit_service_url).toEqual(
+        "https://lk.example.org",
+      );
+
+      // Now emits 3 new delays id
+      delayId$.next("delay_id_1");
+      await flushPromises();
+      delayId$.next("delay_id_2");
+      await flushPromises();
+      delayId$.next("delay_id_3");
+      await flushPromises();
+
+      // No new emissions should've happened, it is the same transport. only auth and delegation of delay has changed
+      expect(advertisedValues.length).toEqual(1);
+      expect(activeValues.length).toEqual(4);
+    },
+  );
 });
