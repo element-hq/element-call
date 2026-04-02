@@ -131,6 +131,9 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         public getSyncState(): SyncState {
           return syncState;
         }
+        public getAccessToken(): string | null {
+          return "a-token";
+        }
       })() as Partial<MatrixClient> as MatrixClient,
       getMembers: () => roomMembers,
       getMembersWithMembership: () => roomMembers,
