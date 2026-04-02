@@ -18,6 +18,7 @@ import {
   from,
   map,
   merge,
+  Observable,
   of,
   startWith,
   switchMap,
@@ -208,54 +209,14 @@ export const createLocalTransport$ = ({
   );
 
   if (useOldestMember) {
-    // --- Oldest member mode ---
-    return {
-      // Never update the transport that we advertise in our membership. Just
-      // take the first valid oldest member or preferred transport that we learn
-      // about, and stick with that. This avoids unnecessary SFU hops and room
-      // state changes.
-      advertised$: scope.behavior(
-        merge(
-          oldestMemberTransport$,
-          preferredTransport$.pipe(map((t) => t.transport)),
-        ).pipe(
-          first((t) => t !== null),
-          tap((t) =>
-            logger.info(`Advertise transport: ${t.livekit_service_url}`),
-          ),
-        ),
-        null,
-      ),
-      // Publish on the transport used by the oldest member.
-      active$: scope.behavior(
-        oldestMemberTransport$.pipe(
-          switchMap((transport) => {
-            // Oldest member not available (or invalid SFU config).
-            if (transport === null) return of(null);
-            // Oldest member available: fetch the SFU config.
-            const fetchOldestMemberTransport =
-              async (): Promise<LocalTransportWithSFUConfig> => ({
-                transport,
-                sfuConfig: await getSFUConfigWithOpenID(
-                  client,
-                  ownMembershipIdentity,
-                  transport.livekit_service_url,
-                  roomId,
-                  { forceJwtEndpoint: JwtEndpointVersion.Legacy },
-                  logger,
-                ),
-              });
-            return from(fetchOldestMemberTransport()).pipe(startWith(null));
-          }),
-          tap((t) =>
-            logger.info(
-              `Publish on transport: ${t?.transport.livekit_service_url}`,
-            ),
-          ),
-        ),
-        null,
-      ),
-    };
+    return observeLocalTransportForOldestMembership(
+      scope,
+      oldestMemberTransport$,
+      preferredTransport$,
+      client,
+      ownMembershipIdentity,
+      roomId,
+    );
   }
 
   // --- Multi-SFU mode ---
@@ -351,5 +312,67 @@ async function doOpenIdAndJWTFromUrl(
       livekit_service_url: url,
     },
     sfuConfig,
+  };
+}
+
+function observeLocalTransportForOldestMembership(
+  scope: ObservableScope,
+  oldestMemberTransport$: Behavior<LivekitTransportConfig | null>,
+  preferredTransport$: Observable<LocalTransportWithSFUConfig>,
+  client: Pick<
+    MatrixClient,
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports" | "getAccessToken"
+  > &
+    OpenIDClientParts,
+  ownMembershipIdentity: CallMembershipIdentityParts,
+  roomId: string,
+): LocalTransport {
+  // --- Oldest member mode ---
+  return {
+    // Never update the transport that we advertise in our membership. Just
+    // take the first valid oldest member or preferred transport that we learn
+    // about, and stick with that. This avoids unnecessary SFU hops and room
+    // state changes.
+    advertised$: scope.behavior(
+      merge(
+        oldestMemberTransport$,
+        preferredTransport$.pipe(map((t) => t.transport)),
+      ).pipe(
+        first((t) => t !== null),
+        tap((t) =>
+          logger.info(`Advertise transport: ${t.livekit_service_url}`),
+        ),
+      ),
+      null,
+    ),
+    // Publish on the transport used by the oldest member.
+    active$: scope.behavior(
+      oldestMemberTransport$.pipe(
+        switchMap((transport) => {
+          // Oldest member not available (or invalid SFU config).
+          if (transport === null) return of(null);
+          // Oldest member available: fetch the SFU config.
+          const fetchOldestMemberTransport =
+            async (): Promise<LocalTransportWithSFUConfig> => ({
+              transport,
+              sfuConfig: await getSFUConfigWithOpenID(
+                client,
+                ownMembershipIdentity,
+                transport.livekit_service_url,
+                roomId,
+                { forceJwtEndpoint: JwtEndpointVersion.Legacy },
+                logger,
+              ),
+            });
+          return from(fetchOldestMemberTransport()).pipe(startWith(null));
+        }),
+        tap((t) =>
+          logger.info(
+            `Publish on transport: ${t?.transport.livekit_service_url}`,
+          ),
+        ),
+      ),
+      null,
+    ),
   };
 }
