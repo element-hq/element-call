@@ -137,21 +137,9 @@ export async function getSFUConfigWithOpenID(
     } catch (e) {
       logger?.debug(`Failed fetching jwt with matrix 2.0 endpoint:`, e);
       // Make this throw a hard error in case we force the matrix2.0 endpoint.
-      if (forceMatrix2Jwt) throw new NoMatrix2AuthorizationService(e as Error);
-
-      // if (e instanceof NotSupportedError) {
-      //   logger?.warn(
-      //     `Failed fetching jwt with matrix 2.0 endpoint (retry with legacy) Not supported`,
-      //     e,
-      //   );
-      // } else {
-      //   logger?.warn(
-      //     `Failed fetching jwt with matrix 2.0 endpoint other issues ->`,
-      //     `(not going to try with legacy endpoint: forceOldJwtEndpoint is set to false, we did not get a not supported error from the sfu)`,
-      //     e,
-      //   );
-      //   // NEVER get bejond this point if we forceMatrix2 and it failed!
-      // }
+      if (forceMatrix2Jwt) {
+        throw new NoMatrix2AuthorizationService(e as Error);
+      }
     }
   }
 
