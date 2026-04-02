@@ -544,7 +544,7 @@ describe("LocalTransport", () => {
     });
   });
 
-  it.fails(
+  it(
     "should not update advertised transport on delayID changes, but active should update",
     async () => {
       // For simplicity, we'll just use the config livekit
