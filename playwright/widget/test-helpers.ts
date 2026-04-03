@@ -13,6 +13,8 @@ import {
 } from "@playwright/test";
 import { type MatrixClient } from "matrix-js-sdk";
 
+import { SynapseAdmin } from "../utils/synapse-admin.ts";
+
 const PASSWORD = "foobarbaz1!";
 
 export const HOST1 = "https://app.m.localhost/#/welcome";
@@ -74,29 +76,41 @@ export class TestHelpers {
     clientHandle: JSHandle<MatrixClient>;
     mxId: string;
   }> {
+    // Determine which homeserver to use based on the host
+    const synapseBaseUrl =
+      host === HOST2
+        ? "https://synapse.othersite.m.localhost"
+        : "https://synapse.m.localhost";
+
+    // Register user via Synapse Admin API to speed things up
+    const synapseAdmin = SynapseAdmin.forHomeserver(synapseBaseUrl);
+    const credentials = await synapseAdmin.registerUser(
+      username,
+      PASSWORD,
+      username,
+    );
+
+    // STEP 2: Open browser and login
     const userContext = await browser.newContext({
       reducedMotion: "reduce",
     });
     const page = await userContext.newPage();
-    await page.goto(host);
-    await page.getByRole("link", { name: "Create Account" }).click();
+    await page.goto(host + "/#/login");
+
+    await page.getByRole("link", { name: "Sign in" }).click();
+
     await page.getByRole("textbox", { name: "Username" }).fill(username);
-    await page.getByRole("textbox", { name: "Password", exact: true }).click();
-    await page
-      .getByRole("textbox", { name: "Password", exact: true })
-      .fill(PASSWORD);
-    await page.getByRole("textbox", { name: "Confirm password" }).click();
-    await page
-      .getByRole("textbox", { name: "Confirm password" })
-      .fill(PASSWORD);
-    await page.getByRole("button", { name: "Register" }).click();
+    await page.getByRole("textbox", { name: "Password" }).fill(PASSWORD);
+    await page.getByRole("button", { name: "Sign in" }).click();
+
+    // 😤For reasons web is staying on an infinite loading page after login, so we reload the page
+    // Super annoying to have to wait...
+    await page.waitForTimeout(2000);
+    await page.reload();
 
     await expect(
       page.getByRole("heading", { name: `Welcome ${username}` }),
-    ).toBeVisible({
-      // Increase timeout as registration can be slow :/
-      timeout: 15_000,
-    });
+    ).toBeVisible();
 
     await this.maybeDismissBrowserNotSupportedToast(page);
     await this.maybeDismissServiceWorkerWarningToast(page);
@@ -106,11 +120,7 @@ export class TestHelpers {
     const clientHandle = await page.evaluateHandle(() =>
       window.mxMatrixClientPeg.get(),
     );
-    const mxId = (await clientHandle.evaluate(
-      (cli: MatrixClient) => cli.getUserId(),
-      clientHandle,
-    ))!;
-
+    const mxId = credentials.user_id;
     return { page, clientHandle, mxId };
   }
 
