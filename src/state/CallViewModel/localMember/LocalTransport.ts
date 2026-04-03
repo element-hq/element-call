@@ -151,7 +151,7 @@ export const createLocalTransport$ = ({
     logger: logger,
   });
 
-  // Get the preferred transport from the current deployement.
+  // Get the preferred transport from the current deployment.
   const discoveredTransport$ = from(
     transportDiscovery.discoverPreferredTransport(),
   );
@@ -266,15 +266,22 @@ function observerOldestMembership$(
   );
 }
 
-// Utility to ensure the user can authenticate with the SFU.
-//
-// We will call `getSFUConfigWithOpenID` once per transport here as it's our
-// only mechanism of validation. This means we will also ask the
-// homeserver for a OpenID token a few times. Since OpenID tokens are single
-// use we don't want to risk any issues by re-using a token.
-//
-// If the OpenID request were to fail, then it's acceptable for us to fail
-// this function early, as we assume the homeserver has got some problems.
+/**
+ *  Utility to ensure the user can authenticate with the SFU.
+ *  We will call `getSFUConfigWithOpenID` once per transport here as it's our
+ *  only mechanism of validation. This means we will also ask the
+ *  homeserver for a OpenID token a few times. Since OpenID tokens are single
+ *  use we don't want to risk any issues by re-using a token.
+ *
+ *  @param transport The transport to authenticate with.
+ *  @param forceJwtEndpoint Whether to force the JWT endpoint to be used.
+ *  @param membership The identity of the local member.
+ *  @param roomId The room ID to use for the JWT.
+ *  @param client The client to use for the OpenID token.
+ *  @param delayId The delayId to use for the JWT.
+ *
+ *  @throws FailToGetOpenIdToken, NoMatrix2AuthorizationService
+ */
 async function doOpenIdAndJWTFromUrl(
   transport: LivekitTransportConfig,
   forceJwtEndpoint: JwtEndpointVersion,
