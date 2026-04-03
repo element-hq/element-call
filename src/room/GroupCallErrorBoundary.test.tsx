@@ -16,6 +16,7 @@ import {
 } from "react";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
+import * as Sentry from "@sentry/react";
 
 import {
   type CallErrorRecoveryAction,
@@ -31,6 +32,15 @@ import {
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
 import { ElementWidgetActions, type WidgetHelpers } from "../widget.ts";
+
+// Mock Sentry before importing the component
+vi.mock("@sentry/react", async () => {
+  const actual = await vi.importActual("@sentry/react");
+  return {
+    ...actual,
+    captureException: vi.fn(),
+  };
+});
 
 test.each([
   {
@@ -210,6 +220,33 @@ describe("Rageshake button", () => {
       screen.queryByRole("button", { name: "Send debug logs" }),
     ).not.toBeInTheDocument();
   });
+});
+
+test("should call Sentry.captureException for unknown errors", async () => {
+  vi.mocked(Sentry.captureException).mockClear(); // Clear previous calls
+
+  const originalError = new Error("Unknown test error");
+  const error = new UnknownCallError(originalError);
+  const TestComponent = (): ReactNode => {
+    throw error;
+  };
+
+  render(
+    <BrowserRouter>
+      <GroupCallErrorBoundary
+        onError={vi.fn()}
+        recoveryActionHandler={vi.fn()}
+        widget={null}
+      >
+        <TestComponent />
+      </GroupCallErrorBoundary>
+    </BrowserRouter>,
+  );
+
+  await screen.findByText(/Something went wrong/);
+
+  expect(Sentry.captureException).toHaveBeenCalledWith(error);
+  expect(Sentry.captureException).toHaveBeenCalledOnce();
 });
 
 test("should have a close button in widget mode", async () => {
