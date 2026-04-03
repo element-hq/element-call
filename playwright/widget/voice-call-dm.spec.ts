@@ -45,8 +45,6 @@ widgetTest(
     await expect(whistler.page.getByText("Incoming voice call")).toBeVisible();
     await whistler.page.getByRole("button", { name: "Accept" }).click();
 
-    await TestHelpers.dismissFileDialogPermissionIfNeeded(whistler.page);
-
     await expect(
       whistler.page.locator('iframe[title="Element Call"]'),
     ).toBeVisible();
@@ -139,8 +137,6 @@ widgetTest(
 
     await expect(whistler.page.getByText("Incoming video call")).toBeVisible();
     await whistler.page.getByRole("button", { name: "Accept" }).click();
-
-    await TestHelpers.dismissFileDialogPermissionIfNeeded(whistler.page);
 
     await expect(
       whistler.page.locator('iframe[title="Element Call"]'),
