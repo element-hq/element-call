@@ -158,7 +158,6 @@ export const createLocalTransport$ = ({
 
   const preferredConfig$ = customLivekitUrl.value$
     .pipe(
-      startWith(null),
       switchMap((customUrl) => {
         if (customUrl) {
           return of({
