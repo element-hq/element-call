@@ -34,9 +34,6 @@ export class TestHelpers {
     ).toBeVisible();
 
     await page.getByRole("menuitem", { name: "Element Call" }).click();
-
-    // TODO: Remove as soon as web merges https://github.com/element-hq/element-web/pull/32755
-    await this.dismissFileDialogPermissionIfNeeded(page);
   }
 
   public static async joinCallFromLobby(page: Page): Promise<void> {
@@ -63,9 +60,6 @@ export class TestHelpers {
     await expect(page.getByText(label)).toBeVisible();
     await expect(page.getByRole("button", { name: "Join" })).toBeVisible();
     await page.getByRole("button", { name: "Join" }).click();
-
-    // TODO: Remove as soon as web merges https://github.com/element-hq/element-web/pull/32755
-    await this.dismissFileDialogPermissionIfNeeded(page);
   }
 
   /**
@@ -242,27 +236,8 @@ export class TestHelpers {
     await page.getByRole("button", { name: "Video call" }).click();
     await page.getByRole("menuitem", { name: "Element Call" }).click();
 
-    // TODO: Remove as soon as web merges https://github.com/element-hq/element-web/pull/32755
-    await this.dismissFileDialogPermissionIfNeeded(page);
-
     await TestHelpers.setEmbeddedElementCallRtcMode(page, mode);
     await page.getByRole("button", { name: "Close lobby" }).click();
-  }
-
-  // TODO: Remove as soon as web merges https://github.com/element-hq/element-web/pull/32755
-  public static async dismissFileDialogPermissionIfNeeded(
-    page: Page,
-  ): Promise<void> {
-    const dialogHeading = page.getByRole("heading", {
-      name: "Approve widget permissions",
-    });
-
-    try {
-      await expect(dialogHeading).toBeVisible({ timeout: 3000 });
-      await page.getByRole("button", { name: "Approve" }).click();
-    } catch {
-      // Dialog did not appear, that's fine
-    }
   }
 
   /**
