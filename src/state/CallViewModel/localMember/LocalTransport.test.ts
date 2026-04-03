@@ -544,13 +544,13 @@ describe("LocalTransport", () => {
     });
   });
 
-  it("should not update advertised transport on delayID changes, but active should update", async () => {
+  it("should not update advertised/active transport on delayID changes, but delay Id delegation should be called", async () => {
     // For simplicity, we'll just use the config livekit
     customLivekitUrl.setValue("https://lk.example.org");
 
-    vi.spyOn(openIDSFU, "getSFUConfigWithOpenID").mockResolvedValue(
-      openIdResponse,
-    );
+    const authCallSpy = vi
+      .spyOn(openIDSFU, "getSFUConfigWithOpenID")
+      .mockResolvedValue(openIdResponse);
 
     const delayId$ = new BehaviorSubject<string | null>(null);
 
@@ -596,6 +596,7 @@ describe("LocalTransport", () => {
       "https://lk.example.org",
     );
 
+    expect(authCallSpy).toHaveBeenCalledTimes(2);
     // Now emits 3 new delays id
     delayId$.next("delay_id_1");
     await flushPromises();
@@ -604,8 +605,24 @@ describe("LocalTransport", () => {
     delayId$.next("delay_id_3");
     await flushPromises();
 
-    // No new emissions should've happened, it is the same transport. only auth and delegation of delay has changed
+    // No new emissions should've happened, it is the same transport.
     expect(advertisedValues.length).toEqual(1);
-    expect(activeValues.length).toEqual(4);
+    expect(activeValues.length).toEqual(1);
+
+    // Still we should have updated the delayID to auth
+    expect(authCallSpy).toHaveBeenCalledTimes(
+      4 * 2 /* 2 calls for each delayId ?? why */,
+    );
+
+    expect(authCallSpy).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({
+        delayId: "delay_id_3",
+      }),
+      expect.anything(),
+    );
   });
 });
