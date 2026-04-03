@@ -222,7 +222,21 @@ export const createLocalTransport$ = ({
       ),
       null,
     ),
-    active$: scope.behavior(preferredTransport$, null),
+    active$: scope.behavior(
+      preferredTransport$.pipe(
+        // XXX: WORK AROUND due to a reconnection glitch.
+        // To remove when we have a proper way to refresh the delegation event ID without refreshing
+        // the whole credentials.
+        // We deliberately hide any changes to the SFU config because we
+        // do not want the app to reconnect whenever the JWT
+        // token changes due to us delegating a new delayed event. The
+        // initial SFU config for the transport is all the app needs.
+        distinctUntilChanged((prev, next) =>
+          areLivekitTransportsEqual(prev.transport, next.transport),
+        ),
+      ),
+      null,
+    ),
   };
 };
 
