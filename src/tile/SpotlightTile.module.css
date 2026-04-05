@@ -40,7 +40,6 @@ Please see LICENSE in the repository root for full details.
 .advance {
   appearance: none;
   cursor: pointer;
-  opacity: 0;
   padding: calc(var(--cpd-space-3x) - var(--cpd-border-width-1));
   border: var(--cpd-border-width-1) solid
     var(--cpd-color-border-interactive-secondary);
