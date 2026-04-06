@@ -27,6 +27,7 @@ import {
   flushPromises,
   ownMemberMock,
   mockRtcMembership,
+  testScope,
 } from "../../../utils/test";
 import {
   createLocalTransport$,
@@ -51,13 +52,11 @@ describe("LocalTransport", () => {
     livekitIdentity: "@lk_user:ABCDEF",
   };
 
-  let scope: ObservableScope;
-  beforeEach(() => (scope = new ObservableScope()));
-  afterEach(() => scope.end());
+  beforeEach(() => vi.clearAllMocks());
 
   it("throws if config is missing", async () => {
     const { advertised$, active$ } = createLocalTransport$({
-      scope,
+      scope: testScope(),
       roomId: "!room:example.org",
       useOldestMember: false,
       memberships$: constant(new Epoch<CallMembership[]>([])),
@@ -144,7 +143,7 @@ describe("LocalTransport", () => {
     );
 
     const { advertised$, active$ } = createLocalTransport$({
-      scope,
+      scope: testScope(),
       roomId: "!room:example.org",
       useOldestMember: false,
       memberships$: constant(new Epoch<CallMembership[]>([])),
@@ -215,6 +214,7 @@ describe("LocalTransport", () => {
       // Initially, Alice is the only member
       const memberships$ = new BehaviorSubject([aliceMembership]);
 
+      const scope = testScope();
       const { advertised$, active$ } = createLocalTransport$({
         scope,
         roomId: "!example_room_id",
@@ -271,6 +271,7 @@ describe("LocalTransport", () => {
       // Initially, there are no members
       const memberships$ = new BehaviorSubject<CallMembership[]>([]);
 
+      const scope = testScope();
       const { advertised$, active$ } = createLocalTransport$({
         scope,
         roomId: "!example_room_id",
@@ -321,7 +322,7 @@ describe("LocalTransport", () => {
       customLivekitUrl.setValue(customLivekitUrl.defaultValue);
       localTransportOpts = {
         ownMembershipIdentity: ownMemberMock,
-        scope,
+        scope: testScope(),
         roomId: "!example_room_id",
         useOldestMember: false,
         forceJwtEndpoint: JwtEndpointVersion.Legacy,
@@ -515,7 +516,7 @@ describe("LocalTransport", () => {
 
     it("throws if no options are available", async () => {
       const { advertised$, active$ } = createLocalTransport$({
-        scope,
+        scope: testScope(),
         ownMembershipIdentity: ownMemberMock,
         roomId: "!example_room_id",
         useOldestMember: false,
@@ -555,7 +556,7 @@ describe("LocalTransport", () => {
     const delayId$ = new BehaviorSubject<string | null>(null);
 
     const { advertised$, active$ } = createLocalTransport$({
-      scope,
+      scope: testScope(),
       ownMembershipIdentity: ownMemberMock,
       roomId: "!example_room_id",
       // We want multi-sdu
