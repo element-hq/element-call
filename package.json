@@ -128,7 +128,7 @@
     "unique-names-generator": "^4.6.0",
     "uuid": "^13.0.0",
     "vaul": "^1.0.0",
-    "vite": "^7.3.0",
+    "vite": "^8.0.0",
     "vite-plugin-generate-file": "^0.3.0",
     "vite-plugin-html": "^3.2.2",
     "vite-plugin-node-stdlib-browser": "^0.2.1",
