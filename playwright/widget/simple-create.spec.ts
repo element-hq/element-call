@@ -17,8 +17,6 @@ widgetTest.skip(
 );
 
 widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
-  test.slow(); // Triples the timeout
-
   const { brooks, whistler } = asWidget;
 
   await TestHelpers.startCallInCurrentRoom(brooks.page, false);
