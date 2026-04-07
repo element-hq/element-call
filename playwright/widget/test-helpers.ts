@@ -95,18 +95,13 @@ export class TestHelpers {
       reducedMotion: "reduce",
     });
     const page = await userContext.newPage();
-    await page.goto(host + "/#/login");
+    await page.goto(host);
 
     await page.getByRole("link", { name: "Sign in" }).click();
 
     await page.getByRole("textbox", { name: "Username" }).fill(username);
     await page.getByRole("textbox", { name: "Password" }).fill(PASSWORD);
     await page.getByRole("button", { name: "Sign in" }).click();
-
-    // 😤For reasons web is staying on an infinite loading page after login, so we reload the page
-    // Super annoying to have to wait...
-    await page.waitForTimeout(2000);
-    await page.reload();
 
     await expect(
       page.getByRole("heading", { name: `Welcome ${username}` }),
