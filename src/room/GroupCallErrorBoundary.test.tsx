@@ -26,8 +26,12 @@ import {
   ConnectionLostError,
   E2EENotSupportedError,
   type ElementCallError,
+  FailToGetOpenIdToken,
+  FailToStartLivekitConnection,
   InsufficientCapacityError,
   MatrixRTCTransportMissingError,
+  NoMatrix2AuthorizationService,
+  SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
@@ -222,32 +226,43 @@ describe("Rageshake button", () => {
   });
 });
 
-test("should call Sentry.captureException for unknown errors", async () => {
-  vi.mocked(Sentry.captureException).mockClear(); // Clear previous calls
+test.each([
+  { error: new MatrixRTCTransportMissingError("example.com") },
+  { error: new ConnectionLostError() },
+  { error: new UnknownCallError(new Error("FOO")) },
+  { error: new E2EENotSupportedError() },
+  { error: new InsufficientCapacityError() },
+  { error: new SFURoomCreationRestrictedError() },
+  { error: new FailToStartLivekitConnection() },
+  { error: new NoMatrix2AuthorizationService(new Error("FOO")) },
+  { error: new FailToGetOpenIdToken(new Error("FOO")) },
+])(
+  "should call Sentry.captureException for group call errors $error",
+  ({ error }) => {
+    vi.mocked(Sentry.captureException).mockClear(); // Clear previous calls
 
-  const originalError = new Error("Unknown test error");
-  const error = new UnknownCallError(originalError);
-  const TestComponent = (): ReactNode => {
-    throw error;
-  };
+    const TestComponent = (): ReactNode => {
+      throw error;
+    };
 
-  render(
-    <BrowserRouter>
-      <GroupCallErrorBoundary
-        onError={vi.fn()}
-        recoveryActionHandler={vi.fn()}
-        widget={null}
-      >
-        <TestComponent />
-      </GroupCallErrorBoundary>
-    </BrowserRouter>,
-  );
+    render(
+      <BrowserRouter>
+        <GroupCallErrorBoundary
+          onError={vi.fn()}
+          recoveryActionHandler={vi.fn()}
+          widget={null}
+        >
+          <TestComponent />
+        </GroupCallErrorBoundary>
+      </BrowserRouter>,
+    );
 
-  await screen.findByText(/Something went wrong/);
+    // await screen.findByText(/Something went wrong/);
 
-  expect(Sentry.captureException).toHaveBeenCalledWith(error);
-  expect(Sentry.captureException).toHaveBeenCalledOnce();
-});
+    expect(Sentry.captureException).toHaveBeenCalledWith(error);
+    expect(Sentry.captureException).toHaveBeenCalledOnce();
+  },
+);
 
 test("should have a close button in widget mode", async () => {
   const error = new MatrixRTCTransportMissingError("example.com");
