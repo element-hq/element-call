@@ -16,8 +16,6 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
     "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
   );
 
-  test.slow(); // We are registering multiple users here, give it more time
-
   const valere = await addUser("Valere", HOST1);
   const timo = await addUser("Timo", HOST1);
   const robin = await addUser("Robin", HOST1);

@@ -16,8 +16,6 @@ widgetTest("Put call in PIP", async ({ addUser, browserName }) => {
     "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
   );
 
-  test.slow();
-
   const valere = await addUser("Valere", HOST1);
   const timo = await addUser("Timo", HOST1);
 
