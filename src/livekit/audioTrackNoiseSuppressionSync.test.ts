@@ -1,5 +1,35 @@
+/*
+Copyright 2026 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
+import {
+  __setEnabledSpy as mockSetEnabled,
+  __setSuppressionLevelSpy as mockSetSuppressionLevel,
+  __destroySpy as mockDestroy,
+} from "deepfilternet3-noise-filter";
+
+import { ObservableScope } from "../state/ObservableScope";
+import type { LocalAudioTrack } from "livekit-client";
+import type { Behavior } from "../state/Behavior";
+import type { Setting } from "../settings/settings";
+
+type AudioTrackNoiseSuppressionSync = (
+  scope: ObservableScope,
+  audioTrack$: Behavior<LocalAudioTrack | null>,
+) => void;
+
+type DeepFilterNoiseFilterProcessorOptions = Record<string, unknown>;
+
+type DeepFilterNoiseFilterProcessorContext = {
+  setEnabled?: unknown;
+  setSuppressionLevel?: unknown;
+  destroy?: unknown;
+};
 
 const localStorageMock = {
   getItem: vi.fn(() => null),
@@ -19,7 +49,10 @@ vi.mock("deepfilternet3-noise-filter", () => {
   const setSuppressionLevel = vi.fn();
   const destroy = vi.fn();
 
-  function DeepFilterNoiseFilterProcessor(this: any, options: any) {
+  function DeepFilterNoiseFilterProcessor(
+    this: DeepFilterNoiseFilterProcessorContext,
+    options: DeepFilterNoiseFilterProcessorOptions,
+  ): void {
     Object.assign(this, options);
     this.setEnabled = setEnabled;
     this.setSuppressionLevel = setSuppressionLevel;
@@ -37,26 +70,17 @@ vi.mock("deepfilternet3-noise-filter", () => {
   };
 });
 
-import { ObservableScope } from "../state/ObservableScope";
-import type { LocalAudioTrack } from "livekit-client";
-import type { Behavior } from "../state/Behavior";
-import {
-  __setEnabledSpy as mockSetEnabled,
-  __setSuppressionLevelSpy as mockSetSuppressionLevel,
-  __destroySpy as mockDestroy,
-} from "deepfilternet3-noise-filter";
-
-let audioTrackNoiseSuppressionSync: typeof import("./audioTrackNoiseSuppressionSync").audioTrackNoiseSuppressionSync;
-let noiseSuppressionEnabled: typeof import("../settings/settings").noiseSuppressionEnabled;
-let noiseSuppressionLevel: typeof import("../settings/settings").noiseSuppressionLevel;
+let audioTrackNoiseSuppressionSync: AudioTrackNoiseSuppressionSync;
+let noiseSuppressionEnabled: Setting<boolean>;
+let noiseSuppressionLevel: Setting<number>;
 
 class MockLocalAudioTrack {
   private processor: unknown = undefined;
-  public readonly setProcessor = vi.fn(async (processor: unknown) => {
+  public readonly setProcessor = vi.fn((processor: unknown) => {
     this.processor = processor;
   });
   public readonly getProcessor = vi.fn(() => this.processor);
-  public readonly stopProcessor = vi.fn(async () => {
+  public readonly stopProcessor = vi.fn(() => {
     this.processor = undefined;
   });
 }
@@ -66,7 +90,7 @@ describe("audioTrackNoiseSuppressionSync", () => {
   let audioTrack$: Behavior<LocalAudioTrack | null>;
   let track: MockLocalAudioTrack;
 
-  beforeEach(async () => {
+  beforeEach(async (): Promise<void> => {
     mockSetEnabled.mockClear();
     mockSetSuppressionLevel.mockClear();
     mockDestroy.mockClear();
@@ -84,12 +108,12 @@ describe("audioTrackNoiseSuppressionSync", () => {
     scope = new ObservableScope();
   });
 
-  afterEach(async () => {
+  afterEach(async (): Promise<void> => {
     scope.end();
     await Promise.resolve();
   });
 
-  it("sets the processor on the audio track and updates the processor settings", async () => {
+  it("sets the processor on the audio track and updates the processor settings", async (): Promise<void> => {
     audioTrackNoiseSuppressionSync(scope, audioTrack$);
     await Promise.resolve();
 
@@ -99,7 +123,7 @@ describe("audioTrackNoiseSuppressionSync", () => {
     expect(mockSetSuppressionLevel).toHaveBeenCalledWith(75);
   });
 
-  it("reapplies processor when audio track becomes available", async () => {
+  it("reapplies processor when audio track becomes available", async (): Promise<void> => {
     audioTrack$ = new BehaviorSubject<LocalAudioTrack | null>(null);
     audioTrackNoiseSuppressionSync(scope, audioTrack$);
     await Promise.resolve();
@@ -112,7 +136,7 @@ describe("audioTrackNoiseSuppressionSync", () => {
     expect(track.setProcessor).toHaveBeenCalledTimes(1);
   });
 
-  it("destroys the transformer when the scope ends", async () => {
+  it("destroys the transformer when the scope ends", async (): Promise<void> => {
     audioTrackNoiseSuppressionSync(scope, audioTrack$);
     await Promise.resolve();
 

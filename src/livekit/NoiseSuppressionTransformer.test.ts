@@ -1,11 +1,37 @@
+/*
+Copyright 2026 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  DeepFilterNoiseFilterProcessor,
+  __setEnabledSpy as mockSetEnabled,
+  __setSuppressionLevelSpy as mockSetSuppressionLevel,
+  __destroySpy as mockDestroy,
+} from "deepfilternet3-noise-filter";
+
+import { NoiseSuppressionTransformer } from "./NoiseSuppressionTransformer";
+
+type DeepFilterNoiseFilterProcessorOptions = Record<string, unknown>;
+
+type DeepFilterNoiseFilterProcessorContext = {
+  setEnabled?: unknown;
+  setSuppressionLevel?: unknown;
+  destroy?: unknown;
+};
 
 vi.mock("deepfilternet3-noise-filter", () => {
   const setEnabled = vi.fn();
   const setSuppressionLevel = vi.fn();
   const destroy = vi.fn();
 
-  function DeepFilterNoiseFilterProcessor(this: any, options: any) {
+  function DeepFilterNoiseFilterProcessor(
+    this: DeepFilterNoiseFilterProcessorContext,
+    options: DeepFilterNoiseFilterProcessorOptions,
+  ): void {
     Object.assign(this, options);
     this.setEnabled = setEnabled;
     this.setSuppressionLevel = setSuppressionLevel;
@@ -23,27 +49,19 @@ vi.mock("deepfilternet3-noise-filter", () => {
   };
 });
 
-import { NoiseSuppressionTransformer } from "./NoiseSuppressionTransformer";
-import {
-  DeepFilterNoiseFilterProcessor,
-  __setEnabledSpy as mockSetEnabled,
-  __setSuppressionLevelSpy as mockSetSuppressionLevel,
-  __destroySpy as mockDestroy,
-} from "deepfilternet3-noise-filter";
-
 const mockDeepFilterNoiseFilterProcessor = vi.mocked(
   DeepFilterNoiseFilterProcessor,
 );
 
 describe("NoiseSuppressionTransformer", () => {
-  beforeEach(() => {
+  beforeEach((): void => {
     mockSetEnabled.mockClear();
     mockSetSuppressionLevel.mockClear();
     mockDestroy.mockClear();
     mockDeepFilterNoiseFilterProcessor.mockClear();
   });
 
-  it("initializes the underlying processor with the expected configuration", () => {
+  it("initializes the underlying processor with the expected configuration", (): void => {
     const transformer = new NoiseSuppressionTransformer();
 
     transformer.initialize(0.5, false);
@@ -63,7 +81,7 @@ describe("NoiseSuppressionTransformer", () => {
     expect(transformer.getProcessor()).not.toBeNull();
   });
 
-  it("does not initialize twice", () => {
+  it("does not initialize twice", (): void => {
     const transformer = new NoiseSuppressionTransformer();
 
     transformer.initialize(0.3, true);
@@ -73,7 +91,7 @@ describe("NoiseSuppressionTransformer", () => {
     expect(transformer.getProcessor()).not.toBeNull();
   });
 
-  it("forwards suppression level changes and clamps out-of-range values", () => {
+  it("forwards suppression level changes and clamps out-of-range values", (): void => {
     const transformer = new NoiseSuppressionTransformer();
     transformer.initialize(0.2, true);
 
@@ -84,7 +102,7 @@ describe("NoiseSuppressionTransformer", () => {
     expect(mockSetSuppressionLevel).toHaveBeenNthCalledWith(2, 0);
   });
 
-  it("forwards enabled state changes to the underlying processor", () => {
+  it("forwards enabled state changes to the underlying processor", (): void => {
     const transformer = new NoiseSuppressionTransformer();
     transformer.initialize(0.4, true);
 
@@ -95,7 +113,7 @@ describe("NoiseSuppressionTransformer", () => {
     expect(mockSetEnabled).toHaveBeenNthCalledWith(2, true);
   });
 
-  it("destroys the processor and resets internal state", () => {
+  it("destroys the processor and resets internal state", (): void => {
     const transformer = new NoiseSuppressionTransformer();
     transformer.initialize(0.6, true);
 
