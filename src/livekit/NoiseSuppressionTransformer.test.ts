@@ -14,7 +14,9 @@ vi.mock("deepfilternet3-noise-filter", () => {
 
   return {
     __esModule: true,
-    DeepFilterNoiseFilterProcessor: vi.fn().mockImplementation(DeepFilterNoiseFilterProcessor),
+    DeepFilterNoiseFilterProcessor: vi
+      .fn()
+      .mockImplementation(DeepFilterNoiseFilterProcessor),
     __setEnabledSpy: setEnabled,
     __setSuppressionLevelSpy: setSuppressionLevel,
     __destroySpy: destroy,
@@ -29,7 +31,9 @@ import {
   __destroySpy as mockDestroy,
 } from "deepfilternet3-noise-filter";
 
-const mockDeepFilterNoiseFilterProcessor = vi.mocked(DeepFilterNoiseFilterProcessor);
+const mockDeepFilterNoiseFilterProcessor = vi.mocked(
+  DeepFilterNoiseFilterProcessor,
+);
 
 describe("NoiseSuppressionTransformer", () => {
   beforeEach(() => {

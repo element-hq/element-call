@@ -28,7 +28,9 @@ vi.mock("deepfilternet3-noise-filter", () => {
 
   return {
     __esModule: true,
-    DeepFilterNoiseFilterProcessor: vi.fn().mockImplementation(DeepFilterNoiseFilterProcessor),
+    DeepFilterNoiseFilterProcessor: vi
+      .fn()
+      .mockImplementation(DeepFilterNoiseFilterProcessor),
     __setEnabledSpy: setEnabled,
     __setSuppressionLevelSpy: setSuppressionLevel,
     __destroySpy: destroy,
@@ -69,7 +71,9 @@ describe("audioTrackNoiseSuppressionSync", () => {
     mockSetSuppressionLevel.mockClear();
     mockDestroy.mockClear();
     track = new MockLocalAudioTrack();
-    audioTrack$ = new BehaviorSubject<LocalAudioTrack | null>(track as unknown as LocalAudioTrack);
+    audioTrack$ = new BehaviorSubject<LocalAudioTrack | null>(
+      track as unknown as LocalAudioTrack,
+    );
     const settingsModule = await import("../settings/settings");
     noiseSuppressionEnabled = settingsModule.noiseSuppressionEnabled;
     noiseSuppressionLevel = settingsModule.noiseSuppressionLevel;
