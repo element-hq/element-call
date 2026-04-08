@@ -25,7 +25,7 @@ export abstract class TranslatedError extends Error {
     messageKey: ParseKeys<DefaultNamespace, TOptions>,
     translationFn: TFunction<DefaultNamespace>,
   ) {
-    super(translationFn(messageKey, { lng: "en" } as TOptions));
+    super(translationFn(messageKey, { lng: "en" }));
     this.translatedMessage = translationFn(messageKey);
   }
 }

@@ -235,9 +235,11 @@ export class TestHelpers {
   ): Promise<void> {
     await page.getByRole("button", { name: "Video call" }).click();
     await page.getByRole("menuitem", { name: "Element Call" }).click();
+
     await TestHelpers.setEmbeddedElementCallRtcMode(page, mode);
     await page.getByRole("button", { name: "Close lobby" }).click();
   }
+
   /**
    * Goes to the settings to set the RTC mode.
    * then closes the settings modal.
