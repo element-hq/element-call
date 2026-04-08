@@ -638,7 +638,13 @@ export const createLocalMembership$ = ({
   ) {
     toggleScreenSharing = (): void => {
       const screenshareSettings: ScreenShareCaptureOptions = {
-        audio: true,
+        // Screen share audio shouldn't have any filtering
+        audio: {
+          autoGainControl: false,
+          echoCancellation: false,
+          noiseSuppression: false,
+          voiceIsolation: false,
+        },
         selfBrowserSurface: "include",
         surfaceSwitching: "include",
         systemAudio: "include",
