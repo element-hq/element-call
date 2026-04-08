@@ -19,7 +19,7 @@ export default defineConfig((configEnv) =>
           reporter: ["html", "json"],
           include: ["src/"],
           exclude: [
-            "src/**/*.{d,test}.{ts,tsx}",
+            "src/**/*.{d,test,stories}.{ts,tsx}",
             "src/utils/test.ts",
             "src/utils/test-viewmodel.ts",
             "src/utils/test-fixtures.ts",

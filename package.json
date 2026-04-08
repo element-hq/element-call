@@ -33,7 +33,9 @@
     "test:playwright": "playwright test",
     "test:playwright:open": "yarn test:playwright --ui",
     "links:enable": "mv .links.disabled.yaml .links.yaml & touch .links.yaml",
-    "links:disable": "mv .links.yaml .links.disabled.yaml"
+    "links:disable": "mv .links.yaml .links.disabled.yaml",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "devDependencies": {
     "@babel/core": "^7.16.5",
@@ -57,6 +59,8 @@
     "@react-spring/web": "^10.0.0",
     "@sentry/react": "^8.0.0",
     "@sentry/vite-plugin": "^3.0.0",
+    "@storybook/addon-docs": "^10.3.3",
+    "@storybook/react-vite": "^10.3.3",
     "@stylistic/eslint-plugin": "^3.0.0",
     "@testing-library/dom": "^10.1.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -94,6 +98,7 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-rxjs": "^5.0.3",
+    "eslint-plugin-storybook": "^10.3.3",
     "eslint-plugin-unicorn": "^56.0.0",
     "fetch-mock": "11.1.5",
     "global-jsdom": "^26.0.0",
@@ -123,6 +128,7 @@
     "react-use-measure": "^2.1.1",
     "rxjs": "^7.8.1",
     "sass": "^1.42.1",
+    "storybook": "^10.3.3",
     "typescript": "^5.8.3",
     "typescript-eslint-language-service": "^5.0.5",
     "unique-names-generator": "^4.6.0",
