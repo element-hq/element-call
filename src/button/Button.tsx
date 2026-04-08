@@ -16,10 +16,12 @@ import {
   VideoCallOffSolidIcon,
   EndCallIcon,
   ShareScreenSolidIcon,
-  SettingsSolidIcon,
+  OverflowHorizontalIcon,
+  OverflowVerticalIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
+import { platform } from "../Platform";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
@@ -134,8 +136,10 @@ export const SettingsButton: FC<SettingsButtonProps> = (props) => {
     <Tooltip label={t("common.settings")}>
       <CpdButton
         iconOnly
-        Icon={SettingsSolidIcon}
-        kind="secondary"
+        Icon={
+          platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon
+        }
+        kind="tertiary"
         {...props}
       />
     </Tooltip>
