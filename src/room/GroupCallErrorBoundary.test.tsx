@@ -16,6 +16,7 @@ import {
 } from "react";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
+import * as Sentry from "@sentry/react";
 
 import {
   type CallErrorRecoveryAction,
@@ -25,12 +26,25 @@ import {
   ConnectionLostError,
   E2EENotSupportedError,
   type ElementCallError,
+  FailToGetOpenIdToken,
+  FailToStartLivekitConnection,
   InsufficientCapacityError,
   MatrixRTCTransportMissingError,
+  NoMatrix2AuthorizationService,
+  SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
 import { ElementWidgetActions, type WidgetHelpers } from "../widget.ts";
+
+// Mock Sentry before importing the component
+vi.mock("@sentry/react", async () => {
+  const actual = await vi.importActual("@sentry/react");
+  return {
+    ...actual,
+    captureException: vi.fn(),
+  };
+});
 
 test.each([
   {
@@ -211,6 +225,44 @@ describe("Rageshake button", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+test.each([
+  { error: new MatrixRTCTransportMissingError("example.com") },
+  { error: new ConnectionLostError() },
+  { error: new UnknownCallError(new Error("FOO")) },
+  { error: new E2EENotSupportedError() },
+  { error: new InsufficientCapacityError() },
+  { error: new SFURoomCreationRestrictedError() },
+  { error: new FailToStartLivekitConnection() },
+  { error: new NoMatrix2AuthorizationService(new Error("FOO")) },
+  { error: new FailToGetOpenIdToken(new Error("FOO")) },
+])(
+  "should call Sentry.captureException for group call errors $error",
+  ({ error }) => {
+    vi.mocked(Sentry.captureException).mockClear(); // Clear previous calls
+
+    const TestComponent = (): ReactNode => {
+      throw error;
+    };
+
+    render(
+      <BrowserRouter>
+        <GroupCallErrorBoundary
+          onError={vi.fn()}
+          recoveryActionHandler={vi.fn()}
+          widget={null}
+        >
+          <TestComponent />
+        </GroupCallErrorBoundary>
+      </BrowserRouter>,
+    );
+
+    // await screen.findByText(/Something went wrong/);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(error);
+    expect(Sentry.captureException).toHaveBeenCalledOnce();
+  },
+);
 
 test("should have a close button in widget mode", async () => {
   const error = new MatrixRTCTransportMissingError("example.com");
