@@ -228,6 +228,7 @@ export const LobbyView: FC<Props> = ({
         </div>
         <div className={inCallStyles.footer}>
           {recentsButtonInFooter && recentsButton}
+          <SettingsButton onClick={openSettings} />
           <div className={inCallStyles.buttons}>
             <MicButton
               enabled={audioEnabled}
@@ -239,7 +240,6 @@ export const LobbyView: FC<Props> = ({
               onClick={toggleVideo ?? undefined}
               disabled={toggleVideo === null}
             />
-            <SettingsButton onClick={openSettings} />
             {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
           </div>
         </div>

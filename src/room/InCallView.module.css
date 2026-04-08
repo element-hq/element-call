@@ -36,13 +36,11 @@ Please see LICENSE in the repository root for full details.
   inset-block-end: 0;
   z-index: var(--call-view-header-footer-layer);
   display: grid;
-  grid-template-columns:
-    minmax(0, var(--inline-content-inset))
-    1fr auto 1fr minmax(0, var(--inline-content-inset));
-  grid-template-areas: ". logo buttons layout .";
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-areas: ". buttons layout";
   align-items: center;
   gap: var(--cpd-space-3x);
-  padding-block: var(--cpd-space-10x);
+  padding: var(--cpd-space-10x) var(--cpd-space-6x);
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
@@ -73,8 +71,13 @@ Please see LICENSE in the repository root for full details.
   pointer-events: initial;
 }
 
+.settingsLogoContainer {
+  display: flex;
+  gap: var(--cpd-space-4x);
+  flex-direction: row;
+}
+
 .logo {
-  grid-area: logo;
   justify-self: start;
   display: flex;
   align-items: center;
@@ -94,12 +97,23 @@ Please see LICENSE in the repository root for full details.
   justify-self: end;
 }
 
+/*First hide the logo*/
 @media (max-width: 660px) {
+  .logo {
+    display: none;
+  }
+}
+
+/*
+With the logo hidden >500px is enough space to show overflow, buttons, layout.
+Once we exceed 500 we hide everything except the buttons.
+*/
+@media (max-width: 500px) {
   .footer {
-    grid-template-areas: ". buttons buttons buttons .";
+    grid-template-areas: "buttons buttons buttons";
   }
 
-  .logo {
+  .settingsLogoContainer {
     display: none;
   }
 
