@@ -53,7 +53,8 @@ vi.mock("deepfilternet3-noise-filter", () => {
   };
 });
 
-const mockDeepFilterNoiseFilterProcessor = DeepFilterNoiseFilterProcessor as unknown as NoiseFilterProcessorMock;
+const mockDeepFilterNoiseFilterProcessor =
+  DeepFilterNoiseFilterProcessor as unknown as NoiseFilterProcessorMock;
 
 describe("NoiseSuppressionTransformer", () => {
   beforeEach((): void => {
@@ -100,8 +101,12 @@ describe("NoiseSuppressionTransformer", () => {
     transformer.setSuppressionLevel(1.5);
     transformer.setSuppressionLevel(-0.2);
 
-    expect(mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel).toHaveBeenNthCalledWith(1, 100);
-    expect(mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel).toHaveBeenNthCalledWith(2, 0);
+    expect(
+      mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel,
+    ).toHaveBeenNthCalledWith(1, 100);
+    expect(
+      mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel,
+    ).toHaveBeenNthCalledWith(2, 0);
   });
 
   it("forwards enabled state changes to the underlying processor", (): void => {
@@ -111,8 +116,12 @@ describe("NoiseSuppressionTransformer", () => {
     transformer.setEnabled(false);
     transformer.setEnabled(true);
 
-    expect(mockDeepFilterNoiseFilterProcessor.mockSetEnabled).toHaveBeenNthCalledWith(1, false);
-    expect(mockDeepFilterNoiseFilterProcessor.mockSetEnabled).toHaveBeenNthCalledWith(2, true);
+    expect(
+      mockDeepFilterNoiseFilterProcessor.mockSetEnabled,
+    ).toHaveBeenNthCalledWith(1, false);
+    expect(
+      mockDeepFilterNoiseFilterProcessor.mockSetEnabled,
+    ).toHaveBeenNthCalledWith(2, true);
   });
 
   it("destroys the processor and resets internal state", (): void => {
@@ -121,7 +130,9 @@ describe("NoiseSuppressionTransformer", () => {
 
     transformer.destroy();
 
-    expect(mockDeepFilterNoiseFilterProcessor.mockDestroy).toHaveBeenCalledTimes(1);
+    expect(
+      mockDeepFilterNoiseFilterProcessor.mockDestroy,
+    ).toHaveBeenCalledTimes(1);
     expect(transformer.getProcessor()).toBeNull();
   });
 });

@@ -75,7 +75,8 @@ vi.mock("deepfilternet3-noise-filter", () => {
   };
 });
 
-const mockDeepFilterNoiseFilterProcessor = DeepFilterNoiseFilterProcessor as unknown as NoiseFilterProcessorMock;
+const mockDeepFilterNoiseFilterProcessor =
+  DeepFilterNoiseFilterProcessor as unknown as NoiseFilterProcessorMock;
 
 let audioTrackNoiseSuppressionSync: AudioTrackNoiseSuppressionSync;
 let noiseSuppressionEnabled: Setting<boolean>;
@@ -126,8 +127,12 @@ describe("audioTrackNoiseSuppressionSync", () => {
 
     expect(track.setProcessor).toHaveBeenCalledTimes(1);
     expect(track.getProcessor()).not.toBeUndefined();
-    expect(mockDeepFilterNoiseFilterProcessor.mockSetEnabled).toHaveBeenCalledWith(false);
-    expect(mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel).toHaveBeenCalledWith(75);
+    expect(
+      mockDeepFilterNoiseFilterProcessor.mockSetEnabled,
+    ).toHaveBeenCalledWith(false);
+    expect(
+      mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel,
+    ).toHaveBeenCalledWith(75);
   });
 
   it("reapplies processor when audio track becomes available", async (): Promise<void> => {
@@ -150,6 +155,8 @@ describe("audioTrackNoiseSuppressionSync", () => {
     scope.end();
     await Promise.resolve();
 
-    expect(mockDeepFilterNoiseFilterProcessor.mockDestroy).toHaveBeenCalledTimes(1);
+    expect(
+      mockDeepFilterNoiseFilterProcessor.mockDestroy,
+    ).toHaveBeenCalledTimes(1);
   });
 });

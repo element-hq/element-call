@@ -159,23 +159,23 @@ vi.mock("../MediaDevicesContext", () => ({
   } => ({
     audioInput: {
       selectedId: "mic1",
-      available$: new BehaviorSubject<readonly { deviceId: string; label: string }[]>([
-        { deviceId: "mic1", label: "Microphone 1" },
-      ] as const),
+      available$: new BehaviorSubject<
+        readonly { deviceId: string; label: string }[]
+      >([{ deviceId: "mic1", label: "Microphone 1" }] as const),
       selected$: new BehaviorSubject({ id: "mic1", label: "Microphone 1" }),
     },
     audioOutput: {
       selectedId: "speaker1",
-      available$: new BehaviorSubject<readonly { deviceId: string; label: string }[]>([
-        { deviceId: "speaker1", label: "Speaker 1" },
-      ] as const),
+      available$: new BehaviorSubject<
+        readonly { deviceId: string; label: string }[]
+      >([{ deviceId: "speaker1", label: "Speaker 1" }] as const),
       selected$: new BehaviorSubject({ id: "speaker1", label: "Speaker 1" }),
     },
     videoInput: {
       selectedId: "cam1",
-      available$: new BehaviorSubject<readonly { deviceId: string; label: string }[]>([
-        { deviceId: "cam1", label: "Camera 1" },
-      ] as const),
+      available$: new BehaviorSubject<
+        readonly { deviceId: string; label: string }[]
+      >([{ deviceId: "cam1", label: "Camera 1" }] as const),
       selected$: new BehaviorSubject({ id: "cam1", label: "Camera 1" }),
     },
     requestDeviceNames: vi.fn(),
