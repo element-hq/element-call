@@ -120,7 +120,6 @@ import {
   type LocalMatrixLivekitMember,
   type RemoteMatrixLivekitMember,
   type MatrixLivekitMember,
-  areLivekitTransportsEqual,
 } from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
   type AutoLeaveReason,
@@ -518,26 +517,6 @@ export function createCallViewModel$(
     ),
   );
 
-  // Observe the transport we should publish
-  const publishingTransport$ = localTransport$.pipe(
-    // observe the active$ transport
-    switchMap((t) => {
-      return combineLatest([t.active$, t.advertised$]).pipe(
-        map(([active, advertised]) => {
-          if (active?.transport) {
-            // use the active one (oldest member transport)
-            return active.transport;
-          } else {
-            // There is no active transport, we might just be the first member in the call
-            // so use the advertised to start
-            return advertised;
-          }
-        }),
-      );
-    }),
-    distinctUntilChanged(areLivekitTransportsEqual),
-  );
-
   const localMembership = createLocalMembership$({
     scope,
     homeserverConnected: createHomeserverConnected$(
@@ -567,7 +546,7 @@ export function createCallViewModel$(
     },
     connectionManager,
     matrixRTCSession,
-    localTransport$: scope.behavior(publishingTransport$),
+    localTransport$,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 

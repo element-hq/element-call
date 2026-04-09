@@ -62,6 +62,8 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { and$ } from "../../../utils/observable.ts";
+import { type LocalTransport } from "./LocalTransport.ts";
+import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -127,7 +129,7 @@ interface Props {
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (transport: LivekitTransportConfig) => void;
   homeserverConnected: HomeserverConnected;
-  localTransport$: Behavior<LivekitTransportConfig | null>;
+  localTransport$: Behavior<LocalTransport>;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
@@ -160,7 +162,7 @@ interface Props {
 export const createLocalMembership$ = ({
   scope,
   connectionManager,
-  localTransport$: localTransportCanThrow$,
+  localTransport$,
   homeserverConnected,
   createPublisherFactory,
   joinMatrixRTC,
@@ -205,23 +207,34 @@ export const createLocalMembership$ = ({
   const logger = parentLogger.getChild("[LocalMembership]");
   logger.debug(`Creating local membership..`);
 
+  // We consider error on the transport as fatal.
+  // Whether it is the active transport or the preferred transport.
+  const handleTransportError = (e: unknown): Observable<null> => {
+    let error: ElementCallError;
+    if (e instanceof ElementCallError) {
+      error = e;
+    } else {
+      error = new UnknownCallError(
+        e instanceof Error ? e : new Error("Unknown error from localTransport"),
+      );
+    }
+    setTransportError(error);
+    return of(null);
+  };
+
+  // This is the transport that we will advertise in our membership.
+  const advertisedTransport$ = localTransport$.pipe(
+    switchMap((lt) => lt.advertised$),
+    catchError(handleTransportError),
+    distinctUntilChanged(areLivekitTransportsEqual),
+  );
+
   // Unwrap the local transport and set the state of the LocalMembership to error in case the transport is an error.
-  const localTransport$ = scope.behavior(
-    localTransportCanThrow$.pipe(
-      catchError((e: unknown) => {
-        let error: ElementCallError;
-        if (e instanceof ElementCallError) {
-          error = e;
-        } else {
-          error = new UnknownCallError(
-            e instanceof Error
-              ? e
-              : new Error("Unknown error from localTransport"),
-          );
-        }
-        setTransportError(error);
-        return of(null);
-      }),
+  const activeTransport$ = scope.behavior(
+    localTransport$.pipe(
+      switchMap((lt) => lt.active$.pipe(map((t) => t?.transport ?? null))),
+      catchError(handleTransportError),
+      distinctUntilChanged(areLivekitTransportsEqual),
     ),
   );
 
@@ -229,7 +242,7 @@ export const createLocalMembership$ = ({
   const localConnection$ = scope.behavior(
     combineLatest([
       connectionManager.connectionManagerData$,
-      localTransport$,
+      activeTransport$,
     ]).pipe(
       map(([{ value: connectionData }, localTransport]) => {
         if (localTransport === null) {
@@ -398,7 +411,7 @@ export const createLocalMembership$ = ({
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
     combineLatest([
       localConnectionState$,
-      localTransport$,
+      activeTransport$,
       joinAndPublishRequested$,
       from(trackStartRequested.promise).pipe(
         map(() => true),
@@ -537,9 +550,11 @@ export const createLocalMembership$ = ({
       });
   });
 
-  // Keep matrix rtc session in sync with localTransport$, connectRequested$
+  // Keep matrix rtc session in sync with advertisedTransport$, connectRequested$
   scope.reconcile(
-    scope.behavior(combineLatest([localTransport$, joinAndPublishRequested$])),
+    scope.behavior(
+      combineLatest([advertisedTransport$, joinAndPublishRequested$]),
+    ),
     async ([transport, shouldConnect]) => {
       if (!transport) return;
       // if shouldConnect=false we will do the disconnect as the cleanup from the previous reconcile iteration.
