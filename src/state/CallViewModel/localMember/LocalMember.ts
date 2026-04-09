@@ -638,10 +638,12 @@ export const createLocalMembership$ = ({
   ) {
     toggleScreenSharing = (): void => {
       const screenshareSettings: ScreenShareCaptureOptions = {
-        // Screen share audio shouldn't have any filtering
+        // Screen share audio shouldn't have any filtering.
+        // "echoCancellation" is purposely excluded, as setting it to
+        // false causes the screen share audio track to include
+        // an echo of the incoming participant's voice
         audio: {
           autoGainControl: false,
-          echoCancellation: false,
           noiseSuppression: false,
           voiceIsolation: false,
         },
