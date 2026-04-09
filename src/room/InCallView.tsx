@@ -632,8 +632,8 @@ export const InCallView: FC<InCallViewProps> = ({
     return (
       <Tooltip label={label}>
         <IconButton
+          key="audio_output_switcher"
           onClick={(e) => {
-            e.preventDefault();
             audioOutputSwitcher.switch();
           }}
         >

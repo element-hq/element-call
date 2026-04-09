@@ -34,6 +34,7 @@ import {
   MockRTCSession,
   testScope,
 } from "./test";
+import { MediaDevices } from "../state/MediaDevices";
 import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "../state/Behavior";
@@ -63,6 +64,7 @@ export function getBasicRTCSession(
       getDeviceId: () => localRtcMember.deviceId,
       getSyncState: () => SyncState.Syncing,
       getDomain: () => null,
+      getAccessToken: () => "fake-token",
       sendEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
       redactEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
       decryptEventIfNeeded: vitest.fn().mockResolvedValue(undefined),
@@ -131,6 +133,7 @@ export function getBasicCallViewModelEnvironment(
   members: RoomMember[],
   initialRtcMemberships: CallMembership[] = [localRtcMember, aliceRtcMember],
   callViewModelOptions: Partial<CallViewModelOptions> = {},
+  mediaDevicesOverride?: MediaDevices,
 ): {
   vm: CallViewModel;
   rtcMemberships$: BehaviorSubject<CallMembership[]>;
@@ -151,7 +154,7 @@ export function getBasicCallViewModelEnvironment(
     testScope(),
     rtcSession.asMockedSession(),
     matrixRoom,
-    mockMediaDevices({}),
+    mediaDevicesOverride ?? mockMediaDevices({}),
     mockMuteStates(),
     {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
