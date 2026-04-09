@@ -18,11 +18,11 @@ import styles from "./LayoutToggle.module.css";
 
 export type Layout = "spotlight" | "grid";
 
-interface Props {
+type Props = {
   layout: Layout;
   setLayout: (layout: Layout) => void;
   className?: string;
-}
+};
 
 export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
   const { t } = useTranslation();
