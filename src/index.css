@@ -43,6 +43,7 @@ layer(compound);
     max(var(--cpd-space-4x), calc((100vw - 900px) / 3))
   );
   --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
+  --big-drop-shadow: 0px 0px 24px 0px #1b1d221a;
   --subtle-drop-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
   --background-gradient: url("graphics/backgroundGradient.svg");
 
