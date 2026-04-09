@@ -34,7 +34,7 @@ import {
   MockRTCSession,
   testScope,
 } from "./test";
-import { MediaDevices } from "../state/MediaDevices";
+import { type MediaDevices } from "../state/MediaDevices";
 import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "../state/Behavior";
