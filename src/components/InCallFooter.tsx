@@ -93,7 +93,7 @@ export const InCallFooter: FC<InCallFooterProps> = ({
       key="audio"
       enabled={audioEnabled}
       onClick={toggleAudio ?? undefined}
-      disabled={toggleAudio === null}
+      disabled={toggleAudio === undefined}
       data-testid="incall_mute"
     />,
     <VideoButton
@@ -101,7 +101,7 @@ export const InCallFooter: FC<InCallFooterProps> = ({
       key="video"
       enabled={videoEnabled}
       onClick={toggleVideo ?? undefined}
-      disabled={toggleVideo === null}
+      disabled={toggleVideo === undefined}
       data-testid="incall_videomute"
     />,
   );
@@ -137,6 +137,7 @@ export const InCallFooter: FC<InCallFooterProps> = ({
     return (
       <LoudspeakerButton
         size={buttonSize}
+        onClick={() => audioOutputSwitcher.switch()}
         isEarpieceTarget={audioOutputSwitcher.targetOutput === "earpiece"}
       />
     );
