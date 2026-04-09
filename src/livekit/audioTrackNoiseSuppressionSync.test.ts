@@ -7,11 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
-import {
-  __setEnabledSpy as mockSetEnabled,
-  __setSuppressionLevelSpy as mockSetSuppressionLevel,
-  __destroySpy as mockDestroy,
-} from "deepfilternet3-noise-filter";
+import { DeepFilterNoiseFilterProcessor } from "deepfilternet3-noise-filter";
 
 import { ObservableScope } from "../state/ObservableScope";
 import type { LocalAudioTrack } from "livekit-client";
@@ -31,6 +27,12 @@ type DeepFilterNoiseFilterProcessorContext = {
   destroy?: unknown;
 };
 
+type NoiseFilterProcessorMock = ReturnType<typeof vi.fn> & {
+  mockSetEnabled: ReturnType<typeof vi.fn>;
+  mockSetSuppressionLevel: ReturnType<typeof vi.fn>;
+  mockDestroy: ReturnType<typeof vi.fn>;
+};
+
 const localStorageMock = {
   getItem: vi.fn(() => null),
   setItem: vi.fn(() => {}),
@@ -45,30 +47,35 @@ Object.defineProperty(globalThis, "localStorage", {
 });
 
 vi.mock("deepfilternet3-noise-filter", () => {
-  const setEnabled = vi.fn();
-  const setSuppressionLevel = vi.fn();
-  const destroy = vi.fn();
+  const mockSetEnabled = vi.fn();
+  const mockSetSuppressionLevel = vi.fn();
+  const mockDestroy = vi.fn();
 
-  function DeepFilterNoiseFilterProcessor(
-    this: DeepFilterNoiseFilterProcessorContext,
-    options: DeepFilterNoiseFilterProcessorOptions,
-  ): void {
-    Object.assign(this, options);
-    this.setEnabled = setEnabled;
-    this.setSuppressionLevel = setSuppressionLevel;
-    this.destroy = destroy;
-  }
+  const mockDeepFilterNoiseFilterProcessor = vi
+    .fn()
+    .mockImplementation(function DeepFilterNoiseFilterProcessor(
+      this: DeepFilterNoiseFilterProcessorContext,
+      options: DeepFilterNoiseFilterProcessorOptions,
+    ): void {
+      Object.assign(this, options);
+      this.setEnabled = mockSetEnabled;
+      this.setSuppressionLevel = mockSetSuppressionLevel;
+      this.destroy = mockDestroy;
+    });
+
+  Object.assign(mockDeepFilterNoiseFilterProcessor, {
+    mockSetEnabled,
+    mockSetSuppressionLevel,
+    mockDestroy,
+  });
 
   return {
     __esModule: true,
-    DeepFilterNoiseFilterProcessor: vi
-      .fn()
-      .mockImplementation(DeepFilterNoiseFilterProcessor),
-    __setEnabledSpy: setEnabled,
-    __setSuppressionLevelSpy: setSuppressionLevel,
-    __destroySpy: destroy,
+    DeepFilterNoiseFilterProcessor: mockDeepFilterNoiseFilterProcessor,
   };
 });
+
+const mockDeepFilterNoiseFilterProcessor = DeepFilterNoiseFilterProcessor as unknown as NoiseFilterProcessorMock;
 
 let audioTrackNoiseSuppressionSync: AudioTrackNoiseSuppressionSync;
 let noiseSuppressionEnabled: Setting<boolean>;
@@ -87,13 +94,13 @@ class MockLocalAudioTrack {
 
 describe("audioTrackNoiseSuppressionSync", () => {
   let scope: ObservableScope;
-  let audioTrack$: Behavior<LocalAudioTrack | null>;
+  let audioTrack$: BehaviorSubject<LocalAudioTrack | null>;
   let track: MockLocalAudioTrack;
 
   beforeEach(async (): Promise<void> => {
-    mockSetEnabled.mockClear();
-    mockSetSuppressionLevel.mockClear();
-    mockDestroy.mockClear();
+    mockDeepFilterNoiseFilterProcessor.mockSetEnabled.mockClear();
+    mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel.mockClear();
+    mockDeepFilterNoiseFilterProcessor.mockDestroy.mockClear();
     track = new MockLocalAudioTrack();
     audioTrack$ = new BehaviorSubject<LocalAudioTrack | null>(
       track as unknown as LocalAudioTrack,
@@ -119,8 +126,8 @@ describe("audioTrackNoiseSuppressionSync", () => {
 
     expect(track.setProcessor).toHaveBeenCalledTimes(1);
     expect(track.getProcessor()).not.toBeUndefined();
-    expect(mockSetEnabled).toHaveBeenCalledWith(false);
-    expect(mockSetSuppressionLevel).toHaveBeenCalledWith(75);
+    expect(mockDeepFilterNoiseFilterProcessor.mockSetEnabled).toHaveBeenCalledWith(false);
+    expect(mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel).toHaveBeenCalledWith(75);
   });
 
   it("reapplies processor when audio track becomes available", async (): Promise<void> => {
@@ -143,6 +150,6 @@ describe("audioTrackNoiseSuppressionSync", () => {
     scope.end();
     await Promise.resolve();
 
-    expect(mockDestroy).toHaveBeenCalledTimes(1);
+    expect(mockDeepFilterNoiseFilterProcessor.mockDestroy).toHaveBeenCalledTimes(1);
   });
 });

@@ -6,12 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  DeepFilterNoiseFilterProcessor,
-  __setEnabledSpy as mockSetEnabled,
-  __setSuppressionLevelSpy as mockSetSuppressionLevel,
-  __destroySpy as mockDestroy,
-} from "deepfilternet3-noise-filter";
+import { DeepFilterNoiseFilterProcessor } from "deepfilternet3-noise-filter";
 
 import { NoiseSuppressionTransformer } from "./NoiseSuppressionTransformer";
 
@@ -23,41 +18,48 @@ type DeepFilterNoiseFilterProcessorContext = {
   destroy?: unknown;
 };
 
-vi.mock("deepfilternet3-noise-filter", () => {
-  const setEnabled = vi.fn();
-  const setSuppressionLevel = vi.fn();
-  const destroy = vi.fn();
+type NoiseFilterProcessorMock = ReturnType<typeof vi.fn> & {
+  mockSetEnabled: ReturnType<typeof vi.fn>;
+  mockSetSuppressionLevel: ReturnType<typeof vi.fn>;
+  mockDestroy: ReturnType<typeof vi.fn>;
+};
 
-  function DeepFilterNoiseFilterProcessor(
-    this: DeepFilterNoiseFilterProcessorContext,
-    options: DeepFilterNoiseFilterProcessorOptions,
-  ): void {
-    Object.assign(this, options);
-    this.setEnabled = setEnabled;
-    this.setSuppressionLevel = setSuppressionLevel;
-    this.destroy = destroy;
-  }
+vi.mock("deepfilternet3-noise-filter", () => {
+  const mockSetEnabled = vi.fn();
+  const mockSetSuppressionLevel = vi.fn();
+  const mockDestroy = vi.fn();
+
+  const mockDeepFilterNoiseFilterProcessor = vi
+    .fn()
+    .mockImplementation(function DeepFilterNoiseFilterProcessor(
+      this: DeepFilterNoiseFilterProcessorContext,
+      options: DeepFilterNoiseFilterProcessorOptions,
+    ): void {
+      Object.assign(this, options);
+      this.setEnabled = mockSetEnabled;
+      this.setSuppressionLevel = mockSetSuppressionLevel;
+      this.destroy = mockDestroy;
+    });
+
+  Object.assign(mockDeepFilterNoiseFilterProcessor, {
+    mockSetEnabled,
+    mockSetSuppressionLevel,
+    mockDestroy,
+  });
 
   return {
     __esModule: true,
-    DeepFilterNoiseFilterProcessor: vi
-      .fn()
-      .mockImplementation(DeepFilterNoiseFilterProcessor),
-    __setEnabledSpy: setEnabled,
-    __setSuppressionLevelSpy: setSuppressionLevel,
-    __destroySpy: destroy,
+    DeepFilterNoiseFilterProcessor: mockDeepFilterNoiseFilterProcessor,
   };
 });
 
-const mockDeepFilterNoiseFilterProcessor = vi.mocked(
-  DeepFilterNoiseFilterProcessor,
-);
+const mockDeepFilterNoiseFilterProcessor = DeepFilterNoiseFilterProcessor as unknown as NoiseFilterProcessorMock;
 
 describe("NoiseSuppressionTransformer", () => {
   beforeEach((): void => {
-    mockSetEnabled.mockClear();
-    mockSetSuppressionLevel.mockClear();
-    mockDestroy.mockClear();
+    mockDeepFilterNoiseFilterProcessor.mockSetEnabled.mockClear();
+    mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel.mockClear();
+    mockDeepFilterNoiseFilterProcessor.mockDestroy.mockClear();
     mockDeepFilterNoiseFilterProcessor.mockClear();
   });
 
@@ -98,8 +100,8 @@ describe("NoiseSuppressionTransformer", () => {
     transformer.setSuppressionLevel(1.5);
     transformer.setSuppressionLevel(-0.2);
 
-    expect(mockSetSuppressionLevel).toHaveBeenNthCalledWith(1, 100);
-    expect(mockSetSuppressionLevel).toHaveBeenNthCalledWith(2, 0);
+    expect(mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel).toHaveBeenNthCalledWith(1, 100);
+    expect(mockDeepFilterNoiseFilterProcessor.mockSetSuppressionLevel).toHaveBeenNthCalledWith(2, 0);
   });
 
   it("forwards enabled state changes to the underlying processor", (): void => {
@@ -109,8 +111,8 @@ describe("NoiseSuppressionTransformer", () => {
     transformer.setEnabled(false);
     transformer.setEnabled(true);
 
-    expect(mockSetEnabled).toHaveBeenNthCalledWith(1, false);
-    expect(mockSetEnabled).toHaveBeenNthCalledWith(2, true);
+    expect(mockDeepFilterNoiseFilterProcessor.mockSetEnabled).toHaveBeenNthCalledWith(1, false);
+    expect(mockDeepFilterNoiseFilterProcessor.mockSetEnabled).toHaveBeenNthCalledWith(2, true);
   });
 
   it("destroys the processor and resets internal state", (): void => {
@@ -119,7 +121,7 @@ describe("NoiseSuppressionTransformer", () => {
 
     transformer.destroy();
 
-    expect(mockDestroy).toHaveBeenCalledTimes(1);
+    expect(mockDeepFilterNoiseFilterProcessor.mockDestroy).toHaveBeenCalledTimes(1);
     expect(transformer.getProcessor()).toBeNull();
   });
 });

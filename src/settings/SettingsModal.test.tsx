@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, expect, vi } from "vitest";
+import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ChangeEvent, type ReactNode, useState } from "react";
@@ -158,23 +159,23 @@ vi.mock("../MediaDevicesContext", () => ({
   } => ({
     audioInput: {
       selectedId: "mic1",
-      available$: new BehaviorSubject([
+      available$: new BehaviorSubject<readonly { deviceId: string; label: string }[]>([
         { deviceId: "mic1", label: "Microphone 1" },
-      ]),
+      ] as const),
       selected$: new BehaviorSubject({ id: "mic1", label: "Microphone 1" }),
     },
     audioOutput: {
       selectedId: "speaker1",
-      available$: new BehaviorSubject([
+      available$: new BehaviorSubject<readonly { deviceId: string; label: string }[]>([
         { deviceId: "speaker1", label: "Speaker 1" },
-      ]),
+      ] as const),
       selected$: new BehaviorSubject({ id: "speaker1", label: "Speaker 1" }),
     },
     videoInput: {
       selectedId: "cam1",
-      available$: new BehaviorSubject([
+      available$: new BehaviorSubject<readonly { deviceId: string; label: string }[]>([
         { deviceId: "cam1", label: "Camera 1" },
-      ]),
+      ] as const),
       selected$: new BehaviorSubject({ id: "cam1", label: "Camera 1" }),
     },
     requestDeviceNames: vi.fn(),
