@@ -5,7 +5,7 @@ on:
   # This is safe because we do not use actions/checkout or execute untrusted code.
   # Using pull_request_target is necessary to allow status writes for PRs from forks.
   pull_request_target:
-    types: [labeled, unlabeled, opened]
+    types: [labeled, unlabeled, opened, synchronize]
 
 permissions:
   pull-requests: read
