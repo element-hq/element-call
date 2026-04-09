@@ -18,6 +18,7 @@ import {
   ShareScreenSolidIcon,
   OverflowHorizontalIcon,
   OverflowVerticalIcon,
+  VolumeOnSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
@@ -121,6 +122,36 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
         Icon={EndCallIcon}
         destructive
         {...props}
+      />
+    </Tooltip>
+  );
+};
+
+interface LoudspeakerButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size?: "sm" | "lg";
+  /** The button will be rendered:
+   * true: currently in loudspeaker mode, pressing will switch to earpiece (rendered as enabled)
+   * false: currently in earpiece mode, pressing will switch to loudspeaker (rendered as disabled)
+   */
+  isEarpieceTarget: boolean;
+}
+
+export const LoudspeakerButton: FC<LoudspeakerButtonProps> = (props) => {
+  const { t } = useTranslation();
+  const label = props.isEarpieceTarget
+    ? t("settings.devices.handset")
+    : t("settings.devices.loudspeaker");
+  // if the target is the earpice, we are currently in loudspeaker mode.
+  const enabled = props.isEarpieceTarget;
+  return (
+    <Tooltip label={label}>
+      <CpdButton
+        iconOnly
+        Icon={VolumeOnSolidIcon}
+        {...props}
+        kind={enabled ? "primary" : "secondary"}
+        role="switch"
+        aria-checked={enabled}
       />
     </Tooltip>
   );

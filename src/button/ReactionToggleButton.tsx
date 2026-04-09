@@ -165,13 +165,13 @@ export function ReactionPopupMenu({
 
 interface ReactionToggleButtonProps extends ComponentPropsWithoutRef<"button"> {
   identifier: string;
-  vm: CallViewModel;
+  reactionData: Pick<CallViewModel, "handsRaised$" | "reactions$">;
   size?: "sm" | "lg";
 }
 
 export function ReactionToggleButton({
   identifier,
-  vm,
+  reactionData,
   ...props
 }: ReactionToggleButtonProps): ReactNode {
   const { t } = useTranslation();
@@ -180,8 +180,8 @@ export function ReactionToggleButton({
   const [showReactionsMenu, setShowReactionsMenu] = useState(false);
   const [errorText, setErrorText] = useState<string>();
 
-  const isHandRaised = !!useBehavior(vm.handsRaised$)[identifier];
-  const canReact = !useBehavior(vm.reactions$)[identifier];
+  const isHandRaised = !!useBehavior(reactionData.handsRaised$)[identifier];
+  const canReact = !useBehavior(reactionData.reactions$)[identifier];
 
   useEffect(() => {
     // Clear whenever the reactions menu state changes.
