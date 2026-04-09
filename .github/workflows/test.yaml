@@ -60,6 +60,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 3
+          name: html-report
+          path: playwright-report
+          if-no-files-found: error
+          retention-days: 4
