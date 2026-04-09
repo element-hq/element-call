@@ -5,7 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { IconButton, Tooltip } from "@vector-im/compound-web";
 import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
@@ -25,22 +24,9 @@ import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable } from "observable-hooks";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import {
-  VoiceCallSolidIcon,
-  VolumeOnSolidIcon,
-} from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 
-import LogoMark from "../icons/LogoMark.svg?react";
-import LogoType from "../icons/LogoType.svg?react";
-import {
-  EndCallButton,
-  MicButton,
-  VideoButton,
-  ShareScreenButton,
-  SettingsButton,
-  ReactionToggleButton,
-} from "../button";
+import { SettingsButton } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
@@ -55,7 +41,6 @@ import { useMergedRefs } from "../useMergedRefs";
 import { type MuteStates } from "../state/MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
-import { LayoutToggle } from "./LayoutToggle";
 import {
   type CallViewModel,
   createCallViewModel$,
@@ -106,6 +91,7 @@ import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.t
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 import { useLatest } from "../useLatest.ts";
+import { InCallFooter } from "../components/InCallFooter.tsx";
 
 const logger = rootLogger.getChild("[InCallView]");
 
@@ -575,133 +561,38 @@ export const InCallView: FC<InCallViewProps> = ({
     matrixRoom.roomId,
   );
 
-  const buttons: JSX.Element[] = [];
-
-  const buttonSize = layout.type === "pip" ? "sm" : "lg";
-  buttons.push(
-    <MicButton
-      size={buttonSize}
-      key="audio"
-      enabled={audioEnabled}
-      onClick={toggleAudio ?? undefined}
-      disabled={toggleAudio === null}
-      data-testid="incall_mute"
-    />,
-    <VideoButton
-      size={buttonSize}
-      key="video"
-      enabled={videoEnabled}
-      onClick={toggleVideo ?? undefined}
-      disabled={toggleVideo === null}
-      data-testid="incall_videomute"
-    />,
-  );
-  if (vm.toggleScreenSharing !== null) {
-    buttons.push(
-      <ShareScreenButton
-        size={buttonSize}
-        key="share_screen"
-        className={styles.shareScreen}
-        enabled={sharingScreen}
-        onClick={vm.toggleScreenSharing}
-        data-testid="incall_screenshare"
-      />,
-    );
-  }
-  if (supportsReactions) {
-    buttons.push(
-      <ReactionToggleButton
-        size={buttonSize}
-        vm={vm}
-        key="raise_hand"
-        className={styles.raiseHand}
-        identifier={`${client.getUserId()}:${client.getDeviceId()}`}
-      />,
-    );
-  }
-
-  // In this PR we just move the button ot the bottom bar. We do not yet update its apperance
-  const audioOutputButton = useMemo(() => {
-    if (audioOutputSwitcher === null) return null;
-    const isEarpieceTarget = audioOutputSwitcher.targetOutput === "earpiece";
-    const Icon = isEarpieceTarget ? VoiceCallSolidIcon : VolumeOnSolidIcon;
-    const label = isEarpieceTarget
-      ? t("settings.devices.handset")
-      : t("settings.devices.loudspeaker");
-
-    return (
-      <Tooltip label={label}>
-        <IconButton
-          key="audio_output_switcher"
-          onClick={(e) => {
-            audioOutputSwitcher.switch();
-          }}
-        >
-          <Icon />
-        </IconButton>
-      </Tooltip>
-    );
-  }, [t, audioOutputSwitcher]);
-  if (audioOutputButton) buttons.push(audioOutputButton);
-
   useAppBarSecondaryButton(
     <SettingsButton key="settings" onClick={openSettings} />,
   );
 
-  buttons.push(
-    <EndCallButton
-      size={buttonSize}
-      key="end_call"
-      onClick={function (): void {
-        vm.hangup();
-      }}
-      data-testid="incall_leave"
-    />,
-  );
-
-  const logo = (
-    <div className={styles.logo}>
-      <LogoMark width={24} height={24} aria-hidden />
-      <LogoType
-        width={80}
-        height={11}
-        aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
-      />
-      {/* Don't mind this odd placement, it's just a little debug label */}
-      {debugTileLayout ? `Tiles generation: ${tileStoreGeneration}` : undefined}
-    </div>
-  );
-
   const footer = (
-    <div
+    <InCallFooter
       ref={footerRef}
-      className={classNames(styles.footer, {
-        [styles.overlay]: windowMode === "flat",
-        [styles.hidden]:
-          !showFooter || (!showControls && headerStyle === "none"),
-      })}
-    >
-      <div className={styles.settingsLogoContainer}>
-        {showControls &&
-          headerStyle !== HeaderStyle.AppBar &&
-          layout.type !== "pip" && (
-            <SettingsButton key="settings" onClick={openSettings} />
-          )}
-
-        {headerStyle !== "none" && logo}
-      </div>
-
-      {showControls && <div className={styles.buttons}>{buttons}</div>}
-      {showControls && (
-        <LayoutToggle
-          className={styles.layout}
-          layout={gridMode}
-          setLayout={setGridMode}
-        />
-      )}
-    </div>
+      asOverlay={windowMode === "flat"}
+      // TODO this should be computed in the view model!
+      showFooter={!showFooter || (!showControls && headerStyle === "none")}
+      showControls={showControls}
+      showLogo={headerStyle !== HeaderStyle.None}
+      showSettingsButton={headerStyle !== HeaderStyle.AppBar}
+      asPip={layout.type === "pip"}
+      gridMode={gridMode}
+      setGridMode={setGridMode}
+      openSettings={openSettings}
+      audioEnabled={audioEnabled}
+      videoEnabled={videoEnabled}
+      toggleAudio={toggleAudio ?? undefined}
+      toggleVideo={toggleVideo ?? undefined}
+      sharingScreen={sharingScreen}
+      toggleScreenSharing={vm.toggleScreenSharing ?? undefined}
+      supportsReactions={supportsReactions}
+      reactionIdentifier={`${client.getUserId()}:${client.getDeviceId()}`}
+      reactionData={vm}
+      audioOutputSwitcher={audioOutputSwitcher}
+      hangup={vm.hangup}
+      debugTileLayout={debugTileLayout}
+      tileStoreGeneration={tileStoreGeneration}
+    />
   );
-
   const allConnections = useBehavior(vm.allConnections$);
 
   return (
