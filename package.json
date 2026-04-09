@@ -103,7 +103,6 @@
     "eslint-plugin-storybook": "^10.3.3",
     "eslint-plugin-unicorn": "^56.0.0",
     "fetch-mock": "11.1.5",
-    "global-jsdom": "^26.0.0",
     "i18next": "^25.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-parser": "^9.1.0",

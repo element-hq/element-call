@@ -8820,7 +8820,6 @@ __metadata:
     eslint-plugin-storybook: "npm:^10.3.3"
     eslint-plugin-unicorn: "npm:^56.0.0"
     fetch-mock: "npm:11.1.5"
-    global-jsdom: "npm:^26.0.0"
     i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
     i18next-parser: "npm:^9.1.0"
@@ -10405,15 +10404,6 @@ __metadata:
   bin:
     glob: dist/esm/bin.mjs
   checksum: 10c0/100705eddbde6323e7b35e1d1ac28bcb58322095bd8e63a7d0bef1a2cdafe0d0f7922a981b2b48369a4f8c1b077be5c171804534c3509dfe950dde15fbe6d828
-  languageName: node
-  linkType: hard
-
-"global-jsdom@npm:^26.0.0":
-  version: 26.0.0
-  resolution: "global-jsdom@npm:26.0.0"
-  peerDependencies:
-    jsdom: ">=26 <27"
-  checksum: 10c0/96b2069eb13e81d3cfe6049b4aabbf84839a171b695bec100cb770fb7196f957578e2068b10d9fd381a0db2a5ac22c37dd5c7a9cf29bd806e843e107b00fba36
   languageName: node
   linkType: hard
 
