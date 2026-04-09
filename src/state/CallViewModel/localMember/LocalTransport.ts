@@ -106,7 +106,7 @@ export function isLocalTransportWithSFUConfig(
   return "transport" in obj && "sfuConfig" in obj;
 }
 
-interface LocalTransport {
+export interface LocalTransport {
   /**
    * The transport to be advertised in our MatrixRTC membership. `null` when not
    * yet fetched/validated.
