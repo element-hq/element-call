@@ -109,6 +109,9 @@ function createInCallView(): RenderResult & {
     getDeviceId: () => localRtcMember.deviceId,
     getRoom: (rId) => (rId === roomId ? room : null),
     getDomain: () => "example.com",
+    getAccessToken: () => "mock-access-token",
+    baseUrl: "https://matrix.example.com",
+    getOpenIdToken: vi.fn(),
   } as Partial<MatrixClient> as MatrixClient;
   const room = mockMatrixRoom({
     relations: {
