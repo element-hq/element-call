@@ -113,9 +113,9 @@ Once we exceed 500 we hide everything except the buttons.
     grid-template-areas: "buttons buttons buttons";
   }
 
-  .settingsLogoContainer {
+  /*.settingsLogoContainer {
     display: none;
-  }
+  }*/
 
   .layout {
     display: none !important;
