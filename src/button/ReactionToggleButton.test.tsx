@@ -37,7 +37,7 @@ function TestComponent({
         vm={vm}
         rtcSession={rtcSession.asMockedSession()}
       >
-        <ReactionToggleButton vm={vm} identifier={localIdent} />
+        <ReactionToggleButton reactionData={vm} identifier={localIdent} />
       </ReactionsSenderProvider>
     </TooltipProvider>
   );
