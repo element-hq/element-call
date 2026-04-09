@@ -565,12 +565,14 @@ export const InCallView: FC<InCallViewProps> = ({
     <SettingsButton key="settings" onClick={openSettings} />,
   );
 
+  const footerNotNeeded =
+    showControls === false && headerStyle === HeaderStyle.None;
   const footer = (
     <InCallFooter
       ref={footerRef}
       asOverlay={windowMode === "flat"}
       // TODO this should be computed in the view model!
-      showFooter={!showFooter || (!showControls && headerStyle === "none")}
+      showFooter={showFooter && !footerNotNeeded}
       showControls={showControls}
       showLogo={headerStyle !== HeaderStyle.None}
       showSettingsButton={headerStyle !== HeaderStyle.AppBar}

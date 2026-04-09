@@ -345,7 +345,30 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
+          aria-checked="false"
           aria-labelledby="_r_n_"
+          class="_button_13vu4_8 shareScreen _has-icon_13vu4_60 _icon-only_13vu4_53"
+          data-kind="secondary"
+          data-size="lg"
+          data-testid="incall_screenshare"
+          role="switch"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M1.288 20.713Q1.575 21 2 21h20q.424 0 .712-.288A.97.97 0 0 0 23 20a.97.97 0 0 0-.288-.712A.97.97 0 0 0 22 19H2a.97.97 0 0 0-.712.288A.97.97 0 0 0 1 20q0 .424.288.712m1.3-3.299A1.93 1.93 0 0 1 2 16V5q0-.824.587-1.412A1.93 1.93 0 0 1 4 3h16q.824 0 1.413.587Q22 4.176 22 5v11q0 .824-.587 1.413A1.93 1.93 0 0 1 20 18H4q-.824 0-1.412-.587m10.12-10.12a1 1 0 0 0-1.415 0l-2.5 2.5a1 1 0 0 0 1.414 1.414l.793-.793V13a1 1 0 1 0 2 0v-2.586l.793.793a1 1 0 0 0 1.414-1.414z"
+            />
+          </svg>
+        </button>
+        <button
+          aria-labelledby="_r_s_"
           class="_button_13vu4_8 endCall _has-icon_13vu4_60 _icon-only_13vu4_53 _destructive_13vu4_110"
           data-kind="primary"
           data-size="lg"
@@ -371,7 +394,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="toggle layout"
       >
         <input
-          aria-labelledby="_r_s_"
+          aria-labelledby="_r_11_"
           name="layout"
           type="radio"
           value="spotlight"
@@ -389,7 +412,7 @@ exports[`InCallView > rendering > renders 1`] = `
           />
         </svg>
         <input
-          aria-labelledby="_r_11_"
+          aria-labelledby="_r_16_"
           checked=""
           name="layout"
           type="radio"

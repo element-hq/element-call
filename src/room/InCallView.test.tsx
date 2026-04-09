@@ -197,7 +197,7 @@ describe("InCallView", () => {
       const { getByRole } = createInCallView({ mediaDevices });
       // The button should be visible. When current output is "speaker",
       // the switcher targets "earpiece", so the tooltip label is "Handset".
-      const audioOutputBtn = getByRole("button", { name: "Handset" });
+      const audioOutputBtn = getByRole("switch", { name: "Handset" });
       expect(audioOutputBtn).toBeVisible();
 
       await user.click(audioOutputBtn);
