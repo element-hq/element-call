@@ -49,7 +49,6 @@ import { LazyEventEmitter } from "../LazyEventEmitter";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { HeaderStyle } from "../UrlParams";
 import { constant } from "../state/Behavior";
 import { type MuteStates } from "../state/MuteStates.ts";
 
@@ -173,7 +172,6 @@ function createGroupCallView(
               confineToRoom={false}
               preload={false}
               skipLobby={false}
-              header={HeaderStyle.Standard}
               rtcSession={rtcSession.asMockedSession()}
               muteStates={muteState}
               widget={widget}
