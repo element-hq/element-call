@@ -26,7 +26,6 @@ import { useObservable } from "observable-hooks";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { useTranslation } from "react-i18next";
 
-import { SettingsButton } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
@@ -79,7 +78,7 @@ import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
-import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
+import { useAppBarHidden } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
 import { Toast } from "../Toast.tsx";
 import overlayStyles from "../Overlay.module.css";
@@ -556,10 +555,6 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const rageshakeRequestModalProps = useRageshakeRequestModal(
     matrixRoom.roomId,
-  );
-
-  useAppBarSecondaryButton(
-    <SettingsButton key="settings" onClick={openSettings} />,
   );
 
   const footer = (
