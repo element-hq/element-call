@@ -94,7 +94,12 @@ export const InCallFooter: FC<InCallFooterProps> = ({
     // add the settings button to the center group of buttons, so it will be visible on small screens.
     // On larger screens, it will be hidden and the one without `forButtonsBar` in the `settingsLogoContainer` will be visible.
     buttons.push(
-      <SettingsButton forButtonsBar key="settings" onClick={openSettings} />,
+      <SettingsButton
+        forButtonsBar
+        key="settings"
+        showForScreenWidth="narrow"
+        onClick={openSettings}
+      />,
     );
   }
 
@@ -157,8 +162,7 @@ export const InCallFooter: FC<InCallFooterProps> = ({
   if (audioOutputButton) buttons.push(audioOutputButton);
 
   useAppBarSecondaryButton(
-    // <SettingsButton key="settings" onClick={openSettings} />,
-    <div style={{ backgroundColor: "red", width: "20px", height: "20px" }} />,
+    <SettingsButton key="settings" onClick={openSettings} />,
   );
 
   buttons.push(
@@ -196,7 +200,11 @@ export const InCallFooter: FC<InCallFooterProps> = ({
     >
       <div className={styles.settingsLogoContainer}>
         {showSettingsButton && (
-          <SettingsButton key="settings" onClick={openSettings} />
+          <SettingsButton
+            key="settings"
+            showForScreenWidth="wide"
+            onClick={openSettings}
+          />
         )}
 
         {showLogoDebugContainer && logoDebugContainer}

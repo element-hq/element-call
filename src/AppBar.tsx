@@ -88,7 +88,7 @@ export const AppBar: FC<Props> = ({ children }) => {
               {title}
             </Heading>
           )}
-          <RightNav>{secondaryButton ?? "x"}</RightNav>
+          <RightNav>{secondaryButton}</RightNav>
         </Header>
       </div>
       <AppBarContext value={context}>{children}</AppBarContext>

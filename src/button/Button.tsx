@@ -160,26 +160,33 @@ export const LoudspeakerButton: FC<LoudspeakerButtonProps> = (props) => {
 
 interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
   size?: "sm" | "lg";
-  /** If the button should be styled so it fits into the footer center buttons group
-   * This implies the button will be hidden unless we are on very small screens.
-   */
+  /** If the button should be styled so it fits into the footer center buttons group */
   forButtonsBar?: boolean;
+  /** If this buttons should be setup to be used in the app bar */
+  showForScreenWidth?: "wide" | "narrow";
 }
-export const SettingsButton: FC<SettingsButtonProps> = (props) => {
+export const SettingsButton: FC<SettingsButtonProps> = ({
+  showForScreenWidth,
+  forButtonsBar,
+  className,
+  ...props
+}) => {
   const { t } = useTranslation();
 
   return (
     <Tooltip label={t("common.settings")}>
       <CpdButton
-        className={classNames(props.className, {
-          [inCallViewStyles.settingForButtonsBar]: props.forButtonsBar,
-          [inCallViewStyles.settingForBottomLeftCorner]: !props.forButtonsBar,
+        className={classNames(className, {
+          [inCallViewStyles.settingsOnlyShowWide]:
+            showForScreenWidth === "wide",
+          [inCallViewStyles.settingsOnlyShowNarrow]:
+            showForScreenWidth === "narrow",
         })}
         iconOnly
         Icon={
           platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon
         }
-        kind={props.forButtonsBar ? "secondary" : "tertiary"}
+        kind={forButtonsBar ? "secondary" : "tertiary"}
         {...props}
       />
     </Tooltip>
