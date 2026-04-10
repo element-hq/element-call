@@ -19,6 +19,7 @@ import {
 import { Button, Heading, Tooltip } from "@vector-im/compound-web";
 import { CollapseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Header, LeftNav, RightNav } from "./Header";
 import { platform } from "./Platform";
@@ -132,6 +133,10 @@ export function useAppBarSecondaryButton(button: ReactNode): void {
     if (setSecondaryButton !== undefined) {
       setSecondaryButton(button);
       return (): void => setSecondaryButton("");
+    } else {
+      logger.warn(
+        "[AppBar] useAppBarSecondaryButton called without AppBarContext provider, this will have no effect",
+      );
     }
   }, [button, setSecondaryButton]);
 }
