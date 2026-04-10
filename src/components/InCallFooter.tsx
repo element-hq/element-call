@@ -1,5 +1,5 @@
 /*
-Copyright 2025 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -19,7 +19,7 @@ import {
   ReactionToggleButton,
   LoudspeakerButton,
 } from "../button";
-import styles from "../room/InCallView.module.css";
+import styles from "./InCallFooter.module.css";
 import { LayoutToggle } from "../room/LayoutToggle";
 import {
   type CallViewModel,
