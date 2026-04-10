@@ -171,7 +171,6 @@ export interface InCallViewProps {
   rtcSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
   muteStates: MuteStates;
-  header: HeaderStyle;
   onShareClick: (() => void) | null;
 }
 
@@ -181,8 +180,6 @@ export const InCallView: FC<InCallViewProps> = ({
   matrixInfo,
   matrixRoom,
   muteStates,
-
-  header: headerStyle,
   onShareClick,
 }) => {
   const { t } = useTranslation();
@@ -206,7 +203,7 @@ export const InCallView: FC<InCallViewProps> = ({
   // Merge the refs so they can attach to the same element
   const containerRef = useMergedRefs(containerRef1, containerRef2);
 
-  const { showControls } = useUrlParams();
+  const { showControls, header: headerStyle } = useUrlParams();
 
   const muteAllAudio = useBehavior(muteAllAudio$);
 
@@ -565,14 +562,11 @@ export const InCallView: FC<InCallViewProps> = ({
     <SettingsButton key="settings" onClick={openSettings} />,
   );
 
-  const footerNotNeeded =
-    showControls === false && headerStyle === HeaderStyle.None;
   const footer = (
     <InCallFooter
       ref={footerRef}
       asOverlay={windowMode === "flat"}
-      // TODO this should be computed in the view model!
-      showFooter={showFooter && !footerNotNeeded}
+      showFooter={showFooter}
       showControls={showControls}
       showLogo={headerStyle !== HeaderStyle.None}
       showSettingsButton={headerStyle !== HeaderStyle.AppBar}

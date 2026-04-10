@@ -39,7 +39,6 @@ import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { HeaderStyle } from "../UrlParams";
 import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { initializeWidget } from "../widget";
 
@@ -131,7 +130,6 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
             <RoomContext value={livekitRoom}>
               <InCallView
                 client={client}
-                header={HeaderStyle.Standard}
                 rtcSession={rtcSession.asMockedSession()}
                 muteStates={muteState}
                 vm={vm}
