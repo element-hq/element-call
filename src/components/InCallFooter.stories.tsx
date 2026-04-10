@@ -33,8 +33,8 @@ export const Default: Story = {
     asOverlay: false,
     showFooter: true,
     showControls: true,
-    showSettingsButton: true,
-    showLogo: false,
+    hideSettingsButton: false,
+    hideLogo: false,
     asPip: false,
     gridMode: "grid",
     audioEnabled: true,
@@ -78,7 +78,7 @@ export const WithLogo: Story = {
   ...Default,
   args: {
     ...Default.args,
-    showLogo: true,
+    hideLogo: false,
   },
 };
 export const WithAudioOutput: Story = {
@@ -101,7 +101,7 @@ export const NoControlsWithLogo: Story = {
   args: {
     ...Default.args,
     showControls: false,
-    showLogo: true,
+    hideLogo: false,
   },
 };
 
@@ -118,7 +118,7 @@ export const MobileLayout: Story = {
   ...Default,
   args: {
     ...Default.args,
-    showLogo: true,
+    hideLogo: true,
     debugTileLayout: true,
     tileStoreGeneration: 74,
     audioOutputSwitcher: null,

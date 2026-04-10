@@ -104,6 +104,20 @@ Please see LICENSE in the repository root for full details.
   }
 }
 
+.settingForButtonsBar {
+  /*
+  never show the settings button for the buttons bar
+  show the settings button in the Buttons bar on width < 500px
+  */
+  display: none;
+}
+.settingForBottomLeftCorner {
+  /*
+  show the left corener by default (will be hidden on width < 500px)
+  */
+  display: inherit;
+}
+
 /*
 With the logo hidden >500px is enough space to show overflow, buttons, layout.
 Once we exceed 500 we hide everything except the buttons.

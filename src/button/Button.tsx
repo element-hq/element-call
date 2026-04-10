@@ -22,6 +22,7 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
+import inCallViewStyles from "../room/InCallView.module.css";
 import { platform } from "../Platform";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
@@ -159,6 +160,10 @@ export const LoudspeakerButton: FC<LoudspeakerButtonProps> = (props) => {
 
 interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
   size?: "sm" | "lg";
+  /** If the button should be styled so it fits into the footer center buttons group
+   * This implies the button will be hidden unless we are on very small screens.
+   */
+  forButtonsBar?: boolean;
 }
 export const SettingsButton: FC<SettingsButtonProps> = (props) => {
   const { t } = useTranslation();
@@ -166,11 +171,15 @@ export const SettingsButton: FC<SettingsButtonProps> = (props) => {
   return (
     <Tooltip label={t("common.settings")}>
       <CpdButton
+        className={classNames(props.className, {
+          [inCallViewStyles.settingForButtonsBar]: props.forButtonsBar,
+          [inCallViewStyles.settingForBottomLeftCorner]: !props.forButtonsBar,
+        })}
         iconOnly
         Icon={
           platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon
         }
-        kind="tertiary"
+        kind={props.forButtonsBar ? "secondary" : "tertiary"}
         {...props}
       />
     </Tooltip>

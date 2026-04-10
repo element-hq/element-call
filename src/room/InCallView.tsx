@@ -568,8 +568,8 @@ export const InCallView: FC<InCallViewProps> = ({
       asOverlay={windowMode === "flat"}
       showFooter={showFooter}
       showControls={showControls}
-      showLogo={headerStyle !== HeaderStyle.None}
-      showSettingsButton={headerStyle !== HeaderStyle.AppBar}
+      hideLogo={headerStyle === HeaderStyle.None}
+      hideSettingsButton={headerStyle === HeaderStyle.AppBar}
       asPip={layout.type === "pip"}
       gridMode={gridMode}
       setGridMode={setGridMode}
