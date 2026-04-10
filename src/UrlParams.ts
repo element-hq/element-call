@@ -14,11 +14,13 @@ import {
   type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { pickBy } from "lodash-es";
+import { BehaviorSubject } from "rxjs";
 
 import { Config } from "./config/Config";
 import { type EncryptionSystem } from "./e2ee/sharedKeyManagement";
 import { E2eeType } from "./e2ee/e2eeType";
 import { platform } from "./Platform";
+import { type ObservableScope } from "./state/ObservableScope";
 
 interface RoomIdentifier {
   roomAlias: string | null;
@@ -605,6 +607,24 @@ export const useRoomIdentifier = (): RoomIdentifier => {
     () => getRoomIdentifierFromUrl(pathname, search, hash),
     [pathname, search, hash],
   );
+};
+
+let urlParams$ = undefined as BehaviorSubject<UrlParams> | undefined;
+export const observerUrlParams$ = (
+  scope: ObservableScope,
+): BehaviorSubject<UrlParams> => {
+  if (urlParams$ !== undefined) return urlParams$;
+  function updateUrlParams(): void {
+    console.log("[observerUrlParams$] update urlParams$");
+    urlParams$!.next(getUrlParams());
+  }
+
+  urlParams$ = new BehaviorSubject(getUrlParams());
+  window.addEventListener("hashchange", updateUrlParams);
+  scope.onEnd(() => {
+    window.removeEventListener("hashchange", updateUrlParams);
+  });
+  return urlParams$;
 };
 
 export function generateUrlSearchParams(

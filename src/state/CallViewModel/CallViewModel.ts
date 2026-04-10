@@ -51,6 +51,7 @@ import { v4 as uuidv4 } from "uuid";
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 
 import {
+  and$,
   createToggle$,
   filterBehavior,
   generateItem,
@@ -82,7 +83,7 @@ import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
-import { getUrlParams } from "../../UrlParams";
+import { getUrlParams, HeaderStyle, observerUrlParams$ } from "../../UrlParams";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../../widget";
 import {
@@ -1316,7 +1317,15 @@ export function createCallViewModel$(
     windowMode$.pipe(map((mode) => mode !== "pip" && mode !== "flat")),
   );
 
-  const showFooter$ = scope.behavior<boolean>(
+  const urlParams$ = observerUrlParams$(scope);
+  const showFooterUrlParams$ = urlParams$.pipe(
+    map(
+      ({ header, showControls }) =>
+        // with no header and no controls we always set showFooter to false.
+        !(header === HeaderStyle.None && showControls === false),
+    ),
+  );
+  const showFooterLayout$ = scope.behavior<boolean>(
     windowMode$.pipe(
       switchMap((mode) => {
         switch (mode) {
@@ -1370,7 +1379,9 @@ export function createCallViewModel$(
       }),
     ),
   );
-
+  const showFooter$ = scope.behavior(
+    and$(showFooterLayout$, showFooterUrlParams$),
+  );
   /**
    * Whether audio is currently being output through the earpiece.
    */
