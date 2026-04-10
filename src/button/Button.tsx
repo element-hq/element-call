@@ -22,7 +22,7 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
-import inCallViewStyles from "../room/InCallView.module.css";
+import inCallViewStyles from "../components/InCallFooter.module.css";
 import { platform } from "../Platform";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {

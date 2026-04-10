@@ -87,7 +87,7 @@ Please see LICENSE in the repository root for full details.
 }
 .settingForBottomLeftCorner {
   /*
-  show the left corener by default (will be hidden on width < 500px)
+  show the settings button in the bottom left corner by default (will be hidden on width < 500px)
   */
   display: inherit;
 }
