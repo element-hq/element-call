@@ -34,6 +34,10 @@ jobs:
     name: Run end-to-end tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shardIndex: [1, 2, 3, 4]
+        shardTotal: [4]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -56,7 +60,7 @@ jobs:
       - name: Run Playwright tests
         env:
           USE_DOCKER: 1
-        run: yarn playwright test
+        run: yarn playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: ${{ !cancelled() }}
         with:
