@@ -295,7 +295,6 @@ describe("LocalMembership", () => {
       });
       localMembership.requestJoinAndPublish();
 
-
       expectObservable(localMembership.localMemberState$).toBe("n-e", {
         n: TransportState.Waiting,
         e: expect.toSatisfy((e) => e instanceof FailToGetOpenIdToken),
