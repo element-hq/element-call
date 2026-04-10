@@ -38,8 +38,8 @@ export interface InCallFooterProps {
   asOverlay: boolean;
   showFooter: boolean;
   showControls: boolean;
-  showSettingsButton: boolean;
-  showLogo: boolean;
+  hideSettingsButton: boolean;
+  hideLogo: boolean;
   asPip: boolean;
   gridMode: GridMode;
   setGridMode: (mode: GridMode) => void;
@@ -64,8 +64,8 @@ export const InCallFooter: FC<InCallFooterProps> = ({
   asOverlay,
   showFooter,
   showControls,
-  showSettingsButton,
-  showLogo,
+  hideSettingsButton,
+  hideLogo,
   asPip,
   gridMode,
   setGridMode,
@@ -86,6 +86,17 @@ export const InCallFooter: FC<InCallFooterProps> = ({
 }) => {
   const buttons: JSX.Element[] = [];
   const buttonSize = asPip ? "sm" : "lg";
+  const showSettingsButton = !hideSettingsButton && !asPip && showControls;
+  const showLayoutSwitcher = !asPip && showControls;
+  const showLogoDebugContainer = !asPip || (!hideLogo && !debugTileLayout);
+  const showLogo = !hideLogo && !asPip;
+  if (showSettingsButton) {
+    // add the settings button to the center group of buttons, so it will be visible on small screens.
+    // On larger screens, it will be hidden and the one without `forButtonsBar` in the `settingsLogoContainer` will be visible.
+    buttons.push(
+      <SettingsButton forButtonsBar key="settings" onClick={openSettings} />,
+    );
+  }
 
   buttons.push(
     <MicButton
@@ -158,7 +169,7 @@ export const InCallFooter: FC<InCallFooterProps> = ({
     />,
   );
 
-  const logo = (
+  const logoDebugContainer = (
     <div className={styles.logo}>
       {showLogo && (
         <>
@@ -183,15 +194,15 @@ export const InCallFooter: FC<InCallFooterProps> = ({
       })}
     >
       <div className={styles.settingsLogoContainer}>
-        {showControls && showSettingsButton && !asPip && (
+        {showSettingsButton && (
           <SettingsButton key="settings" onClick={openSettings} />
         )}
 
-        {(!asPip || (!showLogo && !debugTileLayout)) && logo}
+        {showLogoDebugContainer && logoDebugContainer}
       </div>
 
       {showControls && <div className={styles.buttons}>{buttons}</div>}
-      {showControls && !asPip && (
+      {showLayoutSwitcher && (
         <LayoutToggle
           className={styles.layout}
           layout={gridMode}
