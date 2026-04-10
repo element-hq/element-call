@@ -50,7 +50,9 @@ export const AppBar: FC<Props> = ({ children }) => {
 
   const [title, setTitle] = useState<string>("");
   const [hidden, setHidden] = useState<boolean>(false);
-  const [secondaryButton, setSecondaryButton] = useState<ReactNode>(null);
+  const [secondaryButton, setSecondaryButton] = useState<ReactNode | null>(
+    null,
+  );
   const context = useMemo(
     () => ({ setTitle, setSecondaryButton, setHidden }),
     [setTitle, setHidden, setSecondaryButton],
@@ -86,7 +88,7 @@ export const AppBar: FC<Props> = ({ children }) => {
               {title}
             </Heading>
           )}
-          <RightNav>{secondaryButton}</RightNav>
+          <RightNav>{secondaryButton ?? "x"}</RightNav>
         </Header>
       </div>
       <AppBarContext value={context}>{children}</AppBarContext>
