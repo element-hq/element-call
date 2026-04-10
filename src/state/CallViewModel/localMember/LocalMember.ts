@@ -232,7 +232,16 @@ export const createLocalMembership$ = ({
   // Unwrap the local transport and set the state of the LocalMembership to error in case the transport is an error.
   const activeTransport$ = scope.behavior(
     localTransport$.pipe(
-      switchMap((lt) => lt.active$.pipe(map((t) => t?.transport ?? null))),
+      switchMap((lt) => {
+        return combineLatest([lt.active$, lt.advertised$]).pipe(
+          map(([active, advertised]) => {
+            // Our policy is to not publish to another transport if our prefered transport is miss-configured
+            if (advertised == null) return null;
+
+            return active?.transport ?? null;
+          }),
+        );
+      }),
       catchError(handleTransportError),
       distinctUntilChanged(areLivekitTransportsEqual),
     ),

@@ -33,7 +33,10 @@ import {
   PublishState,
   TrackState,
 } from "./LocalMember";
-import { MatrixRTCTransportMissingError } from "../../../utils/errors";
+import {
+  FailToGetOpenIdToken,
+  MatrixRTCTransportMissingError,
+} from "../../../utils/errors";
 import { Epoch, ObservableScope } from "../../ObservableScope";
 import { constant } from "../../Behavior";
 import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
@@ -254,6 +257,55 @@ describe("LocalMembership", () => {
     });
   });
 
+  it("Should not publish to active transport if advertised has errors", () => {
+    withTestScheduler(({ scope, hot, behavior, expectObservable }) => {
+      const advertised$ = scope.behavior<null | LivekitTransportConfig>(
+        hot("--#", {}, new FailToGetOpenIdToken(new Error("foo"))),
+        null,
+      );
+
+      // Populate a connection for active
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(connectionTransportBConnected, []);
+      const mockConnectionManager = {
+        transports$: constant(new Epoch([bTransport])),
+        connectionManagerData$: constant(new Epoch(connectionManagerData)),
+      };
+
+      const aLocalTransport: LocalTransport = {
+        advertised$,
+        active$: behavior("a", { n: null, a: bTransportWithSFUConfig }),
+      };
+
+      defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
+        () => {
+          return {} as unknown as Publisher;
+        },
+      );
+      const publisherFactory =
+        defaultCreateLocalMemberValues.createPublisherFactory as ReturnType<
+          typeof vi.fn
+        >;
+
+      const localMembership = createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        connectionManager: mockConnectionManager,
+        localTransport$: behavior("a", { a: aLocalTransport }),
+      });
+      localMembership.requestJoinAndPublish();
+
+
+      expectObservable(localMembership.localMemberState$).toBe("n-e", {
+        n: TransportState.Waiting,
+        e: expect.toSatisfy((e) => e instanceof FailToGetOpenIdToken),
+      });
+
+      // Should not have created any publisher
+      expect(publisherFactory).toHaveBeenCalledTimes(0);
+    });
+  });
+
   it("logs if callIntent cannot be updated", async () => {
     const scope = new ObservableScope();
 
@@ -306,6 +358,16 @@ describe("LocalMembership", () => {
   const bTransport = {
     livekit_service_url: "b",
   } as LivekitTransportConfig;
+
+  const bTransportWithSFUConfig = {
+    transport: bTransport,
+    sfuConfig: {
+      jwt: "foo2",
+      livekitAlias: "bar2",
+      livekitIdentity: "baz2",
+      url: "bro2",
+    },
+  } as LocalTransportWithSFUConfig;
 
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
