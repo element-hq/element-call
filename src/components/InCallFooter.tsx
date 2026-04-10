@@ -157,7 +157,8 @@ export const InCallFooter: FC<InCallFooterProps> = ({
   if (audioOutputButton) buttons.push(audioOutputButton);
 
   useAppBarSecondaryButton(
-    <SettingsButton key="settings" onClick={openSettings} />,
+    // <SettingsButton key="settings" onClick={openSettings} />,
+    <div style={{ backgroundColor: "red", width: "20px", height: "20px" }} />,
   );
 
   buttons.push(
