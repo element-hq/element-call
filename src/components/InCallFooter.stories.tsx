@@ -34,7 +34,7 @@ export const Default: Story = {
     showFooter: true,
     showControls: true,
     hideSettingsButton: false,
-    hideLogo: false,
+    hideLogo: true,
     asPip: false,
     gridMode: "grid",
     audioEnabled: true,
