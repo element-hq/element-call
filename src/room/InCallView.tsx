@@ -568,7 +568,8 @@ export const InCallView: FC<InCallViewProps> = ({
       asOverlay={windowMode === "flat"}
       showFooter={showFooter}
       showControls={showControls}
-      hideLogo={headerStyle === HeaderStyle.None}
+      // Hide the logo for both embedded solutions. mobile: HeaderStyle.AppBar and desktop: HeaderStyle.None.
+      hideLogo={headerStyle !== HeaderStyle.Standard}
       hideSettingsButton={headerStyle === HeaderStyle.AppBar}
       asPip={layout.type === "pip"}
       gridMode={gridMode}
