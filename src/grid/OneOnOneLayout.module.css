@@ -19,7 +19,7 @@ Please see LICENSE in the repository root for full details.
   position: absolute;
   inline-size: 180px;
   block-size: 135px;
-  inset: var(--cpd-space-4x);
+  inset: 0;
 }
 
 .spotlight {
