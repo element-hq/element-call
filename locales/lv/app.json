@@ -22,12 +22,6 @@
     "upload_file": "Augšupielādēt failu"
   },
   "analytics_notice": "Piedaloties šajā beta versijā, jūs piekrītat anonīmu datu vākšanai, ko mēs izmantojam produkta uzlabošanai. Plašāku informāciju par to, kādus datus mēs izsekojam, varat atrast mūsu <2>konfidencialitātes politikā</2> un mūsu <6>sīkfailu politikā</6>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Turpināt pārlūkprogrammā",
-    "open_in_app": "Atvērt lietotnē",
-    "text": "Gatavs pievienoties?",
-    "title": "Izvēlies lietotni"
-  },
   "call_ended_view": {
     "create_account_button": "Izveidot kontu",
     "create_account_prompt": "<0>Kādēļ nepabeigt ar paroles iestatīšanu, lai paturētu savu kontu?</0><1>Būs iespējams paturēt savu vārdu un iestatīt attēlu izmantošanai turpmākajos zvanos</1>",
