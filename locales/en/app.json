@@ -22,12 +22,6 @@
     "upload_file": "Upload file"
   },
   "analytics_notice": "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <6>Cookie Policy</6>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Continue in browser",
-    "open_in_app": "Open in the app",
-    "text": "Ready to join?",
-    "title": "Select app"
-  },
   "call_ended_view": {
     "create_account_button": "Create account",
     "create_account_prompt": "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>",

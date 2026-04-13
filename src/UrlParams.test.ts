@@ -218,7 +218,6 @@ describe("UrlParams", () => {
   describe("intent", () => {
     const noIntentDefaults = {
       confineToRoom: false,
-      appPrompt: true,
       preload: false,
       header: HeaderStyle.Standard,
       showControls: true,
@@ -232,7 +231,6 @@ describe("UrlParams", () => {
     };
     const startNewCallDefaults = (platform: string): object => ({
       confineToRoom: true,
-      appPrompt: false,
       preload: false,
       header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
       showControls: true,
@@ -246,7 +244,6 @@ describe("UrlParams", () => {
     });
     const joinExistingCallDefaults = (platform: string): object => ({
       confineToRoom: true,
-      appPrompt: false,
       preload: false,
       header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
       showControls: true,
