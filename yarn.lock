@@ -8693,7 +8693,7 @@ __metadata:
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
     knip: "npm:^5.86.0"
-    livekit-client: "npm:^2.13.0"
+    livekit-client: "npm:^2.18.1"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
     matrix-js-sdk: "matrix-org/matrix-js-sdk#6e3efef0c5f660df47cf00874927dec1c75cc3cf"
@@ -11677,7 +11677,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"livekit-client@npm:^2.13.0":
+"livekit-client@npm:^2.18.1":
   version: 2.18.1
   resolution: "livekit-client@npm:2.18.1"
   dependencies:
