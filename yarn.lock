@@ -6455,9 +6455,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vector-im/compound-design-tokens@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "@vector-im/compound-design-tokens@npm:9.0.0"
+"@vector-im/compound-design-tokens@npm:^10.0.0":
+  version: 10.1.0
+  resolution: "@vector-im/compound-design-tokens@npm:10.1.0"
   peerDependencies:
     "@types/react": "*"
     react: ^17 || ^18 || ^19.0.0
@@ -6466,13 +6466,13 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/6c53770bfba512d8a9f330ca2d0c481806e35f40d98f53815716e41ddac74d6fc3c4788fcda2e33907d62d2c5c04e64db62176c04513fbee41c7c436730081ce
+  checksum: 10c0/ffd8223195eac66bcddd85eb5d6cf64ba5ffa521d3673c1caa5346d0346cfe165819d4744b7c1ad6289f8074684a4c4e8f972a54d34ffa91625f1e377e732ad5
   languageName: node
   linkType: hard
 
-"@vector-im/compound-web@npm:^8.0.0":
-  version: 8.4.0
-  resolution: "@vector-im/compound-web@npm:8.4.0"
+"@vector-im/compound-web@npm:^9.0.0":
+  version: 9.0.1
+  resolution: "@vector-im/compound-web@npm:9.0.1"
   dependencies:
     "@floating-ui/react": "npm:^0.27.0"
     "@radix-ui/react-context-menu": "npm:^2.2.16"
@@ -6487,12 +6487,12 @@ __metadata:
     "@fontsource/inconsolata": ^5
     "@fontsource/inter": ^5
     "@types/react": "*"
-    "@vector-im/compound-design-tokens": ">=1.6.1 <7.0.0"
+    "@vector-im/compound-design-tokens": ">=1.6.1 <11.0.0"
     react: ^18 || ^19.0.0
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/31b73555c47b373d4250872bfe863a030b487197bf1198e3cf3a1ec344f2b02f0c72c1513bb598c1cbd7a91d3c6a334d0c8ae37bd7c90d4859c864fc223e059a
+  checksum: 10c0/4ae90e1518001a8a4a2a76e86cfc4fc2bba9b2e556c6e4b56df2c7b04e0e2cdb213b70ee7c7ba4288250c726e8182a473d3d5fdf95890451675239c957251eee
   languageName: node
   linkType: hard
 
@@ -8666,8 +8666,8 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^8.31.0"
     "@typescript-eslint/parser": "npm:^8.31.0"
     "@use-gesture/react": "npm:^10.2.11"
-    "@vector-im/compound-design-tokens": "npm:^9.0.0"
-    "@vector-im/compound-web": "npm:^8.0.0"
+    "@vector-im/compound-design-tokens": "npm:^10.0.0"
+    "@vector-im/compound-web": "npm:^9.0.0"
     "@vitejs/plugin-react": "npm:^4.0.1"
     "@vitest/coverage-v8": "npm:^4.0.18"
     babel-plugin-transform-vite-meta-env: "npm:^1.0.3"
