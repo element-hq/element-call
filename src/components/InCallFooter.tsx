@@ -40,6 +40,7 @@ export interface InCallFooterProps {
   showControls: boolean;
   hideSettingsButton: boolean;
   hideLogo: boolean;
+  /** Pip controls buttonSize and hides: settings button, layout switcher and logo */
   asPip: boolean;
   gridMode: GridMode;
   setGridMode: (mode: GridMode) => void;

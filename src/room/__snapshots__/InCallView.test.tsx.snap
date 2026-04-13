@@ -169,7 +169,7 @@ exports[`InCallView > rendering > renders 1`] = `
       >
         <button
           aria-labelledby="_r_8_"
-          class="_button_13vu4_8 settingForBottomLeftCorner _has-icon_13vu4_60 _icon-only_13vu4_53"
+          class="_button_13vu4_8 settingsOnlyShowWide _has-icon_13vu4_60 _icon-only_13vu4_53"
           data-kind="tertiary"
           data-size="lg"
           role="button"
@@ -298,7 +298,7 @@ exports[`InCallView > rendering > renders 1`] = `
       >
         <button
           aria-labelledby="_r_d_"
-          class="_button_13vu4_8 settingForButtonsBar _has-icon_13vu4_60 _icon-only_13vu4_53"
+          class="_button_13vu4_8 settingsOnlyShowNarrow _has-icon_13vu4_60 _icon-only_13vu4_53"
           data-kind="secondary"
           data-size="lg"
           role="button"
