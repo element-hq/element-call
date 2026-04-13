@@ -271,7 +271,11 @@ describe("UrlParams", () => {
         computeUrlParams(
           "?intent=start_call&widgetId=1234&parentUrl=parent.org",
         ),
-      ).toMatchObject({ ...startNewCallDefaults("desktop"), skipLobby: false });
+      ).toMatchObject({
+        ...startNewCallDefaults("desktop"),
+        skipLobby: false,
+        callIntent: "video",
+      });
     });
 
     it("accepts start_call_dm mobile", () => {
@@ -307,6 +311,29 @@ describe("UrlParams", () => {
           "?intent=join_existing&widgetId=1234&parentUrl=parent.org",
         ),
       ).toMatchObject(joinExistingCallDefaults("desktop"));
+    });
+
+    it("accepts start_call_voice", () => {
+      expect(
+        computeUrlParams(
+          "?intent=start_call_voice&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...startNewCallDefaults("desktop"),
+        skipLobby: false,
+        callIntent: "audio",
+      });
+    });
+
+    it("accepts join_existing_voice", () => {
+      expect(
+        computeUrlParams(
+          "?intent=join_existing_voice&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...joinExistingCallDefaults("desktop"),
+        callIntent: "audio",
+      });
     });
   });
 

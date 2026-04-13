@@ -33,13 +33,20 @@ import {
   PublishState,
   TrackState,
 } from "./LocalMember";
-import { MatrixRTCTransportMissingError } from "../../../utils/errors";
+import {
+  FailToGetOpenIdToken,
+  MatrixRTCTransportMissingError,
+} from "../../../utils/errors";
 import { Epoch, ObservableScope } from "../../ObservableScope";
 import { constant } from "../../Behavior";
 import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
 import { ConnectionState, type Connection } from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
 import { initializeWidget } from "../../../widget";
+import {
+  type LocalTransport,
+  type LocalTransportWithSFUConfig,
+} from "./LocalTransport";
 
 initializeWidget();
 
@@ -214,7 +221,7 @@ describe("LocalMembership", () => {
   };
 
   it("throws error on missing RTC config error", () => {
-    withTestScheduler(({ scope, hot, expectObservable }) => {
+    withTestScheduler(({ scope, hot, behavior, expectObservable }) => {
       const localTransport$ = scope.behavior<null | LivekitTransportConfig>(
         hot("1ms #", {}, new MatrixRTCTransportMissingError("domain.com")),
         null,
@@ -230,11 +237,16 @@ describe("LocalMembership", () => {
         ),
       };
 
+      const aLocalTransport: LocalTransport = {
+        advertised$: localTransport$,
+        active$: behavior("a", { a: null }),
+      };
+
       const localMembership = createLocalMembership$({
         scope,
         ...defaultCreateLocalMemberValues,
         connectionManager: mockConnectionManager,
-        localTransport$,
+        localTransport$: behavior("a", { a: aLocalTransport }),
       });
       localMembership.requestJoinAndPublish();
 
@@ -245,10 +257,62 @@ describe("LocalMembership", () => {
     });
   });
 
+  it("Should not publish to active transport if advertised has errors", () => {
+    withTestScheduler(({ scope, hot, behavior, expectObservable }) => {
+      const advertised$ = scope.behavior<null | LivekitTransportConfig>(
+        hot("--#", {}, new FailToGetOpenIdToken(new Error("foo"))),
+        null,
+      );
+
+      // Populate a connection for active
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(connectionTransportBConnected, []);
+      const mockConnectionManager = {
+        transports$: constant(new Epoch([bTransport])),
+        connectionManagerData$: constant(new Epoch(connectionManagerData)),
+      };
+
+      const aLocalTransport: LocalTransport = {
+        advertised$,
+        active$: behavior("a", { n: null, a: bTransportWithSFUConfig }),
+      };
+
+      defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
+        () => {
+          return {} as unknown as Publisher;
+        },
+      );
+      const publisherFactory =
+        defaultCreateLocalMemberValues.createPublisherFactory as ReturnType<
+          typeof vi.fn
+        >;
+
+      const localMembership = createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        connectionManager: mockConnectionManager,
+        localTransport$: behavior("a", { a: aLocalTransport }),
+      });
+      localMembership.requestJoinAndPublish();
+
+      expectObservable(localMembership.localMemberState$).toBe("n-e", {
+        n: TransportState.Waiting,
+        e: expect.toSatisfy((e) => e instanceof FailToGetOpenIdToken),
+      });
+
+      // Should not have created any publisher
+      expect(publisherFactory).toHaveBeenCalledTimes(0);
+    });
+  });
+
   it("logs if callIntent cannot be updated", async () => {
     const scope = new ObservableScope();
 
-    const localTransport$ = new BehaviorSubject(aTransport);
+    const aLocalTransport: LocalTransport = {
+      advertised$: new BehaviorSubject(aTransport),
+      active$: new BehaviorSubject(aTransportWithSFUConfig),
+    };
+
     const mockConnectionManager = {
       transports$: constant(new Epoch([])),
       connectionManagerData$: constant(new Epoch(new ConnectionManagerData())),
@@ -264,7 +328,7 @@ describe("LocalMembership", () => {
         leaveRoomSession: vi.fn(),
       },
       connectionManager: mockConnectionManager,
-      localTransport$,
+      localTransport$: new BehaviorSubject(aLocalTransport),
     });
     const expextedLog =
       "'not connected yet' while updating the call intent (this is expected on startup)";
@@ -279,9 +343,30 @@ describe("LocalMembership", () => {
   const aTransport = {
     livekit_service_url: "a",
   } as LivekitTransportConfig;
+
+  const aTransportWithSFUConfig = {
+    transport: aTransport,
+    sfuConfig: {
+      jwt: "foo",
+      livekitAlias: "bar",
+      livekitIdentity: "baz",
+      url: "bro",
+    },
+  } as LocalTransportWithSFUConfig;
+
   const bTransport = {
     livekit_service_url: "b",
   } as LivekitTransportConfig;
+
+  const bTransportWithSFUConfig = {
+    transport: bTransport,
+    sfuConfig: {
+      jwt: "foo2",
+      livekitAlias: "bar2",
+      livekitIdentity: "baz2",
+      url: "bro2",
+    },
+  } as LocalTransportWithSFUConfig;
 
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
@@ -307,7 +392,11 @@ describe("LocalMembership", () => {
   it("recreates publisher if new connection is used, always unpublish and end tracks", async () => {
     const scope = new ObservableScope();
 
-    const localTransport$ = new BehaviorSubject(aTransport);
+    const activeTransport$ = new BehaviorSubject(aTransportWithSFUConfig);
+    const aLocalTransport: LocalTransport = {
+      advertised$: new BehaviorSubject(aTransport),
+      active$: activeTransport$,
+    };
 
     const publishers: Publisher[] = [];
     let seed = 0;
@@ -343,10 +432,13 @@ describe("LocalMembership", () => {
       connectionManager: {
         connectionManagerData$: constant(new Epoch(connectionManagerData)),
       },
-      localTransport$,
+      localTransport$: new BehaviorSubject(aLocalTransport),
     });
     await flushPromises();
-    localTransport$.next(bTransport);
+    activeTransport$.next({
+      ...aTransportWithSFUConfig,
+      transport: bTransport,
+    });
     await flushPromises();
 
     expect(publisherFactory).toHaveBeenCalledTimes(2);
@@ -367,8 +459,6 @@ describe("LocalMembership", () => {
 
   it("only start tracks if requested", async () => {
     const scope = new ObservableScope();
-
-    const localTransport$ = new BehaviorSubject(aTransport);
 
     const publishers: Publisher[] = [];
 
@@ -396,6 +486,11 @@ describe("LocalMembership", () => {
         typeof vi.fn
       >;
 
+    const aLocalTransport: LocalTransport = {
+      advertised$: new BehaviorSubject(aTransport),
+      active$: new BehaviorSubject(aTransportWithSFUConfig),
+    };
+
     const connectionManagerData = new ConnectionManagerData();
     connectionManagerData.add(connectionTransportAConnected, []);
     // connectionManagerData.add(connectionTransportB, []);
@@ -405,7 +500,7 @@ describe("LocalMembership", () => {
       connectionManager: {
         connectionManagerData$: constant(new Epoch(connectionManagerData)),
       },
-      localTransport$,
+      localTransport$: new BehaviorSubject(aLocalTransport),
     });
     await flushPromises();
     expect(publisherFactory).toHaveBeenCalledOnce();
@@ -428,9 +523,15 @@ describe("LocalMembership", () => {
     const scope = new ObservableScope();
 
     const connectionManagerData = new ConnectionManagerData();
-    const localTransport$ = new BehaviorSubject<null | LivekitTransportConfig>(
-      null,
-    );
+
+    const activeTransport$ =
+      new BehaviorSubject<null | LocalTransportWithSFUConfig>(null);
+
+    const aLocalTransport: LocalTransport = {
+      advertised$: new BehaviorSubject(aTransport),
+      active$: activeTransport$,
+    };
+
     const connectionManagerData$ = new BehaviorSubject(
       new Epoch(connectionManagerData),
     );
@@ -470,14 +571,14 @@ describe("LocalMembership", () => {
       connectionManager: {
         connectionManagerData$,
       },
-      localTransport$,
+      localTransport$: new BehaviorSubject(aLocalTransport),
     });
 
     await flushPromises();
     expect(localMembership.localMemberState$.value).toStrictEqual(
       TransportState.Waiting,
     );
-    localTransport$.next(aTransport);
+    activeTransport$.next(aTransportWithSFUConfig);
     await flushPromises();
     expect(localMembership.localMemberState$.value).toStrictEqual({
       matrix: RTCMemberStatus.Connected,

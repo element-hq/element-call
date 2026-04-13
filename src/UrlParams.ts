@@ -29,6 +29,8 @@ interface RoomIdentifier {
 export enum UserIntent {
   StartNewCall = "start_call",
   JoinExistingCall = "join_existing",
+  StartNewCallVoice = "start_call_voice",
+  JoinExistingCallVoice = "join_existing_voice",
   StartNewCallDM = "start_call_dm",
   StartNewCallDMVoice = "start_call_dm_voice",
   JoinExistingCallDM = "join_existing_dm",
@@ -413,6 +415,15 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
       // On desktop this will be overridden based on which button was used to join the call
       intentPreset.skipLobby = false;
       intentPreset.callIntent = "video";
+      break;
+    case UserIntent.StartNewCallVoice:
+      intentPreset.skipLobby = false;
+      intentPreset.callIntent = "audio";
+      break;
+    case UserIntent.JoinExistingCallVoice:
+      // On desktop this will be overridden based on which button was used to join the call
+      intentPreset.skipLobby = false;
+      intentPreset.callIntent = "audio";
       break;
     case UserIntent.StartNewCallDMVoice:
       intentPreset.callIntent = "audio";
