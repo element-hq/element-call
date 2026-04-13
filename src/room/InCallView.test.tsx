@@ -130,7 +130,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   const client = room.client;
 
   const Router = args.initialRoute
-    ? ({ children }: { children: React.ReactNode }) => (
+    ? ({ children }: { children: React.ReactNode }): React.ReactNode => (
         <MemoryRouter initialEntries={[args.initialRoute!]}>
           {children}
         </MemoryRouter>
