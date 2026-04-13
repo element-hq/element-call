@@ -17,7 +17,7 @@ exports[`InCallView > rendering > renders 1`] = `
         >
           <span
             aria-label=""
-            class="_avatar_zysgz_8 roomAvatar _avatar-imageless_zysgz_55"
+            class="_avatar_7h2br_8 roomAvatar _avatar-imageless_7h2br_55"
             data-color="1"
             data-type="round"
             role="img"
@@ -117,8 +117,9 @@ exports[`InCallView > rendering > renders 1`] = `
       data-show="false"
     >
       <div
-        class="_content_1r8kr_8 icon"
-        data-size="large"
+        class="_big-icon_1ssbv_8 icon"
+        data-kind="primary"
+        data-size="lg"
       >
         <svg
           aria-hidden="true"
