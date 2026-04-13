@@ -360,7 +360,12 @@ export const InCallView: FC<InCallViewProps> = ({
   let header: ReactNode = null;
   if (showHeader) {
     switch (headerStyle) {
-      case "none":
+      case HeaderStyle.AppBar: {
+        // dont build a header here. The AppBar will take care of it.
+        header = null;
+        break;
+      }
+      case HeaderStyle.None:
         // Cosmetic header to fill out space while still affecting the bounds of
         // the grid
         header = (
@@ -370,7 +375,7 @@ export const InCallView: FC<InCallViewProps> = ({
           />
         );
         break;
-      case "standard":
+      case HeaderStyle.Standard:
         header = (
           <Header
             className={styles.header}
@@ -565,7 +570,8 @@ export const InCallView: FC<InCallViewProps> = ({
       showControls={showControls}
       // Hide the logo for both embedded solutions. mobile: HeaderStyle.AppBar and desktop: HeaderStyle.None.
       hideLogo={headerStyle !== HeaderStyle.Standard}
-      hideSettingsButton={headerStyle === HeaderStyle.AppBar}
+      // Only hide the settings button if we have an AppBar header and we are showing the header
+      hideSettingsButton={headerStyle === HeaderStyle.AppBar && showHeader}
       asPip={layout.type === "pip"}
       gridMode={gridMode}
       setGridMode={setGridMode}
