@@ -547,9 +547,7 @@ export function createCallViewModel$(
     },
     connectionManager,
     matrixRTCSession,
-    localTransport$: scope.behavior(
-      localTransport$.pipe(switchMap((t) => t.advertised$)),
-    ),
+    localTransport$,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 

@@ -27,9 +27,8 @@ Please see LICENSE in the repository root for full details.
 }
 
 .footer.overlay {
-  position: absolute;
-  inset-block-end: 0;
-  inset-inline: 0;
+  /* Note that the footer is still position: sticky in this case so that certain
+    tiles can move up out of the way of the footer when visible. */
   opacity: 1;
   transition: opacity 0.15s;
 }
@@ -38,6 +37,11 @@ Please see LICENSE in the repository root for full details.
   display: grid;
   opacity: 0;
   pointer-events: none;
+  /* Switch to position: absolute so the footer takes up no space in the layout
+    when hidden. */
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
 }
 
 .footer.overlay:has(:focus-visible) {
@@ -72,7 +76,7 @@ Please see LICENSE in the repository root for full details.
 }
 
 /*First hide the logo*/
-@media (max-width: 660px) {
+@media (max-width: 750px) {
   .logo {
     display: none;
   }
