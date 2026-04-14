@@ -146,16 +146,16 @@ export const SettingsIconButton: FC<SettingsIconButtonProps> = (props) => {
   );
 };
 
-interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size?: "sm" | "lg";
-}
-export const SettingsButton: FC<SettingsButtonProps> = (props) => {
-  const { t } = useTranslation();
-  const Icon =
-    platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon;
-  return (
-    <Tooltip label={t("common.settings")}>
-      <CpdButton iconOnly Icon={Icon} kind="secondary" {...props} />
-    </Tooltip>
-  );
-};
+// interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
+//   size?: "sm" | "lg";
+// }
+// const SettingsButton: FC<SettingsButtonProps> = (props) => {
+//   const { t } = useTranslation();
+//   const Icon =
+//     platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon;
+//   return (
+//     <Tooltip label={t("common.settings")}>
+//       <CpdButton iconOnly Icon={Icon} kind="secondary" {...props} />
+//     </Tooltip>
+//   );
+// };
