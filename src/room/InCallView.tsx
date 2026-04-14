@@ -78,7 +78,7 @@ import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
-import { useAppBarHidden } from "../AppBar.tsx";
+import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
 import { Toast } from "../Toast.tsx";
 import overlayStyles from "../Overlay.module.css";
@@ -91,6 +91,7 @@ import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 import { useLatest } from "../useLatest.ts";
 import { CallFooter } from "../components/CallFooter.tsx";
+import { SettingsIconButton } from "../button/Button.tsx";
 
 const logger = rootLogger.getChild("[InCallView]");
 
@@ -562,8 +563,13 @@ export const InCallView: FC<InCallViewProps> = ({
     matrixRoom.roomId,
   );
 
+  const settingsButtonInAppBar =
+    headerStyle === HeaderStyle.AppBar && showHeader;
+  useAppBarSecondaryButton(
+    <SettingsIconButton key="settings" onClick={openSettings} />,
+  );
+
   // Only hide the settings button if we have an AppBar header and we are showing the header
-  const hideSettings = headerStyle === HeaderStyle.AppBar && showHeader;
   const footer = (
     <CallFooter
       ref={footerRef}
@@ -584,7 +590,9 @@ export const InCallView: FC<InCallViewProps> = ({
       reactionIdentifier={`${client.getUserId()}:${client.getDeviceId()}`}
       reactionData={supportsReactions ? vm : undefined}
       audioOutputSwitcher={audioOutputSwitcher ?? undefined}
-      openSettings={hideSettings ? undefined : openSettings}
+      // Only pass the openSettings function if the settings button is not in the app bar.
+      // If there is no fn the button will be hidden in the footer.
+      openSettings={settingsButtonInAppBar ? undefined : openSettings}
       hangup={vm.hangup}
       //Debug props
       debugTileLayout={debugTileLayout}
