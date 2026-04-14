@@ -130,9 +130,24 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
   );
 };
 
+interface SettingsIconButtonProps extends ComponentPropsWithoutRef<"button"> {
+  kind?: "secondary" | "primary";
+}
+export const SettingsIconButton: FC<SettingsIconButtonProps> = (props) => {
+  const { t } = useTranslation();
+  const Icon =
+    platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon;
+  return (
+    <Tooltip label={t("common.settings")}>
+      <IconButton {...props}>
+        <Icon />
+      </IconButton>
+    </Tooltip>
+  );
+};
+
 interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
   size?: "sm" | "lg";
-  forAppBar?: boolean;
 }
 export const SettingsButton: FC<SettingsButtonProps> = (props) => {
   const { t } = useTranslation();
@@ -140,14 +155,7 @@ export const SettingsButton: FC<SettingsButtonProps> = (props) => {
     platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon;
   return (
     <Tooltip label={t("common.settings")}>
-      {!props.forAppBar && (
-        <CpdButton iconOnly Icon={Icon} kind="tertiary" {...props} />
-      )}
-      {props.forAppBar && (
-        <IconButton {...props}>
-          <Icon />
-        </IconButton>
-      )}
+      <CpdButton iconOnly Icon={Icon} kind="secondary" {...props} />
     </Tooltip>
   );
 };

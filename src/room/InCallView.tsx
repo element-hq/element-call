@@ -38,8 +38,8 @@ import {
   MicButton,
   VideoButton,
   ShareScreenButton,
-  SettingsButton,
   ReactionToggleButton,
+  SettingsIconButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { HeaderStyle, useUrlParams } from "../UrlParams";
@@ -645,7 +645,7 @@ export const InCallView: FC<InCallViewProps> = ({
   if (audioOutputButton) buttons.push(audioOutputButton);
 
   useAppBarSecondaryButton(
-    <SettingsButton forAppBar key="settings" onClick={openSettings} />,
+    <SettingsIconButton key="settings" onClick={openSettings} />,
   );
 
   buttons.push(
@@ -686,7 +686,11 @@ export const InCallView: FC<InCallViewProps> = ({
           // Settings button is also shown in the app bar if present
           headerStyle !== HeaderStyle.AppBar &&
           layout.type !== "pip" && (
-            <SettingsButton key="settings" onClick={openSettings} />
+            <SettingsIconButton
+              kind="secondary"
+              key="settings"
+              onClick={openSettings}
+            />
           )}
 
         {headerStyle !== "none" && logo}
