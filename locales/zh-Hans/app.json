@@ -15,12 +15,6 @@
     "submit": "提交"
   },
   "analytics_notice": "参与测试即表示您同意我们收集匿名数据，用于改进产品。您可以在我们的<2>隐私政策</2>和<5>Cookie政策</5>中找到有关我们跟踪哪些数据以及更多信息。",
-  "app_selection_modal": {
-    "continue_in_browser": "在浏览器中继续",
-    "open_in_app": "在应用中打开",
-    "text": "准备好加入了吗？",
-    "title": "选择应用程序"
-  },
   "call_ended_view": {
     "create_account_button": "创建账户",
     "create_account_prompt": "<0>为何不设置密码来保留你的账户？</0><1>保留昵称并设置头像，以便在未来的通话中使用。</1>",

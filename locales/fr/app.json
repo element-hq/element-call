@@ -15,12 +15,6 @@
     "submit": "Envoyer"
   },
   "analytics_notice": "En participant à cette beta, vous consentez à la collecte de données anonymes, qui seront utilisées pour améliorer le produit. Vous trouverez plus d’informations sur les données collectées dans notre <2>Politique de vie privée</2> et notre <5>Politique de cookies</5>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Continuer dans le navigateur",
-    "open_in_app": "Ouvrir dans l’application",
-    "text": "Prêt à rejoindre ?",
-    "title": "Choisissez l’application"
-  },
   "call_ended_view": {
     "create_account_button": "Créer un compte",
     "create_account_prompt": "<0>Pourquoi ne pas créer un mot de passe pour conserver votre compte ?</0><1>Vous pourrez garder votre nom et définir un avatar pour vos futurs appels</1>",
