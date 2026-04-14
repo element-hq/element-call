@@ -121,7 +121,10 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   const { vm, rtcSession } = getBasicCallViewModelEnvironment(
     [local, alice],
     undefined,
-    args.callViewModelOptions ?? {},
+    {
+      toggleScreensharing: () => {},
+      ...args.callViewModelOptions,
+    },
     args.mediaDevices,
   );
 

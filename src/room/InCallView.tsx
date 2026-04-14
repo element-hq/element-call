@@ -567,25 +567,26 @@ export const InCallView: FC<InCallViewProps> = ({
   const footer = (
     <CallFooter
       ref={footerRef}
-      asOverlay={windowMode === "flat"}
       hidden={!showFooter}
       hideControls={!showControls}
+      asOverlay={windowMode === "flat"}
+      asPip={layout.type === "pip"}
       // Hide the logo for both embedded solutions. mobile: HeaderStyle.AppBar and desktop: HeaderStyle.None.
       hideLogo={headerStyle !== HeaderStyle.Standard}
-      asPip={layout.type === "pip"}
       layoutMode={gridMode}
       setLayoutMode={setGridMode}
-      openSettings={hideSettings ? undefined : openSettings}
       audioEnabled={audioEnabled}
-      videoEnabled={videoEnabled}
       toggleAudio={toggleAudio ?? undefined}
+      videoEnabled={videoEnabled}
       toggleVideo={toggleVideo ?? undefined}
       sharingScreen={sharingScreen}
       toggleScreenSharing={vm.toggleScreenSharing ?? undefined}
       reactionIdentifier={`${client.getUserId()}:${client.getDeviceId()}`}
       reactionData={supportsReactions ? vm : undefined}
       audioOutputSwitcher={audioOutputSwitcher ?? undefined}
+      openSettings={hideSettings ? undefined : openSettings}
       hangup={vm.hangup}
+      //Debug props
       debugTileLayout={debugTileLayout}
       tileStoreGeneration={tileStoreGeneration}
     />

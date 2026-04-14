@@ -173,6 +173,8 @@ export interface CallViewModelOptions {
   windowSize$?: Behavior<{ width: number; height: number }>;
   /** The version & compatibility mode of MatrixRTC that we should use. */
   matrixRTCMode$?: Behavior<MatrixRTCMode>;
+  /** Optional behavior overriding for the screensharing, for testing */
+  toggleScreensharing?: () => void;
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -1506,7 +1508,8 @@ export function createCallViewModel$(
    * Callback to toggle screen sharing. If null, screen sharing is not possible.
    */
   // reassigned here to make it publicly accessible
-  const toggleScreenSharing = localMembership.toggleScreenSharing;
+  const toggleScreenSharing =
+    options.toggleScreensharing ?? localMembership.toggleScreenSharing;
 
   const errors$ = scope.behavior<{
     transportError?: ElementCallError;

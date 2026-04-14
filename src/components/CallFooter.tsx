@@ -153,7 +153,7 @@ export const CallFooter: FC<FooterProps> = ({
     );
   }
 
-  if (reactionIdentifier) {
+  if (reactionIdentifier && reactionData) {
     buttons.push(
       <ReactionToggleButton
         size={buttonSize}
