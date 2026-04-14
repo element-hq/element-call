@@ -16,7 +16,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Button, Heading, Tooltip } from "@vector-im/compound-web";
+import { Button, Heading, IconButton, Tooltip } from "@vector-im/compound-web";
 import { CollapseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 
@@ -68,12 +68,9 @@ export const AppBar: FC<Props> = ({ children }) => {
         >
           <LeftNav>
             <Tooltip label={t("common.back")}>
-              <Button
-                kind={"tertiary"}
-                iconOnly
-                Icon={CollapseIcon}
-                onClick={onBackClick}
-              />
+              <IconButton onClick={onBackClick}>
+                <CollapseIcon />
+              </IconButton>
             </Tooltip>
           </LeftNav>
           {title && (
