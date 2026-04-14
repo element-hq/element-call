@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
+import { BehaviorSubject } from "rxjs";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -19,7 +20,7 @@ import {
   ReactionToggleButton,
   LoudspeakerButton,
 } from "../button";
-import styles from "./InCallFooter.module.css";
+import styles from "./CallFooter.module.css";
 import { LayoutToggle } from "../room/LayoutToggle";
 import {
   type CallViewModel,
@@ -32,44 +33,60 @@ export interface AudioOutputSwitcher {
   switch: () => void;
 }
 
-export interface InCallFooterProps {
+export interface FooterProps {
   ref?: Ref<HTMLDivElement>;
+  /** Children will only be visible if the component is wider than 5*/
+  children?: JSX.Element | JSX.Element[] | false;
   /* This is needed for WindowMode = "flat" */
-  asOverlay: boolean;
-  showFooter: boolean;
-  showControls: boolean;
-  hideSettingsButton: boolean;
-  hideLogo: boolean;
+  hideControls?: boolean;
+  /** hide the entire footer*/
+  hidden?: boolean;
   /** Pip controls buttonSize and hides: settings button, layout switcher and logo */
-  asPip: boolean;
-  gridMode: GridMode;
-  setGridMode: (mode: GridMode) => void;
-  openSettings: () => void;
-  audioEnabled: boolean;
-  videoEnabled: boolean;
+  asPip?: boolean;
+  /** The footer should be used as an overlay.
+   * (Over the Call Grid) This saves spaces on small screens.*/
+  asOverlay?: boolean;
+
+  layoutMode?: GridMode;
+  /** Also controls if the layout button is visible */
+  setLayoutMode?: (mode: GridMode) => void;
+
+  audioEnabled?: boolean;
+  /** Also controls if the audioMute button is disabled */
   toggleAudio?: () => void;
+  videoEnabled?: boolean;
+  /** Also controls if the videoMute button is disabled */
   toggleVideo?: () => void;
-  sharingScreen: boolean;
+
+  sharingScreen?: boolean;
   toggleScreenSharing?: () => void;
-  supportsReactions: boolean;
-  reactionIdentifier: string;
-  reactionData: Pick<CallViewModel, "handsRaised$" | "reactions$">;
-  audioOutputSwitcher: AudioOutputSwitcher | null;
-  hangup: () => void;
-  debugTileLayout: boolean;
-  tileStoreGeneration: number;
+
+  /** Also controls if the audio button is visible */
+  audioOutputSwitcher?: AudioOutputSwitcher;
+  /** Also controls if the settings button is visible */
+  openSettings?: () => void;
+  /** Also controls if the hangup button is visible */
+  hangup?: () => void;
+
+  reactionIdentifier?: string;
+  reactionData?: Pick<CallViewModel, "handsRaised$" | "reactions$">;
+
+  hideLogo?: boolean;
+  // debug stuff
+  debugTileLayout?: boolean;
+  tileStoreGeneration?: number;
 }
 
-export const InCallFooter: FC<InCallFooterProps> = ({
+export const CallFooter: FC<FooterProps> = ({
   ref,
+  children,
   asOverlay,
-  showFooter,
-  showControls,
-  hideSettingsButton,
+  hidden,
+  hideControls,
   hideLogo,
   asPip,
-  gridMode,
-  setGridMode,
+  layoutMode,
+  setLayoutMode,
   openSettings,
   audioEnabled,
   videoEnabled,
@@ -77,7 +94,6 @@ export const InCallFooter: FC<InCallFooterProps> = ({
   toggleVideo,
   sharingScreen,
   toggleScreenSharing,
-  supportsReactions,
   reactionIdentifier,
   reactionData,
   audioOutputSwitcher,
@@ -87,8 +103,9 @@ export const InCallFooter: FC<InCallFooterProps> = ({
 }) => {
   const buttons: JSX.Element[] = [];
   const buttonSize = asPip ? "sm" : "lg";
-  const showSettingsButton = !hideSettingsButton && !asPip && showControls;
-  const showLayoutSwitcher = !asPip && showControls;
+  const showSettingsButton =
+    openSettings !== undefined && !asPip && !hideControls;
+  const showLayoutSwitcher = !asPip && !hideControls;
   const showLogoDebugContainer = !asPip || (!hideLogo && !debugTileLayout);
   const showLogo = !hideLogo && !asPip;
   if (showSettingsButton) {
@@ -108,39 +125,45 @@ export const InCallFooter: FC<InCallFooterProps> = ({
     <MicButton
       size={buttonSize}
       key="audio"
-      enabled={audioEnabled}
-      onClick={toggleAudio ?? undefined}
+      enabled={audioEnabled ?? false}
+      onClick={toggleAudio}
       disabled={toggleAudio === undefined}
       data-testid="incall_mute"
     />,
     <VideoButton
       size={buttonSize}
       key="video"
-      enabled={videoEnabled}
-      onClick={toggleVideo ?? undefined}
+      enabled={videoEnabled ?? false}
+      onClick={toggleVideo}
       disabled={toggleVideo === undefined}
       data-testid="incall_videomute"
     />,
   );
 
-  if (toggleScreenSharing !== null) {
+  if (toggleScreenSharing !== undefined) {
     buttons.push(
       <ShareScreenButton
         size={buttonSize}
         key="share_screen"
         className={styles.shareScreen}
-        enabled={sharingScreen}
+        enabled={sharingScreen ?? false}
         onClick={toggleScreenSharing}
         data-testid="incall_screenshare"
       />,
     );
   }
 
-  if (supportsReactions) {
+  if (reactionIdentifier) {
     buttons.push(
       <ReactionToggleButton
         size={buttonSize}
-        reactionData={reactionData}
+        reactionData={
+          reactionData ??
+          ({
+            handsRaised$: new BehaviorSubject({}),
+            reactions$: new BehaviorSubject({}),
+          } as Pick<CallViewModel, "handsRaised$" | "reactions$">)
+        }
         key="raise_hand"
         className={styles.raiseHand}
         identifier={reactionIdentifier}
@@ -150,7 +173,7 @@ export const InCallFooter: FC<InCallFooterProps> = ({
 
   // In this PR we just move the button to the bottom bar. We do not yet update its appearance
   const audioOutputButton = useMemo(() => {
-    if (audioOutputSwitcher === null) return null;
+    if (audioOutputSwitcher === undefined) return null;
     return (
       <LoudspeakerButton
         size={buttonSize}
@@ -166,14 +189,15 @@ export const InCallFooter: FC<InCallFooterProps> = ({
     <SettingsButton key="settings" onClick={openSettings} />,
   );
 
-  buttons.push(
-    <EndCallButton
-      size={buttonSize}
-      key="end_call"
-      onClick={hangup}
-      data-testid="incall_leave"
-    />,
-  );
+  if (hangup)
+    buttons.push(
+      <EndCallButton
+        size={buttonSize}
+        key="end_call"
+        onClick={hangup}
+        data-testid="incall_leave"
+      />,
+    );
 
   const logoDebugContainer = (
     <div className={styles.logo}>
@@ -196,7 +220,7 @@ export const InCallFooter: FC<InCallFooterProps> = ({
       ref={ref}
       className={classNames(styles.footer, {
         [styles.overlay]: asOverlay,
-        [styles.hidden]: !showFooter,
+        [styles.hidden]: hidden,
       })}
     >
       <div className={styles.settingsLogoContainer}>
@@ -207,16 +231,15 @@ export const InCallFooter: FC<InCallFooterProps> = ({
             onClick={openSettings}
           />
         )}
-
+        {children}
         {showLogoDebugContainer && logoDebugContainer}
       </div>
-
-      {showControls && <div className={styles.buttons}>{buttons}</div>}
-      {showLayoutSwitcher && (
+      {!hideControls && <div className={styles.buttons}>{buttons}</div>}
+      {setLayoutMode && layoutMode && showLayoutSwitcher && (
         <LayoutToggle
           className={styles.layout}
-          layout={gridMode}
-          setLayout={setGridMode}
+          layout={layoutMode}
+          setLayout={setLayoutMode}
         />
       )}
     </div>

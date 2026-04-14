@@ -8,8 +8,8 @@ Please see LICENSE in the repository root for full details.
 import type { StorybookConfig } from "@storybook/react-vite";
 
 const config: StorybookConfig = {
-  stories: ["../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
-  addons: ["@storybook/addon-docs"],
+  stories: ["../src/**/*.mdx", "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+  addons: ["@storybook/addon-docs", "@storybook/addon-vitest"],
   framework: "@storybook/react-vite",
 };
 export default config;

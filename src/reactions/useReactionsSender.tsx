@@ -29,7 +29,7 @@ interface ReactionsSenderContextType {
   sendReaction: (reaction: ReactionOption) => Promise<void>;
 }
 
-const ReactionsSenderContext = createContext<
+export const ReactionsSenderContext = createContext<
   ReactionsSenderContextType | undefined
 >(undefined);
 

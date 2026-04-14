@@ -51,6 +51,7 @@ Please see LICENSE in the repository root for full details.
 
 .settingsLogoContainer {
   display: flex;
+  align-items: center;
   gap: var(--cpd-space-4x);
   flex-direction: row;
 }

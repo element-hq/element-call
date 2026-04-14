@@ -33,12 +33,6 @@ import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { type MatrixInfo, VideoPreview } from "./VideoPreview";
 import { type MuteStates } from "../state/MuteStates";
 import { InviteButton } from "../button/InviteButton";
-import {
-  EndCallButton,
-  MicButton,
-  SettingsButton,
-  VideoButton,
-} from "../button/Button";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useMediaQuery } from "../useMediaQuery";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -52,6 +46,7 @@ import {
 import { usePageTitle } from "../usePageTitle";
 import { getValue } from "../utils/observable";
 import { useBehavior } from "../useBehavior";
+import { CallFooter } from "../components/CallFooter";
 
 interface Props {
   client: MatrixClient;
@@ -226,23 +221,14 @@ export const LobbyView: FC<Props> = ({
           </VideoPreview>
           {!recentsButtonInFooter && recentsButton}
         </div>
-        <div className={inCallStyles.footer}>
+        <CallFooter
+          toggleAudio={toggleAudio ?? undefined}
+          toggleVideo={toggleVideo ?? undefined}
+          openSettings={openSettings}
+          hangup={!confineToRoom ? onLeaveClick : undefined}
+        >
           {recentsButtonInFooter && recentsButton}
-          <SettingsButton onClick={openSettings} />
-          <div className={inCallStyles.buttons}>
-            <MicButton
-              enabled={audioEnabled}
-              onClick={toggleAudio ?? undefined}
-              disabled={toggleAudio === null}
-            />
-            <VideoButton
-              enabled={videoEnabled}
-              onClick={toggleVideo ?? undefined}
-              disabled={toggleVideo === null}
-            />
-            {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
-          </div>
-        </div>
+        </CallFooter>
       </div>
       {client && (
         <SettingsModal
