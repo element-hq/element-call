@@ -113,8 +113,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   const { vm, rtcSession } = getBasicCallViewModelEnvironment(
     [local, alice],
     undefined,
-    {},
-    args.mediaDevices,
+    { mediaDeviceOverride: args.mediaDevices },
   );
 
   rtcSession.joined = true;

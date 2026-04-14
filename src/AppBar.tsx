@@ -16,7 +16,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Button, Heading, IconButton, Tooltip } from "@vector-im/compound-web";
+import { Heading, IconButton, Tooltip } from "@vector-im/compound-web";
 import { CollapseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 

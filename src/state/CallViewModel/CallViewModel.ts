@@ -172,6 +172,7 @@ export interface CallViewModelOptions {
   windowSize$?: Behavior<{ width: number; height: number }>;
   /** The version & compatibility mode of MatrixRTC that we should use. */
   matrixRTCMode$?: Behavior<MatrixRTCMode>;
+  mediaDeviceOverride?: MediaDevices;
 }
 
 // Do not play any sounds if the participant count has exceeded this
