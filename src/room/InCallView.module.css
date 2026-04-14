@@ -102,7 +102,7 @@ Please see LICENSE in the repository root for full details.
 }
 
 /*First hide the logo*/
-@media (max-width: 660px) {
+@media (max-width: 750px) {
   .logo {
     display: none;
   }
