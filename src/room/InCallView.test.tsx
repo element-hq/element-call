@@ -44,7 +44,7 @@ import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { constant } from "../state/Behavior";
 import { AppBar } from "../AppBar";
 import { initializeWidget } from "../widget";
-import inCallFooterStyles from "../components/InCallFooter.module.css";
+import callFooterStyles from "../components/CallFooter.module.css";
 
 initializeWidget();
 vi.hoisted(
@@ -211,9 +211,9 @@ describe("InCallView", () => {
       // Their visibility uses @media css queries, which cannot be tested in JSDOM,
       // but we can at least check that both buttons are rendered and have the correct classes.
       expect(btnA).toBeInTheDocument();
-      expect(btnA).toHaveClass(inCallFooterStyles.settingsOnlyShowWide);
+      expect(btnA).toHaveClass(callFooterStyles.settingsOnlyShowWide);
       expect(btnB).toBeInTheDocument();
-      expect(btnB).toHaveClass(inCallFooterStyles.settingsOnlyShowNarrow);
+      expect(btnB).toHaveClass(callFooterStyles.settingsOnlyShowNarrow);
     });
 
     it("is accessible when showHeader is true", () => {

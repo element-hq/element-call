@@ -22,7 +22,7 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
-import inCallFooterStyles from "../components/InCallFooter.module.css";
+import callFooterStyles from "../components/CallFooter.module.css";
 import { platform } from "../Platform";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
@@ -177,9 +177,9 @@ export const SettingsButton: FC<SettingsButtonProps> = ({
     <Tooltip label={t("common.settings")}>
       <CpdButton
         className={classNames(className, {
-          [inCallFooterStyles.settingsOnlyShowWide]:
+          [callFooterStyles.settingsOnlyShowWide]:
             showForScreenWidth === "wide",
-          [inCallFooterStyles.settingsOnlyShowNarrow]:
+          [callFooterStyles.settingsOnlyShowNarrow]:
             showForScreenWidth === "narrow",
         })}
         iconOnly

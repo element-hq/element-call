@@ -90,7 +90,7 @@ import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.t
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 import { useLatest } from "../useLatest.ts";
-import { InCallFooter } from "../components/InCallFooter.tsx";
+import { CallFooter } from "../components/CallFooter.tsx";
 
 const logger = rootLogger.getChild("[InCallView]");
 
@@ -562,30 +562,29 @@ export const InCallView: FC<InCallViewProps> = ({
     matrixRoom.roomId,
   );
 
+  // Only hide the settings button if we have an AppBar header and we are showing the header
+  const hideSettings = headerStyle === HeaderStyle.AppBar && showHeader;
   const footer = (
-    <InCallFooter
+    <CallFooter
       ref={footerRef}
       asOverlay={windowMode === "flat"}
-      showFooter={showFooter}
-      showControls={showControls}
+      hidden={!showFooter}
+      hideControls={!showControls}
       // Hide the logo for both embedded solutions. mobile: HeaderStyle.AppBar and desktop: HeaderStyle.None.
       hideLogo={headerStyle !== HeaderStyle.Standard}
-      // Only hide the settings button if we have an AppBar header and we are showing the header
-      hideSettingsButton={headerStyle === HeaderStyle.AppBar && showHeader}
       asPip={layout.type === "pip"}
-      gridMode={gridMode}
-      setGridMode={setGridMode}
-      openSettings={openSettings}
+      layoutMode={gridMode}
+      setLayoutMode={setGridMode}
+      openSettings={hideSettings ? undefined : openSettings}
       audioEnabled={audioEnabled}
       videoEnabled={videoEnabled}
       toggleAudio={toggleAudio ?? undefined}
       toggleVideo={toggleVideo ?? undefined}
       sharingScreen={sharingScreen}
       toggleScreenSharing={vm.toggleScreenSharing ?? undefined}
-      supportsReactions={supportsReactions}
       reactionIdentifier={`${client.getUserId()}:${client.getDeviceId()}`}
-      reactionData={vm}
-      audioOutputSwitcher={audioOutputSwitcher}
+      reactionData={supportsReactions ? vm : undefined}
+      audioOutputSwitcher={audioOutputSwitcher ?? undefined}
       hangup={vm.hangup}
       debugTileLayout={debugTileLayout}
       tileStoreGeneration={tileStoreGeneration}
