@@ -29,6 +29,9 @@ async function setupTwoUserSpaCall(
 
   let androlHasSentStickyEvent = false;
 
+  const { promise: stickyAndrolPromise, resolve: stickyAndrolResolve } =
+    Promise.withResolvers<void>();
+
   await interceptEventSend(
     page,
     // This room is not encrypted, so the event is sent in clear
@@ -36,6 +39,9 @@ async function setupTwoUserSpaCall(
     (req) => {
       androlHasSentStickyEvent =
         androlHasSentStickyEvent || isStickySend(req.url());
+      if (androlHasSentStickyEvent) {
+        stickyAndrolResolve();
+      }
     },
   );
 
@@ -53,6 +59,8 @@ async function setupTwoUserSpaCall(
 
   let pevaraHasSentStickyEvent = false;
 
+  const { promise: stickyPevaraPromise, resolve: stickyPevaraResolve } =
+    Promise.withResolvers<void>();
   await interceptEventSend(
     guestPage,
     // This room is not encrypted, so the event is sent in clear
@@ -60,6 +68,9 @@ async function setupTwoUserSpaCall(
     (req) => {
       pevaraHasSentStickyEvent =
         pevaraHasSentStickyEvent || isStickySend(req.url());
+      if (pevaraHasSentStickyEvent) {
+        stickyPevaraResolve();
+      }
     },
   );
 
@@ -70,7 +81,9 @@ async function setupTwoUserSpaCall(
     "2_0",
   );
   // Assert both sides have sent sticky membership events
+  await stickyAndrolPromise;
   expect(androlHasSentStickyEvent).toEqual(true);
+  await stickyPevaraPromise;
   expect(pevaraHasSentStickyEvent).toEqual(true);
 
   return { guestPage };
