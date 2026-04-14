@@ -683,6 +683,7 @@ export const InCallView: FC<InCallViewProps> = ({
     >
       <div className={styles.settingsLogoContainer}>
         {showControls &&
+          // Settings button is also shown in the app bar if present
           headerStyle !== HeaderStyle.AppBar &&
           layout.type !== "pip" && (
             <SettingsButton key="settings" onClick={openSettings} />
