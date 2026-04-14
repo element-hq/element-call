@@ -19,6 +19,7 @@ import {
   SettingsButton,
   ReactionToggleButton,
   LoudspeakerButton,
+  SettingsIconButton,
 } from "../button";
 import styles from "./CallFooter.module.css";
 import { LayoutToggle } from "../room/LayoutToggle";
@@ -110,10 +111,9 @@ export const CallFooter: FC<FooterProps> = ({
   const showLogo = !hideLogo && !asPip;
   if (showSettingsButton) {
     // add the settings button to the center group of buttons, so it will be visible on small screens.
-    // On larger screens, it will be hidden and the one without `forButtonsBar` in the `settingsLogoContainer` will be visible.
+    // On larger screens, it will be hidden SettingsIconButton the one with `showForScreenWidth = "wide"` in the `settingsLogoContainer` will be visible.
     buttons.push(
       <SettingsButton
-        forButtonsBar
         key="settings"
         showForScreenWidth="narrow"
         onClick={openSettings}
@@ -186,7 +186,7 @@ export const CallFooter: FC<FooterProps> = ({
   if (audioOutputButton) buttons.push(audioOutputButton);
 
   useAppBarSecondaryButton(
-    <SettingsButton key="settings" onClick={openSettings} />,
+    <SettingsIconButton key="settings" onClick={openSettings} />,
   );
 
   if (hangup)
@@ -225,8 +225,9 @@ export const CallFooter: FC<FooterProps> = ({
     >
       <div className={styles.settingsLogoContainer}>
         {showSettingsButton && (
-          <SettingsButton
+          <SettingsIconButton
             key="settings"
+            kind="secondary"
             showForScreenWidth="wide"
             onClick={openSettings}
           />

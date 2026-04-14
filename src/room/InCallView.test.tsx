@@ -125,7 +125,6 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       toggleScreensharing: () => {},
       ...args.callViewModelOptions,
     },
-    args.mediaDevices,
   );
 
   rtcSession.joined = true;
@@ -264,7 +263,9 @@ describe("InCallView", () => {
         },
       });
 
-      const { getByRole } = createInCallView({ mediaDevices });
+      const { getByRole } = createInCallView({
+        callViewModelOptions: { mediaDeviceOverride: mediaDevices },
+      });
       // The button should be visible. When current output is "speaker",
       // the switcher targets "earpiece", so the tooltip label is "Handset".
       const audioOutputBtn = getByRole("switch", { name: "Handset" });
