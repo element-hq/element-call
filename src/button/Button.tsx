@@ -8,7 +8,11 @@ Please see LICENSE in the repository root for full details.
 import { type ComponentPropsWithoutRef, type FC } from "react";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
-import { Button as CpdButton, Tooltip } from "@vector-im/compound-web";
+import {
+  Button as CpdButton,
+  IconButton,
+  Tooltip,
+} from "@vector-im/compound-web";
 import {
   MicOnSolidIcon,
   MicOffSolidIcon,
@@ -128,20 +132,22 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
 
 interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
   size?: "sm" | "lg";
+  forAppBar?: boolean;
 }
 export const SettingsButton: FC<SettingsButtonProps> = (props) => {
   const { t } = useTranslation();
-
+  const Icon =
+    platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon;
   return (
     <Tooltip label={t("common.settings")}>
-      <CpdButton
-        iconOnly
-        Icon={
-          platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon
-        }
-        kind="tertiary"
-        {...props}
-      />
+      {!props.forAppBar && (
+        <CpdButton iconOnly Icon={Icon} kind="tertiary" {...props} />
+      )}
+      {props.forAppBar && (
+        <IconButton {...props}>
+          <Icon />
+        </IconButton>
+      )}
     </Tooltip>
   );
 };

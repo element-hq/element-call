@@ -645,7 +645,7 @@ export const InCallView: FC<InCallViewProps> = ({
   if (audioOutputButton) buttons.push(audioOutputButton);
 
   useAppBarSecondaryButton(
-    <SettingsButton key="settings" onClick={openSettings} />,
+    <SettingsButton forAppBar key="settings" onClick={openSettings} />,
   );
 
   buttons.push(
