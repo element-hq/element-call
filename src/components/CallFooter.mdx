@@ -1,18 +1,24 @@
-{/*
+{/**
 Copyright 2026 Element Creations Ltd.
-
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
-*/}
+**/}
 
-{/*
+{/**
 This is a custom doc page overwriting the default autodocs tag.
 This can be done by using the same filename as the component
 With the help of Primary, Controls,Stories the overhead is minimal
-*/}
+**/}
 
-import { Meta, Primary, Controls, Stories, Title, Subtitle } from '@storybook/addon-docs/blocks';
-import * as CallFooterStories from './CallFooter.stories';
+import {
+  Meta,
+  Primary,
+  Controls,
+  Stories,
+  Title,
+  Subtitle,
+} from "@storybook/addon-docs/blocks";
+import * as CallFooterStories from "./CallFooter.stories";
 
 <Meta of={CallFooterStories} />
 
@@ -28,4 +34,4 @@ The story summary here does not render the mobile layouts correctly.
 
 <Primary />
 <Controls of={CallFooterStories.Primary} />
-<Stories/>
+<Stories />
