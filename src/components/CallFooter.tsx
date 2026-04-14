@@ -27,7 +27,6 @@ import {
   type CallViewModel,
   type GridMode,
 } from "../state/CallViewModel/CallViewModel";
-import { useAppBarSecondaryButton } from "../AppBar";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -184,10 +183,6 @@ export const CallFooter: FC<FooterProps> = ({
   }, [audioOutputSwitcher, buttonSize]);
 
   if (audioOutputButton) buttons.push(audioOutputButton);
-
-  useAppBarSecondaryButton(
-    <SettingsIconButton key="settings" onClick={openSettings} />,
-  );
 
   if (hangup)
     buttons.push(
