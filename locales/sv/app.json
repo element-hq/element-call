@@ -22,12 +22,6 @@
     "upload_file": "Ladda upp fil"
   },
   "analytics_notice": "Genom att delta i denna beta samtycker du till insamling av anonyma uppgifter, som vi använder för att förbättra produkten. Du kan hitta mer information om vilka data vi spårar i vår <2>integritetspolicy</2> och vår <5>cookiepolicy</5>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Fortsätt i webbläsaren",
-    "open_in_app": "Öppna i appen",
-    "text": "Är du redo att gå med?",
-    "title": "Välj app"
-  },
   "call_ended_view": {
     "create_account_button": "Skapa konto",
     "create_account_prompt": "<0>Varför inte avsluta genom att skapa ett lösenord för att behålla ditt konto?</0><1>Du kommer att kunna behålla ditt namn och ställa in en avatar för användning vid framtida samtal</1>",
