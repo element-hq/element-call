@@ -15,20 +15,17 @@ import {
   vi,
 } from "vitest";
 import { render, type RenderResult } from "@testing-library/react";
-import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
-import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { type LocalParticipant } from "livekit-client";
-import { of } from "rxjs";
+import { BehaviorSubject, of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
+import userEvent from "@testing-library/user-event";
 
 import { InCallView } from "./InCallView";
 import {
   mockLivekitRoom,
   mockLocalParticipant,
-  mockMatrixRoom,
-  mockMatrixRoomMember,
   mockMediaDevices,
   mockMuteStates,
   mockRemoteParticipant,
@@ -43,7 +40,9 @@ import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { HeaderStyle } from "../UrlParams";
+import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { initializeWidget } from "../widget";
+
 initializeWidget();
 vi.hoisted(
   () =>
@@ -71,10 +70,7 @@ const localParticipant = mockLocalParticipant({
 const remoteParticipant = mockRemoteParticipant({
   identity: "@alice:example.org:AAAAAA",
 });
-const carol = mockMatrixRoomMember(localRtcMember);
-const roomMembers = new Map([carol].map((p) => [p.userId, p]));
 
-const roomId = "!foo:bar";
 let useRoomEncryptionSystemMock: MockedFunction<typeof useRoomEncryptionSystem>;
 
 beforeEach(() => {
@@ -99,36 +95,13 @@ beforeEach(() => {
     useRoomEncryptionSystem as typeof useRoomEncryptionSystemMock;
   useRoomEncryptionSystemMock.mockReturnValue({ kind: E2eeType.NONE });
 });
-
-function createInCallView(): RenderResult & {
+interface CreateInCallViewArgs {
+  mediaDevices?: ECMediaDevices;
+}
+function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   rtcSession: MockRTCSession;
 } {
-  const client = {
-    getUser: () => null,
-    getUserId: () => localRtcMember.userId,
-    getDeviceId: () => localRtcMember.deviceId,
-    getRoom: (rId) => (rId === roomId ? room : null),
-    getDomain: () => "example.com",
-  } as Partial<MatrixClient> as MatrixClient;
-  const room = mockMatrixRoom({
-    relations: {
-      getChildEventsForEvent: () =>
-        vi.mocked({
-          getRelations: () => [],
-        }),
-    } as unknown as RelationsContainer,
-    client,
-    roomId,
-    // getMember: (userId) => roomMembers.get(userId) ?? null,
-    getMembers: () => Array.from(roomMembers.values()),
-    getMxcAvatarUrl: () => null,
-    hasEncryptionStateEvent: vi.fn().mockReturnValue(true),
-    getCanonicalAlias: () => null,
-    currentState: {
-      getJoinRule: () => JoinRule.Invite,
-    } as Partial<RoomState> as RoomState,
-  });
-
+  const mediaDevices = args.mediaDevices ?? mockMediaDevices({});
   const muteState = mockMuteStates();
   const livekitRoom = mockLivekitRoom(
     {
@@ -138,12 +111,19 @@ function createInCallView(): RenderResult & {
       remoteParticipants$: of([remoteParticipant]),
     },
   );
-  const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, rtcSession } = getBasicCallViewModelEnvironment(
+    [local, alice],
+    undefined,
+    mediaDevices,
+    {},
+  );
 
   rtcSession.joined = true;
+  const room = rtcSession.room;
+  const client = room.client;
   const renderResult = render(
     <BrowserRouter>
-      <MediaDevicesContext value={mockMediaDevices({})}>
+      <MediaDevicesContext value={mediaDevices}>
         <ReactionsSenderProvider
           vm={vm}
           rtcSession={rtcSession.asMockedSession()}
@@ -188,6 +168,43 @@ describe("InCallView", () => {
     it("renders", () => {
       const { container } = createInCallView();
       expect(container).toMatchSnapshot();
+    });
+  });
+  describe("audioOutputSwitcher", () => {
+    it("is visible and can be clicked", async () => {
+      const user = userEvent.setup();
+      const switchFn = vi.fn();
+      // Create mediaDevices with a speaker and an earpiece available,
+      // with the speaker currently selected.
+      // This is needed so that the audio switcher button is visible
+      const available$ = new BehaviorSubject(
+        new Map<string, { type: "speaker" } | { type: "earpiece" }>([
+          ["speaker-id", { type: "speaker" }],
+          ["earpiece-id", { type: "earpiece" }],
+        ]),
+      );
+      const selected$ = new BehaviorSubject<
+        { id: string; virtualEarpiece: boolean } | undefined
+      >({ id: "speaker-id", virtualEarpiece: false });
+
+      const mediaDevices = mockMediaDevices({
+        audioOutput: {
+          available$,
+          selected$,
+          select: switchFn,
+        },
+      });
+
+      const { getByRole } = createInCallView({ mediaDevices });
+      // The button should be visible. When current output is "speaker",
+      // the switcher targets "earpiece", so the tooltip label is "Handset".
+      const audioOutputBtn = getByRole("button", { name: "Handset" });
+      expect(audioOutputBtn).toBeVisible();
+
+      await user.click(audioOutputBtn);
+
+      // Clicking the button should call select -> switchFn with the earpiece device id
+      expect(switchFn).toHaveBeenCalledWith("earpiece-id");
     });
   });
 });

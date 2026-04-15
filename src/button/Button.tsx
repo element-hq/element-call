@@ -8,7 +8,11 @@ Please see LICENSE in the repository root for full details.
 import { type ComponentPropsWithoutRef, type FC } from "react";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
-import { Button as CpdButton, Tooltip } from "@vector-im/compound-web";
+import {
+  Button as CpdButton,
+  IconButton,
+  Tooltip,
+} from "@vector-im/compound-web";
 import {
   MicOnSolidIcon,
   MicOffSolidIcon,
@@ -16,10 +20,12 @@ import {
   VideoCallOffSolidIcon,
   EndCallIcon,
   ShareScreenSolidIcon,
-  SettingsSolidIcon,
+  OverflowHorizontalIcon,
+  OverflowVerticalIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
+import { platform } from "../Platform";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
@@ -124,20 +130,32 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
   );
 };
 
-interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size?: "sm" | "lg";
+interface SettingsIconButtonProps extends ComponentPropsWithoutRef<"button"> {
+  kind?: "secondary" | "primary";
 }
-export const SettingsButton: FC<SettingsButtonProps> = (props) => {
+export const SettingsIconButton: FC<SettingsIconButtonProps> = (props) => {
   const { t } = useTranslation();
-
+  const Icon =
+    platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon;
   return (
     <Tooltip label={t("common.settings")}>
-      <CpdButton
-        iconOnly
-        Icon={SettingsSolidIcon}
-        kind="secondary"
-        {...props}
-      />
+      <IconButton {...props}>
+        <Icon aria-hidden />
+      </IconButton>
     </Tooltip>
   );
 };
+
+// interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
+//   size?: "sm" | "lg";
+// }
+// const SettingsButton: FC<SettingsButtonProps> = (props) => {
+//   const { t } = useTranslation();
+//   const Icon =
+//     platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon;
+//   return (
+//     <Tooltip label={t("common.settings")}>
+//       <CpdButton iconOnly Icon={Icon} kind="secondary" {...props} />
+//     </Tooltip>
+//   );
+// };

@@ -36,7 +36,7 @@ import { InviteButton } from "../button/InviteButton";
 import {
   EndCallButton,
   MicButton,
-  SettingsButton,
+  SettingsIconButton,
   VideoButton,
 } from "../button/Button";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
@@ -228,6 +228,7 @@ export const LobbyView: FC<Props> = ({
         </div>
         <div className={inCallStyles.footer}>
           {recentsButtonInFooter && recentsButton}
+          <SettingsIconButton kind="secondary" onClick={openSettings} />
           <div className={inCallStyles.buttons}>
             <MicButton
               enabled={audioEnabled}
@@ -239,7 +240,6 @@ export const LobbyView: FC<Props> = ({
               onClick={toggleVideo ?? undefined}
               disabled={toggleVideo === null}
             />
-            <SettingsButton onClick={openSettings} />
             {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
           </div>
         </div>
