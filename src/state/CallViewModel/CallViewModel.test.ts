@@ -36,7 +36,6 @@ import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { type Layout } from "../layout-types.ts";
 import {
-  mockLocalParticipant,
   mockMatrixRoomMember,
   mockRemoteParticipant,
   withTestScheduler,
@@ -61,7 +60,10 @@ import {
 import { MediaDevices } from "../MediaDevices.ts";
 import { getValue } from "../../utils/observable.ts";
 import { type Behavior, constant } from "../Behavior.ts";
-import { withCallViewModel as withCallViewModelInMode } from "./CallViewModelTestUtils.ts";
+import {
+  localParticipant,
+  withCallViewModel as withCallViewModelInMode,
+} from "./CallViewModelTestUtils.ts";
 import { MatrixRTCMode } from "../../settings/settings.ts";
 import { initializeWidget } from "../../widget.ts";
 
@@ -104,7 +106,6 @@ const dave = mockMatrixRoomMember(daveRtcMember, { rawDisplayName: "Dave" });
 
 const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
-const localParticipant = mockLocalParticipant({ identity: "" });
 const bobParticipant = mockRemoteParticipant({ identity: bobId });
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
 
@@ -269,7 +270,7 @@ describe.each([
     });
   });
 
-  test("screen sharing activates spotlight layout", () => {
+  test("remote screen sharing activates spotlight layout", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Start with no screen shares, then have Alice and Bob share their screens,
       // then return to no screen shares, then have just Alice share for a bit
@@ -344,6 +345,76 @@ describe.each([
           expectObservable(vm.showSpeakingIndicators$).toBe(
             expectedShowSpeakingMarbles,
             yesNo,
+          );
+        },
+      );
+    });
+  });
+
+  test("local screen sharing stays in grid layout", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      // Local participant shares their screen, then stops sharing
+      const sharingInputMarbles = "  nyn";
+      // Layout should show the screen share but stay in type: "grid"
+      const expectedLayoutMarbles = "aba";
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant, bobParticipant]),
+          rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
+          sharingScreen: new Map([
+            [localParticipant, behavior(sharingInputMarbles, yesNo)],
+          ]),
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "grid",
+                spotlight: undefined,
+                grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
+              },
+              b: {
+                type: "grid",
+                spotlight: [`${localId}:0:screen-share`],
+                grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
+              },
+            },
+          );
+        },
+      );
+    });
+  });
+
+  test("local screen sharing in one-on-one call activates grid layout", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      // Local participant shares their screen, then stops sharing
+      const sharingInputMarbles = "  nyn";
+      // Layout should switch to grid layout then back to one-on-one layout
+      const expectedLayoutMarbles = "aba";
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant]),
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          sharingScreen: new Map([
+            [localParticipant, behavior(sharingInputMarbles, yesNo)],
+          ]),
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "one-on-one",
+                pip: `${localId}:0`,
+                spotlight: `${aliceId}:0`,
+              },
+              b: {
+                type: "grid",
+                spotlight: [`${localId}:0:screen-share`],
+                grid: [`${localId}:0`, `${aliceId}:0`],
+              },
+            },
           );
         },
       );
