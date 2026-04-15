@@ -436,7 +436,7 @@ export const GroupCallView: FC<Props> = ({
         muteStates={muteStates}
         onEnter={() => setJoined(true)}
         confineToRoom={confineToRoom}
-        hideHeader={header === HeaderStyle.None}
+        hideHeader={header !== HeaderStyle.Standard}
         participantCount={participantCount}
         onShareClick={onShareClick}
       />
