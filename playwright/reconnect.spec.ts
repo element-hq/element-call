@@ -13,7 +13,7 @@ test.skip(
   'This test is not working on firefox, page.keyboard.press("Tab") not reliable in headless mode',
 );
 
-test("can not interact with media tiles while reconnecting (only with header and footer)", async ({
+test("can only interact with header and footer while reconnecting", async ({
   page,
 }) => {
   await page.goto("/");
