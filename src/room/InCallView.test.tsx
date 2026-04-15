@@ -115,10 +115,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
     [local, alice],
     undefined,
     mediaDevices,
-    {
-      toggleScreensharing: () => {},
-      ...args.callViewModelOptions,
-    },
+    {},
   );
 
   rtcSession.joined = true;
