@@ -15,7 +15,7 @@ import {
   type Room as LivekitRoom,
 } from "livekit-client";
 import { SyncState } from "matrix-js-sdk/lib/sync";
-import { BehaviorSubject, type Observable, map, of } from "rxjs";
+import { BehaviorSubject, combineLatest, map, of } from "rxjs";
 import { onTestFinished, vi } from "vitest";
 import { ClientEvent, type RoomMember, type MatrixClient } from "matrix-js-sdk";
 import EventEmitter from "events";
@@ -68,7 +68,8 @@ export interface CallViewModelInputs {
   rtcMembers$: Behavior<Partial<CallMembership>[]>;
   roomMembers: RoomMember[];
   livekitConnectionState$: Behavior<ConnectionState>;
-  speaking: Map<Participant, Observable<boolean>>;
+  speaking: Map<Participant, Behavior<boolean>>;
+  sharingScreen: Map<Participant, Behavior<boolean>>;
   mediaDevices: MediaDevices;
   initialSyncState: SyncState;
   windowSize$: Behavior<{ width: number; height: number }>;
@@ -94,6 +95,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         ConnectionState.Connected,
       ),
       speaking = new Map(),
+      sharingScreen = new Map(),
       mediaDevices = mockMediaDevices({}),
       initialSyncState = SyncState.Syncing,
       windowSize$ = constant({ width: 1000, height: 800 }),
@@ -154,13 +156,19 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     const eventsSpy = vi
       .spyOn(ComponentsCore, "observeParticipantEvents")
       .mockImplementation((p, ...eventTypes) => {
-        if (eventTypes.includes(ParticipantEvent.IsSpeakingChanged)) {
-          return (speaking.get(p) ?? of(false)).pipe(
-            map((s): Participant => ({ ...p, isSpeaking: s }) as Participant),
-          );
-        } else {
-          return of(p);
-        }
+        return combineLatest([
+          (eventTypes.includes(ParticipantEvent.IsSpeakingChanged) &&
+            speaking.get(p)) ||
+            constant(false),
+          (eventTypes.includes(ParticipantEvent.TrackPublished) &&
+            sharingScreen.get(p)) ||
+            constant(false),
+        ]).pipe(
+          map(
+            ([isSpeaking, isScreenShareEnabled]) =>
+              ({ ...p, isSpeaking, isScreenShareEnabled }) as Participant,
+          ),
+        );
       });
 
     const roomEventSelectorSpy = vi
