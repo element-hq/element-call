@@ -109,6 +109,7 @@ interface CreateInCallViewArgs {
 function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   rtcSession: MockRTCSession;
 } {
+  const mediaDevices = args.mediaDevices ?? mockMediaDevices({});
   const muteState = mockMuteStates();
   const livekitRoom = mockLivekitRoom(
     {
@@ -121,10 +122,8 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   const { vm, rtcSession } = getBasicCallViewModelEnvironment(
     [local, alice],
     undefined,
-    {
-      toggleScreensharing: () => {},
-      ...args.callViewModelOptions,
-    },
+    mediaDevices,
+    {},
   );
 
   rtcSession.joined = true;
@@ -166,7 +165,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
 
   const renderResult = render(
     <Router>
-      <MediaDevicesContext value={args.mediaDevices ?? mockMediaDevices({})}>
+      <MediaDevicesContext value={mediaDevices}>
         <ReactionsSenderProvider
           vm={vm}
           rtcSession={rtcSession.asMockedSession()}
@@ -263,9 +262,7 @@ describe("InCallView", () => {
         },
       });
 
-      const { getByRole } = createInCallView({
-        callViewModelOptions: { mediaDeviceOverride: mediaDevices },
-      });
+      const { getByRole } = createInCallView({ mediaDevices });
       // The button should be visible. When current output is "speaker",
       // the switcher targets "earpiece", so the tooltip label is "Handset".
       const audioOutputBtn = getByRole("switch", { name: "Handset" });

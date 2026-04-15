@@ -175,7 +175,6 @@ export interface CallViewModelOptions {
   matrixRTCMode$?: Behavior<MatrixRTCMode>;
   /** Optional behavior overriding for the screensharing, for testing */
   toggleScreensharing?: () => void;
-  mediaDeviceOverride?: MediaDevices;
 }
 
 // Do not play any sounds if the participant count has exceeded this
