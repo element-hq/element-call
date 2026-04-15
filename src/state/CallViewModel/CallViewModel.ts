@@ -1078,9 +1078,10 @@ export function createCallViewModel$(
     );
 
   const oneOnOneLayoutMedia$: Observable<OneOnOneLayoutMedia | null> =
-    userMedia$.pipe(
-      switchMap((userMedia) => {
-        if (userMedia.length <= 2) {
+    combineLatest([userMedia$, screenShares$]).pipe(
+      switchMap(([userMedia, screenShares]) => {
+        // One-on-one layout only supports 2 user media, no screen shares
+        if (userMedia.length <= 2 && screenShares.length === 0) {
           const local = userMedia.find(
             (vm): vm is WrappedUserMediaViewModel & LocalUserMediaViewModel =>
               vm.type === "user" && vm.local,
