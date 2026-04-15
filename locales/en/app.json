@@ -215,6 +215,12 @@
     "feedback_tab_send_logs_label": "Include debug logs",
     "feedback_tab_thank_you": "Thanks, we received your feedback!",
     "feedback_tab_title": "Feedback",
+    "noise_suppression_description": "Reduces background noise from your microphone",
+    "noise_suppression_header": "Audio Processing",
+    "noise_suppression_label": "Noise suppression",
+    "noise_suppression_level_description": "Higher levels suppress more noise but may affect speech clarity",
+    "noise_suppression_level_label": "Noise suppression level",
+    "noise_suppression_level_value": "Level: {{level}}",
     "opt_in_description": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
     "preferences_tab": {
       "developer_mode_label": "Developer mode",

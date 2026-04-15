@@ -7,7 +7,7 @@
     "dev:full": "vite",
     "dev:embedded": "vite --config vite-embedded.config.js",
     "build": "yarn build:full",
-    "build:full": "NODE_OPTIONS=--max-old-space-size=16384 vite build",
+    "build:full": "yarn setup:assets && NODE_OPTIONS=--max-old-space-size=16384 vite build",
     "build:full:production": "yarn build:full",
     "build:full:development": "yarn build:full --mode development",
     "build:embedded": "yarn build:full --config vite-embedded.config.js",
@@ -17,6 +17,7 @@
     "build:sdk": "yarn build:full --config vite-sdk.config.js",
     "build:sdk:production": "yarn build:sdk",
     "serve": "vite preview",
+    "setup:assets": "node scripts/setup-noise-suppression-assets.js",
     "prettier:check": "prettier -c .",
     "prettier:format": "prettier -w .",
     "lint": "yarn lint:types && yarn lint:eslint && yarn lint:knip",
@@ -68,6 +69,7 @@
     "@testing-library/user-event": "^14.5.1",
     "@types/content-type": "^1.1.5",
     "@types/grecaptcha": "^3.0.9",
+    "@types/jest": "^30.0.0",
     "@types/jsdom": "^21.1.7",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^24.0.0",
@@ -101,7 +103,6 @@
     "eslint-plugin-storybook": "^10.3.3",
     "eslint-plugin-unicorn": "^56.0.0",
     "fetch-mock": "11.1.5",
-    "global-jsdom": "^26.0.0",
     "i18next": "^25.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-parser": "^9.1.0",
@@ -151,5 +152,8 @@
     "qs": "^6.14.1",
     "js-yaml": "^4.1.1"
   },
-  "packageManager": "yarn@4.7.0"
+  "packageManager": "yarn@4.7.0",
+  "dependencies": {
+    "deepfilternet3-noise-filter": "^1.2.1"
+  }
 }

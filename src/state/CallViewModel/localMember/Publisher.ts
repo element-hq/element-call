@@ -9,6 +9,7 @@ import {
   ConnectionState as LivekitConnectionState,
   type LocalTrackPublication,
   LocalVideoTrack,
+  LocalAudioTrack,
   ParticipantEvent,
   type Room as LivekitRoom,
   Track,
@@ -29,6 +30,7 @@ import {
   type ProcessorState,
   trackProcessorSync,
 } from "../../../livekit/TrackProcessorContext.tsx";
+import { audioTrackNoiseSuppressionSync } from "../../../livekit/audioTrackNoiseSuppressionSync";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { observeTrackReference$ } from "../../observeTrackReference";
 import { type Connection } from "../remoteMembers/Connection.ts";
@@ -73,6 +75,8 @@ export class Publisher {
 
     // Setup track processor syncing (blur)
     this.observeTrackProcessors(this.scope, room, trackerProcessorState$);
+    // Setup audio track processor syncing (noise suppression)
+    this.observeAudioTrackProcessors(this.scope, room);
     // Observe media device changes and update LiveKit active devices accordingly
     this.observeMediaDevices(this.scope, devices, controlledAudioDevices);
 
@@ -415,5 +419,24 @@ export class Publisher {
       null,
     );
     trackProcessorSync(scope, track$, trackerProcessorState$);
+  }
+
+  private observeAudioTrackProcessors(
+    scope: ObservableScope,
+    room: LivekitRoom,
+  ): void {
+    const track$ = scope.behavior(
+      observeTrackReference$(
+        room.localParticipant,
+        Track.Source.Microphone,
+      ).pipe(
+        map((trackRef) => {
+          const track = trackRef?.publication.track;
+          return track instanceof LocalAudioTrack ? track : null;
+        }),
+      ),
+      null,
+    );
+    audioTrackNoiseSuppressionSync(scope, track$);
   }
 }

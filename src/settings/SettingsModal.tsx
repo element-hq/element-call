@@ -23,6 +23,8 @@ import {
   useSetting,
   soundEffectVolume as soundEffectVolumeSetting,
   backgroundBlur as backgroundBlurSetting,
+  noiseSuppressionEnabled,
+  noiseSuppressionLevel,
   developerMode,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
@@ -98,6 +100,67 @@ export const SettingsModal: FC<Props> = ({
     );
   };
 
+  // Generate controls for noise suppression.
+  const NoiseSuppressionControls: React.FC = (): ReactNode => {
+    const [noiseEnabled, setNoiseEnabled] = useSetting(noiseSuppressionEnabled);
+    const [noiseLevel, setNoiseLevel] = useSetting(noiseSuppressionLevel);
+    const displayLevel = Math.round(noiseLevel * 100);
+    const [noiseLevelRaw, setNoiseLevelRaw] = useState(noiseLevel);
+
+    useEffect(() => {
+      setNoiseLevelRaw(noiseLevel);
+    }, [noiseLevel]);
+
+    useEffect(() => {
+      if (noiseLevel < 0 || noiseLevel > 1) {
+        setNoiseLevel(Math.max(0, Math.min(1, noiseLevel)));
+      }
+    }, [noiseLevel, setNoiseLevel]);
+
+    return (
+      <>
+        <h4>{t("settings.noise_suppression_header")}</h4>
+
+        <FieldRow>
+          <InputField
+            id="activateNoiseSuppression"
+            label={t("settings.noise_suppression_label")}
+            description={t("settings.noise_suppression_description")}
+            type="checkbox"
+            checked={!!noiseEnabled}
+            onChange={(b): void => setNoiseEnabled(b.target.checked)}
+          />
+        </FieldRow>
+
+        {noiseEnabled && (
+          <div className={styles.volumeSlider}>
+            <label>{t("settings.noise_suppression_level_label")}</label>
+            <p>{t("settings.noise_suppression_level_description")}</p>
+            <Slider
+              label={t("settings.noise_suppression_level_value", {
+                level: displayLevel,
+              })}
+              value={noiseLevelRaw}
+              onValueChange={(value): void => {
+                if (!isNaN(value)) {
+                  setNoiseLevelRaw(value);
+                }
+              }}
+              onValueCommit={(value): void => {
+                if (!isNaN(value)) {
+                  setNoiseLevel(value);
+                }
+              }}
+              min={0}
+              max={1}
+              step={0.05}
+            />
+          </div>
+        )}
+      </>
+    );
+  };
+
   const devices = useMediaDevices();
   useEffect(() => {
     if (open) devices.requestDeviceNames();
@@ -164,6 +227,10 @@ export const SettingsModal: FC<Props> = ({
               step={0.01}
             />
           </div>
+
+          <Separator />
+
+          <NoiseSuppressionControls />
         </Form>
       </>
     ),
