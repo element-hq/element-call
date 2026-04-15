@@ -105,12 +105,16 @@ import {
 import {
   createLocalTransport$,
   JwtEndpointVersion,
+  type LocalTransport,
 } from "./localMember/LocalTransport.ts";
 import {
   createMemberships$,
   membershipsAndTransports$,
 } from "../SessionBehaviors.ts";
-import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
+import {
+  type ConnectionFactory,
+  ECConnectionFactory,
+} from "./remoteMembers/ConnectionFactory.ts";
 import {
   type ConnectionManagerData,
   createConnectionManager$,
@@ -170,6 +174,10 @@ export interface CallViewModelOptions {
   connectionState$?: Behavior<ConnectionState>;
   /** Optional behavior overriding the computed window size, mainly for testing purposes. */
   windowSize$?: Behavior<{ width: number; height: number }>;
+  /** Optional value overriding the local transport, for testing purposes. */
+  localTransport?: LocalTransport;
+  /** Optional value overriding the connection factory, for testing purposes. */
+  connectionFactory?: ConnectionFactory;
   /** The version & compatibility mode of MatrixRTC that we should use. */
   matrixRTCMode$?: Behavior<MatrixRTCMode>;
 }
@@ -441,6 +449,7 @@ export function createCallViewModel$(
         // Re-create LocalTransport whenever the mode changes
         (mode) => ({ keys: [mode], data: undefined }),
         (scope, _data$, mode) =>
+          options.localTransport ??
           createLocalTransport$({
             scope: scope,
             memberships$: memberships$,
@@ -467,17 +476,19 @@ export function createCallViewModel$(
     ),
   );
 
-  const connectionFactory = new ECConnectionFactory(
-    client,
-    matrixRoom.roomId,
-    mediaDevices,
-    trackProcessorState$,
-    livekitKeyProvider,
-    getUrlParams().controlledAudioDevices,
-    options.livekitRoomFactory,
-    getUrlParams().echoCancellation,
-    getUrlParams().noiseSuppression,
-  );
+  const connectionFactory =
+    options.connectionFactory ??
+    new ECConnectionFactory(
+      client,
+      matrixRoom.roomId,
+      mediaDevices,
+      trackProcessorState$,
+      livekitKeyProvider,
+      getUrlParams().controlledAudioDevices,
+      options.livekitRoomFactory,
+      getUrlParams().echoCancellation,
+      getUrlParams().noiseSuppression,
+    );
 
   const connectionManager = createConnectionManager$({
     scope: scope,

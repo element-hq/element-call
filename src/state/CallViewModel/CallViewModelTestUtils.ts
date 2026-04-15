@@ -30,7 +30,10 @@ import {
   type CallViewModelOptions,
 } from "./CallViewModel";
 import {
+  exampleSfuConfig,
+  exampleTransport,
   mockConfig,
+  MockConnection,
   mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
@@ -75,7 +78,7 @@ export interface CallViewModelInputs {
   windowSize$: Behavior<{ width: number; height: number }>;
 }
 
-const localParticipant = mockLocalParticipant({ identity: "" });
+export const localParticipant = mockLocalParticipant({ identity: "" });
 
 export function withCallViewModel(mode: MatrixRTCMode) {
   return (
@@ -180,6 +183,13 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     );
     const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
 
+    const livekitRoomFactory = (): LivekitRoom =>
+      mockLivekitRoom({
+        localParticipant,
+        disconnect: async () => Promise.resolve(),
+        setE2EEEnabled: async () => Promise.resolve(),
+      });
+
     const vm = createCallViewModel$(
       testScope(),
       rtcSession.asMockedSession(),
@@ -189,14 +199,38 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       {
         encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         autoLeaveWhenOthersLeft: false,
-        livekitRoomFactory: (): LivekitRoom =>
-          mockLivekitRoom({
-            localParticipant,
-            disconnect: async () => Promise.resolve(),
-            setE2EEEnabled: async () => Promise.resolve(),
-          }),
+        livekitRoomFactory,
         connectionState$,
         windowSize$,
+        localTransport: {
+          active$: constant({
+            transport: exampleTransport,
+            sfuConfig: exampleSfuConfig,
+          }),
+          advertised$: constant(exampleTransport),
+        },
+        connectionFactory: {
+          createConnection(
+            scope,
+            transport,
+            ownMembershipIdentity,
+            logger,
+            sfuConfig,
+          ) {
+            return new MockConnection(
+              {
+                scope,
+                transport,
+                ownMembershipIdentity,
+                existingSFUConfig: sfuConfig,
+                client: room.client,
+                roomId: room.roomId,
+                livekitRoomFactory,
+              },
+              logger,
+            );
+          },
+        },
         matrixRTCMode$: constant(mode),
         ...options,
       },
