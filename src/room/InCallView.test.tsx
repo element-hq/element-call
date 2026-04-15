@@ -101,6 +101,7 @@ interface CreateInCallViewArgs {
 function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   rtcSession: MockRTCSession;
 } {
+  const mediaDevices = args.mediaDevices ?? mockMediaDevices({});
   const muteState = mockMuteStates();
   const livekitRoom = mockLivekitRoom(
     {
@@ -113,7 +114,11 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   const { vm, rtcSession } = getBasicCallViewModelEnvironment(
     [local, alice],
     undefined,
-    { mediaDeviceOverride: args.mediaDevices },
+    mediaDevices,
+    {
+      toggleScreensharing: () => {},
+      ...args.callViewModelOptions,
+    },
   );
 
   rtcSession.joined = true;
@@ -121,7 +126,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   const client = room.client;
   const renderResult = render(
     <BrowserRouter>
-      <MediaDevicesContext value={args.mediaDevices ?? mockMediaDevices({})}>
+      <MediaDevicesContext value={mediaDevices}>
         <ReactionsSenderProvider
           vm={vm}
           rtcSession={rtcSession.asMockedSession()}
