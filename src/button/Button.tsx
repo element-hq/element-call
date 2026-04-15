@@ -193,7 +193,7 @@ export const SettingsIconButton: FC<SettingsIconButtonProps> = ({
         className={classNamesForScrrenWidth(className, showForScreenWidth)}
         {...props}
       >
-        <Icon />
+        <Icon aria-hidden/>
       </IconButton>
     </Tooltip>
   );

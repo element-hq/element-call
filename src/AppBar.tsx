@@ -71,8 +71,8 @@ export const AppBar: FC<Props> = ({ children }) => {
         >
           <LeftNav>
             <Tooltip label={t("common.back")}>
-              <IconButton onClick={onBackClick}>
-                <CollapseIcon />
+              <IconButton size="24px" onClick={onBackClick}>
+                <CollapseIcon aria-hidden />
               </IconButton>
             </Tooltip>
           </LeftNav>

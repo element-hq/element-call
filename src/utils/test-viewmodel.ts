@@ -34,6 +34,7 @@ import {
   MockRTCSession,
   testScope,
 } from "./test";
+import { type MediaDevices } from "../state/MediaDevices";
 import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "../state/Behavior";
@@ -131,6 +132,7 @@ export function getBasicRTCSession(
 export function getBasicCallViewModelEnvironment(
   members: RoomMember[],
   initialRtcMemberships: CallMembership[] = [localRtcMember, aliceRtcMember],
+  mediaDevicesOverride?: MediaDevices,
   callViewModelOptions: Partial<CallViewModelOptions> = {},
 ): {
   vm: CallViewModel;
@@ -146,13 +148,11 @@ export function getBasicCallViewModelEnvironment(
   const handRaisedSubject$ = new BehaviorSubject({});
   const reactionsSubject$ = new BehaviorSubject({});
 
-  // const remoteParticipants$ = of([aliceParticipant]);
-
   const vm = createCallViewModel$(
     testScope(),
     rtcSession.asMockedSession(),
     matrixRoom,
-    callViewModelOptions.mediaDeviceOverride ?? mockMediaDevices({}),
+    mediaDevicesOverride ?? mockMediaDevices({}),
     mockMuteStates(),
     {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
