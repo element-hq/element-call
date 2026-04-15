@@ -222,6 +222,8 @@ export const LobbyView: FC<Props> = ({
           {!recentsButtonInFooter && recentsButton}
         </div>
         <CallFooter
+          audioEnabled={audioEnabled}
+          videoEnabled={videoEnabled}
           toggleAudio={toggleAudio ?? undefined}
           toggleVideo={toggleVideo ?? undefined}
           openSettings={openSettings}

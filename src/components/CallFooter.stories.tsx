@@ -54,6 +54,8 @@ export const Default: Story = {
   args: {
     hideLogo: true,
     layoutMode: "grid",
+    audioEnabled: true,
+    videoEnabled: true,
     setLayoutMode: fn(),
     openSettings: fn(),
     toggleAudio: fn(),
@@ -73,8 +75,8 @@ export const Default: Story = {
       mapping: {
         NoOutputCallback: undefined,
         // This is inverersed (speaker<->earpice) because the switcher object stores the target output, not the current one.
-        speaker: { targetOutput: "speaker", switch: fn() },
-        earpiece: { targetOutput: "earpiece", switch: fn() },
+        speaker: { targetOutput: "earpiece", switch: fn() },
+        earpiece: { targetOutput: "speaker", switch: fn() },
       },
     },
     toggleScreenSharing: fnArgType,
@@ -102,7 +104,16 @@ export const AudioVideoEnabled: Story = {
     videoEnabled: true,
   },
 };
-export const WithAudioOutput: Story = {
+
+export const WithAudioOutputSpeaker: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    audioOutputSwitcher: { targetOutput: "earpiece", switch: fn() },
+  },
+};
+
+export const WithAudioOutputEarpiece: Story = {
   ...Default,
   args: {
     ...Default.args,

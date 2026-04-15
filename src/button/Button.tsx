@@ -23,6 +23,7 @@ import {
   OverflowHorizontalIcon,
   OverflowVerticalIcon,
   VolumeOnSolidIcon,
+  VolumeOffSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
@@ -134,31 +135,25 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
 
 interface LoudspeakerButtonProps extends ComponentPropsWithoutRef<"button"> {
   size?: "sm" | "lg";
-  /** The button will be rendered:
-   * true: currently in loudspeaker mode, pressing will switch to earpiece (rendered as enabled)
-   * false: currently in earpiece mode, pressing will switch to loudspeaker (rendered as disabled)
-   */
-  isEarpieceTarget: boolean;
+  loudspeakerModeEnabled: boolean;
 }
 export const LoudspeakerButton: FC<LoudspeakerButtonProps> = ({
-  isEarpieceTarget,
+  loudspeakerModeEnabled,
   ...props
 }) => {
   const { t } = useTranslation();
-  const label = isEarpieceTarget
-    ? t("settings.devices.handset")
-    : t("settings.devices.loudspeaker");
   // if the target is the earpice, we are currently in loudspeaker mode.
-  const enabled = isEarpieceTarget;
+  const label = loudspeakerModeEnabled
+    ? t("settings.devices.loudspeaker")
+    : t("settings.devices.handset");
   return (
     <Tooltip label={label}>
       <CpdButton
         iconOnly
-        Icon={VolumeOnSolidIcon}
+        Icon={loudspeakerModeEnabled ? VolumeOnSolidIcon : VolumeOffSolidIcon}
         {...props}
-        kind={enabled ? "primary" : "secondary"}
-        role="switch"
-        aria-checked={enabled}
+        kind={loudspeakerModeEnabled ? "primary" : "secondary"}
+        aria-checked={loudspeakerModeEnabled}
       />
     </Tooltip>
   );
