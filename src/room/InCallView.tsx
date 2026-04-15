@@ -38,11 +38,11 @@ import {
   MicButton,
   VideoButton,
   ShareScreenButton,
-  SettingsButton,
   ReactionToggleButton,
+  SettingsIconButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { type HeaderStyle, useUrlParams } from "../UrlParams";
+import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { widget } from "../widget";
 import styles from "./InCallView.module.css";
@@ -373,30 +373,6 @@ export const InCallView: FC<InCallViewProps> = ({
     [vm],
   );
 
-  useAppBarSecondaryButton(
-    useMemo(() => {
-      if (audioOutputSwitcher === null) return null;
-      const isEarpieceTarget = audioOutputSwitcher.targetOutput === "earpiece";
-      const Icon = isEarpieceTarget ? VoiceCallSolidIcon : VolumeOnSolidIcon;
-      const label = isEarpieceTarget
-        ? t("settings.devices.handset")
-        : t("settings.devices.loudspeaker");
-
-      return (
-        <Tooltip label={label}>
-          <IconButton
-            onClick={(e) => {
-              e.preventDefault();
-              audioOutputSwitcher.switch();
-            }}
-          >
-            <Icon />
-          </IconButton>
-        </Tooltip>
-      );
-    }, [t, audioOutputSwitcher]),
-  );
-
   useAppBarHidden(!showHeader);
 
   let header: ReactNode = null;
@@ -643,14 +619,34 @@ export const InCallView: FC<InCallViewProps> = ({
       />,
     );
   }
-  if (layout.type !== "pip")
-    buttons.push(
-      <SettingsButton
-        size={buttonSize}
-        key="settings"
-        onClick={openSettings}
-      />,
+
+  // In this PR we just move the button ot the bottom bar. We do not yet update its apperance
+  const audioOutputButton = useMemo(() => {
+    if (audioOutputSwitcher === null) return null;
+    const isEarpieceTarget = audioOutputSwitcher.targetOutput === "earpiece";
+    const Icon = isEarpieceTarget ? VoiceCallSolidIcon : VolumeOnSolidIcon;
+    const label = isEarpieceTarget
+      ? t("settings.devices.handset")
+      : t("settings.devices.loudspeaker");
+
+    return (
+      <Tooltip label={label}>
+        <IconButton
+          key="audio_output_switcher"
+          onClick={(e) => {
+            audioOutputSwitcher.switch();
+          }}
+        >
+          <Icon />
+        </IconButton>
+      </Tooltip>
     );
+  }, [t, audioOutputSwitcher]);
+  if (audioOutputButton) buttons.push(audioOutputButton);
+
+  useAppBarSecondaryButton(
+    <SettingsIconButton key="settings" onClick={openSettings} />,
+  );
 
   buttons.push(
     <EndCallButton
@@ -662,6 +658,20 @@ export const InCallView: FC<InCallViewProps> = ({
       data-testid="incall_leave"
     />,
   );
+
+  const logo = (
+    <div className={styles.logo}>
+      <LogoMark width={24} height={24} aria-hidden />
+      <LogoType
+        width={80}
+        height={11}
+        aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
+      />
+      {/* Don't mind this odd placement, it's just a little debug label */}
+      {debugTileLayout ? `Tiles generation: ${tileStoreGeneration}` : undefined}
+    </div>
+  );
+
   const footer = (
     <div
       ref={footerRef}
@@ -671,20 +681,21 @@ export const InCallView: FC<InCallViewProps> = ({
           !showFooter || (!showControls && headerStyle === "none"),
       })}
     >
-      {headerStyle !== "none" && (
-        <div className={styles.logo}>
-          <LogoMark width={24} height={24} aria-hidden />
-          <LogoType
-            width={80}
-            height={11}
-            aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
-          />
-          {/* Don't mind this odd placement, it's just a little debug label */}
-          {debugTileLayout
-            ? `Tiles generation: ${tileStoreGeneration}`
-            : undefined}
-        </div>
-      )}
+      <div className={styles.settingsLogoContainer}>
+        {showControls &&
+          // Settings button is also shown in the app bar if present
+          headerStyle !== HeaderStyle.AppBar &&
+          layout.type !== "pip" && (
+            <SettingsIconButton
+              kind="secondary"
+              key="settings"
+              onClick={openSettings}
+            />
+          )}
+
+        {headerStyle !== "none" && logo}
+      </div>
+
       {showControls && <div className={styles.buttons}>{buttons}</div>}
       {showControls && (
         <LayoutToggle
