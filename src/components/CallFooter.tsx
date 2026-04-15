@@ -114,6 +114,7 @@ export const CallFooter: FC<FooterProps> = ({
         key="settings"
         showForScreenWidth="narrow"
         onClick={openSettings}
+        data-testid="settings-bottom-center"
       />,
     );
   }
@@ -222,6 +223,7 @@ export const CallFooter: FC<FooterProps> = ({
             kind="secondary"
             showForScreenWidth="wide"
             onClick={openSettings}
+            data-testid="settings-bottom-left"
           />
         )}
         {children}

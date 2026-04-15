@@ -164,7 +164,7 @@ export const LoudspeakerButton: FC<LoudspeakerButtonProps> = ({
   );
 };
 
-function classNamesForScrrenWidth(
+function classNamesForScreenWidth(
   className?: string,
   forScreenWidth?: "wide" | "narrow",
 ): string {
@@ -190,10 +190,10 @@ export const SettingsIconButton: FC<SettingsIconButtonProps> = ({
   return (
     <Tooltip label={t("common.settings")}>
       <IconButton
-        className={classNamesForScrrenWidth(className, showForScreenWidth)}
+        className={classNamesForScreenWidth(className, showForScreenWidth)}
         {...props}
       >
-        <Icon aria-hidden/>
+        <Icon aria-hidden />
       </IconButton>
     </Tooltip>
   );
@@ -213,7 +213,7 @@ export const SettingsButton: FC<SettingsButtonProps> = ({
   return (
     <Tooltip label={t("common.settings")}>
       <CpdButton
-        className={classNamesForScrrenWidth(className, showForScreenWidth)}
+        className={classNamesForScreenWidth(className, showForScreenWidth)}
         iconOnly
         Icon={
           platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon

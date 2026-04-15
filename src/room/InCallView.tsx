@@ -565,7 +565,11 @@ export const InCallView: FC<InCallViewProps> = ({
   const settingsButtonInAppBar =
     headerStyle === HeaderStyle.AppBar && showHeader;
   useAppBarSecondaryButton(
-    <SettingsIconButton key="settings" onClick={openSettings} />,
+    <SettingsIconButton
+      key="settings"
+      onClick={openSettings}
+      data-testid="settings-app-bar"
+    />,
   );
 
   // Only hide the settings button if we have an AppBar header and we are showing the header
