@@ -20,13 +20,11 @@ import {
   ReactionToggleButton,
   LoudspeakerButton,
   SettingsIconButton,
+  type ReactionData,
 } from "../button";
 import styles from "./CallFooter.module.css";
 import { LayoutToggle } from "../room/LayoutToggle";
-import {
-  type CallViewModel,
-  type GridMode,
-} from "../state/CallViewModel/CallViewModel";
+import { type GridMode } from "../state/CallViewModel/CallViewModel";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -69,7 +67,7 @@ export interface FooterProps {
   hangup?: () => void;
 
   reactionIdentifier?: string;
-  reactionData?: Pick<CallViewModel, "handsRaised$" | "reactions$">;
+  reactionData?: ReactionData;
 
   hideLogo?: boolean;
   // debug stuff
@@ -157,11 +155,10 @@ export const CallFooter: FC<FooterProps> = ({
       <ReactionToggleButton
         size={buttonSize}
         reactionData={
-          reactionData ??
-          ({
+          reactionData ?? {
             handsRaised$: new BehaviorSubject({}),
             reactions$: new BehaviorSubject({}),
-          } as Pick<CallViewModel, "handsRaised$" | "reactions$">)
+          }
         }
         key="raise_hand"
         className={styles.raiseHand}

@@ -140,13 +140,16 @@ interface LoudspeakerButtonProps extends ComponentPropsWithoutRef<"button"> {
    */
   isEarpieceTarget: boolean;
 }
-export const LoudspeakerButton: FC<LoudspeakerButtonProps> = (props) => {
+export const LoudspeakerButton: FC<LoudspeakerButtonProps> = ({
+  isEarpieceTarget,
+  ...props
+}) => {
   const { t } = useTranslation();
-  const label = props.isEarpieceTarget
+  const label = isEarpieceTarget
     ? t("settings.devices.handset")
     : t("settings.devices.loudspeaker");
   // if the target is the earpice, we are currently in loudspeaker mode.
-  const enabled = props.isEarpieceTarget;
+  const enabled = isEarpieceTarget;
   return (
     <Tooltip label={label}>
       <CpdButton
