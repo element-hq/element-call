@@ -181,6 +181,7 @@ exports[`InCallView > rendering > renders 1`] = `
             style="--cpd-icon-button-size: 100%;"
           >
             <svg
+              aria-hidden="true"
               fill="currentColor"
               height="1em"
               viewBox="0 0 24 24"
