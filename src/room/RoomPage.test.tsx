@@ -205,6 +205,11 @@ describe("RoomPage", () => {
       await waitFor(() => {
         expect(mockRegisterPasswordlessUser).toHaveBeenCalledWith("Bob");
       });
+
+      expect(
+        screen.getByRole("heading", { name: /loading|common\.loading/i }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("RoomAuthView Mock")).not.toBeInTheDocument();
     });
   });
 
@@ -411,8 +416,9 @@ describe("RoomPage", () => {
         </TestWrapper>,
       );
 
-      // The loading state renders with the heading
-      expect(screen.getByRole("heading")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /loading|common\.loading/i }),
+      ).toBeInTheDocument();
     });
 
     test("shows GroupCallView when call is loaded", () => {
