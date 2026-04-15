@@ -363,7 +363,6 @@ export const InCallView: FC<InCallViewProps> = ({
     switch (headerStyle) {
       case HeaderStyle.AppBar: {
         // dont build a header here. The AppBar will take care of it.
-        header = null;
         break;
       }
       case HeaderStyle.None:
