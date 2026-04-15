@@ -253,9 +253,10 @@ describe("InCallView", () => {
           ["earpiece-id", { type: "earpiece" }],
         ]),
       );
-      const selected$ = new BehaviorSubject<
-        { id: string; virtualEarpiece: boolean } | undefined
-      >({ id: "speaker-id", virtualEarpiece: false });
+      const selected$ = new BehaviorSubject({
+        id: "speaker-id",
+        virtualEarpiece: false,
+      });
 
       const mediaDevices = mockMediaDevices({
         audioOutput: {
@@ -267,8 +268,7 @@ describe("InCallView", () => {
 
       const { getByRole } = createInCallView({ mediaDevices });
       // The button should be visible. When current output is "speaker",
-      // the switcher targets "earpiece", so the tooltip label is "Handset".
-      const audioOutputBtn = getByRole("switch", { name: "Handset" });
+      const audioOutputBtn = getByRole("button", { name: "Loudspeaker" });
       expect(audioOutputBtn).toBeVisible();
 
       await user.click(audioOutputBtn);

@@ -35,6 +35,14 @@ export interface FooterProps {
   ref?: Ref<HTMLDivElement>;
   /** Children will only be visible if the component is wider than 5*/
   children?: JSX.Element | JSX.Element[] | false;
+
+  audioEnabled: boolean;
+  /** Also controls if the audioMute button is disabled */
+  toggleAudio: (() => void) | undefined;
+  videoEnabled: boolean;
+  /** Also controls if the videoMute button is disabled */
+  toggleVideo: (() => void) | undefined;
+
   /* This is needed for WindowMode = "flat" */
   hideControls?: boolean;
   /** hide the entire footer*/
@@ -48,13 +56,6 @@ export interface FooterProps {
   layoutMode?: GridMode;
   /** Also controls if the layout button is visible */
   setLayoutMode?: (mode: GridMode) => void;
-
-  audioEnabled?: boolean;
-  /** Also controls if the audioMute button is disabled */
-  toggleAudio?: () => void;
-  videoEnabled?: boolean;
-  /** Also controls if the videoMute button is disabled */
-  toggleVideo?: () => void;
 
   sharingScreen?: boolean;
   toggleScreenSharing?: () => void;
@@ -175,7 +176,7 @@ export const CallFooter: FC<FooterProps> = ({
       <LoudspeakerButton
         size={buttonSize}
         onClick={() => audioOutputSwitcher.switch()}
-        isEarpieceTarget={audioOutputSwitcher.targetOutput === "earpiece"}
+        loudspeakerModeEnabled={audioOutputSwitcher.targetOutput === "earpiece"}
       />
     );
   }, [audioOutputSwitcher, buttonSize]);
