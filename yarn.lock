@@ -11678,8 +11678,8 @@ __metadata:
   linkType: hard
 
 "livekit-client@npm:^2.18.1":
-  version: 2.18.1
-  resolution: "livekit-client@npm:2.18.1"
+  version: 2.18.2
+  resolution: "livekit-client@npm:2.18.2"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
     "@livekit/protocol": "npm:1.44.0"
@@ -11692,7 +11692,7 @@ __metadata:
     webrtc-adapter: "npm:^9.0.1"
   peerDependencies:
     "@types/dom-mediacapture-record": ^1
-  checksum: 10c0/087ffebf3265b1bae2d3346af46c6b03b693e6226dc8b28618de5784979db5354bd17d992589ac9e18a014ef38f05ee8d77aa108fe0638b325cefd23ea8675ba
+  checksum: 10c0/1a2cad00d23e35be2ff20272783d627b2ef1a3a418445eb6965e4003657ae3ff25e9af894ca01177e02b5481e686448420794ed0612beb713fb7c316c93b3635
   languageName: node
   linkType: hard
 
