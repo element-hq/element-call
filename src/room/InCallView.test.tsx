@@ -44,7 +44,6 @@ import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { constant } from "../state/Behavior";
 import { AppBar } from "../AppBar";
 import { initializeWidget } from "../widget";
-import callFooterStyles from "../components/CallFooter.module.css";
 
 initializeWidget();
 vi.hoisted(
@@ -123,7 +122,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
     [local, alice],
     undefined,
     mediaDevices,
-    {},
+    args.callViewModelOptions,
   );
 
   rtcSession.joined = true;
@@ -191,7 +190,7 @@ describe("InCallView", () => {
     });
   });
   describe("settings button with AppBar header", () => {
-    it("is accessible when showHeader is false", () => {
+    it("mobile landscape, is accessible when showHeader is false", () => {
       // windowSize with height <= 600 results in "flat" windowMode,
       // which means showHeader$ emits false.
       const { getAllByRole } = createInCallView({
@@ -204,20 +203,20 @@ describe("InCallView", () => {
       });
       // When showHeader is false, hideSettingsButton is false,
       // so the settings button is visible in the footer.
-      const settingsBtns = getAllByRole("button", { name: "Settings" });
-      expect(settingsBtns.length).toBe(2);
-      const [btnA, btnB] = settingsBtns;
+      const settingsBtn = getAllByRole("button", { name: "Settings" });
       // here we check for two settings buttons because there are two buttons in the bottom bar. One for the
       // the narrow layout and another one for the wide layout.
       // Their visibility uses @media css queries, which cannot be tested in JSDOM,
       // but we can at least check that both buttons are rendered and have the correct classes.
-      expect(btnA).toBeInTheDocument();
-      expect(btnA).toHaveClass(callFooterStyles.settingsOnlyShowWide);
-      expect(btnB).toBeInTheDocument();
-      expect(btnB).toHaveClass(callFooterStyles.settingsOnlyShowNarrow);
+      expect(settingsBtn.length).toBe(2);
+      expect(settingsBtn[0]).toHaveAttribute(
+        "data-testid",
+        "settings-bottom-left",
+      );
+      expect(settingsBtn[0]).toBeVisible();
     });
 
-    it("is accessible when showHeader is true", () => {
+    it("mobile portrait, is accessible when showHeader is true", () => {
       // windowSize with height > 600 and width > 600 results in "normal" windowMode,
       // which means showHeader$ emits true.
       const { getAllByRole } = createInCallView({
@@ -232,8 +231,12 @@ describe("InCallView", () => {
       // hideSettingsButton is true in the footer, but the settings
       // button is rendered in the AppBar via useAppBarSecondaryButton.
       const settingsBtns = getAllByRole("button", { name: "Settings" });
-      expect(settingsBtns.length).toBe(1);
 
+      expect(settingsBtns.length).toBe(1);
+      expect(settingsBtns[0]).toHaveAttribute(
+        "data-testid",
+        "settings-app-bar",
+      );
       expect(settingsBtns[0]).toBeVisible();
     });
   });
