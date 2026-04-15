@@ -105,15 +105,7 @@ const dave = mockMatrixRoomMember(daveRtcMember, { rawDisplayName: "Dave" });
 const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
 const localParticipant = mockLocalParticipant({ identity: "" });
-const aliceSharingScreen = mockRemoteParticipant({
-  identity: aliceId,
-  isScreenShareEnabled: true,
-});
 const bobParticipant = mockRemoteParticipant({ identity: bobId });
-const bobSharingScreen = mockRemoteParticipant({
-  identity: bobId,
-  isScreenShareEnabled: true,
-});
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
 
 export interface GridLayoutSummary {
@@ -281,7 +273,8 @@ describe.each([
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Start with no screen shares, then have Alice and Bob share their screens,
       // then return to no screen shares, then have just Alice share for a bit
-      const participantInputMarbles = "    abcda-ba";
+      const aliceSharingInputMarbles = "   ny-n--yn";
+      const bobSharingInputMarbles = "     n-y-n---";
       // While there are no screen shares, switch to spotlight manually, and then
       // switch back to grid at the end
       const modeInputMarbles = "           -----s--g";
@@ -292,13 +285,12 @@ describe.each([
       const expectedShowSpeakingMarbles = "y----nyny";
       withCallViewModel(
         {
-          remoteParticipants$: behavior(participantInputMarbles, {
-            a: [aliceParticipant, bobParticipant],
-            b: [aliceSharingScreen, bobParticipant],
-            c: [aliceSharingScreen, bobSharingScreen],
-            d: [aliceParticipant, bobSharingScreen],
-          }),
+          remoteParticipants$: constant([aliceParticipant, bobParticipant]),
           rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
+          sharingScreen: new Map([
+            [aliceParticipant, behavior(aliceSharingInputMarbles, yesNo)],
+            [bobParticipant, behavior(bobSharingInputMarbles, yesNo)],
+          ]),
         },
         (vm) => {
           schedule(modeInputMarbles, {
@@ -688,7 +680,7 @@ describe.each([
       withCallViewModel(
         {
           remoteParticipants$: constant([
-            aliceSharingScreen,
+            aliceParticipant,
             bobParticipant,
             daveParticipant,
           ]),
@@ -702,6 +694,7 @@ describe.each([
             [bobParticipant, behavior(bSpeakingInputMarbles, yesNo)],
             [daveParticipant, behavior(dSpeakingInputMarbles, yesNo)],
           ]),
+          sharingScreen: new Map([[aliceParticipant, constant(true)]]),
         },
         (vm) => {
           schedule(modeInputMarbles, {
@@ -856,26 +849,30 @@ describe.each([
     withTestScheduler(({ behavior, expectObservable }) => {
       // iterate through a number of combinations of participants and MatrixRTC memberships
       // Bob never has an MatrixRTC membership
-      const scenarioInputMarbles = " abcdec";
+      const participantInputMarbles = "abcd-c";
+      // Bob even tries to share his screen at the end
+      const bobSharingInputMarbles = " n---yn";
       // Bob should never be visible
-      const expectedLayoutMarbles = "a-bc-b";
+      const expectedLayoutMarbles = "  a-bc-b";
 
       withCallViewModel(
         {
-          remoteParticipants$: behavior(scenarioInputMarbles, {
+          remoteParticipants$: behavior(participantInputMarbles, {
             a: [],
             b: [bobParticipant],
             c: [aliceParticipant, bobParticipant],
             d: [aliceParticipant, daveParticipant, bobParticipant],
-            e: [aliceParticipant, daveParticipant, bobSharingScreen],
           }),
-          rtcMembers$: behavior(scenarioInputMarbles, {
+          rtcMembers$: behavior(participantInputMarbles, {
             a: [localRtcMember],
             b: [localRtcMember],
             c: [localRtcMember, aliceRtcMember],
             d: [localRtcMember, aliceRtcMember, daveRtcMember],
             e: [localRtcMember, aliceRtcMember, daveRtcMember],
           }),
+          sharingScreen: new Map([
+            [bobParticipant, behavior(bobSharingInputMarbles, yesNo)],
+          ]),
         },
         (vm) => {
           vm.setGridMode("grid");
