@@ -140,7 +140,7 @@ export const SettingsIconButton: FC<SettingsIconButtonProps> = (props) => {
   return (
     <Tooltip label={t("common.settings")}>
       <IconButton {...props}>
-        <Icon />
+        <Icon aria-hidden />
       </IconButton>
     </Tooltip>
   );
