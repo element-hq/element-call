@@ -124,7 +124,6 @@ export const Pip: Story = {
     asPip: true,
   },
 };
-
 export const NoControlsWithLogo: Story = {
   ...Default,
   args: {
