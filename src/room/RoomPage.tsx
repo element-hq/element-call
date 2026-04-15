@@ -29,15 +29,12 @@ import { GroupCallView } from "./GroupCallView";
 import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { HomePage } from "../home/HomePage";
-import { platform } from "../Platform";
-import { AppSelectionModal } from "./AppSelectionModal";
 import { widget } from "../widget";
 import { CallTerminatedMessage, useLoadGroupCall } from "./useLoadGroupCall";
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useProfile } from "../profile/useProfile";
 import { useOptInAnalytics } from "../settings/settings";
-import { Config } from "../config/Config";
 import { Link } from "../button/Link";
 import { ErrorView } from "../ErrorView";
 import { useMediaDevices } from "../MediaDevicesContext";
@@ -45,10 +42,9 @@ import { MuteStates } from "../state/MuteStates";
 import { ObservableScope } from "../state/ObservableScope";
 import { calculateInitialMuteState } from "../state/initialMuteState.ts";
 
-export const RoomPage: FC = () => {
+export const RoomPage: FC = (): ReactNode => {
   const urlParams = useUrlParams();
-  const { confineToRoom, appPrompt, preload, header, displayName, skipLobby } =
-    urlParams;
+  const { confineToRoom, preload, header, displayName, skipLobby } = urlParams;
   const { t } = useTranslation();
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
 
@@ -242,28 +238,10 @@ export const RoomPage: FC = () => {
     }
   };
 
-  let content: ReactNode;
-  if (loading || isRegistering) {
-    content = <LoadingPage />;
-  } else if (error) {
-    content = <ErrorPage widget={widget} error={error} />;
-  } else if (!client) {
-    content = <RoomAuthView />;
-  } else if (!roomIdOrAlias) {
-    // TODO: This doesn't belong here, the app routes need to be reworked
-    content = <HomePage />;
-  } else {
-    content = groupCallView();
-  }
-
-  return (
-    <>
-      {content}
-      {/* On Android and iOS, show a prompt to launch the mobile app. */}
-      {appPrompt &&
-        Config.get().app_prompt &&
-        (platform === "android" || platform === "ios") &&
-        roomId && <AppSelectionModal roomId={roomId} />}
-    </>
-  );
+  if (loading || isRegistering) return <LoadingPage />;
+  if (error) return <ErrorPage widget={widget} error={error} />;
+  if (!client) return <RoomAuthView />;
+  // TODO: This doesn't belong here, the app routes need to be reworked
+  if (!roomIdOrAlias) return <HomePage />;
+  return groupCallView();
 };

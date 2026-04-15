@@ -22,12 +22,6 @@
     "upload_file": "Încărcați fișierul"
   },
   "analytics_notice": "Prin participarea la această versiune beta, sunteți de acord cu colectarea de date anonime, pe care le folosim pentru a îmbunătăți produsul. Puteți găsi mai multe informații despre datele pe care le urmărim în Politica noastră de <2> confidențialitate </2> și Politica noastră <6> privind cookie-urile</6>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Continuați în browser",
-    "open_in_app": "Deschideți în aplicație",
-    "text": "Sunteți gata să vă alăturați?",
-    "title": "Selectați o aplicație"
-  },
   "call_ended_view": {
     "create_account_button": "Creaţi un cont",
     "create_account_prompt": "<0>De ce să nu terminați prin configurarea unei parole pentru a vă păstra contul? </0><1>Veți putea să vă păstrați numele și să setați un avatar pentru a fi utilizat la apelurile viitoare </1>",

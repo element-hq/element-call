@@ -98,14 +98,6 @@ export interface ConfigOptions {
   };
 
   /**
-   * Whether upon entering a room, the user should be prompted to launch the
-   * native mobile app. (Affects only Android and iOS.)
-   *
-   * Note that this can additionally be disabled by the app's URL parameters.
-   */
-  app_prompt?: boolean;
-
-  /**
    * These are low level options that are used to configure the MatrixRTC session.
    * Take care when changing these options.
    */
@@ -164,7 +156,6 @@ export interface ResolvedConfigOptions extends ConfigOptions {
     };
   };
   ssla: string;
-  app_prompt: boolean;
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
@@ -178,5 +169,4 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
     feature_use_device_session_member_events: true,
   },
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
-  app_prompt: true,
 };

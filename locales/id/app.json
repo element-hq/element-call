@@ -22,12 +22,6 @@
     "upload_file": "Unggah berkas"
   },
   "analytics_notice": "Dengan bergabung dalam beta ini, Anda mengizinkan kami untuk mengumpulkan data anonim, yang kami gunakan untuk meningkatkan produk ini. Anda dapat mempelajari lebih lanjut tentang data apa yang kami lacak dalam <2>Kebijakan Privasi</2> dan <5>Kebijakan Kuki</5> kami.",
-  "app_selection_modal": {
-    "continue_in_browser": "Lanjutkan dalam peramban",
-    "open_in_app": "Buka dalam aplikasi",
-    "text": "Siap untuk bergabung?",
-    "title": "Pilih plikasi"
-  },
   "call_ended_view": {
     "create_account_button": "Buat akun",
     "create_account_prompt": "<0>Kenapa tidak selesaikan dengan mengatur sebuah kata sandi untuk menjaga akun Anda?</0><1>Anda akan dapat tetap menggunakan nama Anda dan atur sebuah avatar untuk digunakan dalam panggilan di masa mendatang</1>",

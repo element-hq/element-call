@@ -23,8 +23,6 @@ test("@mobile Start a new call then leave and show the feedback screen", async (
   // await page.pause();
   await expect(page.locator("video")).toBeVisible();
   await expect(page.getByTestId("lobby_joinCall")).toBeVisible();
-
-  await page.getByRole("button", { name: "Continue in browser" }).click();
   // Join the call
   await page.getByTestId("lobby_joinCall").click();
 
@@ -66,10 +64,6 @@ mobileTest(
     });
     const guestPage = await guestInviteeContext.newPage();
     await guestPage.goto(inviteLink + "&controlledAudioDevices=true");
-
-    await guestPage
-      .getByRole("button", { name: "Continue in browser" })
-      .click();
 
     await guestPage.getByTestId("joincall_displayName").fill("Invitee");
     await expect(guestPage.getByTestId("joincall_joincall")).toBeVisible();
