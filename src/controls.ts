@@ -158,12 +158,22 @@ window.controls = {
 
   // wrappers for the deprecated controls fields
   setOutputEnabled(enabled: boolean): void {
+    logger.info(
+      `[MediaDevices controls] setOutputEnabled DEPRECATED method called (enabled: ${enabled}) from native -> forwarding to setAudioEnabled.`,
+    );
     this.setAudioEnabled(enabled);
   },
   setAvailableOutputDevices(devices: OutputDevice[]): void {
+    logger.info(
+      "[MediaDevices controls] setAvailableOutputDevices DEPRECATED method called from native -> forwarding to setAvailableAudioDevices",
+      devices,
+    );
     this.setAvailableAudioDevices(devices);
   },
   setOutputDevice(id: string): void {
+    logger.info(
+      `[MediaDevices controls] setOutputDevice DEPRECATED method called (with id: ${id}) from native -> forwarding to setAudioDevice`,
+    );
     this.setAudioDevice(id);
   },
 };

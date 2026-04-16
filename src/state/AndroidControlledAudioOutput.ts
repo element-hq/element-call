@@ -23,7 +23,11 @@ import {
 } from "./MediaDevices.ts";
 import type { ObservableScope } from "./ObservableScope.ts";
 import type { RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
-import { type Controls, type OutputDevice } from "../controls.ts";
+import {
+  outputDevice$,
+  type Controls,
+  type OutputDevice,
+} from "../controls.ts";
 import { type Behavior } from "./Behavior.ts";
 
 type ControllerState = {
@@ -36,9 +40,14 @@ type ControllerState = {
    */
   preferredDeviceId: string | undefined;
   /**
-   * The effective selected device, always valid against available devices.
+   * The effective selected device (what is shown in EW UI), always valid against available devices.
    */
   selectedDeviceId: string | undefined;
+  /**
+   * The device that is selected by the android OS.
+   * This can be different to the selectedDeviceId in cases the OS decides to update it automatically
+   */
+  nativeSelectedDeviceId?: string | undefined;
 };
 
 /**
@@ -47,6 +56,7 @@ type ControllerState = {
  */
 type ControllerAction =
   | { type: "selectDevice"; deviceId: string | undefined }
+  | { type: "nativeSideUpdatedDevice"; deviceId: string | undefined }
   | { type: "deviceUpdated"; devices: OutputDevice[] };
 /**
  * The implementation of the audio output media device for Android when using the controlled audio output mode.
@@ -118,7 +128,7 @@ export class AndroidControlledAudioOutput implements MediaDevice<
     this.available$ = scope.behavior(
       this.controllerState$.pipe(
         map((state) => {
-          this.logger.info("available devices updated:", state.devices);
+          this.logger.info("controller state updated:", state.devices);
 
           return new Map<string, AudioOutputDeviceLabel>(
             state.devices.map((outputDevice) => {
@@ -132,6 +142,7 @@ export class AndroidControlledAudioOutput implements MediaDevice<
     // Effect 1: notify host when effective selection changes
     this.selected$
       // It is a behavior so it has built-in distinct until change
+      // But it wont do anything since SelectedAudioOutputDevice is a obj and its ref always changes.
       .pipe(scope.bind())
       .subscribe((device) => {
         // Let the hosting application know which output device has been selected.
@@ -153,7 +164,7 @@ export class AndroidControlledAudioOutput implements MediaDevice<
       selectedDeviceId: undefined,
     };
 
-    // Merge the two possible inputs observable as a single
+    // Merge the three possible inputs observable as a single
     // stream of actions that will update the state of the controller.
     const actions$: Observable<ControllerAction> = merge(
       this.controlledDevices$.pipe(
@@ -166,6 +177,16 @@ export class AndroidControlledAudioOutput implements MediaDevice<
         map(
           (deviceId) =>
             ({ type: "selectDevice", deviceId }) satisfies ControllerAction,
+        ),
+      ),
+      // The Android native code decided to switch to a new default.
+      outputDevice$.pipe(
+        map(
+          (deviceId) =>
+            ({
+              type: "nativeSideUpdatedDevice",
+              deviceId,
+            }) satisfies ControllerAction,
         ),
       ),
     );
@@ -201,10 +222,26 @@ export class AndroidControlledAudioOutput implements MediaDevice<
                 currentSelectedId: state.selectedDeviceId,
                 preferredDeviceId: action.deviceId,
               });
-
               return {
                 ...state,
                 preferredDeviceId: action.deviceId,
+                selectedDeviceId: chosenDevice,
+              };
+            }
+            case "nativeSideUpdatedDevice": {
+              // We will stick with what we had in selectedDeviceId.
+              // Except if the selected is not available anymore, then we update the default selection based on the available devices.
+              const chosenDevice = this.chooseEffectiveSelection({
+                previousDevices: state.devices,
+                availableDevices: state.devices,
+                currentSelectedId: state.selectedDeviceId,
+                preferredDeviceId: state.preferredDeviceId,
+                nativeSelectedDeviceId: action.deviceId,
+              });
+              return {
+                ...state,
+                // This is only needed to detect if we need to reemit
+                nativeSelectedDeviceId: action.deviceId,
                 selectedDeviceId: chosenDevice,
               };
             }
@@ -220,6 +257,13 @@ export class AndroidControlledAudioOutput implements MediaDevice<
     return this.scope.behavior(
       state$
         .pipe(
+          distinctUntilChanged(
+            (s1, s2) =>
+              s1?.selectedDeviceId === s2?.selectedDeviceId &&
+              // if the native changes we also want to reemit.
+              // Especially if the selectedDeviceId stays the same.
+              s1?.nativeSelectedDeviceId === s2?.nativeSelectedDeviceId,
+          ),
           map((state) => {
             if (state.selectedDeviceId) {
               return {
@@ -230,7 +274,6 @@ export class AndroidControlledAudioOutput implements MediaDevice<
             }
             return undefined;
           }),
-          distinctUntilChanged((a, b) => a?.id === b?.id),
         )
         .pipe(
           tap((selected) => {
@@ -245,6 +288,7 @@ export class AndroidControlledAudioOutput implements MediaDevice<
     availableDevices: OutputDevice[];
     currentSelectedId: string | undefined;
     preferredDeviceId: string | undefined;
+    nativeSelectedDeviceId?: string;
   }): string | undefined {
     const {
       previousDevices,
@@ -253,17 +297,19 @@ export class AndroidControlledAudioOutput implements MediaDevice<
       preferredDeviceId,
     } = args;
 
+    // nativeSelectedDeviceId can be used in case we want to update the selection in the EW UI if native switches to Bluetooth.
     this.logger.debug(`chooseEffectiveSelection with args:`, args);
 
     // Take preferredDeviceId in priority or default to the last effective selection.
-    const activeSelectedDeviceId = preferredDeviceId || currentSelectedId;
+    // || since we also want "" to fallback to currentSelectedId
+    const targetSelectedDeviceId = preferredDeviceId || currentSelectedId;
     const isAvailable = availableDevices.some(
-      (device) => device.id === activeSelectedDeviceId,
+      (device) => device.id === targetSelectedDeviceId,
     );
 
     // If there is no current device, or it is not available anymore,
     // choose the default device selection logic.
-    if (activeSelectedDeviceId === undefined || !isAvailable) {
+    if (targetSelectedDeviceId === undefined || !isAvailable) {
       this.logger.debug(
         `No current device or it is not available, using default selection logic.`,
       );
@@ -285,13 +331,13 @@ export class AndroidControlledAudioOutput implements MediaDevice<
         `A new device was added, checking if we should switch to it.`,
         mostPreferredDevice,
       );
-      if (mostPreferredDevice.id !== activeSelectedDeviceId) {
+      if (mostPreferredDevice.id !== targetSelectedDeviceId) {
         // Given this is automatic switching, we want to be careful and only switch to a more private device
         // (e.g. from speaker to a BT headset) but not switch from a more private device to a less private one
         // (e.g. from a BT headset to the speaker), as that can be disruptive for the user if it happens unexpectedly.
         if (mostPreferredDevice.isExternalHeadset == true) {
           this.logger.info(
-            `The currently selected device ${mostPreferredDevice.id} is not the most preferred one, switching to the most preferred one ${activeSelectedDeviceId} instead.`,
+            `The currently selected device ${mostPreferredDevice.id} is not the most preferred one, switching to the most preferred one ${targetSelectedDeviceId} instead.`,
           );
           // Let's switch as it is a more private device.
           return mostPreferredDevice.id;
@@ -300,7 +346,7 @@ export class AndroidControlledAudioOutput implements MediaDevice<
     }
 
     // no changes
-    return activeSelectedDeviceId;
+    return targetSelectedDeviceId;
   }
 
   /**
@@ -314,7 +360,7 @@ export class AndroidControlledAudioOutput implements MediaDevice<
    */
   private chooseDefaultDeviceId(available: OutputDevice[]): string | undefined {
     this.logger.debug(
-      `Android routing logic intent: ${this.initialIntent} finding best default...`,
+      `Android routing logic intent: "${this.initialIntent}" finding best default...`,
     );
     if (this.initialIntent === "audio") {
       const systemProposed = available[0];
