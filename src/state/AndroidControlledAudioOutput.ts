@@ -226,6 +226,7 @@ export class AndroidControlledAudioOutput implements MediaDevice<
                 ...state,
                 preferredDeviceId: action.deviceId,
                 selectedDeviceId: chosenDevice,
+                nativeSelectedDeviceId: undefined,
               };
             }
             case "nativeSideUpdatedDevice": {
