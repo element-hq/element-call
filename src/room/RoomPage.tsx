@@ -132,7 +132,6 @@ export const RoomPage: FC = (): ReactNode => {
               confineToRoom={confineToRoom}
               preload={preload}
               skipLobby={skipLobby || wasInWaitForInviteState.current}
-              header={header}
               muteStates={muteStates}
             />
           )

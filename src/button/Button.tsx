@@ -22,9 +22,12 @@ import {
   ShareScreenSolidIcon,
   OverflowHorizontalIcon,
   OverflowVerticalIcon,
+  VolumeOnSolidIcon,
+  VolumeOffSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
+import callFooterStyles from "../components/CallFooter.module.css";
 import { platform } from "../Platform";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
@@ -130,32 +133,89 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
   );
 };
 
+interface LoudspeakerButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size?: "sm" | "lg";
+  loudspeakerModeEnabled: boolean;
+}
+export const LoudspeakerButton: FC<LoudspeakerButtonProps> = ({
+  loudspeakerModeEnabled,
+  ...props
+}) => {
+  const { t } = useTranslation();
+  // if the target is the earpice, we are currently in loudspeaker mode.
+  const label = loudspeakerModeEnabled
+    ? t("settings.devices.loudspeaker")
+    : t("settings.devices.handset");
+  return (
+    <Tooltip label={label}>
+      <CpdButton
+        iconOnly
+        Icon={loudspeakerModeEnabled ? VolumeOnSolidIcon : VolumeOffSolidIcon}
+        {...props}
+        kind={loudspeakerModeEnabled ? "primary" : "secondary"}
+        aria-checked={loudspeakerModeEnabled}
+      />
+    </Tooltip>
+  );
+};
+
+function classNamesForScreenWidth(
+  className?: string,
+  forScreenWidth?: "wide" | "narrow",
+): string {
+  return classNames(className, {
+    [callFooterStyles.settingsOnlyShowWide]: forScreenWidth === "wide",
+    [callFooterStyles.settingsOnlyShowNarrow]: forScreenWidth === "narrow",
+  });
+}
+
 interface SettingsIconButtonProps extends ComponentPropsWithoutRef<"button"> {
+  /** If this buttons should be setup to be used in the app bar */
+  showForScreenWidth?: "wide" | "narrow";
   kind?: "secondary" | "primary";
 }
-export const SettingsIconButton: FC<SettingsIconButtonProps> = (props) => {
+export const SettingsIconButton: FC<SettingsIconButtonProps> = ({
+  showForScreenWidth,
+  className,
+  ...props
+}) => {
   const { t } = useTranslation();
   const Icon =
     platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon;
   return (
     <Tooltip label={t("common.settings")}>
-      <IconButton {...props}>
+      <IconButton
+        className={classNamesForScreenWidth(className, showForScreenWidth)}
+        {...props}
+      >
         <Icon aria-hidden />
       </IconButton>
     </Tooltip>
   );
 };
 
-// interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
-//   size?: "sm" | "lg";
-// }
-// const SettingsButton: FC<SettingsButtonProps> = (props) => {
-//   const { t } = useTranslation();
-//   const Icon =
-//     platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon;
-//   return (
-//     <Tooltip label={t("common.settings")}>
-//       <CpdButton iconOnly Icon={Icon} kind="secondary" {...props} />
-//     </Tooltip>
-//   );
-// };
+interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size?: "sm" | "lg";
+  /** If this buttons should be setup to be used in the app bar */
+  showForScreenWidth?: "wide" | "narrow";
+}
+export const SettingsButton: FC<SettingsButtonProps> = ({
+  showForScreenWidth,
+  className,
+  ...props
+}) => {
+  const { t } = useTranslation();
+  return (
+    <Tooltip label={t("common.settings")}>
+      <CpdButton
+        className={classNamesForScreenWidth(className, showForScreenWidth)}
+        iconOnly
+        Icon={
+          platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon
+        }
+        kind={"secondary"}
+        {...props}
+      />
+    </Tooltip>
+  );
+};

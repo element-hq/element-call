@@ -82,7 +82,7 @@ import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
-import { getUrlParams } from "../../UrlParams";
+import { getUrlParams, HeaderStyle } from "../../UrlParams";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../../widget";
 import {
@@ -180,6 +180,8 @@ export interface CallViewModelOptions {
   connectionFactory?: ConnectionFactory;
   /** The version & compatibility mode of MatrixRTC that we should use. */
   matrixRTCMode$?: Behavior<MatrixRTCMode>;
+  /** Optional behavior overriding for the screensharing, for testing */
+  toggleScreensharing?: () => void;
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -1326,7 +1328,11 @@ export function createCallViewModel$(
     windowMode$.pipe(map((mode) => mode !== "pip" && mode !== "flat")),
   );
 
-  const showFooter$ = scope.behavior<boolean>(
+  const urlParams = getUrlParams();
+  const showFooterUrlParams = !(
+    urlParams.header === HeaderStyle.None && urlParams.showControls === false
+  );
+  const showFooterLayout$ = scope.behavior<boolean>(
     windowMode$.pipe(
       switchMap((mode) => {
         switch (mode) {
@@ -1380,7 +1386,11 @@ export function createCallViewModel$(
       }),
     ),
   );
-
+  const showFooter$ = scope.behavior(
+    showFooterLayout$.pipe(
+      map((showFooter) => showFooter && showFooterUrlParams),
+    ),
+  );
   /**
    * Whether audio is currently being output through the earpiece.
    */
@@ -1507,7 +1517,8 @@ export function createCallViewModel$(
    * Callback to toggle screen sharing. If null, screen sharing is not possible.
    */
   // reassigned here to make it publicly accessible
-  const toggleScreenSharing = localMembership.toggleScreenSharing;
+  const toggleScreenSharing =
+    options.toggleScreensharing ?? localMembership.toggleScreenSharing;
 
   const errors$ = scope.behavior<{
     transportError?: ElementCallError;

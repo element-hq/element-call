@@ -103,7 +103,7 @@ mobileTest(
       .click();
 
     // dismiss settings
-    await guestPage.locator("#root").getByLabel("Settings").press("Escape");
+    await guestPage.locator("#root").press("Escape");
 
     await guestPage.pause();
     await expect(

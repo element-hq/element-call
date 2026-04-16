@@ -5,7 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { IconButton, Tooltip } from "@vector-im/compound-web";
 import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
@@ -25,22 +24,8 @@ import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable } from "observable-hooks";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import {
-  VoiceCallSolidIcon,
-  VolumeOnSolidIcon,
-} from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 
-import LogoMark from "../icons/LogoMark.svg?react";
-import LogoType from "../icons/LogoType.svg?react";
-import {
-  EndCallButton,
-  MicButton,
-  VideoButton,
-  ShareScreenButton,
-  ReactionToggleButton,
-  SettingsIconButton,
-} from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
@@ -55,7 +40,6 @@ import { useMergedRefs } from "../useMergedRefs";
 import { type MuteStates } from "../state/MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
-import { LayoutToggle } from "./LayoutToggle";
 import {
   type CallViewModel,
   createCallViewModel$,
@@ -106,6 +90,8 @@ import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.t
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 import { useLatest } from "../useLatest.ts";
+import { CallFooter } from "../components/CallFooter.tsx";
+import { SettingsIconButton } from "../button/Button.tsx";
 
 const logger = rootLogger.getChild("[InCallView]");
 
@@ -185,7 +171,6 @@ export interface InCallViewProps {
   rtcSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
   muteStates: MuteStates;
-  header: HeaderStyle;
   onShareClick: (() => void) | null;
 }
 
@@ -195,8 +180,6 @@ export const InCallView: FC<InCallViewProps> = ({
   matrixInfo,
   matrixRoom,
   muteStates,
-
-  header: headerStyle,
   onShareClick,
 }) => {
   const { t } = useTranslation();
@@ -220,7 +203,7 @@ export const InCallView: FC<InCallViewProps> = ({
   // Merge the refs so they can attach to the same element
   const containerRef = useMergedRefs(containerRef1, containerRef2);
 
-  const { showControls } = useUrlParams();
+  const { showControls, header: headerStyle } = useUrlParams();
 
   const muteAllAudio = useBehavior(muteAllAudio$);
 
@@ -378,7 +361,11 @@ export const InCallView: FC<InCallViewProps> = ({
   let header: ReactNode = null;
   if (showHeader) {
     switch (headerStyle) {
-      case "none":
+      case HeaderStyle.AppBar: {
+        // dont build a header here. The AppBar will take care of it.
+        break;
+      }
+      case HeaderStyle.None:
         // Cosmetic header to fill out space while still affecting the bounds of
         // the grid
         header = (
@@ -388,7 +375,7 @@ export const InCallView: FC<InCallViewProps> = ({
           />
         );
         break;
-      case "standard":
+      case HeaderStyle.Standard:
         header = (
           <Header
             className={styles.header}
@@ -575,138 +562,46 @@ export const InCallView: FC<InCallViewProps> = ({
     matrixRoom.roomId,
   );
 
-  const buttons: JSX.Element[] = [];
-
-  const buttonSize = layout.type === "pip" ? "sm" : "lg";
-  buttons.push(
-    <MicButton
-      size={buttonSize}
-      key="audio"
-      enabled={audioEnabled}
-      onClick={toggleAudio ?? undefined}
-      disabled={toggleAudio === null}
-      data-testid="incall_mute"
-    />,
-    <VideoButton
-      size={buttonSize}
-      key="video"
-      enabled={videoEnabled}
-      onClick={toggleVideo ?? undefined}
-      disabled={toggleVideo === null}
-      data-testid="incall_videomute"
-    />,
-  );
-  if (vm.toggleScreenSharing !== null) {
-    buttons.push(
-      <ShareScreenButton
-        size={buttonSize}
-        key="share_screen"
-        className={styles.shareScreen}
-        enabled={sharingScreen}
-        onClick={vm.toggleScreenSharing}
-        data-testid="incall_screenshare"
-      />,
-    );
-  }
-  if (supportsReactions) {
-    buttons.push(
-      <ReactionToggleButton
-        size={buttonSize}
-        vm={vm}
-        key="raise_hand"
-        className={styles.raiseHand}
-        identifier={`${client.getUserId()}:${client.getDeviceId()}`}
-      />,
-    );
-  }
-
-  // In this PR we just move the button ot the bottom bar. We do not yet update its apperance
-  const audioOutputButton = useMemo(() => {
-    if (audioOutputSwitcher === null) return null;
-    const isEarpieceTarget = audioOutputSwitcher.targetOutput === "earpiece";
-    const Icon = isEarpieceTarget ? VoiceCallSolidIcon : VolumeOnSolidIcon;
-    const label = isEarpieceTarget
-      ? t("settings.devices.handset")
-      : t("settings.devices.loudspeaker");
-
-    return (
-      <Tooltip label={label}>
-        <IconButton
-          key="audio_output_switcher"
-          onClick={(e) => {
-            audioOutputSwitcher.switch();
-          }}
-        >
-          <Icon />
-        </IconButton>
-      </Tooltip>
-    );
-  }, [t, audioOutputSwitcher]);
-  if (audioOutputButton) buttons.push(audioOutputButton);
-
+  const settingsButtonInAppBar =
+    headerStyle === HeaderStyle.AppBar && showHeader;
   useAppBarSecondaryButton(
-    <SettingsIconButton key="settings" onClick={openSettings} />,
-  );
-
-  buttons.push(
-    <EndCallButton
-      size={buttonSize}
-      key="end_call"
-      onClick={function (): void {
-        vm.hangup();
-      }}
-      data-testid="incall_leave"
+    <SettingsIconButton
+      key="settings"
+      onClick={openSettings}
+      data-testid="settings-app-bar"
     />,
   );
 
-  const logo = (
-    <div className={styles.logo}>
-      <LogoMark width={24} height={24} aria-hidden />
-      <LogoType
-        width={80}
-        height={11}
-        aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
-      />
-      {/* Don't mind this odd placement, it's just a little debug label */}
-      {debugTileLayout ? `Tiles generation: ${tileStoreGeneration}` : undefined}
-    </div>
-  );
-
+  // Only hide the settings button if we have an AppBar header and we are showing the header
   const footer = (
-    <div
+    <CallFooter
       ref={footerRef}
-      className={classNames(styles.footer, {
-        [styles.overlay]: windowMode === "flat",
-        [styles.hidden]:
-          !showFooter || (!showControls && headerStyle === "none"),
-      })}
-    >
-      <div className={styles.settingsLogoContainer}>
-        {showControls &&
-          // Settings button is also shown in the app bar if present
-          headerStyle !== HeaderStyle.AppBar &&
-          layout.type !== "pip" && (
-            <SettingsIconButton
-              kind="secondary"
-              key="settings"
-              onClick={openSettings}
-            />
-          )}
-
-        {headerStyle !== "none" && logo}
-      </div>
-
-      {showControls && <div className={styles.buttons}>{buttons}</div>}
-      {showControls && (
-        <LayoutToggle
-          className={styles.layout}
-          layout={gridMode}
-          setLayout={setGridMode}
-        />
-      )}
-    </div>
+      hidden={!showFooter}
+      hideControls={!showControls}
+      asOverlay={windowMode === "flat"}
+      asPip={layout.type === "pip"}
+      // Hide the logo for both embedded solutions. mobile: HeaderStyle.AppBar and desktop: HeaderStyle.None.
+      hideLogo={headerStyle !== HeaderStyle.Standard}
+      layoutMode={gridMode}
+      setLayoutMode={setGridMode}
+      audioEnabled={audioEnabled}
+      toggleAudio={toggleAudio ?? undefined}
+      videoEnabled={videoEnabled}
+      toggleVideo={toggleVideo ?? undefined}
+      sharingScreen={sharingScreen}
+      toggleScreenSharing={vm.toggleScreenSharing ?? undefined}
+      reactionIdentifier={`${client.getUserId()}:${client.getDeviceId()}`}
+      reactionData={supportsReactions ? vm : undefined}
+      audioOutputSwitcher={audioOutputSwitcher ?? undefined}
+      // Only pass the openSettings function if the settings button is not in the app bar.
+      // If there is no fn the button will be hidden in the footer.
+      openSettings={settingsButtonInAppBar ? undefined : openSettings}
+      hangup={vm.hangup}
+      //Debug props
+      debugTileLayout={debugTileLayout}
+      tileStoreGeneration={tileStoreGeneration}
+    />
   );
-
   const allConnections = useBehavior(vm.allConnections$);
 
   return (
