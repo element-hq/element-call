@@ -117,6 +117,10 @@ export function useAppBarHidden(hidden: boolean): void {
     if (setHidden !== undefined) {
       setHidden(hidden);
       return (): void => setHidden(false);
+    } else if (platform !== "desktop") {
+      logger.warn(
+        "[AppBar] useAppBarHidden called without AppBarContext provider, this will have no effect",
+      );
     }
   }, [setHidden, hidden]);
 }
@@ -132,7 +136,7 @@ export function useAppBarSecondaryButton(button: ReactNode): void {
     if (setSecondaryButton !== undefined) {
       setSecondaryButton(button);
       return (): void => setSecondaryButton("");
-    } else {
+    } else if (platform !== "desktop") {
       logger.warn(
         "[AppBar] useAppBarSecondaryButton called without AppBarContext provider, this will have no effect",
       );
