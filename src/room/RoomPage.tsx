@@ -136,7 +136,6 @@ export const RoomPage: FC = () => {
               confineToRoom={confineToRoom}
               preload={preload}
               skipLobby={skipLobby || wasInWaitForInviteState.current}
-              header={header}
               muteStates={muteStates}
             />
           )
