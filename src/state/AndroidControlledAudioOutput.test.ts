@@ -10,7 +10,7 @@ import { firstValueFrom, of, Subject, take, toArray } from "rxjs";
 import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
 
 import { AndroidControlledAudioOutput } from "./AndroidControlledAudioOutput.ts";
-import type { Controls, OutputDevice } from "../controls";
+import { outputDevice$, type Controls, type OutputDevice } from "../controls";
 import { ObservableScope } from "./ObservableScope";
 import { withTestScheduler } from "../utils/test";
 
@@ -512,6 +512,31 @@ describe("Available device changes", () => {
     ].forEach((mockFn) => {
       expect(mockFn).toHaveBeenCalledTimes(1);
       expect(mockFn).toHaveBeenCalledWith(BT_HEADSET_DEVICE.id);
+    });
+  });
+  it("Do emit a device change (onAudioDeviceSelect call) back to the prev id if the OS decides to update the device automatically", () => {
+    createAudioControlledOutput("video");
+
+    // Let the os pass over the avialabe list
+    availableSource$.next(BT_HEADSET_BASE_DEVICE_LIST);
+    // we expect to switch to the BT headset once we get the avialable list.
+    [
+      mockControls.onOutputDeviceSelect,
+      mockControls.onAudioDeviceSelect,
+    ].forEach((mockFn) => {
+      expect(mockFn).toHaveBeenCalledTimes(1);
+      expect(mockFn).toHaveBeenNthCalledWith(1, BT_HEADSET_DEVICE.id);
+    });
+    // let the os switch to a different output device
+    outputDevice$.next(WIRED_HEADSET_DEVICE.id);
+    // We expect the onAudioDeviceSelect to be called again with the BT_HEADSET_DEVICE.id after we update the os output.
+    [
+      mockControls.onOutputDeviceSelect,
+      mockControls.onAudioDeviceSelect,
+    ].forEach((mockFn) => {
+      expect(mockFn).toHaveBeenCalledTimes(2);
+      expect(mockFn).toHaveBeenNthCalledWith(1, BT_HEADSET_DEVICE.id);
+      expect(mockFn).toHaveBeenNthCalledWith(2, BT_HEADSET_DEVICE.id);
     });
   });
 });

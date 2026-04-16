@@ -229,6 +229,10 @@ export class AndroidControlledAudioOutput implements MediaDevice<
               };
             }
             case "nativeSideUpdatedDevice": {
+              // INFO: This can also be achived by not letting the os EVER switch id automatically in Element X.
+              // Then we would be able to control everything from EC based on available device changes.
+              // Probably a good PR to do in EX in combination with removing all the deprecated js-api calls.
+
               // We will stick with what we had in selectedDeviceId.
               // Except if the selected is not available anymore, then we update the default selection based on the available devices.
               const chosenDevice = this.chooseEffectiveSelection({
