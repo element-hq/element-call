@@ -218,7 +218,6 @@ describe("UrlParams", () => {
   describe("intent", () => {
     const noIntentDefaults = {
       confineToRoom: false,
-      appPrompt: true,
       preload: false,
       header: HeaderStyle.Standard,
       showControls: true,
@@ -232,7 +231,6 @@ describe("UrlParams", () => {
     };
     const startNewCallDefaults = (platform: string): object => ({
       confineToRoom: true,
-      appPrompt: false,
       preload: false,
       header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
       showControls: true,
@@ -246,7 +244,6 @@ describe("UrlParams", () => {
     });
     const joinExistingCallDefaults = (platform: string): object => ({
       confineToRoom: true,
-      appPrompt: false,
       preload: false,
       header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
       showControls: true,
@@ -271,7 +268,11 @@ describe("UrlParams", () => {
         computeUrlParams(
           "?intent=start_call&widgetId=1234&parentUrl=parent.org",
         ),
-      ).toMatchObject({ ...startNewCallDefaults("desktop"), skipLobby: false });
+      ).toMatchObject({
+        ...startNewCallDefaults("desktop"),
+        skipLobby: false,
+        callIntent: "video",
+      });
     });
 
     it("accepts start_call_dm mobile", () => {
@@ -307,6 +308,29 @@ describe("UrlParams", () => {
           "?intent=join_existing&widgetId=1234&parentUrl=parent.org",
         ),
       ).toMatchObject(joinExistingCallDefaults("desktop"));
+    });
+
+    it("accepts start_call_voice", () => {
+      expect(
+        computeUrlParams(
+          "?intent=start_call_voice&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...startNewCallDefaults("desktop"),
+        skipLobby: false,
+        callIntent: "audio",
+      });
+    });
+
+    it("accepts join_existing_voice", () => {
+      expect(
+        computeUrlParams(
+          "?intent=join_existing_voice&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...joinExistingCallDefaults("desktop"),
+        callIntent: "audio",
+      });
     });
   });
 

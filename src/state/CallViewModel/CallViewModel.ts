@@ -82,7 +82,7 @@ import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
-import { getUrlParams } from "../../UrlParams";
+import { getUrlParams, HeaderStyle } from "../../UrlParams";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../../widget";
 import {
@@ -105,12 +105,16 @@ import {
 import {
   createLocalTransport$,
   JwtEndpointVersion,
+  type LocalTransport,
 } from "./localMember/LocalTransport.ts";
 import {
   createMemberships$,
   membershipsAndTransports$,
 } from "../SessionBehaviors.ts";
-import { ECConnectionFactory } from "./remoteMembers/ConnectionFactory.ts";
+import {
+  type ConnectionFactory,
+  ECConnectionFactory,
+} from "./remoteMembers/ConnectionFactory.ts";
 import {
   type ConnectionManagerData,
   createConnectionManager$,
@@ -170,8 +174,14 @@ export interface CallViewModelOptions {
   connectionState$?: Behavior<ConnectionState>;
   /** Optional behavior overriding the computed window size, mainly for testing purposes. */
   windowSize$?: Behavior<{ width: number; height: number }>;
+  /** Optional value overriding the local transport, for testing purposes. */
+  localTransport?: LocalTransport;
+  /** Optional value overriding the connection factory, for testing purposes. */
+  connectionFactory?: ConnectionFactory;
   /** The version & compatibility mode of MatrixRTC that we should use. */
   matrixRTCMode$?: Behavior<MatrixRTCMode>;
+  /** Optional behavior overriding for the screensharing, for testing */
+  toggleScreensharing?: () => void;
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -441,6 +451,7 @@ export function createCallViewModel$(
         // Re-create LocalTransport whenever the mode changes
         (mode) => ({ keys: [mode], data: undefined }),
         (scope, _data$, mode) =>
+          options.localTransport ??
           createLocalTransport$({
             scope: scope,
             memberships$: memberships$,
@@ -467,17 +478,19 @@ export function createCallViewModel$(
     ),
   );
 
-  const connectionFactory = new ECConnectionFactory(
-    client,
-    matrixRoom.roomId,
-    mediaDevices,
-    trackProcessorState$,
-    livekitKeyProvider,
-    getUrlParams().controlledAudioDevices,
-    options.livekitRoomFactory,
-    getUrlParams().echoCancellation,
-    getUrlParams().noiseSuppression,
-  );
+  const connectionFactory =
+    options.connectionFactory ??
+    new ECConnectionFactory(
+      client,
+      matrixRoom.roomId,
+      mediaDevices,
+      trackProcessorState$,
+      livekitKeyProvider,
+      getUrlParams().controlledAudioDevices,
+      options.livekitRoomFactory,
+      getUrlParams().echoCancellation,
+      getUrlParams().noiseSuppression,
+    );
 
   const connectionManager = createConnectionManager$({
     scope: scope,
@@ -546,9 +559,7 @@ export function createCallViewModel$(
     },
     connectionManager,
     matrixRTCSession,
-    localTransport$: scope.behavior(
-      localTransport$.pipe(switchMap((t) => t.advertised$)),
-    ),
+    localTransport$,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
@@ -1080,9 +1091,10 @@ export function createCallViewModel$(
     );
 
   const oneOnOneLayoutMedia$: Observable<OneOnOneLayoutMedia | null> =
-    userMedia$.pipe(
-      switchMap((userMedia) => {
-        if (userMedia.length <= 2) {
+    combineLatest([userMedia$, screenShares$]).pipe(
+      switchMap(([userMedia, screenShares]) => {
+        // One-on-one layout only supports 2 user media, no screen shares
+        if (userMedia.length <= 2 && screenShares.length === 0) {
           const local = userMedia.find(
             (vm): vm is WrappedUserMediaViewModel & LocalUserMediaViewModel =>
               vm.type === "user" && vm.local,
@@ -1316,7 +1328,11 @@ export function createCallViewModel$(
     windowMode$.pipe(map((mode) => mode !== "pip" && mode !== "flat")),
   );
 
-  const showFooter$ = scope.behavior<boolean>(
+  const urlParams = getUrlParams();
+  const showFooterUrlParams = !(
+    urlParams.header === HeaderStyle.None && urlParams.showControls === false
+  );
+  const showFooterLayout$ = scope.behavior<boolean>(
     windowMode$.pipe(
       switchMap((mode) => {
         switch (mode) {
@@ -1370,7 +1386,11 @@ export function createCallViewModel$(
       }),
     ),
   );
-
+  const showFooter$ = scope.behavior(
+    showFooterLayout$.pipe(
+      map((showFooter) => showFooter && showFooterUrlParams),
+    ),
+  );
   /**
    * Whether audio is currently being output through the earpiece.
    */
@@ -1497,7 +1517,8 @@ export function createCallViewModel$(
    * Callback to toggle screen sharing. If null, screen sharing is not possible.
    */
   // reassigned here to make it publicly accessible
-  const toggleScreenSharing = localMembership.toggleScreenSharing;
+  const toggleScreenSharing =
+    options.toggleScreensharing ?? localMembership.toggleScreenSharing;
 
   const errors$ = scope.behavior<{
     transportError?: ElementCallError;

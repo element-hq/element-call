@@ -3288,39 +3288,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/components-core@npm:0.12.12, @livekit/components-core@npm:^0.12.0":
-  version: 0.12.12
-  resolution: "@livekit/components-core@npm:0.12.12"
+"@livekit/components-core@npm:0.12.13, @livekit/components-core@npm:^0.12.0":
+  version: 0.12.13
+  resolution: "@livekit/components-core@npm:0.12.13"
   dependencies:
     "@floating-ui/dom": "npm:1.7.4"
     loglevel: "npm:1.9.1"
     rxjs: "npm:7.8.2"
   peerDependencies:
-    livekit-client: ^2.15.14
+    livekit-client: ^2.17.2
     tslib: ^2.6.2
-  checksum: 10c0/788ae01fa6c58a0edbd629f4195f2f3a7bc94660d2fb729af8b27cab2b151abe36cd0a666989811c6187e51d32c847119853010a82be55844750ab3978079c38
+  checksum: 10c0/d6e0b897e4eaeacf42b2845ddcebd03b35c3877ab99ed92152f58ee46b4f334e540542ef35846718a39fe51fbad4264e91f2c1264f0e42a083c261c510013f91
   languageName: node
   linkType: hard
 
 "@livekit/components-react@npm:^2.0.0":
-  version: 2.9.17
-  resolution: "@livekit/components-react@npm:2.9.17"
+  version: 2.9.20
+  resolution: "@livekit/components-react@npm:2.9.20"
   dependencies:
-    "@livekit/components-core": "npm:0.12.12"
+    "@livekit/components-core": "npm:0.12.13"
     clsx: "npm:2.1.1"
     events: "npm:^3.3.0"
     jose: "npm:^6.0.12"
     usehooks-ts: "npm:3.1.1"
   peerDependencies:
     "@livekit/krisp-noise-filter": ^0.2.12 || ^0.3.0
-    livekit-client: ^2.15.14
+    livekit-client: ^2.17.2
     react: ">=18"
     react-dom: ">=18"
     tslib: ^2.6.2
   peerDependenciesMeta:
     "@livekit/krisp-noise-filter":
       optional: true
-  checksum: 10c0/ba64ada37d4b3ce4d5ee7c5b2a6bddbffc17c2e641e95881aac9f02b4ff7428105e0a372d364e50ff124e988b7426d322d94caabdb55b634aebf0144d7e37f99
+  checksum: 10c0/ce00fb59446804571ad5534cdd7ce18315f96daab491ab60b7f7b27d26978f7a06a23495b89578385cd0d42b99a1ddbbd8699d0a3a82f00b2e77875f460387af
   languageName: node
   linkType: hard
 
@@ -3331,21 +3331,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/protocol@npm:1.42.2":
-  version: 1.42.2
-  resolution: "@livekit/protocol@npm:1.42.2"
+"@livekit/protocol@npm:1.45.3, @livekit/protocol@npm:^1.42.2":
+  version: 1.45.3
+  resolution: "@livekit/protocol@npm:1.45.3"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/73e77e0975d4d8ca0baa23ad03cb9ac3a844e8d89e9cefbd17343131a774c7aeb4d190fd0397152fcf5a396d921af3eb83e83e660a4aa12215d9ac4e52bf037a
-  languageName: node
-  linkType: hard
-
-"@livekit/protocol@npm:^1.42.2":
-  version: 1.45.1
-  resolution: "@livekit/protocol@npm:1.45.1"
-  dependencies:
-    "@bufbuild/protobuf": "npm:^1.10.0"
-  checksum: 10c0/f249d8501c0021475c4a0a063af5e5d55469fb889b7df4a14a86d347893133bdc8639a8270d80863fe3b8090a3cebf02e7fdc8e4a55aa3985e41ba8e50a2d078
+  checksum: 10c0/8c9c889d9042d3b27acc0dd537df36e0c804c1d205741e2d3789111c728d840933ab0743655cb81df52c7715210db193c1fc8e2e223d765d05537c502918299b
   languageName: node
   linkType: hard
 
@@ -6455,9 +6446,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vector-im/compound-design-tokens@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "@vector-im/compound-design-tokens@npm:9.0.0"
+"@vector-im/compound-design-tokens@npm:^10.0.0":
+  version: 10.1.0
+  resolution: "@vector-im/compound-design-tokens@npm:10.1.0"
   peerDependencies:
     "@types/react": "*"
     react: ^17 || ^18 || ^19.0.0
@@ -6466,13 +6457,13 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/6c53770bfba512d8a9f330ca2d0c481806e35f40d98f53815716e41ddac74d6fc3c4788fcda2e33907d62d2c5c04e64db62176c04513fbee41c7c436730081ce
+  checksum: 10c0/ffd8223195eac66bcddd85eb5d6cf64ba5ffa521d3673c1caa5346d0346cfe165819d4744b7c1ad6289f8074684a4c4e8f972a54d34ffa91625f1e377e732ad5
   languageName: node
   linkType: hard
 
-"@vector-im/compound-web@npm:^8.0.0":
-  version: 8.4.0
-  resolution: "@vector-im/compound-web@npm:8.4.0"
+"@vector-im/compound-web@npm:^9.0.0":
+  version: 9.0.1
+  resolution: "@vector-im/compound-web@npm:9.0.1"
   dependencies:
     "@floating-ui/react": "npm:^0.27.0"
     "@radix-ui/react-context-menu": "npm:^2.2.16"
@@ -6487,12 +6478,12 @@ __metadata:
     "@fontsource/inconsolata": ^5
     "@fontsource/inter": ^5
     "@types/react": "*"
-    "@vector-im/compound-design-tokens": ">=1.6.1 <7.0.0"
+    "@vector-im/compound-design-tokens": ">=1.6.1 <11.0.0"
     react: ^18 || ^19.0.0
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/31b73555c47b373d4250872bfe863a030b487197bf1198e3cf3a1ec344f2b02f0c72c1513bb598c1cbd7a91d3c6a334d0c8ae37bd7c90d4859c864fc223e059a
+  checksum: 10c0/4ae90e1518001a8a4a2a76e86cfc4fc2bba9b2e556c6e4b56df2c7b04e0e2cdb213b70ee7c7ba4288250c726e8182a473d3d5fdf95890451675239c957251eee
   languageName: node
   linkType: hard
 
@@ -8666,8 +8657,8 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^8.31.0"
     "@typescript-eslint/parser": "npm:^8.31.0"
     "@use-gesture/react": "npm:^10.2.11"
-    "@vector-im/compound-design-tokens": "npm:^9.0.0"
-    "@vector-im/compound-web": "npm:^8.0.0"
+    "@vector-im/compound-design-tokens": "npm:^10.0.0"
+    "@vector-im/compound-web": "npm:^9.0.0"
     "@vitejs/plugin-react": "npm:^4.0.1"
     "@vitest/coverage-v8": "npm:^4.0.18"
     babel-plugin-transform-vite-meta-env: "npm:^1.0.3"
@@ -8693,7 +8684,7 @@ __metadata:
     i18next-parser: "npm:^9.1.0"
     jsdom: "npm:^26.0.0"
     knip: "npm:^5.86.0"
-    livekit-client: "npm:^2.13.0"
+    livekit-client: "npm:^2.18.1"
     lodash-es: "npm:^4.17.21"
     loglevel: "npm:^1.9.1"
     matrix-js-sdk: "matrix-org/matrix-js-sdk#6e3efef0c5f660df47cf00874927dec1c75cc3cf"
@@ -11677,23 +11668,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"livekit-client@npm:^2.13.0":
-  version: 2.16.0
-  resolution: "livekit-client@npm:2.16.0"
+"livekit-client@npm:^2.18.1":
+  version: 2.18.3
+  resolution: "livekit-client@npm:2.18.3"
   dependencies:
     "@livekit/mutex": "npm:1.1.1"
-    "@livekit/protocol": "npm:1.42.2"
+    "@livekit/protocol": "npm:1.45.3"
     events: "npm:^3.3.0"
     jose: "npm:^6.1.0"
     loglevel: "npm:^1.9.2"
     sdp-transform: "npm:^2.15.0"
-    ts-debounce: "npm:^4.0.0"
     tslib: "npm:2.8.1"
     typed-emitter: "npm:^2.1.0"
     webrtc-adapter: "npm:^9.0.1"
   peerDependencies:
     "@types/dom-mediacapture-record": ^1
-  checksum: 10c0/5d03adc5d09efde343ab894db397529dff26117598e773b23a5df90a4fb166bde12c6bb1f2cfd1d28dbaf93fe9f275026d7abb75f2ffd2ba816393a2d58e6c7e
+  checksum: 10c0/8240e0f971f50dcf96a65938208769fac79da8da944e30a63d2c358ae090c0c66f0363201aed5d772c43a67276cf2a4b33dfc2d8c12460f5ef4611f97d7596fc
   languageName: node
   linkType: hard
 
@@ -15319,13 +15309,6 @@ __metadata:
   peerDependencies:
     typescript: ">=4.8.4"
   checksum: 10c0/767849383c114e7f1971fa976b20e73ac28fd0c70d8d65c0004790bf4d8f89888c7e4cf6d5949f9c1beae9bc3c64835bef77bbe27fddf45a3c7b60cebcf85c8c
-  languageName: node
-  linkType: hard
-
-"ts-debounce@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "ts-debounce@npm:4.0.0"
-  checksum: 10c0/1dfac630127d6982b4ad5114a12bd3e8febfd7a34615e6bf388eaf3a5c355f9ab2ef688688bb7e789bc9f0cabfd82e0a6b363efc451ee626b5722919f7f567cd
   languageName: node
   linkType: hard
 

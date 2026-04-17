@@ -74,6 +74,8 @@ import {
   createRemoteScreenShare,
   type RemoteScreenShareViewModel,
 } from "../state/media/RemoteScreenShareViewModel";
+import { Connection } from "../state/CallViewModel/remoteMembers/Connection";
+import { type SFUConfig } from "../livekit/openIDSFU";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -208,6 +210,13 @@ export const exampleTransport: LivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
   livekit_alias: "!alias:example.org",
+};
+
+export const exampleSfuConfig: SFUConfig = {
+  jwt: "foo",
+  livekitAlias: "bar",
+  livekitIdentity: "baz",
+  url: "bro",
 };
 
 export function mockRtcMembership(
@@ -563,4 +572,9 @@ export function mockMuteStates(
     audioEnabled: false,
     videoEnabled: false,
   });
+}
+
+export class MockConnection extends Connection {
+  public async start(): Promise<void> {}
+  public async stop(): Promise<void> {}
 }
