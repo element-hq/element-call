@@ -17,6 +17,8 @@ import { createHtmlPlugin } from "vite-plugin-html";
 
 import { codecovVitePlugin } from "@codecov/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import wasm from "vite-plugin-wasm";
 
 import react from "@vitejs/plugin-react";
 import { realpathSync } from "fs";
@@ -36,6 +38,11 @@ export default ({
   process.env.VITE_PACKAGE = packageType ?? "full";
   const plugins: PluginOption[] = [
     react(),
+    wasm(),
+    nodePolyfills({
+      // Enables the 'events' module, which is required by the matrix-js-sdk
+      include: ['events'], 
+    }),
     svgrPlugin({
       svgrOptions: {
         // This enables ref forwarding on SVGR components, which is needed, for
@@ -43,7 +50,6 @@ export default ({
         ref: true,
       },
     }),
-
     codecovVitePlugin({
       enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
       bundleName: "element-call",
@@ -149,13 +155,6 @@ export default ({
         "@radix-ui/react-focus-guards",
         "@radix-ui/react-dismissable-layer",
       ],
-    },
-    // Vite is using esbuild in development mode, which doesn't work with the wasm loader
-    // in matrix-sdk-crypto-wasm, so we need to exclude it here. This doesn't affect the
-    // production build (which uses rollup) which still works as expected.
-    // https://vite.dev/guide/why.html#why-not-bundle-with-esbuild
-    optimizeDeps: {
-      exclude: ["@matrix-org/matrix-sdk-crypto-wasm"],
     },
   };
 };
