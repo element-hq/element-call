@@ -6,5 +6,5 @@ if [ -n "$USE_DOCKER" ]; then
     exec docker run --rm --name element-call-testing -p 8080:8080 -v ./config/config.devenv.json:/app/config.json:ro,Z element-call:testing
 else
     cp config/config.devenv.json public/config.json
-    exec pnpm dev
+    exec pnpm dev --host
 fi
