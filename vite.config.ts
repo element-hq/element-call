@@ -17,7 +17,7 @@ import { createHtmlPlugin } from "vite-plugin-html";
 
 import { codecovVitePlugin } from "@codecov/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
-import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 import wasm from "vite-plugin-wasm";
 
 import react from "@vitejs/plugin-react";
@@ -41,7 +41,7 @@ export default ({
     wasm(),
     nodePolyfills({
       // Enables the 'events' module, which is required by the matrix-js-sdk
-      include: ['events'], 
+      include: ["events"],
     }),
     svgrPlugin({
       svgrOptions: {
