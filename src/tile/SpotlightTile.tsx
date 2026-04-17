@@ -562,6 +562,7 @@ export const SpotlightTile: FC<Props> = ({
         >
           {media.map((vm) => (
             <div
+              data-testid="screenshare-indicator"
               key={vm.id}
               className={styles.item}
               data-visible={vm.id === visibleId}
