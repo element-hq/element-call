@@ -59,7 +59,7 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
   await alice.page
     .locator('iframe[title="Element Call"]')
     .contentFrame()
-    .getByTestId("incall_screenshare")
+    .getByRole("switch", { name: "Share screen" })
     .click();
 
   // await alice.page.pause();
@@ -102,7 +102,7 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
   await bob.page
     .locator('iframe[title="Element Call"]')
     .contentFrame()
-    .getByTestId("incall_screenshare")
+    .getByRole("switch", { name: "Share screen" })
     .click();
 
   {
