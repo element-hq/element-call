@@ -13,7 +13,7 @@ export default defineConfig((configEnv) =>
             classNameStrategy: "non-scoped",
           },
         },
-        setupFiles: ["vitest.setup.ts"],
+        setupFiles: ["src/vitest.setup.ts"],
         include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
         coverage: {
           reporter: ["html", "json"],
