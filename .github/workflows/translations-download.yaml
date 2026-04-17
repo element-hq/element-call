@@ -22,11 +22,11 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          cache: "yarn"
+          cache: "pnpm"
           node-version-file: ".node-version"
 
       - name: Install Deps
-        run: "yarn install --immutable"
+        run: "pnpm install --frozen-lockfile"
 
       - name: Prune i18n
         run: "rm -R locales"
@@ -40,7 +40,7 @@ jobs:
         run: "sudo chown runner:docker -R locales"
 
       - name: Prettier
-        run: yarn prettier:format
+        run: pnpm prettier:format
 
       - name: Create Pull Request
         id: cpr
