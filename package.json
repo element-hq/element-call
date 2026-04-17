@@ -137,8 +137,10 @@
     "vite": "^8.0.0",
     "vite-plugin-generate-file": "^0.3.0",
     "vite-plugin-html": "^3.2.2",
+    "vite-plugin-node-polyfills": "^0.26.0",
     "vite-plugin-node-stdlib-browser": "^0.2.1",
     "vite-plugin-svgr": "^4.0.0",
+    "vite-plugin-wasm": "^3.6.0",
     "vitest": "^4.0.18",
     "vitest-axe": "^1.0.0-pre.3"
   },
