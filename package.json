@@ -3,23 +3,23 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "yarn dev:full",
+    "dev": "pnpm dev:full",
     "dev:full": "vite",
     "dev:embedded": "vite --config vite-embedded.config.js",
-    "build": "yarn build:full",
+    "build": "pnpm build:full",
     "build:full": "NODE_OPTIONS=--max-old-space-size=16384 vite build",
-    "build:full:production": "yarn build:full",
-    "build:full:development": "yarn build:full --mode development",
-    "build:embedded": "yarn build:full --config vite-embedded.config.js",
-    "build:embedded:production": "yarn build:embedded",
-    "build:embedded:development": "yarn build:embedded --mode development",
-    "build:sdk:development": "yarn build:sdk --mode development",
-    "build:sdk": "yarn build:full --config vite-sdk.config.js",
-    "build:sdk:production": "yarn build:sdk",
+    "build:full:production": "pnpm build:full",
+    "build:full:development": "pnpm build:full --mode development",
+    "build:embedded": "pnpm build:full --config vite-embedded.config.js",
+    "build:embedded:production": "pnpm build:embedded",
+    "build:embedded:development": "pnpm build:embedded --mode development",
+    "build:sdk:development": "pnpm build:sdk --mode development",
+    "build:sdk": "pnpm build:full --config vite-sdk.config.js",
+    "build:sdk:production": "pnpm build:sdk",
     "serve": "vite preview",
     "prettier:check": "prettier -c .",
     "prettier:format": "prettier -w .",
-    "lint": "yarn lint:types && yarn lint:eslint && yarn lint:knip",
+    "lint": "pnpm lint:types && pnpm lint:eslint && pnpm lint:knip",
     "lint:eslint": "eslint --max-warnings 0 src playwright",
     "lint:eslint-fix": "eslint --max-warnings 0 src playwright --fix",
     "lint:knip": "knip",
@@ -31,7 +31,7 @@
     "backend": "docker-compose -f dev-backend-docker-compose.yml up",
     "backend-playwright": "docker-compose -f playwright-backend-docker-compose.yml -f playwright-backend-docker-compose.override.yml up",
     "test:playwright": "playwright test",
-    "test:playwright:open": "yarn test:playwright --ui",
+    "test:playwright:open": "pnpm test:playwright --ui",
     "links:enable": "mv .links.disabled.yaml .links.yaml & touch .links.yaml",
     "links:disable": "mv .links.yaml .links.disabled.yaml",
     "storybook": "storybook dev -p 6006",
@@ -142,14 +142,17 @@
     "vitest": "^4.0.18",
     "vitest-axe": "^1.0.0-pre.3"
   },
-  "resolutions": {
-    "@livekit/components-core/rxjs": "^7.8.1",
-    "@livekit/track-processors/@mediapipe/tasks-vision": "^0.10.18",
-    "minimatch": "^10.2.3",
-    "tar": "^7.5.11",
-    "glob": "^10.5.0",
-    "qs": "^6.14.1",
-    "js-yaml": "^4.1.1"
+  "pnpm": {
+    "overrides": {
+      "@livekit/components-core>rxjs": "^7.8.1",
+      "@livekit/track-processors>@mediapipe/tasks-vision": "^0.10.18",
+      "minimatch": "^10.2.3",
+      "tar": "^7.5.11",
+      "glob": "^10.5.0",
+      "qs": "^6.14.1",
+      "js-yaml": "^4.1.1",
+      "esbuild": "^0.27.7"
+    }
   },
-  "packageManager": "yarn@4.7.0"
+  "packageManager": "pnpm@9.0.0"
 }
