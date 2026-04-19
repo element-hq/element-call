@@ -45,6 +45,14 @@ experimental_features:
   # MSC4222 needed for syncv2 state_after. This allow clients to
   # correctly track the state of the room.
   msc4222_enabled: true
+  # MSC4143: MatrixRTC transports endpoint. Used by some clients to
+  # discover the MatrixRTC Authorization Service for LiveKit.
+  msc4143_enabled: true
+
+# Configure MatrixRTC Transports
+# Must replace <LIVEKIT_URL> with your server's URL.
+matrix_rtc:
+  transports: [{type: livekit, livekit_service_url: "<LIVEKIT_URL>"}]
 
 # The maximum allowed duration by which sent events can be delayed, as
 # per MSC4140.
