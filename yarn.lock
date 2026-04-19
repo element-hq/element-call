@@ -5220,6 +5220,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sapphi-red/web-noise-suppressor@npm:^0.3.5":
+  version: 0.3.5
+  resolution: "@sapphi-red/web-noise-suppressor@npm:0.3.5"
+  checksum: 10c0/b8959a3bfb4acd899866a02eec0588e6f06dc49461fdc48810e9bf9992aeda262d06c3f8e22d41d33d5eb52710931cf3ad8b8350286efc35154419dc3437b879
+  languageName: node
+  linkType: hard
+
 "@sentry-internal/browser-utils@npm:8.55.1":
   version: 8.55.1
   resolution: "@sentry-internal/browser-utils@npm:8.55.1"
@@ -8634,6 +8641,7 @@ __metadata:
     "@radix-ui/react-slider": "npm:^1.1.2"
     "@radix-ui/react-visually-hidden": "npm:^1.0.3"
     "@react-spring/web": "npm:^10.0.0"
+    "@sapphi-red/web-noise-suppressor": "npm:^0.3.5"
     "@sentry/react": "npm:^8.0.0"
     "@sentry/vite-plugin": "npm:^3.0.0"
     "@storybook/addon-docs": "npm:^10.3.3"

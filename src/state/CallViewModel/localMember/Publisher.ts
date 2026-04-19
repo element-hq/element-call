@@ -7,13 +7,16 @@ Please see LICENSE in the repository root for full details.
 */
 import {
   ConnectionState as LivekitConnectionState,
+  type LocalAudioTrack,
   type LocalTrackPublication,
   LocalVideoTrack,
   ParticipantEvent,
   type Room as LivekitRoom,
   Track,
+  TrackEvent,
 } from "livekit-client";
 import {
+  distinctUntilChanged,
   map,
   NEVER,
   type Observable,
@@ -29,10 +32,15 @@ import {
   type ProcessorState,
   trackProcessorSync,
 } from "../../../livekit/TrackProcessorContext.tsx";
+import { MicrophoneDenoiseController } from "../../../livekit/MicrophoneDenoiseController.ts";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { observeTrackReference$ } from "../../observeTrackReference";
 import { type Connection } from "../remoteMembers/Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
+
+interface ReplaceableLocalAudioTrack extends LocalAudioTrack {
+  mediaStreamTrack: MediaStreamTrack;
+}
 
 /**
  * A wrapper for a Connection object.
@@ -48,6 +56,11 @@ export class Publisher {
   public shouldPublish = false;
 
   private readonly scope = new ObservableScope();
+  private readonly microphoneDenoiseController =
+    new MicrophoneDenoiseController();
+  private watchedMicrophoneTrack?: LocalAudioTrack;
+  private syncingMicrophoneDenoise?: Promise<void>;
+  private pendingMicrophoneDenoiseResync = false;
 
   /**
    * Creates a new Publisher.
@@ -62,6 +75,7 @@ export class Publisher {
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
     trackerProcessorState$: Behavior<ProcessorState>,
+    private readonly experimentalMicrophoneDenoise$: Behavior<boolean>,
     private logger: Logger,
   ) {
     const { controlledAudioDevices } = getUrlParams();
@@ -75,6 +89,7 @@ export class Publisher {
     this.observeTrackProcessors(this.scope, room, trackerProcessorState$);
     // Observe media device changes and update LiveKit active devices accordingly
     this.observeMediaDevices(this.scope, devices, controlledAudioDevices);
+    this.observeExperimentalMicrophoneDenoise(this.scope);
 
     this.workaroundRestartAudioInputTrackChrome(devices, this.scope);
 
@@ -86,6 +101,8 @@ export class Publisher {
 
   public async destroy(): Promise<void> {
     this.scope.end();
+    this.unwatchMicrophoneTrack();
+    this.microphoneDenoiseController.destroy();
     this.logger.info("Scope ended -> unset handler");
     this.muteStates.audio.unsetHandler();
     this.muteStates.video.unsetHandler();
@@ -118,6 +135,8 @@ export class Publisher {
     }
     // also check the mute state and apply it
     if (localTrackPublication.source === Track.Source.Microphone) {
+      this.watchMicrophoneTrack(localTrackPublication);
+      void this.syncMicrophoneDenoisePipeline();
       const enabled = this.muteStates.audio.enabled$.value;
       lkRoom.localParticipant.setMicrophoneEnabled(enabled).catch((e) => {
         this.logger.error(
@@ -256,6 +275,8 @@ export class Publisher {
   }
 
   public async stopTracks(): Promise<void> {
+    this.unwatchMicrophoneTrack();
+    this.microphoneDenoiseController.destroy();
     const lkRoom = this.connection.livekitRoom;
     for (const source of [
       Track.Source.Microphone,
@@ -314,6 +335,7 @@ export class Publisher {
           lkRoom.localParticipant
             .getTrackPublication(Track.Source.Microphone)
             ?.audioTrack?.restartTrack()
+            .then(async () => this.syncMicrophoneDenoisePipeline())
             .catch((e) => {
               this.logger.error(`Failed to restart audio device track`, e);
             });
@@ -374,6 +396,9 @@ export class Publisher {
           `handler: Setting LiveKit microphone enabled: ${enable}`,
         );
         await lkRoom.localParticipant.setMicrophoneEnabled(enable);
+        if (enable) {
+          await this.syncMicrophoneDenoisePipeline();
+        }
         // Unmute will restart the track if it was paused upstream,
         // but until explicitly requested, we want to keep it paused.
         if (!this.shouldPublish && enable) {
@@ -415,5 +440,117 @@ export class Publisher {
       null,
     );
     trackProcessorSync(scope, track$, trackerProcessorState$);
+  }
+
+  private observeExperimentalMicrophoneDenoise(scope: ObservableScope): void {
+    this.experimentalMicrophoneDenoise$
+      .pipe(distinctUntilChanged(), scope.bind())
+      .subscribe(() => {
+        void this.syncMicrophoneDenoisePipeline();
+      });
+  }
+
+  private watchMicrophoneTrack(
+    localTrackPublication: LocalTrackPublication,
+  ): void {
+    this.unwatchMicrophoneTrack();
+    const audioTrack = localTrackPublication.audioTrack;
+    if (audioTrack === undefined) return;
+
+    this.watchedMicrophoneTrack = audioTrack;
+    audioTrack.on(TrackEvent.Restarted, this.onMicrophoneTrackRestarted);
+  }
+
+  private async syncMicrophoneDenoisePipeline(): Promise<void> {
+    if (this.syncingMicrophoneDenoise !== undefined) {
+      this.pendingMicrophoneDenoiseResync = true;
+      return this.syncingMicrophoneDenoise;
+    }
+
+    const sync = this.syncMicrophoneDenoisePipelineInner().finally(() => {
+      if (this.syncingMicrophoneDenoise === sync) {
+        this.syncingMicrophoneDenoise = undefined;
+      }
+      if (this.pendingMicrophoneDenoiseResync) {
+        this.pendingMicrophoneDenoiseResync = false;
+        void this.syncMicrophoneDenoisePipeline();
+      }
+    });
+    this.syncingMicrophoneDenoise = sync;
+    return sync;
+  }
+
+  private async syncMicrophoneDenoisePipelineInner(): Promise<void> {
+    // LiveKit still owns microphone capture, including the original
+    // getUserMedia constraints. We only swap the published track after capture.
+    const audioTrack =
+      this.connection.livekitRoom.localParticipant.getTrackPublication(
+        Track.Source.Microphone,
+      )?.audioTrack as ReplaceableLocalAudioTrack | undefined;
+
+    if (audioTrack === undefined) {
+      this.microphoneDenoiseController.destroy();
+      return;
+    }
+
+    if (
+      this.experimentalMicrophoneDenoise$.value === false ||
+      audioTrack.mediaStreamTrack.readyState === "ended"
+    ) {
+      await this.restoreRawMicrophoneTrack(audioTrack);
+      return;
+    }
+
+    const currentRawTrack = audioTrack.mediaStreamTrack;
+    if (
+      this.microphoneDenoiseController.sourceTrack === currentRawTrack &&
+      this.microphoneDenoiseController.processedTrack !== undefined
+    ) {
+      return;
+    }
+
+    try {
+      const processedTrack =
+        await this.microphoneDenoiseController.rebuild(currentRawTrack);
+      await audioTrack.replaceTrack(processedTrack, true);
+      this.logger.info(
+        "Experimental microphone denoise pipeline enabled with RNNoise",
+      );
+    } catch (error) {
+      this.logger.warn(
+        "Failed to enable experimental microphone denoise pipeline, falling back to raw microphone track",
+        error,
+      );
+      this.microphoneDenoiseController.destroy();
+    }
+  }
+
+  private async restoreRawMicrophoneTrack(
+    audioTrack: ReplaceableLocalAudioTrack,
+  ): Promise<void> {
+    const rawTrack = this.microphoneDenoiseController.sourceTrack;
+    if (rawTrack !== undefined) {
+      try {
+        await audioTrack.replaceTrack(rawTrack, true);
+      } catch (error) {
+        this.logger.warn(
+          "Failed to restore raw microphone track after denoise pipeline teardown",
+          error,
+        );
+      }
+    }
+    this.microphoneDenoiseController.destroy();
+  }
+
+  private readonly onMicrophoneTrackRestarted = (): void => {
+    void this.syncMicrophoneDenoisePipeline();
+  };
+
+  private unwatchMicrophoneTrack(): void {
+    this.watchedMicrophoneTrack?.off(
+      TrackEvent.Restarted,
+      this.onMicrophoneTrackRestarted,
+    );
+    this.watchedMicrophoneTrack = undefined;
   }
 }

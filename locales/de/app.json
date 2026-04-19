@@ -196,6 +196,8 @@
       "developer_mode_label": "Entwickler-Modus",
       "developer_mode_label_description": "Aktivieren Sie den Entwicklermodus und zeigen Sie die Registerkarte mit den Entwicklereinstellungen an.",
       "introduction": "Hier können zusätzliche Optionen für individuelle Anforderungen eingestellt werden.",
+      "experimental_microphone_denoise_description": "Reduziert Hintergrundgeräusche vom Mikrofon.",
+      "experimental_microphone_denoise_label": "Geräuschunterdrückung",
       "reactions_play_sound_description": "Spielen Sie einen Soundeffekt ab, wenn jemand eine Reaktion auf einen Anruf sendet.",
       "reactions_play_sound_label": "Reaktionstöne abspielen",
       "reactions_show_description": "Zeige eine Animation, wenn jemand eine Reaktion sendet.",

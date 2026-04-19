@@ -11,6 +11,7 @@ import { Text } from "@vector-im/compound-web";
 
 import { FieldRow, InputField } from "../input/Input";
 import {
+  experimentalMicrophoneDenoise as experimentalMicrophoneDenoiseSetting,
   showHandRaisedTimer as showHandRaisedTimerSetting,
   showReactions as showReactionsSetting,
   playReactionsSound as playReactionsSoundSetting,
@@ -29,6 +30,8 @@ export const PreferencesSettingsTab: FC = () => {
   const [playReactionsSound, setPlayReactionSound] = useSetting(
     playReactionsSoundSetting,
   );
+  const [experimentalMicrophoneDenoise, setExperimentalMicrophoneDenoise] =
+    useSetting(experimentalMicrophoneDenoiseSetting);
 
   const onChangeSetting = (
     e: ChangeEvent<HTMLInputElement>,
@@ -74,6 +77,20 @@ export const PreferencesSettingsTab: FC = () => {
           type="checkbox"
           checked={playReactionsSound}
           onChange={(e) => onChangeSetting(e, setPlayReactionSound)}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="experimentalMicrophoneDenoise"
+          label={t(
+            "settings.preferences_tab.experimental_microphone_denoise_label",
+          )}
+          description={t(
+            "settings.preferences_tab.experimental_microphone_denoise_description",
+          )}
+          type="checkbox"
+          checked={experimentalMicrophoneDenoise}
+          onChange={(e) => onChangeSetting(e, setExperimentalMicrophoneDenoise)}
         />
       </FieldRow>
       <FieldRow>

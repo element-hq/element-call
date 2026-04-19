@@ -220,6 +220,8 @@
       "developer_mode_label": "Developer mode",
       "developer_mode_label_description": "Enable developer mode and show developer settings tab.",
       "introduction": "Here you can configure extra options for an improved experience.",
+      "experimental_microphone_denoise_description": "Reduce background noise from your microphone.",
+      "experimental_microphone_denoise_label": "Background noise reduction",
       "reactions_play_sound_description": "Play a sound effect when anyone sends a reaction into a call.",
       "reactions_play_sound_label": "Play reaction sounds",
       "reactions_show_description": "Show an animation when anyone sends a reaction.",
