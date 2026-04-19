@@ -28,19 +28,57 @@ import { Publisher } from "./Publisher";
 import { type Connection } from "../remoteMembers/Connection";
 import { type MuteStates } from "../../MuteStates";
 
+const { rnnoiseNodeMocks, loadRnnoiseMock } = vi.hoisted(() => ({
+  rnnoiseNodeMocks: [] as {
+    connect: ReturnType<typeof vi.fn>;
+    disconnect: ReturnType<typeof vi.fn>;
+    destroy: ReturnType<typeof vi.fn>;
+  }[],
+  loadRnnoiseMock: vi.fn(),
+}));
+
+vi.mock("@sapphi-red/web-noise-suppressor", () => ({
+  loadRnnoise: loadRnnoiseMock,
+  RnnoiseWorkletNode: class MockRnnoiseWorkletNode {
+    public connect = vi.fn();
+    public disconnect = vi.fn();
+    public destroy = vi.fn();
+
+    public constructor() {
+      rnnoiseNodeMocks.push({
+        connect: this.connect,
+        disconnect: this.disconnect,
+        destroy: this.destroy,
+      });
+    }
+  },
+}));
+
 let scope: ObservableScope;
 
 beforeEach(() => {
   scope = new ObservableScope();
+  rnnoiseNodeMocks.length = 0;
+  loadRnnoiseMock.mockReset();
+  loadRnnoiseMock.mockResolvedValue(new ArrayBuffer(8));
 });
 
 afterEach(() => scope.end());
+afterEach(() => vi.unstubAllGlobals());
 
 function createMockLocalTrack(source: Track.Source): LocalTrack {
+  const mediaStreamTrack = {
+    kind: source === Track.Source.Microphone ? "audio" : "video",
+    readyState: "live",
+    stop: vi.fn(),
+  } as Partial<MediaStreamTrack> as MediaStreamTrack;
   const track = {
     source,
     isMuted: false,
     isUpstreamPaused: false,
+    mediaStreamTrack,
+    on: vi.fn(),
+    off: vi.fn(),
   } as Partial<LocalTrack> as LocalTrack;
 
   vi.mocked(track).mute = vi.fn().mockImplementation(() => {
@@ -57,6 +95,11 @@ function createMockLocalTrack(source: Track.Source): LocalTrack {
     // @ts-expect-error - for that test we want to set isUpstreamPaused directly
     track.isUpstreamPaused = false;
   });
+  (
+    track as LocalTrack & {
+      replaceTrack: (track: MediaStreamTrack) => Promise<void>;
+    }
+  ).replaceTrack = vi.fn().mockResolvedValue(undefined);
 
   return track;
 }
@@ -154,6 +197,8 @@ beforeEach(() => {
       const pub = {
         track,
         source: track.source,
+        audioTrack:
+          track.source === Track.Source.Microphone ? track : undefined,
         mute: track.mute,
         unmute: track.unmute,
       } as Partial<LocalTrackPublication> as LocalTrackPublication;
@@ -188,6 +233,7 @@ describe("Publisher", () => {
       mockMediaDevices({}),
       muteStates,
       constant({ supported: false, processor: undefined }),
+      constant(false),
       logger,
     );
   });
@@ -297,6 +343,120 @@ describe("Publisher", () => {
     expect(track!.isUpstreamPaused).toBe(false);
   });
 
+  it("replaces the published microphone track when experimental denoise is enabled", async () => {
+    const processedTrack = {
+      kind: "audio",
+      readyState: "live",
+      stop: vi.fn(),
+    } as Partial<MediaStreamTrack> as MediaStreamTrack;
+
+    const sourceNode = { connect: vi.fn(), disconnect: vi.fn() };
+    const preFilterNode = {
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      frequency: { value: 0 },
+      Q: { value: 0 },
+      type: "lowpass",
+    };
+    const destinationNode = {
+      disconnect: vi.fn(),
+      stream: {
+        getAudioTracks: (): MediaStreamTrack[] => [processedTrack],
+      },
+    };
+    const audioContext = {
+      state: "running",
+      createMediaStreamSource: vi.fn().mockReturnValue(sourceNode),
+      createMediaStreamDestination: vi.fn().mockReturnValue(destinationNode),
+      createBiquadFilter: vi.fn().mockReturnValue(preFilterNode),
+      resume: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+      audioWorklet: {
+        addModule: vi.fn().mockResolvedValue(undefined),
+      },
+    };
+
+    class MockAudioContext {
+      public state = audioContext.state;
+      public createMediaStreamSource = audioContext.createMediaStreamSource;
+      public createMediaStreamDestination =
+        audioContext.createMediaStreamDestination;
+      public createBiquadFilter = audioContext.createBiquadFilter;
+      public resume = audioContext.resume;
+      public close = audioContext.close;
+      public audioWorklet = audioContext.audioWorklet;
+    }
+
+    vi.stubGlobal("AudioContext", MockAudioContext);
+    vi.stubGlobal("AudioWorkletNode", class MockAudioWorkletNode {});
+    vi.stubGlobal(
+      "MediaStream",
+      vi.fn(function MediaStream(this: { tracks: MediaStreamTrack[] }, tracks) {
+        this.tracks = tracks;
+      }),
+    );
+    vi.stubGlobal("MediaStreamTrack", class MockMediaStreamTrack {});
+
+    const enabledPublisher = new Publisher(
+      connection,
+      mockMediaDevices({}),
+      muteStates,
+      constant({ supported: false, processor: undefined }),
+      constant(true),
+      logger,
+    );
+
+    audioEnabled$.next(true);
+    await enabledPublisher.createAndSetupTracks();
+    await flushPromises();
+
+    const microphoneTrack = localParticipant.getTrackPublication(
+      Track.Source.Microphone,
+    )?.audioTrack as unknown as LocalTrack & {
+      replaceTrack: ReturnType<typeof vi.fn>;
+    };
+
+    expect(microphoneTrack.replaceTrack).toHaveBeenCalledWith(
+      processedTrack,
+      true,
+    );
+    expect(loadRnnoiseMock).toHaveBeenCalledOnce();
+    expect(audioContext.audioWorklet.addModule).toHaveBeenCalledOnce();
+    expect(rnnoiseNodeMocks).toHaveLength(1);
+
+    await enabledPublisher.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it("falls back to the raw microphone track when denoise setup is unavailable", async () => {
+    vi.stubGlobal("AudioContext", undefined);
+    vi.stubGlobal("MediaStreamTrack", class MockMediaStreamTrack {});
+
+    const enabledPublisher = new Publisher(
+      connection,
+      mockMediaDevices({}),
+      muteStates,
+      constant({ supported: false, processor: undefined }),
+      constant(true),
+      logger,
+    );
+
+    audioEnabled$.next(true);
+    await enabledPublisher.createAndSetupTracks();
+    await flushPromises();
+
+    const microphoneTrack = localParticipant.getTrackPublication(
+      Track.Source.Microphone,
+    )?.audioTrack as unknown as LocalTrack & {
+      replaceTrack: ReturnType<typeof vi.fn>;
+    };
+
+    expect(microphoneTrack.replaceTrack).not.toHaveBeenCalled();
+
+    await enabledPublisher.destroy();
+    vi.unstubAllGlobals();
+  });
+
   describe("Mute states", () => {
     let publisher: Publisher;
     beforeEach(() => {
@@ -305,6 +465,7 @@ describe("Publisher", () => {
         mockMediaDevices({}),
         muteStates,
         constant({ supported: false, processor: undefined }),
+        constant(false),
         logger,
       );
     });
@@ -360,6 +521,7 @@ describe("Bug fix", () => {
       mockMediaDevices({}),
       muteStates,
       constant({ supported: false, processor: undefined }),
+      constant(false),
       logger,
     );
     audioEnabled$.next(true);

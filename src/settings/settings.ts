@@ -103,6 +103,11 @@ export const videoInput = new Setting<string | undefined>(
 
 export const backgroundBlur = new Setting<boolean>("background-blur", false);
 
+export const experimentalMicrophoneDenoise = new Setting<boolean>(
+  "experimental-microphone-denoise",
+  false,
+);
+
 export const showHandRaisedTimer = new Setting<boolean>(
   "hand-raised-show-timer",
   false,
