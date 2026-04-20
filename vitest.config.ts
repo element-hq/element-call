@@ -17,8 +17,9 @@ export default defineConfig((configEnv) =>
         include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
         coverage: {
           reporter: ["html", "json"],
-          include: ["src/"],
+          include: ["src/**/*.{ts,tsx,js,jsx}"],
           exclude: [
+            "src/**/*.md",
             "src/**/*.{d,test,stories}.{ts,tsx}",
             "src/utils/test.ts",
             "src/utils/test-viewmodel.ts",

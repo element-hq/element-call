@@ -14,15 +14,15 @@ jobs:
           persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
-      - name: Yarn cache
+      - name: pnpm cache
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          cache: "yarn"
+          cache: "pnpm"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "yarn install --immutable"
+        run: "pnpm install --frozen-lockfile"
       - name: Vitest
-        run: "yarn run test:coverage"
+        run: "pnpm run test:coverage"
       - name: Upload to codecov
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         env:
@@ -42,12 +42,12 @@ jobs:
         run: corepack enable
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          cache: "yarn"
+          cache: "pnpm"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
       - name: Install Playwright Browsers
-        run: yarn playwright install --with-deps
+        run: pnpm exec playwright install --with-deps
       - name: Run backend components
         run: |
           docker compose -f playwright-backend-docker-compose.yml -f playwright-backend-docker-compose.override.yml pull
@@ -56,7 +56,7 @@ jobs:
       - name: Run Playwright tests
         env:
           USE_DOCKER: 1
-        run: yarn playwright test
+        run: pnpm exec playwright test
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ !cancelled() }}
         with:

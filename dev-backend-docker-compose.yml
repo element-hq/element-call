@@ -3,7 +3,7 @@ networks:
 
 services:
   auth-service:
-    image: ghcr.io/element-hq/lk-jwt-service:sha-f8ddd00
+    image: ghcr.io/element-hq/lk-jwt-service:0.4.4
     pull_policy: always
     hostname: auth-server
     environment:
@@ -25,7 +25,7 @@ services:
       - ecbackend
 
   auth-service-1:
-    image: ghcr.io/element-hq/lk-jwt-service:sha-f8ddd00
+    image: ghcr.io/element-hq/lk-jwt-service:0.4.4
     pull_policy: always
     hostname: auth-server-1
     environment:
