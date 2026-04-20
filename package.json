@@ -32,8 +32,8 @@
     "backend-playwright": "docker-compose -f playwright-backend-docker-compose.yml -f playwright-backend-docker-compose.override.yml up",
     "test:playwright": "playwright test",
     "test:playwright:open": "pnpm test:playwright --ui",
-    "links:enable": "mv .links.disabled.yaml .links.yaml & touch .links.yaml",
-    "links:disable": "mv .links.yaml .links.disabled.yaml",
+    "links:enable": "mv .links.disabled.cjs .links.cjs & touch .links.cjs",
+    "links:disable": "mv .links.cjs .links.disabled.cjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
