@@ -21,9 +21,14 @@ yarn-error.log
 !/.yarn/releases
 !/.yarn/sdks
 !/.yarn/versions
+# old yarn based linking
 /.links.yaml
 /.links.disabled.yaml
 /.links.temp-disabled.yaml
+# pnpm based linking
+/.links.cjs
+/.links.disabled.cjs
+/.links.temp-disabled.cjs
 
 # Playwright
 /test-results/
