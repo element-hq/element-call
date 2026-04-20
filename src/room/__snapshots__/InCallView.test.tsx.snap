@@ -17,7 +17,7 @@ exports[`InCallView > rendering > renders 1`] = `
         >
           <span
             aria-label=""
-            class="_avatar_7h2br_8 roomAvatar _avatar-imageless_7h2br_55"
+            class="_avatar_va14e_8 roomAvatar _avatar-imageless_va14e_55"
             data-color="1"
             data-type="round"
             role="img"
