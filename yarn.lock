@@ -6462,8 +6462,8 @@ __metadata:
   linkType: hard
 
 "@vector-im/compound-web@npm:^9.0.0":
-  version: 9.0.1
-  resolution: "@vector-im/compound-web@npm:9.0.1"
+  version: 9.2.0
+  resolution: "@vector-im/compound-web@npm:9.2.0"
   dependencies:
     "@floating-ui/react": "npm:^0.27.0"
     "@radix-ui/react-context-menu": "npm:^2.2.16"
@@ -6483,7 +6483,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/4ae90e1518001a8a4a2a76e86cfc4fc2bba9b2e556c6e4b56df2c7b04e0e2cdb213b70ee7c7ba4288250c726e8182a473d3d5fdf95890451675239c957251eee
+  checksum: 10c0/620a538369ac2417dc5a802bb70500a86ca746404bc6036045e9f8fd57b60f533fa5ec0311cfb3093fadb5427c307d18da0c45859e5f0fb0950af6a305bffd04
   languageName: node
   linkType: hard
 
