@@ -23,18 +23,18 @@ One always needs to run:
 
 ```bash
 mv .links.cjs .links.disabled.cjs
-yarn
+pnpm install
 ```
 
 before committing a change.
 
 To make it more convenient to work with this linking system we added git hooks.
-A `pre-commit` hook will run `mv .links.yaml .links.disabled.yaml`, `yarn` and `git add yarn.lock` if it detects
+A `pre-commit` hook will run `mv .links.yaml .links.disabled.yaml`, `pnpm install` and `git add yarn.lock` if it detects
 a `.links.yaml` file and abort the commit.
 You will than need to check if the resulting changes are appropriate and commit again.
 
 A `post-commit` hook will setup the linking as it was
-before if a `.links.disabled.yaml` is present. It runs `mv .links.disabled.yaml .links.yaml` and `yarn`.
+before if a `.links.disabled.cjs` is present. It runs `mv .links.disabled.cjs .links.cjs` and `pnpm install`.
 
 To activate the hooks automatically configure git with
 
