@@ -288,7 +288,9 @@ to test visibility, text content and clicking.
 
 ##### Investigate a failed test from the CI
 
-In the failed action page, click on the failed job, then scroll down to the
+The playwright tests are run in the CI on GitHub Actions and the report is published to netlify.
+
+It is also uploaded as an artifiact: In the failed action page, click on the failed job, then scroll down to the
 `upload-artifact` step. You will find a link to download the zip report, as per:
 
 ```
