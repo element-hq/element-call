@@ -14,8 +14,6 @@ overrides:
   js-yaml: ^4.1.1
   esbuild: ^0.27.7
 
-pnpmfileChecksum: sha256-toM8G/xDIU9KCsLzvrWKlNM+7K7S70ZB0m5kCeEztjs=
-
 importers:
 
   .:
