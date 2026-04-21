@@ -237,8 +237,8 @@ source. First, clone and install the package:
 git clone https://github.com/element-hq/element-call.git
 cd element-call
 corepack enable
-yarn
-yarn build
+pnpm install
+pnpm build
 ```
 
 If all went well, you can now find the build output under `dist` as a series of

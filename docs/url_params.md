@@ -4,7 +4,7 @@ There are two formats for Element Call URLs.
 
 ## Link for sharing
 
-Requires Element Call to be deployed in [standalone](./embedded-standalone.md) mode.
+Requires Element Call to be deployed in [standalone](./embedded_standalone.md) mode.
 
 ```text
 https://element_call.domain/room/#
@@ -36,15 +36,15 @@ possible to support encryption.
 
 | Package                              | Deployment                    | URL                                                                           |
 | ------------------------------------ | ----------------------------- | ----------------------------------------------------------------------------- |
-| [Full](./embedded-standalone.md)     | All                           | `https://element_call.domain/room`                                            |
-| [Embedded](./embedded-standalone.md) | Remote URL                    | `https://element_call.domain/` n.b. no `/room` part                           |
-| [Embedded](./embedded-standalone.md) | Embedded within messenger app | Platform dependent, but you load the `index.html` file without a `/room` part |
+| [Full](./embedded_standalone.md)     | All                           | `https://element_call.domain/room`                                            |
+| [Embedded](./embedded_standalone.md) | Remote URL                    | `https://element_call.domain/` n.b. no `/room` part                           |
+| [Embedded](./embedded_standalone.md) | Embedded within messenger app | Platform dependent, but you load the `index.html` file without a `/room` part |
 
 ## Parameters
 
 ### Common Parameters
 
-These parameters are relevant to both [widget](./embedded-standalone.md) and [standalone](./embedded-standalone.md) modes:
+These parameters are relevant to both [widget](./embedded_standalone.md) and [standalone](./embedded_standalone.md) modes:
 
 | Name                                           | Values                                                                                                                                                             | Required for widget                                                                               | Required for SPA             | Description                                                                                                                                                                                                                                                                                                                                                                                         |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -74,7 +74,7 @@ These parameters are relevant to both [widget](./embedded-standalone.md) and [st
 
 ### Widget-only parameters
 
-These parameters are only supported in [widget](./embedded-standalone.md) mode.
+These parameters are only supported in [widget](./embedded_standalone.md) mode.
 
 | Name            | Values                                                                                    | Required                | Description                                                                                                                                                                                                                                                                                                                                        |
 | --------------- | ----------------------------------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -89,7 +89,7 @@ These parameters are only supported in [widget](./embedded-standalone.md) mode.
 
 ### Embedded-only parameters
 
-These parameters are only supported in the [embedded](./embedded-standalone.md) package of Element Call and will be ignored in the [full](./embedded-standalone.md) package.
+These parameters are only supported in the [embedded](./embedded_standalone.md) package of Element Call and will be ignored in the [full](./embedded_standalone.md) package.
 
 | Name                 | Values                                                                     | Required | Description                                                                                                                        |
 | -------------------- | -------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
