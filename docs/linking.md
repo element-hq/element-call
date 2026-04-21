@@ -1,9 +1,13 @@
 ## Quickstart guide
+
 run
+
 ```bash
 ./scripts/setup-linking.sh
 ```
+
 Read the script output:
+
 ```
 Setup complete.
 Update: .links.cjs to your liking
@@ -13,7 +17,6 @@ Run: 'pnpm links:off' to be able to commit again
 Run: 'git config --local core.hooksPath ""' to allow committing with linking (not recommended)
 Run: 'rm links.cjs' & 'git config --local core.hooksPath ""' to fully revert what this script did
 ```
-
 
 # Developing with linked packages
 
@@ -54,7 +57,9 @@ To activate the hooks configure git with (when using the setup script (`./script
 ```bash
 git config --local core.hooksPath .githooks
 ```
+
 This will add the hook path for this repository only to .gihooks. which is a tracked (by git) folder containing the pre-commit hook.
 
 ## Background
+
 Information, why this approach is used can be found in the [linking concept reasoning](./linking_concept_reasoning.md) document.
