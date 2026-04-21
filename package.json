@@ -32,8 +32,8 @@
     "backend-playwright": "docker-compose -f playwright-backend-docker-compose.yml -f playwright-backend-docker-compose.override.yml up",
     "test:playwright": "playwright test",
     "test:playwright:open": "pnpm test:playwright --ui",
-    "links:enable": "mv .links.disabled.cjs .links.cjs & touch .links.cjs",
-    "links:disable": "mv .links.cjs .links.disabled.cjs",
+    "links:on": "cp scripts/.pnpmfile.cjs .pnpmfile.cjs & pnpm install",
+    "links:off": "rm .pnpmfile.cjs & pnpm install",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -156,5 +156,5 @@
       "esbuild": "^0.27.7"
     }
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@10.33.0"
 }

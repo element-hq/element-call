@@ -108,17 +108,17 @@ recommended method for embedding Element Call.
 </p>
 
 For more details on the packages, see the
-[Embedded vs. Standalone Guide](./docs/embedded-standalone.md).
+[Embedded vs. Standalone Guide](./docs/embedded_standalone.md).
 
 ## 🛠️ Self-Hosting
 
 For operating and deploying Element Call on your own server, refer to the
-[**Self-Hosting Guide**](./docs/self-hosting.md).
+[**Self-Hosting Guide**](./docs/self_hosting.md).
 
 ## 🧭 MatrixRTC Backend Discovery and Selection
 
 For proper Element Call operation each site deployment needs a MatrixRTC backend
-setup as outlined in the [Self-Hosting](#self-hosting). A typical federated site
+setup as outlined in the [Self-Hosting](#self_hosting). A typical federated site
 deployment for three different sites A, B and C is depicted below.
 
 <p align="center">
@@ -186,7 +186,7 @@ To get started clone and set up this project:
 git clone https://github.com/element-hq/element-call.git
 cd element-call
 corepack enable
-yarn
+pnpm install
 ```
 
 To use it, create a local config by, e.g.,
@@ -197,7 +197,7 @@ environment as outlined in the next section out of box.
 You're now ready to launch the development server:
 
 ```sh
-yarn dev
+pnpm dev
 ```
 
 See also:
@@ -230,7 +230,7 @@ only for local development and **_never be exposed to the public Internet._**
 Run backend components:
 
 ```sh
-yarn backend
+pnpm backend
 # or  for podman-compose
 # podman-compose -f dev-backend-docker-compose.yml up
 ```
@@ -260,13 +260,13 @@ on https://localhost:3000 (this is configured in `playwright.config.ts`) - this
 is what will be tested.
 
 The local backend environment should be running for the test to work:
-`yarn backend`
+`pnpm backend`
 
 There are a few different ways to run the tests yourself. The simplest is to
 run:
 
 ```shell
-yarn run test:playwright
+pnpm run test:playwright
 ```
 
 This will run the Playwright tests once, non-interactively.
@@ -274,7 +274,7 @@ This will run the Playwright tests once, non-interactively.
 There is a more user-friendly way to run the tests in interactive mode:
 
 ```shell
-yarn run test:playwright:open
+pnpm run test:playwright:open
 ```
 
 The easiest way to develop new test is to use the codegen feature of Playwright:
@@ -316,7 +316,7 @@ To add a new translation key you can do these steps:
 
 1. Add the new key entry to the code where the new key is used:
    `t("some_new_key")`
-1. Run `yarn i18n` to extract the new key and update the translation files. This
+1. Run `pnpm i18n` to extract the new key and update the translation files. This
    will add a skeleton entry to the `locales/en/app.json` file:
 
    ```jsonc
