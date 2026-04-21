@@ -4,9 +4,8 @@ FILE=.links.cjs
 FILE_DIS=.links.temp-disabled.cjs
 if test -f "$FILE"; then
   mv $FILE .links.temp-disabled.cjs
-  # echo "running yarn"
   x=$(pnpm install)
   y=$(git add pnpm-lock.yaml)
-  echo "[yarn-linker] The pre-commit hook has disabled $FILE and MODIFIED the pnpm-lock.yaml file. Review the staged changes (the hook added pnpm-lock.yaml, was this desired?) and run \`git commit \` again if they look okay. The post-commit hook will re-enable your links."
+  echo "[pnpm-linker] The pre-commit hook has disabled $FILE and MODIFIED the pnpm-lock.yaml file. Review the staged changes (the hook added pnpm-lock.yaml, was this desired?) and run \`git commit \` again if they look okay. The post-commit hook will re-enable your links."
   exit 1
 fi

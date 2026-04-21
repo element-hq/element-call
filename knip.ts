@@ -30,16 +30,10 @@ export default {
     "@types/content-type",
     "@types/sdp-transform",
     "@types/uuid",
-    // We obviously use this, but if the package has been linked with yarn link,
+    // We obviously use this, but if the package has been linked with pnpm link,
     // then Knip will flag it as a false positive
     // https://github.com/webpro-nl/knip/issues/766
     "@vector-im/compound-web",
-    // Yarn plugins are allowed to depend on packages provided by the Yarn
-    // runtime. These shouldn't be listed in package.json, because plugins
-    // should work before Yarn even installs dependencies for the first time.
-    // https://yarnpkg.com/advanced/plugin-tutorial#what-does-a-plugin-look-like
-    "@yarnpkg/core",
-    "@yarnpkg/parsers",
     "matrix-widget-api",
   ],
   ignoreExportsUsedInFile: true,
