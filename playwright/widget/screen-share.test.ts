@@ -18,9 +18,11 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
 
   test.slow(); // We are registering multiple users here, give it more time
 
-  const alice = await addUser("Alice", HOST1);
-  const bob = await addUser("Bob", HOST1);
-  const carol = await addUser("Carol", HOST1);
+  const [alice, bob, carol] = await Promise.all([
+    addUser("Alice", HOST1),
+    addUser("Bob", HOST1),
+    addUser("Carol", HOST1),
+  ]);
 
   const roomName = "Meeting Room";
   await TestHelpers.createRoom(roomName, alice.page, [bob.mxId, carol.mxId]);
