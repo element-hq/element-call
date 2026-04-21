@@ -47,7 +47,7 @@ export const MicButton: FC<MicButtonProps> = ({ enabled, ...props }) => {
       <CpdButton
         iconOnly
         Icon={Icon}
-        kind={enabled ? "primary" : "secondary"}
+        kind={enabled ? "secondary" : "primary"}
         role="switch"
         aria-checked={enabled}
         {...props}
@@ -73,7 +73,7 @@ export const VideoButton: FC<VideoButtonProps> = ({ enabled, ...props }) => {
       <CpdButton
         iconOnly
         Icon={Icon}
-        kind={enabled ? "primary" : "secondary"}
+        kind={enabled ? "secondary" : "primary"}
         role="switch"
         aria-checked={enabled}
         {...props}
