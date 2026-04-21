@@ -26,7 +26,9 @@ jobs:
           node-version-file: ".node-version"
 
       - name: Install Deps
-        run: "pnpm install --frozen-lockfile"
+        # ignore-pnpmfile will make CI never executes the pnpmfile.cjs. This is acceptable since only need it for local dev linking.
+        # renovate will remove a checksum in pnpm-lock.yaml. So without this every renovate PR will fail CI.
+        run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
 
       - name: Prune i18n
         run: "rm -R locales"
