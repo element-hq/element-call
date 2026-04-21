@@ -14,7 +14,7 @@ overrides:
   js-yaml: ^4.1.1
   esbuild: ^0.27.7
 
-pnpmfileChecksum: rxqlpiscahzxqq6bf4el6c6jvu
+pnpmfileChecksum: sha256-toM8G/xDIU9KCsLzvrWKlNM+7K7S70ZB0m5kCeEztjs=
 
 importers:
 
@@ -190,7 +190,7 @@ importers:
         version: 6.10.2(eslint@8.57.1)
       eslint-plugin-matrix-org:
         specifier: 2.1.0
-        version: 2.1.0(@babel/core@7.29.0)(@babel/eslint-parser@7.28.6(@babel/core@7.29.0)(eslint@8.57.1))(@babel/eslint-plugin@7.27.1(@babel/eslint-parser@7.28.6(@babel/core@7.29.0)(eslint@8.57.1))(eslint@8.57.1))(@stylistic/eslint-plugin@3.1.0(eslint@8.57.1)(typescript@5.9.3))(@typescript-eslint/eslint-plugin@8.58.2(@typescript-eslint/parser@8.58.2(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(@typescript-eslint/parser@8.58.2(eslint@8.57.1)(typescript@5.9.3))(eslint-config-google@0.14.0(eslint@8.57.1))(eslint-config-prettier@10.1.8(eslint@8.57.1))(eslint-plugin-deprecate@0.9.0(eslint@8.57.1))(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.58.2(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint-plugin-jest@29.15.2(@typescript-eslint/eslint-plugin@8.58.2(@typescript-eslint/parser@8.58.2(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-jsx-a11y@6.10.2(eslint@8.57.1))(eslint-plugin-react-hooks@5.2.0(eslint@8.57.1))(eslint-plugin-react@7.37.5(eslint@8.57.1))(eslint-plugin-unicorn@56.0.1(eslint@8.57.1))(eslint@8.57.1)(prettier@3.8.3)(typescript@5.9.3)
+        version: 2.1.0(09e41ec1b738154136ea8b36e5821317)
       eslint-plugin-react:
         specifier: ^7.29.4
         version: 7.37.5(eslint@8.57.1)
@@ -238,7 +238,7 @@ importers:
         version: 1.9.2
       matrix-js-sdk:
         specifier: matrix-org/matrix-js-sdk#develop
-        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/668183d7226ccb4819788018fb48e9a58f85a45b
+        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/4ee3e591bf6498eecc1a92aad92b2ff3fc604fb8
       matrix-widget-api:
         specifier: ^1.16.1
         version: 1.17.0
@@ -334,7 +334,7 @@ importers:
         version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-v8@4.1.4)(jsdom@26.1.0)(vite@8.0.8(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))
       vitest-axe:
         specifier: ^1.0.0-pre.3
-        version: 1.0.0-pre.5(vitest@4.1.4(@types/node@24.12.2)(@vitest/coverage-v8@4.1.4)(jsdom@26.1.0)(vite@8.0.8(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)))
+        version: 1.0.0-pre.5(vitest@4.1.4)
 
 packages:
 
@@ -4976,8 +4976,8 @@ packages:
   matrix-events-sdk@0.0.1:
     resolution: {integrity: sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/668183d7226ccb4819788018fb48e9a58f85a45b:
-    resolution: {tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/668183d7226ccb4819788018fb48e9a58f85a45b}
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/4ee3e591bf6498eecc1a92aad92b2ff3fc604fb8:
+    resolution: {tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/4ee3e591bf6498eecc1a92aad92b2ff3fc604fb8}
     version: 41.3.0
     engines: {node: '>=22.0.0'}
 
@@ -10664,8 +10664,8 @@ snapshots:
       safe-regex-test: 1.1.0
       string.prototype.includes: 2.0.1
 
-  ? eslint-plugin-matrix-org@2.1.0(@babel/core@7.29.0)(@babel/eslint-parser@7.28.6(@babel/core@7.29.0)(eslint@8.57.1))(@babel/eslint-plugin@7.27.1(@babel/eslint-parser@7.28.6(@babel/core@7.29.0)(eslint@8.57.1))(eslint@8.57.1))(@stylistic/eslint-plugin@3.1.0(eslint@8.57.1)(typescript@5.9.3))(@typescript-eslint/eslint-plugin@8.58.2(@typescript-eslint/parser@8.58.2(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(@typescript-eslint/parser@8.58.2(eslint@8.57.1)(typescript@5.9.3))(eslint-config-google@0.14.0(eslint@8.57.1))(eslint-config-prettier@10.1.8(eslint@8.57.1))(eslint-plugin-deprecate@0.9.0(eslint@8.57.1))(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.58.2(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint-plugin-jest@29.15.2(@typescript-eslint/eslint-plugin@8.58.2(@typescript-eslint/parser@8.58.2(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-jsx-a11y@6.10.2(eslint@8.57.1))(eslint-plugin-react-hooks@5.2.0(eslint@8.57.1))(eslint-plugin-react@7.37.5(eslint@8.57.1))(eslint-plugin-unicorn@56.0.1(eslint@8.57.1))(eslint@8.57.1)(prettier@3.8.3)(typescript@5.9.3)
-  : dependencies:
+  eslint-plugin-matrix-org@2.1.0(09e41ec1b738154136ea8b36e5821317):
+    dependencies:
       '@babel/core': 7.29.0
       '@babel/eslint-parser': 7.28.6(@babel/core@7.29.0)(eslint@8.57.1)
       '@babel/eslint-plugin': 7.27.1(@babel/eslint-parser@7.28.6(@babel/core@7.29.0)(eslint@8.57.1))(eslint@8.57.1)
@@ -11751,7 +11751,7 @@ snapshots:
 
   matrix-events-sdk@0.0.1: {}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/668183d7226ccb4819788018fb48e9a58f85a45b:
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/4ee3e591bf6498eecc1a92aad92b2ff3fc604fb8:
     dependencies:
       '@babel/runtime': 7.29.2
       '@matrix-org/matrix-sdk-crypto-wasm': 18.1.0
@@ -13542,7 +13542,7 @@ snapshots:
       terser: 5.46.1
       yaml: 2.8.3
 
-  vitest-axe@1.0.0-pre.5(vitest@4.1.4(@types/node@24.12.2)(@vitest/coverage-v8@4.1.4)(jsdom@26.1.0)(vite@8.0.8(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))):
+  vitest-axe@1.0.0-pre.5(vitest@4.1.4):
     dependencies:
       '@vitest/pretty-format': 3.2.4
       axe-core: 4.11.3
