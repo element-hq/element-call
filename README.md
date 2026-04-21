@@ -108,17 +108,17 @@ recommended method for embedding Element Call.
 </p>
 
 For more details on the packages, see the
-[Embedded vs. Standalone Guide](./docs/embedded-standalone.md).
+[Embedded vs. Standalone Guide](./docs/embedded_standalone.md).
 
 ## 🛠️ Self-Hosting
 
 For operating and deploying Element Call on your own server, refer to the
-[**Self-Hosting Guide**](./docs/self-hosting.md).
+[**Self-Hosting Guide**](./docs/self_hosting.md).
 
 ## 🧭 MatrixRTC Backend Discovery and Selection
 
 For proper Element Call operation each site deployment needs a MatrixRTC backend
-setup as outlined in the [Self-Hosting](#self-hosting). A typical federated site
+setup as outlined in the [Self-Hosting](#self_hosting). A typical federated site
 deployment for three different sites A, B and C is depicted below.
 
 <p align="center">
