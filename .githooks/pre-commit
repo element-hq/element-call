@@ -1,11 +1,9 @@
-#!/usr/bin/sh
+#!/usr/bin/env bash
 
-FILE=.links.cjs
-FILE_DIS=.links.temp-disabled.cjs
-if test -f "$FILE"; then
-  mv $FILE .links.temp-disabled.cjs
-  x=$(pnpm install)
-  y=$(git add pnpm-lock.yaml)
-  echo "[pnpm-linker] The pre-commit hook has disabled $FILE and MODIFIED the pnpm-lock.yaml file. Review the staged changes (the hook added pnpm-lock.yaml, was this desired?) and run \`git commit \` again if they look okay. The post-commit hook will re-enable your links."
+# Checks if there currently is linking configured. Informs the user to disable linking before committing.
+
+PNPMFILE=.pnpmfile.cjs
+if test -f "$PNPMFILE"; then
+  echo "[pnpm-linker] The pre-commit hook detected $PNPMFILE which implies you have linked packages in your pnpm-lock.yaml. Run pnpm links:off and commit again. See also linking.md."
   exit 1
 fi
