@@ -29,7 +29,7 @@ interface WasmFileset {
 // MediaPipe and depend on node_modules having this specific structure. It's
 // easy to see this breaking if our dependencies changed and MediaPipe were
 // no longer hoisted, or if we switched to another dependency loader such as
-// pnpm PnP.
+// yarn PnP.
 // https://github.com/google-ai-edge/mediapipe/issues/5961
 const wasmFileset: WasmFileset = {
   wasmLoaderPath: new URL(
