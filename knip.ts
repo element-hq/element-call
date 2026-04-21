@@ -18,6 +18,7 @@ export default {
     // https://docs.docker.com/compose/migrate/
     "docker-compose",
   ],
+  ignoreFiles: ["scripts/.pnpmfile.cjs"],
   ignoreDependencies: [
     // Used in CSS
     "normalize.css",
