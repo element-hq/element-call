@@ -11,6 +11,9 @@ import { widgetTest } from "../fixtures/widget-user.ts";
 import { HOST1, TestHelpers } from "./test-helpers.ts";
 
 widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
+  // increase the timeouts, it is a long test and it is annoying to retry from the beginning for a single timeout.
+  test.slow();
+
   test.skip(
     browserName === "firefox",
     "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
