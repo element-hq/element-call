@@ -12,8 +12,10 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { ClientEvent, type MatrixClient, SyncState } from "matrix-js-sdk";
-import { fromEvent, startWith, map, tap, type Observable } from "rxjs";
+import { fromEvent, startWith, map, tap, type Observable, debounceTime } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+
+import { Config } from "../../../config/Config";
 
 import { type ObservableScope } from "../../ObservableScope";
 import { type Behavior } from "../../Behavior";
@@ -35,21 +37,29 @@ export interface HomeserverConnected {
  * for the purposes of a MatrixRTC session.
  *
  * Becomes FALSE if ANY sub-condition is fulfilled:
- * 1. Sync loop is not in SyncState.Syncing
+ * 1. Sync loop is not in SyncState.Syncing (after grace period)
  * 2. membershipStatus !== Status.Connected
  * 3. probablyLeft === true
+ *
+ * @param gracePeriodMs - Grace period in milliseconds to wait before reporting sync disconnect.
+ *                        If not provided, uses the config value (default 60000ms).
  */
 export function createHomeserverConnected$(
   scope: ObservableScope,
   client: NodeStyleEventEmitter & Pick<MatrixClient, "getSyncState">,
   matrixRTCSession: NodeStyleEventEmitter &
     Pick<MatrixRTCSession, "membershipStatus" | "probablyLeft">,
+  gracePeriodMs?: number,
 ): HomeserverConnected {
+  // Get grace period from parameter or config (default 60000ms)
+  const graceMs = gracePeriodMs ?? Config.get().sync_disconnect_grace_period_ms ?? 60000;
+
   const syncing$ = (
     fromEvent(client, ClientEvent.Sync) as Observable<[SyncState]>
   ).pipe(
     startWith([client.getSyncState()]),
     map(([state]) => state === SyncState.Syncing),
+    debounceTime(graceMs),
   );
 
   const rtsSession$ = scope.behavior<Status>(
