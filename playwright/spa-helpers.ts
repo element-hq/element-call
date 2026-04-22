@@ -125,8 +125,7 @@ async function expectVideoTilesCount(page: Page, count: number): Promise<void> {
   });
 
   // There should be 5 video elements, visible and autoplaying
-  const videoElements = await page.locator("video").all();
-  expect(videoElements.length).toBe(count);
+  await expect(page.locator("video")).toHaveCount(count);
 
   const blockDisplayCount = await page
     .locator("video")

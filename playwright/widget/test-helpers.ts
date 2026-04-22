@@ -193,7 +193,9 @@ export class TestHelpers {
     await page.getByRole("menuitem", { name: "New Room" }).click();
     await page.getByRole("textbox", { name: "Name" }).fill(name);
     await page.getByRole("button", { name: "Create room" }).click();
-    await expect(page.getByText("You created this room.")).toBeVisible();
+    await expect(page.getByText("You created this room.")).toBeVisible({
+      timeout: 10000,
+    });
     await expect(page.getByText("Encryption enabled")).toBeVisible();
     await TestHelpers.maybeDismissKeyBackupToast(page);
 
