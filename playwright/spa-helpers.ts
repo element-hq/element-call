@@ -127,15 +127,23 @@ async function expectVideoTilesCount(page: Page, count: number): Promise<void> {
   // There should be 5 video elements, visible and autoplaying
   await expect(page.locator("video")).toHaveCount(count);
 
-  const blockDisplayCount = await page
-    .locator("video")
-    .evaluateAll(
-      (videos: Element[]) =>
-        videos.filter(
-          (v: Element) => window.getComputedStyle(v).display === "block",
-        ).length,
-    );
-  expect(blockDisplayCount).toBe(count);
+  await expect
+    .poll(
+      async () => {
+        return await page
+          .locator("video")
+          .evaluateAll(
+            (videos: Element[]) =>
+              videos.filter(
+                (v: Element) => window.getComputedStyle(v).display === "block",
+              ).length,
+          );
+      },
+      {
+        timeout: 10000,
+      },
+    )
+    .toBe(count);
 }
 
 export const SpaHelpers = {
