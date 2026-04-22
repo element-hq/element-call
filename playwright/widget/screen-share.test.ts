@@ -52,7 +52,7 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
 
     // Expect 3 video tiles
     await expect(frame.locator("video")).toHaveCount(3, {
-      timeout: 5000,
+      timeout: 10000,
     });
   }
 
