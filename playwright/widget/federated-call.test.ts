@@ -26,6 +26,8 @@ modePairs.forEach(([rtcMode1, rtcMode2]) => {
         "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
       );
 
+      test.slow();
+
       const [florian, timo] = await Promise.all([
         addUser("florian", HOST1),
         addUser("timo", HOST2),

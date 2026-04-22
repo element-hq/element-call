@@ -256,8 +256,12 @@ export class TestHelpers {
     page: Page,
     mode: RtcMode,
   ): Promise<void> {
-    await page.getByRole("button", { name: "Video call" }).click();
-    await page.getByRole("menuitem", { name: "Element Call" }).click();
+    await page.getByRole("button", { name: "Video call" }).click({
+      timeout: 5000,
+    });
+    await page.getByRole("menuitem", { name: "Element Call" }).click({
+      timeout: 5000,
+    });
 
     await TestHelpers.setEmbeddedElementCallRtcMode(page, mode);
     await page.getByRole("button", { name: "Close lobby" }).click();
