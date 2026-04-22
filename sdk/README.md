@@ -13,8 +13,8 @@ This folder contains an example index.html file that showcases the sdk in use (h
 To get started run
 
 ```
-yarn
-yarn build:sdk
+pnpm install
+pnpm build:sdk
 ```
 
 in the repository root.

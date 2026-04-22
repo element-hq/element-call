@@ -20,7 +20,8 @@ jobs:
           cache: "pnpm"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "pnpm install --frozen-lockfile"
+        # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
+        run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
       - name: Vitest
         run: "pnpm run test:coverage"
       - name: Upload to codecov
@@ -45,7 +46,8 @@ jobs:
           cache: "pnpm"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
+        run: pnpm install --frozen-lockfile --ignore-pnpmfile
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
       - name: Run backend components
