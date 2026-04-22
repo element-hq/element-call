@@ -91,8 +91,14 @@ test("When creator left, avoid reconnect to the same SFU", async ({
   // the creator leaves the call
   await creatorPage.getByTestId("incall_leave").click();
 
-  await guestCPage.waitForTimeout(2000);
   // https://github.com/element-hq/element-call/issues/3344
   // The app used to request a new jwt token then to reconnect to the SFU
   expect(wsConnectionCount).toBe(1);
+  await expect
+    .poll(() => wsConnectionCount, {
+      message:
+        "Expected only 1 WebSocket connection (no reconnection after creator left)",
+      timeout: 5000, // Check for 5 seconds that it stays at 1
+    })
+    .toBe(1);
 });
