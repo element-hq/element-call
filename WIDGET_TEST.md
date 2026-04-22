@@ -1,6 +1,6 @@
 # Testing Element-Call in widget mode
 
-When running `yarn backend` the latest element-web develop will be deployed and served on `http://localhost:8081`.
+When running `pnpm backend` the latest element-web develop will be deployed and served on `http://localhost:8081`.
 In a development environment, you might prefer to just use the `element-web` repo directly, but this setup is useful for CI/CD testing.
 
 ## Setup
@@ -18,7 +18,7 @@ that uses
 It is part of the existing backend setup. To start the backend, run:
 
 ```sh
-yarn backend
+pnpm backend
 ```
 
 Then open `http://localhost:8081` in your browser.

@@ -153,10 +153,10 @@ Please see LICENSE in the repository root for full details.
 }
 
 @media (hover) {
-  .tile > div > button {
+  .tile button {
     opacity: 0;
   }
-  .tile:hover > div > button {
+  .tile:hover button {
     opacity: 1;
   }
 }

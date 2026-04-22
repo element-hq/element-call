@@ -15,6 +15,7 @@ import {
   vitest,
 } from "vitest";
 import {
+  EventType,
   MatrixEvent,
   type Room as MatrixRoom,
   type Room,
@@ -74,6 +75,8 @@ import {
   createRemoteScreenShare,
   type RemoteScreenShareViewModel,
 } from "../state/media/RemoteScreenShareViewModel";
+import { Connection } from "../state/CallViewModel/remoteMembers/Connection";
+import { type SFUConfig } from "../livekit/openIDSFU";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -210,6 +213,13 @@ export const exampleTransport: LivekitTransport = {
   livekit_alias: "!alias:example.org",
 };
 
+export const exampleSfuConfig: SFUConfig = {
+  jwt: "foo",
+  livekitAlias: "bar",
+  livekitIdentity: "baz",
+  url: "bro",
+};
+
 export function mockRtcMembership(
   user: string | RoomMember,
   deviceId: string,
@@ -246,6 +256,7 @@ export function mockRtcMembership(
   const event = new MatrixEvent({
     sender: userId,
     event_id: `$-ev-${randomUUID()}:example.org`,
+    type: EventType.GroupCallMemberPrefix,
     content: data,
   });
 
@@ -457,7 +468,9 @@ export class MockRTCSession extends TypedEventEmitter<
     counters: {},
   };
 
-  public leaveRoomSession = vitest.fn().mockResolvedValue(undefined);
+  public leaveRoomSession: ReturnType<typeof vitest.fn> = vitest
+    .fn()
+    .mockResolvedValue(undefined);
 
   public constructor(
     public readonly room: Room,
@@ -487,7 +500,7 @@ export class MockRTCSession extends TypedEventEmitter<
     return this;
   }
 
-  public updateCallIntent = vitest
+  public updateCallIntent: ReturnType<typeof vitest.fn> = vitest
     .fn()
     .mockImplementation(async () => Promise.resolve());
 
@@ -563,4 +576,9 @@ export function mockMuteStates(
     audioEnabled: false,
     videoEnabled: false,
   });
+}
+
+export class MockConnection extends Connection {
+  public async start(): Promise<void> {}
+  public async stop(): Promise<void> {}
 }

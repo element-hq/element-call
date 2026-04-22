@@ -75,7 +75,9 @@ test("Should automatically retry non fatal JWT errors", async ({
   await expect(page.getByTestId("video").first()).toBeVisible();
 });
 
-test("Should show error screen if call creation is restricted", async ({
+// We skip this test for now as it appears the livekit does not let us
+// detect and handle NotAllowed errors anymore. https://github.com/livekit/client-sdk-js/issues/1883
+test.skip("Should show error screen if call creation is restricted", async ({
   page,
   browserName,
 }) => {
@@ -102,8 +104,10 @@ test("Should show error screen if call creation is restricted", async ({
 
   // Then if the socket connection fails, livekit will try to validate the token!
   // Livekit will not auto_create anymore and will return a 404 error.
+  // Note the regex is required as livekit-client is nowasays trying two
+  // differnt APIs
   await page.route(
-    "**/badurltotricktest/livekit/sfu/rtc/validate?**",
+    /.*\/badurltotricktest\/livekit\/sfu\/rtc(\/v1)?\/validate?.*/,
     async (route) =>
       await route.fulfill({
         status: 404,

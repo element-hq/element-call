@@ -27,8 +27,8 @@ interface CallEnded extends IPosthogEvent {
 }
 
 export class CallEndedTracker {
-  private cache: { startTime: Date; maxParticipantsCount: number } = {
-    startTime: new Date(0),
+  private cache: { startTime?: Date; maxParticipantsCount: number } = {
+    startTime: undefined,
     maxParticipantsCount: 0,
   };
 
@@ -49,26 +49,32 @@ export class CallEndedTracker {
     sendInstantly: boolean,
     rtcSession: MatrixRTCSession,
   ): void {
-    PosthogAnalytics.instance.trackEvent<CallEnded>(
-      {
-        eventName: "CallEnded",
-        callId: callId,
-        callParticipantsMax: this.cache.maxParticipantsCount,
-        callParticipantsOnLeave: callParticipantsNow,
-        callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
-        roomEventEncryptionKeysSent:
-          rtcSession.statistics.counters.roomEventEncryptionKeysSent,
-        roomEventEncryptionKeysReceived:
-          rtcSession.statistics.counters.roomEventEncryptionKeysReceived,
-        roomEventEncryptionKeysReceivedAverageAge:
-          rtcSession.statistics.counters.roomEventEncryptionKeysReceived > 0
-            ? rtcSession.statistics.totals
-                .roomEventEncryptionKeysReceivedTotalAge /
-              rtcSession.statistics.counters.roomEventEncryptionKeysReceived
-            : 0,
-      },
-      { send_instantly: sendInstantly },
-    );
+    if (this.cache.startTime) {
+      PosthogAnalytics.instance.trackEvent<CallEnded>(
+        {
+          eventName: "CallEnded",
+          callId: callId,
+          callParticipantsMax: this.cache.maxParticipantsCount,
+          callParticipantsOnLeave: callParticipantsNow,
+          callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
+          roomEventEncryptionKeysSent:
+            rtcSession.statistics.counters.roomEventEncryptionKeysSent,
+          roomEventEncryptionKeysReceived:
+            rtcSession.statistics.counters.roomEventEncryptionKeysReceived,
+          roomEventEncryptionKeysReceivedAverageAge:
+            rtcSession.statistics.counters.roomEventEncryptionKeysReceived > 0
+              ? rtcSession.statistics.totals
+                  .roomEventEncryptionKeysReceivedTotalAge /
+                rtcSession.statistics.counters.roomEventEncryptionKeysReceived
+              : 0,
+        },
+        { send_instantly: sendInstantly },
+      );
+    } else {
+      logger.warn(
+        "[PosthogEvents] Failed to send posthog callEnded event due to missing startTime",
+      );
+    }
   }
 }
 

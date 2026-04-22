@@ -15,6 +15,7 @@ module.exports = {
     "plugin:matrix-org/typescript",
     "prettier",
     "plugin:rxjs/recommended",
+    "plugin:storybook/recommended",
   ],
   parserOptions: {
     ecmaVersion: "latest",

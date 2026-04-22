@@ -11,7 +11,7 @@ pushd $CURRENT_DIR > /dev/null
 function build_assets() {
 	echo "Generating Element Call assets..."
 	pushd ../..  > /dev/null
-	yarn build
+	pnpm build
 	popd  > /dev/null
 }
 
@@ -26,7 +26,7 @@ function copy_assets() {
 }
 
 getopts :sh opt
-case $opt in 
+case $opt in
 	s)
 		SKIP=1
 		;;
@@ -41,7 +41,7 @@ if [ ! $SKIP ]; then
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     build_assets
-  else 
+  else
     echo "Using existing assets from ../../dist"
   fi
   copy_assets
