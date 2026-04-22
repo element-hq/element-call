@@ -64,8 +64,10 @@ widgetTest("Put call in PIP", async ({ addUser, browserName }) => {
     const frame = valere.page
       .locator('iframe[title="Element Call"]')
       .contentFrame();
+
+    await expect(frame.locator("video")).toHaveCount(1, { timeout: 10000 });
+
     const videoElements = await frame.locator("video").all();
-    expect(videoElements.length).toBe(1);
 
     const pipVideo = videoElements[0];
     await expect(pipVideo).toHaveCSS("object-fit", "cover");

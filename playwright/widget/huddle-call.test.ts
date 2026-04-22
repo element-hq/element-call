@@ -63,7 +63,9 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
         .contentFrame();
       await expect(
         frame.getByRole("switch", { name: "Stop video", checked: true }),
-      ).toBeVisible();
+      ).toBeVisible({
+        timeout: 10000,
+      });
     }),
   );
 

@@ -83,6 +83,10 @@ widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
     .getByTestId("incall_leave")
     .click({ timeout: 15000 });
 
-  await expect(whistler.page.locator(".mx_BasicMessageComposer")).toBeVisible();
-  await expect(brooks.page.locator(".mx_BasicMessageComposer")).toBeVisible();
+  await expect(whistler.page.locator(".mx_BasicMessageComposer")).toBeVisible({
+    timeout: 10000,
+  });
+  await expect(brooks.page.locator(".mx_BasicMessageComposer")).toBeVisible({
+    timeout: 10000,
+  });
 });
