@@ -62,7 +62,10 @@ services:
       - 7882:7882/tcp
       - 50100-50200:50100-50200/udp
     volumes:
+      - ./backend/dev_tls_m.localhost.crt:/local_cert.pem:Z
       - ./backend/dev_livekit.yaml:/etc/livekit.yaml:Z
+    environment:
+      - SSL_CERT_FILE=/local_cert.pem
     networks:
       - ecbackend
 
@@ -82,7 +85,10 @@ services:
       - 17882:17882/tcp
       - 50300-50400:50300-50400/udp
     volumes:
+      - ./backend/dev_tls_m.localhost.crt:/local_cert.pem:Z
       - ./backend/dev_livekit-othersite.yaml:/etc/livekit.yaml:Z
+    environment:
+      - SSL_CERT_FILE=/local_cert.pem
     networks:
       - ecbackend
 
@@ -164,6 +170,8 @@ services:
       - "8448:8448"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+      - "auth-server:127.0.0.1"
+      - "auth-server-1:127.0.0.1"
     depends_on:
       - synapse
     networks:

@@ -68,6 +68,8 @@ export function useCallViewKeyboardShortcuts(
         } else if (KeyToReactionMap[event.key]) {
           event.preventDefault();
           sendReaction(KeyToReactionMap[event.key]);
+        } else if (event.key === "Escape") {
+          window.controls.onBackButtonPressed?.();
         }
       },
       [
