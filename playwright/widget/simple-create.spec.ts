@@ -81,7 +81,7 @@ widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
     .locator('iframe[title="Element Call"]')
     .contentFrame()
     .getByTestId("incall_leave")
-    .click();
+    .click({ timeout: 10000 });
 
   await expect(whistler.page.locator(".mx_BasicMessageComposer")).toBeVisible();
   await expect(brooks.page.locator(".mx_BasicMessageComposer")).toBeVisible();

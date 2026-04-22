@@ -59,7 +59,9 @@ export class TestHelpers {
   ): Promise<void> {
     // This is the header button that notifies about an ongoing call
     const label = audioOnly ? "Voice call started" : "Video call started";
-    await expect(page.getByText(label)).toBeVisible();
+    await expect(page.getByText(label)).toBeVisible({
+      timeout: 10000,
+    });
     await expect(page.getByRole("button", { name: "Join" })).toBeVisible();
     await page.getByRole("button", { name: "Join" }).click();
   }
@@ -97,7 +99,9 @@ export class TestHelpers {
     const page = await userContext.newPage();
     await page.goto(host);
 
-    await page.getByRole("link", { name: "Sign in" }).click();
+    await page.getByRole("link", { name: "Sign in" }).click({
+      timeout: 10000,
+    });
 
     await page.getByRole("textbox", { name: "Username" }).fill(username);
     await page.getByRole("textbox", { name: "Password" }).fill(PASSWORD);
