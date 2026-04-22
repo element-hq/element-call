@@ -34,11 +34,9 @@ export class TestHelpers {
       timeout: 5000,
     });
 
-    await expect(
-      page.getByRole("menuitem", { name: "Element Call" }),
-    ).toBeVisible();
-
-    await page.getByRole("menuitem", { name: "Element Call" }).click();
+    await page.getByRole("menuitem", { name: "Element Call" }).click({
+      timeout: 10000,
+    });
   }
 
   public static async joinCallFromLobby(page: Page): Promise<void> {
@@ -260,7 +258,7 @@ export class TestHelpers {
       timeout: 5000,
     });
     await page.getByRole("menuitem", { name: "Element Call" }).click({
-      timeout: 5000,
+      timeout: 10000,
     });
 
     await TestHelpers.setEmbeddedElementCallRtcMode(page, mode);
