@@ -105,8 +105,12 @@ export class TestHelpers {
       timeout: 10000,
     });
 
-    await page.getByRole("textbox", { name: "Username" }).fill(username);
-    await page.getByRole("textbox", { name: "Password" }).fill(PASSWORD);
+    await page.getByRole("textbox", { name: "Username" }).fill(username, {
+      timeout: 10000,
+    });
+    await page.getByRole("textbox", { name: "Password" }).fill(PASSWORD, {
+      timeout: 10000,
+    });
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(
