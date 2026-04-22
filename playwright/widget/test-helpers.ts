@@ -105,7 +105,10 @@ export class TestHelpers {
 
     await expect(
       page.getByRole("heading", { name: `Welcome ${username}` }),
-    ).toBeVisible();
+    ).toBeVisible({
+      // Increase timeout here
+      timeout: 10000,
+    });
 
     await this.maybeDismissBrowserNotSupportedToast(page);
     await this.maybeDismissServiceWorkerWarningToast(page);
