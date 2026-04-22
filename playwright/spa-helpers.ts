@@ -119,11 +119,10 @@ async function setRtcModeFromSettings(
 async function expectVideoTilesCount(page: Page, count: number): Promise<void> {
   await expect(page.getByTestId("videoTile")).toHaveCount(2);
 
-  // There are no other options than to wait for all media to be ready?
-  // Or it is too flaky :/
-  await page.waitForTimeout(3000);
   // No one should be waiting for media
-  await expect(page.getByText("Waiting for media...")).not.toBeVisible();
+  await expect(page.getByText("Waiting for media...")).not.toBeVisible({
+    timeout: 10000,
+  });
 
   // There should be 5 video elements, visible and autoplaying
   const videoElements = await page.locator("video").all();
