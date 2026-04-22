@@ -28,13 +28,14 @@ import classNames from "classnames";
 import { useReactionsSender } from "../reactions/useReactionsSender";
 import styles from "./ReactionToggleButton.module.css";
 import {
+  type RaisedHandInfo,
   type ReactionOption,
   ReactionSet,
   ReactionsRowSize,
 } from "../reactions";
 import { Modal } from "../Modal";
-import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { useBehavior } from "../useBehavior";
+import { type Behavior } from "../state/Behavior";
 
 interface InnerButtonProps extends ComponentPropsWithoutRef<"button"> {
   raised: boolean;
@@ -163,15 +164,22 @@ export function ReactionPopupMenu({
   );
 }
 
+export interface ReactionData {
+  handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
+  /** List of reactions. Keys are: membership.membershipId (currently predefined as: `${membershipEvent.userId}:${membershipEvent.deviceId}`)*/
+  reactions$: Behavior<Record<string, ReactionOption>>;
+}
+
 interface ReactionToggleButtonProps extends ComponentPropsWithoutRef<"button"> {
+  reactionData: ReactionData;
   identifier: string;
-  vm: CallViewModel;
   size?: "sm" | "lg";
+  /** List of participants raising their hand */
 }
 
 export function ReactionToggleButton({
   identifier,
-  vm,
+  reactionData: { handsRaised$, reactions$ },
   ...props
 }: ReactionToggleButtonProps): ReactNode {
   const { t } = useTranslation();
@@ -180,8 +188,8 @@ export function ReactionToggleButton({
   const [showReactionsMenu, setShowReactionsMenu] = useState(false);
   const [errorText, setErrorText] = useState<string>();
 
-  const isHandRaised = !!useBehavior(vm.handsRaised$)[identifier];
-  const canReact = !useBehavior(vm.reactions$)[identifier];
+  const isHandRaised = !!useBehavior(handsRaised$)[identifier];
+  const canReact = !useBehavior(reactions$)[identifier];
 
   useEffect(() => {
     // Clear whenever the reactions menu state changes.

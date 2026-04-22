@@ -45,9 +45,6 @@ async function createCallAndInvite(
   await creatorPage.getByTestId("home_go").click();
   await expect(creatorPage.locator("video")).toBeVisible();
 
-  await creatorPage
-    .getByRole("button", { name: "Continue in browser" })
-    .click();
   // join
   await creatorPage.getByTestId("lobby_joinCall").click();
 

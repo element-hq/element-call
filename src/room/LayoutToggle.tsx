@@ -18,11 +18,11 @@ import styles from "./LayoutToggle.module.css";
 
 export type Layout = "spotlight" | "grid";
 
-interface Props {
+type Props = {
   layout: Layout;
   setLayout: (layout: Layout) => void;
   className?: string;
-}
+};
 
 export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
   const { t } = useTranslation();
@@ -33,7 +33,7 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
   );
 
   return (
-    <div className={classNames(styles.toggle, className)}>
+    <form className={classNames(styles.toggle, className)}>
       <Tooltip label={t("layout_spotlight_label")}>
         <input
           type="radio"
@@ -54,6 +54,6 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
         />
       </Tooltip>
       <GridIcon aria-hidden width={24} height={24} />
-    </div>
+    </form>
   );
 };
