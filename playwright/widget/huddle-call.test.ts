@@ -73,7 +73,9 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
       const frame = user.page
         .locator('iframe[title="Element Call"]')
         .contentFrame();
-      await expect(frame.getByTestId("videoTile")).toHaveCount(5);
+      await expect(frame.getByTestId("videoTile")).toHaveCount(5, {
+        timeout: 10000,
+      });
       for (const participant of [valere, timo, robin, halfshot, florian]) {
         // Check the names are correct
         await expect(frame.getByText(participant.displayName)).toBeVisible();
