@@ -29,8 +29,10 @@ export class TestHelpers {
     voice: boolean = false,
   ): Promise<void> {
     const buttonName = voice ? "Voice call" : "Video call";
-    await expect(page.getByRole("button", { name: buttonName })).toBeVisible();
-    await page.getByRole("button", { name: buttonName }).click();
+
+    await page.getByRole("button", { name: buttonName }).click({
+      timeout: 5000,
+    });
 
     await expect(
       page.getByRole("menuitem", { name: "Element Call" }),
@@ -63,8 +65,9 @@ export class TestHelpers {
     await expect(page.getByText(label)).toBeVisible({
       timeout: 10000,
     });
-    await expect(page.getByRole("button", { name: "Join" })).toBeVisible();
-    await page.getByRole("button", { name: "Join" }).click();
+    await page.getByRole("button", { name: "Join" }).click({
+      timeout: 5000,
+    });
   }
 
   /**
@@ -191,7 +194,9 @@ export class TestHelpers {
       .getByRole("button", { name: "New conversation" })
       .click();
 
-    await page.getByRole("menuitem", { name: "New Room" }).click();
+    await page.getByRole("menuitem", { name: "New Room" }).click({
+      timeout: 5000,
+    });
     await page.getByRole("textbox", { name: "Name" }).fill(name);
     await page.getByRole("button", { name: "Create room" }).click();
     await expect(page.getByText("You created this room.")).toBeVisible({
@@ -226,9 +231,12 @@ export class TestHelpers {
     roomName: string,
     page: Page,
   ): Promise<void> {
-    await expect(page.getByRole("option", { name: roomName })).toBeVisible();
-    await page.getByRole("option", { name: roomName }).click();
-    await page.getByRole("button", { name: "Accept" }).click();
+    await page.getByRole("option", { name: roomName }).click({
+      timeout: 10000,
+    });
+    await page.getByRole("button", { name: "Accept" }).click({
+      timeout: 5000,
+    });
 
     await expect(
       page.getByRole("main").getByRole("heading", { name: roomName }),
