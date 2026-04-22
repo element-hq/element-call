@@ -72,15 +72,7 @@ modePairs.forEach(([rtcMode1, rtcMode2]) => {
         const videoElements = await frame.locator("video").all();
         expect(videoElements.length).toBe(2);
 
-        const blockDisplayCount = await frame
-          .locator("video")
-          .evaluateAll(
-            (videos: Element[]) =>
-              videos.filter(
-                (v: Element) => window.getComputedStyle(v).display === "block",
-              ).length,
-          );
-        expect(blockDisplayCount).toBe(2);
+        await TestHelpers.expectVisibleVideoCount(frame, 2);
       }
 
       // await florian.page.pause();

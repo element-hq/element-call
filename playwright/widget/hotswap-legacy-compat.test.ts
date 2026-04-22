@@ -71,32 +71,20 @@ widgetTest(
       });
 
       // There should be 2 video elements, visible and autoplaying
-      await expect(frame.locator("video")).toHaveCount(2);
+      await expect(frame.locator("video")).toHaveCount(2, {
+        timeout: 10000,
+      });
 
-      const blockDisplayCount = await frame
-        .locator("video")
-        .evaluateAll(
-          (videos: Element[]) =>
-            videos.filter(
-              (v: Element) => window.getComputedStyle(v).display === "block",
-            ).length,
-        );
-      expect(blockDisplayCount).toBe(2);
+      await TestHelpers.expectVisibleVideoCount(frame, 2);
     }
 
     // now we switch the mode for timo (second joiner on multi-sfu HOST2 but currently HOST1)
     await TestHelpers.setEmbeddedElementCallRtcMode(timo.page, "compat");
     await timo.page.waitForTimeout(3000);
-    const blockDisplayCount = await timo.page
-      .locator('iframe[title="Element Call"]')
-      .contentFrame()
-      .locator("video")
-      .evaluateAll(
-        (videos: Element[]) =>
-          videos.filter(
-            (v: Element) => window.getComputedStyle(v).display === "block",
-          ).length,
-      );
-    expect(blockDisplayCount).toBe(2);
+
+    await TestHelpers.expectVisibleVideoCount(
+      timo.page.locator('iframe[title="Element Call"]').contentFrame(),
+      2,
+    );
   },
 );

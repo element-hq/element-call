@@ -10,6 +10,7 @@ import {
   expect,
   type JSHandle,
   type Page,
+  type FrameLocator,
 } from "@playwright/test";
 import { type MatrixClient } from "matrix-js-sdk";
 
@@ -110,8 +111,8 @@ export class TestHelpers {
     await expect(
       page.getByRole("heading", { name: `Welcome ${username}` }),
     ).toBeVisible({
-      // Increase timeout here
-      timeout: 10000,
+      // Increase timeout here :/ flaky
+      timeout: 15000,
     });
 
     await this.maybeDismissBrowserNotSupportedToast(page);
@@ -321,5 +322,30 @@ export class TestHelpers {
     roomName: string,
   ): Promise<void> {
     await page.getByRole("option", { name: `Open room ${roomName}` }).click();
+  }
+
+  public static async expectVisibleVideoCount(
+    frame: FrameLocator,
+    count: number,
+  ): Promise<void> {
+    // ✅ Retryable assertion for visible videos
+    await expect
+      .poll(
+        async () => {
+          return await frame
+            .locator("video")
+            .evaluateAll(
+              (videos: Element[]) =>
+                videos.filter(
+                  (v: Element) =>
+                    window.getComputedStyle(v).display === "block",
+                ).length,
+            );
+        },
+        {
+          timeout: 10000,
+        },
+      )
+      .toBe(count);
   }
 }

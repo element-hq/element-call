@@ -93,15 +93,7 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
       await expect(frame.locator("video")).toHaveCount(5);
       await expect(frame.locator("video[autoplay]")).toHaveCount(5);
 
-      const blockDisplayCount = await frame
-        .locator("video")
-        .evaluateAll(
-          (videos: Element[]) =>
-            videos.filter(
-              (v: Element) => window.getComputedStyle(v).display === "block",
-            ).length,
-        );
-      expect(blockDisplayCount).toBe(5);
+      await TestHelpers.expectVisibleVideoCount(frame, 5);
     }),
   );
 
@@ -128,18 +120,10 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
       timeout: 10000,
     });
 
-    const blockDisplayCount = await frame
-      .locator("video")
-      .evaluateAll(
-        (videos: Element[]) =>
-          videos.filter(
-            (v: Element) => window.getComputedStyle(v).display === "block",
-          ).length,
-      );
-
     // out of 5 ONLY 4 are visible (display:block) !!
     // XXX we need to be better at our HTML markup and accessibility, it would make
     // this kind of stuff way easier to test if we could look out for aria attributes.
-    expect(blockDisplayCount).toBe(4);
+    // ✅ Retryable assertion for visible videos
+    await TestHelpers.expectVisibleVideoCount(frame, 4);
   }
 });
