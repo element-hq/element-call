@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { EventEmitter } from "events";
 import { ClientEvent, SyncState } from "matrix-js-sdk";
 import { MembershipManagerEvent, Status } from "matrix-js-sdk/lib/matrixrtc";
@@ -199,5 +199,90 @@ describe("createHomeserverConnected$", () => {
     // Drop sync -> false
     client.setSyncState(SyncState.Error);
     expect(hsConnected.combined$.value).toBe(false);
+  });
+});
+
+describe("createHomeserverConnected$ - Grace Period", () => {
+  let scope: ObservableScope;
+  let client: MockMatrixClient;
+  let session: MockMatrixRTCSession;
+  const GRACE_PERIOD = 5000;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    scope = new ObservableScope();
+    // Initialize with values that satisfy the "Connected" condition
+    client = new MockMatrixClient(SyncState.Syncing);
+    session = new MockMatrixRTCSession({
+      membershipStatus: Status.Connected,
+      probablyLeft: false,
+    });
+  });
+
+  afterEach(() => {
+    scope.end();
+    vi.useRealTimers();
+  });
+
+  it("respects gracePeriodMs: stays true during grace period and flips false after", () => {
+    const hsConnected = createHomeserverConnected$(scope, client, session, GRACE_PERIOD);
+
+    session.setMembershipStatus(Status.Connected);
+    session.setProbablyLeft(false);
+
+    // Initial state: Everything is connected
+    expect(hsConnected.combined$.value).toBe(true);
+
+    // 1. Sync loses connection -> should remain TRUE due to grace period
+    client.setSyncState(SyncState.Error);
+    expect(hsConnected.combined$.value).toBe(true);
+
+    // 2. Fast forward time (just before expiration)
+    vi.advanceTimersByTime(GRACE_PERIOD - 1);
+    expect(hsConnected.combined$.value).toBe(true);
+
+    // 3. Fast forward time (expiration)
+    vi.advanceTimersByTime(1);
+    expect(hsConnected.combined$.value).toBe(false);
+  });
+
+  it("recovers immediately if sync returns during grace period", () => {
+    const hsConnected = createHomeserverConnected$(scope, client, session, GRACE_PERIOD);
+
+    session.setMembershipStatus(Status.Connected);
+    session.setProbablyLeft(false);
+
+    // Initial state: Connected
+    expect(hsConnected.combined$.value).toBe(true);
+
+    // 1. Sync error occurs
+    client.setSyncState(SyncState.Error);
+    vi.advanceTimersByTime(GRACE_PERIOD / 2);
+    expect(hsConnected.combined$.value).toBe(true);
+
+    // 2. Sync recovers BEFORE the grace period expires
+    client.setSyncState(SyncState.Syncing);
+    expect(hsConnected.combined$.value).toBe(true);
+
+    // 3. Fast forward the remaining time -> should stay TRUE
+    vi.advanceTimersByTime(GRACE_PERIOD);
+    expect(hsConnected.combined$.value).toBe(true);
+  });
+
+  it("flips to true IMMEDIATELY even if a grace period was pending", () => {
+    const hsConnected = createHomeserverConnected$(scope, client, session, GRACE_PERIOD);
+
+    session.setMembershipStatus(Status.Connected);
+    session.setProbablyLeft(false);
+
+    // 1. Initial error: wait until it flips to false
+    client.setSyncState(SyncState.Error);
+    expect(hsConnected.combined$.value).toBe(true);
+    vi.advanceTimersByTime(GRACE_PERIOD + 1);
+    expect(hsConnected.combined$.value).toBe(false);
+
+    // 2. Back to Syncing -> Must be TRUE immediately (synchronously)
+    client.setSyncState(SyncState.Syncing);
+    expect(hsConnected.combined$.value).toBe(true);
   });
 });
