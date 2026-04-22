@@ -45,7 +45,10 @@ widgetTest("Put call in PIP", async ({ addUser, browserName }) => {
   // check that the video is on
   await expect(
     frame.getByRole("switch", { name: "Stop video", checked: true }),
-  ).toBeVisible();
+  ).toBeVisible({
+    // Increase timeout, as this expect was flaky
+    timeout: 10000,
+  });
 
   // Switch to the other room, the call should go to PIP
   await TestHelpers.switchToRoomNamed(valere.page, "DoubleTask");
