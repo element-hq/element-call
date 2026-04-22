@@ -54,8 +54,8 @@
       "matchFileNames": ["embedded/**/*"]
     },
     {
-      "groupName": "Yarn",
-      "matchDepNames": ["yarn"]
+      "groupName": "Pnpm",
+      "matchDepNames": ["pnpm"]
     }
   ],
   "semanticCommits": "disabled",

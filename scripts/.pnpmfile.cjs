@@ -4,7 +4,11 @@ Copyright 2026 Element Creations Ltd.
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
-
+// DONT RUN THIS FILE MANUALLY
+// This file is intended to be used with `pnpm links:on` and `pnpm links:off` which will copy this file to the project root.
+// See docs/linking.md for details.
+//
+//
 // Created based on https://github.com/element-hq/element-call/blob/60fae70a60e3697eb41210ccf1e400cab37df7c8/.yarn/plugins/linker.cjs
 // and the following prompt history:
 // - Can you convert this yarn plugin into a pnpm plugin.
