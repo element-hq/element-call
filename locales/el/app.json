@@ -65,7 +65,6 @@
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Αναγνωριστικό Matrix: {{id}}",
     "show_connection_stats": "Εμφάνιση στατιστικών σύνδεσης",
-    "show_non_member_tiles": "Εμφάνιση πλακιδίων για μέσα μη-μελών",
     "url_params": "Παράμετροι URL"
   },
   "header_label": "Element Κεντρική Οθόνη Κλήσεων",

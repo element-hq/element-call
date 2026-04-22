@@ -49,6 +49,7 @@
     "profile": "Profil",
     "reaction": "Reakce",
     "reactions": "Reakce",
+    "reconnecting": "Opětovné spojení...",
     "settings": "Nastavení",
     "unencrypted": "Nešifrováno",
     "username": "Uživatelské jméno",
@@ -57,6 +58,14 @@
   "developer_mode": {
     "always_show_iphone_earpiece": "Zobrazit možnost sluchátek pro iPhone na všech platformách",
     "crypto_version": "Kryptografická verze: {{version}}",
+    "custom_livekit_url": {
+      "current_url": "Aktuálně nastaveno na: ",
+      "from_config": "Aktuálně není nastaveno žádné přepsání. Používá se URL z well-known nebo konfigurace.",
+      "label": "Vlastní Livekit-url",
+      "reset": "Resetovat přepsání",
+      "save": "Uložit",
+      "saving": "Ukládání..."
+    },
     "debug_tile_layout_label": "Ladění rozložení dlaždic",
     "device_id": "ID zařízení: {{id}}",
     "duplicate_tiles_label": "Počet dalších kopií dlaždic na účastníka",
@@ -64,13 +73,25 @@
     "hostname": "Název hostitele: {{hostname}}",
     "livekit_server_info": "Informace o serveru LiveKit",
     "livekit_sfu": "LiveKit SFU: {{url}}",
+    "matrixRTCMode": {
+      "Comptibility": {
+        "description": "Kompatibilní s domovskými servery, které nepodporují přilnavé události (ale všechny ostatní EC klienti jsou v0.17.0 nebo novější)",
+        "label": "Kompatibilita: stavové události a více SFU"
+      },
+      "Legacy": {
+        "description": "Kompatibilní se starými verzemi EC, které nepodporují multi SFU",
+        "label": "Zastaralé: stavové události a nejstarší členské SFU"
+      },
+      "Matrix_2_0": {
+        "description": "Kompatibilní pouze s domovskými servery podporujícími přilnavé události a všemi klienty EC v0.17.0 nebo novějšími.",
+        "label": "Matrix 2.0: přilnavé události a multi SFU"
+      },
+      "title": "Režim MatrixRTC"
+    },
     "matrix_id": "Matrix ID: {{id}}",
     "mute_all_audio": "Ztlumit všechny zvuky (účastníci, reakce, zvuky připojení)",
     "show_connection_stats": "Zobrazit statistiky připojení",
-    "show_non_member_tiles": "Zobrazit dlaždice pro nečlenská média",
-    "url_params": "Parametry URL",
-    "use_new_membership_manager": "Použijte novou implementaci volání MembershipManager",
-    "use_to_device_key_transport": "Použít přenos klíčů do zařízení. Tím se vrátíte k přenosu klíčů do místnosti, když jiný účastník hovoru pošle klíč místnosti"
+    "url_params": "Parametry URL"
   },
   "disconnected_banner": "Připojení k serveru bylo ztraceno.",
   "error": {
@@ -85,9 +106,11 @@
     "generic_description": "Odeslání protokolů ladění nám pomůže vystopovat problém.",
     "insufficient_capacity": "Nedostatečná kapacita",
     "insufficient_capacity_description": "Server dosáhl své maximální kapacity a v tuto chvíli se nemůžete připojit k hovoru. Zkuste to později nebo se obraťte na správce serveru, pokud problém přetrvává.",
-    "matrix_rtc_focus_missing": "Server není nakonfigurován pro práci s {{brand}}. Obraťte se na správce serveru (Doména: {{domain}}, Kód chyby: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "Server není nakonfigurován pro práci s {{brand}}. Obraťte se na správce serveru (Doména: {{domain}}, Kód chyby: {{ errorCode }}).",
     "open_elsewhere": "Otevřeno na jiné kartě",
     "open_elsewhere_description": "{{brand}} byl otevřen v jiné záložce. Pokud to nezní správně, zkuste stránku znovu načíst.",
+    "room_creation_restricted": "Nepodařilo se vytvořit hovor",
+    "room_creation_restricted_description": "Vytváření hovorů může být omezeno pouze na oprávněné uživatele. Zkuste to znovu později nebo se obraťte na správce serveru, pokud problém přetrvává.",
     "unexpected_ec_error": "Došlo k neočekávané chybě (<0>Error Code:</0> <1>{{ errorCode }}</1>). Obraťte se prosím na správce serveru."
   },
   "group_call_loader": {
@@ -219,7 +242,6 @@
   "video_tile": {
     "always_show": "Vždy zobrazit",
     "camera_starting": "Načítání videa...",
-    "change_fit_contain": "Přizpůsobit rámu",
     "collapse": "Sbalit",
     "expand": "Rozbalit",
     "mute_for_me": "Pro mě ztlumit",

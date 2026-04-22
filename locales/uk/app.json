@@ -49,13 +49,23 @@
     "profile": "Профіль",
     "reaction": "Реакція",
     "reactions": "Реакції",
+    "reconnecting": "Повторне з'єднання…",
     "settings": "Налаштування",
     "unencrypted": "Не зашифровано",
     "username": "Ім'я користувача",
     "video": "Відео"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Показувати опцію виводу звуку в динамік iPhone на всіх платформах",
     "crypto_version": "Крипто-версія: {{version}}",
+    "custom_livekit_url": {
+      "current_url": "Наразі налаштовано: ",
+      "from_config": "Наразі перезапис не налаштовано. Використовується URL-адреса з відомого ресурсу або конфігурації.",
+      "label": "Власний Livekit-url",
+      "reset": "Скинути перезапис",
+      "save": "Зберегти",
+      "saving": "Збереження..."
+    },
     "debug_tile_layout_label": "Налагоджування макету плиток",
     "device_id": "ID пристрою: {{id}}",
     "duplicate_tiles_label": "Кількість додаткових копій плиток на одного учасника",
@@ -63,11 +73,25 @@
     "hostname": "Ім'я хоста: {{hostname}}",
     "livekit_server_info": "Інформація про сервер LiveKit",
     "livekit_sfu": "LiveKit SFU: {{url}}",
+    "matrixRTCMode": {
+      "Comptibility": {
+        "description": "Сумісно з домашніми серверами, які не підтримують закріплені події (але всі інші клієнти EC мають версію 0.17.0 або новішу)",
+        "label": "Сумісність: події стану та кілька SFU"
+      },
+      "Legacy": {
+        "description": "Сумісно з давнішими версіями EC, які не підтримують кілька SFU",
+        "label": "Застаріле: події стану та найдавніше членство SFU"
+      },
+      "Matrix_2_0": {
+        "description": "Сумісно лише з домашніми серверами, що підтримують закріплені події, та всіма клієнтами EC версії 0.17.0 або новіших.",
+        "label": "Matrix 2.0: закріплені події та мульти-SFU"
+      },
+      "title": "Режим MatrixRTC"
+    },
     "matrix_id": "Matrix ID: {{id}}",
+    "mute_all_audio": "Вимкнути всі звуки (учасників, реакцій, звуків приєднання)",
     "show_connection_stats": "Показувати статистику підключення",
-    "show_non_member_tiles": "Показувати плитки для медіа, які не є учасниками",
-    "url_params": "Параметри URL",
-    "use_new_membership_manager": "Використовуйте нову реалізацію виклику MembershipManager"
+    "url_params": "Параметри URL"
   },
   "disconnected_banner": "Втрачено зв'язок з сервером.",
   "error": {
@@ -78,13 +102,19 @@
     "connection_lost_description": "Вас було відключено від дзвінка.",
     "e2ee_unsupported": "Несумісний браузер",
     "e2ee_unsupported_description": "Ваш веб-браузер не підтримує зашифровані дзвінки. Підтримувані браузери включають Chrome, Safari та Firefox 117+.",
+    "failed_to_start_livekit": "Не вдалося розпочати з’єднання Livekit",
     "generic": "Щось пішло не так",
     "generic_description": "Надсилання журналів налагодження допоможе нам відстежити проблему.",
     "insufficient_capacity": "Недостатньо обсягу",
     "insufficient_capacity_description": "Сервер досяг максимального обсягу, і ви на разі не можете приєднатися до виклику. Спробуйте пізніше або зверніться до адміністратора сервера, якщо проблема не зникне.",
-    "matrix_rtc_focus_missing": "Сервер не налаштований щоб працювати з {{brand}}. Будь ласка, зв'яжіться з адміністратором сервера (Домен: {{domain}}, Код помилки: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "Сервер не налаштовано для роботи з{{brand}}. Зверніться до адміністратора вашого сервера (домен: {{domain}} , Код помилки: {{ errorCode }}).",
+    "membership_manager": "Помилка менеджера членства",
+    "membership_manager_description": "Менеджер членства був змушений припинити роботу. Це сталося через численні послідовні невдалі мережеві запити.",
+    "no_matrix_2_authorization_service": "Служба авторизації для вашого медіасервера (SFU) застаріла.",
     "open_elsewhere": "Відкрито в іншій вкладці",
     "open_elsewhere_description": "{{brand}} було відкрито в іншій вкладці. Якщо це звучить неправильно, спробуйте перезавантажити сторінку.",
+    "room_creation_restricted": "Не вдалося створити виклик",
+    "room_creation_restricted_description": "Створення викликів може бути обмежено лише для авторизованих користувачів. Спробуйте пізніше або зверніться до адміністратора сервера, якщо проблема не зникне.",
     "unexpected_ec_error": "Сталася несподівана помилка (<0>Код помилки: </0> <1> {{ errorCode }}</1>). Будь ласка, зв'яжіться з адміністратором сервера."
   },
   "group_call_loader": {
@@ -95,6 +125,11 @@
     "knock_reject_body": "Ваш запит на приєднання було відхилено.",
     "knock_reject_heading": "Доступ заборонено",
     "reason": "Причина: {{reason}}"
+  },
+  "handset": {
+    "overlay_back_button": "Повернутися до режиму динаміка",
+    "overlay_description": "Працює лише під час використання застосунку",
+    "overlay_title": "Режим гарнітури"
   },
   "hangup_button_label": "Завершити виклик",
   "header_label": "Домівка Element Call",
@@ -158,12 +193,18 @@
       "effect_volume_description": "Змінити гучність реакцій і ефекту підіймання руки.",
       "effect_volume_label": "Гучність звукових ефектів"
     },
+    "background_blur_header": "Фон",
+    "background_blur_label": "Розмиття фону відео",
+    "blur_not_supported_by_browser": "(Розмиття фону не підтримується цим пристроєм.)",
     "developer_tab_title": "Розробнику",
     "devices": {
       "camera": "Камера",
       "camera_numbered": "Камера {{n}}",
+      "change_device_button": "Змінити аудіопристрій",
       "default": "За замовчуванням",
       "default_named": "За замовчуванням <2> ({{name}}) </2>",
+      "handset": "Гарнітура",
+      "loudspeaker": "Гучномовець",
       "microphone": "Мікрофон",
       "microphone_numbered": "Мікрофон {{n}}",
       "speaker": "Динамік",
@@ -205,7 +246,6 @@
   "video_tile": {
     "always_show": "Показувати завжди",
     "camera_starting": "Завантаження відео...",
-    "change_fit_contain": "Допасувати до рамки",
     "collapse": "Згорнути",
     "expand": "Розгорнути",
     "mute_for_me": "Вимкнути звук для мене",

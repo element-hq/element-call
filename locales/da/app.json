@@ -49,6 +49,7 @@
     "profile": "Profil",
     "reaction": "Reaktion",
     "reactions": "Reaktioner",
+    "reconnecting": "Genopretter forbindelse…",
     "settings": "Indstillinger",
     "unencrypted": "Ikke krypteret",
     "username": "Brugernavn",
@@ -67,10 +68,7 @@
     "matrix_id": "Matrix ID: {{id}}",
     "mute_all_audio": "Slå al lyd fra (deltagere, reaktioner, deltagelseslyde)",
     "show_connection_stats": "Vis forbindelsesstatistik",
-    "show_non_member_tiles": "Vis fliser for medier fra ikke-medlemmer",
-    "url_params": "URL-parametre",
-    "use_new_membership_manager": "Brug den nye implementering af opkaldet MembershipManager",
-    "use_to_device_key_transport": "Bruges til at transportere enhedsnøgler. Dette vil falde tilbage til transport af værelsesnøgler, når et andet opkaldsmedlem sender en rumnøgle"
+    "url_params": "URL-parametre"
   },
   "disconnected_banner": "Forbindelsen til serveren er gået tabt.",
   "error": {
@@ -85,7 +83,6 @@
     "generic_description": "Indsendelse af fejlfindingslogfiler hjælper os med at spore problemet.",
     "insufficient_capacity": "Utilstrækkelig kapacitet",
     "insufficient_capacity_description": "Serveren har nået sin maksimale kapacitet, og du kan ikke deltage i opkaldet på dette tidspunkt. Prøv igen senere, eller kontakt din serveradministrator, hvis problemet fortsætter.",
-    "matrix_rtc_focus_missing": "Serveren er ikke konfigureret til at arbejde med {{brand}}{{domain}}. Kontakt venligst din serveradministrator (domæne:{{domain}}, fejlkode: {{ errorCode }}).",
     "open_elsewhere": "Åbnet i en anden fane",
     "open_elsewhere_description": "{{brand}} er blevet åbnet i en anden fane. Hvis det ikke lyder rigtigt, kan du prøve at genindlæse siden.",
     "room_creation_restricted": "Kunne ikke oprette opkald",
@@ -219,7 +216,6 @@
   "video_tile": {
     "always_show": "Vis altid",
     "camera_starting": "Indlæser video",
-    "change_fit_contain": "Tilpas til rammen",
     "collapse": "Fold sammen",
     "expand": "Udvid",
     "mute_for_me": "Slå lyden fra for mig",
