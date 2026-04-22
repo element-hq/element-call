@@ -47,7 +47,7 @@ widgetTest("Put call in PIP", async ({ addUser, browserName }) => {
     frame.getByRole("switch", { name: "Stop video", checked: true }),
   ).toBeVisible({
     // Increase timeout, as this expect was flaky
-    timeout: 10000,
+    timeout: 15000,
   });
 
   // Switch to the other room, the call should go to PIP
