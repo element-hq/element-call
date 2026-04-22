@@ -65,15 +65,13 @@ widgetTest(
         .contentFrame();
       await expect(frame.getByTestId("videoTile")).toHaveCount(2);
 
-      // There are no other options than to wait for all media to be ready?
-      // Or it is too flaky :/
-      await user.page.waitForTimeout(3000);
-      // No one should be waiting for media
-      await expect(frame.getByText("Waiting for media...")).not.toBeVisible();
+      // Wait for "Waiting for media..." to disappear (with timeout)
+      await expect(frame.getByText("Waiting for media...")).not.toBeVisible({
+        timeout: 10000, // Maximum time to wait
+      });
 
       // There should be 2 video elements, visible and autoplaying
-      const videoElements = await frame.locator("video").all();
-      expect(videoElements.length).toBe(2);
+      await expect(frame.locator("video")).toHaveCount(2);
 
       const blockDisplayCount = await frame
         .locator("video")
