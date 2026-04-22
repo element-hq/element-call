@@ -12,11 +12,20 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { ClientEvent, type MatrixClient, SyncState } from "matrix-js-sdk";
-import { fromEvent, startWith, map, tap, type Observable, debounceTime } from "rxjs";
+import {
+  fromEvent,
+  startWith,
+  map,
+  tap,
+  type Observable,
+  distinctUntilChanged,
+  switchMap,
+  of,
+  delay,
+} from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { Config } from "../../../config/Config";
-
 import { type ObservableScope } from "../../ObservableScope";
 import { type Behavior } from "../../Behavior";
 import { and$ } from "../../../utils/observable";
@@ -41,6 +50,9 @@ export interface HomeserverConnected {
  * 2. membershipStatus !== Status.Connected
  * 3. probablyLeft === true
  *
+ * @param scope - The observable scope for lifecycle management.
+ * @param client - The Matrix client to monitor sync state.
+ * @param matrixRTCSession - The RTC session to monitor membership.
  * @param gracePeriodMs - Grace period in milliseconds to wait before reporting sync disconnect.
  *                        If not provided, uses the config value (default 60000ms).
  */
@@ -52,14 +64,24 @@ export function createHomeserverConnected$(
   gracePeriodMs?: number,
 ): HomeserverConnected {
   // Get grace period from parameter or config (default 60000ms)
-  const graceMs = gracePeriodMs ?? Config.get().sync_disconnect_grace_period_ms ?? 60000;
+  const graceMs =
+    gracePeriodMs ?? Config.get().sync_disconnect_grace_period_ms ?? 60000;
 
   const syncing$ = (
     fromEvent(client, ClientEvent.Sync) as Observable<[SyncState]>
   ).pipe(
     startWith([client.getSyncState()]),
     map(([state]) => state === SyncState.Syncing),
-    debounceTime(graceMs),
+    distinctUntilChanged(),
+    switchMap((isSyncing) => 
+{
+    if (isSyncing || graceMs <= 0) {
+      return of(isSyncing); // Sofortige Emission (Synchron)
+    }
+    return of(false).pipe(delay(graceMs)); // Verzögertes false
+  }    ),
+    startWith(client.getSyncState() === SyncState.Syncing),
+    distinctUntilChanged(),
   );
 
   const rtsSession$ = scope.behavior<Status>(
