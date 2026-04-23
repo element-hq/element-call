@@ -106,6 +106,7 @@ export const widgetTest = test.extend<MyFixtures>({
       await ewPage1.getByRole("dialog").getByRole("textbox").fill(whistlerMxId);
       await ewPage1.getByRole("dialog").getByRole("textbox").click();
       await ewPage1.getByRole("button", { name: "Invite" }).click();
+      await TestHelpers.dismissInviteUnknownUserModal(ewPage1);
 
       // Accept the invite
       await expect(
@@ -128,6 +129,7 @@ export const widgetTest = test.extend<MyFixtures>({
       await ewPage1.getByRole("textbox", { name: "Search" }).click();
       await ewPage1.getByRole("textbox", { name: "Search" }).fill(whistlerMxId);
       await ewPage1.getByRole("button", { name: "Go" }).click();
+      await TestHelpers.dismissInviteUnknownUserModalDM(ewPage1);
 
       // Wait and send the first message to create the DM
       await expect(
