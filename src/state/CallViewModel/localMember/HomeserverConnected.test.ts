@@ -225,7 +225,12 @@ describe("createHomeserverConnected$ - Grace Period", () => {
   });
 
   it("respects gracePeriodMs: stays true during grace period and flips false after", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, GRACE_PERIOD);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client,
+      session,
+      GRACE_PERIOD,
+    );
 
     session.setMembershipStatus(Status.Connected);
     session.setProbablyLeft(false);
@@ -247,7 +252,12 @@ describe("createHomeserverConnected$ - Grace Period", () => {
   });
 
   it("recovers immediately if sync returns during grace period", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, GRACE_PERIOD);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client,
+      session,
+      GRACE_PERIOD,
+    );
 
     session.setMembershipStatus(Status.Connected);
     session.setProbablyLeft(false);
@@ -270,7 +280,12 @@ describe("createHomeserverConnected$ - Grace Period", () => {
   });
 
   it("flips to true IMMEDIATELY even if a grace period was pending", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, GRACE_PERIOD);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client,
+      session,
+      GRACE_PERIOD,
+    );
 
     session.setMembershipStatus(Status.Connected);
     session.setProbablyLeft(false);
