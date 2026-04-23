@@ -73,13 +73,12 @@ export function createHomeserverConnected$(
     startWith([client.getSyncState()]),
     map(([state]) => state === SyncState.Syncing),
     distinctUntilChanged(),
-    switchMap((isSyncing) => 
-{
-    if (isSyncing || graceMs <= 0) {
-      return of(isSyncing); // Sofortige Emission (Synchron)
-    }
-    return of(false).pipe(delay(graceMs)); // Verzögertes false
-  }    ),
+    switchMap((isSyncing) => {
+      if (isSyncing || graceMs <= 0) {
+        return of(isSyncing);
+      }
+      return of(false).pipe(delay(graceMs));
+    }),
     startWith(client.getSyncState() === SyncState.Syncing),
     distinctUntilChanged(),
   );
