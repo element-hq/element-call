@@ -199,6 +199,7 @@ export class TestHelpers {
       }
 
       await page.getByRole("button", { name: "Invite" }).click();
+      await TestHelpers.dismissInviteUnknownUserModal(page);
     }
   }
 
@@ -307,5 +308,27 @@ export class TestHelpers {
     roomName: string,
   ): Promise<void> {
     await page.getByRole("option", { name: `Open room ${roomName}` }).click();
+  }
+
+  public static async dismissInviteUnknownUserModal(page: Page): Promise<void> {
+    await expect(
+      page.getByRole("heading", { name: "Invite new contacts to this" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Invite" }).click({
+      timeout: 5000,
+    });
+  }
+
+  public static async dismissInviteUnknownUserModalDM(
+    page: Page,
+  ): Promise<void> {
+    await expect(
+      page.getByRole("heading", {
+        name: "Start a chat with this new contact?",
+      }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Continue" }).click({
+      timeout: 5000,
+    });
   }
 }
