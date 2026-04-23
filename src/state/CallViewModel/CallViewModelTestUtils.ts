@@ -8,11 +8,11 @@ Please see LICENSE in the repository root for full details.
 
 import {
   ConnectionState,
-  type LocalParticipant,
   type Participant,
   ParticipantEvent,
   type RemoteParticipant,
   type Room as LivekitRoom,
+  type TrackPublication,
 } from "livekit-client";
 import { SyncState } from "matrix-js-sdk/lib/sync";
 import { BehaviorSubject, combineLatest, map, of } from "rxjs";
@@ -72,6 +72,7 @@ export interface CallViewModelInputs {
   roomMembers: RoomMember[];
   livekitConnectionState$: Behavior<ConnectionState>;
   speaking: Map<Participant, Behavior<boolean>>;
+  videoEnabled: Map<Participant, Behavior<boolean>>;
   sharingScreen: Map<Participant, Behavior<boolean>>;
   mediaDevices: MediaDevices;
   initialSyncState: SyncState;
@@ -98,6 +99,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         ConnectionState.Connected,
       ),
       speaking = new Map(),
+      videoEnabled = new Map(),
       sharingScreen = new Map(),
       mediaDevices = mockMediaDevices({}),
       initialSyncState = SyncState.Syncing,
@@ -151,11 +153,19 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       .mockReturnValue(remoteParticipants$);
     const mediaSpy = vi
       .spyOn(ComponentsCore, "observeParticipantMedia")
-      .mockImplementation((p) =>
-        of({ participant: p } as Partial<
-          ComponentsCore.ParticipantMedia<LocalParticipant>
-        > as ComponentsCore.ParticipantMedia<LocalParticipant>),
-      );
+      .mockImplementation((p) => {
+        return (videoEnabled.get(p) ?? constant(false)).pipe(
+          map((videoEnabled) => ({
+            participant: p,
+            isMicrophoneEnabled: false,
+            isCameraEnabled: videoEnabled,
+            isScreenShareEnabled: false,
+            cameraTrack: {
+              isMuted: !videoEnabled,
+            } as unknown as TrackPublication,
+          })),
+        );
+      });
     const eventsSpy = vi
       .spyOn(ComponentsCore, "observeParticipantEvents")
       .mockImplementation((p, ...eventTypes) => {
