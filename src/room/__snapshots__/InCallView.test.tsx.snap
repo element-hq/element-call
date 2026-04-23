@@ -84,6 +84,11 @@ exports[`InCallView > rendering > renders 1`] = `
       />
     </header>
     <div
+      class="fixedGrid grid"
+    >
+      <div />
+    </div>
+    <div
       class="scrollingGrid grid"
     >
       <div
@@ -101,11 +106,6 @@ exports[`InCallView > rendering > renders 1`] = `
           />
         </div>
       </div>
-    </div>
-    <div
-      class="fixedGrid grid"
-    >
-      <div />
     </div>
     <div
       class="bg animate"
