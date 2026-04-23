@@ -47,16 +47,16 @@ importers:
         version: 11.7.12
       '@livekit/components-core':
         specifier: ^0.12.0
-        version: 0.12.13(livekit-client@2.18.4(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)
+        version: 0.12.13(livekit-client@2.18.5(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)
       '@livekit/components-react':
         specifier: ^2.0.0
-        version: 2.9.20(livekit-client@2.18.4(@types/dom-mediacapture-record@1.0.22))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tslib@2.8.1)
+        version: 2.9.20(livekit-client@2.18.5(@types/dom-mediacapture-record@1.0.22))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tslib@2.8.1)
       '@livekit/protocol':
         specifier: ^1.42.2
         version: 1.45.3
       '@livekit/track-processors':
         specifier: ^0.7.1
-        version: 0.7.2(@types/dom-mediacapture-transform@0.1.11)(livekit-client@2.18.4(@types/dom-mediacapture-record@1.0.22))
+        version: 0.7.2(@types/dom-mediacapture-transform@0.1.11)(livekit-client@2.18.5(@types/dom-mediacapture-record@1.0.22))
       '@mediapipe/tasks-vision':
         specifier: ^0.10.18
         version: 0.10.34
@@ -227,7 +227,7 @@ importers:
         version: 5.88.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@24.12.2)(typescript@5.9.3)
       livekit-client:
         specifier: ^2.18.1
-        version: 2.18.4(@types/dom-mediacapture-record@1.0.22)
+        version: 2.18.5(@types/dom-mediacapture-record@1.0.22)
       lodash-es:
         specifier: ^4.17.21
         version: 4.18.1
@@ -236,7 +236,7 @@ importers:
         version: 1.9.2
       matrix-js-sdk:
         specifier: matrix-org/matrix-js-sdk#develop
-        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/fef093747e1c35a60b0fdc687a7166a7d7eb8a28
+        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/bec985b783c666de24d6db92a4307a10416742d7
       matrix-widget-api:
         specifier: ^1.16.1
         version: 1.17.0
@@ -1576,8 +1576,8 @@ packages:
       '@types/dom-mediacapture-transform': ^0.1.9
       livekit-client: ^1.12.0 || ^2.1.0
 
-  '@matrix-org/matrix-sdk-crypto-wasm@18.1.0':
-    resolution: {integrity: sha512-GxXK2U39+2qWNvR3fXJY7nxdikvpiT17RaS0/Dktk6R8FMKDk3vm79Hq65yrCWLBmT7pJZoerfILNZqhrcUHrg==}
+  '@matrix-org/matrix-sdk-crypto-wasm@18.2.0':
+    resolution: {integrity: sha512-puyZefvq6sHfqlmkri8umhA44724H2JL0YtX8wlvhGuNl8awX/Q1tZyW2Iekm9ZJP7BtuOqlNdg9oQd6iaGbNw==}
     engines: {node: '>= 18'}
 
   '@mdx-js/react@3.1.1':
@@ -4973,8 +4973,8 @@ packages:
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
-  livekit-client@2.18.4:
-    resolution: {integrity: sha512-kjbH9WdA85gZNqFiAMY9jKJ3HArk8F+AQvAvSE5N6PnY+wNCV9OYe9yeb9BVezZiD6ltGyB3CkTxGyuX6BXYAw==}
+  livekit-client@2.18.5:
+    resolution: {integrity: sha512-KdKYO/ledQl+iyb2H5SWYOQFYgOwyiWh2QO4BKvbaq/h+4fykui0BWn5LISL0QAmleTHWUXiSBDLzuJFf3pm1w==}
     peerDependencies:
       '@types/dom-mediacapture-record': ^1
 
@@ -5048,8 +5048,8 @@ packages:
   matrix-events-sdk@0.0.1:
     resolution: {integrity: sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/fef093747e1c35a60b0fdc687a7166a7d7eb8a28:
-    resolution: {tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/fef093747e1c35a60b0fdc687a7166a7d7eb8a28}
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/bec985b783c666de24d6db92a4307a10416742d7:
+    resolution: {tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/bec985b783c666de24d6db92a4307a10416742d7}
     version: 41.3.0
     engines: {node: '>=22.0.0'}
 
@@ -8152,21 +8152,21 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@livekit/components-core@0.12.13(livekit-client@2.18.4(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)':
+  '@livekit/components-core@0.12.13(livekit-client@2.18.5(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)':
     dependencies:
       '@floating-ui/dom': 1.7.4
-      livekit-client: 2.18.4(@types/dom-mediacapture-record@1.0.22)
+      livekit-client: 2.18.5(@types/dom-mediacapture-record@1.0.22)
       loglevel: 1.9.1
       rxjs: 7.8.2
       tslib: 2.8.1
 
-  '@livekit/components-react@2.9.20(livekit-client@2.18.4(@types/dom-mediacapture-record@1.0.22))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tslib@2.8.1)':
+  '@livekit/components-react@2.9.20(livekit-client@2.18.5(@types/dom-mediacapture-record@1.0.22))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tslib@2.8.1)':
     dependencies:
-      '@livekit/components-core': 0.12.13(livekit-client@2.18.4(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)
+      '@livekit/components-core': 0.12.13(livekit-client@2.18.5(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)
       clsx: 2.1.1
       events: 3.3.0
       jose: 6.2.2
-      livekit-client: 2.18.4(@types/dom-mediacapture-record@1.0.22)
+      livekit-client: 2.18.5(@types/dom-mediacapture-record@1.0.22)
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
       tslib: 2.8.1
@@ -8178,13 +8178,13 @@ snapshots:
     dependencies:
       '@bufbuild/protobuf': 1.10.1
 
-  '@livekit/track-processors@0.7.2(@types/dom-mediacapture-transform@0.1.11)(livekit-client@2.18.4(@types/dom-mediacapture-record@1.0.22))':
+  '@livekit/track-processors@0.7.2(@types/dom-mediacapture-transform@0.1.11)(livekit-client@2.18.5(@types/dom-mediacapture-record@1.0.22))':
     dependencies:
       '@mediapipe/tasks-vision': 0.10.34
       '@types/dom-mediacapture-transform': 0.1.11
-      livekit-client: 2.18.4(@types/dom-mediacapture-record@1.0.22)
+      livekit-client: 2.18.5(@types/dom-mediacapture-record@1.0.22)
 
-  '@matrix-org/matrix-sdk-crypto-wasm@18.1.0': {}
+  '@matrix-org/matrix-sdk-crypto-wasm@18.2.0': {}
 
   '@mdx-js/react@3.1.1(@types/react@19.2.14)(react@19.2.5)':
     dependencies:
@@ -11798,7 +11798,7 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
-  livekit-client@2.18.4(@types/dom-mediacapture-record@1.0.22):
+  livekit-client@2.18.5(@types/dom-mediacapture-record@1.0.22):
     dependencies:
       '@livekit/mutex': 1.1.1
       '@livekit/protocol': 1.45.3
@@ -11874,10 +11874,10 @@ snapshots:
 
   matrix-events-sdk@0.0.1: {}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/fef093747e1c35a60b0fdc687a7166a7d7eb8a28:
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/bec985b783c666de24d6db92a4307a10416742d7:
     dependencies:
       '@babel/runtime': 7.29.2
-      '@matrix-org/matrix-sdk-crypto-wasm': 18.1.0
+      '@matrix-org/matrix-sdk-crypto-wasm': 18.2.0
       another-json: 0.2.0
       bs58: 6.0.0
       content-type: 1.0.5
@@ -11889,7 +11889,6 @@ snapshots:
       p-retry: 8.0.0
       sdp-transform: 3.0.0
       unhomoglyph: 1.0.6
-      uuid: 13.0.0
 
   matrix-widget-api@1.17.0:
     dependencies:
