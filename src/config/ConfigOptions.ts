@@ -100,7 +100,7 @@ export interface ConfigOptions {
   /**
    * Grace period in milliseconds to wait before reporting the sync loop as disconnected.
    * This allows brief sync interruptions without triggering a reconnection message.
-   * Default is 60000ms (60 seconds). Set to 0 to disable the grace period.
+   * Default is 10000ms (10 seconds). Set to 0 to disable the grace period.
    */
   sync_disconnect_grace_period_ms?: number;
 
@@ -175,6 +175,6 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
   features: {
     feature_use_device_session_member_events: true,
   },
-  sync_disconnect_grace_period_ms: 60000,
+  sync_disconnect_grace_period_ms: 10000,
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
 };
