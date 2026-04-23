@@ -54,7 +54,7 @@ export interface HomeserverConnected {
  * @param client - The Matrix client to monitor sync state.
  * @param matrixRTCSession - The RTC session to monitor membership.
  * @param gracePeriodMs - Grace period in milliseconds to wait before reporting sync disconnect.
- *                        If not provided, uses the config value (default 60000ms).
+ *                        If not provided, uses the config value (default 10000ms).
  */
 export function createHomeserverConnected$(
   scope: ObservableScope,
@@ -63,9 +63,9 @@ export function createHomeserverConnected$(
     Pick<MatrixRTCSession, "membershipStatus" | "probablyLeft">,
   gracePeriodMs?: number,
 ): HomeserverConnected {
-  // Get grace period from parameter or config (default 60000ms)
+  // Get grace period from parameter or config (default 10000ms)
   const graceMs =
-    gracePeriodMs ?? Config.get().sync_disconnect_grace_period_ms ?? 60000;
+    gracePeriodMs ?? Config.get().sync_disconnect_grace_period_ms ?? 10000;
 
   const syncing$ = (
     fromEvent(client, ClientEvent.Sync) as Observable<[SyncState]>

@@ -83,7 +83,6 @@ import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
 import { getUrlParams, HeaderStyle } from "../../UrlParams";
-import { Config } from "../../config/Config";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../../widget";
 import {
@@ -537,7 +536,6 @@ export function createCallViewModel$(
       scope,
       client,
       matrixRTCSession,
-      Config.get().sync_disconnect_grace_period_ms,
     ),
     muteStates,
     joinMatrixRTC: (transport: LivekitTransportConfig) => {
