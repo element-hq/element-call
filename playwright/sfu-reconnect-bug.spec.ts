@@ -9,11 +9,9 @@ import { expect, test } from "@playwright/test";
 
 test("When creator left, avoid reconnect to the same SFU", async ({
   browser,
+  browserName,
 }) => {
-  test.skip(
-    ({ browserName }) => browserName === "firefox",
-    "Browser independent",
-  );
+  test.skip(browserName === "firefox", "Browser independent");
   // Use reduce motion to disable animations that are making the tests a bit flaky
   const creatorContext = await browser.newContext({ reducedMotion: "reduce" });
   const creatorPage = await creatorContext.newPage();
