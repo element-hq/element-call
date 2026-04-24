@@ -409,8 +409,9 @@ export function createCallViewModel$(
     options.encryptionSystem,
     matrixRTCSession,
   );
-  const matrixRTCMode$ =
-    options.matrixRTCMode$ ?? constant(MatrixRTCMode.Legacy);
+  // const matrixRTCMode$ =
+  //   options.matrixRTCMode$ ?? constant(MatrixRTCMode.Legacy);
+  const matrixRTCMode$ = constant(MatrixRTCMode.Compatibility);
 
   // Each hbar seperates a block of input variables required for the CallViewModel to function.
   // The outputs of this block is written under the hbar.

@@ -6,12 +6,12 @@
     }
   },
   "ssla": "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
-  "sync_disconnect_grace_period_ms": 20000,
+  "sync_disconnect_grace_period_ms": 60000,
   "matrix_rtc_session": {
     "wait_for_key_rotation_ms": 3000,
     "membership_event_expiry_ms": 180000000,
-    "delayed_leave_event_delay_ms": 60000,
-    "delayed_leave_event_restart_ms": 4000,
+    "delayed_leave_event_delay_ms": 120000,
+    "delayed_leave_event_restart_ms": 15000,
     "network_error_retry_ms": 100
   },
   "posthog": {
