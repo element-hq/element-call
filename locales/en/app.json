@@ -143,6 +143,7 @@
     "text": "This call already exists, would you like to join?",
     "title": "Join existing call?"
   },
+  "layout_switch_label": "Layout",
   "layout_grid_label": "Grid",
   "layout_spotlight_label": "Spotlight",
   "lobby": {
