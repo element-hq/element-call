@@ -8,6 +8,12 @@ Please see LICENSE in the repository root for full details.
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
 import { BehaviorSubject } from "rxjs";
+import { Switch } from "@vector-im/compound-web";
+import { t } from "i18next";
+import {
+  SpotlightIcon,
+  GridIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -23,7 +29,6 @@ import {
   type ReactionData,
 } from "../button";
 import styles from "./CallFooter.module.css";
-import { LayoutToggle } from "../room/LayoutToggle";
 import { type GridMode } from "../state/CallViewModel/CallViewModel";
 
 export interface AudioOutputSwitcher {
@@ -232,10 +237,16 @@ export const CallFooter: FC<FooterProps> = ({
       </div>
       {!hideControls && <div className={styles.buttons}>{buttons}</div>}
       {setLayoutMode && layoutMode && showLayoutSwitcher && (
-        <LayoutToggle
+        <Switch
+          leftLabel={t("layout_spotlight_label")}
+          leftValue="spotlight"
+          leftIcon={SpotlightIcon}
+          rightLabel={t("layout_grid_label")}
+          rightValue="grid"
+          rightIcon={GridIcon}
           className={styles.layout}
-          layout={layoutMode}
-          setLayout={setLayoutMode}
+          value={layoutMode}
+          onChange={setLayoutMode}
         />
       )}
     </div>
