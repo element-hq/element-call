@@ -365,7 +365,8 @@ export class TestHelpers {
     frame: FrameLocator,
     count: number,
   ): Promise<void> {
-    // ✅ Retryable assertion for visible videos
+    // XXX we need to be better at our HTML markup and accessibility, it would make
+    // this kind of stuff way easier to test if we could look out for aria attributes.
     await expect
       .poll(
         async () => {

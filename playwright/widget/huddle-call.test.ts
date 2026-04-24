@@ -78,10 +78,13 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
       await expect(frame.getByTestId("videoTile")).toHaveCount(5, {
         timeout: 15000,
       });
-      for (const participant of [valere, timo, robin, halfshot, florian]) {
-        // Check the names are correct
-        await expect(frame.getByText(participant.displayName)).toBeVisible();
-      }
+
+      await Promise.all([
+        [valere, timo, robin, halfshot, florian].map(async (user) => {
+          // Check the names are correct
+          expect(frame.getByText(participant.displayName)).toBeVisible();
+        }),
+      ]);
 
       // No one should be waiting for media
       await expect(frame.getByText("Waiting for media...")).not.toBeVisible({
@@ -121,9 +124,6 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
     });
 
     // out of 5 ONLY 4 are visible (display:block) !!
-    // XXX we need to be better at our HTML markup and accessibility, it would make
-    // this kind of stuff way easier to test if we could look out for aria attributes.
-    // ✅ Retryable assertion for visible videos
     await TestHelpers.expectVisibleVideoCount(frame, 4);
   }
 });
