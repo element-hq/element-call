@@ -20,8 +20,6 @@ widgetTest(
       "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
     );
 
-    test.slow(); // Triples the timeout
-
     const { brooks, whistler } = asWidget;
 
     await TestHelpers.startCallInCurrentRoom(brooks.page, true);
@@ -113,8 +111,6 @@ widgetTest(
       "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
     );
 
-    test.slow(); // Triples the timeout
-
     const { brooks, whistler } = asWidget;
 
     await TestHelpers.startCallInCurrentRoom(brooks.page, false);
@@ -199,8 +195,6 @@ widgetTest(
       browserName === "firefox",
       "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
     );
-
-    test.slow(); // Triples the timeout
 
     const { brooks, whistler } = asWidget;
 
