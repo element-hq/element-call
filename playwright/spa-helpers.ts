@@ -124,7 +124,7 @@ async function expectVideoTilesCount(page: Page, count: number): Promise<void> {
     timeout: 10000,
   });
 
-  // There should be 5 video elements, visible and autoplaying
+  // There should be `count` video elements, visible and autoplaying
   await expect(page.locator("video")).toHaveCount(count);
 
   await expect
