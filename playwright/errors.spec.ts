@@ -75,9 +75,7 @@ test("Should automatically retry non fatal JWT errors", async ({
   await expect(page.getByTestId("video").first()).toBeVisible();
 });
 
-// We skip this test for now as it appears the livekit does not let us
-// detect and handle NotAllowed errors anymore. https://github.com/livekit/client-sdk-js/issues/1883
-test.skip("Should show error screen if call creation is restricted", async ({
+test("Should show error screen if call creation is restricted", async ({
   page,
   browserName,
 }) => {
