@@ -79,12 +79,12 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
         timeout: 15000,
       });
 
-      await Promise.all([
+      await Promise.all(
         [valere, timo, robin, halfshot, florian].map(async (user) => {
           // Check the names are correct
-          expect(frame.getByText(participant.displayName)).toBeVisible();
+          await expect(frame.getByText(user.displayName)).toBeVisible();
         }),
-      ]);
+      );
 
       // No one should be waiting for media
       await expect(frame.getByText("Waiting for media...")).not.toBeVisible({
