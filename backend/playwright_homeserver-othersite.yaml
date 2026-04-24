@@ -50,6 +50,9 @@ max_event_delay_duration: 24h
 enable_registration: true
 enable_registration_without_verification: true
 
+# Shared secret for admin user registration via API (for testing only!)
+registration_shared_secret: "test_shared_secret_for_local_dev_only"
+
 report_stats: false
 serve_server_wellknown: true
 
