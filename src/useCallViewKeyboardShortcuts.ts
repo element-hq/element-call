@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type RefObject, useCallback, useMemo, useRef } from "react";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useEventTarget } from "./useEvents";
 import {
@@ -18,22 +19,46 @@ import {
  * Determines whether focus is in the same part of the tree as the given
  * element (specifically, if the element or an ancestor of it is focused).
  */
-const mayReceiveKeyEvents = (e: HTMLElement): boolean => {
-  const focusedElement = document.activeElement;
-  return focusedElement !== null && focusedElement.contains(e);
+const mayReceiveKeyEvents = (): boolean => {
+  const root = document.getElementById("root");
+  if (root === null) {
+    logger.warn(
+      "[mayReceiveKeyEvents] Root element not found, always allow keyboard shortcuts (m,v,esc...)",
+    );
+    return true;
+  }
+  const focusElement = document.activeElement;
+  const nothingInFocus = focusElement === null;
+  const focusOnBody = focusElement === document.body;
+  const noPrimaryFocus =
+    nothingInFocus || root.contains(focusElement) || focusOnBody;
+
+  // Only if we do not have a primary focus we allow keyboard shortcut events.
+  return noPrimaryFocus;
 };
 
 const KeyToReactionMap: Record<string, ReactionOption> = Object.fromEntries(
   ReactionSet.slice(0, ReactionsRowSize).map((r, i) => [(i + 1).toString(), r]),
 );
 
+/**
+ * This hook sets up gloabl keyboard shortcuts. It will filter for keyboard presses that should be ignored due to user
+ * currently focussing on a modal.
+ * This is achieved by using the fact, that all modal inputs are outside the #root element and use react portals to get rendered.
+ * The following shortcuts are auspported (optional):
+ * @param toggleAudio - triggered on (m)
+ * @param toggleVideo - triggered on (v)
+ * @param setAudioEnabled - push to talk behavior controlled via (space)
+ * @param sendReaction - triggered on (1,2,3,...)
+ * @param toggleHandRaised - triggered on (h)
+ * Additionally this method listens to the (escape) key to trigger the onBackButtonPressed callback, which is used to navigate to pip in the native app.
+ */
 export function useCallViewKeyboardShortcuts(
-  focusElement: RefObject<HTMLElement | null>,
   toggleAudio: (() => void) | null,
   toggleVideo: (() => void) | null,
   setAudioEnabled: ((enabled: boolean) => void) | null,
-  sendReaction: (reaction: ReactionOption) => void,
-  toggleHandRaised: () => void,
+  sendReaction: ((reaction: ReactionOption) => void) | null,
+  toggleHandRaised: (() => void) | null,
 ): void {
   const spacebarHeld = useRef(false);
 
@@ -45,8 +70,8 @@ export function useCallViewKeyboardShortcuts(
     "keydown",
     useCallback(
       (event: KeyboardEvent) => {
-        if (focusElement.current === null) return;
-        if (!mayReceiveKeyEvents(focusElement.current)) return;
+        logger.info("Keydown event", event);
+        if (!mayReceiveKeyEvents()) return;
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
           return;
 
@@ -64,16 +89,15 @@ export function useCallViewKeyboardShortcuts(
           }
         } else if (event.key === "h") {
           event.preventDefault();
-          toggleHandRaised();
+          toggleHandRaised?.();
         } else if (KeyToReactionMap[event.key]) {
           event.preventDefault();
-          sendReaction(KeyToReactionMap[event.key]);
+          sendReaction?.(KeyToReactionMap[event.key]);
         } else if (event.key === "Escape") {
           window.controls.onBackButtonPressed?.();
         }
       },
       [
-        focusElement,
         toggleVideo,
         toggleAudio,
         setAudioEnabled,
@@ -92,15 +116,13 @@ export function useCallViewKeyboardShortcuts(
     "keyup",
     useCallback(
       (event: KeyboardEvent) => {
-        if (focusElement.current === null) return;
-        if (!mayReceiveKeyEvents(focusElement.current)) return;
-
+        if (!mayReceiveKeyEvents()) return;
         if (event.key === " ") {
           spacebarHeld.current = false;
           setAudioEnabled?.(false);
         }
       },
-      [focusElement, setAudioEnabled],
+      [setAudioEnabled],
     ),
   );
 
