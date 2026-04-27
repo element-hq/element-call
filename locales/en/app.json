@@ -252,6 +252,8 @@
     "muted_for_me": "Muted for me",
     "screen_share_volume": "Screen share volume",
     "volume": "Volume",
-    "waiting_for_media": "Waiting for media..."
+    "waiting_for_media": "Waiting for media...",
+    "pin_speaker": "Pin the speaker",
+    "unpin_speaker": "Detach the speaker"
   }
 }

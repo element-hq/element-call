@@ -454,6 +454,7 @@ export const InCallView: FC<InCallViewProps> = ({
         const showSpotlightIndicatorsValue = useBehavior(
           vm.showSpotlightIndicators$,
         );
+        const pinnedUserId = useBehavior(vm.pinnedUserId$);
 
         return model instanceof GridTileViewModel ? (
           <GridTile
@@ -466,6 +467,8 @@ export const InCallView: FC<InCallViewProps> = ({
             style={style}
             showSpeakingIndicators={showSpeakingIndicatorsValue}
             focusable={!contentObscured}
+            onPinUser={(userId) => vm.pinSpotlightUser(userId)}
+            pinnedUserId={pinnedUserId}
           />
         ) : (
           <SpotlightTile

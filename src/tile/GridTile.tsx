@@ -32,6 +32,7 @@ import {
   VideoCallSolidIcon,
   VoiceCallSolidIcon,
   EndCallIcon,
+  PinIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
   ContextMenu,
@@ -328,11 +329,15 @@ LocalUserMediaTile.displayName = "LocalUserMediaTile";
 interface RemoteUserMediaTileProps extends TileProps {
   vm: RemoteUserMediaViewModel;
   showSpeakingIndicators: boolean;
+  onPinUser?: (userId: string | null) => void;
+  pinnedUserId: string | null;
 }
 
 const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
   ref,
   vm,
+  onPinUser,
+  pinnedUserId,
   ...props
 }) => {
   const { t } = useTranslation();
@@ -340,6 +345,8 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
   const playbackMuted = useBehavior(vm.playbackMuted$);
   const playbackVolume = useBehavior(vm.playbackVolume$);
   const focusUrl = useBehavior(vm.focusUrl$);
+  const userId = vm.userId;
+  const isPinned = pinnedUserId === userId
 
   const onSelectMute = useCallback(
     (e: Event) => {
@@ -347,6 +354,17 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
       vm.togglePlaybackMuted();
     },
     [vm],
+  );
+
+  const onSelectPin = useCallback(
+      (e: Event) => {
+        e.preventDefault();
+
+        if (onPinUser) {
+          onPinUser(isPinned ? null : userId);
+        }
+      },
+      [onPinUser, userId, isPinned],
   );
 
   const VolumeIcon = playbackMuted ? VolumeOffIcon : VolumeOnIcon;
@@ -360,6 +378,12 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
       mirror={false}
       menuStart={
         <>
+          <ToggleMenuItem
+              Icon={PinIcon}
+              label={isPinned ? t("video_tile.unpin_speaker") : t("video_tile.pin_speaker")}
+              checked={isPinned}
+              onSelect={onSelectPin}
+          />
           <ToggleMenuItem
             Icon={MicOffIcon}
             label={t("video_tile.mute_for_me")}
@@ -399,6 +423,8 @@ interface GridTileProps {
   style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicators: boolean;
   focusable: boolean;
+  onPinUser?: (userId: string | null) => void;
+  pinnedUserId: string | null;
 }
 
 export const GridTile: FC<GridTileProps> = ({
@@ -406,6 +432,8 @@ export const GridTile: FC<GridTileProps> = ({
   vm,
   showSpeakingIndicators,
   onOpenProfile,
+  onPinUser,
+  pinnedUserId,
   ...props
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
@@ -422,6 +450,7 @@ export const GridTile: FC<GridTileProps> = ({
         {...props}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        pinnedUserId={pinnedUserId}
       />
     );
   } else if (media.local) {
@@ -433,6 +462,8 @@ export const GridTile: FC<GridTileProps> = ({
         onOpenProfile={onOpenProfile}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        onPinUser={onPinUser}
+        pinnedUserId={pinnedUserId}
         {...props}
       />
     );
@@ -444,6 +475,8 @@ export const GridTile: FC<GridTileProps> = ({
         showSpeakingIndicators={showSpeakingIndicators}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        onPinUser={onPinUser}
+        pinnedUserId={pinnedUserId}
         {...props}
       />
     );

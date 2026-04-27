@@ -274,6 +274,16 @@ export interface CallViewModel {
    */
   unhoverScreen: () => void;
 
+  /**
+   * Pin a specific user to the spotlight. Pass null to unpin and return to auto-speaker detection.
+   */
+  pinSpotlightUser: (userId: string | null) => void;
+
+  /**
+   * The currently pinned user ID, or null if no user is pinned.
+   */
+  pinnedUserId$: Behavior<string | null>;
+
   // errors
   /**
    * If there is a configuration error with the call (e.g. misconfigured E2EE).
@@ -886,40 +896,54 @@ export function createCallViewModel$(
       merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
     ).pipe(scope.share);
 
-  const spotlightSpeaker$ = scope.behavior<UserMediaViewModel | undefined>(
-    userMedia$.pipe(
-      switchMap((mediaItems) =>
-        mediaItems.length === 0
-          ? of([])
-          : combineLatest(
-              mediaItems.map((m) =>
+  const pinnedUserId$ = new Subject<string | null>();
+  const pinnedUserIdBehavior$ = scope.behavior(
+      pinnedUserId$.pipe(startWith(null))
+  );
+
+  const pinnedSpeaker$ = combineLatest([userMedia$, pinnedUserIdBehavior$]).pipe(
+      map(([mediaItems, pinnedUserId]): UserMediaViewModel | null => {
+        if (pinnedUserId !== null) {
+          return mediaItems.find((m) => m.userId === pinnedUserId) ?? null;
+        }
+        return null;
+      }),
+  );
+
+  const autoSpeaker$ = userMedia$.pipe(
+      switchMap((mediaItems) => {
+        if (mediaItems.length === 0) return of(undefined);
+
+        return combineLatest(
+            mediaItems.map((m) =>
                 m.speaking$.pipe(map((s) => [m, s] as const)),
-              ),
             ),
+        ).pipe(
+            scan<
+                (readonly [UserMediaViewModel, boolean])[],
+                UserMediaViewModel | undefined,
+                undefined
+            >((prev, items) => {
+              const [stickyMedia, stickySpeaking] =
+              (!prev?.local && items.find(([m]) => m === prev)) || [];
+
+              return stickySpeaking
+                  ? stickyMedia!
+                  : items.find(([m, s]) => !m.local && s)?.[0] ??    // Говорящий удалённый
+                  stickyMedia ??                                    // Последний говоривший
+                  items.find(([m]) => !m.local)?.[0] ??             // Любой удалённый
+                  items.find(([m]) => m.local)?.[0];                // Локальный
+            }, undefined),
+        );
+      }),
+  );
+
+  const spotlightSpeaker$ = scope.behavior<UserMediaViewModel | undefined>(
+      combineLatest([pinnedSpeaker$, autoSpeaker$]).pipe(
+          map(([pinned, auto]) => {
+            return pinned ?? auto;
+          }),
       ),
-      scan<
-        (readonly [UserMediaViewModel, boolean])[],
-        UserMediaViewModel | undefined,
-        undefined
-      >((prev, mediaItems) => {
-        // Only remote users that are still in the call should be sticky
-        const [stickyMedia, stickySpeaking] =
-          (!prev?.local && mediaItems.find(([m]) => m === prev)) || [];
-        // Decide who to spotlight:
-        // If the previous speaker is still speaking, stick with them rather
-        // than switching eagerly to someone else
-        return stickySpeaking
-          ? stickyMedia!
-          : // Otherwise, select any remote user who is speaking
-            (mediaItems.find(([m, s]) => !m.local && s)?.[0] ??
-              // Otherwise, stick with the person who was last speaking
-              stickyMedia ??
-              // Otherwise, spotlight an arbitrary remote user
-              mediaItems.find(([m]) => !m.local)?.[0] ??
-              // Otherwise, spotlight the local user
-              mediaItems.find(([m]) => m.local)?.[0]);
-      }, undefined),
-    ),
   );
 
   const grid$ = scope.behavior<UserMediaViewModel[]>(
@@ -1560,6 +1584,8 @@ export function createCallViewModel$(
     hangup: (): void => userHangup$.next(),
     join: localMembership.requestJoinAndPublish,
     leave: localMembership.requestDisconnect,
+    pinSpotlightUser: (userId: string | null) => pinnedUserId$.next(userId),
+    pinnedUserId$: pinnedUserIdBehavior$,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
 
