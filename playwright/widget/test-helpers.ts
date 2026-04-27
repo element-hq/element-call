@@ -122,6 +122,7 @@ export class TestHelpers {
 
     await this.maybeDismissBrowserNotSupportedToast(page);
     await this.maybeDismissServiceWorkerWarningToast(page);
+    await this.maybeDismissBackupChat(page);
 
     await TestHelpers.setDevToolElementCallDevUrl(page);
 
@@ -164,6 +165,22 @@ export class TestHelpers {
       await page
         .locator(".mx_Toast_toast")
         .getByRole("button", { name: "OK" })
+        .click();
+    } catch {
+      // toast not visible, continue as normal
+    }
+  }
+
+  private static async maybeDismissBackupChat(page: Page): Promise<void> {
+    const toast = page
+      .locator(".mx_Toast_toast")
+      .getByText("Back up your chats");
+
+    try {
+      await expect(toast).toBeVisible({ timeout: 700 });
+      await page
+        .locator(".mx_Toast_toast")
+        .getByRole("button", { name: "Dismiss" })
         .click();
     } catch {
       // toast not visible, continue as normal
