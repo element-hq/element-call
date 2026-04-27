@@ -47,6 +47,7 @@ import { usePageTitle } from "../usePageTitle";
 import { getValue } from "../utils/observable";
 import { useBehavior } from "../useBehavior";
 import { CallFooter } from "../components/CallFooter";
+import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 
 interface Props {
   client: MatrixClient;
@@ -90,6 +91,11 @@ export const LobbyView: FC<Props> = ({
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
+
+  // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
+  // TODO: Make sure that this module is resilient when it comes to camera/microphone availability!
+  // Next to the keyboard shortcuts, this is also responsible for catching escape key presses and forwarding the to mobile -> pip.
+  useCallViewKeyboardShortcuts(toggleAudio, toggleVideo, null, null, null);
 
   const openSettings = useCallback(
     () => setSettingsModalOpen(true),
