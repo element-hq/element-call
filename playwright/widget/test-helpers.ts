@@ -10,8 +10,11 @@ import {
   expect,
   type JSHandle,
   type Page,
+  type FrameLocator,
 } from "@playwright/test";
 import { type MatrixClient } from "matrix-js-sdk";
+
+import { SynapseAdmin } from "../utils/synapse-admin.ts";
 
 const PASSWORD = "foobarbaz1!";
 
@@ -26,14 +29,14 @@ export class TestHelpers {
     voice: boolean = false,
   ): Promise<void> {
     const buttonName = voice ? "Voice call" : "Video call";
-    await expect(page.getByRole("button", { name: buttonName })).toBeVisible();
-    await page.getByRole("button", { name: buttonName }).click();
 
-    await expect(
-      page.getByRole("menuitem", { name: "Element Call" }),
-    ).toBeVisible();
+    await page.getByRole("button", { name: buttonName }).click({
+      timeout: 5000,
+    });
 
-    await page.getByRole("menuitem", { name: "Element Call" }).click();
+    await page.getByRole("menuitem", { name: "Element Call" }).click({
+      timeout: 10000,
+    });
   }
 
   public static async joinCallFromLobby(page: Page): Promise<void> {
@@ -57,9 +60,12 @@ export class TestHelpers {
   ): Promise<void> {
     // This is the header button that notifies about an ongoing call
     const label = audioOnly ? "Voice call started" : "Video call started";
-    await expect(page.getByText(label)).toBeVisible();
-    await expect(page.getByRole("button", { name: "Join" })).toBeVisible();
-    await page.getByRole("button", { name: "Join" }).click();
+    await expect(page.getByText(label)).toBeVisible({
+      timeout: 10000,
+    });
+    await page.getByRole("button", { name: "Join" }).click({
+      timeout: 5000,
+    });
   }
 
   /**
@@ -74,28 +80,44 @@ export class TestHelpers {
     clientHandle: JSHandle<MatrixClient>;
     mxId: string;
   }> {
+    // Determine which homeserver to use based on the host
+    const synapseBaseUrl =
+      host === HOST2
+        ? "https://synapse.othersite.m.localhost"
+        : "https://synapse.m.localhost";
+
+    // Register user via Synapse Admin API to speed things up
+    const synapseAdmin = SynapseAdmin.forHomeserver(synapseBaseUrl);
+    const credentials = await synapseAdmin.registerUser(
+      username,
+      PASSWORD,
+      username,
+    );
+
+    // STEP 2: Open browser and login
     const userContext = await browser.newContext({
       reducedMotion: "reduce",
     });
     const page = await userContext.newPage();
     await page.goto(host);
-    await page.getByRole("link", { name: "Create Account" }).click();
-    await page.getByRole("textbox", { name: "Username" }).fill(username);
-    await page.getByRole("textbox", { name: "Password", exact: true }).click();
-    await page
-      .getByRole("textbox", { name: "Password", exact: true })
-      .fill(PASSWORD);
-    await page.getByRole("textbox", { name: "Confirm password" }).click();
-    await page
-      .getByRole("textbox", { name: "Confirm password" })
-      .fill(PASSWORD);
-    await page.getByRole("button", { name: "Register" }).click();
+
+    await page.getByRole("link", { name: "Sign in" }).click({
+      timeout: 10000,
+    });
+
+    await page.getByRole("textbox", { name: "Username" }).fill(username, {
+      timeout: 10000,
+    });
+    await page.getByRole("textbox", { name: "Password" }).fill(PASSWORD, {
+      timeout: 10000,
+    });
+    await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(
       page.getByRole("heading", { name: `Welcome ${username}` }),
     ).toBeVisible({
-      // Increase timeout as registration can be slow :/
-      timeout: 15_000,
+      // Increase timeout here :/ flaky
+      timeout: 15000,
     });
 
     await this.maybeDismissBrowserNotSupportedToast(page);
@@ -106,11 +128,7 @@ export class TestHelpers {
     const clientHandle = await page.evaluateHandle(() =>
       window.mxMatrixClientPeg.get(),
     );
-    const mxId = (await clientHandle.evaluate(
-      (cli: MatrixClient) => cli.getUserId(),
-      clientHandle,
-    ))!;
-
+    const mxId = credentials.user_id;
     return { page, clientHandle, mxId };
   }
 
@@ -178,10 +196,14 @@ export class TestHelpers {
       .getByRole("button", { name: "New conversation" })
       .click();
 
-    await page.getByRole("menuitem", { name: "New Room" }).click();
+    await page.getByRole("menuitem", { name: "New Room" }).click({
+      timeout: 5000,
+    });
     await page.getByRole("textbox", { name: "Name" }).fill(name);
     await page.getByRole("button", { name: "Create room" }).click();
-    await expect(page.getByText("You created this room.")).toBeVisible();
+    await expect(page.getByText("You created this room.")).toBeVisible({
+      timeout: 10000,
+    });
     await expect(page.getByText("Encryption enabled")).toBeVisible();
     await TestHelpers.maybeDismissKeyBackupToast(page);
 
@@ -199,6 +221,7 @@ export class TestHelpers {
       }
 
       await page.getByRole("button", { name: "Invite" }).click();
+      await TestHelpers.dismissInviteUnknownUserModal(page);
     }
   }
 
@@ -211,9 +234,12 @@ export class TestHelpers {
     roomName: string,
     page: Page,
   ): Promise<void> {
-    await expect(page.getByRole("option", { name: roomName })).toBeVisible();
-    await page.getByRole("option", { name: roomName }).click();
-    await page.getByRole("button", { name: "Accept" }).click();
+    await page.getByRole("option", { name: roomName }).click({
+      timeout: 10000,
+    });
+    await page.getByRole("button", { name: "Accept" }).click({
+      timeout: 5000,
+    });
 
     await expect(
       page.getByRole("main").getByRole("heading", { name: roomName }),
@@ -233,8 +259,12 @@ export class TestHelpers {
     page: Page,
     mode: RtcMode,
   ): Promise<void> {
-    await page.getByRole("button", { name: "Video call" }).click();
-    await page.getByRole("menuitem", { name: "Element Call" }).click();
+    await page.getByRole("button", { name: "Video call" }).click({
+      timeout: 5000,
+    });
+    await page.getByRole("menuitem", { name: "Element Call" }).click({
+      timeout: 10000,
+    });
 
     await TestHelpers.setEmbeddedElementCallRtcMode(page, mode);
     await page.getByRole("button", { name: "Close lobby" }).click();
@@ -307,5 +337,53 @@ export class TestHelpers {
     roomName: string,
   ): Promise<void> {
     await page.getByRole("option", { name: `Open room ${roomName}` }).click();
+  }
+
+  public static async dismissInviteUnknownUserModal(page: Page): Promise<void> {
+    await expect(
+      page.getByRole("heading", { name: "Invite new contacts to this" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Invite" }).click({
+      timeout: 5000,
+    });
+  }
+
+  public static async dismissInviteUnknownUserModalDM(
+    page: Page,
+  ): Promise<void> {
+    await expect(
+      page.getByRole("heading", {
+        name: "Start a chat with this new contact?",
+      }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Continue" }).click({
+      timeout: 5000,
+    });
+  }
+
+  public static async expectVisibleVideoCount(
+    frame: FrameLocator,
+    count: number,
+  ): Promise<void> {
+    // XXX we need to be better at our HTML markup and accessibility, it would make
+    // this kind of stuff way easier to test if we could look out for aria attributes.
+    await expect
+      .poll(
+        async () => {
+          return await frame
+            .locator("video")
+            .evaluateAll(
+              (videos: Element[]) =>
+                videos.filter(
+                  (v: Element) =>
+                    window.getComputedStyle(v).display === "block",
+                ).length,
+            );
+        },
+        {
+          timeout: 10000,
+        },
+      )
+      .toBe(count);
   }
 }

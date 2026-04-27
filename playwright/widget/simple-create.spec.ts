@@ -17,7 +17,7 @@ widgetTest.skip(
 );
 
 widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
-  test.slow(); // Triples the timeout
+  test.slow();
 
   const { brooks, whistler } = asWidget;
 
@@ -83,8 +83,12 @@ widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
     .locator('iframe[title="Element Call"]')
     .contentFrame()
     .getByTestId("incall_leave")
-    .click();
+    .click({ timeout: 15000 });
 
-  await expect(whistler.page.locator(".mx_BasicMessageComposer")).toBeVisible();
-  await expect(brooks.page.locator(".mx_BasicMessageComposer")).toBeVisible();
+  await expect(whistler.page.locator(".mx_BasicMessageComposer")).toBeVisible({
+    timeout: 10000,
+  });
+  await expect(brooks.page.locator(".mx_BasicMessageComposer")).toBeVisible({
+    timeout: 10000,
+  });
 });

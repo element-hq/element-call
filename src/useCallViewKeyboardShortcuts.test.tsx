@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { type FC, useRef } from "react";
+import { type FC, useRef, useState } from "react";
 import { expect, test, vi } from "vitest";
 import { Button } from "@vector-im/compound-web";
 import userEvent from "@testing-library/user-event";
@@ -17,6 +17,7 @@ import {
   ReactionSet,
   ReactionsRowSize,
 } from "./reactions";
+import { type Controls } from "./controls";
 
 // Test Explanation:
 // - The main objective is to test `useCallViewKeyboardShortcuts`.
@@ -27,6 +28,7 @@ interface TestComponentProps {
   onButtonClick?: () => void;
   sendReaction?: () => void;
   toggleHandRaised?: () => void;
+  initialModalOpen?: boolean;
 }
 
 const TestComponent: FC<TestComponentProps> = ({
@@ -34,7 +36,9 @@ const TestComponent: FC<TestComponentProps> = ({
   onButtonClick = (): void => {},
   sendReaction = (reaction: ReactionOption): void => {},
   toggleHandRaised = (): void => {},
+  initialModalOpen = false,
 }) => {
+  const [modalOpen, setModalOpen] = useState(initialModalOpen);
   const ref = useRef<HTMLDivElement | null>(null);
   useCallViewKeyboardShortcuts(
     ref,
@@ -47,6 +51,19 @@ const TestComponent: FC<TestComponentProps> = ({
   return (
     <div ref={ref}>
       <Button onClick={onButtonClick}>TEST</Button>
+      {modalOpen && (
+        <dialog
+          open
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              setModalOpen(false);
+            }
+          }}
+        >
+          <button>InModalButton</button>
+        </dialog>
+      )}
     </div>
   );
 };
@@ -118,6 +135,27 @@ test("raised hand can be sent via keyboard presses", async () => {
   expect(toggleHandRaised).toHaveBeenCalledOnce();
 });
 
+test("raised hand cannot be sent via keyboard presses if modal open and focussed", async () => {
+  const user = userEvent.setup();
+  const toggleHandRaised = vi.fn();
+  const { getByRole } = render(
+    <TestComponent
+      toggleHandRaised={toggleHandRaised}
+      initialModalOpen={true}
+    />,
+  );
+  getByRole("button", { name: "InModalButton" }).focus();
+  await user.keyboard("h");
+
+  expect(toggleHandRaised).not.toHaveBeenCalledOnce();
+
+  // once we press esc...
+  await user.keyboard("[Escape]");
+  // we can toggle the hand raise...
+  await user.keyboard("h");
+  expect(toggleHandRaised).toHaveBeenCalledOnce();
+});
+
 test("unmuting happens in place of the default action", async () => {
   const user = userEvent.setup();
   const defaultPrevented = vi.fn();
@@ -137,4 +175,36 @@ test("unmuting happens in place of the default action", async () => {
   await user.tab(); // Focus the <video>
   await user.keyboard("[Space]");
   expect(defaultPrevented).toBeCalledWith(true);
+});
+
+test("escape button triggers the controls back action", async () => {
+  const user = userEvent.setup();
+
+  window.controls = { onBackButtonPressed: vi.fn() } as unknown as Controls;
+  // In the real application, we mostly just want the spacebar shortcut to avoid
+  // scrolling the page. But to test that here in JSDOM, we need some kind of
+  // container element that can be interactive and receive focus / keydown
+  // events. <video> is kind of a weird choice, but it'll do the job.
+  render(<TestComponent setAudioEnabled={() => {}} />);
+
+  await user.keyboard("[Escape]");
+  expect(window.controls.onBackButtonPressed).toHaveBeenCalled();
+});
+
+test("escape button does not trigger back if sth else is focused", async () => {
+  const user = userEvent.setup();
+
+  window.controls = { onBackButtonPressed: vi.fn() } as unknown as Controls;
+
+  const { getByRole } = render(<TestComponent initialModalOpen={true} />);
+  getByRole("button", { name: "InModalButton" }).focus();
+
+  // First Escape: the dialog's onKeyDown intercepts it and closes the modal.
+  await user.keyboard("[Escape]");
+  expect(window.controls.onBackButtonPressed).not.toHaveBeenCalled();
+
+  // Second Escape: modal is gone, focus has fallen back to document.body,
+  // which *does* contain the ref div, so the hook fires and back IS triggered.
+  await user.keyboard("[Escape]");
+  expect(window.controls.onBackButtonPressed).toHaveBeenCalled();
 });
