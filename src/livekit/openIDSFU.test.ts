@@ -131,7 +131,7 @@ describe("getSFUConfigWithOpenID", () => {
     expect(calls[1][0]).toStrictEqual("https://sfu.example.org/sfu/get");
 
     expect(calls[1][1]).toStrictEqual({
-      body: '{"room":"!example_room_id","device_id":"DEVICE"}',
+      body: '{"room":"!example_room_id","device_id":"DEVICE","delay_id":"mock_delay_id","delay_timeout":1000,"delay_cs_api_url":"https://matrix.homeserverserver.org"}',
       headers: {
         "Content-Type": "application/json",
       },
