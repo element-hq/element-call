@@ -32,7 +32,7 @@ import { platform } from "../Platform";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
-  size?: "sm" | "lg";
+  size?: "md" | "lg";
 }
 
 export const MicButton: FC<MicButtonProps> = ({ enabled, ...props }) => {
@@ -58,7 +58,7 @@ export const MicButton: FC<MicButtonProps> = ({ enabled, ...props }) => {
 
 interface VideoButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
-  size?: "sm" | "lg";
+  size?: "md" | "lg";
 }
 
 export const VideoButton: FC<VideoButtonProps> = ({ enabled, ...props }) => {
@@ -84,7 +84,7 @@ export const VideoButton: FC<VideoButtonProps> = ({ enabled, ...props }) => {
 
 interface ShareScreenButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
-  size: "sm" | "lg";
+  size: "md" | "lg";
 }
 
 export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
@@ -111,7 +111,7 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
 };
 
 interface EndCallButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size?: "sm" | "lg";
+  size?: "md" | "lg";
 }
 
 export const EndCallButton: FC<EndCallButtonProps> = ({
@@ -134,7 +134,7 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
 };
 
 interface LoudspeakerButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size?: "sm" | "lg";
+  size?: "md" | "lg";
   loudspeakerModeEnabled: boolean;
 }
 export const LoudspeakerButton: FC<LoudspeakerButtonProps> = ({
@@ -195,7 +195,7 @@ export const SettingsIconButton: FC<SettingsIconButtonProps> = ({
 };
 
 interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size?: "sm" | "lg";
+  size?: "md" | "lg";
   /** If this buttons should be setup to be used in the app bar */
   showForScreenWidth?: "wide" | "narrow";
 }
