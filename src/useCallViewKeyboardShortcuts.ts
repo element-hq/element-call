@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type RefObject, useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useEventTarget } from "./useEvents";
@@ -35,6 +35,15 @@ const mayReceiveKeyEvents = (): boolean => {
 
   // Only if we do not have a primary focus we allow keyboard shortcut events.
   return noPrimaryFocus;
+};
+
+/**
+ * Only do push to talk behavior if the active element is not a button or button like.
+ */
+const mayReceiveSpaceKeyEvents = (): boolean => {
+  const activeElement = document.activeElement;
+  if (activeElement === null) return true;
+  return activeElement.tagName.toLowerCase() !== "button";
 };
 
 const KeyToReactionMap: Record<string, ReactionOption> = Object.fromEntries(
@@ -81,7 +90,7 @@ export function useCallViewKeyboardShortcuts(
         } else if (event.key === "v") {
           event.preventDefault();
           toggleVideo?.();
-        } else if (event.key === " ") {
+        } else if (event.key === " " && mayReceiveSpaceKeyEvents()) {
           event.preventDefault();
           if (!spacebarHeld.current) {
             spacebarHeld.current = true;
@@ -116,7 +125,7 @@ export function useCallViewKeyboardShortcuts(
     "keyup",
     useCallback(
       (event: KeyboardEvent) => {
-        if (!mayReceiveKeyEvents()) return;
+        if (!mayReceiveKeyEvents() || !mayReceiveSpaceKeyEvents()) return;
         if (event.key === " ") {
           spacebarHeld.current = false;
           setAudioEnabled?.(false);
