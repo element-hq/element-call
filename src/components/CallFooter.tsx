@@ -238,6 +238,7 @@ export const CallFooter: FC<FooterProps> = ({
       {!hideControls && <div className={styles.buttons}>{buttons}</div>}
       {setLayoutMode && layoutMode && showLayoutSwitcher && (
         <Switch<"spotlight", "grid">
+          name="layoutMode"
           aria-label={t("layout_switch_label")}
           leftLabel={t("layout_spotlight_label")}
           leftValue="spotlight"
