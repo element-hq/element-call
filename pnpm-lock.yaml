@@ -148,8 +148,8 @@ importers:
         specifier: ^10.0.0
         version: 10.1.0(@types/react@19.2.14)(react@19.2.5)
       '@vector-im/compound-web':
-        specifier: ^9.0.0
-        version: 9.2.0(@fontsource/inconsolata@5.2.8)(@fontsource/inter@5.2.8)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(@vector-im/compound-design-tokens@10.1.0(@types/react@19.2.14)(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        specifier: ^9.3.0
+        version: 9.3.0(@fontsource/inconsolata@5.2.8)(@fontsource/inter@5.2.8)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(@vector-im/compound-design-tokens@10.1.0(@types/react@19.2.14)(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@vitejs/plugin-react':
         specifier: ^4.0.1
         version: 4.7.0(vite@8.0.8(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))
@@ -3105,8 +3105,8 @@ packages:
       react:
         optional: true
 
-  '@vector-im/compound-web@9.2.0':
-    resolution: {integrity: sha512-jHbABGEQ2yqNtm5xRIkklQs198VEfSk9AJQolI+e4WSJ0xg8Ozyv9t9KIuKQAmjdSV9aow5G6hDE861XB6DQgw==}
+  '@vector-im/compound-web@9.3.0':
+    resolution: {integrity: sha512-Elu4Uw8RbfP6JaudQYkVibALYT6qpwubqfKhteTxIPWBWzSYM+P5T+B1uX+ra+grNcXwXUt2xfMxpqYQsAHgYA==}
     peerDependencies:
       '@fontsource/inconsolata': ^5
       '@fontsource/inter': ^5
@@ -9596,7 +9596,7 @@ snapshots:
       '@types/react': 19.2.14
       react: 19.2.5
 
-  '@vector-im/compound-web@9.2.0(@fontsource/inconsolata@5.2.8)(@fontsource/inter@5.2.8)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(@vector-im/compound-design-tokens@10.1.0(@types/react@19.2.14)(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@vector-im/compound-web@9.3.0(@fontsource/inconsolata@5.2.8)(@fontsource/inter@5.2.8)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(@vector-im/compound-design-tokens@10.1.0(@types/react@19.2.14)(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@floating-ui/react': 0.27.19(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@fontsource/inconsolata': 5.2.8
