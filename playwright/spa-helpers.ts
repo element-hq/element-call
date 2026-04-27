@@ -119,25 +119,27 @@ async function setRtcModeFromSettings(
 async function expectVideoTilesCount(page: Page, count: number): Promise<void> {
   await expect(page.getByTestId("videoTile")).toHaveCount(2);
 
-  // There are no other options than to wait for all media to be ready?
-  // Or it is too flaky :/
-  await page.waitForTimeout(3000);
   // No one should be waiting for media
-  await expect(page.getByText("Waiting for media...")).not.toBeVisible();
+  await expect(page.getByText("Waiting for media...")).not.toBeVisible({
+    timeout: 10000,
+  });
 
-  // There should be 5 video elements, visible and autoplaying
-  const videoElements = await page.locator("video").all();
-  expect(videoElements.length).toBe(count);
+  // There should be `count` video elements, visible and autoplaying
+  await expect(page.locator("video")).toHaveCount(count);
 
-  const blockDisplayCount = await page
-    .locator("video")
-    .evaluateAll(
-      (videos: Element[]) =>
-        videos.filter(
-          (v: Element) => window.getComputedStyle(v).display === "block",
-        ).length,
-    );
-  expect(blockDisplayCount).toBe(count);
+  await expect(async () => {
+    const videoBlockCount = await page
+      .locator("video")
+      .evaluateAll(
+        (videos: Element[]) =>
+          videos.filter(
+            (v: Element) => window.getComputedStyle(v).display === "block",
+          ).length,
+      );
+    expect(videoBlockCount).toBe(count);
+  }).toPass({
+    timeout: 10000,
+  });
 }
 
 export const SpaHelpers = {

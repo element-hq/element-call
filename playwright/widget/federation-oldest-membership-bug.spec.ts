@@ -75,18 +75,11 @@ widgetTest(
       await expect(frame.getByText("Waiting for media...")).not.toBeVisible();
 
       // There should be 2 video elements, visible and autoplaying
-      const videoElements = await frame.locator("video").all();
-      expect(videoElements.length).toBe(2);
+      await expect(frame.locator("video")).toHaveCount(2, {
+        timeout: 10000,
+      });
 
-      const blockDisplayCount = await frame
-        .locator("video")
-        .evaluateAll(
-          (videos: Element[]) =>
-            videos.filter(
-              (v: Element) => window.getComputedStyle(v).display === "block",
-            ).length,
-        );
-      expect(blockDisplayCount).toBe(2);
+      await TestHelpers.expectVisibleVideoCount(frame, 2);
     }
   },
 );

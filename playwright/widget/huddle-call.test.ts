@@ -11,18 +11,21 @@ import { widgetTest } from "../fixtures/widget-user.ts";
 import { HOST1, TestHelpers } from "./test-helpers.ts";
 
 widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
+  // increase the timeouts, it is a long test and it is annoying to retry from the beginning for a single timeout.
+  test.slow();
+
   test.skip(
     browserName === "firefox",
     "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
   );
 
-  test.slow(); // We are registering multiple users here, give it more time
-
-  const valere = await addUser("Valere", HOST1);
-  const timo = await addUser("Timo", HOST1);
-  const robin = await addUser("Robin", HOST1);
-  const halfshot = await addUser("Halfshot", HOST1);
-  const florian = await addUser("florian", HOST1);
+  const [valere, timo, robin, halfshot, florian] = await Promise.all([
+    addUser("Valere", HOST1),
+    addUser("Timo", HOST1),
+    addUser("Robin", HOST1),
+    addUser("Halfshot", HOST1),
+    addUser("florian", HOST1),
+  ]);
 
   const roomName = "Group Call Room";
   await TestHelpers.createRoom(roomName, valere.page, [
@@ -47,52 +50,55 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
 
   await TestHelpers.joinCallFromLobby(valere.page);
 
-  for (const user of [timo, robin, halfshot, florian]) {
-    await TestHelpers.joinCallInCurrentRoom(user.page);
-  }
+  await Promise.all(
+    [timo, robin, halfshot, florian].map(async (user) => {
+      await TestHelpers.joinCallInCurrentRoom(user.page);
+    }),
+  );
 
-  for (const user of [timo, robin, halfshot, florian]) {
-    const frame = user.page
-      .locator('iframe[title="Element Call"]')
-      .contentFrame();
-    // No lobby, should start with video on
-    await expect(
-      frame.getByRole("switch", { name: "Stop video", checked: true }),
-    ).toBeVisible();
-  }
+  await Promise.all(
+    [timo, robin, halfshot, florian].map(async (user) => {
+      const frame = user.page
+        .locator('iframe[title="Element Call"]')
+        .contentFrame();
+      await expect(
+        frame.getByRole("switch", { name: "Stop video", checked: true }),
+      ).toBeVisible({
+        timeout: 10000,
+      });
+    }),
+  );
 
   // We should see 5 video tiles everywhere now
-  for (const user of [valere, timo, robin, halfshot, florian]) {
-    const frame = user.page
-      .locator('iframe[title="Element Call"]')
-      .contentFrame();
-    await expect(frame.getByTestId("videoTile")).toHaveCount(5);
-    for (const participant of [valere, timo, robin, halfshot, florian]) {
-      // Check the names are correct
-      await expect(frame.getByText(participant.displayName)).toBeVisible();
-    }
+  await Promise.all(
+    [valere, timo, robin, halfshot, florian].map(async (user) => {
+      const frame = user.page
+        .locator('iframe[title="Element Call"]')
+        .contentFrame();
+      await expect(frame.getByTestId("videoTile")).toHaveCount(5, {
+        timeout: 15000,
+      });
 
-    // There is no other options than to wait for all media to be ready?
-    // Or it is too flaky :/
-    await user.page.waitForTimeout(5000);
-    // No one should be waiting for media
-    await expect(frame.getByText("Waiting for media...")).not.toBeVisible();
-
-    // There should be 5 video elements, visible and autoplaying
-    const videoElements = await frame.locator("video").all();
-    expect(videoElements.length).toBe(5);
-    await expect(frame.locator("video[autoplay]")).toHaveCount(5);
-
-    const blockDisplayCount = await frame
-      .locator("video")
-      .evaluateAll(
-        (videos: Element[]) =>
-          videos.filter(
-            (v: Element) => window.getComputedStyle(v).display === "block",
-          ).length,
+      await Promise.all(
+        [valere, timo, robin, halfshot, florian].map(async (user) => {
+          // Check the names are correct
+          await expect(frame.getByText(user.displayName)).toBeVisible();
+        }),
       );
-    expect(blockDisplayCount).toBe(5);
-  }
+
+      // No one should be waiting for media
+      await expect(frame.getByText("Waiting for media...")).not.toBeVisible({
+        // Use a bigger timeout here
+        timeout: 10000,
+      });
+
+      // There should be 5 video elements, visible and autoplaying
+      await expect(frame.locator("video")).toHaveCount(5);
+      await expect(frame.locator("video[autoplay]")).toHaveCount(5);
+
+      await TestHelpers.expectVisibleVideoCount(frame, 5);
+    }),
+  );
 
   // Quickly test muting one participant to see it reflects and that our asserts works
   const florianFrame = florian.page
@@ -108,28 +114,16 @@ widgetTest("Create and join a group call", async ({ addUser, browserName }) => {
   await expect(florianVideoButton).toHaveAccessibleName("Start video");
   await expect(florianVideoButton).not.toBeChecked();
 
-  // wait a bit for the state to propagate
-  await valere.page.waitForTimeout(3000);
   {
     const frame = valere.page
       .locator('iframe[title="Element Call"]')
       .contentFrame();
 
-    const videoElements = await frame.locator("video").all();
-    expect(videoElements.length).toBe(5);
-
-    const blockDisplayCount = await frame
-      .locator("video")
-      .evaluateAll(
-        (videos: Element[]) =>
-          videos.filter(
-            (v: Element) => window.getComputedStyle(v).display === "block",
-          ).length,
-      );
+    await expect(frame.locator("video")).toHaveCount(5, {
+      timeout: 10000,
+    });
 
     // out of 5 ONLY 4 are visible (display:block) !!
-    // XXX we need to be better at our HTML markup and accessibility, it would make
-    // this kind of stuff way easier to test if we could look out for aria attributes.
-    expect(blockDisplayCount).toBe(4);
+    await TestHelpers.expectVisibleVideoCount(frame, 4);
   }
 });

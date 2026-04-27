@@ -53,7 +53,6 @@ test("@mobile Start a new call then leave and show the feedback screen", async (
 mobileTest(
   "Test earpiece overlay in controlledAudioDevices mode",
   async ({ asMobile, browser }) => {
-    test.slow(); // Triples the timeout
     const { creatorPage, inviteLink } = asMobile;
 
     // ========
