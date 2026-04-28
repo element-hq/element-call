@@ -33,6 +33,9 @@ const mayReceiveKeyEvents = (): boolean => {
   const noPrimaryFocus =
     nothingInFocus || root.contains(focusElement) || focusOnBody;
 
+  logger.warn(
+    `[mayReceiveKeyEvents] nothingInFocus ${nothingInFocus}, focusOnBody ${focusOnBody}, noPrimaryFocus ${noPrimaryFocus}`,
+  );
   // Only if we do not have a primary focus we allow keyboard shortcut events.
   return noPrimaryFocus;
 };
@@ -103,6 +106,7 @@ export function useCallViewKeyboardShortcuts(
           event.preventDefault();
           sendReaction?.(KeyToReactionMap[event.key]);
         } else if (event.key === "Escape") {
+          logger.info("Escape key pressed, triggering onBackButtonPressed");
           window.controls.onBackButtonPressed?.();
         }
       },
