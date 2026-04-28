@@ -80,7 +80,7 @@ export const Modal: FC<Props> = ({
   const { t } = useTranslation();
   // Empirically, Chrome on Android can end up not matching (hover: none), but
   // still matching (pointer: coarse) :/
-  const touchscreen = useMediaQuery("(hover: none) or (pointer: coarse)");
+  const touchscreen = true; //useMediaQuery("(hover: none) or (pointer: coarse)");
   const onOpenChange = useCallback(
     (open: boolean) => {
       if (!open) onDismiss?.();
@@ -92,6 +92,11 @@ export const Modal: FC<Props> = ({
     return (
       <Drawer.Root
         open={open}
+        // This autofocus is a custom vault property and not the
+        // standard HTML autofocus attribute.
+        // It makes the Drawer.Root behave like the `DialogRoot`
+        // eslint-disable-next-line jsx-a11y/no-autofocus
+        autoFocus
         onOpenChange={onOpenChange}
         dismissible={onDismiss !== undefined}
       >
