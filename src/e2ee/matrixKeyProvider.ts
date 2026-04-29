@@ -16,6 +16,7 @@ const logger = rootLogger.getChild("[MatrixKeyProvider]");
 
 export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
+  private joinedAt?: number;
 
   public constructor() {
     super({ ratchetWindowSize: 10, keyringSize: 256 });
@@ -30,6 +31,8 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     }
 
     this.rtcSession = rtcSession;
+    this.joinedAt = Date.now();
+    logger.info(`setRTCSession called, recording join timestamp`);
 
     this.rtcSession.on(
       MatrixRTCSessionEvent.EncryptionKeyChanged,
@@ -47,6 +50,14 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     membershipParts: CallMembershipIdentityParts,
     rtcBackendIdentity: string,
   ): void => {
+    const keyReceivedAt = Date.now();
+    const timeSinceJoin = this.joinedAt
+      ? keyReceivedAt - this.joinedAt
+      : undefined;
+    logger.info(
+      `Key received ${timeSinceJoin !== undefined ? `${timeSinceJoin}ms after join` : "(no join timestamp)"} for ${membershipParts.userId}:${membershipParts.deviceId} index=${encryptionKeyIndex}`,
+    );
+
     crypto.subtle
       .importKey("raw", encryptionKey, "HKDF", false, [
         "deriveBits",
@@ -54,14 +65,15 @@ export class MatrixKeyProvider extends BaseKeyProvider {
       ])
       .then(
         (keyMaterial) => {
+          const importDuration = Date.now() - keyReceivedAt;
           this.onSetEncryptionKey(
             keyMaterial,
             rtcBackendIdentity,
             encryptionKeyIndex,
           );
 
-          logger.debug(
-            `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${rtcBackendIdentity} (before hash: ${membershipParts.userId}:${membershipParts.deviceId}) encryptionKeyIndex=${encryptionKeyIndex}`,
+          logger.info(
+            `Key imported in ${importDuration}ms and sent to livekit room=${this.rtcSession?.room.roomId} participantId=${rtcBackendIdentity} (before hash: ${membershipParts.userId}:${membershipParts.deviceId}) encryptionKeyIndex=${encryptionKeyIndex}`,
           );
         },
         (e) => {

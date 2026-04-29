@@ -56,6 +56,7 @@ import {
   useUrlParams,
 } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
+import { usePrewarmOlmSessions } from "../e2ee/usePrewarmOlmSessions";
 import { useAudioContext } from "../useAudioContext";
 import {
   callEventAudioSounds,
@@ -204,6 +205,15 @@ export const GroupCallView: FC<Props> = ({
       e2eeSystem,
     };
   }, [client, displayName, avatarUrl, roomName, room, roomAvatar, e2eeSystem]);
+
+  // Pre-warm Olm sessions with call participants while in the lobby so that
+  // E2EE key exchange is faster when the user actually joins.
+  usePrewarmOlmSessions(
+    client,
+    room,
+    memberships,
+    !joined && e2eeSystem.kind === E2eeType.PER_PARTICIPANT,
+  );
 
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(

@@ -76,10 +76,9 @@ export function LivekitRoomAudioRenderer({
     .filter((ref) => ref.publication.kind === Track.Kind.Audio)
     // Only keep tracks from participants that are in the validIdentities list
     .filter((ref) => {
+      if (ref.participant.isLocal) return false;
       const isValid = validIdentities.includes(ref.participant.identity);
       if (!isValid) {
-        // TODO make sure to also skip the warn logging for the local identity
-        // Log that there is an invalid identity, that means that someone is publishing audio that is not expected to be in the call.
         prefixedLogger.warn(
           `Audio track ${ref.participant.identity} from ${url} has no matching matrix call member`,
           `current members: ${validIdentities.join()}`,

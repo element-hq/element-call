@@ -143,6 +143,23 @@ export interface ConfigOptions {
      * This is what goes into the m.rtc.member event expiry field and is typically set to a number of hours.
      */
     membership_event_expiry_ms?: number;
+
+    /**
+     * The delay (in milliseconds) between sending a new encryption key and
+     * starting to encrypt media with it. This gives other participants time
+     * to receive the key before media is encrypted with it.
+     * SDK default: 1000
+     */
+    use_key_delay_ms?: number;
+
+    /**
+     * The grace period (in milliseconds) after a key rotation during which
+     * new joiners can reuse the existing key instead of triggering another
+     * rotation. Higher values reduce redundant rotations when multiple
+     * participants join in quick succession.
+     * SDK default: 10000
+     */
+    key_rotation_grace_period_ms?: number;
   };
 }
 
