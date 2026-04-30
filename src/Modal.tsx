@@ -80,7 +80,7 @@ export const Modal: FC<Props> = ({
   const { t } = useTranslation();
   // Empirically, Chrome on Android can end up not matching (hover: none), but
   // still matching (pointer: coarse) :/
-  const touchscreen = true; //useMediaQuery("(hover: none) or (pointer: coarse)");
+  const touchscreen = useMediaQuery("(hover: none) or (pointer: coarse)");
   const onOpenChange = useCallback(
     (open: boolean) => {
       if (!open) onDismiss?.();
