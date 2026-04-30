@@ -8,6 +8,14 @@ Please see LICENSE in the repository root for full details.
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
 import { BehaviorSubject } from "rxjs";
+import {
+  MicOffSolidIcon,
+  MicOnSolidIcon,
+  MicOnIcon,
+  VideoCallSolidIcon,
+  VideoCallIcon,
+  VideoCallOffSolidIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -25,6 +33,10 @@ import {
 import styles from "./CallFooter.module.css";
 import { LayoutToggle } from "../room/LayoutToggle";
 import { type GridMode } from "../state/CallViewModel/CallViewModel";
+import {
+  MediaMuteAndSwitchButton,
+  type MenuOptions,
+} from "./MediaMuteAndSwitchButton";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -74,6 +86,11 @@ export interface FooterProps {
   // debug stuff
   debugTileLayout?: boolean;
   tileStoreGeneration?: number;
+
+  audioOptions?: MenuOptions[];
+  videoOptions?: MenuOptions[];
+  selectedAudio?: string;
+  selectedVideo?: string;
 }
 
 export const CallFooter: FC<FooterProps> = ({
@@ -99,6 +116,11 @@ export const CallFooter: FC<FooterProps> = ({
   hangup,
   debugTileLayout,
   tileStoreGeneration,
+
+  audioOptions,
+  videoOptions,
+  selectedAudio,
+  selectedVideo,
 }) => {
   const buttons: JSX.Element[] = [];
   const buttonSize = asPip ? "md" : "lg";
@@ -120,24 +142,60 @@ export const CallFooter: FC<FooterProps> = ({
     );
   }
 
-  buttons.push(
-    <MicButton
-      size={buttonSize}
-      key="audio"
-      enabled={audioEnabled ?? false}
-      onClick={toggleAudio}
-      disabled={toggleAudio === undefined}
-      data-testid="incall_mute"
-    />,
-    <VideoButton
-      size={buttonSize}
-      key="video"
-      enabled={videoEnabled ?? false}
-      onClick={toggleVideo}
-      disabled={toggleVideo === undefined}
-      data-testid="incall_videomute"
-    />,
-  );
+  if ((audioOptions?.length ?? 0) > 0) {
+    buttons.push(
+      <MediaMuteAndSwitchButton
+        title={"Mic Source"}
+        key="audio"
+        IconEnabled={MicOnSolidIcon}
+        IconDisabled={MicOffSolidIcon}
+        IconOptions={MicOnIcon}
+        enabled={audioEnabled ?? false}
+        onMuteClick={toggleAudio}
+        data-testid="incall_mute"
+        options={audioOptions}
+        selectedOption={selectedAudio}
+      />,
+    );
+  } else {
+    buttons.push(
+      <MicButton
+        size={buttonSize}
+        key="audio"
+        enabled={audioEnabled ?? false}
+        onClick={toggleAudio}
+        disabled={toggleAudio === undefined}
+        data-testid="incall_mute"
+      />,
+    );
+  }
+  if ((videoOptions?.length ?? 0) > 0) {
+    buttons.push(
+      <MediaMuteAndSwitchButton
+        title={"Camera Source"}
+        key="audio"
+        IconEnabled={VideoCallSolidIcon}
+        IconDisabled={VideoCallOffSolidIcon}
+        IconOptions={VideoCallIcon}
+        enabled={videoEnabled ?? false}
+        onMuteClick={toggleVideo}
+        data-testid="incall_mute"
+        options={videoOptions}
+        selectedOption={selectedVideo}
+      />,
+    );
+  } else {
+    buttons.push(
+      <VideoButton
+        size={buttonSize}
+        key="video"
+        enabled={videoEnabled ?? false}
+        onClick={toggleVideo}
+        disabled={toggleVideo === undefined}
+        data-testid="incall_videomute"
+      />,
+    );
+  }
 
   if (toggleScreenSharing !== undefined) {
     buttons.push(
