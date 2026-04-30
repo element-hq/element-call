@@ -113,7 +113,7 @@ export const AvatarInputField: FC<Props> = ({
                 iconOnly
                 Icon={EditIcon}
                 kind="tertiary"
-                size="sm"
+                size="md"
                 aria-label={t("action.edit")}
               />
             }
@@ -136,7 +136,7 @@ export const AvatarInputField: FC<Props> = ({
             iconOnly
             Icon={EditIcon}
             kind="tertiary"
-            size="sm"
+            size="md"
             aria-label={t("action.edit")}
             onClick={onSelectUpload}
           />
