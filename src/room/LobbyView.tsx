@@ -209,7 +209,7 @@ export const LobbyView: FC<Props> = ({
               className={classNames(styles.join, {
                 [styles.wait]: waitingForInvite,
               })}
-              size={waitingForInvite ? "sm" : "lg"}
+              size={waitingForInvite ? "md" : "lg"}
               disabled={waitingForInvite}
               onClick={() => {
                 if (!waitingForInvite) onEnter();
