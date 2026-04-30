@@ -45,7 +45,7 @@ widgetTest("Start a new call as widget", async ({ asWidget, browserName }) => {
   ).toBeVisible();
 
   // Join from the other side
-  await TestHelpers.joinCallInCurrentRoom(whistler.page);
+  await TestHelpers.joinCallInCurrentDM(whistler.page);
 
   // Currently disabled due to recent Element Web is bypassing Lobby
   // await expect(
