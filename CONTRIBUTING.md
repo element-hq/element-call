@@ -37,7 +37,7 @@ The issue is where we resolve all of that **before** anyone writes code.
 ## Contribution Workflow
 
 1. **Open an issue** using the [Enhancement request](https://github.com/element-hq/element-call/issues/new?template=enhancement.yml) template.
-2. **Wait for feedback.** A maintainer will discuss the use case and approach with you.
+2. **Wait for feedback.** A maintainer will comment on the issue **within two weeks**. The use case and approach will get dicussed.
    This may involve questions, suggestions, or a request to adjust scope.
    This also allows to bring design and product into the loop before code gets created.
 3. **Get a green light.** Wait for explicit approval from a maintainer before starting
