@@ -54,12 +54,34 @@ export class TestHelpers {
       .click();
   }
 
+  public static async joinCallInCurrentDM(
+    page: Page,
+    audioOnly: boolean = false,
+  ): Promise<void> {
+    await this.joinCallInRoom(page, audioOnly, true);
+  }
+
   public static async joinCallInCurrentRoom(
     page: Page,
     audioOnly: boolean = false,
   ): Promise<void> {
-    // This is the header button that notifies about an ongoing call
-    const label = audioOnly ? "Voice call started" : "Video call started";
+    await this.joinCallInRoom(page, audioOnly, false);
+  }
+
+  public static async joinCallInRoom(
+    page: Page,
+    audioOnly: boolean = false,
+    isDM: boolean = false,
+  ): Promise<void> {
+    // XXX This using the notification toast to join the room.
+    // Not the button in the header
+
+    await page.waitForTimeout(3000);
+    const label = isDM
+      ? audioOnly
+        ? "Incoming voice call"
+        : "Incoming video call"
+      : "Group call started";
     await expect(page.getByText(label)).toBeVisible({
       timeout: 10000,
     });
