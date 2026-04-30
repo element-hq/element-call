@@ -192,7 +192,12 @@ async function getLiveKitJWT(
   delayEndpointBaseUrl?: string,
   delayId?: string,
 ): Promise<{ url: string; jwt: string }> {
-  let bodyDalayParts = {};
+  interface IDelayParams {
+    delay_id?: string;
+    delay_timeout?: number;
+    delay_cs_api_url?: string;
+  }
+  let bodyDalayParts: IDelayParams = {};
   // Also check for empty string
   if (delayId && delayEndpointBaseUrl) {
     const delayTimeoutMs =
@@ -205,7 +210,7 @@ async function getLiveKitJWT(
   }
 
   const makeRequest = async (
-    delayParts: Record<string, unknown>,
+    delayParts: IDelayParams,
   ): Promise<Response> => {
     return await fetch(livekitServiceURL + "/sfu/get", {
       method: "POST",
