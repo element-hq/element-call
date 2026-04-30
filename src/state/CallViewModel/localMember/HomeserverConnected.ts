@@ -77,9 +77,8 @@ export function createHomeserverConnected$(
       if (isSyncing || graceMs <= 0) {
         return of(isSyncing);
       }
-      return of(false).pipe(delay(graceMs));
+      return of(false).pipe(delay(graceMs), startWith(true));
     }),
-    startWith(client.getSyncState() === SyncState.Syncing),
     distinctUntilChanged(),
   );
 
