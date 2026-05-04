@@ -85,7 +85,7 @@ export function createHomeserverConnected$(
     fromEvent(matrixRTCSession, MembershipManagerEvent.StatusChanged).pipe(
       map(() => matrixRTCSession.membershipStatus ?? Status.Unknown),
     ),
-    Status.Unknown,
+    matrixRTCSession.membershipStatus ?? Status.Unknown,
   );
 
   const membershipConnected$ = rtsSession$.pipe(
