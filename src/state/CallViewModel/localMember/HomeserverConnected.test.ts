@@ -6,14 +6,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { EventEmitter } from "events";
 import { ClientEvent, SyncState } from "matrix-js-sdk";
 import { MembershipManagerEvent, Status } from "matrix-js-sdk/lib/matrixrtc";
-import { TestScheduler } from "rxjs/testing";
 
 import { ObservableScope } from "../../ObservableScope";
 import { createHomeserverConnected$ } from "./HomeserverConnected";
+import { testScope, withTestScheduler } from "../../../utils/test";
 
 /**
  * Minimal stub of a Matrix client sufficient for our tests:
@@ -204,129 +204,60 @@ describe("createHomeserverConnected$", () => {
 });
 
 describe("createHomeserverConnected$ - Grace Period", () => {
-  let scope: ObservableScope;
-  let client: MockMatrixClient;
-  let session: MockMatrixRTCSession;
-  const GRACE_PERIOD = 5000;
+  const GRACE_PERIOD = 5;
 
-  beforeEach(() => {
-    vi.useFakeTimers();
-    scope = new ObservableScope();
-    // Initialize with values that satisfy the "Connected" condition
-    client = new MockMatrixClient(SyncState.Syncing);
-    session = new MockMatrixRTCSession({
-      membershipStatus: Status.Connected,
-      probablyLeft: false,
-    });
-  });
-
-  afterEach(() => {
-    scope.end();
-    vi.useRealTimers();
-  });
-
-  it("respects gracePeriodMs: stays true during grace period and flips false after", () => {
-    const hsConnected = createHomeserverConnected$(
-      scope,
-      client,
-      session,
-      GRACE_PERIOD,
-    );
-
-    // Initial state: Everything is connected
-    expect(hsConnected.combined$.value).toBe(true);
-
-    // 1. Sync loses connection -> should remain TRUE due to grace period
-    client.setSyncState(SyncState.Error);
-    expect(hsConnected.combined$.value).toBe(true);
-
-    // 2. Fast forward time (just before expiration)
-    vi.advanceTimersByTime(GRACE_PERIOD - 1);
-    expect(hsConnected.combined$.value).toBe(true);
-
-    // 3. Fast forward time (expiration)
-    vi.advanceTimersByTime(1);
-    expect(hsConnected.combined$.value).toBe(false);
-  });
-
-  it("recovers immediately if sync returns during grace period", () => {
-    const hsConnected = createHomeserverConnected$(
-      scope,
-      client,
-      session,
-      GRACE_PERIOD,
-    );
-
-    // Initial state: Connected
-    expect(hsConnected.combined$.value).toBe(true);
-
-    // 1. Sync error occurs
-    client.setSyncState(SyncState.Error);
-    vi.advanceTimersByTime(GRACE_PERIOD / 2);
-    expect(hsConnected.combined$.value).toBe(true);
-
-    // 2. Sync recovers BEFORE the grace period expires
-    client.setSyncState(SyncState.Syncing);
-    expect(hsConnected.combined$.value).toBe(true);
-
-    // 3. Fast forward the remaining time -> should stay TRUE
-    vi.advanceTimersByTime(GRACE_PERIOD);
-    expect(hsConnected.combined$.value).toBe(true);
-  });
-
-  it("flips to true IMMEDIATELY even if a grace period was pending", () => {
-    const hsConnected = createHomeserverConnected$(
-      scope,
-      client,
-      session,
-      GRACE_PERIOD,
-    );
-
-    // 1. Initial error: wait until it flips to false
-    client.setSyncState(SyncState.Error);
-    expect(hsConnected.combined$.value).toBe(true);
-    vi.advanceTimersByTime(GRACE_PERIOD + 1);
-    expect(hsConnected.combined$.value).toBe(false);
-
-    // 2. Back to Syncing -> Must be TRUE immediately (synchronously)
-    client.setSyncState(SyncState.Syncing);
-    expect(hsConnected.combined$.value).toBe(true);
-  });
-
-  it('marble: sync "s----e" -> HomeserverConnected "t---------f"', () => {
-    const ts = new TestScheduler((a, b) => expect(a).toEqual(b));
-
-    ts.run(({ cold, expectObservable }) => {
-      const GRACE = 5;
-      const scope = new ObservableScope();
-
-      // Setup Mocks
-      const client = new MockMatrixClient(SyncState.Syncing);
+  function marbleTest(
+    syncStateMarbles: string,
+    expectedConnectedMarbles: string,
+  ): void {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      const syncState$ = behavior(syncStateMarbles, {
+        s: SyncState.Syncing,
+        e: SyncState.Error,
+      });
+      const client = new MockMatrixClient(syncState$.value);
+      schedule(syncStateMarbles, {
+        s: () => client.setSyncState(SyncState.Syncing),
+        e: () => client.setSyncState(SyncState.Error),
+      });
       const session = new MockMatrixRTCSession({
         membershipStatus: Status.Connected,
         probablyLeft: false,
       });
-
-      const hs = createHomeserverConnected$(scope, client, session, GRACE);
-
-      // Marble-Input: s (Syncing) at 0ms, e (Error) at 5ms
-      const syncValues = { s: SyncState.Syncing, e: SyncState.Error };
-      const driver$ = cold("s----e", syncValues);
-
-      // Feed Mock-Client with marble values
-      driver$.subscribe((state) => {
-        client.setSyncState(state);
+      const hsConnected = createHomeserverConnected$(
+        testScope(),
+        client,
+        session,
+        GRACE_PERIOD,
+      );
+      expectObservable(hsConnected.combined$).toBe(expectedConnectedMarbles, {
+        y: true,
+        n: false,
       });
-
-      const values = { t: true, f: false };
-
-      // t (0ms: Syncing + Connected = true)
-      //   (5ms: Error occurs, Grace period starts, still true)
-      // f (10ms: 5ms + 5ms Grace period ends, should flip to false)
-      expectObservable(hs.combined$).toBe("t---------f", values);
-
-      ts.flush();
-      scope.end();
     });
+  }
+
+  it("respects gracePeriodMs: stays true during grace period and flips false after", () => {
+    // - Initial state: Everything is connected
+    // - Sync error occurs -> should remain connected due to grace period
+    // - After grace period, not connected
+    marbleTest("se", "y-----n");
+    // If the sync error takes longer to occur, it should take equally long for
+    // the connection state to change
+    marbleTest("s--e", "y-------n");
+  });
+
+  it("recovers immediately if sync returns during grace period", () => {
+    // - Initial state: Connected
+    // - Sync error occurs
+    // - Sync recovers BEFORE the grace period expires
+    // - Connection state remains constant
+    marbleTest("se--s", "y");
+  });
+
+  it("flips to true IMMEDIATELY even if a grace period was pending", () => {
+    // - Initial error: connection eventually flips to false
+    // - Back to Syncing -> Must be connected immediately (synchronously)
+    marbleTest("e-----s", "y----ny");
   });
 });
