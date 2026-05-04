@@ -189,6 +189,7 @@ export class Initializer {
 
     // Add the platform to the DOM, so CSS can query it
     document.body.setAttribute("data-platform", platform);
+    logger.info(`Platform: ${platform}`);
   }
 
   public static init(): Promise<void> | null {
