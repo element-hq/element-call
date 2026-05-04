@@ -209,9 +209,7 @@ async function getLiveKitJWT(
     };
   }
 
-  const makeRequest = async (
-    delayParts: IDelayParams,
-  ): Promise<Response> => {
+  const makeRequest = async (delayParts: IDelayParams): Promise<Response> => {
     return await fetch(livekitServiceURL + "/sfu/get", {
       method: "POST",
       headers: {
@@ -219,7 +217,7 @@ async function getLiveKitJWT(
       },
       body: JSON.stringify({
         // The legacy jwt endpoint uses only the matrix room id to calculate the livekit room alias.
-        // In turn, the livekit room alias is provided as part f the JWT payload.
+        // In turn, the livekit room alias is provided as part of the JWT payload.
         room: matrixRoomId,
         openid_token: openIDToken,
         device_id: deviceId,
