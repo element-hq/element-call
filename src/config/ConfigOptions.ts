@@ -162,6 +162,7 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       server_name: string;
     };
   };
+  sync_disconnect_grace_period_ms: number;
   ssla: string;
 }
 

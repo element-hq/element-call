@@ -91,7 +91,9 @@ export const widgetTest = test.extend<MyFixtures>({
 
       await ewPage1
         .getByRole("button", { name: "Invite to this room", exact: true })
-        .click();
+        .click({
+          timeout: 10000,
+        });
       await expect(
         ewPage1.getByRole("heading", { name: "Invite to Welcome Room" }),
       ).toBeVisible();

@@ -18,7 +18,11 @@ Please see LICENSE in the repository root for full details.
   position: absolute;
   inline-size: 135px;
   block-size: 160px;
-  inset: var(--cpd-space-4x);
+  /* Ensure that PiP lies within the safe area */
+  inset: calc(env(safe-area-inset-top) + var(--cpd-space-4x))
+    var(--content-inset-right)
+    calc(env(safe-area-inset-bottom) + var(--cpd-space-4x))
+    var(--content-inset-left);
 }
 
 @media (min-width: 600px) {

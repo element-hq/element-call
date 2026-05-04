@@ -12,7 +12,9 @@ Please see LICENSE in the repository root for full details.
   align-items: center;
   user-select: none;
   flex-shrink: 0;
-  padding-inline: var(--inline-content-inset);
+  padding-left: var(--content-inset-left);
+  padding-right: var(--content-inset-right);
+  padding-top: env(safe-area-inset-top);
 }
 
 .nav {

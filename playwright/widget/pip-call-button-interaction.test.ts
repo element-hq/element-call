@@ -16,8 +16,6 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
     "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
   );
 
-  test.slow();
-
   const valere = await addUser("Valere", HOST1);
 
   const callRoom = "CallRoom";
