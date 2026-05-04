@@ -1,4 +1,4 @@
-# SDK mode
+# SDK mode (EXPERIMENTAL)
 
 EC can be build in sdk mode. This will result in a compiled js file that can be imported in very simple webapps.
 
@@ -13,8 +13,8 @@ This folder contains an example index.html file that showcases the sdk in use (h
 To get started run
 
 ```
-yarn
-yarn build:sdk
+pnpm install
+pnpm build:sdk
 ```
 
 in the repository root.

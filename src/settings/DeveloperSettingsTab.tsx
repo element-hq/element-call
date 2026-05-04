@@ -22,6 +22,7 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   EditInPlace,
+  ErrorMessage,
   Root as Form,
   Heading,
   HelpMessage,
@@ -45,9 +46,11 @@ import {
 } from "./settings";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
+import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 
 interface Props {
   client: MatrixClient;
+  roomId?: string;
   livekitRooms?: {
     room: LivekitRoom;
     url: string;
@@ -60,6 +63,7 @@ interface Props {
 export const DeveloperSettingsTab: FC<Props> = ({
   client,
   livekitRooms,
+  roomId,
   env,
 }) => {
   const { t } = useTranslation();
@@ -97,6 +101,8 @@ export const DeveloperSettingsTab: FC<Props> = ({
     alwaysShowIphoneEarpieceSetting,
   );
 
+  const [customLivekitUrlUpdateError, setCustomLivekitUrlUpdateError] =
+    useState<string | null>(null);
   const [customLivekitUrl, setCustomLivekitUrl] = useSetting(
     customLivekitUrlSetting,
   );
@@ -234,14 +240,36 @@ export const DeveloperSettingsTab: FC<Props> = ({
         savingLabel={t("developer_mode.custom_livekit_url.saving")}
         cancelButtonLabel={t("developer_mode.custom_livekit_url.reset")}
         onSave={useCallback(
-          (e: React.FormEvent<HTMLFormElement>) => {
-            setCustomLivekitUrl(
-              customLivekitUrlTextBuffer === ""
-                ? null
-                : customLivekitUrlTextBuffer,
-            );
+          async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+            if (
+              roomId === undefined ||
+              customLivekitUrlTextBuffer === "" ||
+              customLivekitUrlTextBuffer === null
+            ) {
+              setCustomLivekitUrl(null);
+              return;
+            }
+
+            try {
+              const userId = client.getUserId();
+              const deviceId = client.getDeviceId();
+
+              if (userId === null || deviceId === null) {
+                throw new Error("Invalid user or device ID");
+              }
+              await getSFUConfigWithOpenID(
+                client,
+                { userId, deviceId, memberId: "" },
+                customLivekitUrlTextBuffer,
+                roomId,
+              );
+              setCustomLivekitUrlUpdateError(null);
+              setCustomLivekitUrl(customLivekitUrlTextBuffer);
+            } catch {
+              setCustomLivekitUrlUpdateError("invalid URL (did not update)");
+            }
           },
-          [setCustomLivekitUrl, customLivekitUrlTextBuffer],
+          [customLivekitUrlTextBuffer, setCustomLivekitUrl, client, roomId],
         )}
         value={customLivekitUrlTextBuffer ?? ""}
         onChange={useCallback(
@@ -256,7 +284,12 @@ export const DeveloperSettingsTab: FC<Props> = ({
           },
           [setCustomLivekitUrl],
         )}
-      />
+        serverInvalid={customLivekitUrlUpdateError !== null}
+      >
+        {customLivekitUrlUpdateError !== null && (
+          <ErrorMessage>{customLivekitUrlUpdateError}</ErrorMessage>
+        )}
+      </EditInPlace>
       <Heading as="h3" type="body" weight="semibold" size="lg">
         {t("developer_mode.matrixRTCMode.title")}
       </Heading>
@@ -316,6 +349,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
             })}
           </h4>
           <p>LivekitAlias: {livekitRoom.livekitAlias}</p>
+          <p>connectionState (wont hot reload): {livekitRoom.room.state}</p>
           {livekitRoom.isLocal && <p>ws-url: {localSfuUrl?.href}</p>}
           <p>
             {t("developer_mode.livekit_server_info")}(

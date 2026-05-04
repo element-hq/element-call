@@ -18,6 +18,7 @@ export default {
     // https://docs.docker.com/compose/migrate/
     "docker-compose",
   ],
+  ignoreFiles: ["scripts/.pnpmfile.cjs"],
   ignoreDependencies: [
     // Used in CSS
     "normalize.css",
@@ -30,7 +31,7 @@ export default {
     "@types/content-type",
     "@types/sdp-transform",
     "@types/uuid",
-    // We obviously use this, but if the package has been linked with yarn link,
+    // We obviously use this, but if the package has been linked with pnpm link,
     // then Knip will flag it as a false positive
     // https://github.com/webpro-nl/knip/issues/766
     "@vector-im/compound-web",

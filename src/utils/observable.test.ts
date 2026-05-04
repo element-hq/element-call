@@ -47,6 +47,7 @@ test("generateItems", () => {
     expectObservable(
       hot<string>(inputMarbles).pipe(
         generateItems(
+          "test items",
           function* (input) {
             for (let i = 1; i <= +input; i++) {
               yield { keys: [i], data: undefined };

@@ -19,6 +19,8 @@ import {
   bobRtcMember,
 } from "../utils/test-fixtures";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
+import { initializeWidget } from "../widget";
+initializeWidget();
 
 vi.mock("livekit-client/e2ee-worker?worker");
 

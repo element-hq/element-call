@@ -17,6 +17,7 @@ import { observeParticipantEvents } from "@livekit/components-core";
 import {
   Status as RTCSessionStatus,
   type LivekitTransport,
+  type LivekitTransportConfig,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
@@ -61,7 +62,8 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { and$ } from "../../../utils/observable.ts";
-import { type LocalTransportWithSFUConfig } from "./LocalTransport.ts";
+import { type LocalTransport } from "./LocalTransport.ts";
+import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -125,9 +127,9 @@ interface Props {
   muteStates: MuteStates;
   connectionManager: IConnectionManager;
   createPublisherFactory: (connection: Connection) => Publisher;
-  joinMatrixRTC: (transport: LivekitTransport) => void;
+  joinMatrixRTC: (transport: LivekitTransportConfig) => void;
   homeserverConnected: HomeserverConnected;
-  localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
+  localTransport$: Behavior<LocalTransport>;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
@@ -146,7 +148,7 @@ interface Props {
  * @param props.createPublisherFactory Factory to create a publisher once we have a connection.
  * @param props.joinMatrixRTC Callback to join the matrix RTC session once we have a transport.
  * @param props.homeserverConnected The homeserver connected state.
- * @param props.localTransport$ The local transport to use for publishing.
+ * @param props.localTransport$ The transport to advertise in our membership.
  * @param props.logger The logger to use.
  * @param props.muteStates The mute states for video and audio.
  * @param props.matrixRTCSession The matrix RTC session to join.
@@ -160,7 +162,7 @@ interface Props {
 export const createLocalMembership$ = ({
   scope,
   connectionManager,
-  localTransport$: localTransportCanThrow$,
+  localTransport$,
   homeserverConnected,
   createPublisherFactory,
   joinMatrixRTC,
@@ -200,27 +202,48 @@ export const createLocalMembership$ = ({
    * Fully connected
    */
   connected$: Behavior<boolean>;
+  internalLoggerRef: Logger;
 } => {
   const logger = parentLogger.getChild("[LocalMembership]");
   logger.debug(`Creating local membership..`);
 
+  // We consider error on the transport as fatal.
+  // Whether it is the active transport or the preferred transport.
+  const handleTransportError = (e: unknown): Observable<null> => {
+    let error: ElementCallError;
+    if (e instanceof ElementCallError) {
+      error = e;
+    } else {
+      error = new UnknownCallError(
+        e instanceof Error ? e : new Error("Unknown error from localTransport"),
+      );
+    }
+    setTransportError(error);
+    return of(null);
+  };
+
+  // This is the transport that we will advertise in our membership.
+  const advertisedTransport$ = localTransport$.pipe(
+    switchMap((lt) => lt.advertised$),
+    catchError(handleTransportError),
+    distinctUntilChanged(areLivekitTransportsEqual),
+  );
+
   // Unwrap the local transport and set the state of the LocalMembership to error in case the transport is an error.
-  const localTransport$ = scope.behavior(
-    localTransportCanThrow$.pipe(
-      catchError((e: unknown) => {
-        let error: ElementCallError;
-        if (e instanceof ElementCallError) {
-          error = e;
-        } else {
-          error = new UnknownCallError(
-            e instanceof Error
-              ? e
-              : new Error("Unknown error from localTransport"),
-          );
-        }
-        setTransportError(error);
-        return of(null);
+  const activeTransport$ = scope.behavior(
+    localTransport$.pipe(
+      switchMap((lt) => {
+        return combineLatest([lt.active$, lt.advertised$]).pipe(
+          map(([active, advertised]) => {
+            // Our policy is to not publish to another transport if our prefered transport is miss-configured
+            if (advertised == null) return null;
+
+            return active?.transport ?? null;
+          }),
+        );
       }),
+      catchError(handleTransportError),
+      distinctUntilChanged(areLivekitTransportsEqual),
     ),
   );
 
@@ -228,16 +251,14 @@ export const createLocalMembership$ = ({
   const localConnection$ = scope.behavior(
     combineLatest([
       connectionManager.connectionManagerData$,
-      localTransport$,
+      activeTransport$,
     ]).pipe(
       map(([{ value: connectionData }, localTransport]) => {
         if (localTransport === null) {
           return null;
         }
 
-        return connectionData.getConnectionForTransport(
-          localTransport.transport,
-        );
+        return connectionData.getConnectionForTransport(localTransport);
       }),
       tap((connection) => {
         logger.info(
@@ -266,11 +287,11 @@ export const createLocalMembership$ = ({
 
   mediaErrors$.pipe(scope.bind()).subscribe((error) => {
     if (error) {
+      // This is a MediaDevice error, can be PermissionDenied, NotFound, DeviceInUse, Other.
+      // Will also occurs if you cancel screen sharing browser prompt.
+      // This is not necessarily fatal, since the user might be able to join without media.
+      // XXX We might want to give some user feedback here to let them know their media is not working.
       logger.error(`Failed to create local tracks:`, error);
-      setMatrixError(
-        // TODO is it fatal? Do we need to create a new Specialized Error?
-        new UnknownCallError(new Error(`Media device error: ${error}`)),
-      );
     }
   });
   // MATRIX RELATED
@@ -310,13 +331,17 @@ export const createLocalMembership$ = ({
   //  - destruct all current streams
   //  - overwrite current publisher
   scope.reconcile(localConnection$, async (connection) => {
+    logger.info(
+      "reconcile based on new localConnection:",
+      connection?.transport.livekit_service_url,
+    );
     if (connection !== null) {
       const publisher = createPublisherFactory(connection);
       publisher$.next(publisher);
+
       // Clean-up callback
       return Promise.resolve(async (): Promise<void> => {
-        await publisher.stopPublishing();
-        await publisher.stopTracks();
+        await publisher.destroy();
       });
     }
   });
@@ -395,7 +420,7 @@ export const createLocalMembership$ = ({
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
     combineLatest([
       localConnectionState$,
-      localTransport$,
+      activeTransport$,
       joinAndPublishRequested$,
       from(trackStartRequested.promise).pipe(
         map(() => true),
@@ -520,23 +545,32 @@ export const createLocalMembership$ = ({
       }
     });
 
-  combineLatest([muteStates.video.enabled$, homeserverConnected.combined$])
-    .pipe(scope.bind())
-    .subscribe(([videoEnabled, connected]) => {
-      if (!connected) return;
-      void matrixRTCSession.updateCallIntent(videoEnabled ? "video" : "audio");
-    });
+  muteStates.video.enabled$.pipe(scope.bind()).subscribe((videoEnabled) => {
+    void matrixRTCSession
+      .updateCallIntent(videoEnabled ? "video" : "audio")
+      .catch((e) => {
+        if (e instanceof Error && e.message === "Not connected yet") {
+          logger.debug(
+            "'not connected yet' while updating the call intent (this is expected on startup)",
+          );
+        } else {
+          throw e;
+        }
+      });
+  });
 
-  // Keep matrix rtc session in sync with localTransport$, connectRequested$
+  // Keep matrix rtc session in sync with advertisedTransport$, connectRequested$
   scope.reconcile(
-    scope.behavior(combineLatest([localTransport$, joinAndPublishRequested$])),
+    scope.behavior(
+      combineLatest([advertisedTransport$, joinAndPublishRequested$]),
+    ),
     async ([transport, shouldConnect]) => {
       if (!transport) return;
       // if shouldConnect=false we will do the disconnect as the cleanup from the previous reconcile iteration.
       if (!shouldConnect) return;
 
       try {
-        joinMatrixRTC(transport.transport);
+        joinMatrixRTC(transport);
       } catch (error) {
         logger.error("Error entering RTC session", error);
         if (error instanceof Error)
@@ -628,7 +662,15 @@ export const createLocalMembership$ = ({
   ) {
     toggleScreenSharing = (): void => {
       const screenshareSettings: ScreenShareCaptureOptions = {
-        audio: true,
+        // Screen share audio shouldn't have any filtering.
+        // "echoCancellation" is purposely excluded, as setting it to
+        // false causes the screen share audio track to include
+        // an echo of the incoming participant's voice
+        audio: {
+          autoGainControl: false,
+          noiseSuppression: false,
+          voiceIsolation: false,
+        },
         selfBrowserSurface: "include",
         surfaceSwitching: "include",
         systemAudio: "include",
@@ -669,6 +711,7 @@ export const createLocalMembership$ = ({
     sharingScreen$,
     toggleScreenSharing,
     connection$: localConnection$,
+    internalLoggerRef: logger,
   };
 };
 
@@ -704,7 +747,7 @@ interface EnterRTCSessionOptions {
 export function enterRTCSession(
   rtcSession: MatrixRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
-  transport: LivekitTransport,
+  transport: LivekitTransportConfig,
   options: EnterRTCSessionOptions,
 ): void {
   const { encryptMedia, matrixRTCMode } = options;
@@ -722,12 +765,26 @@ export function enterRTCSession(
   const multiSFU =
     matrixRTCMode === MatrixRTCMode.Compatibility ||
     matrixRTCMode === MatrixRTCMode.Matrix_2_0;
+
+  // For backwards compatibility with Element Call versions that do not do Matrix 2.0,
+  // we add the livekit alias to the transport.
+  let backwardCompatibleTransport: LivekitTransport | LivekitTransportConfig;
+  if (matrixRTCMode === MatrixRTCMode.Matrix_2_0) {
+    backwardCompatibleTransport = transport;
+  } else {
+    backwardCompatibleTransport = {
+      livekit_alias: rtcSession.room.roomId,
+      ...transport,
+    };
+  }
+
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   // TODO where/how do we track errors originating from the ongoing rtcSession?
+
   rtcSession.joinRTCSession(
     ownMembershipIdentity,
-    multiSFU ? [] : [transport],
-    multiSFU ? transport : undefined,
+    multiSFU ? [] : [backwardCompatibleTransport],
+    multiSFU ? backwardCompatibleTransport : undefined,
     {
       notificationType,
       callIntent,
@@ -745,7 +802,6 @@ export function enterRTCSession(
       makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
-      useExperimentalToDeviceTransport: true,
       unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
     },
   );

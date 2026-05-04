@@ -108,8 +108,9 @@ exports[`ConnectionLostError: Action handling should reset error state 1`] = `
           class="error"
         >
           <div
-            class="_content_1r8kr_8 icon"
-            data-size="large"
+            class="_big-icon_1ssbv_8 icon"
+            data-kind="primary"
+            data-size="lg"
           >
             <svg
               aria-hidden="true"
@@ -133,7 +134,7 @@ exports[`ConnectionLostError: Action handling should reset error state 1`] = `
             You were disconnected from the call.
           </p>
           <button
-            class="_button_13vu4_8"
+            class="_button_1nw83_8"
             data-kind="secondary"
             data-size="lg"
             role="button"
@@ -142,7 +143,7 @@ exports[`ConnectionLostError: Action handling should reset error state 1`] = `
             Reconnect
           </button>
           <button
-            class="_button_13vu4_8 homeLink"
+            class="_button_1nw83_8 homeLink"
             data-kind="tertiary"
             data-size="lg"
             role="button"
@@ -265,8 +266,9 @@ exports[`should have a close button in widget mode 1`] = `
           class="error"
         >
           <div
-            class="_content_1r8kr_8 icon"
-            data-size="large"
+            class="_big-icon_1ssbv_8 icon"
+            data-kind="primary"
+            data-size="lg"
           >
             <svg
               aria-hidden="true"
@@ -295,7 +297,7 @@ exports[`should have a close button in widget mode 1`] = `
             The server is not configured to work with Element Call. Please contact your server admin (Domain: example.com, Error Code: MISSING_MATRIX_RTC_TRANSPORT).
           </p>
           <button
-            class="_button_13vu4_8"
+            class="_button_1nw83_8"
             data-kind="primary"
             data-size="lg"
             role="button"
@@ -418,8 +420,9 @@ exports[`should render the error page with link back to home 1`] = `
           class="error"
         >
           <div
-            class="_content_1r8kr_8 icon"
-            data-size="large"
+            class="_big-icon_1ssbv_8 icon"
+            data-kind="primary"
+            data-size="lg"
           >
             <svg
               aria-hidden="true"
@@ -448,7 +451,7 @@ exports[`should render the error page with link back to home 1`] = `
             The server is not configured to work with Element Call. Please contact your server admin (Domain: example.com, Error Code: MISSING_MATRIX_RTC_TRANSPORT).
           </p>
           <button
-            class="_button_13vu4_8 homeLink"
+            class="_button_1nw83_8 homeLink"
             data-kind="tertiary"
             data-size="lg"
             role="button"
@@ -571,8 +574,9 @@ exports[`should report correct error for 'Call is not supported' 1`] = `
           class="error"
         >
           <div
-            class="_content_1r8kr_8 icon"
-            data-size="large"
+            class="_big-icon_1ssbv_8 icon"
+            data-kind="primary"
+            data-size="lg"
           >
             <svg
               aria-hidden="true"
@@ -601,7 +605,7 @@ exports[`should report correct error for 'Call is not supported' 1`] = `
             The server is not configured to work with Element Call. Please contact your server admin (Domain: example.com, Error Code: MISSING_MATRIX_RTC_TRANSPORT).
           </p>
           <button
-            class="_button_13vu4_8 homeLink"
+            class="_button_1nw83_8 homeLink"
             data-kind="tertiary"
             data-size="lg"
             role="button"
@@ -724,8 +728,9 @@ exports[`should report correct error for 'Connection lost' 1`] = `
           class="error"
         >
           <div
-            class="_content_1r8kr_8 icon"
-            data-size="large"
+            class="_big-icon_1ssbv_8 icon"
+            data-kind="primary"
+            data-size="lg"
           >
             <svg
               aria-hidden="true"
@@ -749,7 +754,7 @@ exports[`should report correct error for 'Connection lost' 1`] = `
             You were disconnected from the call.
           </p>
           <button
-            class="_button_13vu4_8"
+            class="_button_1nw83_8"
             data-kind="secondary"
             data-size="lg"
             role="button"
@@ -758,7 +763,7 @@ exports[`should report correct error for 'Connection lost' 1`] = `
             Reconnect
           </button>
           <button
-            class="_button_13vu4_8 homeLink"
+            class="_button_1nw83_8 homeLink"
             data-kind="tertiary"
             data-size="lg"
             role="button"
@@ -881,8 +886,9 @@ exports[`should report correct error for 'Incompatible browser' 1`] = `
           class="error"
         >
           <div
-            class="_content_1r8kr_8 icon"
-            data-size="large"
+            class="_big-icon_1ssbv_8 icon"
+            data-kind="primary"
+            data-size="lg"
           >
             <svg
               aria-hidden="true"
@@ -906,7 +912,7 @@ exports[`should report correct error for 'Incompatible browser' 1`] = `
             Your web browser does not support encrypted calls. Supported browsers include Chrome, Safari, and Firefox 117+.
           </p>
           <button
-            class="_button_13vu4_8 homeLink"
+            class="_button_1nw83_8 homeLink"
             data-kind="tertiary"
             data-size="lg"
             role="button"
@@ -1029,8 +1035,9 @@ exports[`should report correct error for 'Insufficient capacity' 1`] = `
           class="error"
         >
           <div
-            class="_content_1r8kr_8 icon"
-            data-size="large"
+            class="_big-icon_1ssbv_8 icon"
+            data-kind="primary"
+            data-size="lg"
           >
             <svg
               aria-hidden="true"
@@ -1054,7 +1061,7 @@ exports[`should report correct error for 'Insufficient capacity' 1`] = `
             The server has reached its maximum capacity and you cannot join the call at this time. Try again later, or contact your server admin if the problem persists.
           </p>
           <button
-            class="_button_13vu4_8 homeLink"
+            class="_button_1nw83_8 homeLink"
             data-kind="tertiary"
             data-size="lg"
             role="button"

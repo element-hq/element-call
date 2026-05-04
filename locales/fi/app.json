@@ -22,12 +22,6 @@
     "upload_file": "Lähetä tiedosto"
   },
   "analytics_notice": "Osallistumalla tähän betaan hyväksyt nimettömien tietojen keräämisen, joita käytämme tuotteen parantamiseen. Löydät lisätietoa siitä, mitä tietoja seuraamme meidän <2> Tietosuojakäytännöstä</2> ja <6>Evästekäytännöstä</6> .",
-  "app_selection_modal": {
-    "continue_in_browser": "Jatka selaimessa",
-    "open_in_app": "Avaa sovelluksessa",
-    "text": "Oletko valmis liittymään?",
-    "title": "Valitse sovellus"
-  },
   "call_ended_view": {
     "create_account_button": "Luo tili",
     "create_account_prompt": "<0>Miksi et viimeistelisi määrittämällä salasanaa tilisi säilyttämiseksi?</0><1>Voit säilyttää nimesi ja asettaa avatarin käytettäväksi tulevissa puheluissa</1>",

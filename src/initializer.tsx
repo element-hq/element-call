@@ -28,6 +28,7 @@ import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { platform } from "./Platform";
 import { isFailure } from "./utils/fetch";
+import { initializeWidget } from "./widget";
 
 // This generates a map of locale names to their URL (based on import.meta.url), which looks like this:
 // {
@@ -115,6 +116,8 @@ export class Initializer {
   }
 
   public static async initBeforeReact(): Promise<void> {
+    initializeWidget();
+
     const polyfills: Promise<unknown>[] = [];
     if (shouldPolyfillSegmenter()) {
       polyfills.push(import("@formatjs/intl-segmenter/polyfill-force"));

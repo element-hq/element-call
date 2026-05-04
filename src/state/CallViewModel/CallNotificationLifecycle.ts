@@ -7,9 +7,9 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type CallMembership,
+  type IRTCNotificationContent,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-  type MatrixRTCSessionEventHandlerMap,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   combineLatest,
@@ -38,6 +38,7 @@ import {
 
 import { type Behavior } from "../Behavior";
 import { type Epoch, mapEpoch, type ObservableScope } from "../ObservableScope";
+
 export type AutoLeaveReason = "allOthersLeft" | "timeout" | "decline";
 export type CallPickupState =
   | "unknown"
@@ -46,9 +47,11 @@ export type CallPickupState =
   | "decline"
   | "success"
   | null;
-export type CallNotificationWrapper = Parameters<
-  MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
->;
+
+export type CallNotificationWrapper = {
+  event_id: string;
+} & IRTCNotificationContent;
+
 export function createSentCallNotification$(
   scope: ObservableScope,
   matrixRTCSession: MatrixRTCSession,
@@ -80,12 +83,12 @@ export interface Props {
   options: { waitForCallPickup?: boolean; autoLeaveWhenOthersLeft?: boolean };
   localUser: { deviceId: string; userId: string };
 }
+
 /**
  * @returns two observables:
  * `callPickupState$` The current call pickup state of the call.
  *  - "unknown": The client has not yet sent the notification event. We don't know if it will because it first needs to send its own membership.
  *     Then we can conclude if we were the first one to join or not.
- *     This may also be set if we are disconnected.
  *  - "ringing": The call is ringing on other devices in this room (This client should give audiovisual feedback that this is happening).
  *  - "timeout": No-one picked up in the defined time this call should be ringing on others devices.
  *     The call failed. If desired this can be used as a trigger to exit the call.
@@ -127,25 +130,19 @@ export function createCallNotificationLifecycle$({
   ) as Behavior<Epoch<boolean>>;
 
   /**
-   * Whenever the RTC session tells us that it intends to ring the remote
-   * participant's devices, this emits an Observable tracking the current state of
-   * that ringing process.
+   * The state of the current ringing attempt, if the RTC session is indeed
+   * ringing the remote participant's devices. Otherwise `null`.
    */
-  // This is a behavior since we need to store the latest state for when we subscribe to this after `didSendCallNotification$`
-  // has already emitted but we still need the latest observable with a timeout timer that only gets created on after receiving `notificationEvent`.
-  // A behavior will emit the latest observable with the running timer to new subscribers.
-  // see also: callPickupState$ and in particular the line: `return this.ring$.pipe(mergeAll());` here we otherwise might get an EMPTY observable if
-  // `ring$` would not be a behavior.
   const remoteRingState$: Behavior<"ringing" | "timeout" | "decline" | null> =
     scope.behavior(
       sentCallNotification$.pipe(
         filter(
-          (newAndLegacyEvents) =>
+          (notificationEventArgs: CallNotificationWrapper | null) =>
             // only care about new events (legacy do not have decline pattern)
-            newAndLegacyEvents?.[0].notification_type === "ring",
+            notificationEventArgs?.notification_type === "ring",
         ),
         map((e) => e as CallNotificationWrapper),
-        switchMap(([notificationEvent]) => {
+        switchMap((notificationEvent) => {
           const lifetimeMs = notificationEvent?.lifetime ?? 0;
           return concat(
             lifetimeMs === 0

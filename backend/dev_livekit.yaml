@@ -18,3 +18,7 @@ keys:
   devkey: secret
 room:
   auto_create: false
+webhook:
+  api_key: devkey
+  urls:
+    - https://matrix-rtc.m.localhost/livekit/jwt/sfu_webhook

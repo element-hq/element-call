@@ -22,12 +22,6 @@
     "upload_file": "Nahrát soubor"
   },
   "analytics_notice": "Účastí v této beta verzi souhlasíte se shromažďováním anonymních údajů, které používáme ke zlepšování produktu. Více informací o tom, které údaje sledujeme, najdete v našich <2>Zásadách ochrany osobních údajů</2> a <6>Zásadách používání souborů cookie</6>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Pokračovat v prohlížeči",
-    "open_in_app": "Otevřít v aplikaci",
-    "text": "Jste připraveni se připojit?",
-    "title": "Vybrat aplikaci"
-  },
   "call_ended_view": {
     "create_account_button": "Vytvořit účet",
     "create_account_prompt": "<0>Proč neskončit nastavením hesla, abyste mohli účet použít znovu?</0><1>Budete si moci nechat své jméno a nastavit si avatar pro budoucí hovory </1>",

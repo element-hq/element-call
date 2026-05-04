@@ -15,9 +15,9 @@ import {
   type Room as LivekitRoom,
 } from "livekit-client";
 import { SyncState } from "matrix-js-sdk/lib/sync";
-import { BehaviorSubject, type Observable, map, of } from "rxjs";
+import { BehaviorSubject, combineLatest, map, of } from "rxjs";
 import { onTestFinished, vi } from "vitest";
-import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
+import { ClientEvent, type RoomMember, type MatrixClient } from "matrix-js-sdk";
 import EventEmitter from "events";
 import * as ComponentsCore from "@livekit/components-core";
 
@@ -30,7 +30,10 @@ import {
   type CallViewModelOptions,
 } from "./CallViewModel";
 import {
+  exampleSfuConfig,
+  exampleTransport,
   mockConfig,
+  MockConnection,
   mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
@@ -63,33 +66,39 @@ const carol = local;
 
 const dave = mockMatrixRoomMember(daveRTLRtcMember, { rawDisplayName: "Dave" });
 
-const roomMembers = new Map(
-  [alice, aliceDoppelganger, bob, bobZeroWidthSpace, carol, dave, daveRTL].map(
-    (p) => [p.userId, p],
-  ),
-);
-
 export interface CallViewModelInputs {
   remoteParticipants$: Behavior<RemoteParticipant[]>;
   rtcMembers$: Behavior<Partial<CallMembership>[]>;
+  roomMembers: RoomMember[];
   livekitConnectionState$: Behavior<ConnectionState>;
-  speaking: Map<Participant, Observable<boolean>>;
+  speaking: Map<Participant, Behavior<boolean>>;
+  sharingScreen: Map<Participant, Behavior<boolean>>;
   mediaDevices: MediaDevices;
   initialSyncState: SyncState;
   windowSize$: Behavior<{ width: number; height: number }>;
 }
 
-const localParticipant = mockLocalParticipant({ identity: "" });
+export const localParticipant = mockLocalParticipant({ identity: "" });
 
 export function withCallViewModel(mode: MatrixRTCMode) {
   return (
     {
       remoteParticipants$ = constant([]),
       rtcMembers$ = constant([localRtcMember]),
+      roomMembers = [
+        alice,
+        aliceDoppelganger,
+        bob,
+        bobZeroWidthSpace,
+        carol,
+        dave,
+        daveRTL,
+      ],
       livekitConnectionState$: connectionState$ = constant(
         ConnectionState.Connected,
       ),
       speaking = new Map(),
+      sharingScreen = new Map(),
       mediaDevices = mockMediaDevices({}),
       initialSyncState = SyncState.Syncing,
       windowSize$ = constant({ width: 1000, height: 800 }),
@@ -127,9 +136,12 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         public getSyncState(): SyncState {
           return syncState;
         }
+        public getAccessToken(): string | null {
+          return "a-token";
+        }
       })() as Partial<MatrixClient> as MatrixClient,
-      getMembers: () => Array.from(roomMembers.values()),
-      getMembersWithMembership: () => Array.from(roomMembers.values()),
+      getMembers: () => roomMembers,
+      getMembersWithMembership: () => roomMembers,
     });
     const rtcSession = new MockRTCSession(room, []).withMemberships(
       rtcMembers$,
@@ -147,13 +159,19 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     const eventsSpy = vi
       .spyOn(ComponentsCore, "observeParticipantEvents")
       .mockImplementation((p, ...eventTypes) => {
-        if (eventTypes.includes(ParticipantEvent.IsSpeakingChanged)) {
-          return (speaking.get(p) ?? of(false)).pipe(
-            map((s): Participant => ({ ...p, isSpeaking: s }) as Participant),
-          );
-        } else {
-          return of(p);
-        }
+        return combineLatest([
+          (eventTypes.includes(ParticipantEvent.IsSpeakingChanged) &&
+            speaking.get(p)) ||
+            constant(false),
+          (eventTypes.includes(ParticipantEvent.TrackPublished) &&
+            sharingScreen.get(p)) ||
+            constant(false),
+        ]).pipe(
+          map(
+            ([isSpeaking, isScreenShareEnabled]) =>
+              ({ ...p, isSpeaking, isScreenShareEnabled }) as Participant,
+          ),
+        );
       });
 
     const roomEventSelectorSpy = vi
@@ -165,6 +183,13 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     );
     const reactions$ = new BehaviorSubject<Record<string, ReactionInfo>>({});
 
+    const livekitRoomFactory = (): LivekitRoom =>
+      mockLivekitRoom({
+        localParticipant,
+        disconnect: async () => Promise.resolve(),
+        setE2EEEnabled: async () => Promise.resolve(),
+      });
+
     const vm = createCallViewModel$(
       testScope(),
       rtcSession.asMockedSession(),
@@ -174,14 +199,38 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       {
         encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         autoLeaveWhenOthersLeft: false,
-        livekitRoomFactory: (): LivekitRoom =>
-          mockLivekitRoom({
-            localParticipant,
-            disconnect: async () => Promise.resolve(),
-            setE2EEEnabled: async () => Promise.resolve(),
-          }),
+        livekitRoomFactory,
         connectionState$,
         windowSize$,
+        localTransport: {
+          active$: constant({
+            transport: exampleTransport,
+            sfuConfig: exampleSfuConfig,
+          }),
+          advertised$: constant(exampleTransport),
+        },
+        connectionFactory: {
+          createConnection(
+            scope,
+            transport,
+            ownMembershipIdentity,
+            logger,
+            sfuConfig,
+          ) {
+            return new MockConnection(
+              {
+                scope,
+                transport,
+                ownMembershipIdentity,
+                existingSFUConfig: sfuConfig,
+                client: room.client,
+                roomId: room.roomId,
+                livekitRoomFactory,
+              },
+              logger,
+            );
+          },
+        },
         matrixRTCMode$: constant(mode),
         ...options,
       },

@@ -27,9 +27,7 @@ import { HOST1, HOST2, TestHelpers } from "./test-helpers";
 widgetTest(
   `Test swapping publisher from ${HOST1} to ${HOST2}`,
   async ({ addUser, browserName }) => {
-    // ALWAYS SKIPT THE TEST SINCE IT IS EXPECTED TO FAIL.
-    // confirmed locally that its failing without: https://github.com/element-hq/element-call/pull/3675
-    test.skip(true);
+    test.slow();
     test.skip(
       browserName === "firefox",
       "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
@@ -68,40 +66,26 @@ widgetTest(
         .contentFrame();
       await expect(frame.getByTestId("videoTile")).toHaveCount(2);
 
-      // There are no other options than to wait for all media to be ready?
-      // Or it is too flaky :/
-      await user.page.waitForTimeout(3000);
-      // No one should be waiting for media
-      await expect(frame.getByText("Waiting for media...")).not.toBeVisible();
+      // Wait for "Waiting for media..." to disappear (with timeout)
+      await expect(frame.getByText("Waiting for media...")).not.toBeVisible({
+        timeout: 10000, // Maximum time to wait
+      });
 
       // There should be 2 video elements, visible and autoplaying
-      const videoElements = await frame.locator("video").all();
-      expect(videoElements.length).toBe(2);
+      await expect(frame.locator("video")).toHaveCount(2, {
+        timeout: 10000,
+      });
 
-      const blockDisplayCount = await frame
-        .locator("video")
-        .evaluateAll(
-          (videos: Element[]) =>
-            videos.filter(
-              (v: Element) => window.getComputedStyle(v).display === "block",
-            ).length,
-        );
-      expect(blockDisplayCount).toBe(2);
+      await TestHelpers.expectVisibleVideoCount(frame, 2);
     }
 
     // now we switch the mode for timo (second joiner on multi-sfu HOST2 but currently HOST1)
     await TestHelpers.setEmbeddedElementCallRtcMode(timo.page, "compat");
     await timo.page.waitForTimeout(3000);
-    const blockDisplayCount = await timo.page
-      .locator('iframe[title="Element Call"]')
-      .contentFrame()
-      .locator("video")
-      .evaluateAll(
-        (videos: Element[]) =>
-          videos.filter(
-            (v: Element) => window.getComputedStyle(v).display === "block",
-          ).length,
-      );
-    expect(blockDisplayCount).toBe(2);
+
+    await TestHelpers.expectVisibleVideoCount(
+      timo.page.locator('iframe[title="Element Call"]').contentFrame(),
+      2,
+    );
   },
 );

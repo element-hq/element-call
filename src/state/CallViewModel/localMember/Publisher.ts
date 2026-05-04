@@ -30,9 +30,9 @@ import {
   trackProcessorSync,
 } from "../../../livekit/TrackProcessorContext.tsx";
 import { getUrlParams } from "../../../UrlParams.ts";
-import { observeTrackReference$ } from "../../MediaViewModel.ts";
+import { observeTrackReference$ } from "../../observeTrackReference";
 import { type Connection } from "../remoteMembers/Connection.ts";
-import { type ObservableScope } from "../../ObservableScope.ts";
+import { ObservableScope } from "../../ObservableScope.ts";
 
 /**
  * A wrapper for a Connection object.
@@ -47,9 +47,10 @@ export class Publisher {
    */
   public shouldPublish = false;
 
+  private readonly scope = new ObservableScope();
+
   /**
    * Creates a new Publisher.
-   * @param scope - The observable scope to use for managing the publisher.
    * @param connection - The connection to use for publishing.
    * @param devices - The media devices to use for audio and video input.
    * @param muteStates - The mute states for audio and video.
@@ -57,7 +58,6 @@ export class Publisher {
    * @param logger - The logger to use for logging :D.
    */
   public constructor(
-    private scope: ObservableScope,
     private connection: Pick<Connection, "livekitRoom" | "state$">, //setE2EEEnabled,
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
@@ -65,7 +65,6 @@ export class Publisher {
     private logger: Logger,
   ) {
     const { controlledAudioDevices } = getUrlParams();
-
     const room = connection.livekitRoom;
 
     room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {
@@ -73,22 +72,31 @@ export class Publisher {
     });
 
     // Setup track processor syncing (blur)
-    this.observeTrackProcessors(scope, room, trackerProcessorState$);
+    this.observeTrackProcessors(this.scope, room, trackerProcessorState$);
     // Observe media device changes and update LiveKit active devices accordingly
-    this.observeMediaDevices(scope, devices, controlledAudioDevices);
+    this.observeMediaDevices(this.scope, devices, controlledAudioDevices);
 
-    this.workaroundRestartAudioInputTrackChrome(devices, scope);
-    this.scope.onEnd(() => {
-      this.logger.info("Scope ended -> stop publishing all tracks");
-      void this.stopPublishing();
-      muteStates.audio.unsetHandler();
-      muteStates.video.unsetHandler();
-    });
+    this.workaroundRestartAudioInputTrackChrome(devices, this.scope);
 
     this.connection.livekitRoom.localParticipant.on(
       ParticipantEvent.LocalTrackPublished,
       this.onLocalTrackPublished.bind(this),
     );
+  }
+
+  public async destroy(): Promise<void> {
+    this.scope.end();
+    this.logger.info("Scope ended -> unset handler");
+    this.muteStates.audio.unsetHandler();
+    this.muteStates.video.unsetHandler();
+
+    this.logger.info(`Start to stop tracks`);
+    try {
+      await this.stopTracks();
+      this.logger.info(`Done to stop tracks`);
+    } catch (e) {
+      this.logger.error(`Failed to stop tracks: ${e}`);
+    }
   }
 
   // LiveKit will publish the tracks as soon as they are created

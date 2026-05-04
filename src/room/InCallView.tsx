@@ -5,12 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { IconButton, Text, Tooltip } from "@vector-im/compound-web";
 import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
-  type PointerEvent,
-  type TouchEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -25,27 +24,12 @@ import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable } from "observable-hooks";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import {
-  VoiceCallSolidIcon,
-  VolumeOnSolidIcon,
-} from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 
-import LogoMark from "../icons/LogoMark.svg?react";
-import LogoType from "../icons/LogoType.svg?react";
-import type { IWidgetApiRequest } from "matrix-widget-api";
-import {
-  EndCallButton,
-  MicButton,
-  VideoButton,
-  ShareScreenButton,
-  SettingsButton,
-  ReactionToggleButton,
-} from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { type HeaderStyle, useUrlParams } from "../UrlParams";
+import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
-import { ElementWidgetActions, widget } from "../widget";
+import { widget } from "../widget";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
@@ -56,7 +40,6 @@ import { useMergedRefs } from "../useMergedRefs";
 import { type MuteStates } from "../state/MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
-import { LayoutToggle } from "./LayoutToggle";
 import {
   type CallViewModel,
   createCallViewModel$,
@@ -99,8 +82,6 @@ import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
 import { Toast } from "../Toast.tsx";
 import overlayStyles from "../Overlay.module.css";
-import { Avatar, Size as AvatarSize } from "../Avatar";
-import waitingStyles from "./WaitingForJoin.module.css";
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 import ringtoneMp3 from "../sound/ringtone.mp3?url";
@@ -108,10 +89,11 @@ import ringtoneOgg from "../sound/ringtone.ogg?url";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
+import { useLatest } from "../useLatest.ts";
+import { CallFooter } from "../components/CallFooter.tsx";
+import { SettingsIconButton } from "../button/Button.tsx";
 
 const logger = rootLogger.getChild("[InCallView]");
-
-const maxTapDurationMs = 400;
 
 export interface ActiveCallProps extends Omit<
   InCallViewProps,
@@ -189,7 +171,6 @@ export interface InCallViewProps {
   rtcSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
   muteStates: MuteStates;
-  header: HeaderStyle;
   onShareClick: (() => void) | null;
 }
 
@@ -199,8 +180,6 @@ export const InCallView: FC<InCallViewProps> = ({
   matrixInfo,
   matrixRoom,
   muteStates,
-
-  header: headerStyle,
   onShareClick,
 }) => {
   const { t } = useTranslation();
@@ -224,11 +203,9 @@ export const InCallView: FC<InCallViewProps> = ({
   // Merge the refs so they can attach to the same element
   const containerRef = useMergedRefs(containerRef1, containerRef2);
 
-  const { showControls } = useUrlParams();
+  const { showControls, header: headerStyle } = useUrlParams();
 
   const muteAllAudio = useBehavior(muteAllAudio$);
-  // Call pickup state and display names are needed for waiting overlay/sounds
-  const callPickupState = useBehavior(vm.callPickupState$);
 
   // Preload a waiting and decline sounds
   const pickupPhaseSoundCache = useInitial(async () => {
@@ -242,6 +219,7 @@ export const InCallView: FC<InCallViewProps> = ({
     latencyHint: "interactive",
     muted: muteAllAudio,
   });
+  const latestPickupPhaseAudio = useLatest(pickupPhaseAudio);
 
   const audioEnabled = useBehavior(muteStates.audio.enabled$);
   const videoEnabled = useBehavior(muteStates.video.enabled$);
@@ -260,6 +238,7 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
+  const ringing = useBehavior(vm.ringing$);
   const audioParticipants = useBehavior(vm.livekitRoomItems$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
@@ -274,7 +253,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
 
-  const ringOverlay = useBehavior(vm.ringOverlay$);
   const fatalCallError = useBehavior(vm.fatalError$);
   // Stop the rendering and throw for the error boundary
   if (fatalCallError) {
@@ -282,93 +260,36 @@ export const InCallView: FC<InCallViewProps> = ({
     throw fatalCallError;
   }
 
-  // We need to set the proper timings on the animation based upon the sound length.
-  const ringDuration = pickupPhaseAudio?.soundDuration["waiting"] ?? 1;
-  useEffect((): (() => void) => {
-    // The CSS animation includes the delay, so we must double the length of the sound.
-    window.document.body.style.setProperty(
-      "--call-ring-duration-s",
-      `${ringDuration * 2}s`,
-    );
-    window.document.body.style.setProperty(
-      "--call-ring-delay-s",
-      `${ringDuration}s`,
-    );
-    // Remove properties when we unload.
-    return () => {
-      window.document.body.style.removeProperty("--call-ring-duration-s");
-      window.document.body.style.removeProperty("--call-ring-delay-s");
-    };
-  }, [pickupPhaseAudio?.soundDuration, ringDuration]);
-
-  // When waiting for pickup, loop a waiting sound
+  // While ringing, loop the ringtone
   useEffect((): void | (() => void) => {
-    if (callPickupState !== "ringing" || !pickupPhaseAudio) return;
-    const endSound = pickupPhaseAudio.playSoundLooping("waiting", ringDuration);
-    return () => {
-      void endSound().catch((e) => {
-        logger.error("Failed to stop ringing sound", e);
-      });
-    };
-  }, [callPickupState, pickupPhaseAudio, ringDuration]);
+    const audio = latestPickupPhaseAudio.current;
+    if (ringing && audio) {
+      const endSound = audio.playSoundLooping(
+        "waiting",
+        audio.soundDuration["waiting"] ?? 1,
+      );
+      return () => {
+        void endSound().catch((e) => {
+          logger.error("Failed to stop ringing sound", e);
+        });
+      };
+    }
+  }, [ringing, latestPickupPhaseAudio]);
 
-  // Waiting UI overlay
-  const waitingOverlay: JSX.Element | null = useMemo(() => {
-    return ringOverlay ? (
-      <div className={classNames(overlayStyles.bg, waitingStyles.overlay)}>
-        <div
-          className={classNames(overlayStyles.content, waitingStyles.content)}
-        >
-          <div className={waitingStyles.pulse}>
-            <Avatar
-              id={ringOverlay.idForAvatar}
-              name={ringOverlay.name}
-              src={ringOverlay.avatarMxc}
-              size={AvatarSize.XL}
-            />
-          </div>
-          <Text size="md" className={waitingStyles.text}>
-            {ringOverlay.text}
-          </Text>
-        </div>
-      </div>
-    ) : null;
-  }, [ringOverlay]);
-
-  // Ideally we could detect taps by listening for click events and checking
-  // that the pointerType of the event is "touch", but this isn't yet supported
-  // in Safari: https://developer.mozilla.org/en-US/docs/Web/API/Element/click_event#browser_compatibility
-  // Instead we have to watch for sufficiently fast touch events.
-  const touchStart = useRef<number | null>(null);
-  const onTouchStart = useCallback(() => (touchStart.current = Date.now()), []);
-  const onTouchEnd = useCallback(() => {
-    const start = touchStart.current;
-    if (start !== null && Date.now() - start <= maxTapDurationMs)
-      vm.tapScreen();
-    touchStart.current = null;
-  }, [vm]);
-  const onTouchCancel = useCallback(() => (touchStart.current = null), []);
-
-  // We also need to tell the footer controls to prevent touch events from
-  // bubbling up, or else the footer will be dismissed before a click/change
-  // event can be registered on the control
-  const onControlsTouchEnd = useCallback(
-    (e: TouchEvent) => {
-      // Somehow applying pointer-events: none to the controls when the footer
-      // is hidden is not enough to stop clicks from happening as the footer
-      // becomes visible, so we check manually whether the footer is shown
-      if (showFooter) {
-        e.stopPropagation();
-        vm.tapControls();
-      } else {
-        e.preventDefault();
-      }
+  const onViewClick = useCallback(
+    (e: ReactMouseEvent) => {
+      if (
+        (e.nativeEvent as PointerEvent).pointerType === "touch" &&
+        // If an interactive element was tapped, don't count this as a tap on the screen
+        (e.target as Element).closest?.("button, input") === null
+      )
+        vm.tapScreen();
     },
-    [vm, showFooter],
+    [vm],
   );
 
   const onPointerMove = useCallback(
-    (e: PointerEvent) => {
+    (e: ReactPointerEvent) => {
       if (e.pointerType === "mouse") vm.hoverScreen();
     },
     [vm],
@@ -435,76 +356,16 @@ export const InCallView: FC<InCallViewProps> = ({
     [vm],
   );
 
-  useEffect(() => {
-    widget?.api.transport
-      .send(
-        gridMode === "grid"
-          ? ElementWidgetActions.TileLayout
-          : ElementWidgetActions.SpotlightLayout,
-        {},
-      )
-      .catch((e) => {
-        logger.error("Failed to send layout change to widget API", e);
-      });
-  }, [gridMode]);
-
-  useEffect(() => {
-    if (widget) {
-      const onTileLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        setGridMode("grid");
-        widget!.api.transport.reply(ev.detail, {});
-      };
-      const onSpotlightLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        setGridMode("spotlight");
-        widget!.api.transport.reply(ev.detail, {});
-      };
-
-      widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
-      widget.lazyActions.on(
-        ElementWidgetActions.SpotlightLayout,
-        onSpotlightLayout,
-      );
-
-      return (): void => {
-        widget!.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
-        widget!.lazyActions.off(
-          ElementWidgetActions.SpotlightLayout,
-          onSpotlightLayout,
-        );
-      };
-    }
-  }, [setGridMode]);
-
-  useAppBarSecondaryButton(
-    useMemo(() => {
-      if (audioOutputSwitcher === null) return null;
-      const isEarpieceTarget = audioOutputSwitcher.targetOutput === "earpiece";
-      const Icon = isEarpieceTarget ? VoiceCallSolidIcon : VolumeOnSolidIcon;
-      const label = isEarpieceTarget
-        ? t("settings.devices.handset")
-        : t("settings.devices.loudspeaker");
-
-      return (
-        <Tooltip label={label}>
-          <IconButton
-            onClick={(e) => {
-              e.preventDefault();
-              audioOutputSwitcher.switch();
-            }}
-          >
-            <Icon />
-          </IconButton>
-        </Tooltip>
-      );
-    }, [t, audioOutputSwitcher]),
-  );
-
   useAppBarHidden(!showHeader);
 
   let header: ReactNode = null;
   if (showHeader) {
     switch (headerStyle) {
-      case "none":
+      case HeaderStyle.AppBar: {
+        // dont build a header here. The AppBar will take care of it.
+        break;
+      }
+      case HeaderStyle.None:
         // Cosmetic header to fill out space while still affecting the bounds of
         // the grid
         header = (
@@ -514,7 +375,7 @@ export const InCallView: FC<InCallViewProps> = ({
           />
         );
         break;
-      case "standard":
+      case HeaderStyle.Standard:
         header = (
           <Header
             className={styles.header}
@@ -647,8 +508,8 @@ export const InCallView: FC<InCallViewProps> = ({
           vm={layout.spotlight}
           expanded
           onToggleExpanded={null}
-          targetWidth={gridBounds.height}
-          targetHeight={gridBounds.width}
+          targetWidth={gridBounds.width}
+          targetHeight={gridBounds.height}
           showIndicators={false}
           focusable={!contentObscured}
           aria-hidden={contentObscured}
@@ -701,112 +562,56 @@ export const InCallView: FC<InCallViewProps> = ({
     matrixRoom.roomId,
   );
 
-  const buttons: JSX.Element[] = [];
-
-  buttons.push(
-    <MicButton
-      key="audio"
-      muted={!audioEnabled}
-      onClick={toggleAudio ?? undefined}
-      onTouchEnd={onControlsTouchEnd}
-      disabled={toggleAudio === null}
-      data-testid="incall_mute"
-    />,
-    <VideoButton
-      key="video"
-      muted={!videoEnabled}
-      onClick={toggleVideo ?? undefined}
-      onTouchEnd={onControlsTouchEnd}
-      disabled={toggleVideo === null}
-      data-testid="incall_videomute"
+  const settingsButtonInAppBar =
+    headerStyle === HeaderStyle.AppBar && showHeader;
+  useAppBarSecondaryButton(
+    <SettingsIconButton
+      key="settings"
+      onClick={openSettings}
+      data-testid="settings-app-bar"
     />,
   );
-  if (vm.toggleScreenSharing !== null) {
-    buttons.push(
-      <ShareScreenButton
-        key="share_screen"
-        className={styles.shareScreen}
-        enabled={sharingScreen}
-        onClick={vm.toggleScreenSharing}
-        onTouchEnd={onControlsTouchEnd}
-        data-testid="incall_screenshare"
-      />,
-    );
-  }
-  if (supportsReactions) {
-    buttons.push(
-      <ReactionToggleButton
-        vm={vm}
-        key="raise_hand"
-        className={styles.raiseHand}
-        identifier={`${client.getUserId()}:${client.getDeviceId()}`}
-        onTouchEnd={onControlsTouchEnd}
-      />,
-    );
-  }
-  if (layout.type !== "pip")
-    buttons.push(
-      <SettingsButton
-        key="settings"
-        onClick={openSettings}
-        onTouchEnd={onControlsTouchEnd}
-      />,
-    );
 
-  buttons.push(
-    <EndCallButton
-      key="end_call"
-      onClick={function (): void {
-        vm.hangup();
-      }}
-      onTouchEnd={onControlsTouchEnd}
-      data-testid="incall_leave"
-    />,
-  );
+  // Only hide the settings button if we have an AppBar header and we are showing the header
   const footer = (
-    <div
+    <CallFooter
       ref={footerRef}
-      className={classNames(styles.footer, {
-        [styles.overlay]: windowMode === "flat",
-        [styles.hidden]:
-          !showFooter || (!showControls && headerStyle === "none"),
-      })}
-    >
-      {headerStyle !== "none" && (
-        <div className={styles.logo}>
-          <LogoMark width={24} height={24} aria-hidden />
-          <LogoType
-            width={80}
-            height={11}
-            aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
-          />
-          {/* Don't mind this odd placement, it's just a little debug label */}
-          {debugTileLayout
-            ? `Tiles generation: ${tileStoreGeneration}`
-            : undefined}
-        </div>
-      )}
-      {showControls && <div className={styles.buttons}>{buttons}</div>}
-      {showControls && (
-        <LayoutToggle
-          className={styles.layout}
-          layout={gridMode}
-          setLayout={setGridMode}
-          onTouchEnd={onControlsTouchEnd}
-        />
-      )}
-    </div>
+      hidden={!showFooter}
+      hideControls={!showControls}
+      asOverlay={windowMode === "flat"}
+      asPip={layout.type === "pip"}
+      // Hide the logo for both embedded solutions. mobile: HeaderStyle.AppBar and desktop: HeaderStyle.None.
+      hideLogo={headerStyle !== HeaderStyle.Standard}
+      layoutMode={gridMode}
+      setLayoutMode={setGridMode}
+      audioEnabled={audioEnabled}
+      toggleAudio={toggleAudio ?? undefined}
+      videoEnabled={videoEnabled}
+      toggleVideo={toggleVideo ?? undefined}
+      sharingScreen={sharingScreen}
+      toggleScreenSharing={vm.toggleScreenSharing ?? undefined}
+      reactionIdentifier={`${client.getUserId()}:${client.getDeviceId()}`}
+      reactionData={supportsReactions ? vm : undefined}
+      audioOutputSwitcher={audioOutputSwitcher ?? undefined}
+      // Only pass the openSettings function if the settings button is not in the app bar.
+      // If there is no fn the button will be hidden in the footer.
+      openSettings={settingsButtonInAppBar ? undefined : openSettings}
+      hangup={vm.hangup}
+      //Debug props
+      debugTileLayout={debugTileLayout}
+      tileStoreGeneration={tileStoreGeneration}
+    />
   );
-
   const allConnections = useBehavior(vm.allConnections$);
 
   return (
+    // The onClick handler here exists to control the visibility of the footer,
+    // and the footer is also viewable by moving focus into it, so this is fine.
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
     <div
       className={styles.inRoom}
       ref={containerRef}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchCancel}
+      onClick={onViewClick}
       onPointerMove={onPointerMove}
       onPointerOut={onPointerOut}
     >
@@ -826,7 +631,6 @@ export const InCallView: FC<InCallViewProps> = ({
       {reconnectingToast}
       {earpieceOverlay}
       <ReactionsOverlay vm={vm} />
-      {waitingOverlay}
       {footer}
       {layout.type !== "pip" && (
         <>

@@ -67,6 +67,6 @@ Initializer.initBeforeReact()
     );
   })
   .catch((e) => {
-    logger.error("Failed to initialize app", e);
+    logger.error(`Failed to initialize app ${e.message}`, e);
     root.render(e.message);
   });

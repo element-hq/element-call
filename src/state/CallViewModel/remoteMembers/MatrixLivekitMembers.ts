@@ -7,19 +7,16 @@ Please see LICENSE in the repository root for full details.
 
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
 import {
-  type LivekitTransport,
   type CallMembership,
+  type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map } from "rxjs";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
 import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
-
-const logger = rootLogger.getChild("[MatrixLivekitMembers]");
 
 interface LocalTaggedParticipant {
   type: "local";
@@ -62,7 +59,7 @@ export interface RemoteMatrixLivekitMember extends MatrixLivekitMember {
 interface Props {
   scope: ObservableScope;
   membershipsWithTransport$: Behavior<
-    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
+    Epoch<{ membership: CallMembership; transport?: LivekitTransportConfig }[]>
   >;
   connectionManager: IConnectionManager;
 }
@@ -94,9 +91,10 @@ export function createMatrixLivekitMembers$({
       ),
       map(([ms, data]) => new Epoch([ms.value, data.value] as const, ms.epoch)),
       generateItemsWithEpoch(
+        "MatrixLivekitMembers",
         // Generator function.
         // creates an array of `{key, data}[]`
-        // Each change in the keys (new key, missing key) will result in a call to the factory function.
+        // Each change in the keys (new key) will result in a call to the factory function.
         function* ([membershipsWithTransport, managerData]) {
           for (const { membership, transport } of membershipsWithTransport) {
             const participants = transport
@@ -111,18 +109,23 @@ export function createMatrixLivekitMembers$({
               : null;
 
             yield {
-              keys: [membership.userId, membership.deviceId],
+              // This could just be the backend identity without the other keys.
+              // The user ID, device ID, and member ID are included however so
+              // they show up in debug logs.
+              keys: [
+                membership.userId,
+                membership.deviceId,
+                membership.memberId,
+                membership.rtcBackendIdentity,
+              ],
               data: { membership, participant, connection },
             };
           }
         },
-        // Each update where the key of the generator array do not change will result in updates to the `data$` observable in the factory.
-        (scope, data$, userId, deviceId) => {
-          logger.debug(
-            `Generating member for livekitIdentity: ${data$.value.membership.rtcBackendIdentity}, userId:deviceId: ${userId}${deviceId}`,
-          );
+        // Each update where the key of the generator array do not change will result in updates to the `data$` behavior.
+        (scope, data$, userId, _deviceId, _memberId, _rtcBackendIdentity) => {
           const { participant$, ...rest } = scope.splitBehavior(data$);
-          // will only get called once per `participantId, userId` pair.
+          // will only get called once per backend identity.
           // updates to data$ and as a result to displayName$ and mxcAvatarUrl$ are more frequent.
           return {
             userId,
@@ -139,18 +142,12 @@ export function createMatrixLivekitMembers$({
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
 
 // TODO add this to the JS-SDK
-export function areLivekitTransportsEqual<T extends LivekitTransport>(
+export function areLivekitTransportsEqual<T extends LivekitTransportConfig>(
   t1: T | null,
   t2: T | null,
 ): boolean {
-  if (t1 && t2)
-    return (
-      t1.livekit_service_url === t2.livekit_service_url &&
-      // In case we have different lk rooms in the same SFU (depends on the livekit authorization service)
-      // It is only needed in case the livekit authorization service is not behaving as expected (or custom implementation)
-      // Also LivekitTransport is planned to become a `ConnectionIdentifier` which moves this equal somewhere else.
-      t1.livekit_alias === t2.livekit_alias
-    );
-  if (!t1 && !t2) return true;
-  return false;
+  if (t1 && t2) {
+    return t1.livekit_service_url === t2.livekit_service_url;
+  }
+  return !t1 && !t2;
 }

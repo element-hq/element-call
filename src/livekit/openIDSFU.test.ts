@@ -19,12 +19,14 @@ import fetchMock from "fetch-mock";
 import { getSFUConfigWithOpenID, type OpenIDClientParts } from "./openIDSFU";
 import { testJWTToken } from "../utils/test-fixtures";
 import { ownMemberMock } from "../utils/test";
+import { FailToGetOpenIdToken } from "../utils/errors";
 
 const sfuUrl = "https://sfu.example.org";
 
 describe("getSFUConfigWithOpenID", () => {
   let matrixClient: MockedObject<OpenIDClientParts>;
   beforeEach(() => {
+    fetchMock.catch(404);
     matrixClient = {
       getOpenIdToken: vitest.fn(),
       getDeviceId: vitest.fn(),
@@ -71,9 +73,10 @@ describe("getSFUConfigWithOpenID", () => {
         "https://sfu.example.org",
         "!example_room_id",
       );
-    } catch (ex) {
-      expect((ex as Error).message).toEqual(
-        "SFU Config fetch failed with status code 500",
+    } catch (ex: unknown) {
+      expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
+      expect((ex as FailToGetOpenIdToken).cause).toEqual(
+        new Error("SFU Config fetch failed with status code 500"),
       );
       void (await fetchMock.flush());
       return;
@@ -106,8 +109,9 @@ describe("getSFUConfigWithOpenID", () => {
         },
       );
     } catch (ex) {
-      expect((ex as Error).message).toEqual(
-        "SFU Config fetch failed with status code 500",
+      expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
+      expect((ex as FailToGetOpenIdToken).cause).toEqual(
+        new Error("SFU Config fetch failed with status code 500"),
       );
       void (await fetchMock.flush());
     }
@@ -160,8 +164,9 @@ describe("getSFUConfigWithOpenID", () => {
         },
       );
     } catch (ex) {
-      expect((ex as Error).message).toEqual(
-        "SFU Config fetch failed with status code 500",
+      expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
+      expect((ex as FailToGetOpenIdToken).cause).toEqual(
+        new Error("SFU Config fetch failed with status code 500"),
       );
       void (await fetchMock.flush());
     }

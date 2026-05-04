@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, map, of, switchMap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
@@ -42,8 +42,10 @@ export class ConnectionManagerData {
     }
   }
 
-  private getKey(transport: LivekitTransport): string {
-    return transport.livekit_service_url + "|" + transport.livekit_alias;
+  private getKey(transport: LivekitTransportConfig): string {
+    // This is enough as a key because the ConnectionManager is already scoped by room.
+    // We also do not need to consider the slotId at this point since each `MatrixRTCSession` is already scoped by `slotDescription: {id, application}`.
+    return transport.livekit_service_url;
   }
 
   public getConnections(): Connection[] {
@@ -51,15 +53,15 @@ export class ConnectionManagerData {
   }
 
   public getConnectionForTransport(
-    transport: LivekitTransport,
+    transport: LivekitTransportConfig,
   ): Connection | null {
     return this.store.get(this.getKey(transport))?.connection ?? null;
   }
 
   public getParticipantsForTransport(
-    transport: LivekitTransport,
+    transport: LivekitTransportConfig,
   ): RemoteParticipant[] {
-    const key = transport.livekit_service_url + "|" + transport.livekit_alias;
+    const key = this.getKey(transport);
     const existing = this.store.get(key);
     if (existing) {
       return existing.participants;
@@ -72,7 +74,7 @@ interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
   localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
-  remoteTransports$: Behavior<Epoch<LivekitTransport[]>>;
+  remoteTransports$: Behavior<Epoch<LivekitTransportConfig[]>>;
 
   logger: Logger;
   ownMembershipIdentity: CallMembershipIdentityParts;
@@ -88,7 +90,7 @@ export interface IConnectionManager {
  * @param props - Configuration object
  * @param props.scope - The observable scope used by this object
  * @param props.connectionFactory - Used to create new connections
- * @param props.localTransport$ - The local transport to use. (deduplicated with remoteTransports$)
+ * @param props.localTransport$ - The transport to publish local media on. (deduplicated with remoteTransports$)
  * @param props.remoteTransports$ - All other transports. The connection manager will create connections for each transport. (deduplicated with localTransport$)
  * @param props.ownMembershipIdentity - The own membership identity to use.
  * @param props.logger - The logger to use.
@@ -123,7 +125,7 @@ export function createConnectionManager$({
    * externally this is modified via `registerTransports()`.
    */
   const localAndRemoteTransports$: Behavior<
-    Epoch<(LivekitTransport | LocalTransportWithSFUConfig)[]>
+    Epoch<(LivekitTransportConfig | LocalTransportWithSFUConfig)[]>
   > = scope.behavior(
     combineLatest([remoteTransports$, localTransport$]).pipe(
       // Combine local and remote transports into one transport array
@@ -160,48 +162,40 @@ export function createConnectionManager$({
   const connections$ = scope.behavior(
     localAndRemoteTransports$.pipe(
       generateItemsWithEpoch(
+        "ConnectionManager connections$",
         function* (transports) {
-          for (const transportWithOrWithoutSfuConfig of transports) {
-            if (
-              isLocalTransportWithSFUConfig(transportWithOrWithoutSfuConfig)
-            ) {
-              // This is the local transport only the `LocalTransportWithSFUConfig` has a `sfuConfig` field
-              const { transport, sfuConfig } = transportWithOrWithoutSfuConfig;
+          for (const transport of transports) {
+            if (isLocalTransportWithSFUConfig(transport)) {
+              // This is the local transport; only the `LocalTransportWithSFUConfig` has a `sfuConfig` field.
               yield {
                 keys: [
-                  transport.livekit_service_url,
-                  transport.livekit_alias,
-                  sfuConfig,
+                  transport.transport.livekit_service_url,
+                  transport.sfuConfig,
                 ],
                 data: undefined,
               };
             } else {
-              const transport = transportWithOrWithoutSfuConfig;
               yield {
                 keys: [
                   transport.livekit_service_url,
-                  transport.livekit_alias,
-                  undefined as undefined | SFUConfig,
+                  undefined as SFUConfig | undefined,
                 ],
                 data: undefined,
               };
             }
           }
         },
-        (scope, _data$, serviceUrl, alias, sfuConfig) => {
-          logger.debug(
-            `Creating connection to ${serviceUrl} (${alias}, withSfuConfig (local connection?): ${JSON.stringify(sfuConfig) ?? "no config->remote connection"})`,
-          );
-
+        (scope, _data$, serviceUrl, sfuConfig) => {
           const connection = connectionFactory.createConnection(
             scope,
             {
               type: "livekit",
               livekit_service_url: serviceUrl,
-              livekit_alias: alias,
             },
             ownMembershipIdentity,
             logger,
+            // TODO: This whole optional SFUConfig parameter is not particularly elegant.
+            // I would like it if connections always fetched the SFUConfig by themselves.
             sfuConfig,
           );
           // Start the connection immediately
@@ -258,7 +252,7 @@ export function createConnectionManager$({
   return { connectionManagerData$ };
 }
 
-function removeDuplicateTransports<T extends LivekitTransport>(
+function removeDuplicateTransports<T extends LivekitTransportConfig>(
   transports: T[],
 ): T[] {
   return transports.reduce((acc, transport) => {

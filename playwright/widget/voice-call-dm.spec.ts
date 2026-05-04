@@ -20,8 +20,6 @@ widgetTest(
       "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
     );
 
-    test.slow(); // Triples the timeout
-
     const { brooks, whistler } = asWidget;
 
     await TestHelpers.startCallInCurrentRoom(brooks.page, true);
@@ -34,13 +32,16 @@ widgetTest(
       .locator('iframe[title="Element Call"]')
       .contentFrame();
 
-    // We should show a ringing overlay, let's check for that
+    // We should show a ringing tile, let's check for that
     await expect(
-      brooksFrame.getByText(`Waiting for ${whistler.displayName} to join…`),
+      brooksFrame
+        .getByTestId("videoTile")
+        .filter({ has: brooksFrame.getByText(whistler.displayName) })
+        .filter({ has: brooksFrame.getByText("Calling…") }),
     ).toBeVisible();
 
     await expect(whistler.page.getByText("Incoming voice call")).toBeVisible();
-    await whistler.page.getByRole("button", { name: "Accept" }).click();
+    await whistler.page.getByRole("button", { name: "Join" }).click();
 
     await expect(
       whistler.page.locator('iframe[title="Element Call"]'),
@@ -51,34 +52,36 @@ widgetTest(
       .contentFrame();
 
     // ASSERT the button states for whistler (the callee)
-    {
-      // The only way to know if it is muted or not is to look at the data-kind attribute..
-      const videoButton = whistlerFrame.getByTestId("incall_videomute");
-      // video should be off by default in a voice call
-      await expect(videoButton).toHaveAttribute("aria-label", /^Start video$/);
-
-      const audioButton = whistlerFrame.getByTestId("incall_mute");
-      // audio should be on for the voice call
-      await expect(audioButton).toHaveAttribute(
-        "aria-label",
-        /^Mute microphone$/,
-      );
-    }
+    // video should be off by default in a voice call
+    await expect(
+      whistlerFrame.getByRole("switch", {
+        name: "Start video",
+        checked: false,
+      }),
+    ).toBeVisible();
+    // audio should be on for the voice call
+    await expect(
+      whistlerFrame.getByRole("switch", {
+        name: "Mute microphone",
+        checked: true,
+      }),
+    ).toBeVisible();
 
     // ASSERT the button states for brools (the caller)
-    {
-      // The only way to know if it is muted or not is to look at the data-kind attribute..
-      const videoButton = brooksFrame.getByTestId("incall_videomute");
-      // video should be off by default in a voice call
-      await expect(videoButton).toHaveAttribute("aria-label", /^Start video$/);
-
-      const audioButton = brooksFrame.getByTestId("incall_mute");
-      // audio should be on for the voice call
-      await expect(audioButton).toHaveAttribute(
-        "aria-label",
-        /^Mute microphone$/,
-      );
-    }
+    // video should be off by default in a voice call
+    await expect(
+      whistlerFrame.getByRole("switch", {
+        name: "Start video",
+        checked: false,
+      }),
+    ).toBeVisible();
+    // audio should be on for the voice call
+    await expect(
+      whistlerFrame.getByRole("switch", {
+        name: "Mute microphone",
+        checked: true,
+      }),
+    ).toBeVisible();
 
     // In order to confirm that the call is disconnected we will check that the message composer is shown again.
     // So first we need to confirm that it is hidden when in the call.
@@ -90,10 +93,7 @@ widgetTest(
     ).not.toBeVisible();
 
     // ASSERT hanging up on one side ends the call for both
-    {
-      const hangupButton = brooksFrame.getByTestId("incall_leave");
-      await hangupButton.click();
-    }
+    await brooksFrame.getByRole("button", { name: "End call" }).click();
 
     // The widget should be closed on both sides and the timeline should be back on screen
     await expect(
@@ -111,8 +111,6 @@ widgetTest(
       "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
     );
 
-    test.slow(); // Triples the timeout
-
     const { brooks, whistler } = asWidget;
 
     await TestHelpers.startCallInCurrentRoom(brooks.page, false);
@@ -125,13 +123,16 @@ widgetTest(
       .locator('iframe[title="Element Call"]')
       .contentFrame();
 
-    // We should show a ringing overlay, let's check for that
+    // We should show a ringing tile, let's check for that
     await expect(
-      brooksFrame.getByText(`Waiting for ${whistler.displayName} to join…`),
+      brooksFrame
+        .getByTestId("videoTile")
+        .filter({ has: brooksFrame.getByText(whistler.displayName) })
+        .filter({ has: brooksFrame.getByText("Calling…") }),
     ).toBeVisible();
 
     await expect(whistler.page.getByText("Incoming video call")).toBeVisible();
-    await whistler.page.getByRole("button", { name: "Accept" }).click();
+    await whistler.page.getByRole("button", { name: "Join" }).click();
 
     await expect(
       whistler.page.locator('iframe[title="Element Call"]'),
@@ -142,34 +143,30 @@ widgetTest(
       .contentFrame();
 
     // ASSERT the button states for whistler (the callee)
-    {
-      // The only way to know if it is muted or not is to look at the data-kind attribute..
-      const videoButton = whistlerFrame.getByTestId("incall_videomute");
-      // video should be on by default in a voice call
-      await expect(videoButton).toHaveAttribute("aria-label", /^Stop video$/);
-
-      const audioButton = whistlerFrame.getByTestId("incall_mute");
-      // audio should be on for the voice call
-      await expect(audioButton).toHaveAttribute(
-        "aria-label",
-        /^Mute microphone$/,
-      );
-    }
+    // video should be off by default in a video call
+    await expect(
+      whistlerFrame.getByRole("switch", { name: "Stop video", checked: true }),
+    ).toBeVisible();
+    // audio should be on too
+    await expect(
+      whistlerFrame.getByRole("switch", {
+        name: "Mute microphone",
+        checked: true,
+      }),
+    ).toBeVisible();
 
     // ASSERT the button states for brools (the caller)
-    {
-      // The only way to know if it is muted or not is to look at the data-kind attribute..
-      const videoButton = brooksFrame.getByTestId("incall_videomute");
-      // video should be on by default in a voice call
-      await expect(videoButton).toHaveAttribute("aria-label", /^Stop video$/);
-
-      const audioButton = brooksFrame.getByTestId("incall_mute");
-      // audio should be on for the voice call
-      await expect(audioButton).toHaveAttribute(
-        "aria-label",
-        /^Mute microphone$/,
-      );
-    }
+    // video should be off by default in a video call
+    await expect(
+      whistlerFrame.getByRole("switch", { name: "Stop video", checked: true }),
+    ).toBeVisible();
+    // audio should be on too
+    await expect(
+      whistlerFrame.getByRole("switch", {
+        name: "Mute microphone",
+        checked: true,
+      }),
+    ).toBeVisible();
 
     // In order to confirm that the call is disconnected we will check that the message composer is shown again.
     // So first we need to confirm that it is hidden when in the call.
@@ -181,10 +178,7 @@ widgetTest(
     ).not.toBeVisible();
 
     // ASSERT hanging up on one side ends the call for both
-    {
-      const hangupButton = brooksFrame.getByTestId("incall_leave");
-      await hangupButton.click();
-    }
+    await brooksFrame.getByRole("button", { name: "End call" }).click();
 
     // The widget should be closed on both sides and the timeline should be back on screen
     await expect(
@@ -202,8 +196,6 @@ widgetTest(
       "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
     );
 
-    test.slow(); // Triples the timeout
-
     const { brooks, whistler } = asWidget;
 
     await TestHelpers.startCallInCurrentRoom(brooks.page, false);
@@ -216,13 +208,16 @@ widgetTest(
       .locator('iframe[title="Element Call"]')
       .contentFrame();
 
-    // We should show a ringing overlay, let's check for that
+    // We should show a ringing tile, let's check for that
     await expect(
-      brooksFrame.getByText(`Waiting for ${whistler.displayName} to join…`),
+      brooksFrame
+        .getByTestId("videoTile")
+        .filter({ has: brooksFrame.getByText(whistler.displayName) })
+        .filter({ has: brooksFrame.getByText("Calling…") }),
     ).toBeVisible();
 
     await expect(whistler.page.getByText("Incoming video call")).toBeVisible();
-    await whistler.page.getByRole("button", { name: "Decline" }).click();
+    await whistler.page.getByRole("button", { name: "Ignore" }).click();
 
     await expect(
       whistler.page.locator('iframe[title="Element Call"]'),

@@ -22,12 +22,6 @@
     "upload_file": "Upload file"
   },
   "analytics_notice": "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <6>Cookie Policy</6>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Continue in browser",
-    "open_in_app": "Open in the app",
-    "text": "Ready to join?",
-    "title": "Select app"
-  },
   "call_ended_view": {
     "create_account_button": "Create account",
     "create_account_prompt": "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>",
@@ -116,7 +110,7 @@
     "matrix_rtc_transport_missing": "The server is not configured to work with {{brand}}. Please contact your server admin (Domain: {{domain}}, Error Code: {{ errorCode }}).",
     "membership_manager": "Membership Manager Error",
     "membership_manager_description": "The Membership Manager had to shut down. This is caused by many consequtive failed network requests.",
-    "no_matrix_2_authorization_service": "Your authorization service for you media server (SFU) is not on the newest version",
+    "no_matrix_2_authorization_service": "The authorization service for your media server (SFU) is out of date.",
     "open_elsewhere": "Opened in another tab",
     "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page.",
     "room_creation_restricted": "Failed to create call",
@@ -249,12 +243,14 @@
   "version": "{{productName}} version: {{version}}",
   "video_tile": {
     "always_show": "Always show",
+    "call_ended": "Call ended",
+    "calling": "Calling…",
     "camera_starting": "Video loading...",
-    "change_fit_contain": "Fit to frame",
     "collapse": "Collapse",
     "expand": "Expand",
     "mute_for_me": "Mute for me",
     "muted_for_me": "Muted for me",
+    "screen_share_volume": "Screen share volume",
     "volume": "Volume",
     "waiting_for_media": "Waiting for media..."
   }
