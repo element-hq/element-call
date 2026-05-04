@@ -227,8 +227,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const toggleVideo = useBehavior(muteStates.video.toggle$);
   const setAudioEnabled = useBehavior(muteStates.audio.setEnabled$);
 
-  // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
-  // TODO: Make sure that this module is resilient when it comes to camera/microphone availability!
   useCallViewKeyboardShortcuts(
     toggleAudio,
     toggleVideo,
