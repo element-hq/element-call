@@ -14,6 +14,8 @@ import { MembershipManagerEvent, Status } from "matrix-js-sdk/lib/matrixrtc";
 import { ObservableScope } from "../../ObservableScope";
 import { createHomeserverConnected$ } from "./HomeserverConnected";
 
+import { TestScheduler } from "rxjs/testing";
+
 /**
  * Minimal stub of a Matrix client sufficient for our tests:
  ```
@@ -291,4 +293,42 @@ describe("createHomeserverConnected$ - Grace Period", () => {
     client.setSyncState(SyncState.Syncing);
     expect(hsConnected.combined$.value).toBe(true);
   });
+
+  it('marble: sync "s----e" -> HomeserverConnected "t---------f"', () => {
+    const ts = new TestScheduler((a, b) => expect(a).toEqual(b));
+    
+    ts.run(({ cold, expectObservable }) => {
+      const GRACE = 5;
+      const scope = new ObservableScope();
+
+      // Setup Mocks
+      const client = new MockMatrixClient(SyncState.Syncing);
+      const session = new MockMatrixRTCSession({
+        membershipStatus: Status.Connected,
+        probablyLeft: false,
+      });
+
+      const hs = createHomeserverConnected$(scope, client, session, GRACE);
+
+      // Marble-Input: s (Syncing) at 0ms, e (Error) at 5ms
+      const syncValues = { s: SyncState.Syncing, e: SyncState.Error };
+      const driver$ = cold("s----e", syncValues);
+      
+      // Feed Mock-Client with marble values
+      driver$.subscribe((state) => {
+        client.setSyncState(state);
+      });
+
+      const values = { t: true, f: false };
+      
+      // t (0ms: Syncing + Connected = true)
+      //   (5ms: Error occurs, Grace period starts, still true)
+      // f (10ms: 5ms + 5ms Grace period ends, should flip to false)
+      expectObservable(hs.combined$).toBe("t---------f", values);
+
+      ts.flush();
+      scope.end();
+    });
+  });
+
 });
