@@ -10,11 +10,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { EventEmitter } from "events";
 import { ClientEvent, SyncState } from "matrix-js-sdk";
 import { MembershipManagerEvent, Status } from "matrix-js-sdk/lib/matrixrtc";
+import { TestScheduler } from "rxjs/testing";
 
 import { ObservableScope } from "../../ObservableScope";
 import { createHomeserverConnected$ } from "./HomeserverConnected";
-
-import { TestScheduler } from "rxjs/testing";
 
 /**
  * Minimal stub of a Matrix client sufficient for our tests:
