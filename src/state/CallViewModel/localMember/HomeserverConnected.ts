@@ -64,8 +64,7 @@ export function createHomeserverConnected$(
   gracePeriodMs?: number,
 ): HomeserverConnected {
   // Get grace period from parameter or config (default 10000ms)
-  const graceMs =
-    gracePeriodMs ?? Config.get().sync_disconnect_grace_period_ms ?? 10000;
+  const graceMs = gracePeriodMs ?? Config.get().sync_disconnect_grace_period_ms;
 
   const syncing$ = (
     fromEvent(client, ClientEvent.Sync) as Observable<[SyncState]>

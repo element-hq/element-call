@@ -12,7 +12,6 @@
     "feature_use_device_session_member_events": true
   },
   "ssla": "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
-  "sync_disconnect_grace_period_ms": 10000,
   "matrix_rtc_session": {
     "wait_for_key_rotation_ms": 3000,
     "membership_event_expiry_ms": 180000000,
