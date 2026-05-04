@@ -232,9 +232,6 @@ describe("createHomeserverConnected$ - Grace Period", () => {
       GRACE_PERIOD,
     );
 
-    session.setMembershipStatus(Status.Connected);
-    session.setProbablyLeft(false);
-
     // Initial state: Everything is connected
     expect(hsConnected.combined$.value).toBe(true);
 
@@ -258,9 +255,6 @@ describe("createHomeserverConnected$ - Grace Period", () => {
       session,
       GRACE_PERIOD,
     );
-
-    session.setMembershipStatus(Status.Connected);
-    session.setProbablyLeft(false);
 
     // Initial state: Connected
     expect(hsConnected.combined$.value).toBe(true);
@@ -286,9 +280,6 @@ describe("createHomeserverConnected$ - Grace Period", () => {
       session,
       GRACE_PERIOD,
     );
-
-    session.setMembershipStatus(Status.Connected);
-    session.setProbablyLeft(false);
 
     // 1. Initial error: wait until it flips to false
     client.setSyncState(SyncState.Error);
