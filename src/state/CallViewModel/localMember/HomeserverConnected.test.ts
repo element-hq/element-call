@@ -296,7 +296,7 @@ describe("createHomeserverConnected$ - Grace Period", () => {
 
   it('marble: sync "s----e" -> HomeserverConnected "t---------f"', () => {
     const ts = new TestScheduler((a, b) => expect(a).toEqual(b));
-    
+
     ts.run(({ cold, expectObservable }) => {
       const GRACE = 5;
       const scope = new ObservableScope();
@@ -313,14 +313,14 @@ describe("createHomeserverConnected$ - Grace Period", () => {
       // Marble-Input: s (Syncing) at 0ms, e (Error) at 5ms
       const syncValues = { s: SyncState.Syncing, e: SyncState.Error };
       const driver$ = cold("s----e", syncValues);
-      
+
       // Feed Mock-Client with marble values
       driver$.subscribe((state) => {
         client.setSyncState(state);
       });
 
       const values = { t: true, f: false };
-      
+
       // t (0ms: Syncing + Connected = true)
       //   (5ms: Error occurs, Grace period starts, still true)
       // f (10ms: 5ms + 5ms Grace period ends, should flip to false)
@@ -330,5 +330,4 @@ describe("createHomeserverConnected$ - Grace Period", () => {
       scope.end();
     });
   });
-
 });
