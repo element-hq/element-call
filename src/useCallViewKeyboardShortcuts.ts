@@ -64,7 +64,10 @@ const KeyToReactionMap: Record<string, ReactionOption> = Object.fromEntries(
  * @param sendReaction - triggered on (1,2,3,...)
  * @param toggleHandRaised - triggered on (h)
  * Additionally this method listens to the (escape) key to trigger the onBackButtonPressed callback, which is used to navigate to pip in the native app.
+ *
+ * Note: This function incorrectly assumes that there is a camera and microphone, which is not always the case.
  */
+// TODO: Make sure that this module is resilient when it comes to camera/microphone availability!
 export function useCallViewKeyboardShortcuts(
   toggleAudio: (() => void) | null,
   toggleVideo: (() => void) | null,
