@@ -125,6 +125,12 @@ body[data-platform="ios"] {
     -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 }
 
+body[data-platform="ios"] * {
+  /* This makes click events bubble properly on iOS
+  https://www.quirksmode.org/blog/archives/2014/02/mouse_event_bub.html */
+  cursor: pointer;
+}
+
 @layer compound-legacy {
   h1,
   h2,
