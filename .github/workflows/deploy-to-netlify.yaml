@@ -17,7 +17,12 @@ on:
       package:
         required: true
         type: string
-        description: Which package to deploy - 'full', 'embedded', or 'sdk'
+        description: Which package to deploy - 'full', 'embedded', 'sdk', or 'storybook'
+      environment_name:
+        required: false
+        type: string
+        default: NetlifyDefault
+        description: The GitHub deployment environment label shown in the PR (e.g. 'Netlify', 'Storybook')
       artifact_run_id:
         required: false
         type: string
@@ -35,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       deployments: write
-    environment: Netlify
+    environment: NetlifyTestName
     steps:
       - name: 📝 Create Deployment
         uses: bobheadxi/deployments@648679e8e4915b27893bd7dbc35cb504dc915bc8 # v1
@@ -43,7 +48,7 @@ jobs:
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: Netlify
+          env: TestName
           ref: ${{ inputs.deployment_ref }}
           desc: |
             Do you trust the author of this PR? Maybe this build will steal your keys or give you malware.
@@ -59,9 +64,13 @@ jobs:
 
       - name: Add redirects file
         # We fetch from github directly as we don't bother checking out the repo
+        # Not needed for storybook deployments
+        if: inputs.package != 'storybook'
         run: curl -s https://raw.githubusercontent.com/element-hq/element-call/main/config/netlify_redirects > webapp/_redirects
 
       - name: Add config file
+        # Not needed for storybook deployments
+        if: inputs.package != 'storybook'
         run: |
           if [ "${INPUTS_PACKAGE}" = "full" ]; then
             curl -s "https://raw.githubusercontent.com/${INPUTS_PR_HEAD_FULL_NAME}/${INPUTS_PR_HEAD_REF}/config/config_netlify_preview.json" > webapp/config.json
@@ -78,7 +87,7 @@ jobs:
         with:
           publish-dir: webapp
           deploy-message: "Deploy from GitHub Actions"
-          alias: ${{ inputs.package == 'sdk' && format('pr{0}-sdk', inputs.pr_number) || format('pr{0}', inputs.pr_number) }}
+          alias: ${{ inputs.package == 'sdk' && format('pr{0}-sdk', inputs.pr_number) || inputs.package == 'storybook' && format('pr{0}-storybook', inputs.pr_number) || format('pr{0}', inputs.pr_number) }}
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -92,7 +101,7 @@ jobs:
           override: false
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
-          env: ${{ steps.deployment.outputs.env }}
+          env: TestName
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
           env_url: ${{ steps.netlify.outputs.deploy-url }}
           desc: |
