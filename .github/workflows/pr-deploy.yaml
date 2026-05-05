@@ -47,7 +47,7 @@ jobs:
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
       NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 
-  netlify-sdk-deploy:
+  netlify-sdk:
     needs: prdetails
     permissions:
       deployments: write

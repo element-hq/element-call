@@ -88,6 +88,8 @@ jobs:
 
   build_storybook:
     name: Build Storybook
+    if: ${{ needs.prdetails.outputs.pr_data_json && contains(fromJSON(needs.prdetails.outputs.pr_data_json).labels.*.name, 'storybook build') }}
+    needs: prdetails
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

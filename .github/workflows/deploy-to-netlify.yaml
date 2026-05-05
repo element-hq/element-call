@@ -48,7 +48,7 @@ jobs:
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: TestName
+          env: ${{ inputs.environment_name}}
           ref: ${{ inputs.deployment_ref }}
           desc: |
             Do you trust the author of this PR? Maybe this build will steal your keys or give you malware.
@@ -101,7 +101,7 @@ jobs:
           override: false
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
-          env: TestName
+          env: ${{ steps.deployment.outputs.env }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
           env_url: ${{ steps.netlify.outputs.deploy-url }}
           desc: |
