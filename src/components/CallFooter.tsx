@@ -83,6 +83,8 @@ export interface FooterProps {
   videoOptions?: MenuOptions[];
   selectedAudio?: string;
   selectedVideo?: string;
+  selectAudioDevice?: (deviceId: string) => void;
+  selectVideoDevice?: (deviceId: string) => void;
 }
 
 export const CallFooter: FC<FooterProps> = ({
@@ -113,6 +115,8 @@ export const CallFooter: FC<FooterProps> = ({
   videoOptions,
   selectedAudio,
   selectedVideo,
+  selectAudioDevice,
+  selectVideoDevice,
 }) => {
   const buttons: JSX.Element[] = [];
   const buttonSize = asPip ? "md" : "lg";
@@ -145,6 +149,7 @@ export const CallFooter: FC<FooterProps> = ({
         data-testid="incall_mute"
         options={audioOptions}
         selectedOption={selectedAudio}
+        onSelect={selectAudioDevice}
       />,
     );
   } else {
@@ -170,6 +175,7 @@ export const CallFooter: FC<FooterProps> = ({
         data-testid="incall_mute"
         options={videoOptions}
         selectedOption={selectedVideo}
+        onSelect={selectVideoDevice}
       />,
     );
   } else {

@@ -197,9 +197,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               )
             }
             onSelect={(e) => {
+              e.preventDefault();
+              if (option.id === selectedOption) return;
               setPlannedSelection(option.id);
               onSelect?.(option.id);
-              e.preventDefault();
             }}
             key={option.id}
           >

@@ -91,6 +91,28 @@ describe("MediaMuteAndSwitchButton", () => {
 
     expect(onSelect).toHaveBeenCalledWith("mic2");
   });
+  test("does not call select callback on already selected menu click", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const { getByRole } = render(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: "Microphone 1", id: "mic1" },
+          { label: "Microphone 2", id: "mic2" },
+        ]}
+        selectedOption="mic1"
+        onSelect={onSelect}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Microphone" }));
+    await user.click(screen.getByRole("menuitem", { name: "Microphone 1" }));
+
+    expect(onSelect).not.toHaveBeenCalled();
+  });
 
   test("renders menu spinner until selection updates for the component", async () => {
     const user = userEvent.setup();
