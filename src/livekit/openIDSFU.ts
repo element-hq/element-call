@@ -241,7 +241,7 @@ export async function getLiveKitJWTWithDelayDelegation(
   // Also check for empty string
   if (delayId && delayEndpointBaseUrl) {
     const delayTimeoutMs =
-      Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms ?? 1000;
+      Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms;
     bodyDalayParts = {
       delay_id: delayId,
       delay_timeout: delayTimeoutMs,
