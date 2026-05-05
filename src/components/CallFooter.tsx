@@ -8,14 +8,6 @@ Please see LICENSE in the repository root for full details.
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
 import { BehaviorSubject } from "rxjs";
-import {
-  MicOffSolidIcon,
-  MicOnSolidIcon,
-  MicOnIcon,
-  VideoCallSolidIcon,
-  VideoCallIcon,
-  VideoCallOffSolidIcon,
-} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -147,9 +139,7 @@ export const CallFooter: FC<FooterProps> = ({
       <MediaMuteAndSwitchButton
         title={"Mic Source"}
         key="audio"
-        IconEnabled={MicOnSolidIcon}
-        IconDisabled={MicOffSolidIcon}
-        IconOptions={MicOnIcon}
+        iconsAndLabels="video"
         enabled={audioEnabled ?? false}
         onMuteClick={toggleAudio}
         data-testid="incall_mute"
@@ -174,9 +164,7 @@ export const CallFooter: FC<FooterProps> = ({
       <MediaMuteAndSwitchButton
         title={"Camera Source"}
         key="audio"
-        IconEnabled={VideoCallSolidIcon}
-        IconDisabled={VideoCallOffSolidIcon}
-        IconOptions={VideoCallIcon}
+        iconsAndLabels="audio"
         enabled={videoEnabled ?? false}
         onMuteClick={toggleVideo}
         data-testid="incall_mute"

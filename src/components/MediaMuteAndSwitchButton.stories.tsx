@@ -5,15 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  MicOnSolidIcon,
-  MicOffSolidIcon,
-  VideoCallSolidIcon,
-  VideoCallOffSolidIcon,
-  AdvancedSettingsIcon,
-  VideoCallIcon,
-  MicOnIcon,
-} from "@vector-im/compound-design-tokens/assets/web/icons";
+import { AdvancedSettingsIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { fn, userEvent, within, expect } from "storybook/test";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
@@ -28,23 +21,29 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     title: "SomeMenu",
-    IconEnabled: AdvancedSettingsIcon,
-    IconDisabled: AdvancedSettingsIcon,
+    iconsAndLabels: {
+      IconEnabled: AdvancedSettingsIcon,
+      IconDisabled: AdvancedSettingsIcon,
+      enabledLabel: "Enabled",
+      disabledLabel: "Disabled",
+      optionsButtonLabel: "Options",
+    },
     enabled: true,
     options: [
       { label: "option 1", id: "1" },
       { label: "option 2", id: "2" },
     ],
     selectedOption: "1",
+    onMuteClick: fn(),
+    onSelect: fn(),
   },
 };
 
 export const AudioMute: Story = {
   args: {
+    ...Default.args,
     title: "Microphone",
-    IconEnabled: MicOnSolidIcon,
-    IconDisabled: MicOffSolidIcon,
-    IconOptions: MicOnIcon,
+    iconsAndLabels: "audio",
     enabled: false,
     options: [
       { label: "Microphone 1", id: "1" },
@@ -52,14 +51,20 @@ export const AudioMute: Story = {
     ],
     selectedOption: "2",
   },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    // Both the mute button and the chevron trigger currently share the aria-label "Edit"
+    // (both are TODO placeholders in the component). The mute button is first in the DOM.
+    const muteButton = canvas.getByLabelText("Unmute microphone");
+    await userEvent.click(muteButton);
+    await expect(args.onMuteClick).toHaveBeenCalled();
+  },
 };
 
 export const AudioUnmute: Story = {
   args: {
     title: "Microphone",
-    IconEnabled: MicOnSolidIcon,
-    IconDisabled: MicOffSolidIcon,
-    IconOptions: MicOnIcon,
+    iconsAndLabels: "audio",
     enabled: true,
     options: [
       { label: "Microphone 1", id: "1" },
@@ -72,9 +77,7 @@ export const AudioUnmute: Story = {
 export const VideoMute: Story = {
   args: {
     title: "Camera",
-    IconEnabled: VideoCallSolidIcon,
-    IconDisabled: VideoCallOffSolidIcon,
-    IconOptions: VideoCallIcon,
+    iconsAndLabels: "video",
     enabled: false,
     options: [
       { label: "Camera 1", id: "1" },
@@ -87,9 +90,7 @@ export const VideoMute: Story = {
 export const VideoUnmute: Story = {
   args: {
     title: "Camera",
-    IconEnabled: VideoCallSolidIcon,
-    IconDisabled: VideoCallOffSolidIcon,
-    IconOptions: VideoCallIcon,
+    iconsAndLabels: "video",
     enabled: true,
     options: [
       { label: "Camera 1", id: "1" },

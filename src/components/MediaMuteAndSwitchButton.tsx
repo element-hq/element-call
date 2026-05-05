@@ -16,11 +16,19 @@ import { t } from "i18next";
 import {
   CheckIcon,
   ChevronUpIcon,
+  MicOffSolidIcon,
+  MicOnIcon,
+  MicOnSolidIcon,
   SpinnerIcon,
+  VideoCallIcon,
+  VideoCallOffSolidIcon,
+  VideoCallSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import styles from "./MediaMuteAndSwitchButton.module.css";
+
 export interface MenuOptions {
   label: string;
   id: string;
@@ -31,6 +39,18 @@ export interface ToggleOption {
   id: string;
 }
 
+export interface IconsAndLabels {
+  /** The Icon used if the mute button is enabled */
+  IconEnabled: ComponentType<React.SVGAttributes<SVGElement>>;
+  /** The Icon used if the mute button is disabled */
+  IconDisabled: ComponentType<React.SVGAttributes<SVGElement>>;
+  /** The icon used for the different options */
+  IconOptions?: ComponentType<React.SVGAttributes<SVGElement>>;
+  enabledLabel: string;
+  disabledLabel: string;
+  optionsButtonLabel: string;
+}
+
 export interface MediaMuteAndSwitchButtonProps {
   /** The title used in the Switcher modal. */
   title: string;
@@ -38,16 +58,11 @@ export interface MediaMuteAndSwitchButtonProps {
   enabled?: boolean;
   /** Callback if the mute button is clicked */
   onMuteClick?: () => void;
-  /** The Icon used if the mute button is enabled */
-  IconEnabled: ComponentType<React.SVGAttributes<SVGElement>>;
-  /** The Icon used if the mute button is disabled */
-  IconDisabled: ComponentType<React.SVGAttributes<SVGElement>>;
+  iconsAndLabels?: "video" | "audio" | IconsAndLabels;
   /** The options available for the media device selector modal */
   options?: MenuOptions[];
   /** The option that will currently be rendered as the selected option */
   selectedOption?: string;
-  /** The icon used for the different options */
-  IconOptions?: ComponentType<React.SVGAttributes<SVGElement>>;
   /**
    * The available toggles (including there current state)
    * The toggle state is not stored by this component.
@@ -65,16 +80,67 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
   enabled,
   onMuteClick,
-  IconEnabled,
-  IconDisabled,
+  iconsAndLabels: iconsAndLabelsWithDefaultCases,
   options,
   selectedOption,
-  IconOptions,
   toggles,
   onSelect,
 }) => {
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  let iconsAndLabels: IconsAndLabels | undefined;
+  switch (iconsAndLabelsWithDefaultCases) {
+    case "video":
+      iconsAndLabels = {
+        IconEnabled: VideoCallSolidIcon,
+        IconDisabled: VideoCallOffSolidIcon,
+        IconOptions: VideoCallIcon,
+        disabledLabel: t("stop_video_button_label"),
+        enabledLabel: t("start_video_button_label"),
+        optionsButtonLabel: t("settings.devices.microphone"),
+      };
+      break;
+    case "audio":
+      iconsAndLabels = {
+        IconEnabled: MicOnSolidIcon,
+        IconDisabled: MicOffSolidIcon,
+        IconOptions: MicOnIcon,
+        disabledLabel: t("mute_microphone_button_label"),
+        enabledLabel: t("unmute_microphone_button_label"),
+        optionsButtonLabel: t("settings.devices.microphone"),
+      };
+      break;
+    default:
+      iconsAndLabels = iconsAndLabelsWithDefaultCases;
+      break;
+  }
+  const {
+    IconEnabled,
+    IconDisabled,
+    IconOptions,
+    disabledLabel,
+    enabledLabel,
+    optionsButtonLabel,
+  } = iconsAndLabels ?? {
+    IconEnabled: undefined,
+    IconDisabled: undefined,
+    IconOptions: undefined,
+    disabledLabel: undefined,
+    enabledLabel: undefined,
+    optionsButtonLabel: undefined,
+  };
+  {
+    logger.info(
+      "RENDER WITH: selectedOption !== option.id && plannedSelection === option.id",
+      selectedOption,
+      " !==",
+      "option.id",
+      " && ",
+      plannedSelection,
+      " === ",
+      "option.id",
+    );
+  }
   return (
     <div
       className={classNames({
@@ -94,7 +160,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         kind={enabled ? "secondary" : "primary"}
         size="lg"
         className={styles.button}
-        aria-label={t("action.edit")}
+        aria-label={enabled ? disabledLabel : enabledLabel}
       />
       <Menu
         title={title}
@@ -109,7 +175,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             Icon={ChevronUpIcon}
             kind={"tertiary"}
             size="lg"
-            aria-label={/*TODO*/ t("action.edit")}
+            aria-label={optionsButtonLabel}
           />
         }
       >
@@ -127,8 +193,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               )
             }
             onSelect={(e) => {
-              onSelect?.(option.id);
               setPlannedSelection(option.id);
+              onSelect?.(option.id);
               e.preventDefault();
             }}
             key={option.id}

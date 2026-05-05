@@ -1,0 +1,43 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MediaMuteAndSwitchButton > renders 1`] = `
+<div>
+  <div
+    class="container"
+  >
+    <button
+      class="_button_1nw83_8 button _icon-only_1nw83_53"
+      data-kind="primary"
+      data-size="lg"
+      role="button"
+      tabindex="0"
+    />
+    <button
+      aria-disabled="false"
+      aria-expanded="false"
+      aria-haspopup="menu"
+      class="_button_1nw83_8 menuButton _has-icon_1nw83_60 _icon-only_1nw83_53"
+      data-kind="tertiary"
+      data-size="lg"
+      data-state="closed"
+      id="radix-_r_0_"
+      role="button"
+      tabindex="0"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        fill="currentColor"
+        height="24"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12 10.775-3.9 3.9a.95.95 0 0 1-.7.275.95.95 0 0 1-.7-.275.95.95 0 0 1-.275-.7q0-.425.275-.7l4.6-4.6q.15-.15.325-.212Q11.8 8.4 12 8.4t.375.063a.9.9 0 0 1 .325.212l4.6 4.6a.95.95 0 0 1 .275.7.95.95 0 0 1-.275.7.95.95 0 0 1-.7.275.95.95 0 0 1-.7-.275z"
+        />
+      </svg>
+    </button>
+  </div>
+</div>
+`;
