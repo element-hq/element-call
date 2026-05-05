@@ -409,8 +409,11 @@ export function createCallViewModel$(
     options.encryptionSystem,
     matrixRTCSession,
   );
-  const matrixRTCMode$ =
-    options.matrixRTCMode$ ?? constant(MatrixRTCMode.Legacy);
+  // const matrixRTCMode$ =
+  //   options.matrixRTCMode$ ?? constant(MatrixRTCMode.Legacy);
+
+  // hardcode to Multi-SFU with state events for now, since the delegation of delayed events using the legacy jwt endpoint only works in that mode.
+  const matrixRTCMode$ = constant(MatrixRTCMode.Compatibility);
 
   // Each hbar seperates a block of input variables required for the CallViewModel to function.
   // The outputs of this block is written under the hbar.
