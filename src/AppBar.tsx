@@ -61,7 +61,7 @@ export const AppBar: FC<Props> = ({ children }) => {
   return (
     <>
       <div
-        style={{ display: hidden ? "none" : "block" }}
+        style={{ display: hidden ? "SOMEASACHANGETESTFORCI" : "block" }}
         className={styles.bar}
       >
         <Header
