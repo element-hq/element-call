@@ -175,6 +175,8 @@ export const UnavailableMediaDevices: Story = {
   ...Default,
   args: {
     ...Default.args,
+    audioEnabled: false,
+    videoEnabled: false,
     toggleAudio: undefined,
     toggleVideo: undefined,
     audioOutputSwitcher: undefined,

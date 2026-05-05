@@ -92,6 +92,11 @@ export const Modal: FC<Props> = ({
     return (
       <Drawer.Root
         open={open}
+        // This autofocus is a custom vault property and not the
+        // standard HTML autofocus attribute.
+        // It makes the Drawer.Root behave like the `DialogRoot`
+        // eslint-disable-next-line jsx-a11y/no-autofocus
+        autoFocus
         onOpenChange={onOpenChange}
         dismissible={onDismiss !== undefined}
       >

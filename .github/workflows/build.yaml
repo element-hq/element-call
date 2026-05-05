@@ -88,6 +88,7 @@ jobs:
 
   build_storybook:
     name: Build Storybook
+    if: contains(github.event.pull_request.labels.*.name, 'storybook build')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
