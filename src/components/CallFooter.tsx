@@ -101,7 +101,7 @@ export const CallFooter: FC<FooterProps> = ({
   tileStoreGeneration,
 }) => {
   const buttons: JSX.Element[] = [];
-  const buttonSize = asPip ? "sm" : "lg";
+  const buttonSize = asPip ? "md" : "lg";
   const showSettingsButton =
     openSettings !== undefined && !asPip && !hideControls;
   const showLayoutSwitcher = !asPip && !hideControls;
