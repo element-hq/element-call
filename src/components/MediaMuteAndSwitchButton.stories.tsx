@@ -49,6 +49,13 @@ export const AudioMute: Story = {
       { label: "Microphone 1", id: "1" },
       { label: "Microphone 2", id: "2" },
     ],
+    toggles: [
+      {
+        label: "example toggle",
+        id: "t0",
+        enabled: true,
+      },
+    ],
     selectedOption: "2",
   },
   play: async ({ args, canvasElement }) => {
@@ -70,6 +77,7 @@ export const AudioUnmute: Story = {
       { label: "Microphone 1", id: "1" },
       { label: "Microphone 2", id: "2" },
     ],
+    toggles: [],
     selectedOption: "2",
   },
 };
@@ -83,6 +91,7 @@ export const VideoMute: Story = {
       { label: "Camera 1", id: "1" },
       { label: "Camera 2", id: "2" },
     ],
+    toggles: [],
     selectedOption: "1",
   },
 };
