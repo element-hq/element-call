@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       deployments: write
-    environment: NetlifyTestName
+    environment: Netlify
     steps:
       - name: 📝 Create Deployment
         uses: bobheadxi/deployments@648679e8e4915b27893bd7dbc35cb504dc915bc8 # v1
@@ -96,7 +96,7 @@ jobs:
           override: false
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
-          env: TestName
+          env: ${{ steps.deployment.outputs.env }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
           env_url: ${{ steps.netlify.outputs.deploy-url }}
           desc: |
