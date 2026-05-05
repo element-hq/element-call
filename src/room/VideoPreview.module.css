@@ -6,7 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 .preview {
-  margin-inline: var(--inline-content-inset);
+  margin-left: var(--content-inset-left);
+  margin-right: var(--content-inset-right);
   min-block-size: 0;
   block-size: 50vh;
   border-radius: var(--cpd-space-4x);
@@ -80,6 +81,7 @@ video.mirror {
   }
 
   .buttonBar {
-    padding-inline: var(--inline-content-inset);
+    padding-left: var(--content-inset-left);
+    padding-right: var(--content-inset-right);
   }
 }

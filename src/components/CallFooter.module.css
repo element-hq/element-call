@@ -14,7 +14,11 @@ Please see LICENSE in the repository root for full details.
   grid-template-areas: ". buttons layout";
   align-items: center;
   gap: var(--cpd-space-3x);
-  padding: var(--cpd-space-10x) var(--cpd-space-6x);
+  /* Ensure that footer lies within the safe area */
+  padding-left: calc(env(safe-area-inset-left) + var(--cpd-space-6x));
+  padding-right: calc(env(safe-area-inset-right) + var(--cpd-space-6x));
+  padding-block: var(--cpd-space-10x)
+    calc(env(safe-area-inset-bottom) + var(--cpd-space-10x));
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
@@ -118,13 +122,15 @@ Once we exceed 500 we hide everything except the buttons.
 
 @media (max-height: 800px) {
   .footer {
-    padding-block: var(--cpd-space-8x);
+    padding-block: var(--cpd-space-8x)
+      calc(env(safe-area-inset-bottom) + var(--cpd-space-8x));
   }
 }
 
 @media (max-height: 400px) {
   .footer {
-    padding-block: var(--cpd-space-4x);
+    padding-block: var(--cpd-space-4x)
+      calc(env(safe-area-inset-bottom) + var(--cpd-space-4x));
   }
 }
 
@@ -140,7 +146,9 @@ Once we exceed 500 we hide everything except the buttons.
     }
     .footer {
       padding-block-start: var(--cpd-space-3x);
-      padding-block-end: var(--cpd-space-2x);
+      padding-block-end: calc(
+        env(safe-area-inset-bottom) + var(--cpd-space-2x)
+      );
     }
   }
 }

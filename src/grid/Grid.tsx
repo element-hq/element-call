@@ -266,6 +266,20 @@ export function Grid<
     }, []),
     useCallback(() => window.innerHeight, []),
   );
+  const orientation = useSyncExternalStore(
+    useCallback((onChange) => {
+      // Support for the change event is experimental
+      // https://developer.mozilla.org/en-US/docs/Web/API/Screen/change_event#browser_compatibility
+      (screen as unknown as EventTarget).addEventListener?.("change", onChange);
+      return (): void =>
+        (screen as unknown as EventTarget).removeEventListener?.(
+          "change",
+          onChange,
+        );
+    }, []),
+    useCallback(() => window.innerHeight, []),
+  );
+
   const [layoutRoot, setLayoutRoot] = useState<HTMLElement | null>(null);
   const [generation, setGeneration] = useState<number | null>(null);
   const [visibleTilesCallback, setVisibleTilesCallback] =
@@ -336,10 +350,10 @@ export function Grid<
     }
 
     return result;
-    // The rects may change due to the grid resizing or updating to a new
-    // generation, but eslint can't statically verify this
+    // The rects may change due to the grid resizing, changing orientation, or
+    // updating to a new generation, but eslint can't statically verify this
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gridRoot, layoutRoot, tiles, gridBounds, generation]);
+  }, [gridRoot, layoutRoot, tiles, gridBounds, orientation, generation]);
 
   // The height of the portion of the grid visible at any given time
   const visibleHeight = useMemo(

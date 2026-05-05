@@ -26,8 +26,12 @@ modePairs.forEach(([rtcMode1, rtcMode2]) => {
         "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
       );
 
-      const florian = await addUser("floriant", HOST1);
-      const timo = await addUser("timo", HOST2);
+      test.slow();
+
+      const [florian, timo] = await Promise.all([
+        addUser("florian", HOST1),
+        addUser("timo", HOST2),
+      ]);
 
       const roomName = "Call Room";
 
@@ -57,27 +61,20 @@ modePairs.forEach(([rtcMode1, rtcMode2]) => {
         const frame = user.page
           .locator('iframe[title="Element Call"]')
           .contentFrame();
-        await expect(frame.getByTestId("videoTile")).toHaveCount(2);
+        await expect(frame.getByTestId("videoTile")).toHaveCount(2, {
+          timeout: 10000,
+        });
 
-        // There are no other options than to wait for all media to be ready?
-        // Or it is too flaky :/
-        await user.page.waitForTimeout(3000);
         // No one should be waiting for media
-        await expect(frame.getByText("Waiting for media...")).not.toBeVisible();
+        await expect(frame.getByText("Waiting for media...")).not.toBeVisible({
+          timeout: 10000,
+        });
 
         // There should be 2 video elements, visible and autoplaying
         const videoElements = await frame.locator("video").all();
         expect(videoElements.length).toBe(2);
 
-        const blockDisplayCount = await frame
-          .locator("video")
-          .evaluateAll(
-            (videos: Element[]) =>
-              videos.filter(
-                (v: Element) => window.getComputedStyle(v).display === "block",
-              ).length,
-          );
-        expect(blockDisplayCount).toBe(2);
+        await TestHelpers.expectVisibleVideoCount(frame, 2);
       }
 
       // await florian.page.pause();

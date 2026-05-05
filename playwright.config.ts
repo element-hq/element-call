@@ -7,10 +7,21 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { defineConfig, devices } from "@playwright/test";
+import { join } from "path";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const baseURL = process.env.USE_DOCKER
   ? "http://localhost:8080"
   : "https://localhost:3000";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Needed by the synapse admin API called in fixtures
+process.env.NODE_EXTRA_CA_CERTS = join(
+  __dirname,
+  "backend/dev_tls_local-ca.crt",
+);
 
 /**
  * See https://playwright.dev/docs/test-configuration.
