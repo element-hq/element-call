@@ -65,7 +65,7 @@ jobs:
 
   netlify-storybook:
     needs: prdetails
-    # if: ${{ needs.prdetails.outputs.pr_data_json && contains(fromJSON(needs.prdetails.outputs.pr_data_json).labels.*.name, 'storybook build') }}
+    if: ${{ needs.prdetails.outputs.pr_data_json && contains(fromJSON(needs.prdetails.outputs.pr_data_json).labels.*.name, 'storybook build') }}
     permissions:
       deployments: write
     uses: ./.github/workflows/deploy-to-netlify.yaml
