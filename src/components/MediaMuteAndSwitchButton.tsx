@@ -16,6 +16,7 @@ import { t } from "i18next";
 import {
   CheckIcon,
   ChevronUpIcon,
+  ChevronDownIcon,
   MicOffSolidIcon,
   MicOnIcon,
   MicOnSolidIcon,
@@ -171,8 +172,11 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         trigger={
           <Button
             iconOnly
-            className={styles.menuButton}
-            Icon={ChevronUpIcon}
+            className={classNames({
+              [styles.menuButton]: true,
+              [styles.chevronIconOpen]: menuOpen,
+            })}
+            Icon={menuOpen ? ChevronUpIcon : ChevronDownIcon}
             kind={"tertiary"}
             size="lg"
             aria-label={optionsButtonLabel}
