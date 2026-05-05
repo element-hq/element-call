@@ -220,7 +220,7 @@ export const InCallView: FC<InCallViewProps> = ({
     muted: muteAllAudio,
   });
   const latestPickupPhaseAudio = useLatest(pickupPhaseAudio);
-
+  const mediaDevices = useMediaDevices();
   const audioEnabled = useBehavior(muteStates.audio.enabled$);
   const videoEnabled = useBehavior(muteStates.video.enabled$);
   const toggleAudio = useBehavior(muteStates.audio.toggle$);
@@ -597,6 +597,8 @@ export const InCallView: FC<InCallViewProps> = ({
       //Debug props
       debugTileLayout={debugTileLayout}
       tileStoreGeneration={tileStoreGeneration}
+      audioDevice={mediaDevices.audioInput}
+      videoDevice={mediaDevices.videoInput}
     />
   );
   const allConnections = useBehavior(vm.allConnections$);

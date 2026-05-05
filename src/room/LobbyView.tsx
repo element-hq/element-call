@@ -236,6 +236,8 @@ export const LobbyView: FC<Props> = ({
           hangup={!confineToRoom ? onLeaveClick : undefined}
           // Logo and header are connected. We will only show the logo in SPA with header.
           hideLogo={hideHeader}
+          audioDevice={devices.audioInput}
+          videoDevice={devices.videoInput}
         >
           {recentsButtonInFooter && recentsButton}
         </CallFooter>

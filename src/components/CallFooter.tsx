@@ -7,7 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, of } from "rxjs";
+import { useObservableEagerState } from "observable-hooks";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -29,7 +30,18 @@ import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
-
+import {
+  type AudioOutputDeviceLabel,
+  type DeviceLabel,
+  type MediaDevice,
+  type SelectedDevice,
+} from "../state/MediaDevices";
+import { mediaDeviceLabelToString } from "../settings/DeviceSelection";
+import {
+  backgroundBlur as backgroundBlurSettings,
+  useSetting,
+} from "../settings/settings";
+import { useTrackProcessor } from "../livekit/TrackProcessorContext";
 export interface AudioOutputSwitcher {
   targetOutput: string;
   switch: () => void;
@@ -85,6 +97,19 @@ export interface FooterProps {
   selectedVideo?: string;
   selectAudioDevice?: (deviceId: string) => void;
   selectVideoDevice?: (deviceId: string) => void;
+  /**
+   * If provided the footer will use the switchAndMute buttons.
+   * If not provided it will use the normal mute Buttons
+   */
+  audioDevice?: MediaDevice<
+    DeviceLabel | AudioOutputDeviceLabel,
+    SelectedDevice
+  >;
+  /**
+   * If provided the footer will use the switchAndMute buttons.
+   * If not provided it will use the normal mute Buttons
+   */
+  videoDevice?: MediaDevice<DeviceLabel, SelectedDevice>;
 }
 
 export const CallFooter: FC<FooterProps> = ({
@@ -111,13 +136,25 @@ export const CallFooter: FC<FooterProps> = ({
   debugTileLayout,
   tileStoreGeneration,
 
-  audioOptions,
-  videoOptions,
-  selectedAudio,
-  selectedVideo,
-  selectAudioDevice,
-  selectVideoDevice,
+  audioDevice,
+  videoDevice,
 }) => {
+  const videoOptions = useObservableEagerState(
+    videoDevice?.available$ ?? of(new Map()),
+  );
+  const selectedVideo = useObservableEagerState(
+    videoDevice?.selected$ ?? of(undefined),
+  );
+  const audioOptions = useObservableEagerState(
+    audioDevice?.available$ ?? of(new Map()),
+  );
+  const selectedAudio = useObservableEagerState(
+    audioDevice?.selected$ ?? of(undefined),
+  );
+
+  const { supported: blurSupported } = useTrackProcessor();
+  const [blurActive, setBlurActive] = useSetting(backgroundBlurSettings);
+
   const buttons: JSX.Element[] = [];
   const buttonSize = asPip ? "md" : "lg";
   const showSettingsButton =
@@ -138,18 +175,24 @@ export const CallFooter: FC<FooterProps> = ({
     );
   }
 
-  if ((audioOptions?.length ?? 0) > 0) {
+  if ((audioOptions?.size ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
         title={"Mic Source"}
         key="audio"
-        iconsAndLabels="video"
+        iconsAndLabels="audio"
         enabled={audioEnabled ?? false}
         onMuteClick={toggleAudio}
         data-testid="incall_mute"
-        options={audioOptions}
-        selectedOption={selectedAudio}
-        onSelect={selectAudioDevice}
+        options={Array.from(audioOptions.entries()).map(([k, v]) => {
+          const label = mediaDeviceLabelToString(v, (n) => "Audio Device " + n);
+          return {
+            id: k,
+            label: label,
+          };
+        })}
+        selectedOption={selectedAudio?.id}
+        onSelect={audioDevice?.select}
       />,
     );
   } else {
@@ -164,18 +207,40 @@ export const CallFooter: FC<FooterProps> = ({
       />,
     );
   }
-  if ((videoOptions?.length ?? 0) > 0) {
+  if ((videoOptions?.size ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
         title={"Camera Source"}
-        key="audio"
-        iconsAndLabels="audio"
+        key="video"
+        iconsAndLabels="video"
         enabled={videoEnabled ?? false}
         onMuteClick={toggleVideo}
         data-testid="incall_mute"
-        options={videoOptions}
-        selectedOption={selectedVideo}
-        onSelect={selectVideoDevice}
+        options={Array.from(videoOptions.entries()).map(([k, v]) => ({
+          id: k,
+          label: v.type === "name" ? v.name : "Camera " + v.number,
+        }))}
+        toggles={
+          blurSupported
+            ? [
+                {
+                  id: "blur",
+                  enabled: blurActive,
+                  label: "Blur Background",
+                },
+              ]
+            : []
+        }
+        selectedOption={selectedVideo?.id}
+        onSelect={(option) => {
+          switch (option) {
+            case "blur":
+              setBlurActive(!blurActive);
+              break;
+            default:
+              videoDevice?.select(option);
+          }
+        }}
       />,
     );
   } else {
