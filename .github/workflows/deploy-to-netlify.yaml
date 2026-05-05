@@ -18,11 +18,6 @@ on:
         required: true
         type: string
         description: Which package to deploy - 'full', 'embedded', 'sdk', or 'storybook'
-      environment_name:
-        required: false
-        type: string
-        default: NetlifyDefault
-        description: The GitHub deployment environment label shown in the PR (e.g. 'Netlify', 'Storybook')
       artifact_run_id:
         required: false
         type: string
@@ -48,7 +43,7 @@ jobs:
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: ${{ inputs.environment_name}}
+          env: ${{ inputs.package}}
           ref: ${{ inputs.deployment_ref }}
           desc: |
             Do you trust the author of this PR? Maybe this build will steal your keys or give you malware.
