@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       deployments: write
-    environment: NetlifyTestName
+    environment: Netlify
     steps:
       - name: 📝 Create Deployment
         uses: bobheadxi/deployments@648679e8e4915b27893bd7dbc35cb504dc915bc8 # v1
