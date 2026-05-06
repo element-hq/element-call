@@ -260,7 +260,10 @@ describe("Start connection states", () => {
       await deferredSFU.promise;
       return {
         status: 500,
-        body: "Internal Server Error",
+        body: {
+          errcode: "M_LOOKUP_FAILED",
+          error: "Failed to look up user info from homeserver",
+        },
       };
     });
 
@@ -282,7 +285,7 @@ describe("Start connection states", () => {
       capturedState.cause instanceof Error
     ) {
       expect(capturedState.cause.message).toContain(
-        "SFU Config fetch failed with status code 500",
+        "Failed to look up user info from homeserver",
       );
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,
