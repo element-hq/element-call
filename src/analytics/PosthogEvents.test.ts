@@ -192,4 +192,45 @@ describe("CallEnded", () => {
     );
   });
 });
+
+describe("CallReconnecting", () => {
+  beforeAll(() => {
+    mockConfig();
+  });
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.spyOn(PosthogAnalytics.instance, "trackEvent").mockImplementation(
+      () => {},
+    );
+  });
+
+  afterAll(() => {
+    PosthogAnalytics.resetInstance();
+  });
+
+  it("tracks event with correct shape", () => {
+    const tracker = new CallReconnectingTracker();
+    tracker.track("!room:example.org", "syncing");
+
+    expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith({
+      eventName: "CallReconnecting",
+      callId: "!room:example.org",
+      reason: "syncing",
+    });
+  });
+
+  it.each([
+    "syncing",
+    "membershipConnected",
+    "certainlyConnected",
+    "livekit",
+  ] as CallReconnectingReason[])("tracks reason %s correctly", (reason) => {
+    const tracker = new CallReconnectingTracker();
+    tracker.track("!room:example.org", reason);
+
+    expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ reason }),
+    );
+  });
 });
