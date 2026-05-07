@@ -217,7 +217,7 @@ widgetTest(
     ).toBeVisible();
 
     await expect(whistler.page.getByText("Incoming video call")).toBeVisible();
-    await whistler.page.getByRole("button", { name: "Ignore" }).click();
+    await whistler.page.getByRole("button", { name: "Decline" }).click();
 
     await expect(
       whistler.page.locator('iframe[title="Element Call"]'),
