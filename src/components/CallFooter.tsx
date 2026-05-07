@@ -7,8 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
-import { BehaviorSubject, of } from "rxjs";
-import { useObservableEagerState } from "observable-hooks";
+import { combineLatest, map } from "rxjs";
+import { supportsBackgroundProcessors } from "@livekit/track-processors";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -25,49 +25,52 @@ import {
 } from "../button";
 import styles from "./CallFooter.module.css";
 import { LayoutToggle } from "../room/LayoutToggle";
-import { type GridMode } from "../state/CallViewModel/CallViewModel";
+import {
+  type CallViewModel,
+  type GridMode,
+} from "../state/CallViewModel/CallViewModel";
 import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
+  type ToggleOption,
 } from "./MediaMuteAndSwitchButton";
-import {
-  type AudioOutputDeviceLabel,
-  type DeviceLabel,
-  type MediaDevice,
-  type SelectedDevice,
-} from "../state/MediaDevices";
+import { type MediaDevices } from "../state/MediaDevices";
 import { mediaDeviceLabelToString } from "../settings/DeviceSelection";
 import {
   backgroundBlur as backgroundBlurSettings,
-  useSetting,
+  debugTileLayout as debugTileLayoutSetting,
 } from "../settings/settings";
-import { useTrackProcessor } from "../livekit/TrackProcessorContext";
+import { constant } from "../state/Behavior";
+import type { ObservableScope } from "../state/ObservableScope";
+import { type MuteStates } from "../state/MuteStates";
+import { type ViewModel, useViewModel } from "../state/ViewModel";
+import { getUrlParams, HeaderStyle } from "../UrlParams";
+
 export interface AudioOutputSwitcher {
   targetOutput: string;
   switch: () => void;
 }
 
-export interface FooterProps {
-  ref?: Ref<HTMLDivElement>;
-  /** Children will only be visible if the component is wider than 5*/
-  children?: JSX.Element | JSX.Element[] | false;
-
+export interface FooterSnapshot {
   audioEnabled: boolean;
   /** Also controls if the audioMute button is disabled */
   toggleAudio: (() => void) | undefined;
+
   videoEnabled: boolean;
   /** Also controls if the videoMute button is disabled */
   toggleVideo: (() => void) | undefined;
 
   /* This is needed for WindowMode = "flat" */
   hideControls?: boolean;
-  /** hide the entire footer*/
-  hidden?: boolean;
-  /** Pip controls buttonSize and hides: settings button, layout switcher and logo */
-  asPip?: boolean;
   /** The footer should be used as an overlay.
-   * (Over the Call Grid) This saves spaces on small screens.*/
+   * (Over the Call Grid) This saves spaces on small screens. */
   asOverlay?: boolean;
+
+  buttonSize: "md" | "lg";
+  showSettingsButton?: boolean;
+  showLayoutSwitcher?: boolean;
+  showLogoDebugContainer?: boolean;
+  showLogo?: boolean;
 
   layoutMode?: GridMode;
   /** Also controls if the layout button is visible */
@@ -76,7 +79,7 @@ export interface FooterProps {
   sharingScreen?: boolean;
   toggleScreenSharing?: () => void;
 
-  /** Also controls if the audio button is visible */
+  /** Also controls if the audio output button is visible */
   audioOutputSwitcher?: AudioOutputSwitcher;
   /** Also controls if the settings button is visible */
   openSettings?: () => void;
@@ -86,7 +89,6 @@ export interface FooterProps {
   reactionIdentifier?: string;
   reactionData?: ReactionData;
 
-  hideLogo?: boolean;
   // debug stuff
   debugTileLayout?: boolean;
   tileStoreGeneration?: number;
@@ -95,76 +97,311 @@ export interface FooterProps {
   videoOptions?: MenuOptions[];
   selectedAudio?: string;
   selectedVideo?: string;
-  selectAudioDevice?: (deviceId: string) => void;
-  selectVideoDevice?: (deviceId: string) => void;
-  /**
-   * If provided the footer will use the switchAndMute buttons.
-   * If not provided it will use the normal mute Buttons
-   */
-  audioDevice?: MediaDevice<
-    DeviceLabel | AudioOutputDeviceLabel,
-    SelectedDevice
-  >;
-  /**
-   * If provided the footer will use the switchAndMute buttons.
-   * If not provided it will use the normal mute Buttons
-   */
-  videoDevice?: MediaDevice<DeviceLabel, SelectedDevice>;
+  selectAudioButtonOption?: (deviceId: string) => void;
+  selectVideoButtonOption?: (option: string) => void;
+  videoToggles?: ToggleOption[];
 }
 
-export const CallFooter: FC<FooterProps> = ({
-  ref,
-  children,
-  asOverlay,
-  hidden,
-  hideControls,
-  hideLogo,
-  asPip,
-  layoutMode,
-  setLayoutMode,
-  openSettings,
-  audioEnabled,
-  videoEnabled,
-  toggleAudio,
-  toggleVideo,
-  sharingScreen,
-  toggleScreenSharing,
-  reactionIdentifier,
-  reactionData,
-  audioOutputSwitcher,
-  hangup,
-  debugTileLayout,
-  tileStoreGeneration,
+/**
+ * Shared helper: maps MuteStates into the audio/video enabled + toggle behaviors
+ * needed by FooterSnapshot.
+ */
+function buildMuteBehaviors(
+  scope: ObservableScope,
+  muteStates: MuteStates,
+): Pick<
+  ViewModel<FooterSnapshot>,
+  "audioEnabled" | "toggleAudio" | "videoEnabled" | "toggleVideo"
+> {
+  return {
+    audioEnabled: muteStates.audio.enabled$,
+    toggleAudio: scope.behavior(
+      muteStates.audio.toggle$.pipe(map((t) => t ?? undefined)),
+    ),
+    videoEnabled: muteStates.video.enabled$,
+    toggleVideo: scope.behavior(
+      muteStates.video.toggle$.pipe(map((t) => t ?? undefined)),
+    ),
+  };
+}
 
-  audioDevice,
-  videoDevice,
-}) => {
-  const videoOptions = useObservableEagerState(
-    videoDevice?.available$ ?? of(new Map()),
-  );
-  const selectedVideo = useObservableEagerState(
-    videoDevice?.selected$ ?? of(undefined),
-  );
-  const audioOptions = useObservableEagerState(
-    audioDevice?.available$ ?? of(new Map()),
-  );
-  const selectedAudio = useObservableEagerState(
-    audioDevice?.selected$ ?? of(undefined),
-  );
+/**
+ * Shared helper: maps MediaDevices into the audio/video device-list behaviors
+ * needed by FooterSnapshot (options, selection, callbacks, blur toggle).
+ */
+function buildDeviceBehaviors(
+  scope: ObservableScope,
+  mediaDevices: MediaDevices,
+): Pick<
+  ViewModel<FooterSnapshot>,
+  | "audioOptions"
+  | "selectedAudio"
+  | "selectAudioButtonOption"
+  | "videoOptions"
+  | "selectedVideo"
+  | "selectVideoButtonOption"
+  | "videoToggles"
+> {
+  return {
+    audioOptions: scope.behavior(
+      mediaDevices.audioInput.available$.pipe(
+        map((available) =>
+          [...available.entries()].map(([id, label]) => ({
+            id,
+            label: mediaDeviceLabelToString(label, (n) => "Audio Device " + n),
+          })),
+        ),
+      ),
+    ),
+    selectedAudio: scope.behavior(
+      mediaDevices.audioInput.selected$.pipe(map((s) => s?.id)),
+    ),
+    selectAudioButtonOption: constant(mediaDevices.audioInput.select),
+    videoOptions: scope.behavior(
+      mediaDevices.videoInput.available$.pipe(
+        map((available) =>
+          [...available.entries()].map(([id, label]) => ({
+            id,
+            label: mediaDeviceLabelToString(label, (n) => "Camera " + n),
+          })),
+        ),
+      ),
+    ),
+    selectedVideo: scope.behavior(
+      mediaDevices.videoInput.selected$.pipe(map((s) => s?.id)),
+    ),
+    selectVideoButtonOption: scope.behavior(
+      backgroundBlurSettings.value$.pipe(
+        map((current) => {
+          return (option: string) => {
+            if (option === "blur") {
+              backgroundBlurSettings.setValue(!current);
+            } else {
+              mediaDevices.videoInput.select(option);
+            }
+          };
+        }),
+      ),
+    ),
+    videoToggles: scope.behavior(
+      backgroundBlurSettings.value$.pipe(
+        map((blurActive) =>
+          supportsBackgroundProcessors()
+            ? [{ id: "blur", enabled: blurActive, label: "Blur Background" }]
+            : [],
+        ),
+      ),
+    ),
+  };
+}
 
-  const { supported: blurSupported } = useTrackProcessor();
-  const [blurActive, setBlurActive] = useSetting(backgroundBlurSettings);
+/**
+ * Creates the ViewModel for the CallFooter.
+ *
+ * @param scope - ObservableScope that bounds the lifetime of derived behaviors.
+ * @param vm - The root CallViewModel; provides layout, grid mode, reactions, etc.
+ * @param muteStates - Audio and video mute state + toggles.
+ * @param mediaDevices - Available and selected input devices.
+ * @param openSettings - Callback to open the settings modal, or undefined if the
+ *   settings button should be hidden (e.g. when it is already shown in an app bar).
+ * @param hideControls - When true the button row is hidden (from URL param).
+ * @param reactionIdentifier - The local user's reaction identifier string, or
+ *   undefined when reactions are not supported (hides the reaction button).
+ */
+export function createCallFooterViewModel(
+  scope: ObservableScope,
+  callModel: CallViewModel,
+  muteStates: MuteStates,
+  mediaDevices: MediaDevices,
+  openSettings: (() => void) | undefined,
+  reactionIdentifier: string | undefined,
+): ViewModel<FooterSnapshot> {
+  const { showControls, header: headerStyle } = getUrlParams();
+
+  const hideLogo = headerStyle !== HeaderStyle.Standard;
+
+  return {
+    ...buildMuteBehaviors(scope, muteStates),
+
+    // ── Visibility / sizing ──────────────────────────────────────────────────
+    hideControls: constant(!showControls),
+    asOverlay: scope.behavior(
+      callModel.windowMode$.pipe(map((mode) => mode === "flat")),
+    ),
+    buttonSize: scope.behavior(
+      callModel.layout$.pipe(
+        map((l) => (l.type === "pip" ? "md" : "lg") as "md" | "lg"),
+      ),
+    ),
+    showSettingsButton: scope.behavior(
+      combineLatest([callModel.layout$, callModel.showHeader$]).pipe(
+        map(
+          ([l, showHeader]) =>
+            openSettings !== undefined &&
+            l.type !== "pip" &&
+            showControls &&
+            !(headerStyle === HeaderStyle.AppBar && showHeader),
+        ),
+      ),
+    ),
+    showLayoutSwitcher: scope.behavior(
+      callModel.layout$.pipe(map((l) => l.type !== "pip" && showControls)),
+    ),
+    showLogoDebugContainer: scope.behavior(
+      combineLatest([callModel.layout$, debugTileLayoutSetting.value$]).pipe(
+        map(([l, debugTile]) => l.type !== "pip" || (!hideLogo && !debugTile)),
+      ),
+    ),
+    showLogo: scope.behavior(
+      callModel.layout$.pipe(map((l) => !hideLogo && l.type !== "pip")),
+    ),
+
+    // ── Layout mode ───────────────────────────────────────────────────────────
+    layoutMode: callModel.gridMode$,
+    setLayoutMode: constant(callModel.setGridMode),
+
+    // ── Screen sharing ────────────────────────────────────────────────────────
+    sharingScreen: callModel.sharingScreen$,
+    toggleScreenSharing: constant(callModel.toggleScreenSharing ?? undefined),
+
+    // ── Audio output ─────────────────────────────────────────────────────────
+    audioOutputSwitcher: scope.behavior(
+      callModel.audioOutputSwitcher$.pipe(
+        map((switcher) => switcher ?? undefined),
+      ),
+    ),
+
+    // ── Actions ───────────────────────────────────────────────────────────────
+    openSettings: scope.behavior(
+      callModel.showHeader$.pipe(
+        map((showHeader) =>
+          headerStyle === HeaderStyle.AppBar && showHeader
+            ? undefined
+            : openSettings,
+        ),
+      ),
+    ),
+    hangup: constant(callModel.hangup),
+
+    // ── Reactions ─────────────────────────────────────────────────────────────
+    reactionIdentifier: constant(reactionIdentifier),
+    reactionData: constant(
+      reactionIdentifier !== undefined
+        ? {
+            handsRaised$: callModel.handsRaised$,
+            reactions$: callModel.reactions$,
+          }
+        : undefined,
+    ),
+
+    // ── Debug ─────────────────────────────────────────────────────────────────
+    debugTileLayout: debugTileLayoutSetting.value$,
+    tileStoreGeneration: callModel.tileStoreGeneration$,
+
+    ...buildDeviceBehaviors(scope, mediaDevices),
+  };
+}
+
+/**
+ * Creates a simplified ViewModel for the CallFooter used in the lobby
+ * (pre-call) screen. Unlike createCallFooterViewModel, this does not require
+ * a CallViewModel — it only needs mute states, device lists, and callbacks.
+ *
+ * @param scope - ObservableScope that bounds the lifetime of derived behaviors.
+ * @param muteStates - Audio and video mute state + toggles.
+ * @param mediaDevices - Available and selected input devices.
+ * @param openSettings - Callback to open the settings modal, or undefined.
+ * @param hangup - Callback to leave/cancel, or undefined (hides the button).
+ * @param showLogo - Whether to show the Element Call logo.
+ */
+export function createLobbyFooterViewModel(
+  scope: ObservableScope,
+  muteStates: MuteStates,
+  mediaDevices: MediaDevices,
+  openSettings: (() => void) | undefined,
+  hangup: (() => void) | undefined,
+  showLogo: boolean,
+): ViewModel<FooterSnapshot> {
+  return {
+    ...buildMuteBehaviors(scope, muteStates),
+    ...buildDeviceBehaviors(scope, mediaDevices),
+    // ── Visibility / sizing ───────────────────────────────────────────────────
+    hideControls: constant(false),
+    asOverlay: constant(false),
+    buttonSize: constant("lg"),
+    showSettingsButton: constant(openSettings !== undefined),
+    showLayoutSwitcher: constant(false),
+    showLogoDebugContainer: constant(showLogo),
+    showLogo: constant(showLogo),
+
+    // ── Layout mode (not applicable in lobby) ─────────────────────────────────
+    layoutMode: constant(undefined),
+    setLayoutMode: constant(undefined),
+
+    // ── Screen sharing (not applicable in lobby) ──────────────────────────────
+    sharingScreen: constant(undefined),
+    toggleScreenSharing: constant(undefined),
+
+    // ── Audio output (not applicable in lobby) ────────────────────────────────
+    audioOutputSwitcher: constant(undefined),
+
+    // ── Actions ───────────────────────────────────────────────────────────────
+    openSettings: constant(openSettings),
+    hangup: constant(hangup),
+
+    // ── Reactions (not applicable in lobby) ───────────────────────────────────
+    reactionIdentifier: constant(undefined),
+    reactionData: constant(undefined),
+
+    // ── Debug (not needed in lobby) ───────────────────────────────────────────
+    debugTileLayout: constant(false),
+    tileStoreGeneration: constant(0),
+  };
+}
+
+export interface FooterProps {
+  ref?: Ref<HTMLDivElement>;
+  children?: JSX.Element | JSX.Element[] | false;
+  vm: ViewModel<FooterSnapshot>;
+}
+export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
+  const {
+    asOverlay,
+    hideControls,
+    layoutMode,
+    setLayoutMode,
+    openSettings,
+    audioEnabled,
+    videoEnabled,
+    toggleAudio,
+    toggleVideo,
+    sharingScreen,
+    toggleScreenSharing,
+    reactionIdentifier,
+    reactionData,
+    audioOutputSwitcher,
+    hangup,
+    debugTileLayout,
+    tileStoreGeneration,
+    videoOptions,
+    selectedVideo,
+    audioOptions,
+    selectedAudio,
+    selectAudioButtonOption,
+    selectVideoButtonOption,
+    videoToggles,
+    buttonSize,
+    showSettingsButton,
+    showLogoDebugContainer,
+    showLogo,
+  } = useViewModel(vm);
 
   const buttons: JSX.Element[] = [];
-  const buttonSize = asPip ? "md" : "lg";
-  const showSettingsButton =
-    openSettings !== undefined && !asPip && !hideControls;
-  const showLayoutSwitcher = !asPip && !hideControls;
-  const showLogoDebugContainer = !asPip || (!hideLogo && !debugTileLayout);
-  const showLogo = !hideLogo && !asPip;
+
   if (showSettingsButton) {
-    // add the settings button to the center group of buttons, so it will be visible on small screens.
-    // On larger screens, it will be hidden SettingsIconButton the one with `showForScreenWidth = "wide"` in the `settingsLogoContainer` will be visible.
+    // Add the settings button to the center group so it's visible on small
+    // screens. On larger screens the SettingsIconButton with
+    // showForScreenWidth="wide" in the settingsLogoContainer is used instead.
     buttons.push(
       <SettingsButton
         key="settings"
@@ -175,7 +412,7 @@ export const CallFooter: FC<FooterProps> = ({
     );
   }
 
-  if ((audioOptions?.size ?? 0) > 0) {
+  if ((audioOptions?.length ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
         title={"Mic Source"}
@@ -184,15 +421,9 @@ export const CallFooter: FC<FooterProps> = ({
         enabled={audioEnabled ?? false}
         onMuteClick={toggleAudio}
         data-testid="incall_mute"
-        options={Array.from(audioOptions.entries()).map(([k, v]) => {
-          const label = mediaDeviceLabelToString(v, (n) => "Audio Device " + n);
-          return {
-            id: k,
-            label: label,
-          };
-        })}
-        selectedOption={selectedAudio?.id}
-        onSelect={audioDevice?.select}
+        options={audioOptions}
+        selectedOption={selectedAudio}
+        onSelect={selectAudioButtonOption}
       />,
     );
   } else {
@@ -207,7 +438,8 @@ export const CallFooter: FC<FooterProps> = ({
       />,
     );
   }
-  if ((videoOptions?.size ?? 0) > 0) {
+
+  if ((videoOptions?.length ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
         title={"Camera Source"}
@@ -215,32 +447,11 @@ export const CallFooter: FC<FooterProps> = ({
         iconsAndLabels="video"
         enabled={videoEnabled ?? false}
         onMuteClick={toggleVideo}
-        data-testid="incall_mute"
-        options={Array.from(videoOptions.entries()).map(([k, v]) => ({
-          id: k,
-          label: v.type === "name" ? v.name : "Camera " + v.number,
-        }))}
-        toggles={
-          blurSupported
-            ? [
-                {
-                  id: "blur",
-                  enabled: blurActive,
-                  label: "Blur Background",
-                },
-              ]
-            : []
-        }
-        selectedOption={selectedVideo?.id}
-        onSelect={(option) => {
-          switch (option) {
-            case "blur":
-              setBlurActive(!blurActive);
-              break;
-            default:
-              videoDevice?.select(option);
-          }
-        }}
+        data-testid="incall_videomute"
+        options={videoOptions}
+        toggles={videoToggles}
+        selectedOption={selectedVideo}
+        onSelect={selectVideoButtonOption}
       />,
     );
   } else {
@@ -273,12 +484,7 @@ export const CallFooter: FC<FooterProps> = ({
     buttons.push(
       <ReactionToggleButton
         size={buttonSize}
-        reactionData={
-          reactionData ?? {
-            handsRaised$: new BehaviorSubject({}),
-            reactions$: new BehaviorSubject({}),
-          }
-        }
+        reactionData={reactionData}
         key="raise_hand"
         className={styles.raiseHand}
         identifier={reactionIdentifier}
@@ -331,7 +537,6 @@ export const CallFooter: FC<FooterProps> = ({
       ref={ref}
       className={classNames(styles.footer, {
         [styles.overlay]: asOverlay,
-        [styles.hidden]: hidden,
       })}
     >
       <div className={styles.settingsLogoContainer}>
@@ -348,7 +553,7 @@ export const CallFooter: FC<FooterProps> = ({
         {showLogoDebugContainer && logoDebugContainer}
       </div>
       {!hideControls && <div className={styles.buttons}>{buttons}</div>}
-      {setLayoutMode && layoutMode && showLayoutSwitcher && (
+      {setLayoutMode && layoutMode && (
         <LayoutToggle
           className={styles.layout}
           layout={layoutMode}

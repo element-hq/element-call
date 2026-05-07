@@ -7,16 +7,23 @@ Please see LICENSE in the repository root for full details.
 
 import { fn } from "storybook/test";
 import { BehaviorSubject } from "rxjs";
-import { type ReactNode } from "react";
+import { type JSX, type ReactNode } from "react";
 import { Link } from "@vector-im/compound-web";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { CallFooter, type FooterProps } from "./CallFooter";
+import { CallFooter, type FooterSnapshot } from "./CallFooter";
 import inCallViewStyles from "../room/InCallView.module.css";
+import { createMockedViewModel } from "../state/ViewModel";
 import { ReactionsSenderContext } from "../reactions/useReactionsSender";
 import { type ReactionOption } from "../reactions";
 
-function CallFooterWrapper(props: FooterProps): ReactNode {
+export function CallFooterStoryWrapper(
+  props: FooterSnapshot & {
+    children?: false | JSX.Element | JSX.Element[] | undefined;
+  },
+): ReactNode {
+  const { children, ...vmProps } = props;
+  const vm = createMockedViewModel(vmProps);
   return (
     <div className={inCallViewStyles.inRoom}>
       <ReactionsSenderContext
@@ -26,15 +33,15 @@ function CallFooterWrapper(props: FooterProps): ReactNode {
           sendReaction: async (reaction: ReactionOption) => Promise.resolve(),
         }}
       >
-        <CallFooter {...props} />
+        <CallFooter vm={vm} />
       </ReactionsSenderContext>
     </div>
   );
 }
 
 const meta = {
-  component: CallFooterWrapper,
-} satisfies Meta<typeof CallFooterWrapper>;
+  component: CallFooterStoryWrapper,
+} satisfies Meta<typeof CallFooterStoryWrapper>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -50,9 +57,10 @@ const fnArgType = {
   options: ["MockedCallback", "undefined"],
   mapping: { MockedCallback: fn(), undefined: undefined },
 };
+
 export const Default: Story = {
   args: {
-    hideLogo: true,
+    showLogo: false,
     layoutMode: "grid",
     audioEnabled: true,
     videoEnabled: true,
@@ -62,6 +70,7 @@ export const Default: Story = {
     toggleVideo: fn(),
     toggleScreenSharing: fn(),
     hangup: fn(),
+    buttonSize: "lg",
   },
   parameters: {
     layout: "fullscreen",
@@ -110,7 +119,7 @@ export const WithLogo: Story = {
   ...Default,
   args: {
     ...Default.args,
-    hideLogo: false,
+    showLogo: true,
   },
 };
 
@@ -150,7 +159,9 @@ export const Pip: Story = {
   ...Default,
   args: {
     ...Default.args,
-    asPip: true,
+    buttonSize: "md",
+    showSettingsButton: false,
+    layoutMode: undefined,
   },
 };
 export const NoControlsWithLogo: Story = {
@@ -158,7 +169,7 @@ export const NoControlsWithLogo: Story = {
   args: {
     ...Default.args,
     hideControls: true,
-    hideLogo: false,
+    showLogo: true,
   },
 };
 
@@ -187,7 +198,7 @@ export const MobileLayout: Story = {
   ...Default,
   args: {
     ...Default.args,
-    hideLogo: true,
+    showLogo: false,
 
     audioOutputSwitcher: { targetOutput: "speaker", switch: fn() },
   },
@@ -203,7 +214,7 @@ export const Lobby: Story = {
   ...Default,
   args: {
     ...Default.args,
-    hideLogo: true,
+    showLogo: false,
     openSettings: undefined,
     setLayoutMode: undefined,
     toggleScreenSharing: undefined,
@@ -217,7 +228,7 @@ export const LobbyMobile: Story = {
   ...Default,
   args: {
     ...Default.args,
-    hideLogo: true,
+    showLogo: false,
 
     setLayoutMode: undefined,
     toggleScreenSharing: undefined,
@@ -235,7 +246,7 @@ export const LobbyRecentButton: Story = {
   args: {
     ...Default.args,
     children: <Link>Back To Recents</Link>,
-    hideLogo: true,
+    showLogo: false,
     setLayoutMode: undefined,
     toggleScreenSharing: undefined,
   },
@@ -249,7 +260,7 @@ export const LobbyRecentButtonMobile: Story = {
   args: {
     ...Default.args,
     children: <Link>Back To Recents</Link>,
-    hideLogo: true,
+    showLogo: false,
     setLayoutMode: undefined,
     toggleScreenSharing: undefined,
   },

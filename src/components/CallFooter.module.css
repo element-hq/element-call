@@ -26,10 +26,6 @@ Please see LICENSE in the repository root for full details.
   );
 }
 
-.footer.hidden {
-  display: none;
-}
-
 .footer.overlay {
   /* Note that the footer is still position: sticky in this case so that certain
     tiles can move up out of the way of the footer when visible. */
