@@ -18,7 +18,11 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
-import { CallEndedTracker } from "./PosthogEvents";
+import {
+  CallEndedTracker,
+  CallReconnectingTracker,
+  type CallReconnectingReason,
+} from "./PosthogEvents";
 import { mockConfig } from "../utils/test";
 
 const defaultCounters = {
@@ -164,4 +168,28 @@ describe("CallEnded", () => {
       { send_instantly: false },
     );
   });
+
+  it("includes per-reason reconnecting counts in CallEnded", () => {
+    const tracker = new CallEndedTracker();
+    const mockSession = createMockRtcSession();
+
+    tracker.cacheStartCall(new Date());
+    tracker.cacheReconnecting("syncing");
+    tracker.cacheReconnecting("syncing");
+    tracker.cacheReconnecting("livekit");
+    tracker.cacheReconnecting("membershipConnected");
+    tracker.track("test-call-id", 1, false, mockSession);
+
+    expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callReconnectingCount: 4,
+        callReconnectingCountSyncing: 2,
+        callReconnectingCountMembershipConnected: 1,
+        callReconnectingCountCertainlyConnected: 0,
+        callReconnectingCountLivekit: 1,
+      }),
+      expect.anything(),
+    );
+  });
+});
 });
