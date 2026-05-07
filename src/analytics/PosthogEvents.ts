@@ -24,12 +24,29 @@ interface CallEnded extends IPosthogEvent {
   roomEventEncryptionKeysSent: number;
   roomEventEncryptionKeysReceived: number;
   roomEventEncryptionKeysReceivedAverageAge: number;
+  callReconnectingCount: number;
+  callReconnectingCountSyncing: number;
+  callReconnectingCountMembershipConnected: number;
+  callReconnectingCountCertainlyConnected: number;
+  callReconnectingCountLivekit: number;
 }
 
 export class CallEndedTracker {
-  private cache: { startTime?: Date; maxParticipantsCount: number } = {
+  private cache: {
+    startTime?: Date;
+    maxParticipantsCount: number;
+    reconnectingCount: number;
+    reconnectingCountByReason: Record<CallReconnectingReason, number>;
+  } = {
     startTime: undefined,
     maxParticipantsCount: 0,
+    reconnectingCount: 0,
+    reconnectingCountByReason: {
+      syncing: 0,
+      membershipConnected: 0,
+      certainlyConnected: 0,
+      livekit: 0,
+    },
   };
 
   public cacheStartCall(time: Date): void {
@@ -41,6 +58,11 @@ export class CallEndedTracker {
       count,
       this.cache.maxParticipantsCount,
     );
+  }
+
+  public cacheReconnecting(reason: CallReconnectingReason): void {
+    this.cache.reconnectingCount++;
+    this.cache.reconnectingCountByReason[reason]++;
   }
 
   public track(
@@ -67,6 +89,15 @@ export class CallEndedTracker {
                   .roomEventEncryptionKeysReceivedTotalAge /
                 rtcSession.statistics.counters.roomEventEncryptionKeysReceived
               : 0,
+          callReconnectingCount: this.cache.reconnectingCount,
+          callReconnectingCountSyncing:
+            this.cache.reconnectingCountByReason.syncing,
+          callReconnectingCountMembershipConnected:
+            this.cache.reconnectingCountByReason.membershipConnected,
+          callReconnectingCountCertainlyConnected:
+            this.cache.reconnectingCountByReason.certainlyConnected,
+          callReconnectingCountLivekit:
+            this.cache.reconnectingCountByReason.livekit,
         },
         { send_instantly: sendInstantly },
       );
@@ -247,5 +278,27 @@ export class CallConnectDurationTracker {
       logger.log(
         `Time to connect:\ntotal: ${totalDuration}ms\npeerConnection: ${websocketDuration}ms\nwebsocket: ${peerConnectionDuration}ms`,
       );
+  }
+}
+
+export type CallReconnectingReason =
+  | "syncing"
+  | "membershipConnected"
+  | "certainlyConnected"
+  | "livekit";
+
+interface CallReconnecting extends IPosthogEvent {
+  eventName: "CallReconnecting";
+  callId: string;
+  reason: CallReconnectingReason;
+}
+
+export class CallReconnectingTracker {
+  public track(callId: string, reason: CallReconnectingReason): void {
+    PosthogAnalytics.instance.trackEvent<CallReconnecting>({
+      eventName: "CallReconnecting",
+      callId,
+      reason,
+    });
   }
 }

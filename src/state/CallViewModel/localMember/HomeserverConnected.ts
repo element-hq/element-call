@@ -22,6 +22,7 @@ import {
   switchMap,
   of,
   delay,
+  combineLatest,
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
@@ -36,9 +37,15 @@ import { type NodeStyleEventEmitter } from "../../../utils/test";
  */
 const logger = rootLogger.getChild("[HomeserverConnected]");
 
+export type HomeserverDisconnectReason =
+  | "syncing"
+  | "membershipConnected"
+  | "certainlyConnected";
+
 export interface HomeserverConnected {
   combined$: Behavior<boolean>;
   rtsSession$: Behavior<Status>;
+  disconnectReason$: Behavior<HomeserverDisconnectReason | null>;
 }
 
 /**
@@ -116,5 +123,17 @@ export function createHomeserverConnected$(
     ),
   );
 
-  return { combined$, rtsSession$ };
+  const disconnectReason$ = scope.behavior(
+    combineLatest([syncing$, membershipConnected$, certainlyConnected$]).pipe(
+      map(([syncing, membership, certainly]) => {
+        if (!syncing) return "syncing" as const;
+        if (!membership) return "membershipConnected" as const;
+        if (!certainly) return "certainlyConnected" as const;
+        return null;
+      }),
+    ),
+    null,
+  );
+
+  return { combined$, rtsSession$, disconnectReason$ };
 }

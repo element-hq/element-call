@@ -217,7 +217,9 @@ describe("LocalMembership", () => {
     homeserverConnected: {
       combined$: constant(true),
       rtsSession$: constant(RTCMemberStatus.Connected),
+      disconnectReason$: constant(null),
     },
+    callId: "!test-room-id:example.org",
   };
 
   it("throws error on missing RTC config error", () => {

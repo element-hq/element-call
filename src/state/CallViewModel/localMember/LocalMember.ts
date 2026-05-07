@@ -25,6 +25,7 @@ import {
   catchError,
   combineLatest,
   distinctUntilChanged,
+  filter,
   from,
   fromEvent,
   map,
@@ -34,6 +35,7 @@ import {
   startWith,
   switchMap,
   tap,
+  withLatestFrom,
 } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
@@ -129,6 +131,7 @@ interface Props {
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (transport: LivekitTransportConfig) => void;
   homeserverConnected: HomeserverConnected;
+  callId: string;
   localTransport$: Behavior<LocalTransport>;
   matrixRTCSession: Pick<
     MatrixRTCSession,
@@ -152,6 +155,7 @@ interface Props {
  * @param props.logger The logger to use.
  * @param props.muteStates The mute states for video and audio.
  * @param props.matrixRTCSession The matrix RTC session to join.
+ * @param props.callId The room ID used as the call identifier in analytics events.
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
  *  - connected$: the current connection state. Including matrix server and livekit server connection. (only considering the livekit server we are using for our own media publication)
@@ -169,6 +173,7 @@ export const createLocalMembership$ = ({
   logger: parentLogger,
   muteStates,
   matrixRTCSession,
+  callId,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -518,6 +523,19 @@ export const createLocalMembership$ = ({
     ),
     false,
   );
+
+  reconnecting$
+    .pipe(
+      distinctUntilChanged(),
+      filter(Boolean),
+      withLatestFrom(homeserverConnected.disconnectReason$, localConnectionState$),
+      scope.bind(),
+    )
+    .subscribe(([_, homeserverReason]) => {
+      const reason = homeserverReason !== null ? homeserverReason : "livekit";
+      PosthogAnalytics.instance.eventCallReconnecting.track(callId, reason);
+      PosthogAnalytics.instance.eventCallEnded.cacheReconnecting(reason);
+    });
 
   // inform the widget about the connect and disconnect intent from the user.
   scope

@@ -89,6 +89,11 @@ describe("CallEnded", () => {
         roomEventEncryptionKeysSent: 10,
         roomEventEncryptionKeysReceived: 5,
         roomEventEncryptionKeysReceivedAverageAge: 100,
+        callReconnectingCount: 0,
+        callReconnectingCountSyncing: 0,
+        callReconnectingCountMembershipConnected: 0,
+        callReconnectingCountCertainlyConnected: 0,
+        callReconnectingCountLivekit: 0,
       },
       { send_instantly: true },
     );
