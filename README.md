@@ -220,7 +220,7 @@ including federation:
 - Minimum TLS reverse proxy for
   - Synapse homeserver: `synapse.m.localhost` and `synapse.othersite.m.localhost`
   - MatrixRTC backend: `matrix-rtc.m.localhost` and `matrix-rtc.othersite.m.localhost`
-  - Local Element Call development `call.m.localhost` via `yarn dev --host `
+  - Local Element Call development `call.m.localhost` via `pnpm dev --host `
   - Element Web `app.m.localhost` and `app.othersite.m.localhost`
   - Note certificates will expire on Thr, 20 September 2035 14:27:35 CEST
 
