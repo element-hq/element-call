@@ -24,18 +24,10 @@ import react from "@vitejs/plugin-react";
 import { realpathSync } from "fs";
 import * as fs from "node:fs";
 
-// https://vitejs.dev/config/
-// Modified type helper from defineConfig to allow for packageType (see defineConfig from vite)
-export default ({
+export const vitePluginsConfig = ({
   mode,
-  packageType,
-}: ConfigEnv & { packageType?: "full" | "embedded" }): UserConfig => {
+}: Pick<ConfigEnv, "mode">): UserConfig => {
   const env = loadEnv(mode, process.cwd());
-  // Environment variables with the VITE_ prefix are accessible at runtime.
-  // So, we set this to allow for build/package specific behavior.
-  // In future we might be able to do what is needed via code splitting at
-  // build time.
-  process.env.VITE_PACKAGE = packageType ?? "full";
   const plugins: PluginOption[] = [
     react(),
     wasm(),
@@ -72,7 +64,7 @@ export default ({
     );
   }
 
-  if (!process.env.STORYBOOK) {
+  if (!process.env.STORYBOOK && !process.env.VITEST) {
     plugins.push(
       createHtmlPlugin({
         entry: "src/main.tsx",
@@ -85,6 +77,20 @@ export default ({
       }),
     );
   }
+
+  return { plugins };
+};
+// https://vitejs.dev/config/
+// Modified type helper from defineConfig to allow for packageType (see defineConfig from vite)
+export default ({
+  mode,
+  packageType,
+}: ConfigEnv & { packageType?: "full" | "embedded" }): UserConfig => {
+  // Environment variables with the VITE_ prefix are accessible at runtime.
+  // So, we set this to allow for build/package specific behavior.
+  // In future we might be able to do what is needed via code splitting at
+  // build time.
+  process.env.VITE_PACKAGE = packageType ?? "full";
 
   // The crypto WASM module is imported dynamically. Since it's common
   // for developers to use a linked copy of matrix-js-sdk or Rust
@@ -102,6 +108,7 @@ export default ({
   console.log("Allowed vite paths:", allow);
 
   return {
+    ...vitePluginsConfig({ mode }),
     server: {
       port: 3000,
       fs: { allow },
@@ -136,7 +143,6 @@ export default ({
         },
       },
     },
-    plugins,
     resolve: {
       alias: {
         // matrix-widget-api has its transpiled lib/index.js as its entry point,
