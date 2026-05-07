@@ -528,7 +528,10 @@ export const createLocalMembership$ = ({
     .pipe(
       distinctUntilChanged(),
       filter(Boolean),
-      withLatestFrom(homeserverConnected.disconnectReason$, localConnectionState$),
+      withLatestFrom(
+        homeserverConnected.disconnectReason$,
+        localConnectionState$,
+      ),
       scope.bind(),
     )
     .subscribe(([_, homeserverReason]) => {
