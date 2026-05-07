@@ -536,8 +536,7 @@ export const createLocalMembership$ = ({
     )
     .subscribe(([_, homeserverReason]) => {
       const reason = homeserverReason !== null ? homeserverReason : "livekit";
-      PosthogAnalytics.instance.eventCallReconnecting.track(callId, reason);
-      PosthogAnalytics.instance.eventCallEnded.cacheReconnecting(reason);
+      PosthogAnalytics.instance.trackCallReconnecting(callId, reason);
     });
 
   // inform the widget about the connect and disconnect intent from the user.

@@ -696,12 +696,8 @@ describe("LocalMembership", () => {
     it("fires CallReconnecting with the homeserver reason when homeserver disconnects", async () => {
       const scope = new ObservableScope();
       const trackSpy = vi.spyOn(
-        PosthogAnalytics.instance.eventCallReconnecting,
-        "track",
-      );
-      const cacheSpy = vi.spyOn(
-        PosthogAnalytics.instance.eventCallEnded,
-        "cacheReconnecting",
+        PosthogAnalytics.instance,
+        "trackCallReconnecting",
       );
 
       const hsConnected$ = new BehaviorSubject<boolean>(true);
@@ -738,7 +734,6 @@ describe("LocalMembership", () => {
         defaultCreateLocalMemberValues.callId,
         "syncing",
       );
-      expect(cacheSpy).toHaveBeenCalledWith("syncing");
 
       scope.end();
     });
@@ -746,8 +741,8 @@ describe("LocalMembership", () => {
     it("reports livekit reason when livekit disconnects but homeserver is fine", async () => {
       const scope = new ObservableScope();
       const trackSpy = vi.spyOn(
-        PosthogAnalytics.instance.eventCallReconnecting,
-        "track",
+        PosthogAnalytics.instance,
+        "trackCallReconnecting",
       );
 
       const connectionState$ = new BehaviorSubject<ConnectionState>(
@@ -795,8 +790,8 @@ describe("LocalMembership", () => {
     it("fires one event per reconnection, not once per condition change", async () => {
       const scope = new ObservableScope();
       const trackSpy = vi.spyOn(
-        PosthogAnalytics.instance.eventCallReconnecting,
-        "track",
+        PosthogAnalytics.instance,
+        "trackCallReconnecting",
       );
 
       const hsConnected$ = new BehaviorSubject<boolean>(true);
