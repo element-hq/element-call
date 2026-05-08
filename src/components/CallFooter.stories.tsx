@@ -5,10 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { fn } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 import { BehaviorSubject } from "rxjs";
 import { type JSX, type ReactNode } from "react";
 import { Link } from "@vector-im/compound-web";
+import {
+  useArgs,
+  useCallback,
+  useEffect,
+} from "storybook/internal/preview-api";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CallFooter, type FooterSnapshot } from "./CallFooter";
@@ -16,8 +21,17 @@ import inCallViewStyles from "../room/InCallView.module.css";
 import { createMockedViewModel } from "../state/ViewModel";
 import { ReactionsSenderContext } from "../reactions/useReactionsSender";
 import { type ReactionOption } from "../reactions";
+import { GridMode } from "../state/CallViewModel/CallViewModel";
+import { constant } from "../state/Behavior";
 
-export function CallFooterStoryWrapper(
+/**
+ * A wrapper component that is used for:
+ *  - exposing the snapshot via props so the storybook documents the snapshot properties (basically unpack them form the vm)
+ *  - Add additional react context
+ * @param props
+ * @returns
+ */
+function CallFooterStoryWrapper(
   props: FooterSnapshot & {
     children?: false | JSX.Element | JSX.Element[] | undefined;
   },
@@ -25,7 +39,7 @@ export function CallFooterStoryWrapper(
   const { children, ...vmProps } = props;
   const vm = createMockedViewModel(vmProps);
   return (
-    <div className={inCallViewStyles.inRoom}>
+    <div /*className={inCallViewStyles.inRoom}*/>
       <ReactionsSenderContext
         value={{
           supportsReactions: false,
@@ -130,6 +144,35 @@ export const AudioVideoEnabled: Story = {
     audioEnabled: true,
     videoEnabled: true,
   },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const spotlightRadio = canvas.getByRole("radio", { name: "Spotlight" });
+    await userEvent.click(spotlightRadio);
+    await expect(args.setLayoutMode).toHaveBeenCalledWith("spotlight");
+
+    const micButtonMute = canvas.getByRole("switch", {
+      name: "Mute microphone",
+    });
+    await userEvent.click(micButtonMute);
+    await expect(args.toggleAudio).toHaveBeenCalled();
+
+    const videoMuteButton = canvas.getByRole("switch", {
+      name: "Stop video",
+    });
+    await userEvent.click(videoMuteButton);
+    await expect(args.toggleVideo).toHaveBeenCalled();
+    const screenShare = canvas.getByRole("switch", {
+      name: "Share screen",
+    });
+    await userEvent.click(screenShare);
+    await expect(args.toggleScreenSharing).toHaveBeenCalled();
+    const endCall = canvas.getByRole("button", {
+      name: "End call",
+    });
+    await userEvent.click(endCall);
+    await expect(args.hangup).toHaveBeenCalled();
+  },
 };
 
 export const WithAudioOutputSpeaker: Story = {
@@ -162,6 +205,35 @@ export const Pip: Story = {
     buttonSize: "md",
     showSettingsButton: false,
     layoutMode: undefined,
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(
+      canvas.getByRole("radio", { name: "Spotlight" }),
+    ).not.toBeInTheDocument();
+
+    const micButtonMute = canvas.getByRole("switch", {
+      name: "Mute microphone",
+    });
+    await userEvent.click(micButtonMute);
+    await expect(args.toggleAudio).toHaveBeenCalled();
+
+    const videoMuteButton = canvas.getByRole("switch", {
+      name: "Stop video",
+    });
+    await userEvent.click(videoMuteButton);
+    await expect(args.toggleVideo).toHaveBeenCalled();
+    const screenShare = canvas.getByRole("switch", {
+      name: "Share screen",
+    });
+    await userEvent.click(screenShare);
+    await expect(args.toggleScreenSharing).toHaveBeenCalled();
+    const endCall = canvas.getByRole("button", {
+      name: "End call",
+    });
+    await userEvent.click(endCall);
+    await expect(args.hangup).toHaveBeenCalled();
   },
 };
 export const NoControlsWithLogo: Story = {

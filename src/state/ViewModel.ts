@@ -5,8 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { BehaviorSubject } from "rxjs";
+
 import { useBehavior } from "../useBehavior";
-import { type Behavior, constant } from "./Behavior";
+import { type Behavior } from "./Behavior";
 
 export type ViewModel<Snapshot> = {
   [K in keyof Snapshot]: Behavior<Snapshot[K]>;
@@ -27,7 +29,7 @@ export function createMockedViewModel<Snapshot>(
 ): ViewModel<Snapshot> {
   const vm = {} as ViewModel<Snapshot>;
   for (const key in snapshot) {
-    vm[key] = constant(snapshot[key]);
+    vm[key] = new BehaviorSubject(snapshot[key]);
   }
   return vm;
 }
