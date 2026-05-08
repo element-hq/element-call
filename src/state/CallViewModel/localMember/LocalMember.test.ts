@@ -693,11 +693,11 @@ describe("LocalMembership", () => {
       PosthogAnalytics.resetInstance();
     });
 
-    it("fires CallReconnecting with the homeserver reason when homeserver disconnects", async () => {
+    it("fires CallReconnecting with homeserver reason and duration when reconnected", async () => {
       const scope = new ObservableScope();
       const trackSpy = vi.spyOn(
-        PosthogAnalytics.instance,
-        "trackCallReconnecting",
+        PosthogAnalytics.instance.eventCallReconnecting,
+        "track",
       );
 
       const hsConnected$ = new BehaviorSubject<boolean>(true);
@@ -726,23 +726,26 @@ describe("LocalMembership", () => {
 
       await flushPromises();
 
-      // Simulate homeserver disconnect with syncing as the reason
+      // Disconnect with syncing reason, then reconnect
       disconnectReason$.next("syncing");
       hsConnected$.next(false);
+      disconnectReason$.next(null);
+      hsConnected$.next(true);
 
       expect(trackSpy).toHaveBeenCalledWith(
         defaultCreateLocalMemberValues.callId,
         "syncing",
+        expect.any(Number),
       );
 
       scope.end();
     });
 
-    it("reports livekit reason when livekit disconnects but homeserver is fine", async () => {
+    it("reports livekit reason when livekit disconnects then reconnects", async () => {
       const scope = new ObservableScope();
       const trackSpy = vi.spyOn(
-        PosthogAnalytics.instance,
-        "trackCallReconnecting",
+        PosthogAnalytics.instance.eventCallReconnecting,
+        "track",
       );
 
       const connectionState$ = new BehaviorSubject<ConnectionState>(
@@ -776,22 +779,24 @@ describe("LocalMembership", () => {
 
       await flushPromises();
 
-      // Livekit drops while homeserver stays connected
+      // Livekit drops then recovers
       connectionState$.next(ConnectionState.LivekitDisconnected);
+      connectionState$.next(ConnectionState.LivekitConnected);
 
       expect(trackSpy).toHaveBeenCalledWith(
         defaultCreateLocalMemberValues.callId,
         "livekit",
+        expect.any(Number),
       );
 
       scope.end();
     });
 
-    it("fires one event per reconnection, not once per condition change", async () => {
+    it("fires one event per completed reconnection cycle", async () => {
       const scope = new ObservableScope();
       const trackSpy = vi.spyOn(
-        PosthogAnalytics.instance,
-        "trackCallReconnecting",
+        PosthogAnalytics.instance.eventCallReconnecting,
+        "track",
       );
 
       const hsConnected$ = new BehaviorSubject<boolean>(true);
@@ -820,26 +825,29 @@ describe("LocalMembership", () => {
 
       await flushPromises();
 
-      // First reconnect
+      // First full reconnect cycle
       disconnectReason$.next("membershipConnected");
       hsConnected$.next(false);
-      // Reconnected
       disconnectReason$.next(null);
       hsConnected$.next(true);
-      // Second reconnect
+      // Second full reconnect cycle
       disconnectReason$.next("certainlyConnected");
       hsConnected$.next(false);
+      disconnectReason$.next(null);
+      hsConnected$.next(true);
 
       expect(trackSpy).toHaveBeenCalledTimes(2);
       expect(trackSpy).toHaveBeenNthCalledWith(
         1,
         defaultCreateLocalMemberValues.callId,
         "membershipConnected",
+        expect.any(Number),
       );
       expect(trackSpy).toHaveBeenNthCalledWith(
         2,
         defaultCreateLocalMemberValues.callId,
         "certainlyConnected",
+        expect.any(Number),
       );
 
       scope.end();

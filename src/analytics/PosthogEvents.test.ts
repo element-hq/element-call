@@ -211,12 +211,13 @@ describe("CallReconnecting", () => {
 
   it("tracks event with correct shape", () => {
     const tracker = new CallReconnectingTracker();
-    tracker.track("!room:example.org", "syncing");
+    tracker.track("!room:example.org", "syncing", 3.5);
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith({
       eventName: "CallReconnecting",
       callId: "!room:example.org",
       reason: "syncing",
+      reconnectDuration: 3.5,
     });
   });
 
@@ -227,10 +228,10 @@ describe("CallReconnecting", () => {
     "livekit",
   ] as CallReconnectingReason[])("tracks reason %s correctly", (reason) => {
     const tracker = new CallReconnectingTracker();
-    tracker.track("!room:example.org", reason);
+    tracker.track("!room:example.org", reason, 1.0);
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ reason }),
+      expect.objectContaining({ reason, reconnectDuration: 1.0 }),
     );
   });
 });

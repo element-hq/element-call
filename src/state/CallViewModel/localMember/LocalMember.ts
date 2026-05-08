@@ -25,7 +25,6 @@ import {
   catchError,
   combineLatest,
   distinctUntilChanged,
-  filter,
   from,
   fromEvent,
   map,
@@ -35,7 +34,6 @@ import {
   startWith,
   switchMap,
   tap,
-  withLatestFrom,
 } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
@@ -55,6 +53,7 @@ import {
 import { ElementWidgetActions, widget } from "../../../widget.ts";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
+import { type CallReconnectingReason } from "../../../analytics/PosthogEvents.ts";
 import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import {
@@ -524,19 +523,29 @@ export const createLocalMembership$ = ({
     false,
   );
 
+  let reconnectStart: { time: number; reason: CallReconnectingReason } | null =
+    null;
   reconnecting$
-    .pipe(
-      distinctUntilChanged(),
-      filter(Boolean),
-      withLatestFrom(
-        homeserverConnected.disconnectReason$,
-        localConnectionState$,
-      ),
-      scope.bind(),
-    )
-    .subscribe(([_, homeserverReason]) => {
-      const reason = homeserverReason !== null ? homeserverReason : "livekit";
-      PosthogAnalytics.instance.trackCallReconnecting(callId, reason);
+    .pipe(distinctUntilChanged(), scope.bind())
+    .subscribe((reconnecting) => {
+      if (reconnecting) {
+        const homeserverReason = homeserverConnected.disconnectReason$.value;
+        reconnectStart = {
+          time: Date.now(),
+          reason: homeserverReason !== null ? homeserverReason : "livekit",
+        };
+      } else if (reconnectStart !== null) {
+        const duration = (Date.now() - reconnectStart.time) / 1000;
+        PosthogAnalytics.instance.eventCallReconnecting.track(
+          callId,
+          reconnectStart.reason,
+          duration,
+        );
+        PosthogAnalytics.instance.eventCallEnded.cacheReconnecting(
+          reconnectStart.reason,
+        );
+        reconnectStart = null;
+      }
     });
 
   // inform the widget about the connect and disconnect intent from the user.

@@ -27,7 +27,6 @@ import {
   CallDisconnectedEventTracker,
   CallConnectDurationTracker,
   CallReconnectingTracker,
-  type CallReconnectingReason,
 } from "./PosthogEvents";
 import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
@@ -423,13 +422,5 @@ export class PosthogAnalytics {
   public eventQualitySurvey = new QualitySurveyEventTracker();
   public eventCallDisconnected = new CallDisconnectedEventTracker();
   public eventCallConnectDuration = new CallConnectDurationTracker();
-  private readonly _eventCallReconnecting = new CallReconnectingTracker();
-
-  public trackCallReconnecting(
-    callId: string,
-    reason: CallReconnectingReason,
-  ): void {
-    this._eventCallReconnecting.track(callId, reason);
-    this.eventCallEnded.cacheReconnecting(reason);
-  }
+  public eventCallReconnecting = new CallReconnectingTracker();
 }

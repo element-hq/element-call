@@ -291,14 +291,20 @@ interface CallReconnecting extends IPosthogEvent {
   eventName: "CallReconnecting";
   callId: string;
   reason: CallReconnectingReason;
+  reconnectDuration: number;
 }
 
 export class CallReconnectingTracker {
-  public track(callId: string, reason: CallReconnectingReason): void {
+  public track(
+    callId: string,
+    reason: CallReconnectingReason,
+    reconnectDuration: number,
+  ): void {
     PosthogAnalytics.instance.trackEvent<CallReconnecting>({
       eventName: "CallReconnecting",
       callId,
       reason,
+      reconnectDuration,
     });
   }
 }
