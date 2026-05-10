@@ -131,10 +131,38 @@ export function createConnectionManager$({
       // Combine local and remote transports into one transport array
       // and set the forceOldJwtEndpoint property on the local transport
       map(([remoteTransports, localTransport]) => {
-        let localTransportAsArray: LocalTransportWithSFUConfig[] = [];
-        if (localTransport) {
-          localTransportAsArray = [localTransport];
+        // Defer all transport processing until we know our own local
+        // transport. Without this, the snapshot taken between
+        // remoteTransports$ first emitting and localTransport$
+        // emitting causes us to create a subscribe-only Connection
+        // for any remote member's URL — and then, when localTransport$
+        // does emit, that Connection is keyed differently
+        // (`[URL, sfuConfig]` vs. `[URL, undefined]`) and gets
+        // destroyed and recreated. The destroy races with the
+        // freshly-started LK connection on the new Connection (and,
+        // worse, the two Connections fetch JWTs via different
+        // endpoints — the legacy `/sfu/get` for the local one and
+        // the Matrix-2.0 delegation endpoint for the
+        // subscribe-only — so they end up with *different*
+        // LK identities for the same Matrix user, which the SFU then
+        // gets confused about). Holding back until localTransport is
+        // resolved means the dedup against the local URL has the
+        // chance to filter out matching remotes before any
+        // subscribe-only Connection is started, so that race never
+        // happens. Cascade calls (where some remote URLs genuinely
+        // don't match the local one) just see those subscribe-only
+        // Connections come up the moment the local transport
+        // resolves, with no functional difference vs. coming up at
+        // remoteTransports$' first emission.
+        if (!localTransport) {
+          logger.debug(
+            "localTransport not yet resolved; deferring remote transport processing",
+          );
+          return new Epoch([], remoteTransports.epoch);
         }
+        const localTransportAsArray: LocalTransportWithSFUConfig[] = [
+          localTransport,
+        ];
         const dedupedRemote = removeDuplicateTransports(remoteTransports.value);
         const remoteWithoutLocal = dedupedRemote.filter(
           (transport) =>
