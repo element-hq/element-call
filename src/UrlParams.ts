@@ -179,6 +179,14 @@ export interface UrlConfiguration {
    * Whether to hide the screen-sharing button.
    */
   hideScreensharing: boolean;
+  /**
+   * Whether to hide tiles representing the local device. This includes the
+   * local camera tile and any other MatrixRTC memberships originating from
+   * the same device (e.g. a `+publish` twin used to publish media). Useful
+   * for kiosk-style embeddings where the embedder does not want the local
+   * user to see themselves.
+   */
+  hideLocalTiles: boolean;
 
   /**
    * Whether the app is allowed to use fallback STUN servers for ICE in case the
@@ -369,6 +377,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
     showControls: true,
     hideScreensharing: false,
+    hideLocalTiles: false,
     allowIceFallback: true,
     perParticipantE2EE: true,
     controlledAudioDevices: platform === "desktop" ? false : true,
@@ -424,6 +433,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
         header: HeaderStyle.Standard,
         showControls: true,
         hideScreensharing: false,
+        hideLocalTiles: false,
         allowIceFallback: false,
         perParticipantE2EE: false,
         controlledAudioDevices: false,
@@ -470,6 +480,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     header: parser.getEnumParam("header", HeaderStyle),
     showControls: parser.getFlag("showControls"),
     hideScreensharing: parser.getFlag("hideScreensharing"),
+    hideLocalTiles: parser.getFlag("hideLocalTiles"),
     allowIceFallback: parser.getFlag("allowIceFallback"),
     perParticipantE2EE: parser.getFlag("perParticipantE2EE"),
     controlledAudioDevices: parser.getFlag("controlledAudioDevices"),

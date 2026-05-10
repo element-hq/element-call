@@ -197,6 +197,11 @@ const smallMobileCallThreshold = 3;
 // with the interface
 const showFooterMs = 4000;
 
+// Suffix used by MatrixRTC members who participate twice from the same
+// physical device — once with the bare device ID (typically receive-only)
+// and once with this suffix appended (the publishing twin).
+const PUBLISH_SUFFIX = "+publish";
+
 export type GridMode = "grid" | "spotlight";
 
 export type WindowMode = "normal" | "narrow" | "flat" | "pip";
@@ -704,6 +709,18 @@ export function createCallViewModel$(
         ]) {
           const computeMediaId = (m: MatrixLivekitMember): string =>
             `${m.userId}:${m.membership$.value.deviceId}`;
+          // A member may participate twice from the same physical device by
+          // suffixing their device ID with "+publish" — one membership for
+          // receiving and one for publishing media. We treat both as the same
+          // logical device for de-duplication and local-tile filtering.
+          const baseDeviceId = (deviceId: string): string =>
+            deviceId.endsWith(PUBLISH_SUFFIX)
+              ? deviceId.slice(0, -PUBLISH_SUFFIX.length)
+              : deviceId;
+          const isPublishTwin = (m: MatrixLivekitMember): boolean =>
+            m.membership$.value.deviceId.endsWith(PUBLISH_SUFFIX);
+          const computeBaseId = (m: MatrixLivekitMember): string =>
+            `${m.userId}:${baseDeviceId(m.membership$.value.deviceId)}`;
 
           const localUserMediaId = localMatrixLivekitMember
             ? computeMediaId(localMatrixLivekitMember)
@@ -715,10 +732,28 @@ export function createCallViewModel$(
           const remoteWithoutLocal = matrixLivekitMembers.value.filter(
             (m) => computeMediaId(m) !== localUserMediaId,
           );
-          const allMatrixLivekitMembers = [
-            ...localAsArray,
-            ...remoteWithoutLocal,
-          ];
+          const candidates = [...localAsArray, ...remoteWithoutLocal];
+
+          // For any (user, device) that has a +publish membership, hide its
+          // non-suffixed sibling — the publishing twin is the one carrying
+          // the media, so the receive-only twin's tile would just be empty.
+          const publishTwinBaseIds = new Set(
+            candidates.filter(isPublishTwin).map(computeBaseId),
+          );
+
+          const { hideLocalTiles } = getUrlParams();
+          const localBaseId = `${userId}:${deviceId}`;
+
+          const allMatrixLivekitMembers = candidates.filter((m) => {
+            // Hide all tiles originating from the local device, including
+            // the +publish twin.
+            if (hideLocalTiles && computeBaseId(m) === localBaseId)
+              return false;
+            // Drop the receive-only sibling when a +publish twin is present.
+            if (!isPublishTwin(m) && publishTwinBaseIds.has(computeBaseId(m)))
+              return false;
+            return true;
+          });
 
           for (const matrixLivekitMember of allMatrixLivekitMembers) {
             const { userId, participant, connection$, membership$ } =
