@@ -7,13 +7,12 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
-import { BehaviorSubject } from "rxjs";
-import { Switch } from "@vector-im/compound-web";
-import { t } from "i18next";
 import {
   SpotlightIcon,
   GridIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { Switch } from "@vector-im/compound-web";
+import { t } from "i18next";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -33,34 +32,35 @@ import { type GridMode } from "../state/CallViewModel/CallViewModel";
 import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
+  type ToggleOption,
 } from "./MediaMuteAndSwitchButton";
+import { type ViewModel, useViewModel } from "../state/ViewModel";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
   switch: () => void;
 }
 
-export interface FooterProps {
-  ref?: Ref<HTMLDivElement>;
-  /** Children will only be visible if the component is wider than 5*/
-  children?: JSX.Element | JSX.Element[] | false;
-
+export interface FooterSnapshot {
   audioEnabled: boolean;
   /** Also controls if the audioMute button is disabled */
   toggleAudio: (() => void) | undefined;
+
   videoEnabled: boolean;
   /** Also controls if the videoMute button is disabled */
   toggleVideo: (() => void) | undefined;
 
   /* This is needed for WindowMode = "flat" */
   hideControls?: boolean;
-  /** hide the entire footer*/
-  hidden?: boolean;
-  /** Pip controls buttonSize and hides: settings button, layout switcher and logo */
-  asPip?: boolean;
   /** The footer should be used as an overlay.
-   * (Over the Call Grid) This saves spaces on small screens.*/
+   * (Over the Call Grid) This saves spaces on small screens. */
   asOverlay?: boolean;
+
+  buttonSize: "md" | "lg";
+  showSettingsButton?: boolean;
+  showLayoutSwitcher?: boolean;
+  showLogoDebugContainer?: boolean;
+  showLogo?: boolean;
 
   layoutMode?: GridMode;
   /** Also controls if the layout button is visible */
@@ -69,7 +69,7 @@ export interface FooterProps {
   sharingScreen?: boolean;
   toggleScreenSharing?: () => void;
 
-  /** Also controls if the audio button is visible */
+  /** Also controls if the audio output button is visible */
   audioOutputSwitcher?: AudioOutputSwitcher;
   /** Also controls if the settings button is visible */
   openSettings?: () => void;
@@ -79,60 +79,64 @@ export interface FooterProps {
   reactionIdentifier?: string;
   reactionData?: ReactionData;
 
-  hideLogo?: boolean;
   // debug stuff
   debugTileLayout?: boolean;
   tileStoreGeneration?: number;
 
+  /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
   audioOptions?: MenuOptions[];
+  /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
   videoOptions?: MenuOptions[];
   selectedAudio?: string;
   selectedVideo?: string;
-  selectAudioDevice?: (deviceId: string) => void;
-  selectVideoDevice?: (deviceId: string) => void;
+  selectAudioButtonOption?: (deviceId: string) => void;
+  selectVideoButtonOption?: (option: string) => void;
+  videoToggles?: ToggleOption[];
 }
 
-export const CallFooter: FC<FooterProps> = ({
-  ref,
-  children,
-  asOverlay,
-  hidden,
-  hideControls,
-  hideLogo,
-  asPip,
-  layoutMode,
-  setLayoutMode,
-  openSettings,
-  audioEnabled,
-  videoEnabled,
-  toggleAudio,
-  toggleVideo,
-  sharingScreen,
-  toggleScreenSharing,
-  reactionIdentifier,
-  reactionData,
-  audioOutputSwitcher,
-  hangup,
-  debugTileLayout,
-  tileStoreGeneration,
+export interface FooterProps {
+  ref?: Ref<HTMLDivElement>;
+  children?: JSX.Element | JSX.Element[] | false;
+  vm: ViewModel<FooterSnapshot>;
+}
+export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
+  const {
+    asOverlay,
+    hideControls,
+    layoutMode,
+    setLayoutMode,
+    openSettings,
+    audioEnabled,
+    videoEnabled,
+    toggleAudio,
+    toggleVideo,
+    sharingScreen,
+    toggleScreenSharing,
+    reactionIdentifier,
+    reactionData,
+    audioOutputSwitcher,
+    hangup,
+    debugTileLayout,
+    tileStoreGeneration,
+    videoOptions,
+    selectedVideo,
+    audioOptions,
+    selectedAudio,
+    selectAudioButtonOption,
+    selectVideoButtonOption,
+    videoToggles,
+    buttonSize,
+    showSettingsButton,
+    showLogoDebugContainer,
+    showLogo,
+  } = useViewModel(vm);
 
-  audioOptions,
-  videoOptions,
-  selectedAudio,
-  selectedVideo,
-  selectAudioDevice,
-  selectVideoDevice,
-}) => {
   const buttons: JSX.Element[] = [];
-  const buttonSize = asPip ? "md" : "lg";
-  const showSettingsButton =
-    openSettings !== undefined && !asPip && !hideControls;
-  const showLayoutSwitcher = !asPip && !hideControls;
-  const showLogoDebugContainer = !asPip || (!hideLogo && !debugTileLayout);
-  const showLogo = !hideLogo && !asPip;
+
   if (showSettingsButton) {
-    // add the settings button to the center group of buttons, so it will be visible on small screens.
-    // On larger screens, it will be hidden SettingsIconButton the one with `showForScreenWidth = "wide"` in the `settingsLogoContainer` will be visible.
+    // Add the settings button to the center group so it's visible on small
+    // screens. On larger screens the SettingsIconButton with
+    // showForScreenWidth="wide" in the settingsLogoContainer is used instead.
     buttons.push(
       <SettingsButton
         key="settings"
@@ -154,7 +158,7 @@ export const CallFooter: FC<FooterProps> = ({
         data-testid="incall_mute"
         options={audioOptions}
         selectedOption={selectedAudio}
-        onSelect={selectAudioDevice}
+        onSelect={selectAudioButtonOption}
       />,
     );
   } else {
@@ -169,6 +173,7 @@ export const CallFooter: FC<FooterProps> = ({
       />,
     );
   }
+
   if ((videoOptions?.length ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
@@ -179,8 +184,9 @@ export const CallFooter: FC<FooterProps> = ({
         onMuteClick={toggleVideo}
         data-testid="incall_videomute"
         options={videoOptions}
+        toggles={videoToggles}
         selectedOption={selectedVideo}
-        onSelect={selectVideoDevice}
+        onSelect={selectVideoButtonOption}
       />,
     );
   } else {
@@ -213,12 +219,7 @@ export const CallFooter: FC<FooterProps> = ({
     buttons.push(
       <ReactionToggleButton
         size={buttonSize}
-        reactionData={
-          reactionData ?? {
-            handsRaised$: new BehaviorSubject({}),
-            reactions$: new BehaviorSubject({}),
-          }
-        }
+        reactionData={reactionData}
         key="raise_hand"
         className={styles.raiseHand}
         identifier={reactionIdentifier}
@@ -271,7 +272,6 @@ export const CallFooter: FC<FooterProps> = ({
       ref={ref}
       className={classNames(styles.footer, {
         [styles.overlay]: asOverlay,
-        [styles.hidden]: hidden,
       })}
     >
       <div className={styles.settingsLogoContainer}>
@@ -288,7 +288,7 @@ export const CallFooter: FC<FooterProps> = ({
         {showLogoDebugContainer && logoDebugContainer}
       </div>
       {!hideControls && <div className={styles.buttons}>{buttons}</div>}
-      {setLayoutMode && layoutMode && showLayoutSwitcher && (
+      {setLayoutMode && layoutMode && (
         <Switch<"spotlight", "grid">
           name="layoutMode"
           aria-label={t("layout_switch_label")}
