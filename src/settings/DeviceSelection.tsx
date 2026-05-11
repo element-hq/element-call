@@ -5,14 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type ChangeEvent,
-  type FC,
-  type ReactElement,
-  type ReactNode,
-  useCallback,
-  useId,
-} from "react";
+import { type ChangeEvent, type FC, useCallback, useId } from "react";
 import {
   Heading,
   InlineField,
@@ -20,8 +13,8 @@ import {
   RadioControl,
   Separator,
 } from "@vector-im/compound-web";
-import { Trans, useTranslation } from "react-i18next";
 import { useObservableEagerState } from "observable-hooks";
+import { t } from "i18next";
 
 import {
   type AudioOutputDeviceLabel,
@@ -37,12 +30,39 @@ interface Props {
   numberedLabel: (number: number) => string;
 }
 
+export function mediaDeviceLabelToString(
+  label: DeviceLabel | AudioOutputDeviceLabel,
+  numberedLabel: (number: number) => string,
+): string {
+  let labelText = "";
+  switch (label.type) {
+    case "name":
+      labelText = label.name;
+      break;
+    case "number":
+      labelText = numberedLabel(label.number);
+      break;
+    case "default":
+      labelText =
+        label.name === null
+          ? t("settings.devices.default")
+          : t("settings.devices.default") + " (" + label.name + ")";
+      break;
+    case "speaker":
+      labelText = t("settings.devices.loudspeaker");
+      break;
+    case "earpiece":
+      labelText = t("settings.devices.handset");
+      break;
+  }
+  return labelText;
+}
+
 export const DeviceSelection: FC<Props> = ({
   device,
   title,
   numberedLabel,
 }) => {
-  const { t } = useTranslation();
   const groupId = useId();
   const available = useObservableEagerState(device.available$);
   const selectedId = useObservableEagerState(device.selected$)?.id;
@@ -70,38 +90,7 @@ export const DeviceSelection: FC<Props> = ({
       <Separator className={styles.separator} />
       <div className={styles.options}>
         {[...available].map(([id, label]) => {
-          let labelText: ReactNode;
-          switch (label.type) {
-            case "name":
-              labelText = label.name;
-              break;
-            case "number":
-              labelText = numberedLabel(label.number);
-              break;
-            case "default":
-              labelText =
-                label.name === null ? (
-                  t("settings.devices.default")
-                ) : (
-                  <Trans
-                    i18nKey="settings.devices.default_named"
-                    name={label.name}
-                  >
-                    Default{" "}
-                    <span className={styles.secondary}>
-                      ({{ name: label.name } as unknown as ReactElement})
-                    </span>
-                  </Trans>
-                );
-              break;
-            case "speaker":
-              labelText = t("settings.devices.loudspeaker");
-              break;
-            case "earpiece":
-              labelText = t("settings.devices.handset");
-              break;
-          }
-
+          const labelText = mediaDeviceLabelToString(label, numberedLabel);
           return (
             <InlineField
               key={id}
