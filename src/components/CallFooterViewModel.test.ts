@@ -87,12 +87,12 @@ const twoMicsAndOneCamMediaDevices = mockMediaDevices({
 
 describe("createCallFooterViewModel", () => {
   describe("audioOptions and videoOptions", () => {
-    it("are empty when the layout is PiP on desktop", () => {
-      platformMock.mockReturnValue("desktop");
+    function checkEmptyFor(platform: string, layout: Layout): void {
+      platformMock.mockReturnValue(platform);
 
       const vm = createCallFooterViewModel(
         testScope(),
-        buildMinimalCallViewModel(pipLayout),
+        buildMinimalCallViewModel(layout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
         /* openSettings */ undefined,
@@ -101,23 +101,13 @@ describe("createCallFooterViewModel", () => {
 
       expect(vm.audioOptions$?.value).toEqual([]);
       expect(vm.videoOptions$?.value).toEqual([]);
+    }
+    it("are empty when both the platform is iOS", () => {
+      checkEmptyFor("ios", gridLayout);
+    it("are empty when both the layout is pip", () => {
+      checkEmptyFor("desktop", pipLayout);
     });
 
-    it("are empty when the platform is iOS regardless of layout", () => {
-      platformMock.mockReturnValue("ios");
-
-      const vm = createCallFooterViewModel(
-        testScope(),
-        buildMinimalCallViewModel(gridLayout),
-        mockMuteStates(),
-        twoMicsAndOneCamMediaDevices,
-        /* openSettings */ undefined,
-        /* reactionIdentifier */ undefined,
-      );
-
-      expect(vm.audioOptions$?.value).toEqual([]);
-      expect(vm.videoOptions$?.value).toEqual([]);
-    });
 
     it("are populated when the platform is desktop and the layout is not PiP", () => {
       platformMock.mockReturnValue("desktop");
