@@ -3,6 +3,18 @@
   <head>
     <meta charset="UTF-8" />
 
+    <!-- Preload the bundled Twemoji COLR font so emoji glyphs render on the
+    first paint. Without this, environments without a system colour-emoji
+    font (notably WPEWebKit on Linux) briefly show fallback/tofu before the
+    font finishes loading via the @font-face declaration in index.css. -->
+    <link
+      rel="preload"
+      href="/src/fonts/Twemoji_Mozilla/TwemojiMozilla-colr.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
     <% if (packageType === "full") { %>
     <link rel="icon" type="image/svg+xml" href="favicon.png" />
     <link rel="preload" href="/config.json" as="fetch" />

@@ -19,7 +19,49 @@ Please see LICENSE in the repository root for full details.
 layer(compound);
 @import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
 
+/* Twemoji COLR — bundled so that environments without a system colour-emoji
+font (notably WPEWebKit on Linux) still render reactions and other emoji
+glyphs correctly. */
+@font-face {
+  font-family: "Twemoji";
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/Twemoji_Mozilla/TwemojiMozilla-colr.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Twemoji";
+  font-weight: 500;
+  font-display: block;
+  src: url("./fonts/Twemoji_Mozilla/TwemojiMozilla-colr.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Twemoji";
+  font-weight: 600;
+  font-display: block;
+  src: url("./fonts/Twemoji_Mozilla/TwemojiMozilla-colr.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Twemoji";
+  font-weight: 700;
+  font-display: block;
+  src: url("./fonts/Twemoji_Mozilla/TwemojiMozilla-colr.woff2") format("woff2");
+}
+
 :root {
+  /* "Twemoji" is placed FIRST in the stack so emoji codepoints render via
+  the bundled COLR font on platforms whose system fonts lack a colour
+  emoji face (e.g. WPEWebKit on Linux). The COLR file only contains emoji
+  glyphs, so text characters fall through to Inter as normal. Putting it
+  last (as a fallback) was insufficient: WebKit's emoji-font matching
+  heuristic does not always honour an @font-face registration buried late
+  in the family stack — it has to be first to be guaranteed to win. */
+  --cpd-font-family-sans:
+    "Twemoji", Inter, "Inter Fallback: Helvetica Neue",
+    "Inter Fallback: Segoe UI", "Inter Fallback: Roboto",
+    "Inter Fallback: Ubuntu", "Inter Fallback: Fira Sans",
+    "Inter Fallback: Noto Sans", "Inter Fallback: Arial", "Helvetica Neue",
+    "Segoe UI", Roboto, Ubuntu, "Fira Sans", "Noto Sans", Arial, sans-serif;
+
   --font-scale: 1;
   --font-size-micro: calc(10px * var(--font-scale));
   --font-size-caption: calc(12px * var(--font-scale));
@@ -79,6 +121,10 @@ body {
   background-position: center;
   color: var(--cpd-color-text-primary);
   color-scheme: dark;
+  /* Apply the Compound font stack to the page. Without this rule
+  --cpd-font-family-sans is only consumed by avatars and nothing else,
+  so the Twemoji fallback never reaches reactions / emoji rendering. */
+  font-family: var(--cpd-font-family-sans);
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -117,12 +163,12 @@ body,
 Compound Web is where these variables ultimately get consumed to set the page's
 font-family. */
 body[data-platform="android"] {
-  --cpd-font-family-sans: "Roboto", "Noto", "Inter", sans-serif;
+  --cpd-font-family-sans: "Twemoji", "Roboto", "Noto", "Inter", sans-serif;
 }
 
 body[data-platform="ios"] {
   --cpd-font-family-sans:
-    -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    "Twemoji", -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 }
 
 @layer compound-legacy {
