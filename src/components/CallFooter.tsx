@@ -143,7 +143,7 @@ export const CallFooter: FC<FooterProps> = ({
       <MediaMuteAndSwitchButton
         title={"Mic Source"}
         key="audio"
-        iconsAndLabels="video"
+        iconsAndLabels="audio"
         enabled={audioEnabled ?? false}
         onMuteClick={toggleAudio}
         data-testid="incall_mute"
@@ -168,11 +168,11 @@ export const CallFooter: FC<FooterProps> = ({
     buttons.push(
       <MediaMuteAndSwitchButton
         title={"Camera Source"}
-        key="audio"
-        iconsAndLabels="audio"
+        key="video"
+        iconsAndLabels="video"
         enabled={videoEnabled ?? false}
         onMuteClick={toggleVideo}
-        data-testid="incall_mute"
+        data-testid="incall_videomute"
         options={videoOptions}
         selectedOption={selectedVideo}
         onSelect={selectVideoDevice}
