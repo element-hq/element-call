@@ -94,9 +94,9 @@ describe("CallEnded", () => {
         roomEventEncryptionKeysReceived: 5,
         roomEventEncryptionKeysReceivedAverageAge: 100,
         callReconnectingCount: 0,
-        callReconnectingCountSyncing: 0,
-        callReconnectingCountMembershipConnected: 0,
-        callReconnectingCountCertainlyConnected: 0,
+        callReconnectingCountSync: 0,
+        callReconnectingCountMembership: 0,
+        callReconnectingCountProbablyLeft: 0,
         callReconnectingCountLivekit: 0,
       },
       { send_instantly: true },
@@ -174,18 +174,18 @@ describe("CallEnded", () => {
     const mockSession = createMockRtcSession();
 
     tracker.cacheStartCall(new Date());
-    tracker.cacheReconnecting("syncing");
-    tracker.cacheReconnecting("syncing");
+    tracker.cacheReconnecting("sync");
+    tracker.cacheReconnecting("sync");
     tracker.cacheReconnecting("livekit");
-    tracker.cacheReconnecting("membershipConnected");
+    tracker.cacheReconnecting("membership");
     tracker.track("test-call-id", 1, false, mockSession);
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         callReconnectingCount: 4,
-        callReconnectingCountSyncing: 2,
-        callReconnectingCountMembershipConnected: 1,
-        callReconnectingCountCertainlyConnected: 0,
+        callReconnectingCountSync: 2,
+        callReconnectingCountMembership: 1,
+        callReconnectingCountProbablyLeft: 0,
         callReconnectingCountLivekit: 1,
       }),
       expect.anything(),
@@ -211,20 +211,20 @@ describe("CallReconnecting", () => {
 
   it("tracks event with correct shape", () => {
     const tracker = new CallReconnectingTracker();
-    tracker.track("!room:example.org", "syncing", 3.5);
+    tracker.track("!room:example.org", "sync", 3.5);
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith({
       eventName: "CallReconnecting",
       callId: "!room:example.org",
-      reason: "syncing",
+      reason: "sync",
       reconnectDuration: 3.5,
     });
   });
 
   it.each([
-    "syncing",
-    "membershipConnected",
-    "certainlyConnected",
+    "sync",
+    "membership",
+    "probablyLeft",
     "livekit",
   ] as CallReconnectingReason[])("tracks reason %s correctly", (reason) => {
     const tracker = new CallReconnectingTracker();

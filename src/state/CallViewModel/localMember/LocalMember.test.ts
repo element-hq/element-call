@@ -225,9 +225,8 @@ describe("LocalMembership", () => {
     createPublisherFactory: vi.fn(),
     joinMatrixRTC: async (): Promise<void> => {},
     homeserverConnected: {
-      combined$: constant(true),
+      combined$: constant(null),
       rtsSession$: constant(RTCMemberStatus.Connected),
-      disconnectReason$: constant(null),
     },
     callId: "!test-room-id:example.org",
   };
@@ -693,16 +692,17 @@ describe("LocalMembership", () => {
       PosthogAnalytics.resetInstance();
     });
 
-    it("fires CallReconnecting with homeserver reason and duration when reconnected", async () => {
+    it("does not fire CallReconnecting for the initial non-connected state at startup", async () => {
       const scope = new ObservableScope();
       const trackSpy = vi.spyOn(
         PosthogAnalytics.instance.eventCallReconnecting,
         "track",
       );
 
-      const hsConnected$ = new BehaviorSubject<boolean>(true);
-      const disconnectReason$ =
-        new BehaviorSubject<HomeserverDisconnectReason | null>(null);
+      // Simulate startup where membership isn't established yet
+      const hsReason$ = new BehaviorSubject<HomeserverDisconnectReason | null>(
+        "membership",
+      );
 
       const connectionManagerData = new ConnectionManagerData();
       connectionManagerData.add(connectionTransportAConnected, []);
@@ -711,9 +711,8 @@ describe("LocalMembership", () => {
         scope,
         ...defaultCreateLocalMemberValues,
         homeserverConnected: {
-          combined$: hsConnected$,
+          combined$: hsReason$,
           rtsSession$: constant(RTCMemberStatus.Connected),
-          disconnectReason$,
         },
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
@@ -726,15 +725,52 @@ describe("LocalMembership", () => {
 
       await flushPromises();
 
-      // Disconnect with syncing reason, then reconnect
-      disconnectReason$.next("syncing");
-      hsConnected$.next(false);
-      disconnectReason$.next(null);
-      hsConnected$.next(true);
+      // Membership is established — call is now connected
+      hsReason$.next(null);
+
+      expect(trackSpy).not.toHaveBeenCalled();
+
+      scope.end();
+    });
+
+    it("fires CallReconnecting with homeserver reason and duration when reconnected", async () => {
+      const scope = new ObservableScope();
+      const trackSpy = vi.spyOn(
+        PosthogAnalytics.instance.eventCallReconnecting,
+        "track",
+      );
+
+      const hsReason$ = new BehaviorSubject<HomeserverDisconnectReason | null>(
+        null,
+      );
+
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(connectionTransportAConnected, []);
+
+      createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        homeserverConnected: {
+          combined$: hsReason$,
+          rtsSession$: constant(RTCMemberStatus.Connected),
+        },
+        connectionManager: {
+          connectionManagerData$: constant(new Epoch(connectionManagerData)),
+        },
+        localTransport$: new BehaviorSubject({
+          advertised$: new BehaviorSubject(aTransport),
+          active$: new BehaviorSubject(aTransportWithSFUConfig),
+        }),
+      });
+
+      await flushPromises();
+
+      hsReason$.next("sync");
+      hsReason$.next(null);
 
       expect(trackSpy).toHaveBeenCalledWith(
         defaultCreateLocalMemberValues.callId,
-        "syncing",
+        "sync",
         expect.any(Number),
       );
 
@@ -763,10 +799,10 @@ describe("LocalMembership", () => {
         scope,
         ...defaultCreateLocalMemberValues,
         homeserverConnected: {
-          combined$: new BehaviorSubject(true),
+          combined$: new BehaviorSubject<HomeserverDisconnectReason | null>(
+            null,
+          ),
           rtsSession$: constant(RTCMemberStatus.Connected),
-          disconnectReason$:
-            new BehaviorSubject<HomeserverDisconnectReason | null>(null),
         },
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
@@ -779,7 +815,6 @@ describe("LocalMembership", () => {
 
       await flushPromises();
 
-      // Livekit drops then recovers
       connectionState$.next(ConnectionState.LivekitDisconnected);
       connectionState$.next(ConnectionState.LivekitConnected);
 
@@ -799,9 +834,9 @@ describe("LocalMembership", () => {
         "track",
       );
 
-      const hsConnected$ = new BehaviorSubject<boolean>(true);
-      const disconnectReason$ =
-        new BehaviorSubject<HomeserverDisconnectReason | null>(null);
+      const hsReason$ = new BehaviorSubject<HomeserverDisconnectReason | null>(
+        null,
+      );
 
       const connectionManagerData = new ConnectionManagerData();
       connectionManagerData.add(connectionTransportAConnected, []);
@@ -810,9 +845,8 @@ describe("LocalMembership", () => {
         scope,
         ...defaultCreateLocalMemberValues,
         homeserverConnected: {
-          combined$: hsConnected$,
+          combined$: hsReason$,
           rtsSession$: constant(RTCMemberStatus.Connected),
-          disconnectReason$,
         },
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
@@ -825,28 +859,81 @@ describe("LocalMembership", () => {
 
       await flushPromises();
 
-      // First full reconnect cycle
-      disconnectReason$.next("membershipConnected");
-      hsConnected$.next(false);
-      disconnectReason$.next(null);
-      hsConnected$.next(true);
-      // Second full reconnect cycle
-      disconnectReason$.next("certainlyConnected");
-      hsConnected$.next(false);
-      disconnectReason$.next(null);
-      hsConnected$.next(true);
+      hsReason$.next("membership");
+      hsReason$.next(null);
+
+      hsReason$.next("probablyLeft");
+      hsReason$.next(null);
 
       expect(trackSpy).toHaveBeenCalledTimes(2);
       expect(trackSpy).toHaveBeenNthCalledWith(
         1,
         defaultCreateLocalMemberValues.callId,
-        "membershipConnected",
+        "membership",
         expect.any(Number),
       );
       expect(trackSpy).toHaveBeenNthCalledWith(
         2,
         defaultCreateLocalMemberValues.callId,
-        "certainlyConnected",
+        "probablyLeft",
+        expect.any(Number),
+      );
+
+      scope.end();
+    });
+
+    it("uses the first-disconnect reason when a brief intermediate reconnect occurs (multi-phase livekit reconnect)", async () => {
+      const scope = new ObservableScope();
+      const trackSpy = vi.spyOn(
+        PosthogAnalytics.instance.eventCallReconnecting,
+        "track",
+      );
+
+      const hsReason$ = new BehaviorSubject<HomeserverDisconnectReason | null>(
+        null,
+      );
+
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(connectionTransportAConnected, []);
+
+      createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        homeserverConnected: {
+          combined$: hsReason$,
+          rtsSession$: constant(RTCMemberStatus.Connected),
+        },
+        connectionManager: {
+          connectionManagerData$: constant(new Epoch(connectionManagerData)),
+        },
+        localTransport$: new BehaviorSubject({
+          advertised$: new BehaviorSubject(aTransport),
+          active$: new BehaviorSubject(aTransportWithSFUConfig),
+        }),
+      });
+
+      await flushPromises();
+
+      // Disconnect → brief reconnect → disconnect again → stable reconnect
+      // This simulates a multi-phase LiveKit reconnect. Two CallReconnecting
+      // events are emitted (one per null transition) but both carry the
+      // reason from the first disconnect.
+      hsReason$.next("sync");
+      hsReason$.next(null); // brief reconnect
+      hsReason$.next("sync"); // re-disconnect (reconnectStart already set, keeps original reason)
+      hsReason$.next(null); // stable reconnect
+
+      expect(trackSpy).toHaveBeenCalledTimes(2);
+      expect(trackSpy).toHaveBeenNthCalledWith(
+        1,
+        defaultCreateLocalMemberValues.callId,
+        "sync",
+        expect.any(Number),
+      );
+      expect(trackSpy).toHaveBeenNthCalledWith(
+        2,
+        defaultCreateLocalMemberValues.callId,
+        "sync",
         expect.any(Number),
       );
 

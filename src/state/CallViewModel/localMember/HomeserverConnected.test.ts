@@ -98,112 +98,112 @@ describe("createHomeserverConnected$", () => {
   // LLM generated test cases. They are a bit overkill but I improved the mocking so it is
   // easy enough to read them so I think they can stay.
   // Note: gracePeriodMs is set to 0 to avoid debouncing delays in tests
-  it("is false when sync state is not Syncing", () => {
+  it("reports syncing reason when sync state is not Syncing", () => {
     const hsConnected = createHomeserverConnected$(scope, client, session, 0);
-    expect(hsConnected.combined$.value).toBe(false);
+    expect(hsConnected.combined$.value).toBe("sync");
   });
 
-  it("remains false while membership status is not Connected even if sync is Syncing", () => {
+  it("reports membership reason when sync is Syncing but membership is not Connected", () => {
     const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
-    expect(hsConnected.combined$.value).toBe(false); // membership still disconnected
+    expect(hsConnected.combined$.value).toBe("membership");
   });
 
-  it("is false when membership status transitions to Connected but ProbablyLeft is true", () => {
+  it("reports probablyLeft reason when membership transitions to Connected but ProbablyLeft is true", () => {
     const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     // Make sync loop OK
     client.setSyncState(SyncState.Syncing);
     // Indicate probable leave before connection
     session.setProbablyLeft(true);
     session.setMembershipStatus(Status.Connected);
-    expect(hsConnected.combined$.value).toBe(false);
+    expect(hsConnected.combined$.value).toBe("probablyLeft");
   });
 
-  it("becomes true only when all three conditions are satisfied", () => {
+  it("becomes null (connected) only when all three conditions are satisfied", () => {
     const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     // 1. Sync loop connected
     client.setSyncState(SyncState.Syncing);
-    expect(hsConnected.combined$.value).toBe(false); // not yet membership connected
+    expect(hsConnected.combined$.value).toBe("membership"); // not yet membership connected
     // 2. Membership connected
     session.setMembershipStatus(Status.Connected);
-    expect(hsConnected.combined$.value).toBe(true); // probablyLeft is false
+    expect(hsConnected.combined$.value).toBeNull(); // probablyLeft is false
   });
 
-  it("drops back to false when sync loop leaves Syncing", () => {
+  it("returns syncing reason when sync loop leaves Syncing", () => {
     const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     // Reach connected state
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
-    expect(hsConnected.combined$.value).toBe(true);
+    expect(hsConnected.combined$.value).toBeNull();
 
-    // Sync loop error => should flip false
+    // Sync loop error => should report syncing reason
     client.setSyncState(SyncState.Error);
-    expect(hsConnected.combined$.value).toBe(false);
+    expect(hsConnected.combined$.value).toBe("sync");
   });
 
-  it("drops back to false when membership status becomes disconnected", () => {
+  it("returns membershipConnected reason when membership status becomes disconnected", () => {
     const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
-    expect(hsConnected.combined$.value).toBe(true);
+    expect(hsConnected.combined$.value).toBeNull();
 
     session.setMembershipStatus(Status.Disconnected);
-    expect(hsConnected.combined$.value).toBe(false);
+    expect(hsConnected.combined$.value).toBe("membership");
   });
 
-  it("drops to false when ProbablyLeft is emitted after being true", () => {
+  it("returns certainlyConnected reason when ProbablyLeft is emitted", () => {
     const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
-    expect(hsConnected.combined$.value).toBe(true);
+    expect(hsConnected.combined$.value).toBeNull();
 
     session.setProbablyLeft(true);
-    expect(hsConnected.combined$.value).toBe(false);
+    expect(hsConnected.combined$.value).toBe("probablyLeft");
   });
 
-  it("recovers to true if ProbablyLeft becomes false again while other conditions remain true", () => {
+  it("recovers to null (connected) if ProbablyLeft becomes false again while other conditions remain true", () => {
     const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
-    expect(hsConnected.combined$.value).toBe(true);
+    expect(hsConnected.combined$.value).toBeNull();
 
     session.setProbablyLeft(true);
-    expect(hsConnected.combined$.value).toBe(false);
+    expect(hsConnected.combined$.value).toBe("probablyLeft");
 
     // Simulate clearing the flag (in realistic scenario membership manager would update)
     session.setProbablyLeft(false);
-    expect(hsConnected.combined$.value).toBe(true);
+    expect(hsConnected.combined$.value).toBeNull();
   });
 
   it("composite sequence reflects each individual failure reason", () => {
     const hsConnected = createHomeserverConnected$(scope, client, session, 0);
 
-    // Initially false (sync error + disconnected + not probably left)
-    expect(hsConnected.combined$.value).toBe(false);
+    // Initially: sync error + membership disconnected → syncing wins (highest priority)
+    expect(hsConnected.combined$.value).toBe("sync");
 
-    // Fix sync only
+    // Fix sync only → membershipConnected is now the blocker
     client.setSyncState(SyncState.Syncing);
-    expect(hsConnected.combined$.value).toBe(false);
+    expect(hsConnected.combined$.value).toBe("membership");
 
-    // Fix membership
+    // Fix membership → all conditions satisfied
     session.setMembershipStatus(Status.Connected);
-    expect(hsConnected.combined$.value).toBe(true);
+    expect(hsConnected.combined$.value).toBeNull();
 
-    // Introduce probablyLeft -> false
+    // Introduce probablyLeft → certainlyConnected
     session.setProbablyLeft(true);
-    expect(hsConnected.combined$.value).toBe(false);
+    expect(hsConnected.combined$.value).toBe("probablyLeft");
 
-    // Restore notProbablyLeft -> true again
+    // Restore notProbablyLeft → connected again
     session.setProbablyLeft(false);
-    expect(hsConnected.combined$.value).toBe(true);
+    expect(hsConnected.combined$.value).toBeNull();
 
-    // Drop sync -> false
+    // Drop sync → syncing reason
     client.setSyncState(SyncState.Error);
-    expect(hsConnected.combined$.value).toBe(false);
+    expect(hsConnected.combined$.value).toBe("sync");
   });
 });
 
-describe("createHomeserverConnected$ - disconnectReason$", () => {
+describe("createHomeserverConnected$ - combined$ reason values", () => {
   let scope: ObservableScope;
   let client: MockMatrixClient;
   let session: MockMatrixRTCSession;
@@ -223,86 +223,56 @@ describe("createHomeserverConnected$ - disconnectReason$", () => {
   });
 
   it("is null when all three conditions are satisfied", () => {
-    const { disconnectReason$ } = createHomeserverConnected$(
-      scope,
-      client,
-      session,
-      0,
-    );
+    const { combined$ } = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
-    expect(disconnectReason$.value).toBe(null);
+    expect(combined$.value).toBeNull();
   });
 
   it("reports syncing when sync loop is not Syncing", () => {
-    const { disconnectReason$ } = createHomeserverConnected$(
-      scope,
-      client,
-      session,
-      0,
-    );
+    const { combined$ } = createHomeserverConnected$(scope, client, session, 0);
     // client starts with SyncState.Error, membership also disconnected
-    expect(disconnectReason$.value).toBe("syncing");
+    expect(combined$.value).toBe("sync");
   });
 
   it("reports membershipConnected when sync is fine but membership is not Connected", () => {
-    const { disconnectReason$ } = createHomeserverConnected$(
-      scope,
-      client,
-      session,
-      0,
-    );
+    const { combined$ } = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
     // session still Status.Disconnected
-    expect(disconnectReason$.value).toBe("membershipConnected");
+    expect(combined$.value).toBe("membership");
   });
 
   it("reports certainlyConnected when probablyLeft is true", () => {
-    const { disconnectReason$ } = createHomeserverConnected$(
-      scope,
-      client,
-      session,
-      0,
-    );
+    const { combined$ } = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
     session.setProbablyLeft(true);
-    expect(disconnectReason$.value).toBe("certainlyConnected");
+    expect(combined$.value).toBe("probablyLeft");
   });
 
   it("prioritises syncing over membershipConnected when both fail", () => {
-    const { disconnectReason$ } = createHomeserverConnected$(
-      scope,
-      client,
-      session,
-      0,
-    );
+    const { combined$ } = createHomeserverConnected$(scope, client, session, 0);
     // Both sync (Error) and membership (Disconnected) are failing
-    expect(disconnectReason$.value).toBe("syncing");
+    expect(combined$.value).toBe("sync");
   });
 
   it("updates reason as conditions change", () => {
-    const { disconnectReason$ } = createHomeserverConnected$(
-      scope,
-      client,
-      session,
-      0,
-    );
+    const { combined$ } = createHomeserverConnected$(scope, client, session, 0);
     // Initially: syncing fails
-    expect(disconnectReason$.value).toBe("syncing");
+    expect(combined$.value).toBe("sync");
 
     // Fix sync → membershipConnected is now the blocker
     client.setSyncState(SyncState.Syncing);
-    expect(disconnectReason$.value).toBe("membershipConnected");
+    expect(combined$.value).toBe("membership");
 
     // Fix membership → probablyLeft makes certainlyConnected fail
     session.setProbablyLeft(true);
     session.setMembershipStatus(Status.Connected);
-    expect(disconnectReason$.value).toBe("certainlyConnected");
+    expect(combined$.value).toBe("probablyLeft");
 
     // Clear probablyLeft → all conditions satisfied
     session.setProbablyLeft(false);
-    expect(disconnectReason$.value).toBe(null);
+    expect(combined$.value).toBeNull();
   });
 });
 
@@ -334,8 +304,8 @@ describe("createHomeserverConnected$ - Grace Period", () => {
         GRACE_PERIOD,
       );
       expectObservable(hsConnected.combined$).toBe(expectedConnectedMarbles, {
-        y: true,
-        n: false,
+        y: null,
+        n: "sync",
       });
     });
   }

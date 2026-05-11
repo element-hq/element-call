@@ -53,7 +53,6 @@ import {
 import { ElementWidgetActions, widget } from "../../../widget.ts";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
-import { type CallReconnectingReason } from "../../../analytics/PosthogEvents.ts";
 import { MatrixRTCMode } from "../../../settings/settings.ts";
 import { Config } from "../../../config/Config.ts";
 import {
@@ -62,7 +61,6 @@ import {
   type FailedToStartError,
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
-import { and$ } from "../../../utils/observable.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 
@@ -498,18 +496,33 @@ export const createLocalMembership$ = ({
   );
 
   /**
-   * Whether we are "fully" connected to the call. Accounts for both the
-   * connection to the MatrixRTC session and the LiveKit publish connection.
+   * The disconnect reason for the combined Matrix + LiveKit connection, or null
+   * when fully connected. Homeserver reasons take priority over livekit.
+   * Both connectivity state and reason come from the same combineLatest emission,
+   * avoiding any race between the two.
    */
-  const matrixAndLivekitConnected$ = scope.behavior(
-    and$(
+  const connectionDisconnectReason$ = scope.behavior(
+    combineLatest([
       homeserverConnected.combined$,
       localConnectionState$.pipe(
         map((state) => state === ConnectionState.LivekitConnected),
       ),
-    ).pipe(
+    ]).pipe(
+      map(([homeserverReason, livekitConnected]) => {
+        if (homeserverReason !== null) return homeserverReason;
+        if (!livekitConnected) return "livekit" as const;
+        return null;
+      }),
       tap((v) => logger.debug("livekit+matrix: Connected state changed", v)),
     ),
+  );
+
+  /**
+   * Whether we are "fully" connected to the call. Accounts for both the
+   * connection to the MatrixRTC session and the LiveKit publish connection.
+   */
+  const matrixAndLivekitConnected$ = scope.behavior(
+    connectionDisconnectReason$.pipe(map((reason) => reason === null)),
   );
 
   /**
@@ -523,23 +536,25 @@ export const createLocalMembership$ = ({
     false,
   );
 
-  let reconnectStart: { time: number; reason: CallReconnectingReason } | null =
-    null;
-  reconnecting$
-    .pipe(distinctUntilChanged(), scope.bind())
-    .subscribe((reconnecting) => {
-      if (reconnecting) {
-        const homeserverReason = homeserverConnected.disconnectReason$.value;
-        reconnectStart = {
-          time: Date.now(),
-          reason: homeserverReason !== null ? homeserverReason : "livekit",
-        };
+  let reconnectStart: {
+    time: number;
+    reason: NonNullable<(typeof connectionDisconnectReason$)["value"]>;
+  } | null = null;
+  connectionDisconnectReason$
+    .pipe(distinctUntilChanged(), pairwise(), scope.bind())
+    .subscribe(([prev, reason]) => {
+      if (reason !== null) {
+        // Only begin tracking when transitioning FROM connected (null → non-null).
+        // This prevents the initial startup phase — where we may be non-null before
+        // the first real connection — from being counted as a reconnect.
+        if (prev === null) {
+          reconnectStart ??= { time: Date.now(), reason };
+        }
       } else if (reconnectStart !== null) {
-        const duration = (Date.now() - reconnectStart.time) / 1000;
         PosthogAnalytics.instance.eventCallReconnecting.track(
           callId,
           reconnectStart.reason,
-          duration,
+          (Date.now() - reconnectStart.time) / 1000,
         );
         PosthogAnalytics.instance.eventCallEnded.cacheReconnecting(
           reconnectStart.reason,

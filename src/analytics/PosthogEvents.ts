@@ -25,9 +25,9 @@ interface CallEnded extends IPosthogEvent {
   roomEventEncryptionKeysReceived: number;
   roomEventEncryptionKeysReceivedAverageAge: number;
   callReconnectingCount: number;
-  callReconnectingCountSyncing: number;
-  callReconnectingCountMembershipConnected: number;
-  callReconnectingCountCertainlyConnected: number;
+  callReconnectingCountSync: number;
+  callReconnectingCountMembership: number;
+  callReconnectingCountProbablyLeft: number;
   callReconnectingCountLivekit: number;
 }
 
@@ -42,9 +42,9 @@ export class CallEndedTracker {
     maxParticipantsCount: 0,
     reconnectingCount: 0,
     reconnectingCountByReason: {
-      syncing: 0,
-      membershipConnected: 0,
-      certainlyConnected: 0,
+      sync: 0,
+      membership: 0,
+      probablyLeft: 0,
       livekit: 0,
     },
   };
@@ -55,9 +55,9 @@ export class CallEndedTracker {
       maxParticipantsCount: 0,
       reconnectingCount: 0,
       reconnectingCountByReason: {
-        syncing: 0,
-        membershipConnected: 0,
-        certainlyConnected: 0,
+        sync: 0,
+        membership: 0,
+        probablyLeft: 0,
         livekit: 0,
       },
     };
@@ -100,12 +100,11 @@ export class CallEndedTracker {
                 rtcSession.statistics.counters.roomEventEncryptionKeysReceived
               : 0,
           callReconnectingCount: this.cache.reconnectingCount,
-          callReconnectingCountSyncing:
-            this.cache.reconnectingCountByReason.syncing,
-          callReconnectingCountMembershipConnected:
-            this.cache.reconnectingCountByReason.membershipConnected,
-          callReconnectingCountCertainlyConnected:
-            this.cache.reconnectingCountByReason.certainlyConnected,
+          callReconnectingCountSync: this.cache.reconnectingCountByReason.sync,
+          callReconnectingCountMembership:
+            this.cache.reconnectingCountByReason.membership,
+          callReconnectingCountProbablyLeft:
+            this.cache.reconnectingCountByReason.probablyLeft,
           callReconnectingCountLivekit:
             this.cache.reconnectingCountByReason.livekit,
         },
@@ -292,9 +291,9 @@ export class CallConnectDurationTracker {
 }
 
 export type CallReconnectingReason =
-  | "syncing"
-  | "membershipConnected"
-  | "certainlyConnected"
+  | "sync"
+  | "membership"
+  | "probablyLeft"
   | "livekit";
 
 interface CallReconnecting extends IPosthogEvent {
