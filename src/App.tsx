@@ -32,7 +32,6 @@ import { type AppViewModel } from "./state/AppViewModel";
 import { MediaDevicesContext } from "./MediaDevicesContext";
 import { getUrlParams, HeaderStyle } from "./UrlParams";
 import { AppBar } from "./AppBar";
-import { LivekitLogLevelSync } from "./LivekitLogLevelSync.tsx";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -82,7 +81,6 @@ export const App: FC<Props> = ({ vm }) => {
   const content = loaded ? (
     <ClientProvider>
       <MediaDevicesContext value={vm.mediaDevices}>
-        <LivekitLogLevelSync />
         <ProcessorProvider>
           <Sentry.ErrorBoundary
             fallback={(error) => <ErrorPage error={error} widget={widget} />}
