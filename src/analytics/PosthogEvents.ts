@@ -50,7 +50,17 @@ export class CallEndedTracker {
   };
 
   public cacheStartCall(time: Date): void {
-    this.cache.startTime = time;
+    this.cache = {
+      startTime: time,
+      maxParticipantsCount: 0,
+      reconnectingCount: 0,
+      reconnectingCountByReason: {
+        syncing: 0,
+        membershipConnected: 0,
+        certainlyConnected: 0,
+        livekit: 0,
+      },
+    };
   }
 
   public cacheParticipantCountChanged(count: number): void {
