@@ -11,6 +11,11 @@
 
 .reaction {
   font-size: 32pt;
+  /* WPEWebKit on Linux has no system colour-emoji font and its emoji-font
+  matching heuristic does not always honour an `@font-face` registration
+  buried late in the family stack. Putting "Twemoji" first guarantees the
+  bundled COLR font is picked for the emoji codepoint. */
+  font-family: "Twemoji", var(--cpd-font-family-sans);
   /* Reactions are "active" for 3 seconds (as per REACTION_ACTIVE_TIME_MS), give a bit more time for it to fade out. */
   animation-duration: 4s;
   animation-name: reaction-up;

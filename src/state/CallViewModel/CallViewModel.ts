@@ -1176,66 +1176,90 @@ export function createCallViewModel$(
     map((spotlight) => ({ type: "pip", spotlight })),
   );
 
+  const layoutMediaByWindowMode$: Observable<LayoutMedia> = windowMode$.pipe(
+    switchMap((windowMode) => {
+      switch (windowMode) {
+        case "normal":
+          return gridMode$.pipe(
+            switchMap((gridMode) => {
+              switch (gridMode) {
+                case "grid":
+                  return oneOnOneLayoutMedia$.pipe(
+                    switchMap((oneOnOne) =>
+                      oneOnOne === null ? gridLayoutMedia$ : of(oneOnOne),
+                    ),
+                  );
+                case "spotlight":
+                  return spotlightExpanded$.pipe(
+                    switchMap((expanded) =>
+                      expanded
+                        ? spotlightExpandedLayoutMedia$
+                        : spotlightLandscapeLayoutMedia$,
+                    ),
+                  );
+              }
+            }),
+          );
+        case "narrow":
+          return oneOnOneLayoutMedia$.pipe(
+            switchMap((oneOnOne) =>
+              oneOnOne === null
+                ? combineLatest([grid$, spotlight$], (grid, spotlight) =>
+                    grid.length > smallMobileCallThreshold ||
+                    spotlight.some((vm) => vm.type === "screen share")
+                      ? spotlightPortraitLayoutMedia$
+                      : gridLayoutMedia$,
+                  ).pipe(switchAll())
+                : // The expanded spotlight layout makes for a better one-on-one
+                  // experience in narrow windows
+                  spotlightExpandedLayoutMedia$,
+            ),
+          );
+        case "flat":
+          return gridMode$.pipe(
+            switchMap((gridMode) => {
+              switch (gridMode) {
+                case "grid":
+                  // Yes, grid mode actually gets you a "spotlight" layout in
+                  // this window mode.
+                  return spotlightLandscapeLayoutMedia$;
+                case "spotlight":
+                  return spotlightExpandedLayoutMedia$;
+              }
+            }),
+          );
+        case "pip":
+          return pipLayoutMedia$;
+      }
+    }),
+  );
+
+  // In kiosk mode (showControls=false) with a single user-media tile and
+  // no screen share, render that tile edge-to-edge as a full-window
+  // spotlight rather than as a floating PiP inside a one-on-one layout.
+  // This is what we'd produce on a small form-factor 1:1 anyway.
+  const soloKioskLayoutMedia$: Observable<SpotlightExpandedLayoutMedia | null> =
+    getUrlParams().showControls
+      ? of(null)
+      : combineLatest([userMedia$, screenShares$]).pipe(
+          map(([userMedia, screenShares]) => {
+            if (screenShares.length > 0) return null;
+            if (userMedia.length !== 1) return null;
+            return {
+              type: "spotlight-expanded" as const,
+              spotlight: [userMedia[0]],
+            };
+          }),
+        );
+
   /**
    * The media to be used to produce a layout.
    */
   const layoutMedia$ = scope.behavior<LayoutMedia>(
-    windowMode$.pipe(
-      switchMap((windowMode) => {
-        switch (windowMode) {
-          case "normal":
-            return gridMode$.pipe(
-              switchMap((gridMode) => {
-                switch (gridMode) {
-                  case "grid":
-                    return oneOnOneLayoutMedia$.pipe(
-                      switchMap((oneOnOne) =>
-                        oneOnOne === null ? gridLayoutMedia$ : of(oneOnOne),
-                      ),
-                    );
-                  case "spotlight":
-                    return spotlightExpanded$.pipe(
-                      switchMap((expanded) =>
-                        expanded
-                          ? spotlightExpandedLayoutMedia$
-                          : spotlightLandscapeLayoutMedia$,
-                      ),
-                    );
-                }
-              }),
-            );
-          case "narrow":
-            return oneOnOneLayoutMedia$.pipe(
-              switchMap((oneOnOne) =>
-                oneOnOne === null
-                  ? combineLatest([grid$, spotlight$], (grid, spotlight) =>
-                      grid.length > smallMobileCallThreshold ||
-                      spotlight.some((vm) => vm.type === "screen share")
-                        ? spotlightPortraitLayoutMedia$
-                        : gridLayoutMedia$,
-                    ).pipe(switchAll())
-                  : // The expanded spotlight layout makes for a better one-on-one
-                    // experience in narrow windows
-                    spotlightExpandedLayoutMedia$,
-              ),
-            );
-          case "flat":
-            return gridMode$.pipe(
-              switchMap((gridMode) => {
-                switch (gridMode) {
-                  case "grid":
-                    // Yes, grid mode actually gets you a "spotlight" layout in
-                    // this window mode.
-                    return spotlightLandscapeLayoutMedia$;
-                  case "spotlight":
-                    return spotlightExpandedLayoutMedia$;
-                }
-              }),
-            );
-          case "pip":
-            return pipLayoutMedia$;
-        }
-      }),
+    soloKioskLayoutMedia$.pipe(
+      switchMap((solo) =>
+        solo !== null ? of<LayoutMedia>(solo) : layoutMediaByWindowMode$,
+      ),
     ),
   );
 

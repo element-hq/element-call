@@ -67,6 +67,7 @@ import {
 } from "../reactions/useReactionsSender";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { ReactionsOverlay } from "./ReactionsOverlay";
+import { CallClock } from "./CallClock";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   debugTileLayout as debugTileLayoutSetting,
@@ -364,13 +365,17 @@ export const InCallView: FC<InCallViewProps> = ({
       }
       case HeaderStyle.None:
         // Cosmetic header to fill out space while still affecting the bounds of
-        // the grid
-        header = (
-          <div
-            className={classNames(styles.header, styles.filler)}
-            ref={headerRef}
-          />
-        );
+        // the grid. In kiosk mode (showControls=false) we drop it entirely so
+        // the layout fills the window edge-to-edge — mirrors the existing
+        // suppression of the footer in this combo.
+        if (showControls) {
+          header = (
+            <div
+              className={classNames(styles.header, styles.filler)}
+              ref={headerRef}
+            />
+          );
+        }
         break;
       case HeaderStyle.Standard:
         header = (
@@ -433,6 +438,12 @@ export const InCallView: FC<InCallViewProps> = ({
   // need to remove them from the accessibility tree and block focus.
   const contentObscured = reconnecting || earpieceMode;
 
+  // In kiosk mode (showControls=false), suppress the per-tile fullscreen and
+  // zoom (expand/collapse) buttons when we're already rendering a single tile
+  // edge-to-edge in spotlight-expanded layout — they'd just be visual noise.
+  const suppressSpotlightTileButtons =
+    !showControls && layout.type === "spotlight-expanded";
+
   const Tile = useMemo(
     () =>
       function Tile({
@@ -469,7 +480,10 @@ export const InCallView: FC<InCallViewProps> = ({
             ref={ref}
             vm={model}
             expanded={spotlightExpanded}
-            onToggleExpanded={onToggleExpanded}
+            onToggleExpanded={
+              suppressSpotlightTileButtons ? null : onToggleExpanded
+            }
+            hideFullscreen={suppressSpotlightTileButtons}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
             showIndicators={showSpotlightIndicatorsValue}
@@ -479,7 +493,7 @@ export const InCallView: FC<InCallViewProps> = ({
           />
         );
       },
-    [vm, openProfile, contentObscured],
+    [vm, openProfile, contentObscured, suppressSpotlightTileButtons],
   );
 
   const layouts = useMemo(() => {
@@ -628,6 +642,8 @@ export const InCallView: FC<InCallViewProps> = ({
       {reconnectingToast}
       {earpieceOverlay}
       <ReactionsOverlay vm={vm} />
+      {/* Clock hidden for now (retained for re-enabling later) */}
+      {false && <CallClock />}
       {footer}
       {layout.type !== "pip" && (
         <>

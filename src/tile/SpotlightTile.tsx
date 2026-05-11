@@ -384,6 +384,7 @@ interface Props {
   focusable: boolean;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
+  hideFullscreen?: boolean;
 }
 
 export const SpotlightTile: FC<Props> = ({
@@ -397,6 +398,7 @@ export const SpotlightTile: FC<Props> = ({
   focusable = true,
   className,
   style,
+  hideFullscreen = false,
 }) => {
   const { t } = useTranslation();
   const [ourRef, root$] = useObservableRef<HTMLDivElement | null>(null);
@@ -520,7 +522,7 @@ export const SpotlightTile: FC<Props> = ({
         {visibleMedia?.type === "screen share" && !visibleMedia.local && (
           <ScreenShareVolumeButton vm={visibleMedia} />
         )}
-        {platform === "desktop" && (
+        {platform === "desktop" && !hideFullscreen && (
           <button
             className={classNames(styles.expand)}
             aria-label={"maximise"}
