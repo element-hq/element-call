@@ -45,7 +45,7 @@ export default defineConfig((configEnv) =>
                 // Make sure to install Playwright
                 provider: playwright(),
                 headless: true,
-                instances: [{ browser: "firefox" }],
+                instances: [{ browser: "chromium" }],
               },
             },
           },

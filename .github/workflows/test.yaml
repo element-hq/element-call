@@ -23,10 +23,10 @@ jobs:
       - name: Install dependencies
         # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
         run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps firefox
+      - name: Install Playwright Browser
+        run: pnpm exec playwright install --with-deps chromium
       - name: Vitest
-        run: "pnpm run test:coverage"
+        run: "pnpm run test:storybook"
       - name: Upload to codecov
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         env:
