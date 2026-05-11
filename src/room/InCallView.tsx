@@ -43,7 +43,6 @@ import { InviteButton } from "../button/InviteButton";
 import {
   type CallViewModel,
   createCallViewModel$,
-  type GridMode,
 } from "../state/CallViewModel/CallViewModel.ts";
 import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
@@ -68,11 +67,7 @@ import {
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
-import {
-  debugTileLayout as debugTileLayoutSetting,
-  matrixRTCMode as matrixRTCModeSetting,
-  useSetting,
-} from "../settings/settings";
+import { matrixRTCMode as matrixRTCModeSetting } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
@@ -90,8 +85,10 @@ import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.t
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 import { useLatest } from "../useLatest.ts";
-import { CallFooter } from "../components/CallFooter.tsx";
+import { CallFooter, type FooterSnapshot } from "../components/CallFooter.tsx";
 import { SettingsIconButton } from "../button/Button.tsx";
+import { createCallFooterViewModel } from "../components/CallFooterViewModel.tsx";
+import { type ViewModel } from "../state/ViewModel.ts";
 
 const logger = rootLogger.getChild("[InCallView]");
 
@@ -220,9 +217,7 @@ export const InCallView: FC<InCallViewProps> = ({
     muted: muteAllAudio,
   });
   const latestPickupPhaseAudio = useLatest(pickupPhaseAudio);
-
-  const audioEnabled = useBehavior(muteStates.audio.enabled$);
-  const videoEnabled = useBehavior(muteStates.video.enabled$);
+  const mediaDevices = useMediaDevices();
   const toggleAudio = useBehavior(muteStates.audio.toggle$);
   const toggleVideo = useBehavior(muteStates.video.toggle$);
   const setAudioEnabled = useBehavior(muteStates.audio.setEnabled$);
@@ -241,14 +236,10 @@ export const InCallView: FC<InCallViewProps> = ({
   const reconnecting = useBehavior(vm.reconnecting$);
   const windowMode = useBehavior(vm.windowMode$);
   const layout = useBehavior(vm.layout$);
-  const tileStoreGeneration = useBehavior(vm.tileStoreGeneration$);
-  const [debugTileLayout] = useSetting(debugTileLayoutSetting);
-  const gridMode = useBehavior(vm.gridMode$);
   const showHeader = useBehavior(vm.showHeader$);
   const showFooter = useBehavior(vm.showFooter$);
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
-  const sharingScreen = useBehavior(vm.sharingScreen$);
 
   const fatalCallError = useBehavior(vm.fatalError$);
   // Stop the rendering and throw for the error boundary
@@ -346,11 +337,6 @@ export const InCallView: FC<InCallViewProps> = ({
   );
   const pipAlignment$ = useInitial(
     () => new BehaviorSubject(defaultPipAlignment),
-  );
-
-  const setGridMode = useCallback(
-    (mode: GridMode) => vm.setGridMode(mode),
-    [vm],
   );
 
   useAppBarHidden(!showHeader);
@@ -558,9 +544,28 @@ export const InCallView: FC<InCallViewProps> = ({
   const rageshakeRequestModalProps = useRageshakeRequestModal(
     matrixRoom.roomId,
   );
+  const [footerVm, setFooterVm] = useState<ViewModel<FooterSnapshot> | null>(
+    null,
+  );
+  useEffect(() => {
+    const footerScope = new ObservableScope();
+    setFooterVm(
+      createCallFooterViewModel(
+        footerScope,
+        vm,
+        muteStates,
+        mediaDevices,
+        openSettings,
+        supportsReactions
+          ? `${client.getUserId()}:${client.getDeviceId()}`
+          : undefined,
+      ),
+    );
+    return (): void => {
+      footerScope.end();
+    };
+  }, [client, mediaDevices, muteStates, openSettings, supportsReactions, vm]);
 
-  const settingsButtonInAppBar =
-    headerStyle === HeaderStyle.AppBar && showHeader;
   useAppBarSecondaryButton(
     <SettingsIconButton
       key="settings"
@@ -570,34 +575,8 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   // Only hide the settings button if we have an AppBar header and we are showing the header
-  const footer = (
-    <CallFooter
-      ref={footerRef}
-      hidden={!showFooter}
-      hideControls={!showControls}
-      asOverlay={windowMode === "flat"}
-      asPip={layout.type === "pip"}
-      // Hide the logo for both embedded solutions. mobile: HeaderStyle.AppBar and desktop: HeaderStyle.None.
-      hideLogo={headerStyle !== HeaderStyle.Standard}
-      layoutMode={gridMode}
-      setLayoutMode={setGridMode}
-      audioEnabled={audioEnabled}
-      toggleAudio={toggleAudio ?? undefined}
-      videoEnabled={videoEnabled}
-      toggleVideo={toggleVideo ?? undefined}
-      sharingScreen={sharingScreen}
-      toggleScreenSharing={vm.toggleScreenSharing ?? undefined}
-      reactionIdentifier={`${client.getUserId()}:${client.getDeviceId()}`}
-      reactionData={supportsReactions ? vm : undefined}
-      audioOutputSwitcher={audioOutputSwitcher ?? undefined}
-      // Only pass the openSettings function if the settings button is not in the app bar.
-      // If there is no fn the button will be hidden in the footer.
-      openSettings={settingsButtonInAppBar ? undefined : openSettings}
-      hangup={vm.hangup}
-      //Debug props
-      debugTileLayout={debugTileLayout}
-      tileStoreGeneration={tileStoreGeneration}
-    />
+  const footer = footerVm !== null && (
+    <>{showFooter && <CallFooter ref={footerRef} vm={footerVm} />}</>
   );
   const allConnections = useBehavior(vm.allConnections$);
 
