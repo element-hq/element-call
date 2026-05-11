@@ -19,12 +19,14 @@ import fetchMock from "fetch-mock";
 import { getSFUConfigWithOpenID, type OpenIDClientParts } from "./openIDSFU";
 import { testJWTToken } from "../utils/test-fixtures";
 import { ownMemberMock } from "../utils/test";
+import { FailToGetOpenIdToken } from "../utils/errors";
 
 const sfuUrl = "https://sfu.example.org";
 
 describe("getSFUConfigWithOpenID", () => {
   let matrixClient: MockedObject<OpenIDClientParts>;
   beforeEach(() => {
+    fetchMock.catch(404);
     matrixClient = {
       getOpenIdToken: vitest.fn(),
       getDeviceId: vitest.fn(),
@@ -71,14 +73,108 @@ describe("getSFUConfigWithOpenID", () => {
         "https://sfu.example.org",
         "!example_room_id",
       );
-    } catch (ex) {
-      expect((ex as Error).message).toEqual(
-        "SFU Config fetch failed with status code 500",
+    } catch (ex: unknown) {
+      expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
+      expect((ex as FailToGetOpenIdToken).cause).toEqual(
+        new Error("SFU Config fetch failed with status code 500"),
       );
       void (await fetchMock.flush());
       return;
     }
     expect.fail("Expected test to throw;");
+  });
+
+  it("should retry without delay params if the JWT service legacy endpoint returns M_BAD_JSON 400", async () => {
+    let callCount = 0;
+
+    fetchMock.post(
+      "https://sfu.example.org/sfu/get",
+      (url, opts) => {
+        callCount++;
+        const body = JSON.parse(opts.body as string);
+
+        // First call: check if it has delay parts and return 400
+        if (callCount === 1) {
+          expect(body).toHaveProperty("delay_id", "mock_delay_id");
+          return {
+            status: 400,
+            body: { errcode: "M_BAD_JSON", error: "Unsupported parameters" },
+          };
+        }
+
+        // Second call: check if delay parts were stripped and return success
+        expect(body).not.toHaveProperty("delay_id");
+        expect(body).not.toHaveProperty("delay_timeout");
+        expect(body).not.toHaveProperty("delay_cs_api_url");
+
+        return {
+          status: 200,
+          body: { url: sfuUrl, jwt: testJWTToken },
+        };
+      },
+      { overwriteRoutes: true },
+    );
+
+    // Note: Assuming getSFUConfigWithOpenID eventually calls getLiveKitJWT
+    const config = await getSFUConfigWithOpenID(
+      matrixClient,
+      ownMemberMock,
+      "https://sfu.example.org",
+      "!example_room_id",
+      {
+        delayEndpointBaseUrl: "https://matrix.homeserverserver.org",
+        delayId: "mock_delay_id",
+      },
+    );
+
+    expect(config.jwt).toBe(testJWTToken);
+    expect(callCount).toBe(2);
+    void (await fetchMock.flush());
+  });
+
+  it("should successfully send delay parameters to the JWT service legacy endpoint", async () => {
+    fetchMock.post(
+      "https://sfu.example.org/sfu/get",
+      (url, opts) => {
+        const body = JSON.parse(opts.body as string);
+
+        // Verify, that the request contains the expected delay parameters
+        if (
+          body.delay_id === "mock_delay_id" &&
+          body.delay_timeout === 10000 &&
+          body.delay_cs_api_url === "https://homeserverserver.org/cs_api"
+        ) {
+          return {
+            status: 200,
+            body: { url: sfuUrl, jwt: testJWTToken },
+          };
+        }
+        return {
+          status: 400,
+          body: { error: "Missing expected delay params" },
+        };
+      },
+      { overwriteRoutes: true },
+    );
+
+    const config = await getSFUConfigWithOpenID(
+      matrixClient,
+      ownMemberMock,
+      "https://sfu.example.org",
+      "!example_room_id",
+      {
+        delayEndpointBaseUrl: "https://homeserverserver.org/cs_api",
+        delayId: "mock_delay_id",
+      },
+    );
+
+    // Prüfe das Ergebnis
+    expect(config).toMatchObject({
+      jwt: testJWTToken,
+      url: sfuUrl,
+    });
+
+    void (await fetchMock.flush());
   });
 
   it("should try legacy and then new endpoint with delay delegation", async () => {
@@ -106,8 +202,9 @@ describe("getSFUConfigWithOpenID", () => {
         },
       );
     } catch (ex) {
-      expect((ex as Error).message).toEqual(
-        "SFU Config fetch failed with status code 500",
+      expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
+      expect((ex as FailToGetOpenIdToken).cause).toEqual(
+        new Error("SFU Config fetch failed with status code 500"),
       );
       void (await fetchMock.flush());
     }
@@ -117,7 +214,7 @@ describe("getSFUConfigWithOpenID", () => {
     expect(calls[0][0]).toStrictEqual("https://sfu.example.org/get_token");
     expect(calls[0][1]).toStrictEqual({
       // check if it uses correct delayID!
-      body: '{"room_id":"!example_room_id","slot_id":"m.call#ROOM","member":{"id":"@alice:example.org:DEVICE","claimed_user_id":"@alice:example.org","claimed_device_id":"DEVICE"},"delay_id":"mock_delay_id","delay_timeout":1000,"delay_cs_api_url":"https://matrix.homeserverserver.org"}',
+      body: '{"room_id":"!example_room_id","slot_id":"m.call#ROOM","member":{"id":"@alice:example.org:DEVICE","claimed_user_id":"@alice:example.org","claimed_device_id":"DEVICE"},"delay_id":"mock_delay_id","delay_timeout":10000,"delay_cs_api_url":"https://matrix.homeserverserver.org"}',
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -127,7 +224,7 @@ describe("getSFUConfigWithOpenID", () => {
     expect(calls[1][0]).toStrictEqual("https://sfu.example.org/sfu/get");
 
     expect(calls[1][1]).toStrictEqual({
-      body: '{"room":"!example_room_id","device_id":"DEVICE"}',
+      body: '{"room":"!example_room_id","device_id":"DEVICE","delay_id":"mock_delay_id","delay_timeout":10000,"delay_cs_api_url":"https://matrix.homeserverserver.org"}',
       headers: {
         "Content-Type": "application/json",
       },
@@ -160,8 +257,9 @@ describe("getSFUConfigWithOpenID", () => {
         },
       );
     } catch (ex) {
-      expect((ex as Error).message).toEqual(
-        "SFU Config fetch failed with status code 500",
+      expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
+      expect((ex as FailToGetOpenIdToken).cause).toEqual(
+        new Error("SFU Config fetch failed with status code 500"),
       );
       void (await fetchMock.flush());
     }
@@ -171,7 +269,7 @@ describe("getSFUConfigWithOpenID", () => {
     expect(calls[0][0]).toStrictEqual("https://sfu.example.org/get_token");
     expect(calls[0][1]).toStrictEqual({
       // check if it uses correct delayID!
-      body: '{"room_id":"!example_room_id","slot_id":"m.call#ROOM","member":{"id":"@alice:example.org:DEVICE","claimed_user_id":"@alice:example.org","claimed_device_id":"DEVICE"},"delay_id":"mock_delay_id","delay_timeout":1000,"delay_cs_api_url":"https://matrix.homeserverserver.org"}',
+      body: '{"room_id":"!example_room_id","slot_id":"m.call#ROOM","member":{"id":"@alice:example.org:DEVICE","claimed_user_id":"@alice:example.org","claimed_device_id":"DEVICE"},"delay_id":"mock_delay_id","delay_timeout":10000,"delay_cs_api_url":"https://matrix.homeserverserver.org"}',
       method: "POST",
       headers: {
         "Content-Type": "application/json",

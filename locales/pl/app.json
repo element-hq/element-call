@@ -22,12 +22,6 @@
     "upload_file": "Prześlij plik"
   },
   "analytics_notice": "Uczestnicząc w tej becie, upoważniasz nas do zbierania anonimowych danych, które wykorzystamy do ulepszenia produktu. Dowiedz się więcej na temat danych, które zbieramy w naszej <2>Polityce prywatności</2> i <5>Polityce ciasteczek</5>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Kontynuuj w przeglądarce",
-    "open_in_app": "Otwórz w aplikacji",
-    "text": "Gotowy, by dołączyć?",
-    "title": "Wybierz aplikację"
-  },
   "call_ended_view": {
     "create_account_button": "Utwórz konto",
     "create_account_prompt": "<0>Może zechcesz ustawić hasło, aby zachować swoje konto?</0><1>Będziesz w stanie utrzymać swoją nazwę i ustawić awatar do wyświetlania podczas połączeń w przyszłości</1>",

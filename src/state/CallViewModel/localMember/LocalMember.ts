@@ -62,6 +62,8 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { and$ } from "../../../utils/observable.ts";
+import { type LocalTransport } from "./LocalTransport.ts";
+import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -127,7 +129,7 @@ interface Props {
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (transport: LivekitTransportConfig) => void;
   homeserverConnected: HomeserverConnected;
-  localTransport$: Behavior<LivekitTransportConfig | null>;
+  localTransport$: Behavior<LocalTransport>;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
@@ -160,7 +162,7 @@ interface Props {
 export const createLocalMembership$ = ({
   scope,
   connectionManager,
-  localTransport$: localTransportCanThrow$,
+  localTransport$,
   homeserverConnected,
   createPublisherFactory,
   joinMatrixRTC,
@@ -205,23 +207,43 @@ export const createLocalMembership$ = ({
   const logger = parentLogger.getChild("[LocalMembership]");
   logger.debug(`Creating local membership..`);
 
+  // We consider error on the transport as fatal.
+  // Whether it is the active transport or the preferred transport.
+  const handleTransportError = (e: unknown): Observable<null> => {
+    let error: ElementCallError;
+    if (e instanceof ElementCallError) {
+      error = e;
+    } else {
+      error = new UnknownCallError(
+        e instanceof Error ? e : new Error("Unknown error from localTransport"),
+      );
+    }
+    setTransportError(error);
+    return of(null);
+  };
+
+  // This is the transport that we will advertise in our membership.
+  const advertisedTransport$ = localTransport$.pipe(
+    switchMap((lt) => lt.advertised$),
+    catchError(handleTransportError),
+    distinctUntilChanged(areLivekitTransportsEqual),
+  );
+
   // Unwrap the local transport and set the state of the LocalMembership to error in case the transport is an error.
-  const localTransport$ = scope.behavior(
-    localTransportCanThrow$.pipe(
-      catchError((e: unknown) => {
-        let error: ElementCallError;
-        if (e instanceof ElementCallError) {
-          error = e;
-        } else {
-          error = new UnknownCallError(
-            e instanceof Error
-              ? e
-              : new Error("Unknown error from localTransport"),
-          );
-        }
-        setTransportError(error);
-        return of(null);
+  const activeTransport$ = scope.behavior(
+    localTransport$.pipe(
+      switchMap((lt) => {
+        return combineLatest([lt.active$, lt.advertised$]).pipe(
+          map(([active, advertised]) => {
+            // Our policy is to not publish to another transport if our prefered transport is miss-configured
+            if (advertised == null) return null;
+
+            return active?.transport ?? null;
+          }),
+        );
       }),
+      catchError(handleTransportError),
+      distinctUntilChanged(areLivekitTransportsEqual),
     ),
   );
 
@@ -229,7 +251,7 @@ export const createLocalMembership$ = ({
   const localConnection$ = scope.behavior(
     combineLatest([
       connectionManager.connectionManagerData$,
-      localTransport$,
+      activeTransport$,
     ]).pipe(
       map(([{ value: connectionData }, localTransport]) => {
         if (localTransport === null) {
@@ -398,7 +420,7 @@ export const createLocalMembership$ = ({
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
     combineLatest([
       localConnectionState$,
-      localTransport$,
+      activeTransport$,
       joinAndPublishRequested$,
       from(trackStartRequested.promise).pipe(
         map(() => true),
@@ -537,9 +559,11 @@ export const createLocalMembership$ = ({
       });
   });
 
-  // Keep matrix rtc session in sync with localTransport$, connectRequested$
+  // Keep matrix rtc session in sync with advertisedTransport$, connectRequested$
   scope.reconcile(
-    scope.behavior(combineLatest([localTransport$, joinAndPublishRequested$])),
+    scope.behavior(
+      combineLatest([advertisedTransport$, joinAndPublishRequested$]),
+    ),
     async ([transport, shouldConnect]) => {
       if (!transport) return;
       // if shouldConnect=false we will do the disconnect as the cleanup from the previous reconcile iteration.
@@ -638,7 +662,15 @@ export const createLocalMembership$ = ({
   ) {
     toggleScreenSharing = (): void => {
       const screenshareSettings: ScreenShareCaptureOptions = {
-        audio: true,
+        // Screen share audio shouldn't have any filtering.
+        // "echoCancellation" is purposely excluded, as setting it to
+        // false causes the screen share audio track to include
+        // an echo of the incoming participant's voice
+        audio: {
+          autoGainControl: false,
+          noiseSuppression: false,
+          voiceIsolation: false,
+        },
         selfBrowserSurface: "include",
         surfaceSwitching: "include",
         systemAudio: "include",
@@ -746,6 +778,19 @@ export function enterRTCSession(
     };
   }
 
+  // Calculates `maximumNetworkErrorRetryCount`. The connection is failed if EITHER:
+  // - The /sync loop is unresponsive for > `gracePeriod` ms, or
+  // - A delayed leave event is emitted (after `leaveDelay` ms period).
+  // Note: Use leaveDelay >> gracePeriod for delegated leave events.
+  const gracePeriod = Config.get().sync_disconnect_grace_period_ms;
+  const leaveDelay = matrixRtcSessionConfig?.delayed_leave_event_delay_ms;
+  const retryInterval = matrixRtcSessionConfig?.network_error_retry_ms;
+
+  // Math.min is used to account for the respective worst case: /sync not available or leave event emitted.
+  const maxWaitTime = Math.min(gracePeriod, leaveDelay);
+  const maximumNetworkErrorRetryCount =
+    Math.ceil(maxWaitTime / retryInterval) + 1;
+
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   // TODO where/how do we track errors originating from the ongoing rtcSession?
 
@@ -770,8 +815,8 @@ export function enterRTCSession(
       makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
-      useExperimentalToDeviceTransport: true,
       unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
+      maximumNetworkErrorRetryCount: maximumNetworkErrorRetryCount,
     },
   );
 }

@@ -22,12 +22,6 @@
     "upload_file": "Laadi fail üles"
   },
   "analytics_notice": "Nõustudes selle beetaversiooni kasutamisega, sa nõustud ka toote arendamiseks kasutatavate anonüümsete andmete kogumisega. Täpsemat teavet kogutavate andmete kohta leiad meie <2>Privaatsuspoliitikast</2> ja meie <6>Küpsiste kasutamise reeglitest</6>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Jätka veebibrauseris",
-    "open_in_app": "Ava rakenduses",
-    "text": "Oled valmis liituma?",
-    "title": "Vali rakendus"
-  },
   "call_ended_view": {
     "create_account_button": "Loo konto",
     "create_account_prompt": "<0>Kas soovid salasõna seadistada ja sellega oma kasutajakonto alles jätta?</0><1>Nii saad säilitada oma nime ja määrata profiilipildi, mida saad kasutada tulevastes kõnedes</1>",

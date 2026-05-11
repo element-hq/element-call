@@ -33,6 +33,12 @@ Please see LICENSE in the repository root for full details.
   --media-view-fg-inset: 10px;
 }
 
+.maximised .item {
+  /* Ensure that foreground elements lie within the safe area */
+  --media-view-fg-inset: 10px calc(env(safe-area-inset-right) + 10px) 10px
+    calc(env(safe-area-inset-left) + 10px);
+}
+
 .item.snap {
   scroll-snap-align: start;
 }
@@ -153,10 +159,10 @@ Please see LICENSE in the repository root for full details.
 }
 
 @media (hover) {
-  .tile > div > button {
+  .tile button {
     opacity: 0;
   }
-  .tile:hover > div > button {
+  .tile:hover button {
     opacity: 1;
   }
 }

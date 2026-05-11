@@ -36,7 +36,6 @@ import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { type Layout } from "../layout-types.ts";
 import {
-  mockLocalParticipant,
   mockMatrixRoomMember,
   mockRemoteParticipant,
   withTestScheduler,
@@ -61,7 +60,10 @@ import {
 import { MediaDevices } from "../MediaDevices.ts";
 import { getValue } from "../../utils/observable.ts";
 import { type Behavior, constant } from "../Behavior.ts";
-import { withCallViewModel as withCallViewModelInMode } from "./CallViewModelTestUtils.ts";
+import {
+  localParticipant,
+  withCallViewModel as withCallViewModelInMode,
+} from "./CallViewModelTestUtils.ts";
 import { MatrixRTCMode } from "../../settings/settings.ts";
 import { initializeWidget } from "../../widget.ts";
 
@@ -104,16 +106,7 @@ const dave = mockMatrixRoomMember(daveRtcMember, { rawDisplayName: "Dave" });
 
 const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
-const localParticipant = mockLocalParticipant({ identity: "" });
-const aliceSharingScreen = mockRemoteParticipant({
-  identity: aliceId,
-  isScreenShareEnabled: true,
-});
 const bobParticipant = mockRemoteParticipant({ identity: bobId });
-const bobSharingScreen = mockRemoteParticipant({
-  identity: bobId,
-  isScreenShareEnabled: true,
-});
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
 
 export interface GridLayoutSummary {
@@ -277,11 +270,12 @@ describe.each([
     });
   });
 
-  test("screen sharing activates spotlight layout", () => {
+  test("remote screen sharing activates spotlight layout", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Start with no screen shares, then have Alice and Bob share their screens,
       // then return to no screen shares, then have just Alice share for a bit
-      const participantInputMarbles = "    abcda-ba";
+      const aliceSharingInputMarbles = "   ny-n--yn";
+      const bobSharingInputMarbles = "     n-y-n---";
       // While there are no screen shares, switch to spotlight manually, and then
       // switch back to grid at the end
       const modeInputMarbles = "           -----s--g";
@@ -292,13 +286,12 @@ describe.each([
       const expectedShowSpeakingMarbles = "y----nyny";
       withCallViewModel(
         {
-          remoteParticipants$: behavior(participantInputMarbles, {
-            a: [aliceParticipant, bobParticipant],
-            b: [aliceSharingScreen, bobParticipant],
-            c: [aliceSharingScreen, bobSharingScreen],
-            d: [aliceParticipant, bobSharingScreen],
-          }),
+          remoteParticipants$: constant([aliceParticipant, bobParticipant]),
           rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
+          sharingScreen: new Map([
+            [aliceParticipant, behavior(aliceSharingInputMarbles, yesNo)],
+            [bobParticipant, behavior(bobSharingInputMarbles, yesNo)],
+          ]),
         },
         (vm) => {
           schedule(modeInputMarbles, {
@@ -352,6 +345,76 @@ describe.each([
           expectObservable(vm.showSpeakingIndicators$).toBe(
             expectedShowSpeakingMarbles,
             yesNo,
+          );
+        },
+      );
+    });
+  });
+
+  test("local screen sharing stays in grid layout", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      // Local participant shares their screen, then stops sharing
+      const sharingInputMarbles = "  nyn";
+      // Layout should show the screen share but stay in type: "grid"
+      const expectedLayoutMarbles = "aba";
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant, bobParticipant]),
+          rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
+          sharingScreen: new Map([
+            [localParticipant, behavior(sharingInputMarbles, yesNo)],
+          ]),
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "grid",
+                spotlight: undefined,
+                grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
+              },
+              b: {
+                type: "grid",
+                spotlight: [`${localId}:0:screen-share`],
+                grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
+              },
+            },
+          );
+        },
+      );
+    });
+  });
+
+  test("local screen sharing in one-on-one call activates grid layout", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      // Local participant shares their screen, then stops sharing
+      const sharingInputMarbles = "  nyn";
+      // Layout should switch to grid layout then back to one-on-one layout
+      const expectedLayoutMarbles = "aba";
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant]),
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          sharingScreen: new Map([
+            [localParticipant, behavior(sharingInputMarbles, yesNo)],
+          ]),
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "one-on-one",
+                pip: `${localId}:0`,
+                spotlight: `${aliceId}:0`,
+              },
+              b: {
+                type: "grid",
+                spotlight: [`${localId}:0:screen-share`],
+                grid: [`${localId}:0`, `${aliceId}:0`],
+              },
+            },
           );
         },
       );
@@ -688,7 +751,7 @@ describe.each([
       withCallViewModel(
         {
           remoteParticipants$: constant([
-            aliceSharingScreen,
+            aliceParticipant,
             bobParticipant,
             daveParticipant,
           ]),
@@ -702,6 +765,7 @@ describe.each([
             [bobParticipant, behavior(bSpeakingInputMarbles, yesNo)],
             [daveParticipant, behavior(dSpeakingInputMarbles, yesNo)],
           ]),
+          sharingScreen: new Map([[aliceParticipant, constant(true)]]),
         },
         (vm) => {
           schedule(modeInputMarbles, {
@@ -745,6 +809,53 @@ describe.each([
               map(() => "x"),
             ),
           ).toBe("x"); // Expect just one emission
+        },
+      );
+    });
+  });
+
+  test("PiP tile in expanded spotlight layout avoids redundantly showing local user", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      // Switch to spotlight immediately
+      const modeInputMarbles = "       s";
+      // And expand the spotlight immediately
+      const expandInputMarbles = "     a";
+      // First no one else is in the call, then Alice joins
+      const participantInputMarbles = "ab";
+      // First local user should be in the spotlight, then they appear in PiP
+      // only once Alice has joined
+      const expectedLayoutMarbles = "  ab";
+
+      withCallViewModel(
+        {
+          rtcMembers$: behavior(participantInputMarbles, {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
+        },
+        (vm) => {
+          schedule(modeInputMarbles, {
+            s: () => vm.setGridMode("spotlight"),
+          });
+          schedule(expandInputMarbles, {
+            a: () => vm.toggleSpotlightExpanded$.value!(),
+          });
+
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "spotlight-expanded",
+                spotlight: [`${localId}:0`],
+                pip: undefined,
+              },
+              b: {
+                type: "spotlight-expanded",
+                spotlight: [`${aliceId}:0`],
+                pip: `${localId}:0`,
+              },
+            },
+          );
         },
       );
     });
@@ -809,26 +920,30 @@ describe.each([
     withTestScheduler(({ behavior, expectObservable }) => {
       // iterate through a number of combinations of participants and MatrixRTC memberships
       // Bob never has an MatrixRTC membership
-      const scenarioInputMarbles = " abcdec";
+      const participantInputMarbles = "abcd-c";
+      // Bob even tries to share his screen at the end
+      const bobSharingInputMarbles = " n---yn";
       // Bob should never be visible
-      const expectedLayoutMarbles = "a-bc-b";
+      const expectedLayoutMarbles = "  a-bc-b";
 
       withCallViewModel(
         {
-          remoteParticipants$: behavior(scenarioInputMarbles, {
+          remoteParticipants$: behavior(participantInputMarbles, {
             a: [],
             b: [bobParticipant],
             c: [aliceParticipant, bobParticipant],
             d: [aliceParticipant, daveParticipant, bobParticipant],
-            e: [aliceParticipant, daveParticipant, bobSharingScreen],
           }),
-          rtcMembers$: behavior(scenarioInputMarbles, {
+          rtcMembers$: behavior(participantInputMarbles, {
             a: [localRtcMember],
             b: [localRtcMember],
             c: [localRtcMember, aliceRtcMember],
             d: [localRtcMember, aliceRtcMember, daveRtcMember],
             e: [localRtcMember, aliceRtcMember, daveRtcMember],
           }),
+          sharingScreen: new Map([
+            [bobParticipant, behavior(bobSharingInputMarbles, yesNo)],
+          ]),
         },
         (vm) => {
           vm.setGridMode("grid");

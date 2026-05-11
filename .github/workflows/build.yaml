@@ -85,3 +85,31 @@ jobs:
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  build_storybook:
+    name: Build Storybook
+    if: contains(github.event.pull_request.labels.*.name, 'storybook build')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Enable Corepack
+        run: corepack enable
+      - name: pnpm cache
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          cache: "pnpm"
+          node-version-file: ".node-version"
+      - name: Install dependencies
+        run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
+      - name: Build Storybook
+        run: pnpm run build-storybook
+      - name: Upload Artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: build-output-storybook
+          path: storybook-static
+          # We'll only use this in a triggered job, then we're done with it
+          retention-days: 1

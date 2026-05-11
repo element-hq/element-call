@@ -22,12 +22,6 @@
     "upload_file": "Dosya Yükle"
   },
   "analytics_notice": "Bu beta sürümüne katılarak, ürünü geliştirmek için kullandığımız anonim verilerin toplanmasına izin vermiş olursunuz. Hangi verileri izlediğimiz hakkında daha fazla bilgiyi <2>Gizlilik Politikamızda</2> ve <6>Çerez Politikamızda bulabilirsiniz</6>..",
-  "app_selection_modal": {
-    "continue_in_browser": "Tarayıcıda devam et",
-    "open_in_app": "Uygulamada aç",
-    "text": "Katılmaya hazır mısınız?",
-    "title": "Uygulama seçin"
-  },
   "call_ended_view": {
     "create_account_button": "Hesap aç",
     "create_account_prompt": "<0>Hesabınızı tutmak için niye bir parola açmıyorsunuz?</0><1>Böylece ileriki aramalarda adınızı ve avatarınızı kullanabileceksiniz</1>",

@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   afterEach,
+  beforeEach,
   describe,
   expect,
   it,
@@ -151,6 +152,19 @@ afterEach(() => {
 });
 
 describe("Start connection states", () => {
+  beforeEach(() => {
+    fetchMock.post(
+      `https://matrix-rtc.example.org/livekit/jwt/get_token`,
+      () => {
+        return {
+          // Return a non-retryable error, if not, the retry logic will
+          // wait and fail the test with a timeout.
+          status: 404,
+        };
+      },
+    );
+  });
+
   it("start in initialized state", () => {
     setupTest();
 
