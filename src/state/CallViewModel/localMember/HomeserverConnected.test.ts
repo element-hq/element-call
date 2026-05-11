@@ -13,6 +13,7 @@ import { MembershipManagerEvent, Status } from "matrix-js-sdk/lib/matrixrtc";
 
 import { ObservableScope } from "../../ObservableScope";
 import { createHomeserverConnected$ } from "./HomeserverConnected";
+import { testScope, withTestScheduler } from "../../../utils/test";
 
 /**
  * Minimal stub of a Matrix client sufficient for our tests:
@@ -96,19 +97,20 @@ describe("createHomeserverConnected$", () => {
 
   // LLM generated test cases. They are a bit overkill but I improved the mocking so it is
   // easy enough to read them so I think they can stay.
+  // Note: gracePeriodMs is set to 0 to avoid debouncing delays in tests
   it("is false when sync state is not Syncing", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session);
+    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     expect(hsConnected.combined$.value).toBe(false);
   });
 
   it("remains false while membership status is not Connected even if sync is Syncing", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session);
+    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
     expect(hsConnected.combined$.value).toBe(false); // membership still disconnected
   });
 
   it("is false when membership status transitions to Connected but ProbablyLeft is true", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session);
+    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     // Make sync loop OK
     client.setSyncState(SyncState.Syncing);
     // Indicate probable leave before connection
@@ -118,7 +120,7 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("becomes true only when all three conditions are satisfied", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session);
+    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     // 1. Sync loop connected
     client.setSyncState(SyncState.Syncing);
     expect(hsConnected.combined$.value).toBe(false); // not yet membership connected
@@ -128,7 +130,7 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("drops back to false when sync loop leaves Syncing", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session);
+    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     // Reach connected state
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
@@ -140,7 +142,7 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("drops back to false when membership status becomes disconnected", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session);
+    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
     expect(hsConnected.combined$.value).toBe(true);
@@ -150,7 +152,7 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("drops to false when ProbablyLeft is emitted after being true", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session);
+    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
     expect(hsConnected.combined$.value).toBe(true);
@@ -160,7 +162,7 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("recovers to true if ProbablyLeft becomes false again while other conditions remain true", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session);
+    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
     expect(hsConnected.combined$.value).toBe(true);
@@ -174,7 +176,7 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("composite sequence reflects each individual failure reason", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session);
+    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
 
     // Initially false (sync error + disconnected + not probably left)
     expect(hsConnected.combined$.value).toBe(false);
@@ -198,5 +200,64 @@ describe("createHomeserverConnected$", () => {
     // Drop sync -> false
     client.setSyncState(SyncState.Error);
     expect(hsConnected.combined$.value).toBe(false);
+  });
+});
+
+describe("createHomeserverConnected$ - Grace Period", () => {
+  const GRACE_PERIOD = 5;
+
+  function marbleTest(
+    syncStateMarbles: string,
+    expectedConnectedMarbles: string,
+  ): void {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      const syncState$ = behavior(syncStateMarbles, {
+        s: SyncState.Syncing,
+        e: SyncState.Error,
+      });
+      const client = new MockMatrixClient(syncState$.value);
+      schedule(syncStateMarbles, {
+        s: () => client.setSyncState(SyncState.Syncing),
+        e: () => client.setSyncState(SyncState.Error),
+      });
+      const session = new MockMatrixRTCSession({
+        membershipStatus: Status.Connected,
+        probablyLeft: false,
+      });
+      const hsConnected = createHomeserverConnected$(
+        testScope(),
+        client,
+        session,
+        GRACE_PERIOD,
+      );
+      expectObservable(hsConnected.combined$).toBe(expectedConnectedMarbles, {
+        y: true,
+        n: false,
+      });
+    });
+  }
+
+  it("respects gracePeriodMs: stays true during grace period and flips false after", () => {
+    // - Initial state: Everything is connected
+    // - Sync error occurs -> should remain connected due to grace period
+    // - After grace period, not connected
+    marbleTest("se", "y-----n");
+    // If the sync error takes longer to occur, it should take equally long for
+    // the connection state to change
+    marbleTest("s--e", "y-------n");
+  });
+
+  it("recovers immediately if sync returns during grace period", () => {
+    // - Initial state: Connected
+    // - Sync error occurs
+    // - Sync recovers BEFORE the grace period expires
+    // - Connection state remains constant
+    marbleTest("se--s", "y");
+  });
+
+  it("flips to true IMMEDIATELY even if a grace period was pending", () => {
+    // - Initial error: connection eventually flips to false
+    // - Back to Syncing -> Must be connected immediately (synchronously)
+    marbleTest("e-----s", "y----ny");
   });
 });

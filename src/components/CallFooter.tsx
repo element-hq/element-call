@@ -8,6 +8,12 @@ Please see LICENSE in the repository root for full details.
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
 import { BehaviorSubject } from "rxjs";
+import { Switch } from "@vector-im/compound-web";
+import { t } from "i18next";
+import {
+  SpotlightIcon,
+  GridIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -23,8 +29,11 @@ import {
   type ReactionData,
 } from "../button";
 import styles from "./CallFooter.module.css";
-import { LayoutToggle } from "../room/LayoutToggle";
 import { type GridMode } from "../state/CallViewModel/CallViewModel";
+import {
+  MediaMuteAndSwitchButton,
+  type MenuOptions,
+} from "./MediaMuteAndSwitchButton";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -74,6 +83,13 @@ export interface FooterProps {
   // debug stuff
   debugTileLayout?: boolean;
   tileStoreGeneration?: number;
+
+  audioOptions?: MenuOptions[];
+  videoOptions?: MenuOptions[];
+  selectedAudio?: string;
+  selectedVideo?: string;
+  selectAudioDevice?: (deviceId: string) => void;
+  selectVideoDevice?: (deviceId: string) => void;
 }
 
 export const CallFooter: FC<FooterProps> = ({
@@ -99,9 +115,16 @@ export const CallFooter: FC<FooterProps> = ({
   hangup,
   debugTileLayout,
   tileStoreGeneration,
+
+  audioOptions,
+  videoOptions,
+  selectedAudio,
+  selectedVideo,
+  selectAudioDevice,
+  selectVideoDevice,
 }) => {
   const buttons: JSX.Element[] = [];
-  const buttonSize = asPip ? "sm" : "lg";
+  const buttonSize = asPip ? "md" : "lg";
   const showSettingsButton =
     openSettings !== undefined && !asPip && !hideControls;
   const showLayoutSwitcher = !asPip && !hideControls;
@@ -120,24 +143,58 @@ export const CallFooter: FC<FooterProps> = ({
     );
   }
 
-  buttons.push(
-    <MicButton
-      size={buttonSize}
-      key="audio"
-      enabled={audioEnabled ?? false}
-      onClick={toggleAudio}
-      disabled={toggleAudio === undefined}
-      data-testid="incall_mute"
-    />,
-    <VideoButton
-      size={buttonSize}
-      key="video"
-      enabled={videoEnabled ?? false}
-      onClick={toggleVideo}
-      disabled={toggleVideo === undefined}
-      data-testid="incall_videomute"
-    />,
-  );
+  if ((audioOptions?.length ?? 0) > 0) {
+    buttons.push(
+      <MediaMuteAndSwitchButton
+        title={"Mic Source"}
+        key="audio"
+        iconsAndLabels="audio"
+        enabled={audioEnabled ?? false}
+        onMuteClick={toggleAudio}
+        data-testid="incall_mute"
+        options={audioOptions}
+        selectedOption={selectedAudio}
+        onSelect={selectAudioDevice}
+      />,
+    );
+  } else {
+    buttons.push(
+      <MicButton
+        size={buttonSize}
+        key="audio"
+        enabled={audioEnabled ?? false}
+        onClick={toggleAudio}
+        disabled={toggleAudio === undefined}
+        data-testid="incall_mute"
+      />,
+    );
+  }
+  if ((videoOptions?.length ?? 0) > 0) {
+    buttons.push(
+      <MediaMuteAndSwitchButton
+        title={"Camera Source"}
+        key="video"
+        iconsAndLabels="video"
+        enabled={videoEnabled ?? false}
+        onMuteClick={toggleVideo}
+        data-testid="incall_videomute"
+        options={videoOptions}
+        selectedOption={selectedVideo}
+        onSelect={selectVideoDevice}
+      />,
+    );
+  } else {
+    buttons.push(
+      <VideoButton
+        size={buttonSize}
+        key="video"
+        enabled={videoEnabled ?? false}
+        onClick={toggleVideo}
+        disabled={toggleVideo === undefined}
+        data-testid="incall_videomute"
+      />,
+    );
+  }
 
   if (toggleScreenSharing !== undefined) {
     buttons.push(
@@ -232,10 +289,18 @@ export const CallFooter: FC<FooterProps> = ({
       </div>
       {!hideControls && <div className={styles.buttons}>{buttons}</div>}
       {setLayoutMode && layoutMode && showLayoutSwitcher && (
-        <LayoutToggle
+        <Switch<"spotlight", "grid">
+          name="layoutMode"
+          aria-label={t("layout_switch_label")}
+          leftLabel={t("layout_spotlight_label")}
+          leftValue="spotlight"
+          leftIcon={SpotlightIcon}
+          rightLabel={t("layout_grid_label")}
+          rightValue="grid"
+          rightIcon={GridIcon}
           className={styles.layout}
-          layout={layoutMode}
-          setLayout={setLayoutMode}
+          value={layoutMode}
+          onChange={setLayoutMode}
         />
       )}
     </div>

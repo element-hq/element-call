@@ -173,7 +173,7 @@ export interface ReactionData {
 interface ReactionToggleButtonProps extends ComponentPropsWithoutRef<"button"> {
   reactionData: ReactionData;
   identifier: string;
-  size?: "sm" | "lg";
+  size?: "md" | "lg";
   /** List of participants raising their hand */
 }
 

@@ -88,6 +88,24 @@ export const Default: Story = {
   },
 };
 
+export const WithAudioAndVideoOptions: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    audioEnabled: false,
+    videoEnabled: true,
+    audioOptions: [
+      { label: "Microphone 1", id: "1" },
+      { label: "Microphone 2", id: "2" },
+    ],
+    videoOptions: [
+      { label: "Camera 1", id: "1" },
+      { label: "Camera 2", id: "2" },
+    ],
+    selectedAudio: "2",
+    selectedVideo: "1",
+  },
+};
 export const WithLogo: Story = {
   ...Default,
   args: {
@@ -157,6 +175,8 @@ export const UnavailableMediaDevices: Story = {
   ...Default,
   args: {
     ...Default.args,
+    audioEnabled: false,
+    videoEnabled: false,
     toggleAudio: undefined,
     toggleVideo: undefined,
     audioOutputSwitcher: undefined,
