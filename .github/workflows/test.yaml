@@ -26,7 +26,7 @@ jobs:
       - name: Install Playwright Browser
         run: pnpm exec playwright install --with-deps chromium
       - name: Vitest
-        run: "pnpm run test:storybook"
+        run: "pnpm run test:coverage"
       - name: Upload to codecov
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         env:
