@@ -202,7 +202,6 @@
       "camera_numbered": "Camera {{n}}",
       "change_device_button": "Change audio device",
       "default": "Default",
-      "default_named": "Default <2>({{name}})</2>",
       "handset": "Handset",
       "loudspeaker": "Loudspeaker",
       "microphone": "Microphone",
