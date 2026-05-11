@@ -107,7 +107,7 @@ export const VideoUnmute: Story = {
     ],
     toggles: [
       {
-        label: "Blur Background",
+        label: "Background blur",
         id: "background_blurring",
         enabled: false,
       },
