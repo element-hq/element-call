@@ -12,6 +12,7 @@ export default defineConfig((configEnv) =>
     vitePluginsConfig(configEnv),
     defineConfig({
       test: {
+        fileParallelism: false,
         projects: [
           {
             extends: true,
@@ -39,7 +40,6 @@ export default defineConfig((configEnv) =>
             ],
             test: {
               name: "storybook",
-              // setupFiles: [".storybook/vitest.setup.ts"],
               browser: {
                 enabled: true,
                 // Make sure to install Playwright
