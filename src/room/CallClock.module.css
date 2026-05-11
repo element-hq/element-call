@@ -1,0 +1,23 @@
+/*
+Copyright 2026 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.clock {
+  position: fixed;
+  inset-block-start: var(--cpd-space-6x);
+  inset-inline-start: var(--cpd-space-6x);
+  z-index: 2147483647;
+  padding: var(--cpd-space-2x) var(--cpd-space-3x);
+  border-radius: var(--cpd-space-2x);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: var(--font-size-body);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
