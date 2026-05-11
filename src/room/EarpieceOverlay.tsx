@@ -30,7 +30,7 @@ export const EarpieceOverlay: FC<Props> = ({ show, onBackToVideoPressed }) => {
       <Text>{t("handset.overlay_description")}</Text>
       <Button
         kind="primary"
-        size="sm"
+        size="md"
         onClick={() => {
           onBackToVideoPressed?.();
         }}

@@ -778,6 +778,19 @@ export function enterRTCSession(
     };
   }
 
+  // Calculates `maximumNetworkErrorRetryCount`. The connection is failed if EITHER:
+  // - The /sync loop is unresponsive for > `gracePeriod` ms, or
+  // - A delayed leave event is emitted (after `leaveDelay` ms period).
+  // Note: Use leaveDelay >> gracePeriod for delegated leave events.
+  const gracePeriod = Config.get().sync_disconnect_grace_period_ms;
+  const leaveDelay = matrixRtcSessionConfig?.delayed_leave_event_delay_ms;
+  const retryInterval = matrixRtcSessionConfig?.network_error_retry_ms;
+
+  // Math.min is used to account for the respective worst case: /sync not available or leave event emitted.
+  const maxWaitTime = Math.min(gracePeriod, leaveDelay);
+  const maximumNetworkErrorRetryCount =
+    Math.ceil(maxWaitTime / retryInterval) + 1;
+
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   // TODO where/how do we track errors originating from the ongoing rtcSession?
 
@@ -803,6 +816,7 @@ export function enterRTCSession(
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
       unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
+      maximumNetworkErrorRetryCount: maximumNetworkErrorRetryCount,
     },
   );
 }

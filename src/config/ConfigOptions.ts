@@ -98,6 +98,13 @@ export interface ConfigOptions {
   };
 
   /**
+   * Grace period in milliseconds to wait before reporting the sync loop as disconnected.
+   * This allows brief sync interruptions without triggering a reconnection message.
+   * Default is 10000ms (10 seconds). Set to 0 to disable the grace period.
+   */
+  sync_disconnect_grace_period_ms?: number;
+
+  /**
    * These are low level options that are used to configure the MatrixRTC session.
    * Take care when changing these options.
    */
@@ -155,7 +162,16 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       server_name: string;
     };
   };
+  sync_disconnect_grace_period_ms: number;
   ssla: string;
+  matrix_rtc_session: {
+    wait_for_key_rotation_ms?: number;
+    delayed_leave_event_delay_ms: number;
+    delayed_leave_event_restart_local_timeout_ms?: number;
+    delayed_leave_event_restart_ms?: number;
+    network_error_retry_ms: number;
+    membership_event_expiry_ms?: number;
+  };
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
@@ -168,5 +184,10 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
   features: {
     feature_use_device_session_member_events: true,
   },
+  sync_disconnect_grace_period_ms: 10000,
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
+  matrix_rtc_session: {
+    delayed_leave_event_delay_ms: 10000,
+    network_error_retry_ms: 1000,
+  },
 };
