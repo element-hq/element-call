@@ -39,7 +39,7 @@ export default defineConfig((configEnv) =>
             ],
             test: {
               name: "storybook",
-              setupFiles: [".storybook/vitest.setup.ts"],
+              // setupFiles: [".storybook/vitest.setup.ts"],
               browser: {
                 enabled: true,
                 // Make sure to install Playwright
