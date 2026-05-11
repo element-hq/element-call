@@ -7,8 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
+import {
+  SpotlightIcon,
+  GridIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 import { combineLatest, map } from "rxjs";
 import { supportsBackgroundProcessors } from "@livekit/track-processors";
+import { Switch } from "@vector-im/compound-web";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -24,7 +29,6 @@ import {
   type ReactionData,
 } from "../button";
 import styles from "./CallFooter.module.css";
-import { LayoutToggle } from "../room/LayoutToggle";
 import {
   type CallViewModel,
   type GridMode,
@@ -45,6 +49,7 @@ import type { ObservableScope } from "../state/ObservableScope";
 import { type MuteStates } from "../state/MuteStates";
 import { type ViewModel, useViewModel } from "../state/ViewModel";
 import { getUrlParams, HeaderStyle } from "../UrlParams";
+import { t } from "i18next";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -554,10 +559,18 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
       </div>
       {!hideControls && <div className={styles.buttons}>{buttons}</div>}
       {setLayoutMode && layoutMode && (
-        <LayoutToggle
+        <Switch<"spotlight", "grid">
+          name="layoutMode"
+          aria-label={t("layout_switch_label")}
+          leftLabel={t("layout_spotlight_label")}
+          leftValue="spotlight"
+          leftIcon={SpotlightIcon}
+          rightLabel={t("layout_grid_label")}
+          rightValue="grid"
+          rightIcon={GridIcon}
           className={styles.layout}
-          layout={layoutMode}
-          setLayout={setLayoutMode}
+          value={layoutMode}
+          onChange={setLayoutMode}
         />
       )}
     </div>

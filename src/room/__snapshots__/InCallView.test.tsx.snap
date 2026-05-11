@@ -396,21 +396,23 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
       </div>
-      <form
-        class="toggle layout"
+      <fieldset
+        aria-label="Layout"
+        class="_toggle_13rnk_9 layout"
+        data-size="lg"
       >
         <input
           aria-labelledby="_r_11_"
-          name="layout"
+          name="layoutMode"
           type="radio"
           value="spotlight"
         />
         <svg
           aria-hidden="true"
           fill="currentColor"
-          height="24"
+          height="1em"
           viewBox="0 0 24 24"
-          width="24"
+          width="1em"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -420,23 +422,23 @@ exports[`InCallView > rendering > renders 1`] = `
         <input
           aria-labelledby="_r_16_"
           checked=""
-          name="layout"
+          name="layoutMode"
           type="radio"
           value="grid"
         />
         <svg
           aria-hidden="true"
           fill="currentColor"
-          height="24"
+          height="1em"
           viewBox="0 0 24 24"
-          width="24"
+          width="1em"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
             d="M4 11a.97.97 0 0 1-.712-.287A.97.97 0 0 1 3 10V4q0-.424.288-.712A.97.97 0 0 1 4 3h6q.424 0 .713.288Q11 3.575 11 4v6q0 .424-.287.713A.97.97 0 0 1 10 11zm5-2V5H5v4zm5 12a.97.97 0 0 1-.713-.288A.97.97 0 0 1 13 20v-6q0-.424.287-.713A.97.97 0 0 1 14 13h6q.424 0 .712.287.288.288.288.713v6q0 .424-.288.712A.97.97 0 0 1 20 21zm5-2v-4h-4v4zM4 21a.97.97 0 0 1-.712-.288A.97.97 0 0 1 3 20v-6q0-.424.288-.713A.97.97 0 0 1 4 13h6q.424 0 .713.287.287.288.287.713v6q0 .424-.287.712A.97.97 0 0 1 10 21zm5-2v-4H5v4zm5-8a.97.97 0 0 1-.713-.287A.97.97 0 0 1 13 10V4q0-.424.287-.712A.97.97 0 0 1 14 3h6q.424 0 .712.288Q21 3.575 21 4v6q0 .424-.288.713A.97.97 0 0 1 20 11zm5-2V5h-4v4z"
           />
         </svg>
-      </form>
+      </fieldset>
     </div>
   </div>
 </div>

@@ -155,6 +155,8 @@ export async function getSFUConfigWithOpenID(
       serviceUrl,
       roomId,
       openIdToken,
+      opts?.delayEndpointBaseUrl,
+      opts?.delayId,
     );
     logger?.info(`Got JWT from call's active focus URL.`);
     return extractFullConfigFromToken(sfuConfig);
@@ -187,20 +189,62 @@ async function getLiveKitJWT(
   livekitServiceURL: string,
   matrixRoomId: string,
   openIDToken: IOpenIDToken,
+  delayEndpointBaseUrl?: string,
+  delayId?: string,
 ): Promise<{ url: string; jwt: string }> {
-  const res = await doNetworkOperationWithRetry(async () => {
+  interface IDelayParams {
+    delay_id?: string;
+    delay_timeout?: number;
+    delay_cs_api_url?: string;
+  }
+  let bodyDalayParts: IDelayParams = {};
+  // Also check for empty string
+  if (delayId && delayEndpointBaseUrl) {
+    const delayTimeoutMs =
+      Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms;
+    bodyDalayParts = {
+      delay_id: delayId,
+      delay_timeout: delayTimeoutMs,
+      delay_cs_api_url: delayEndpointBaseUrl,
+    };
+  }
+
+  const makeRequest = async (delayParts: IDelayParams): Promise<Response> => {
     return await fetch(livekitServiceURL + "/sfu/get", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // This is the actual livekit room alias. For the legacy jwt endpoint simply the room id was used.
+        // The legacy JWT endpoint uses only the matrix room id to calculate the livekit room alias.
+        // However, the livekit room alias is provided as part of the JWT payload.
         room: matrixRoomId,
         openid_token: openIDToken,
         device_id: deviceId,
+        ...delayParts,
       }),
     });
+  };
+
+  const res = await doNetworkOperationWithRetry(async () => {
+    let response = await makeRequest(bodyDalayParts);
+
+    // Old service compatibility check
+    const oldServiceDoesNotSupportDelayParts =
+      response.status === 400 && Object.keys(bodyDalayParts).length > 0;
+    // If http status 400 with M_BAD_JSON and we sent delay parts, retry without them
+    if (oldServiceDoesNotSupportDelayParts) {
+      try {
+        const errorBody = await response.json();
+        if (errorBody.errcode === "M_BAD_JSON") {
+          response = await makeRequest({});
+        }
+      } catch {
+        // If we can't parse the error, treat as real error
+      }
+    }
+
+    return response;
   });
 
   if (!res.ok) {
@@ -241,7 +285,7 @@ export async function getLiveKitJWTWithDelayDelegation(
   // Also check for empty string
   if (delayId && delayEndpointBaseUrl) {
     const delayTimeoutMs =
-      Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms ?? 1000;
+      Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms;
     bodyDalayParts = {
       delay_id: delayId,
       delay_timeout: delayTimeoutMs,
