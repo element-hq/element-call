@@ -30,6 +30,10 @@ import {
 } from "../button";
 import styles from "./CallFooter.module.css";
 import { type GridMode } from "../state/CallViewModel/CallViewModel";
+import {
+  MediaMuteAndSwitchButton,
+  type MenuOptions,
+} from "./MediaMuteAndSwitchButton";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -79,6 +83,13 @@ export interface FooterProps {
   // debug stuff
   debugTileLayout?: boolean;
   tileStoreGeneration?: number;
+
+  audioOptions?: MenuOptions[];
+  videoOptions?: MenuOptions[];
+  selectedAudio?: string;
+  selectedVideo?: string;
+  selectAudioDevice?: (deviceId: string) => void;
+  selectVideoDevice?: (deviceId: string) => void;
 }
 
 export const CallFooter: FC<FooterProps> = ({
@@ -104,6 +115,13 @@ export const CallFooter: FC<FooterProps> = ({
   hangup,
   debugTileLayout,
   tileStoreGeneration,
+
+  audioOptions,
+  videoOptions,
+  selectedAudio,
+  selectedVideo,
+  selectAudioDevice,
+  selectVideoDevice,
 }) => {
   const buttons: JSX.Element[] = [];
   const buttonSize = asPip ? "md" : "lg";
@@ -125,24 +143,58 @@ export const CallFooter: FC<FooterProps> = ({
     );
   }
 
-  buttons.push(
-    <MicButton
-      size={buttonSize}
-      key="audio"
-      enabled={audioEnabled ?? false}
-      onClick={toggleAudio}
-      disabled={toggleAudio === undefined}
-      data-testid="incall_mute"
-    />,
-    <VideoButton
-      size={buttonSize}
-      key="video"
-      enabled={videoEnabled ?? false}
-      onClick={toggleVideo}
-      disabled={toggleVideo === undefined}
-      data-testid="incall_videomute"
-    />,
-  );
+  if ((audioOptions?.length ?? 0) > 0) {
+    buttons.push(
+      <MediaMuteAndSwitchButton
+        title={"Mic Source"}
+        key="audio"
+        iconsAndLabels="audio"
+        enabled={audioEnabled ?? false}
+        onMuteClick={toggleAudio}
+        data-testid="incall_mute"
+        options={audioOptions}
+        selectedOption={selectedAudio}
+        onSelect={selectAudioDevice}
+      />,
+    );
+  } else {
+    buttons.push(
+      <MicButton
+        size={buttonSize}
+        key="audio"
+        enabled={audioEnabled ?? false}
+        onClick={toggleAudio}
+        disabled={toggleAudio === undefined}
+        data-testid="incall_mute"
+      />,
+    );
+  }
+  if ((videoOptions?.length ?? 0) > 0) {
+    buttons.push(
+      <MediaMuteAndSwitchButton
+        title={"Camera Source"}
+        key="video"
+        iconsAndLabels="video"
+        enabled={videoEnabled ?? false}
+        onMuteClick={toggleVideo}
+        data-testid="incall_videomute"
+        options={videoOptions}
+        selectedOption={selectedVideo}
+        onSelect={selectVideoDevice}
+      />,
+    );
+  } else {
+    buttons.push(
+      <VideoButton
+        size={buttonSize}
+        key="video"
+        enabled={videoEnabled ?? false}
+        onClick={toggleVideo}
+        disabled={toggleVideo === undefined}
+        data-testid="incall_videomute"
+      />,
+    );
+  }
 
   if (toggleScreenSharing !== undefined) {
     buttons.push(
