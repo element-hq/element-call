@@ -17,6 +17,7 @@ export default defineConfig((configEnv) =>
           {
             extends: true,
             test: {
+              name: "unit",
               css: {
                 modules: {
                   classNameStrategy: "non-scoped",
@@ -27,7 +28,6 @@ export default defineConfig((configEnv) =>
               // an example of file based convention,
               // you don't have to follow it
               include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
-              name: "unit",
             },
           },
           {
@@ -45,7 +45,7 @@ export default defineConfig((configEnv) =>
                 // Make sure to install Playwright
                 provider: playwright(),
                 headless: true,
-                instances: [{ browser: "chromium" }],
+                instances: [{ browser: "firefox" }],
               },
             },
           },
