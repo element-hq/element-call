@@ -7,7 +7,10 @@ jobs:
   vitest:
     name: Run unit tests
     runs-on: ubuntu-latest
-
+    container:
+      # Make sure to grab the latest version of the Playwright image
+      # https://playwright.dev/docs/docker#pull-the-image
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -23,8 +26,8 @@ jobs:
       - name: Install dependencies
         # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
         run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
-      - name: Install Playwright Browser
-        run: pnpm exec playwright install --with-deps chromium
+      # - name: Install Playwright Browser
+      #   run: pnpm exec playwright install --with-deps chromium
       - name: Vitest
         run: "pnpm run test:coverage"
       - name: Upload to codecov
@@ -38,6 +41,10 @@ jobs:
     name: Run end-to-end tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    container:
+      # Make sure to grab the latest version of the Playwright image
+      # https://playwright.dev/docs/docker#pull-the-image
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -51,8 +58,8 @@ jobs:
       - name: Install dependencies
         # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
         run: pnpm install --frozen-lockfile --ignore-pnpmfile
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
+      # - name: Install Playwright Browsers
+      #   run: pnpm exec playwright install --with-deps
       - name: Run backend components
         run: |
           docker compose -f playwright-backend-docker-compose.yml -f playwright-backend-docker-compose.override.yml pull
