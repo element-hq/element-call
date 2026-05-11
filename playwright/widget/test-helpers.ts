@@ -54,12 +54,34 @@ export class TestHelpers {
       .click();
   }
 
+  public static async joinCallInCurrentDM(
+    page: Page,
+    audioOnly: boolean = false,
+  ): Promise<void> {
+    await this.joinCallInRoom(page, audioOnly, true);
+  }
+
   public static async joinCallInCurrentRoom(
     page: Page,
     audioOnly: boolean = false,
   ): Promise<void> {
-    // This is the header button that notifies about an ongoing call
-    const label = audioOnly ? "Voice call started" : "Video call started";
+    await this.joinCallInRoom(page, audioOnly, false);
+  }
+
+  public static async joinCallInRoom(
+    page: Page,
+    audioOnly: boolean = false,
+    isDM: boolean = false,
+  ): Promise<void> {
+    // XXX This using the notification toast to join the room.
+    // Not the button in the header
+
+    await page.waitForTimeout(3000);
+    const label = isDM
+      ? audioOnly
+        ? "Incoming voice call"
+        : "Incoming video call"
+      : "Group call started";
     await expect(page.getByText(label)).toBeVisible({
       timeout: 10000,
     });
@@ -120,9 +142,7 @@ export class TestHelpers {
       timeout: 15000,
     });
 
-    await this.maybeDismissBrowserNotSupportedToast(page);
-    await this.maybeDismissServiceWorkerWarningToast(page);
-    await this.maybeDismissBackupChat(page);
+    await this.dismissStartupToasts(page);
 
     await TestHelpers.setDevToolElementCallDevUrl(page);
 
@@ -133,73 +153,39 @@ export class TestHelpers {
     return { page, clientHandle, mxId };
   }
 
-  private static async maybeDismissBrowserNotSupportedToast(
-    page: Page,
-  ): Promise<void> {
-    const browserUnsupportedToast = page
-      .getByText("Element does not support this browser")
-      .locator("..")
-      .locator("..");
+  // Dismisses any toasts that appear on startup, such as "Failed to load service worker" or "Back up your chats".
+  // Toast can be stacked, and only the top one can be dismiss, so just look at what is on top and
+  // dismiss (if part of expected toats)
+  public static async dismissStartupToasts(page: Page): Promise<void> {
+    const expectedToasts = [
+      { title: "Failed to load service worker", button: "OK" },
+      { title: "Back up your chats", button: "Dismiss" },
+      { title: "Element does not support this browser", button: "Dismiss" },
+    ];
 
-    // Dismiss incompatible browser toast
-    const dismissButton = browserUnsupportedToast.getByRole("button", {
-      name: "Dismiss",
-    });
-    try {
-      await expect(dismissButton).toBeVisible({ timeout: 700 });
-      await dismissButton.click();
-    } catch {
-      // dismissButton not visible, continue as normal
-    }
-  }
+    const toast = page.locator(".mx_Toast_toast");
 
-  private static async maybeDismissServiceWorkerWarningToast(
-    page: Page,
-  ): Promise<void> {
-    const toast = page
-      .locator(".mx_Toast_toast")
-      .getByText("Failed to load service worker");
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        await toast.waitFor({ state: "visible", timeout: 700 });
+        const title = await toast.locator(".mx_Toast_title h2").textContent();
 
-    try {
-      await expect(toast).toBeVisible({ timeout: 700 });
-      await page
-        .locator(".mx_Toast_toast")
-        .getByRole("button", { name: "OK" })
-        .click();
-    } catch {
-      // toast not visible, continue as normal
-    }
-  }
+        // Find the matching toast config
+        const toastConfig = expectedToasts.find((t) =>
+          title?.includes(t.title),
+        );
 
-  private static async maybeDismissBackupChat(page: Page): Promise<void> {
-    const toast = page
-      .locator(".mx_Toast_toast")
-      .getByText("Back up your chats");
-
-    try {
-      await expect(toast).toBeVisible({ timeout: 700 });
-      await page
-        .locator(".mx_Toast_toast")
-        .getByRole("button", { name: "Dismiss" })
-        .click();
-    } catch {
-      // toast not visible, continue as normal
-    }
-  }
-
-  public static async maybeDismissKeyBackupToast(page: Page): Promise<void> {
-    const toast = page
-      .locator(".mx_Toast_toast")
-      .getByText("Back up your chats");
-
-    try {
-      await expect(toast).toBeVisible({ timeout: 700 });
-      await page
-        .locator(".mx_Toast_toast")
-        .getByRole("button", { name: "Dismiss" })
-        .click();
-    } catch {
-      // toast not visible, continue as normal
+        if (toastConfig) {
+          await toast.getByRole("button", { name: toastConfig.button }).click();
+        } else {
+          // Unknown toast. We don't want to act on unknown toasts
+          break;
+        }
+      } catch {
+        // No toast visible, exit loop
+        break;
+      }
     }
   }
 
@@ -222,7 +208,7 @@ export class TestHelpers {
       timeout: 10000,
     });
     await expect(page.getByText("Encryption enabled")).toBeVisible();
-    await TestHelpers.maybeDismissKeyBackupToast(page);
+    await TestHelpers.dismissStartupToasts(page);
 
     // Invite users if any
     if (andInvite.length > 0) {
@@ -261,7 +247,7 @@ export class TestHelpers {
     await expect(
       page.getByRole("main").getByRole("heading", { name: roomName }),
     ).toBeVisible();
-    await TestHelpers.maybeDismissKeyBackupToast(page);
+    await TestHelpers.dismissStartupToasts(page);
   }
 
   /**
