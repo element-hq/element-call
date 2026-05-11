@@ -28,7 +28,7 @@ const reactionData = {
  * A wrapper component that is used for:
  *  - exposing the snapshot via props so the storybook documents the snapshot properties (basically unpack them form the vm)
  *  - Add additional react context
- * @param chilren used for the "Back to Recents" button in the lobby stories, but can be used for anything really
+ * @param children used for the "Back to Recents" button in the lobby stories, but can be used for anything really
  * @param vmSnapshot the Snapshot of the vm, the wrapper will create a mocked vm from it and pass it to the CallFooter.
  * @returns
  */

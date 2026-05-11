@@ -104,30 +104,30 @@ describe("createCallFooterViewModel", () => {
     }
     it("are empty when both the platform is iOS", () => {
       checkEmptyFor("ios", gridLayout);
-    it("are empty when both the layout is pip", () => {
-      checkEmptyFor("desktop", pipLayout);
-    });
+      it("are empty when both the layout is pip", () => {
+        checkEmptyFor("desktop", pipLayout);
+      });
 
+      it("are populated when the platform is desktop and the layout is not PiP", () => {
+        platformMock.mockReturnValue("desktop");
 
-    it("are populated when the platform is desktop and the layout is not PiP", () => {
-      platformMock.mockReturnValue("desktop");
+        const vm = createCallFooterViewModel(
+          testScope(),
+          buildMinimalCallViewModel(gridLayout),
+          mockMuteStates(),
+          twoMicsAndOneCamMediaDevices,
+          /* openSettings */ undefined,
+          /* reactionIdentifier */ undefined,
+        );
 
-      const vm = createCallFooterViewModel(
-        testScope(),
-        buildMinimalCallViewModel(gridLayout),
-        mockMuteStates(),
-        twoMicsAndOneCamMediaDevices,
-        /* openSettings */ undefined,
-        /* reactionIdentifier */ undefined,
-      );
-
-      expect(vm.audioOptions$?.value).toEqual([
-        { id: "mic1", label: "Microphone 1" },
-        { id: "mic2", label: "Microphone 2" },
-      ]);
-      expect(vm.videoOptions$?.value).toEqual([
-        { id: "cam1", label: "Camera 1" },
-      ]);
+        expect(vm.audioOptions$?.value).toEqual([
+          { id: "mic1", label: "Microphone 1" },
+          { id: "mic2", label: "Microphone 2" },
+        ]);
+        expect(vm.videoOptions$?.value).toEqual([
+          { id: "cam1", label: "Camera 1" },
+        ]);
+      });
     });
   });
 });
