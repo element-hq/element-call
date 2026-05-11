@@ -1,0 +1,37 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: var(--cpd-color-bg-subtle-secondary);
+  border-radius: 32px;
+  transition: background-color 0.2s ease-in-out;
+}
+.containerOpen {
+  background-color: var(--cpd-color-bg-action-primary-pressed);
+}
+.chevronIconOpen > svg {
+  color: var(--cpd-color-icon-on-solid-primary);
+}
+.menuButton {
+  width: 40px;
+  background-color: transparent !important;
+}
+.itemIcon {
+  color: var(--cpd-color-text-secondary);
+}
+
+.rotate {
+  animation: spinner 1.5s linear infinite;
+}
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
