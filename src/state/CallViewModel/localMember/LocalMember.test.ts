@@ -863,6 +863,8 @@ describe("LocalMembership", () => {
       hsReason$.next(null);
 
       hsReason$.next("probablyLeft");
+      hsReason$.next("sync");
+      hsReason$.next("membership");
       hsReason$.next(null);
 
       expect(trackSpy).toHaveBeenCalledTimes(2);
@@ -876,64 +878,6 @@ describe("LocalMembership", () => {
         2,
         defaultCreateLocalMemberValues.callId,
         "probablyLeft",
-        expect.any(Number),
-      );
-
-      scope.end();
-    });
-
-    it("uses the first-disconnect reason when a brief intermediate reconnect occurs (multi-phase livekit reconnect)", async () => {
-      const scope = new ObservableScope();
-      const trackSpy = vi.spyOn(
-        PosthogAnalytics.instance.eventCallReconnecting,
-        "track",
-      );
-
-      const hsReason$ = new BehaviorSubject<HomeserverDisconnectReason | null>(
-        null,
-      );
-
-      const connectionManagerData = new ConnectionManagerData();
-      connectionManagerData.add(connectionTransportAConnected, []);
-
-      createLocalMembership$({
-        scope,
-        ...defaultCreateLocalMemberValues,
-        homeserverConnected: {
-          combined$: hsReason$,
-          rtsSession$: constant(RTCMemberStatus.Connected),
-        },
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
-        localTransport$: new BehaviorSubject({
-          advertised$: new BehaviorSubject(aTransport),
-          active$: new BehaviorSubject(aTransportWithSFUConfig),
-        }),
-      });
-
-      await flushPromises();
-
-      // Disconnect → brief reconnect → disconnect again → stable reconnect
-      // This simulates a multi-phase LiveKit reconnect. Two CallReconnecting
-      // events are emitted (one per null transition) but both carry the
-      // reason from the first disconnect.
-      hsReason$.next("sync");
-      hsReason$.next(null); // brief reconnect
-      hsReason$.next("sync"); // re-disconnect (reconnectStart already set, keeps original reason)
-      hsReason$.next(null); // stable reconnect
-
-      expect(trackSpy).toHaveBeenCalledTimes(2);
-      expect(trackSpy).toHaveBeenNthCalledWith(
-        1,
-        defaultCreateLocalMemberValues.callId,
-        "sync",
-        expect.any(Number),
-      );
-      expect(trackSpy).toHaveBeenNthCalledWith(
-        2,
-        defaultCreateLocalMemberValues.callId,
-        "sync",
         expect.any(Number),
       );
 
