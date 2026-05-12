@@ -26,7 +26,15 @@ export function useViewModel<Snapshot>(vm: ViewModel<Snapshot>): Snapshot {
   return snapshot;
 }
 
-export function createMockedViewModel<Snapshot>(
+/**
+ * This allows to build a view model (or Partial view model)
+ * with BehaviorSubjects.
+ * It can be used in tests and for simplifying view model creation for non reactive snapshot parameters.
+ *
+ * @param snapshot The snapshot values this view model with start with. ({a: number, b: string})
+ * @returns A view model: ({a$: BehaviroSubject<number>, b$: BehaviroSubject<string>}) (note the automatic addition of $ at the end of the keys)
+ */
+export function createStaticViewModel<Snapshot>(
   snapshot: Snapshot,
 ): ViewModel<Snapshot> {
   const vm = {} as ViewModel<Snapshot>;
