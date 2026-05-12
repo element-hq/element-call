@@ -67,7 +67,7 @@ const twoMicsAndOneCamMediaDevices = mockMediaDevices({
   audioInput: {
     available$: constant(
       new Map<string, DeviceLabel>([
-        ["mic1", { type: "name", name: "Microphone 1" }],
+        ["mic1", { type: "number", number: 1 }],
         ["mic2", { type: "name", name: "Microphone 2" }],
       ]),
     ),
@@ -122,7 +122,7 @@ describe("createCallFooterViewModel", () => {
       );
 
       expect(vm.audioOptions$?.value).toEqual([
-        { id: "mic1", label: "Microphone 1" },
+        { id: "mic1", label: "Audio Device 1" },
         { id: "mic2", label: "Microphone 2" },
       ]);
       expect(vm.videoOptions$?.value).toEqual([
