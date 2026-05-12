@@ -225,7 +225,10 @@ describe("LocalMembership", () => {
     createPublisherFactory: vi.fn(),
     joinMatrixRTC: async (): Promise<void> => {},
     homeserverConnected: {
-      combined$: constant(null),
+      combined$: constant<[boolean, HomeserverDisconnectReason | null]>([
+        true,
+        null,
+      ]),
       rtsSession$: constant(RTCMemberStatus.Connected),
     },
     callId: "!test-room-id:example.org",
@@ -700,9 +703,9 @@ describe("LocalMembership", () => {
       );
 
       // Simulate startup where membership isn't established yet
-      const hsReason$ = new BehaviorSubject<HomeserverDisconnectReason | null>(
-        "membership",
-      );
+      const hsReason$ = new BehaviorSubject<
+        [boolean, HomeserverDisconnectReason | null]
+      >([false, "membership"]);
 
       const connectionManagerData = new ConnectionManagerData();
       connectionManagerData.add(connectionTransportAConnected, []);
@@ -726,7 +729,7 @@ describe("LocalMembership", () => {
       await flushPromises();
 
       // Membership is established — call is now connected
-      hsReason$.next(null);
+      hsReason$.next([true, null]);
 
       expect(trackSpy).not.toHaveBeenCalled();
 
@@ -740,9 +743,9 @@ describe("LocalMembership", () => {
         "track",
       );
 
-      const hsReason$ = new BehaviorSubject<HomeserverDisconnectReason | null>(
-        null,
-      );
+      const hsReason$ = new BehaviorSubject<
+        [boolean, HomeserverDisconnectReason | null]
+      >([true, null]);
 
       const connectionManagerData = new ConnectionManagerData();
       connectionManagerData.add(connectionTransportAConnected, []);
@@ -765,8 +768,8 @@ describe("LocalMembership", () => {
 
       await flushPromises();
 
-      hsReason$.next("sync");
-      hsReason$.next(null);
+      hsReason$.next([false, "sync"]);
+      hsReason$.next([true, null]);
 
       expect(trackSpy).toHaveBeenCalledWith(
         defaultCreateLocalMemberValues.callId,
@@ -799,9 +802,9 @@ describe("LocalMembership", () => {
         scope,
         ...defaultCreateLocalMemberValues,
         homeserverConnected: {
-          combined$: new BehaviorSubject<HomeserverDisconnectReason | null>(
-            null,
-          ),
+          combined$: new BehaviorSubject<
+            [boolean, HomeserverDisconnectReason | null]
+          >([true, null]),
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
         connectionManager: {
@@ -834,9 +837,9 @@ describe("LocalMembership", () => {
         "track",
       );
 
-      const hsReason$ = new BehaviorSubject<HomeserverDisconnectReason | null>(
-        null,
-      );
+      const hsReason$ = new BehaviorSubject<
+        [boolean, HomeserverDisconnectReason | null]
+      >([true, null]);
 
       const connectionManagerData = new ConnectionManagerData();
       connectionManagerData.add(connectionTransportAConnected, []);
@@ -859,13 +862,13 @@ describe("LocalMembership", () => {
 
       await flushPromises();
 
-      hsReason$.next("membership");
-      hsReason$.next(null);
+      hsReason$.next([false, "membership"]);
+      hsReason$.next([true, null]);
 
-      hsReason$.next("probablyLeft");
-      hsReason$.next("sync");
-      hsReason$.next("membership");
-      hsReason$.next(null);
+      hsReason$.next([false, "probablyLeft"]);
+      hsReason$.next([false, "sync"]);
+      hsReason$.next([false, "membership"]);
+      hsReason$.next([true, null]);
 
       expect(trackSpy).toHaveBeenCalledTimes(2);
       expect(trackSpy).toHaveBeenNthCalledWith(

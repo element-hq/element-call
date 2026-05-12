@@ -40,10 +40,10 @@ export type HomeserverDisconnectReason = "sync" | "membership" | "probablyLeft";
 
 export interface HomeserverConnected {
   /**
-   * Emits `null` when the homeserver connection is healthy, or the reason for
-   * disconnection when one of the three sub-conditions fails.
+   * Emits `[true, null]` when the homeserver connection is healthy, or
+   * `[false, reason]` when one of the three sub-conditions fails.
    */
-  combined$: Behavior<HomeserverDisconnectReason | null>;
+  combined$: Behavior<[boolean, HomeserverDisconnectReason | null]>;
   rtsSession$: Behavior<Status>;
 }
 
@@ -117,14 +117,21 @@ export function createHomeserverConnected$(
 
   const combined$ = scope.behavior(
     combineLatest([syncing$, membershipConnected$, certainlyConnected$]).pipe(
-      map(([syncing, membership, certainly]) => {
-        if (!syncing) return "sync" as const;
-        if (!membership) return "membership" as const;
-        if (!certainly) return "probablyLeft" as const;
-        return null;
-      }),
-      tap((reason) => {
-        logger.info(`Homeserver connected update: ${reason ?? "connected"}`);
+      map(
+        ([syncing, membership, certainly]): [
+          boolean,
+          HomeserverDisconnectReason | null,
+        ] => {
+          if (!syncing) return [false, "sync"];
+          if (!membership) return [false, "membership"];
+          if (!certainly) return [false, "probablyLeft"];
+          return [true, null];
+        },
+      ),
+      tap(([connected, reason]) => {
+        logger.info(
+          `Homeserver connected update: ${connected ? "connected" : reason}`,
+        );
       }),
     ),
   );

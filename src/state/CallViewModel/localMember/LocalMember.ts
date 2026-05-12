@@ -508,8 +508,8 @@ export const createLocalMembership$ = ({
         map((state) => state === ConnectionState.LivekitConnected),
       ),
     ]).pipe(
-      map(([homeserverReason, livekitConnected]) => {
-        if (homeserverReason !== null) return homeserverReason;
+      map(([[hsConnected, hsReason], livekitConnected]) => {
+        if (!hsConnected) return hsReason!;
         if (!livekitConnected) return "livekit" as const;
         return null;
       }),
@@ -650,7 +650,7 @@ export const createLocalMembership$ = ({
   // TODO refactor this based no livekitState$
   combineLatest([participant$, homeserverConnected.combined$])
     .pipe(scope.bind())
-    .subscribe(([participant, connected]) => {
+    .subscribe(([participant, [connected]]) => {
       if (!participant) return;
       const publications = participant.trackPublications.values();
       if (connected) {
