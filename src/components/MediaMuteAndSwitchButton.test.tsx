@@ -39,16 +39,16 @@ describe("MediaMuteAndSwitchButton", () => {
     const renderVideoDisabled = renderLabels("video", false);
 
     expect(
-      renderAudioEndabled.getByRole("button", { name: "Mute microphone" }),
+      renderAudioEndabled.getByRole("switch", { name: "Mute microphone" }),
     ).toBeInTheDocument();
     expect(
-      renderAudioDisabled.getByRole("button", { name: "Unmute microphone" }),
+      renderAudioDisabled.getByRole("switch", { name: "Unmute microphone" }),
     ).toBeInTheDocument();
     expect(
-      renderVideoEnabled.getByRole("button", { name: "Start video" }),
+      renderVideoEnabled.getByRole("switch", { name: "Start video" }),
     ).toBeInTheDocument();
     expect(
-      renderVideoDisabled.getByRole("button", { name: "Stop video" }),
+      renderVideoDisabled.getByRole("switch", { name: "Stop video" }),
     ).toBeInTheDocument();
   });
 
@@ -64,7 +64,7 @@ describe("MediaMuteAndSwitchButton", () => {
       />,
     );
 
-    await user.click(getByRole("button", { name: "Mute microphone" }));
+    await user.click(getByRole("switch", { name: "Mute microphone" }));
 
     expect(onMute).toHaveBeenCalled();
   });
