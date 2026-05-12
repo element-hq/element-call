@@ -156,7 +156,7 @@ function buildDeviceBehaviors(
  * Creates the ViewModel for the CallFooter.
  *
  * @param scope - ObservableScope that bounds the lifetime of derived behaviors.
- * @param vm - The root CallViewModel; provides layout, grid mode, reactions, etc.
+ * @param callModel - The root CallViewModel; provides layout, grid mode, reactions, etc.
  * @param muteStates - Audio and video mute state + toggles.
  * @param mediaDevices - Available and selected input devices.
  * @param openSettings - Callback to open the settings modal, or undefined if the
