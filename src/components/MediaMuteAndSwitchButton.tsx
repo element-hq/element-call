@@ -98,7 +98,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         IconOptions: VideoCallIcon,
         disabledLabel: t("stop_video_button_label"),
         enabledLabel: t("start_video_button_label"),
-        optionsButtonLabel: t("settings.devices.microphone"),
+        optionsButtonLabel: t("settings.devices.camera"),
       };
       break;
     case "audio":
@@ -152,6 +152,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       {/* The mute button lives inside */}
       <Button
         iconOnly
+        role="switch"
         Icon={enabled ? IconEnabled : IconDisabled}
         onClick={(e) => {
           onMuteClick?.();
