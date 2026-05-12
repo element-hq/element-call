@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  afterEach,
   beforeEach,
   describe,
   expect,
@@ -14,10 +15,10 @@ import {
   type MockedFunction,
   vi,
 } from "vitest";
-import { render, type RenderResult } from "@testing-library/react";
+import { act, render, type RenderResult } from "@testing-library/react";
 import { type LocalParticipant } from "livekit-client";
 import { BehaviorSubject, of } from "rxjs";
-import { BrowserRouter, MemoryRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import userEvent from "@testing-library/user-event";
@@ -34,7 +35,10 @@ import {
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
-import { type CallViewModelOptions } from "../state/CallViewModel/CallViewModel";
+import {
+  type CallViewModel,
+  type CallViewModelOptions,
+} from "../state/CallViewModel/CallViewModel";
 import { alice, local } from "../utils/test-fixtures";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
@@ -100,13 +104,12 @@ beforeEach(() => {
 interface CreateInCallViewArgs {
   mediaDevices?: ECMediaDevices;
   callViewModelOptions?: Partial<CallViewModelOptions>;
-  /** If set, uses a MemoryRouter with this as the initial entry instead of BrowserRouter */
-  initialRoute?: string;
   /** If true, wraps the rendered tree in an AppBar provider */
   withAppBar?: boolean;
 }
 function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   rtcSession: MockRTCSession;
+  vm: CallViewModel;
 } {
   const mediaDevices = args.mediaDevices ?? mockMediaDevices({});
   const muteState = mockMuteStates();
@@ -128,14 +131,6 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   rtcSession.joined = true;
   const room = rtcSession.room;
   const client = room.client;
-
-  const Router = args.initialRoute
-    ? ({ children }: { children: React.ReactNode }): React.ReactNode => (
-        <MemoryRouter initialEntries={[args.initialRoute!]}>
-          {children}
-        </MemoryRouter>
-      )
-    : BrowserRouter;
 
   const inCallView = (
     <InCallView
@@ -163,7 +158,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   const content = args.withAppBar ? <AppBar>{inCallView}</AppBar> : inCallView;
 
   const renderResult = render(
-    <Router>
+    <BrowserRouter>
       <MediaDevicesContext value={mediaDevices}>
         <ReactionsSenderProvider
           vm={vm}
@@ -174,11 +169,12 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
           </TooltipProvider>
         </ReactionsSenderProvider>
       </MediaDevicesContext>
-    </Router>,
+    </BrowserRouter>,
   );
   return {
     ...renderResult,
     rtcSession,
+    vm,
   };
 }
 
@@ -190,17 +186,37 @@ describe("InCallView", () => {
     });
   });
   describe("settings button with AppBar header", () => {
+    beforeEach(() => {
+      // getUrlParams() reads window.location directly rather than from the
+      // React Router context, so MemoryRouter alone is not enough to make
+      // it see "header=app_bar". Push the real URL so both paths agree.
+      window.history.pushState({}, "", "?header=app_bar");
+    });
+
+    afterEach(() => {
+      window.history.pushState({}, "", "/");
+    });
+
     it("mobile landscape, is accessible when showHeader is false", () => {
       // windowSize with height <= 600 results in "flat" windowMode,
       // which means showHeader$ emits false.
-      const { getAllByRole } = createInCallView({
-        initialRoute: "/?header=app_bar",
+      const { getAllByRole, queryAllByRole, vm } = createInCallView({
         withAppBar: true,
         callViewModelOptions: {
           // Set windowMode$ to "flat" (height <= 600)
           windowSize$: constant({ width: 1000, height: 500 }),
         },
       });
+
+      // In flat (landscape) mode the footer starts hidden until the user
+      // taps the screen, so no settings button should be accessible yet.
+      expect(queryAllByRole("button", { name: "Settings" })).toHaveLength(0);
+
+      // Simulate a touch tap on the call view to reveal the footer.
+      // (PointerEvent is not available in JSDOM, so we call tapScreen() directly,
+      // which is exactly what the onClick handler does for touch events.)
+      act(() => vm.tapScreen());
+
       // When showHeader is false, hideSettingsButton is false,
       // so the settings button is visible in the footer.
       const settingsBtn = getAllByRole("button", { name: "Settings" });
@@ -220,7 +236,6 @@ describe("InCallView", () => {
       // windowSize with height > 600 and width > 600 results in "normal" windowMode,
       // which means showHeader$ emits true.
       const { getAllByRole } = createInCallView({
-        initialRoute: "/?header=app_bar",
         withAppBar: true,
         callViewModelOptions: {
           // Set windowMode$ to "normal" (height >= 600)
@@ -228,7 +243,7 @@ describe("InCallView", () => {
         },
       });
       // When showHeader is true and headerStyle is AppBar,
-      // hideSettingsButton is true in the footer, but the settings
+      // showSettingsButton is false in the footer, but the settings
       // button is rendered in the AppBar via useAppBarSecondaryButton.
       const settingsBtns = getAllByRole("button", { name: "Settings" });
 

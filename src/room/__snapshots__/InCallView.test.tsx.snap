@@ -169,7 +169,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="settingsLogoContainer"
       >
         <button
-          aria-labelledby="_r_8_"
+          aria-labelledby="_r_f_"
           class="_icon-button_1215g_8 settingsOnlyShowWide"
           data-kind="secondary"
           data-testid="settings-bottom-left"
@@ -304,7 +304,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="buttons"
       >
         <button
-          aria-labelledby="_r_d_"
+          aria-labelledby="_r_k_"
           class="_button_1nw83_8 settingsOnlyShowNarrow _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="secondary"
           data-size="lg"
@@ -328,7 +328,7 @@ exports[`InCallView > rendering > renders 1`] = `
         <button
           aria-checked="false"
           aria-disabled="true"
-          aria-labelledby="_r_i_"
+          aria-labelledby="_r_p_"
           class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="primary"
           data-size="lg"
@@ -352,7 +352,7 @@ exports[`InCallView > rendering > renders 1`] = `
         <button
           aria-checked="false"
           aria-disabled="true"
-          aria-labelledby="_r_n_"
+          aria-labelledby="_r_u_"
           class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="primary"
           data-size="lg"
@@ -374,7 +374,7 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-labelledby="_r_s_"
+          aria-labelledby="_r_13_"
           class="_button_1nw83_8 endCall _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
           data-kind="primary"
           data-size="lg"
@@ -402,7 +402,7 @@ exports[`InCallView > rendering > renders 1`] = `
         data-size="lg"
       >
         <input
-          aria-labelledby="_r_11_"
+          aria-labelledby="_r_18_"
           name="layoutMode"
           type="radio"
           value="spotlight"
@@ -420,7 +420,7 @@ exports[`InCallView > rendering > renders 1`] = `
           />
         </svg>
         <input
-          aria-labelledby="_r_16_"
+          aria-labelledby="_r_1d_"
           checked=""
           name="layoutMode"
           type="radio"

@@ -59,7 +59,6 @@ export interface FooterSnapshot {
   buttonSize: "md" | "lg";
   showSettingsButton?: boolean;
   showLayoutSwitcher?: boolean;
-  showLogoDebugContainer?: boolean;
   showLogo?: boolean;
 
   layoutMode?: GridMode;
@@ -127,7 +126,6 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
     videoToggles,
     buttonSize,
     showSettingsButton,
-    showLogoDebugContainer,
     showLogo,
   } = useViewModel(vm);
 
@@ -285,10 +283,10 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
           />
         )}
         {children}
-        {showLogoDebugContainer && logoDebugContainer}
+        {(showLogo || debugTileLayout) && logoDebugContainer}
       </div>
       {!hideControls && <div className={styles.buttons}>{buttons}</div>}
-      {setLayoutMode && layoutMode && (
+      {!hideControls && setLayoutMode && layoutMode && (
         <Switch<"spotlight", "grid">
           name="layoutMode"
           aria-label={t("layout_switch_label")}

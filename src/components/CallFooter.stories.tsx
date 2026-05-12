@@ -13,7 +13,7 @@ import { Link } from "@vector-im/compound-web";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CallFooter, type FooterSnapshot } from "./CallFooter";
 import inCallViewStyles from "../room/InCallView.module.css";
-import { createMockedViewModel } from "../state/ViewModel";
+import { createStaticViewModel } from "../state/ViewModel";
 import { ReactionsSenderContext } from "../reactions/useReactionsSender";
 import { type ReactionOption } from "../reactions";
 import { type GridMode } from "../state/CallViewModel/CallViewModel";
@@ -38,7 +38,7 @@ function CallFooterStoryWrapper({
 }: FooterSnapshot & {
   children?: false | JSX.Element | JSX.Element[] | undefined;
 }): ReactNode {
-  const vm = createMockedViewModel(vmSnapshot);
+  const vm = createStaticViewModel(vmSnapshot);
   return (
     <div className={inCallViewStyles.inRoom}>
       <ReactionsSenderContext
@@ -70,6 +70,7 @@ const fnArgType = {
 export const Default: Story = {
   args: {
     showLogo: false,
+    showSettingsButton: true,
     layoutMode: "grid",
     audioEnabled: true,
     videoEnabled: true,

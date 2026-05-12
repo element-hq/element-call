@@ -22,7 +22,7 @@ import {
 import { type Behavior, constant } from "../state/Behavior";
 import type { ObservableScope } from "../state/ObservableScope";
 import { type MuteStates } from "../state/MuteStates";
-import { type ViewModel } from "../state/ViewModel";
+import { createStaticViewModel, type ViewModel } from "../state/ViewModel";
 import { getUrlParams, HeaderStyle } from "../UrlParams";
 import { platform } from "../Platform";
 import { type FooterSnapshot } from "./CallFooter";
@@ -173,8 +173,8 @@ export function createCallFooterViewModel(
   reactionIdentifier: string | undefined,
 ): ViewModel<FooterSnapshot> {
   const { showControls, header: headerStyle } = getUrlParams();
+  const showLogo = headerStyle === HeaderStyle.Standard;
 
-  const hideLogo = headerStyle !== HeaderStyle.Standard;
   const isPip$ = scope.behavior(
     callModel.layout$.pipe(map((l) => l.type === "pip")),
   );
@@ -206,12 +206,7 @@ export function createCallFooterViewModel(
     showLayoutSwitcher$: scope.behavior(
       isPip$.pipe(map((l) => !isPip$ && showControls)),
     ),
-    showLogoDebugContainer$: scope.behavior(
-      combineLatest([isPip$, debugTileLayoutSetting.value$]).pipe(
-        map(([isPip, debugTile]) => !isPip || (!hideLogo && !debugTile)),
-      ),
-    ),
-    showLogo$: scope.behavior(isPip$.pipe(map((l) => !hideLogo && !isPip$))),
+    showLogo$: scope.behavior(isPip$.pipe(map((isPip) => showLogo && !isPip))),
 
     layoutMode$: callModel.gridMode$,
     setLayoutMode$: constant(callModel.setGridMode),
@@ -272,31 +267,22 @@ export function createLobbyFooterViewModel(
   showLogo: boolean,
 ): ViewModel<FooterSnapshot> {
   return {
+    ...createStaticViewModel({
+      // we can safly skip any props that we do not need.
+      // The view model will then have less keys.
+      // But as soon as we call `useViewModel` and convert back to a snapshot the missing props will
+      // be correcty matching the snapshot type.
+      showLogo,
+      hideControls: false,
+      asOverlay: false,
+      buttonSize: "lg",
+      showLayoutSwitcher: false,
+      openSettings,
+      hangup,
+      debugTileLayout: false,
+      showSettingsButton: openSettings !== undefined,
+    }),
     ...buildMuteBehaviors(scope, muteStates),
     ...buildDeviceBehaviors(scope, mediaDevices, constant(false)),
-    hideControls$: constant(false),
-    asOverlay$: constant(false),
-    buttonSize$: constant("lg"),
-    showSettingsButton$: constant(openSettings !== undefined),
-    showLayoutSwitcher$: constant(false),
-    showLogoDebugContainer$: constant(showLogo),
-    showLogo$: constant(showLogo),
-
-    layoutMode$: constant(undefined),
-    setLayoutMode$: constant(undefined),
-
-    sharingScreen$: constant(undefined),
-    toggleScreenSharing$: constant(undefined),
-
-    audioOutputSwitcher$: constant(undefined),
-
-    openSettings$: constant(openSettings),
-    hangup$: constant(hangup),
-
-    reactionIdentifier$: constant(undefined),
-    reactionData$: constant(undefined),
-
-    debugTileLayout$: constant(false),
-    tileStoreGeneration$: constant(0),
   };
 }
