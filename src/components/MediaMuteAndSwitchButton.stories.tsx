@@ -62,7 +62,7 @@ export const AudioMute: Story = {
     const canvas = within(canvasElement);
     // Both the mute button and the chevron trigger currently share the aria-label "Edit"
     // (both are TODO placeholders in the component). The mute button is first in the DOM.
-    const muteButton = canvas.getByLabelText("Unmute microphone");
+    const muteButton = canvas.getByTestId("incall_mute");
     await userEvent.click(muteButton);
     await expect(args.onMuteClick).toHaveBeenCalled();
   },
