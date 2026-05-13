@@ -304,7 +304,7 @@ export type CallReconnectingReason =
 
 interface CallReconnecting extends IPosthogEvent {
   eventName: "CallReconnecting";
-   // the callId posthog key is essentially a Matrix roomId
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
   reason: CallReconnectingReason;
   reconnectDuration: number;
