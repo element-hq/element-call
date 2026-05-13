@@ -128,7 +128,7 @@ interface Props {
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (transport: LivekitTransportConfig) => void;
   homeserverConnected: HomeserverConnected;
-  callId: string;
+  roomId: string;
   localTransport$: Behavior<LocalTransport>;
   matrixRTCSession: Pick<
     MatrixRTCSession,
@@ -152,7 +152,7 @@ interface Props {
  * @param props.logger The logger to use.
  * @param props.muteStates The mute states for video and audio.
  * @param props.matrixRTCSession The matrix RTC session to join.
- * @param props.callId The room ID used as the call identifier in analytics events.
+ * @param props.roomId The room ID used as the call identifier in analytics events.
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
  *  - connected$: the current connection state. Including matrix server and livekit server connection. (only considering the livekit server we are using for our own media publication)
@@ -170,7 +170,7 @@ export const createLocalMembership$ = ({
   logger: parentLogger,
   muteStates,
   matrixRTCSession,
-  callId,
+  roomId: roomId,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -552,7 +552,7 @@ export const createLocalMembership$ = ({
         }
       } else if (reconnectStart !== null) {
         PosthogAnalytics.instance.eventCallReconnecting.track(
-          callId,
+          roomId,
           reconnectStart.reason,
           (Date.now() - reconnectStart.time) / 1000,
         );

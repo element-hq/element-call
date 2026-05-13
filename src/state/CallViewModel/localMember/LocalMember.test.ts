@@ -231,7 +231,7 @@ describe("LocalMembership", () => {
       ]),
       rtsSession$: constant(RTCMemberStatus.Connected),
     },
-    callId: "!test-room-id:example.org",
+    roomId: "!test-room-id:example.org",
   };
 
   it("throws error on missing RTC config error", () => {
@@ -772,7 +772,7 @@ describe("LocalMembership", () => {
       hsReason$.next([true, null]);
 
       expect(trackSpy).toHaveBeenCalledWith(
-        defaultCreateLocalMemberValues.callId,
+        defaultCreateLocalMemberValues.roomId,
         "sync",
         expect.any(Number),
       );
@@ -822,7 +822,7 @@ describe("LocalMembership", () => {
       connectionState$.next(ConnectionState.LivekitConnected);
 
       expect(trackSpy).toHaveBeenCalledWith(
-        defaultCreateLocalMemberValues.callId,
+        defaultCreateLocalMemberValues.roomId,
         "livekit",
         expect.any(Number),
       );
@@ -873,13 +873,13 @@ describe("LocalMembership", () => {
       expect(trackSpy).toHaveBeenCalledTimes(2);
       expect(trackSpy).toHaveBeenNthCalledWith(
         1,
-        defaultCreateLocalMemberValues.callId,
+        defaultCreateLocalMemberValues.roomId,
         "membership",
         expect.any(Number),
       );
       expect(trackSpy).toHaveBeenNthCalledWith(
         2,
-        defaultCreateLocalMemberValues.callId,
+        defaultCreateLocalMemberValues.roomId,
         "probablyLeft",
         expect.any(Number),
       );

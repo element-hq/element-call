@@ -17,6 +17,7 @@ import {
 
 interface CallEnded extends IPosthogEvent {
   eventName: "CallEnded";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
   callParticipantsOnLeave: number;
   callParticipantsMax: number;
@@ -120,6 +121,7 @@ export class CallEndedTracker {
 
 interface CallStarted extends IPosthogEvent {
   eventName: "CallStarted";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
 }
 
@@ -180,6 +182,7 @@ export class LoginTracker {
 interface MuteMicrophone {
   eventName: "MuteMicrophone";
   targetMuteState: "mute" | "unmute";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
 }
 
@@ -196,6 +199,7 @@ export class MuteMicrophoneTracker {
 interface MuteCamera {
   eventName: "MuteCamera";
   targetMuteState: "mute" | "unmute";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
 }
 
@@ -211,6 +215,7 @@ export class MuteCameraTracker {
 
 interface UndecryptableToDeviceEvent {
   eventName: "UndecryptableToDeviceEvent";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
 }
 
@@ -225,6 +230,7 @@ export class UndecryptableToDeviceEventTracker {
 
 interface QualitySurveyEvent {
   eventName: "QualitySurvey";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
   feedbackText: string;
   stars: number;
@@ -298,6 +304,7 @@ export type CallReconnectingReason =
 
 interface CallReconnecting extends IPosthogEvent {
   eventName: "CallReconnecting";
+   // the callId posthog key is essentially a Matrix roomId
   callId: string;
   reason: CallReconnectingReason;
   reconnectDuration: number;

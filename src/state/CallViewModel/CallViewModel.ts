@@ -560,7 +560,7 @@ export function createCallViewModel$(
     connectionManager,
     matrixRTCSession,
     localTransport$,
-    callId: matrixRoom.roomId,
+    roomId: matrixRoom.roomId,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
