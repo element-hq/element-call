@@ -17,18 +17,14 @@ import {
   CheckIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  MicOffSolidIcon,
   MicOnIcon,
-  MicOnSolidIcon,
   SpinnerIcon,
   VideoCallIcon,
-  VideoCallOffSolidIcon,
-  VideoCallSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 import styles from "./MediaMuteAndSwitchButton.module.css";
+import { MicButton, VideoButton } from "../button";
 
 export interface MenuOptions {
   label: string;
@@ -81,7 +77,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
   enabled,
   onMuteClick,
-  iconsAndLabels: iconsAndLabelsWithDefaultCases,
+  iconsAndLabels,
   options,
   selectedOption,
   toggles,
@@ -89,58 +85,82 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 }) => {
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  let iconsAndLabels: IconsAndLabels | undefined;
-  switch (iconsAndLabelsWithDefaultCases) {
+
+  let button;
+  switch (iconsAndLabels) {
     case "video":
-      iconsAndLabels = {
-        IconEnabled: VideoCallSolidIcon,
-        IconDisabled: VideoCallOffSolidIcon,
-        IconOptions: VideoCallIcon,
-        disabledLabel: t("stop_video_button_label"),
-        enabledLabel: t("start_video_button_label"),
-        optionsButtonLabel: t("settings.devices.camera"),
-      };
+      button = (
+        <VideoButton
+          enabled={enabled ?? false}
+          onClick={(e) => {
+            onMuteClick?.();
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          disabled={onMuteClick === undefined}
+          data-testid="incall_videomute"
+        />
+      );
       break;
     case "audio":
-      iconsAndLabels = {
-        IconEnabled: MicOnSolidIcon,
-        IconDisabled: MicOffSolidIcon,
-        IconOptions: MicOnIcon,
-        disabledLabel: t("mute_microphone_button_label"),
-        enabledLabel: t("unmute_microphone_button_label"),
-        optionsButtonLabel: t("settings.devices.microphone"),
-      };
+      button = (
+        <MicButton
+          enabled={enabled ?? false}
+          onClick={(e) => {
+            onMuteClick?.();
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          disabled={onMuteClick === undefined}
+          data-testid="incall_mute"
+        />
+      );
       break;
     default:
-      iconsAndLabels = iconsAndLabelsWithDefaultCases;
+      button = (
+        <Button
+          iconOnly
+          role="switch"
+          Icon={
+            enabled ? iconsAndLabels?.IconEnabled : iconsAndLabels?.IconDisabled
+          }
+          onClick={(e) => {
+            onMuteClick?.();
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          kind={enabled ? "secondary" : "primary"}
+          size="lg"
+          className={styles.button}
+          aria-label={
+            enabled
+              ? iconsAndLabels?.disabledLabel
+              : iconsAndLabels?.enabledLabel
+          }
+        />
+      );
       break;
   }
-  const {
-    IconEnabled,
-    IconDisabled,
-    IconOptions,
-    disabledLabel,
-    enabledLabel,
-    optionsButtonLabel,
-  } = iconsAndLabels ?? {
-    IconEnabled: undefined,
-    IconDisabled: undefined,
-    IconOptions: undefined,
-    disabledLabel: undefined,
-    enabledLabel: undefined,
-    optionsButtonLabel: undefined,
-  };
-  {
-    logger.info(
-      "RENDER WITH: selectedOption !== option.id && plannedSelection === option.id",
-      selectedOption,
-      " !==",
-      "option.id",
-      " && ",
-      plannedSelection,
-      " === ",
-      "option.id",
-    );
+
+  let IconOptions: ComponentType<React.SVGAttributes<SVGElement>> | undefined;
+  let optionsButtonLabel: string;
+  switch (iconsAndLabels) {
+    case "video":
+      IconOptions = VideoCallIcon;
+      optionsButtonLabel = t("settings.devices.camera");
+      break;
+    case "audio":
+      IconOptions = MicOnIcon;
+      optionsButtonLabel = t("settings.devices.microphone");
+      break;
+    case undefined:
+      IconOptions = undefined;
+      optionsButtonLabel = "undefined";
+      break;
+    default:
+      IconOptions = iconsAndLabels.IconOptions;
+      optionsButtonLabel = iconsAndLabels.optionsButtonLabel;
+      break;
   }
   return (
     <div
@@ -150,20 +170,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       })}
     >
       {/* The mute button lives inside */}
-      <Button
-        iconOnly
-        role="switch"
-        Icon={enabled ? IconEnabled : IconDisabled}
-        onClick={(e) => {
-          onMuteClick?.();
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        kind={enabled ? "secondary" : "primary"}
-        size="lg"
-        className={styles.button}
-        aria-label={enabled ? disabledLabel : enabledLabel}
-      />
+      {button}
       <Menu
         title={title}
         showTitle={true}

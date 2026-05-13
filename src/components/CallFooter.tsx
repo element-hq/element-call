@@ -180,7 +180,6 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
         iconsAndLabels="video"
         enabled={videoEnabled ?? false}
         onMuteClick={toggleVideo}
-        data-testid="incall_videomute"
         options={videoOptions}
         toggles={videoToggles}
         selectedOption={selectedVideo}
