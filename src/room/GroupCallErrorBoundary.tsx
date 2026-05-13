@@ -54,9 +54,11 @@ const ErrorPage: FC<ErrorPageProps> = ({
   widget,
 }: ErrorPageProps): ReactElement => {
   const { t } = useTranslation();
+  const cause = error?.cause;
   logger.error(
     `Error boundary caught: name=${error?.name} message=${error?.message} category=${error?.category}`,
     error,
+    ...(cause ? ["caused by:", cause] : []),
   );
   let icon: ComponentType<SVGAttributes<SVGElement>>;
   switch (error.category) {
@@ -131,7 +133,9 @@ export const GroupCallErrorBoundary = ({
       const callError =
         error instanceof ElementCallError
           ? error
-          : new UnknownCallError(error instanceof Error ? error : new Error());
+          : new UnknownCallError(
+              error instanceof Error ? error : new Error(String(error)),
+            );
       return (
         <ErrorPage
           widget={widget ?? null}
