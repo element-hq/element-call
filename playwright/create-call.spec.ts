@@ -62,6 +62,11 @@ test("Start a new call then leave and show the feedback screen", async ({
 test("BugFix: When unmuting in lobby, you had to click twice to unmute in call", async ({
   page,
 }) => {
+  // Forward browser console to test output for CI diagnostics.
+  page.on("console", (msg) =>
+    console.log(`[browser:${msg.type()}]`, msg.text()),
+  );
+
   await page.goto("/");
 
   await page.getByTestId("home_callName").click();
@@ -70,8 +75,32 @@ test("BugFix: When unmuting in lobby, you had to click twice to unmute in call",
   await page.getByTestId("home_displayName").fill("me");
   await page.getByTestId("home_go").click();
 
+  // Pre-warm getUserMedia AFTER reaching the lobby. On CI runners without
+  // real hardware, enumerateDevices() returns an empty list until getUserMedia
+  // has been called at least once — even with --use-fake-device-for-media-stream.
+  await page.evaluate(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
+      console.log(`getUserMedia OK, ${stream.getTracks().length} tracks`);
+      stream.getTracks().forEach((t) => t.stop());
+      const list = await navigator.mediaDevices.enumerateDevices();
+      console.log(
+        "enumerateDevices:",
+        JSON.stringify(list.map((d) => ({ kind: d.kind, label: d.label }))),
+      );
+    } catch (e) {
+      console.error("getUserMedia FAILED", (e as Error).message);
+    }
+  });
+
   const microphoneButton = page.getByTestId("incall_mute");
   const cameraButton = page.getByTestId("incall_videomute");
+
+  // Wait for devices to enumerate before the button enables.
+  await expect(microphoneButton).toBeEnabled({ timeout: 10_000 });
 
   await microphoneButton.click();
   await cameraButton.click();
