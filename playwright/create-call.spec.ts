@@ -73,6 +73,9 @@ test("BugFix: When unmuting in lobby, you had to click twice to unmute in call",
   const microphoneButton = page.getByTestId("incall_mute");
   const cameraButton = page.getByTestId("incall_videomute");
 
+  // Wait for devices to enumerate before the button enables.
+  await expect(microphoneButton).toBeEnabled({ timeout: 10_000 });
+
   await microphoneButton.click();
   await cameraButton.click();
 
