@@ -36,7 +36,7 @@ export function calculateInitialMuteState(
   // Same for when showing a lobby, as users can adjust their settings there.
   // Additionally, if the call intent is "audio", we disable video by default.
   return {
-    audioEnabled: true,
-    videoEnabled: callIntent != "audio",
+    audioEnabled: false,
+    videoEnabled: false,
   };
 }
