@@ -17,6 +17,7 @@ import {
 
 interface CallEnded extends IPosthogEvent {
   eventName: "CallEnded";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
   callParticipantsOnLeave: number;
   callParticipantsMax: number;
@@ -24,16 +25,43 @@ interface CallEnded extends IPosthogEvent {
   roomEventEncryptionKeysSent: number;
   roomEventEncryptionKeysReceived: number;
   roomEventEncryptionKeysReceivedAverageAge: number;
+  callReconnectingCount: number;
+  callReconnectingCountSync: number;
+  callReconnectingCountMembership: number;
+  callReconnectingCountProbablyLeft: number;
+  callReconnectingCountLivekit: number;
 }
 
 export class CallEndedTracker {
-  private cache: { startTime?: Date; maxParticipantsCount: number } = {
+  private cache: {
+    startTime?: Date;
+    maxParticipantsCount: number;
+    reconnectingCount: number;
+    reconnectingCountByReason: Record<CallReconnectingReason, number>;
+  } = {
     startTime: undefined,
     maxParticipantsCount: 0,
+    reconnectingCount: 0,
+    reconnectingCountByReason: {
+      sync: 0,
+      membership: 0,
+      probablyLeft: 0,
+      livekit: 0,
+    },
   };
 
   public cacheStartCall(time: Date): void {
-    this.cache.startTime = time;
+    this.cache = {
+      startTime: time,
+      maxParticipantsCount: 0,
+      reconnectingCount: 0,
+      reconnectingCountByReason: {
+        sync: 0,
+        membership: 0,
+        probablyLeft: 0,
+        livekit: 0,
+      },
+    };
   }
 
   public cacheParticipantCountChanged(count: number): void {
@@ -41,6 +69,11 @@ export class CallEndedTracker {
       count,
       this.cache.maxParticipantsCount,
     );
+  }
+
+  public cacheReconnecting(reason: CallReconnectingReason): void {
+    this.cache.reconnectingCount++;
+    this.cache.reconnectingCountByReason[reason]++;
   }
 
   public track(
@@ -67,6 +100,14 @@ export class CallEndedTracker {
                   .roomEventEncryptionKeysReceivedTotalAge /
                 rtcSession.statistics.counters.roomEventEncryptionKeysReceived
               : 0,
+          callReconnectingCount: this.cache.reconnectingCount,
+          callReconnectingCountSync: this.cache.reconnectingCountByReason.sync,
+          callReconnectingCountMembership:
+            this.cache.reconnectingCountByReason.membership,
+          callReconnectingCountProbablyLeft:
+            this.cache.reconnectingCountByReason.probablyLeft,
+          callReconnectingCountLivekit:
+            this.cache.reconnectingCountByReason.livekit,
         },
         { send_instantly: sendInstantly },
       );
@@ -80,6 +121,7 @@ export class CallEndedTracker {
 
 interface CallStarted extends IPosthogEvent {
   eventName: "CallStarted";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
 }
 
@@ -140,6 +182,7 @@ export class LoginTracker {
 interface MuteMicrophone {
   eventName: "MuteMicrophone";
   targetMuteState: "mute" | "unmute";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
 }
 
@@ -156,6 +199,7 @@ export class MuteMicrophoneTracker {
 interface MuteCamera {
   eventName: "MuteCamera";
   targetMuteState: "mute" | "unmute";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
 }
 
@@ -171,6 +215,7 @@ export class MuteCameraTracker {
 
 interface UndecryptableToDeviceEvent {
   eventName: "UndecryptableToDeviceEvent";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
 }
 
@@ -185,6 +230,7 @@ export class UndecryptableToDeviceEventTracker {
 
 interface QualitySurveyEvent {
   eventName: "QualitySurvey";
+  // the callId posthog key is essentially a Matrix roomId
   callId: string;
   feedbackText: string;
   stars: number;
@@ -247,5 +293,34 @@ export class CallConnectDurationTracker {
       logger.log(
         `Time to connect:\ntotal: ${totalDuration}ms\npeerConnection: ${websocketDuration}ms\nwebsocket: ${peerConnectionDuration}ms`,
       );
+  }
+}
+
+export type CallReconnectingReason =
+  | "sync"
+  | "membership"
+  | "probablyLeft"
+  | "livekit";
+
+interface CallReconnecting extends IPosthogEvent {
+  eventName: "CallReconnecting";
+  // the callId posthog key is essentially a Matrix roomId
+  callId: string;
+  reason: CallReconnectingReason;
+  reconnectDuration: number;
+}
+
+export class CallReconnectingTracker {
+  public track(
+    callId: string,
+    reason: CallReconnectingReason,
+    reconnectDuration: number,
+  ): void {
+    PosthogAnalytics.instance.trackEvent<CallReconnecting>({
+      eventName: "CallReconnecting",
+      callId,
+      reason,
+      reconnectDuration,
+    });
   }
 }
