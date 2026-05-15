@@ -26,6 +26,7 @@ import {
   QualitySurveyEventTracker,
   CallDisconnectedEventTracker,
   CallConnectDurationTracker,
+  CallReconnectingTracker,
 } from "./PosthogEvents";
 import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
@@ -421,4 +422,5 @@ export class PosthogAnalytics {
   public eventQualitySurvey = new QualitySurveyEventTracker();
   public eventCallDisconnected = new CallDisconnectedEventTracker();
   public eventCallConnectDuration = new CallConnectDurationTracker();
+  public eventCallReconnecting = new CallReconnectingTracker();
 }
