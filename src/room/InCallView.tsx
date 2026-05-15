@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
-  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
@@ -273,10 +272,13 @@ export const InCallView: FC<InCallViewProps> = ({
     }
   }, [ringing, latestPickupPhaseAudio]);
 
-  const onViewClick = useCallback(
-    (e: ReactMouseEvent) => {
+  // iOS Safari doesn't reliably fire `click` on plain <div>s, so we listen
+  // for `pointerup` instead. Scrolls end in `pointercancel`, not `pointerup`,
+  // so this still only fires for taps.
+  const onViewPointerUp = useCallback(
+    (e: ReactPointerEvent) => {
       if (
-        (e.nativeEvent as PointerEvent).pointerType === "touch" &&
+        e.pointerType === "touch" &&
         // If an interactive element was tapped, don't count this as a tap on the screen
         (e.target as Element).closest?.("button, input") === null
       )
@@ -602,13 +604,13 @@ export const InCallView: FC<InCallViewProps> = ({
   const allConnections = useBehavior(vm.allConnections$);
 
   return (
-    // The onClick handler here exists to control the visibility of the footer,
+    // The pointer handler here exists to control the visibility of the footer,
     // and the footer is also viewable by moving focus into it, so this is fine.
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       className={styles.inRoom}
       ref={containerRef}
-      onClick={onViewClick}
+      onPointerUp={onViewPointerUp}
       onPointerMove={onPointerMove}
       onPointerOut={onPointerOut}
     >
