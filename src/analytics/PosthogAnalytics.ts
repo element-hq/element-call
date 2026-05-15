@@ -173,6 +173,9 @@ export class PosthogAnalytics {
       .slice(0, 3)
       .join("");
 
+    // drop $initial_person_info for increased privacy.
+    delete properties["$initial_person_info"];
+
     return properties;
   };
 
