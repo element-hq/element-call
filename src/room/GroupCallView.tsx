@@ -140,6 +140,72 @@ export const GroupCallView: FC<Props> = ({
     };
   }, []);
 
+  // Add this useEffect in GroupCallView.tsx to monitor native navigator.mediaDevices
+  useEffect(() => {
+    logger.info(
+      "[Navigator.mediaDevices Debug] Setting up native device monitoring",
+    );
+
+    // Log initial devices
+    navigator.mediaDevices
+      .enumerateDevices()
+      .then((devices) => {
+        logger.info(
+          "[Navigator.mediaDevices Debug] Initial devices:",
+          devices.map((d) => ({
+            kind: d.kind,
+            deviceId: d.deviceId,
+            label: d.label,
+            groupId: d.groupId,
+          })),
+        );
+      })
+      .catch((e) =>
+        logger.error(
+          "[Navigator.mediaDevices Debug] Failed to enumerate initial devices:",
+          e,
+        ),
+      );
+
+    // Monitor devicechange events
+    const handleDeviceChange = (): void => {
+      logger.info("[Navigator.mediaDevices Debug] 'devicechange' event fired!");
+
+      navigator.mediaDevices
+        .enumerateDevices()
+        .then((devices) => {
+          logger.info(
+            "[Navigator.mediaDevices Debug] Devices after change:",
+            devices.map((d) => ({
+              kind: d.kind,
+              deviceId: d.deviceId,
+              label: d.label,
+              groupId: d.groupId,
+            })),
+          );
+        })
+        .catch((e) =>
+          logger.error(
+            "[Navigator.mediaDevices Debug] Failed to enumerate devices:",
+            e,
+          ),
+        );
+    };
+
+    navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
+
+    logger.info("[Navigator.mediaDevices Debug] Device monitoring active");
+
+    // Cleanup
+    return (): void => {
+      logger.info("[Navigator.mediaDevices Debug] Removing device monitoring");
+      navigator.mediaDevices.removeEventListener(
+        "devicechange",
+        handleDeviceChange,
+      );
+    };
+  }, []);
+
   // This CSS is the only way we could find to not make element call scroll for
   // viewport sizes smaller than 122px width. (It is actually this exact number: 122px
   // tested on different devices...)
@@ -528,4 +594,4 @@ export const GroupCallView: FC<Props> = ({
       {body}
     </GroupCallErrorBoundary>
   );
-};
+};;
