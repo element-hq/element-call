@@ -248,6 +248,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const showFooter = useBehavior(vm.showFooter$);
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
+  const nativeAudioRoute = useBehavior(vm.nativeAudioRouteSwitcher$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
 
   const fatalCallError = useBehavior(vm.fatalError$);
@@ -590,6 +591,7 @@ export const InCallView: FC<InCallViewProps> = ({
       reactionIdentifier={`${client.getUserId()}:${client.getDeviceId()}`}
       reactionData={supportsReactions ? vm : undefined}
       audioOutputSwitcher={audioOutputSwitcher ?? undefined}
+      nativeAudioRoute = { nativeAudioRoute ?? undefined}
       // Only pass the openSettings function if the settings button is not in the app bar.
       // If there is no fn the button will be hidden in the footer.
       openSettings={settingsButtonInAppBar ? undefined : openSettings}

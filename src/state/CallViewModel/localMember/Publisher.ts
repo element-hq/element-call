@@ -64,7 +64,8 @@ export class Publisher {
     trackerProcessorState$: Behavior<ProcessorState>,
     private logger: Logger,
   ) {
-    const { controlledAudioDevices } = getUrlParams();
+    const { controlledAudioDevices, audioInputOutputSelection } =
+      getUrlParams();
     const room = connection.livekitRoom;
 
     room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {
@@ -74,7 +75,12 @@ export class Publisher {
     // Setup track processor syncing (blur)
     this.observeTrackProcessors(this.scope, room, trackerProcessorState$);
     // Observe media device changes and update LiveKit active devices accordingly
-    this.observeMediaDevices(this.scope, devices, controlledAudioDevices);
+    this.observeMediaDevices(
+      this.scope,
+      devices,
+      controlledAudioDevices,
+      audioInputOutputSelection,
+    );
 
     this.workaroundRestartAudioInputTrackChrome(devices, this.scope);
 
@@ -304,7 +310,7 @@ export class Publisher {
           // the process of being restarted.
           activeMicTrack.mediaStreamTrack.readyState !== "ended"
         ) {
-          this.logger?.info(
+          this.logger.info(
             "Restarting audio device track due to active media device changed (workaroundRestartAudioInputTrackChrome)",
           );
           // Restart the track, which will cause Livekit to do another
@@ -326,14 +332,18 @@ export class Publisher {
     scope: ObservableScope,
     devices: MediaDevices,
     controlledAudioDevices: boolean,
+    audioInputOutputSelection: boolean,
   ): void {
     const lkRoom = this.connection.livekitRoom;
     const syncDevice = (
       kind: MediaDeviceKind,
       selected$: Observable<SelectedDevice | undefined>,
-    ): Subscription =>
-      selected$.pipe(scope.bind()).subscribe((device) => {
+    ): Subscription => {
+      return selected$.pipe(scope.bind()).subscribe((device) => {
         if (lkRoom.state != LivekitConnectionState.Connected) return;
+        this.logger.info(
+          `Selection change for kind: ${kind} selected is ${device?.id}`,
+        );
         // if (this.connectionState$.value !== ConnectionState.Connected) return;
         this.logger.info(
           "[LivekitRoom] syncDevice room.getActiveDevice(kind) !== d.id :",
@@ -355,10 +365,15 @@ export class Publisher {
             );
         }
       });
+    };
 
-    syncDevice("audioinput", devices.audioInput.selected$);
-    if (!controlledAudioDevices)
-      syncDevice("audiooutput", devices.audioOutput.selected$);
+    this.logger.debug(`Syncing initial devices with LiveKit, controlledAudioDevices: ${controlledAudioDevices}, audioInputOutputSelection: ${audioInputOutputSelection}`);
+    if (audioInputOutputSelection) {
+      syncDevice("audioinput", devices.audioInput.selected$);
+      if (!controlledAudioDevices) {
+        syncDevice("audiooutput", devices.audioOutput.selected$);
+      }
+    }
     syncDevice("videoinput", devices.videoInput.selected$);
   }
 

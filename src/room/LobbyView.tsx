@@ -26,6 +26,7 @@ import {
 } from "livekit-client";
 import { useObservableEagerState } from "observable-hooks";
 import { useNavigate } from "react-router-dom";
+import { map, startWith } from "rxjs";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -48,6 +49,14 @@ import { getValue } from "../utils/observable";
 import { useBehavior } from "../useBehavior";
 import { CallFooter } from "../components/CallFooter";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
+import {
+  type AudioRoute,
+  currentRoute$,
+  RouteType,
+  showNativeAudioDevicePicker,
+} from "../controls.ts";
+import { ObservableScope } from "../state/ObservableScope.ts";
+import { startsWith } from "lodash-es";
 
 interface Props {
   client: MatrixClient;
@@ -184,6 +193,39 @@ export const LobbyView: FC<Props> = ({
 
   useTrackProcessorSync(videoTrack);
 
+  const [nativeAudioRoute, setNativeAudioRoute] = useState<{
+    targetOutput: AudioRoute
+    switch: () => void
+  } | null>();
+  useEffect(() => {
+    const scope = new ObservableScope();
+    const nativeAudioRouteSwitcher$ = scope.behavior<{
+      targetOutput: AudioRoute;
+      switch: () => void;
+    } | null>(
+      currentRoute$.pipe(
+        map((route) => {
+          return {
+            targetOutput: route || { type: RouteType.speaker, label: "" },
+            switch: (): void => {
+              showNativeAudioDevicePicker?.();
+            },
+          };
+        }),
+        startWith(null),
+      ),
+    );
+
+    nativeAudioRouteSwitcher$.subscribe((route) => {
+      setNativeAudioRoute(route);
+    });
+    return (): void => {
+      scope.end();
+    };
+  }, [setNativeAudioRoute]);
+
+
+
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
   return (
@@ -234,6 +276,7 @@ export const LobbyView: FC<Props> = ({
           toggleVideo={toggleVideo ?? undefined}
           openSettings={openSettings}
           hangup={!confineToRoom ? onLeaveClick : undefined}
+          nativeAudioRoute={nativeAudioRoute ?? undefined}
           // Logo and header are connected. We will only show the logo in SPA with header.
           hideLogo={hideHeader}
         >

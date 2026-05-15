@@ -41,9 +41,9 @@ import {
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
-  MembershipManagerEvent,
   type LivekitTransportConfig,
   type MatrixRTCSession,
+  MembershipManagerEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -64,7 +64,14 @@ import {
   showReactions,
 } from "../../settings/settings";
 import { isFirefox, platform } from "../../Platform";
-import { setPipEnabled$ } from "../../controls";
+import {
+  type AudioRoute,
+  currentRoute$,
+  RouteType,
+  setPipEnabled$,
+  showNativeAudioDevicePicker,
+  showNativeAudioDevicePicker$,
+} from "../../controls";
 import { TileStore } from "../TileStore";
 import { gridLikeLayout } from "../GridLikeLayout";
 import { spotlightExpandedLayout } from "../SpotlightExpandedLayout";
@@ -78,7 +85,7 @@ import {
 } from "../../reactions";
 import { shallowEquals } from "../../utils/array";
 import { type MediaDevices } from "../MediaDevices";
-import { constant, type Behavior } from "../Behavior";
+import { type Behavior, constant } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
@@ -122,8 +129,8 @@ import {
 import {
   createMatrixLivekitMembers$,
   type LocalMatrixLivekitMember,
-  type RemoteMatrixLivekitMember,
   type MatrixLivekitMember,
+  type RemoteMatrixLivekitMember,
 } from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
   type AutoLeaveReason,
@@ -365,6 +372,14 @@ export interface CallViewModel {
    */
   audioOutputSwitcher$: Behavior<{
     targetOutput: "earpiece" | "speaker";
+    switch: () => void;
+  } | null>;
+
+  /**
+   * Use when in native controlled route mode
+   */
+  nativeAudioRouteSwitcher$: Behavior<{
+    targetOutput: AudioRoute;
     switch: () => void;
   } | null>;
 
@@ -1435,6 +1450,23 @@ export function createCallViewModel$(
     ),
   );
 
+  const nativeAudioRouteSwitcher$ = scope.behavior<{
+    targetOutput: AudioRoute;
+    switch: () => void;
+  } | null>(
+    currentRoute$.pipe(
+      map((route) => {
+        return {
+          targetOutput: route || { type: RouteType.speaker, label: "" },
+          switch: (): void => {
+            showNativeAudioDevicePicker?.();
+          },
+        };
+      }),
+      startWith(null),
+    ),
+  );
+
   /**
    * Emits an array of reactions that should be visible on the screen.
    */
@@ -1624,6 +1656,7 @@ export function createCallViewModel$(
     showFooter$: showFooter$,
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
+    nativeAudioRouteSwitcher$: nativeAudioRouteSwitcher$,
     reconnecting$: localMembership.reconnecting$,
     livekitRoomItems$,
     connected$: localMembership.connected$,

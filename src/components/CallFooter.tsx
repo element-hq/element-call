@@ -34,6 +34,7 @@ import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
+import { type AudioRoute, RouteType } from "../controls.ts";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -90,6 +91,8 @@ export interface FooterProps {
   selectedVideo?: string;
   selectAudioDevice?: (deviceId: string) => void;
   selectVideoDevice?: (deviceId: string) => void;
+
+  nativeAudioRoute?: { targetOutput: AudioRoute , switch: () => void };
 }
 
 export const CallFooter: FC<FooterProps> = ({
@@ -112,6 +115,7 @@ export const CallFooter: FC<FooterProps> = ({
   reactionIdentifier,
   reactionData,
   audioOutputSwitcher,
+  nativeAudioRoute,
   hangup,
   debugTileLayout,
   tileStoreGeneration,
@@ -228,15 +232,30 @@ export const CallFooter: FC<FooterProps> = ({
 
   // In this PR we just move the button to the bottom bar. We do not yet update its appearance
   const audioOutputButton = useMemo(() => {
-    if (audioOutputSwitcher === undefined) return null;
-    return (
-      <LoudspeakerButton
-        size={buttonSize}
-        onClick={() => audioOutputSwitcher.switch()}
-        loudspeakerModeEnabled={audioOutputSwitcher.targetOutput === "earpiece"}
-      />
-    );
-  }, [audioOutputSwitcher, buttonSize]);
+
+    if (nativeAudioRoute) {
+      return (
+        // TODO make a 4 state button to also include the headset option when supported by the OS
+        <LoudspeakerButton
+          size={buttonSize}
+          onClick={() => nativeAudioRoute.switch()}
+          loudspeakerModeEnabled={nativeAudioRoute.targetOutput.type === RouteType.speaker}
+        />
+      );
+    } else {
+      if (audioOutputSwitcher === undefined) return null;
+      return (
+        <LoudspeakerButton
+          size={buttonSize}
+          onClick={() => audioOutputSwitcher.switch()}
+          loudspeakerModeEnabled={
+            audioOutputSwitcher.targetOutput === "earpiece"
+          }
+        />
+      );
+    }
+  }, [audioOutputSwitcher, buttonSize, nativeAudioRoute]);
+
 
   if (audioOutputButton) buttons.push(audioOutputButton);
 

@@ -8,6 +8,18 @@ Please see LICENSE in the repository root for full details.
 import { Subject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
+export enum RouteType {
+  speaker = "speaker",
+  phone = "phone",
+  bluetooth = "bluetooth",
+  wired = "wired",
+}
+
+export interface AudioRoute {
+  type: RouteType;
+  label: string;
+}
+
 export interface Controls {
   canEnterPip(): boolean;
   enablePip(): void;
@@ -31,6 +43,9 @@ export interface Controls {
   setOutputEnabled(enabled: boolean): void;
   /** @deprecated use  showNativeAudioDevicePicker instead*/
   showNativeOutputDevicePicker?: () => void;
+
+  /** iOS native controlled device selection */
+  onNativeRouteChanged(route: AudioRoute): void;
 }
 
 /**
@@ -93,12 +108,18 @@ export const outputDevice$ = new Subject<string>();
  */
 export const setAudioEnabled$ = new Subject<boolean>();
 
+export const currentRoute$ = new Subject<AudioRoute | null>();
+
 let playbackStartedEmitted = false;
 export const setPlaybackStarted = (): void => {
   if (!playbackStartedEmitted) {
     playbackStartedEmitted = true;
     window.controls.onAudioPlaybackStarted?.();
   }
+};
+
+export const showNativeAudioDevicePicker = (): void => {
+  window.controls.showNativeAudioDevicePicker?.();
 };
 
 window.controls = {
@@ -154,6 +175,14 @@ window.controls = {
         "Output controls are disabled. No setAudioEnabled$ observer",
       );
     setAudioEnabled$.next(enabled);
+  },
+
+  onNativeRouteChanged(route: AudioRoute): void {
+    logger.info(
+      "[MediaDevices controls] onNativeRouteChanged called from native",
+      route,
+    );
+    currentRoute$.next(route);
   },
 
   // wrappers for the deprecated controls fields

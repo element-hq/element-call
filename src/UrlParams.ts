@@ -196,6 +196,7 @@ export interface UrlConfiguration {
    * Element Call.
    */
   controlledAudioDevices: boolean;
+  audioInputOutputSelection: boolean;
   /**
    * Setting this flag skips the lobby and brings you in the call directly.
    * In the widget this can be combined with preload to pass the device settings
@@ -372,6 +373,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     allowIceFallback: true,
     perParticipantE2EE: true,
     controlledAudioDevices: platform === "desktop" ? false : true,
+    audioInputOutputSelection: platform !== "ios",
     skipLobby: true,
     returnToLobby: false,
     sendNotificationType: "notification",
@@ -427,6 +429,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
         allowIceFallback: false,
         perParticipantE2EE: false,
         controlledAudioDevices: false,
+        audioInputOutputSelection: true,
         skipLobby: false,
         returnToLobby: false,
         sendNotificationType: undefined,

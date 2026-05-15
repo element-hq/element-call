@@ -50,6 +50,7 @@ export class IOSControlledAudioOutput implements MediaDevice<
     combineLatest(
       [controlledAvailableOutputDevices$.pipe(startWith([])), iosDeviceMenu$],
       (availableRaw, iosDeviceMenu) => {
+        this.logger.debug("Available device update ", availableRaw);
         const available = new Map<string, AudioOutputDeviceLabel>(
           availableRaw.map(
             ({ id, name, isEarpiece, isSpeaker /*,isExternalHeadset*/ }) => {
