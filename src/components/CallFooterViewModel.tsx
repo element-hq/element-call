@@ -159,8 +159,6 @@ function buildDeviceBehaviors(
  * @param callModel - The root CallViewModel; provides layout, grid mode, reactions, etc.
  * @param muteStates - Audio and video mute state + toggles.
  * @param mediaDevices - Available and selected input devices.
- * @param openSettings - Callback to open the settings modal, or undefined if the
- *   settings button should be hidden (e.g. when it is already shown in an app bar).
  * @param reactionIdentifier - The local user's reaction identifier string, or
  *   undefined when reactions are not supported (hides the reaction button).
  */
@@ -169,7 +167,6 @@ export function createCallFooterViewModel(
   callModel: CallViewModel,
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
-  openSettings: (() => void) | undefined,
   reactionIdentifier: string | undefined,
 ): ViewModel<FooterSnapshot> {
   const { showControls, header: headerStyle } = getUrlParams();
@@ -184,7 +181,8 @@ export function createCallFooterViewModel(
   return {
     ...buildMuteBehaviors(scope, muteStates),
     ...buildDeviceBehaviors(scope, mediaDevices, disableDeviceSwitcher$),
-
+    // candidat to move into the FooterViewModel
+    showFooter$: callModel.showFooter$,
     hideControls$: constant(!showControls),
     asOverlay$: scope.behavior(
       callModel.windowMode$.pipe(map((mode) => mode === "flat")),
@@ -193,10 +191,14 @@ export function createCallFooterViewModel(
       isPip$.pipe(map((pip) => (pip ? "md" : "lg") as "md" | "lg")),
     ),
     showSettingsButton$: scope.behavior(
-      combineLatest([isPip$, callModel.showHeader$]).pipe(
+      combineLatest([
+        isPip$,
+        callModel.showHeader$,
+        callModel.settingsOpen$,
+      ]).pipe(
         map(
-          ([isPip, showHeader]) =>
-            openSettings !== undefined &&
+          ([isPip, showHeader, settingsOpen]) =>
+            settingsOpen !== undefined &&
             !isPip &&
             showControls &&
             !(headerStyle === HeaderStyle.AppBar && showHeader),
@@ -221,11 +223,11 @@ export function createCallFooterViewModel(
     ),
 
     openSettings$: scope.behavior(
-      callModel.showHeader$.pipe(
-        map((showHeader) =>
+      combineLatest([callModel.showHeader$, callModel.setSettingsOpen$]).pipe(
+        map(([showHeader, setSettingsOpen]) =>
           headerStyle === HeaderStyle.AppBar && showHeader
             ? undefined
-            : openSettings,
+            : (): void => setSettingsOpen(true),
         ),
       ),
     ),
@@ -281,6 +283,26 @@ export function createLobbyFooterViewModel(
       hangup,
       debugTileLayout: false,
       showSettingsButton: openSettings !== undefined,
+      showFooter: true,
+      toggleAudio: undefined,
+      toggleVideo: undefined,
+      setLayoutMode: undefined,
+      toggleScreenSharing: undefined,
+      audioEnabled: undefined,
+      videoEnabled: undefined,
+      layoutMode: undefined,
+      sharingScreen: false,
+      audioOutputSwitcher: undefined,
+      reactionIdentifier: undefined,
+      reactionData: undefined,
+      tileStoreGeneration: undefined,
+      audioOptions: undefined,
+      videoOptions: undefined,
+      selectedAudio: undefined,
+      selectedVideo: undefined,
+      selectAudioButtonOption: undefined,
+      selectVideoButtonOption: undefined,
+      videoToggles: undefined,
     }),
     ...buildMuteBehaviors(scope, muteStates),
     ...buildDeviceBehaviors(scope, mediaDevices, constant(false)),

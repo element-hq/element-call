@@ -13,7 +13,7 @@ import { Link } from "@vector-im/compound-web";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CallFooter, type FooterSnapshot } from "./CallFooter";
 import inCallViewStyles from "../room/InCallView.module.css";
-import { createStaticViewModel } from "../state/ViewModel";
+import { useStaticViewModel } from "../state/ViewModel";
 import { ReactionsSenderContext } from "../reactions/useReactionsSender";
 import { type ReactionOption } from "../reactions";
 import { type GridMode } from "../state/CallViewModel/CallViewModel";
@@ -39,7 +39,7 @@ function CallFooterStoryWrapper({
 }: FooterSnapshot & {
   children?: false | JSX.Element | JSX.Element[] | undefined;
 }): ReactNode {
-  const vm = createStaticViewModel(vmSnapshot);
+  const vm = useStaticViewModel(vmSnapshot);
   return (
     <div className={inCallViewStyles.inRoom}>
       <ReactionsSenderContext
@@ -82,6 +82,23 @@ export const Default: Story = {
     toggleScreenSharing: fn(),
     hangup: fn(),
     buttonSize: "lg",
+    showFooter: true,
+    hideControls: false,
+    asOverlay: false,
+    showLayoutSwitcher: false,
+    sharingScreen: false,
+    audioOutputSwitcher: undefined,
+    reactionIdentifier: undefined,
+    reactionData: undefined,
+    debugTileLayout: false,
+    tileStoreGeneration: undefined,
+    audioOptions: [],
+    videoOptions: [],
+    selectedAudio: undefined,
+    selectedVideo: undefined,
+    selectAudioButtonOption: undefined,
+    selectVideoButtonOption: undefined,
+    videoToggles: [],
   },
   parameters: {
     layout: "fullscreen",

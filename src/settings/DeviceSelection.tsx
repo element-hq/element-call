@@ -46,7 +46,7 @@ export function mediaDeviceLabelToString(
       labelText =
         label.name === null
           ? t("settings.devices.default")
-          : t("settings.devices.default") + " (" + label.name + ")";
+          : t("settings.devices.default_named", { name: label.name });
       break;
     case "speaker":
       labelText = t("settings.devices.loudspeaker");

@@ -200,7 +200,7 @@ describe("InCallView", () => {
     it("mobile landscape, is accessible when showHeader is false", () => {
       // windowSize with height <= 600 results in "flat" windowMode,
       // which means showHeader$ emits false.
-      const { getAllByRole, queryAllByRole, vm } = createInCallView({
+      const { getAllByRole, getByRole, getByTestId, vm } = createInCallView({
         withAppBar: true,
         callViewModelOptions: {
           // Set windowMode$ to "flat" (height <= 600)
@@ -210,7 +210,12 @@ describe("InCallView", () => {
 
       // In flat (landscape) mode the footer starts hidden until the user
       // taps the screen, so no settings button should be accessible yet.
-      expect(queryAllByRole("button", { name: "Settings" })).toHaveLength(0);
+
+      expect(getByTestId("footer-container")).not.toBeVisible();
+      const buttons = getAllByRole("button", { name: "Settings" });
+      for (const b of buttons) {
+        expect(b).not.toBeVisible();
+      }
 
       // Simulate a touch tap on the call view to reveal the footer.
       // (PointerEvent is not available in JSDOM, so we call tapScreen() directly,
@@ -219,17 +224,15 @@ describe("InCallView", () => {
 
       // When showHeader is false, hideSettingsButton is false,
       // so the settings button is visible in the footer.
-      const settingsBtn = getAllByRole("button", { name: "Settings" });
-      // here we check for two settings buttons because there are two buttons in the bottom bar. One for the
+      const settingsBtn = getByRole("button", { name: "Settings" });
+      // There are two buttons in the bottom bar. One for the
       // the narrow layout and another one for the wide layout.
-      // Their visibility uses @media css queries, which cannot be tested in JSDOM,
-      // but we can at least check that both buttons are rendered and have the correct classes.
-      expect(settingsBtn.length).toBe(2);
-      expect(settingsBtn[0]).toHaveAttribute(
+      // Their visibility uses @media css queries, which we can test JSDOM (see `test.css.include` vitest config).
+      expect(settingsBtn).toHaveAttribute(
         "data-testid",
         "settings-bottom-left",
       );
-      expect(settingsBtn[0]).toBeVisible();
+      expect(settingsBtn).toBeVisible();
     });
 
     it("mobile portrait, is accessible when showHeader is true", () => {
