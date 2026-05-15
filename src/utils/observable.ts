@@ -116,6 +116,8 @@ export function getValue<T>(state$: Observable<T>): T {
 /**
  * Creates an Observable that has a value of true whenever all its inputs are
  * true.
+ *
+ * @public
  */
 export function and$(...inputs: Observable<boolean>[]): Observable<boolean> {
   return combineLatest(inputs, (...flags) => flags.every((flag) => flag));
