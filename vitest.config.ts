@@ -19,6 +19,7 @@ export default defineConfig((configEnv) =>
             test: {
               name: "unit",
               css: {
+                include: /.+/,
                 modules: {
                   classNameStrategy: "non-scoped",
                 },

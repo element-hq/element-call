@@ -34,63 +34,81 @@ import {
   type MenuOptions,
   type ToggleOption,
 } from "./MediaMuteAndSwitchButton";
-import { type ViewModel, useViewModel } from "../state/ViewModel";
+import { type ViewModel } from "../state/ViewModel";
+import { useBehavior } from "../useBehavior";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
   switch: () => void;
 }
 
-export interface FooterSnapshot {
-  audioEnabled: boolean;
+/**
+ * The Snapshot combines all fields required to populate the view.
+ *
+ * It is a combination of Actions and State.
+ * All Actions and State will be wrappen in behaviors.
+ * This has the advantage, that actions can mutate.
+ * (example: a device gets disconnected, the swicht action is not possible anymore, the actions becomes undefined)
+ * With it being reactive we can use the existance of the action to update the rendering without
+ * requiring additional state.
+ *
+ * Comment: It might not make sense to seperate the two interfaces. Hence the seperation
+ * just happens on the syntax level with the `type = ... & ...` notation.
+ */
+export type FooterSnapshot = FooterActions & FooterState;
+export interface FooterActions {
   /** Also controls if the audioMute button is disabled */
   toggleAudio: (() => void) | undefined;
-
-  videoEnabled: boolean;
   /** Also controls if the videoMute button is disabled */
   toggleVideo: (() => void) | undefined;
+  /** Also controls if the layout button is visible */
+  setLayoutMode: ((mode: GridMode) => void) | undefined;
+  toggleScreenSharing: (() => void) | undefined;
+  /** Also controls if the settings button is visible */
+  openSettings: (() => void) | undefined;
+  /** Also controls if the hangup button is visible */
+  hangup: (() => void) | undefined;
+}
+// we do not use any ? optional properties so that the vm type is including all fields.
+export interface FooterState {
+  audioEnabled: boolean;
+  videoEnabled: boolean;
+  showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
-  hideControls?: boolean;
+  hideControls: boolean;
   /** The footer should be used as an overlay.
    * (Over the Call Grid) This saves spaces on small screens. */
-  asOverlay?: boolean;
+  asOverlay: boolean;
 
   buttonSize: "md" | "lg";
-  showSettingsButton?: boolean;
-  showLayoutSwitcher?: boolean;
-  showLogo?: boolean;
+  showSettingsButton: boolean;
+  showLayoutSwitcher: boolean;
+  showLogo: boolean;
 
-  layoutMode?: GridMode;
-  /** Also controls if the layout button is visible */
-  setLayoutMode?: (mode: GridMode) => void;
+  layoutMode: GridMode | undefined;
 
-  sharingScreen?: boolean;
-  toggleScreenSharing?: () => void;
+  sharingScreen: boolean;
 
   /** Also controls if the audio output button is visible */
-  audioOutputSwitcher?: AudioOutputSwitcher;
-  /** Also controls if the settings button is visible */
-  openSettings?: () => void;
-  /** Also controls if the hangup button is visible */
-  hangup?: () => void;
+  audioOutputSwitcher: AudioOutputSwitcher | undefined;
 
-  reactionIdentifier?: string;
-  reactionData?: ReactionData;
+  reactionIdentifier: string | undefined;
+  reactionData: ReactionData | undefined;
 
   // debug stuff
-  debugTileLayout?: boolean;
-  tileStoreGeneration?: number;
+  debugTileLayout: boolean;
+  tileStoreGeneration: number | undefined;
 
   /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
-  audioOptions?: MenuOptions[];
+  audioOptions: MenuOptions[];
   /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
-  videoOptions?: MenuOptions[];
-  selectedAudio?: string;
-  selectedVideo?: string;
-  selectAudioButtonOption?: (deviceId: string) => void;
-  selectVideoButtonOption?: (option: string) => void;
-  videoToggles?: ToggleOption[];
+  videoOptions: MenuOptions[];
+  selectedAudio: string | undefined;
+  selectedVideo: string | undefined;
+  selectAudioButtonOption: ((deviceId: string) => void) | undefined;
+  selectVideoButtonOption: ((option: string) => void) | undefined;
+  videoToggles: ToggleOption[];
 }
 
 export interface FooterProps {
@@ -99,35 +117,34 @@ export interface FooterProps {
   vm: ViewModel<FooterSnapshot>;
 }
 export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
-  const {
-    asOverlay,
-    hideControls,
-    layoutMode,
-    setLayoutMode,
-    openSettings,
-    audioEnabled,
-    videoEnabled,
-    toggleAudio,
-    toggleVideo,
-    sharingScreen,
-    toggleScreenSharing,
-    reactionIdentifier,
-    reactionData,
-    audioOutputSwitcher,
-    hangup,
-    debugTileLayout,
-    tileStoreGeneration,
-    videoOptions,
-    selectedVideo,
-    audioOptions,
-    selectedAudio,
-    selectAudioButtonOption,
-    selectVideoButtonOption,
-    videoToggles,
-    buttonSize,
-    showSettingsButton,
-    showLogo,
-  } = useViewModel(vm);
+  const asOverlay = useBehavior(vm.asOverlay$);
+  const showFooter = useBehavior(vm.showFooter$);
+  const hideControls = useBehavior(vm.hideControls$);
+  const layoutMode = useBehavior(vm.layoutMode$);
+  const setLayoutMode = useBehavior(vm.setLayoutMode$);
+  const openSettings = useBehavior(vm.openSettings$);
+  const audioEnabled = useBehavior(vm.audioEnabled$);
+  const videoEnabled = useBehavior(vm.videoEnabled$);
+  const toggleAudio = useBehavior(vm.toggleAudio$);
+  const toggleVideo = useBehavior(vm.toggleVideo$);
+  const sharingScreen = useBehavior(vm.sharingScreen$);
+  const toggleScreenSharing = useBehavior(vm.toggleScreenSharing$);
+  const reactionIdentifier = useBehavior(vm.reactionIdentifier$);
+  const reactionData = useBehavior(vm.reactionData$);
+  const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
+  const hangup = useBehavior(vm.hangup$);
+  const debugTileLayout = useBehavior(vm.debugTileLayout$);
+  const tileStoreGeneration = useBehavior(vm.tileStoreGeneration$);
+  const videoOptions = useBehavior(vm.videoOptions$);
+  const selectedVideo = useBehavior(vm.selectedVideo$);
+  const audioOptions = useBehavior(vm.audioOptions$);
+  const selectedAudio = useBehavior(vm.selectedAudio$);
+  const selectAudioButtonOption = useBehavior(vm.selectAudioButtonOption$);
+  const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
+  const videoToggles = useBehavior(vm.videoToggles$);
+  const buttonSize = useBehavior(vm.buttonSize$);
+  const showSettingsButton = useBehavior(vm.showSettingsButton$);
+  const showLogo = useBehavior(vm.showLogo$);
 
   const buttons: JSX.Element[] = [];
 
@@ -267,8 +284,10 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
   return (
     <div
       ref={ref}
+      data-testid="footer-container"
       className={classNames(styles.footer, {
         [styles.overlay]: asOverlay,
+        [styles.hidden]: !showFooter,
       })}
     >
       <div className={styles.settingsLogoContainer}>

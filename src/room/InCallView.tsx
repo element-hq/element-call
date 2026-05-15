@@ -237,7 +237,8 @@ export const InCallView: FC<InCallViewProps> = ({
   const windowMode = useBehavior(vm.windowMode$);
   const layout = useBehavior(vm.layout$);
   const showHeader = useBehavior(vm.showHeader$);
-  const showFooter = useBehavior(vm.showFooter$);
+  const settingsOpen = useBehavior(vm.settingsOpen$);
+  const setSettingsOpen = useBehavior(vm.setSettingsOpen$);
   const earpieceMode = useBehavior(vm.earpieceMode$);
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
 
@@ -284,17 +285,7 @@ export const InCallView: FC<InCallViewProps> = ({
   );
   const onPointerOut = useCallback(() => vm.unhoverScreen(), [vm]);
 
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
-
-  const openSettings = useCallback(
-    () => setSettingsModalOpen(true),
-    [setSettingsModalOpen],
-  );
-  const closeSettings = useCallback(
-    () => setSettingsModalOpen(false),
-    [setSettingsModalOpen],
-  );
 
   const openProfile = useMemo(
     () =>
@@ -302,10 +293,10 @@ export const InCallView: FC<InCallViewProps> = ({
       widget === null
         ? (): void => {
             setSettingsTab("profile");
-            setSettingsModalOpen(true);
+            setSettingsOpen(true);
           }
         : null,
-    [setSettingsTab, setSettingsModalOpen],
+    [setSettingsTab, setSettingsOpen],
   );
 
   const [headerRef, headerBounds] = useMeasure();
@@ -555,7 +546,6 @@ export const InCallView: FC<InCallViewProps> = ({
         vm,
         muteStates,
         mediaDevices,
-        openSettings,
         supportsReactions
           ? `${client.getUserId()}:${client.getDeviceId()}`
           : undefined,
@@ -564,19 +554,19 @@ export const InCallView: FC<InCallViewProps> = ({
     return (): void => {
       footerScope.end();
     };
-  }, [client, mediaDevices, muteStates, openSettings, supportsReactions, vm]);
+  }, [client, mediaDevices, muteStates, supportsReactions, vm]);
 
   useAppBarSecondaryButton(
     <SettingsIconButton
       key="settings"
-      onClick={openSettings}
+      onClick={() => setSettingsOpen(true)}
       data-testid="settings-app-bar"
     />,
   );
 
   // Only hide the settings button if we have an AppBar header and we are showing the header
   const footer = footerVm !== null && (
-    <>{showFooter && <CallFooter ref={footerRef} vm={footerVm} />}</>
+    <CallFooter ref={footerRef} vm={footerVm} />
   );
   const allConnections = useBehavior(vm.allConnections$);
 
@@ -614,8 +604,8 @@ export const InCallView: FC<InCallViewProps> = ({
           <SettingsModal
             client={client}
             roomId={matrixRoom.roomId}
-            open={settingsModalOpen}
-            onDismiss={closeSettings}
+            open={settingsOpen}
+            onDismiss={(): void => setSettingsOpen(false)}
             tab={settingsTab}
             onTabChange={setSettingsTab}
             livekitRooms={allConnections

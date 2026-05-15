@@ -15,6 +15,7 @@ import {
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
+  BehaviorSubject,
   catchError,
   combineLatest,
   distinctUntilChanged,
@@ -351,6 +352,9 @@ export interface CallViewModel {
   // header/footer visibility
   showHeader$: Behavior<boolean>;
   showFooter$: Behavior<boolean>;
+
+  settingsOpen$: Behavior<boolean>;
+  setSettingsOpen$: Behavior<(open: boolean) => void>;
 
   // audio routing
   /**
@@ -1332,6 +1336,7 @@ export function createCallViewModel$(
   const showFooterUrlParams = !(
     urlParams.header === HeaderStyle.None && urlParams.showControls === false
   );
+  // candidat to move into the FooterViewModel
   const showFooterLayout$ = scope.behavior<boolean>(
     windowMode$.pipe(
       switchMap((mode) => {
@@ -1386,11 +1391,18 @@ export function createCallViewModel$(
       }),
     ),
   );
+  // candidat to move into the FooterViewModel
   const showFooter$ = scope.behavior(
     showFooterLayout$.pipe(
       map((showFooter) => showFooter && showFooterUrlParams),
     ),
   );
+
+  const settingsOpen$ = new BehaviorSubject(false);
+  const setSettingsOpen$ = constant((open: boolean) => {
+    settingsOpen$.next(open);
+  });
+
   /**
    * Whether audio is currently being output through the earpiece.
    */
@@ -1622,6 +1634,8 @@ export function createCallViewModel$(
     showSpeakingIndicators$: showSpeakingIndicators$,
     showHeader$: showHeader$,
     showFooter$: showFooter$,
+    settingsOpen$: settingsOpen$,
+    setSettingsOpen$: setSettingsOpen$,
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
     reconnecting$: localMembership.reconnecting$,

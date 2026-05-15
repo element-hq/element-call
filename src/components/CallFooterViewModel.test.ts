@@ -47,6 +47,9 @@ function buildMinimalCallViewModel(layout: Layout): CallViewModel {
     handsRaised$: constant({}),
     reactions$: constant({}),
     tileStoreGeneration$: constant(0),
+    showFooter$: constant(true),
+    settingsOpen$: constant(false),
+    setSettingsOpen$: constant(() => {}),
   } as unknown as CallViewModel;
 }
 
@@ -95,12 +98,11 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(layout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        /* openSettings */ undefined,
         /* reactionIdentifier */ undefined,
       );
 
-      expect(vm.audioOptions$?.value).toEqual([]);
-      expect(vm.videoOptions$?.value).toEqual([]);
+      expect(vm.audioOptions$.value).toEqual([]);
+      expect(vm.videoOptions$.value).toEqual([]);
     }
     it("are empty when both the platform is iOS", () => {
       checkEmptyFor("ios", gridLayout);
@@ -117,7 +119,6 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(gridLayout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        /* openSettings */ undefined,
         /* reactionIdentifier */ undefined,
       );
 
