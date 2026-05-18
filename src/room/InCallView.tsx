@@ -90,6 +90,13 @@ import { useLatest } from "../useLatest.ts";
 import { CallFooter } from "../components/CallFooter.tsx";
 import { SettingsIconButton } from "../button/Button.tsx";
 
+declare module "react" {
+  interface CSSProperties {
+    "--call-view-safe-area-inset-top"?: string;
+    "--call-view-safe-area-inset-bottom"?: string;
+  }
+}
+
 const logger = rootLogger.getChild("[InCallView]");
 
 export interface ActiveCallProps extends Omit<
@@ -510,6 +517,16 @@ export const InCallView: FC<InCallViewProps> = ({
           insetBlockStart:
             edgeToEdge || headerBounds.height === 0 ? 0 : headerBounds.bottom,
           height: edgeToEdge ? "100%" : gridBounds.height,
+          // If edge-to-edge, compute new safe area insets that account for the
+          // header and footer.
+          "--call-view-safe-area-inset-top":
+            edgeToEdge && header && showHeader
+              ? `calc(env(safe-area-inset-top) + ${headerBounds.height}px)`
+              : undefined,
+          "--call-view-safe-area-inset-bottom":
+            edgeToEdge && showFooter
+              ? `calc(env(safe-area-inset-bottom) + ${footerBounds.height}px)`
+              : undefined,
         }}
         model={layout}
         Layout={layers.fixed}
