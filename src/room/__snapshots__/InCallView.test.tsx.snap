@@ -164,12 +164,13 @@ exports[`InCallView > rendering > renders 1`] = `
     />
     <div
       class="footer"
+      data-testid="footer-container"
     >
       <div
         class="settingsLogoContainer"
       >
         <button
-          aria-labelledby="_r_f_"
+          aria-labelledby="_r_8_"
           class="_icon-button_1215g_8 settingsOnlyShowWide"
           data-kind="secondary"
           data-testid="settings-bottom-left"
@@ -304,7 +305,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="buttons"
       >
         <button
-          aria-labelledby="_r_k_"
+          aria-labelledby="_r_d_"
           class="_button_1nw83_8 settingsOnlyShowNarrow _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="secondary"
           data-size="lg"
@@ -328,7 +329,7 @@ exports[`InCallView > rendering > renders 1`] = `
         <button
           aria-checked="false"
           aria-disabled="true"
-          aria-labelledby="_r_p_"
+          aria-labelledby="_r_i_"
           class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="primary"
           data-size="lg"
@@ -352,7 +353,7 @@ exports[`InCallView > rendering > renders 1`] = `
         <button
           aria-checked="false"
           aria-disabled="true"
-          aria-labelledby="_r_u_"
+          aria-labelledby="_r_n_"
           class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="primary"
           data-size="lg"
@@ -374,7 +375,33 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-labelledby="_r_13_"
+          aria-disabled="false"
+          aria-expanded="false"
+          aria-haspopup="true"
+          aria-labelledby="_r_s_"
+          class="_button_1nw83_8 raiseHand _has-icon_1nw83_60 _icon-only_1nw83_53"
+          data-kind="secondary"
+          data-size="lg"
+          role="button"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              clip-rule="evenodd"
+              d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10m3.536-6.464a1 1 0 0 0-1.415-1.415A3 3 0 0 1 12 15a3 3 0 0 1-2.121-.879 1 1 0 1 0-1.414 1.415A5 5 0 0 0 12 17c1.38 0 2.632-.56 3.536-1.464M10 10.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m5.5 1.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"
+              fill-rule="evenodd"
+            />
+          </svg>
+        </button>
+        <button
+          aria-labelledby="_r_14_"
           class="_button_1nw83_8 endCall _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
           data-kind="primary"
           data-size="lg"
@@ -402,7 +429,7 @@ exports[`InCallView > rendering > renders 1`] = `
         data-size="lg"
       >
         <input
-          aria-labelledby="_r_18_"
+          aria-labelledby="_r_19_"
           name="layoutMode"
           type="radio"
           value="spotlight"
@@ -420,7 +447,7 @@ exports[`InCallView > rendering > renders 1`] = `
           />
         </svg>
         <input
-          aria-labelledby="_r_1d_"
+          aria-labelledby="_r_1e_"
           checked=""
           name="layoutMode"
           type="radio"

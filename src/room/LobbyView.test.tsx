@@ -17,6 +17,9 @@ import { mockMediaDevices, mockMuteStates } from "../utils/test";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import lobbyStyles from "./LobbyView.module.css";
+import headerStyles from "../Header.module.css";
+import { axe } from "vitest-axe";
 
 vi.mock("@livekit/components-react", () => ({
   usePreviewTracks: (): unknown[] => [],
@@ -83,18 +86,26 @@ function renderLobbyView(
 }
 
 describe("LobbyView", () => {
-  it("renders with header and participant count", () => {
+  it("renders with header and participant count", async () => {
     const { container } = renderLobbyView();
     expect(container).toMatchSnapshot();
+    expect(
+      container.getElementsByClassName(headerStyles.header).length,
+    ).toBeTruthy();
+    expect(await axe(container)).toHaveNoViolations();
   });
 
   it("renders without header", () => {
     const { container } = renderLobbyView({ hideHeader: true });
-    expect(container).toMatchSnapshot();
+    expect(
+      container.getElementsByClassName(headerStyles.header).length,
+    ).toBeFalsy();
   });
 
   it("renders with waiting for invite state", () => {
-    const { container } = renderLobbyView({ waitingForInvite: true });
-    expect(container).toMatchSnapshot();
+    const { getByTestId } = renderLobbyView({
+      waitingForInvite: true,
+    });
+    expect(getByTestId("lobby_joinCall")).toHaveClass(lobbyStyles.wait);
   });
 });

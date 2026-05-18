@@ -104,10 +104,10 @@ describe("createCallFooterViewModel", () => {
       expect(vm.audioOptions$.value).toEqual([]);
       expect(vm.videoOptions$.value).toEqual([]);
     }
-    it("are empty when both the platform is iOS", () => {
+    it("are both empty when the platform is iOS", () => {
       checkEmptyFor("ios", gridLayout);
     });
-    it("are empty when both the layout is pip", () => {
+    it("are both empty when the layout is pip", () => {
       checkEmptyFor("desktop", pipLayout);
     });
 

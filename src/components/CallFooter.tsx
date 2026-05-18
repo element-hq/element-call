@@ -82,8 +82,6 @@ export interface FooterState {
   asOverlay: boolean;
 
   buttonSize: "md" | "lg";
-  showSettingsButton: boolean;
-  showLayoutSwitcher: boolean;
   showLogo: boolean;
 
   layoutMode: GridMode | undefined;
@@ -143,12 +141,11 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
   const videoToggles = useBehavior(vm.videoToggles$);
   const buttonSize = useBehavior(vm.buttonSize$);
-  const showSettingsButton = useBehavior(vm.showSettingsButton$);
   const showLogo = useBehavior(vm.showLogo$);
 
   const buttons: JSX.Element[] = [];
 
-  if (showSettingsButton) {
+  if (openSettings !== undefined) {
     // Add the settings button to the center group so it's visible on small
     // screens. On larger screens the SettingsIconButton with
     // showForScreenWidth="wide" in the settingsLogoContainer is used instead.
@@ -291,7 +288,7 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
       })}
     >
       <div className={styles.settingsLogoContainer}>
-        {showSettingsButton && (
+        {openSettings !== undefined && (
           <SettingsIconButton
             key="settings"
             kind="secondary"
