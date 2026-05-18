@@ -94,7 +94,7 @@ const logger = rootLogger.getChild("[InCallView]");
 
 export interface ActiveCallProps extends Omit<
   InCallViewProps,
-  "vm" | "livekitRoom" | "connState"
+  "vm" | "livekitRoom" | "connState" | "footerVm"
 > {
   e2eeSystem: EncryptionSystem;
   // TODO refactor those reasons into an enum

@@ -98,7 +98,6 @@ export const Default: Story = {
     selectedVideo: undefined,
     selectAudioButtonOption: undefined,
     selectVideoButtonOption: undefined,
-    videoToggles: [],
   },
   parameters: {
     layout: "fullscreen",
@@ -135,12 +134,12 @@ export const WithAudioAndVideoOptions: Story = {
     audioEnabled: false,
     videoEnabled: true,
     audioOptions: [
-      { label: "Microphone 1", id: "1" },
-      { label: "Microphone 2", id: "2" },
+      { label: { type: "name", name: "Microphone 1" }, id: "1" },
+      { label: { type: "name", name: "Microphone 2" }, id: "2" },
     ],
     videoOptions: [
-      { label: "Camera 1", id: "1" },
-      { label: "Camera 2", id: "2" },
+      { label: { type: "name", name: "Camera 1" }, id: "1" },
+      { label: { type: "name", name: "Camera 2" }, id: "2" },
     ],
     selectedAudio: "2",
     selectedVideo: "1",

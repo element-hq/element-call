@@ -11,7 +11,6 @@ import { supportsBackgroundProcessors } from "@livekit/track-processors";
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
 import { type MediaDevices } from "../state/MediaDevices";
-import { mediaDeviceLabelToString } from "../settings/DeviceSelection";
 import {
   backgroundBlur as backgroundBlurSettings,
   debugTileLayout as debugTileLayoutSetting,
@@ -77,10 +76,7 @@ function buildDeviceBehaviors(
                 map((available) =>
                   [...available.entries()].map(([id, label]) => ({
                     id,
-                    label: mediaDeviceLabelToString(
-                      label,
-                      (n) => "Audio Device " + n,
-                    ),
+                    label,
                   })),
                 ),
               ),
@@ -100,10 +96,7 @@ function buildDeviceBehaviors(
                 map((available) =>
                   [...available.entries()].map(([id, label]) => ({
                     id,
-                    label: mediaDeviceLabelToString(
-                      label,
-                      (n) => "Camera " + n,
-                    ),
+                    label,
                   })),
                 ),
               ),
