@@ -121,7 +121,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       remoteParticipants$: of([remoteParticipant]),
     },
   );
-  const { vm, rtcSession } = getBasicCallViewModelEnvironment(
+  const { vm, footerVm, rtcSession } = getBasicCallViewModelEnvironment(
     [local, alice],
     undefined,
     mediaDevices,
@@ -138,6 +138,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       rtcSession={rtcSession.asMockedSession()}
       muteStates={muteState}
       vm={vm}
+      footerVm={footerVm}
       matrixInfo={{
         userId: "",
         displayName: "",

@@ -36,18 +36,6 @@ export interface ToggleOption {
   id: string;
 }
 
-export interface IconsAndLabels {
-  /** The Icon used if the mute button is enabled */
-  IconEnabled: ComponentType<React.SVGAttributes<SVGElement>>;
-  /** The Icon used if the mute button is disabled */
-  IconDisabled: ComponentType<React.SVGAttributes<SVGElement>>;
-  /** The icon used for the different options */
-  IconOptions?: ComponentType<React.SVGAttributes<SVGElement>>;
-  enabledLabel: string;
-  disabledLabel: string;
-  optionsButtonLabel: string;
-}
-
 export interface MediaMuteAndSwitchButtonProps {
   /** The title used in the Switcher modal. */
   title: string;
@@ -55,7 +43,7 @@ export interface MediaMuteAndSwitchButtonProps {
   enabled?: boolean;
   /** Callback if the mute button is clicked */
   onMuteClick?: () => void;
-  iconsAndLabels?: "video" | "audio" | IconsAndLabels;
+  iconsAndLabels: "video" | "audio";
   /** The options available for the media device selector modal */
   options?: MenuOptions[];
   /** The option that will currently be rendered as the selected option */
@@ -115,30 +103,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           data-testid="incall_mute"
         />
       );
-      break;
-    default:
-      button = (
-        <Button
-          iconOnly
-          role="switch"
-          Icon={
-            enabled ? iconsAndLabels?.IconEnabled : iconsAndLabels?.IconDisabled
-          }
-          onClick={(e) => {
-            onMuteClick?.();
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          kind={enabled ? "secondary" : "primary"}
-          size="lg"
-          className={styles.button}
-          aria-label={
-            enabled
-              ? iconsAndLabels?.disabledLabel
-              : iconsAndLabels?.enabledLabel
-          }
-        />
-      );
+
       break;
   }
 
@@ -152,14 +117,6 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     case "audio":
       IconOptions = MicOnIcon;
       optionsButtonLabel = t("settings.devices.microphone");
-      break;
-    case undefined:
-      IconOptions = undefined;
-      optionsButtonLabel = "undefined";
-      break;
-    default:
-      IconOptions = iconsAndLabels.IconOptions;
-      optionsButtonLabel = iconsAndLabels.optionsButtonLabel;
       break;
   }
   return (

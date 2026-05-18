@@ -30,7 +30,7 @@ const reactionData = {
  *  - Add additional react context
  * The paraeters are all params from the FooterSnapshot,
  * the Snapshot of the vm, the wrapper will create a mocked vm from it and pass it to the CallFooter.
- * children used for the "Back to Recents" button in the lobby stories, but can be used for anything really
+ * `children` is used for the "Back to Recents" button in the lobby stories, but can be used for anything really.
  * @returns A component that renders the CallFooter based on primitive snapshot params (not a view model). Which is what we want for storybook.
  */
 function CallFooterStoryWrapper({
@@ -71,7 +71,6 @@ const fnArgType = {
 export const Default: Story = {
   args: {
     showLogo: false,
-    showSettingsButton: true,
     layoutMode: "grid",
     audioEnabled: true,
     videoEnabled: true,
@@ -85,7 +84,6 @@ export const Default: Story = {
     showFooter: true,
     hideControls: false,
     asOverlay: false,
-    showLayoutSwitcher: false,
     sharingScreen: false,
     audioOutputSwitcher: undefined,
     reactionIdentifier: undefined,

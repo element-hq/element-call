@@ -105,7 +105,10 @@ export interface ActiveCallProps extends Omit<
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const [vm, setVm] = useState<CallViewModel | null>(null);
-
+  const [footerVm, setFooterVm] = useState<ViewModel<FooterSnapshot> | null>(
+    null,
+  );
+  const { supportsReactions } = useReactionsSender();
   const urlParams = useUrlParams();
   const mediaDevices = useMediaDevices();
   const trackProcessorState$ = useTrackProcessorObservable$();
@@ -115,6 +118,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     const reactionsReader = new ReactionsReader(scope, props.rtcSession);
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
       urlParams;
+
     const vm = createCallViewModel$(
       scope,
       props.rtcSession,
@@ -131,6 +135,16 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       reactionsReader.reactions$,
       scope.behavior(trackProcessorState$),
     );
+    const footerVm = createCallFooterViewModel(
+      scope,
+      vm,
+      props.muteStates,
+      mediaDevices,
+      supportsReactions
+        ? `${props.client.getUserId()}:${props.client.getDeviceId()}`
+        : undefined,
+    );
+    setFooterVm(footerVm);
     // TODO move this somewhere else once we use the callViewModel in the lobby as well!
     vm.join();
     setVm(vm);
@@ -138,7 +152,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     vm.leave$.pipe(scope.bind()).subscribe(props.onLeft);
 
     return (): void => {
-      logger.info("END CALL VIEW SCOPE");
       scope.end();
     };
   }, [
@@ -150,13 +163,48 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     urlParams,
     mediaDevices,
     trackProcessorState$,
+    props.client,
+    supportsReactions,
+  ]);
+
+  useEffect(() => {
+    if (vm === null) return;
+
+    const scope = new ObservableScope();
+    const footerVm = createCallFooterViewModel(
+      scope,
+      vm,
+      props.muteStates,
+      mediaDevices,
+      supportsReactions
+        ? `${props.client.getUserId()}:${props.client.getDeviceId()}`
+        : undefined,
+    );
+    setFooterVm(footerVm);
+
+    return (): void => {
+      scope.end();
+    };
+  }, [
+    props.rtcSession,
+    props.matrixRoom,
+    props.muteStates,
+    props.e2eeSystem,
+    props.onLeft,
+    urlParams,
+    mediaDevices,
+    trackProcessorState$,
+    props.client,
+    supportsReactions,
+    vm,
   ]);
 
   if (vm === null) return null;
+  if (footerVm === null) return null;
 
   return (
     <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
-      <InCallView {...props} vm={vm} />
+      <InCallView {...props} vm={vm} footerVm={footerVm} />
     </ReactionsSenderProvider>
   );
 };
@@ -164,6 +212,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 export interface InCallViewProps {
   client: MatrixClient;
   vm: CallViewModel;
+  footerVm: ViewModel<FooterSnapshot>;
   matrixInfo: MatrixInfo;
   rtcSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
@@ -174,14 +223,14 @@ export interface InCallViewProps {
 export const InCallView: FC<InCallViewProps> = ({
   client,
   vm,
+  footerVm,
   matrixInfo,
   matrixRoom,
   muteStates,
   onShareClick,
 }) => {
   const { t } = useTranslation();
-  const { supportsReactions, sendReaction, toggleRaisedHand } =
-    useReactionsSender();
+  const { sendReaction, toggleRaisedHand } = useReactionsSender();
 
   useWakeLock();
   // TODO-MULTI-SFU This is unused now??
@@ -217,7 +266,6 @@ export const InCallView: FC<InCallViewProps> = ({
     muted: muteAllAudio,
   });
   const latestPickupPhaseAudio = useLatest(pickupPhaseAudio);
-  const mediaDevices = useMediaDevices();
   const toggleAudio = useBehavior(muteStates.audio.toggle$);
   const toggleVideo = useBehavior(muteStates.video.toggle$);
   const setAudioEnabled = useBehavior(muteStates.audio.setEnabled$);
@@ -535,26 +583,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const rageshakeRequestModalProps = useRageshakeRequestModal(
     matrixRoom.roomId,
   );
-  const [footerVm, setFooterVm] = useState<ViewModel<FooterSnapshot> | null>(
-    null,
-  );
-  useEffect(() => {
-    const footerScope = new ObservableScope();
-    setFooterVm(
-      createCallFooterViewModel(
-        footerScope,
-        vm,
-        muteStates,
-        mediaDevices,
-        supportsReactions
-          ? `${client.getUserId()}:${client.getDeviceId()}`
-          : undefined,
-      ),
-    );
-    return (): void => {
-      footerScope.end();
-    };
-  }, [client, mediaDevices, muteStates, supportsReactions, vm]);
 
   useAppBarSecondaryButton(
     <SettingsIconButton

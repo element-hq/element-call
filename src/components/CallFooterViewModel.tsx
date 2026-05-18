@@ -188,30 +188,35 @@ export function createCallFooterViewModel(
       callModel.windowMode$.pipe(map((mode) => mode === "flat")),
     ),
     buttonSize$: scope.behavior(
-      isPip$.pipe(map((pip) => (pip ? "md" : "lg") as "md" | "lg")),
+      isPip$.pipe(map<boolean, "md" | "lg">((pip) => (pip ? "md" : "lg"))),
     ),
-    showSettingsButton$: scope.behavior(
+
+    openSettings$: scope.behavior(
       combineLatest([
         isPip$,
         callModel.showHeader$,
-        callModel.settingsOpen$,
+        callModel.setSettingsOpen$,
       ]).pipe(
-        map(
-          ([isPip, showHeader, settingsOpen]) =>
-            settingsOpen !== undefined &&
-            !isPip &&
-            showControls &&
-            !(headerStyle === HeaderStyle.AppBar && showHeader),
+        map(([isPip, showHeader, setSettingsOpen]) =>
+          !isPip &&
+          !(headerStyle === HeaderStyle.AppBar && showHeader) &&
+          showControls
+            ? (): void => setSettingsOpen(true)
+            : undefined,
         ),
       ),
     ),
-    showLayoutSwitcher$: scope.behavior(
-      isPip$.pipe(map((l) => !isPip$ && showControls)),
-    ),
+
     showLogo$: scope.behavior(isPip$.pipe(map((isPip) => showLogo && !isPip))),
 
     layoutMode$: callModel.gridMode$,
-    setLayoutMode$: constant(callModel.setGridMode),
+    setLayoutMode$: scope.behavior(
+      isPip$.pipe(
+        map((isPip) =>
+          !isPip && showControls ? callModel.setGridMode : undefined,
+        ),
+      ),
+    ),
 
     sharingScreen$: callModel.sharingScreen$,
     toggleScreenSharing$: constant(callModel.toggleScreenSharing ?? undefined),
@@ -222,15 +227,6 @@ export function createCallFooterViewModel(
       ),
     ),
 
-    openSettings$: scope.behavior(
-      combineLatest([callModel.showHeader$, callModel.setSettingsOpen$]).pipe(
-        map(([showHeader, setSettingsOpen]) =>
-          headerStyle === HeaderStyle.AppBar && showHeader
-            ? undefined
-            : (): void => setSettingsOpen(true),
-        ),
-      ),
-    ),
     hangup$: constant(callModel.hangup),
 
     reactionIdentifier$: constant(reactionIdentifier),

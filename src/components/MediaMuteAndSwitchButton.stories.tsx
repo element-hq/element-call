@@ -5,7 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { AdvancedSettingsIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { fn, userEvent, within, expect } from "storybook/test";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
@@ -21,13 +20,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     title: "SomeMenu",
-    iconsAndLabels: {
-      IconEnabled: AdvancedSettingsIcon,
-      IconDisabled: AdvancedSettingsIcon,
-      enabledLabel: "Enabled",
-      disabledLabel: "Disabled",
-      optionsButtonLabel: "Options",
-    },
+    iconsAndLabels: "audio",
     enabled: true,
     options: [
       { label: "option 1", id: "1" },
