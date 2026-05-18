@@ -32,7 +32,6 @@ import { type GridMode } from "../state/CallViewModel/CallViewModel";
 import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
-  type ToggleOption,
 } from "./MediaMuteAndSwitchButton";
 import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
@@ -61,6 +60,7 @@ export interface FooterActions {
   toggleAudio: (() => void) | undefined;
   /** Also controls if the videoMute button is disabled */
   toggleVideo: (() => void) | undefined;
+  toggleBlur: (() => void) | undefined;
   /** Also controls if the layout button is visible */
   setLayoutMode: ((mode: GridMode) => void) | undefined;
   toggleScreenSharing: (() => void) | undefined;
@@ -73,6 +73,7 @@ export interface FooterActions {
 export interface FooterState {
   audioEnabled: boolean;
   videoEnabled: boolean;
+  videoBlurEnabled: boolean;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -106,7 +107,6 @@ export interface FooterState {
   selectedVideo: string | undefined;
   selectAudioButtonOption: ((deviceId: string) => void) | undefined;
   selectVideoButtonOption: ((option: string) => void) | undefined;
-  videoToggles: ToggleOption[];
 }
 
 export interface FooterProps {
@@ -139,7 +139,8 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
   const selectedAudio = useBehavior(vm.selectedAudio$);
   const selectAudioButtonOption = useBehavior(vm.selectAudioButtonOption$);
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
-  const videoToggles = useBehavior(vm.videoToggles$);
+  const toggleBlur = useBehavior(vm.toggleBlur$);
+  const videoBlurEnabled = useBehavior(vm.videoBlurEnabled$);
   const buttonSize = useBehavior(vm.buttonSize$);
   const showLogo = useBehavior(vm.showLogo$);
 
@@ -195,9 +196,10 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
         enabled={videoEnabled ?? false}
         onMuteClick={toggleVideo}
         options={videoOptions}
-        toggles={videoToggles}
         selectedOption={selectedVideo}
         onSelect={selectVideoButtonOption}
+        backgroundBlurToggleClick={toggleBlur}
+        videoBlurEnabled={videoBlurEnabled}
       />,
     );
   } else {
