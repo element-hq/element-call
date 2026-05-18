@@ -66,9 +66,47 @@ export enum RegistrationType {
   Registered,
 }
 
+// Sanitize URL / referrer / device fields on a single posthog properties bag.
+// Applied to event.properties and to the person-profile bags ($set / $set_once),
+// since posthog mirrors the same URL fields into those.
+function stripPrivacyFields(
+  obj: Properties | undefined,
+  anonymity: Anonymity,
+): void {
+  if (!obj) return;
+
+  if (anonymity === Anonymity.Anonymous) {
+    // drop referrer information for anonymous users
+    obj["$referrer"] = null;
+    obj["$referring_domain"] = null;
+    obj["$initial_referrer"] = null;
+    obj["$initial_referring_domain"] = null;
+
+    // drop device ID, which is a UUID persisted in local storage
+    obj["$device_id"] = null;
+  }
+
+  // the url leaks a lot of private data like the call name or the user
+  // (room password / room ID can land in the hash/query). Strip down to
+  // scheme + host so we still get host-level insights (develop / main / sfu).
+  for (const key of ["$current_url", "$initial_current_url"]) {
+    if (typeof obj[key] === "string") {
+      obj[key] = (obj[key] as string).split("/").slice(0, 3).join("");
+    }
+  }
+
+  // $session_entry_url carries the full untrimmed URL; $initial_person_info
+  // bundles initial referrer + URL into a nested object that bypasses the
+  // per-key strips above. Drop both.
+  delete obj["$session_entry_url"];
+  delete obj["$initial_person_info"];
+}
+
 /**
  * Strip PII from posthog's built-in properties (URL, referrer fields,
- * device ID, $initial_person_info) before events leave the client.
+ * device ID, $initial_person_info, $session_entry_url) before events leave
+ * the client. Also applied to the person-profile bags ($set / $set_once),
+ * which mirror the same URL fields.
  * See src/utils/event-utils.ts in posthog-js (getEventProperties, getPersonInfo)
  * for the list of properties posthog sets automatically.
  */
@@ -77,30 +115,15 @@ export function applyPrivacyFilters(
   anonymity: Anonymity,
 ): CaptureResult | null {
   if (event === null) return null;
-  const properties = event.properties;
 
-  if (anonymity === Anonymity.Anonymous) {
-    // drop referrer information for anonymous users
-    properties["$referrer"] = null;
-    properties["$referring_domain"] = null;
-    properties["$initial_referrer"] = null;
-    properties["$initial_referring_domain"] = null;
-
-    // drop device ID, which is a UUID persisted in local storage
-    properties["$device_id"] = null;
-  }
-
-  // the url leaks a lot of private data like the call name or the user.
-  // Its stripped down to the bare minimum to only give insights about the host (develop, main or sfu)
-  if (typeof properties["$current_url"] === "string") {
-    properties["$current_url"] = properties["$current_url"]
-      .split("/")
-      .slice(0, 3)
-      .join("");
-  }
-
-  // drop $initial_person_info for increased privacy.
-  delete properties["$initial_person_info"];
+  stripPrivacyFields(event.properties, anonymity);
+  // posthog can stash person-profile updates either at the top level
+  // of CaptureResult or nested inside properties depending on the pipeline
+  // stage; clean both spots so nothing slips through.
+  stripPrivacyFields(event.$set, anonymity);
+  stripPrivacyFields(event.$set_once, anonymity);
+  stripPrivacyFields(event.properties["$set"], anonymity);
+  stripPrivacyFields(event.properties["$set_once"], anonymity);
 
   return event;
 }

@@ -138,6 +138,65 @@ describe("PosthogAnalytics", () => {
     it("passes null events through unchanged", () => {
       expect(applyPrivacyFilters(null, Anonymity.Pseudonymous)).toBeNull();
     });
+
+    it("strips URL fields nested inside $set_once", () => {
+      const secretUrl =
+        "https://call.example.com/room/#/?password=hunter2&roomId=abc";
+      const out = applyPrivacyFilters(
+        makeEvent({
+          $current_url: "https://call.example.com/x",
+          $set_once: {
+            $current_url: secretUrl,
+            $initial_current_url: secretUrl,
+            $session_entry_url: secretUrl,
+            $initial_person_info: { r: "x", u: secretUrl },
+          },
+        }),
+        Anonymity.Pseudonymous,
+      );
+
+      const setOnce = out?.properties["$set_once"] as Record<string, unknown>;
+      expect(setOnce["$current_url"]).not.toContain("password");
+      expect(setOnce["$initial_current_url"]).not.toContain("password");
+      expect(setOnce).not.toHaveProperty("$session_entry_url");
+      expect(setOnce).not.toHaveProperty("$initial_person_info");
+    });
+
+    it("strips URL fields nested inside $set", () => {
+      const secretUrl =
+        "https://call.example.com/room/#/?password=hunter2&roomId=abc";
+      const out = applyPrivacyFilters(
+        makeEvent({
+          $current_url: "https://call.example.com/x",
+          $set: {
+            $current_url: secretUrl,
+            $session_entry_url: secretUrl,
+          },
+        }),
+        Anonymity.Pseudonymous,
+      );
+
+      const set = out?.properties["$set"] as Record<string, unknown>;
+      expect(set["$current_url"]).not.toContain("password");
+      expect(set).not.toHaveProperty("$session_entry_url");
+    });
+
+    it("nulls referrer fields inside $set_once when anonymous", () => {
+      const out = applyPrivacyFilters(
+        makeEvent({
+          $current_url: "https://x/y",
+          $set_once: {
+            $initial_referrer: "https://leaky",
+            $initial_referring_domain: "leaky",
+          },
+        }),
+        Anonymity.Anonymous,
+      );
+
+      const setOnce = out?.properties["$set_once"] as Record<string, unknown>;
+      expect(setOnce["$initial_referrer"]).toBeNull();
+      expect(setOnce["$initial_referring_domain"]).toBeNull();
+    });
   });
 
   // Verifies that applyPrivacyFilters is actually wired into posthog.init via
