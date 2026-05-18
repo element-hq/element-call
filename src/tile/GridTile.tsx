@@ -62,6 +62,7 @@ interface TileProps {
   targetHeight: number;
   displayName: string;
   mxcAvatarUrl: string | undefined;
+  showNameTags: boolean;
   focusable: boolean;
 }
 
@@ -398,6 +399,7 @@ interface GridTileProps {
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicators: boolean;
+  showNameTags: boolean;
   focusable: boolean;
 }
 
@@ -419,9 +421,9 @@ export const GridTile: FC<GridTileProps> = ({
       <RingingMediaTile
         ref={ref}
         vm={media}
-        {...props}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        {...props}
       />
     );
   } else if (media.local) {
