@@ -110,10 +110,11 @@ function buildDeviceBehaviors(
     toggleBlur$: scope.behavior(
       combineLatest([backgroundBlurSettings.value$, disableSwitcher$]).pipe(
         map(([current, switcherDisabled]) => {
-          return () =>
-            !switcherDisabled && supportsBackgroundProcessors()
-              ? (): void => backgroundBlurSettings.setValue(!current)
-              : constant(undefined);
+          return !switcherDisabled && supportsBackgroundProcessors()
+            ? (): void => {
+                backgroundBlurSettings.setValue(!current);
+              }
+            : undefined;
         }),
       ),
     ),

@@ -108,7 +108,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const [footerVm, setFooterVm] = useState<ViewModel<FooterSnapshot> | null>(
     null,
   );
-  const { supportsReactions } = useReactionsSender();
   const urlParams = useUrlParams();
   const mediaDevices = useMediaDevices();
   const trackProcessorState$ = useTrackProcessorObservable$();
@@ -135,16 +134,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       reactionsReader.reactions$,
       scope.behavior(trackProcessorState$),
     );
-    const footerVm = createCallFooterViewModel(
-      scope,
-      vm,
-      props.muteStates,
-      mediaDevices,
-      supportsReactions
-        ? `${props.client.getUserId()}:${props.client.getDeviceId()}`
-        : undefined,
-    );
-    setFooterVm(footerVm);
     // TODO move this somewhere else once we use the callViewModel in the lobby as well!
     vm.join();
     setVm(vm);
@@ -164,7 +153,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     mediaDevices,
     trackProcessorState$,
     props.client,
-    supportsReactions,
   ]);
 
   useEffect(() => {
@@ -176,9 +164,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       vm,
       props.muteStates,
       mediaDevices,
-      supportsReactions
-        ? `${props.client.getUserId()}:${props.client.getDeviceId()}`
-        : undefined,
+      `${props.client.getUserId()}:${props.client.getDeviceId()}`,
     );
     setFooterVm(footerVm);
 
@@ -195,7 +181,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     mediaDevices,
     trackProcessorState$,
     props.client,
-    supportsReactions,
     vm,
   ]);
 

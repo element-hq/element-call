@@ -70,16 +70,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useTranslation();
   let button;
-  let toggles =
-    backgroundBlurToggleClick === undefined
-      ? []
-      : [
-          {
-            label: t("action.blur_background"),
-            enabled: videoBlurEnabled,
-            id: BLUR_ID,
-          },
-        ];
+  let toggles: { label: string; enabled: boolean; id: string }[] = [];
   switch (iconsAndLabels) {
     case "video":
       button = (
@@ -94,7 +85,15 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           data-testid="incall_videomute"
         />
       );
-      toggles = [];
+      if (backgroundBlurToggleClick !== undefined) {
+        toggles = [
+          {
+            label: t("action.blur_background"),
+            enabled: videoBlurEnabled ?? false,
+            id: BLUR_ID,
+          },
+        ];
+      }
       break;
     case "audio":
       button = (
