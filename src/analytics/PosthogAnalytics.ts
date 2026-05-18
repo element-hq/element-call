@@ -199,6 +199,7 @@ export class PosthogAnalytics {
         autocapture: false,
         mask_all_text: true,
         mask_all_element_attributes: true,
+        mask_personal_data_properties: true,
         capture_pageview: false,
         before_send: beforeSend,
         respect_dnt: true,
