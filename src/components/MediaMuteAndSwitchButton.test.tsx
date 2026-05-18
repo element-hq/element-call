@@ -192,7 +192,7 @@ describe("MediaMuteAndSwitchButton", () => {
       <TooltipProvider>
         <MediaMuteAndSwitchButton
           title="Switcher"
-          iconsAndLabels="audio"
+          iconsAndLabels="video"
           enabled={true}
           backgroundBlurToggleClick={onVideoBlurToggle}
           onSelect={onSelect}
@@ -200,7 +200,7 @@ describe("MediaMuteAndSwitchButton", () => {
       </TooltipProvider>,
     );
 
-    await user.click(getByRole("button", { name: "Microphone" }));
+    await user.click(getByRole("button", { name: "Camera" }));
 
     const toggle = screen.getByRole("menuitemcheckbox", {
       name: "Blur background",
