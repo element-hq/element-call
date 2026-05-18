@@ -10,6 +10,7 @@ import { render } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
+import { axe } from "vitest-axe";
 
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -19,7 +20,6 @@ import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import lobbyStyles from "./LobbyView.module.css";
 import headerStyles from "../Header.module.css";
-import { axe } from "vitest-axe";
 
 vi.mock("@livekit/components-react", () => ({
   usePreviewTracks: (): unknown[] => [],
