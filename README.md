@@ -201,7 +201,7 @@ pnpm dev
 
 See also:
 
-- [Developing with linked packages](./linking.md)
+- [Developing with linked packages](./docs/linking.md)
 
 ### Backend
 
