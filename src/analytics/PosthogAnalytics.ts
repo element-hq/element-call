@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import posthog, {
   type CaptureOptions,
+  type CaptureResult,
   type PostHog,
   type Properties,
 } from "posthog-js";
@@ -63,6 +64,45 @@ export enum Anonymity {
 export enum RegistrationType {
   Guest,
   Registered,
+}
+
+/**
+ * Strip PII from posthog's built-in properties (URL, referrer fields,
+ * device ID, $initial_person_info) before events leave the client.
+ * See src/utils/event-utils.ts in posthog-js (getEventProperties, getPersonInfo)
+ * for the list of properties posthog sets automatically.
+ */
+export function applyPrivacyFilters(
+  event: CaptureResult | null,
+  anonymity: Anonymity,
+): CaptureResult | null {
+  if (event === null) return null;
+  const properties = event.properties;
+
+  if (anonymity === Anonymity.Anonymous) {
+    // drop referrer information for anonymous users
+    properties["$referrer"] = null;
+    properties["$referring_domain"] = null;
+    properties["$initial_referrer"] = null;
+    properties["$initial_referring_domain"] = null;
+
+    // drop device ID, which is a UUID persisted in local storage
+    properties["$device_id"] = null;
+  }
+
+  // the url leaks a lot of private data like the call name or the user.
+  // Its stripped down to the bare minimum to only give insights about the host (develop, main or sfu)
+  if (typeof properties["$current_url"] === "string") {
+    properties["$current_url"] = properties["$current_url"]
+      .split("/")
+      .slice(0, 3)
+      .join("");
+  }
+
+  // drop $initial_person_info for increased privacy.
+  delete properties["$initial_person_info"];
+
+  return event;
 }
 
 interface PlatformProperties {
@@ -129,13 +169,15 @@ export class PosthogAnalytics {
     }
 
     if (apiKey && apiHost) {
+      const beforeSend = (event: CaptureResult | null): CaptureResult | null =>
+        applyPrivacyFilters(event, this.anonymity);
       this.posthog.init(apiKey, {
         api_host: apiHost,
         autocapture: false,
         mask_all_text: true,
         mask_all_element_attributes: true,
         capture_pageview: false,
-        sanitize_properties: this.sanitizeProperties,
+        before_send: beforeSend,
         respect_dnt: true,
         advanced_disable_decide: true,
       });
@@ -147,37 +189,6 @@ export class PosthogAnalytics {
       this.enabled = false;
     }
   }
-
-  private sanitizeProperties = (
-    properties: Properties,
-    _eventName: string,
-  ): Properties => {
-    // Callback from posthog to sanitize properties before sending them to the server.
-    // Here we sanitize posthog's built in properties which leak PII e.g. url reporting.
-    // See utils.js _.info.properties in posthog-js.
-
-    if (this.anonymity == Anonymity.Anonymous) {
-      // drop referrer information for anonymous users
-      properties["$referrer"] = null;
-      properties["$referring_domain"] = null;
-      properties["$initial_referrer"] = null;
-      properties["$initial_referring_domain"] = null;
-
-      // drop device ID, which is a UUID persisted in local storage
-      properties["$device_id"] = null;
-    }
-    // the url leaks a lot of private data like the call name or the user.
-    // Its stripped down to the bare minimum to only give insights about the host (develop, main or sfu)
-    properties["$current_url"] = (properties["$current_url"] as string)
-      .split("/")
-      .slice(0, 3)
-      .join("");
-
-    // drop $initial_person_info for increased privacy.
-    delete properties["$initial_person_info"];
-
-    return properties;
-  };
 
   private registerSuperProperties(properties: Properties): void {
     if (this.enabled) {

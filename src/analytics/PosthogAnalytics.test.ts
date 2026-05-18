@@ -14,9 +14,13 @@ import {
   beforeAll,
   afterAll,
 } from "vitest";
-import posthog, { type Properties } from "posthog-js";
+import posthog, { type CaptureResult } from "posthog-js";
 
-import { PosthogAnalytics } from "./PosthogAnalytics";
+import {
+  Anonymity,
+  applyPrivacyFilters,
+  PosthogAnalytics,
+} from "./PosthogAnalytics";
 import { mockConfig } from "../utils/test";
 
 describe("PosthogAnalytics", () => {
@@ -90,7 +94,57 @@ describe("PosthogAnalytics", () => {
     });
   });
 
-  describe("sanitizeProperties", () => {
+  describe("applyPrivacyFilters", () => {
+    const makeEvent = (properties: Record<string, unknown>): CaptureResult =>
+      ({ event: "anyEvent", properties }) as unknown as CaptureResult;
+
+    it("drops $initial_person_info regardless of anonymity", () => {
+      const out = applyPrivacyFilters(
+        makeEvent({
+          $current_url: "https://call.example.com/some/private/path",
+          $initial_person_info: {
+            r: "https://example.com/referrer",
+            u: "https://call.example.com/some/private/path",
+          },
+        }),
+        Anonymity.Pseudonymous,
+      );
+      expect(out?.properties).not.toHaveProperty("$initial_person_info");
+    });
+
+    it("strips path from $current_url", () => {
+      const out = applyPrivacyFilters(
+        makeEvent({ $current_url: "https://call.example.com/x/y/z" }),
+        Anonymity.Pseudonymous,
+      );
+      expect(out?.properties["$current_url"]).not.toContain("/x/y/z");
+    });
+
+    it("nulls referrer and device fields when anonymous", () => {
+      const out = applyPrivacyFilters(
+        makeEvent({
+          $current_url: "https://x/y",
+          $referrer: "https://leaky",
+          $initial_referrer: "https://leaky-too",
+          $device_id: "uuid",
+        }),
+        Anonymity.Anonymous,
+      );
+      expect(out?.properties["$referrer"]).toBeNull();
+      expect(out?.properties["$initial_referrer"]).toBeNull();
+      expect(out?.properties["$device_id"]).toBeNull();
+    });
+
+    it("passes null events through unchanged", () => {
+      expect(applyPrivacyFilters(null, Anonymity.Pseudonymous)).toBeNull();
+    });
+  });
+
+  // Verifies that applyPrivacyFilters is actually wired into posthog.init via
+  // the before_send hook — guards against typos in the option name or future
+  // posthog-js bumps renaming/removing the hook. The filter logic itself is
+  // covered by the applyPrivacyFilters block above.
+  describe("posthog.init wiring", () => {
     beforeAll(() => {
       vi.stubEnv("VITE_PACKAGE", "full");
     });
@@ -109,25 +163,25 @@ describe("PosthogAnalytics", () => {
       vi.unstubAllEnvs();
     });
 
-    it("drops $initial_person_info from event properties", () => {
+    it("passes events through the privacy filter via before_send", () => {
       const initSpy = vi.spyOn(posthog, "init");
       expect(PosthogAnalytics.instance.isEnabled()).toBe(true);
 
-      const sanitize = initSpy.mock.calls[0][1]?.sanitize_properties;
-      expect(sanitize).toBeDefined();
+      const beforeSend = initSpy.mock.calls[0][1]?.before_send;
+      expect(beforeSend).toBeInstanceOf(Function);
 
-      const sanitized = sanitize!(
-        {
-          $current_url: "https://call.example.com/some/private/path",
-          $initial_person_info: {
-            r: "https://example.com/referrer",
-            u: "https://call.example.com/some/private/path",
-          },
-        } as Properties,
-        "anyEvent",
+      const event = {
+        event: "anyEvent",
+        properties: {
+          $current_url: "https://call.example.com/x/y",
+          $initial_person_info: { r: "x" },
+        },
+      } as unknown as CaptureResult;
+
+      const out = (beforeSend as (e: CaptureResult) => CaptureResult | null)(
+        event,
       );
-
-      expect(sanitized).not.toHaveProperty("$initial_person_info");
+      expect(out?.properties).not.toHaveProperty("$initial_person_info");
     });
   });
 });
