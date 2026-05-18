@@ -30,11 +30,6 @@ export interface MenuOptions {
   label: string;
   id: string;
 }
-export interface ToggleOption {
-  label: string;
-  enabled: boolean;
-  id: string;
-}
 
 export interface MediaMuteAndSwitchButtonProps {
   /** The title used in the Switcher modal. */
@@ -48,18 +43,16 @@ export interface MediaMuteAndSwitchButtonProps {
   options?: MenuOptions[];
   /** The option that will currently be rendered as the selected option */
   selectedOption?: string;
-  /**
-   * The available toggles (including there current state)
-   * The toggle state is not stored by this component.
-   * It is handled externally and needs to be set by listening to the `onSelect` callback and setting the right toggle item to `enabled`
-   */
-  toggles?: ToggleOption[];
+  backgroundBlurToggleClick?: () => void;
+  videoBlurEnabled?: boolean;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
    */
   onSelect?: (id: string) => void;
 }
+
+const BLUR_ID = "blur";
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
@@ -68,13 +61,24 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   iconsAndLabels,
   options,
   selectedOption,
-  toggles,
+  videoBlurEnabled,
+  backgroundBlurToggleClick,
   onSelect,
 }) => {
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   let button;
+  let toggles =
+    backgroundBlurToggleClick === undefined
+      ? []
+      : [
+          {
+            label: t("action.blur_background"),
+            enabled: videoBlurEnabled,
+            id: BLUR_ID,
+          },
+        ];
   switch (iconsAndLabels) {
     case "video":
       button = (
@@ -89,6 +93,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           data-testid="incall_videomute"
         />
       );
+      toggles = [];
       break;
     case "audio":
       button = (
@@ -103,7 +108,6 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           data-testid="incall_mute"
         />
       );
-
       break;
   }
 
@@ -182,10 +186,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           <ToggleMenuItem
             label={toggle.label}
             onSelect={(e) => {
-              onSelect?.(toggle.id);
+              backgroundBlurToggleClick?.();
               e.preventDefault();
             }}
-            checked={toggle.enabled}
+            checked={toggle.enabled ?? false}
             key={toggle.id}
           />
         ))}

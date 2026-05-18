@@ -9,10 +9,7 @@ import { combineLatest, map, switchMap } from "rxjs";
 import { supportsBackgroundProcessors } from "@livekit/track-processors";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
-import {
-  type MenuOptions,
-  type ToggleOption,
-} from "./MediaMuteAndSwitchButton";
+import { type MenuOptions } from "./MediaMuteAndSwitchButton";
 import { type MediaDevices } from "../state/MediaDevices";
 import { mediaDeviceLabelToString } from "../settings/DeviceSelection";
 import {
@@ -67,7 +64,8 @@ function buildDeviceBehaviors(
   | "videoOptions$"
   | "selectedVideo$"
   | "selectVideoButtonOption$"
-  | "videoToggles$"
+  | "toggleBlur$"
+  | "videoBlurEnabled$"
 > {
   return {
     audioOptions$: scope.behavior(
@@ -115,40 +113,18 @@ function buildDeviceBehaviors(
     selectedVideo$: scope.behavior(
       mediaDevices.videoInput.selected$.pipe(map((s) => s?.id)),
     ),
-    selectVideoButtonOption$: scope.behavior(
-      backgroundBlurSettings.value$.pipe(
-        map((current) => {
-          return (option: string) => {
-            if (option === "blur") {
-              backgroundBlurSettings.setValue(!current);
-            } else {
-              mediaDevices.videoInput.select(option);
-            }
-          };
+    selectVideoButtonOption$: constant(mediaDevices.videoInput.select),
+    toggleBlur$: scope.behavior(
+      combineLatest([backgroundBlurSettings.value$, disableSwitcher$]).pipe(
+        map(([current, switcherDisabled]) => {
+          return () =>
+            !switcherDisabled && supportsBackgroundProcessors()
+              ? (): void => backgroundBlurSettings.setValue(!current)
+              : constant(undefined);
         }),
       ),
     ),
-    videoToggles$: scope.behavior(
-      disableSwitcher$.pipe(
-        switchMap((disable) =>
-          disable
-            ? constant([] as ToggleOption[])
-            : backgroundBlurSettings.value$.pipe(
-                map((blurActive) =>
-                  supportsBackgroundProcessors()
-                    ? [
-                        {
-                          id: "blur",
-                          enabled: blurActive,
-                          label: "Blur Background",
-                        },
-                      ]
-                    : [],
-                ),
-              ),
-        ),
-      ),
-    ),
+    videoBlurEnabled$: backgroundBlurSettings.value$,
   };
 }
 
@@ -278,7 +254,6 @@ export function createLobbyFooterViewModel(
       openSettings,
       hangup,
       debugTileLayout: false,
-      showSettingsButton: openSettings !== undefined,
       showFooter: true,
       toggleAudio: undefined,
       toggleVideo: undefined,
@@ -298,7 +273,6 @@ export function createLobbyFooterViewModel(
       selectedVideo: undefined,
       selectAudioButtonOption: undefined,
       selectVideoButtonOption: undefined,
-      videoToggles: undefined,
     }),
     ...buildMuteBehaviors(scope, muteStates),
     ...buildDeviceBehaviors(scope, mediaDevices, constant(false)),

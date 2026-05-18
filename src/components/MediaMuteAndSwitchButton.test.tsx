@@ -17,7 +17,7 @@ describe("MediaMuteAndSwitchButton", () => {
   test("renders", () => {
     const { container } = render(
       <TooltipProvider>
-        <MediaMuteAndSwitchButton title={"Switcher"} />
+        <MediaMuteAndSwitchButton title={"Switcher"} iconsAndLabels={"audio"} />
       </TooltipProvider>,
     );
     expect(container).toMatchSnapshot();
@@ -187,15 +187,14 @@ describe("MediaMuteAndSwitchButton", () => {
   test("renders menu with toggle control and calls toggle callback", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
+    const onVideoBlurToggle = vi.fn();
     const { getByRole } = render(
       <TooltipProvider>
         <MediaMuteAndSwitchButton
           title="Switcher"
           iconsAndLabels="audio"
           enabled={true}
-          toggles={[
-            { label: "Background blur", id: "bg_blur", enabled: false },
-          ]}
+          backgroundBlurToggleClick={onVideoBlurToggle}
           onSelect={onSelect}
         />
       </TooltipProvider>,
@@ -204,14 +203,14 @@ describe("MediaMuteAndSwitchButton", () => {
     await user.click(getByRole("button", { name: "Microphone" }));
 
     const toggle = screen.getByRole("menuitemcheckbox", {
-      name: "Background blur",
+      name: "Blur background",
     });
     expect(toggle).toBeInTheDocument();
     expect(toggle).toHaveAttribute("aria-checked", "false");
 
     await user.click(toggle);
 
-    expect(onSelect).toHaveBeenCalledWith("bg_blur");
+    expect(onVideoBlurToggle).toHaveBeenCalled();
   });
 
   test("renders check icon to mark the selected menu item", async () => {

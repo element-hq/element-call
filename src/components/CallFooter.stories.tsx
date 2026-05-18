@@ -79,6 +79,8 @@ export const Default: Story = {
     toggleAudio: fn(),
     toggleVideo: fn(),
     toggleScreenSharing: fn(),
+    toggleBlur: fn(),
+    videoBlurEnabled: true,
     hangup: fn(),
     buttonSize: "lg",
     showFooter: true,
@@ -234,7 +236,6 @@ export const Pip: Story = {
   args: {
     ...Default.args,
     buttonSize: "md",
-    showSettingsButton: false,
     layoutMode: undefined,
   },
   play: async ({ args, canvasElement }) => {
