@@ -1,6 +1,6 @@
 ## Quickstart guide
 
-run
+Run:
 
 ```bash
 ./scripts/setup-linking.sh
@@ -50,7 +50,7 @@ before committing a change.
 To make this less of a foot gun we added a git hook.
 A `pre-commit` hook will check if linking is currently used. If it detects
 a `.pnpmfile.cjs` file it will abort the commit with an explanatory message.
-You will than need to run `pnpm links:off` and commit again.
+You will then need to run `pnpm links:off` and commit again.
 
 To activate the hooks configure git with (when using the setup script (`./scripts/setup-linking.sh`) this is already done):
 
