@@ -209,7 +209,7 @@ A docker compose file `dev-backend-docker-compose.yml` is provided to start the
 whole stack of components which is required for a local development environment
 including federation:
 
-- Minimum Synapse Setup (servernameis: `synapse.m.localhost`, `synapse.othersite.m.localhost`)
+- Minimum Synapse Setup (servernames: `synapse.m.localhost`, `synapse.othersite.m.localhost`)
 - MatrixRTC Authorization Service (Note requires Federation API and hence a TLS reverse proxy)
 - Minimum LiveKit SFU setup using dev defaults for config
 - Minimum `localhost` Certificate Authority (CA) for Transport Layer Security (TLS)
