@@ -230,7 +230,7 @@ Run backend components:
 
 ```sh
 pnpm backend
-# or  for podman-compose
+# or for podman-compose:
 # podman-compose -f dev-backend-docker-compose.yml up
 ```
 
