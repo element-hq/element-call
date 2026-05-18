@@ -118,8 +118,8 @@ For operating and deploying Element Call on your own server, refer to the
 ## 🧭 MatrixRTC Backend Discovery and Selection
 
 For proper Element Call operation each site deployment needs a MatrixRTC backend
-setup as outlined in the [Self-Hosting](#self_hosting). A typical federated site
-deployment for three different sites A, B and C is depicted below.
+setup as outlined in the [Self-Hosting Guide](./docs/self_hosting.md). A typical
+federated site deployment for three different sites A, B and C is depicted below.
 
 <p align="center">
   <img src="./docs/Federated_Setup.drawio.png" alt="Element Call federated setup">
