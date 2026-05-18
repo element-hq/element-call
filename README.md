@@ -214,7 +214,7 @@ including federation:
 - Minimum LiveKit SFU setup using dev defaults for config
 - Minimum `localhost` Certificate Authority (CA) for Transport Layer Security (TLS)
   - Hostnames: `m.localhost`, `*.m.localhost`, `*.othersite.m.localhost`
-  - Add [./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt) to your web browsers trusted
+  - Add [./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt) to your web browser's trusted
     certificates
 - Minimum TLS reverse proxy for
   - Synapse homeserver: `synapse.m.localhost` and `synapse.othersite.m.localhost`
