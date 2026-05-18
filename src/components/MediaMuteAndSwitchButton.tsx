@@ -114,14 +114,19 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 
   let IconOptions: ComponentType<React.SVGAttributes<SVGElement>> | undefined;
   let optionsButtonLabel: string;
+  let numberedLabel: (number: number) => string;
   switch (iconsAndLabels) {
     case "video":
       IconOptions = VideoCallIcon;
       optionsButtonLabel = t("settings.devices.camera");
+      numberedLabel = (n): string =>
+        t("settings.devices.microphone_numbered", { n });
       break;
     case "audio":
       IconOptions = MicOnIcon;
       optionsButtonLabel = t("settings.devices.microphone");
+      numberedLabel = (n): string =>
+        t("settings.devices.camera_numbered", { n });
       break;
   }
   return (
@@ -154,16 +159,15 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         }
       >
         {options?.map(({ label, id }) => {
-          const labelText = ((): string => {
-            switch (label.type) {
-              case "name":
-                return label.name;
-              case "number":
-                return t("settings.devices.default_numbered", {
-                  n: label.number,
-                });
-            }
-          })();
+          let labelText: string;
+          switch (label.type) {
+            case "name":
+              labelText = label.name;
+              break;
+            case "number":
+              labelText = numberedLabel(label.number);
+              break;
+          }
           return (
             <MenuItem
               hideChevron
