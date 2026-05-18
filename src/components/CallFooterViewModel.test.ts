@@ -123,11 +123,29 @@ describe("createCallFooterViewModel", () => {
       );
 
       expect(vm.audioOptions$?.value).toEqual([
-        { id: "mic1", label: "Audio Device 1" },
-        { id: "mic2", label: "Microphone 2" },
+        {
+          id: "mic1",
+          label: {
+            number: 1,
+            type: "number",
+          },
+        },
+        {
+          id: "mic2",
+          label: {
+            name: "Microphone 2",
+            type: "name",
+          },
+        },
       ]);
       expect(vm.videoOptions$?.value).toEqual([
-        { id: "cam1", label: "Camera 1" },
+        {
+          id: "cam1",
+          label: {
+            name: "Camera 1",
+            type: "name",
+          },
+        },
       ]);
     });
   });

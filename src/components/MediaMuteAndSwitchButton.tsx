@@ -12,7 +12,6 @@ import {
   MenuItem,
   ToggleMenuItem,
 } from "@vector-im/compound-web";
-import { t } from "i18next";
 import {
   CheckIcon,
   ChevronUpIcon,
@@ -22,12 +21,14 @@ import {
   VideoCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import styles from "./MediaMuteAndSwitchButton.module.css";
 import { MicButton, VideoButton } from "../button";
+import { type DeviceLabel } from "../state/MediaDevices";
 
 export interface MenuOptions {
-  label: string;
+  label: DeviceLabel;
   id: string;
 }
 
@@ -67,7 +68,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 }) => {
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const { t } = useTranslation();
   let button;
   let toggles =
     backgroundBlurToggleClick === undefined
@@ -152,35 +153,45 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        {options?.map((option) => (
-          <MenuItem
-            hideChevron
-            label={option.label}
-            Icon={
-              IconOptions && (
-                <IconOptions
-                  width={24}
-                  height={24}
-                  className={styles.itemIcon}
-                />
-              )
+        {options?.map(({ label, id }) => {
+          const labelText = ((): string => {
+            switch (label.type) {
+              case "name":
+                return label.name;
+              case "number":
+                return t("settings.devices.default_numbered", {
+                  n: label.number,
+                });
             }
-            onSelect={(e) => {
-              e.preventDefault();
-              if (option.id === selectedOption) return;
-              setPlannedSelection(option.id);
-              onSelect?.(option.id);
-            }}
-            key={option.id}
-          >
-            {selectedOption === option.id && (
-              <CheckIcon width={24} height={24} />
-            )}
-            {selectedOption !== option.id && plannedSelection === option.id && (
-              <SpinnerIcon width={24} height={24} className={styles.rotate} />
-            )}
-          </MenuItem>
-        ))}
+          })();
+          return (
+            <MenuItem
+              hideChevron
+              label={labelText}
+              Icon={
+                IconOptions && (
+                  <IconOptions
+                    width={24}
+                    height={24}
+                    className={styles.itemIcon}
+                  />
+                )
+              }
+              onSelect={(e) => {
+                e.preventDefault();
+                if (id === selectedOption) return;
+                setPlannedSelection(id);
+                onSelect?.(id);
+              }}
+              key={id}
+            >
+              {selectedOption === id && <CheckIcon width={24} height={24} />}
+              {selectedOption !== id && plannedSelection === id && (
+                <SpinnerIcon width={24} height={24} className={styles.rotate} />
+              )}
+            </MenuItem>
+          );
+        })}
         {(toggles?.length ?? 0) > 0 && <hr />}
         {toggles?.map((toggle) => (
           <ToggleMenuItem

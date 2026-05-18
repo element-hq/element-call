@@ -14,7 +14,7 @@ import {
   Separator,
 } from "@vector-im/compound-web";
 import { useObservableEagerState } from "observable-hooks";
-import { t } from "i18next";
+import { useTranslation } from "react-i18next";
 
 import {
   type AudioOutputDeviceLabel,
@@ -30,42 +30,11 @@ interface Props {
   numberedLabel: (number: number) => string;
 }
 
-export function mediaDeviceLabelToString(
-  label: DeviceLabel | AudioOutputDeviceLabel,
-  numberedLabel: (number: number) => string,
-): string {
-  let labelText = "";
-  switch (label.type) {
-    case "name":
-      labelText = label.name;
-      break;
-    case "number":
-      labelText = numberedLabel(label.number);
-      break;
-    case "default":
-      labelText =
-        label.name === null
-          ? t("settings.devices.default")
-          : t("settings.devices.default_named", { name: label.name });
-      break;
-    case "speaker":
-      labelText = t("settings.devices.loudspeaker");
-      break;
-    case "earpiece":
-      labelText = t("settings.devices.handset");
-      break;
-  }
-  return labelText;
-}
-
-export const DeviceSelection: FC<Props> = ({
-  device,
-  title,
-  numberedLabel,
-}) => {
+export const DeviceSelection: FC<Props> = ({ device, title }) => {
   const groupId = useId();
   const available = useObservableEagerState(device.available$);
   const selectedId = useObservableEagerState(device.selected$)?.id;
+  const { t } = useTranslation();
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       device.select(e.target.value);
@@ -90,7 +59,24 @@ export const DeviceSelection: FC<Props> = ({
       <Separator className={styles.separator} />
       <div className={styles.options}>
         {[...available].map(([id, label]) => {
-          const labelText = mediaDeviceLabelToString(label, numberedLabel);
+          const labelText = ((): string => {
+            switch (label.type) {
+              case "name":
+                return label.name;
+              case "number":
+                return t("settings.devices.default_numbered", {
+                  n: label.number,
+                });
+              case "default":
+                return label.name === null
+                  ? t("settings.devices.default")
+                  : t("settings.devices.default_named", label.name);
+              case "speaker":
+                return t("settings.devices.loudspeaker");
+              case "earpiece":
+                return t("settings.devices.handset");
+            }
+          })();
           return (
             <InlineField
               key={id}

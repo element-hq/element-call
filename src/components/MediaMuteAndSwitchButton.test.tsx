@@ -86,8 +86,8 @@ describe("MediaMuteAndSwitchButton", () => {
           iconsAndLabels="audio"
           enabled={true}
           options={[
-            { label: "Microphone 1", id: "mic1" },
-            { label: "Microphone 2", id: "mic2" },
+            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
           ]}
           selectedOption="mic1"
           onSelect={onSelect}
@@ -110,8 +110,8 @@ describe("MediaMuteAndSwitchButton", () => {
           iconsAndLabels="audio"
           enabled={true}
           options={[
-            { label: "Microphone 1", id: "mic1" },
-            { label: "Microphone 2", id: "mic2" },
+            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
           ]}
           selectedOption="mic1"
           onSelect={onSelect}
@@ -139,8 +139,8 @@ describe("MediaMuteAndSwitchButton", () => {
             iconsAndLabels="audio"
             enabled={true}
             options={[
-              { label: "Microphone 1", id: "mic1" },
-              { label: "Microphone 2", id: "mic2" },
+              { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+              { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
             ]}
             selectedOption={selectedOption}
             onSelect={(id) => {
@@ -222,8 +222,8 @@ describe("MediaMuteAndSwitchButton", () => {
           iconsAndLabels="audio"
           enabled={true}
           options={[
-            { label: "Microphone 1", id: "mic1" },
-            { label: "Microphone 2", id: "mic2" },
+            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
           ]}
           selectedOption="mic2"
         />
