@@ -151,7 +151,7 @@ via `livekit_service_url`.
 
 - Each call participant proposes their discovered MatrixRTC backend from
   `org.matrix.msc4143.rtc_foci` in their `org.matrix.msc3401.call.member` state event.
-- For **LiveKit** MatrixRTC backend
+- For the **LiveKit** MatrixRTC backend
   ([MSC4195](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)),
   the **first participant who joined the call** defines via the `foci_preferred`
   key in their `org.matrix.msc3401.call.member` which actual MatrixRTC backend
