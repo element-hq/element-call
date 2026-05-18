@@ -241,7 +241,7 @@ pnpm backend
 > `https://synapse.m.localhost/.well-known/matrix/client`. This can be either
 > done by adding the minimum localhost CA
 > ([./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt)) to your web
-> browsers trusted certificates or by simply copying and pasting each URL into
+> browser's trusted certificates or by simply copying and pasting each URL into
 > your browser’s address bar and follow the prompts to add the exception.
 
 ### Playwright tests
