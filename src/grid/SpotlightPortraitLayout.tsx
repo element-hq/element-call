@@ -29,7 +29,7 @@ interface GridCSSProperties extends CSSProperties {
 export const makeSpotlightPortraitLayout: CallLayout<
   SpotlightPortraitLayoutModel
 > = ({ minBounds$ }) => ({
-  scrollingOnTop: false,
+  foreground: "fixed",
 
   fixed: function SpotlightPortraitLayoutFixed({
     ref,

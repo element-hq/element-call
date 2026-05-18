@@ -44,6 +44,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   videoEnabled: boolean;
   unencryptedWarning: boolean;
   status?: { text: string; Icon: ComponentType<SVGAttributes<SVGElement>> };
+  showNameTags: boolean;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   mxcAvatarUrl: string | undefined;
@@ -72,6 +73,7 @@ export const MediaView: FC<Props> = ({
   userId,
   videoEnabled,
   unencryptedWarning,
+  showNameTags,
   nameTagLeadingIcon,
   displayName,
   mxcAvatarUrl,
@@ -93,6 +95,23 @@ export const MediaView: FC<Props> = ({
   const [showConnectionStats] = useSetting(showConnectionStatsSetting);
 
   const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
+
+  const warnings = unencryptedWarning && (
+    <Tooltip
+      label={t("common.unencrypted")}
+      placement="bottom"
+      isTriggerInteractive={false}
+      nonInteractiveTriggerTabIndex={focusable ? undefined : -1}
+    >
+      <ErrorSolidIcon
+        width={20}
+        height={20}
+        className={styles.errorIcon}
+        role="img"
+        aria-label={t("common.unencrypted")}
+      />
+    </Tooltip>
+  );
 
   return (
     <animated.div
@@ -184,34 +203,23 @@ export const MediaView: FC<Props> = ({
               </Text>
             </div>
           )*/}
-        <div className={styles.nameTag}>
-          {nameTagLeadingIcon}
-          <Text
-            as="span"
-            size="sm"
-            weight="medium"
-            className={styles.name}
-            data-testid="name_tag"
-          >
-            {displayName}
-          </Text>
-          {unencryptedWarning && (
-            <Tooltip
-              label={t("common.unencrypted")}
-              placement="bottom"
-              isTriggerInteractive={false}
-              nonInteractiveTriggerTabIndex={focusable ? undefined : -1}
+        {showNameTags && targetWidth >= 100 ? (
+          <div className={styles.nameTag}>
+            {nameTagLeadingIcon}
+            <Text
+              as="span"
+              size="sm"
+              weight="medium"
+              className={styles.name}
+              data-testid="name_tag"
             >
-              <ErrorSolidIcon
-                width={20}
-                height={20}
-                className={styles.errorIcon}
-                role="img"
-                aria-label={t("common.unencrypted")}
-              />
-            </Tooltip>
-          )}
-        </div>
+              {displayName}
+            </Text>
+            {warnings}
+          </div>
+        ) : (
+          warnings
+        )}
         {primaryButton}
       </div>
     </animated.div>
