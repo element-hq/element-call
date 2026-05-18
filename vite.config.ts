@@ -103,6 +103,7 @@ export default ({
 
   return {
     server: {
+      host: true,
       port: 3000,
       fs: { allow },
       https: {
