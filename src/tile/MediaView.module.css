@@ -85,6 +85,7 @@ unconditionally select the container so we can use cqmin units */
     calc(var(--media-view-border-radius) - var(--cpd-space-3x))
   );
   padding: var(--fg-inset);
+  transition: padding 0.3s;
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: 1fr auto;
@@ -92,6 +93,12 @@ unconditionally select the container so we can use cqmin units */
   gap: var(--cpd-space-1x);
   place-items: start;
   contain: strict;
+}
+
+@media (prefers-reduced-motion) {
+  .fg {
+    transition: none;
+  }
 }
 
 .nameTag {
