@@ -69,7 +69,7 @@ export enum RegistrationType {
 // Sanitize URL / referrer / device fields on a single posthog properties bag.
 // Applied to event.properties and to the person-profile bags ($set / $set_once),
 // since posthog mirrors the same URL fields into those.
-function stripPrivacyFields(
+function stripSensitiveFields(
   obj: Properties | undefined,
   anonymity: Anonymity,
 ): void {
@@ -77,13 +77,13 @@ function stripPrivacyFields(
 
   if (anonymity === Anonymity.Anonymous) {
     // drop referrer information for anonymous users
-    obj["$referrer"] = null;
-    obj["$referring_domain"] = null;
-    obj["$initial_referrer"] = null;
-    obj["$initial_referring_domain"] = null;
+    delete obj["$referrer"];
+    delete obj["$referring_domain"];
+    delete obj["$initial_referrer"];
+    delete obj["$initial_referring_domain"];
 
     // drop device ID, which is a UUID persisted in local storage
-    obj["$device_id"] = null;
+    delete obj["$device_id"];
   }
 
   // the url leaks a lot of private data like the call name or the user
@@ -91,7 +91,12 @@ function stripPrivacyFields(
   // scheme + host so we still get host-level insights (develop / main / sfu).
   for (const key of ["$current_url", "$initial_current_url"]) {
     if (typeof obj[key] === "string") {
-      obj[key] = (obj[key] as string).split("/").slice(0, 3).join("");
+      try {
+        const url = new URL(obj[key]);
+        obj[key] = url.protocol + "//" + url.hostname + url.pathname;
+      } catch {
+        obj[key] = null;
+      }
     }
   }
 
@@ -116,14 +121,14 @@ export function applyPrivacyFilters(
 ): CaptureResult | null {
   if (event === null) return null;
 
-  stripPrivacyFields(event.properties, anonymity);
+  stripSensitiveFields(event.properties, anonymity);
   // posthog can stash person-profile updates either at the top level
   // of CaptureResult or nested inside properties depending on the pipeline
   // stage; clean both spots so nothing slips through.
-  stripPrivacyFields(event.$set, anonymity);
-  stripPrivacyFields(event.$set_once, anonymity);
-  stripPrivacyFields(event.properties["$set"], anonymity);
-  stripPrivacyFields(event.properties["$set_once"], anonymity);
+  stripSensitiveFields(event.$set, anonymity);
+  stripSensitiveFields(event.$set_once, anonymity);
+  stripSensitiveFields(event.properties["$set"], anonymity);
+  stripSensitiveFields(event.properties["$set_once"], anonymity);
 
   return event;
 }
