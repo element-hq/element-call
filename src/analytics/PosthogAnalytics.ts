@@ -115,7 +115,7 @@ function stripSensitiveFields(
  * See src/utils/event-utils.ts in posthog-js (getEventProperties, getPersonInfo)
  * for the list of properties posthog sets automatically.
  */
-export function applyPrivacyFilters(
+export function santizeSensitiveData(
   event: CaptureResult | null,
   anonymity: Anonymity,
 ): CaptureResult | null {
@@ -198,7 +198,7 @@ export class PosthogAnalytics {
 
     if (apiKey && apiHost) {
       const beforeSend = (event: CaptureResult | null): CaptureResult | null =>
-        applyPrivacyFilters(event, this.anonymity);
+        santizeSensitiveData(event, this.anonymity);
       this.posthog.init(apiKey, {
         api_host: apiHost,
         autocapture: false,

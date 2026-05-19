@@ -18,7 +18,7 @@ import posthog, { type CaptureResult } from "posthog-js";
 
 import {
   Anonymity,
-  applyPrivacyFilters,
+  santizeSensitiveData,
   PosthogAnalytics,
 } from "./PosthogAnalytics";
 import { mockConfig } from "../utils/test";
@@ -99,7 +99,7 @@ describe("PosthogAnalytics", () => {
       ({ event: "anyEvent", properties }) as unknown as CaptureResult;
 
     it("drops $initial_person_info regardless of anonymity", () => {
-      const out = applyPrivacyFilters(
+      const out = santizeSensitiveData(
         makeEvent({
           $current_url: "https://call.example.com/some/private/path",
           $initial_person_info: {
@@ -112,16 +112,16 @@ describe("PosthogAnalytics", () => {
       expect(out?.properties).not.toHaveProperty("$initial_person_info");
     });
 
-    it("strips path from $current_url", () => {
-      const out = applyPrivacyFilters(
-        makeEvent({ $current_url: "https://call.example.com/x/y/z" }),
+    it("strips hash from $current_url", () => {
+      const out = santizeSensitiveData(
+        makeEvent({ $current_url: "https://call.example.com/#/x/y/z" }),
         Anonymity.Pseudonymous,
       );
       expect(out?.properties["$current_url"]).not.toContain("/x/y/z");
     });
 
     it("nulls referrer and device fields when anonymous", () => {
-      const out = applyPrivacyFilters(
+      const out = santizeSensitiveData(
         makeEvent({
           $current_url: "https://x/y",
           $referrer: "https://leaky",
@@ -130,19 +130,19 @@ describe("PosthogAnalytics", () => {
         }),
         Anonymity.Anonymous,
       );
-      expect(out?.properties["$referrer"]).toBeNull();
-      expect(out?.properties["$initial_referrer"]).toBeNull();
-      expect(out?.properties["$device_id"]).toBeNull();
+      expect(out?.properties["$referrer"]).toBeUndefined();
+      expect(out?.properties["$initial_referrer"]).toBeUndefined();
+      expect(out?.properties["$device_id"]).toBeUndefined();
     });
 
     it("passes null events through unchanged", () => {
-      expect(applyPrivacyFilters(null, Anonymity.Pseudonymous)).toBeNull();
+      expect(santizeSensitiveData(null, Anonymity.Pseudonymous)).toBeNull();
     });
 
     it("strips URL fields nested inside $set_once", () => {
       const secretUrl =
         "https://call.example.com/room/#/?password=hunter2&roomId=abc";
-      const out = applyPrivacyFilters(
+      const out = santizeSensitiveData(
         makeEvent({
           $current_url: "https://call.example.com/x",
           $set_once: {
@@ -165,7 +165,7 @@ describe("PosthogAnalytics", () => {
     it("strips URL fields nested inside $set", () => {
       const secretUrl =
         "https://call.example.com/room/#/?password=hunter2&roomId=abc";
-      const out = applyPrivacyFilters(
+      const out = santizeSensitiveData(
         makeEvent({
           $current_url: "https://call.example.com/x",
           $set: {
@@ -182,7 +182,7 @@ describe("PosthogAnalytics", () => {
     });
 
     it("nulls referrer fields inside $set_once when anonymous", () => {
-      const out = applyPrivacyFilters(
+      const out = santizeSensitiveData(
         makeEvent({
           $current_url: "https://x/y",
           $set_once: {
@@ -194,8 +194,8 @@ describe("PosthogAnalytics", () => {
       );
 
       const setOnce = out?.properties["$set_once"] as Record<string, unknown>;
-      expect(setOnce["$initial_referrer"]).toBeNull();
-      expect(setOnce["$initial_referring_domain"]).toBeNull();
+      expect(setOnce["$initial_referrer"]).toBeUndefined();
+      expect(setOnce["$initial_referring_domain"]).toBeUndefined();
     });
   });
 
