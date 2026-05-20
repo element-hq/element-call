@@ -177,6 +177,13 @@ discuss and coordinate translation efforts.
 
 ## 🛠️ Development
 
+### Dependencies
+
+- Node.js (e.g. via [nvm](https://github.com/nvm-sh/nvm))
+- [Corepack](https://github.com/nodejs/corepack) (not bundled with Node.js anymore starting from 25.0.0)
+- Docker client and runtime + Docker Compose (for the backend)
+  - On macOS you can install everything with `brew install colima docker docker-compose`
+
 ### Frontend
 
 To get started clone and set up this project:
@@ -226,7 +233,8 @@ including federation:
 These use a test 'secret' published in this repository, so this must be used
 only for local development and **_never be exposed to the public Internet._**
 
-Run backend components:
+Make sure your Docker runtime is running (e.g. via `colima start`) and then start
+the backend components:
 
 ```sh
 pnpm backend
