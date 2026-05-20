@@ -194,7 +194,7 @@ describe("MediaMuteAndSwitchButton", () => {
           title="Switcher"
           iconsAndLabels="video"
           enabled={true}
-          backgroundBlurToggleClick={onVideoBlurToggle}
+          videoBlurToggleClick={onVideoBlurToggle}
           onSelect={onSelect}
         />
       </TooltipProvider>,

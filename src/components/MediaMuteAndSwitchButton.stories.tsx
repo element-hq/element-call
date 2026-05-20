@@ -43,7 +43,7 @@ export const AudioMute: Story = {
       { label: { type: "name", name: "Microphone 2" }, id: "2" },
     ],
     videoBlurEnabled: true,
-    backgroundBlurToggleClick: fn(),
+    videoBlurToggleClick: fn(),
     selectedOption: "2",
   },
   play: async ({ args, canvasElement }) => {
@@ -94,7 +94,7 @@ export const VideoUnmute: Story = {
       { label: { type: "name", name: "Camera 2" }, id: "2" },
     ],
     videoBlurEnabled: true,
-    backgroundBlurToggleClick: fn(),
+    videoBlurToggleClick: fn(),
     selectedOption: "2",
   },
 };
