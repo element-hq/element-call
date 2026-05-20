@@ -516,11 +516,11 @@ export const InCallView: FC<InCallViewProps> = ({
         key="fixed"
         className={styles.fixedGrid}
         style={{
-          insetBlockStart:
-            edgeToEdge || headerBounds.height === 0 ? 0 : headerBounds.bottom,
+          // If not edge-to-edge, consume the header insets right here.
+          insetBlockStart: edgeToEdge ? 0 : bounds.top + headerBounds.height,
           height: edgeToEdge ? "100%" : gridBounds.height,
           // If edge-to-edge, compute new safe area insets that account for the
-          // header and footer.
+          // header and footer, passing them down to the tiles.
           "--call-view-safe-area-inset-top":
             edgeToEdge && headerStyle !== HeaderStyle.None && showHeader
               ? // Header has two relevant cases: if it's an app bar, it lives
