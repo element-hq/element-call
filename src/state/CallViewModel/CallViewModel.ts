@@ -1341,6 +1341,10 @@ export function createCallViewModel$(
         // Layout is edge-to-edge; show/hide the footer in response to interactions
         return windowMode$.pipe(
           switchMap((mode) => {
+            if (mode == "pip" && platform != "desktop") {
+              // No controls are shown in mobile pip as interactions are disabled
+              return of(false);
+            }
             const showInitially = mode !== "flat";
             const timeout$ = mode === "flat" ? timer(showFooterMs) : NEVER;
 
