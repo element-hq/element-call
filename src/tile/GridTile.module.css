@@ -72,6 +72,10 @@ borders don't support gradients */
   }
 }
 
+.tile.edgeToEdge {
+  --media-view-border-radius: 0;
+}
+
 .muteIcon[data-muted="true"] {
   color: var(--cpd-color-icon-secondary);
 }

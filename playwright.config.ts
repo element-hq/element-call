@@ -79,6 +79,11 @@ export default defineConfig({
           firefoxUserPrefs: {
             "permissions.default.microphone": 1,
             "permissions.default.camera": 1,
+            // Equivalent to Chromium's --use-fake-device-for-media-stream:
+            // feeds a synthetic media stream so getUserMedia and
+            // enumerateDevices work on CI runners without real hardware.
+            "media.navigator.streams.fake": true,
+            "media.navigator.permission.disabled": true,
           },
         },
       },

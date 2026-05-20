@@ -66,7 +66,7 @@ requiring a separate Matrix client.
 
 ### 📲 In-App Calling (Widget Mode in Messenger Apps)
 
-When used as a widget 🧩, Element Call is solely responsible on the core calling
+When used as a widget 🧩, Element Call is solely responsible for the core calling
 functionality (MatrixRTC). Authentication, event handling, and room state
 updates (via the Client-Server API) are handled by the hosting client.
 Communication between Element Call and the client is managed through the widget
@@ -118,8 +118,8 @@ For operating and deploying Element Call on your own server, refer to the
 ## 🧭 MatrixRTC Backend Discovery and Selection
 
 For proper Element Call operation each site deployment needs a MatrixRTC backend
-setup as outlined in the [Self-Hosting](#self_hosting). A typical federated site
-deployment for three different sites A, B and C is depicted below.
+setup as outlined in the [Self-Hosting Guide](./docs/self_hosting.md). A typical
+federated site deployment for three different sites A, B and C is depicted below.
 
 <p align="center">
   <img src="./docs/Federated_Setup.drawio.png" alt="Element Call federated setup">
@@ -127,7 +127,7 @@ deployment for three different sites A, B and C is depicted below.
 
 ### Backend Discovery
 
-MatrixRTC backend (according to
+The MatrixRTC backend (according to
 [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143)) is
 announced by the Matrix site's `.well-known/matrix/client` file and discovered
 via the `org.matrix.msc4143.rtc_foci` key, e.g.:
@@ -151,11 +151,10 @@ via `livekit_service_url`.
 
 - Each call participant proposes their discovered MatrixRTC backend from
   `org.matrix.msc4143.rtc_foci` in their `org.matrix.msc3401.call.member` state event.
-- For **LiveKit** MatrixRTC backend
+- For the **LiveKit** MatrixRTC backend
   ([MSC4195](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)),
-  the **first participant who joined the call** defines via the `foci_preferred`
-  key in their `org.matrix.msc3401.call.member` which actual MatrixRTC backend
-  will be used for this call.
+  the **first participant who joined the call** defines which backend will be used for this call via
+  the `foci_preferred` key in their `org.matrix.msc3401.call.member` state event.
 - During the actual call join flow, the **[MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service)**
   provides the client with the **LiveKit SFU WebSocket URL** and an
   **access JWT token** in order to exchange media via WebRTC.
@@ -202,7 +201,7 @@ pnpm dev
 
 See also:
 
-- [Developing with linked packages](./linking.md)
+- [Developing with linked packages](./docs/linking.md)
 
 ### Backend
 
@@ -210,12 +209,12 @@ A docker compose file `dev-backend-docker-compose.yml` is provided to start the
 whole stack of components which is required for a local development environment
 including federation:
 
-- Minimum Synapse Setup (servernameis: `synapse.m.localhost`, `synapse.othersite.m.localhost`)
-- MatrixRTC Authorization Service (Note requires Federation API and hence a TLS reverse proxy)
+- Minimum Synapse Setup (servernames: `synapse.m.localhost`, `synapse.othersite.m.localhost`)
+- MatrixRTC Authorization Service (Note: requires Federation API and hence a TLS reverse proxy)
 - Minimum LiveKit SFU setup using dev defaults for config
 - Minimum `localhost` Certificate Authority (CA) for Transport Layer Security (TLS)
   - Hostnames: `m.localhost`, `*.m.localhost`, `*.othersite.m.localhost`
-  - Add [./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt) to your web browsers trusted
+  - Add [./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt) to your web browser's trusted
     certificates
 - Minimum TLS reverse proxy for
   - Synapse homeserver: `synapse.m.localhost` and `synapse.othersite.m.localhost`
@@ -231,7 +230,7 @@ Run backend components:
 
 ```sh
 pnpm backend
-# or  for podman-compose
+# or for podman-compose:
 # podman-compose -f dev-backend-docker-compose.yml up
 ```
 
@@ -242,7 +241,7 @@ pnpm backend
 > `https://synapse.m.localhost/.well-known/matrix/client`. This can be either
 > done by adding the minimum localhost CA
 > ([./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt)) to your web
-> browsers trusted certificates or by simply copying and pasting each URL into
+> browser's trusted certificates or by simply copying and pasting each URL into
 > your browser’s address bar and follow the prompts to add the exception.
 
 ### Playwright tests
