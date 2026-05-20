@@ -61,7 +61,7 @@ importers:
         specifier: ^0.10.18
         version: 0.10.34
       '@playwright/test':
-        specifier: ^1.57.0
+        specifier: ^1.59.0
         version: 1.59.1
       '@radix-ui/react-dialog':
         specifier: ^1.0.4
@@ -261,9 +261,6 @@ importers:
       pako:
         specifier: ^2.0.4
         version: 2.1.0
-      playwright:
-        specifier: ^1.59.1
-        version: 1.59.1
       postcss:
         specifier: ^8.4.41
         version: 8.5.11
