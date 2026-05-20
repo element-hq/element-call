@@ -570,8 +570,6 @@ export const InCallView: FC<InCallViewProps> = ({
     matrixRoom.roomId,
   );
 
-  const settingsButtonInAppBar =
-    headerStyle === HeaderStyle.AppBar && showHeader;
   useAppBarSecondaryButton(
     <SettingsIconButton
       key="settings"
@@ -603,7 +601,9 @@ export const InCallView: FC<InCallViewProps> = ({
       audioOutputSwitcher={audioOutputSwitcher ?? undefined}
       // Only pass the openSettings function if the settings button is not in the app bar.
       // If there is no fn the button will be hidden in the footer.
-      openSettings={settingsButtonInAppBar ? undefined : openSettings}
+      openSettings={
+        headerStyle === HeaderStyle.AppBar ? undefined : openSettings
+      }
       hangup={vm.hangup}
       //Debug props
       debugTileLayout={debugTileLayout}
