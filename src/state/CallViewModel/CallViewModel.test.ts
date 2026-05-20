@@ -85,6 +85,14 @@ vi.mock("../e2ee/matrixKeyProvider");
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("../UrlParams", () => ({ getUrlParams }));
 
+const getPlatform = vi.hoisted(() => vi.fn(() => "desktop"));
+vi.mock("../../Platform", () => ({
+  get platform(): string {
+    return getPlatform();
+  },
+  isFirefox: (): boolean => false,
+}));
+
 vi.mock(
   "../state/CallViewModel/localMember/localTransport",
   async (importOriginal) => ({
@@ -837,6 +845,59 @@ describe.each([
       );
     });
   });
+
+  // Test cases for footer visibility in PIP mode across different platforms
+  const PIP_FOOTER_VISIBILITY_TEST_CASES: Array<{
+    platform: "ios" | "android" | "desktop";
+    expectedMarbles: string;
+    description: string;
+  }> = [
+    {
+      platform: "ios",
+      expectedMarbles: "tf",
+      description: "hidden on iOS",
+    },
+    {
+      platform: "android",
+      expectedMarbles: "tf",
+      description: "hidden on Android",
+    },
+    {
+      platform: "desktop",
+      expectedMarbles: "t",
+      description: "visible on desktop",
+    },
+  ];
+
+  it.each(PIP_FOOTER_VISIBILITY_TEST_CASES)(
+    "footer is $description in PIP mode",
+    ({ platform: testPlatform, expectedMarbles }) => {
+      withTestScheduler(({ schedule, expectObservable }) => {
+        // Set platform for this test case
+        getPlatform.mockReturnValue(testPlatform);
+
+        // Enable PIP mode after initial render
+        const pipControlInputMarbles = "-e";
+
+        withCallViewModel(
+          {
+            remoteParticipants$: constant([aliceParticipant]),
+            rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          },
+          (vm) => {
+            schedule(pipControlInputMarbles, {
+              e: () => window.controls.enablePip(),
+            });
+
+            expectObservable(vm.showFooter$).toBe(expectedMarbles, {
+              t: true,
+              f: false,
+            });
+          },
+        );
+      });
+    },
+  );
 
   test("PiP tile in expanded spotlight layout switches speakers without layout shifts", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
