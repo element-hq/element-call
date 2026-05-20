@@ -332,10 +332,6 @@ export interface CallViewModel {
   >;
 
   /**
-   * The general shape of the window.
-   */
-  windowMode$: Behavior<WindowMode>;
-  /**
    * The layout of tiles in the call interface.
    */
   layout$: Behavior<Layout>;
@@ -1764,7 +1760,6 @@ export function createCallViewModel$(
     reconnecting$: localMembership.reconnecting$,
     livekitRoomItems$,
     connected$: localMembership.connected$,
-    windowMode$,
   };
 }
 

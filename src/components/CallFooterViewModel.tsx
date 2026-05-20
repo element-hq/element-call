@@ -154,9 +154,7 @@ export function createCallFooterViewModel(
     // candidat to move into the FooterViewModel
     showFooter$: callModel.showFooter$,
     hideControls$: constant(!showControls),
-    asOverlay$: scope.behavior(
-      callModel.windowMode$.pipe(map((mode) => mode === "flat")),
-    ),
+    asOverlay$: callModel.edgeToEdge$,
     buttonSize$: scope.behavior(
       isPip$.pipe(map<boolean, "md" | "lg">((pip) => (pip ? "md" : "lg"))),
     ),

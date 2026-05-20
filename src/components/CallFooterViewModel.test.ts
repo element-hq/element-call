@@ -37,7 +37,7 @@ vi.mock("@livekit/track-processors", () => ({
 function buildMinimalCallViewModel(layout: Layout): CallViewModel {
   return {
     layout$: constant(layout),
-    windowMode$: constant("normal"),
+    edgeToEdge$: constant(false),
     showHeader$: constant(false),
     hangup: (): void => {},
     gridMode$: constant("grid"),

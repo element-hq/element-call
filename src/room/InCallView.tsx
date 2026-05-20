@@ -591,7 +591,6 @@ export const InCallView: FC<InCallViewProps> = ({
 
   // Only hide the settings button if we have an AppBar header and we are showing the header
   const footer = footerVm !== null && (
-    //asOverlay={edgeToEdge}
     <CallFooter ref={footerRef} vm={footerVm} />
   );
   const allConnections = useBehavior(vm.allConnections$);
