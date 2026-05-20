@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
-  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
@@ -21,7 +20,7 @@ import {
 import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
-import { BehaviorSubject, map } from "rxjs";
+import { map } from "rxjs";
 import { useObservable } from "observable-hooks";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { useTranslation } from "react-i18next";
@@ -51,12 +50,9 @@ import { SpotlightTile } from "../tile/SpotlightTile";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
-import {
-  type CallLayoutOutputs,
-  defaultPipAlignment,
-  defaultSpotlightAlignment,
-} from "../grid/CallLayout";
-import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
+import { type CallLayoutOutputs } from "../grid/CallLayout";
+import { makeOneOnOneLandscapeLayout } from "../grid/OneOnOneLandscapeLayout";
+import { makeOneOnOnePortraitLayout } from "../grid/OneOnOnePortraitLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
@@ -92,6 +88,13 @@ import { ObservableScope } from "../state/ObservableScope.ts";
 import { useLatest } from "../useLatest.ts";
 import { CallFooter } from "../components/CallFooter.tsx";
 import { SettingsIconButton } from "../button/Button.tsx";
+
+declare module "react" {
+  interface CSSProperties {
+    "--call-view-safe-area-inset-top"?: string;
+    "--call-view-safe-area-inset-bottom"?: string;
+  }
+}
 
 const logger = rootLogger.getChild("[InCallView]");
 
@@ -239,10 +242,11 @@ export const InCallView: FC<InCallViewProps> = ({
   const audioParticipants = useBehavior(vm.livekitRoomItems$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
-  const windowMode = useBehavior(vm.windowMode$);
   const layout = useBehavior(vm.layout$);
+  const edgeToEdge = useBehavior(vm.edgeToEdge$);
   const tileStoreGeneration = useBehavior(vm.tileStoreGeneration$);
   const [debugTileLayout] = useSetting(debugTileLayoutSetting);
+  const showNameTags = useBehavior(vm.showNameTags$);
   const gridMode = useBehavior(vm.gridMode$);
   const showHeader = useBehavior(vm.showHeader$);
   const showFooter = useBehavior(vm.showFooter$);
@@ -273,10 +277,13 @@ export const InCallView: FC<InCallViewProps> = ({
     }
   }, [ringing, latestPickupPhaseAudio]);
 
-  const onViewClick = useCallback(
-    (e: ReactMouseEvent) => {
+  // iOS Safari doesn't reliably fire `click` on plain <div>s, so we listen
+  // for `pointerup` instead. Scrolls end in `pointercancel`, not `pointerup`,
+  // so this still only fires for taps.
+  const onViewPointerUp = useCallback(
+    (e: ReactPointerEvent) => {
       if (
-        (e.nativeEvent as PointerEvent).pointerType === "touch" &&
+        e.pointerType === "touch" &&
         // If an interactive element was tapped, don't count this as a tap on the screen
         (e.target as Element).closest?.("button, input") === null
       )
@@ -325,27 +332,19 @@ export const InCallView: FC<InCallViewProps> = ({
       width: bounds.width,
       height:
         bounds.height -
-        headerBounds.height -
-        (windowMode === "flat" ? 0 : footerBounds.height),
+        (edgeToEdge ? 0 : headerBounds.height + footerBounds.height),
     }),
     [
       bounds.width,
       bounds.height,
       headerBounds.height,
       footerBounds.height,
-      windowMode,
+      edgeToEdge,
     ],
   );
   const gridBoundsObservable$ = useObservable(
     (inputs$) => inputs$.pipe(map(([gridBounds]) => gridBounds)),
     [gridBounds],
-  );
-
-  const spotlightAlignment$ = useInitial(
-    () => new BehaviorSubject(defaultSpotlightAlignment),
-  );
-  const pipAlignment$ = useInitial(
-    () => new BehaviorSubject(defaultPipAlignment),
   );
 
   const setGridMode = useCallback(
@@ -356,49 +355,47 @@ export const InCallView: FC<InCallViewProps> = ({
   useAppBarHidden(!showHeader);
 
   let header: ReactNode = null;
-  if (showHeader) {
-    switch (headerStyle) {
-      case HeaderStyle.AppBar: {
-        // dont build a header here. The AppBar will take care of it.
-        break;
-      }
-      case HeaderStyle.None:
-        // Cosmetic header to fill out space while still affecting the bounds of
-        // the grid
-        header = (
-          <div
-            className={classNames(styles.header, styles.filler)}
-            ref={headerRef}
-          />
-        );
-        break;
-      case HeaderStyle.Standard:
-        header = (
-          <Header
-            className={styles.header}
-            ref={headerRef}
-            disconnectedBanner={false} // This screen has its own 'reconnecting' toast
-          >
-            <LeftNav>
-              <RoomHeaderInfo
-                id={matrixInfo.roomId}
-                name={matrixInfo.roomName}
-                avatarUrl={matrixInfo.roomAvatar}
-                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
-                participantCount={participantCount}
-              />
-            </LeftNav>
-            <RightNav>
-              {showControls && onShareClick !== null && (
-                <InviteButton
-                  className={styles.invite}
-                  onClick={onShareClick}
-                />
-              )}
-            </RightNav>
-          </Header>
-        );
+  switch (headerStyle) {
+    case HeaderStyle.AppBar: {
+      // dont build a header here. The AppBar will take care of it.
+      break;
     }
+    case HeaderStyle.None:
+      // Cosmetic header to fill out space while still affecting the bounds of
+      // the grid
+      header = showHeader && (
+        <div
+          className={classNames(styles.header, styles.filler)}
+          ref={headerRef}
+        />
+      );
+      break;
+    case HeaderStyle.Standard:
+      header = (
+        <Header
+          className={classNames(styles.header, {
+            [styles.overlay]: edgeToEdge,
+            [styles.hidden]: !showHeader,
+          })}
+          ref={headerRef}
+          disconnectedBanner={false} // This screen has its own 'reconnecting' toast
+        >
+          <LeftNav>
+            <RoomHeaderInfo
+              id={matrixInfo.roomId}
+              name={matrixInfo.roomName}
+              avatarUrl={matrixInfo.roomAvatar}
+              encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
+              participantCount={participantCount}
+            />
+          </LeftNav>
+          <RightNav>
+            {showControls && onShareClick !== null && (
+              <InviteButton className={styles.invite} onClick={onShareClick} />
+            )}
+          </RightNav>
+        </Header>
+      );
   }
 
   // The reconnecting toast cannot be dismissed
@@ -445,12 +442,11 @@ export const InCallView: FC<InCallViewProps> = ({
       }: TileProps<TileViewModel, HTMLDivElement>): ReactNode {
         const spotlightExpanded = useBehavior(vm.spotlightExpanded$);
         const onToggleExpanded = useBehavior(vm.toggleSpotlightExpanded$);
-        const showSpeakingIndicatorsValue = useBehavior(
-          vm.showSpeakingIndicators$,
-        );
-        const showSpotlightIndicatorsValue = useBehavior(
+        const showSpotlightIndicators = useBehavior(
           vm.showSpotlightIndicators$,
         );
+        const showSpeakingIndicators = useBehavior(vm.showSpeakingIndicators$);
+        const showNameTags = useBehavior(vm.showNameTags$);
 
         return model instanceof GridTileViewModel ? (
           <GridTile
@@ -461,7 +457,8 @@ export const InCallView: FC<InCallViewProps> = ({
             targetHeight={targetHeight}
             className={classNames(className, styles.tile)}
             style={style}
-            showSpeakingIndicators={showSpeakingIndicatorsValue}
+            showSpeakingIndicators={showSpeakingIndicators}
+            showNameTags={showNameTags}
             focusable={!contentObscured}
           />
         ) : (
@@ -472,7 +469,8 @@ export const InCallView: FC<InCallViewProps> = ({
             onToggleExpanded={onToggleExpanded}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
-            showIndicators={showSpotlightIndicatorsValue}
+            showIndicators={showSpotlightIndicators}
+            showNameTags={showNameTags}
             focusable={!contentObscured}
             className={classNames(className, styles.tile)}
             style={style}
@@ -483,19 +481,16 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const layouts = useMemo(() => {
-    const inputs = {
-      minBounds$: gridBoundsObservable$,
-      spotlightAlignment$,
-      pipAlignment$,
-    };
+    const inputs = { minBounds$: gridBoundsObservable$ };
     return {
       grid: makeGridLayout(inputs),
       "spotlight-landscape": makeSpotlightLandscapeLayout(inputs),
       "spotlight-portrait": makeSpotlightPortraitLayout(inputs),
       "spotlight-expanded": makeSpotlightExpandedLayout(inputs),
-      "one-on-one": makeOneOnOneLayout(inputs),
+      "one-on-one-landscape": makeOneOnOneLandscapeLayout(inputs),
+      "one-on-one-portrait": makeOneOnOnePortraitLayout(inputs),
     };
-  }, [gridBoundsObservable$, spotlightAlignment$, pipAlignment$]);
+  }, [gridBoundsObservable$]);
 
   const renderContent = (): JSX.Element => {
     if (layout.type === "pip") {
@@ -508,6 +503,7 @@ export const InCallView: FC<InCallViewProps> = ({
           targetWidth={gridBounds.width}
           targetHeight={gridBounds.height}
           showIndicators={false}
+          showNameTags={showNameTags}
           focusable={!contentObscured}
           aria-hidden={contentObscured}
         />
@@ -521,8 +517,18 @@ export const InCallView: FC<InCallViewProps> = ({
         className={styles.fixedGrid}
         style={{
           insetBlockStart:
-            headerBounds.height > 0 ? headerBounds.bottom : bounds.top,
-          height: gridBounds.height,
+            edgeToEdge || headerBounds.height === 0 ? 0 : headerBounds.bottom,
+          height: edgeToEdge ? "100%" : gridBounds.height,
+          // If edge-to-edge, compute new safe area insets that account for the
+          // header and footer.
+          "--call-view-safe-area-inset-top":
+            edgeToEdge && header && showHeader
+              ? `calc(env(safe-area-inset-top) + ${headerBounds.height}px)`
+              : undefined,
+          "--call-view-safe-area-inset-bottom":
+            edgeToEdge && showFooter
+              ? `calc(env(safe-area-inset-bottom) + ${footerBounds.height}px)`
+              : undefined,
         }}
         model={layout}
         Layout={layers.fixed}
@@ -540,19 +546,24 @@ export const InCallView: FC<InCallViewProps> = ({
         aria-hidden={contentObscured}
       />
     );
-    // The grid tiles go *under* the spotlight in the portrait layout, but
-    // *over* the spotlight in the expanded layout
-    return layout.type === "spotlight-expanded" ? (
-      <>
-        {fixedGrid}
-        {scrollingGrid}
-      </>
-    ) : (
-      <>
-        {scrollingGrid}
-        {fixedGrid}
-      </>
-    );
+
+    // Put the right layer in the foreground for the requested layout
+    switch (layers.foreground) {
+      case "fixed":
+        return (
+          <>
+            {scrollingGrid}
+            {fixedGrid}
+          </>
+        );
+      case "scrolling":
+        return (
+          <>
+            {fixedGrid}
+            {scrollingGrid}
+          </>
+        );
+    }
   };
 
   const rageshakeRequestModalProps = useRageshakeRequestModal(
@@ -575,7 +586,7 @@ export const InCallView: FC<InCallViewProps> = ({
       ref={footerRef}
       hidden={!showFooter}
       hideControls={!showControls}
-      asOverlay={windowMode === "flat"}
+      asOverlay={edgeToEdge}
       asPip={layout.type === "pip"}
       // Hide the logo for both embedded solutions. mobile: HeaderStyle.AppBar and desktop: HeaderStyle.None.
       hideLogo={headerStyle !== HeaderStyle.Standard}
@@ -602,13 +613,13 @@ export const InCallView: FC<InCallViewProps> = ({
   const allConnections = useBehavior(vm.allConnections$);
 
   return (
-    // The onClick handler here exists to control the visibility of the footer,
+    // The pointer handler here exists to control the visibility of the footer,
     // and the footer is also viewable by moving focus into it, so this is fine.
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       className={styles.inRoom}
       ref={containerRef}
-      onClick={onViewClick}
+      onPointerUp={onViewPointerUp}
       onPointerMove={onPointerMove}
       onPointerOut={onPointerOut}
     >

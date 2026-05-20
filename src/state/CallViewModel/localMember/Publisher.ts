@@ -379,10 +379,11 @@ export class Publisher {
         if (!this.shouldPublish && enable) {
           await this.pauseUpstreams(lkRoom, [Track.Source.Microphone]);
         }
+        return enable;
       } catch (e) {
         this.logger.error("Failed to update LiveKit audio input mute state", e);
+        return lkRoom.localParticipant.isMicrophoneEnabled;
       }
-      return lkRoom.localParticipant.isMicrophoneEnabled;
     });
     this.muteStates.video.setHandler(async (enable) => {
       try {
@@ -393,10 +394,11 @@ export class Publisher {
         if (!this.shouldPublish && enable) {
           await this.pauseUpstreams(lkRoom, [Track.Source.Camera]);
         }
+        return enable;
       } catch (e) {
         this.logger.error("Failed to update LiveKit video input mute state", e);
+        return lkRoom.localParticipant.isCameraEnabled;
       }
-      return lkRoom.localParticipant.isCameraEnabled;
     });
   }
 
