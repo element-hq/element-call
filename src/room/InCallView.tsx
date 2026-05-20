@@ -362,16 +362,6 @@ export const InCallView: FC<InCallViewProps> = ({
     [gridBounds],
   );
 
-  const spotlightAlignment$ = useInitial(
-    () => new BehaviorSubject(defaultSpotlightAlignment),
-  );
-  const pipAlignment$ = useInitial(
-    () => new BehaviorSubject(defaultPipAlignment),
-  const setGridMode = useCallback(
-    (mode: GridMode) => vm.setGridMode(mode),
-    [vm],
-  );
-
   useAppBarHidden(!showHeader);
 
   let header: ReactNode = null;
@@ -512,6 +502,7 @@ export const InCallView: FC<InCallViewProps> = ({
     };
   }, [gridBoundsObservable$]);
 
+  const showFooter = useBehavior(footerVm.showFooter$);
   const renderContent = (): JSX.Element => {
     if (layout.type === "pip") {
       return (
