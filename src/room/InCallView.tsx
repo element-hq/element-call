@@ -522,12 +522,19 @@ export const InCallView: FC<InCallViewProps> = ({
           // If edge-to-edge, compute new safe area insets that account for the
           // header and footer.
           "--call-view-safe-area-inset-top":
-            edgeToEdge && header && showHeader
-              ? `calc(env(safe-area-inset-top) + ${headerBounds.height}px)`
+            edgeToEdge && headerStyle !== HeaderStyle.None && showHeader
+              ? // Header has two relevant cases: if it's an app bar, it lives
+                // outside the InCallView and consumes the safe area insets
+                // itself. Otherwise account for the safe area and header size
+                // as part of the InCallView.
+                headerStyle === HeaderStyle.AppBar
+                ? `${bounds.top}px`
+                : `calc(env(safe-area-inset-top) + ${headerBounds.height}px)`
               : undefined,
           "--call-view-safe-area-inset-bottom":
             edgeToEdge && showFooter
-              ? `calc(env(safe-area-inset-bottom) + ${footerBounds.height}px)`
+              ? // Footer always lives inside the InCallView.
+                `calc(env(safe-area-inset-bottom) + ${footerBounds.height}px)`
               : undefined,
         }}
         model={layout}
