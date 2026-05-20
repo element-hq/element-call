@@ -15,7 +15,12 @@ import {
   type MockedFunction,
   vi,
 } from "vitest";
-import { act, render, type RenderResult } from "@testing-library/react";
+import {
+  render,
+  type RenderResult,
+  getByRole,
+  screen,
+} from "@testing-library/react";
 import { type LocalParticipant } from "livekit-client";
 import { BehaviorSubject, of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
@@ -186,6 +191,7 @@ describe("InCallView", () => {
       expect(container).toMatchSnapshot();
     });
   });
+
   describe("settings button with AppBar header", () => {
     beforeEach(() => {
       // getUrlParams() reads window.location directly rather than from the
@@ -198,67 +204,33 @@ describe("InCallView", () => {
       window.history.pushState({}, "", "/");
     });
 
-    it("mobile landscape, is accessible when showHeader is false", () => {
-      // windowSize with height <= 600 results in "flat" windowMode,
-      // which means showHeader$ emits false.
-      const { getAllByRole, getByRole, getByTestId, vm } = createInCallView({
+    it("mobile portrait, is visible in the header", () => {
+      createInCallView({
         withAppBar: true,
         callViewModelOptions: {
-          // Set windowMode$ to "flat" (height <= 600)
-          windowSize$: constant({ width: 1000, height: 500 }),
+          // Narrow like a mobile phone in portrait orientation
+          windowSize$: constant({ width: 400, height: 700 }),
         },
       });
 
-      // In flat (landscape) mode the footer starts hidden until the user
-      // taps the screen, so no settings button should be accessible yet.
-
-      expect(getByTestId("footer-container")).not.toBeVisible();
-      const buttons = getAllByRole("button", { name: "Settings" });
-      for (const b of buttons) {
-        expect(b).not.toBeVisible();
-      }
-
-      // Simulate a touch tap on the call view to reveal the footer.
-      // (PointerEvent is not available in JSDOM, so we call tapScreen() directly,
-      // which is exactly what the onClick handler does for touch events.)
-      act(() => vm.tapScreen());
-
-      // When showHeader is false, hideSettingsButton is false,
-      // so the settings button is visible in the footer.
-      const settingsBtn = getByRole("button", { name: "Settings" });
-      // There are two buttons in the bottom bar. One for the
-      // the narrow layout and another one for the wide layout.
-      // Their visibility uses @media css queries, which we can test JSDOM (see `test.css.include` vitest config).
-      expect(settingsBtn).toHaveAttribute(
-        "data-testid",
-        "settings-bottom-left",
-      );
-      expect(settingsBtn).toBeVisible();
+      getByRole(screen.getByRole("banner", { name: "" }), "button", {
+        name: "Settings",
+      });
     });
 
-    it("mobile portrait, is accessible when showHeader is true", () => {
-      // windowSize with height > 600 and width > 600 results in "normal" windowMode,
-      // which means showHeader$ emits true.
-      const { getAllByRole } = createInCallView({
+    it("mobile landscape, is not visible anywhere", () => {
+      const { queryByRole } = createInCallView({
         withAppBar: true,
         callViewModelOptions: {
-          // Set windowMode$ to "normal" (height >= 600)
-          windowSize$: constant({ width: 1000, height: 800 }),
+          // Flat like a mobile phone in landscape orientation
+          windowSize$: constant({ width: 700, height: 400 }),
         },
       });
-      // When showHeader is true and headerStyle is AppBar,
-      // showSettingsButton is false in the footer, but the settings
-      // button is rendered in the AppBar via useAppBarSecondaryButton.
-      const settingsBtns = getAllByRole("button", { name: "Settings" });
 
-      expect(settingsBtns.length).toBe(1);
-      expect(settingsBtns[0]).toHaveAttribute(
-        "data-testid",
-        "settings-app-bar",
-      );
-      expect(settingsBtns[0]).toBeVisible();
+      expect(queryByRole("button", { name: "Settings" })).toBe(null);
     });
   });
+
   describe("audioOutputSwitcher", () => {
     it("is visible and can be clicked", async () => {
       const user = userEvent.setup();

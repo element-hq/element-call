@@ -12,7 +12,7 @@ export default defineConfig((configEnv) =>
     vitePluginsConfig(configEnv),
     defineConfig({
       test: {
-        fileParallelism: false,
+        fileParallelism: true,
         projects: [
           {
             extends: true,
