@@ -37,7 +37,7 @@ export function createStaticViewModel<Snapshot>(
 export function useStaticViewModel<Snapshot>(
   snapshot: Snapshot,
 ): ViewModel<Snapshot> {
-  const [vm] = useState(createStaticViewModel(snapshot));
+  const [vm] = useState(() => createStaticViewModel(snapshot));
   useEffect(() => {
     for (const key in snapshot) {
       (vm as unknown as Record<string, BehaviorSubject<unknown>>)[
