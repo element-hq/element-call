@@ -1070,10 +1070,12 @@ export function createCallViewModel$(
     }),
   );
 
-  const spotlightLandscapeLayoutMedia$: Observable<SpotlightLandscapeLayoutMedia> =
+  const spotlightLandscapeLayoutMedia$ = (
+    edgeToEdge: boolean,
+  ): Observable<SpotlightLandscapeLayoutMedia> =>
     combineLatest([grid$, spotlight$], (grid, spotlight) => ({
       type: "spotlight-landscape",
-      edgeToEdge: false,
+      edgeToEdge,
       spotlight,
       grid,
     }));
@@ -1208,7 +1210,7 @@ export function createCallViewModel$(
                       switchMap((expanded) =>
                         expanded
                           ? spotlightExpandedLayoutMedia$(false)
-                          : spotlightLandscapeLayoutMedia$,
+                          : spotlightLandscapeLayoutMedia$(false),
                       ),
                     );
                 }
@@ -1234,7 +1236,7 @@ export function createCallViewModel$(
                   case "grid":
                     // Yes, grid mode actually gets you a "spotlight" layout in
                     // this window mode.
-                    return spotlightLandscapeLayoutMedia$;
+                    return spotlightLandscapeLayoutMedia$(true);
                   case "spotlight":
                     return spotlightExpandedLayoutMedia$(true);
                 }
