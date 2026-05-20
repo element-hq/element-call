@@ -26,7 +26,7 @@ export interface GridLayoutMedia {
 
 export interface SpotlightLandscapeLayoutMedia {
   type: "spotlight-landscape";
-  edgeToEdge: false;
+  edgeToEdge: boolean;
   spotlight: MediaViewModel[];
   grid: UserMediaViewModel[];
 }
