@@ -14,7 +14,12 @@ import {
   type MockedFunction,
   vi,
 } from "vitest";
-import { render, type RenderResult } from "@testing-library/react";
+import {
+  getByRole,
+  render,
+  screen,
+  type RenderResult,
+} from "@testing-library/react";
 import { type LocalParticipant } from "livekit-client";
 import { BehaviorSubject, of } from "rxjs";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
@@ -189,57 +194,35 @@ describe("InCallView", () => {
       expect(container).toMatchSnapshot();
     });
   });
+
   describe("settings button with AppBar header", () => {
-    it("mobile landscape, is accessible when showHeader is false", () => {
-      // windowSize with height <= 600 results in "flat" windowMode,
-      // which means showHeader$ emits false.
-      const { getAllByRole } = createInCallView({
+    it("mobile portrait, is visible in the header", () => {
+      createInCallView({
         initialRoute: "/?header=app_bar",
         withAppBar: true,
         callViewModelOptions: {
-          // Set windowMode$ to "flat" (height <= 600)
-          windowSize$: constant({ width: 1000, height: 500 }),
+          // Narrow like a mobile phone in portrait orientation
+          windowSize$: constant({ width: 400, height: 700 }),
         },
       });
-      // When showHeader is false, hideSettingsButton is false,
-      // so the settings button is visible in the footer.
-      const settingsBtn = getAllByRole("button", { name: "Settings" });
-      // here we check for two settings buttons because there are two buttons in the bottom bar. One for the
-      // the narrow layout and another one for the wide layout.
-      // Their visibility uses @media css queries, which cannot be tested in JSDOM,
-      // but we can at least check that both buttons are rendered and have the correct classes.
-      expect(settingsBtn.length).toBe(2);
-      expect(settingsBtn[0]).toHaveAttribute(
-        "data-testid",
-        "settings-bottom-left",
-      );
-      expect(settingsBtn[0]).toBeVisible();
+
+      getByRole(screen.getByRole("banner"), "button", { name: "Settings" });
     });
 
-    it("mobile portrait, is accessible when showHeader is true", () => {
-      // windowSize with height > 600 and width > 600 results in "normal" windowMode,
-      // which means showHeader$ emits true.
-      const { getAllByRole } = createInCallView({
+    it("mobile landscape, is not visible anywhere", () => {
+      const { queryByRole } = createInCallView({
         initialRoute: "/?header=app_bar",
         withAppBar: true,
         callViewModelOptions: {
-          // Set windowMode$ to "normal" (height >= 600)
-          windowSize$: constant({ width: 1000, height: 800 }),
+          // Flat like a mobile phone in landscape orientation
+          windowSize$: constant({ width: 700, height: 400 }),
         },
       });
-      // When showHeader is true and headerStyle is AppBar,
-      // hideSettingsButton is true in the footer, but the settings
-      // button is rendered in the AppBar via useAppBarSecondaryButton.
-      const settingsBtns = getAllByRole("button", { name: "Settings" });
 
-      expect(settingsBtns.length).toBe(1);
-      expect(settingsBtns[0]).toHaveAttribute(
-        "data-testid",
-        "settings-app-bar",
-      );
-      expect(settingsBtns[0]).toBeVisible();
+      expect(queryByRole("button", { name: "Settings" })).toBe(null);
     });
   });
+
   describe("audioOutputSwitcher", () => {
     it("is visible and can be clicked", async () => {
       const user = userEvent.setup();
