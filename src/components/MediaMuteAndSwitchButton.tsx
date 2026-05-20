@@ -44,7 +44,7 @@ export interface MediaMuteAndSwitchButtonProps {
   options?: MenuOptions[];
   /** The option that will currently be rendered as the selected option */
   selectedOption?: string;
-  backgroundBlurToggleClick?: () => void;
+  videoBlurToggleClick?: () => void;
   videoBlurEnabled?: boolean;
   /**
    * For any toggle and option this method will be called.
@@ -63,7 +63,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   options,
   selectedOption,
   videoBlurEnabled,
-  backgroundBlurToggleClick,
+  videoBlurToggleClick,
   onSelect,
 }) => {
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
@@ -85,7 +85,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           data-testid="incall_videomute"
         />
       );
-      if (backgroundBlurToggleClick !== undefined) {
+      if (videoBlurToggleClick !== undefined) {
         toggles = [
           {
             label: t("action.blur_background"),
@@ -200,7 +200,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           <ToggleMenuItem
             label={toggle.label}
             onSelect={(e) => {
-              backgroundBlurToggleClick?.();
+              videoBlurToggleClick?.();
               e.preventDefault();
             }}
             checked={toggle.enabled ?? false}

@@ -198,7 +198,7 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
         options={videoOptions}
         selectedOption={selectedVideo}
         onSelect={selectVideoButtonOption}
-        backgroundBlurToggleClick={toggleBlur}
+        videoBlurToggleClick={toggleBlur}
         videoBlurEnabled={videoBlurEnabled}
       />,
     );
