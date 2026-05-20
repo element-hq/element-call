@@ -502,6 +502,13 @@ export async function init(): Promise<void> {
     };
   });
 
+  window.addEventListener("unhandledrejection", (event) => {
+    global.mx_rage_logger.log(
+      LogLevel.error,
+      `Unhandled promise rejection: ${event.reason}`,
+    );
+  });
+
   return tryInitStorage();
 }
 

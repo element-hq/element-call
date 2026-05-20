@@ -77,6 +77,7 @@ test("GridTile is accessible", async () => {
         targetWidth={300}
         targetHeight={200}
         showSpeakingIndicators
+        showNameTags
         focusable
       />
     </ReactionsSenderProvider>,
@@ -109,6 +110,7 @@ test("GridTile displays ringing media", async () => {
         targetWidth={300}
         targetHeight={200}
         showSpeakingIndicators
+        showNameTags
         focusable
       />
     </ReactionsSenderProvider>,
