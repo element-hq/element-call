@@ -26,8 +26,6 @@ export default defineConfig((configEnv) =>
               },
               setupFiles: ["src/vitest.setup.ts"],
               environment: "jsdom",
-              // an example of file based convention,
-              // you don't have to follow it
               include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
             },
           },
@@ -35,7 +33,7 @@ export default defineConfig((configEnv) =>
             plugins: [
               storybookTest({
                 // The location of your Storybook config, main.js|ts
-                configDir: path.join(dirname, ".storybook"),
+                configDir: "./.storybook",
               }),
               ...vitePluginsConfig(configEnv).plugins!,
             ],
