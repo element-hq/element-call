@@ -39,7 +39,6 @@ import {
   tap,
   throttleTime,
   timer,
-  BehaviorSubject,
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
@@ -1765,6 +1764,7 @@ export function createCallViewModel$(
     reconnecting$: localMembership.reconnecting$,
     livekitRoomItems$,
     connected$: localMembership.connected$,
+    windowMode$,
   };
 }
 
