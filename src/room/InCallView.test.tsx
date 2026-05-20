@@ -53,7 +53,6 @@ import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { constant } from "../state/Behavior";
 import { AppBar } from "../AppBar";
 import { initializeWidget } from "../widget";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 initializeWidget();
 vi.hoisted(
