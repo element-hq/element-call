@@ -12,13 +12,14 @@ export default defineConfig((configEnv) =>
     vitePluginsConfig(configEnv),
     defineConfig({
       test: {
-        fileParallelism: false,
+        fileParallelism: true,
         projects: [
           {
             extends: true,
             test: {
               name: "unit",
               css: {
+                include: /.+/,
                 modules: {
                   classNameStrategy: "non-scoped",
                 },

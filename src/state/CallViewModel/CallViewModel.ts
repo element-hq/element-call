@@ -15,6 +15,7 @@ import {
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
+  BehaviorSubject,
   catchError,
   combineLatest,
   distinctUntilChanged,
@@ -38,7 +39,6 @@ import {
   tap,
   throttleTime,
   timer,
-  BehaviorSubject,
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
@@ -355,6 +355,9 @@ export interface CallViewModel {
    * and header as overlays.
    */
   edgeToEdge$: Behavior<boolean>;
+
+  settingsOpen$: Behavior<boolean>;
+  setSettingsOpen$: Behavior<(open: boolean) => void>;
 
   // audio routing
   /**
@@ -1397,6 +1400,10 @@ export function createCallViewModel$(
       map((naturallyShowFooter) => naturallyShowFooter && showFooterUrlParams),
     ),
   );
+  const settingsOpen$ = new BehaviorSubject(false);
+  const setSettingsOpen$ = constant((open: boolean) => {
+    settingsOpen$.next(open);
+  });
 
   const showHeader$ = scope.behavior<boolean>(
     windowMode$.pipe(
@@ -1751,6 +1758,8 @@ export function createCallViewModel$(
     showNameTags$,
     showHeader$: showHeader$,
     showFooter$: showFooter$,
+    settingsOpen$: settingsOpen$,
+    setSettingsOpen$: setSettingsOpen$,
     edgeToEdge$,
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
