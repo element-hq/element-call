@@ -22,13 +22,13 @@ import {
   switchMap,
   of,
   delay,
+  combineLatest,
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { Config } from "../../../config/Config";
 import { type ObservableScope } from "../../ObservableScope";
 import { type Behavior } from "../../Behavior";
-import { and$ } from "../../../utils/observable";
 import { type NodeStyleEventEmitter } from "../../../utils/test";
 
 /**
@@ -36,8 +36,14 @@ import { type NodeStyleEventEmitter } from "../../../utils/test";
  */
 const logger = rootLogger.getChild("[HomeserverConnected]");
 
+export type HomeserverDisconnectReason = "sync" | "membership" | "probablyLeft";
+
 export interface HomeserverConnected {
-  combined$: Behavior<boolean>;
+  /**
+   * Emits `[true, null]` when the homeserver connection is healthy, or
+   * `[false, reason]` when one of the three sub-conditions fails.
+   */
+  combined$: Behavior<[boolean, HomeserverDisconnectReason | null]>;
   rtsSession$: Behavior<Status>;
 }
 
@@ -45,10 +51,11 @@ export interface HomeserverConnected {
  * Behavior representing whether we consider ourselves connected to the Matrix homeserver
  * for the purposes of a MatrixRTC session.
  *
- * Becomes FALSE if ANY sub-condition is fulfilled:
- * 1. Sync loop is not in SyncState.Syncing (after grace period)
- * 2. membershipStatus !== Status.Connected
- * 3. probablyLeft === true
+ * `combined$` emits `null` when all conditions are satisfied, or the first failing
+ * reason (priority: syncing > membershipConnected > certainlyConnected):
+ * 1. Sync loop is not in SyncState.Syncing (after grace period) → "sync"
+ * 2. membershipStatus !== Status.Connected → "membership"
+ * 3. probablyLeft === true → "probablyLeft"
  *
  * @param scope - The observable scope for lifecycle management.
  * @param client - The Matrix client to monitor sync state.
@@ -109,9 +116,22 @@ export function createHomeserverConnected$(
   );
 
   const combined$ = scope.behavior(
-    and$(syncing$, membershipConnected$, certainlyConnected$).pipe(
-      tap((connected) => {
-        logger.info(`Homeserver connected update: ${connected}`);
+    combineLatest([syncing$, membershipConnected$, certainlyConnected$]).pipe(
+      map(
+        ([syncing, membership, certainly]): [
+          boolean,
+          HomeserverDisconnectReason | null,
+        ] => {
+          if (!syncing) return [false, "sync"];
+          if (!membership) return [false, "membership"];
+          if (!certainly) return [false, "probablyLeft"];
+          return [true, null];
+        },
+      ),
+      tap(([connected, reason]) => {
+        logger.info(
+          `Homeserver connected update: ${connected ? "connected" : reason}`,
+        );
       }),
     ),
   );

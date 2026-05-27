@@ -65,6 +65,7 @@ test("SpotlightTile is accessible", async () => {
       expanded={false}
       onToggleExpanded={toggleExpanded}
       showIndicators
+      showNameTags
       focusable={true}
     />,
   );
@@ -106,6 +107,7 @@ test("Screen share volume UI is shown when screen share has audio", async () => 
         expanded={false}
         onToggleExpanded={toggleExpanded}
         showIndicators
+        showNameTags
         focusable
       />
     </TooltipProvider>,
@@ -135,6 +137,7 @@ test("Screen share volume UI is hidden when screen share has no audio", async ()
       expanded={false}
       onToggleExpanded={toggleExpanded}
       showIndicators
+      showNameTags
       focusable
     />,
   );
@@ -171,6 +174,7 @@ test("SpotlightTile displays ringing media", async () => {
       expanded={false}
       onToggleExpanded={toggleExpanded}
       showIndicators
+      showNameTags
       focusable={true}
     />,
   );

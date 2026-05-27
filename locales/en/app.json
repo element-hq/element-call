@@ -3,6 +3,7 @@
     "user_menu": "User menu"
   },
   "action": {
+    "blur_background": "Blur background",
     "close": "Close",
     "copy_link": "Copy link",
     "edit": "Edit",

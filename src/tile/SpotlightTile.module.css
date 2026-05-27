@@ -35,7 +35,9 @@ Please see LICENSE in the repository root for full details.
 
 .maximised .item {
   /* Ensure that foreground elements lie within the safe area */
-  --media-view-fg-inset: 10px calc(env(safe-area-inset-right) + 10px) 10px
+  --media-view-fg-inset: calc(var(--call-view-safe-area-inset-top, 0px) + 10px)
+    calc(env(safe-area-inset-right) + 10px)
+    calc(var(--call-view-safe-area-inset-bottom, 0px) + 10px)
     calc(env(safe-area-inset-left) + 10px);
 }
 
