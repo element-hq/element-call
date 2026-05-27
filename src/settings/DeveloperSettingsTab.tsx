@@ -230,7 +230,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
             },
             [setAlwaysShowIphoneEarpiece],
           )}
-        />{" "}
+        />
       </FieldRow>
       <FieldRow>
         <InputField
@@ -244,7 +244,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
             },
             [setEnableExtendedLivekitLogs],
           )}
-        />{" "}
+        />
       </FieldRow>
       <EditInPlace
         onSubmit={(e) => e.preventDefault()}
