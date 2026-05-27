@@ -5,7 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type Layout, type LayoutMedia } from "./layout-types.ts";
+import { type BehaviorSubject } from "rxjs";
+
+import {
+  type Alignment,
+  type Layout,
+  type LayoutMedia,
+} from "./layout-types.ts";
 import { type TileStore } from "./TileStore";
 
 export type GridLikeLayoutType =
@@ -19,6 +25,7 @@ export type GridLikeLayoutType =
  */
 export function gridLikeLayout(
   media: LayoutMedia & { type: GridLikeLayoutType },
+  spotlightAlignment$: BehaviorSubject<Alignment>,
   visibleTiles: number,
   setVisibleTiles: (value: number) => void,
   prevTiles: TileStore,
@@ -37,6 +44,7 @@ export function gridLikeLayout(
       type: media.type,
       spotlight: tiles.spotlightTile,
       grid: tiles.gridTiles,
+      spotlightAlignment$,
       setVisibleTiles,
     } as Layout & { type: GridLikeLayoutType },
     tiles,
