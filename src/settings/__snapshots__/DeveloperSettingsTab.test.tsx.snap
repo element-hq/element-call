@@ -185,7 +185,6 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         Show iPhone earpiece option on all platforms
       </label>
     </div>
-     
   </div>
   <div
     class="fieldRow"
@@ -223,7 +222,6 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         Enable extended livekit logs
       </label>
     </div>
-     
   </div>
   <form
     class="_root_19upo_16"
