@@ -104,6 +104,7 @@ exports[`InCallView > rendering > renders 1`] = `
     </div>
     <div
       class="fixedGrid grid"
+      style="inset-block-start: NaNpx;"
     >
       <div />
     </div>
@@ -164,6 +165,7 @@ exports[`InCallView > rendering > renders 1`] = `
     />
     <div
       class="footer"
+      data-testid="footer-container"
     >
       <div
         class="settingsLogoContainer"
@@ -374,7 +376,33 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
+          aria-disabled="false"
+          aria-expanded="false"
+          aria-haspopup="true"
           aria-labelledby="_r_s_"
+          class="_button_1nw83_8 raiseHand _has-icon_1nw83_60 _icon-only_1nw83_53"
+          data-kind="secondary"
+          data-size="lg"
+          role="button"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              clip-rule="evenodd"
+              d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10m3.536-6.464a1 1 0 0 0-1.415-1.415A3 3 0 0 1 12 15a3 3 0 0 1-2.121-.879 1 1 0 1 0-1.414 1.415A5 5 0 0 0 12 17c1.38 0 2.632-.56 3.536-1.464M10 10.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m5.5 1.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"
+              fill-rule="evenodd"
+            />
+          </svg>
+        </button>
+        <button
+          aria-labelledby="_r_14_"
           class="_button_1nw83_8 endCall _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
           data-kind="primary"
           data-size="lg"
@@ -396,21 +424,23 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
       </div>
-      <form
-        class="toggle layout"
+      <fieldset
+        aria-label="Layout"
+        class="_toggle_13rnk_9 layout"
+        data-size="lg"
       >
         <input
-          aria-labelledby="_r_11_"
-          name="layout"
+          aria-labelledby="_r_19_"
+          name="layoutMode"
           type="radio"
           value="spotlight"
         />
         <svg
           aria-hidden="true"
           fill="currentColor"
-          height="24"
+          height="1em"
           viewBox="0 0 24 24"
-          width="24"
+          width="1em"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -418,25 +448,25 @@ exports[`InCallView > rendering > renders 1`] = `
           />
         </svg>
         <input
-          aria-labelledby="_r_16_"
+          aria-labelledby="_r_1e_"
           checked=""
-          name="layout"
+          name="layoutMode"
           type="radio"
           value="grid"
         />
         <svg
           aria-hidden="true"
           fill="currentColor"
-          height="24"
+          height="1em"
           viewBox="0 0 24 24"
-          width="24"
+          width="1em"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
             d="M4 11a.97.97 0 0 1-.712-.287A.97.97 0 0 1 3 10V4q0-.424.288-.712A.97.97 0 0 1 4 3h6q.424 0 .713.288Q11 3.575 11 4v6q0 .424-.287.713A.97.97 0 0 1 10 11zm5-2V5H5v4zm5 12a.97.97 0 0 1-.713-.288A.97.97 0 0 1 13 20v-6q0-.424.287-.713A.97.97 0 0 1 14 13h6q.424 0 .712.287.288.288.288.713v6q0 .424-.288.712A.97.97 0 0 1 20 21zm5-2v-4h-4v4zM4 21a.97.97 0 0 1-.712-.288A.97.97 0 0 1 3 20v-6q0-.424.288-.713A.97.97 0 0 1 4 13h6q.424 0 .713.287.287.288.287.713v6q0 .424-.287.712A.97.97 0 0 1 10 21zm5-2v-4H5v4zm5-8a.97.97 0 0 1-.713-.287A.97.97 0 0 1 13 10V4q0-.424.287-.712A.97.97 0 0 1 14 3h6q.424 0 .712.288Q21 3.575 21 4v6q0 .424-.288.713A.97.97 0 0 1 20 11zm5-2V5h-4v4z"
           />
         </svg>
-      </form>
+      </fieldset>
     </div>
   </div>
 </div>

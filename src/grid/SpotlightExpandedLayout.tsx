@@ -19,8 +19,8 @@ import { useBehavior } from "../useBehavior";
  */
 export const makeSpotlightExpandedLayout: CallLayout<
   SpotlightExpandedLayoutModel
-> = ({ pipAlignment$ }) => ({
-  scrollingOnTop: true,
+> = () => ({
+  foreground: "scrolling",
 
   fixed: function SpotlightExpandedLayoutFixed({
     ref,
@@ -46,15 +46,15 @@ export const makeSpotlightExpandedLayout: CallLayout<
     Slot,
   }): ReactNode {
     useUpdateLayout();
-    const pipAlignmentValue = useBehavior(pipAlignment$);
+    const pipAlignment = useBehavior(model.pipAlignment$);
 
     const onDragPip: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
-        pipAlignment$.next({
+        model.pipAlignment$.next({
           block: yRatio < 0.5 ? "start" : "end",
           inline: xRatio < 0.5 ? "start" : "end",
         }),
-      [],
+      [model.pipAlignment$],
     );
 
     return (
@@ -65,8 +65,8 @@ export const makeSpotlightExpandedLayout: CallLayout<
             id={model.pip.id}
             model={model.pip}
             onDrag={onDragPip}
-            data-block-alignment={pipAlignmentValue.block}
-            data-inline-alignment={pipAlignmentValue.inline}
+            data-block-alignment={pipAlignment.block}
+            data-inline-alignment={pipAlignment.inline}
           />
         )}
       </div>
