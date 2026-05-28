@@ -26,6 +26,33 @@ Please see LICENSE in the repository root for full details.
   );
 }
 
+.header.hidden {
+  display: none;
+}
+
+.header.overlay {
+  /* Note that the header is still position: sticky in this case so that certain
+    tiles can move down out of the way of the header when visible. */
+  opacity: 1;
+  transition: opacity 0.15s;
+}
+
+.header.overlay.hidden {
+  display: flex;
+  opacity: 0;
+  pointer-events: none;
+  /* Switch to position: absolute so the header takes up no space in the layout
+    when hidden. */
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+}
+
+.header.overlay:has(:focus-visible) {
+  opacity: 1;
+  pointer-events: initial;
+}
+
 .header.filler {
   block-size: var(--cpd-space-6x);
   background: none;

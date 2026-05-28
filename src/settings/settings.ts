@@ -129,6 +129,11 @@ export const alwaysShowIphoneEarpiece = new Setting<boolean>(
   false,
 );
 
+export const enableExtendedLivekitLogs = new Setting<boolean>(
+  "extended-livekit-logs",
+  false,
+);
+
 export enum MatrixRTCMode {
   Legacy = "legacy",
   Compatibility = "compatibility",

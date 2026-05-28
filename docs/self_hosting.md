@@ -58,7 +58,7 @@ rc_message:
 
 rc_delayed_event_mgmt:
   # This needs to match at least the heart-beat frequency plus a bit of headroom
-  # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2s
+  # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2Hz
   per_second: 1
   burst_count: 20
 ```
@@ -70,7 +70,7 @@ make sure that your Synapse server has either a `federation` or `openid`
 
 ### MatrixRTC Backend
 
-In order to **guarantee smooth operation** of Element Call MatrixRTC backend is
+In order to **guarantee smooth operation** of Element Call, a MatrixRTC backend is
 required for each site deployment.
 
 ![MSC4195 compatible setup](MSC4195_setup.drawio.png)
@@ -190,8 +190,8 @@ backend mxrtc_auth_backend
 
 > [!IMPORTANT]
 > As defined in
-> [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143)
-> MatrixRTC backend must be announced to the client via your **Matrix site's
+> [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143),
+> the MatrixRTC backend(s) must be announced to the client via your **Matrix site's
 > `.well-known/matrix/client`** file (e.g.
 > `example.com/.well-known/matrix/client` matching the site deployment example
 > from above). The configuration is a list of Foci configs:
@@ -222,7 +222,7 @@ Access-Control-Allow-Headers: X-Requested-With, Content-Type, Authorization
 
 > [!NOTE]  
 > Most `org.matrix.msc4143.rtc_foci` configurations will only have one entry in
-> the array
+> the array.
 
 ## Building Element Call
 
@@ -291,7 +291,7 @@ be able to handle those yet and it may behave unreliably.
 
 Therefore, to use a self-hosted homeserver, this is recommended to be a new
 server where any user account created has not joined any normal rooms anywhere
-in the Matrix federated network. The homeserver used can be setup to disable
+in the Matrix federated network. The homeserver used can be set up to disable
 federation, so as to prevent spam registrations (if you keep registrations open)
 and to ensure Element Call continues to work in case any user decides to log in
 to their Element Call account using the standard Element app and joins normal

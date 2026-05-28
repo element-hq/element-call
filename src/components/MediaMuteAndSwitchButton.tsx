@@ -12,44 +12,24 @@ import {
   MenuItem,
   ToggleMenuItem,
 } from "@vector-im/compound-web";
-import { t } from "i18next";
 import {
   CheckIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  MicOffSolidIcon,
   MicOnIcon,
-  MicOnSolidIcon,
   SpinnerIcon,
   VideoCallIcon,
-  VideoCallOffSolidIcon,
-  VideoCallSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { useTranslation } from "react-i18next";
 
 import styles from "./MediaMuteAndSwitchButton.module.css";
+import { MicButton, VideoButton } from "../button";
+import { type DeviceLabel } from "../state/MediaDevices";
 
 export interface MenuOptions {
-  label: string;
+  label: DeviceLabel;
   id: string;
-}
-export interface ToggleOption {
-  label: string;
-  enabled: boolean;
-  id: string;
-}
-
-export interface IconsAndLabels {
-  /** The Icon used if the mute button is enabled */
-  IconEnabled: ComponentType<React.SVGAttributes<SVGElement>>;
-  /** The Icon used if the mute button is disabled */
-  IconDisabled: ComponentType<React.SVGAttributes<SVGElement>>;
-  /** The icon used for the different options */
-  IconOptions?: ComponentType<React.SVGAttributes<SVGElement>>;
-  enabledLabel: string;
-  disabledLabel: string;
-  optionsButtonLabel: string;
 }
 
 export interface MediaMuteAndSwitchButtonProps {
@@ -59,17 +39,13 @@ export interface MediaMuteAndSwitchButtonProps {
   enabled?: boolean;
   /** Callback if the mute button is clicked */
   onMuteClick?: () => void;
-  iconsAndLabels?: "video" | "audio" | IconsAndLabels;
+  iconsAndLabels: "video" | "audio";
   /** The options available for the media device selector modal */
   options?: MenuOptions[];
   /** The option that will currently be rendered as the selected option */
   selectedOption?: string;
-  /**
-   * The available toggles (including there current state)
-   * The toggle state is not stored by this component.
-   * It is handled externally and needs to be set by listening to the `onSelect` callback and setting the right toggle item to `enabled`
-   */
-  toggles?: ToggleOption[];
+  videoBlurToggleClick?: () => void;
+  videoBlurEnabled?: boolean;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
@@ -77,70 +53,80 @@ export interface MediaMuteAndSwitchButtonProps {
   onSelect?: (id: string) => void;
 }
 
+const BLUR_ID = "blur";
+
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
   enabled,
   onMuteClick,
-  iconsAndLabels: iconsAndLabelsWithDefaultCases,
+  iconsAndLabels,
   options,
   selectedOption,
-  toggles,
+  videoBlurEnabled,
+  videoBlurToggleClick,
   onSelect,
 }) => {
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  let iconsAndLabels: IconsAndLabels | undefined;
-  switch (iconsAndLabelsWithDefaultCases) {
+  const { t } = useTranslation();
+  let button;
+  let toggles: { label: string; enabled: boolean; id: string }[] = [];
+  switch (iconsAndLabels) {
     case "video":
-      iconsAndLabels = {
-        IconEnabled: VideoCallSolidIcon,
-        IconDisabled: VideoCallOffSolidIcon,
-        IconOptions: VideoCallIcon,
-        disabledLabel: t("stop_video_button_label"),
-        enabledLabel: t("start_video_button_label"),
-        optionsButtonLabel: t("settings.devices.microphone"),
-      };
+      button = (
+        <VideoButton
+          enabled={enabled ?? false}
+          onClick={(e) => {
+            onMuteClick?.();
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          disabled={onMuteClick === undefined}
+          data-testid="incall_videomute"
+        />
+      );
+      if (videoBlurToggleClick !== undefined) {
+        toggles = [
+          {
+            label: t("action.blur_background"),
+            enabled: videoBlurEnabled ?? false,
+            id: BLUR_ID,
+          },
+        ];
+      }
       break;
     case "audio":
-      iconsAndLabels = {
-        IconEnabled: MicOnSolidIcon,
-        IconDisabled: MicOffSolidIcon,
-        IconOptions: MicOnIcon,
-        disabledLabel: t("mute_microphone_button_label"),
-        enabledLabel: t("unmute_microphone_button_label"),
-        optionsButtonLabel: t("settings.devices.microphone"),
-      };
-      break;
-    default:
-      iconsAndLabels = iconsAndLabelsWithDefaultCases;
+      button = (
+        <MicButton
+          enabled={enabled ?? false}
+          onClick={(e) => {
+            onMuteClick?.();
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          disabled={onMuteClick === undefined}
+          data-testid="incall_mute"
+        />
+      );
       break;
   }
-  const {
-    IconEnabled,
-    IconDisabled,
-    IconOptions,
-    disabledLabel,
-    enabledLabel,
-    optionsButtonLabel,
-  } = iconsAndLabels ?? {
-    IconEnabled: undefined,
-    IconDisabled: undefined,
-    IconOptions: undefined,
-    disabledLabel: undefined,
-    enabledLabel: undefined,
-    optionsButtonLabel: undefined,
-  };
-  {
-    logger.info(
-      "RENDER WITH: selectedOption !== option.id && plannedSelection === option.id",
-      selectedOption,
-      " !==",
-      "option.id",
-      " && ",
-      plannedSelection,
-      " === ",
-      "option.id",
-    );
+
+  let IconOptions: ComponentType<React.SVGAttributes<SVGElement>> | undefined;
+  let optionsButtonLabel: string;
+  let numberedLabel: (number: number) => string;
+  switch (iconsAndLabels) {
+    case "video":
+      IconOptions = VideoCallIcon;
+      optionsButtonLabel = t("settings.devices.camera");
+      numberedLabel = (n): string =>
+        t("settings.devices.microphone_numbered", { n });
+      break;
+    case "audio":
+      IconOptions = MicOnIcon;
+      optionsButtonLabel = t("settings.devices.microphone");
+      numberedLabel = (n): string =>
+        t("settings.devices.camera_numbered", { n });
+      break;
   }
   return (
     <div
@@ -150,19 +136,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       })}
     >
       {/* The mute button lives inside */}
-      <Button
-        iconOnly
-        Icon={enabled ? IconEnabled : IconDisabled}
-        onClick={(e) => {
-          onMuteClick?.();
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        kind={enabled ? "secondary" : "primary"}
-        size="lg"
-        className={styles.button}
-        aria-label={enabled ? disabledLabel : enabledLabel}
-      />
+      {button}
       <Menu
         title={title}
         showTitle={true}
@@ -183,44 +157,53 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        {options?.map((option) => (
-          <MenuItem
-            hideChevron
-            label={option.label}
-            Icon={
-              IconOptions && (
-                <IconOptions
-                  width={24}
-                  height={24}
-                  className={styles.itemIcon}
-                />
-              )
-            }
-            onSelect={(e) => {
-              e.preventDefault();
-              if (option.id === selectedOption) return;
-              setPlannedSelection(option.id);
-              onSelect?.(option.id);
-            }}
-            key={option.id}
-          >
-            {selectedOption === option.id && (
-              <CheckIcon width={24} height={24} />
-            )}
-            {selectedOption !== option.id && plannedSelection === option.id && (
-              <SpinnerIcon width={24} height={24} className={styles.rotate} />
-            )}
-          </MenuItem>
-        ))}
+        {options?.map(({ label, id }) => {
+          let labelText: string;
+          switch (label.type) {
+            case "name":
+              labelText = label.name;
+              break;
+            case "number":
+              labelText = numberedLabel(label.number);
+              break;
+          }
+          return (
+            <MenuItem
+              hideChevron
+              label={labelText}
+              Icon={
+                IconOptions && (
+                  <IconOptions
+                    width={24}
+                    height={24}
+                    className={styles.itemIcon}
+                  />
+                )
+              }
+              onSelect={(e) => {
+                e.preventDefault();
+                if (id === selectedOption) return;
+                setPlannedSelection(id);
+                onSelect?.(id);
+              }}
+              key={id}
+            >
+              {selectedOption === id && <CheckIcon width={24} height={24} />}
+              {selectedOption !== id && plannedSelection === id && (
+                <SpinnerIcon width={24} height={24} className={styles.rotate} />
+              )}
+            </MenuItem>
+          );
+        })}
         {(toggles?.length ?? 0) > 0 && <hr />}
         {toggles?.map((toggle) => (
           <ToggleMenuItem
             label={toggle.label}
             onSelect={(e) => {
-              onSelect?.(toggle.id);
+              videoBlurToggleClick?.();
               e.preventDefault();
             }}
-            checked={toggle.enabled}
+            checked={toggle.enabled ?? false}
             key={toggle.id}
           />
         ))}
