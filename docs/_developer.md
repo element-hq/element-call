@@ -92,11 +92,10 @@ https://192-168-0-122.nip.io:3000/
 
 **For Element X Android Developer Tools**
 
-In Element X's developer settings, set the Element Call URL to the same URL from step 3.
+In Element X's developer settings, set the Element Call URL to the nip.io url (replace . with - in the IP address):
 
 ```
 https://192-168-0-122.nip.io:3000/room
-
 ```
 
 ### Why nip.io?
@@ -108,6 +107,6 @@ https://192-168-0-122.nip.io:3000/room
 - iOS/Android treat it as a proper domain name, not an IP address
 - One-time certificate setup works for all future IP addresses
 
-```
-
-```
+> [!IMPORTANT]
+> Make sure your network router doesn't enforce DNS rebinding protection (which will
+> break nip.io). If it does, try allow-listing nip.io in your router's administration interface.
