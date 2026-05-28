@@ -54,7 +54,7 @@
     "@livekit/protocol": "^1.42.2",
     "@livekit/track-processors": "^0.7.1",
     "@mediapipe/tasks-vision": "^0.10.18",
-    "@playwright/test": "^1.59.0",
+    "@playwright/test": "^1.60.0",
     "@radix-ui/react-dialog": "^1.0.4",
     "@radix-ui/react-slider": "^1.1.2",
     "@radix-ui/react-visually-hidden": "^1.0.3",
