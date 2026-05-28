@@ -23,12 +23,17 @@ import {
   createRoutesFromChildren,
   matchRoutes,
 } from "react-router-dom";
+import {
+  setLogExtension as setLKLogExtension,
+  setLogLevel as setLKLogLevel,
+} from "livekit-client";
 
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { platform } from "./Platform";
 import { isFailure } from "./utils/fetch";
 import { initializeWidget } from "./widget";
+import { enableExtendedLivekitLogs } from "./settings/settings.ts";
 
 // This generates a map of locale names to their URL (based on import.meta.url), which looks like this:
 // {
@@ -189,6 +194,18 @@ export class Initializer {
 
     // Add the platform to the DOM, so CSS can query it
     document.body.setAttribute("data-platform", platform);
+
+    // livekit logging configuration
+    setLKLogExtension((level, msg, context) => {
+      // we pass a synthetic logger name of "livekit" to the rageshake to make it easier to read
+      global.mx_rage_logger.log(level, "livekit", msg, context);
+    });
+
+    enableExtendedLivekitLogs.value$.subscribe((enabled) => {
+      setLKLogLevel(enabled ? "trace" : "info");
+    });
+
+    window.setLKLogLevel = setLKLogLevel;
   }
 
   public static init(): Promise<void> | null {
