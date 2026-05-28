@@ -1,20 +1,54 @@
 import { defineConfig, mergeConfig } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
+import { vitePluginsConfig } from "./vite.config";
+import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-import viteConfig from "./vite.config";
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig((configEnv) =>
   mergeConfig(
-    viteConfig(configEnv),
+    vitePluginsConfig(configEnv),
     defineConfig({
       test: {
-        environment: "jsdom",
-        css: {
-          modules: {
-            classNameStrategy: "non-scoped",
+        fileParallelism: true,
+        projects: [
+          {
+            extends: true,
+            test: {
+              name: "unit",
+              css: {
+                include: /.+/,
+                modules: {
+                  classNameStrategy: "non-scoped",
+                },
+              },
+              setupFiles: ["src/vitest.setup.ts"],
+              environment: "jsdom",
+              include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+            },
           },
-        },
-        setupFiles: ["src/vitest.setup.ts"],
-        include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+          {
+            plugins: [
+              storybookTest({
+                // The location of your Storybook config, main.js|ts
+                configDir: "./.storybook",
+              }),
+              ...vitePluginsConfig(configEnv).plugins!,
+            ],
+            test: {
+              name: "storybook",
+              browser: {
+                enabled: true,
+                // Make sure to install Playwright
+                provider: playwright(),
+                headless: true,
+                instances: [{ browser: "chromium" }],
+              },
+            },
+          },
+        ],
         coverage: {
           reporter: ["html", "json"],
           include: ["src/**/*.{ts,tsx,js,jsx}"],

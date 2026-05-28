@@ -97,7 +97,7 @@ jobs:
         run: find ${FILENAME_PREFIX} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${FILENAME_PREFIX}.sha256
       - name: Upload
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: |
             ${{ env.FILENAME_PREFIX }}.tar.gz
@@ -297,7 +297,7 @@ jobs:
           NEEDS_PUBLISH_IOS_OUTPUTS_ARTIFACT_VERSION: ${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}
       - name: Add release notes
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           append_body: true
           body: |

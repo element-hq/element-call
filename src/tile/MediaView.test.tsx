@@ -42,6 +42,7 @@ describe("MediaView", () => {
     targetHeight: 200,
     mirror: false,
     unencryptedWarning: false,
+    showNameTags: true,
     video: trackReference,
     userId: "@alice:example.com",
     mxcAvatarUrl: undefined,
@@ -105,6 +106,16 @@ describe("MediaView", () => {
       );
       expect(await axe(container)).toHaveNoViolations();
       expect(screen.getByRole("img", { name: "Not encrypted" })).toBeTruthy();
+    });
+
+    test("is shown and accessible even with name tag hidden", async () => {
+      const { container } = render(
+        <TooltipProvider>
+          <MediaView {...baseProps} unencryptedWarning showNameTags={false} />
+        </TooltipProvider>,
+      );
+      expect(await axe(container)).toHaveNoViolations();
+      screen.getByRole("img", { name: "Not encrypted" });
     });
 
     test("is not shown", () => {

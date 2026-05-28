@@ -1,5 +1,21 @@
 .bar {
   flex-shrink: 0;
+  position: relative;
+}
+
+/* Pseudo-element for the gradient background */
+.bar::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  /* Extend the gradient beyond the bottom of the header for readability */
+  inset-block: -24px;
+  z-index: var(--call-view-header-footer-layer);
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0%,
+    var(--cpd-color-bg-canvas-default) 100%
+  );
 }
 
 .bar > header {
