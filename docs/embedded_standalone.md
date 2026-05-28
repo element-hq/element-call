@@ -25,7 +25,7 @@ The basics are:
 
 1. Add the appropriate platform dependency as given for a [release](https://github.com/element-hq/element-call/releases), or use the embedded tarball. e.g. `npm install @element-hq/element-call-embedded@0.9.0`
 2. Include the assets from the platform dependency in the build process. e.g. copy the assets during a [Webpack](https://github.com/element-hq/element-web/blob/247cd8d56d832d006d7dfb919d1042529d712b59/webpack.config.js#L677-L682) build.
-3. Use the `index.html` entrypointof the imported assets when you are constructing the WebView or iframe. e.g. using a [relative path in a webapp](https://github.com/element-hq/element-web/blob/247cd8d56d832d006d7dfb919d1042529d712b59/src/models/Call.ts#L680), or on the the Android [WebViewAssetLoader](https://github.com/element-hq/element-x-android/blob/fe5aab6588ecdcf9354a3bfbd9e97c1b31175a8f/features/call/impl/src/main/kotlin/io/element/android/features/call/impl/utils/DefaultCallWidgetProvider.kt#L20)
+3. Use the `index.html` entrypoint of the imported assets when you are constructing the WebView or iframe. e.g. using a [relative path in a webapp](https://github.com/element-hq/element-web/blob/247cd8d56d832d006d7dfb919d1042529d712b59/src/models/Call.ts#L680), or on the the Android [WebViewAssetLoader](https://github.com/element-hq/element-x-android/blob/fe5aab6588ecdcf9354a3bfbd9e97c1b31175a8f/features/call/impl/src/main/kotlin/io/element/android/features/call/impl/utils/DefaultCallWidgetProvider.kt#L20)
 4. Set any of the [embedded-only URL parameters](./url_params.md#embedded-only-parameters) that you need.
 
 ## Widget vs standalone mode
@@ -35,5 +35,5 @@ Element Call is developed using the [js-sdk](https://github.com/matrix-org/matri
 As a widget, the app only uses the core calling (MatrixRTC) parts. The rest (authentication, sending events, getting room state updates about calls) is done by the hosting client.
 Element Call and the hosting client are connected via the widget API.
 
-Element Call detects that it is run as a widget if a widgetId is defined in the url parameters. If `widgetId` is present then Element Call will try to connect to the client via the widget postMessage API using the parameters provided in [Url Format and parameters
+Element Call detects that it is run as a widget if `widgetId` is defined in the url parameters. If `widgetId` is present then Element Call will try to connect to the client via the widget postMessage API using the parameters provided in [Url Format and parameters
 ](./url_params.md).

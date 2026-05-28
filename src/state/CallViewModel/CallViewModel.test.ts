@@ -50,6 +50,7 @@ import {
   aliceParticipant,
   aliceRtcMember,
   aliceUserId,
+  bob,
   bobId,
   bobRtcMember,
   local,
@@ -83,6 +84,14 @@ vi.mock("../e2ee/matrixKeyProvider");
 
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("../UrlParams", () => ({ getUrlParams }));
+
+const getPlatform = vi.hoisted(() => vi.fn(() => "desktop"));
+vi.mock("../../Platform", () => ({
+  get platform(): string {
+    return getPlatform();
+  },
+  isFirefox: (): boolean => false,
+}));
 
 vi.mock(
   "../state/CallViewModel/localMember/localTransport",
@@ -133,10 +142,17 @@ export interface SpotlightExpandedLayoutSummary {
   pip?: string;
 }
 
-export interface OneOnOneLayoutSummary {
-  type: "one-on-one";
+export interface OneOnOneLandscapeLayoutSummary {
+  type: "one-on-one-landscape";
   spotlight: string;
   pip: string;
+}
+
+export interface OneOnOnePortraitLayoutSummary {
+  type: "one-on-one-portrait";
+  spotlight: string[];
+  pip?: string;
+  pipSize: "sm" | "lg";
 }
 
 export interface PipLayoutSummary {
@@ -149,7 +165,8 @@ export type LayoutSummary =
   | SpotlightLandscapeLayoutSummary
   | SpotlightPortraitLayoutSummary
   | SpotlightExpandedLayoutSummary
-  | OneOnOneLayoutSummary
+  | OneOnOneLandscapeLayoutSummary
+  | OneOnOnePortraitLayoutSummary
   | PipLayoutSummary;
 
 function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
@@ -187,13 +204,27 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
               pip: pip?.id,
             }),
           );
-        case "one-on-one":
+        case "one-on-one-landscape":
           return combineLatest(
             [l.spotlight.media$, l.pip.media$],
             (spotlight, pip) => ({
               type: l.type,
               spotlight: spotlight.id,
               pip: pip.id,
+            }),
+          );
+        case "one-on-one-portrait":
+          return combineLatest(
+            [
+              l.spotlight.media$,
+              l.pip?.media$ ?? constant(undefined),
+              l.pipSize$,
+            ],
+            (spotlight, pip, pipSize) => ({
+              type: l.type,
+              spotlight: spotlight.map((vm) => vm.id),
+              pip: pip?.id,
+              pipSize,
             }),
           );
         case "pip":
@@ -405,7 +436,7 @@ describe.each([
             expectedLayoutMarbles,
             {
               a: {
-                type: "one-on-one",
+                type: "one-on-one-landscape",
                 pip: `${localId}:0`,
                 spotlight: `${aliceId}:0`,
               },
@@ -416,6 +447,85 @@ describe.each([
               },
             },
           );
+        },
+      );
+    });
+  });
+
+  test("one-on-one portrait layout shows local tile when video is enabled", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      // Local participant enables their video, then disables it
+      const videoInputMarbles = "    ny--n";
+      // While tile is shown, tap the screen twice
+      const tapScreenInputMarbles = "--aa-";
+      // Layout should show local tile, make it small, enlarge it again, then hide it
+      const expectedLayoutMarbles = "abcba";
+
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant]),
+          roomMembers: [local, alice],
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          videoEnabled: new Map([
+            [localParticipant, behavior(videoInputMarbles, yesNo)],
+          ]),
+          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone in portrait
+        },
+        (vm) => {
+          schedule(tapScreenInputMarbles, { a: () => vm.tapScreen() });
+
+          expectObservable(vm.edgeToEdge$).toBe("y", yesNo); // Edge-to-edge-layout
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "one-on-one-portrait",
+                spotlight: [`${aliceId}:0`],
+                pip: undefined,
+                pipSize: "lg",
+              },
+              b: {
+                type: "one-on-one-portrait",
+                spotlight: [`${aliceId}:0`],
+                pip: `${localId}:0`,
+                pipSize: "lg",
+              },
+              c: {
+                type: "one-on-one-portrait",
+                spotlight: [`${aliceId}:0`],
+                pip: `${localId}:0`,
+                pipSize: "sm",
+              },
+            },
+          );
+        },
+      );
+    });
+  });
+
+  test("one-on-one portrait layout shows name tags in room with 3 members", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant]),
+          // Both Alice and Bob are with us in the room
+          roomMembers: [local, alice, bob],
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone in portrait
+        },
+        (vm) => {
+          // Uses one-on-one portrait layout
+          expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
+            a: {
+              type: "one-on-one-portrait",
+              spotlight: [`${aliceId}:0`],
+              pip: undefined,
+              pipSize: "lg",
+            },
+          });
+          // It wouldn't be clear whether Alice or Bob is the remote video tile,
+          // so the interface must put a name tag on it
+          expectObservable(vm.showNameTags$).toBe("y", yesNo);
         },
       );
     });
@@ -576,7 +686,7 @@ describe.each([
   });
 
   test("layout reacts to window size", () => {
-    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+    withTestScheduler(({ behavior, expectObservable }) => {
       const windowSizeInputMarbles = "abc";
       const expectedLayoutMarbles = " abc";
       withCallViewModel(
@@ -584,7 +694,7 @@ describe.each([
           remoteParticipants$: constant([aliceParticipant]),
           rtcMembers$: constant([localRtcMember, aliceRtcMember]),
           windowSize$: behavior(windowSizeInputMarbles, {
-            a: { width: 300, height: 600 }, // Start very narrow, like a phone
+            a: { width: 380, height: 700 }, // Start very narrow, like a phone
             b: { width: 1000, height: 800 }, // Go to normal desktop window size
             c: { width: 200, height: 180 }, // Go to PiP size
           }),
@@ -595,13 +705,14 @@ describe.each([
             {
               a: {
                 // This is the expected one-on-one layout for a narrow window
-                type: "spotlight-expanded",
+                type: "one-on-one-portrait",
                 spotlight: [`${aliceId}:0`],
-                pip: `${localId}:0`,
+                pip: undefined,
+                pipSize: "lg",
               },
               b: {
                 // In a larger window, expect the normal one-on-one layout
-                type: "one-on-one",
+                type: "one-on-one-landscape",
                 pip: `${localId}:0`,
                 spotlight: `${aliceId}:0`,
               },
@@ -734,6 +845,59 @@ describe.each([
       );
     });
   });
+
+  // Test cases for footer visibility in PIP mode across different platforms
+  const PIP_FOOTER_VISIBILITY_TEST_CASES: Array<{
+    platform: "ios" | "android" | "desktop";
+    expectedMarbles: string;
+    description: string;
+  }> = [
+    {
+      platform: "ios",
+      expectedMarbles: "tf",
+      description: "hidden on iOS",
+    },
+    {
+      platform: "android",
+      expectedMarbles: "tf",
+      description: "hidden on Android",
+    },
+    {
+      platform: "desktop",
+      expectedMarbles: "t",
+      description: "visible on desktop",
+    },
+  ];
+
+  it.each(PIP_FOOTER_VISIBILITY_TEST_CASES)(
+    "footer is $description in PIP mode",
+    ({ platform: testPlatform, expectedMarbles }) => {
+      withTestScheduler(({ schedule, expectObservable }) => {
+        // Set platform for this test case
+        getPlatform.mockReturnValue(testPlatform);
+
+        // Enable PIP mode after initial render
+        const pipControlInputMarbles = "-e";
+
+        withCallViewModel(
+          {
+            remoteParticipants$: constant([aliceParticipant]),
+            rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          },
+          (vm) => {
+            schedule(pipControlInputMarbles, {
+              e: () => window.controls.enablePip(),
+            });
+
+            expectObservable(vm.showFooter$).toBe(expectedMarbles, {
+              t: true,
+              f: false,
+            });
+          },
+        );
+      });
+    },
+  );
 
   test("PiP tile in expanded spotlight layout switches speakers without layout shifts", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
@@ -956,7 +1120,7 @@ describe.each([
                 grid: [`${localId}:0`],
               },
               b: {
-                type: "one-on-one",
+                type: "one-on-one-landscape",
                 pip: `${localId}:0`,
                 spotlight: `${aliceId}:0`,
               },
@@ -999,7 +1163,7 @@ describe.each([
                 grid: [`${localId}:0`],
               },
               b: {
-                type: "one-on-one",
+                type: "one-on-one-landscape",
                 pip: `${localId}:0`,
                 spotlight: `${aliceId}:0`,
               },
@@ -1009,7 +1173,7 @@ describe.each([
                 grid: [`${localId}:0`, `${aliceId}:0`, `${daveId}:0`],
               },
               d: {
-                type: "one-on-one",
+                type: "one-on-one-landscape",
                 pip: `${localId}:0`,
                 spotlight: `${daveId}:0`,
               },
@@ -1227,7 +1391,7 @@ describe.each([
           // ringing the entire time (even once timed out)
           expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
             a: {
-              type: "one-on-one",
+              type: "one-on-one-landscape",
               spotlight: `${localId}:0`,
               pip: `ringing:${aliceUserId}`,
             },
@@ -1266,12 +1430,12 @@ describe.each([
           // ringing the entire time
           expectObservable(summarizeLayout$(vm.layout$)).toBe("a 20ms b", {
             a: {
-              type: "one-on-one",
+              type: "one-on-one-landscape",
               spotlight: `${localId}:0`,
               pip: `ringing:${aliceUserId}`,
             },
             b: {
-              type: "one-on-one",
+              type: "one-on-one-landscape",
               spotlight: `${aliceId}:0`,
               pip: `${localId}:0`,
             },

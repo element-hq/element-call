@@ -1,34 +1,32 @@
 /*
 Copyright 2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import { type ReactNode, useCallback } from "react";
+import classNames from "classnames";
 
-import { type SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/layout-types.ts";
+import { type OneOnOnePortraitLayout as OneOnOnePortraitLayoutModel } from "../state/layout-types.ts";
 import { type CallLayout } from "./CallLayout";
+import styles from "./OneOnOnePortraitLayout.module.css";
 import { type DragCallback, useUpdateLayout } from "./Grid";
-import styles from "./SpotlightExpandedLayout.module.css";
 import { useBehavior } from "../useBehavior";
 
 /**
- * An implementation of the "expanded spotlight" layout, in which the spotlight
- * tile stretches edge-to-edge and is overlaid by a picture-in-picture tile.
+ * An implementation of the "one-on-one" layout for portrait screens, in which
+ * the remote participant is shown at maximum size, overlaid by a small view of
+ * the local participant.
  */
-export const makeSpotlightExpandedLayout: CallLayout<
-  SpotlightExpandedLayoutModel
+export const makeOneOnOnePortraitLayout: CallLayout<
+  OneOnOnePortraitLayoutModel
 > = () => ({
   foreground: "scrolling",
 
-  fixed: function SpotlightExpandedLayoutFixed({
-    ref,
-    model,
-    Slot,
-  }): ReactNode {
+  fixed: function OneOnOnePortraitLayoutFixed({ ref, model, Slot }): ReactNode {
     useUpdateLayout();
-
     return (
       <div ref={ref} className={styles.layer}>
         <Slot
@@ -40,15 +38,15 @@ export const makeSpotlightExpandedLayout: CallLayout<
     );
   },
 
-  scrolling: function SpotlightExpandedLayoutScrolling({
+  scrolling: function OneOnOnePortraitLayoutScrolling({
     ref,
     model,
     Slot,
   }): ReactNode {
     useUpdateLayout();
+    const pipSize = useBehavior(model.pipSize$);
     const pipAlignment = useBehavior(model.pipAlignment$);
-
-    const onDragPip: DragCallback = useCallback(
+    const onDragLocalTile: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
         model.pipAlignment$.next({
           block: yRatio < 0.5 ? "start" : "end",
@@ -61,10 +59,11 @@ export const makeSpotlightExpandedLayout: CallLayout<
       <div ref={ref} className={styles.layer}>
         {model.pip && (
           <Slot
-            className={styles.pip}
+            className={classNames(styles.pip)}
             id={model.pip.id}
             model={model.pip}
-            onDrag={onDragPip}
+            onDrag={onDragLocalTile}
+            data-size={pipSize}
             data-block-alignment={pipAlignment.block}
             data-inline-alignment={pipAlignment.inline}
           />

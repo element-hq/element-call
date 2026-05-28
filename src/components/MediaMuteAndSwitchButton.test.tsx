@@ -9,13 +9,16 @@ import { describe, expect, test, vi } from "vitest";
 import { act, render, screen, type RenderResult } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type JSX, useState } from "react";
+import { TooltipProvider } from "@vector-im/compound-web";
 
 import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
 
 describe("MediaMuteAndSwitchButton", () => {
   test("renders", () => {
     const { container } = render(
-      <MediaMuteAndSwitchButton title={"Switcher"} />,
+      <TooltipProvider>
+        <MediaMuteAndSwitchButton title={"Switcher"} iconsAndLabels={"audio"} />
+      </TooltipProvider>,
     );
     expect(container).toMatchSnapshot();
   });
@@ -26,11 +29,13 @@ describe("MediaMuteAndSwitchButton", () => {
       enabled: boolean,
     ): RenderResult => {
       return render(
-        <MediaMuteAndSwitchButton
-          title={"Switcher"}
-          iconsAndLabels={type}
-          enabled={enabled}
-        />,
+        <TooltipProvider>
+          <MediaMuteAndSwitchButton
+            title={"Switcher"}
+            iconsAndLabels={type}
+            enabled={enabled}
+          />
+        </TooltipProvider>,
       );
     };
     const renderAudioEndabled = renderLabels("audio", true);
@@ -39,16 +44,16 @@ describe("MediaMuteAndSwitchButton", () => {
     const renderVideoDisabled = renderLabels("video", false);
 
     expect(
-      renderAudioEndabled.getByRole("button", { name: "Mute microphone" }),
+      renderAudioEndabled.getByRole("switch", { name: "Mute microphone" }),
     ).toBeInTheDocument();
     expect(
-      renderAudioDisabled.getByRole("button", { name: "Unmute microphone" }),
+      renderAudioDisabled.getByRole("switch", { name: "Unmute microphone" }),
     ).toBeInTheDocument();
     expect(
-      renderVideoEnabled.getByRole("button", { name: "Start video" }),
+      renderVideoEnabled.getByRole("switch", { name: "Start video" }),
     ).toBeInTheDocument();
     expect(
-      renderVideoDisabled.getByRole("button", { name: "Stop video" }),
+      renderVideoDisabled.getByRole("switch", { name: "Stop video" }),
     ).toBeInTheDocument();
   });
 
@@ -56,15 +61,17 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const onMute = vi.fn();
     const { getByRole } = render(
-      <MediaMuteAndSwitchButton
-        title={"Switcher"}
-        onMuteClick={onMute}
-        iconsAndLabels="audio"
-        enabled={true}
-      />,
+      <TooltipProvider>
+        <MediaMuteAndSwitchButton
+          title={"Switcher"}
+          onMuteClick={onMute}
+          iconsAndLabels="audio"
+          enabled={true}
+        />
+      </TooltipProvider>,
     );
 
-    await user.click(getByRole("button", { name: "Mute microphone" }));
+    await user.click(getByRole("switch", { name: "Mute microphone" }));
 
     expect(onMute).toHaveBeenCalled();
   });
@@ -73,17 +80,19 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const { getByRole } = render(
-      <MediaMuteAndSwitchButton
-        title="Switcher"
-        iconsAndLabels="audio"
-        enabled={true}
-        options={[
-          { label: "Microphone 1", id: "mic1" },
-          { label: "Microphone 2", id: "mic2" },
-        ]}
-        selectedOption="mic1"
-        onSelect={onSelect}
-      />,
+      <TooltipProvider>
+        <MediaMuteAndSwitchButton
+          title="Switcher"
+          iconsAndLabels="audio"
+          enabled={true}
+          options={[
+            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+          ]}
+          selectedOption="mic1"
+          onSelect={onSelect}
+        />
+      </TooltipProvider>,
     );
 
     await user.click(getByRole("button", { name: "Microphone" }));
@@ -95,17 +104,19 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const { getByRole } = render(
-      <MediaMuteAndSwitchButton
-        title="Switcher"
-        iconsAndLabels="audio"
-        enabled={true}
-        options={[
-          { label: "Microphone 1", id: "mic1" },
-          { label: "Microphone 2", id: "mic2" },
-        ]}
-        selectedOption="mic1"
-        onSelect={onSelect}
-      />,
+      <TooltipProvider>
+        <MediaMuteAndSwitchButton
+          title="Switcher"
+          iconsAndLabels="audio"
+          enabled={true}
+          options={[
+            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+          ]}
+          selectedOption="mic1"
+          onSelect={onSelect}
+        />
+      </TooltipProvider>,
     );
 
     await user.click(getByRole("button", { name: "Microphone" }));
@@ -122,23 +133,25 @@ describe("MediaMuteAndSwitchButton", () => {
     function Wrapper(): JSX.Element {
       const [selectedOption, setSelectedOption] = useState("mic1");
       return (
-        <MediaMuteAndSwitchButton
-          title="Switcher"
-          iconsAndLabels="audio"
-          enabled={true}
-          options={[
-            { label: "Microphone 1", id: "mic1" },
-            { label: "Microphone 2", id: "mic2" },
-          ]}
-          selectedOption={selectedOption}
-          onSelect={(id) => {
-            onSelectPressed();
-            void promise.then(() => {
-              setSelectedOption(id);
-              onOptionUpdated();
-            });
-          }}
-        />
+        <TooltipProvider>
+          <MediaMuteAndSwitchButton
+            title="Switcher"
+            iconsAndLabels="audio"
+            enabled={true}
+            options={[
+              { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+              { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+            ]}
+            selectedOption={selectedOption}
+            onSelect={(id) => {
+              onSelectPressed();
+              void promise.then(() => {
+                setSelectedOption(id);
+                onOptionUpdated();
+              });
+            }}
+          />
+        </TooltipProvider>
       );
     }
 
@@ -174,42 +187,47 @@ describe("MediaMuteAndSwitchButton", () => {
   test("renders menu with toggle control and calls toggle callback", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
+    const onVideoBlurToggle = vi.fn();
     const { getByRole } = render(
-      <MediaMuteAndSwitchButton
-        title="Switcher"
-        iconsAndLabels="audio"
-        enabled={true}
-        toggles={[{ label: "Background blur", id: "bg_blur", enabled: false }]}
-        onSelect={onSelect}
-      />,
+      <TooltipProvider>
+        <MediaMuteAndSwitchButton
+          title="Switcher"
+          iconsAndLabels="video"
+          enabled={true}
+          videoBlurToggleClick={onVideoBlurToggle}
+          onSelect={onSelect}
+        />
+      </TooltipProvider>,
     );
 
-    await user.click(getByRole("button", { name: "Microphone" }));
+    await user.click(getByRole("button", { name: "Camera" }));
 
     const toggle = screen.getByRole("menuitemcheckbox", {
-      name: "Background blur",
+      name: "Blur background",
     });
     expect(toggle).toBeInTheDocument();
     expect(toggle).toHaveAttribute("aria-checked", "false");
 
     await user.click(toggle);
 
-    expect(onSelect).toHaveBeenCalledWith("bg_blur");
+    expect(onVideoBlurToggle).toHaveBeenCalled();
   });
 
   test("renders check icon to mark the selected menu item", async () => {
     const user = userEvent.setup();
     const { getByRole } = render(
-      <MediaMuteAndSwitchButton
-        title="Switcher"
-        iconsAndLabels="audio"
-        enabled={true}
-        options={[
-          { label: "Microphone 1", id: "mic1" },
-          { label: "Microphone 2", id: "mic2" },
-        ]}
-        selectedOption="mic2"
-      />,
+      <TooltipProvider>
+        <MediaMuteAndSwitchButton
+          title="Switcher"
+          iconsAndLabels="audio"
+          enabled={true}
+          options={[
+            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+          ]}
+          selectedOption="mic2"
+        />
+      </TooltipProvider>,
     );
 
     // open menu

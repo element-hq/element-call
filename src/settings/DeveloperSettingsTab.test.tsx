@@ -14,7 +14,11 @@ import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
-import { customLivekitUrl as customLivekitUrlSetting } from "./settings";
+import {
+  customLivekitUrl as customLivekitUrlSetting,
+  enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
+} from "./settings";
+
 // Mock url params hook to avoid environment-dependent snapshot churn.
 vi.mock("../UrlParams", () => ({
   useUrlParams: (): { mocked: boolean; answer: number } => ({
@@ -246,6 +250,65 @@ describe("DeveloperSettingsTab", () => {
         screen.getByText("invalid URL (did not update)"),
       ).toBeInTheDocument();
       expect(customLivekitUrlSetting.getValue()).toBe(null);
+    });
+  });
+
+  // Add this test inside the describe("DeveloperSettingsTab", () => { block,
+  // after the custom livekit url tests:
+
+  describe("enable extended livekit logs", () => {
+    afterEach(() => {
+      enableExtendedLivekitLogsSetting.setValue(false);
+    });
+
+    it("toggles extended livekit logs setting", async () => {
+      const user = userEvent.setup();
+      const client = createMockMatrixClient();
+
+      render(
+        <TooltipProvider>
+          <DeveloperSettingsTab
+            client={client}
+            env={{} as unknown as ImportMetaEnv}
+          />
+        </TooltipProvider>,
+      );
+
+      const checkbox = screen.getByLabelText("Enable extended livekit logs");
+
+      // Initial state should be unchecked (default false)
+      expect(checkbox).not.toBeChecked();
+      expect(enableExtendedLivekitLogsSetting.getValue()).toBe(false);
+
+      // Click to enable
+      await user.click(checkbox);
+      expect(checkbox).toBeChecked();
+      expect(enableExtendedLivekitLogsSetting.getValue()).toBe(true);
+
+      // Click to disable
+      await user.click(checkbox);
+      expect(checkbox).not.toBeChecked();
+      expect(enableExtendedLivekitLogsSetting.getValue()).toBe(false);
+    });
+
+    it("Use the current setting value on render", () => {
+      const client = createMockMatrixClient();
+
+      // Set the value to true before rendering
+      enableExtendedLivekitLogsSetting.setValue(true);
+
+      render(
+        <TooltipProvider>
+          <DeveloperSettingsTab
+            client={client}
+            env={{} as unknown as ImportMetaEnv}
+          />
+        </TooltipProvider>,
+      );
+
+      const checkbox = screen.getByLabelText("Enable extended livekit logs");
+      expect(checkbox).toBeChecked();
+      expect(enableExtendedLivekitLogsSetting.getValue()).toBe(true);
     });
   });
 });

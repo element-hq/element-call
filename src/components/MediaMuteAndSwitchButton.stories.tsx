@@ -5,7 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { AdvancedSettingsIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { fn, userEvent, within, expect } from "storybook/test";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
@@ -21,17 +20,11 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     title: "SomeMenu",
-    iconsAndLabels: {
-      IconEnabled: AdvancedSettingsIcon,
-      IconDisabled: AdvancedSettingsIcon,
-      enabledLabel: "Enabled",
-      disabledLabel: "Disabled",
-      optionsButtonLabel: "Options",
-    },
+    iconsAndLabels: "audio",
     enabled: true,
     options: [
-      { label: "option 1", id: "1" },
-      { label: "option 2", id: "2" },
+      { label: { type: "name", name: "Option 1" }, id: "1" },
+      { label: { type: "name", name: "Option 2" }, id: "2" },
     ],
     selectedOption: "1",
     onMuteClick: fn(),
@@ -46,23 +39,18 @@ export const AudioMute: Story = {
     iconsAndLabels: "audio",
     enabled: false,
     options: [
-      { label: "Microphone 1", id: "1" },
-      { label: "Microphone 2", id: "2" },
+      { label: { type: "name", name: "Microphone 1" }, id: "1" },
+      { label: { type: "name", name: "Microphone 2" }, id: "2" },
     ],
-    toggles: [
-      {
-        label: "example toggle",
-        id: "t0",
-        enabled: true,
-      },
-    ],
+    videoBlurEnabled: true,
+    videoBlurToggleClick: fn(),
     selectedOption: "2",
   },
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
     // Both the mute button and the chevron trigger currently share the aria-label "Edit"
     // (both are TODO placeholders in the component). The mute button is first in the DOM.
-    const muteButton = canvas.getByLabelText("Unmute microphone");
+    const muteButton = canvas.getByTestId("incall_mute");
     await userEvent.click(muteButton);
     await expect(args.onMuteClick).toHaveBeenCalled();
   },
@@ -74,10 +62,10 @@ export const AudioUnmute: Story = {
     iconsAndLabels: "audio",
     enabled: true,
     options: [
-      { label: "Microphone 1", id: "1" },
-      { label: "Microphone 2", id: "2" },
+      { label: { type: "name", name: "Microphone 1" }, id: "1" },
+      { label: { type: "name", name: "Microphone 2" }, id: "2" },
     ],
-    toggles: [],
+
     selectedOption: "2",
   },
 };
@@ -88,10 +76,10 @@ export const VideoMute: Story = {
     iconsAndLabels: "video",
     enabled: false,
     options: [
-      { label: "Camera 1", id: "1" },
-      { label: "Camera 2", id: "2" },
+      { label: { type: "name", name: "Camera 1" }, id: "1" },
+      { label: { type: "name", name: "Camera 2" }, id: "2" },
     ],
-    toggles: [],
+
     selectedOption: "1",
   },
 };
@@ -102,16 +90,11 @@ export const VideoUnmute: Story = {
     iconsAndLabels: "video",
     enabled: true,
     options: [
-      { label: "Camera 1", id: "1" },
-      { label: "Camera 2", id: "2" },
+      { label: { type: "name", name: "Camera 1" }, id: "1" },
+      { label: { type: "name", name: "Camera 2" }, id: "2" },
     ],
-    toggles: [
-      {
-        label: "Blur Background",
-        id: "background_blurring",
-        enabled: false,
-      },
-    ],
+    videoBlurEnabled: true,
+    videoBlurToggleClick: fn(),
     selectedOption: "2",
   },
 };
