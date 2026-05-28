@@ -291,7 +291,7 @@ describe("DeveloperSettingsTab", () => {
       expect(enableExtendedLivekitLogsSetting.getValue()).toBe(false);
     });
 
-    it("reflects the current setting value on render", () => {
+    it("Use the current setting value on render", () => {
       const client = createMockMatrixClient();
 
       // Set the value to true before rendering
