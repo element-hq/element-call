@@ -10,6 +10,7 @@ Please see LICENSE in the repository root for full details.
   --hover-space-margin: var(--cpd-space-1x);
   transition: outline-color ease 0.15s;
   outline: var(--cpd-border-width-2) solid rgb(0 0 0 / 0);
+  box-shadow: var(--draggable-shadow);
 }
 
 /* Use a pseudo-element to create the expressive speaking border, since CSS
