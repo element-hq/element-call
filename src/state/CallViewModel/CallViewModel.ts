@@ -1208,13 +1208,12 @@ export function createCallViewModel$(
         }
         return layout;
       }),
-      tap((orientation) => {
-        logger.info("controls api pip orientation updated:", orientation);
-        window.controls.onPipMediaOrientationUpdate?.(orientation);
-      }),
       scope.bind(),
     )
-    .subscribe();
+    .subscribe((orientation) => {
+      logger.info("controls api pip orientation updated:", orientation);
+      window.controls.onPipMediaOrientationUpdate?.(orientation);
+    });
 
   /**
    * The media to be used to produce a layout.
