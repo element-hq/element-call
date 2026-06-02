@@ -15,6 +15,7 @@ import {
   vitest,
 } from "vitest";
 import fetchMock from "fetch-mock";
+import { MatrixError } from "matrix-js-sdk";
 
 import { getSFUConfigWithOpenID, type OpenIDClientParts } from "./openIDSFU";
 import { testJWTToken } from "../utils/test-fixtures";
@@ -63,7 +64,10 @@ describe("getSFUConfigWithOpenID", () => {
     fetchMock.post("https://sfu.example.org/sfu/get", () => {
       return {
         status: 500,
-        body: { error: "Test failure" },
+        body: {
+          errcode: "M_LOOKUP_FAILED",
+          error: "Failed to look up user info from homeserver",
+        },
       };
     });
     try {
@@ -75,9 +79,12 @@ describe("getSFUConfigWithOpenID", () => {
       );
     } catch (ex: unknown) {
       expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
-      expect((ex as FailToGetOpenIdToken).cause).toEqual(
-        new Error("SFU Config fetch failed with status code 500"),
+      expect((ex as FailToGetOpenIdToken).cause).toBeInstanceOf(MatrixError);
+      const mxError = (ex as Error).cause as MatrixError;
+      expect(mxError.message).toEqual(
+        "MatrixError: [500] Failed to look up user info from homeserver",
       );
+
       void (await fetchMock.flush());
       return;
     }
@@ -181,13 +188,19 @@ describe("getSFUConfigWithOpenID", () => {
     fetchMock.post("https://sfu.example.org/get_token", () => {
       return {
         status: 500,
-        body: { error: "Test failure" },
+        body: {
+          errcode: "M_LOOKUP_FAILED",
+          error: "Failed to look up user info from homeserver",
+        },
       };
     });
     fetchMock.post("https://sfu.example.org/sfu/get", () => {
       return {
         status: 500,
-        body: { error: "Test failure" },
+        body: {
+          errcode: "M_LOOKUP_FAILED",
+          error: "Failed to look up user info from homeserver",
+        },
       };
     });
     try {
@@ -203,8 +216,10 @@ describe("getSFUConfigWithOpenID", () => {
       );
     } catch (ex) {
       expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
-      expect((ex as FailToGetOpenIdToken).cause).toEqual(
-        new Error("SFU Config fetch failed with status code 500"),
+      expect((ex as FailToGetOpenIdToken).cause).toBeInstanceOf(MatrixError);
+      const mxError = (ex as Error).cause as MatrixError;
+      expect(mxError.message).toEqual(
+        "MatrixError: [500] Failed to look up user info from homeserver",
       );
       void (await fetchMock.flush());
     }
