@@ -73,7 +73,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   const devices = useMediaDevices();
 
   useEffect(() => {
-    if (menuOpen) devices.requestDeviceNames();
+    if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
   }, [menuOpen, devices]);
 
   let button;

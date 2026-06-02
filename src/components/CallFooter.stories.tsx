@@ -17,12 +17,17 @@ import { useStaticViewModel } from "../state/ViewModel";
 import { ReactionsSenderContext } from "../reactions/useReactionsSender";
 import { type ReactionOption } from "../reactions";
 import { type GridMode } from "../state/CallViewModel/CallViewModel";
+import { MediaDevicesContext } from "../MediaDevicesContext";
+import { MediaDevices } from "../state/MediaDevices";
+import { globalScope } from "../state/ObservableScope";
 // consts for tests
 const reactionIdentifier = "@user:example.com:DEVICE";
 const reactionData = {
   handsRaised$: new BehaviorSubject({}),
   reactions$: new BehaviorSubject({}),
 };
+
+const mediaDevices = new MediaDevices(globalScope);
 
 /**
  * A wrapper component that is used for:
@@ -41,17 +46,19 @@ function CallFooterStoryWrapper({
 }): ReactNode {
   const vm = useStaticViewModel(vmSnapshot);
   return (
-    <div className={inCallViewStyles.inRoom}>
-      <ReactionsSenderContext
-        value={{
-          supportsReactions: false,
-          toggleRaisedHand: async () => Promise.resolve(),
-          sendReaction: async (reaction: ReactionOption) => Promise.resolve(),
-        }}
-      >
-        <CallFooter vm={vm} />
-      </ReactionsSenderContext>
-    </div>
+    <MediaDevicesContext value={mediaDevices}>
+      <div className={inCallViewStyles.inRoom}>
+        <ReactionsSenderContext
+          value={{
+            supportsReactions: false,
+            toggleRaisedHand: async () => Promise.resolve(),
+            sendReaction: async (reaction: ReactionOption) => Promise.resolve(),
+          }}
+        >
+          <CallFooter vm={vm} />
+        </ReactionsSenderContext>
+      </div>
+    </MediaDevicesContext>
   );
 }
 
