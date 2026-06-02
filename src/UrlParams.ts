@@ -1,5 +1,6 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -233,15 +234,18 @@ export interface UrlConfiguration {
    */
   waitForCallPickup: boolean;
 
+  /**
+   * Whether to enable echo cancellation for audio capture.
+   * Defaults to true.
+   */
+  echoCancellation?: boolean;
+  /**
+   * Whether to enable noise suppression for audio capture.
+   * Defaults to true.
+   */
+  noiseSuppression?: boolean;
+
   callIntent?: RTCCallIntent;
-}
-interface IntentAndPlatformDerivedConfiguration {
-  defaultAudioEnabled?: boolean;
-  defaultVideoEnabled?: boolean;
-}
-interface IntentAndPlatformDerivedConfiguration {
-  defaultAudioEnabled?: boolean;
-  defaultVideoEnabled?: boolean;
 }
 
 // If you need to add a new flag to this interface, prefer a name that describes
@@ -249,10 +253,7 @@ interface IntentAndPlatformDerivedConfiguration {
 // the situations that call for this behavior ('isEmbedded'). This makes it
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
-export interface UrlParams
-  extends UrlProperties,
-    UrlConfiguration,
-    IntentAndPlatformDerivedConfiguration {}
+export interface UrlParams extends UrlProperties, UrlConfiguration {}
 
 // This is here as a stopgap, but what would be far nicer is a function that
 // takes a UrlParams and returns a query string. That would enable us to
@@ -452,29 +453,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
       };
   }
 
-  const intentAndPlatformDerivedConfiguration: IntentAndPlatformDerivedConfiguration =
-    {};
-  // Desktop also includes web. Its anything that is not mobile.
-  const desktopMobile = platform === "desktop" ? "desktop" : "mobile";
-  switch (desktopMobile) {
-    case "desktop":
-    case "mobile":
-      switch (intent) {
-        case UserIntent.StartNewCall:
-        case UserIntent.JoinExistingCall:
-        case UserIntent.StartNewCallDM:
-        case UserIntent.JoinExistingCallDM:
-          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
-          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = true;
-          break;
-        case UserIntent.StartNewCallDMVoice:
-        case UserIntent.JoinExistingCallDMVoice:
-          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
-          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = false;
-          break;
-      }
-  }
-
   const properties: UrlProperties = {
     widgetId,
     parentUrl,
@@ -495,8 +473,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     homeserver: !isWidget ? parser.getParam("homeserver") : null,
     posthogApiHost: parser.getParam("posthogApiHost"),
     posthogApiKey: parser.getParam("posthogApiKey"),
-    posthogUserId:
-      parser.getParam("posthogUserId") ?? parser.getParam("analyticsID"),
+    posthogUserId: parser.getParam("posthogUserId"),
     rageshakeSubmitUrl: parser.getParam("rageshakeSubmitUrl"),
     sentryDsn: parser.getParam("sentryDsn"),
     sentryEnvironment: parser.getParam("sentryEnvironment"),
@@ -525,6 +502,8 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     ]),
     waitForCallPickup: parser.getFlag("waitForCallPickup"),
     autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
+    noiseSuppression: parser.getFlagParam("noiseSuppression", true),
+    echoCancellation: parser.getFlagParam("echoCancellation", true),
   };
 
   // Log the final configuration for debugging purposes.
@@ -537,15 +516,12 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     properties,
     "configuration:",
     configuration,
-    "intentAndPlatformDerivedConfiguration:",
-    intentAndPlatformDerivedConfiguration,
   );
 
   return {
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
-    ...intentAndPlatformDerivedConfiguration,
   };
 };
 

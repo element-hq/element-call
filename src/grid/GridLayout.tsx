@@ -14,7 +14,7 @@ import {
 import { distinctUntilChanged } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 
-import { type GridLayout as GridLayoutModel } from "../state/CallViewModel";
+import { type GridLayout as GridLayoutModel } from "../state/layout-types.ts";
 import styles from "./GridLayout.module.css";
 import { useInitial } from "../useInitial";
 import { type CallLayout, arrangeTiles } from "./CallLayout";

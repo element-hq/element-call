@@ -5,69 +5,121 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ChangeEvent, type FC, useCallback, useMemo } from "react";
+import {
+  type ChangeEvent,
+  type FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useId,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
+import {
+  UNSTABLE_MSC4354_STICKY_EVENTS,
+  type MatrixClient,
+} from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
+import {
+  EditInPlace,
+  Root as Form,
+  Heading,
+  HelpMessage,
+  InlineField,
+  Label,
+  RadioControl,
+} from "@vector-im/compound-web";
+import { type Room as LivekitRoom } from "livekit-client";
 
 import { FieldRow, InputField } from "../input/Input";
 import {
   useSetting,
   duplicateTiles as duplicateTilesSetting,
   debugTileLayout as debugTileLayoutSetting,
-  showNonMemberTiles as showNonMemberTilesSetting,
   showConnectionStats as showConnectionStatsSetting,
-  useNewMembershipManager as useNewMembershipManagerSetting,
-  useExperimentalToDeviceTransport as useExperimentalToDeviceTransportSetting,
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
+  matrixRTCMode as matrixRTCModeSetting,
+  customLivekitUrl as customLivekitUrlSetting,
+  MatrixRTCMode,
 } from "./settings";
-import type { MatrixClient } from "matrix-js-sdk";
-import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
+
 interface Props {
   client: MatrixClient;
-  livekitRoom?: LivekitRoom;
+  livekitRooms?: {
+    room: LivekitRoom;
+    url: string;
+    isLocal?: boolean;
+    livekitAlias?: string;
+  }[];
+  env: ImportMetaEnv;
 }
 
-export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
+export const DeveloperSettingsTab: FC<Props> = ({
+  client,
+  livekitRooms,
+  env,
+}) => {
   const { t } = useTranslation();
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
   const [debugTileLayout, setDebugTileLayout] = useSetting(
     debugTileLayoutSetting,
   );
-  const [showNonMemberTiles, setShowNonMemberTiles] = useSetting(
-    showNonMemberTilesSetting,
+
+  const [stickyEventsSupported, setStickyEventsSupported] = useState(false);
+  useEffect(() => {
+    client
+      .doesServerSupportUnstableFeature(UNSTABLE_MSC4354_STICKY_EVENTS)
+      .then((result) => {
+        setStickyEventsSupported(result);
+      })
+      .catch((ex) => {
+        logger.warn("Failed to check if sticky events are supported", ex);
+      });
+  }, [client]);
+
+  const [matrixRTCMode, setMatrixRTCMode] = useSetting(matrixRTCModeSetting);
+  const matrixRTCModeRadioGroup = useId();
+  const onMatrixRTCModeChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setMatrixRTCMode(e.target.value as MatrixRTCMode);
+    },
+    [setMatrixRTCMode],
   );
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
   );
 
-  const [useNewMembershipManager, setNewMembershipManager] = useSetting(
-    useNewMembershipManagerSetting,
-  );
-
   const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
     alwaysShowIphoneEarpieceSetting,
   );
-  const [
-    useExperimentalToDeviceTransport,
-    setUseExperimentalToDeviceTransport,
-  ] = useSetting(useExperimentalToDeviceTransportSetting);
+
+  const [customLivekitUrl, setCustomLivekitUrl] = useSetting(
+    customLivekitUrlSetting,
+  );
+  const [customLivekitUrlTextBuffer, setCustomLivekitUrlTextBuffer] =
+    useState(customLivekitUrl);
+  useEffect(() => {
+    setCustomLivekitUrlTextBuffer(customLivekitUrl);
+  }, [customLivekitUrl]);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
   const urlParams = useUrlParams();
 
-  const sfuUrl = useMemo((): URL | null => {
-    if (livekitRoom?.engine.client.ws?.url) {
+  const localSfuUrl = useMemo((): URL | null => {
+    const localRoom = livekitRooms?.find((r) => r.isLocal)?.room;
+    if (localRoom?.engine.client.ws?.url) {
       // strip the URL params
-      const url = new URL(livekitRoom.engine.client.ws.url);
+      const url = new URL(localRoom.engine.client.ws.url);
       url.search = "";
       return url;
     }
     return null;
-  }, [livekitRoom]);
+  }, [livekitRooms]);
 
   return (
     <>
@@ -129,20 +181,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
       </FieldRow>
       <FieldRow>
         <InputField
-          id="showNonMemberTiles"
-          type="checkbox"
-          label={t("developer_mode.show_non_member_tiles")}
-          checked={!!showNonMemberTiles}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setShowNonMemberTiles(event.target.checked);
-            },
-            [setShowNonMemberTiles],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
           id="showConnectionStats"
           type="checkbox"
           label={t("developer_mode.show_connection_stats")}
@@ -152,34 +190,6 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
               setShowConnectionStats(event.target.checked);
             },
             [setShowConnectionStats],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="useNewMembershipManager"
-          type="checkbox"
-          label={t("developer_mode.use_new_membership_manager")}
-          checked={!!useNewMembershipManager}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setNewMembershipManager(event.target.checked);
-            },
-            [setNewMembershipManager],
-          )}
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="useToDeviceKeyTransport"
-          type="checkbox"
-          label={t("developer_mode.use_to_device_key_transport")}
-          checked={!!useExperimentalToDeviceTransport}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              setUseExperimentalToDeviceTransport(event.target.checked);
-            },
-            [setUseExperimentalToDeviceTransport],
           )}
         />
       </FieldRow>
@@ -211,24 +221,129 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
           )}
         />{" "}
       </FieldRow>
-      {livekitRoom ? (
-        <>
-          <p>
+      <EditInPlace
+        onSubmit={(e) => e.preventDefault()}
+        helpLabel={
+          customLivekitUrl === null
+            ? t("developer_mode.custom_livekit_url.from_config")
+            : t("developer_mode.custom_livekit_url.current_url") +
+              customLivekitUrl
+        }
+        label={t("developer_mode.custom_livekit_url.label")}
+        saveButtonLabel={t("developer_mode.custom_livekit_url.save")}
+        savingLabel={t("developer_mode.custom_livekit_url.saving")}
+        cancelButtonLabel={t("developer_mode.custom_livekit_url.reset")}
+        onSave={useCallback(
+          (e: React.FormEvent<HTMLFormElement>) => {
+            setCustomLivekitUrl(
+              customLivekitUrlTextBuffer === ""
+                ? null
+                : customLivekitUrlTextBuffer,
+            );
+          },
+          [setCustomLivekitUrl, customLivekitUrlTextBuffer],
+        )}
+        value={customLivekitUrlTextBuffer ?? ""}
+        onChange={useCallback(
+          (event: ChangeEvent<HTMLInputElement>): void => {
+            setCustomLivekitUrlTextBuffer(event.target.value);
+          },
+          [setCustomLivekitUrlTextBuffer],
+        )}
+        onCancel={useCallback(
+          (e: React.FormEvent<HTMLFormElement>) => {
+            setCustomLivekitUrl(null);
+          },
+          [setCustomLivekitUrl],
+        )}
+      />
+      <Heading as="h3" type="body" weight="semibold" size="lg">
+        {t("developer_mode.matrixRTCMode.title")}
+      </Heading>
+      <Form>
+        <InlineField
+          name={matrixRTCModeRadioGroup}
+          control={
+            <RadioControl
+              checked={matrixRTCMode === MatrixRTCMode.Legacy}
+              value={MatrixRTCMode.Legacy}
+              onChange={onMatrixRTCModeChange}
+            />
+          }
+        >
+          <Label>{t("developer_mode.matrixRTCMode.Legacy.label")}</Label>
+          <HelpMessage>
+            {t("developer_mode.matrixRTCMode.Legacy.description")}
+          </HelpMessage>
+        </InlineField>
+        <InlineField
+          name={matrixRTCModeRadioGroup}
+          control={
+            <RadioControl
+              checked={matrixRTCMode === MatrixRTCMode.Compatibility}
+              value={MatrixRTCMode.Compatibility}
+              onChange={onMatrixRTCModeChange}
+            />
+          }
+        >
+          <Label>{t("developer_mode.matrixRTCMode.Comptibility.label")}</Label>
+          <HelpMessage>
+            {t("developer_mode.matrixRTCMode.Comptibility.description")}
+          </HelpMessage>
+        </InlineField>
+        <InlineField
+          name={matrixRTCModeRadioGroup}
+          control={
+            <RadioControl
+              checked={matrixRTCMode === MatrixRTCMode.Matrix_2_0}
+              value={MatrixRTCMode.Matrix_2_0}
+              disabled={!stickyEventsSupported}
+              onChange={onMatrixRTCModeChange}
+            />
+          }
+        >
+          <Label>{t("developer_mode.matrixRTCMode.Matrix_2_0.label")}</Label>
+          <HelpMessage>
+            {t("developer_mode.matrixRTCMode.Matrix_2_0.description")}
+          </HelpMessage>
+        </InlineField>
+      </Form>
+      {livekitRooms?.map((livekitRoom) => (
+        <div className={styles.livekit_room_box}>
+          <h4>
             {t("developer_mode.livekit_sfu", {
-              url: sfuUrl?.href || "unknown",
+              url: livekitRoom.url || "unknown",
             })}
+          </h4>
+          <p>LivekitAlias: {livekitRoom.livekitAlias}</p>
+          <p>connectionState (wont hot reload): {livekitRoom.room.state}</p>
+          {livekitRoom.isLocal && <p>ws-url: {localSfuUrl?.href}</p>}
+          <p>
+            {t("developer_mode.livekit_server_info")}(
+            {livekitRoom.isLocal ? "local" : "remote"})
           </p>
-          <p>{t("developer_mode.livekit_server_info")}</p>
           <pre className={styles.pre}>
-            {livekitRoom.serverInfo
-              ? JSON.stringify(livekitRoom.serverInfo, null, 2)
+            {livekitRoom.room.serverInfo
+              ? JSON.stringify(livekitRoom.room.serverInfo, null, 2)
               : "undefined"}
-            {livekitRoom.metadata}
+            {livekitRoom.room.metadata}
           </pre>
-        </>
-      ) : null}
+          <p>Local Participant</p>
+          <pre className={styles.pre}>
+            {livekitRoom.room.localParticipant.identity}
+          </pre>
+          <p>Remote Participants</p>
+          <ul>
+            {Array.from(livekitRoom.room.remoteParticipants.keys()).map(
+              (id) => (
+                <li key={id}>{id}</li>
+              ),
+            )}
+          </ul>
+        </div>
+      ))}
       <p>{t("developer_mode.environment_variables")}</p>
-      <pre>{JSON.stringify(import.meta.env, null, 2)}</pre>
+      <pre>{JSON.stringify(env, null, 2)}</pre>
       <p>{t("developer_mode.url_params")}</p>
       <pre>{JSON.stringify(urlParams, null, 2)}</pre>
     </>

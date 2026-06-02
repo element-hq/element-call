@@ -64,6 +64,14 @@
   "developer_mode": {
     "always_show_iphone_earpiece": "Show iPhone earpiece option on all platforms",
     "crypto_version": "Crypto version: {{version}}",
+    "custom_livekit_url": {
+      "current_url": "Currently set to: ",
+      "from_config": "Currently, no overwrite is set. Url from well-known or config is used.",
+      "label": "Custom Livekit-url",
+      "reset": "Reset overwrite",
+      "save": "Save",
+      "saving": "Saving..."
+    },
     "debug_tile_layout_label": "Debug tile layout",
     "device_id": "Device ID: {{id}}",
     "duplicate_tiles_label": "Number of additional tile copies per participant",
@@ -72,12 +80,24 @@
     "livekit_server_info": "LiveKit Server Info",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
+    "matrixRTCMode": {
+      "Comptibility": {
+        "description": "Compatible with homeservers that do not support sticky events (but all other EC clients are v0.17.0 or later)",
+        "label": "Compatibility: state events & multi SFU"
+      },
+      "Legacy": {
+        "description": "Compatible with old versions of EC that do not support multi SFU",
+        "label": "Legacy: state events & oldest membership SFU"
+      },
+      "Matrix_2_0": {
+        "description": "Compatible only with homservers supporting sticky events and all EC clients v0.17.0 or later",
+        "label": "Matrix 2.0: sticky events & multi SFU"
+      },
+      "title": "MatrixRTC mode"
+    },
     "mute_all_audio": "Mute all audio (participants, reactions, join sounds)",
     "show_connection_stats": "Show connection statistics",
-    "show_non_member_tiles": "Show tiles for non-member media",
-    "url_params": "URL parameters",
-    "use_new_membership_manager": "Use the new implementation of the call MembershipManager",
-    "use_to_device_key_transport": "Use to device key transport. This will fallback to room key transport when another call member sent a room key"
+    "url_params": "URL parameters"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "error": {
@@ -88,11 +108,15 @@
     "connection_lost_description": "You were disconnected from the call.",
     "e2ee_unsupported": "Incompatible browser",
     "e2ee_unsupported_description": "Your web browser does not support encrypted calls. Supported browsers include Chrome, Safari, and Firefox 117+.",
+    "failed_to_start_livekit": "Failed to start Livekit connection",
     "generic": "Something went wrong",
     "generic_description": "Submitting debug logs will help us track down the problem.",
     "insufficient_capacity": "Insufficient capacity",
     "insufficient_capacity_description": "The server has reached its maximum capacity and you cannot join the call at this time. Try again later, or contact your server admin if the problem persists.",
-    "matrix_rtc_focus_missing": "The server is not configured to work with {{brand}}. Please contact your server admin (Domain: {{domain}}, Error Code: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "The server is not configured to work with {{brand}}. Please contact your server admin (Domain: {{domain}}, Error Code: {{ errorCode }}).",
+    "membership_manager": "Membership Manager Error",
+    "membership_manager_description": "The Membership Manager had to shut down. This is caused by many consequtive failed network requests.",
+    "no_matrix_2_authorization_service": "The authorization service for your media server (SFU) is out of date.",
     "open_elsewhere": "Opened in another tab",
     "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page.",
     "room_creation_restricted": "Failed to create call",
@@ -226,11 +250,11 @@
   "video_tile": {
     "always_show": "Always show",
     "camera_starting": "Video loading...",
-    "change_fit_contain": "Fit to frame",
     "collapse": "Collapse",
     "expand": "Expand",
     "mute_for_me": "Mute for me",
     "muted_for_me": "Muted for me",
+    "screen_share_volume": "Screen share volume",
     "volume": "Volume",
     "waiting_for_media": "Waiting for media..."
   }

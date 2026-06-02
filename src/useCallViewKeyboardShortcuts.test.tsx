@@ -23,14 +23,14 @@ import {
 //   The TestComponent just wraps a button around that hook.
 
 interface TestComponentProps {
-  setMicrophoneMuted?: (muted: boolean) => void;
+  setAudioEnabled?: (enabled: boolean) => void;
   onButtonClick?: () => void;
   sendReaction?: () => void;
   toggleHandRaised?: () => void;
 }
 
 const TestComponent: FC<TestComponentProps> = ({
-  setMicrophoneMuted = (): void => {},
+  setAudioEnabled = (): void => {},
   onButtonClick = (): void => {},
   sendReaction = (reaction: ReactionOption): void => {},
   toggleHandRaised = (): void => {},
@@ -40,7 +40,7 @@ const TestComponent: FC<TestComponentProps> = ({
     ref,
     () => {},
     () => {},
-    setMicrophoneMuted,
+    setAudioEnabled,
     sendReaction,
     toggleHandRaised,
   );
@@ -57,12 +57,13 @@ test("spacebar unmutes", async () => {
   render(
     <TestComponent
       onButtonClick={() => (muted = false)}
-      setMicrophoneMuted={(m) => {
-        muted = m;
+      setAudioEnabled={(m) => {
+        muted = !m;
       }}
     />,
   );
 
+  expect(muted).toBe(true);
   await user.keyboard("[Space>]");
   expect(muted).toBe(false);
   await user.keyboard("[/Space]");
@@ -73,15 +74,15 @@ test("spacebar unmutes", async () => {
 test("spacebar prioritizes pressing a button", async () => {
   const user = userEvent.setup();
 
-  const setMuted = vi.fn();
+  const setAudioEnabled = vi.fn();
   const onClick = vi.fn();
   render(
-    <TestComponent setMicrophoneMuted={setMuted} onButtonClick={onClick} />,
+    <TestComponent setAudioEnabled={setAudioEnabled} onButtonClick={onClick} />,
   );
 
   await user.tab(); // Focus the button
   await user.keyboard("[Space]");
-  expect(setMuted).not.toBeCalled();
+  expect(setAudioEnabled).not.toBeCalled();
   expect(onClick).toBeCalled();
 });
 
@@ -129,7 +130,7 @@ test("unmuting happens in place of the default action", async () => {
       tabIndex={0}
       onKeyDown={(e) => defaultPrevented(e.isDefaultPrevented())}
     >
-      <TestComponent setMicrophoneMuted={() => {}} />
+      <TestComponent setAudioEnabled={() => {}} />
     </video>,
   );
 

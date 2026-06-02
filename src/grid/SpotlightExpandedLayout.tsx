@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type ReactNode, useCallback } from "react";
 
-import { type SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/CallViewModel";
+import { type SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/layout-types.ts";
 import { type CallLayout } from "./CallLayout";
 import { type DragCallback, useUpdateLayout } from "./Grid";
 import styles from "./SpotlightExpandedLayout.module.css";

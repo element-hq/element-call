@@ -13,7 +13,7 @@ exports[`AppBar > renders 1`] = `
         class="nav leftNav"
       >
         <button
-          aria-labelledby="«r0»"
+          aria-labelledby="_r_0_"
           class="_icon-button_1pz9o_8"
           data-kind="primary"
           role="button"
@@ -21,7 +21,7 @@ exports[`AppBar > renders 1`] = `
           tabindex="0"
         >
           <div
-            class="_indicator-icon_zr2a0_17"
+            class="_indicator-icon_147l5_17"
             style="--cpd-icon-button-size: 100%;"
           >
             <svg

@@ -1,5 +1,6 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -122,7 +123,7 @@ export interface ConfigOptions {
     delayed_leave_event_delay_ms?: number;
 
     /**
-     * The time (in milliseconds) after which a we consider a delayed event restart http request to have failed.
+     * The time (in milliseconds) after which we consider a delayed event restart http request to have failed.
      * Setting this to a lower value will result in more frequent retries but also a higher chance of failiour.
      *
      * In the presence of network packet loss (hurting TCP connections), the custom delayedEventRestartLocalTimeoutMs
@@ -163,10 +164,6 @@ export interface ResolvedConfigOptions extends ConfigOptions {
     };
   };
   ssla: string;
-  media_devices: {
-    enable_audio: boolean;
-    enable_video: boolean;
-  };
   app_prompt: boolean;
 }
 
@@ -181,9 +178,5 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
     feature_use_device_session_member_events: true,
   },
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
-  media_devices: {
-    enable_audio: true,
-    enable_video: true,
-  },
   app_prompt: true,
 };

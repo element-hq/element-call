@@ -1,5 +1,6 @@
 /*
 Copyright 2021-2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -35,16 +36,19 @@ import { CallTerminatedMessage, useLoadGroupCall } from "./useLoadGroupCall";
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useProfile } from "../profile/useProfile";
-import { useMuteStates } from "./MuteStates";
 import { useOptInAnalytics } from "../settings/settings";
 import { Config } from "../config/Config";
 import { Link } from "../button/Link";
 import { ErrorView } from "../ErrorView";
-import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
+import { useMediaDevices } from "../MediaDevicesContext";
+import { MuteStates } from "../state/MuteStates";
+import { ObservableScope } from "../state/ObservableScope";
+import { calculateInitialMuteState } from "../state/initialMuteState.ts";
 
 export const RoomPage: FC = () => {
+  const urlParams = useUrlParams();
   const { confineToRoom, appPrompt, preload, header, displayName, skipLobby } =
-    useUrlParams();
+    urlParams;
   const { t } = useTranslation();
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
 
@@ -61,10 +65,26 @@ export const RoomPage: FC = () => {
   const { avatarUrl, displayName: userDisplayName } = useProfile(client);
 
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
-  const isJoined = useMatrixRTCSessionJoinState(
-    groupCallState.kind === "loaded" ? groupCallState.rtcSession : undefined,
-  );
-  const muteStates = useMuteStates(isJoined);
+  const [joined, setJoined] = useState(false);
+
+  const devices = useMediaDevices();
+  const [muteStates, setMuteStates] = useState<MuteStates | null>(null);
+
+  useEffect(() => {
+    const scope = new ObservableScope();
+    setMuteStates(
+      new MuteStates(
+        scope,
+        devices,
+        calculateInitialMuteState(
+          urlParams.skipLobby,
+          urlParams.callIntent,
+          widget !== null,
+        ),
+      ),
+    );
+    return (): void => scope.end();
+  }, [devices, urlParams]);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
@@ -101,22 +121,25 @@ export const RoomPage: FC = () => {
     }
   }, [groupCallState.kind]);
 
-  const groupCallView = (): JSX.Element => {
+  const groupCallView = (): ReactNode => {
     switch (groupCallState.kind) {
       case "loaded":
         return (
-          <GroupCallView
-            widget={widget}
-            client={client!}
-            rtcSession={groupCallState.rtcSession}
-            isJoined={isJoined}
-            isPasswordlessUser={passwordlessUser}
-            confineToRoom={confineToRoom}
-            preload={preload}
-            skipLobby={skipLobby || wasInWaitForInviteState.current}
-            header={header}
-            muteStates={muteStates}
-          />
+          muteStates && (
+            <GroupCallView
+              widget={widget}
+              client={client!}
+              rtcSession={groupCallState.rtcSession}
+              joined={joined}
+              setJoined={setJoined}
+              isPasswordlessUser={passwordlessUser}
+              confineToRoom={confineToRoom}
+              preload={preload}
+              skipLobby={skipLobby || wasInWaitForInviteState.current}
+              header={header}
+              muteStates={muteStates}
+            />
+          )
         );
       case "waitForInvite":
       case "canKnock": {
@@ -135,31 +158,35 @@ export const RoomPage: FC = () => {
             </>
           );
         return (
-          <LobbyView
-            client={client!}
-            matrixInfo={{
-              userId: client!.getUserId() ?? "",
-              displayName: userDisplayName ?? "",
-              avatarUrl: avatarUrl ?? "",
-              roomAlias: null,
-              roomId: groupCallState.roomSummary.room_id,
-              roomName: groupCallState.roomSummary.name ?? "",
-              roomAvatar: groupCallState.roomSummary.avatar_url ?? null,
-              e2eeSystem: {
-                kind: groupCallState.roomSummary["im.nheko.summary.encryption"]
-                  ? E2eeType.PER_PARTICIPANT
-                  : E2eeType.NONE,
-              },
-            }}
-            onEnter={(): void => knock?.()}
-            enterLabel={label}
-            waitingForInvite={groupCallState.kind === "waitForInvite"}
-            confineToRoom={confineToRoom}
-            hideHeader={header !== "standard"}
-            participantCount={null}
-            muteStates={muteStates}
-            onShareClick={null}
-          />
+          muteStates && (
+            <LobbyView
+              client={client!}
+              matrixInfo={{
+                userId: client!.getUserId() ?? "",
+                displayName: userDisplayName ?? "",
+                avatarUrl: avatarUrl ?? "",
+                roomAlias: null,
+                roomId: groupCallState.roomSummary.room_id,
+                roomName: groupCallState.roomSummary.name ?? "",
+                roomAvatar: groupCallState.roomSummary.avatar_url ?? null,
+                e2eeSystem: {
+                  kind: groupCallState.roomSummary[
+                    "im.nheko.summary.encryption"
+                  ]
+                    ? E2eeType.PER_PARTICIPANT
+                    : E2eeType.NONE,
+                },
+              }}
+              onEnter={(): void => knock?.()}
+              enterLabel={label}
+              waitingForInvite={groupCallState.kind === "waitForInvite"}
+              confineToRoom={confineToRoom}
+              hideHeader={header !== "standard"}
+              participantCount={null}
+              muteStates={muteStates}
+              onShareClick={null}
+            />
+          )
         );
       }
       case "loading":

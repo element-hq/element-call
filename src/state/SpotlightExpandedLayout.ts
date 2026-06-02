@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import {
   type SpotlightExpandedLayout,
   type SpotlightExpandedLayoutMedia,
-} from "./CallViewModel";
+} from "./layout-types";
 import { type TileStore } from "./TileStore";
 
 /**
@@ -20,7 +20,7 @@ export function spotlightExpandedLayout(
 ): [SpotlightExpandedLayout, TileStore] {
   const update = prevTiles.from(1);
   update.registerSpotlight(media.spotlight, true);
-  if (media.pip !== undefined) update.registerGridTile(media.pip);
+  if (media.pip !== undefined) update.registerPipTile(media.pip);
   const tiles = update.build();
 
   return [

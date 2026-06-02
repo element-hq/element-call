@@ -75,7 +75,14 @@ class ConsoleLogger extends EventEmitter {
       } else if (arg instanceof Error) {
         return arg.message + (arg.stack ? `\n${arg.stack}` : "");
       } else if (typeof arg === "object") {
-        return JSON.stringify(arg, getCircularReplacer());
+        try {
+          return JSON.stringify(arg, getCircularReplacer());
+        } catch {
+          // Stringify can fail if the object has circular references or if
+          // there is a bigInt.
+          // Did happen even with our `getCircularReplacer`. In this case, just log
+          return "<$ failed to serialize object $>";
+        }
       } else {
         return arg;
       }
@@ -99,7 +106,7 @@ class ConsoleLogger extends EventEmitter {
 
   /**
    * Returns the log lines to flush to disk and empties the internal log buffer
-   * @return {string} \n delimited log lines
+   * @return \n delimited log lines
    */
   public popLogs(): string {
     const logsToFlush = this.logs;
@@ -109,7 +116,7 @@ class ConsoleLogger extends EventEmitter {
 
   /**
    * Returns lines currently in the log buffer without removing them
-   * @return {string} \n delimited log lines
+   * @return \n delimited log lines
    */
   public peekLogs(): string {
     return this.logs;
@@ -139,7 +146,7 @@ class IndexedDBLogStore {
   }
 
   /**
-   * @return {Promise} Resolves when the store is ready.
+   * @return Resolves when the store is ready.
    */
   public async connect(): Promise<void> {
     const req = this.indexedDB.open("logs");
@@ -219,7 +226,7 @@ class IndexedDBLogStore {
    * This guarantees that we will always eventually do a flush when flush() is
    * called.
    *
-   * @return {Promise} Resolved when the logs have been flushed.
+   * @return Resolved when the logs have been flushed.
    */
   public flush = async (): Promise<void> => {
     // check if a flush() operation is ongoing
@@ -270,7 +277,7 @@ class IndexedDBLogStore {
    * returned are deleted at the same time, so this can be called at startup
    * to do house-keeping to keep the logs from growing too large.
    *
-   * @return {Promise<Object[]>} Resolves to an array of objects. The array is
+   * @return Resolves to an array of objects. The array is
    * sorted in time (oldest first) based on when the log file was created (the
    * log ID). The objects have said log ID in an "id" field and "lines" which
    * is a big string with all the new-line delimited logs.
@@ -421,12 +428,12 @@ class IndexedDBLogStore {
 
 /**
  * Helper method to collect results from a Cursor and promiseify it.
- * @param {ObjectStore|Index} store The store to perform openCursor on.
- * @param {IDBKeyRange=} keyRange Optional key range to apply on the cursor.
- * @param {Function} resultMapper A function which is repeatedly called with a
+ * @param store - The store to perform openCursor on.
+ * @param keyRange - Optional key range to apply on the cursor.
+ * @param resultMapper - A function which is repeatedly called with a
  * Cursor.
  * Return the data you want to keep.
- * @return {Promise<T[]>} Resolves to an array of whatever you returned from
+ * @return Resolves to an array of whatever you returned from
  * resultMapper.
  */
 async function selectQuery<T>(
@@ -464,9 +471,7 @@ declare global {
 /**
  * Configure rage shaking support for sending bug reports.
  * Modifies globals.
- * @param {boolean} setUpPersistence When true (default), the persistence will
- * be set up immediately for the logs.
- * @return {Promise} Resolves when set up.
+ * @return Resolves when set up.
  */
 export async function init(): Promise<void> {
   global.mx_rage_logger = new ConsoleLogger();
@@ -503,7 +508,7 @@ export async function init(): Promise<void> {
 /**
  * Try to start up the rageshake storage for logs. If not possible (client unsupported)
  * then this no-ops.
- * @return {Promise} Resolves when complete.
+ * @return Resolves when complete.
  */
 async function tryInitStorage(): Promise<void> {
   if (global.mx_rage_initStoragePromise) {
@@ -536,7 +541,7 @@ async function tryInitStorage(): Promise<void> {
 /**
  * Get a recent snapshot of the logs, ready for attaching to a bug report
  *
- * @return {LogEntry[]}  list of log data
+ * @return list of log data
  */
 export async function getLogsForReport(): Promise<LogEntry[]> {
   if (!global.mx_rage_logger) {

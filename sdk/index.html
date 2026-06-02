@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+  <head>
+    <title>MatrixRTC Widget</title>
+    <meta charset="utf-8" />
+    <script type="module">
+      // TODO use the url where the matrixrtc-sdk.js file from dist is hosted
+      import { createMatrixRTCSdk } from "http://localhost:8123/matrixrtc-sdk.js";
+
+      try {
+        window.matrixRTCSdk = await createMatrixRTCSdk(
+          "com.github.toger5.rtc-application-type", // rtc application type
+        );
+        console.info("createMatrixRTCSdk was created!");
+      } catch (e) {
+        console.error("createMatrixRTCSdk", e);
+      }
+      const sdk = window.matrixRTCSdk;
+
+      console.info("matrixRTCSdk join ", sdk);
+      const connectionState = sdk.join();
+      console.info("matrixRTCSdk joined");
+
+      const div = document.getElementById("data");
+      div.innerHTML = "<h3>Data:</h3>";
+
+      sdk.data$.subscribe((data) => {
+        const child = document.createElement("p");
+        child.innerHTML = JSON.stringify(data);
+        div.appendChild(child);
+      });
+
+      sdk.members$.subscribe((memberObjects) => {
+        const div = document.getElementById("members");
+        div.innerHTML = "<h3>Members:</h3>";
+
+        // Create member list
+        const members = memberObjects.map((member) => member.membership.sender);
+        console.info("members changed", members);
+        for (const m of members) {
+          console.info("member", m);
+          const child = document.createElement("p");
+          child.innerHTML = m;
+          div.appendChild(child);
+        }
+      });
+
+      sdk.connected$.subscribe((connected) => {
+        console.info("connected changed", connected);
+        const div = document.getElementById("connect_status");
+        div.innerHTML = connected ? "Connected" : "Disconnected";
+      });
+    </script>
+  </head>
+  <body>
+    <div
+      style="position: absolute; top: 0; right: 0; background-color: #ffffff10"
+    >
+      <div id="connect_status"></div>
+      <button onclick="window.matrixRTCSdk.leave()">Leave</button>
+      <button onclick="window.matrixRTCSdk.sendData({ prop: 'Hello, world!' })">
+        Send Text
+      </button>
+      <div id="members"></div>
+      <div id="data"></div>
+    </div>
+  </body>
+</html>

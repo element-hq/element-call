@@ -2,3 +2,6 @@ services:
   synapse:
     volumes:
       - ./backend/playwright_homeserver.yaml:/data/cfg/homeserver.yaml:Z
+  synapse-1:
+    volumes:
+      - ./backend/playwright_homeserver-othersite.yaml:/data/cfg/homeserver.yaml:Z

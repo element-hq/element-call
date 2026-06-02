@@ -71,7 +71,9 @@ jobs:
       contents: write # required to upload release asset
     steps:
       - name: Determine filename
-        run: echo "FILENAME_PREFIX=element-call-embedded-${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
+        run: echo "FILENAME_PREFIX=element-call-embedded-${NEEDS_VERSIONING_OUTPUTS_UNPREFIXED_VERSION}" >> "$GITHUB_ENV"
+        env:
+          NEEDS_VERSIONING_OUTPUTS_UNPREFIXED_VERSION: ${{ needs.versioning.outputs.UNPREFIXED_VERSION }}
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
@@ -80,12 +82,12 @@ jobs:
           name: build-output-embedded
           path: ${{ env.FILENAME_PREFIX}}
       - name: Create Tarball
-        run: tar --numeric-owner -cvzf ${{ env.FILENAME_PREFIX }}.tar.gz ${{ env.FILENAME_PREFIX }}
+        run: tar --numeric-owner -cvzf ${FILENAME_PREFIX}.tar.gz ${FILENAME_PREFIX}
       - name: Create Checksum
-        run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
+        run: find ${FILENAME_PREFIX} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${FILENAME_PREFIX}.sha256
       - name: Upload
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
         with:
           files: |
             ${{ env.FILENAME_PREFIX }}.tar.gz
@@ -100,10 +102,12 @@ jobs:
       ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
     permissions:
       contents: read
-      id-token: write # required for the provenance flag on npm publish
+      id-token: write # Allow npm to authenticate as a trusted publisher
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
 
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -123,15 +127,16 @@ jobs:
       - name: Publish npm
         working-directory: embedded/web
         run: |
-          npm version ${{ needs.versioning.outputs.PREFIXED_VERSION }} --no-git-tag-version
+          npm version ${NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION} --no-git-tag-version
           echo "ARTIFACT_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
-          npm publish --provenance --access public --tag ${{ needs.versioning.outputs.TAG }} ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+          npm publish --provenance --access public --tag ${NEEDS_VERSIONING_OUTPUTS_TAG} ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
+          NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION: ${{ needs.versioning.outputs.PREFIXED_VERSION }}
+          NEEDS_VERSIONING_OUTPUTS_TAG: ${{ needs.versioning.outputs.TAG }}
 
       - id: artifact_version
         name: Output artifact version
-        run: echo "ARTIFACT_VERSION=${{env.ARTIFACT_VERSION}}" >> "$GITHUB_OUTPUT"
+        run: echo "ARTIFACT_VERSION=${ARTIFACT_VERSION}" >> "$GITHUB_OUTPUT"
 
   publish_android:
     needs: [build_element_call, versioning]
@@ -144,7 +149,9 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
 
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -155,7 +162,7 @@ jobs:
           path: embedded/android/lib/src/main/assets/element-call
 
       - name: ☕️ Setup Java
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: "temurin"
           java-version: "17"
@@ -163,16 +170,19 @@ jobs:
       - name: Get artifact version
         # Anything that is not a final release will be tagged as a snapshot
         run: |
-          if [[ "${{ needs.versioning.outputs.TAG }}" == "latest" ]]; then
-            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
-          elif [[ "${{ needs.versioning.outputs.TAG }}" == "rc" ]]; then
-            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
+          if [[ "${NEEDS_VERSIONING_OUTPUTS_TAG}" == "latest" ]]; then
+            echo "ARTIFACT_VERSION=${NEEDS_VERSIONING_OUTPUTS_UNPREFIXED_VERSION}" >> "$GITHUB_ENV"
+          elif [[ "${NEEDS_VERSIONING_OUTPUTS_TAG}" == "rc" ]]; then
+            echo "ARTIFACT_VERSION=${NEEDS_VERSIONING_OUTPUTS_UNPREFIXED_VERSION}" >> "$GITHUB_ENV"
           else
-            echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}-SNAPSHOT" >> "$GITHUB_ENV"
+            echo "ARTIFACT_VERSION=${NEEDS_VERSIONING_OUTPUTS_UNPREFIXED_VERSION}-SNAPSHOT" >> "$GITHUB_ENV"
           fi
+        env:
+          NEEDS_VERSIONING_OUTPUTS_TAG: ${{ needs.versioning.outputs.TAG }}
+          NEEDS_VERSIONING_OUTPUTS_UNPREFIXED_VERSION: ${{ needs.versioning.outputs.UNPREFIXED_VERSION }}
 
       - name: Set version string
-        run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" embedded/android/lib/src/main/kotlin/io/element/android/call/embedded/Version.kt
+        run: sed -i "s/0.0.0/${ARTIFACT_VERSION}/g" embedded/android/lib/src/main/kotlin/io/element/android/call/embedded/Version.kt
 
       - name: Publish AAR
         working-directory: embedded/android
@@ -186,7 +196,7 @@ jobs:
 
       - id: artifact_version
         name: Output artifact version
-        run: echo "ARTIFACT_VERSION=${{env.ARTIFACT_VERSION}}" >> "$GITHUB_OUTPUT"
+        run: echo "ARTIFACT_VERSION=${ARTIFACT_VERSION}" >> "$GITHUB_OUTPUT"
 
   publish_ios:
     needs: [build_element_call, versioning]
@@ -199,9 +209,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           path: element-call
+          persist-credentials: false
 
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -212,20 +223,23 @@ jobs:
           path: element-call/embedded/ios/Sources/dist
 
       - name: Checkout element-call-swift
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: element-hq/element-call-swift
           path: element-call-swift
           token: ${{ secrets.SWIFT_RELEASE_TOKEN }}
+          persist-credentials: false
 
       - name: Copy files
         run: rsync -a --delete --exclude .git element-call/embedded/ios/ element-call-swift
 
       - name: Get artifact version
-        run: echo "ARTIFACT_VERSION=${{ needs.versioning.outputs.UNPREFIXED_VERSION }}" >> "$GITHUB_ENV"
+        run: echo "ARTIFACT_VERSION=${NEEDS_VERSIONING_OUTPUTS_UNPREFIXED_VERSION}" >> "$GITHUB_ENV"
+        env:
+          NEEDS_VERSIONING_OUTPUTS_UNPREFIXED_VERSION: ${{ needs.versioning.outputs.UNPREFIXED_VERSION }}
 
       - name: Set version string
-        run: sed -i "s/0.0.0/${{ env.ARTIFACT_VERSION }}/g" element-call-swift/Sources/EmbeddedElementCall/EmbeddedElementCall.swift
+        run: sed -i "s/0.0.0/${ARTIFACT_VERSION}/g" element-call-swift/Sources/EmbeddedElementCall/EmbeddedElementCall.swift
 
       - name: Test build
         working-directory: element-call-swift
@@ -237,17 +251,22 @@ jobs:
           git config --global user.email "ci@element.io"
           git config --global user.name "Element CI"
           git add -A
-          git commit -am "Release ${{ needs.versioning.outputs.PREFIXED_VERSION }}"
-          git tag -a ${{ env.ARTIFACT_VERSION }} -m "${{ github.event.release.html_url }}"
+          git commit -am "Release ${NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION}"
+          git tag -a ${ARTIFACT_VERSION} -m "${GITHUB_EVENT_RELEASE_HTML_URL}"
+        env:
+          NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION: ${{ needs.versioning.outputs.PREFIXED_VERSION }}
+          GITHUB_EVENT_RELEASE_HTML_URL: ${{ github.event.release.html_url }}
 
       - name: Push
         working-directory: element-call-swift
         run: |
-          git push --tags ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+          git push "https://x-access-token:${SWIFT_RELEASE_TOKEN}@github.com/element-hq/element-call-swift.git" --tags ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+        env:
+          SWIFT_RELEASE_TOKEN: ${{ secrets.SWIFT_RELEASE_TOKEN }}
 
       - id: artifact_version
         name: Output artifact version
-        run: echo "ARTIFACT_VERSION=${{env.ARTIFACT_VERSION}}" >> "$GITHUB_OUTPUT"
+        run: echo "ARTIFACT_VERSION=${ARTIFACT_VERSION}" >> "$GITHUB_OUTPUT"
 
   release_notes:
     needs: [versioning, publish_npm, publish_android, publish_ios]
@@ -259,12 +278,16 @@ jobs:
     steps:
       - name: Log versions
         run: |
-          echo "NPM: ${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}"
-          echo "Android: ${{ needs.publish_android.outputs.ARTIFACT_VERSION }}"
-          echo "iOS: ${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}"
+          echo "NPM: ${NEEDS_PUBLISH_NPM_OUTPUTS_ARTIFACT_VERSION}"
+          echo "Android: ${NEEDS_PUBLISH_ANDROID_OUTPUTS_ARTIFACT_VERSION}"
+          echo "iOS: ${NEEDS_PUBLISH_IOS_OUTPUTS_ARTIFACT_VERSION}"
+        env:
+          NEEDS_PUBLISH_NPM_OUTPUTS_ARTIFACT_VERSION: ${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}
+          NEEDS_PUBLISH_ANDROID_OUTPUTS_ARTIFACT_VERSION: ${{ needs.publish_android.outputs.ARTIFACT_VERSION }}
+          NEEDS_PUBLISH_IOS_OUTPUTS_ARTIFACT_VERSION: ${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}
       - name: Add release notes
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
         with:
           append_body: true
           body: |

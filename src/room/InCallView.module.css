@@ -65,6 +65,7 @@ Please see LICENSE in the repository root for full details.
 .footer.overlay.hidden {
   display: grid;
   opacity: 0;
+  pointer-events: none;
 }
 
 .footer.overlay:has(:focus-visible) {
@@ -107,22 +108,9 @@ Please see LICENSE in the repository root for full details.
   }
 }
 
-@media (max-width: 370px) {
-  .shareScreen {
-    display: none;
-  }
-
-  @media (max-height: 400px) {
-    .footer {
-      display: none;
-    }
-  }
-}
-
-@media (max-width: 320px) {
-  .invite,
-  .raiseHand {
-    display: none;
+@media (max-height: 800px) {
+  .footer {
+    padding-block: var(--cpd-space-8x);
   }
 }
 
@@ -132,9 +120,27 @@ Please see LICENSE in the repository root for full details.
   }
 }
 
-@media (max-height: 800px) {
-  .footer {
-    padding-block: var(--cpd-space-8x);
+@media (max-width: 370px) {
+  .shareScreen {
+    display: none;
+  }
+
+  /* PIP custom css */
+  @media (max-height: 400px) {
+    .shareScreen {
+      display: flex;
+    }
+    .footer {
+      padding-block-start: var(--cpd-space-3x);
+      padding-block-end: var(--cpd-space-2x);
+    }
+  }
+}
+
+@media (max-width: 320px) {
+  .invite,
+  .raiseHand {
+    display: none;
   }
 }
 
