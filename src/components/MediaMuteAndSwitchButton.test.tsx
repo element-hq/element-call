@@ -76,6 +76,42 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(onMute).toHaveBeenCalled();
   });
 
+  test("shows numbered devices correctly", async () => {
+    const user = userEvent.setup();
+    render(
+      <TooltipProvider>
+        <MediaMuteAndSwitchButton
+          title="Switcher"
+          iconsAndLabels="audio"
+          enabled
+          options={[
+            { label: { type: "number", number: 1 }, id: "mic1" },
+            { label: { type: "number", number: 2 }, id: "mic2" },
+          ]}
+          selectedOption="mic1"
+        />
+        <MediaMuteAndSwitchButton
+          title="Switcher"
+          iconsAndLabels="video"
+          enabled
+          options={[
+            { label: { type: "number", number: 1 }, id: "cam1" },
+            { label: { type: "number", number: 2 }, id: "cam2" },
+          ]}
+          selectedOption="cam1"
+        />
+      </TooltipProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Microphone" }));
+    screen.getByRole("menuitem", { name: "Microphone 1" });
+    screen.getByRole("menuitem", { name: "Microphone 2" });
+    await user.keyboard("[Escape]");
+    await user.click(screen.getByRole("button", { name: "Camera" }));
+    screen.getByRole("menuitem", { name: "Camera 1" });
+    screen.getByRole("menuitem", { name: "Camera 2" });
+  });
+
   test("calls select callback on menu click", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();

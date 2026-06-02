@@ -119,13 +119,13 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       IconOptions = VideoCallIcon;
       optionsButtonLabel = t("settings.devices.camera");
       numberedLabel = (n): string =>
-        t("settings.devices.microphone_numbered", { n });
+        t("settings.devices.camera_numbered", { n });
       break;
     case "audio":
       IconOptions = MicOnIcon;
       optionsButtonLabel = t("settings.devices.microphone");
       numberedLabel = (n): string =>
-        t("settings.devices.camera_numbered", { n });
+        t("settings.devices.microphone_numbered", { n });
       break;
   }
   return (
