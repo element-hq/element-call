@@ -57,10 +57,7 @@ import {
 } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
-import {
-  callEventAudioSounds,
-  type CallEventSounds,
-} from "./CallEventAudioRenderer";
+import { callEventAudioSounds } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import {
@@ -323,7 +320,9 @@ export const GroupCallView: FC<Props> = ({
         case "allOthersLeft":
           // When "allOthersLeft", the leaveSoundEffect$ in CallEventAudioRenderer
           // already plays the "left" sound when the remote participant's media
-          // disappears. Playing it here too would cause the sound to play twice.
+          // disappears. We play it here silenced (volumeOverwrite = 0) so we have the right duration in the audioPromise.
+          // (used to destory the widget)
+          audioPromise = leaveSoundContext.current?.playSound("left", 0);
           break;
         case "timeout":
         case "decline":
