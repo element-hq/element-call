@@ -57,7 +57,10 @@ import {
 } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
-import { callEventAudioSounds } from "./CallEventAudioRenderer";
+import {
+  callEventAudioSounds,
+  type CallEventSounds,
+} from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import {
@@ -117,7 +120,7 @@ export const GroupCallView: FC<Props> = ({
 
   const muteAllAudio = useBehavior(muteAllAudio$);
   const leaveSoundContext = useLatest(
-    useAudioContext({
+    useAudioContext<CallEventSounds>({
       sounds: callEventAudioSounds,
       latencyHint: "interactive",
       muted: muteAllAudio,
