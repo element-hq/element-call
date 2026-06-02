@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ComponentType, useState, type FC } from "react";
+import { type ComponentType, useState, type FC, useEffect } from "react";
 import {
   Button,
   Menu,
@@ -26,6 +26,7 @@ import { useTranslation } from "react-i18next";
 import styles from "./MediaMuteAndSwitchButton.module.css";
 import { MicButton, VideoButton } from "../button";
 import { type DeviceLabel } from "../state/MediaDevices";
+import { useMediaDevices } from "../MediaDevicesContext";
 
 export interface MenuOptions {
   label: DeviceLabel;
@@ -69,6 +70,12 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useTranslation();
+  const devices = useMediaDevices();
+
+  useEffect(() => {
+    if (menuOpen) devices.requestDeviceNames();
+  }, [menuOpen, devices]);
+
   let button;
   let toggles: { label: string; enabled: boolean; id: string }[] = [];
   switch (iconsAndLabels) {
@@ -128,6 +135,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         t("settings.devices.microphone_numbered", { n });
       break;
   }
+
   return (
     <div
       className={classNames({

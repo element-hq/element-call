@@ -8,14 +8,35 @@ Please see LICENSE in the repository root for full details.
 import { describe, expect, test, vi } from "vitest";
 import { act, render, screen, type RenderResult } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { type JSX, useState } from "react";
+import { type JSX, useState, type ReactNode } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
 
 import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
+import { MediaDevicesContext } from "../MediaDevicesContext";
+import { type MediaDevices } from "../state/MediaDevices";
+
+interface RenderOptions {
+  requestDeviceNames: () => void;
+}
+
+function renderComponent(
+  component: ReactNode,
+  { requestDeviceNames = (): void => {} }: Partial<RenderOptions> = {},
+): RenderResult {
+  return render(
+    <TooltipProvider>
+      <MediaDevicesContext
+        value={{ requestDeviceNames } as unknown as MediaDevices}
+      >
+        {component}
+      </MediaDevicesContext>
+    </TooltipProvider>,
+  );
+}
 
 describe("MediaMuteAndSwitchButton", () => {
   test("renders", () => {
-    const { container } = render(
+    const { container } = renderComponent(
       <TooltipProvider>
         <MediaMuteAndSwitchButton title={"Switcher"} iconsAndLabels={"audio"} />
       </TooltipProvider>,
@@ -28,14 +49,12 @@ describe("MediaMuteAndSwitchButton", () => {
       type: "video" | "audio",
       enabled: boolean,
     ): RenderResult => {
-      return render(
-        <TooltipProvider>
-          <MediaMuteAndSwitchButton
-            title={"Switcher"}
-            iconsAndLabels={type}
-            enabled={enabled}
-          />
-        </TooltipProvider>,
+      return renderComponent(
+        <MediaMuteAndSwitchButton
+          title={"Switcher"}
+          iconsAndLabels={type}
+          enabled={enabled}
+        />,
       );
     };
     const renderAudioEndabled = renderLabels("audio", true);
@@ -60,15 +79,13 @@ describe("MediaMuteAndSwitchButton", () => {
   test("calls mute on mute press", async () => {
     const user = userEvent.setup();
     const onMute = vi.fn();
-    const { getByRole } = render(
-      <TooltipProvider>
-        <MediaMuteAndSwitchButton
-          title={"Switcher"}
-          onMuteClick={onMute}
-          iconsAndLabels="audio"
-          enabled={true}
-        />
-      </TooltipProvider>,
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title={"Switcher"}
+        onMuteClick={onMute}
+        iconsAndLabels="audio"
+        enabled={true}
+      />,
     );
 
     await user.click(getByRole("switch", { name: "Mute microphone" }));
@@ -76,10 +93,27 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(onMute).toHaveBeenCalled();
   });
 
+  test("requests device names when opened", async () => {
+    const user = userEvent.setup();
+    const requestDeviceNames = vi.fn();
+    renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled
+      />,
+      { requestDeviceNames },
+    );
+
+    expect(requestDeviceNames).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Microphone" }));
+    expect(requestDeviceNames).toHaveBeenCalled();
+  });
+
   test("shows numbered devices correctly", async () => {
     const user = userEvent.setup();
-    render(
-      <TooltipProvider>
+    renderComponent(
+      <>
         <MediaMuteAndSwitchButton
           title="Switcher"
           iconsAndLabels="audio"
@@ -100,7 +134,7 @@ describe("MediaMuteAndSwitchButton", () => {
           ]}
           selectedOption="cam1"
         />
-      </TooltipProvider>,
+      </>,
     );
 
     await user.click(screen.getByRole("button", { name: "Microphone" }));
@@ -115,20 +149,18 @@ describe("MediaMuteAndSwitchButton", () => {
   test("calls select callback on menu click", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    const { getByRole } = render(
-      <TooltipProvider>
-        <MediaMuteAndSwitchButton
-          title="Switcher"
-          iconsAndLabels="audio"
-          enabled={true}
-          options={[
-            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
-            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
-          ]}
-          selectedOption="mic1"
-          onSelect={onSelect}
-        />
-      </TooltipProvider>,
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic1"
+        onSelect={onSelect}
+      />,
     );
 
     await user.click(getByRole("button", { name: "Microphone" }));
@@ -139,20 +171,18 @@ describe("MediaMuteAndSwitchButton", () => {
   test("does not call select callback on already selected menu click", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    const { getByRole } = render(
-      <TooltipProvider>
-        <MediaMuteAndSwitchButton
-          title="Switcher"
-          iconsAndLabels="audio"
-          enabled={true}
-          options={[
-            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
-            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
-          ]}
-          selectedOption="mic1"
-          onSelect={onSelect}
-        />
-      </TooltipProvider>,
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic1"
+        onSelect={onSelect}
+      />,
     );
 
     await user.click(getByRole("button", { name: "Microphone" }));
@@ -169,29 +199,27 @@ describe("MediaMuteAndSwitchButton", () => {
     function Wrapper(): JSX.Element {
       const [selectedOption, setSelectedOption] = useState("mic1");
       return (
-        <TooltipProvider>
-          <MediaMuteAndSwitchButton
-            title="Switcher"
-            iconsAndLabels="audio"
-            enabled={true}
-            options={[
-              { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
-              { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
-            ]}
-            selectedOption={selectedOption}
-            onSelect={(id) => {
-              onSelectPressed();
-              void promise.then(() => {
-                setSelectedOption(id);
-                onOptionUpdated();
-              });
-            }}
-          />
-        </TooltipProvider>
+        <MediaMuteAndSwitchButton
+          title="Switcher"
+          iconsAndLabels="audio"
+          enabled={true}
+          options={[
+            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+          ]}
+          selectedOption={selectedOption}
+          onSelect={(id) => {
+            onSelectPressed();
+            void promise.then(() => {
+              setSelectedOption(id);
+              onOptionUpdated();
+            });
+          }}
+        />
       );
     }
 
-    const { getByRole } = render(<Wrapper />);
+    const { getByRole } = renderComponent(<Wrapper />);
 
     await user.click(getByRole("button", { name: "Microphone" }));
     await user.click(screen.getByRole("menuitem", { name: "Microphone 2" }));
@@ -224,16 +252,14 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const onVideoBlurToggle = vi.fn();
-    const { getByRole } = render(
-      <TooltipProvider>
-        <MediaMuteAndSwitchButton
-          title="Switcher"
-          iconsAndLabels="video"
-          enabled={true}
-          videoBlurToggleClick={onVideoBlurToggle}
-          onSelect={onSelect}
-        />
-      </TooltipProvider>,
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="video"
+        enabled={true}
+        videoBlurToggleClick={onVideoBlurToggle}
+        onSelect={onSelect}
+      />,
     );
 
     await user.click(getByRole("button", { name: "Camera" }));
@@ -251,19 +277,17 @@ describe("MediaMuteAndSwitchButton", () => {
 
   test("renders check icon to mark the selected menu item", async () => {
     const user = userEvent.setup();
-    const { getByRole } = render(
-      <TooltipProvider>
-        <MediaMuteAndSwitchButton
-          title="Switcher"
-          iconsAndLabels="audio"
-          enabled={true}
-          options={[
-            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
-            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
-          ]}
-          selectedOption="mic2"
-        />
-      </TooltipProvider>,
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic2"
+      />,
     );
 
     // open menu

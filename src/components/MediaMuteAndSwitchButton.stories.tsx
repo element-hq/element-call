@@ -6,12 +6,25 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { fn, userEvent, within, expect } from "storybook/test";
+import { type JSX } from "react";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
+import { MediaDevicesContext } from "../MediaDevicesContext";
+import { MediaDevices } from "../state/MediaDevices";
+import { globalScope } from "../state/ObservableScope";
+
+const mediaDevices = new MediaDevices(globalScope);
 
 const meta = {
   component: MediaMuteAndSwitchButton,
+  decorators: [
+    (Story): JSX.Element => (
+      <MediaDevicesContext value={mediaDevices}>
+        <Story />
+      </MediaDevicesContext>
+    ),
+  ],
 } satisfies Meta<typeof MediaMuteAndSwitchButton>;
 
 export default meta;
