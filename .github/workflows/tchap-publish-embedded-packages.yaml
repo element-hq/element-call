@@ -132,7 +132,6 @@ jobs:
         env:
           NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION: ${{ needs.versioning.outputs.PREFIXED_VERSION }}
           NEEDS_VERSIONING_OUTPUTS_TAG: ${{ needs.versioning.outputs.TAG }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
 
       - id: artifact_version
         name: Output artifact version
