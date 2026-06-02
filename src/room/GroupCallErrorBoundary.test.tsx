@@ -16,6 +16,7 @@ import {
 } from "react";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
+import { MatrixError } from "matrix-js-sdk";
 
 import {
   type CallErrorRecoveryAction,
@@ -25,6 +26,7 @@ import {
   ConnectionLostError,
   E2EENotSupportedError,
   type ElementCallError,
+  FailToGetOpenIdToken,
   InsufficientCapacityError,
   MatrixRTCTransportMissingError,
   UnknownCallError,
@@ -251,4 +253,70 @@ test("should have a close button in widget mode", async () => {
     expect.anything(),
   );
   expect(mockWidget.api.transport.stop).toHaveBeenCalled();
+});
+
+test("should show technical details when error has a matrixError cause", async () => {
+  const underlyingError = new MatrixError(
+    {
+      errcode: "M_LOOKUP_FAILED",
+      error: "Failed to look up user info from homeserver",
+    },
+    500,
+    "https://matrix-rtc.m.localhost/livekit/jwt/sfu/get",
+  );
+  const error = new FailToGetOpenIdToken(underlyingError);
+
+  const TestComponent = (): ReactNode => {
+    throw error;
+  };
+
+  render(
+    <BrowserRouter>
+      <GroupCallErrorBoundary
+        onError={vi.fn()}
+        recoveryActionHandler={vi.fn()}
+        widget={null}
+      >
+        <TestComponent />
+      </GroupCallErrorBoundary>
+    </BrowserRouter>,
+  );
+
+  await screen.findByText("Something went wrong");
+
+  // Technical details should be present
+  const detailsElement = screen.getByText("Technical details");
+  expect(detailsElement).toBeInTheDocument();
+
+  // Verify error details are shown
+  expect(
+    screen.getByText(/Failed to look up user info from homeserver/i, {
+      selector: "pre",
+    }),
+  ).toBeInTheDocument();
+});
+
+test("should not show technical details when error has no matrix error cause", async () => {
+  const error = new ConnectionLostError();
+
+  const TestComponent = (): ReactNode => {
+    throw error;
+  };
+
+  render(
+    <BrowserRouter>
+      <GroupCallErrorBoundary
+        onError={vi.fn()}
+        recoveryActionHandler={vi.fn()}
+        widget={null}
+      >
+        <TestComponent />
+      </GroupCallErrorBoundary>
+    </BrowserRouter>,
+  );
+
+  await screen.findByText("Connection lost");
+
+  // Technical details should not be present (ConnectionLostError has no cause)
+  expect(screen.queryByText("Technical details")).not.toBeInTheDocument();
 });
