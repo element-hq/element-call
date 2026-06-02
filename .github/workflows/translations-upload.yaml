@@ -14,7 +14,9 @@ jobs:
 
     steps:
       - name: Checkout the code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
 
       - name: Upload
         uses: localazy/upload@27e6b5c0fddf4551596b42226b1c24124335d24a # v1

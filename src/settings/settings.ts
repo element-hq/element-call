@@ -76,10 +76,6 @@ export const developerMode = new Setting("developer-settings-tab", false);
 
 export const duplicateTiles = new Setting("duplicate-tiles", 0);
 
-export const showNonMemberTiles = new Setting<boolean>(
-  "show-non-member-tiles",
-  false,
-);
 export const debugTileLayout = new Setting("debug-tile-layout", false);
 
 export const showConnectionStats = new Setting<boolean>(
@@ -119,16 +115,6 @@ export const soundEffectVolume = new Setting<number>(
   0.5,
 );
 
-export const useNewMembershipManager = new Setting<boolean>(
-  "new-membership-manager",
-  true,
-);
-
-export const useExperimentalToDeviceTransport = new Setting<boolean>(
-  "experimental-to-device-transport",
-  true,
-);
-
 export const muteAllAudio = new Setting<boolean>("mute-all-audio", false);
 
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
@@ -136,4 +122,26 @@ export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
 export const alwaysShowIphoneEarpiece = new Setting<boolean>(
   "always-show-iphone-earpiece",
   false,
+);
+
+export enum MatrixRTCMode {
+  Legacy = "legacy",
+  Compatibility = "compatibility",
+  /** This implies using
+   *  - sticky events
+   *  - hashed RTC backend identity
+   *  - the new endpoint for the jwt token on the local membership (remote memberships will always try the new jwt endpoint first -> then the legacy one)
+   *  - use the hashed identity for the local membership
+   */
+  Matrix_2_0 = "matrix_2_0",
+}
+
+export const matrixRTCMode = new Setting<MatrixRTCMode>(
+  "matrix-rtc-mode",
+  MatrixRTCMode.Legacy,
+);
+
+export const customLivekitUrl = new Setting<string | null>(
+  "custom-livekit-url",
+  null,
 );

@@ -3,6 +3,7 @@
 [![Chat](https://img.shields.io/matrix/webrtc:matrix.org)](https://matrix.to/#/#webrtc:matrix.org)
 [![Localazy](https://img.shields.io/endpoint?url=https%3A%2F%2Fconnect.localazy.com%2Fstatus%2Felement-call%2Fdata%3Fcontent%3Dall%26title%3Dlocalazy%26logo%3Dtrue)](https://localazy.com/p/element-call)
 [![License](https://img.shields.io/github/license/element-hq/element-call)](LICENSE-AGPL-3.0)
+[![Codecov](https://img.shields.io/codecov/c/github/element-hq/element-call)](https://app.codecov.io/gh/element-hq/element-call)
 
 [🎬 Live Demo 🎬](https://call.element.io)
 
@@ -206,22 +207,22 @@ See also:
 ### Backend
 
 A docker compose file `dev-backend-docker-compose.yml` is provided to start the
-whole stack of components which is required for a local development environment:
+whole stack of components which is required for a local development environment
+including federation:
 
-- Minimum Synapse Setup (servername: `synapse.m.localhost`)
+- Minimum Synapse Setup (servernameis: `synapse.m.localhost`, `synapse.othersite.m.localhost`)
 - MatrixRTC Authorization Service (Note requires Federation API and hence a TLS reverse proxy)
-- Minimum LiveKit SFU Setup using dev defaults for config
-- Redis db for completeness
+- Minimum LiveKit SFU setup using dev defaults for config
 - Minimum `localhost` Certificate Authority (CA) for Transport Layer Security (TLS)
-  - Hostnames: `m.localhost`, `*.m.localhost`
+  - Hostnames: `m.localhost`, `*.m.localhost`, `*.othersite.m.localhost`
   - Add [./backend/dev_tls_local-ca.crt](./backend/dev_tls_local-ca.crt) to your web browsers trusted
     certificates
 - Minimum TLS reverse proxy for
-  - Synapse homeserver: `synapse.m.localhost`
-  - MatrixRTC backend: `matrix-rtc.m.localhost`
+  - Synapse homeserver: `synapse.m.localhost` and `synapse.othersite.m.localhost`
+  - MatrixRTC backend: `matrix-rtc.m.localhost` and `matrix-rtc.othersite.m.localhost`
   - Local Element Call development `call.m.localhost` via `yarn dev --host `
-  - Element Web `app.m.localhost`
-  - Note certificates will expire on Thu, 03 May 2035 10:32:02 GMT
+  - Element Web `app.m.localhost` and `app.othersite.m.localhost`
+  - Note certificates will expire on Thr, 20 September 2035 14:27:35 CEST
 
 These use a test 'secret' published in this repository, so this must be used
 only for local development and **_never be exposed to the public Internet._**

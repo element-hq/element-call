@@ -1,5 +1,6 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -22,6 +23,7 @@ import styles from "./Button.module.css";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
   muted: boolean;
+  size?: "sm" | "lg";
 }
 
 export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
@@ -35,6 +37,7 @@ export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
     <Tooltip label={label}>
       <CpdButton
         iconOnly
+        aria-label={label}
         Icon={Icon}
         kind={muted ? "primary" : "secondary"}
         {...props}
@@ -45,6 +48,7 @@ export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
 
 interface VideoButtonProps extends ComponentPropsWithoutRef<"button"> {
   muted: boolean;
+  size?: "sm" | "lg";
 }
 
 export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
@@ -58,6 +62,7 @@ export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
     <Tooltip label={label}>
       <CpdButton
         iconOnly
+        aria-label={label}
         Icon={Icon}
         kind={muted ? "primary" : "secondary"}
         {...props}
@@ -68,6 +73,7 @@ export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
 
 interface ShareScreenButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
+  size: "sm" | "lg";
 }
 
 export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
@@ -91,7 +97,11 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
   );
 };
 
-export const EndCallButton: FC<ComponentPropsWithoutRef<"button">> = ({
+interface EndCallButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size?: "sm" | "lg";
+}
+
+export const EndCallButton: FC<EndCallButtonProps> = ({
   className,
   ...props
 }) => {
@@ -102,6 +112,7 @@ export const EndCallButton: FC<ComponentPropsWithoutRef<"button">> = ({
       <CpdButton
         className={classNames(className, styles.endCall)}
         iconOnly
+        aria-label={t("hangup_button_label")}
         Icon={EndCallIcon}
         destructive
         {...props}
@@ -110,9 +121,10 @@ export const EndCallButton: FC<ComponentPropsWithoutRef<"button">> = ({
   );
 };
 
-export const SettingsButton: FC<ComponentPropsWithoutRef<"button">> = (
-  props,
-) => {
+interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size?: "sm" | "lg";
+}
+export const SettingsButton: FC<SettingsButtonProps> = (props) => {
   const { t } = useTranslation();
 
   return (

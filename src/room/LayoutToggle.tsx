@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ChangeEvent, type FC, type TouchEvent, useCallback } from "react";
+import { type ChangeEvent, type FC, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
 import {
@@ -22,15 +22,9 @@ interface Props {
   layout: Layout;
   setLayout: (layout: Layout) => void;
   className?: string;
-  onTouchEnd?: (e: TouchEvent) => void;
 }
 
-export const LayoutToggle: FC<Props> = ({
-  layout,
-  setLayout,
-  className,
-  onTouchEnd,
-}) => {
+export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
   const { t } = useTranslation();
 
   const onChange = useCallback(
@@ -47,7 +41,6 @@ export const LayoutToggle: FC<Props> = ({
           value="spotlight"
           checked={layout === "spotlight"}
           onChange={onChange}
-          onTouchEnd={onTouchEnd}
         />
       </Tooltip>
       <SpotlightIcon aria-hidden width={24} height={24} />
@@ -58,7 +51,6 @@ export const LayoutToggle: FC<Props> = ({
           value="grid"
           checked={layout === "grid"}
           onChange={onChange}
-          onTouchEnd={onTouchEnd}
         />
       </Tooltip>
       <GridIcon aria-hidden width={24} height={24} />

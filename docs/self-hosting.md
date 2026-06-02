@@ -136,8 +136,8 @@ handle @jwt_service {
   reverse_proxy http://[::1]:8080 {
     header_up Host {host}
     header_up X-Forwarded-Server {host}
-    header_up X-Real-IP {remote_addr}
-    header_up X-Forwarded-For {remote_addr}
+    header_up X-Real-IP {remote_host}
+    header_up X-Forwarded-For {remote_host}
   }
 }
 
@@ -146,10 +146,44 @@ handle {
   reverse_proxy http://localhost:7880 {
     header_up Host {host}
     header_up X-Forwarded-Server {host}
-    header_up X-Real-IP {remote_addr}
-    header_up X-Forwarded-For {remote_addr}
+    header_up X-Real-IP {remote_host}
+    header_up X-Forwarded-For {remote_host}
   }
 }
+```
+
+Using Haproxy, you can achieve this by:
+
+```
+# Frontend
+    # Match /livekit/sfu/ path
+    acl is_sfu path_beg -i /livekit/sfu/
+    use_backend sfu_backend if is_sfu matrixrtc_domain
+
+    acl is_mxrtc_auth path_beg -i /sfu/get
+    use_backend mxrtc_auth_backend if is_mxrtc_auth matrixrtc_domain
+
+# Backend
+## MatrixRTC backend
+backend sfu_backend
+    server livekit 127.0.0.1:7880
+    http-request set-path %[path,regsub(^/livekit/sfu/,/)]
+    http-request set-header Host %[req.hdr(host)]
+    timeout server 120s
+    # WebSocket support
+    option forwardfor
+    option http-server-close
+    option http-buffer-request
+
+backend mxrtc_auth_backend
+    server sfu 127.0.0.1:8070
+    http-request set-header Host %[req.hdr(host)]
+    timeout server 120s
+    # WebSocket support
+    option forwardfor
+    option http-server-close
+    option http-buffer-request
+
 ```
 
 #### MatrixRTC backend announcement
@@ -283,6 +317,7 @@ self-hosters and developers working with Element Call.
 - [MatrixRTC with Synology Container Manager (Docker)](https://ztfr.de/matrixrtc-with-synology-container-manager-docker/)
 - [Encrypted & Scalable Video Calls: How to deploy an Element Call backend with Synapse Using Docker-Compose](https://willlewis.co.uk/blog/posts/deploy-element-call-backend-with-synapse-and-docker-compose/)
 - [Element Call einrichten: Verschlüsselte Videoanrufe mit Element X und Matrix Synapse](https://www.cleveradmin.de/blog/2025/04/matrixrtc-element-call-backend-einrichten/)
+- [MatrixRTC Back-End for Synapse with Docker Compose and Traefik](https://forge.avontech.net/kstro1/matrixrtc-docker-traefik/)
 
 ## 🛠️ Tools
 

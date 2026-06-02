@@ -10,7 +10,7 @@ import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
 import { type CallLayout } from "./CallLayout";
-import { type SpotlightLandscapeLayout as SpotlightLandscapeLayoutModel } from "../state/CallViewModel";
+import { type SpotlightLandscapeLayout as SpotlightLandscapeLayoutModel } from "../state/layout-types.ts";
 import styles from "./SpotlightLandscapeLayout.module.css";
 import { useUpdateLayout, useVisibleTiles } from "./Grid";
 

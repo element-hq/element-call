@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import { type RoomMember } from "matrix-js-sdk";
 import { type FC, type ComponentProps, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
@@ -17,9 +16,13 @@ import { ErrorSolidIcon } from "@vector-im/compound-design-tokens/assets/web/ico
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
-import { type EncryptionStatus } from "../state/MediaViewModel";
+import { type EncryptionStatus } from "../state/media/MemberMediaViewModel";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
-import { showHandRaisedTimer, useSetting } from "../settings/settings";
+import {
+  showConnectionStats as showConnectionStatsSetting,
+  showHandRaisedTimer,
+  useSetting,
+} from "../settings/settings";
 import { type ReactionOption } from "../reactions";
 import { ReactionIndicator } from "../reactions/ReactionIndicator";
 import { RTCConnectionStats } from "../RTCConnectionStats";
@@ -32,20 +35,24 @@ interface Props extends ComponentProps<typeof animated.div> {
   video: TrackReferenceOrPlaceholder | undefined;
   videoFit: "cover" | "contain";
   mirror: boolean;
-  member: RoomMember | undefined;
+  userId: string;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
+  mxcAvatarUrl: string | undefined;
   focusable: boolean;
   primaryButton?: ReactNode;
   raisedHandTime?: Date;
   currentReaction?: ReactionOption;
   raisedHandOnClick?: () => void;
-  localParticipant: boolean;
+  waitingForMedia?: boolean;
   audioStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
+  rtcBackendIdentity?: string;
+  // The focus url, mainly for debugging purposes
+  focusUrl?: string;
 }
 
 export const MediaView: FC<Props> = ({
@@ -57,24 +64,28 @@ export const MediaView: FC<Props> = ({
   video,
   videoFit,
   mirror,
-  member,
+  userId,
   videoEnabled,
   unencryptedWarning,
   nameTagLeadingIcon,
   displayName,
+  mxcAvatarUrl,
   focusable,
   primaryButton,
   encryptionStatus,
   raisedHandTime,
   currentReaction,
   raisedHandOnClick,
-  localParticipant,
+  waitingForMedia,
   audioStreamStats,
   videoStreamStats,
+  rtcBackendIdentity,
+  focusUrl,
   ...props
 }) => {
   const { t } = useTranslation();
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
+  const [showConnectionStats] = useSetting(showConnectionStatsSetting);
 
   const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
 
@@ -91,10 +102,10 @@ export const MediaView: FC<Props> = ({
     >
       <div className={styles.bg}>
         <Avatar
-          id={member?.userId ?? displayName}
+          id={userId}
           name={displayName}
           size={avatarSize}
-          src={member?.getMxcAvatarUrl()}
+          src={mxcAvatarUrl}
           className={styles.avatar}
           style={{ display: video && videoEnabled ? "none" : "initial" }}
         />
@@ -125,16 +136,21 @@ export const MediaView: FC<Props> = ({
             />
           )}
         </div>
-        {!video && !localParticipant && (
+        {waitingForMedia && (
           <div className={styles.status}>
             {t("video_tile.waiting_for_media")}
+            {showConnectionStats ? " " + rtcBackendIdentity : ""}
           </div>
         )}
-        {(audioStreamStats || videoStreamStats) && (
-          <RTCConnectionStats
-            audio={audioStreamStats}
-            video={videoStreamStats}
-          />
+        {showConnectionStats && (
+          <>
+            <RTCConnectionStats
+              audio={audioStreamStats}
+              video={videoStreamStats}
+              focusUrl={focusUrl}
+              rtcBackendIdentity={rtcBackendIdentity}
+            />
+          </>
         )}
         {/* TODO: Bring this back once encryption status is less broken */}
         {/*encryptionStatus !== EncryptionStatus.Okay && (

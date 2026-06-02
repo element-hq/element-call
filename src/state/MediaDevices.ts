@@ -212,9 +212,10 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
   }
 }
 
-class AudioOutput
-  implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
-{
+class AudioOutput implements MediaDevice<
+  AudioOutputDeviceLabel,
+  SelectedAudioOutputDevice
+> {
   private logger = rootLogger.getChild("[MediaDevices AudioOutput]");
   public readonly available$ = this.scope.behavior(
     availableRawDevices$(
@@ -274,9 +275,10 @@ class AudioOutput
   }
 }
 
-class ControlledAudioOutput
-  implements MediaDevice<AudioOutputDeviceLabel, SelectedAudioOutputDevice>
-{
+class ControlledAudioOutput implements MediaDevice<
+  AudioOutputDeviceLabel,
+  SelectedAudioOutputDevice
+> {
   private logger = rootLogger.getChild("[MediaDevices ControlledAudioOutput]");
   // We need to subscribe to the raw devices so that the OS does update the input
   // back to what it was before. otherwise we will switch back to the default
