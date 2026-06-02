@@ -272,7 +272,7 @@ test("Should close widget when all other left and have time to play a sound", as
     lazyActions: new LazyEventEmitter(),
   };
   const resolvePlaySound = Promise.withResolvers<void>();
-  playSound = vi.fn().mockReturnValue(resolvePlaySound);
+  playSound = vi.fn().mockReturnValue(resolvePlaySound.promise);
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
     playSoundLooping: vitest.fn(),
@@ -285,7 +285,6 @@ test("Should close widget when all other left and have time to play a sound", as
   await flushPromises();
   expect(widgetClosedCalled).toBeFalsy();
   resolvePlaySound.resolve();
-  await flushPromises();
 
   // Expect the leave sound to be played but silent (volumeOverwrite = 0)
   // The allOthersLeft effect should already play a leave sound for the last user in the call.
