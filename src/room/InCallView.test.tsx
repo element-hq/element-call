@@ -57,7 +57,10 @@ import { initializeWidget } from "../widget";
 initializeWidget();
 vi.hoisted(
   () =>
-    (global.ImageData = class MockImageData {
+    // Use globalThis rather than global because vite-plugin-node-polyfills seems
+    // to rewrite global into an import which then interferes with vitest's hoisting
+    // which runs before imports.
+    (globalThis.ImageData = class MockImageData {
       public data: number[] = [];
     } as unknown as typeof ImageData),
 );
