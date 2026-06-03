@@ -237,7 +237,6 @@ jobs:
         with:
           repository: element-hq/element-call-swift
           path: element-call-swift
-          token: ${{ secrets.SWIFT_RELEASE_TOKEN }}
           persist-credentials: false
 
       - name: Copy files
@@ -268,9 +267,10 @@ jobs:
           GITHUB_EVENT_RELEASE_HTML_URL: ${{ github.event.release.html_url }}
 
       - name: Push
+        if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
         working-directory: element-call-swift
         run: |
-          git push "https://x-access-token:${SWIFT_RELEASE_TOKEN}@github.com/element-hq/element-call-swift.git" --tags ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+          git push "https://x-access-token:${SWIFT_RELEASE_TOKEN}@github.com/element-hq/element-call-swift.git" --tags
         env:
           SWIFT_RELEASE_TOKEN: ${{ secrets.SWIFT_RELEASE_TOKEN }}
 
