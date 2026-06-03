@@ -1195,9 +1195,11 @@ export function createCallViewModel$(
     .pipe(
       switchMap((media) => {
         let layout;
-        switch (media[0].type) {
+        const pipMedia = media[0];
+        if (pipMedia === undefined) return of(undefined);
+        switch (pipMedia.type) {
           case "user":
-            layout = media[0].videoOrientation$;
+            layout = pipMedia.videoOrientation$;
             break;
           case "ringing":
             layout = of("landscape" as const);
@@ -1211,6 +1213,7 @@ export function createCallViewModel$(
       scope.bind(),
     )
     .subscribe((orientation) => {
+      if (orientation === undefined) return;
       logger.info("controls api pip orientation updated:", orientation);
       window.controls.onPipMediaOrientationUpdate?.(orientation);
     });
