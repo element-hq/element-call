@@ -900,7 +900,7 @@ describe.each([
   );
 
   // TODO add media to lk mocks
-  test.skip("onPipMediaOrientationUpdate is called with the spotlight media orientation", () => {
+  test("onPipMediaOrientationUpdate is called with the spotlight media orientation", () => {
     // Set the spy before creating the view model so the initial call is captured
     const onPipMediaOrientationUpdate = vi.fn();
     window.controls.onPipMediaOrientationUpdate = onPipMediaOrientationUpdate;
