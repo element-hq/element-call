@@ -10,6 +10,7 @@ Please see LICENSE in the repository root for full details.
   inline-size: 100%;
   display: flex;
   border-radius: var(--cpd-space-6x);
+  box-shadow: var(--draggable-shadow);
   contain: strict;
   overflow-x: auto;
   overflow-y: hidden;
