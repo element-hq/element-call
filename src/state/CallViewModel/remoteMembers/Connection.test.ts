@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   afterEach,
+  beforeEach,
   describe,
   expect,
   it,
@@ -151,6 +152,19 @@ afterEach(() => {
 });
 
 describe("Start connection states", () => {
+  beforeEach(() => {
+    fetchMock.post(
+      `https://matrix-rtc.example.org/livekit/jwt/get_token`,
+      () => {
+        return {
+          // Return a non-retryable error, if not, the retry logic will
+          // wait and fail the test with a timeout.
+          status: 404,
+        };
+      },
+    );
+  });
+
   it("start in initialized state", () => {
     setupTest();
 
@@ -246,7 +260,10 @@ describe("Start connection states", () => {
       await deferredSFU.promise;
       return {
         status: 500,
-        body: "Internal Server Error",
+        body: {
+          errcode: "M_LOOKUP_FAILED",
+          error: "Failed to look up user info from homeserver",
+        },
       };
     });
 
@@ -268,7 +285,7 @@ describe("Start connection states", () => {
       capturedState.cause instanceof Error
     ) {
       expect(capturedState.cause.message).toContain(
-        "SFU Config fetch failed with status code 500",
+        "Failed to look up user info from homeserver",
       );
       expect(connection.transport.livekit_alias).toEqual(
         livekitFocus.livekit_alias,

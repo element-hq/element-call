@@ -93,7 +93,6 @@ interface Props {
   confineToRoom: boolean;
   preload: UrlParams["preload"];
   skipLobby: UrlParams["skipLobby"];
-  header: HeaderStyle;
   rtcSession: MatrixRTCSession;
   joined: boolean;
   setJoined: (value: boolean) => void;
@@ -107,7 +106,6 @@ export const GroupCallView: FC<Props> = ({
   confineToRoom,
   preload,
   skipLobby,
-  header,
   rtcSession,
   joined,
   setJoined,
@@ -122,7 +120,7 @@ export const GroupCallView: FC<Props> = ({
 
   const muteAllAudio = useBehavior(muteAllAudio$);
   const leaveSoundContext = useLatest(
-    useAudioContext({
+    useAudioContext<CallEventSounds>({
       sounds: callEventAudioSounds,
       latencyHint: "interactive",
       muted: muteAllAudio,
@@ -182,6 +180,7 @@ export const GroupCallView: FC<Props> = ({
     perParticipantE2EE,
     returnToLobby,
     password: passwordFromUrl,
+    header,
   } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
 
@@ -319,12 +318,26 @@ export const GroupCallView: FC<Props> = ({
     (
       reason: "timeout" | "user" | "allOthersLeft" | "decline" | "error",
     ): void => {
-      let playSound: CallEventSounds = "left";
-      if (reason === "timeout" || reason === "decline") playSound = reason;
+      let audioPromise: Promise<void> | undefined = undefined;
+      switch (reason) {
+        case "allOthersLeft":
+          // When "allOthersLeft", the leaveSoundEffect$ in CallEventAudioRenderer
+          // already plays the "left" sound when the remote participant's media
+          // disappears. We play it here silenced (volumeOverwrite = 0) so we have the right duration in the audioPromise.
+          // (used to destory the widget)
+          audioPromise = leaveSoundContext.current?.playSound("left", 0);
+          break;
+        case "timeout":
+        case "decline":
+          audioPromise = leaveSoundContext.current?.playSound(reason);
+          break;
+        default:
+          audioPromise = leaveSoundContext.current?.playSound("left");
+      }
 
       setJoined(false);
       setLeft(true);
-      const audioPromise = leaveSoundContext.current?.playSound(playSound);
+
       // We need to wait until the callEnded event is tracked on PostHog,
       // otherwise the iframe may get killed first.
       const posthogRequest = new Promise((resolve) => {
@@ -437,7 +450,7 @@ export const GroupCallView: FC<Props> = ({
         muteStates={muteStates}
         onEnter={() => setJoined(true)}
         confineToRoom={confineToRoom}
-        hideHeader={header === HeaderStyle.None}
+        hideHeader={header !== HeaderStyle.Standard}
         participantCount={participantCount}
         onShareClick={onShareClick}
       />
@@ -463,7 +476,6 @@ export const GroupCallView: FC<Props> = ({
           rtcSession={rtcSession as MatrixRTCSession}
           matrixRoom={room}
           onLeft={onLeft}
-          header={header}
           muteStates={muteStates}
           e2eeSystem={e2eeSystem}
           //otelGroupCallMembership={otelGroupCallMembership}

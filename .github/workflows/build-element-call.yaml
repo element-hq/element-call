@@ -37,15 +37,16 @@ jobs:
           persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
-      - name: Yarn cache
+      - name: pnpm cache
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          cache: "yarn"
+          cache: "pnpm"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "yarn install --immutable"
+        # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
+        run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
       - name: Build Element Call
-        run: yarn run build:"$PACKAGE":"$BUILD_MODE"
+        run: pnpm run build:"$PACKAGE":"$BUILD_MODE"
         env:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}

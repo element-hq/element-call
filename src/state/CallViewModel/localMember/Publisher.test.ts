@@ -131,6 +131,8 @@ beforeEach(() => {
     },
     new Map(),
     {},
+    {},
+    {},
   );
 
   vi.mocked(localParticipant).createTracks = vi

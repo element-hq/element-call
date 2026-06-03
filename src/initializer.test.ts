@@ -18,7 +18,7 @@ import {
 
 import { mockConfig } from "./utils/test";
 
-const sentryInitSpy = vi.fn();
+const sentryInitSpy = vi.hoisted(() => vi.fn());
 
 // Place the mock after the spy is defined
 vi.mock("@sentry/react", () => ({

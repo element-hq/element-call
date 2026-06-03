@@ -26,127 +26,41 @@ Please see LICENSE in the repository root for full details.
   );
 }
 
+.header.hidden {
+  display: none;
+}
+
+.header.overlay {
+  /* Note that the header is still position: sticky in this case so that certain
+    tiles can move down out of the way of the header when visible. */
+  opacity: 1;
+  transition: opacity 0.15s;
+}
+
+.header.overlay.hidden {
+  display: flex;
+  opacity: 0;
+  pointer-events: none;
+  /* Switch to position: absolute so the header takes up no space in the layout
+    when hidden. */
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+}
+
+.header.overlay:has(:focus-visible) {
+  opacity: 1;
+  pointer-events: initial;
+}
+
 .header.filler {
   block-size: var(--cpd-space-6x);
   background: none;
 }
 
-.footer {
-  position: sticky;
-  inset-block-end: 0;
-  z-index: var(--call-view-header-footer-layer);
-  display: grid;
-  grid-template-columns:
-    minmax(0, var(--inline-content-inset))
-    1fr auto 1fr minmax(0, var(--inline-content-inset));
-  grid-template-areas: ". logo buttons layout .";
-  align-items: center;
-  gap: var(--cpd-space-3x);
-  padding-block: var(--cpd-space-10x);
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0) 0%,
-    var(--cpd-color-bg-canvas-default) 100%
-  );
-}
-
-.footer.hidden {
-  display: none;
-}
-
-.footer.overlay {
-  position: absolute;
-  inset-block-end: 0;
-  inset-inline: 0;
-  opacity: 1;
-  transition: opacity 0.15s;
-}
-
-.footer.overlay.hidden {
-  display: grid;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.footer.overlay:has(:focus-visible) {
-  opacity: 1;
-  pointer-events: initial;
-}
-
-.logo {
-  grid-area: logo;
-  justify-self: start;
-  display: flex;
-  align-items: center;
-  gap: var(--cpd-space-2x);
-  padding-inline-start: var(--cpd-space-1x);
-}
-
-.buttons {
-  grid-area: buttons;
-  justify-self: center;
-  display: flex;
-  gap: var(--cpd-space-3x);
-}
-
-.layout {
-  grid-area: layout;
-  justify-self: end;
-}
-
-@media (max-width: 660px) {
-  .footer {
-    grid-template-areas: ". buttons buttons buttons .";
-  }
-
-  .logo {
-    display: none;
-  }
-
-  .layout {
-    display: none !important;
-  }
-}
-
-@media (max-height: 800px) {
-  .footer {
-    padding-block: var(--cpd-space-8x);
-  }
-}
-
-@media (max-height: 400px) {
-  .footer {
-    padding-block: var(--cpd-space-4x);
-  }
-}
-
-@media (max-width: 370px) {
-  .shareScreen {
-    display: none;
-  }
-
-  /* PIP custom css */
-  @media (max-height: 400px) {
-    .shareScreen {
-      display: flex;
-    }
-    .footer {
-      padding-block-start: var(--cpd-space-3x);
-      padding-block-end: var(--cpd-space-2x);
-    }
-  }
-}
-
 @media (max-width: 320px) {
-  .invite,
-  .raiseHand {
+  .invite {
     display: none;
-  }
-}
-
-@media (min-width: 800px) {
-  .buttons {
-    gap: var(--cpd-space-4x);
   }
 }
 

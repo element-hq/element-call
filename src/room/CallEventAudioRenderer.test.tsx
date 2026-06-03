@@ -123,6 +123,7 @@ test("does not play a sound before the call is successful", () => {
   const { vm, rtcMemberships$ } = getBasicCallViewModelEnvironment(
     [local, alice],
     [localRtcMember],
+    undefined,
     { waitForCallPickup: true },
   );
   render(<CallEventAudioRenderer vm={vm} />);

@@ -66,6 +66,7 @@ interface SpotlightItemBaseProps {
   userId: string;
   displayName: string;
   mxcAvatarUrl: string | undefined;
+  showNameTags: boolean;
   focusable: boolean;
   "aria-hidden"?: boolean;
 }
@@ -244,6 +245,7 @@ interface SpotlightItemProps {
    * The height this tile will have once its animations have settled.
    */
   targetHeight: number;
+  showNameTags: boolean;
   focusable: boolean;
   intersectionObserver$: Observable<IntersectionObserver>;
   /**
@@ -258,6 +260,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   vm,
   targetWidth,
   targetHeight,
+  showNameTags,
   focusable,
   intersectionObserver$,
   snap,
@@ -293,6 +296,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     userId: vm.userId,
     displayName,
     mxcAvatarUrl,
+    showNameTags,
     focusable,
     "aria-hidden": ariaHidden,
   };
@@ -381,6 +385,7 @@ interface Props {
   targetWidth: number;
   targetHeight: number;
   showIndicators: boolean;
+  showNameTags: boolean;
   focusable: boolean;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
@@ -394,6 +399,7 @@ export const SpotlightTile: FC<Props> = ({
   targetWidth,
   targetHeight,
   showIndicators,
+  showNameTags,
   focusable = true,
   className,
   style,
@@ -504,6 +510,7 @@ export const SpotlightTile: FC<Props> = ({
             vm={vm}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
+            showNameTags={showNameTags}
             focusable={focusable}
             intersectionObserver$={intersectionObserver$}
             // This is how we get the container to scroll to the right media
@@ -562,6 +569,7 @@ export const SpotlightTile: FC<Props> = ({
         >
           {media.map((vm) => (
             <div
+              data-testid="screenshare-indicator"
               key={vm.id}
               className={styles.item}
               data-visible={vm.id === visibleId}

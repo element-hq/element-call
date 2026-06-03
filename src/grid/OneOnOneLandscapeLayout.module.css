@@ -19,13 +19,7 @@ Please see LICENSE in the repository root for full details.
   position: absolute;
   inline-size: 180px;
   block-size: 135px;
-  inset: var(--cpd-space-4x);
-}
-
-.spotlight {
-  position: absolute;
-  inline-size: 404px;
-  block-size: 233px;
+  inset: 0;
 }
 
 .slot[data-block-alignment="start"] {

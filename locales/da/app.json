@@ -22,12 +22,6 @@
     "upload_file": "Upload fil"
   },
   "analytics_notice": "Ved at deltage i denne beta giver du samtykke til indsamling af anonyme data, som vi bruger til at forbedre produktet. Du kan finde flere oplysninger om, hvilke data vi sporer, i vores <2>fortrolighedspolitik</2> og vores <6>cookiepolitik</6>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Fortsæt i browseren",
-    "open_in_app": "Åbn i appen",
-    "text": "Klar til at deltage?",
-    "title": "Vælg app"
-  },
   "call_ended_view": {
     "create_account_button": "Opret konto",
     "create_account_prompt": "<0>Hvorfor ikke afslutte med at oprette en adgangskode for at beholde din konto? </0><1>Du kan beholde dit navn og indstille en avatar til brug ved fremtidige opkald </1>",

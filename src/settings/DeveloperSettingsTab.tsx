@@ -43,6 +43,7 @@ import {
   matrixRTCMode as matrixRTCModeSetting,
   customLivekitUrl as customLivekitUrlSetting,
   MatrixRTCMode,
+  enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
 } from "./settings";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
@@ -99,6 +100,10 @@ export const DeveloperSettingsTab: FC<Props> = ({
 
   const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
     alwaysShowIphoneEarpieceSetting,
+  );
+
+  const [enableExtendedLivekitLogs, setEnableExtendedLivekitLogs] = useSetting(
+    enableExtendedLivekitLogsSetting,
   );
 
   const [customLivekitUrlUpdateError, setCustomLivekitUrlUpdateError] =
@@ -225,7 +230,21 @@ export const DeveloperSettingsTab: FC<Props> = ({
             },
             [setAlwaysShowIphoneEarpiece],
           )}
-        />{" "}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="enableLivekitExtendedLogs"
+          type="checkbox"
+          label="Enable extended livekit logs"
+          checked={enableExtendedLivekitLogs}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setEnableExtendedLivekitLogs(event.target.checked);
+            },
+            [setEnableExtendedLivekitLogs],
+          )}
+        />
       </FieldRow>
       <EditInPlace
         onSubmit={(e) => e.preventDefault()}

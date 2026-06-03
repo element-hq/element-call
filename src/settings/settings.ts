@@ -140,6 +140,11 @@ export const vadAdvancedOpenThreshold = new Setting<number>("vad-advanced-open-t
 export const vadAdvancedCloseThreshold = new Setting<number>("vad-advanced-close-threshold", 0.6);
 export const vadHoldTime = new Setting<number>("vad-hold-time", 300);
 
+export const enableExtendedLivekitLogs = new Setting<boolean>(
+  "extended-livekit-logs",
+  false,
+);
+
 export enum MatrixRTCMode {
   Legacy = "legacy",
   Compatibility = "compatibility",
