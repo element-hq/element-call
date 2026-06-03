@@ -359,6 +359,16 @@ Usage and other technical details about the project can be found here:
 
 [**Docs**](./docs/README.md)
 
+## GitHub Labels
+
+GitHub labels in this repository are maintained in the [`labels.yml`](.github/labels.yml) file and
+automatically synced to GitHub using the [`sync-labels` workflow](.github/workflows/sync-labels.yml).
+We do this so that we can reuse the labels between repositories.
+
+> [!WARNING]
+> Do not manually edit labels in the GitHub UI. Any manual changes will be overridden by the
+> workflow on its next invocation.
+
 ## 📝 Copyright & License
 
 Copyright 2021-2025 New Vector Ltd
