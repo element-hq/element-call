@@ -154,6 +154,28 @@ export const WithAudioAndVideoOptions: Story = {
     selectedVideo: "1",
   },
 };
+
+export const AudioBusy: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    audioEnabled: true,
+    audioBusy: true,
+    videoEnabled: true,
+    videoBusy: false,
+  },
+};
+
+export const VideoBusy: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    audioEnabled: true,
+    audioBusy: false,
+    videoEnabled: true,
+    videoBusy: true,
+  },
+};
 export const WithLogo: Story = {
   ...Default,
   args: {
