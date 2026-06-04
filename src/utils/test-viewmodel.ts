@@ -38,7 +38,7 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "../state/Behavior";
-import { MatrixRTCMode } from "../settings/settings";
+import { MatrixRTCMode } from "../config/ConfigOptions";
 import { createCallFooterViewModel } from "../components/CallFooterViewModel";
 import { type FooterSnapshot } from "../components/CallFooter";
 import { type ViewModel } from "../state/ViewModel";

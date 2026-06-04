@@ -42,9 +42,9 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   matrixRTCMode as matrixRTCModeSetting,
   customLivekitUrl as customLivekitUrlSetting,
-  MatrixRTCMode,
   enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
 } from "./settings";
+import { MatrixRTCMode } from "../config/ConfigOptions";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";

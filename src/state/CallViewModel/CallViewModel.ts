@@ -60,10 +60,11 @@ import {
 } from "../../utils/observable";
 import {
   duplicateTiles,
-  MatrixRTCMode,
   playReactionsSound,
   showReactions,
 } from "../../settings/settings";
+import { Config } from "../../config/Config";
+import { MatrixRTCMode } from "../../config/ConfigOptions";
 import { isFirefox, platform } from "../../Platform";
 import { setPipEnabled$ } from "../../controls";
 import { TileStore } from "../TileStore";
