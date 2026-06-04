@@ -117,6 +117,17 @@ export interface ConfigOptions {
   sync_disconnect_grace_period_ms?: number;
 
   /**
+   * Forces the MatrixRTC mode for all clients on this deployment.
+   * When set, this overrides any per-user choice from the Developer Settings.
+   * - "legacy"        — legacy single-SFU + user-keyed memberships + legacy JWT endpoint
+   * - "compatibility" — multi-SFU transport, legacy JWT endpoint, no sticky events
+   * - "matrix_2_0"    — multi-SFU transport, sticky events, new JWT endpoint, hashed identity
+   * If unset, the user's Developer Settings choice (or its default of "legacy") is used.
+   * String values must match `MatrixRTCMode` in src/settings/settings.ts.
+   */
+  matrix_rtc_mode?: MatrixRTCMode;
+
+  /**
    * These are low level options that are used to configure the MatrixRTC session.
    * Take care when changing these options.
    */

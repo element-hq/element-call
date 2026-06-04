@@ -417,8 +417,15 @@ export function createCallViewModel$(
     options.encryptionSystem,
     matrixRTCSession,
   );
+  // matrix_rtc_mode in config.json overrides the user's Developer Settings choice.
+  // It is validated at config load (src/config/Config.ts) so the cast is safe.
+  const configMatrixRTCMode = Config.get().matrix_rtc_mode as
+    | MatrixRTCMode
+    | undefined;
   const matrixRTCMode$ =
-    options.matrixRTCMode$ ?? constant(MatrixRTCMode.Legacy);
+    configMatrixRTCMode !== undefined
+      ? constant(configMatrixRTCMode)
+      : (options.matrixRTCMode$ ?? constant(MatrixRTCMode.Legacy));
 
   // Each hbar seperates a block of input variables required for the CallViewModel to function.
   // The outputs of this block is written under the hbar.

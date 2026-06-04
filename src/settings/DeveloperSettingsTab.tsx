@@ -33,6 +33,7 @@ import {
 import { type Room as LivekitRoom } from "livekit-client";
 
 import { FieldRow, InputField } from "../input/Input";
+import { Config } from "../config/Config";
 import {
   useSetting,
   duplicateTiles as duplicateTilesSetting,
@@ -93,6 +94,11 @@ export const DeveloperSettingsTab: FC<Props> = ({
     },
     [setMatrixRTCMode],
   );
+  const configMatrixRTCMode = Config.get().matrix_rtc_mode as
+    | MatrixRTCMode
+    | undefined;
+  const matrixRTCModeForced = configMatrixRTCMode !== undefined;
+  const effectiveMatrixRTCMode = configMatrixRTCMode ?? matrixRTCMode;
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
@@ -317,8 +323,9 @@ export const DeveloperSettingsTab: FC<Props> = ({
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Legacy}
+              checked={effectiveMatrixRTCMode === MatrixRTCMode.Legacy}
               value={MatrixRTCMode.Legacy}
+              disabled={matrixRTCModeForced}
               onChange={onMatrixRTCModeChange}
             />
           }
@@ -332,8 +339,9 @@ export const DeveloperSettingsTab: FC<Props> = ({
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Compatibility}
+              checked={effectiveMatrixRTCMode === MatrixRTCMode.Compatibility}
               value={MatrixRTCMode.Compatibility}
+              disabled={matrixRTCModeForced}
               onChange={onMatrixRTCModeChange}
             />
           }
@@ -347,9 +355,9 @@ export const DeveloperSettingsTab: FC<Props> = ({
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Matrix_2_0}
+              checked={effectiveMatrixRTCMode === MatrixRTCMode.Matrix_2_0}
               value={MatrixRTCMode.Matrix_2_0}
-              disabled={!stickyEventsSupported}
+              disabled={matrixRTCModeForced || !stickyEventsSupported}
               onChange={onMatrixRTCModeChange}
             />
           }

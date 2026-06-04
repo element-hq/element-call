@@ -17,7 +17,10 @@ import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 import {
   customLivekitUrl as customLivekitUrlSetting,
   enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
+  matrixRTCMode as matrixRTCModeSetting,
 } from "./settings";
+import { MatrixRTCMode } from "../config/ConfigOptions";
+import { mockConfig } from "../utils/test";
 
 // Mock url params hook to avoid environment-dependent snapshot churn.
 vi.mock("../UrlParams", () => ({
@@ -310,5 +313,103 @@ describe("DeveloperSettingsTab", () => {
       expect(checkbox).toBeChecked();
       expect(enableExtendedLivekitLogsSetting.getValue()).toBe(true);
     });
+  });
+
+  describe("matrix rtc mode", () => {
+    afterEach(() => {
+      matrixRTCModeSetting.setValue(MatrixRTCMode.Legacy);
+      vi.restoreAllMocks();
+    });
+
+    function getModeRadios(): {
+      legacy: HTMLInputElement;
+      compatibility: HTMLInputElement;
+      matrix20: HTMLInputElement;
+    } {
+      return {
+        legacy: screen.getByRole("radio", {
+          name: /Legacy:/,
+        }) as HTMLInputElement,
+        compatibility: screen.getByRole("radio", {
+          name: /Compatibility:/,
+        }) as HTMLInputElement,
+        matrix20: screen.getByRole("radio", {
+          name: /Matrix 2\.0:/,
+        }) as HTMLInputElement,
+      };
+    }
+
+    it("radios reflect the localStorage setting when config does not force the mode", async () => {
+      mockConfig({});
+      matrixRTCModeSetting.setValue(MatrixRTCMode.Compatibility);
+      const client = createMockMatrixClient();
+
+      render(
+        <TooltipProvider>
+          <DeveloperSettingsTab
+            client={client}
+            env={{} as unknown as ImportMetaEnv}
+          />
+        </TooltipProvider>,
+      );
+
+      await waitFor(() =>
+        expect(client.doesServerSupportUnstableFeature).toHaveBeenCalled(),
+      );
+
+      const radios = getModeRadios();
+      expect(radios.compatibility).toBeChecked();
+      expect(radios.legacy).not.toBeChecked();
+      expect(radios.matrix20).not.toBeChecked();
+      // None are disabled by config; only Matrix_2_0 may be disabled by sticky-events support.
+      expect(radios.legacy).not.toBeDisabled();
+      expect(radios.compatibility).not.toBeDisabled();
+    });
+
+    it.each([
+      MatrixRTCMode.Legacy,
+      MatrixRTCMode.Compatibility,
+      MatrixRTCMode.Matrix_2_0,
+    ])(
+      "disables all radios and shows the config value (%s) as checked when matrix_rtc_mode is set",
+      async (configMode) => {
+        mockConfig({ matrix_rtc_mode: configMode });
+        // Local setting is intentionally different from the config value to
+        // prove config wins.
+        matrixRTCModeSetting.setValue(
+          configMode === MatrixRTCMode.Legacy
+            ? MatrixRTCMode.Compatibility
+            : MatrixRTCMode.Legacy,
+        );
+        const client = createMockMatrixClient();
+
+        render(
+          <TooltipProvider>
+            <DeveloperSettingsTab
+              client={client}
+              env={{} as unknown as ImportMetaEnv}
+            />
+          </TooltipProvider>,
+        );
+
+        await waitFor(() =>
+          expect(client.doesServerSupportUnstableFeature).toHaveBeenCalled(),
+        );
+
+        const radios = getModeRadios();
+        expect(radios.legacy).toBeDisabled();
+        expect(radios.compatibility).toBeDisabled();
+        expect(radios.matrix20).toBeDisabled();
+
+        const checkedValue = (
+          {
+            [MatrixRTCMode.Legacy]: radios.legacy,
+            [MatrixRTCMode.Compatibility]: radios.compatibility,
+            [MatrixRTCMode.Matrix_2_0]: radios.matrix20,
+          } as const
+        )[configMode];
+        expect(checkedValue).toBeChecked();
+      },
+    );
   });
 });
