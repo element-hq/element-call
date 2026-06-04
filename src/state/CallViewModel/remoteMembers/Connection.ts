@@ -12,8 +12,9 @@ import {
 } from "@livekit/components-core";
 import {
   ConnectionError,
-  type Room as LivekitRoom,
+  ConnectionErrorReason,
   type RemoteParticipant,
+  type Room as LivekitRoom,
 } from "livekit-client";
 import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, map } from "rxjs";
@@ -30,6 +31,8 @@ import { type ObservableScope } from "../../ObservableScope.ts";
 import {
   ElementCallError,
   InsufficientCapacityError,
+  LivekitConnectionError,
+  PeerConnectionTimeoutError,
   SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
@@ -248,6 +251,13 @@ export class Connection {
             // In the first case there will not be a 404, so we are in the second case.
             throw new SFURoomCreationRestrictedError();
           }
+
+          if (e.reason === ConnectionErrorReason.Timeout) {
+            // Unabled to establish peer connection within the timeout
+            throw new PeerConnectionTimeoutError();
+          }
+
+          throw new LivekitConnectionError(e);
         }
         throw e;
       }

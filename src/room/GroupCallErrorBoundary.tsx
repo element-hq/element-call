@@ -92,7 +92,26 @@ const ErrorPage: FC<ErrorPageProps> = ({
         widget={widget}
       >
         <p>
-          {error.localisedMessage ?? (
+          {error.localisedMessageKey ? (
+            <Trans
+              // @ts-expect-error - Dynamic i18nKey from error object
+              i18nKey={error.localisedMessageKey}
+              values={error.localisedMessageValues}
+              components={[
+                <a
+                  href={String(error.localisedMessageValues?.linkUrl || "#")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {/* Content injected by Trans component */}
+                </a>,
+                <b />,
+                <code />,
+              ]}
+            />
+          ) : error.localisedMessage ? (
+            error.localisedMessage
+          ) : (
             <Trans
               i18nKey="error.unexpected_ec_error"
               components={[<b />, <code />]}

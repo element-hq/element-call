@@ -16,6 +16,7 @@ import {
 } from "react";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
+import { ConnectionError } from "livekit-client";
 import { MatrixError } from "matrix-js-sdk";
 
 import {
@@ -28,7 +29,9 @@ import {
   type ElementCallError,
   FailToGetOpenIdToken,
   InsufficientCapacityError,
+  LivekitConnectionError,
   MatrixRTCTransportMissingError,
+  PeerConnectionTimeoutError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
@@ -319,4 +322,100 @@ test("should not show technical details when error has no matrix error cause", a
 
   // Technical details should not be present (ConnectionLostError has no cause)
   expect(screen.queryByText("Technical details")).not.toBeInTheDocument();
+});
+
+describe("LiveKit ConnectionError variants", () => {
+  test.each([
+    {
+      name: "notAllowed",
+      error: ConnectionError.notAllowed("Permission denied by server", 403),
+      expectedReason: "NotAllowed",
+    },
+    {
+      name: "timeout",
+      error: ConnectionError.timeout("Connection timed out"),
+      expectedReason: "Timeout",
+    },
+    {
+      name: "serverUnreachable",
+      error: ConnectionError.serverUnreachable("Server is unreachable", 503),
+      expectedReason: "ServerUnreachable",
+    },
+    {
+      name: "serviceNotFound",
+      error: ConnectionError.serviceNotFound(
+        "RTC service not found",
+        "v0-rtc" as const,
+      ),
+      expectedReason: "ServiceNotFound",
+    },
+    {
+      name: "internal",
+      error: ConnectionError.internal("Internal server error", {
+        status: 500,
+        statusText: "Internal Server Error",
+      }),
+      expectedReason: "InternalError",
+    },
+  ])(
+    "should display LiveKit $name error correctly",
+    async ({ error, expectedReason }) => {
+      const TestComponent = (): ReactNode => {
+        throw new LivekitConnectionError(error);
+      };
+
+      const { asFragment } = render(
+        <BrowserRouter>
+          <GroupCallErrorBoundary
+            onError={vi.fn()}
+            recoveryActionHandler={vi.fn()}
+            widget={null}
+          >
+            <TestComponent />
+          </GroupCallErrorBoundary>
+        </BrowserRouter>,
+      );
+
+      // Check title
+      await screen.findByText("Failed to connect to Livekit server");
+
+      // Check that reason is displayed in the description
+      expect(screen.getByText(/Reason:/i)).toBeInTheDocument();
+      expect(screen.getByText(expectedReason)).toBeInTheDocument();
+
+      expect(asFragment()).toMatchSnapshot();
+    },
+  );
+
+  test("should link to troubleshoot guide when timeout error", async () => {
+    const error = new PeerConnectionTimeoutError();
+
+    const TestComponent = (): ReactNode => {
+      throw error;
+    };
+
+    const { asFragment } = render(
+      <BrowserRouter>
+        <GroupCallErrorBoundary
+          onError={vi.fn()}
+          recoveryActionHandler={vi.fn()}
+          widget={null}
+        >
+          <TestComponent />
+        </GroupCallErrorBoundary>
+      </BrowserRouter>,
+    );
+
+    await screen.findByText("Connection timeout");
+
+    // Verify the link is present and has correct href
+    const link = screen.getByText("troubleshooting guide");
+    expect(link).toHaveAttribute(
+      "href",
+      "https://docs.element.io/latest/element-server-suite-pro/configuring-components/configuring-matrix-rtc/#sfu-connectivity-troubleshooting",
+    );
+
+    // Snapshot the complete rendered error
+    expect(asFragment()).toMatchSnapshot();
+  });
 });

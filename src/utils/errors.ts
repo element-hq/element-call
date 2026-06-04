@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { t } from "i18next";
+import { type ConnectionError } from "livekit-client";
 
 export enum ErrorCode {
   /**
@@ -42,6 +43,10 @@ export class ElementCallError extends Error {
   public category: ErrorCategory;
   public localisedMessage?: string;
   public localisedTitle: string;
+
+  // Alternative to localisedMessage, for rich error rendering
+  public localisedMessageKey?: string;
+  public localisedMessageValues?: Record<string, string>;
 
   protected constructor(
     localisedTitle: string,
@@ -233,5 +238,35 @@ export class SFURoomCreationRestrictedError extends ElementCallError {
       ErrorCategory.CONFIGURATION_ISSUE,
       t("error.room_creation_restricted_description"),
     );
+  }
+}
+
+/**
+ * Error indicating that the SFU peer-to-peer connection timed out.
+ */
+export class PeerConnectionTimeoutError extends ElementCallError {
+  public constructor() {
+    super(
+      t("error.peer_connection_timeout"),
+      ErrorCode.SFU_ERROR,
+      ErrorCategory.NETWORK_CONNECTIVITY,
+    );
+    this.localisedMessageKey = "error.peer_connection_timeout_description";
+    this.localisedMessageValues = {
+      linkUrl:
+        "https://docs.element.io/latest/element-server-suite-pro/configuring-components/configuring-matrix-rtc/#sfu-connectivity-troubleshooting",
+    };
+  }
+}
+
+export class LivekitConnectionError extends ElementCallError {
+  public constructor(cause: ConnectionError) {
+    super(
+      t("error.livekit_connection_error"),
+      ErrorCode.SFU_ERROR,
+      ErrorCategory.NETWORK_CONNECTIVITY,
+    );
+    this.localisedMessageKey = "error.livekit_connection_error_description";
+    this.localisedMessageValues = { reason: cause.reasonName };
   }
 }
