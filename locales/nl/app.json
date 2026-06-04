@@ -1,0 +1,96 @@
+{
+  "a11y": {
+    "user_menu": "Gebruikersmenu"
+  },
+  "action": {
+    "close": "Sluiten",
+    "copy_link": "Link kopiëren",
+    "edit": "Bewerken",
+    "go": "Ga",
+    "invite": "Uitnodigen",
+    "lower_hand": "Hand laten zakken",
+    "no": "Nee",
+    "pick_reaction": "Reactie kiezen",
+    "raise_hand": "Hand opsteken",
+    "register": "Registreren",
+    "remove": "Verwijderen",
+    "show_less": "Minder weergeven",
+    "show_more": "Meer weergeven",
+    "sign_in": "Aanmelden",
+    "sign_out": "Afmelden",
+    "submit": "Indienen",
+    "upload_file": "Bestand uploaden"
+  },
+  "analytics_notice": "Door deel te nemen aan deze bètaversie stemt u in met het verzamelen van anonieme gegevens, die we gebruiken om het product te verbeteren. Meer informatie over welke gegevens we bijhouden, vindt u in ons privacybeleid <2>Privacybeleid</2> en ons cookiebeleid <6>Cookiebeleid</6>.",
+  "call_ended_view": {
+    "create_account_button": "Account aanmaken",
+    "create_account_prompt": "<0>Waarom sluit u niet af met het instellen van een wachtwoord om uw account te bewaren?</0><1>U kunt uw naam behouden en een avatar instellen voor gebruik bij toekomstige gesprekken.</1>",
+    "feedback_done": "<0>Bedankt voor je feedback!</0>",
+    "feedback_prompt": "<0>We horen graag uw feedback, zodat we uw ervaring kunnen verbeteren.</0>",
+    "headline": "{{displayName}}, uw gesprek is beëindigd.",
+    "not_now_button": "Niet nu, ga terug naar het startscherm.",
+    "reconnect_button": "Opnieuw verbinden",
+    "survey_prompt": "Hoe is het gegaan?"
+  },
+  "call_name": "Naam van de oproep",
+  "common": {
+    "analytics": "Statistieken",
+    "audio": "Audio",
+    "avatar": "Avatar",
+    "back": "Terug",
+    "display_name": "Weergavenaam",
+    "encrypted": "Versleuteld",
+    "home": "Startpagina",
+    "loading": "Bezig met laden...",
+    "next": "Volgende",
+    "options": "Opties",
+    "password": "Wachtwoord",
+    "preferences": "Voorkeuren",
+    "profile": "Profiel",
+    "reaction": "Reactie",
+    "reactions": "Reacties",
+    "reconnecting": "Opnieuw verbinden...",
+    "settings": "Instellingen",
+    "unencrypted": "Niet versleuteld",
+    "username": "Gebruikersnaam",
+    "video": "Video"
+  },
+  "developer_mode": {
+    "always_show_iphone_earpiece": "iPhone-oortelefoonoptie op alle platformen weergeven",
+    "custom_livekit_url": {
+      "save": "Opslaan",
+      "saving": "Bezig met opslaan..."
+    },
+    "matrixRTCMode": {
+      "title": "MatrixRTC modus"
+    },
+    "matrix_id": "Matrix ID:{{id}}",
+    "mute_all_audio": "Alle audio dempen (deelnemers, reacties, geluiden bij deelname)",
+    "show_connection_stats": "Verbindingsstatistieken weergeven"
+  },
+  "error": {
+    "matrix_rtc_transport_missing": "De server is niet geconfigureerd om te werken met {{brand}}. Neem contact op met uw serverbeheerder (Domein: {{domain}}, Foutcode: {{ errorCode }}).",
+    "no_matrix_2_authorization_service": "De autorisatieservice voor uw mediaserver (SFU) is verouderd."
+  },
+  "mute_microphone_button_label": "Microfoon dempen",
+  "settings": {
+    "preferences_tab": {
+      "developer_mode_label_description": "Schakel de ontwikkelaarsmodus is en geef het tabblad met ontwikkelaarsinstellingen weer.",
+      "reactions_show_description": "Geef een animatie weer wanneer iemand een reactie verstuurt.",
+      "reactions_show_label": "Reacties weergeven",
+      "show_hand_raised_timer_description": "Geef een timer weer wanneer een deelnemer zijn hand opsteekt",
+      "show_hand_raised_timer_label": "Duur van het opsteken van de hand weergeven"
+    }
+  },
+  "unmute_microphone_button_label": "Microfoon dempen opheffen",
+  "video_tile": {
+    "always_show": "Altijd weergeven",
+    "camera_starting": "Video wordt geladen...",
+    "collapse": "Samenvouwen",
+    "expand": "Uitbreiden",
+    "mute_for_me": "Dempen voor mij",
+    "muted_for_me": "Gedempt voor mij",
+    "volume": "Volume",
+    "waiting_for_media": "Wachten op media..."
+  }
+}

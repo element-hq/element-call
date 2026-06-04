@@ -49,13 +49,23 @@
     "profile": "Profiili",
     "reaction": "Reaktio",
     "reactions": "Reaktiot",
+    "reconnecting": "Yhdistetään uudelleen...",
     "settings": "Asetukset",
     "unencrypted": "Ei salattu",
     "username": "Käyttäjänimi",
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Näytä iPhone korvakaiutinvaihtoehto kaikilla alustoilla",
     "crypto_version": "Kryptoversio: {{version}}",
+    "custom_livekit_url": {
+      "current_url": "Tällä hetkellä asetettu: ",
+      "from_config": "Tällä hetkellä ei ole asetettu päällekirjoitusta. Käytetään URL-osoitetta well-known tiedostosta tai konfiguraatiosta.",
+      "label": "Mukautettu Livekit-url",
+      "reset": "Palauta päällekirjoitus",
+      "save": "Tallenna",
+      "saving": "Tallennetaan..."
+    },
     "debug_tile_layout_label": "Laattojen asettelun vianmääritys",
     "device_id": "Laitteen tunnus: {{id}}",
     "duplicate_tiles_label": "Lisälaattakopioiden määrä osallistujaa kohti",
@@ -63,29 +73,48 @@
     "hostname": "Isäntänimi: {{hostname}}",
     "livekit_server_info": "LiveKit-palvelimen tiedot",
     "livekit_sfu": "LiveKit SFU: {{url}}",
+    "matrixRTCMode": {
+      "Comptibility": {
+        "description": "Yhteensopiva kotipalvelimien kanssa, jotka eivät tue tarttuvia tapahtumia (mutta kaikki muut EC-sovellukset ovat v0.17.0 tai uudempia)",
+        "label": "Yhteensopivuus: tilatapahtumat ja useat SFU:t"
+      },
+      "Legacy": {
+        "description": "Yhteensopiva vanhempien EC-versioiden kanssa, jotka eivät tue useita SFU:ita",
+        "label": "Vanha: tilatapahtumat ja vanhimman jäsenen SFU"
+      },
+      "Matrix_2_0": {
+        "description": "Yhteensopiva vain tarttuvia tapahtumia tukevien kotipalvelimien ja kaikkien EC-sovelluksien v0.17.0 tai uudempien kanssa",
+        "label": "Matrix 2.0: tarttuvat tapahtumat ja useat SFU:t"
+      },
+      "title": "MatrixRTC-tila"
+    },
     "matrix_id": "Matrix tunnus: {{id}}",
+    "mute_all_audio": "Mykistä kaikki ääni (osallistujat, reaktiot, liittymisäänet)",
     "show_connection_stats": "Näytä yhteystilastot",
-    "show_non_member_tiles": "Näytä laatat ei-jäsenien medialle",
-    "url_params": "URL-parametrit",
-    "use_new_membership_manager": "Käytä uutta puhelun MembershipManagerin toteutusta",
-    "use_to_device_key_transport": "Käytä laitteen avainten kuljetusta. Tämä palaa huoneen avainten siirtoon, kun toinen puhelun jäsen lähettää huoneavaimen"
+    "url_params": "URL-parametrit"
   },
   "disconnected_banner": "Yhteys palvelimeen on katkennut.",
   "error": {
     "call_is_not_supported": "Puhelua ei tueta",
     "call_not_found": "Puhelua ei löydy",
-    "call_not_found_description": "<0>Kyseinen linkki ei näytä kuuluvan mihinkään olemassa olevaan puheluun. Tarkista, että sinulla on oikea linkki, tai <1>luo uusi linkki</1>.</0>",
+    "call_not_found_description": "<0>Kyseinen linkki ei näytä kuuluvan mihinkään olemassa olevaan puheluun. Tarkista, että sinulla on oikea linkki, tai <2>luo uusi linkki</2>.</0>",
     "connection_lost": "Yhteys katkesi",
     "connection_lost_description": "Sinut katkaistiin puhelusta.",
     "e2ee_unsupported": "Yhteensopimaton selain",
     "e2ee_unsupported_description": "Verkkoselaimesi ei tue salattuja puheluita. Tuettuja selaimia ovat Chrome, Safari ja Firefox 117+.",
+    "failed_to_start_livekit": "Livekit-yhteyden muodostaminen epäonnistui.",
     "generic": "Jokin meni pieleen",
     "generic_description": "Vianmäärityslokien lähettäminen auttaa meitä jäljittämään ongelman.",
     "insufficient_capacity": "Riittämätön kapasiteetti",
     "insufficient_capacity_description": "Palvelin on saavuttanut maksimikapasiteettinsa, etkä voi liittyä puheluun tällä hetkellä. Yritä myöhemmin uudelleen tai ota yhteyttä palvelimen ylläpitäjään, jos ongelma jatkuu.",
-    "matrix_rtc_focus_missing": "Palvelinta ei ole määritetty toimimaan {{brand}} -sovelluksen kanssa. Ota yhteyttä palvelimen ylläpitäjään (Verkkotunnus: {{domain}}, Virhekoodi: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "Palvelinta ei ole määritetty toimimaan {{brand}} -sovelluksen kanssa. Ota yhteyttä palvelimen ylläpitäjään (Verkkotunnus: {{domain}}, Virhekoodi: {{ errorCode }}).",
+    "membership_manager": "Jäsenyydenhallinnan virhe",
+    "membership_manager_description": "Jäsenyyshallinta jouduttiin sulkemaan. Tämä johtui useista peräkkäisistä epäonnistuneista verkkopyynnöistä.",
+    "no_matrix_2_authorization_service": "Mediapalvelimesi (SFU) valtuutuspalvelu on vanhentunut.",
     "open_elsewhere": "Avattu toisessa välilehdessä",
     "open_elsewhere_description": "{{brand}} on avattu toisessa välilehdessä. Jos tämä ei kuulosta oikealta, yritä ladata sivu uudelleen.",
+    "room_creation_restricted": "Puhelun luominen epäonnistui",
+    "room_creation_restricted_description": "Puheluiden luominen saattaa olla rajoitettu vain valtuutetuille käyttäjille. Yritä myöhemmin uudelleen tai ota yhteyttä palvelimen ylläpitäjään, jos ongelma jatkuu.",
     "unexpected_ec_error": "Tapahtui odottamaton virhe (<0>Virhekoodi:</0> <1>{{ errorCode }}</1>). Ota yhteyttä palvelimen ylläpitäjään."
   },
   "group_call_loader": {
@@ -96,6 +125,11 @@
     "knock_reject_body": "Liittymispyyntösi hylättiin.",
     "knock_reject_heading": "Pääsy kielletty",
     "reason": "Syy: {{reason}}"
+  },
+  "handset": {
+    "overlay_back_button": "Takaisin kaiutintilaan",
+    "overlay_description": "Toimii vain sovellusta käytettäessä",
+    "overlay_title": "Luuritila"
   },
   "hangup_button_label": "Lopeta puhelu",
   "header_label": "Element Call Etusivu",
@@ -165,8 +199,11 @@
     "devices": {
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
+      "change_device_button": "Vaihda äänilaite",
       "default": "Oletus",
       "default_named": "Oletus <2>({{name}})</2>",
+      "handset": "Luuri",
+      "loudspeaker": "Kaiutin",
       "microphone": "Mikrofoni",
       "microphone_numbered": "Mikrofoni {{n}}",
       "speaker": "Kaiutin",
@@ -206,12 +243,14 @@
   "version": "{{productName}} versio: {{version}}",
   "video_tile": {
     "always_show": "Näytä aina",
+    "call_ended": "Puhelu päättyi",
+    "calling": "Soitetaan…",
     "camera_starting": "Videota ladataan...",
-    "change_fit_contain": "Sovita kehykseen",
     "collapse": "Supista",
     "expand": "Laajenna",
     "mute_for_me": "Mykistä minulle",
     "muted_for_me": "Mykistetty minulle",
+    "screen_share_volume": "Näytönjaon äänenvoimakkuus",
     "volume": "Äänenvoimakkuus",
     "waiting_for_media": "Odotetaan mediaa..."
   }
