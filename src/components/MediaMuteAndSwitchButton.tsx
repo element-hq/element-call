@@ -40,6 +40,8 @@ export interface MediaMuteAndSwitchButtonProps {
   enabled?: boolean;
   /** Callback if the mute button is clicked */
   onMuteClick?: () => void;
+  /** True while mute/unmute operation is syncing. */
+  busy?: boolean;
   iconsAndLabels: "video" | "audio";
   /** The options available for the media device selector modal */
   options?: MenuOptions[];
@@ -59,6 +61,7 @@ const BLUR_ID = "blur";
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
   enabled,
+  busy,
   onMuteClick,
   iconsAndLabels,
   options,
@@ -69,6 +72,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 }) => {
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const isBusy = busy ?? false;
   const { t } = useTranslation();
   const devices = useMediaDevices();
 
@@ -83,12 +87,14 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       button = (
         <VideoButton
           enabled={enabled ?? false}
+          busy={isBusy}
           onClick={(e) => {
+            if (isBusy) return;
             onMuteClick?.();
             e.preventDefault();
             e.stopPropagation();
           }}
-          disabled={onMuteClick === undefined}
+          disabled={isBusy || onMuteClick === undefined}
           data-testid="incall_videomute"
         />
       );
@@ -106,12 +112,14 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       button = (
         <MicButton
           enabled={enabled ?? false}
+          busy={isBusy}
           onClick={(e) => {
+            if (isBusy) return;
             onMuteClick?.();
             e.preventDefault();
             e.stopPropagation();
           }}
-          disabled={onMuteClick === undefined}
+          disabled={isBusy || onMuteClick === undefined}
           data-testid="incall_mute"
         />
       );

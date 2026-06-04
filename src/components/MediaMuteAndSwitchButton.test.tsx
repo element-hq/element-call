@@ -93,6 +93,27 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(onMute).toHaveBeenCalled();
   });
 
+  test("disables mute button while busy", async () => {
+    const user = userEvent.setup();
+    const onMute = vi.fn();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title={"Switcher"}
+        onMuteClick={onMute}
+        iconsAndLabels="audio"
+        enabled={true}
+        busy={true}
+      />,
+    );
+
+    const muteButton = getByRole("switch", { name: "Mute microphone" });
+    expect(muteButton).toHaveAttribute("aria-disabled", "true");
+    expect(muteButton).toHaveAttribute("aria-busy", "true");
+
+    await user.click(muteButton);
+    expect(onMute).not.toHaveBeenCalled();
+  });
+
   test("requests device names when opened", async () => {
     const user = userEvent.setup();
     const requestDeviceNames = vi.fn();

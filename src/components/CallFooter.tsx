@@ -72,7 +72,9 @@ export interface FooterActions {
 // we do not use any ? optional properties so that the vm type is including all fields.
 export interface FooterState {
   audioEnabled: boolean;
+  audioBusy: boolean;
   videoEnabled: boolean;
+  videoBusy: boolean;
   videoBlurEnabled: boolean;
   showFooter: boolean;
 
@@ -122,7 +124,9 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
   const setLayoutMode = useBehavior(vm.setLayoutMode$);
   const openSettings = useBehavior(vm.openSettings$);
   const audioEnabled = useBehavior(vm.audioEnabled$);
+  const audioBusy = useBehavior(vm.audioBusy$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
+  const videoBusy = useBehavior(vm.videoBusy$);
   const toggleAudio = useBehavior(vm.toggleAudio$);
   const toggleVideo = useBehavior(vm.toggleVideo$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
@@ -167,6 +171,7 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
         key="audio"
         iconsAndLabels="audio"
         enabled={audioEnabled ?? false}
+        busy={audioBusy ?? false}
         onMuteClick={toggleAudio}
         data-testid="incall_mute"
         options={audioOptions}
@@ -180,8 +185,9 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
         size={buttonSize}
         key="audio"
         enabled={audioEnabled ?? false}
+        busy={audioBusy ?? false}
         onClick={toggleAudio}
-        disabled={toggleAudio === undefined}
+        disabled={(audioBusy ?? false) || toggleAudio === undefined}
         data-testid="incall_mute"
       />,
     );
@@ -194,6 +200,7 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
         key="video"
         iconsAndLabels="video"
         enabled={videoEnabled ?? false}
+        busy={videoBusy ?? false}
         onMuteClick={toggleVideo}
         options={videoOptions}
         selectedOption={selectedVideo}
@@ -208,8 +215,9 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
         size={buttonSize}
         key="video"
         enabled={videoEnabled ?? false}
+        busy={videoBusy ?? false}
         onClick={toggleVideo}
-        disabled={toggleVideo === undefined}
+        disabled={(videoBusy ?? false) || toggleVideo === undefined}
         data-testid="incall_videomute"
       />,
     );

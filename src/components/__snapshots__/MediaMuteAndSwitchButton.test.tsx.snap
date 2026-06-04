@@ -6,6 +6,7 @@ exports[`MediaMuteAndSwitchButton > renders 1`] = `
     class="container"
   >
     <button
+      aria-busy="false"
       aria-checked="false"
       aria-disabled="true"
       aria-labelledby="_r_0_"
