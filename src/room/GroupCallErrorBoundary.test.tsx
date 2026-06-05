@@ -32,6 +32,7 @@ import {
   LivekitConnectionError,
   MatrixRTCTransportMissingError,
   PeerConnectionTimeoutError,
+  StickyEventsRequiredError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
