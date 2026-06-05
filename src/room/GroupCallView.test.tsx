@@ -38,6 +38,7 @@ import { useAudioContext } from "../useAudioContext";
 import { ActiveCall } from "./InCallView";
 import {
   flushPromises,
+  mockConfig,
   mockEmitter,
   mockMatrixRoom,
   mockMatrixRoomMember,
@@ -46,9 +47,11 @@ import {
   MockRTCSession,
 } from "../utils/test";
 import { GroupCallView } from "./GroupCallView";
+import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary";
 import { ElementWidgetActions, type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
+import { MatrixRTCMode } from "../config/ConfigOptions";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { constant } from "../state/Behavior";
@@ -130,6 +133,10 @@ beforeEach(() => {
 function createGroupCallView(
   widget: WidgetHelpers | null,
   joined = true,
+  options: {
+    doesServerSupportUnstableFeature?: (feature: string) => Promise<boolean>;
+    withErrorBoundary?: boolean;
+  } = {},
 ): {
   rtcSession: MatrixRTCSession;
   getByText: ReturnType<typeof render>["getByText"];
@@ -139,6 +146,9 @@ function createGroupCallView(
     getUserId: () => localRtcMember.userId,
     getDeviceId: () => localRtcMember.deviceId,
     getRoom: (rId) => (rId === roomId ? room : null),
+    doesServerSupportUnstableFeature:
+      options.doesServerSupportUnstableFeature ??
+      vi.fn().mockResolvedValue(true),
   } as Partial<MatrixClient> as MatrixClient;
   const room = mockMatrixRoom({
     relations: {
@@ -166,24 +176,36 @@ function createGroupCallView(
     video: { enabled: false },
     // TODO-MULTI-SFU: This cast isn't valid, it's likely the cause of some current test failures
   } as unknown as MuteStates;
+  const groupCallView = (
+    <GroupCallView
+      client={client}
+      isPasswordlessUser={false}
+      confineToRoom={false}
+      preload={false}
+      skipLobby={false}
+      rtcSession={rtcSession.asMockedSession()}
+      muteStates={muteState}
+      widget={widget}
+      // TODO-MULTI-SFU: Make joined and setJoined work
+      joined={true}
+      setJoined={function (value: boolean): void {}}
+    />
+  );
   const { getByText } = render(
     <BrowserRouter>
       <TooltipProvider>
         <MediaDevicesContext value={mockMediaDevices({})}>
           <ProcessorProvider>
-            <GroupCallView
-              client={client}
-              isPasswordlessUser={false}
-              confineToRoom={false}
-              preload={false}
-              skipLobby={false}
-              rtcSession={rtcSession.asMockedSession()}
-              muteStates={muteState}
-              widget={widget}
-              // TODO-MULTI-SFU: Make joined and setJoined work
-              joined={true}
-              setJoined={function (value: boolean): void {}}
-            />
+            {options.withErrorBoundary ? (
+              <GroupCallErrorBoundary
+                recoveryActionHandler={vi.fn()}
+                widget={null}
+              >
+                {groupCallView}
+              </GroupCallErrorBoundary>
+            ) : (
+              groupCallView
+            )}
           </ProcessorProvider>
         </MediaDevicesContext>
       </TooltipProvider>
@@ -392,6 +414,30 @@ test.skip("GroupCallView shows errors that occur during joining", async () => {
   createGroupCallView(null, false);
   await user.click(screen.getByRole("button", { name: "Join call" }));
   screen.getByText("Call is not supported");
+});
+
+test("shows StickyEventsRequiredError when matrix_2_0 is forced but homeserver lacks MSC4354", async () => {
+  mockConfig({ matrix_rtc_mode: MatrixRTCMode.Matrix_2_0 });
+  createGroupCallView(null, true, {
+    doesServerSupportUnstableFeature: vi.fn().mockResolvedValue(false),
+    withErrorBoundary: true,
+  });
+  await screen.findByText("Homeserver does not support Matrix 2.0 calls");
+});
+
+test("does not show StickyEventsRequiredError when homeserver supports MSC4354", async () => {
+  mockConfig({ matrix_rtc_mode: MatrixRTCMode.Matrix_2_0 });
+  const { getByText } = createGroupCallView(null, true, {
+    doesServerSupportUnstableFeature: vi.fn().mockResolvedValue(true),
+    withErrorBoundary: true,
+  });
+  // Give the async support check a chance to resolve.
+  await flushPromises();
+  expect(
+    screen.queryByText("Homeserver does not support Matrix 2.0 calls"),
+  ).toBeNull();
+  // The normal call UI (mocked ActiveCall) renders instead.
+  expect(getByText("Leave")).toBeInTheDocument();
 });
 
 test("user can reconnect after a membership manager error", async () => {

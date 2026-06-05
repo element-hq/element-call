@@ -59,6 +59,12 @@ test.each([
     expectedDescription:
       "The server has reached its maximum capacity and you cannot join the call at this time. Try again later, or contact your server admin if the problem persists.",
   },
+  {
+    error: new StickyEventsRequiredError(),
+    expectedTitle: "Homeserver does not support Matrix 2.0 calls",
+    expectedDescription:
+      "This deployment is configured to use Matrix 2.0 call mode, but the homeserver does not advertise support for sticky events (MSC4354). Ask your server admin to upgrade, or switch the deployment to a compatible mode.",
+  },
 ])(
   "should report correct error for $expectedTitle",
   async ({ error, expectedTitle, expectedDescription }) => {

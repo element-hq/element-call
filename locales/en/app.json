@@ -120,6 +120,8 @@
     "peer_connection_timeout_description": "Connection to the media server timed out. Try switching to a different network or disabling your VPN. If the problem persists, see our <0>troubleshooting guide</0> or contact your server administrator.",
     "room_creation_restricted": "Failed to create call",
     "room_creation_restricted_description": "Call creation might be restricted to authorized users only. Try again later, or contact your server admin if the problem persists.",
+    "sticky_events_required": "Homeserver does not support Matrix 2.0 calls",
+    "sticky_events_required_description": "This deployment is configured to use Matrix 2.0 call mode, but the homeserver does not advertise support for sticky events (MSC4354). Ask your server admin to upgrade, or switch the deployment to a compatible mode.",
     "unexpected_ec_error": "An unexpected error occurred (<0>Error Code:</0> <1>{{ errorCode }}</1>). Please contact your server admin."
   },
   "group_call_loader": {

@@ -13,7 +13,12 @@ import {
   useMemo,
   useState,
 } from "react";
-import { type MatrixClient, JoinRule, type Room } from "matrix-js-sdk";
+import {
+  type MatrixClient,
+  JoinRule,
+  type Room,
+  UNSTABLE_MSC4354_STICKY_EVENTS,
+} from "matrix-js-sdk";
 import {
   Room as LivekitRoom,
   isE2EESupported as isE2EESupportedBrowser,
@@ -67,8 +72,11 @@ import {
   ConnectionLostError,
   E2EENotSupportedError,
   ElementCallError,
+  StickyEventsRequiredError,
   UnknownCallError,
 } from "../utils/errors.ts";
+import { Config } from "../config/Config.ts";
+import { MatrixRTCMode } from "../config/ConfigOptions.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
 import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
@@ -164,6 +172,28 @@ export const GroupCallView: FC<Props> = ({
     MatrixRTCSessionEvent.MembershipManagerError,
     (error) => setExternalError(new ConnectionLostError()),
   );
+
+  // If the deployment pins matrix_rtc_mode=matrix_2_0 but this homeserver
+  // doesn't advertise MSC4354 (sticky events), the call will fail to connect
+  // with a generic "Connection lost" message. Surface the real cause up front.
+  useEffect(() => {
+    if (Config.get().matrix_rtc_mode !== MatrixRTCMode.Matrix_2_0) return;
+    let cancelled = false;
+    client
+      .doesServerSupportUnstableFeature(UNSTABLE_MSC4354_STICKY_EVENTS)
+      .then((supported) => {
+        if (!cancelled && !supported) {
+          setExternalError(new StickyEventsRequiredError());
+        }
+      })
+      .catch((e) => {
+        logger.warn("Failed to check sticky-events homeserver support", e);
+      });
+    return (): void => {
+      cancelled = true;
+    };
+  }, [client]);
+
   useEffect(() => {
     // Sanity check the room object
     if (client.getRoom(rtcSession.room.roomId) !== rtcSession.room)
