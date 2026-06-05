@@ -112,27 +112,49 @@ export class Publisher {
     this.logger.info("Local track published", localTrackPublication);
     const lkRoom = this.connection.livekitRoom;
     if (!this.shouldPublish) {
+      this.logger.debug("Not publishing, pausing upstream");
       this.pauseUpstreams(lkRoom, [localTrackPublication.source]).catch((e) => {
         this.logger.error(`Failed to pause upstreams`, e);
       });
     }
-    // also check the mute state and apply it
     if (localTrackPublication.source === Track.Source.Microphone) {
-      const enabled = this.muteStates.audio.enabled$.value;
-      lkRoom.localParticipant.setMicrophoneEnabled(enabled).catch((e) => {
-        this.logger.error(
-          `Failed to enable microphone track, enabled:${enabled}`,
-          e,
-        );
-      });
+      const muteState = this.muteStates.audio;
+      // skip this if a sync is in progress: enabled$ still reflects the old
+      // state while the handler is mid-flight, so the handler itself will apply
+      // the correct mute state once it completes.
+      if (!muteState.syncing$.value) {
+        const enabled = muteState.enabled$.value;
+        if (!enabled) {
+          this.logger.info(
+            "Local audio track just published but muted meanwhile, setting enabled to false",
+          );
+          lkRoom.localParticipant.setMicrophoneEnabled(false).catch((e) => {
+            this.logger.error(
+              `Failed to enable microphone track, enabled:${enabled}`,
+              e,
+            );
+          });
+        }
+      }
     } else if (localTrackPublication.source === Track.Source.Camera) {
-      const enabled = this.muteStates.video.enabled$.value;
-      lkRoom.localParticipant.setCameraEnabled(enabled).catch((e) => {
-        this.logger.error(
-          `Failed to enable camera track, enabled:${enabled}`,
-          e,
-        );
-      });
+      const muteState = this.muteStates.video;
+      // skip this if a sync is in progress: enabled$ still reflects the old
+      // state while the handler is mid-flight, so the handler itself will apply
+      // the correct mute state once it completes.
+      if (!muteState.syncing$.value) {
+        const enabled = muteState.enabled$.value;
+        if (!enabled) {
+          this.logger.info(
+            "Local video track just published but muted meanwhile, setting enabled to false",
+          );
+          lkRoom.localParticipant.setCameraEnabled(false).catch((e) => {
+            this.logger.error(
+              `Failed to enable camera track, enabled:${enabled}`,
+              e,
+            );
+          });
+        }
+      }
     }
   }
   /**
