@@ -89,7 +89,6 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           enabled={enabled ?? false}
           busy={isBusy}
           onClick={(e) => {
-            if (isBusy) return;
             onMuteClick?.();
             e.preventDefault();
             e.stopPropagation();
@@ -114,7 +113,6 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           enabled={enabled ?? false}
           busy={isBusy}
           onClick={(e) => {
-            if (isBusy) return;
             onMuteClick?.();
             e.preventDefault();
             e.stopPropagation();
