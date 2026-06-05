@@ -15,7 +15,7 @@ import { constant } from "./Behavior.ts";
 import { aliceParticipant, localRtcMember } from "../utils/test-fixtures.ts";
 import { ElementWidgetActions, widget } from "../widget.ts";
 import { E2eeType } from "../e2ee/e2eeType.ts";
-import { MatrixRTCMode } from "../settings/settings.ts";
+import { MatrixRTCMode } from "../config/ConfigOptions.ts";
 
 vi.mock("@livekit/components-core", { spy: true });
 

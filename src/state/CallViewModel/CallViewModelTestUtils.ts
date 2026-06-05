@@ -56,7 +56,7 @@ import {
 import { type Behavior, constant } from "../Behavior";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { type MediaDevices } from "../MediaDevices";
-import { type MatrixRTCMode } from "../../settings/settings";
+import { type MatrixRTCMode } from "../../config/ConfigOptions";
 
 mockConfig({
   livekit: { livekit_service_url: "http://my-default-service-url.com" },

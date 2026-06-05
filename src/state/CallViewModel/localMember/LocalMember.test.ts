@@ -26,7 +26,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { type LocalParticipant, type LocalTrack } from "livekit-client";
 
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics";
-import { MatrixRTCMode } from "../../../settings/settings";
+import { MatrixRTCMode } from "../../../config/ConfigOptions";
 import { type HomeserverDisconnectReason } from "./HomeserverConnected";
 import {
   flushPromises,

@@ -65,7 +65,7 @@ import {
   localParticipant,
   withCallViewModel as withCallViewModelInMode,
 } from "./CallViewModelTestUtils.ts";
-import { MatrixRTCMode } from "../../settings/settings.ts";
+import { MatrixRTCMode } from "../../config/ConfigOptions.ts";
 import { initializeWidget } from "../../widget.ts";
 
 initializeWidget();

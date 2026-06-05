@@ -53,7 +53,7 @@ import {
 import { ElementWidgetActions, widget } from "../../../widget.ts";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
-import { MatrixRTCMode } from "../../../settings/settings.ts";
+import { MatrixRTCMode } from "../../../config/ConfigOptions.ts";
 import { Config } from "../../../config/Config.ts";
 import {
   ConnectionState,
