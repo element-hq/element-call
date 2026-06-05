@@ -32,14 +32,21 @@ function buildMuteBehaviors(
   muteStates: MuteStates,
 ): Pick<
   ViewModel<FooterSnapshot>,
-  "audioEnabled$" | "toggleAudio$" | "videoEnabled$" | "toggleVideo$"
+  | "audioEnabled$"
+  | "audioBusy$"
+  | "toggleAudio$"
+  | "videoEnabled$"
+  | "videoBusy$"
+  | "toggleVideo$"
 > {
   return {
     audioEnabled$: muteStates.audio.enabled$,
+    audioBusy$: muteStates.audio.syncing$,
     toggleAudio$: scope.behavior(
       muteStates.audio.toggle$.pipe(map((t) => t ?? undefined)),
     ),
     videoEnabled$: muteStates.video.enabled$,
+    videoBusy$: muteStates.video.syncing$,
     toggleVideo$: scope.behavior(
       muteStates.video.toggle$.pipe(map((t) => t ?? undefined)),
     ),
@@ -252,7 +259,9 @@ export function createLobbyFooterViewModel(
       setLayoutMode: undefined,
       toggleScreenSharing: undefined,
       audioEnabled: undefined,
+      audioBusy: false,
       videoEnabled: undefined,
+      videoBusy: false,
       layoutMode: undefined,
       sharingScreen: false,
       audioOutputSwitcher: undefined,

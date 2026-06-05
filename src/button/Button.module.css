@@ -8,3 +8,17 @@ Please see LICENSE in the repository root for full details.
 .endCall > svg {
   color: var(--stopgap-color-on-solid-accent);
 }
+
+.rotate > svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
