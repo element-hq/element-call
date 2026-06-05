@@ -327,15 +327,9 @@ describe("DeveloperSettingsTab", () => {
       matrix20: HTMLInputElement;
     } {
       return {
-        legacy: screen.getByRole("radio", {
-          name: /Legacy:/,
-        }) as HTMLInputElement,
-        compatibility: screen.getByRole("radio", {
-          name: /Compatibility:/,
-        }) as HTMLInputElement,
-        matrix20: screen.getByRole("radio", {
-          name: /Matrix 2\.0:/,
-        }) as HTMLInputElement,
+        legacy: screen.getByDisplayValue(MatrixRTCMode.Legacy) as HTMLInputElement,
+        compatibility: screen.getByDisplayValue(MatrixRTCMode.Compatibility) as HTMLInputElement,
+        matrix20: screen.getByDisplayValue(MatrixRTCMode.Matrix_2_0) as HTMLInputElement,
       };
     }
 
