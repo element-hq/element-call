@@ -162,7 +162,6 @@ export const AudioBusy: Story = {
     audioEnabled: true,
     audioBusy: true,
     videoEnabled: true,
-    videoBusy: false,
   },
 };
 
@@ -171,7 +170,6 @@ export const VideoBusy: Story = {
   args: {
     ...Default.args,
     audioEnabled: true,
-    audioBusy: false,
     videoEnabled: true,
     videoBusy: true,
   },
