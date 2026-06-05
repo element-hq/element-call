@@ -318,6 +318,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
       <Heading as="h3" type="body" weight="semibold" size="lg">
         {t("developer_mode.matrixRTCMode.title")}
       </Heading>
+      {matrixRTCModeForced && <p>Your deployment overrides the mode.</p>}
       <Form>
         <InlineField
           name={matrixRTCModeRadioGroup}
