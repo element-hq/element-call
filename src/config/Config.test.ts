@@ -21,16 +21,15 @@ describe("validateConfig", () => {
     expect(result.matrix_rtc_mode).toBeUndefined();
   });
 
-  it.each([
-    MatrixRTCMode.Legacy,
-    MatrixRTCMode.Compatibility,
-    MatrixRTCMode.Matrix_2_0,
-  ])("keeps a valid matrix_rtc_mode value (%s)", (mode) => {
-    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => {});
-    const result = validateConfig({ matrix_rtc_mode: mode });
-    expect(result.matrix_rtc_mode).toBe(mode);
-    expect(warnSpy).not.toHaveBeenCalled();
-  });
+  it.each(Object.values(MatrixRTCMode))(
+    "keeps a valid matrix_rtc_mode value (%s)",
+    (mode) => {
+      const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => {});
+      const result = validateConfig({ matrix_rtc_mode: mode });
+      expect(result.matrix_rtc_mode).toBe(mode);
+      expect(warnSpy).not.toHaveBeenCalled();
+    },
+  );
 
   it("drops an invalid matrix_rtc_mode value and warns", () => {
     const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => {});
