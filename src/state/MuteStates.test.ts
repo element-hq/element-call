@@ -92,6 +92,75 @@ describe("MuteState", () => {
     await flushPromises();
     expect(lastEnabled).toBe(true);
   });
+
+  test("should ignore toggle while syncing but still process set requests", async () => {
+    const deviceStub = {
+      available$: constant(
+        new Map<string, DeviceLabel>([
+          ["mic", { type: "name", name: "Microphone" }],
+        ]),
+      ),
+      selected$: constant({ id: "mic" }),
+      select(): void {},
+    } as unknown as MediaDevice<DeviceLabel, SelectedDevice>;
+
+    const muteState = new MuteState(
+      testScope,
+      deviceStub,
+      false,
+      constant(false),
+    );
+
+    const first = Promise.withResolvers<boolean>();
+    const second = Promise.withResolvers<boolean>();
+    const handler = vi
+      .fn<(desired: boolean) => Promise<boolean>>()
+      .mockImplementationOnce(async () => first.promise)
+      .mockImplementationOnce(async () => second.promise);
+    muteState.setHandler(handler);
+
+    const syncingValues: boolean[] = [];
+    muteState.syncing$.subscribe((syncing) => {
+      syncingValues.push(syncing);
+    });
+
+    let setEnabled: ((enabled: boolean) => void) | null = null;
+    muteState.setEnabled$.subscribe((setter) => {
+      setEnabled = setter;
+    });
+    let toggle: (() => void) | null = null;
+    muteState.toggle$.subscribe((toggleFn) => {
+      toggle = toggleFn;
+    });
+
+    await flushPromises();
+
+    // Start syncing by requesting unmute.
+    toggle!();
+    await flushPromises();
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenNthCalledWith(1, true);
+
+    // Toggle requests are ignored while syncing.
+    toggle!();
+    await flushPromises();
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    // setEnabled still updates latest desired state while syncing (push-to-talk).
+    setEnabled!(false);
+    await flushPromises();
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    first.resolve(true);
+    await flushPromises();
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(handler).toHaveBeenNthCalledWith(2, false);
+
+    second.resolve(false);
+    await flushPromises();
+    expect(syncingValues).toContain(true);
+    expect(syncingValues.at(-1)).toBe(false);
+  });
 });
 
 describe("MuteStates", () => {
