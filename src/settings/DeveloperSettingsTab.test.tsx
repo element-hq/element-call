@@ -327,9 +327,15 @@ describe("DeveloperSettingsTab", () => {
       matrix20: HTMLInputElement;
     } {
       return {
-        legacy: screen.getByDisplayValue(MatrixRTCMode.Legacy) as HTMLInputElement,
-        compatibility: screen.getByDisplayValue(MatrixRTCMode.Compatibility) as HTMLInputElement,
-        matrix20: screen.getByDisplayValue(MatrixRTCMode.Matrix_2_0) as HTMLInputElement,
+        legacy: screen.getByDisplayValue(
+          MatrixRTCMode.Legacy,
+        ) as HTMLInputElement,
+        compatibility: screen.getByDisplayValue(
+          MatrixRTCMode.Compatibility,
+        ) as HTMLInputElement,
+        matrix20: screen.getByDisplayValue(
+          MatrixRTCMode.Matrix_2_0,
+        ) as HTMLInputElement,
       };
     }
 
