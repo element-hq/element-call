@@ -304,6 +304,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
           </svg>
         </button>
         <button
+          aria-busy="false"
           aria-checked="false"
           aria-disabled="true"
           aria-labelledby="_r_g_"
@@ -328,6 +329,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
           </svg>
         </button>
         <button
+          aria-busy="false"
           aria-checked="false"
           aria-disabled="true"
           aria-labelledby="_r_l_"

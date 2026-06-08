@@ -80,7 +80,9 @@ export const Default: Story = {
     showLogo: false,
     layoutMode: "grid",
     audioEnabled: true,
+    audioBusy: false,
     videoEnabled: true,
+    videoBusy: false,
     setLayoutMode: fn(),
     openSettings: fn(),
     toggleAudio: fn(),
@@ -150,6 +152,26 @@ export const WithAudioAndVideoOptions: Story = {
     ],
     selectedAudio: "2",
     selectedVideo: "1",
+  },
+};
+
+export const AudioBusy: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    audioEnabled: true,
+    audioBusy: true,
+    videoEnabled: true,
+  },
+};
+
+export const VideoBusy: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    audioEnabled: true,
+    videoEnabled: true,
+    videoBusy: true,
   },
 };
 export const WithLogo: Story = {
