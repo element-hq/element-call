@@ -30,7 +30,6 @@ export default {
     // these look unused to Knip
     "@types/content-type",
     "@types/sdp-transform",
-    "@types/uuid",
     // We obviously use this, but if the package has been linked with pnpm link,
     // then Knip will flag it as a false positive
     // https://github.com/webpro-nl/knip/issues/766
