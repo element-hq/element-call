@@ -11,7 +11,7 @@ export default {
   vite: {
     config: ["vite.config.ts", "vite-embedded.config.ts", "vite-sdk.config.ts"],
   },
-  entry: ["src/main.tsx", "i18next-parser.config.ts"],
+  entry: ["src/main.tsx", "i18next.config.ts"],
   ignoreBinaries: [
     // This is deprecated, so Knip doesn't actually recognize it as a globally
     // installed binary. TODO We should switch to Compose v2:
