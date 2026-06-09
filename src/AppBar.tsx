@@ -85,7 +85,11 @@ export const AppBar: FC<Props> = ({ children }) => {
           <LeftNav>
             <Tooltip label={t("common.back")}>
               <IconButton size="24px" onClick={onBackClick}>
-                {PrimaryButtonIcon ? <PrimaryButtonIcon /> : <CollapseIcon />}
+                {PrimaryButtonIcon ? (
+                  <PrimaryButtonIcon aria-hidden />
+                ) : (
+                  <CollapseIcon aria-hidden />
+                )}
               </IconButton>
             </Tooltip>
           </LeftNav>

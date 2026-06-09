@@ -224,13 +224,13 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     </div>
   </div>
   <form
-    class="_root_1o4d9_17"
+    class="_root_19upo_16"
   >
     <div
-      class="_field_1o4d9_27"
+      class="_field_19upo_26"
     >
       <label
-        class="_label_1o4d9_60"
+        class="_label_19upo_59"
         for="radix-_r_7_"
       >
         Custom Livekit-url
@@ -248,7 +248,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         />
       </div>
       <span
-        class="_message_1o4d9_86 _help-message_1o4d9_92"
+        class="_message_19upo_85 _help-message_19upo_91"
         id="radix-_r_8_"
       >
         Currently, no overwrite is set. Url from well-known or config is used.
@@ -261,13 +261,13 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     MatrixRTC mode
   </h3>
   <form
-    class="_root_1o4d9_17"
+    class="_root_19upo_16"
   >
     <div
-      class="_inline-field_1o4d9_33"
+      class="_inline-field_19upo_32"
     >
       <div
-        class="_inline-field-control_1o4d9_45"
+        class="_inline-field-control_19upo_44"
       >
         <div
           class="_container_1ug7n_10"
@@ -288,16 +288,16 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         </div>
       </div>
       <div
-        class="_inline-field-body_1o4d9_39"
+        class="_inline-field-body_19upo_38"
       >
         <label
-          class="_label_1o4d9_60"
+          class="_label_19upo_59"
           for="radix-_r_9_"
         >
           Legacy: state events & oldest membership SFU
         </label>
         <span
-          class="_message_1o4d9_86 _help-message_1o4d9_92"
+          class="_message_19upo_85 _help-message_19upo_91"
           id="radix-_r_a_"
         >
           Compatible with old versions of EC that do not support multi SFU
@@ -305,10 +305,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </div>
     </div>
     <div
-      class="_inline-field_1o4d9_33"
+      class="_inline-field_19upo_32"
     >
       <div
-        class="_inline-field-control_1o4d9_45"
+        class="_inline-field-control_19upo_44"
       >
         <div
           class="_container_1ug7n_10"
@@ -328,16 +328,16 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         </div>
       </div>
       <div
-        class="_inline-field-body_1o4d9_39"
+        class="_inline-field-body_19upo_38"
       >
         <label
-          class="_label_1o4d9_60"
+          class="_label_19upo_59"
           for="radix-_r_b_"
         >
           Compatibility: state events & multi SFU
         </label>
         <span
-          class="_message_1o4d9_86 _help-message_1o4d9_92"
+          class="_message_19upo_85 _help-message_19upo_91"
           id="radix-_r_c_"
         >
           Compatible with homeservers that do not support sticky events (but all other EC clients are v0.17.0 or later)
@@ -345,10 +345,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </div>
     </div>
     <div
-      class="_inline-field_1o4d9_33"
+      class="_inline-field_19upo_32"
     >
       <div
-        class="_inline-field-control_1o4d9_45"
+        class="_inline-field-control_19upo_44"
       >
         <div
           class="_container_1ug7n_10"
@@ -368,16 +368,16 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         </div>
       </div>
       <div
-        class="_inline-field-body_1o4d9_39"
+        class="_inline-field-body_19upo_38"
       >
         <label
-          class="_label_1o4d9_60"
+          class="_label_19upo_59"
           for="radix-_r_d_"
         >
           Matrix 2.0: sticky events & multi SFU
         </label>
         <span
-          class="_message_1o4d9_86 _help-message_1o4d9_92"
+          class="_message_19upo_85 _help-message_19upo_91"
           id="radix-_r_e_"
         >
           Compatible only with homservers supporting sticky events and all EC clients v0.17.0 or later
