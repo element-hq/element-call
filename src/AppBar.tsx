@@ -6,15 +6,16 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  createContext,
-  type FC,
-  type MouseEvent,
-  type ReactNode,
   use,
   useCallback,
   useEffect,
   useMemo,
   useState,
+  createContext,
+  type ComponentType,
+  type FC,
+  type MouseEvent,
+  type ReactNode,
 } from "react";
 import { Heading, IconButton, Tooltip } from "@vector-im/compound-web";
 import { CollapseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
@@ -28,6 +29,9 @@ import styles from "./AppBar.module.css";
 interface AppBarContext {
   setTitle: (value: string) => void;
   setSecondaryButton: (value: ReactNode) => void;
+  setPrimaryButtonIcon: (
+    value: ComponentType<React.SVGAttributes<SVGElement>> | null,
+  ) => void;
   setHidden: (value: boolean) => void;
 }
 
@@ -53,9 +57,18 @@ export const AppBar: FC<Props> = ({ children }) => {
   const [secondaryButton, setSecondaryButton] = useState<ReactNode | null>(
     null,
   );
+  const [PrimaryButtonIcon, setPrimaryButtonIcon] = useState<ComponentType<
+    React.SVGAttributes<SVGElement>
+  > | null>(null);
+
   const context = useMemo(
-    () => ({ setTitle, setSecondaryButton, setHidden }),
-    [setTitle, setHidden, setSecondaryButton],
+    () => ({
+      setTitle,
+      setSecondaryButton,
+      setHidden,
+      setPrimaryButtonIcon,
+    }),
+    [setTitle, setHidden, setSecondaryButton, setPrimaryButtonIcon],
   );
 
   return (
@@ -72,7 +85,7 @@ export const AppBar: FC<Props> = ({ children }) => {
           <LeftNav>
             <Tooltip label={t("common.back")}>
               <IconButton size="24px" onClick={onBackClick}>
-                <CollapseIcon aria-hidden />
+                {PrimaryButtonIcon ? <PrimaryButtonIcon /> : <CollapseIcon />}
               </IconButton>
             </Tooltip>
           </LeftNav>
@@ -105,6 +118,20 @@ export function useAppBarTitle(title: string): void {
       return (): void => setTitle("");
     }
   }, [title, setTitle]);
+}
+
+/**
+ * React hook which sets the title to be shown in the app bar, if present. It is
+ * an error to call this hook from multiple sites in the same component tree.
+ */
+export function useAppBarPrimaryButtonIcon(icon: typeof CollapseIcon): void {
+  const setIcon = use(AppBarContext)?.setPrimaryButtonIcon;
+  useEffect(() => {
+    if (setIcon !== undefined) {
+      setIcon(icon);
+      return (): void => setIcon(null);
+    }
+  }, [setIcon, icon]);
 }
 
 /**

@@ -26,6 +26,7 @@ import {
 } from "livekit-client";
 import { useObservableEagerState } from "observable-hooks";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeftIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -51,6 +52,7 @@ import { CallFooter, type FooterSnapshot } from "../components/CallFooter";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { createLobbyFooterViewModel } from "../components/CallFooterViewModel";
 import { type ViewModel } from "../state/ViewModel";
+import { useAppBarPrimaryButtonIcon } from "../AppBar";
 
 interface Props {
   client: MatrixClient;
@@ -87,6 +89,7 @@ export const LobbyView: FC<Props> = ({
   const { t } = useTranslation();
   usePageTitle(matrixInfo.roomName);
 
+  useAppBarPrimaryButtonIcon(ArrowLeftIcon);
   const audioEnabled = useBehavior(muteStates.audio.enabled$);
   const videoEnabled = useBehavior(muteStates.video.enabled$);
   const toggleAudio = useBehavior(muteStates.audio.toggle$);
