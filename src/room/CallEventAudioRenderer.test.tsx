@@ -39,7 +39,8 @@ import {
   localRtcMember,
 } from "../utils/test-fixtures";
 import { MAX_PARTICIPANT_COUNT_FOR_SOUND } from "../state/CallViewModel/CallViewModel";
-
+import { initializeWidget } from "../widget";
+initializeWidget();
 vitest.mock("livekit-client/e2ee-worker?worker");
 vitest.mock("../useAudioContext");
 vitest.mock("../soundUtils");
@@ -122,6 +123,7 @@ test("does not play a sound before the call is successful", () => {
   const { vm, rtcMemberships$ } = getBasicCallViewModelEnvironment(
     [local, alice],
     [localRtcMember],
+    undefined,
     { waitForCallPickup: true },
   );
   render(<CallEventAudioRenderer vm={vm} />);

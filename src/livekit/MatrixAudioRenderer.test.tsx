@@ -28,8 +28,15 @@ import {
   mockRemoteParticipant,
   mockTrack,
 } from "../utils/test";
-
-export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
+import { initializeWidget } from "../widget";
+initializeWidget();
+export const TestAudioContextConstructor = vi.fn(
+  class {
+    public constructor() {
+      return testAudioContext;
+    }
+  },
+);
 
 const MediaDevicesProvider = MediaDevicesContext.MediaDevicesContext.Provider;
 

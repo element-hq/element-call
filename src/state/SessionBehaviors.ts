@@ -7,10 +7,10 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type CallMembership,
-  isLivekitTransport,
-  type LivekitTransport,
+  type LivekitTransportConfig,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
+  isLivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { fromEvent } from "rxjs";
 
@@ -27,19 +27,26 @@ export const membershipsAndTransports$ = (
   memberships$: Behavior<Epoch<CallMembership[]>>,
 ): {
   membershipsWithTransport$: Behavior<
-    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
+    Epoch<{ membership: CallMembership; transport?: LivekitTransportConfig }[]>
   >;
-  transports$: Behavior<Epoch<LivekitTransport[]>>;
+  transports$: Behavior<Epoch<LivekitTransportConfig[]>>;
 } => {
   /**
    * Lists the transports used by ourselves, plus all other MatrixRTC session
-   * members. For completeness this also lists the preferred transport and
-   * whether we are in multi-SFU mode or sticky events mode (because
-   * advertisedTransport$ wants to read them at the same time, and bundling data
-   * together when it might change together is what you have to do in RxJS to
-   * avoid reading inconsistent state or observing too many changes.)
+   * members.
+   * For completeness this also lists the preferred transport and
+   * whether we are in multi-SFU mode or sticky events mode.
+   * `advertisedTransport$` reads these values together, so bundling them avoids inconsistent state or
+   * excessive updates when using RxJS.
    */
-  const membershipsWithTransport$ = scope.behavior(
+  const membershipsWithTransport$: Behavior<
+    Epoch<
+      {
+        membership: CallMembership;
+        transport: LivekitTransportConfig | undefined;
+      }[]
+    >
+  > = scope.behavior(
     memberships$.pipe(
       mapEpoch((memberships) => {
         return memberships.map((membership) => {
@@ -47,14 +54,16 @@ export const membershipsAndTransports$ = (
           const transport = membership.getTransport(oldestMembership);
           return {
             membership,
-            transport: isLivekitTransport(transport) ? transport : undefined,
+            transport: isLivekitTransportConfig(transport)
+              ? transport
+              : undefined,
           };
         });
       }),
     ),
   );
 
-  const transports$ = scope.behavior(
+  const transports$: Behavior<Epoch<LivekitTransportConfig[]>> = scope.behavior(
     membershipsWithTransport$.pipe(
       mapEpoch((mts) => mts.flatMap(({ transport: t }) => (t ? [t] : []))),
     ),

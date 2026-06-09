@@ -38,7 +38,7 @@ experimental_features:
   # MSC4222 needed for syncv2 state_after. This allow clients to
   # correctly track the state of the room.
   msc4222_enabled: true
-  # sticky events for matrixRTC user state
+  # sticky events for MatrixRTC user state
   msc4354_enabled: true
 
 # The maximum allowed duration by which sent events can be delayed, as
@@ -49,6 +49,9 @@ max_event_delay_duration: 24h
 # Required for Element Call in Single Page Mode due to on-the-fly user registration
 enable_registration: true
 enable_registration_without_verification: true
+
+# Shared secret for admin user registration via API (for testing only!)
+registration_shared_secret: "test_shared_secret_for_local_dev_only"
 
 report_stats: false
 serve_server_wellknown: true

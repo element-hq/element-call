@@ -22,9 +22,12 @@ import * as controls from "./controls";
  * Play a sound though a given AudioContext. Will take
  * care of connecting the correct buffer and gating
  * through gain.
- * @param volume The volume to play at.
  * @param ctx The context to play through.
  * @param buffer The buffer to play.
+ * @param volume The volume to play at.
+ * @param stereoPan The stereo pan to apply.
+ * @param delayS Delay in seconds before starting playing.
+ * @param abort Optional AbortController that can be used to stop playback.
  * @returns A promise that resolves when the sound has finished playing.
  */
 async function playSound(
@@ -55,9 +58,11 @@ async function playSound(
  * Play a sound though a given AudioContext, looping until stopped. Will take
  * care of connecting the correct buffer and gating
  * through gain.
- * @param volume The volume to play at.
  * @param ctx The context to play through.
  * @param buffer The buffer to play.
+ * @param volume The volume to play at.
+ * @param stereoPan The stereo pan to apply.
+ * @param delayS Delay in seconds between each loop.
  * @returns A function used to end the sound. This function will return a promise when the sound has stopped.
  */
 function playSoundLooping(
@@ -109,7 +114,7 @@ interface Props<S extends string> {
 }
 
 interface UseAudioContext<S extends string> {
-  playSound(soundName: S): Promise<void>;
+  playSound(soundName: S, volumeOverwrite?: number): Promise<void>;
   playSoundLooping(soundName: S, delayS?: number): () => Promise<void>;
   /**
    * Map of sound name to duration in seconds.
@@ -120,7 +125,7 @@ interface UseAudioContext<S extends string> {
 /**
  * Add an audio context which can be used to play
  * a set of preloaded sounds.
- * @param props
+ * @param props The properties for the audio context.
  * @returns Either an instance that can be used to play sounds, or null if not ready.
  */
 export function useAudioContext<S extends string>(
@@ -190,7 +195,7 @@ export function useAudioContext<S extends string>(
   }
 
   return {
-    playSound: async (name): Promise<void> => {
+    playSound: async (name, volumeOverwrite?: number): Promise<void> => {
       if (!audioBuffers[name]) {
         logger.debug(`Tried to play a sound that wasn't buffered (${name})`);
         return;
@@ -198,7 +203,7 @@ export function useAudioContext<S extends string>(
       return playSound(
         audioContext,
         audioBuffers[name],
-        soundEffectVolume * earpieceVolume,
+        volumeOverwrite ?? soundEffectVolume * earpieceVolume,
         earpiecePan,
       );
     },

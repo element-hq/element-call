@@ -13,18 +13,21 @@ jobs:
 
     steps:
       - name: Checkout the code
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
 
       - name: Enable Corepack
         run: corepack enable
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          cache: "yarn"
+          cache: "pnpm"
           node-version-file: ".node-version"
 
       - name: Install Deps
-        run: "yarn install --immutable"
+        # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
+        run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
 
       - name: Prune i18n
         run: "rm -R locales"
@@ -38,11 +41,11 @@ jobs:
         run: "sudo chown runner:docker -R locales"
 
       - name: Prettier
-        run: yarn prettier:format
+        run: pnpm prettier:format
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7.0.11
         with:
           token: ${{ secrets.ELEMENT_BOT_TOKEN }}
           branch: actions/localazy-download

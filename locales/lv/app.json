@@ -22,12 +22,6 @@
     "upload_file": "Augšupielādēt failu"
   },
   "analytics_notice": "Piedaloties šajā beta versijā, jūs piekrītat anonīmu datu vākšanai, ko mēs izmantojam produkta uzlabošanai. Plašāku informāciju par to, kādus datus mēs izsekojam, varat atrast mūsu <2>konfidencialitātes politikā</2> un mūsu <6>sīkfailu politikā</6>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Turpināt pārlūkprogrammā",
-    "open_in_app": "Atvērt lietotnē",
-    "text": "Gatavs pievienoties?",
-    "title": "Izvēlies lietotni"
-  },
   "call_ended_view": {
     "create_account_button": "Izveidot kontu",
     "create_account_prompt": "<0>Kādēļ nepabeigt ar paroles iestatīšanu, lai paturētu savu kontu?</0><1>Būs iespējams paturēt savu vārdu un iestatīt attēlu izmantošanai turpmākajos zvanos</1>",
@@ -55,13 +49,23 @@
     "profile": "Profils",
     "reaction": "Reakcija",
     "reactions": "Reakcijas",
+    "reconnecting": "Notiek savienojuma atjaunošana...",
     "settings": "Iestatījumi",
     "unencrypted": "Nav šifrēts",
     "username": "Lietotājvārds",
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Rādīt iPhone austiņu opciju visās platformās",
     "crypto_version": "Crypto versija: {{version}}",
+    "custom_livekit_url": {
+      "current_url": "Iestatīts uz: ",
+      "from_config": "Šobrīd nav pārrakstīts. Tiek izmantots URL no well-known vai konfigurācijas.",
+      "label": "Pielāgots Livekit URL",
+      "reset": "Atiestatīt pārrakstīto",
+      "save": "Saglabāt",
+      "saving": "Saglabāju..."
+    },
     "debug_tile_layout_label": "Vietu izkārtojuma atkļūdošana",
     "device_id": "Ierīces ID: {{id}}",
     "duplicate_tiles_label": "Papildu vietu kopiju skaits vienam dalībniekam",
@@ -69,11 +73,25 @@
     "hostname": "Saimniekdatora nosaukums: {{hostname}}",
     "livekit_server_info": "LiveKit Server informācija",
     "livekit_sfu": "LiveKit SFU: {{url}}",
+    "matrixRTCMode": {
+      "Comptibility": {
+        "description": "Savietojams ar mājas serveriem, kas neatbalsta fiksētos notikumus (bet visi pārējie EC klienti ir v0.17.0 vai jaunāki)",
+        "label": "Savietojamība: state notikumi & ulti SFU"
+      },
+      "Legacy": {
+        "description": "Savietojams ar vecākām EC versijām, kas neatbalsta multi SFU",
+        "label": "Mantojums: state events & vecākā SFU dalība"
+      },
+      "Matrix_2_0": {
+        "description": "Savietojams tikai ar mājas serveriem, kas atbalsta fiksētos notikumus, un visiem EC klientiem v0.17.0 vai jaunāku versiju.",
+        "label": "Matrix 2.0: fiksētie notikumi un multi SFU"
+      },
+      "title": "MatrixRTC režīms"
+    },
     "matrix_id": "Matrix ID: {{id}}",
+    "mute_all_audio": "Izslēgt visu audio (dalībnieku, reakciju, pievienošanās skaņu)",
     "show_connection_stats": "Rādīt savienojuma statistiku",
-    "show_non_member_tiles": "Rādīt vietu medijiem no ne-dalībniekiem",
-    "url_params": "URL parametri",
-    "use_new_membership_manager": "Izmantojiet jauno zvana MembershipManager versiju"
+    "url_params": "URL parametri"
   },
   "disconnected_banner": "Ir zaudēts savienojums ar serveri.",
   "error": {
@@ -84,13 +102,19 @@
     "connection_lost_description": "Jūs tikāt atvienots no zvana.",
     "e2ee_unsupported": "Nesaderīgs pārlūks",
     "e2ee_unsupported_description": "Jūsu tīmekļa pārlūkprogramma neatbalsta encrypted zvanus. Atbalstītās pārlūkprogrammas ir Chrome, Safari un Firefox 117+.",
+    "failed_to_start_livekit": "Neizdevās uzsākt Livekit savienojumu",
     "generic": "Kaut kas nogāja greizi",
     "generic_description": "Atkļūdošanas žurnālu iesniegšana palīdzēs mums izsekot problēmu.",
     "insufficient_capacity": "Nepietiekama jauda",
     "insufficient_capacity_description": "Serveris ir sasniedzis maksimālo ietilpību, un jūs šobrīd nevarat pievienoties zvanam. Mēģiniet vēlreiz vēlāk vai sazinieties ar servera administratoru, ja problēma joprojām pastāv.",
-    "matrix_rtc_focus_missing": "Serveris nav konfigurēts darbam ar{{brand}}. Lūdzu, sazinieties ar sava servera administratoru (Domēns: {{domain}}, Kļūdas kods: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "Serveris nav konfigurēts darbam ar{{brand}}. Lūdzu, sazinieties ar sava servera administratoru (Domēns: {{domain}}, Kļūdas kods: {{ errorCode }}).",
+    "membership_manager": "Dalības pārvaldnieka kļūda",
+    "membership_manager_description": "Dalības pārvaldnieks bija jāslēdz. To izraisīja daudzi secīgi, neveiksmīgi tīkla pieprasījumi.",
+    "no_matrix_2_authorization_service": "Jūsu multivides servera (SFU) autorizācijas pakalpojums ir novecojis.",
     "open_elsewhere": "Atvērts citā cilnē",
     "open_elsewhere_description": "{{brand}} ir atvērts citā cilnē. Ja tas neizklausās pareizi, mēģiniet atkārtoti ielādēt lapu.",
+    "room_creation_restricted": "Neizdevās izveidot zvanu",
+    "room_creation_restricted_description": "Zvanu izveide, iespējams, ir atļauta tikai pilnvarotiem lietotājiem. Mēģiniet vēlreiz vēlāk vai sazinieties ar servera administratoru, ja problēma joprojām pastāv.",
     "unexpected_ec_error": "Negaidīta kļūda (<0>kļūdas kods: </0> <1> {{ errorCode }}</1>). Lūdzu, sazinieties ar servera administratoru."
   },
   "group_call_loader": {
@@ -101,6 +125,11 @@
     "knock_reject_body": "Jūsu pieteikums pievienoties tika noraidīts.",
     "knock_reject_heading": "Piekļuve liegta",
     "reason": "Iemesls: {{reason}}"
+  },
+  "handset": {
+    "overlay_back_button": "Atpakaļ uz skaļruņa režīmu",
+    "overlay_description": "Darbojas tikai lietotnes lietošanas laikā",
+    "overlay_title": "Klausules režīms"
   },
   "hangup_button_label": "Beigt zvanu",
   "header_label": "Element Call sākums",
@@ -164,12 +193,18 @@
       "effect_volume_description": "Pielāgojiet skaļumu, kurā tiek atskaņotas reakcijas un paceltas rokas skaņas.",
       "effect_volume_label": "Skaņas efektu skaļums"
     },
+    "background_blur_header": "Fons",
+    "background_blur_label": "Izplūdināt video fonu",
+    "blur_not_supported_by_browser": "(Šī ierīce neatbalsta fona izplūšanu.)",
     "developer_tab_title": "Izstrādātājs",
     "devices": {
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
+      "change_device_button": "Mainīt audio ierīci",
       "default": "Noklusējums",
       "default_named": "Noklusējums <2> ({{name}} )</2>",
+      "handset": "Klausule",
+      "loudspeaker": "Skaļrunis",
       "microphone": "Mikrofons",
       "microphone_numbered": "Mikrofons {{n}}",
       "speaker": "Skaļrunis",
@@ -211,7 +246,6 @@
   "video_tile": {
     "always_show": "Vienmēr rādīt",
     "camera_starting": "Video ielāde...",
-    "change_fit_contain": "Pielāgot rāmim",
     "collapse": "Sakļaut",
     "expand": "Izvērst",
     "mute_for_me": "Klusums man",

@@ -12,12 +12,23 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { ClientEvent, type MatrixClient, SyncState } from "matrix-js-sdk";
-import { fromEvent, startWith, map, tap, type Observable } from "rxjs";
+import {
+  fromEvent,
+  startWith,
+  map,
+  tap,
+  type Observable,
+  distinctUntilChanged,
+  switchMap,
+  of,
+  delay,
+  combineLatest,
+} from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
+import { Config } from "../../../config/Config";
 import { type ObservableScope } from "../../ObservableScope";
 import { type Behavior } from "../../Behavior";
-import { and$ } from "../../../utils/observable";
 import { type NodeStyleEventEmitter } from "../../../utils/test";
 
 /**
@@ -25,34 +36,67 @@ import { type NodeStyleEventEmitter } from "../../../utils/test";
  */
 const logger = rootLogger.getChild("[HomeserverConnected]");
 
+export type HomeserverDisconnectReason = "sync" | "membership" | "probablyLeft";
+
+export interface HomeserverConnected {
+  /**
+   * Emits `[true, null]` when the homeserver connection is healthy, or
+   * `[false, reason]` when one of the three sub-conditions fails.
+   */
+  combined$: Behavior<[boolean, HomeserverDisconnectReason | null]>;
+  rtsSession$: Behavior<Status>;
+}
+
 /**
  * Behavior representing whether we consider ourselves connected to the Matrix homeserver
  * for the purposes of a MatrixRTC session.
  *
- * Becomes FALSE if ANY sub-condition is fulfilled:
- * 1. Sync loop is not in SyncState.Syncing
- * 2. membershipStatus !== Status.Connected
- * 3. probablyLeft === true
+ * `combined$` emits `null` when all conditions are satisfied, or the first failing
+ * reason (priority: syncing > membershipConnected > certainlyConnected):
+ * 1. Sync loop is not in SyncState.Syncing (after grace period) → "sync"
+ * 2. membershipStatus !== Status.Connected → "membership"
+ * 3. probablyLeft === true → "probablyLeft"
+ *
+ * @param scope - The observable scope for lifecycle management.
+ * @param client - The Matrix client to monitor sync state.
+ * @param matrixRTCSession - The RTC session to monitor membership.
+ * @param gracePeriodMs - Grace period in milliseconds to wait before reporting sync disconnect.
+ *                        If not provided, uses the config value (default 10000ms).
  */
 export function createHomeserverConnected$(
   scope: ObservableScope,
   client: NodeStyleEventEmitter & Pick<MatrixClient, "getSyncState">,
   matrixRTCSession: NodeStyleEventEmitter &
     Pick<MatrixRTCSession, "membershipStatus" | "probablyLeft">,
-): Behavior<boolean> {
+  gracePeriodMs?: number,
+): HomeserverConnected {
+  // Get grace period from parameter or config (default 10000ms)
+  const graceMs = gracePeriodMs ?? Config.get().sync_disconnect_grace_period_ms;
+
   const syncing$ = (
     fromEvent(client, ClientEvent.Sync) as Observable<[SyncState]>
   ).pipe(
     startWith([client.getSyncState()]),
     map(([state]) => state === SyncState.Syncing),
+    distinctUntilChanged(),
+    switchMap((isSyncing) => {
+      if (isSyncing || graceMs <= 0) {
+        return of(isSyncing);
+      }
+      return of(false).pipe(delay(graceMs), startWith(true));
+    }),
+    distinctUntilChanged(),
   );
 
-  const membershipConnected$ = fromEvent(
-    matrixRTCSession,
-    MembershipManagerEvent.StatusChanged,
-  ).pipe(
-    startWith(null),
-    map(() => matrixRTCSession.membershipStatus === Status.Connected),
+  const rtsSession$ = scope.behavior<Status>(
+    fromEvent(matrixRTCSession, MembershipManagerEvent.StatusChanged).pipe(
+      map(() => matrixRTCSession.membershipStatus ?? Status.Unknown),
+    ),
+    matrixRTCSession.membershipStatus ?? Status.Unknown,
+  );
+
+  const membershipConnected$ = rtsSession$.pipe(
+    map((status) => status === Status.Connected),
   );
 
   // This is basically notProbablyLeft$
@@ -71,15 +115,26 @@ export function createHomeserverConnected$(
     map(() => matrixRTCSession.probablyLeft !== true),
   );
 
-  const connectedCombined$ = and$(
-    syncing$,
-    membershipConnected$,
-    certainlyConnected$,
-  ).pipe(
-    tap((connected) => {
-      logger.info(`Homeserver connected update: ${connected}`);
-    }),
+  const combined$ = scope.behavior(
+    combineLatest([syncing$, membershipConnected$, certainlyConnected$]).pipe(
+      map(
+        ([syncing, membership, certainly]): [
+          boolean,
+          HomeserverDisconnectReason | null,
+        ] => {
+          if (!syncing) return [false, "sync"];
+          if (!membership) return [false, "membership"];
+          if (!certainly) return [false, "probablyLeft"];
+          return [true, null];
+        },
+      ),
+      tap(([connected, reason]) => {
+        logger.info(
+          `Homeserver connected update: ${connected ? "connected" : reason}`,
+        );
+      }),
+    ),
   );
 
-  return scope.behavior(connectedCombined$);
+  return { combined$, rtsSession$ };
 }

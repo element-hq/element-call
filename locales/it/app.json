@@ -21,13 +21,7 @@
     "submit": "Invia",
     "upload_file": "Carica file"
   },
-  "analytics_notice": "Partecipando a questa beta, acconsenti alla raccolta di dati anonimi che usiamo per migliorare il prodotto. Puoi trovare più informazioni su quali dati monitoriamo nella nostra <2>informativa sulla privacy</2> e nell'<5>informativa sui cookie</5>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Continua nel browser",
-    "open_in_app": "Apri nell'app",
-    "text": "Tutto pronto per entrare?",
-    "title": "Seleziona app"
-  },
+  "analytics_notice": "Partecipando a questa beta, acconsenti alla raccolta di dati anonimi che usiamo per migliorare il prodotto. Puoi trovare più informazioni su quali dati monitoriamo nella nostra <2>informativa sulla privacy</2> e nell'<6>informativa sui cookie</6>.",
   "call_ended_view": {
     "create_account_button": "Crea profilo",
     "create_account_prompt": "<0>Ti va di terminare impostando una password per mantenere il profilo?</0><1>Potrai mantenere il tuo nome e impostare un avatar da usare in chiamate future</1>",
@@ -55,23 +49,49 @@
     "profile": "Profilo",
     "reaction": "Reazione",
     "reactions": "Reazioni",
+    "reconnecting": "Riconnessione…",
     "settings": "Impostazioni",
     "unencrypted": "Non cifrata",
     "username": "Nome utente",
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Mostra l'opzione auricolare iPhone su tutte le piattaforme",
     "crypto_version": "Versione crittografica: {{version}}",
+    "custom_livekit_url": {
+      "current_url": "Attualmente impostato a: ",
+      "from_config": "Al momento non è impostata alcuna sovrascrittura. Viene usato l'URL da well-known o config.",
+      "label": "URL Livekit personalizzato",
+      "reset": "Reimposta sovrascrittura",
+      "save": "Salva",
+      "saving": "Salvataggio..."
+    },
     "debug_tile_layout_label": "Debug della disposizione dei riquadri",
     "device_id": "ID dispositivo: {{id}}",
     "duplicate_tiles_label": "Numero di copie di riquadri aggiuntivi per partecipante",
+    "environment_variables": "Variabili di ambiente",
     "hostname": "Nome host: {{hostname}}",
     "livekit_server_info": "Informazioni sul server LiveKit",
     "livekit_sfu": "SFU LiveKit: {{url}}",
+    "matrixRTCMode": {
+      "Comptibility": {
+        "description": "Compatibile con homeserver che non supportano eventi sticky (ma tutte le altre applicazioni EC sono alla v0.17.0 o successive)",
+        "label": "Compatibilità: eventi di stato e multi SFU"
+      },
+      "Legacy": {
+        "description": "Compatibile con le vecchie versioni di EC che non supportano multi SFU",
+        "label": "Classico: event di stato e appartenenza più antica alla SFU"
+      },
+      "Matrix_2_0": {
+        "description": "Compatibile solo con homeserver che supportano eventi sticky e tutte le applicazioni EC alla v0.17.0 o successive",
+        "label": "Matrix 2.0: eventi sticky e multi SFU"
+      },
+      "title": "Modalità MatrixRTC"
+    },
     "matrix_id": "ID Matrix: {{id}}",
+    "mute_all_audio": "Disattiva tutti gli audio (partecipanti, reazioni, suoni di partecipazione)",
     "show_connection_stats": "Mostra le statistiche di connessione",
-    "show_non_member_tiles": "Mostra i riquadri per i file multimediali non-membri",
-    "use_new_membership_manager": "Usa la nuova implementazione della chiamata MembershipManager"
+    "url_params": "Parametri URL"
   },
   "disconnected_banner": "La connessione al server è stata persa.",
   "error": {
@@ -82,13 +102,18 @@
     "connection_lost_description": "Sei stato disconnesso dalla chiamata.",
     "e2ee_unsupported": "Browser incompatibile",
     "e2ee_unsupported_description": "Il tuo browser non supporta le chiamate crittografate. I browser supportati sono Chrome, Safari e Firefox 117+.",
+    "failed_to_start_livekit": "Impossibile avviare la connessione Livekit",
     "generic": "Qualcosa è andato storto",
     "generic_description": "L'invio dei registri di debug ci aiuterà a rintracciare il problema.",
     "insufficient_capacity": "Capacità insufficiente",
     "insufficient_capacity_description": "Il server ha raggiunto la capacità massima e non è possibile partecipare alla chiamata in questo momento. Riprova più tardi o contatta l'amministratore del server se il problema persiste.",
-    "matrix_rtc_focus_missing": "Il server non è configurato per funzionare con {{brand}}. Contatta l'amministratore del tuo server (Dominio: {{domain}}, codice di errore: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "Il server non è configurato per funzionare con {{brand}}. Contatta l'amministratore del tuo server (Dominio: {{domain}}, codice di errore: {{ errorCode }}).",
+    "membership_manager": "Errore del gestore dei membri",
+    "membership_manager_description": "Il gestore dei membri ha dovuto chiudersi. Ciò è stato causato da numerose richieste di rete consecutive non riuscite.",
     "open_elsewhere": "Aperto in un'altra scheda",
     "open_elsewhere_description": "{{brand}} è stato aperto in un'altra scheda. Se non ti sembra corretto, prova a ricaricare la pagina.",
+    "room_creation_restricted": "Impossibile creare la chiamata",
+    "room_creation_restricted_description": "La creazione di chiamate potrebbe essere limitata solo agli utenti autorizzati. Riprova più tardi o contatta l'amministratore del server se il problema persiste.",
     "unexpected_ec_error": "Si è verificato un errore imprevisto (<0>Codice errore:</0> <1>{{ errorCode }}</1>). Contatta l'amministratore del tuo server."
   },
   "group_call_loader": {
@@ -99,6 +124,11 @@
     "knock_reject_body": "I membri della stanza hanno rifiutato la tua richiesta di partecipazione.",
     "knock_reject_heading": "Partecipazione non consentita",
     "reason": "Motivo"
+  },
+  "handset": {
+    "overlay_back_button": "Torna alla modalità altoparlante",
+    "overlay_description": "Funziona solo mentre si usa l'app",
+    "overlay_title": "Modalità cornetta"
   },
   "hangup_button_label": "Termina chiamata",
   "header_label": "Inizio di Element Call",
@@ -144,6 +174,7 @@
   "rageshake_sent": "Grazie!",
   "recaptcha_dismissed": "Recaptcha annullato",
   "recaptcha_not_loaded": "Recaptcha non caricato",
+  "recaptcha_ssla_caption": "Questo sito è protetto da ReCAPTCHA e si applicano l'<2>informativa sulla privacy</2> e i <6>termini di servizio</6> di Google.<9></9>Cliccando \"Registra\", accetti il nostro <12>Software and Services License Agreement (SSLA)</12>",
   "register": {
     "passwords_must_match": "Le password devono coincidere",
     "registering": "Registrazione…"
@@ -153,18 +184,25 @@
   "register_heading": "Crea il tuo account",
   "return_home_button": "Torna alla schermata di iniziale",
   "room_auth_view_continue_button": "Continua",
+  "room_auth_view_ssla_caption": "Cliccando \"Partecipa ora alla chiamata\", accetti il nostro <2>Software and Services License Agreement (SSLA)</2>",
   "screenshare_button_label": "Condividi schermo",
   "settings": {
     "audio_tab": {
       "effect_volume_description": "Regola il volume delle reazioni e degli effetti di alzata di mani.",
       "effect_volume_label": "Volume degli effetti sonori"
     },
+    "background_blur_header": "Sfondo",
+    "background_blur_label": "Sfoca lo sfondo del video",
+    "blur_not_supported_by_browser": "(La sfocatura dello sfondo non è supportata da questo dispositivo.)",
     "developer_tab_title": "Sviluppatore",
     "devices": {
       "camera": "Fotocamera",
       "camera_numbered": "Fotocamera {{n}}",
+      "change_device_button": "Cambia dispositivo audio",
       "default": "Predefinito",
       "default_named": "Predefinito <2>({{name}})</2>",
+      "handset": "Cornetta",
+      "loudspeaker": "Altoparlante",
       "microphone": "Microfono",
       "microphone_numbered": "Microfono {{n}}",
       "speaker": "Altoparlante",
@@ -199,12 +237,12 @@
   "switch_camera": "Cambia fotocamera",
   "unauthenticated_view_body": "Non hai ancora un profilo? <2>Creane uno</2>",
   "unauthenticated_view_login_button": "Accedi al tuo profilo",
+  "unauthenticated_view_ssla_caption": "Cliccando \"Vai\", accetti il nostro <2>Software and Services License Agreement (SSLA)</2>",
   "unmute_microphone_button_label": "Riaccendi il microfono",
-  "version": "Versione: {{version}}",
+  "version": "Versione di {{productName}}: {{version}}",
   "video_tile": {
     "always_show": "Mostra sempre",
     "camera_starting": "Caricamento del video...",
-    "change_fit_contain": "Adatta al frame",
     "collapse": "Riduci",
     "expand": "Espandi",
     "mute_for_me": "Disattiva l'audio per me",

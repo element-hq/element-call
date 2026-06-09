@@ -19,6 +19,7 @@ import {
 import { Heading, IconButton, Tooltip } from "@vector-im/compound-web";
 import { CollapseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Header, LeftNav, RightNav } from "./Header";
 import { platform } from "./Platform";
@@ -49,7 +50,9 @@ export const AppBar: FC<Props> = ({ children }) => {
 
   const [title, setTitle] = useState<string>("");
   const [hidden, setHidden] = useState<boolean>(false);
-  const [secondaryButton, setSecondaryButton] = useState<ReactNode>(null);
+  const [secondaryButton, setSecondaryButton] = useState<ReactNode | null>(
+    null,
+  );
   const context = useMemo(
     () => ({ setTitle, setSecondaryButton, setHidden }),
     [setTitle, setHidden, setSecondaryButton],
@@ -68,8 +71,8 @@ export const AppBar: FC<Props> = ({ children }) => {
         >
           <LeftNav>
             <Tooltip label={t("common.back")}>
-              <IconButton onClick={onBackClick}>
-                <CollapseIcon />
+              <IconButton size="24px" onClick={onBackClick}>
+                <CollapseIcon aria-hidden />
               </IconButton>
             </Tooltip>
           </LeftNav>
@@ -114,6 +117,10 @@ export function useAppBarHidden(hidden: boolean): void {
     if (setHidden !== undefined) {
       setHidden(hidden);
       return (): void => setHidden(false);
+    } else if (platform !== "desktop") {
+      logger.warn(
+        "[AppBar] useAppBarHidden called without AppBarContext provider, this will have no effect",
+      );
     }
   }, [setHidden, hidden]);
 }
@@ -129,6 +136,10 @@ export function useAppBarSecondaryButton(button: ReactNode): void {
     if (setSecondaryButton !== undefined) {
       setSecondaryButton(button);
       return (): void => setSecondaryButton("");
+    } else if (platform !== "desktop") {
+      logger.warn(
+        "[AppBar] useAppBarSecondaryButton called without AppBarContext provider, this will have no effect",
+      );
     }
   }, [button, setSecondaryButton]);
 }

@@ -38,11 +38,11 @@ jobs:
           name: build-output-full
           path: ${{ env.FILENAME_PREFIX }}
       - name: Create Tarball
-        run: tar --numeric-owner --transform "s/dist/${{ env.FILENAME_PREFIX }}/" -cvzf ${{ env.FILENAME_PREFIX }}.tar.gz ${{ env.FILENAME_PREFIX }}
+        run: tar --numeric-owner --transform "s/dist/${FILENAME_PREFIX}/" -cvzf ${FILENAME_PREFIX}.tar.gz ${FILENAME_PREFIX}
       - name: Create Checksum
-        run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
+        run: find ${FILENAME_PREFIX} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${FILENAME_PREFIX}.sha256
       - name: Upload
-        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: |
             ${{ env.FILENAME_PREFIX }}.tar.gz
@@ -55,12 +55,15 @@ jobs:
     permissions:
       contents: write
       packages: write
+      id-token: write
     uses: ./.github/workflows/build-and-publish-docker.yaml
+    secrets: inherit
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |
         type=sha,format=short,event=branch
         type=raw,value=${{ github.event.release.tag_name }}
+        type=raw,value=latest
       # Like before, using ${{ env.VERSION }} above doesn't work
   add_docker_release_note:
     needs: publish_docker
@@ -68,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add release note
-        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           append_body: true
           body: |

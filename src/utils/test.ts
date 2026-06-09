@@ -15,6 +15,7 @@ import {
   vitest,
 } from "vitest";
 import {
+  EventType,
   MatrixEvent,
   type Room as MatrixRoom,
   type Room,
@@ -44,17 +45,14 @@ import {
   Track,
 } from "livekit-client";
 import { randomUUID } from "crypto";
-import {
-  type RoomAndToDeviceEvents,
-  type RoomAndToDeviceEventsHandlerMap,
-} from "matrix-js-sdk/lib/matrixrtc/RoomAndToDeviceKeyTransport";
 import { type TrackReference } from "@livekit/components-core";
 import EventEmitter from "events";
-
 import {
-  LocalUserMediaViewModel,
-  RemoteUserMediaViewModel,
-} from "../state/MediaViewModel";
+  type KeyTransportEvents,
+  type KeyTransportEventsHandlerMap,
+} from "matrix-js-sdk/lib/matrixrtc/IKeyTransport";
+import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
+
 import { E2eeType } from "../e2ee/e2eeType";
 import {
   DEFAULT_CONFIG,
@@ -65,6 +63,20 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { type Behavior, constant } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
 import { MuteStates } from "../state/MuteStates";
+import {
+  createLocalUserMedia,
+  type LocalUserMediaViewModel,
+} from "../state/media/LocalUserMediaViewModel";
+import {
+  createRemoteUserMedia,
+  type RemoteUserMediaViewModel,
+} from "../state/media/RemoteUserMediaViewModel";
+import {
+  createRemoteScreenShare,
+  type RemoteScreenShareViewModel,
+} from "../state/media/RemoteScreenShareViewModel";
+import { Connection } from "../state/CallViewModel/remoteMembers/Connection";
+import { type SFUConfig } from "../livekit/openIDSFU";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -201,40 +213,37 @@ export const exampleTransport: LivekitTransport = {
   livekit_alias: "!alias:example.org",
 };
 
-export function mockCallMembership(
-  userId: string,
-  deviceId: string,
-  transport?: Transport,
-): CallMembership {
-  const t = transport ?? transportForUser(userId);
-  return {
-    userId: userId,
-    deviceId: deviceId,
-    getTransport: vi.fn().mockReturnValue(t),
-    transports: [t],
-  } as unknown as CallMembership;
-}
-
-function transportForUser(userId: string): Transport {
-  const domain = userId.split(":")[1];
-  return {
-    type: "livekit",
-    livekit_service_url: `https://lk.${domain}`,
-    livekit_alias: `!alias:${domain}`,
-  };
-}
+export const exampleSfuConfig: SFUConfig = {
+  jwt: "foo",
+  livekitAlias: "bar",
+  livekitIdentity: "baz",
+  url: "bro",
+};
 
 export function mockRtcMembership(
   user: string | RoomMember,
   deviceId: string,
-  callId = "",
-  fociPreferred: Transport[] = [exampleTransport],
-  focusActive: LivekitFocusSelection = {
-    type: "livekit",
-    focus_selection: "oldest_membership",
+  customOverwrites?: {
+    rtcBackendIdentity?: string;
+    callId?: string;
+    fociPreferred?: Transport[];
+    focusActive?: LivekitFocusSelection;
+    membership?: Partial<SessionMembershipData>;
   },
-  membership: Partial<SessionMembershipData> = {},
 ): CallMembership {
+  // setup defaults based on overwrites and fallback values.
+  const { rtcBackendIdentity, callId, fociPreferred, focusActive, membership } =
+    {
+      fociPreferred: [exampleTransport],
+      focusActive: {
+        type: "livekit" as const,
+        focus_selection: "oldest_membership" as const,
+      },
+      callId: "",
+      membership: {},
+      ...customOverwrites,
+    };
+
   const data: SessionMembershipData = {
     application: "m.call",
     call_id: callId,
@@ -243,17 +252,30 @@ export function mockRtcMembership(
     focus_active: focusActive,
     ...membership,
   };
+  const userId = typeof user === "string" ? user : user.userId;
   const event = new MatrixEvent({
-    sender: typeof user === "string" ? user : user.userId,
+    sender: userId,
     event_id: `$-ev-${randomUUID()}:example.org`,
+    type: EventType.GroupCallMemberPrefix,
     content: data,
   });
 
-  const cms = new CallMembership(event, data);
+  const membershipData = CallMembership.membershipDataFromMatrixEvent(event);
+  const cms = new CallMembership(
+    event,
+    membershipData,
+    rtcBackendIdentity ?? `${userId}:${deviceId}`,
+  );
   vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
+
   return cms;
 }
 
+export const ownMemberMock: CallMembershipIdentityParts = {
+  userId: "@alice:example.org",
+  deviceId: "DEVICE",
+  memberId: "@alice:example.org:DEVICE",
+};
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
 // rather simple, but if one util to mock a member is good enough for us, maybe
 // it's useful for matrix-js-sdk consumers in general.
@@ -284,6 +306,8 @@ export function mockLivekitRoom(
 ): LivekitRoom {
   const livekitRoom = {
     options: {},
+    setE2EEEnabled: vi.fn(),
+
     ...mockEmitter(),
     ...room,
   } as Partial<LivekitRoom> as LivekitRoom;
@@ -306,7 +330,11 @@ export function mockLocalParticipant(
   return {
     isLocal: true,
     trackPublications: new Map(),
-    unpublishTracks: async () => Promise.resolve(),
+    publishTrack: vi.fn(),
+    unpublishTracks: vi.fn().mockResolvedValue([]),
+    createTracks: vi.fn(),
+    setMicrophoneEnabled: vi.fn(),
+    setCameraEnabled: vi.fn(),
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
     ...mockEmitter(),
@@ -314,29 +342,27 @@ export function mockLocalParticipant(
   } as Partial<LocalParticipant> as LocalParticipant;
 }
 
-export function createLocalMedia(
-  localRtcMember: CallMembership,
+export function mockLocalMedia(
+  rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
   localParticipant: LocalParticipant,
   mediaDevices: MediaDevices,
 ): LocalUserMediaViewModel {
-  const member = mockMatrixRoomMember(localRtcMember, roomMember);
-  return new LocalUserMediaViewModel(
-    testScope(),
-    "local",
-    member.userId,
-    constant(localParticipant),
-    {
-      kind: E2eeType.PER_PARTICIPANT,
-    },
-    constant(mockLivekitRoom({ localParticipant })),
-    constant("https://rtc-example.org"),
+  const member = mockMatrixRoomMember(rtcMember, roomMember);
+  return createLocalUserMedia(testScope(), {
+    id: "local",
+    userId: member.userId,
+    rtcBackendIdentity: rtcMember.rtcBackendIdentity,
+    participant$: constant(localParticipant),
+    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+    livekitRoom$: constant(mockLivekitRoom({ localParticipant })),
+    focusUrl$: constant("https://rtc-example.org"),
     mediaDevices,
-    constant(member.rawDisplayName ?? "nodisplayname"),
-    constant(member.getMxcAvatarUrl()),
-    constant(null),
-    constant(null),
-  );
+    displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
+    mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
+    handRaised$: constant(null),
+    reaction$: constant(null),
+  });
 }
 
 export function mockRemoteParticipant(
@@ -354,31 +380,57 @@ export function mockRemoteParticipant(
   } as RemoteParticipant;
 }
 
-export function createRemoteMedia(
-  localRtcMember: CallMembership,
+export function mockRemoteMedia(
+  rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
-  participant: Partial<RemoteParticipant>,
-): RemoteUserMediaViewModel {
-  const member = mockMatrixRoomMember(localRtcMember, roomMember);
-  const remoteParticipant = mockRemoteParticipant(participant);
-  return new RemoteUserMediaViewModel(
-    testScope(),
-    "remote",
-    member.userId,
-    of(remoteParticipant),
+  participant: RemoteParticipant | null,
+  livekitRoom: LivekitRoom | undefined = mockLivekitRoom(
+    {},
     {
-      kind: E2eeType.PER_PARTICIPANT,
+      remoteParticipants$: of(participant ? [participant] : []),
     },
-    constant(
-      mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
-    ),
-    constant("https://rtc-example.org"),
-    constant(false),
-    constant(member.rawDisplayName ?? "nodisplayname"),
-    constant(member.getMxcAvatarUrl()),
-    constant(null),
-    constant(null),
-  );
+  ),
+): RemoteUserMediaViewModel {
+  const member = mockMatrixRoomMember(rtcMember, roomMember);
+  return createRemoteUserMedia(testScope(), {
+    id: "remote",
+    userId: member.userId,
+    rtcBackendIdentity: rtcMember.rtcBackendIdentity,
+    participant$: constant(participant),
+    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+    livekitRoom$: constant(livekitRoom),
+    focusUrl$: constant("https://rtc-example.org"),
+    pretendToBeDisconnected$: constant(false),
+    displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
+    mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
+    handRaised$: constant(null),
+    reaction$: constant(null),
+  });
+}
+
+export function mockRemoteScreenShare(
+  rtcMember: CallMembership,
+  roomMember: Partial<RoomMember>,
+  participant: RemoteParticipant | null,
+  livekitRoom: LivekitRoom | undefined = mockLivekitRoom(
+    {},
+    {
+      remoteParticipants$: of(participant ? [participant] : []),
+    },
+  ),
+): RemoteScreenShareViewModel {
+  const member = mockMatrixRoomMember(rtcMember, roomMember);
+  return createRemoteScreenShare(testScope(), {
+    id: "screenshare",
+    userId: member.userId,
+    participant$: constant(participant),
+    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+    livekitRoom$: constant(livekitRoom),
+    focusUrl$: constant("https://rtc-example.org"),
+    pretendToBeDisconnected$: constant(false),
+    displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
+    mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
+  });
 }
 
 export function mockConfig(
@@ -394,18 +446,18 @@ export function mockConfig(
 }
 
 export class MockRTCSession extends TypedEventEmitter<
-  MatrixRTCSessionEvent | RoomAndToDeviceEvents | MembershipManagerEvent,
-  MatrixRTCSessionEventHandlerMap &
-    RoomAndToDeviceEventsHandlerMap &
+  MatrixRTCSessionEvent | MembershipManagerEvent | KeyTransportEvents,
+  KeyTransportEventsHandlerMap &
+    MatrixRTCSessionEventHandlerMap &
     MembershipManagerEventHandlerMap
 > {
   public asMockedSession(): MockedObject<MatrixRTCSession> {
     const session = this as unknown as MockedObject<MatrixRTCSession>;
 
-    vi.mocked(session).reemitEncryptionKeys = vi
+    session.reemitEncryptionKeys = vi
       .fn<() => void>()
       .mockReturnValue(undefined);
-    vi.mocked(session).getOldestMembership = vi
+    session.getOldestMembership = vi
       .fn<() => CallMembership | undefined>()
       .mockReturnValue(this.memberships[0]);
 
@@ -416,7 +468,9 @@ export class MockRTCSession extends TypedEventEmitter<
     counters: {},
   };
 
-  public leaveRoomSession = vitest.fn().mockResolvedValue(undefined);
+  public leaveRoomSession: ReturnType<typeof vitest.fn> = vitest
+    .fn()
+    .mockResolvedValue(undefined);
 
   public constructor(
     public readonly room: Room,
@@ -446,7 +500,9 @@ export class MockRTCSession extends TypedEventEmitter<
     return this;
   }
 
-  public updateCallIntent = vitest.fn();
+  public updateCallIntent: ReturnType<typeof vitest.fn> = vitest
+    .fn()
+    .mockImplementation(async () => Promise.resolve());
 
   private _membershipStatus = Status.Connected;
   public get membershipStatus(): Status {
@@ -469,7 +525,7 @@ export class MockRTCSession extends TypedEventEmitter<
     if (value !== prev) this.emit(MembershipManagerEvent.ProbablyLeft, value);
   }
 
-  public async joinRoomSession(): Promise<void> {
+  public async joinRTCSession(): Promise<void> {
     return Promise.resolve();
   }
 }
@@ -516,5 +572,13 @@ export function mockMuteStates(
   joined$: Observable<boolean> = of(true),
 ): MuteStates {
   const observableScope = new ObservableScope();
-  return new MuteStates(observableScope, mockMediaDevices({}), joined$);
+  return new MuteStates(observableScope, mockMediaDevices({}), {
+    audioEnabled: false,
+    videoEnabled: false,
+  });
+}
+
+export class MockConnection extends Connection {
+  public async start(): Promise<void> {}
+  public async stop(): Promise<void> {}
 }

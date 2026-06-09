@@ -15,7 +15,6 @@ import {
   type AudioTrackProps,
 } from "@livekit/components-react";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type ParticipantId } from "matrix-js-sdk/lib/matrixrtc";
 
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
@@ -32,7 +31,7 @@ export interface MatrixAudioRendererProps {
    * This list needs to be composed based on the matrixRTC members so that we do not play audio from users
    * that are not expected to be in the rtc session (local user is excluded).
    */
-  validIdentities: ParticipantId[];
+  validIdentities: string[];
   /**
    * If set to `true`, mutes all audio tracks rendered by the component.
    * @remarks
@@ -79,6 +78,7 @@ export function LivekitRoomAudioRenderer({
     .filter((ref) => {
       const isValid = validIdentities.includes(ref.participant.identity);
       if (!isValid) {
+        // TODO make sure to also skip the warn logging for the local identity
         // Log that there is an invalid identity, that means that someone is publishing audio that is not expected to be in the call.
         prefixedLogger.warn(
           `Audio track ${ref.participant.identity} from ${url} has no matching matrix call member`,
@@ -166,7 +166,11 @@ interface StereoPanAudioTrackProps {
  * It main purpose is to remount the AudioTrack component when switching from
  * audioContext to normal audio playback.
  * As of now the AudioTrack component does not support adding audio nodes while being mounted.
- * @param param0
+ * @param props The component props
+ * @param props.trackRef The track reference
+ * @param props.muted If the track should be muted
+ * @param props.audioContext The audio context to use
+ * @param props.audioNodes The audio nodes to use
  * @returns
  */
 function AudioTrackWithAudioNodes({

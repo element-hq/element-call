@@ -1,9 +1,30 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
+
+/**
+ * The MatrixRTC mode determines how Element Call interacts with the
+ * MatrixRTC backend and other participants. Selectable via the Developer
+ * Settings, or pinned for a deployment via `matrix_rtc_mode` in config.json.
+ */
+export enum MatrixRTCMode {
+  /** Legacy single-SFU + user-keyed memberships + legacy JWT endpoint. */
+  Legacy = "legacy",
+  /** Multi-SFU transport, legacy JWT endpoint, no sticky events. */
+  Compatibility = "compatibility",
+  /**
+   * Multi-SFU transport with:
+   *  - sticky events
+   *  - hashed RTC backend identity
+   *  - the new endpoint for the jwt token on the local membership (remote memberships will always try the new jwt endpoint first -> then the legacy one)
+   *  - use the hashed identity for the local membership
+   */
+  Matrix_2_0 = "matrix_2_0",
+}
 
 export interface ConfigOptions {
   /**
@@ -97,12 +118,18 @@ export interface ConfigOptions {
   };
 
   /**
-   * Whether upon entering a room, the user should be prompted to launch the
-   * native mobile app. (Affects only Android and iOS.)
-   *
-   * Note that this can additionally be disabled by the app's URL parameters.
+   * Grace period in milliseconds to wait before reporting the sync loop as disconnected.
+   * This allows brief sync interruptions without triggering a reconnection message.
+   * Default is 10000ms (10 seconds). Set to 0 to disable the grace period.
    */
-  app_prompt?: boolean;
+  sync_disconnect_grace_period_ms?: number;
+
+  /**
+   * Pins the {@link MatrixRTCMode} for all clients on this deployment,
+   * overriding any per-user choice from the Developer Settings. If unset,
+   * the user's Developer Settings choice (or its default of `Legacy`) wins.
+   */
+  matrix_rtc_mode?: MatrixRTCMode;
 
   /**
    * These are low level options that are used to configure the MatrixRTC session.
@@ -162,12 +189,16 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       server_name: string;
     };
   };
+  sync_disconnect_grace_period_ms: number;
   ssla: string;
-  media_devices: {
-    enable_audio: boolean;
-    enable_video: boolean;
+  matrix_rtc_session: {
+    wait_for_key_rotation_ms?: number;
+    delayed_leave_event_delay_ms: number;
+    delayed_leave_event_restart_local_timeout_ms?: number;
+    delayed_leave_event_restart_ms?: number;
+    network_error_retry_ms: number;
+    membership_event_expiry_ms?: number;
   };
-  app_prompt: boolean;
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
@@ -180,10 +211,10 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
   features: {
     feature_use_device_session_member_events: true,
   },
+  sync_disconnect_grace_period_ms: 10000,
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
-  media_devices: {
-    enable_audio: true,
-    enable_video: true,
+  matrix_rtc_session: {
+    delayed_leave_event_delay_ms: 10000,
+    network_error_retry_ms: 1000,
   },
-  app_prompt: true,
 };

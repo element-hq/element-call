@@ -1,5 +1,6 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -217,7 +218,6 @@ describe("UrlParams", () => {
   describe("intent", () => {
     const noIntentDefaults = {
       confineToRoom: false,
-      appPrompt: true,
       preload: false,
       header: HeaderStyle.Standard,
       showControls: true,
@@ -231,7 +231,6 @@ describe("UrlParams", () => {
     };
     const startNewCallDefaults = (platform: string): object => ({
       confineToRoom: true,
-      appPrompt: false,
       preload: false,
       header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
       showControls: true,
@@ -245,7 +244,6 @@ describe("UrlParams", () => {
     });
     const joinExistingCallDefaults = (platform: string): object => ({
       confineToRoom: true,
-      appPrompt: false,
       preload: false,
       header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
       showControls: true,
@@ -256,8 +254,6 @@ describe("UrlParams", () => {
       skipLobby: false,
       returnToLobby: false,
       sendNotificationType: "notification",
-      defaultAudioEnabled: true,
-      defaultVideoEnabled: true,
     });
     it("use no-intent-defaults with unknown intent", () => {
       expect(computeUrlParams()).toMatchObject(noIntentDefaults);
@@ -272,7 +268,11 @@ describe("UrlParams", () => {
         computeUrlParams(
           "?intent=start_call&widgetId=1234&parentUrl=parent.org",
         ),
-      ).toMatchObject({ ...startNewCallDefaults("desktop"), skipLobby: false });
+      ).toMatchObject({
+        ...startNewCallDefaults("desktop"),
+        skipLobby: false,
+        callIntent: "video",
+      });
     });
 
     it("accepts start_call_dm mobile", () => {
@@ -309,6 +309,29 @@ describe("UrlParams", () => {
         ),
       ).toMatchObject(joinExistingCallDefaults("desktop"));
     });
+
+    it("accepts start_call_voice", () => {
+      expect(
+        computeUrlParams(
+          "?intent=start_call_voice&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...startNewCallDefaults("desktop"),
+        skipLobby: false,
+        callIntent: "audio",
+      });
+    });
+
+    it("accepts join_existing_voice", () => {
+      expect(
+        computeUrlParams(
+          "?intent=join_existing_voice&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...joinExistingCallDefaults("desktop"),
+        callIntent: "audio",
+      });
+    });
   });
 
   describe("skipLobby", () => {
@@ -332,6 +355,42 @@ describe("UrlParams", () => {
       expect(computeUrlParams("?intent=join_existing").skipLobby).toBe(false);
     });
   });
+
+  describe("noiseSuppression", () => {
+    it("defaults to true", () => {
+      expect(computeUrlParams().noiseSuppression).toBe(true);
+    });
+
+    it("is parsed", () => {
+      expect(
+        computeUrlParams("?intent=start_call&noiseSuppression=true")
+          .noiseSuppression,
+      ).toBe(true);
+      expect(
+        computeUrlParams("?intent=start_call&noiseSuppression&bar=foo")
+          .noiseSuppression,
+      ).toBe(true);
+      expect(computeUrlParams("?noiseSuppression=false").noiseSuppression).toBe(
+        false,
+      );
+    });
+  });
+
+  describe("echoCancellation", () => {
+    it("defaults to true", () => {
+      expect(computeUrlParams().echoCancellation).toBe(true);
+    });
+
+    it("is parsed", () => {
+      expect(computeUrlParams("?echoCancellation=true").echoCancellation).toBe(
+        true,
+      );
+      expect(computeUrlParams("?echoCancellation=false").echoCancellation).toBe(
+        false,
+      );
+    });
+  });
+
   describe("header", () => {
     it("uses header if provided", () => {
       expect(computeUrlParams("?header=app_bar&hideHeader=true").header).toBe(
@@ -359,8 +418,6 @@ describe("UrlParams", () => {
         expect.any(Object),
         "configuration:",
         expect.any(Object),
-        "intentAndPlatformDerivedConfiguration:",
-        {},
       );
     });
   });

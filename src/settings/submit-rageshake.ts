@@ -17,7 +17,6 @@ import { type CryptoApi } from "matrix-js-sdk/lib/crypto-api";
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
 import { Config } from "../config/Config";
-import { ElementCallOpenTelemetry } from "../otel/otel";
 import { type RageshakeRequestModal } from "../room/RageshakeRequestModal";
 import { getUrlParams } from "../UrlParams";
 
@@ -274,14 +273,6 @@ export function useSubmitRageshake(
           for (const entry of logs) {
             body.append("compressed-log", await gzip(entry.lines), entry.id);
           }
-
-          body.append(
-            "file",
-            await gzip(
-              ElementCallOpenTelemetry.instance.rageshakeProcessor!.dump(),
-            ),
-            "traces.json.gz",
-          );
         }
 
         if (opts.rageshakeRequestId) {

@@ -22,6 +22,7 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   EditInPlace,
+  ErrorMessage,
   Root as Form,
   Heading,
   HelpMessage,
@@ -29,8 +30,10 @@ import {
   Label,
   RadioControl,
 } from "@vector-im/compound-web";
+import { type Room as LivekitRoom } from "livekit-client";
 
 import { FieldRow, InputField } from "../input/Input";
+import { Config } from "../config/Config";
 import {
   useSetting,
   duplicateTiles as duplicateTilesSetting,
@@ -40,21 +43,29 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   matrixRTCMode as matrixRTCModeSetting,
   customLivekitUrl as customLivekitUrlSetting,
-  MatrixRTCMode,
+  enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
 } from "./settings";
-import type { Room as LivekitRoom } from "livekit-client";
+import { MatrixRTCMode } from "../config/ConfigOptions";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
+import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 
 interface Props {
   client: MatrixClient;
-  livekitRooms?: { room: LivekitRoom; url: string; isLocal?: boolean }[];
+  roomId?: string;
+  livekitRooms?: {
+    room: LivekitRoom;
+    url: string;
+    isLocal?: boolean;
+    livekitAlias?: string;
+  }[];
   env: ImportMetaEnv;
 }
 
 export const DeveloperSettingsTab: FC<Props> = ({
   client,
   livekitRooms,
+  roomId,
   env,
 }) => {
   const { t } = useTranslation();
@@ -83,6 +94,11 @@ export const DeveloperSettingsTab: FC<Props> = ({
     },
     [setMatrixRTCMode],
   );
+  const configMatrixRTCMode = Config.get().matrix_rtc_mode as
+    | MatrixRTCMode
+    | undefined;
+  const matrixRTCModeForced = configMatrixRTCMode !== undefined;
+  const effectiveMatrixRTCMode = configMatrixRTCMode ?? matrixRTCMode;
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
@@ -92,6 +108,12 @@ export const DeveloperSettingsTab: FC<Props> = ({
     alwaysShowIphoneEarpieceSetting,
   );
 
+  const [enableExtendedLivekitLogs, setEnableExtendedLivekitLogs] = useSetting(
+    enableExtendedLivekitLogsSetting,
+  );
+
+  const [customLivekitUrlUpdateError, setCustomLivekitUrlUpdateError] =
+    useState<string | null>(null);
   const [customLivekitUrl, setCustomLivekitUrl] = useSetting(
     customLivekitUrlSetting,
   );
@@ -214,7 +236,21 @@ export const DeveloperSettingsTab: FC<Props> = ({
             },
             [setAlwaysShowIphoneEarpiece],
           )}
-        />{" "}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="enableLivekitExtendedLogs"
+          type="checkbox"
+          label="Enable extended livekit logs"
+          checked={enableExtendedLivekitLogs}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setEnableExtendedLivekitLogs(event.target.checked);
+            },
+            [setEnableExtendedLivekitLogs],
+          )}
+        />
       </FieldRow>
       <EditInPlace
         onSubmit={(e) => e.preventDefault()}
@@ -229,14 +265,36 @@ export const DeveloperSettingsTab: FC<Props> = ({
         savingLabel={t("developer_mode.custom_livekit_url.saving")}
         cancelButtonLabel={t("developer_mode.custom_livekit_url.reset")}
         onSave={useCallback(
-          (e: React.FormEvent<HTMLFormElement>) => {
-            setCustomLivekitUrl(
-              customLivekitUrlTextBuffer === ""
-                ? null
-                : customLivekitUrlTextBuffer,
-            );
+          async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+            if (
+              roomId === undefined ||
+              customLivekitUrlTextBuffer === "" ||
+              customLivekitUrlTextBuffer === null
+            ) {
+              setCustomLivekitUrl(null);
+              return;
+            }
+
+            try {
+              const userId = client.getUserId();
+              const deviceId = client.getDeviceId();
+
+              if (userId === null || deviceId === null) {
+                throw new Error("Invalid user or device ID");
+              }
+              await getSFUConfigWithOpenID(
+                client,
+                { userId, deviceId, memberId: "" },
+                customLivekitUrlTextBuffer,
+                roomId,
+              );
+              setCustomLivekitUrlUpdateError(null);
+              setCustomLivekitUrl(customLivekitUrlTextBuffer);
+            } catch {
+              setCustomLivekitUrlUpdateError("invalid URL (did not update)");
+            }
           },
-          [setCustomLivekitUrl, customLivekitUrlTextBuffer],
+          [customLivekitUrlTextBuffer, setCustomLivekitUrl, client, roomId],
         )}
         value={customLivekitUrlTextBuffer ?? ""}
         onChange={useCallback(
@@ -251,17 +309,24 @@ export const DeveloperSettingsTab: FC<Props> = ({
           },
           [setCustomLivekitUrl],
         )}
-      />
+        serverInvalid={customLivekitUrlUpdateError !== null}
+      >
+        {customLivekitUrlUpdateError !== null && (
+          <ErrorMessage>{customLivekitUrlUpdateError}</ErrorMessage>
+        )}
+      </EditInPlace>
       <Heading as="h3" type="body" weight="semibold" size="lg">
         {t("developer_mode.matrixRTCMode.title")}
       </Heading>
+      {matrixRTCModeForced && <p>Your deployment overrides the mode.</p>}
       <Form>
         <InlineField
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Legacy}
+              checked={effectiveMatrixRTCMode === MatrixRTCMode.Legacy}
               value={MatrixRTCMode.Legacy}
+              disabled={matrixRTCModeForced}
               onChange={onMatrixRTCModeChange}
             />
           }
@@ -275,8 +340,9 @@ export const DeveloperSettingsTab: FC<Props> = ({
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Compatibil}
-              value={MatrixRTCMode.Compatibil}
+              checked={effectiveMatrixRTCMode === MatrixRTCMode.Compatibility}
+              value={MatrixRTCMode.Compatibility}
+              disabled={matrixRTCModeForced}
               onChange={onMatrixRTCModeChange}
             />
           }
@@ -290,9 +356,9 @@ export const DeveloperSettingsTab: FC<Props> = ({
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Matrix_2_0}
+              checked={effectiveMatrixRTCMode === MatrixRTCMode.Matrix_2_0}
               value={MatrixRTCMode.Matrix_2_0}
-              disabled={!stickyEventsSupported}
+              disabled={matrixRTCModeForced || !stickyEventsSupported}
               onChange={onMatrixRTCModeChange}
             />
           }
@@ -304,12 +370,14 @@ export const DeveloperSettingsTab: FC<Props> = ({
         </InlineField>
       </Form>
       {livekitRooms?.map((livekitRoom) => (
-        <>
-          <h3>
+        <div className={styles.livekit_room_box}>
+          <h4>
             {t("developer_mode.livekit_sfu", {
               url: livekitRoom.url || "unknown",
             })}
-          </h3>
+          </h4>
+          <p>LivekitAlias: {livekitRoom.livekitAlias}</p>
+          <p>connectionState (wont hot reload): {livekitRoom.room.state}</p>
           {livekitRoom.isLocal && <p>ws-url: {localSfuUrl?.href}</p>}
           <p>
             {t("developer_mode.livekit_server_info")}(
@@ -321,7 +389,19 @@ export const DeveloperSettingsTab: FC<Props> = ({
               : "undefined"}
             {livekitRoom.room.metadata}
           </pre>
-        </>
+          <p>Local Participant</p>
+          <pre className={styles.pre}>
+            {livekitRoom.room.localParticipant.identity}
+          </pre>
+          <p>Remote Participants</p>
+          <ul>
+            {Array.from(livekitRoom.room.remoteParticipants.keys()).map(
+              (id) => (
+                <li key={id}>{id}</li>
+              ),
+            )}
+          </ul>
+        </div>
       ))}
       <p>{t("developer_mode.environment_variables")}</p>
       <pre>{JSON.stringify(env, null, 2)}</pre>

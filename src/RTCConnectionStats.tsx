@@ -20,6 +20,7 @@ interface Props {
   audio?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   video?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   focusUrl?: string;
+  rtcBackendIdentity?: string;
 }
 
 const extractDomain = (url: string): string => {
@@ -37,6 +38,7 @@ export const RTCConnectionStats: FC<Props> = ({
   audio,
   video,
   focusUrl,
+  rtcBackendIdentity,
   ...rest
 }) => {
   const [showModal, setShowModal] = useState(false);
@@ -71,6 +73,9 @@ export const RTCConnectionStats: FC<Props> = ({
           </pre>
         </div>
       </Modal>
+      <Text as="span" size="xs" title="rtcBackendIdentity">
+        rtcBackendIdentity:{rtcBackendIdentity}
+      </Text>
       {focusUrl && (
         <div>
           <Text as="span" size="xs" title="focusURL">
@@ -82,7 +87,7 @@ export const RTCConnectionStats: FC<Props> = ({
         <div>
           <Button
             onClick={() => showFullModal("audio")}
-            size="sm"
+            size="md"
             kind="tertiary"
             Icon={MicOnSolidIcon}
           >
@@ -98,7 +103,7 @@ export const RTCConnectionStats: FC<Props> = ({
         <div>
           <Button
             onClick={() => showFullModal("video")}
-            size="sm"
+            size="md"
             kind="tertiary"
             Icon={VideoCallSolidIcon}
           >

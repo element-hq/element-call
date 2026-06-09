@@ -1,0 +1,37 @@
+{/**
+Copyright 2026 Element Creations Ltd.
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+**/}
+
+{/**
+This is a custom doc page overwriting the default autodocs tag.
+This can be done by using the same filename as the component
+With the help of Primary, Controls,Stories the overhead is minimal
+**/}
+
+import {
+  Meta,
+  Primary,
+  Controls,
+  Stories,
+  Title,
+  Subtitle,
+} from "@storybook/addon-docs/blocks";
+import * as CallFooterStories from "./CallFooter.stories";
+
+<Meta of={CallFooterStories} />
+
+<Title> Call Footer </Title>
+
+The footer compoentn contains all main interactions needed for a call.
+
+<Subtitle> Mobile layouts </Subtitle>
+
+This component is reactive. To properly check the mobile layout, you will need to click on the stories in the left sidebar to see the
+component on a mobile screen.
+The story summary here does not render the mobile layouts correctly.
+
+<Primary />
+<Controls of={CallFooterStories.Primary} />
+<Stories />

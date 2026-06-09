@@ -1,5 +1,6 @@
 /*
 Copyright 2022-2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -28,6 +29,8 @@ interface RoomIdentifier {
 export enum UserIntent {
   StartNewCall = "start_call",
   JoinExistingCall = "join_existing",
+  StartNewCallVoice = "start_call_voice",
+  JoinExistingCallVoice = "join_existing_voice",
   StartNewCallDM = "start_call_dm",
   StartNewCallDMVoice = "start_call_dm_voice",
   JoinExistingCallDM = "join_existing_dm",
@@ -157,13 +160,6 @@ export interface UrlConfiguration {
    */
   confineToRoom: boolean;
   /**
-   * Whether upon entering a room, the user should be prompted to launch the
-   * native mobile app. (Affects only Android and iOS.)
-   *
-   * The app prompt must also be enabled in the config for this to take effect.
-   */
-  appPrompt: boolean;
-  /**
    * Whether the app should pause before joining the call until it sees an
    * io.element.join widget action, allowing it to be preloaded.
    */
@@ -233,15 +229,18 @@ export interface UrlConfiguration {
    */
   waitForCallPickup: boolean;
 
+  /**
+   * Whether to enable echo cancellation for audio capture.
+   * Defaults to true.
+   */
+  echoCancellation?: boolean;
+  /**
+   * Whether to enable noise suppression for audio capture.
+   * Defaults to true.
+   */
+  noiseSuppression?: boolean;
+
   callIntent?: RTCCallIntent;
-}
-interface IntentAndPlatformDerivedConfiguration {
-  defaultAudioEnabled?: boolean;
-  defaultVideoEnabled?: boolean;
-}
-interface IntentAndPlatformDerivedConfiguration {
-  defaultAudioEnabled?: boolean;
-  defaultVideoEnabled?: boolean;
 }
 
 // If you need to add a new flag to this interface, prefer a name that describes
@@ -249,30 +248,7 @@ interface IntentAndPlatformDerivedConfiguration {
 // the situations that call for this behavior ('isEmbedded'). This makes it
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
-export interface UrlParams
-  extends UrlProperties,
-    UrlConfiguration,
-    IntentAndPlatformDerivedConfiguration {}
-
-// This is here as a stopgap, but what would be far nicer is a function that
-// takes a UrlParams and returns a query string. That would enable us to
-// consolidate all the data about URL parameters and their meanings to this one
-// file.
-export function editFragmentQuery(
-  hash: string,
-  edit: (params: URLSearchParams) => URLSearchParams,
-): string {
-  const fragmentQueryStart = hash.indexOf("?");
-  const fragmentParams = edit(
-    new URLSearchParams(
-      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart),
-    ),
-  );
-  return `${hash.substring(
-    0,
-    fragmentQueryStart,
-  )}?${fragmentParams.toString()}`;
-}
+export interface UrlParams extends UrlProperties, UrlConfiguration {}
 
 class ParamParser {
   private fragmentParams: URLSearchParams;
@@ -389,7 +365,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   // Here we only use constants and `platform` to determine the intent preset.
   let intentPreset: UrlConfiguration = {
     confineToRoom: true,
-    appPrompt: false,
     preload: false,
     header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
     showControls: true,
@@ -412,6 +387,15 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
       // On desktop this will be overridden based on which button was used to join the call
       intentPreset.skipLobby = false;
       intentPreset.callIntent = "video";
+      break;
+    case UserIntent.StartNewCallVoice:
+      intentPreset.skipLobby = false;
+      intentPreset.callIntent = "audio";
+      break;
+    case UserIntent.JoinExistingCallVoice:
+      // On desktop this will be overridden based on which button was used to join the call
+      intentPreset.skipLobby = false;
+      intentPreset.callIntent = "audio";
       break;
     case UserIntent.StartNewCallDMVoice:
       intentPreset.callIntent = "audio";
@@ -436,7 +420,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     default:
       intentPreset = {
         confineToRoom: false,
-        appPrompt: true,
         preload: false,
         header: HeaderStyle.Standard,
         showControls: true,
@@ -450,29 +433,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
         autoLeaveWhenOthersLeft: false,
         waitForCallPickup: false,
       };
-  }
-
-  const intentAndPlatformDerivedConfiguration: IntentAndPlatformDerivedConfiguration =
-    {};
-  // Desktop also includes web. Its anything that is not mobile.
-  const desktopMobile = platform === "desktop" ? "desktop" : "mobile";
-  switch (desktopMobile) {
-    case "desktop":
-    case "mobile":
-      switch (intent) {
-        case UserIntent.StartNewCall:
-        case UserIntent.JoinExistingCall:
-        case UserIntent.StartNewCallDM:
-        case UserIntent.JoinExistingCallDM:
-          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
-          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = true;
-          break;
-        case UserIntent.StartNewCallDMVoice:
-        case UserIntent.JoinExistingCallDMVoice:
-          intentAndPlatformDerivedConfiguration.defaultAudioEnabled = true;
-          intentAndPlatformDerivedConfiguration.defaultVideoEnabled = false;
-          break;
-      }
   }
 
   const properties: UrlProperties = {
@@ -495,8 +455,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     homeserver: !isWidget ? parser.getParam("homeserver") : null,
     posthogApiHost: parser.getParam("posthogApiHost"),
     posthogApiKey: parser.getParam("posthogApiKey"),
-    posthogUserId:
-      parser.getParam("posthogUserId") ?? parser.getParam("analyticsID"),
+    posthogUserId: parser.getParam("posthogUserId"),
     rageshakeSubmitUrl: parser.getParam("rageshakeSubmitUrl"),
     sentryDsn: parser.getParam("sentryDsn"),
     sentryEnvironment: parser.getParam("sentryEnvironment"),
@@ -505,7 +464,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
 
   const configuration: Partial<UrlConfiguration> = {
     confineToRoom: parser.getFlag("confineToRoom"),
-    appPrompt: parser.getFlag("appPrompt"),
     preload: isWidget ? parser.getFlag("preload") : undefined,
     // Check hideHeader for backwards compatibility. If header is set, hideHeader
     // is ignored.
@@ -525,6 +483,8 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     ]),
     waitForCallPickup: parser.getFlag("waitForCallPickup"),
     autoLeaveWhenOthersLeft: parser.getFlag("autoLeave"),
+    noiseSuppression: parser.getFlagParam("noiseSuppression", true),
+    echoCancellation: parser.getFlagParam("echoCancellation", true),
   };
 
   // Log the final configuration for debugging purposes.
@@ -537,15 +497,12 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     properties,
     "configuration:",
     configuration,
-    "intentAndPlatformDerivedConfiguration:",
-    intentAndPlatformDerivedConfiguration,
   );
 
   return {
     ...properties,
     ...intentPreset,
     ...pickBy(configuration, (v?: unknown) => v !== undefined),
-    ...intentAndPlatformDerivedConfiguration,
   };
 };
 

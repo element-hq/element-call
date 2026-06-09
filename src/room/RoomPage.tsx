@@ -1,5 +1,6 @@
 /*
 Copyright 2021-2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -20,8 +21,6 @@ import {
   CheckIcon,
   UnknownSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
-import { useObservable } from "observable-hooks";
-import { map } from "rxjs";
 
 import { useClientLegacy } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
@@ -30,24 +29,22 @@ import { GroupCallView } from "./GroupCallView";
 import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { HomePage } from "../home/HomePage";
-import { platform } from "../Platform";
-import { AppSelectionModal } from "./AppSelectionModal";
 import { widget } from "../widget";
 import { CallTerminatedMessage, useLoadGroupCall } from "./useLoadGroupCall";
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useProfile } from "../profile/useProfile";
 import { useOptInAnalytics } from "../settings/settings";
-import { Config } from "../config/Config";
 import { Link } from "../button/Link";
 import { ErrorView } from "../ErrorView";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { MuteStates } from "../state/MuteStates";
 import { ObservableScope } from "../state/ObservableScope";
+import { calculateInitialMuteState } from "../state/initialMuteState.ts";
 
-export const RoomPage: FC = () => {
-  const { confineToRoom, appPrompt, preload, header, displayName, skipLobby } =
-    useUrlParams();
+export const RoomPage: FC = (): ReactNode => {
+  const urlParams = useUrlParams();
+  const { confineToRoom, preload, header, displayName, skipLobby } = urlParams;
   const { t } = useTranslation();
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
 
@@ -68,15 +65,22 @@ export const RoomPage: FC = () => {
 
   const devices = useMediaDevices();
   const [muteStates, setMuteStates] = useState<MuteStates | null>(null);
-  const joined$ = useObservable(
-    (inputs$) => inputs$.pipe(map(([joined]) => joined)),
-    [joined],
-  );
+
   useEffect(() => {
     const scope = new ObservableScope();
-    setMuteStates(new MuteStates(scope, devices, joined$));
+    setMuteStates(
+      new MuteStates(
+        scope,
+        devices,
+        calculateInitialMuteState(
+          urlParams.skipLobby,
+          urlParams.callIntent,
+          widget !== null,
+        ),
+      ),
+    );
     return (): void => scope.end();
-  }, [devices, joined$]);
+  }, [devices, urlParams]);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
@@ -128,7 +132,6 @@ export const RoomPage: FC = () => {
               confineToRoom={confineToRoom}
               preload={preload}
               skipLobby={skipLobby || wasInWaitForInviteState.current}
-              header={header}
               muteStates={muteStates}
             />
           )
@@ -234,28 +237,10 @@ export const RoomPage: FC = () => {
     }
   };
 
-  let content: ReactNode;
-  if (loading || isRegistering) {
-    content = <LoadingPage />;
-  } else if (error) {
-    content = <ErrorPage widget={widget} error={error} />;
-  } else if (!client) {
-    content = <RoomAuthView />;
-  } else if (!roomIdOrAlias) {
-    // TODO: This doesn't belong here, the app routes need to be reworked
-    content = <HomePage />;
-  } else {
-    content = groupCallView();
-  }
-
-  return (
-    <>
-      {content}
-      {/* On Android and iOS, show a prompt to launch the mobile app. */}
-      {appPrompt &&
-        Config.get().app_prompt &&
-        (platform === "android" || platform === "ios") &&
-        roomId && <AppSelectionModal roomId={roomId} />}
-    </>
-  );
+  if (loading || isRegistering) return <LoadingPage />;
+  if (error) return <ErrorPage widget={widget} error={error} />;
+  if (!client) return <RoomAuthView />;
+  // TODO: This doesn't belong here, the app routes need to be reworked
+  if (!roomIdOrAlias) return <HomePage />;
+  return groupCallView();
 };

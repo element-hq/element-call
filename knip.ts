@@ -9,7 +9,7 @@ import { type KnipConfig } from "knip";
 
 export default {
   vite: {
-    config: ["vite.config.ts", "vite-embedded.config.ts"],
+    config: ["vite.config.ts", "vite-embedded.config.ts", "vite-sdk.config.ts"],
   },
   entry: ["src/main.tsx", "i18next-parser.config.ts"],
   ignoreBinaries: [
@@ -18,6 +18,7 @@ export default {
     // https://docs.docker.com/compose/migrate/
     "docker-compose",
   ],
+  ignoreFiles: ["scripts/.pnpmfile.cjs"],
   ignoreDependencies: [
     // Used in CSS
     "normalize.css",
@@ -30,14 +31,10 @@ export default {
     "@types/content-type",
     "@types/sdp-transform",
     "@types/uuid",
-    // We obviously use this, but if the package has been linked with yarn link,
+    // We obviously use this, but if the package has been linked with pnpm link,
     // then Knip will flag it as a false positive
     // https://github.com/webpro-nl/knip/issues/766
     "@vector-im/compound-web",
-    // We need this so that TypeScript is happy with @livekit/track-processors.
-    // This might be a bug in the LiveKit repo but for now we fix it on the
-    // Element Call side.
-    "@types/dom-mediacapture-transform",
     "matrix-widget-api",
   ],
   ignoreExportsUsedInFile: true,

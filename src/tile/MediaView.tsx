@@ -7,7 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import { type FC, type ComponentProps, type ReactNode } from "react";
+import {
+  type FC,
+  type ComponentProps,
+  type ReactNode,
+  type ComponentType,
+  type SVGAttributes,
+} from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -16,9 +22,12 @@ import { ErrorSolidIcon } from "@vector-im/compound-design-tokens/assets/web/ico
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
-import { type EncryptionStatus } from "../state/MediaViewModel";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
-import { showHandRaisedTimer, useSetting } from "../settings/settings";
+import {
+  showConnectionStats as showConnectionStatsSetting,
+  showHandRaisedTimer,
+  useSetting,
+} from "../settings/settings";
 import { type ReactionOption } from "../reactions";
 import { ReactionIndicator } from "../reactions/ReactionIndicator";
 import { RTCConnectionStats } from "../RTCConnectionStats";
@@ -34,7 +43,8 @@ interface Props extends ComponentProps<typeof animated.div> {
   userId: string;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
-  encryptionStatus: EncryptionStatus;
+  status?: { text: string; Icon: ComponentType<SVGAttributes<SVGElement>> };
+  showNameTags: boolean;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   mxcAvatarUrl: string | undefined;
@@ -43,9 +53,10 @@ interface Props extends ComponentProps<typeof animated.div> {
   raisedHandTime?: Date;
   currentReaction?: ReactionOption;
   raisedHandOnClick?: () => void;
-  localParticipant: boolean;
+  waitingForMedia?: boolean;
   audioStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
+  rtcBackendIdentity?: string;
   // The focus url, mainly for debugging purposes
   focusUrl?: string;
 }
@@ -62,25 +73,45 @@ export const MediaView: FC<Props> = ({
   userId,
   videoEnabled,
   unencryptedWarning,
+  showNameTags,
   nameTagLeadingIcon,
   displayName,
   mxcAvatarUrl,
   focusable,
   primaryButton,
-  encryptionStatus,
+  status,
   raisedHandTime,
   currentReaction,
   raisedHandOnClick,
-  localParticipant,
+  waitingForMedia,
   audioStreamStats,
   videoStreamStats,
+  rtcBackendIdentity,
   focusUrl,
   ...props
 }) => {
   const { t } = useTranslation();
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
+  const [showConnectionStats] = useSetting(showConnectionStatsSetting);
 
   const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
+
+  const warnings = unencryptedWarning && (
+    <Tooltip
+      label={t("common.unencrypted")}
+      placement="bottom"
+      isTriggerInteractive={false}
+      nonInteractiveTriggerTabIndex={focusable ? undefined : -1}
+    >
+      <ErrorSolidIcon
+        width={20}
+        height={20}
+        className={styles.errorIcon}
+        role="img"
+        aria-label={t("common.unencrypted")}
+      />
+    </Tooltip>
+  );
 
   return (
     <animated.div
@@ -99,7 +130,11 @@ export const MediaView: FC<Props> = ({
           name={displayName}
           size={avatarSize}
           src={mxcAvatarUrl}
-          className={styles.avatar}
+          className={classNames(styles.avatar, {
+            // When the avatar is overlaid with a status, make it translucent
+            // for readability
+            [styles.translucent]: status,
+          })}
           style={{ display: video && videoEnabled ? "none" : "initial" }}
         />
         {video?.publication !== undefined && (
@@ -129,17 +164,29 @@ export const MediaView: FC<Props> = ({
             />
           )}
         </div>
-        {!video && !localParticipant && (
+        {waitingForMedia && (
           <div className={styles.status}>
             {t("video_tile.waiting_for_media")}
+            {showConnectionStats ? " " + rtcBackendIdentity : ""}
           </div>
         )}
-        {(audioStreamStats || videoStreamStats) && (
-          <RTCConnectionStats
-            audio={audioStreamStats}
-            video={videoStreamStats}
-            focusUrl={focusUrl}
-          />
+        {showConnectionStats && (
+          <>
+            <RTCConnectionStats
+              audio={audioStreamStats}
+              video={videoStreamStats}
+              focusUrl={focusUrl}
+              rtcBackendIdentity={rtcBackendIdentity}
+            />
+          </>
+        )}
+        {status && (
+          <div className={styles.status}>
+            <status.Icon width={16} height={16} aria-hidden />
+            <Text as="span" size="sm" weight="medium">
+              {status.text}
+            </Text>
+          </div>
         )}
         {/* TODO: Bring this back once encryption status is less broken */}
         {/*encryptionStatus !== EncryptionStatus.Okay && (
@@ -156,34 +203,23 @@ export const MediaView: FC<Props> = ({
               </Text>
             </div>
           )*/}
-        <div className={styles.nameTag}>
-          {nameTagLeadingIcon}
-          <Text
-            as="span"
-            size="sm"
-            weight="medium"
-            className={styles.name}
-            data-testid="name_tag"
-          >
-            {displayName}
-          </Text>
-          {unencryptedWarning && (
-            <Tooltip
-              label={t("common.unencrypted")}
-              placement="bottom"
-              isTriggerInteractive={false}
-              nonInteractiveTriggerTabIndex={focusable ? undefined : -1}
+        {showNameTags && targetWidth >= 100 ? (
+          <div className={styles.nameTag}>
+            {nameTagLeadingIcon}
+            <Text
+              as="span"
+              size="sm"
+              weight="medium"
+              className={styles.name}
+              data-testid="name_tag"
             >
-              <ErrorSolidIcon
-                width={20}
-                height={20}
-                className={styles.errorIcon}
-                role="img"
-                aria-label={t("common.unencrypted")}
-              />
-            </Tooltip>
-          )}
-        </div>
+              {displayName}
+            </Text>
+            {warnings}
+          </div>
+        ) : (
+          warnings
+        )}
         {primaryButton}
       </div>
     </animated.div>

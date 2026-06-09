@@ -7,23 +7,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
-      - name: Yarn cache
+      - name: pnpm cache
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          cache: "yarn"
+          cache: "pnpm"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "yarn install --immutable"
+        # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
+        run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
       - name: Prettier
-        run: "yarn run prettier:check"
+        run: "pnpm run prettier:check"
       - name: i18n
-        run: "yarn run i18n:check"
+        run: "pnpm run i18n:check"
       - name: ESLint
-        run: "yarn run lint:eslint"
+        run: "pnpm run lint:eslint"
       - name: Type check
-        run: "yarn run lint:types"
+        run: "pnpm run lint:types"
       - name: Dead code analysis
-        run: "yarn run lint:knip"
+        run: "pnpm run lint:knip"

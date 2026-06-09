@@ -22,12 +22,6 @@
     "upload_file": "Ladda upp fil"
   },
   "analytics_notice": "Genom att delta i denna beta samtycker du till insamling av anonyma uppgifter, som vi använder för att förbättra produkten. Du kan hitta mer information om vilka data vi spårar i vår <2>integritetspolicy</2> och vår <5>cookiepolicy</5>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Fortsätt i webbläsaren",
-    "open_in_app": "Öppna i appen",
-    "text": "Är du redo att gå med?",
-    "title": "Välj app"
-  },
   "call_ended_view": {
     "create_account_button": "Skapa konto",
     "create_account_prompt": "<0>Varför inte avsluta genom att skapa ett lösenord för att behålla ditt konto?</0><1>Du kommer att kunna behålla ditt namn och ställa in en avatar för användning vid framtida samtal</1>",
@@ -55,6 +49,7 @@
     "profile": "Profil",
     "reaction": "Reaktion",
     "reactions": "Reaktioner",
+    "reconnecting": "Återansluter …",
     "settings": "Inställningar",
     "unencrypted": "Inte krypterad",
     "username": "Användarnamn",
@@ -63,6 +58,14 @@
   "developer_mode": {
     "always_show_iphone_earpiece": "Visa iPhone-hörsnäckealternativ på alla plattformar",
     "crypto_version": "Kryptoversion: {{version}}",
+    "custom_livekit_url": {
+      "current_url": "För närvarande inställd på: ",
+      "from_config": "För närvarande är ingen överskrivning inställd. URL från well-known eller konfig används.",
+      "label": "Anpassad Livekit-url",
+      "reset": "Återställ överskrivning",
+      "save": "Spara",
+      "saving": "Sparar…"
+    },
     "debug_tile_layout_label": "Felsök panelarrangemang",
     "device_id": "Enhets-ID: {{id}}",
     "duplicate_tiles_label": "Antal ytterligare panelkopior per deltagare",
@@ -70,13 +73,25 @@
     "hostname": "Värdnamn: {{hostname}}",
     "livekit_server_info": "LiveKit-serverinfo",
     "livekit_sfu": "LiveKit SFU: {{url}}",
+    "matrixRTCMode": {
+      "Comptibility": {
+        "description": "Kompatibel med hemservrar som inte stöder sticky events (men alla andra EC-klienter är v0.17.0 eller senare)",
+        "label": "Kompatibilitet: tillståndshändelser och multi-SFU"
+      },
+      "Legacy": {
+        "description": "Kompatibel med äldre versioner av EC som inte stöder multi SFU",
+        "label": "Legacy: state events och oldest membership SFU"
+      },
+      "Matrix_2_0": {
+        "description": "Endast kompatibel med hemservrar som stöder sticky events och alla EC-klienter v0.17.0 eller senare",
+        "label": "Matrix 2.0: sticky events & multi SFU"
+      },
+      "title": "MatrixRTC-läge"
+    },
     "matrix_id": "Matrix-ID: {{id}}",
     "mute_all_audio": "Tysta allt ljud (deltagare, reaktioner, anslutningsljud)",
     "show_connection_stats": "Visa anslutningsstatistik",
-    "show_non_member_tiles": "Visa paneler för media som inte är medlemmar",
-    "url_params": "URL-parametrar",
-    "use_new_membership_manager": "Använd den nya implementeringen av samtals-MembershipManager",
-    "use_to_device_key_transport": "Använd \"till enhet\"-nyckeltransport. Detta kommer att falla tillbaka till rumsnyckeltransport om en annan samtalsmedlem skickar en rumsnyckel."
+    "url_params": "URL-parametrar"
   },
   "disconnected_banner": "Anslutningen till servern har brutits.",
   "error": {
@@ -87,11 +102,15 @@
     "connection_lost_description": "Du kopplades bort från samtalet.",
     "e2ee_unsupported": "Inkompatibel webbläsare",
     "e2ee_unsupported_description": "Din webbläsare stöder inte krypterade samtal. Webbläsare som stöds inkluderar Chrome, Safari och Firefox 117+.",
+    "failed_to_start_livekit": "Misslyckades att starta Livekit-anslutning",
     "generic": "Något gick fel",
     "generic_description": "Att skicka felsökningsloggar hjälper oss att spåra problemet.",
     "insufficient_capacity": "Otillräcklig kapacitet",
     "insufficient_capacity_description": "Servern har nått sin maximala kapacitet och du kan inte gå med i samtalet just nu. Försök igen senare, eller kontakta serveradministratören om problemet kvarstår.",
-    "matrix_rtc_focus_missing": "Servern är inte konfigurerad för att fungera med {{brand}}. Vänligen kontakta serveradministratören (Domän: {{domain}}, Felkod: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "Servern är inte konfigurerad för att fungera med {{brand}}. Vänligen kontakta din serveradministratör (Domän: {{domain}}, Felkod: {{ errorCode }}).",
+    "membership_manager": "Fel i medlemskapshanteraren",
+    "membership_manager_description": "Medlemskapshanteraren var tvungen att stängas av. Detta orsakas av många misslyckade nätverksförfrågningar i rad.",
+    "no_matrix_2_authorization_service": "Auktoriseringstjänsten för din medieserver (SFU) är föråldrad.",
     "open_elsewhere": "Öppnades i en annan flik",
     "open_elsewhere_description": "{{brand}} har öppnats i en annan flik. Om det inte låter rätt, pröva att ladda om sidan.",
     "room_creation_restricted": "Misslyckades att skapa samtal",
@@ -225,7 +244,6 @@
   "video_tile": {
     "always_show": "Visa alltid",
     "camera_starting": "Video laddar …",
-    "change_fit_contain": "Anpassa till ram",
     "collapse": "Kollapsa",
     "expand": "Expandera",
     "mute_for_me": "Tysta för mig",
