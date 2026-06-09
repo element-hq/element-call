@@ -38,7 +38,6 @@ import { useAudioContext } from "../useAudioContext";
 import { ActiveCall } from "./InCallView";
 import {
   flushPromises,
-  mockConfig,
   mockEmitter,
   mockMatrixRoom,
   mockMatrixRoomMember,
@@ -51,7 +50,6 @@ import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary";
 import { ElementWidgetActions, type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
-import { MatrixRTCMode } from "../config/ConfigOptions";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { constant } from "../state/Behavior";
@@ -134,7 +132,6 @@ function createGroupCallView(
   widget: WidgetHelpers | null,
   joined = true,
   options: {
-    doesServerSupportUnstableFeature?: (feature: string) => Promise<boolean>;
     withErrorBoundary?: boolean;
   } = {},
 ): {
@@ -146,9 +143,6 @@ function createGroupCallView(
     getUserId: () => localRtcMember.userId,
     getDeviceId: () => localRtcMember.deviceId,
     getRoom: (rId) => (rId === roomId ? room : null),
-    doesServerSupportUnstableFeature:
-      options.doesServerSupportUnstableFeature ??
-      vi.fn().mockResolvedValue(true),
   } as Partial<MatrixClient> as MatrixClient;
   const room = mockMatrixRoom({
     relations: {
@@ -416,28 +410,37 @@ test.skip("GroupCallView shows errors that occur during joining", async () => {
   screen.getByText("Call is not supported");
 });
 
-test("shows StickyEventsRequiredError when matrix_2_0 is forced but homeserver lacks MSC4354", async () => {
-  mockConfig({ matrix_rtc_mode: MatrixRTCMode.Matrix_2_0 });
-  createGroupCallView(null, true, {
-    doesServerSupportUnstableFeature: vi.fn().mockResolvedValue(false),
+test("translates UnsupportedStickyEventsEndpointError to the StickyEventsRequiredError screen", async () => {
+  // Match the shape the SDK emits on
+  // MatrixRTCSessionEvent.MembershipManagerError when matrix_2_0 mode is
+  // configured but the homeserver does not advertise MSC4354.
+  const stickyError = new Error("Server does not support the sticky events");
+  stickyError.name = "UnsupportedStickyEventsEndpointError";
+
+  const { rtcSession } = createGroupCallView(null, true, {
     withErrorBoundary: true,
   });
+
+  await act(() =>
+    rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, stickyError),
+  );
+
   await screen.findByText("Homeserver does not support Matrix 2.0 calls");
 });
 
-test("does not show StickyEventsRequiredError when homeserver supports MSC4354", async () => {
-  mockConfig({ matrix_rtc_mode: MatrixRTCMode.Matrix_2_0 });
-  const { getByText } = createGroupCallView(null, true, {
-    doesServerSupportUnstableFeature: vi.fn().mockResolvedValue(true),
+test("falls back to ConnectionLostError for unrecognised membership manager errors", async () => {
+  const { rtcSession } = createGroupCallView(null, true, {
     withErrorBoundary: true,
   });
-  // Give the async support check a chance to resolve.
-  await flushPromises();
-  expect(
-    screen.queryByText("Homeserver does not support Matrix 2.0 calls"),
-  ).toBeNull();
-  // The normal call UI (mocked ActiveCall) renders instead.
-  expect(getByText("Leave")).toBeInTheDocument();
+
+  await act(() =>
+    rtcSession.emit(
+      MatrixRTCSessionEvent.MembershipManagerError,
+      new Error("something else broke"),
+    ),
+  );
+
+  await screen.findByText("Connection lost");
 });
 
 test("user can reconnect after a membership manager error", async () => {
