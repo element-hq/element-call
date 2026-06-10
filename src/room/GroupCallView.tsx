@@ -13,7 +13,12 @@ import {
   useMemo,
   useState,
 } from "react";
-import { type MatrixClient, JoinRule, type Room } from "matrix-js-sdk";
+import {
+  type MatrixClient,
+  JoinRule,
+  type Room,
+  UnsupportedStickyEventsEndpointError,
+} from "matrix-js-sdk";
 import {
   Room as LivekitRoom,
   isE2EESupported as isE2EESupportedBrowser,
@@ -164,12 +169,13 @@ export const GroupCallView: FC<Props> = ({
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
     (error) => {
-      // The SDK throws this typed error when matrix_rtc_mode=matrix_2_0 is in
-      // effect but the homeserver does not advertise MSC4354 (sticky events).
-      // Surface the actual cause instead of a generic connection-lost screen.
+      // When matrix_rtc_mode=matrix_2_0 is in effect but the homeserver does
+      // not advertise MSC4354 (sticky events), the SDK throws an
+      // `UnsupportedStickyEventsEndpointError`. The MembershipManager
+      // scheduler wraps it and exposes the original via `.cause`.
       if (
         error instanceof Error &&
-        error.name === "UnsupportedStickyEventsEndpointError"
+        error.cause instanceof UnsupportedStickyEventsEndpointError
       ) {
         setExternalError(new StickyEventsRequiredError());
       } else {

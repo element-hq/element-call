@@ -19,7 +19,12 @@ import {
   vitest,
 } from "vitest";
 import { render, waitFor, screen, act } from "@testing-library/react";
-import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
+import {
+  type MatrixClient,
+  JoinRule,
+  type RoomState,
+  UnsupportedStickyEventsEndpointError,
+} from "matrix-js-sdk";
 import {
   MatrixRTCSessionEvent,
   type MatrixRTCSession,
@@ -410,19 +415,26 @@ test.skip("GroupCallView shows errors that occur during joining", async () => {
   screen.getByText("Call is not supported");
 });
 
-test("translates UnsupportedStickyEventsEndpointError to the StickyEventsRequiredError screen", async () => {
-  // Match the shape the SDK emits on
-  // MatrixRTCSessionEvent.MembershipManagerError when matrix_2_0 mode is
-  // configured but the homeserver does not advertise MSC4354.
-  const stickyError = new Error("Server does not support the sticky events");
-  stickyError.name = "UnsupportedStickyEventsEndpointError";
+test("translates wrapped UnsupportedStickyEventsEndpointError to the StickyEventsRequiredError screen", async () => {
+  // Mirror the shape the SDK emits: the MembershipManager scheduler wraps
+  // the original UnsupportedStickyEventsEndpointError in a generic Error
+  // but preserves the original on `.cause`.
+  const stickyError = new UnsupportedStickyEventsEndpointError(
+    "Server does not support the sticky events",
+    "sendStickyEvent",
+  );
+  const wrappedError = new Error(
+    "The MembershipManager shut down because of the end condition: " +
+      String(stickyError),
+    { cause: stickyError },
+  );
 
   const { rtcSession } = createGroupCallView(null, true, {
     withErrorBoundary: true,
   });
 
   await act(() =>
-    rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, stickyError),
+    rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, wrappedError),
   );
 
   await screen.findByText("Homeserver does not support Matrix 2.0 calls");
