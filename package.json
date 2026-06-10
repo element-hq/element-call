@@ -79,7 +79,6 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/sdp-transform": "^2.4.5",
-    "@types/uuid": "10",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@typescript-eslint/parser": "^8.31.0",
     "@use-gesture/react": "^10.2.11",
