@@ -1,9 +1,9 @@
 .reactionIndicatorWidget {
   display: flex;
-  background-color: #00000030;
   border-radius: var(--cpd-radius-pill-effect);
   box-shadow: 0 0 var(--cpd-space-2x) #00000040;
-  background: "ffffff40";
+  color: var(--cpd-color-text-on-solid-primary);
+  background: var(--cpd-color-icon-secondary-alpha);
   backdrop-filter: blur(10px);
   outline: var(--cpd-border-width-1) solid var(--cpd-color-alpha-gray-400);
   outline-offset: calc(-1 * var(--cpd-border-width-1));
@@ -33,7 +33,6 @@
 
 .reaction {
   margin: var(--cpd-space-1x);
-  color: white;
   display: flex;
   align-items: center;
   border-radius: var(--cpd-radius-pill-effect);

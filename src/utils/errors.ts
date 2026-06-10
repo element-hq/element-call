@@ -8,6 +8,8 @@ Please see LICENSE in the repository root for full details.
 import { t } from "i18next";
 import { type ConnectionError } from "livekit-client";
 
+import { i18nKey } from "./i18n";
+
 export enum ErrorCode {
   /**
    * Configuration problem due to no MatrixRTC backend/SFU is exposed via .well-known and no fallback configured.
@@ -268,9 +270,9 @@ export class PeerConnectionTimeoutError extends ElementCallError {
       ErrorCode.SFU_ERROR,
       ErrorCategory.NETWORK_CONNECTIVITY,
     );
-    // Mark translation key for i18n extraction
-    // t("error.peer_connection_timeout_description");
-    this.localisedMessageKey = "error.peer_connection_timeout_description";
+    this.localisedMessageKey = i18nKey(
+      "error.peer_connection_timeout_description",
+    );
     this.localisedMessageValues = {
       linkUrl:
         "https://docs.element.io/latest/element-server-suite-pro/configuring-components/configuring-matrix-rtc/#sfu-connectivity-troubleshooting",
@@ -285,9 +287,9 @@ export class LivekitConnectionError extends ElementCallError {
       ErrorCode.SFU_ERROR,
       ErrorCategory.NETWORK_CONNECTIVITY,
     );
-    // Mark translation key for i18n extraction
-    // t("error.livekit_connection_error_description");
-    this.localisedMessageKey = "error.livekit_connection_error_description";
+    this.localisedMessageKey = i18nKey(
+      "error.livekit_connection_error_description",
+    );
     this.localisedMessageValues = { reason: cause.reasonName };
   }
 }

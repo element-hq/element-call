@@ -252,6 +252,14 @@ pnpm backend
 > browser's trusted certificates or by simply copying and pasting each URL into
 > your browser’s address bar and follow the prompts to add the exception.
 
+### Updating snapshots
+
+To update snapshots used in tests, use Vitest's `-u` flag, e.g.:
+
+```sh
+pnpm test DeveloperSettingsTab -u
+```
+
 ### Playwright tests
 
 Our Playwright tests run automatically as part of our CI along with our other
