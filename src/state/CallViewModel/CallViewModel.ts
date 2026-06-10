@@ -29,7 +29,6 @@ import {
   pairwise,
   race,
   scan,
-  skipWhile,
   startWith,
   Subject,
   switchAll,
@@ -39,10 +38,13 @@ import {
   tap,
   throttleTime,
   timer,
+  takeUntil,
+  concat,
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   MembershipManagerEvent,
+  type RTCCallIntent,
   type LivekitTransportConfig,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -230,9 +232,9 @@ export interface CallViewModel {
   // lifecycle
   autoLeave$: Observable<AutoLeaveReason>;
   /**
-   * Whether we are ringing a call recipient.
+   * Whether we are ringing a call recipient. Contains the ringing intent if so.
    */
-  ringing$: Behavior<boolean>;
+  ringingIntent$: Behavior<RTCCallIntent | null>;
   /** Observable that emits when the user should leave the call (hangup pressed, widget action, error).
    * THIS DOES NOT LEAVE THE CALL YET. The only way to leave the call (send the hangup event) is
    *  - by ending the scope
@@ -611,20 +613,6 @@ export function createCallViewModel$(
     );
 
   // ------------------------------------------------------------------------
-  // callLifecycle
-
-  // TODO if we are in "unknown" state we need a loading rendering (or empty screen)
-  // Otherwise it looks like we already connected and only than the ringing starts which is weird.
-  const { callPickupState$, autoLeave$ } = createCallNotificationLifecycle$({
-    scope: scope,
-    memberships$: memberships$,
-    sentCallNotification$: createSentCallNotification$(scope, matrixRTCSession),
-    receivedDecline$: createReceivedDecline$(matrixRoom),
-    options: options,
-    localUser: { userId: userId, deviceId: deviceId },
-  });
-
-  // ------------------------------------------------------------------------
   // matrixMemberMetadataStore
 
   const matrixRoomMembers$ = createRoomMembers$(scope, matrixRoom);
@@ -633,6 +621,21 @@ export function createCallViewModel$(
     scope.behavior(memberships$.pipe(map((mems) => mems.value))),
     matrixRoomMembers$,
   );
+
+  // ------------------------------------------------------------------------
+  // callLifecycle
+
+  // TODO if we are in "unknown" state we need a loading rendering (or empty screen)
+  // Otherwise it looks like we already connected and only than the ringing starts which is weird.
+  const { ringAttempts$, autoLeave$ } = createCallNotificationLifecycle$({
+    scope,
+    memberships$,
+    matrixRoomMembers$,
+    sentCallNotification$: createSentCallNotification$(scope, matrixRTCSession),
+    receivedDecline$: createReceivedDecline$(matrixRoom),
+    options,
+    localUser: { userId, deviceId },
+  });
 
   const allConnections$ = scope.behavior(
     connectionManager.connectionManagerData$.pipe(map((d) => d.value)),
@@ -782,49 +785,39 @@ export function createCallViewModel$(
     ),
   );
 
-  const ringingMedia$ = scope.behavior<RingingMediaViewModel[]>(
-    combineLatest([userMedia$, matrixRoomMembers$, callPickupState$]).pipe(
-      generateItems(
-        "CallViewModel ringingMedia$",
-        function* ([userMedia, roomMembers, callPickupState]) {
-          if (
-            callPickupState === "ringing" ||
-            callPickupState === "timeout" ||
-            callPickupState === "decline"
-          ) {
-            // TODO: Respect io.element.functional_members
-            for (const member of roomMembers.values()) {
-              if (!userMedia.some((vm) => vm.userId === member.userId))
-                yield {
-                  keys: [member.userId],
-                  data: callPickupState,
-                };
-            }
-          }
-        },
-        (scope, pickupState$, userId) =>
-          createRingingMedia({
-            id: `ringing:${userId}`,
-            userId,
-            displayName$: scope.behavior(
-              matrixRoomMembers$.pipe(
-                map((members) => members.get(userId)?.rawDisplayName || userId),
-              ),
-            ),
-            mxcAvatarUrl$:
-              matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
-            pickupState$,
-            muteStates,
-          }),
+  const ringingMedia$ = scope.behavior<RingingMediaViewModel | null>(
+    ringAttempts$.pipe(
+      switchMap(({ intent, recipient, outcome$ }) =>
+        outcome$.pipe(
+          startWith("ringing" as const),
+          generateItems(
+            "CallViewModel ringingMedia$",
+            function* (pickupState) {
+              if (pickupState !== "accept")
+                yield { keys: [intent, recipient], data: pickupState };
+            },
+            (scope, pickupState$, intent, userId) =>
+              createRingingMedia({
+                id: `ringing:${userId}`,
+                userId,
+                displayName$: scope.behavior(
+                  matrixRoomMembers$.pipe(
+                    map(
+                      (members) =>
+                        members.get(userId)?.rawDisplayName || userId,
+                    ),
+                  ),
+                ),
+                mxcAvatarUrl$:
+                  matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
+                pickupState$,
+                intent,
+              }),
+          ),
+          map(([media]) => media ?? null),
+        ),
       ),
-      distinctUntilChanged(shallowEquals),
-      tap((ringingMedia) => {
-        if (ringingMedia.length > 1)
-          // Warn that UI may do something unexpected in this case
-          logger.warn(
-            `Ringing more than one participant is not supported (ringing ${ringingMedia.map((vm) => vm.userId).join(", ")})`,
-          );
-      }),
+      startWith(null),
     ),
   );
 
@@ -866,11 +859,7 @@ export function createCallViewModel$(
     matrixLivekitMembers$.pipe(map((ms) => ms.value.length)),
   );
 
-  const leaveSoundEffect$ = combineLatest([callPickupState$, userMedia$]).pipe(
-    // Until the call is successful, do not play a leave sound.
-    // If callPickupState$ is null, then we always play the sound as it will not conflict with a decline sound.
-    skipWhile(([c]) => c !== null && c !== "success"),
-    map(([, userMedia]) => userMedia),
+  const leaveSoundEffect$ = userMedia$.pipe(
     pairwise(),
     filter(
       ([prev, current]) =>
@@ -879,6 +868,9 @@ export function createCallViewModel$(
     ),
     map(() => {}),
     throttleTime(THROTTLE_SOUND_EFFECT_MS),
+    // Avoid doubling up on any auto-leave sounds (e.g. the decline sound),
+    // which are handled elsewhere
+    takeUntil(autoLeave$),
   );
 
   const userHangup$ = new Subject<void>();
@@ -983,8 +975,8 @@ export function createCallViewModel$(
   }>(
     ringingMedia$.pipe(
       switchMap((ringingMedia) => {
-        if (ringingMedia.length > 0)
-          return of({ spotlight: ringingMedia, pip$: localUserMediaForPip$ });
+        if (ringingMedia !== null)
+          return of({ spotlight: [ringingMedia], pip$: localUserMediaForPip$ });
 
         return screenShares$.pipe(
           switchMap((screenShares) => {
@@ -1140,14 +1132,10 @@ export function createCallViewModel$(
           // show ringing media instead
           if (userMedia.length === 1)
             return ringingMedia$.pipe(
-              map((ringingMedia) => {
-                return ringingMedia.length === 1
-                  ? {
-                      local,
-                      remote: ringingMedia[0],
-                    }
-                  : null;
-              }),
+              map(
+                (ringingMedia) =>
+                  ringingMedia && { local, remote: ringingMedia },
+              ),
             );
         }
       }
@@ -1697,8 +1685,14 @@ export function createCallViewModel$(
 
   return {
     autoLeave$: autoLeave$,
-    ringing$: scope.behavior(
-      callPickupState$.pipe(map((state) => state === "ringing")),
+    ringingIntent$: scope.behavior(
+      ringAttempts$.pipe(
+        switchMap(({ intent, outcome$ }) =>
+          // Hold the intent as the value until the ring attempt completes
+          concat(of(intent), NEVER.pipe(takeUntil(outcome$)), of(null)),
+        ),
+        startWith<RTCCallIntent | null>(null),
+      ),
     ),
     leave$: leave$,
     hangup: (): void => userHangup$.next(),

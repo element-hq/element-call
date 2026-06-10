@@ -77,7 +77,6 @@ const RingingMediaTile: FC<RingingMediaTileProps> = ({
 }) => {
   const { t } = useTranslation();
   const pickupState = useBehavior(vm.pickupState$);
-  const videoEnabled = useBehavior(vm.videoEnabled$);
 
   return (
     <MediaView
@@ -89,11 +88,12 @@ const RingingMediaTile: FC<RingingMediaTileProps> = ({
         pickupState === "ringing"
           ? {
               text: t("video_tile.calling"),
-              Icon: videoEnabled ? VideoCallSolidIcon : VoiceCallSolidIcon,
+              Icon:
+                vm.intent === "video" ? VideoCallSolidIcon : VoiceCallSolidIcon,
             }
           : { text: t("video_tile.call_ended"), Icon: EndCallIcon }
       }
-      videoEnabled={videoEnabled}
+      videoEnabled={false}
       videoFit="cover"
       mirror={false}
       {...props}

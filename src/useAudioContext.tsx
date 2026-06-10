@@ -114,7 +114,7 @@ interface Props<S extends string> {
 }
 
 interface UseAudioContext<S extends string> {
-  playSound(soundName: S, volumeOverwrite?: number): Promise<void>;
+  playSound(soundName: S): Promise<void>;
   playSoundLooping(soundName: S, delayS?: number): () => Promise<void>;
   /**
    * Map of sound name to duration in seconds.
@@ -195,7 +195,7 @@ export function useAudioContext<S extends string>(
   }
 
   return {
-    playSound: async (name, volumeOverwrite?: number): Promise<void> => {
+    playSound: async (name): Promise<void> => {
       if (!audioBuffers[name]) {
         logger.debug(`Tried to play a sound that wasn't buffered (${name})`);
         return;
@@ -203,7 +203,7 @@ export function useAudioContext<S extends string>(
       return playSound(
         audioContext,
         audioBuffers[name],
-        volumeOverwrite ?? soundEffectVolume * earpieceVolume,
+        soundEffectVolume * earpieceVolume,
         earpiecePan,
       );
     },
