@@ -149,7 +149,7 @@ class IndexedDBLogStore {
    * @return Resolves when the store is ready.
    */
   public async connect(): Promise<void> {
-    const req = this.indexedDB.open("logs");
+    const req = this.indexedDB.open("logs-element-call");
     return new Promise((resolve, reject) => {
       req.onsuccess = (): void => {
         this.db = req.result;
