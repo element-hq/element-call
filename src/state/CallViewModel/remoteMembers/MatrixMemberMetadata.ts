@@ -115,8 +115,14 @@ export const createMatrixMemberMetadata$ = (
   memberships$: Behavior<Pick<CallMembership, "userId">[]>,
   roomMembers$: Behavior<RoomMemberMap>,
 ): {
-  createDisplayNameBehavior$: (userId: string) => Behavior<string | undefined>;
-  createAvatarUrlBehavior$: (userId: string) => Behavior<string | undefined>;
+  createDisplayNameBehavior$: (
+    scope: ObservableScope,
+    userId: string,
+  ) => Behavior<string | undefined>;
+  createAvatarUrlBehavior$: (
+    scope: ObservableScope,
+    userId: string,
+  ) => Behavior<string | undefined>;
   displaynameMap$: Behavior<Map<string, string>>;
   avatarMap$: Behavior<Map<string, string | undefined>>;
 } => {
@@ -136,13 +142,13 @@ export const createMatrixMemberMetadata$ = (
     ),
   );
   return {
-    createDisplayNameBehavior$: (userId: string) =>
+    createDisplayNameBehavior$: (scope: ObservableScope, userId: string) =>
       scope.behavior(
         displaynameMap$.pipe(
           map((displaynameMap) => displaynameMap.get(userId)),
         ),
       ),
-    createAvatarUrlBehavior$: (userId: string) =>
+    createAvatarUrlBehavior$: (scope: ObservableScope, userId: string) =>
       scope.behavior(
         roomMembers$.pipe(
           map((roomMembers) => roomMembers.get(userId)?.getMxcAvatarUrl()),
