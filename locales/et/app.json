@@ -49,6 +49,7 @@
     "profile": "Profiil",
     "reaction": "Reaktsioon",
     "reactions": "Reageerimised",
+    "reconnecting": "Ühendan uuesti…",
     "settings": "Seadistused",
     "unencrypted": "Krüptimata",
     "username": "Kasutajanimi",
@@ -57,6 +58,14 @@
   "developer_mode": {
     "always_show_iphone_earpiece": "Näita iPhone'i kuulari valikut kõikidel platvormidel",
     "crypto_version": "Krüptoteekide versioon: {{version}}",
+    "custom_livekit_url": {
+      "current_url": "Hetkel määratud olekuks: ",
+      "from_config": "Hetkel on ülekirjutamine määratlemata. Kasutusel on võrguaadress „well-known“-failist või seadistustest.",
+      "label": "Sisu määratud Livekit-url",
+      "reset": "Lähtesta ülekirjutamine",
+      "save": "Salvesta",
+      "saving": "Salvestan..."
+    },
     "debug_tile_layout_label": "Meediapaanide paigutus",
     "device_id": "Seadme tunnus: {{id}}",
     "duplicate_tiles_label": "Täiendavaid vaadete koopiaid osaleja kohta",
@@ -64,13 +73,13 @@
     "hostname": "Hosti nimi: {{hostname}}",
     "livekit_server_info": "LiveKiti serveri teave",
     "livekit_sfu": "LiveKit SFU: {{url}}",
+    "matrixRTCMode": {
+      "title": "MatrixRTC režiim"
+    },
     "matrix_id": "Matrixi kasutajatunnus: {{id}}",
     "mute_all_audio": "Summuta kõik helid (osalejad, regeerimised, liitumise helid)",
     "show_connection_stats": "Näita ühenduse statistikat",
-    "show_non_member_tiles": "Näita ka mitteseotud meedia paane",
-    "url_params": "Võrguaadressi parameetrid",
-    "use_new_membership_manager": "Kasuta kõne liikmelisuse halduri (MembershipManager) uut implementatsiooni",
-    "use_to_device_key_transport": "Kasuta seadmepõhist krüptovõtmete vahetust. Kui jututoa liige peaks saatma jututoakohase krüptovõtme, siis kasuta jututoakohast võtmevahetust"
+    "url_params": "Võrguaadressi parameetrid"
   },
   "disconnected_banner": "Võrguühendus serveriga on katkenud.",
   "error": {
@@ -81,11 +90,14 @@
     "connection_lost_description": "Sinu ühendus selle kõnega on katkenud.",
     "e2ee_unsupported": "Mitteühilduv brauser",
     "e2ee_unsupported_description": "Sinu veebibrauser ei toeta krüptitud kõnesid. Toimivad veebibrauserid on Chrome, Safari, ja Firefox 117+.",
+    "failed_to_start_livekit": "Ei õnnestunud käivitada Livekiti ühendust",
     "generic": "Midagi läks valesti",
     "generic_description": "Silumis- ja vealogide saatmine võib aidata meid vea põhjuseni jõuda.",
     "insufficient_capacity": "Mittepiisav jõudlus",
     "insufficient_capacity_description": "Serveri jõudluse ülempiir on hetkel ületatud ja sa ei saa hetkel selle kõnega liituda. Proovi hiljem uuesti või kui probleem kestab kauem, siis võta ühendust serveri haldajaga.",
-    "matrix_rtc_focus_missing": "See server pole seadistatud töötama rakendusega {{brand}}. Palun võta ühendust serveri halduriga (domeen: {{domain}}, veakood: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "See server pole seadistatud töötama rakendusega {{brand}}. Palun võta ühendust serveri halduriga (domeen: {{domain}}, veakood: {{ errorCode }}).",
+    "membership_manager": "Viga liikmelisuse haldamisel",
+    "membership_manager_description": "Liikmelisuse haldur pidi oma töö lõpetama. Selle põhjuseks olid paljud järjestikused ebaõnnestunud võrgupäringud.",
     "open_elsewhere": "Avatud teisel vahekaardil",
     "open_elsewhere_description": "{{brand}} on avatud teisel vahekaardil. Kui see ei tundu olema õige, proovi selle lehe uuesti laadimist.",
     "room_creation_restricted": "Kõne loomine ei õnnestunud",
@@ -103,7 +115,8 @@
   },
   "handset": {
     "overlay_back_button": "Tagasi esineja vaatesse",
-    "overlay_description": "See toimib vaid rakenduse kasutamise ajal"
+    "overlay_description": "See toimib vaid rakenduse kasutamise ajal",
+    "overlay_title": "Telefonirežiim"
   },
   "hangup_button_label": "Lõpeta kõne",
   "header_label": "Avaleht: Element Call",
@@ -176,6 +189,7 @@
       "change_device_button": "Muuda heliseadet",
       "default": "Vaikimisi",
       "default_named": "Vaikimisi <2>({{name}})</2>",
+      "handset": "Telefon",
       "loudspeaker": "Valjuhääldi",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon {{n}}",
@@ -217,7 +231,6 @@
   "video_tile": {
     "always_show": "Näita alati",
     "camera_starting": "Video on laadimisel...",
-    "change_fit_contain": "Mahuta aknasse",
     "collapse": "Näita vähem",
     "expand": "Näita rohkem",
     "mute_for_me": "Summuta minu jaoks",

@@ -10,11 +10,24 @@
 
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+      content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0"
     />
     <title><%- brand %></title>
     <script>
       window.global = window;
+    </script>
+    <!-- Polyfill for Chrome < 119 (Huawei WebView, etc.) -->
+    <script>
+      if (!Promise.withResolvers) {
+        Promise.withResolvers = function () {
+          var resolve, reject;
+          var promise = new Promise(function (a, b) {
+            resolve = a;
+            reject = b;
+          });
+          return { promise: promise, resolve: resolve, reject: reject };
+        };
+      }
     </script>
 
     <% if (packageType === "full") { %>

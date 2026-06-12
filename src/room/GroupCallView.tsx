@@ -13,7 +13,12 @@ import {
   useMemo,
   useState,
 } from "react";
-import { type MatrixClient, JoinRule, type Room } from "matrix-js-sdk";
+import {
+  type MatrixClient,
+  JoinRule,
+  type Room,
+  UnsupportedStickyEventsEndpointError,
+} from "matrix-js-sdk";
 import {
   Room as LivekitRoom,
   isE2EESupported as isE2EESupportedBrowser,
@@ -67,6 +72,7 @@ import {
   ConnectionLostError,
   E2EENotSupportedError,
   ElementCallError,
+  StickyEventsRequiredError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
@@ -120,7 +126,7 @@ export const GroupCallView: FC<Props> = ({
 
   const muteAllAudio = useBehavior(muteAllAudio$);
   const leaveSoundContext = useLatest(
-    useAudioContext({
+    useAudioContext<CallEventSounds>({
       sounds: callEventAudioSounds,
       latencyHint: "interactive",
       muted: muteAllAudio,
@@ -162,8 +168,22 @@ export const GroupCallView: FC<Props> = ({
   useTypedEventEmitter(
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
-    (error) => setExternalError(new ConnectionLostError()),
+    (error) => {
+      // When matrix_rtc_mode=matrix_2_0 is in effect but the homeserver does
+      // not advertise MSC4354 (sticky events), the SDK throws an
+      // `UnsupportedStickyEventsEndpointError`. The MembershipManager
+      // scheduler wraps it and exposes the original via `.cause`.
+      if (
+        error instanceof Error &&
+        error.cause instanceof UnsupportedStickyEventsEndpointError
+      ) {
+        setExternalError(new StickyEventsRequiredError());
+      } else {
+        setExternalError(new ConnectionLostError());
+      }
+    },
   );
+
   useEffect(() => {
     // Sanity check the room object
     if (client.getRoom(rtcSession.room.roomId) !== rtcSession.room)
@@ -318,12 +338,26 @@ export const GroupCallView: FC<Props> = ({
     (
       reason: "timeout" | "user" | "allOthersLeft" | "decline" | "error",
     ): void => {
-      let playSound: CallEventSounds = "left";
-      if (reason === "timeout" || reason === "decline") playSound = reason;
+      let audioPromise: Promise<void> | undefined = undefined;
+      switch (reason) {
+        case "allOthersLeft":
+          // When "allOthersLeft", the leaveSoundEffect$ in CallEventAudioRenderer
+          // already plays the "left" sound when the remote participant's media
+          // disappears. We play it here silenced (volumeOverwrite = 0) so we have the right duration in the audioPromise.
+          // (used to destory the widget)
+          audioPromise = leaveSoundContext.current?.playSound("left", 0);
+          break;
+        case "timeout":
+        case "decline":
+          audioPromise = leaveSoundContext.current?.playSound(reason);
+          break;
+        default:
+          audioPromise = leaveSoundContext.current?.playSound("left");
+      }
 
       setJoined(false);
       setLeft(true);
-      const audioPromise = leaveSoundContext.current?.playSound(playSound);
+
       // We need to wait until the callEnded event is tracked on PostHog,
       // otherwise the iframe may get killed first.
       const posthogRequest = new Promise((resolve) => {

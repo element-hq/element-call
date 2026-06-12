@@ -49,12 +49,14 @@
     "profile": "Profil",
     "reaction": "Reakcja",
     "reactions": "Reakcje",
+    "reconnecting": "Próba ponownego połączenia...",
     "settings": "Ustawienia",
     "unencrypted": "Nie szyfrowane",
     "username": "Nazwa użytkownika",
     "video": "Wideo"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Pokaż opcję słuchawki iPhone na wszystkich platformach",
     "crypto_version": "Wersja krypto: {{version}}",
     "debug_tile_layout_label": "Układ kafelków Debug",
     "device_id": "ID urządzenia: {{id}}",
@@ -64,10 +66,9 @@
     "livekit_server_info": "Informacje serwera LiveKit",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "ID Matrix: {{id}}",
+    "mute_all_audio": "Wycisz cały dźwięk (uczestnicy, reakcje, dźwięki dołączenia)",
     "show_connection_stats": "Pokaż statystyki połączenia",
-    "show_non_member_tiles": "Pokaż kafelki dla mediów, które nie są od członków",
-    "url_params": "Parametry URL",
-    "use_new_membership_manager": "Użyj nowej implementacji połączenia MembershipManager"
+    "url_params": "Parametry URL"
   },
   "disconnected_banner": "Utracono połączenie z serwerem.",
   "error": {
@@ -82,9 +83,10 @@
     "generic_description": "Wysłanie dziennika debug, pozwoli nam namierzyć problem.",
     "insufficient_capacity": "Za mało miejsca",
     "insufficient_capacity_description": "Serwer osiągnął maksymalną pojemność, przez co nie możesz dołączyć do połączenia. Spróbuj ponownie później lub skontaktuj się z administratorem serwera, jeśli problem nie zniknie.",
-    "matrix_rtc_focus_missing": "Serwer nie jest skonfigurowany do pracy z {{brand}}. Prosimy o kontakt z administratorem serwera (Domena: {{domain}}, Kod błędu: {{ errorCode }}).",
     "open_elsewhere": "Otwarto w innej karcie",
     "open_elsewhere_description": "{{brand}} został otwarty w innej karcie. Jeśli tak nie jest, spróbuj odświeżyć stronę.",
+    "room_creation_restricted": "Nie udało się utworzyć połączenia",
+    "room_creation_restricted_description": "Tworzenie połączeń mogło zostać ograniczone tylko do autoryzowanych użytkowników. Spróbuj ponownie później lub skontaktuj się z administratorem serwera, jeśli problem nie minie.",
     "unexpected_ec_error": "Wystąpił nieoczekiwany błąd (<0>Kod błędu:</0> <1>{{ errorCode }}</1>). Skontaktuj się z administratorem serwera."
   },
   "group_call_loader": {
@@ -95,6 +97,11 @@
     "knock_reject_body": "Członkowie pokoju odrzucili Twoją prośbę o dołączenie.",
     "knock_reject_heading": "Nie możesz dołączyć",
     "reason": "Powód: {{reason}}"
+  },
+  "handset": {
+    "overlay_back_button": "Powrót do trybu głośnika",
+    "overlay_description": "Działa tylko podczas korzystania z aplikacji",
+    "overlay_title": "Tryb słuchawkowy"
   },
   "hangup_button_label": "Zakończ połączenie",
   "header_label": "Strona główna Element Call",
@@ -158,12 +165,18 @@
       "effect_volume_description": "Dostosuj głośność, z jaką odtwarzane są efekty reakcji i podniesionej ręki",
       "effect_volume_label": "Głośność efektu dźwiękowego"
     },
+    "background_blur_header": "Tło",
+    "background_blur_label": "Rozmycie tła wideo",
+    "blur_not_supported_by_browser": "(Rozmycie tła nie jest wspierane przez to urządzenie.)",
     "developer_tab_title": "Programista",
     "devices": {
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
+      "change_device_button": "Zmień urządzenie audio",
       "default": "Domyślne",
       "default_named": "Domyślne <2>({{name}})</2>",
+      "handset": "Słuchawka",
+      "loudspeaker": "Głośnomówiący",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon {{n}}",
       "speaker": "Głośnik",
@@ -204,7 +217,6 @@
   "video_tile": {
     "always_show": "Zawsze pokazuj",
     "camera_starting": "Wczytywanie wideo...",
-    "change_fit_contain": "Dopasuj do obramowania",
     "collapse": "Zwiń",
     "expand": "Rozwiń",
     "mute_for_me": "Wycisz dla mnie",

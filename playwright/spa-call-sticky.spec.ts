@@ -115,8 +115,12 @@ test("One to One rejoin after improper leave does not crash EC", async ({
   await guestPage.getByTestId("lobby_joinCall").click();
 
   // We cannot use the `expectVideoTilesCount` helper here since one of them is expected to show waiting for media
-  await expect(page.getByTestId("videoTile")).toHaveCount(3);
-  await expect(guestPage.getByTestId("videoTile")).toHaveCount(2);
+  await expect(page.getByTestId("videoTile")).toHaveCount(3, {
+    timeout: 10000,
+  });
+  await expect(guestPage.getByTestId("videoTile")).toHaveCount(2, {
+    timeout: 10000,
+  });
 });
 
 function isStickySend(url: string): boolean {

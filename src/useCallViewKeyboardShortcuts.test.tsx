@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { type FC, useRef, useState } from "react";
+import { type FC, useState } from "react";
 import { expect, test, vi } from "vitest";
 import { Button } from "@vector-im/compound-web";
 import userEvent from "@testing-library/user-event";
@@ -39,9 +39,7 @@ const TestComponent: FC<TestComponentProps> = ({
   initialModalOpen = false,
 }) => {
   const [modalOpen, setModalOpen] = useState(initialModalOpen);
-  const ref = useRef<HTMLDivElement | null>(null);
   useCallViewKeyboardShortcuts(
-    ref,
     () => {},
     () => {},
     setAudioEnabled,
@@ -49,8 +47,11 @@ const TestComponent: FC<TestComponentProps> = ({
     toggleHandRaised,
   );
   return (
-    <div ref={ref}>
-      <Button onClick={onButtonClick}>TEST</Button>
+    <>
+      <div id={initialModalOpen ? "root" : undefined}>
+        <Button onClick={onButtonClick}>TEST</Button>
+      </div>
+      {/*// modal lives outside of the root*/}
       {modalOpen && (
         <dialog
           open
@@ -64,7 +65,7 @@ const TestComponent: FC<TestComponentProps> = ({
           <button>InModalButton</button>
         </dialog>
       )}
-    </div>
+    </>
   );
 };
 
@@ -164,12 +165,13 @@ test("unmuting happens in place of the default action", async () => {
   // container element that can be interactive and receive focus / keydown
   // events. <video> is kind of a weird choice, but it'll do the job.
   render(
-    <video
-      tabIndex={0}
-      onKeyDown={(e) => defaultPrevented(e.isDefaultPrevented())}
-    >
-      <TestComponent setAudioEnabled={() => {}} />
-    </video>,
+    <div id="root">
+      <video
+        tabIndex={0}
+        onKeyDown={(e) => defaultPrevented(e.isDefaultPrevented())}
+      />
+      <TestComponent setAudioEnabled={() => {}} />,
+    </div>,
   );
 
   await user.tab(); // Focus the <video>

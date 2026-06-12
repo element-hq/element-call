@@ -53,7 +53,6 @@ test("@mobile Start a new call then leave and show the feedback screen", async (
 mobileTest(
   "Test earpiece overlay in controlledAudioDevices mode",
   async ({ asMobile, browser }) => {
-    test.slow(); // Triples the timeout
     const { creatorPage, inviteLink } = asMobile;
 
     // ========
@@ -78,13 +77,13 @@ mobileTest(
     await expect(
       guestPage.getByTestId("roomHeader_participants_count"),
     ).toContainText("2");
-    expect(await guestPage.getByTestId("videoTile").count()).toBe(2);
+    await expect(guestPage.getByTestId("videoTile")).toHaveCount(2);
 
     // Same in creator page
     await expect(
       creatorPage.getByTestId("roomHeader_participants_count"),
     ).toContainText("2");
-    expect(await creatorPage.getByTestId("videoTile").count()).toBe(2);
+    await expect(creatorPage.getByTestId("videoTile")).toHaveCount(2);
 
     // TEST: control audio devices from the invitee page
 

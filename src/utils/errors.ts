@@ -6,6 +6,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { t } from "i18next";
+import { type ConnectionError } from "livekit-client";
+
+import { i18nKey } from "./i18n";
 
 export enum ErrorCode {
   /**
@@ -18,6 +21,7 @@ export enum ErrorCode {
   /** LiveKit indicates that the server has hit its track limits */
   INSUFFICIENT_CAPACITY_ERROR = "INSUFFICIENT_CAPACITY_ERROR",
   E2EE_NOT_SUPPORTED = "E2EE_NOT_SUPPORTED",
+  STICKY_EVENTS_NOT_SUPPORTED = "STICKY_EVENTS_NOT_SUPPORTED",
   OPEN_ID_ERROR = "OPEN_ID_ERROR",
   NO_MATRIX_2_AUTHORIZATION_SERVICE = "NO_MATRIX_2_0_AUTHORIZATION_SERVICE",
   SFU_ERROR = "SFU_ERROR",
@@ -42,6 +46,10 @@ export class ElementCallError extends Error {
   public category: ErrorCategory;
   public localisedMessage?: string;
   public localisedTitle: string;
+
+  // Alternative to localisedMessage, for rich error rendering
+  public localisedMessageKey?: string;
+  public localisedMessageValues?: Record<string, string>;
 
   protected constructor(
     localisedTitle: string,
@@ -114,6 +122,22 @@ export class MembershipManagerError extends ElementCallError {
       ErrorCategory.SYSTEM_FAILURE,
       t("error.membership_manager_description"),
       error,
+    );
+  }
+}
+
+/**
+ * Error indicating that this deployment pins `matrix_rtc_mode=matrix_2_0` in
+ * config.json but the homeserver does not advertise MSC4354 (sticky events),
+ * which the Matrix 2.0 mode requires.
+ */
+export class StickyEventsRequiredError extends ElementCallError {
+  public constructor() {
+    super(
+      t("error.sticky_events_required"),
+      ErrorCode.STICKY_EVENTS_NOT_SUPPORTED,
+      ErrorCategory.CONFIGURATION_ISSUE,
+      t("error.sticky_events_required_description"),
     );
   }
 }
@@ -233,5 +257,39 @@ export class SFURoomCreationRestrictedError extends ElementCallError {
       ErrorCategory.CONFIGURATION_ISSUE,
       t("error.room_creation_restricted_description"),
     );
+  }
+}
+
+/**
+ * Error indicating that the SFU peer-to-peer connection timed out.
+ */
+export class PeerConnectionTimeoutError extends ElementCallError {
+  public constructor() {
+    super(
+      t("error.peer_connection_timeout"),
+      ErrorCode.SFU_ERROR,
+      ErrorCategory.NETWORK_CONNECTIVITY,
+    );
+    this.localisedMessageKey = i18nKey(
+      "error.peer_connection_timeout_description",
+    );
+    this.localisedMessageValues = {
+      linkUrl:
+        "https://docs.element.io/latest/element-server-suite-pro/configuring-components/configuring-matrix-rtc/#sfu-connectivity-troubleshooting",
+    };
+  }
+}
+
+export class LivekitConnectionError extends ElementCallError {
+  public constructor(cause: ConnectionError) {
+    super(
+      t("error.livekit_connection_error"),
+      ErrorCode.SFU_ERROR,
+      ErrorCategory.NETWORK_CONNECTIVITY,
+    );
+    this.localisedMessageKey = i18nKey(
+      "error.livekit_connection_error_description",
+    );
+    this.localisedMessageValues = { reason: cause.reasonName };
   }
 }

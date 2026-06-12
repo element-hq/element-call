@@ -110,7 +110,6 @@
   "unmute_microphone_button_label": "マイクのミュート解除",
   "version": "バージョン：{{version}}",
   "video_tile": {
-    "change_fit_contain": "フレームに合わせる",
     "mute_for_me": "ミュートする",
     "volume": "ボリューム"
   }

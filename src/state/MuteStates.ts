@@ -30,6 +30,7 @@ import { type Behavior, constant } from "./Behavior";
 
 interface MuteStateData {
   enabled$: Observable<boolean>;
+  syncing$: Observable<boolean>;
   set: ((enabled: boolean) => void) | null;
   toggle: (() => void) | null;
 }
@@ -79,33 +80,40 @@ export class MuteState<Label, Selected> {
           this.handler$.value(false).catch((err) => {
             logger.error("MuteState-disable: handler error", err);
           });
-          return { enabled$: of(false), set: null, toggle: null };
+          return {
+            enabled$: of(false),
+            syncing$: of(false),
+            set: null,
+            toggle: null,
+          };
         }
 
         // Assume the default value only once devices are actually connected
         let enabled = this.enabledByDefault;
         const set$ = new Subject<boolean>();
         const toggle$ = new Subject<void>();
+        const syncing$ = new BehaviorSubject(false);
         const desired$ = merge(set$, toggle$.pipe(map(() => !enabled)));
         const enabled$ = new Observable<boolean>((subscriber) => {
           subscriber.next(enabled);
           let latestDesired = this.enabledByDefault;
-          let syncing = false;
 
           const sync = async (): Promise<void> => {
-            if (enabled === latestDesired) syncing = false;
-            else {
+            if (enabled === latestDesired) {
+              syncing$.next(false);
+            } else {
               const previouslyEnabled = enabled;
+              syncing$.next(true);
               enabled = await firstValueFrom(
                 this.handler$.pipe(
                   switchMap(async (handler) => handler(latestDesired)),
                 ),
               );
               if (enabled === previouslyEnabled) {
-                syncing = false;
+                syncing$.next(false);
               } else {
                 subscriber.next(enabled);
-                syncing = true;
+                syncing$.next(true);
                 sync().catch((err) => {
                   // TODO: better error handling
                   logger.error("MuteState: handler error", err);
@@ -116,21 +124,28 @@ export class MuteState<Label, Selected> {
 
           const s = desired$.subscribe((desired) => {
             latestDesired = desired;
-            if (syncing === false) {
-              syncing = true;
+            if (syncing$.value === false) {
+              syncing$.next(true);
               sync().catch((err) => {
                 // TODO: better error handling
                 logger.error("MuteState: handler error", err);
               });
             }
           });
-          return (): void => s.unsubscribe();
+          return (): void => {
+            s.unsubscribe();
+            syncing$.complete();
+          };
         });
 
         return {
           set: (enabled: boolean): void => set$.next(enabled),
-          toggle: (): void => toggle$.next(),
+          toggle: (): void => {
+            if (syncing$.value) return;
+            toggle$.next();
+          },
           enabled$,
+          syncing$,
         };
       }),
     ),
@@ -145,6 +160,10 @@ export class MuteState<Label, Selected> {
 
   public readonly toggle$: Behavior<(() => void) | null> = this.scope.behavior(
     this.data$.pipe(map(({ toggle }) => toggle)),
+  );
+
+  public readonly syncing$: Behavior<boolean> = this.scope.behavior(
+    this.data$.pipe(switchMap(({ syncing$ }) => syncing$)),
   );
 
   public constructor(

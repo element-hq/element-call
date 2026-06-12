@@ -63,8 +63,7 @@
     "livekit_server_info": "LiveKit Sunucu Bilgisi",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix Kimliği: {{id}}",
-    "show_connection_stats": "Bağlantı istatistiklerini göster",
-    "show_non_member_tiles": "Üye olmayan kullanıcılar için ortam döşemelerini göster"
+    "show_connection_stats": "Bağlantı istatistiklerini göster"
   },
   "disconnected_banner": "Sunucuyla bağlantı kesildi.",
   "error": {
@@ -192,7 +191,6 @@
   "video_tile": {
     "always_show": "Her zaman göster",
     "camera_starting": "Video paylaşımı başlatılıyor...",
-    "change_fit_contain": "Çerçeveye sığdır",
     "collapse": "Daralt",
     "expand": "Genişlet",
     "mute_for_me": "Benim için sessize al",

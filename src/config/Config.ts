@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { merge } from "lodash-es";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { getUrlParams } from "../UrlParams";
 import {
@@ -14,6 +15,11 @@ import {
   type ResolvedConfigOptions,
 } from "./ConfigOptions";
 import { isFailure } from "../utils/fetch";
+import { MatrixRTCMode } from "./ConfigOptions";
+
+const VALID_MATRIX_RTC_MODES: ReadonlySet<string> = new Set(
+  Object.values(MatrixRTCMode),
+);
 
 export class Config {
   private static internalInstance: Config | undefined;
@@ -44,7 +50,11 @@ export class Config {
 
       Config.internalInstance.initPromise = downloadConfig(fetchTarget).then(
         (config) => {
-          internalInstance.config = merge({}, DEFAULT_CONFIG, config);
+          internalInstance.config = merge(
+            {},
+            DEFAULT_CONFIG,
+            validateConfig(config),
+          );
         },
       );
     }
@@ -82,6 +92,17 @@ export class Config {
 
   public config?: ResolvedConfigOptions;
   private initPromise?: Promise<void>;
+}
+
+export function validateConfig(config: ConfigOptions): ConfigOptions {
+  const mode = config.matrix_rtc_mode;
+  if (mode !== undefined && !VALID_MATRIX_RTC_MODES.has(mode)) {
+    logger.warn(
+      `Ignoring invalid matrix_rtc_mode in config.json: ${String(mode)}`,
+    );
+    delete config.matrix_rtc_mode;
+  }
+  return config;
 }
 
 async function downloadConfig(fetchTarget: string): Promise<ConfigOptions> {

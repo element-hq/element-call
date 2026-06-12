@@ -2,11 +2,15 @@ name: Test
 on:
   pull_request: {}
   push:
-    branches: [livekit, full-mesh]
+    branches: [livekit]
 jobs:
   vitest:
     name: Run unit tests
     runs-on: ubuntu-latest
+    container:
+      # Make sure to grab the latest version of the Playwright image
+      # https://playwright.dev/docs/docker#pull-the-image
+      image: mcr.microsoft.com/playwright:v1.60.0-noble
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -25,7 +29,7 @@ jobs:
       - name: Vitest
         run: "pnpm run test:coverage"
       - name: Upload to codecov
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:

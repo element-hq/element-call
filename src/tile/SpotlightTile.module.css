@@ -10,6 +10,7 @@ Please see LICENSE in the repository root for full details.
   inline-size: 100%;
   display: flex;
   border-radius: var(--cpd-space-6x);
+  box-shadow: var(--draggable-shadow);
   contain: strict;
   overflow-x: auto;
   overflow-y: hidden;
@@ -31,6 +32,14 @@ Please see LICENSE in the repository root for full details.
   flex-basis: 100%;
   flex-shrink: 0;
   --media-view-fg-inset: 10px;
+}
+
+.maximised .item {
+  /* Ensure that foreground elements lie within the safe area */
+  --media-view-fg-inset: calc(var(--call-view-safe-area-inset-top, 0px) + 10px)
+    calc(env(safe-area-inset-right) + 10px)
+    calc(var(--call-view-safe-area-inset-bottom, 0px) + 10px)
+    calc(env(safe-area-inset-left) + 10px);
 }
 
 .item.snap {

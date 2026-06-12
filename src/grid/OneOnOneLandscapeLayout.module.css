@@ -22,12 +22,6 @@ Please see LICENSE in the repository root for full details.
   inset: 0;
 }
 
-.spotlight {
-  position: absolute;
-  inline-size: 404px;
-  block-size: 233px;
-}
-
 .slot[data-block-alignment="start"] {
   inset-block-end: unset;
 }

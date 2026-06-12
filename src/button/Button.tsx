@@ -16,6 +16,7 @@ import {
 import {
   MicOnSolidIcon,
   MicOffSolidIcon,
+  SpinnerIcon,
   VideoCallSolidIcon,
   VideoCallOffSolidIcon,
   EndCallIcon,
@@ -32,12 +33,13 @@ import { platform } from "../Platform";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
-  size?: "sm" | "lg";
+  busy?: boolean;
+  size?: "md" | "lg";
 }
 
-export const MicButton: FC<MicButtonProps> = ({ enabled, ...props }) => {
+export const MicButton: FC<MicButtonProps> = ({ enabled, busy, ...props }) => {
   const { t } = useTranslation();
-  const Icon = enabled ? MicOnSolidIcon : MicOffSolidIcon;
+  const Icon = busy ? SpinnerIcon : enabled ? MicOnSolidIcon : MicOffSolidIcon;
   const label = enabled
     ? t("mute_microphone_button_label")
     : t("unmute_microphone_button_label");
@@ -51,6 +53,11 @@ export const MicButton: FC<MicButtonProps> = ({ enabled, ...props }) => {
         role="switch"
         aria-checked={enabled}
         {...props}
+        aria-busy={busy}
+        className={classNames(props.className, {
+          [styles.rotate]: !!busy,
+        })}
+        disabled={props.disabled || busy}
       />
     </Tooltip>
   );
@@ -58,12 +65,21 @@ export const MicButton: FC<MicButtonProps> = ({ enabled, ...props }) => {
 
 interface VideoButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
-  size?: "sm" | "lg";
+  busy?: boolean;
+  size?: "md" | "lg";
 }
 
-export const VideoButton: FC<VideoButtonProps> = ({ enabled, ...props }) => {
+export const VideoButton: FC<VideoButtonProps> = ({
+  enabled,
+  busy,
+  ...props
+}) => {
   const { t } = useTranslation();
-  const Icon = enabled ? VideoCallSolidIcon : VideoCallOffSolidIcon;
+  const Icon = busy
+    ? SpinnerIcon
+    : enabled
+      ? VideoCallSolidIcon
+      : VideoCallOffSolidIcon;
   const label = enabled
     ? t("stop_video_button_label")
     : t("start_video_button_label");
@@ -77,6 +93,11 @@ export const VideoButton: FC<VideoButtonProps> = ({ enabled, ...props }) => {
         role="switch"
         aria-checked={enabled}
         {...props}
+        aria-busy={busy}
+        className={classNames(props.className, {
+          [styles.rotate]: !!busy,
+        })}
+        disabled={props.disabled || busy}
       />
     </Tooltip>
   );
@@ -84,7 +105,7 @@ export const VideoButton: FC<VideoButtonProps> = ({ enabled, ...props }) => {
 
 interface ShareScreenButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
-  size: "sm" | "lg";
+  size: "md" | "lg";
 }
 
 export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
@@ -111,7 +132,7 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
 };
 
 interface EndCallButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size?: "sm" | "lg";
+  size?: "md" | "lg";
 }
 
 export const EndCallButton: FC<EndCallButtonProps> = ({
@@ -134,7 +155,7 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
 };
 
 interface LoudspeakerButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size?: "sm" | "lg";
+  size?: "md" | "lg";
   loudspeakerModeEnabled: boolean;
 }
 export const LoudspeakerButton: FC<LoudspeakerButtonProps> = ({
@@ -195,7 +216,7 @@ export const SettingsIconButton: FC<SettingsIconButtonProps> = ({
 };
 
 interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size?: "sm" | "lg";
+  size?: "md" | "lg";
   /** If this buttons should be setup to be used in the app bar */
   showForScreenWidth?: "wide" | "narrow";
 }

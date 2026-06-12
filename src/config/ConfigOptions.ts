@@ -6,6 +6,26 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+/**
+ * The MatrixRTC mode determines how Element Call interacts with the
+ * MatrixRTC backend and other participants. Selectable via the Developer
+ * Settings, or pinned for a deployment via `matrix_rtc_mode` in config.json.
+ */
+export enum MatrixRTCMode {
+  /** Legacy single-SFU + user-keyed memberships + legacy JWT endpoint. */
+  Legacy = "legacy",
+  /** Multi-SFU transport, legacy JWT endpoint, no sticky events. */
+  Compatibility = "compatibility",
+  /**
+   * Multi-SFU transport with:
+   *  - sticky events
+   *  - hashed RTC backend identity
+   *  - the new endpoint for the jwt token on the local membership (remote memberships will always try the new jwt endpoint first -> then the legacy one)
+   *  - use the hashed identity for the local membership
+   */
+  Matrix_2_0 = "matrix_2_0",
+}
+
 export interface ConfigOptions {
   /**
    * The Posthog endpoint to which analytics data will be sent.
@@ -153,6 +173,20 @@ export interface ConfigOptions {
   };
 
   /**
+   * Grace period in milliseconds to wait before reporting the sync loop as disconnected.
+   * This allows brief sync interruptions without triggering a reconnection message.
+   * Default is 10000ms (10 seconds). Set to 0 to disable the grace period.
+   */
+  sync_disconnect_grace_period_ms?: number;
+
+  /**
+   * Pins the {@link MatrixRTCMode} for all clients on this deployment,
+   * overriding any per-user choice from the Developer Settings. If unset,
+   * the user's Developer Settings choice (or its default of `Legacy`) wins.
+   */
+  matrix_rtc_mode?: MatrixRTCMode;
+
+  /**
    * These are low level options that are used to configure the MatrixRTC session.
    * Take care when changing these options.
    */
@@ -210,6 +244,7 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       server_name: string;
     };
   };
+  sync_disconnect_grace_period_ms: number;
   ssla: string;
   media_quality: Required<
     Pick<NonNullable<ConfigOptions["media_quality"]>, "video_codec">
@@ -229,6 +264,14 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       >
     >;
   };
+  matrix_rtc_session: {
+    wait_for_key_rotation_ms?: number;
+    delayed_leave_event_delay_ms: number;
+    delayed_leave_event_restart_local_timeout_ms?: number;
+    delayed_leave_event_restart_ms?: number;
+    network_error_retry_ms: number;
+    membership_event_expiry_ms?: number;
+  };
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
@@ -241,6 +284,7 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
   features: {
     feature_use_device_session_member_events: true,
   },
+  sync_disconnect_grace_period_ms: 10000,
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
   media_quality: {
     video_codec: "vp8",
@@ -254,5 +298,9 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
       max_bitrate: 5_000_000,
       max_framerate: 30,
     },
+  },
+  matrix_rtc_session: {
+    delayed_leave_event_delay_ms: 10000,
+    network_error_retry_ms: 1000,
   },
 };

@@ -5,6 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { type BehaviorSubject } from "rxjs";
+
 import { type LocalUserMediaViewModel } from "./media/LocalUserMediaViewModel.ts";
 import { type MediaViewModel } from "./media/MediaViewModel.ts";
 import { type RingingMediaViewModel } from "./media/RingingMediaViewModel.ts";
@@ -13,39 +15,53 @@ import {
   type GridTileViewModel,
   type SpotlightTileViewModel,
 } from "./TileViewModel.ts";
+import { type Behavior } from "./Behavior.ts";
 
 export interface GridLayoutMedia {
   type: "grid";
+  edgeToEdge: false;
   spotlight?: MediaViewModel[];
   grid: UserMediaViewModel[];
 }
 
 export interface SpotlightLandscapeLayoutMedia {
   type: "spotlight-landscape";
+  edgeToEdge: boolean;
   spotlight: MediaViewModel[];
   grid: UserMediaViewModel[];
 }
 
 export interface SpotlightPortraitLayoutMedia {
   type: "spotlight-portrait";
+  edgeToEdge: false;
   spotlight: MediaViewModel[];
   grid: UserMediaViewModel[];
 }
 
 export interface SpotlightExpandedLayoutMedia {
   type: "spotlight-expanded";
+  edgeToEdge: boolean;
   spotlight: MediaViewModel[];
   pip?: UserMediaViewModel;
 }
 
-export interface OneOnOneLayoutMedia {
-  type: "one-on-one";
+export interface OneOnOneLandscapeLayoutMedia {
+  type: "one-on-one-landscape";
+  edgeToEdge: false;
   spotlight: UserMediaViewModel;
   pip: LocalUserMediaViewModel | RingingMediaViewModel;
 }
 
+export interface OneOnOnePortraitLayoutMedia {
+  type: "one-on-one-portrait";
+  edgeToEdge: true;
+  spotlight: UserMediaViewModel | RingingMediaViewModel;
+  pip?: LocalUserMediaViewModel;
+}
+
 export interface PipLayoutMedia {
   type: "pip";
+  edgeToEdge: boolean;
   spotlight: MediaViewModel[];
 }
 
@@ -54,13 +70,20 @@ export type LayoutMedia =
   | SpotlightLandscapeLayoutMedia
   | SpotlightPortraitLayoutMedia
   | SpotlightExpandedLayoutMedia
-  | OneOnOneLayoutMedia
+  | OneOnOneLandscapeLayoutMedia
+  | OneOnOnePortraitLayoutMedia
   | PipLayoutMedia;
+
+export interface Alignment {
+  inline: "start" | "end";
+  block: "start" | "end";
+}
 
 export interface GridLayout {
   type: "grid";
   spotlight?: SpotlightTileViewModel;
   grid: GridTileViewModel[];
+  spotlightAlignment$: BehaviorSubject<Alignment>;
   setVisibleTiles: (value: number) => void;
 }
 
@@ -82,12 +105,22 @@ export interface SpotlightExpandedLayout {
   type: "spotlight-expanded";
   spotlight: SpotlightTileViewModel;
   pip?: GridTileViewModel;
+  pipAlignment$: BehaviorSubject<Alignment>;
 }
 
-export interface OneOnOneLayout {
-  type: "one-on-one";
+export interface OneOnOneLandscapeLayout {
+  type: "one-on-one-landscape";
   spotlight: GridTileViewModel;
   pip: GridTileViewModel;
+  pipAlignment$: BehaviorSubject<Alignment>;
+}
+
+export interface OneOnOnePortraitLayout {
+  type: "one-on-one-portrait";
+  spotlight: SpotlightTileViewModel;
+  pip?: GridTileViewModel;
+  pipSize$: Behavior<"sm" | "lg">;
+  pipAlignment$: BehaviorSubject<Alignment>;
 }
 
 export interface PipLayout {
@@ -104,5 +137,6 @@ export type Layout =
   | SpotlightLandscapeLayout
   | SpotlightPortraitLayout
   | SpotlightExpandedLayout
-  | OneOnOneLayout
+  | OneOnOneLandscapeLayout
+  | OneOnOnePortraitLayout
   | PipLayout;

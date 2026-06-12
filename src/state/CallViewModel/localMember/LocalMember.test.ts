@@ -11,13 +11,23 @@ import {
   type LivekitTransportConfig,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { describe, expect, it, vi } from "vitest";
+import {
+  describe,
+  expect,
+  it,
+  vi,
+  beforeAll,
+  afterAll,
+  beforeEach,
+} from "vitest";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { BehaviorSubject, map, of } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type LocalParticipant, type LocalTrack } from "livekit-client";
 
-import { MatrixRTCMode } from "../../../settings/settings";
+import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics";
+import { MatrixRTCMode } from "../../../config/ConfigOptions";
+import { type HomeserverDisconnectReason } from "./HomeserverConnected";
 import {
   flushPromises,
   mockConfig,
@@ -215,9 +225,13 @@ describe("LocalMembership", () => {
     createPublisherFactory: vi.fn(),
     joinMatrixRTC: async (): Promise<void> => {},
     homeserverConnected: {
-      combined$: constant(true),
+      combined$: constant<[boolean, HomeserverDisconnectReason | null]>([
+        true,
+        null,
+      ]),
       rtsSession$: constant(RTCMemberStatus.Connected),
     },
+    roomId: "!test-room-id:example.org",
   };
 
   it("throws error on missing RTC config error", () => {
@@ -667,4 +681,210 @@ describe("LocalMembership", () => {
     // expect(publishers[0].stopTracks).toHaveBeenCalled();
   });
   // TODO add tests for matrix local matrix participation.
+
+  describe("reconnecting analytics", () => {
+    beforeAll(() => {
+      mockConfig();
+    });
+
+    beforeEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    afterAll(() => {
+      PosthogAnalytics.resetInstance();
+    });
+
+    it("does not fire CallReconnecting for the initial non-connected state at startup", async () => {
+      const scope = new ObservableScope();
+      const trackSpy = vi.spyOn(
+        PosthogAnalytics.instance.eventCallReconnecting,
+        "track",
+      );
+
+      // Simulate startup where membership isn't established yet
+      const hsReason$ = new BehaviorSubject<
+        [boolean, HomeserverDisconnectReason | null]
+      >([false, "membership"]);
+
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(connectionTransportAConnected, []);
+
+      createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        homeserverConnected: {
+          combined$: hsReason$,
+          rtsSession$: constant(RTCMemberStatus.Connected),
+        },
+        connectionManager: {
+          connectionManagerData$: constant(new Epoch(connectionManagerData)),
+        },
+        localTransport$: new BehaviorSubject({
+          advertised$: new BehaviorSubject(aTransport),
+          active$: new BehaviorSubject(aTransportWithSFUConfig),
+        }),
+      });
+
+      await flushPromises();
+
+      // Membership is established — call is now connected
+      hsReason$.next([true, null]);
+
+      expect(trackSpy).not.toHaveBeenCalled();
+
+      scope.end();
+    });
+
+    it("fires CallReconnecting with homeserver reason and duration when reconnected", async () => {
+      const scope = new ObservableScope();
+      const trackSpy = vi.spyOn(
+        PosthogAnalytics.instance.eventCallReconnecting,
+        "track",
+      );
+
+      const hsReason$ = new BehaviorSubject<
+        [boolean, HomeserverDisconnectReason | null]
+      >([true, null]);
+
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(connectionTransportAConnected, []);
+
+      createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        homeserverConnected: {
+          combined$: hsReason$,
+          rtsSession$: constant(RTCMemberStatus.Connected),
+        },
+        connectionManager: {
+          connectionManagerData$: constant(new Epoch(connectionManagerData)),
+        },
+        localTransport$: new BehaviorSubject({
+          advertised$: new BehaviorSubject(aTransport),
+          active$: new BehaviorSubject(aTransportWithSFUConfig),
+        }),
+      });
+
+      await flushPromises();
+
+      hsReason$.next([false, "sync"]);
+      hsReason$.next([true, null]);
+
+      expect(trackSpy).toHaveBeenCalledWith(
+        defaultCreateLocalMemberValues.roomId,
+        "sync",
+        expect.any(Number),
+      );
+
+      scope.end();
+    });
+
+    it("reports livekit reason when livekit disconnects then reconnects", async () => {
+      const scope = new ObservableScope();
+      const trackSpy = vi.spyOn(
+        PosthogAnalytics.instance.eventCallReconnecting,
+        "track",
+      );
+
+      const connectionState$ = new BehaviorSubject<ConnectionState>(
+        ConnectionState.LivekitConnected,
+      );
+      const mutableConnection = {
+        ...connectionTransportAConnected,
+        state$: connectionState$,
+      } as unknown as Connection;
+
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(mutableConnection, []);
+
+      createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        homeserverConnected: {
+          combined$: new BehaviorSubject<
+            [boolean, HomeserverDisconnectReason | null]
+          >([true, null]),
+          rtsSession$: constant(RTCMemberStatus.Connected),
+        },
+        connectionManager: {
+          connectionManagerData$: constant(new Epoch(connectionManagerData)),
+        },
+        localTransport$: new BehaviorSubject({
+          advertised$: new BehaviorSubject(aTransport),
+          active$: new BehaviorSubject(aTransportWithSFUConfig),
+        }),
+      });
+
+      await flushPromises();
+
+      connectionState$.next(ConnectionState.LivekitDisconnected);
+      connectionState$.next(ConnectionState.LivekitConnected);
+
+      expect(trackSpy).toHaveBeenCalledWith(
+        defaultCreateLocalMemberValues.roomId,
+        "livekit",
+        expect.any(Number),
+      );
+
+      scope.end();
+    });
+
+    it("fires one event per completed reconnection cycle", async () => {
+      const scope = new ObservableScope();
+      const trackSpy = vi.spyOn(
+        PosthogAnalytics.instance.eventCallReconnecting,
+        "track",
+      );
+
+      const hsReason$ = new BehaviorSubject<
+        [boolean, HomeserverDisconnectReason | null]
+      >([true, null]);
+
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(connectionTransportAConnected, []);
+
+      createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        homeserverConnected: {
+          combined$: hsReason$,
+          rtsSession$: constant(RTCMemberStatus.Connected),
+        },
+        connectionManager: {
+          connectionManagerData$: constant(new Epoch(connectionManagerData)),
+        },
+        localTransport$: new BehaviorSubject({
+          advertised$: new BehaviorSubject(aTransport),
+          active$: new BehaviorSubject(aTransportWithSFUConfig),
+        }),
+      });
+
+      await flushPromises();
+
+      hsReason$.next([false, "membership"]);
+      hsReason$.next([true, null]);
+
+      hsReason$.next([false, "probablyLeft"]);
+      hsReason$.next([false, "sync"]);
+      hsReason$.next([false, "membership"]);
+      hsReason$.next([true, null]);
+
+      expect(trackSpy).toHaveBeenCalledTimes(2);
+      expect(trackSpy).toHaveBeenNthCalledWith(
+        1,
+        defaultCreateLocalMemberValues.roomId,
+        "membership",
+        expect.any(Number),
+      );
+      expect(trackSpy).toHaveBeenNthCalledWith(
+        2,
+        defaultCreateLocalMemberValues.roomId,
+        "probablyLeft",
+        expect.any(Number),
+      );
+
+      scope.end();
+    });
+  });
 });

@@ -38,7 +38,10 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { aliceRtcMember, localRtcMember } from "./test-fixtures";
 import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "../state/Behavior";
-import { MatrixRTCMode } from "../settings/settings";
+import { MatrixRTCMode } from "../config/ConfigOptions";
+import { createCallFooterViewModel } from "../components/CallFooterViewModel";
+import { type FooterSnapshot } from "../components/CallFooter";
+import { type ViewModel } from "../state/ViewModel";
 
 mockConfig({ livekit: { livekit_service_url: "https://example.com" } });
 
@@ -136,6 +139,7 @@ export function getBasicCallViewModelEnvironment(
   callViewModelOptions: Partial<CallViewModelOptions> = {},
 ): {
   vm: CallViewModel;
+  footerVm: ViewModel<FooterSnapshot>;
   rtcMemberships$: BehaviorSubject<CallMembership[]>;
   rtcSession: MockRTCSession;
   handRaisedSubject$: BehaviorSubject<Record<string, RaisedHandInfo>>;
@@ -148,12 +152,15 @@ export function getBasicCallViewModelEnvironment(
   const handRaisedSubject$ = new BehaviorSubject({});
   const reactionsSubject$ = new BehaviorSubject({});
 
+  const scope = testScope();
+  const muteStates = mockMuteStates();
+  const mediaDevices = mediaDevicesOverride ?? mockMediaDevices({});
   const vm = createCallViewModel$(
-    testScope(),
+    scope,
     rtcSession.asMockedSession(),
     matrixRoom,
-    mediaDevicesOverride ?? mockMediaDevices({}),
-    mockMuteStates(),
+    mediaDevices,
+    muteStates,
     {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       livekitRoomFactory: (): LivekitRoom =>
@@ -171,8 +178,16 @@ export function getBasicCallViewModelEnvironment(
     reactionsSubject$,
     constant({ processor: undefined, supported: false }),
   );
+  const footerVm = createCallFooterViewModel(
+    testScope(),
+    vm,
+    muteStates,
+    mediaDevices,
+    "reactionId",
+  );
   return {
     vm,
+    footerVm,
     rtcMemberships$,
     rtcSession,
     handRaisedSubject$: handRaisedSubject$,

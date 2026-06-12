@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  afterEach,
   beforeEach,
   describe,
   expect,
@@ -14,10 +15,15 @@ import {
   type MockedFunction,
   vi,
 } from "vitest";
-import { render, type RenderResult } from "@testing-library/react";
+import {
+  render,
+  type RenderResult,
+  getByRole,
+  screen,
+} from "@testing-library/react";
 import { type LocalParticipant } from "livekit-client";
 import { BehaviorSubject, of } from "rxjs";
-import { BrowserRouter, MemoryRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import userEvent from "@testing-library/user-event";
@@ -34,7 +40,10 @@ import {
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
-import { type CallViewModelOptions } from "../state/CallViewModel/CallViewModel";
+import {
+  type CallViewModel,
+  type CallViewModelOptions,
+} from "../state/CallViewModel/CallViewModel";
 import { alice, local } from "../utils/test-fixtures";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
@@ -48,7 +57,10 @@ import { initializeWidget } from "../widget";
 initializeWidget();
 vi.hoisted(
   () =>
-    (global.ImageData = class MockImageData {
+    // Use globalThis rather than global because vite-plugin-node-polyfills seems
+    // to rewrite global into an import which then interferes with vitest's hoisting
+    // which runs before imports.
+    (globalThis.ImageData = class MockImageData {
       public data: number[] = [];
     } as unknown as typeof ImageData),
 );
@@ -100,13 +112,12 @@ beforeEach(() => {
 interface CreateInCallViewArgs {
   mediaDevices?: ECMediaDevices;
   callViewModelOptions?: Partial<CallViewModelOptions>;
-  /** If set, uses a MemoryRouter with this as the initial entry instead of BrowserRouter */
-  initialRoute?: string;
   /** If true, wraps the rendered tree in an AppBar provider */
   withAppBar?: boolean;
 }
 function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   rtcSession: MockRTCSession;
+  vm: CallViewModel;
 } {
   const mediaDevices = args.mediaDevices ?? mockMediaDevices({});
   const muteState = mockMuteStates();
@@ -118,7 +129,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       remoteParticipants$: of([remoteParticipant]),
     },
   );
-  const { vm, rtcSession } = getBasicCallViewModelEnvironment(
+  const { vm, footerVm, rtcSession } = getBasicCallViewModelEnvironment(
     [local, alice],
     undefined,
     mediaDevices,
@@ -129,20 +140,13 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   const room = rtcSession.room;
   const client = room.client;
 
-  const Router = args.initialRoute
-    ? ({ children }: { children: React.ReactNode }): React.ReactNode => (
-        <MemoryRouter initialEntries={[args.initialRoute!]}>
-          {children}
-        </MemoryRouter>
-      )
-    : BrowserRouter;
-
   const inCallView = (
     <InCallView
       client={client}
       rtcSession={rtcSession.asMockedSession()}
       muteStates={muteState}
       vm={vm}
+      footerVm={footerVm}
       matrixInfo={{
         userId: "",
         displayName: "",
@@ -163,7 +167,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   const content = args.withAppBar ? <AppBar>{inCallView}</AppBar> : inCallView;
 
   const renderResult = render(
-    <Router>
+    <BrowserRouter>
       <MediaDevicesContext value={mediaDevices}>
         <ReactionsSenderProvider
           vm={vm}
@@ -174,11 +178,12 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
           </TooltipProvider>
         </ReactionsSenderProvider>
       </MediaDevicesContext>
-    </Router>,
+    </BrowserRouter>,
   );
   return {
     ...renderResult,
     rtcSession,
+    vm,
   };
 }
 
@@ -189,57 +194,46 @@ describe("InCallView", () => {
       expect(container).toMatchSnapshot();
     });
   });
+
   describe("settings button with AppBar header", () => {
-    it("mobile landscape, is accessible when showHeader is false", () => {
-      // windowSize with height <= 600 results in "flat" windowMode,
-      // which means showHeader$ emits false.
-      const { getAllByRole } = createInCallView({
-        initialRoute: "/?header=app_bar",
-        withAppBar: true,
-        callViewModelOptions: {
-          // Set windowMode$ to "flat" (height <= 600)
-          windowSize$: constant({ width: 1000, height: 500 }),
-        },
-      });
-      // When showHeader is false, hideSettingsButton is false,
-      // so the settings button is visible in the footer.
-      const settingsBtn = getAllByRole("button", { name: "Settings" });
-      // here we check for two settings buttons because there are two buttons in the bottom bar. One for the
-      // the narrow layout and another one for the wide layout.
-      // Their visibility uses @media css queries, which cannot be tested in JSDOM,
-      // but we can at least check that both buttons are rendered and have the correct classes.
-      expect(settingsBtn.length).toBe(2);
-      expect(settingsBtn[0]).toHaveAttribute(
-        "data-testid",
-        "settings-bottom-left",
-      );
-      expect(settingsBtn[0]).toBeVisible();
+    beforeEach(() => {
+      // getUrlParams() reads window.location directly rather than from the
+      // React Router context, so MemoryRouter alone is not enough to make
+      // it see "header=app_bar". Push the real URL so both paths agree.
+      window.history.pushState({}, "", "?header=app_bar");
     });
 
-    it("mobile portrait, is accessible when showHeader is true", () => {
-      // windowSize with height > 600 and width > 600 results in "normal" windowMode,
-      // which means showHeader$ emits true.
-      const { getAllByRole } = createInCallView({
-        initialRoute: "/?header=app_bar",
+    afterEach(() => {
+      window.history.pushState({}, "", "/");
+    });
+
+    it("mobile portrait, is visible in the header", () => {
+      createInCallView({
         withAppBar: true,
         callViewModelOptions: {
-          // Set windowMode$ to "normal" (height >= 600)
-          windowSize$: constant({ width: 1000, height: 800 }),
+          // Narrow like a mobile phone in portrait orientation
+          windowSize$: constant({ width: 400, height: 700 }),
         },
       });
-      // When showHeader is true and headerStyle is AppBar,
-      // hideSettingsButton is true in the footer, but the settings
-      // button is rendered in the AppBar via useAppBarSecondaryButton.
-      const settingsBtns = getAllByRole("button", { name: "Settings" });
 
-      expect(settingsBtns.length).toBe(1);
-      expect(settingsBtns[0]).toHaveAttribute(
-        "data-testid",
-        "settings-app-bar",
-      );
-      expect(settingsBtns[0]).toBeVisible();
+      getByRole(screen.getByRole("banner"), "button", {
+        name: "Settings",
+      });
+    });
+
+    it("mobile landscape, is not visible anywhere", () => {
+      const { queryByRole } = createInCallView({
+        withAppBar: true,
+        callViewModelOptions: {
+          // Flat like a mobile phone in landscape orientation
+          windowSize$: constant({ width: 700, height: 400 }),
+        },
+      });
+
+      expect(queryByRole("button", { name: "Settings" })).not.toBeVisible();
     });
   });
+
   describe("audioOutputSwitcher", () => {
     it("is visible and can be clicked", async () => {
       const user = userEvent.setup();
