@@ -497,7 +497,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="field checkboxField"
     >
       <input
-        aria-describedby="_r_j_"
+        aria-describedby="_r_k_"
         id="cameraToggle"
         type="checkbox"
       />
@@ -527,7 +527,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </label>
       <p
         class="description"
-        id="_r_j_"
+        id="_r_k_"
       >
         Configure resolution, framerate, bitrate, and codec for camera video. Changes apply on next call join.
       </p>
@@ -549,7 +549,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="field checkboxField"
     >
       <input
-        aria-describedby="_r_k_"
+        aria-describedby="_r_l_"
         id="screenShareToggle"
         type="checkbox"
       />
@@ -579,7 +579,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </label>
       <p
         class="description"
-        id="_r_k_"
+        id="_r_l_"
       >
         Configure resolution, framerate, bitrate, and codec for screen sharing
       </p>
@@ -604,7 +604,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="field checkboxField"
     >
       <input
-        aria-describedby="_r_l_"
+        aria-describedby="_r_m_"
         checked=""
         id="echoCancellation"
         type="checkbox"
@@ -642,7 +642,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="field checkboxField"
     >
       <input
-        aria-describedby="_r_m_"
+        aria-describedby="_r_n_"
         checked=""
         id="noiseSuppression"
         type="checkbox"
@@ -680,7 +680,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="field checkboxField"
     >
       <input
-        aria-describedby="_r_n_"
+        aria-describedby="_r_o_"
         checked=""
         id="autoGainControl"
         type="checkbox"
