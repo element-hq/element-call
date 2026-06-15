@@ -18,7 +18,11 @@ import {
   type ReactNode,
 } from "react";
 import { Heading, IconButton, Tooltip } from "@vector-im/compound-web";
-import { CollapseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import {
+  ArrowLeftIcon,
+  ChevronLeftIcon,
+  CollapseIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -29,9 +33,7 @@ import styles from "./AppBar.module.css";
 interface AppBarContext {
   setTitle: (value: string) => void;
   setSecondaryButton: (value: ReactNode) => void;
-  setPrimaryButtonIcon: (
-    value: ComponentType<React.SVGAttributes<SVGElement>> | null,
-  ) => void;
+  setPrimaryButtonIconKind: (value: "back" | "minimise") => void;
   setHidden: (value: boolean) => void;
 }
 
@@ -57,19 +59,21 @@ export const AppBar: FC<Props> = ({ children }) => {
   const [secondaryButton, setSecondaryButton] = useState<ReactNode | null>(
     null,
   );
-  const [PrimaryButtonIcon, setPrimaryButtonIcon] = useState<ComponentType<
-    React.SVGAttributes<SVGElement>
-  > | null>(null);
+  const [primaryButtonIcon, setPrimaryButtonIconKind] = useState<
+    "back" | "minimise"
+  >("minimise");
 
   const context = useMemo(
     () => ({
       setTitle,
       setSecondaryButton,
       setHidden,
-      setPrimaryButtonIcon,
+      setPrimaryButtonIconKind,
     }),
-    [setTitle, setHidden, setSecondaryButton, setPrimaryButtonIcon],
+    [setTitle, setHidden, setSecondaryButton, setPrimaryButtonIconKind],
   );
+
+  const BackIcon = platform === "android" ? ArrowLeftIcon : ChevronLeftIcon;
 
   return (
     <>
@@ -84,9 +88,14 @@ export const AppBar: FC<Props> = ({ children }) => {
         >
           <LeftNav>
             <Tooltip label={t("common.back")}>
-              <IconButton onClick={onBackClick}>
-                {PrimaryButtonIcon ? (
-                  <PrimaryButtonIcon aria-hidden />
+              <IconButton
+                // We render the back button (PrimaryButtonIcon) the same size as the native os.
+                // We render the minimise icon (default) smaller as per designs.
+                size={primaryButtonIcon === "back" ? "32px" : "24px"}
+                onClick={onBackClick}
+              >
+                {primaryButtonIcon === "back" ? (
+                  <BackIcon aria-hidden />
                 ) : (
                   <CollapseIcon aria-hidden />
                 )}
@@ -128,14 +137,16 @@ export function useAppBarTitle(title: string): void {
  * React hook which sets the title to be shown in the app bar, if present. It is
  * an error to call this hook from multiple sites in the same component tree.
  */
-export function useAppBarPrimaryButtonIcon(icon: typeof CollapseIcon): void {
-  const setIcon = use(AppBarContext)?.setPrimaryButtonIcon;
+export function useAppBarPrimaryButtonIconKind(
+  icon: "back" | "minimise",
+): void {
+  const setIconKind = use(AppBarContext)?.setPrimaryButtonIconKind;
   useEffect(() => {
-    if (setIcon !== undefined) {
-      setIcon(icon);
-      return (): void => setIcon(null);
+    if (setIconKind !== undefined) {
+      setIconKind(icon);
+      return (): void => setIconKind("minimise");
     }
-  }, [setIcon, icon]);
+  }, [setIconKind, icon]);
 }
 
 /**

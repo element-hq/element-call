@@ -26,7 +26,6 @@ import {
 } from "livekit-client";
 import { useObservableEagerState } from "observable-hooks";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -54,7 +53,7 @@ import { createLobbyFooterViewModel } from "../components/CallFooterViewModel";
 import { type ViewModel } from "../state/ViewModel";
 import {
   useAppBarHidden,
-  useAppBarPrimaryButtonIcon,
+  useAppBarPrimaryButtonIconKind,
   useAppBarTitle,
 } from "../AppBar";
 
@@ -95,7 +94,7 @@ export const LobbyView: FC<Props> = ({
 
   useAppBarHidden(false);
   useAppBarTitle(matrixInfo.roomName);
-  useAppBarPrimaryButtonIcon(ArrowLeftIcon);
+  useAppBarPrimaryButtonIconKind("back");
   const audioEnabled = useBehavior(muteStates.audio.enabled$);
   const videoEnabled = useBehavior(muteStates.video.enabled$);
   const toggleAudio = useBehavior(muteStates.audio.toggle$);
