@@ -17,6 +17,8 @@ export default {
     // installed binary. TODO We should switch to Compose v2:
     // https://docs.docker.com/compose/migrate/
     "docker-compose",
+    // Shell builtin, not a binary
+    "printf",
   ],
   ignoreFiles: ["scripts/.pnpmfile.cjs"],
   ignoreDependencies: [

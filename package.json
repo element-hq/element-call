@@ -17,7 +17,7 @@
     "build:sdk": "pnpm build:full --config vite-sdk.config.js",
     "build:sdk:production": "pnpm build:sdk",
     "serve": "vite preview",
-    "prettier:check": "prettier -c .",
+    "prettier:check": "prettier -c .; EC=$?; [ $EC -ne 0 ] && printf '[\\033[33mwarn\\033[0m] To fix, run: pnpm run prettier:format\\n' >&2; exit $EC",
     "prettier:format": "prettier -w .",
     "lint": "pnpm lint:types && pnpm lint:eslint && pnpm lint:knip",
     "lint:eslint": "eslint --max-warnings 0 src playwright",
