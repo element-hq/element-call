@@ -12,7 +12,6 @@ import {
   useMemo,
   useState,
   createContext,
-  type ComponentType,
   type FC,
   type MouseEvent,
   type ReactNode,

@@ -11,7 +11,10 @@ import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
 import { axe } from "vitest-axe";
-import { ArrowLeftIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import {
+  ArrowLeftIcon,
+  ChevronLeftIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -49,6 +52,13 @@ const mockClient = {
   getDeviceId: () => "DEVICE",
 } as Partial<MatrixClient> as MatrixClient;
 
+const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
+vi.mock("../Platform", () => ({
+  get platform(): string {
+    return platformMock();
+  },
+}));
+
 const matrixInfo = {
   userId: "@user:example.org",
   displayName: "Test User",
@@ -63,7 +73,9 @@ const matrixInfo = {
 function renderLobbyView(
   props: Partial<Parameters<typeof LobbyView>[0]> = {},
   withAppBar = false,
+  platform = "android",
 ): ReturnType<typeof render> {
+  platformMock.mockReturnValue(platform);
   const mediaDevices = mockMediaDevices({});
   const muteStates = mockMuteStates();
   const hideHeader = withAppBar ? true : false;
@@ -117,12 +129,13 @@ describe("LobbyView", () => {
     expect(getByTestId("lobby_joinCall")).toHaveClass(lobbyStyles.wait);
   });
 
-  it("renders with AppBar", async () => {
+  it("renders with AppBar android", async () => {
     const { container } = renderLobbyView(
       {
         waitingForInvite: true,
       },
       true,
+      "android",
     );
     expect(
       container.getElementsByClassName(headerStyles.header).length,
@@ -130,6 +143,32 @@ describe("LobbyView", () => {
     // Check that the primary button uses ArrowLeftIcon (the back/return icon),
     // not the default CollapseIcon
     const { container: iconContainer } = render(<ArrowLeftIcon />);
+    const expectedSvgPath = iconContainer
+      .querySelector("path")!
+      .getAttribute("d");
+    const primaryButtonSvgPath = container
+      .querySelector(".leftNav button")
+      ?.querySelector("path")
+      ?.getAttribute("d");
+    expect(primaryButtonSvgPath).toBe(expectedSvgPath);
+    expect(container).toMatchSnapshot();
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("renders with AppBar ios", async () => {
+    const { container } = renderLobbyView(
+      {
+        waitingForInvite: true,
+      },
+      true,
+      "ios",
+    );
+    expect(
+      container.getElementsByClassName(headerStyles.header).length,
+    ).toBeTruthy();
+    // Check that the primary button uses ArrowLeftIcon (the back/return icon),
+    // not the default CollapseIcon
+    const { container: iconContainer } = render(<ChevronLeftIcon />);
     const expectedSvgPath = iconContainer
       .querySelector("path")!
       .getAttribute("d");
