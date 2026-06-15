@@ -93,7 +93,7 @@ export const LobbyView: FC<Props> = ({
   const { t } = useTranslation();
   usePageTitle(matrixInfo.roomName);
 
-  useAppBarHidden(hideHeader);
+  useAppBarHidden(false);
   useAppBarTitle(matrixInfo.roomName);
   useAppBarPrimaryButtonIcon(ArrowLeftIcon);
   const audioEnabled = useBehavior(muteStates.audio.enabled$);
