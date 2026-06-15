@@ -1,3 +1,17 @@
-# dependencies where we use branches and hashes in the package.json. But that also use a pre/post install script.
-onlyBuiltDependencies:
-  - "matrix-js-sdk"
+allowBuilds:
+  "@parcel/watcher": true
+  "@sentry/cli": true
+  "@swc/core": true
+  "core-js": true
+  "esbuild": true
+  "matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7": true
+  "protobufjs": true
+overrides:
+  "@livekit/components-core>rxjs": "^7.8.1"
+  "@livekit/track-processors>@mediapipe/tasks-vision": "^0.10.18"
+  "minimatch": "^10.2.3"
+  "tar": "^7.5.11"
+  "glob": "^10.5.0"
+  "qs": "^6.14.1"
+  "js-yaml": "^4.1.1"
+  "esbuild": "^0.28.0"
