@@ -130,12 +130,14 @@ describe("LobbyView", () => {
     // Check that the primary button uses ArrowLeftIcon (the back/return icon),
     // not the default CollapseIcon
     const { container: iconContainer } = render(<ArrowLeftIcon />);
-    const expectedPath = iconContainer.querySelector("path")!.getAttribute("d");
-    const primaryButtonPath = container
+    const expectedSvgPath = iconContainer
+      .querySelector("path")!
+      .getAttribute("d");
+    const primaryButtonSvgPath = container
       .querySelector(".leftNav button")
       ?.querySelector("path")
       ?.getAttribute("d");
-    expect(primaryButtonPath).toBe(expectedPath);
+    expect(primaryButtonSvgPath).toBe(expectedSvgPath);
     expect(container).toMatchSnapshot();
     expect(await axe(container)).toHaveNoViolations();
   });
