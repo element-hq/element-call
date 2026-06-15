@@ -143,10 +143,10 @@ importers:
         version: 10.3.1(react@19.2.6)
       '@vector-im/compound-design-tokens':
         specifier: ^10.0.0
-        version: 10.2.1(@types/react@19.2.15)(react@19.2.6)
+        version: 10.2.2(@types/react@19.2.15)(react@19.2.6)
       '@vector-im/compound-web':
         specifier: ^9.3.0
-        version: 9.4.1(@fontsource/inconsolata@5.2.8)(@fontsource/inter@5.2.8)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(@vector-im/compound-design-tokens@10.2.1(@types/react@19.2.15)(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 9.4.1(@fontsource/inconsolata@5.2.8)(@fontsource/inter@5.2.8)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(@vector-im/compound-design-tokens@10.2.2(@types/react@19.2.15)(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@vitejs/plugin-react':
         specifier: ^4.0.1
         version: 4.7.0(vite@8.0.14(@types/node@24.12.4)(esbuild@0.28.0)(jiti@2.7.0)(sass@1.100.0)(terser@5.46.1)(yaml@2.9.0))
@@ -239,7 +239,7 @@ importers:
         version: 1.9.2
       matrix-js-sdk:
         specifier: github:matrix-org/matrix-js-sdk#develop
-        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/7675fb2e65c3b13910b745cd7e7067c5aad4e816
+        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7
       matrix-widget-api:
         specifier: ^1.16.1
         version: 1.17.0
@@ -3999,8 +3999,8 @@ packages:
     peerDependencies:
       react: '>= 16.8.0'
 
-  '@vector-im/compound-design-tokens@10.2.1':
-    resolution: {integrity: sha512-N8to81u7qVYRgQiMr8Fr1mM+s6ZHRsiGpXLFJiHTP4YDyc7vXW6MBUVuUaUGFcbmxq76lqPaZt2AsnD2barn6Q==}
+  '@vector-im/compound-design-tokens@10.2.2':
+    resolution: {integrity: sha512-kncYroDEwyvvk4K4E67ExP4RYp9NEineD1tB38KeJwTmOvcrPtGjWyBAyJgOGeRuc7G5edNLkWnAbvk5yZJ+5w==}
     peerDependencies:
       '@types/react': '*'
       react: ^17 || ^18 || ^19.0.0
@@ -5922,8 +5922,8 @@ packages:
   matrix-events-sdk@0.0.1:
     resolution: {integrity: sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/7675fb2e65c3b13910b745cd7e7067c5aad4e816:
-    resolution: {tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/7675fb2e65c3b13910b745cd7e7067c5aad4e816}
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7:
+    resolution: {tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7}
     version: 41.7.0
     engines: {node: '>=22.0.0'}
 
@@ -11231,12 +11231,12 @@ snapshots:
       '@use-gesture/core': 10.3.1
       react: 19.2.6
 
-  '@vector-im/compound-design-tokens@10.2.1(@types/react@19.2.15)(react@19.2.6)':
+  '@vector-im/compound-design-tokens@10.2.2(@types/react@19.2.15)(react@19.2.6)':
     optionalDependencies:
       '@types/react': 19.2.15
       react: 19.2.6
 
-  '@vector-im/compound-web@9.4.1(@fontsource/inconsolata@5.2.8)(@fontsource/inter@5.2.8)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(@vector-im/compound-design-tokens@10.2.1(@types/react@19.2.15)(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@vector-im/compound-web@9.4.1(@fontsource/inconsolata@5.2.8)(@fontsource/inter@5.2.8)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(@vector-im/compound-design-tokens@10.2.2(@types/react@19.2.15)(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@floating-ui/react': 0.27.19(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@fontsource/inconsolata': 5.2.8
@@ -11247,7 +11247,7 @@ snapshots:
       '@radix-ui/react-progress': 1.1.9(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@radix-ui/react-separator': 1.1.9(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@radix-ui/react-slot': 1.2.5(@types/react@19.2.15)(react@19.2.6)
-      '@vector-im/compound-design-tokens': 10.2.1(@types/react@19.2.15)(react@19.2.6)
+      '@vector-im/compound-design-tokens': 10.2.2(@types/react@19.2.15)(react@19.2.6)
       classnames: 2.5.1
       react: 19.2.6
       vaul: 1.1.2(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -13457,7 +13457,7 @@ snapshots:
 
   matrix-events-sdk@0.0.1: {}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/7675fb2e65c3b13910b745cd7e7067c5aad4e816:
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7:
     dependencies:
       '@babel/runtime': 7.29.2
       '@matrix-org/matrix-sdk-crypto-wasm': 18.3.1
