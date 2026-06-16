@@ -7,6 +7,9 @@ A few aspects of Element Call's interface can be controlled through a global API
 - `controls.canEnterPip(): boolean` Determines whether it's possible to enter picture-in-picture mode.
 - `controls.enablePip(): void` Puts the call interface into picture-in-picture mode. Throws if not in a call.
 - `controls.disablePip(): void` Takes the call interface out of picture-in-picture mode, restoring it to its natural display mode. Throws if not in a call.
+- `controls.onPipMediaOrientationUpdate: ((orientation: "landscape"|"portrait") => void) | undefined` Callback called whenever the PiP media orientation changes.
+  The client should track this value to already initiate the pip in the right orientation.
+  It should update the orientation of the current Pip window when called.
 
 ## Audio devices
 

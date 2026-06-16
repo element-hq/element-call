@@ -105,7 +105,7 @@ describe("MatrixMemberMetadata", () => {
     }
 
     it("should show our own user if present in rtc session and room", () => {
-      withTestScheduler(({ behavior, expectObservable }) => {
+      withTestScheduler(({ scope, behavior, expectObservable }) => {
         fakeMemberWith({
           userId: "@local:example.com",
           rawDisplayName: "it's a me",
@@ -118,8 +118,10 @@ describe("MatrixMemberMetadata", () => {
           memberships$,
           createRoomMembers$(testScope, mockMatrixRoom),
         );
-        const dn$ =
-          metadataStore.createDisplayNameBehavior$("@local:example.com");
+        const dn$ = metadataStore.createDisplayNameBehavior$(
+          scope,
+          "@local:example.com",
+        );
 
         expectObservable(dn$).toBe("a", {
           a: "it's a me",
@@ -146,7 +148,7 @@ describe("MatrixMemberMetadata", () => {
     it("should get displayName for users", () => {
       setUpBasicRoom();
 
-      withTestScheduler(({ behavior, expectObservable }) => {
+      withTestScheduler(({ scope, behavior, expectObservable }) => {
         const memberships$ = behavior("a", {
           a: [
             mockRtcMembership("@alice:example.com", "DEVICE1"),
@@ -158,8 +160,10 @@ describe("MatrixMemberMetadata", () => {
           memberships$,
           createRoomMembers$(testScope, mockMatrixRoom),
         );
-        const aliceDispName$ =
-          metadataStore.createDisplayNameBehavior$("@alice:example.com");
+        const aliceDispName$ = metadataStore.createDisplayNameBehavior$(
+          scope,
+          "@alice:example.com",
+        );
 
         expectObservable(aliceDispName$).toBe("a", {
           a: "Alice",
@@ -322,7 +326,7 @@ describe("MatrixMemberMetadata", () => {
     });
 
     it("should track individual member id with createDisplayNameBehavior", () => {
-      withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      withTestScheduler(({ scope, behavior, schedule, expectObservable }) => {
         setUpBasicRoom();
         const BOB = "@bob:example.com";
         const CARL = "@carl:example.com";
@@ -356,8 +360,8 @@ describe("MatrixMemberMetadata", () => {
           createRoomMembers$(testScope, mockMatrixRoom),
         );
 
-        const bob$ = metadataStore.createDisplayNameBehavior$(BOB);
-        const carl$ = metadataStore.createDisplayNameBehavior$(CARL);
+        const bob$ = metadataStore.createDisplayNameBehavior$(scope, BOB);
+        const carl$ = metadataStore.createDisplayNameBehavior$(scope, CARL);
 
         expectObservable(bob$).toBe("abc-", {
           a: undefined,
@@ -378,7 +382,7 @@ describe("MatrixMemberMetadata", () => {
     });
 
     it("should disambiguate users with invisible characters", () => {
-      withTestScheduler(({ behavior, expectObservable }) => {
+      withTestScheduler(({ scope, behavior, expectObservable }) => {
         const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
         const bobZeroWidthSpaceRtcMember = mockRtcMembership(
           "@bob2:example.org",
@@ -411,12 +415,18 @@ describe("MatrixMemberMetadata", () => {
           createRoomMembers$(testScope, mockMatrixRoom),
         );
 
-        const bob$ =
-          metadataStore.createDisplayNameBehavior$("@bob:example.org");
-        const bob2$ =
-          metadataStore.createDisplayNameBehavior$("@bob2:example.org");
-        const carol$ =
-          metadataStore.createDisplayNameBehavior$("@carol:example.org");
+        const bob$ = metadataStore.createDisplayNameBehavior$(
+          scope,
+          "@bob:example.org",
+        );
+        const bob2$ = metadataStore.createDisplayNameBehavior$(
+          scope,
+          "@bob2:example.org",
+        );
+        const carol$ = metadataStore.createDisplayNameBehavior$(
+          scope,
+          "@carol:example.org",
+        );
         expectObservable(bob$).toBe("ab", {
           a: "Bob",
           b: "Bob (@bob:example.org)",
@@ -517,7 +527,7 @@ describe("MatrixMemberMetadata", () => {
     }
 
     it("should use avatar url from room members", () => {
-      withTestScheduler(({ behavior, expectObservable }) => {
+      withTestScheduler(({ scope, behavior, expectObservable }) => {
         fakeMemberWith({
           userId: "@local:example.com",
         });
@@ -536,11 +546,15 @@ describe("MatrixMemberMetadata", () => {
           memberships$,
           createRoomMembers$(testScope, mockMatrixRoom),
         );
-        const local$ =
-          metadataStore.createAvatarUrlBehavior$("@local:example.com");
+        const local$ = metadataStore.createAvatarUrlBehavior$(
+          scope,
+          "@local:example.com",
+        );
 
-        const alice$ =
-          metadataStore.createAvatarUrlBehavior$("@alice:example.com");
+        const alice$ = metadataStore.createAvatarUrlBehavior$(
+          scope,
+          "@alice:example.com",
+        );
 
         expectObservable(local$).toBe("a", {
           a: "mxc://example.com/@local:example.com",
@@ -558,7 +572,7 @@ describe("MatrixMemberMetadata", () => {
     });
 
     it("should update on avatar change and user join/leave", () => {
-      withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      withTestScheduler(({ scope, behavior, schedule, expectObservable }) => {
         fakeMemberWith({ userId: "@carl:example.com" });
         fakeMemberWith({ userId: "@bob:example.com" });
         const memberships$ = behavior("ab-d", {
@@ -585,9 +599,14 @@ describe("MatrixMemberMetadata", () => {
           },
         });
 
-        const bob$ = metadataStore.createAvatarUrlBehavior$("@bob:example.com");
-        const carl$ =
-          metadataStore.createAvatarUrlBehavior$("@carl:example.com");
+        const bob$ = metadataStore.createAvatarUrlBehavior$(
+          scope,
+          "@bob:example.com",
+        );
+        const carl$ = metadataStore.createAvatarUrlBehavior$(
+          scope,
+          "@carl:example.com",
+        );
         expectObservable(bob$).toBe("a---", {
           a: "mxc://example.com/@bob:example.com",
         });
