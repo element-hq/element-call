@@ -11,6 +11,7 @@ import { BehaviorSubject } from "rxjs";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { type Behavior } from "../state/Behavior";
 import { useBehavior } from "../useBehavior";
+import { MatrixRTCMode } from "../config/ConfigOptions";
 
 export class Setting<T> {
   public constructor(
@@ -129,17 +130,10 @@ export const alwaysShowIphoneEarpiece = new Setting<boolean>(
   false,
 );
 
-export enum MatrixRTCMode {
-  Legacy = "legacy",
-  Compatibility = "compatibility",
-  /** This implies using
-   *  - sticky events
-   *  - hashed RTC backend identity
-   *  - the new endpoint for the jwt token on the local membership (remote memberships will always try the new jwt endpoint first -> then the legacy one)
-   *  - use the hashed identity for the local membership
-   */
-  Matrix_2_0 = "matrix_2_0",
-}
+export const enableExtendedLivekitLogs = new Setting<boolean>(
+  "extended-livekit-logs",
+  false,
+);
 
 export const matrixRTCMode = new Setting<MatrixRTCMode>(
   "matrix-rtc-mode",

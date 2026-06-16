@@ -49,24 +49,26 @@
     "profile": "Profil",
     "reaction": "Reacție",
     "reactions": "Reacții",
+    "reconnecting": "Se restabilește conexiunea…",
     "settings": "Setări",
     "unencrypted": "Nu este criptat",
     "username": "Numele utilizatorului",
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Afișează opțiunea pentru căștile iPhone pe toate platformele",
     "crypto_version": "Versiunea Crypto: {{version}}",
     "debug_tile_layout_label": "Depanaţi aranjamentul cartonaşelor",
     "device_id": "ID-ul dispozitivului: {{id}}",
     "duplicate_tiles_label": "Numărul de exemplare suplimentare de cartonașe per participant",
     "environment_variables": "Variabile de mediu",
     "hostname": "Numele gazdei: {{hostname}}",
+    "livekit_server_info": "Informaţii despre serverul livekit",
+    "livekit_sfu": "Unitate de expediere selectivă LiveKit: {{url}}",
     "matrix_id": "ID-ul matricei: {{id}}",
+    "mute_all_audio": "Dezactivează toate sunetele (participanți, reacții, sunete de conectare)",
     "show_connection_stats": "Afişaţi informaţii cu privire la starea conexiunii",
-    "show_non_member_tiles": "Afişaţi pictograme pentru fluxul media care nu aparţine participanţilor apelului",
-    "url_params": "Parametrii linkului",
-    "use_new_membership_manager": "Folosiţi noua versiune de administrator pentru participanţi ai apelului",
-    "use_to_device_key_transport": "Folosiţi metoda de transport direct către dispozitiv. Aceasta va reveni la transportul prin intermediul evenimentelor din cameră doar dacă un alt participant la apel recurge la acel mod de transport mai întâi."
+    "url_params": "Parametrii linkului"
   },
   "disconnected_banner": "Conexiunea către server s-a încheiat abrupt",
   "error": {
@@ -81,9 +83,10 @@
     "generic_description": "Dacă ne trimiteţi jurnalele de depanare generate de aplicaţie, ne puteţi ajuta să rezolvăm problema.",
     "insufficient_capacity": "Capacitate insuficientă",
     "insufficient_capacity_description": "Serverul a ajuns la capacitatea maximă și nu vă puteți alătura apelului în acest moment. Încercați din nou in câteva minute, sau contactați administratorul serverului dumneavoastră dacă problema persistă.",
-    "matrix_rtc_focus_missing": "Serverul nu este configurat să funcționeze cu{{brand}}. Vă rugăm să contactați administratorul serverului dumneavoastră pentru a raporta o eroare în configurare. Detalii: Domeniu: {{domain}}. Cod de eroare: {{ errorCode }}.",
     "open_elsewhere": "Aplicaţia este deschisă intr-o altă pagină",
     "open_elsewhere_description": "{{brand}} a fost deschis într-o altă pagină. Dacă credeți că acest mesaj a fost emis in eroare, încercați să reîncărcați pagina.",
+    "room_creation_restricted": "Apelul nu a putut fi creat",
+    "room_creation_restricted_description": "Crearea apelurilor ar putea fi restricționată doar utilizatorilor autorizați. Încercați din nou mai târziu sau contactați administratorul serverului dacă problema persistă.",
     "unexpected_ec_error": "A apărut o eroare neașteptată (Cod de <0> eroare: </0> <1> {{ errorCode }}</1>). Vă rugăm să contactați administratorul serverului dumneavoastră."
   },
   "group_call_loader": {
@@ -94,6 +97,11 @@
     "knock_reject_body": "Cererea dvs. de a vă alătura a fost respinsă.",
     "knock_reject_heading": "Acces refuzat",
     "reason": "Motivul"
+  },
+  "handset": {
+    "overlay_back_button": "Înapoi la modul Difuzor",
+    "overlay_description": "Funcționează doar în timp ce se utilizează aplicația",
+    "overlay_title": "Mod telefon"
   },
   "hangup_button_label": "Încheiați apelul",
   "header_label": "Element Call Home",
@@ -125,6 +133,9 @@
   "microphone_off": "Microfon oprit",
   "microphone_on": "Microfon pornit",
   "mute_microphone_button_label": "Dezactivați microfonul",
+  "participant_count_one": "{{count, number}}",
+  "participant_count_few": "{{count, number}}",
+  "participant_count_other": "{{count, number}}",
   "qr_code": "COD QR",
   "rageshake_button_error_caption": "Încearcă din nou trimiterea jurnalelor",
   "rageshake_request_modal": {
@@ -137,6 +148,7 @@
   "rageshake_sent": "Multumesc!",
   "recaptcha_dismissed": "Recaptcha a fost respins",
   "recaptcha_not_loaded": "Recaptcha nu a fost încărcat",
+  "recaptcha_ssla_caption": "Acest site este protejat de reCAPTCHA. Se aplică atât Politica de <2> confidențialitate Google </2> cât și <6> Termenii și condițiile. </6> <9></9>Făcând clic pe \"Înregistrare\", sunteți de acord cu Acordul <12> nostru de licență pentru software și servicii (SSLA) </12>",
   "register": {
     "passwords_must_match": "Parolele trebuie să se potrivească",
     "registering": "Înregistrare..."
@@ -146,16 +158,29 @@
   "register_heading": "Creează-ți contul",
   "return_home_button": "Reveniți la ecranul de pornire",
   "room_auth_view_continue_button": "Continuă",
+  "room_auth_view_ssla_caption": "Făcând clic pe „Alăturați-vă apelului acum”, sunteți de acord cu Acordul <2> nostru de licență pentru software și servicii (SSLA) </2>",
   "screenshare_button_label": "Partajare ecran",
   "settings": {
     "audio_tab": {
       "effect_volume_description": "Reglați volumul la care reacționează reacțiile și efectele ridicate de mână",
       "effect_volume_label": "Volumul efectului sonor"
     },
+    "background_blur_header": "Fundal",
+    "background_blur_label": "Estompează fundalul videoclipului",
+    "blur_not_supported_by_browser": "(Funcția de estompare a fundalului nu este acceptată de acest device.)",
     "developer_tab_title": "dezvoltator",
     "devices": {
+      "camera": "Cameră",
+      "camera_numbered": "Camera {{n}}",
+      "change_device_button": "Schimbați dispozitivul audio",
+      "default": "Implicit",
+      "default_named": "Dispozitiv implicit <2>({{name}})</2>",
+      "handset": "Telefon",
+      "loudspeaker": "Difuzor",
       "microphone": "Microfon",
-      "speaker": "Difuzor"
+      "microphone_numbered": "Microfon {{n}}",
+      "speaker": "Difuzor",
+      "speaker_numbered": "Difuzor {{n}}"
     },
     "feedback_tab_body": "Dacă întâmpinați probleme sau pur și simplu doriți să oferiți feedback, vă rugăm să ne trimiteți o scurtă descriere mai jos.",
     "feedback_tab_description_label": "Feedback-ul tău",
@@ -176,6 +201,9 @@
       "show_hand_raised_timer_label": "Afișați durata ridicării mâinii"
     }
   },
+  "star_rating_input_label_one": "{{count}} stea",
+  "star_rating_input_label_few": "{{count}} stele",
+  "star_rating_input_label_other": "{{count}} stele",
   "start_new_call": "Începe un nou apel",
   "start_video_button_label": "Începeți videoclipul",
   "stop_screenshare_button_label": "Partajarea ecranului",
@@ -184,12 +212,12 @@
   "switch_camera": "Comutați camera",
   "unauthenticated_view_body": "Nu sunteți încă înregistrat? <2>Creați un cont </2>",
   "unauthenticated_view_login_button": "Conectați-vă la contul dvs.",
+  "unauthenticated_view_ssla_caption": "Făcând clic pe \"Înainte\", sunteți de acord cu Acordul nostru de licență pentru <2> software și servicii (SSLA) </2>",
   "unmute_microphone_button_label": "Anulează microfonul",
   "version": "{{productName}}Versiune: {{version}}",
   "video_tile": {
     "always_show": "Arată întotdeauna",
     "camera_starting": "Se încarcă fluxul video...",
-    "change_fit_contain": "Se potrivește cadrului",
     "collapse": "colaps",
     "expand": "Extindeți",
     "mute_for_me": "Mute pentru mine",

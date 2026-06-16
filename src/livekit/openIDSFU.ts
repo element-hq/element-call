@@ -5,7 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type IOpenIDToken, type MatrixClient } from "matrix-js-sdk";
+import {
+  type IOpenIDToken,
+  type MatrixClient,
+  parseErrorResponse,
+} from "matrix-js-sdk";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
@@ -248,7 +252,7 @@ async function getLiveKitJWT(
   });
 
   if (!res.ok) {
-    throw new Error("SFU Config fetch failed with status code " + res.status);
+    throw parseErrorResponse(res, await res.text());
   }
   return await res.json();
 }
@@ -308,7 +312,7 @@ export async function getLiveKitJWTWithDelayDelegation(
     if (res.status === 404) {
       throw new NotSupportedError(msg);
     } else {
-      throw new Error(msg);
+      throw parseErrorResponse(res, await res.text());
     }
   }
   return await res.json();

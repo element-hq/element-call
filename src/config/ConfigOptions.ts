@@ -6,6 +6,26 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+/**
+ * The MatrixRTC mode determines how Element Call interacts with the
+ * MatrixRTC backend and other participants. Selectable via the Developer
+ * Settings, or pinned for a deployment via `matrix_rtc_mode` in config.json.
+ */
+export enum MatrixRTCMode {
+  /** Legacy single-SFU + user-keyed memberships + legacy JWT endpoint. */
+  Legacy = "legacy",
+  /** Multi-SFU transport, legacy JWT endpoint, no sticky events. */
+  Compatibility = "compatibility",
+  /**
+   * Multi-SFU transport with:
+   *  - sticky events
+   *  - hashed RTC backend identity
+   *  - the new endpoint for the jwt token on the local membership (remote memberships will always try the new jwt endpoint first -> then the legacy one)
+   *  - use the hashed identity for the local membership
+   */
+  Matrix_2_0 = "matrix_2_0",
+}
+
 export interface ConfigOptions {
   /**
    * The Posthog endpoint to which analytics data will be sent.
@@ -103,6 +123,13 @@ export interface ConfigOptions {
    * Default is 10000ms (10 seconds). Set to 0 to disable the grace period.
    */
   sync_disconnect_grace_period_ms?: number;
+
+  /**
+   * Pins the {@link MatrixRTCMode} for all clients on this deployment,
+   * overriding any per-user choice from the Developer Settings. If unset,
+   * the user's Developer Settings choice (or its default of `Legacy`) wins.
+   */
+  matrix_rtc_mode?: MatrixRTCMode;
 
   /**
    * These are low level options that are used to configure the MatrixRTC session.

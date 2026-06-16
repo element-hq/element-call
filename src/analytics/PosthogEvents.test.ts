@@ -18,7 +18,11 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
-import { CallEndedTracker } from "./PosthogEvents";
+import {
+  CallEndedTracker,
+  CallReconnectingTracker,
+  type CallReconnectingReason,
+} from "./PosthogEvents";
 import { mockConfig } from "../utils/test";
 
 const defaultCounters = {
@@ -89,6 +93,11 @@ describe("CallEnded", () => {
         roomEventEncryptionKeysSent: 10,
         roomEventEncryptionKeysReceived: 5,
         roomEventEncryptionKeysReceivedAverageAge: 100,
+        callReconnectingCount: 0,
+        callReconnectingCountSync: 0,
+        callReconnectingCountMembership: 0,
+        callReconnectingCountProbablyLeft: 0,
+        callReconnectingCountLivekit: 0,
       },
       { send_instantly: true },
     );
@@ -157,6 +166,72 @@ describe("CallEnded", () => {
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.anything(),
       { send_instantly: false },
+    );
+  });
+
+  it("includes per-reason reconnecting counts in CallEnded", () => {
+    const tracker = new CallEndedTracker();
+    const mockSession = createMockRtcSession();
+
+    tracker.cacheStartCall(new Date());
+    tracker.cacheReconnecting("sync");
+    tracker.cacheReconnecting("sync");
+    tracker.cacheReconnecting("livekit");
+    tracker.cacheReconnecting("membership");
+    tracker.track("test-call-id", 1, false, mockSession);
+
+    expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callReconnectingCount: 4,
+        callReconnectingCountSync: 2,
+        callReconnectingCountMembership: 1,
+        callReconnectingCountProbablyLeft: 0,
+        callReconnectingCountLivekit: 1,
+      }),
+      expect.anything(),
+    );
+  });
+});
+
+describe("CallReconnecting", () => {
+  beforeAll(() => {
+    mockConfig();
+  });
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.spyOn(PosthogAnalytics.instance, "trackEvent").mockImplementation(
+      () => {},
+    );
+  });
+
+  afterAll(() => {
+    PosthogAnalytics.resetInstance();
+  });
+
+  it("tracks event with correct shape", () => {
+    const tracker = new CallReconnectingTracker();
+    tracker.track("!room:example.org", "sync", 3.5);
+
+    expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith({
+      eventName: "CallReconnecting",
+      callId: "!room:example.org",
+      reason: "sync",
+      reconnectDuration: 3.5,
+    });
+  });
+
+  it.each([
+    "sync",
+    "membership",
+    "probablyLeft",
+    "livekit",
+  ] as CallReconnectingReason[])("tracks reason %s correctly", (reason) => {
+    const tracker = new CallReconnectingTracker();
+    tracker.track("!room:example.org", reason, 1.0);
+
+    expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ reason, reconnectDuration: 1.0 }),
     );
   });
 });

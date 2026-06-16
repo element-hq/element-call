@@ -21,7 +21,7 @@
     "submit": "Kirim",
     "upload_file": "Unggah berkas"
   },
-  "analytics_notice": "Dengan bergabung dalam beta ini, Anda mengizinkan kami untuk mengumpulkan data anonim, yang kami gunakan untuk meningkatkan produk ini. Anda dapat mempelajari lebih lanjut tentang data apa yang kami lacak dalam <2>Kebijakan Privasi</2> dan <5>Kebijakan Kuki</5> kami.",
+  "analytics_notice": "Dengan bergabung dalam beta ini, Anda mengizinkan kami untuk mengumpulkan data anonim, yang kami gunakan untuk meningkatkan produk ini. Anda dapat mempelajari lebih lanjut tentang data apa yang kami lacak dalam <2>Kebijakan Privasi</2> dan <6>Kebijakan Kuki</6> kami.",
   "call_ended_view": {
     "create_account_button": "Buat akun",
     "create_account_prompt": "<0>Kenapa tidak selesaikan dengan mengatur sebuah kata sandi untuk menjaga akun Anda?</0><1>Anda akan dapat tetap menggunakan nama Anda dan atur sebuah avatar untuk digunakan dalam panggilan di masa mendatang</1>",
@@ -49,12 +49,14 @@
     "profile": "Profil",
     "reaction": "Reaksi",
     "reactions": "Reaksi",
+    "reconnecting": "Menghubungkan kembali…",
     "settings": "Pengaturan",
     "unencrypted": "Tidak terenkripsi",
     "username": "Nama pengguna",
     "video": "Video"
   },
   "developer_mode": {
+    "always_show_iphone_earpiece": "Tampilkan opsi lubang suara iPhone di semua platform",
     "crypto_version": "Versi kripto: {{version}}",
     "debug_tile_layout_label": "Awakutu tata letak ubin",
     "device_id": "ID perangkat: {{id}}",
@@ -64,17 +66,15 @@
     "livekit_server_info": "Info Server LiveKit",
     "livekit_sfu": "SFU LiveKit: {{url}}",
     "matrix_id": "ID Matrix: {{id}}",
+    "mute_all_audio": "Bisukan semua audio (suara peserta, reaksi, bergabung)",
     "show_connection_stats": "Tampilkan statistik koneksi",
-    "show_non_member_tiles": "Tampilkan ubin untuk media non-anggota",
-    "url_params": "Parameter URL",
-    "use_new_membership_manager": "Gunakan implementasi baru dari panggilan MembershipManager",
-    "use_to_device_key_transport": "Gunakan untuk transportasi kunci perangkat. Ini akan kembali ke transportasi kunci ruangan ketika anggota panggilan lain mengirim kunci ruangan"
+    "url_params": "Parameter URL"
   },
   "disconnected_banner": "Koneksi ke server telah hilang.",
   "error": {
     "call_is_not_supported": "Panggilan tidak didukung",
     "call_not_found": "Panggilan tidak ditemukan",
-    "call_not_found_description": "<0>Tautan itu tampaknya bukan milik panggilan yang ada. Periksa apakah Anda memiliki tautan yang tepat, atau <1> buat yang baru</1>.</0>",
+    "call_not_found_description": "<0>Tautan itu tampaknya bukan milik panggilan yang ada. Periksa apakah Anda memiliki tautan yang tepat, atau <2> buat yang baru</2>. </0>",
     "connection_lost": "Koneksi terputus",
     "connection_lost_description": "Anda terputus dari panggilan.",
     "e2ee_unsupported": "Peramban tidak kompatibel",
@@ -83,9 +83,10 @@
     "generic_description": "Mengirimkan log awakutu akan membantu kami melacak masalah.",
     "insufficient_capacity": "Kapasitas tidak mencukupi",
     "insufficient_capacity_description": "Server telah mencapai kapasitas maksimum dan Anda tidak dapat bergabung dalam panggilan saat ini. Coba lagi nanti, atau hubungi admin server Anda jika masalah masih berlanjut.",
-    "matrix_rtc_focus_missing": "Server tidak dikonfigurasi untuk bekerja dengan {{brand}}. Silakan hubungi admin server Anda (Domain: {{domain}}, Kode Kesalahan: {{ errorCode }}).",
     "open_elsewhere": "Dibuka di tab lain",
     "open_elsewhere_description": "{{brand}} telah dibuka di tab lain. Jika sepertinya tidak benar, coba muat ulang halaman.",
+    "room_creation_restricted": "Gagal membuat panggilan",
+    "room_creation_restricted_description": "Pembuatan panggilan mungkin hanya terbatas untuk pengguna yang diizinkan. Coba lagi nanti, atau hubungi admin server Anda jika masalah berlanjut.",
     "unexpected_ec_error": "Terjadi kesalahan tak terduga (<0> Kode Kesalahan:</0><1>{{ errorCode }}</1>). Silakan hubungi admin server Anda."
   },
   "group_call_loader": {
@@ -96,6 +97,11 @@
     "knock_reject_body": "Permintaan Anda untuk bergabung ditolak.",
     "knock_reject_heading": "Akses ditolak",
     "reason": "Alasan: {{reason}}"
+  },
+  "handset": {
+    "overlay_back_button": "Kembali ke Mode Pembicara",
+    "overlay_description": "Hanya berfungsi saat menggunakan aplikasi",
+    "overlay_title": "Mode Ponsel"
   },
   "hangup_button_label": "Akhiri panggilan",
   "header_label": "Beranda Element Call",
@@ -164,8 +170,11 @@
     "devices": {
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
+      "change_device_button": "Ubah perangkat audio",
       "default": "Bawaan",
       "default_named": "Bawaan <2>({{name}})</2>",
+      "handset": "Ponsel",
+      "loudspeaker": "Pengeras suara",
       "microphone": "Mikrofon",
       "microphone_numbered": "Mikrofon {{n}}",
       "speaker": "Speaker",
@@ -190,7 +199,6 @@
       "show_hand_raised_timer_label": "Tampilkan durasi angkat tangan"
     }
   },
-  "star_rating_input_label_one": "{{count}} bintang",
   "star_rating_input_label_other": "{{count}} bintang",
   "start_new_call": "Mulai panggilan baru",
   "start_video_button_label": "Nyalakan video",
@@ -202,11 +210,10 @@
   "unauthenticated_view_login_button": "Masuk ke akun Anda",
   "unauthenticated_view_ssla_caption": "Dengan mengeklik \"Go\", Anda menyetujui <2>Perjanjian Lisensi Perangkat Lunak dan Layanan (SSLA) kami</2>",
   "unmute_microphone_button_label": "Nyalakan mikrofon",
-  "version": "Versi: {{version}}",
+  "version": "Versi {{productName}}: {{version}}",
   "video_tile": {
     "always_show": "Selalu tampilkan",
     "camera_starting": "Memuat video...",
-    "change_fit_contain": "Sesuai dengan bingkai",
     "collapse": "Tutup",
     "expand": "Buka",
     "mute_for_me": "Bisukan untuk saya",

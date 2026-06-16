@@ -77,13 +77,13 @@ mobileTest(
     await expect(
       guestPage.getByTestId("roomHeader_participants_count"),
     ).toContainText("2");
-    expect(await guestPage.getByTestId("videoTile").count()).toBe(2);
+    await expect(guestPage.getByTestId("videoTile")).toHaveCount(2);
 
     // Same in creator page
     await expect(
       creatorPage.getByTestId("roomHeader_participants_count"),
     ).toContainText("2");
-    expect(await creatorPage.getByTestId("videoTile").count()).toBe(2);
+    await expect(creatorPage.getByTestId("videoTile")).toHaveCount(2);
 
     // TEST: control audio devices from the invitee page
 

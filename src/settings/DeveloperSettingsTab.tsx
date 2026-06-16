@@ -33,6 +33,7 @@ import {
 import { type Room as LivekitRoom } from "livekit-client";
 
 import { FieldRow, InputField } from "../input/Input";
+import { Config } from "../config/Config";
 import {
   useSetting,
   duplicateTiles as duplicateTilesSetting,
@@ -42,8 +43,9 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   matrixRTCMode as matrixRTCModeSetting,
   customLivekitUrl as customLivekitUrlSetting,
-  MatrixRTCMode,
+  enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
 } from "./settings";
+import { MatrixRTCMode } from "../config/ConfigOptions";
 import styles from "./DeveloperSettingsTab.module.css";
 import { useUrlParams } from "../UrlParams";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
@@ -92,6 +94,11 @@ export const DeveloperSettingsTab: FC<Props> = ({
     },
     [setMatrixRTCMode],
   );
+  const configMatrixRTCMode = Config.get().matrix_rtc_mode as
+    | MatrixRTCMode
+    | undefined;
+  const matrixRTCModeForced = configMatrixRTCMode !== undefined;
+  const effectiveMatrixRTCMode = configMatrixRTCMode ?? matrixRTCMode;
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
@@ -99,6 +106,10 @@ export const DeveloperSettingsTab: FC<Props> = ({
 
   const [alwaysShowIphoneEarpiece, setAlwaysShowIphoneEarpiece] = useSetting(
     alwaysShowIphoneEarpieceSetting,
+  );
+
+  const [enableExtendedLivekitLogs, setEnableExtendedLivekitLogs] = useSetting(
+    enableExtendedLivekitLogsSetting,
   );
 
   const [customLivekitUrlUpdateError, setCustomLivekitUrlUpdateError] =
@@ -225,7 +236,21 @@ export const DeveloperSettingsTab: FC<Props> = ({
             },
             [setAlwaysShowIphoneEarpiece],
           )}
-        />{" "}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="enableLivekitExtendedLogs"
+          type="checkbox"
+          label="Enable extended livekit logs"
+          checked={enableExtendedLivekitLogs}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setEnableExtendedLivekitLogs(event.target.checked);
+            },
+            [setEnableExtendedLivekitLogs],
+          )}
+        />
       </FieldRow>
       <EditInPlace
         onSubmit={(e) => e.preventDefault()}
@@ -293,13 +318,15 @@ export const DeveloperSettingsTab: FC<Props> = ({
       <Heading as="h3" type="body" weight="semibold" size="lg">
         {t("developer_mode.matrixRTCMode.title")}
       </Heading>
+      {matrixRTCModeForced && <p>Your deployment overrides the mode.</p>}
       <Form>
         <InlineField
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Legacy}
+              checked={effectiveMatrixRTCMode === MatrixRTCMode.Legacy}
               value={MatrixRTCMode.Legacy}
+              disabled={matrixRTCModeForced}
               onChange={onMatrixRTCModeChange}
             />
           }
@@ -313,8 +340,9 @@ export const DeveloperSettingsTab: FC<Props> = ({
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Compatibility}
+              checked={effectiveMatrixRTCMode === MatrixRTCMode.Compatibility}
               value={MatrixRTCMode.Compatibility}
+              disabled={matrixRTCModeForced}
               onChange={onMatrixRTCModeChange}
             />
           }
@@ -328,9 +356,9 @@ export const DeveloperSettingsTab: FC<Props> = ({
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={matrixRTCMode === MatrixRTCMode.Matrix_2_0}
+              checked={effectiveMatrixRTCMode === MatrixRTCMode.Matrix_2_0}
               value={MatrixRTCMode.Matrix_2_0}
-              disabled={!stickyEventsSupported}
+              disabled={matrixRTCModeForced || !stickyEventsSupported}
               onChange={onMatrixRTCModeChange}
             />
           }
