@@ -86,8 +86,8 @@ export const LobbyView: FC<Props> = ({
   }, []);
 
   const { t } = useTranslation();
-  usePageTitle(matrixInfo.roomName);
 
+  usePageTitle(matrixInfo.roomName);
   useAppBarPrimaryButtonIconKind("back");
   const audioEnabled = useBehavior(muteStates.audio.enabled$);
   const videoEnabled = useBehavior(muteStates.video.enabled$);
