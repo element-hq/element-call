@@ -133,8 +133,8 @@ export function useAppBarTitle(title: string): void {
 }
 
 /**
- * React hook which sets the title to be shown in the app bar, if present. It is
- * an error to call this hook from multiple sites in the same component tree.
+ * React hook which sets the primary button icon kind. Can only be "minimise" or "back"
+ * It is an error to call this hook from multiple sites in the same component tree.
  */
 export function useAppBarPrimaryButtonIconKind(
   icon: "back" | "minimise",

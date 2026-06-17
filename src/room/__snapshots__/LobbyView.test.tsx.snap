@@ -39,11 +39,6 @@ exports[`LobbyView > renders with AppBar android 1`] = `
           </div>
         </button>
       </div>
-      <h1
-        class="_typography_6v6n8_153 _font-body-lg-medium_6v6n8_79"
-      >
-        Test Room
-      </h1>
       <div
         class="nav rightNav"
       />
@@ -282,11 +277,6 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
           </div>
         </button>
       </div>
-      <h1
-        class="_typography_6v6n8_153 _font-body-lg-semibold_6v6n8_74"
-      >
-        Test Room
-      </h1>
       <div
         class="nav rightNav"
       />
