@@ -147,19 +147,5 @@
     "vitest": "^4.1.5",
     "vitest-axe": "^1.0.0-pre.3"
   },
-  "pnpm": {
-    "overrides": {
-      "@livekit/components-core>rxjs": "^7.8.1",
-      "@livekit/track-processors>@mediapipe/tasks-vision": "^0.10.18",
-      "minimatch": "^10.2.3",
-      "tar": "^7.5.11",
-      "glob": "^10.5.0",
-      "qs": "^6.14.1",
-      "js-yaml": "^4.1.1",
-      "esbuild": "^0.28.0",
-      "flatted": "^3.4.2",
-      "undici": "^6.24.0"
-    }
-  },
-  "packageManager": "pnpm@10.33.0"
+  "packageManager": "pnpm@11.6.0+sha512.9a36518224080c6fe5165afdcfe79bfa118c29be703f3f462b1e32efe1e98e47e8750b148e08286250aad4113cc7993ca413c4e2cd447752708c2ee5751bc95f"
 }
