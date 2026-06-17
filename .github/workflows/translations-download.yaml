@@ -40,8 +40,8 @@ jobs:
       - name: Fix the owner of the downloaded files
         run: "sudo chown runner:docker -R locales"
 
-      - name: Prettier
-        run: pnpm prettier:format
+      - name: Formatting
+        run: pnpm format
 
       - name: Create Pull Request
         id: cpr

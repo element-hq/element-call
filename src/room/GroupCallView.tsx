@@ -553,11 +553,9 @@ export const GroupCallView: FC<Props> = ({
           });
         }
       }}
-      onError={
-        (/**error*/) => {
-          if (rtcSession.isJoined()) onLeft("error");
-        }
-      }
+      onError={(_error) => {
+        if (rtcSession.isJoined()) onLeft("error");
+      }}
     >
       {body}
     </GroupCallErrorBoundary>
