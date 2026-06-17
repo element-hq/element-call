@@ -1,0 +1,125 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["jsdoc", "jsx-a11y", "react", "typescript"],
+  "jsPlugins": [
+    "eslint-plugin-matrix-org"
+    // TODO: Re-enable once oxlint supports lint rules that rely on TypeScript type-awareness.
+    // "eslint-plugin-rxjs"
+  ],
+  "categories": {
+    "correctness": "off"
+  },
+  "options": {
+    "typeAware": true
+  },
+  "env": {
+    "builtin": true
+  },
+  "rules": {
+    "jsdoc/empty-tags": "error",
+    "jsdoc/check-property-names": "error",
+    "jsdoc/require-param-description": "warn",
+    "matrix-org/require-copyright-header": [
+      "error",
+      "/*\nCopyright %%CURRENT_YEAR%% New Vector Ltd.\n\nSPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial\nPlease see LICENSE in the repository root for full details.\n*/\n\n"
+    ],
+    "react/display-name": "error",
+    // TODO: Re-enable once oxlint supports lint rules that rely on TypeScript type-awareness.
+    // "rxjs/no-exposed-subjects": "error",
+    // "rxjs/finnish": [
+    //   "error",
+    //   {
+    //     "names": {
+    //       "^this$": false
+    //     }
+    //   }
+    // ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "matrix-widget-api/src",
+            "message": "Please use matrix-widget-api instead"
+          },
+          {
+            "name": "matrix-widget-api/src/",
+            "message": "Please use matrix-widget-api instead"
+          },
+          {
+            "name": "matrix-widget-api/src/index",
+            "message": "Please use matrix-widget-api instead"
+          },
+          {
+            "name": "matrix-widget-api/lib",
+            "message": "Please use matrix-widget-api instead"
+          },
+          {
+            "name": "matrix-widget-api/lib/",
+            "message": "Please use matrix-widget-api instead"
+          },
+          {
+            "name": "matrix-widget-api/lib/index",
+            "message": "Please use matrix-widget-api instead"
+          },
+          {
+            "name": "matrix-js-sdk/src",
+            "message": "Please use matrix-js-sdk instead"
+          },
+          {
+            "name": "matrix-js-sdk/src/",
+            "message": "Please use matrix-js-sdk instead"
+          },
+          {
+            "name": "matrix-js-sdk/src/index",
+            "message": "Please use matrix-js-sdk instead"
+          },
+          {
+            "name": "matrix-js-sdk/lib",
+            "message": "Please use matrix-js-sdk instead"
+          },
+          {
+            "name": "matrix-js-sdk/lib/",
+            "message": "Please use matrix-js-sdk instead"
+          },
+          {
+            "name": "matrix-js-sdk/lib/index",
+            "message": "Please use matrix-js-sdk instead"
+          }
+        ],
+        "patterns": [
+          {
+            "group": [
+              "matrix-widget-api/src",
+              "matrix-widget-api/src/",
+              "matrix-widget-api/src/**",
+              "matrix-widget-api/lib",
+              "matrix-widget-api/lib/",
+              "matrix-widget-api/lib/**"
+            ],
+            "message": "Please use matrix-widget-api instead"
+          },
+          {
+            "group": [
+              "matrix-js-sdk/src",
+              "matrix-js-sdk/src/",
+              "matrix-js-sdk/src/**"
+            ],
+            "message": "Please use matrix-js-sdk instead"
+          }
+        ]
+      }
+    ],
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/promise-function-async": "error",
+    "typescript/require-await": "error",
+    "typescript/await-thenable": "error",
+    "typescript/consistent-type-imports": [
+      "error",
+      {
+        "fixStyle": "inline-type-imports"
+      }
+    ]
+  }
+}
