@@ -140,9 +140,9 @@ export function createCallNotificationLifecycle$({
         const timeout$ = timer(notificationEvent.lifetime).pipe(
           map(() => "timeout" as const),
         );
-        // Call is accepted when someone else joins
+        // Call is accepted when the recipient joins
         const accept$ = memberships$.pipe(
-          filter((ms) => ms.value.some((m) => m.userId !== localUser.userId)),
+          filter((ms) => ms.value.some((m) => m.userId === recipient)),
           map(() => "accept" as const),
         );
         // Call is declined when we receive a decline event
