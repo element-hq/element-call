@@ -39,12 +39,10 @@ import {
   throttleTime,
   timer,
   takeUntil,
-  concat,
 } from "rxjs";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   MembershipManagerEvent,
-  type RTCCallIntent,
   type LivekitTransportConfig,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -232,9 +230,9 @@ export interface CallViewModel {
   // lifecycle
   autoLeave$: Observable<AutoLeaveReason>;
   /**
-   * Whether we are ringing a call recipient. Contains the ringing intent if so.
+   * View model for info relating to ringing, timing out, calling back, etc.
    */
-  ringingIntent$: Behavior<RTCCallIntent | null>;
+  ringingVm$: Behavior<RingingMediaViewModel | null>;
   /** Observable that emits when the user should leave the call (hangup pressed, widget action, error).
    * THIS DOES NOT LEAVE THE CALL YET. The only way to leave the call (send the hangup event) is
    *  - by ending the scope
@@ -1717,15 +1715,7 @@ export function createCallViewModel$(
 
   return {
     autoLeave$: autoLeave$,
-    ringingIntent$: scope.behavior(
-      ringAttempts$.pipe(
-        switchMap(({ intent, outcome$ }) =>
-          // Hold the intent as the value until the ring attempt completes
-          concat(of(intent), NEVER.pipe(takeUntil(outcome$)), of(null)),
-        ),
-        startWith<RTCCallIntent | null>(null),
-      ),
-    ),
+    ringingVm$: ringingMedia$,
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
     join: localMembership.requestJoinAndPublish,

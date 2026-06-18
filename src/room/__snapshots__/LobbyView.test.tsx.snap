@@ -4,43 +4,36 @@ exports[`LobbyView > renders with AppBar android 1`] = `
 <div>
   <div
     class="bar"
-    style="display: block;"
   >
-    <header
-      class="header"
-    >
-      <div
-        class="nav leftNav"
+    <header>
+      <button
+        aria-labelledby="_r_36_"
+        class="_icon-button_1215g_8 primaryButton"
+        data-kind="primary"
+        role="button"
+        style="--cpd-icon-button-size: 32px;"
+        tabindex="0"
       >
-        <button
-          aria-labelledby="_r_36_"
-          class="_icon-button_1215g_8"
-          data-kind="primary"
-          role="button"
-          style="--cpd-icon-button-size: 32px;"
-          tabindex="0"
+        <div
+          class="_indicator-icon_147l5_17"
+          style="--cpd-icon-button-size: 100%;"
         >
-          <div
-            class="_indicator-icon_147l5_17"
-            style="--cpd-icon-button-size: 100%;"
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="1em"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <svg
-              aria-hidden="true"
-              fill="currentColor"
-              height="1em"
-              viewBox="0 0 24 24"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12.207 5.293a1 1 0 0 1 0 1.414L7.914 11H18.5a1 1 0 1 1 0 2H7.914l4.293 4.293a1 1 0 0 1-1.414 1.414l-6-6a1 1 0 0 1 0-1.414l6-6a1 1 0 0 1 1.414 0"
-              />
-            </svg>
-          </div>
-        </button>
-      </div>
+            <path
+              d="M12.207 5.293a1 1 0 0 1 0 1.414L7.914 11H18.5a1 1 0 1 1 0 2H7.914l4.293 4.293a1 1 0 0 1-1.414 1.414l-6-6a1 1 0 0 1 0-1.414l6-6a1 1 0 0 1 1.414 0"
+            />
+          </svg>
+        </div>
+      </button>
       <div
-        class="nav rightNav"
+        class="secondaryButton"
       />
     </header>
   </div>
@@ -242,43 +235,36 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
 <div>
   <div
     class="bar"
-    style="display: block;"
   >
-    <header
-      class="header"
-    >
-      <div
-        class="nav leftNav"
+    <header>
+      <button
+        aria-labelledby="_r_4a_"
+        class="_icon-button_1215g_8 primaryButton"
+        data-kind="primary"
+        role="button"
+        style="--cpd-icon-button-size: 32px;"
+        tabindex="0"
       >
-        <button
-          aria-labelledby="_r_4a_"
-          class="_icon-button_1215g_8"
-          data-kind="primary"
-          role="button"
-          style="--cpd-icon-button-size: 32px;"
-          tabindex="0"
+        <div
+          class="_indicator-icon_147l5_17"
+          style="--cpd-icon-button-size: 100%;"
         >
-          <div
-            class="_indicator-icon_147l5_17"
-            style="--cpd-icon-button-size: 100%;"
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="1em"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <svg
-              aria-hidden="true"
-              fill="currentColor"
-              height="1em"
-              viewBox="0 0 24 24"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="m13.3 17.3-4.6-4.6a.9.9 0 0 1-.213-.325A1.1 1.1 0 0 1 8.425 12q0-.2.062-.375A.9.9 0 0 1 8.7 11.3l4.6-4.6a.95.95 0 0 1 .7-.275q.425 0 .7.275a.95.95 0 0 1 .275.7.95.95 0 0 1-.275.7L10.8 12l3.9 3.9a.95.95 0 0 1 .275.7.95.95 0 0 1-.275.7.95.95 0 0 1-.7.275.95.95 0 0 1-.7-.275"
-              />
-            </svg>
-          </div>
-        </button>
-      </div>
+            <path
+              d="m13.3 17.3-4.6-4.6a.9.9 0 0 1-.213-.325A1.1 1.1 0 0 1 8.425 12q0-.2.062-.375A.9.9 0 0 1 8.7 11.3l4.6-4.6a.95.95 0 0 1 .7-.275q.425 0 .7.275a.95.95 0 0 1 .275.7.95.95 0 0 1-.275.7L10.8 12l3.9 3.9a.95.95 0 0 1 .275.7.95.95 0 0 1-.275.7.95.95 0 0 1-.7.275.95.95 0 0 1-.7-.275"
+            />
+          </svg>
+        </div>
+      </button>
       <div
-        class="nav rightNav"
+        class="secondaryButton"
       />
     </header>
   </div>

@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, expect, vi } from "vitest";
-import { act, isInaccessible, render, screen } from "@testing-library/react";
+import { isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -177,11 +177,6 @@ test("SpotlightTile displays ringing media", async () => {
   );
 
   expect(await axe(container)).toHaveNoViolations();
-  // Alice should be in the spotlight with the right status
+  // Alice should be in the spotlight
   screen.getByText("Alice");
-  screen.getByText("Calling…");
-
-  // Now we time out ringing to Alice
-  act(() => pickupState$.next("timeout"));
-  screen.getByText("Call ended");
 });

@@ -7,13 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import {
-  type FC,
-  type ComponentProps,
-  type ReactNode,
-  type ComponentType,
-  type SVGAttributes,
-} from "react";
+import { type FC, type ComponentProps, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -43,7 +37,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   userId: string;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
-  status?: { text: string; Icon: ComponentType<SVGAttributes<SVGElement>> };
+  status?: ReactNode;
   showNameTags: boolean;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
@@ -180,14 +174,7 @@ export const MediaView: FC<Props> = ({
             />
           </>
         )}
-        {status && (
-          <div className={styles.status}>
-            <status.Icon width={16} height={16} aria-hidden />
-            <Text as="span" size="sm" weight="medium">
-              {status.text}
-            </Text>
-          </div>
-        )}
+        {status && <div className={styles.status}>{status}</div>}
         {/* TODO: Bring this back once encryption status is less broken */}
         {/*encryptionStatus !== EncryptionStatus.Okay && (
             <div className={styles.status}>

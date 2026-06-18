@@ -121,18 +121,22 @@ unconditionally select the container so we can use cqmin units */
 .status {
   grid-area: status;
   color: var(--cpd-color-text-primary);
-  display: flex;
-  flex-wrap: none;
-  align-items: center;
-  gap: 3px;
   user-select: none;
   overflow: hidden;
   margin-block-start: calc(var(--cpd-space-3x) - var(--fg-inset));
   margin-inline-start: calc(var(--cpd-space-4x) - var(--fg-inset));
-}
 
-.status svg {
-  color: var(--cpd-color-icon-tertiary);
+  span {
+    vertical-align: center;
+  }
+
+  svg {
+    color: var(--cpd-color-icon-tertiary);
+    vertical-align: center;
+    margin-inline-end: 3px;
+    block-size: 1.2em;
+    inline-size: 1.2em;
+  }
 }
 
 .reactions {

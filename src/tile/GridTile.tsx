@@ -29,15 +29,13 @@ import {
   UserProfileIcon,
   VolumeOffSolidIcon,
   SwitchCameraSolidIcon,
-  VideoCallSolidIcon,
-  VoiceCallSolidIcon,
-  EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
   ContextMenu,
   MenuItem,
   ToggleMenuItem,
   Menu,
+  Text,
 } from "@vector-im/compound-web";
 import { useObservableEagerState } from "observable-hooks";
 
@@ -53,6 +51,7 @@ import { type LocalUserMediaViewModel } from "../state/media/LocalUserMediaViewM
 import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaViewModel";
 import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
 import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
+import { RingingStatus } from "./RingingStatus";
 
 interface TileProps {
   ref?: Ref<HTMLDivElement>;
@@ -75,9 +74,6 @@ const RingingMediaTile: FC<RingingMediaTileProps> = ({
   className,
   ...props
 }) => {
-  const { t } = useTranslation();
-  const pickupState = useBehavior(vm.pickupState$);
-
   return (
     <MediaView
       className={classNames(className, styles.tile)}
@@ -85,13 +81,9 @@ const RingingMediaTile: FC<RingingMediaTileProps> = ({
       userId={vm.userId}
       unencryptedWarning={false}
       status={
-        pickupState === "ringing"
-          ? {
-              text: t("video_tile.calling"),
-              Icon:
-                vm.intent === "video" ? VideoCallSolidIcon : VoiceCallSolidIcon,
-            }
-          : { text: t("video_tile.call_ended"), Icon: EndCallIcon }
+        <Text as="span" size="sm" weight="medium">
+          <RingingStatus vm={vm} />
+        </Text>
       }
       videoEnabled={false}
       videoFit="cover"

@@ -1420,10 +1420,13 @@ describe.each([
             },
           });
 
-          // Should ring for 30ms and then time out
-          expectObservable(vm.ringingIntent$).toBe("(ab) 26ms a", {
+          expectObservable(vm.ringingVm$).toBe("(ab)", {
             a: null,
-            b: "audio",
+            b: expect.objectContaining({
+              type: "ringing",
+              userId: alice.userId,
+              intent: "audio",
+            }),
           });
           // Layout should show placeholder media for the participant we're
           // ringing the entire time (even once timed out)
@@ -1463,9 +1466,13 @@ describe.each([
           });
 
           // Should ring until Alice joins
-          expectObservable(vm.ringingIntent$).toBe("(ab) 17ms a", {
+          expectObservable(vm.ringingVm$).toBe("(ab) 17ms a", {
             a: null,
-            b: "audio",
+            b: expect.objectContaining({
+              type: "ringing",
+              userId: alice.userId,
+              intent: "audio",
+            }),
           });
           // Layout should show placeholder media for the participant we're
           // ringing the entire time

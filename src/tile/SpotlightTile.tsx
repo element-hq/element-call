@@ -24,9 +24,6 @@ import {
   VolumeOnIcon,
   VolumeOffSolidIcon,
   VolumeOnSolidIcon,
-  VideoCallSolidIcon,
-  VoiceCallSolidIcon,
-  EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
 import { type Observable, map } from "rxjs";
@@ -210,22 +207,10 @@ const SpotlightRingingMediaItem: FC<SpotlightRingingMediaItemProps> = ({
   vm,
   ...props
 }) => {
-  const { t } = useTranslation();
-  const pickupState = useBehavior(vm.pickupState$);
-
   return (
     <MediaView
       video={undefined}
       unencryptedWarning={false}
-      status={
-        pickupState === "ringing"
-          ? {
-              text: t("video_tile.calling"),
-              Icon:
-                vm.intent === "video" ? VideoCallSolidIcon : VoiceCallSolidIcon,
-            }
-          : { text: t("video_tile.call_ended"), Icon: EndCallIcon }
-      }
       videoEnabled={false}
       videoFit="cover"
       mirror={false}

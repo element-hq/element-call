@@ -173,9 +173,7 @@ export function createCallFooterViewModel(
         callModel.setSettingsOpen$,
       ]).pipe(
         map(([isPip, showHeader, setSettingsOpen]) =>
-          !isPip &&
-          !(headerStyle === HeaderStyle.AppBar && showHeader) &&
-          showControls
+          !isPip && headerStyle !== HeaderStyle.AppBar && showControls
             ? (): void => setSettingsOpen(true)
             : undefined,
         ),

@@ -16,7 +16,8 @@ import {
   type MouseEvent,
   type ReactNode,
 } from "react";
-import { Heading, IconButton, Tooltip } from "@vector-im/compound-web";
+import classNames from "classnames";
+import { Heading, IconButton, Text, Tooltip } from "@vector-im/compound-web";
 import {
   ArrowLeftIcon,
   ChevronLeftIcon,
@@ -25,12 +26,12 @@ import {
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { Header, LeftNav, RightNav } from "./Header";
 import { platform } from "./Platform";
 import styles from "./AppBar.module.css";
 
 interface AppBarContext {
   setTitle: (value: string) => void;
+  setSubtitle: (value: ReactNode) => void;
   setSecondaryButton: (value: ReactNode) => void;
   setPrimaryButtonIconKind: (value: "back" | "minimise") => void;
   setHidden: (value: boolean) => void;
@@ -54,6 +55,7 @@ export const AppBar: FC<Props> = ({ children }) => {
   }, []);
 
   const [title, setTitle] = useState<string>("");
+  const [subtitle, setSubtitle] = useState<ReactNode>(undefined);
   const [hidden, setHidden] = useState<boolean>(false);
   const [secondaryButton, setSecondaryButton] = useState<ReactNode | null>(
     null,
@@ -65,53 +67,64 @@ export const AppBar: FC<Props> = ({ children }) => {
   const context = useMemo(
     () => ({
       setTitle,
+      setSubtitle,
       setSecondaryButton,
       setHidden,
       setPrimaryButtonIconKind,
     }),
-    [setTitle, setHidden, setSecondaryButton, setPrimaryButtonIconKind],
+    [
+      setTitle,
+      setSubtitle,
+      setHidden,
+      setSecondaryButton,
+      setPrimaryButtonIconKind,
+    ],
   );
 
   const BackIcon = platform === "android" ? ArrowLeftIcon : ChevronLeftIcon;
 
   return (
     <>
-      <div
-        style={{ display: hidden ? "none" : "block" }}
-        className={styles.bar}
-      >
-        <Header
-          // App bar is mainly seen in the call view, which has its own
-          // 'reconnecting' toast
-          disconnectedBanner={false}
-        >
-          <LeftNav>
-            <Tooltip label={t("common.back")}>
-              <IconButton
-                // We render the back button (PrimaryButtonIcon) the same size as the native os.
-                // We render the minimise icon (default) smaller as per designs.
-                size={primaryButtonIcon === "back" ? "32px" : "24px"}
-                onClick={onBackClick}
-              >
-                {primaryButtonIcon === "back" ? (
-                  <BackIcon aria-hidden />
-                ) : (
-                  <CollapseIcon aria-hidden />
-                )}
-              </IconButton>
-            </Tooltip>
-          </LeftNav>
+      {/* Wrap the header in a div due to annoying z-index issues with the
+      gradient background */}
+      <div className={classNames(styles.bar, { [styles.hidden]: hidden })}>
+        <header>
+          <Tooltip label={t("common.back")}>
+            <IconButton
+              className={styles.primaryButton}
+              // We render the back button (PrimaryButtonIcon) the same size as the native os.
+              // We render the minimise icon (default) smaller as per designs.
+              size={primaryButtonIcon === "back" ? "32px" : "24px"}
+              onClick={onBackClick}
+            >
+              {primaryButtonIcon === "back" ? (
+                <BackIcon aria-hidden />
+              ) : (
+                <CollapseIcon aria-hidden />
+              )}
+            </IconButton>
+          </Tooltip>
           {title && (
             <Heading
+              className={styles.title}
               type="body"
-              size="lg"
-              weight={platform === "android" ? "medium" : "semibold"}
+              size={platform === "ios" ? "md" : "lg"}
+              weight={platform === "ios" ? "semibold" : "medium"}
             >
               {title}
             </Heading>
           )}
-          <RightNav>{secondaryButton}</RightNav>
-        </Header>
+          {subtitle && (
+            <Text
+              className={styles.subtitle}
+              as="span"
+              size={platform === "ios" ? "sm" : "lg"}
+            >
+              {subtitle}
+            </Text>
+          )}
+          <div className={styles.secondaryButton}>{secondaryButton}</div>
+        </header>
       </div>
       <AppBarContext value={context}>{children}</AppBarContext>
     </>
@@ -130,6 +143,20 @@ export function useAppBarTitle(title: string): void {
       return (): void => setTitle("");
     }
   }, [title, setTitle]);
+}
+
+/**
+ * React hook which sets the subtitle to be shown in the app bar, if present. It
+ * is an error to call this hook from multiple sites in the same component tree.
+ */
+export function useAppBarSubtitle(subtitle: ReactNode): void {
+  const setSubtitle = use(AppBarContext)?.setSubtitle;
+  useEffect(() => {
+    if (setSubtitle !== undefined) {
+      setSubtitle(subtitle);
+      return (): void => setSubtitle("");
+    }
+  }, [subtitle, setSubtitle]);
 }
 
 /**

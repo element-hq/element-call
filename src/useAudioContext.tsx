@@ -113,7 +113,7 @@ interface Props<S extends string> {
   muted?: boolean;
 }
 
-interface UseAudioContext<S extends string> {
+export interface UseAudioContext<S extends string> {
   playSound(soundName: S, volumeOverwrite?: number): Promise<void>;
   playSoundLooping(soundName: S, delayS?: number): () => Promise<void>;
   /**
