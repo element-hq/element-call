@@ -29,13 +29,13 @@ import {
 import { type ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import {
   areLivekitTransportsEqual,
-  createMatrixLivekitMembers$,
+  createRemoteMatrixLivekitMembers$,
   type RemoteMatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
 import { createConnectionManager$ } from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 import { constant } from "../../Behavior.ts";
-import { testJWTToken } from "../../../utils/test-fixtures.ts";
+import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
 
@@ -130,11 +130,12 @@ test("bob, carl, then bob joining no tracks yet", () => {
       ownMembershipIdentity: ownMemberMock,
     });
 
-    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
+    const matrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$:
         membershipsAndTransports.membershipsWithTransport$,
       connectionManager,
+      localUser: localRtcMember,
     });
 
     expectObservable(matrixLivekitMembers$).toBe(vMarble, {

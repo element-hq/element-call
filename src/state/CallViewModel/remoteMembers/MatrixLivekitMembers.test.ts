@@ -15,7 +15,7 @@ import { BehaviorSubject, combineLatest, map, type Observable } from "rxjs";
 import { type IConnectionManager } from "./ConnectionManager.ts";
 import {
   type RemoteMatrixLivekitMember,
-  createMatrixLivekitMembers$,
+  createRemoteMatrixLivekitMembers$,
 } from "./MatrixLivekitMembers.ts";
 import {
   Epoch,
@@ -31,6 +31,7 @@ import {
 } from "../../../utils/test.ts";
 import { type Connection } from "./Connection.ts";
 import { constant } from "../../Behavior.ts";
+import { localRtcMember } from "../../../utils/test-fixtures.ts";
 
 let testScope: ObservableScope;
 
@@ -88,12 +89,13 @@ test("should signal participant not yet connected to livekit", async () => {
     mockConnectionManagerData$,
   );
 
-  const matrixLivekitMember$ = createMatrixLivekitMembers$({
+  const matrixLivekitMember$ = createRemoteMatrixLivekitMembers$({
     scope: testScope,
     membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
     connectionManager: {
       connectionManagerData$: connectionManagerData$,
     } as unknown as IConnectionManager,
+    localUser: localRtcMember,
   });
 
   await flushPromises();
@@ -157,12 +159,13 @@ test("should signal participant on a connection that is publishing", async () =>
     constant(dataWithPublisher),
   );
 
-  const matrixLivekitMember$ = createMatrixLivekitMembers$({
+  const matrixLivekitMember$ = createRemoteMatrixLivekitMembers$({
     scope: testScope,
     membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
     connectionManager: {
       connectionManagerData$: connectionManagerData$,
     } as unknown as IConnectionManager,
+    localUser: localRtcMember,
   });
 
   await flushPromises();
@@ -197,12 +200,13 @@ test("should signal participant on a connection that is not publishing", async (
     constant(dataWithPublisher),
   );
 
-  const matrixLivekitMember$ = createMatrixLivekitMembers$({
+  const matrixLivekitMember$ = createRemoteMatrixLivekitMembers$({
     scope: testScope,
     membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
     connectionManager: {
       connectionManagerData$: connectionManagerData$,
     } as unknown as IConnectionManager,
+    localUser: localRtcMember,
   });
   await flushPromises();
   expect(matrixLivekitMember$.value.value).toSatisfy(
@@ -245,12 +249,13 @@ describe("Publication edge case", () => {
       constant(connectionWithPublisher),
     );
 
-    const matrixLivekitMembers$ = createMatrixLivekitMembers$({
+    const matrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
       connectionManager: {
         connectionManagerData$: connectionManagerData$,
       } as unknown as IConnectionManager,
+      localUser: localRtcMember,
     });
     await flushPromises();
     expect(matrixLivekitMembers$.value.value).toSatisfy(
@@ -303,12 +308,13 @@ test("bob is publishing in the wrong connection", async () => {
     connectionsWithPublisher$,
   );
 
-  const matrixLivekitMember$ = createMatrixLivekitMembers$({
+  const matrixLivekitMember$ = createRemoteMatrixLivekitMembers$({
     scope: testScope,
     membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
     connectionManager: {
       connectionManagerData$: connectionManagerData$,
     } as unknown as IConnectionManager,
+    localUser: localRtcMember,
   });
 
   await flushPromises();

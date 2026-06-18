@@ -62,7 +62,9 @@ interface Props {
     Epoch<{ membership: CallMembership; transport?: LivekitTransportConfig }[]>
   >;
   connectionManager: IConnectionManager;
+  localUser: { deviceId: string; userId: string };
 }
+
 /**
  * Combines MatrixRTC and Livekit worlds.
  *
@@ -73,13 +75,14 @@ interface Props {
  *  - out (via public Observable):
  *    - `remoteMatrixLivekitMember` an observable of MatrixLivekitMember[] to track the remote members and associated livekit data.
  */
-export function createMatrixLivekitMembers$({
+export function createRemoteMatrixLivekitMembers$({
   scope,
   membershipsWithTransport$,
   connectionManager,
+  localUser,
 }: Props): Behavior<Epoch<RemoteMatrixLivekitMember[]>> {
   /**
-   * Stream of all the call members and their associated livekit data (if available).
+   * Behavior of all the remote call members and their associated livekit data (if available).
    */
   return scope.behavior(
     combineLatest([
@@ -91,12 +94,19 @@ export function createMatrixLivekitMembers$({
       ),
       map(([ms, data]) => new Epoch([ms.value, data.value] as const, ms.epoch)),
       generateItemsWithEpoch(
-        "MatrixLivekitMembers",
+        "RemoteMatrixLivekitMembers",
         // Generator function.
         // creates an array of `{key, data}[]`
         // Each change in the keys (new key) will result in a call to the factory function.
         function* ([membershipsWithTransport, managerData]) {
           for (const { membership, transport } of membershipsWithTransport) {
+            // Exclude the local membership
+            if (
+              membership.userId === localUser.userId &&
+              membership.deviceId === localUser.deviceId
+            )
+              continue;
+
             const participants = transport
               ? managerData.getParticipantsForTransport(transport)
               : [];
