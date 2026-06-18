@@ -5,17 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, it } from "vitest";
+import { test } from "vitest";
 import {
   EventType,
-  type IEvent,
   type IRoomTimelineData,
   MatrixEvent,
   type Room,
 } from "matrix-js-sdk";
+import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
+import { map, mergeMap, NEVER, type Observable, startWith } from "rxjs";
 
 import { withTestScheduler } from "../../utils/test";
 import {
+  alice,
   aliceRtcMember,
   local,
   localRtcMember,
@@ -23,9 +25,10 @@ import {
 import {
   type CallNotificationWrapper,
   createCallNotificationLifecycle$,
-  type Props as CallNotificationLifecycleProps,
+  type RingAttempt,
 } from "./CallNotificationLifecycle";
-import { trackEpoch } from "../ObservableScope";
+import { Epoch, trackEpoch } from "../ObservableScope";
+import { constant } from "../Behavior";
 
 function mockRingEvent(
   eventId: string,
@@ -40,311 +43,272 @@ function mockRingEvent(
   } as unknown as CallNotificationWrapper;
 }
 
-describe("waitForCallPickup$", () => {
-  it("unknown -> ringing -> timeout when notified and nobody joins", () => {
-    withTestScheduler(({ scope, expectObservable, behavior, hot }) => {
+const defaultProps = {
+  memberships$: constant(new Epoch([])),
+  matrixRoomMembers$: constant(new Map([[alice.userId, alice]])),
+  receivedDecline$: NEVER,
+  options: {
+    waitForCallPickup: true,
+    autoLeaveWhenOthersLeft: false,
+  },
+  localUser: localRtcMember,
+};
+
+function summarizeRingAttempts$(
+  ringAttempts$: Observable<RingAttempt>,
+): Observable<
+  | { intent: RTCCallIntent; recipient: string }
+  | { outcome: "accept" | "decline" | "timeout" }
+> {
+  return ringAttempts$.pipe(
+    mergeMap(({ intent, recipient, outcome$ }) =>
+      outcome$.pipe(
+        map((outcome) => ({ outcome })),
+        startWith({ intent, recipient }),
+      ),
+    ),
+  );
+}
+
+test("no ring attempt when waitForCallPickup=false", () => {
+  withTestScheduler(({ scope, expectObservable, hot }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
+      sentCallNotification$: hot("-a", {
+        a: mockRingEvent("$notif1", 30),
+      }),
+      options: { ...defaultProps.options, waitForCallPickup: false },
+    });
+
+    expectObservable(ringAttempts$).toBe("");
+  });
+});
+
+test("no ring attempt when notification type is not ring", () => {
+  withTestScheduler(({ scope, expectObservable, hot }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
+      sentCallNotification$: hot("-a", {
+        a: {
+          ...mockRingEvent("$notif1", 30),
+          notification_type: "notification",
+        },
+      }),
+    });
+
+    expectObservable(ringAttempts$).toBe("");
+  });
+});
+
+test("no ring attempt if lifetime is missing", () => {
+  withTestScheduler(({ scope, expectObservable, hot }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
+      sentCallNotification$: hot("-a", {
+        a: mockRingEvent("$notif1", undefined),
+      }),
+    });
+
+    expectObservable(ringAttempts$).toBe("");
+  });
+});
+
+test("ring attempt times out after nobody joins", () => {
+  withTestScheduler(({ scope, expectObservable, hot }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
       // No one ever joins (only local user)
-      const props: CallNotificationLifecycleProps = {
-        scope,
-        memberships$: scope.behavior(
-          behavior("a", { a: [] }).pipe(trackEpoch()),
-        ),
-        sentCallNotification$: hot("10ms a", {
-          a: mockRingEvent("$notif1", 30),
-        }),
-        receivedDecline$: hot(""),
-        options: {
-          waitForCallPickup: true,
-          autoLeaveWhenOthersLeft: false,
-        },
-        localUser: localRtcMember,
-      };
+      memberships$: constant(new Epoch([])),
+      sentCallNotification$: hot("-a", {
+        a: mockRingEvent("$notif1", 30),
+      }),
+    });
 
-      const lifecycle = createCallNotificationLifecycle$(props);
-
-      expectObservable(lifecycle.callPickupState$).toBe("a 9ms b 29ms c", {
-        a: "unknown",
-        b: "ringing",
-        c: "timeout",
-      });
+    expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-a 29ms A", {
+      a: { intent: "audio", recipient: alice.userId },
+      A: { outcome: "timeout" },
     });
   });
+});
 
-  it("ringing -> success if someone joins before timeout is reached", () => {
-    withTestScheduler(({ scope, hot, behavior, expectObservable }) => {
-      // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
-      const props: CallNotificationLifecycleProps = {
-        scope,
-        memberships$: scope.behavior(
-          behavior("a 19ms b", {
-            a: [localRtcMember],
-            b: [localRtcMember, aliceRtcMember],
-          }).pipe(trackEpoch()),
-        ),
-        sentCallNotification$: hot("5ms a", {
-          a: mockRingEvent("$notif2", 100),
-        }),
-        receivedDecline$: hot(""),
-        options: {
-          waitForCallPickup: true,
-          autoLeaveWhenOthersLeft: false,
-        },
-        localUser: localRtcMember,
-      };
-      const lifecycle = createCallNotificationLifecycle$(props);
-      expectObservable(lifecycle.callPickupState$).toBe("a 4ms b 14ms c", {
-        a: "unknown",
-        b: "ringing",
-        c: "success",
-      });
+test("ring attempt is accepted once recipient joins", () => {
+  withTestScheduler(({ scope, expectObservable, hot, behavior }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
+      memberships$: scope.behavior(
+        behavior("a-b", { a: [], b: [aliceRtcMember] }).pipe(trackEpoch()),
+      ),
+      sentCallNotification$: hot("-a", {
+        a: mockRingEvent("$notif1", 30),
+      }),
     });
-  });
-  it("success when someone joins before we notify", () => {
-    withTestScheduler(({ scope, hot, behavior, expectObservable }) => {
-      // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
-      const props: CallNotificationLifecycleProps = {
-        scope,
-        memberships$: scope.behavior(
-          behavior("a 9ms b", {
-            a: [localRtcMember],
-            b: [localRtcMember, aliceRtcMember],
-          }).pipe(trackEpoch()),
-        ),
-        sentCallNotification$: hot("20ms a", {
-          a: mockRingEvent("$notif2", 50),
-        }),
-        receivedDecline$: hot(""),
-        options: {
-          waitForCallPickup: true,
-          autoLeaveWhenOthersLeft: false,
-        },
-        localUser: localRtcMember,
-      };
-      const lifecycle = createCallNotificationLifecycle$(props);
-      expectObservable(lifecycle.callPickupState$).toBe("a 9ms b", {
-        a: "unknown",
-        b: "success",
-      });
-    });
-  });
-  it("notify without lifetime -> immediate timeout", () => {
-    withTestScheduler(({ scope, hot, behavior, expectObservable }) => {
-      // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
-      const props: CallNotificationLifecycleProps = {
-        scope,
-        memberships$: scope.behavior(
-          behavior("a", {
-            a: [localRtcMember],
-          }).pipe(trackEpoch()),
-        ),
-        sentCallNotification$: hot("10ms a", {
-          a: mockRingEvent("$notif2", undefined),
-        }),
-        receivedDecline$: hot(""),
-        options: {
-          waitForCallPickup: true,
-          autoLeaveWhenOthersLeft: false,
-        },
-        localUser: localRtcMember,
-      };
-      const lifecycle = createCallNotificationLifecycle$(props);
-      expectObservable(lifecycle.callPickupState$).toBe("a 9ms b", {
-        a: "unknown",
-        b: "timeout",
-      });
-    });
-  });
 
-  it("stays null when waitForCallPickup=false", () => {
-    withTestScheduler(({ scope, hot, behavior, expectObservable }) => {
-      // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
-      const validProps: CallNotificationLifecycleProps = {
-        scope,
-        memberships$: scope.behavior(
-          behavior("a--b", {
-            a: [localRtcMember],
-            b: [localRtcMember, aliceRtcMember],
-          }).pipe(trackEpoch()),
-        ),
-        sentCallNotification$: hot("10ms a", {
-          a: mockRingEvent("$notif5", 30),
-        }),
-        receivedDecline$: hot(""),
-        options: {
-          waitForCallPickup: true,
-          autoLeaveWhenOthersLeft: false,
-        },
-        localUser: localRtcMember,
-      };
-      const propsDeactivated = {
-        ...validProps,
-        options: {
-          ...validProps.options,
-          waitForCallPickup: false,
-        },
-      };
-      const lifecycle = createCallNotificationLifecycle$(propsDeactivated);
-      expectObservable(lifecycle.callPickupState$).toBe("n", {
-        n: null,
-      });
-      const lifecycleReference = createCallNotificationLifecycle$(validProps);
-      expectObservable(lifecycleReference.callPickupState$).toBe("u--s", {
-        u: "unknown",
-        s: "success",
-      });
+    expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-aA", {
+      a: { intent: "audio", recipient: alice.userId },
+      A: { outcome: "accept" },
     });
   });
+});
 
-  it("decline before timeout window ends -> decline", () => {
-    withTestScheduler(({ scope, hot, behavior, expectObservable }) => {
-      // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
-      const props: CallNotificationLifecycleProps = {
-        scope,
-        memberships$: scope.behavior(
-          behavior("a", {
-            a: [localRtcMember],
-          }).pipe(trackEpoch()),
-        ),
-        sentCallNotification$: hot("10ms a", {
-          a: mockRingEvent("$decl1", 50),
-        }),
-        receivedDecline$: hot("40ms d", {
-          d: [
-            new MatrixEvent({
-              type: EventType.RTCDecline,
-              content: {
-                "m.relates_to": {
-                  rel_type: "m.reference",
-                  event_id: "$decl1",
-                },
+test("ring attempt is immediately accepted if recipient is already joined", () => {
+  withTestScheduler(({ scope, expectObservable, hot }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
+      memberships$: constant(new Epoch([aliceRtcMember])),
+      sentCallNotification$: hot("-a", {
+        a: mockRingEvent("$notif1", 30),
+      }),
+    });
+
+    expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-(aA)", {
+      a: { intent: "audio", recipient: alice.userId },
+      A: { outcome: "accept" },
+    });
+  });
+});
+
+test("ring attempt can be declined", () => {
+  withTestScheduler(({ scope, expectObservable, hot }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
+      sentCallNotification$: hot("-a", {
+        a: mockRingEvent("$notif1", 30),
+      }),
+      receivedDecline$: hot("--d", {
+        d: [
+          new MatrixEvent({
+            type: EventType.RTCDecline,
+            sender: alice.userId,
+            content: {
+              "m.relates_to": {
+                rel_type: "m.reference",
+                event_id: "$notif1",
               },
-            }),
-            {} as Room,
-            undefined,
-            false,
-            {} as IRoomTimelineData,
-          ],
-        }),
-        options: {
-          waitForCallPickup: true,
-          autoLeaveWhenOthersLeft: false,
-        },
-        localUser: localRtcMember,
-      };
-      const lifecycle = createCallNotificationLifecycle$(props);
-      expectObservable(lifecycle.callPickupState$).toBe("a 9ms b 29ms e", {
-        a: "unknown",
-        b: "ringing",
-        e: "decline",
-      });
+            },
+          }),
+          {} as Room,
+          undefined,
+          false,
+          {} as IRoomTimelineData,
+        ],
+      }),
+    });
+
+    expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-aA", {
+      a: { intent: "audio", recipient: alice.userId },
+      A: { outcome: "decline" },
     });
   });
-  it("decline after timeout window ends -> stays timeout", () => {
-    withTestScheduler(({ scope, hot, behavior, expectObservable }) => {
-      // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
-      const props: CallNotificationLifecycleProps = {
-        scope,
-        memberships$: scope.behavior(
-          behavior("a", {
-            a: [localRtcMember],
-          }).pipe(trackEpoch()),
-        ),
-        sentCallNotification$: hot("10ms a", {
-          a: mockRingEvent("$decl", 20),
-        }),
-        receivedDecline$: hot("40ms d", {
-          d: [
-            new MatrixEvent({
-              type: EventType.RTCDecline,
-              content: {
-                "m.relates_to": {
-                  rel_type: "m.reference",
-                  event_id: "$decl",
-                },
+});
+
+test("ring attempt times out if recipient declines too late", () => {
+  withTestScheduler(({ scope, expectObservable, hot }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
+      sentCallNotification$: hot("-a", {
+        a: mockRingEvent("$notif1", 30),
+      }),
+      receivedDecline$: hot("100ms d", {
+        d: [
+          new MatrixEvent({
+            type: EventType.RTCDecline,
+            sender: alice.userId,
+            content: {
+              "m.relates_to": {
+                rel_type: "m.reference",
+                event_id: "$notif1",
               },
-            }),
-            {} as Room,
-            undefined,
-            false,
-            {} as IRoomTimelineData,
-          ],
-        }),
-        options: {
-          waitForCallPickup: true,
-          autoLeaveWhenOthersLeft: false,
-        },
-        localUser: localRtcMember,
-      };
-      const lifecycle = createCallNotificationLifecycle$(props);
-      expectObservable(lifecycle.callPickupState$, "50ms !").toBe(
-        "a 9ms b 19ms e",
-        {
-          a: "unknown",
-          b: "ringing",
-          e: "timeout",
-        },
-      );
+            },
+          }),
+          {} as Room,
+          undefined,
+          false,
+          {} as IRoomTimelineData,
+        ],
+      }),
+    });
+
+    expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-a 29ms A", {
+      a: { intent: "audio", recipient: alice.userId },
+      A: { outcome: "timeout" },
     });
   });
-  //
-  function testStaysRinging(
-    declineEvent: Partial<IEvent>,
-    expectDecline: boolean,
-  ): void {
-    withTestScheduler(({ scope, hot, behavior, expectObservable }) => {
-      // Someone joins at 20ms (both LiveKit participant and MatrixRTC member)
-      const props: CallNotificationLifecycleProps = {
-        scope,
-        memberships$: scope.behavior(
-          behavior("a", {
-            a: [localRtcMember],
-          }).pipe(trackEpoch()),
-        ),
-        sentCallNotification$: hot("10ms a", {
-          a: mockRingEvent("$right", 50),
-        }),
-        receivedDecline$: hot("20ms d", {
-          d: [
-            new MatrixEvent(declineEvent),
-            {} as Room,
-            undefined,
-            false,
-            {} as IRoomTimelineData,
-          ],
-        }),
-        options: {
-          waitForCallPickup: true,
-          autoLeaveWhenOthersLeft: false,
-        },
-        localUser: localRtcMember,
-      };
-      const lifecycle = createCallNotificationLifecycle$(props);
-      const marbles = expectDecline ? "a 9ms b 9ms d" : "a 9ms b";
-      expectObservable(lifecycle.callPickupState$, "21ms !").toBe(marbles, {
-        a: "unknown",
-        b: "ringing",
-        d: "decline",
-      });
+});
+
+test("decline event relating to wrong event is ignored (times out)", () => {
+  withTestScheduler(({ scope, expectObservable, hot }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
+      sentCallNotification$: hot("-a", {
+        a: mockRingEvent("$notif1", 30),
+      }),
+      receivedDecline$: hot("--d", {
+        d: [
+          new MatrixEvent({
+            type: EventType.RTCDecline,
+            sender: alice.userId,
+            content: {
+              "m.relates_to": {
+                rel_type: "m.reference",
+                event_id: "$other", // <---- WRONG
+              },
+            },
+          }),
+          {} as Room,
+          undefined,
+          false,
+          {} as IRoomTimelineData,
+        ],
+      }),
     });
-  }
-  const reference = (refId?: string, sender?: string): Partial<IEvent> => ({
-    event_id: "$decline",
-    type: EventType.RTCDecline,
-    sender: sender ?? "@other:example.org",
-    content: {
-      "m.relates_to": {
-        rel_type: "m.reference",
-        event_id: refId ?? "$right",
-      },
-    },
+
+    expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-a 29ms A", {
+      a: { intent: "audio", recipient: alice.userId },
+      A: { outcome: "timeout" },
+    });
   });
-  it("decline reference works", () => {
-    testStaysRinging(reference(), true);
-  });
-  it("decline with wrong id is ignored (stays ringing)", () => {
-    testStaysRinging(reference("$wrong"), false);
-  });
-  it("decline with wrong id is ignored (stays ringing)", () => {
-    testStaysRinging(reference(undefined, local.userId), false);
+});
+
+test("decline event from wrong sender is ignored (times out)", () => {
+  withTestScheduler(({ scope, expectObservable, hot }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
+      sentCallNotification$: hot("-a", {
+        a: mockRingEvent("$notif1", 30),
+      }),
+      receivedDecline$: hot("--d", {
+        d: [
+          new MatrixEvent({
+            type: EventType.RTCDecline,
+            sender: local.userId, // <---- WRONG
+            content: {
+              "m.relates_to": {
+                rel_type: "m.reference",
+                event_id: "$notif1",
+              },
+            },
+          }),
+          {} as Room,
+          undefined,
+          false,
+          {} as IRoomTimelineData,
+        ],
+      }),
+    });
+
+    expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-a 29ms A", {
+      a: { intent: "audio", recipient: alice.userId },
+      A: { outcome: "timeout" },
+    });
   });
 });

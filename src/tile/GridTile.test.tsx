@@ -26,7 +26,6 @@ import {
   createRingingMedia,
   type RingingMediaViewModel,
 } from "../state/media/RingingMediaViewModel";
-import { type MuteStates } from "../state/MuteStates";
 
 global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
@@ -93,10 +92,8 @@ test("GridTile displays ringing media", async () => {
   >("ringing");
   const vm = createRingingMedia({
     pickupState$,
-    muteStates: {
-      video: { enabled$: constant(false) },
-    } as unknown as MuteStates,
     id: "test",
+    intent: "audio",
     userId: "@alice:example.org",
     displayName$: constant("Alice"),
     mxcAvatarUrl$: constant(undefined),

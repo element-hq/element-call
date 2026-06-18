@@ -5,8 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
+
 import { type Behavior } from "../Behavior";
-import { type MuteStates } from "../MuteStates";
 import {
   type BaseMediaInputs,
   type BaseMediaViewModel,
@@ -20,32 +21,23 @@ import {
 export interface RingingMediaViewModel extends BaseMediaViewModel {
   type: "ringing";
   pickupState$: Behavior<"ringing" | "timeout" | "decline">;
-  /**
-   * Whether this media would be expected to have video, were it not simply a
-   * placeholder.
-   */
-  videoEnabled$: Behavior<boolean>;
+  intent: RTCCallIntent;
 }
 
 export interface RingingMediaInputs extends BaseMediaInputs {
   pickupState$: Behavior<"ringing" | "timeout" | "decline">;
-  /**
-   * The local user's own mute states.
-   */
-  muteStates: MuteStates;
+  intent: RTCCallIntent;
 }
 
 export function createRingingMedia({
   pickupState$,
-  muteStates,
+  intent,
   ...inputs
 }: RingingMediaInputs): RingingMediaViewModel {
   return {
     ...createBaseMedia(inputs),
     type: "ringing",
     pickupState$,
-    // If our own video is enabled, then this is a video call and we would
-    // expect remote media to have video as well
-    videoEnabled$: muteStates.video.enabled$,
+    intent,
   };
 }
