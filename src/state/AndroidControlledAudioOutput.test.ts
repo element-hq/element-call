@@ -253,7 +253,7 @@ describe("Test mappings", () => {
 });
 
 describe("Test select a device", () => {
-  it(`Switch to correct device `, () => {
+  it(`Switch to correct device`, () => {
     withTestScheduler(({ cold, schedule, expectObservable, flush }) => {
       const controlledAudioOutput = new AndroidControlledAudioOutput(
         cold("a", { a: FULL_DEVICE_LIST }),

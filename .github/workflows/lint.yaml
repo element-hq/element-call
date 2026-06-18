@@ -24,8 +24,8 @@ jobs:
         run: "pnpm run format:check"
       - name: i18n
         run: "pnpm run i18n:check"
-      - name: ESLint
-        run: "pnpm run lint:eslint"
+      - name: Lint
+        run: "pnpm run lint:oxlint"
       - name: Type check
         run: "pnpm run lint:types"
       - name: Dead code analysis
