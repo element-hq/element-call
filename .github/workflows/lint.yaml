@@ -2,7 +2,7 @@ name: Lint, format & type check
 on:
   pull_request: {}
 jobs:
-  prettier:
+  lint:
     name: Lint, format & type check
     runs-on: ubuntu-latest
     steps:
@@ -20,8 +20,8 @@ jobs:
       - name: Install dependencies
         # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
         run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
-      - name: Prettier
-        run: "pnpm run prettier:check"
+      - name: Formatting
+        run: "pnpm run format:check"
       - name: i18n
         run: "pnpm run i18n:check"
       - name: ESLint
