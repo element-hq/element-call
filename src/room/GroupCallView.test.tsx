@@ -310,7 +310,7 @@ test("Should close widget when all other left and play a sound", async () => {
   expect(widgetClosedCalled).toBeFalsy();
   resolvePlaySound.resolve();
 
-  expect(playSound).toHaveBeenCalledWith("left");
+  expect(playSound).toHaveBeenCalledWith("left", 0);
   await widgetClosedPromise;
   await flushPromises();
   expect(widgetClosedCalled).toBeTruthy();
