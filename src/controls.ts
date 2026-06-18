@@ -12,6 +12,7 @@ export interface Controls {
   canEnterPip(): boolean;
   enablePip(): void;
   disablePip(): void;
+  onPipMediaOrientationUpdate?: (orientation: "landscape" | "portrait") => void;
 
   setAvailableAudioDevices(devices: OutputDevice[]): void;
   setAudioDevice(id: string): void;

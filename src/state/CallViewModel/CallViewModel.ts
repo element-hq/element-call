@@ -769,11 +769,13 @@ export function createCallViewModel$(
             pretendToBeDisconnected$: localMembership.reconnecting$,
             displayName$: scope.behavior(
               matrixMemberMetadataStore
-                .createDisplayNameBehavior$(userId)
+                .createDisplayNameBehavior$(scope, userId)
                 .pipe(map((name) => name ?? userId)),
             ),
-            mxcAvatarUrl$:
-              matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
+            mxcAvatarUrl$: matrixMemberMetadataStore.createAvatarUrlBehavior$(
+              scope,
+              userId,
+            ),
             handRaised$: scope.behavior(
               handsRaised$.pipe(map((v) => v[mediaId]?.time ?? null)),
             ),
@@ -809,7 +811,7 @@ export function createCallViewModel$(
                   ),
                 ),
                 mxcAvatarUrl$:
-                  matrixMemberMetadataStore.createAvatarUrlBehavior$(userId),
+                  matrixMemberMetadataStore.createAvatarUrlBehavior$(scope, userId),
                 pickupState$,
                 intent,
               }),
@@ -1186,6 +1188,33 @@ export function createCallViewModel$(
       spotlight,
     })),
   );
+
+  spotlight$
+    .pipe(
+      switchMap((media) => {
+        let layout;
+        const pipMedia = media[0];
+        if (pipMedia === undefined) return of(undefined);
+        switch (pipMedia.type) {
+          case "user":
+            layout = pipMedia.videoOrientation$;
+            break;
+          case "ringing":
+            layout = of("landscape" as const);
+            break;
+          case "screen share":
+            layout = of("landscape" as const);
+            break;
+        }
+        return layout;
+      }),
+      scope.bind(),
+    )
+    .subscribe((orientation) => {
+      if (orientation === undefined) return;
+      logger.info("controls api pip orientation updated:", orientation);
+      window.controls.onPipMediaOrientationUpdate?.(orientation);
+    });
 
   /**
    * The media to be used to produce a layout.

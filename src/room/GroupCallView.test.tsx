@@ -19,7 +19,12 @@ import {
   vitest,
 } from "vitest";
 import { render, waitFor, screen, act } from "@testing-library/react";
-import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
+import {
+  type MatrixClient,
+  JoinRule,
+  type RoomState,
+  UnsupportedStickyEventsEndpointError,
+} from "matrix-js-sdk";
 import {
   MatrixRTCSessionEvent,
   type MatrixRTCSession,
@@ -46,6 +51,7 @@ import {
   MockRTCSession,
 } from "../utils/test";
 import { GroupCallView } from "./GroupCallView";
+import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary";
 import { ElementWidgetActions, type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
@@ -130,6 +136,9 @@ beforeEach(() => {
 function createGroupCallView(
   widget: WidgetHelpers | null,
   joined = true,
+  options: {
+    withErrorBoundary?: boolean;
+  } = {},
 ): {
   rtcSession: MatrixRTCSession;
   getByText: ReturnType<typeof render>["getByText"];
@@ -166,24 +175,36 @@ function createGroupCallView(
     video: { enabled: false },
     // TODO-MULTI-SFU: This cast isn't valid, it's likely the cause of some current test failures
   } as unknown as MuteStates;
+  const groupCallView = (
+    <GroupCallView
+      client={client}
+      isPasswordlessUser={false}
+      confineToRoom={false}
+      preload={false}
+      skipLobby={false}
+      rtcSession={rtcSession.asMockedSession()}
+      muteStates={muteState}
+      widget={widget}
+      // TODO-MULTI-SFU: Make joined and setJoined work
+      joined={true}
+      setJoined={function (value: boolean): void {}}
+    />
+  );
   const { getByText } = render(
     <BrowserRouter>
       <TooltipProvider>
         <MediaDevicesContext value={mockMediaDevices({})}>
           <ProcessorProvider>
-            <GroupCallView
-              client={client}
-              isPasswordlessUser={false}
-              confineToRoom={false}
-              preload={false}
-              skipLobby={false}
-              rtcSession={rtcSession.asMockedSession()}
-              muteStates={muteState}
-              widget={widget}
-              // TODO-MULTI-SFU: Make joined and setJoined work
-              joined={true}
-              setJoined={function (value: boolean): void {}}
-            />
+            {options.withErrorBoundary ? (
+              <GroupCallErrorBoundary
+                recoveryActionHandler={vi.fn()}
+                widget={null}
+              >
+                {groupCallView}
+              </GroupCallErrorBoundary>
+            ) : (
+              groupCallView
+            )}
           </ProcessorProvider>
         </MediaDevicesContext>
       </TooltipProvider>
@@ -359,6 +380,46 @@ test.skip("GroupCallView shows errors that occur during joining", async () => {
   createGroupCallView(null, false);
   await user.click(screen.getByRole("button", { name: "Join call" }));
   screen.getByText("Call is not supported");
+});
+
+test("translates wrapped UnsupportedStickyEventsEndpointError to the StickyEventsRequiredError screen", async () => {
+  // Mirror the shape the SDK emits: the MembershipManager scheduler wraps
+  // the original UnsupportedStickyEventsEndpointError in a generic Error
+  // but preserves the original on `.cause`.
+  const stickyError = new UnsupportedStickyEventsEndpointError(
+    "Server does not support the sticky events",
+    "sendStickyEvent",
+  );
+  const wrappedError = new Error(
+    "The MembershipManager shut down because of the end condition: " +
+      String(stickyError),
+    { cause: stickyError },
+  );
+
+  const { rtcSession } = createGroupCallView(null, true, {
+    withErrorBoundary: true,
+  });
+
+  await act(() =>
+    rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, wrappedError),
+  );
+
+  await screen.findByText("Homeserver does not support Matrix 2.0 calls");
+});
+
+test("falls back to ConnectionLostError for unrecognised membership manager errors", async () => {
+  const { rtcSession } = createGroupCallView(null, true, {
+    withErrorBoundary: true,
+  });
+
+  await act(() =>
+    rtcSession.emit(
+      MatrixRTCSessionEvent.MembershipManagerError,
+      new Error("something else broke"),
+    ),
+  );
+
+  await screen.findByText("Connection lost");
 });
 
 test("user can reconnect after a membership manager error", async () => {

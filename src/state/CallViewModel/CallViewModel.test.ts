@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, onTestFinished, it, describe } from "vitest";
+import { test, vi, onTestFinished, it, describe, expect } from "vitest";
 import {
   BehaviorSubject,
   combineLatest,
@@ -898,6 +898,41 @@ describe.each([
       });
     },
   );
+
+  // TODO add media to lk mocks
+  test("onPipMediaOrientationUpdate is called with the spotlight media orientation", () => {
+    // Set the spy before creating the view model so the initial call is captured
+    const onPipMediaOrientationUpdate = vi.fn();
+    window.controls.onPipMediaOrientationUpdate = onPipMediaOrientationUpdate;
+    onTestFinished(() => {
+      window.controls.onPipMediaOrientationUpdate = undefined;
+    });
+
+    withTestScheduler(({ behavior }) => {
+      // Alice starts as a regular participant, then shares her screen, then stops
+      const aliceSharingInputMarbles = "nyn";
+
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant]),
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          sharingScreen: new Map([
+            [aliceParticipant, behavior(aliceSharingInputMarbles, yesNo)],
+          ]),
+        },
+        () => {},
+      );
+    });
+
+    // Should be called exactly 3 times:
+    // 1. Initially with "portrait" (Alice is in spotlight as a user, default portrait orientation)
+    // 2. With "landscape" when Alice starts screen sharing (screen shares always use landscape)
+    // 3. With "portrait" again when Alice stops screen sharing and returns to user tile
+    expect(onPipMediaOrientationUpdate).toHaveBeenCalledTimes(3);
+    expect(onPipMediaOrientationUpdate).toHaveBeenNthCalledWith(1, "portrait");
+    expect(onPipMediaOrientationUpdate).toHaveBeenNthCalledWith(2, "landscape");
+    expect(onPipMediaOrientationUpdate).toHaveBeenNthCalledWith(3, "portrait");
+  });
 
   test("PiP tile in expanded spotlight layout switches speakers without layout shifts", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
