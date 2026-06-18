@@ -811,7 +811,10 @@ export function createCallViewModel$(
                   ),
                 ),
                 mxcAvatarUrl$:
-                  matrixMemberMetadataStore.createAvatarUrlBehavior$(scope, userId),
+                  matrixMemberMetadataStore.createAvatarUrlBehavior$(
+                    scope,
+                    userId,
+                  ),
                 pickupState$,
                 intent,
               }),
