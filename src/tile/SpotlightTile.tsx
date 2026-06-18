@@ -212,7 +212,6 @@ const SpotlightRingingMediaItem: FC<SpotlightRingingMediaItemProps> = ({
 }) => {
   const { t } = useTranslation();
   const pickupState = useBehavior(vm.pickupState$);
-  const videoEnabled = useBehavior(vm.videoEnabled$);
 
   return (
     <MediaView
@@ -222,7 +221,8 @@ const SpotlightRingingMediaItem: FC<SpotlightRingingMediaItemProps> = ({
         pickupState === "ringing"
           ? {
               text: t("video_tile.calling"),
-              Icon: videoEnabled ? VideoCallSolidIcon : VoiceCallSolidIcon,
+              Icon:
+                vm.intent === "video" ? VideoCallSolidIcon : VoiceCallSolidIcon,
             }
           : { text: t("video_tile.call_ended"), Icon: EndCallIcon }
       }

@@ -266,7 +266,7 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
-  const ringing = useBehavior(vm.ringing$);
+  const ringingIntent = useBehavior(vm.ringingIntent$);
   const audioParticipants = useBehavior(vm.livekitRoomItems$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
@@ -289,7 +289,7 @@ export const InCallView: FC<InCallViewProps> = ({
   // While ringing, loop the ringtone
   useEffect((): void | (() => void) => {
     const audio = latestPickupPhaseAudio.current;
-    if (ringing && audio) {
+    if (ringingIntent !== null && audio) {
       const endSound = audio.playSoundLooping(
         "waiting",
         audio.soundDuration["waiting"] ?? 1,
@@ -300,7 +300,7 @@ export const InCallView: FC<InCallViewProps> = ({
         });
       };
     }
-  }, [ringing, latestPickupPhaseAudio]);
+  }, [ringingIntent, latestPickupPhaseAudio]);
 
   // iOS Safari doesn't reliably fire `click` on plain <div>s, so we listen
   // for `pointerup` instead. Scrolls end in `pointercancel`, not `pointerup`,
