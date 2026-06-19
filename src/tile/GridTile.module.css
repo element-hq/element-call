@@ -66,6 +66,11 @@ borders don't support gradients */
   opacity: 1;
 }
 
+.tile.outline {
+  outline: var(--cpd-border-width-1) solid
+    var(--cpd-color-border-interactive-secondary);
+}
+
 @media (hover: hover) {
   .tile:hover {
     outline: var(--cpd-border-width-2) solid

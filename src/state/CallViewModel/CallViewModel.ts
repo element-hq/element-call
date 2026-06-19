@@ -155,6 +155,7 @@ import {
   createRingingMedia,
   type RingingMediaViewModel,
 } from "../media/RingingMediaViewModel.ts";
+import { type GridTileViewModel } from "../TileViewModel.ts";
 
 const logger = rootLogger.getChild("[CallViewModel]");
 //TODO
@@ -1482,6 +1483,7 @@ export function createCallViewModel$(
         ({ tiles: prevTiles }, [media, visibleTiles]) => {
           let layout: Layout;
           let newTiles: TileStore;
+          let pip: GridTileViewModel | undefined;
           switch (media.type) {
             case "grid":
             case "spotlight-landscape":
@@ -1507,6 +1509,7 @@ export function createCallViewModel$(
                 landscapePipAlignment$,
                 prevTiles,
               );
+              pip = layout.pip;
               break;
             case "one-on-one-portrait":
               [layout, newTiles] = oneOnOnePortraitLayout(
@@ -1515,10 +1518,15 @@ export function createCallViewModel$(
                 portraitPipAlignment$,
                 prevTiles,
               );
+              pip = layout.pip;
               break;
             case "pip":
               [layout, newTiles] = pipLayout(media, prevTiles);
               break;
+          }
+
+          for (const tile of newTiles.gridTiles) {
+            tile.setShowOutline(tile === pip);
           }
 
           return { layout, tiles: newTiles };
