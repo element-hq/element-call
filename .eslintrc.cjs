@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 `;
 
 module.exports = {
-  plugins: ["matrix-org", "rxjs", "jsdoc"],
+  plugins: ["matrix-org", "rxjs", "jsdoc", "element-call"],
   extends: [
     "plugin:matrix-org/react",
     "plugin:matrix-org/a11y",
@@ -27,6 +27,7 @@ module.exports = {
     node: true,
   },
   rules: {
+    "element-call/no-observablescope-leak": "error",
     "jsdoc/no-types": "error",
     "jsdoc/empty-tags": "error",
     "jsdoc/check-property-names": "error",
@@ -92,6 +93,9 @@ module.exports = {
         "**/test-**",
       ],
       rules: {
+        // Tests often initialize an ObservableScope in an outer scope in
+        // beforeEach, which is not actually a problem
+        "element-call/no-observablescope-leak": "off",
         "jsdoc/no-types": "off",
         "jsdoc/empty-tags": "off",
         "jsdoc/check-property-names": "off",
