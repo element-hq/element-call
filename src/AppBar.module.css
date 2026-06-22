@@ -67,6 +67,27 @@
     "subtitle subtitle subtitle";
 }
 
+/* Hide everything but the subtitle in small windows */
+@media (max-height: 450px) {
+  .bar {
+    display: none;
+    .title,
+    .primaryButton,
+    .secondaryButton {
+      display: none;
+    }
+  }
+
+  .bar:has(.subtitle) {
+    display: initial;
+    > header {
+      grid-template-columns: 1fr;
+      grid-template-rows: var(--cpd-space-5x) minmax(var(--cpd-space-5x), auto);
+      grid-template-areas: "." "subtitle";
+    }
+  }
+}
+
 .primaryButton {
   grid-area: primaryButton;
   justify-self: start;
@@ -139,6 +160,28 @@ body[data-platform="ios"] {
 
     svg {
       display: none;
+    }
+  }
+
+  /* Hide everything but the subtitle in small windows */
+  @media (max-height: 450px) {
+    .bar {
+      display: none;
+    }
+
+    .bar:has(.subtitle) {
+      display: initial;
+      > header {
+        grid-template-rows: var(--cpd-space-4x) minmax(
+            var(--cpd-space-5x),
+            auto
+          );
+        grid-template-areas: "." "subtitle";
+      }
+    }
+
+    .subtitle {
+      color: var(--cpd-color-text-primary);
     }
   }
 }

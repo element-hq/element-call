@@ -1424,7 +1424,7 @@ export function createCallViewModel$(
     windowMode$.pipe(
       switchMap((mode) => {
         // In small windows the header would be too obstructive
-        if (mode === "pip" || mode === "flat") return of(false);
+        if (mode === "pip") return of(false);
         // In edge-to-edge layouts, couple the visibility of the header
         // to that of the footer
         return edgeToEdge$.pipe(
