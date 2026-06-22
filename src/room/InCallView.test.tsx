@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  afterEach,
   beforeEach,
   describe,
   expect,
@@ -14,21 +15,23 @@ import {
   type MockedFunction,
   vi,
 } from "vitest";
-import { render, type RenderResult } from "@testing-library/react";
-import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
-import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
+import {
+  render,
+  type RenderResult,
+  getByRole,
+  screen,
+} from "@testing-library/react";
 import { type LocalParticipant } from "livekit-client";
-import { of } from "rxjs";
+import { BehaviorSubject, of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
+import userEvent from "@testing-library/user-event";
 
 import { InCallView } from "./InCallView";
 import {
   mockLivekitRoom,
   mockLocalParticipant,
-  mockMatrixRoom,
-  mockMatrixRoomMember,
   mockMediaDevices,
   mockMuteStates,
   mockRemoteParticipant,
@@ -37,17 +40,27 @@ import {
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
+import {
+  type CallViewModel,
+  type CallViewModelOptions,
+} from "../state/CallViewModel/CallViewModel";
 import { alice, local } from "../utils/test-fixtures";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { HeaderStyle } from "../UrlParams";
+import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
+import { constant } from "../state/Behavior";
+import { AppBar } from "../AppBar";
 import { initializeWidget } from "../widget";
+
 initializeWidget();
 vi.hoisted(
   () =>
-    (global.ImageData = class MockImageData {
+    // Use globalThis rather than global because vite-plugin-node-polyfills seems
+    // to rewrite global into an import which then interferes with vitest's hoisting
+    // which runs before imports.
+    (globalThis.ImageData = class MockImageData {
       public data: number[] = [];
     } as unknown as typeof ImageData),
 );
@@ -71,10 +84,7 @@ const localParticipant = mockLocalParticipant({
 const remoteParticipant = mockRemoteParticipant({
   identity: "@alice:example.org:AAAAAA",
 });
-const carol = mockMatrixRoomMember(localRtcMember);
-const roomMembers = new Map([carol].map((p) => [p.userId, p]));
 
-const roomId = "!foo:bar";
 let useRoomEncryptionSystemMock: MockedFunction<typeof useRoomEncryptionSystem>;
 
 beforeEach(() => {
@@ -99,36 +109,17 @@ beforeEach(() => {
     useRoomEncryptionSystem as typeof useRoomEncryptionSystemMock;
   useRoomEncryptionSystemMock.mockReturnValue({ kind: E2eeType.NONE });
 });
-
-function createInCallView(): RenderResult & {
+interface CreateInCallViewArgs {
+  mediaDevices?: ECMediaDevices;
+  callViewModelOptions?: Partial<CallViewModelOptions>;
+  /** If true, wraps the rendered tree in an AppBar provider */
+  withAppBar?: boolean;
+}
+function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   rtcSession: MockRTCSession;
+  vm: CallViewModel;
 } {
-  const client = {
-    getUser: () => null,
-    getUserId: () => localRtcMember.userId,
-    getDeviceId: () => localRtcMember.deviceId,
-    getRoom: (rId) => (rId === roomId ? room : null),
-    getDomain: () => "example.com",
-  } as Partial<MatrixClient> as MatrixClient;
-  const room = mockMatrixRoom({
-    relations: {
-      getChildEventsForEvent: () =>
-        vi.mocked({
-          getRelations: () => [],
-        }),
-    } as unknown as RelationsContainer,
-    client,
-    roomId,
-    // getMember: (userId) => roomMembers.get(userId) ?? null,
-    getMembers: () => Array.from(roomMembers.values()),
-    getMxcAvatarUrl: () => null,
-    hasEncryptionStateEvent: vi.fn().mockReturnValue(true),
-    getCanonicalAlias: () => null,
-    currentState: {
-      getJoinRule: () => JoinRule.Invite,
-    } as Partial<RoomState> as RoomState,
-  });
-
+  const mediaDevices = args.mediaDevices ?? mockMediaDevices({});
   const muteState = mockMuteStates();
   const livekitRoom = mockLivekitRoom(
     {
@@ -138,40 +129,52 @@ function createInCallView(): RenderResult & {
       remoteParticipants$: of([remoteParticipant]),
     },
   );
-  const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, footerVm, rtcSession } = getBasicCallViewModelEnvironment(
+    [local, alice],
+    undefined,
+    mediaDevices,
+    args.callViewModelOptions,
+  );
 
   rtcSession.joined = true;
+  const room = rtcSession.room;
+  const client = room.client;
+
+  const inCallView = (
+    <InCallView
+      client={client}
+      rtcSession={rtcSession.asMockedSession()}
+      muteStates={muteState}
+      vm={vm}
+      footerVm={footerVm}
+      matrixInfo={{
+        userId: "",
+        displayName: "",
+        avatarUrl: "",
+        roomId: "",
+        roomName: "",
+        roomAlias: null,
+        roomAvatar: null,
+        e2eeSystem: {
+          kind: E2eeType.NONE,
+        },
+      }}
+      matrixRoom={room}
+      onShareClick={null}
+    />
+  );
+
+  const content = args.withAppBar ? <AppBar>{inCallView}</AppBar> : inCallView;
+
   const renderResult = render(
     <BrowserRouter>
-      <MediaDevicesContext value={mockMediaDevices({})}>
+      <MediaDevicesContext value={mediaDevices}>
         <ReactionsSenderProvider
           vm={vm}
           rtcSession={rtcSession.asMockedSession()}
         >
           <TooltipProvider>
-            <RoomContext value={livekitRoom}>
-              <InCallView
-                client={client}
-                header={HeaderStyle.Standard}
-                rtcSession={rtcSession.asMockedSession()}
-                muteStates={muteState}
-                vm={vm}
-                matrixInfo={{
-                  userId: "",
-                  displayName: "",
-                  avatarUrl: "",
-                  roomId: "",
-                  roomName: "",
-                  roomAlias: null,
-                  roomAvatar: null,
-                  e2eeSystem: {
-                    kind: E2eeType.NONE,
-                  },
-                }}
-                matrixRoom={room}
-                onShareClick={null}
-              />
-            </RoomContext>
+            <RoomContext value={livekitRoom}>{content}</RoomContext>
           </TooltipProvider>
         </ReactionsSenderProvider>
       </MediaDevicesContext>
@@ -180,6 +183,7 @@ function createInCallView(): RenderResult & {
   return {
     ...renderResult,
     rtcSession,
+    vm,
   };
 }
 
@@ -188,6 +192,83 @@ describe("InCallView", () => {
     it("renders", () => {
       const { container } = createInCallView();
       expect(container).toMatchSnapshot();
+    });
+  });
+
+  describe("settings button with AppBar header", () => {
+    beforeEach(() => {
+      // getUrlParams() reads window.location directly rather than from the
+      // React Router context, so MemoryRouter alone is not enough to make
+      // it see "header=app_bar". Push the real URL so both paths agree.
+      window.history.pushState({}, "", "?header=app_bar");
+    });
+
+    afterEach(() => {
+      window.history.pushState({}, "", "/");
+    });
+
+    it("mobile portrait, is visible in the header", () => {
+      createInCallView({
+        withAppBar: true,
+        callViewModelOptions: {
+          // Narrow like a mobile phone in portrait orientation
+          windowSize$: constant({ width: 400, height: 700 }),
+        },
+      });
+
+      getByRole(screen.getByRole("banner"), "button", {
+        name: "Settings",
+      });
+    });
+
+    it("mobile landscape, is not visible anywhere", () => {
+      const { queryByRole } = createInCallView({
+        withAppBar: true,
+        callViewModelOptions: {
+          // Flat like a mobile phone in landscape orientation
+          windowSize$: constant({ width: 700, height: 400 }),
+        },
+      });
+
+      expect(queryByRole("button", { name: "Settings" })).not.toBeVisible();
+    });
+  });
+
+  describe("audioOutputSwitcher", () => {
+    it("is visible and can be clicked", async () => {
+      const user = userEvent.setup();
+      const switchFn = vi.fn();
+      // Create mediaDevices with a speaker and an earpiece available,
+      // with the speaker currently selected.
+      // This is needed so that the audio switcher button is visible
+      const available$ = new BehaviorSubject(
+        new Map<string, { type: "speaker" } | { type: "earpiece" }>([
+          ["speaker-id", { type: "speaker" }],
+          ["earpiece-id", { type: "earpiece" }],
+        ]),
+      );
+      const selected$ = new BehaviorSubject({
+        id: "speaker-id",
+        virtualEarpiece: false,
+      });
+
+      const mediaDevices = mockMediaDevices({
+        audioOutput: {
+          available$,
+          selected$,
+          select: switchFn,
+        },
+      });
+
+      const { getByRole } = createInCallView({ mediaDevices });
+      // The button should be visible. When current output is "speaker",
+      const audioOutputBtn = getByRole("button", { name: "Loudspeaker" });
+      expect(audioOutputBtn).toBeVisible();
+
+      await user.click(audioOutputBtn);
+
+      // Clicking the button should call select -> switchFn with the earpiece device id
+      expect(switchFn).toHaveBeenCalledWith("earpiece-id");
     });
   });
 });

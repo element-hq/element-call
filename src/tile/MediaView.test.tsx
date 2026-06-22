@@ -18,7 +18,6 @@ import { TrackInfo } from "@livekit/protocol";
 import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
-import { EncryptionStatus } from "../state/media/MemberMediaViewModel";
 import { mockLocalParticipant } from "../utils/test";
 
 describe("MediaView", () => {
@@ -41,9 +40,9 @@ describe("MediaView", () => {
     videoFit: "contain",
     targetWidth: 300,
     targetHeight: 200,
-    encryptionStatus: EncryptionStatus.Connecting,
     mirror: false,
     unencryptedWarning: false,
+    showNameTags: true,
     video: trackReference,
     userId: "@alice:example.com",
     mxcAvatarUrl: undefined,
@@ -107,6 +106,16 @@ describe("MediaView", () => {
       );
       expect(await axe(container)).toHaveNoViolations();
       expect(screen.getByRole("img", { name: "Not encrypted" })).toBeTruthy();
+    });
+
+    test("is shown and accessible even with name tag hidden", async () => {
+      const { container } = render(
+        <TooltipProvider>
+          <MediaView {...baseProps} unencryptedWarning showNameTags={false} />
+        </TooltipProvider>,
+      );
+      expect(await axe(container)).toHaveNoViolations();
+      screen.getByRole("img", { name: "Not encrypted" });
     });
 
     test("is not shown", () => {

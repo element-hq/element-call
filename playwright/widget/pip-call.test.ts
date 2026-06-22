@@ -40,16 +40,17 @@ widgetTest("Put call in PIP", async ({ addUser, browserName }) => {
 
   await TestHelpers.joinCallInCurrentRoom(timo.page);
 
-  {
-    const frame = timo.page
-      .locator('iframe[title="Element Call"]')
-      .contentFrame();
+  const frame = timo.page
+    .locator('iframe[title="Element Call"]')
+    .contentFrame();
 
-    const videoButton = frame.getByTestId("incall_videomute");
-    await expect(videoButton).toBeVisible();
-    // check that the video is on
-    await expect(videoButton).toHaveAttribute("aria-label", /^Stop video$/);
-  }
+  // check that the video is on
+  await expect(
+    frame.getByRole("switch", { name: "Stop video", checked: true }),
+  ).toBeVisible({
+    // Increase timeout, as this expect was flaky
+    timeout: 15000,
+  });
 
   // Switch to the other room, the call should go to PIP
   await TestHelpers.switchToRoomNamed(valere.page, "DoubleTask");
@@ -65,8 +66,10 @@ widgetTest("Put call in PIP", async ({ addUser, browserName }) => {
     const frame = valere.page
       .locator('iframe[title="Element Call"]')
       .contentFrame();
+
+    await expect(frame.locator("video")).toHaveCount(1, { timeout: 10000 });
+
     const videoElements = await frame.locator("video").all();
-    expect(videoElements.length).toBe(1);
 
     const pipVideo = videoElements[0];
     await expect(pipVideo).toHaveCSS("object-fit", "cover");

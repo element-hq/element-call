@@ -14,10 +14,10 @@ exports[`AppBar > renders 1`] = `
       >
         <button
           aria-labelledby="_r_0_"
-          class="_icon-button_1pz9o_8"
+          class="_icon-button_1215g_8"
           data-kind="primary"
           role="button"
-          style="--cpd-icon-button-size: 32px;"
+          style="--cpd-icon-button-size: 24px;"
           tabindex="0"
         >
           <div
@@ -25,6 +25,7 @@ exports[`AppBar > renders 1`] = `
             style="--cpd-icon-button-size: 100%;"
           >
             <svg
+              aria-hidden="true"
               fill="currentColor"
               height="1em"
               viewBox="0 0 24 24"

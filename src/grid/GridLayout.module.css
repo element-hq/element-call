@@ -31,8 +31,9 @@ Please see LICENSE in the repository root for full details.
   position: absolute;
   inline-size: 404px;
   block-size: 233px;
-  inset-block: 0;
-  inset-inline: var(--cpd-space-3x);
+  /* Ensure that spotlight tile lies within the safe area */
+  inset: 0 calc(env(safe-area-inset-right) + var(--cpd-space-3x)) 0
+    calc(env(safe-area-inset-left) + var(--cpd-space-3x));
 }
 
 .fixed > .slot[data-block-alignment="start"] {

@@ -23,8 +23,6 @@ test("@mobile Start a new call then leave and show the feedback screen", async (
   // await page.pause();
   await expect(page.locator("video")).toBeVisible();
   await expect(page.getByTestId("lobby_joinCall")).toBeVisible();
-
-  await page.getByRole("button", { name: "Continue in browser" }).click();
   // Join the call
   await page.getByTestId("lobby_joinCall").click();
 
@@ -55,7 +53,6 @@ test("@mobile Start a new call then leave and show the feedback screen", async (
 mobileTest(
   "Test earpiece overlay in controlledAudioDevices mode",
   async ({ asMobile, browser }) => {
-    test.slow(); // Triples the timeout
     const { creatorPage, inviteLink } = asMobile;
 
     // ========
@@ -66,10 +63,6 @@ mobileTest(
     });
     const guestPage = await guestInviteeContext.newPage();
     await guestPage.goto(inviteLink + "&controlledAudioDevices=true");
-
-    await guestPage
-      .getByRole("button", { name: "Continue in browser" })
-      .click();
 
     await guestPage.getByTestId("joincall_displayName").fill("Invitee");
     await expect(guestPage.getByTestId("joincall_joincall")).toBeVisible();
@@ -84,13 +77,13 @@ mobileTest(
     await expect(
       guestPage.getByTestId("roomHeader_participants_count"),
     ).toContainText("2");
-    expect(await guestPage.getByTestId("videoTile").count()).toBe(2);
+    await expect(guestPage.getByTestId("videoTile")).toHaveCount(2);
 
     // Same in creator page
     await expect(
       creatorPage.getByTestId("roomHeader_participants_count"),
     ).toContainText("2");
-    expect(await creatorPage.getByTestId("videoTile").count()).toBe(2);
+    await expect(creatorPage.getByTestId("videoTile")).toHaveCount(2);
 
     // TEST: control audio devices from the invitee page
 
@@ -100,8 +93,18 @@ mobileTest(
         { id: "earpiece", name: "Handset", isEarpiece: true },
         { id: "headphones", name: "Headphones" },
       ]);
-      window.controls.setAudioDevice("earpiece");
     });
+
+    // Open settings to select earpiece
+    await guestPage.getByRole("button", { name: "Settings" }).click();
+    await guestPage
+      .getByRole("radio", { name: "Handset", exact: true })
+      .click();
+
+    // dismiss settings
+    await guestPage.locator("#root").press("Escape");
+
+    await guestPage.pause();
     await expect(
       guestPage.getByRole("heading", { name: "Handset Mode" }),
     ).toBeVisible();

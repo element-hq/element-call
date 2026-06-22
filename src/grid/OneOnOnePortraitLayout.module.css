@@ -1,0 +1,46 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.layer {
+  block-size: 100%;
+}
+
+.spotlight {
+  block-size: 100%;
+  inline-size: 100%;
+}
+
+.pip {
+  position: absolute;
+  inset: var(--cpd-space-4x);
+}
+
+.pip[data-size="sm"] {
+  inline-size: 88px;
+  block-size: 132px;
+}
+
+.pip[data-size="lg"] {
+  inline-size: 140px;
+  block-size: 210px;
+}
+
+.pip[data-block-alignment="start"] {
+  inset-block-end: unset;
+}
+
+.pip[data-block-alignment="end"] {
+  inset-block-start: unset;
+}
+
+.pip[data-inline-alignment="start"] {
+  inset-inline-end: unset;
+}
+
+.pip[data-inline-alignment="end"] {
+  inset-inline-start: unset;
+}

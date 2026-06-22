@@ -53,7 +53,7 @@ import {
 import { ElementWidgetActions, widget } from "../../../widget.ts";
 import { getUrlParams } from "../../../UrlParams.ts";
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
-import { MatrixRTCMode } from "../../../settings/settings.ts";
+import { MatrixRTCMode } from "../../../config/ConfigOptions.ts";
 import { Config } from "../../../config/Config.ts";
 import {
   ConnectionState,
@@ -61,7 +61,8 @@ import {
   type FailedToStartError,
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
-import { and$ } from "../../../utils/observable.ts";
+import { type LocalTransport } from "./LocalTransport.ts";
+import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -127,7 +128,8 @@ interface Props {
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (transport: LivekitTransportConfig) => void;
   homeserverConnected: HomeserverConnected;
-  localTransport$: Behavior<LivekitTransportConfig | null>;
+  roomId: string;
+  localTransport$: Behavior<LocalTransport>;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
@@ -150,6 +152,7 @@ interface Props {
  * @param props.logger The logger to use.
  * @param props.muteStates The mute states for video and audio.
  * @param props.matrixRTCSession The matrix RTC session to join.
+ * @param props.roomId The room ID used as the call identifier in analytics events.
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
  *  - connected$: the current connection state. Including matrix server and livekit server connection. (only considering the livekit server we are using for our own media publication)
@@ -160,13 +163,14 @@ interface Props {
 export const createLocalMembership$ = ({
   scope,
   connectionManager,
-  localTransport$: localTransportCanThrow$,
+  localTransport$,
   homeserverConnected,
   createPublisherFactory,
   joinMatrixRTC,
   logger: parentLogger,
   muteStates,
   matrixRTCSession,
+  roomId: roomId,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -205,23 +209,43 @@ export const createLocalMembership$ = ({
   const logger = parentLogger.getChild("[LocalMembership]");
   logger.debug(`Creating local membership..`);
 
+  // We consider error on the transport as fatal.
+  // Whether it is the active transport or the preferred transport.
+  const handleTransportError = (e: unknown): Observable<null> => {
+    let error: ElementCallError;
+    if (e instanceof ElementCallError) {
+      error = e;
+    } else {
+      error = new UnknownCallError(
+        e instanceof Error ? e : new Error("Unknown error from localTransport"),
+      );
+    }
+    setTransportError(error);
+    return of(null);
+  };
+
+  // This is the transport that we will advertise in our membership.
+  const advertisedTransport$ = localTransport$.pipe(
+    switchMap((lt) => lt.advertised$),
+    catchError(handleTransportError),
+    distinctUntilChanged(areLivekitTransportsEqual),
+  );
+
   // Unwrap the local transport and set the state of the LocalMembership to error in case the transport is an error.
-  const localTransport$ = scope.behavior(
-    localTransportCanThrow$.pipe(
-      catchError((e: unknown) => {
-        let error: ElementCallError;
-        if (e instanceof ElementCallError) {
-          error = e;
-        } else {
-          error = new UnknownCallError(
-            e instanceof Error
-              ? e
-              : new Error("Unknown error from localTransport"),
-          );
-        }
-        setTransportError(error);
-        return of(null);
+  const activeTransport$ = scope.behavior(
+    localTransport$.pipe(
+      switchMap((lt) => {
+        return combineLatest([lt.active$, lt.advertised$]).pipe(
+          map(([active, advertised]) => {
+            // Our policy is to not publish to another transport if our prefered transport is miss-configured
+            if (advertised == null) return null;
+
+            return active?.transport ?? null;
+          }),
+        );
       }),
+      catchError(handleTransportError),
+      distinctUntilChanged(areLivekitTransportsEqual),
     ),
   );
 
@@ -229,7 +253,7 @@ export const createLocalMembership$ = ({
   const localConnection$ = scope.behavior(
     combineLatest([
       connectionManager.connectionManagerData$,
-      localTransport$,
+      activeTransport$,
     ]).pipe(
       map(([{ value: connectionData }, localTransport]) => {
         if (localTransport === null) {
@@ -398,7 +422,7 @@ export const createLocalMembership$ = ({
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
     combineLatest([
       localConnectionState$,
-      localTransport$,
+      activeTransport$,
       joinAndPublishRequested$,
       from(trackStartRequested.promise).pipe(
         map(() => true),
@@ -472,18 +496,33 @@ export const createLocalMembership$ = ({
   );
 
   /**
-   * Whether we are "fully" connected to the call. Accounts for both the
-   * connection to the MatrixRTC session and the LiveKit publish connection.
+   * The disconnect reason for the combined Matrix + LiveKit connection, or null
+   * when fully connected. Homeserver reasons take priority over livekit.
+   * Both connectivity state and reason come from the same combineLatest emission,
+   * avoiding any race between the two.
    */
-  const matrixAndLivekitConnected$ = scope.behavior(
-    and$(
+  const connectionDisconnectReason$ = scope.behavior(
+    combineLatest([
       homeserverConnected.combined$,
       localConnectionState$.pipe(
         map((state) => state === ConnectionState.LivekitConnected),
       ),
-    ).pipe(
+    ]).pipe(
+      map(([[hsConnected, hsReason], livekitConnected]) => {
+        if (!hsConnected) return hsReason!;
+        if (!livekitConnected) return "livekit" as const;
+        return null;
+      }),
       tap((v) => logger.debug("livekit+matrix: Connected state changed", v)),
     ),
+  );
+
+  /**
+   * Whether we are "fully" connected to the call. Accounts for both the
+   * connection to the MatrixRTC session and the LiveKit publish connection.
+   */
+  const matrixAndLivekitConnected$ = scope.behavior(
+    connectionDisconnectReason$.pipe(map((reason) => reason === null)),
   );
 
   /**
@@ -496,6 +535,33 @@ export const createLocalMembership$ = ({
     ),
     false,
   );
+
+  let reconnectStart: {
+    time: number;
+    reason: NonNullable<(typeof connectionDisconnectReason$)["value"]>;
+  } | null = null;
+  connectionDisconnectReason$
+    .pipe(distinctUntilChanged(), pairwise(), scope.bind())
+    .subscribe(([prev, reason]) => {
+      if (reason !== null) {
+        // Only begin tracking when transitioning FROM connected (null → non-null).
+        // This prevents the initial startup phase — where we may be non-null before
+        // the first real connection — from being counted as a reconnect.
+        if (prev === null) {
+          reconnectStart ??= { time: Date.now(), reason };
+        }
+      } else if (reconnectStart !== null) {
+        PosthogAnalytics.instance.eventCallReconnecting.track(
+          roomId,
+          reconnectStart.reason,
+          (Date.now() - reconnectStart.time) / 1000,
+        );
+        PosthogAnalytics.instance.eventCallEnded.cacheReconnecting(
+          reconnectStart.reason,
+        );
+        reconnectStart = null;
+      }
+    });
 
   // inform the widget about the connect and disconnect intent from the user.
   scope
@@ -537,9 +603,11 @@ export const createLocalMembership$ = ({
       });
   });
 
-  // Keep matrix rtc session in sync with localTransport$, connectRequested$
+  // Keep matrix rtc session in sync with advertisedTransport$, connectRequested$
   scope.reconcile(
-    scope.behavior(combineLatest([localTransport$, joinAndPublishRequested$])),
+    scope.behavior(
+      combineLatest([advertisedTransport$, joinAndPublishRequested$]),
+    ),
     async ([transport, shouldConnect]) => {
       if (!transport) return;
       // if shouldConnect=false we will do the disconnect as the cleanup from the previous reconcile iteration.
@@ -582,7 +650,7 @@ export const createLocalMembership$ = ({
   // TODO refactor this based no livekitState$
   combineLatest([participant$, homeserverConnected.combined$])
     .pipe(scope.bind())
-    .subscribe(([participant, connected]) => {
+    .subscribe(([participant, [connected]]) => {
       if (!participant) return;
       const publications = participant.trackPublications.values();
       if (connected) {
@@ -638,7 +706,15 @@ export const createLocalMembership$ = ({
   ) {
     toggleScreenSharing = (): void => {
       const screenshareSettings: ScreenShareCaptureOptions = {
-        audio: true,
+        // Screen share audio shouldn't have any filtering.
+        // "echoCancellation" is purposely excluded, as setting it to
+        // false causes the screen share audio track to include
+        // an echo of the incoming participant's voice
+        audio: {
+          autoGainControl: false,
+          noiseSuppression: false,
+          voiceIsolation: false,
+        },
         selfBrowserSurface: "include",
         surfaceSwitching: "include",
         systemAudio: "include",
@@ -746,6 +822,19 @@ export function enterRTCSession(
     };
   }
 
+  // Calculates `maximumNetworkErrorRetryCount`. The connection is failed if EITHER:
+  // - The /sync loop is unresponsive for > `gracePeriod` ms, or
+  // - A delayed leave event is emitted (after `leaveDelay` ms period).
+  // Note: Use leaveDelay >> gracePeriod for delegated leave events.
+  const gracePeriod = Config.get().sync_disconnect_grace_period_ms;
+  const leaveDelay = matrixRtcSessionConfig?.delayed_leave_event_delay_ms;
+  const retryInterval = matrixRtcSessionConfig?.network_error_retry_ms;
+
+  // Math.min is used to account for the respective worst case: /sync not available or leave event emitted.
+  const maxWaitTime = Math.min(gracePeriod, leaveDelay);
+  const maximumNetworkErrorRetryCount =
+    Math.ceil(maxWaitTime / retryInterval) + 1;
+
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   // TODO where/how do we track errors originating from the ongoing rtcSession?
 
@@ -770,8 +859,8 @@ export function enterRTCSession(
       makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
-      useExperimentalToDeviceTransport: true,
       unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
+      maximumNetworkErrorRetryCount: maximumNetworkErrorRetryCount,
     },
   );
 }

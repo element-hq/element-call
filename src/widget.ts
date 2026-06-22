@@ -61,7 +61,7 @@ export interface WidgetHelpers {
  * is initialized with `initializeWidget`. This should happen at the top level because the widget messaging
  * needs to be set up ASAP on load to ensure it doesn't miss any requests.
  */
-export let widget: WidgetHelpers | null;
+export let widget: WidgetHelpers | null = null;
 
 /**
  * Should be called as soon as possible on app start. (In the initilizer before react)
@@ -93,6 +93,7 @@ export const initializeWidget = (
       logger.info("Widget API is available");
       const api = new WidgetApi(widgetId, parentOrigin);
       api.requestCapability(MatrixCapabilities.AlwaysOnScreen);
+      api.requestCapability(MatrixCapabilities.MSC4039DownloadFile);
 
       // Set up the lazy action emitter, but only for select actions that we
       // intend for the app to handle

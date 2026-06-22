@@ -8,64 +8,96 @@ Please see LICENSE in the repository root for full details.
 import { type ComponentPropsWithoutRef, type FC } from "react";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
-import { Button as CpdButton, Tooltip } from "@vector-im/compound-web";
+import {
+  Button as CpdButton,
+  IconButton,
+  Tooltip,
+} from "@vector-im/compound-web";
 import {
   MicOnSolidIcon,
   MicOffSolidIcon,
+  SpinnerIcon,
   VideoCallSolidIcon,
   VideoCallOffSolidIcon,
   EndCallIcon,
   ShareScreenSolidIcon,
-  SettingsSolidIcon,
+  OverflowHorizontalIcon,
+  OverflowVerticalIcon,
+  VolumeOnSolidIcon,
+  VolumeOffSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
+import callFooterStyles from "../components/CallFooter.module.css";
+import { platform } from "../Platform";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
-  muted: boolean;
-  size?: "sm" | "lg";
+  enabled: boolean;
+  busy?: boolean;
+  size?: "md" | "lg";
 }
 
-export const MicButton: FC<MicButtonProps> = ({ muted, ...props }) => {
+export const MicButton: FC<MicButtonProps> = ({ enabled, busy, ...props }) => {
   const { t } = useTranslation();
-  const Icon = muted ? MicOffSolidIcon : MicOnSolidIcon;
-  const label = muted
-    ? t("unmute_microphone_button_label")
-    : t("mute_microphone_button_label");
+  const Icon = busy ? SpinnerIcon : enabled ? MicOnSolidIcon : MicOffSolidIcon;
+  const label = enabled
+    ? t("mute_microphone_button_label")
+    : t("unmute_microphone_button_label");
 
   return (
     <Tooltip label={label}>
       <CpdButton
         iconOnly
-        aria-label={label}
         Icon={Icon}
-        kind={muted ? "primary" : "secondary"}
+        kind={enabled ? "secondary" : "primary"}
+        role="switch"
+        aria-checked={enabled}
         {...props}
+        aria-busy={busy}
+        className={classNames(props.className, {
+          [styles.rotate]: !!busy,
+        })}
+        disabled={props.disabled || busy}
       />
     </Tooltip>
   );
 };
 
 interface VideoButtonProps extends ComponentPropsWithoutRef<"button"> {
-  muted: boolean;
-  size?: "sm" | "lg";
+  enabled: boolean;
+  busy?: boolean;
+  size?: "md" | "lg";
 }
 
-export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
+export const VideoButton: FC<VideoButtonProps> = ({
+  enabled,
+  busy,
+  ...props
+}) => {
   const { t } = useTranslation();
-  const Icon = muted ? VideoCallOffSolidIcon : VideoCallSolidIcon;
-  const label = muted
-    ? t("start_video_button_label")
-    : t("stop_video_button_label");
+  const Icon = busy
+    ? SpinnerIcon
+    : enabled
+      ? VideoCallSolidIcon
+      : VideoCallOffSolidIcon;
+  const label = enabled
+    ? t("stop_video_button_label")
+    : t("start_video_button_label");
 
   return (
     <Tooltip label={label}>
       <CpdButton
         iconOnly
-        aria-label={label}
         Icon={Icon}
-        kind={muted ? "primary" : "secondary"}
+        kind={enabled ? "secondary" : "primary"}
+        role="switch"
+        aria-checked={enabled}
         {...props}
+        aria-busy={busy}
+        className={classNames(props.className, {
+          [styles.rotate]: !!busy,
+        })}
+        disabled={props.disabled || busy}
       />
     </Tooltip>
   );
@@ -73,7 +105,7 @@ export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
 
 interface ShareScreenButtonProps extends ComponentPropsWithoutRef<"button"> {
   enabled: boolean;
-  size: "sm" | "lg";
+  size: "md" | "lg";
 }
 
 export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
@@ -91,6 +123,8 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
         iconOnly
         Icon={ShareScreenSolidIcon}
         kind={enabled ? "primary" : "secondary"}
+        role="switch"
+        aria-checked={enabled}
         {...props}
       />
     </Tooltip>
@@ -98,7 +132,7 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
 };
 
 interface EndCallButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size?: "sm" | "lg";
+  size?: "md" | "lg";
 }
 
 export const EndCallButton: FC<EndCallButtonProps> = ({
@@ -112,7 +146,6 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
       <CpdButton
         className={classNames(className, styles.endCall)}
         iconOnly
-        aria-label={t("hangup_button_label")}
         Icon={EndCallIcon}
         destructive
         {...props}
@@ -121,18 +154,87 @@ export const EndCallButton: FC<EndCallButtonProps> = ({
   );
 };
 
-interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
-  size?: "sm" | "lg";
+interface LoudspeakerButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size?: "md" | "lg";
+  loudspeakerModeEnabled: boolean;
 }
-export const SettingsButton: FC<SettingsButtonProps> = (props) => {
+export const LoudspeakerButton: FC<LoudspeakerButtonProps> = ({
+  loudspeakerModeEnabled,
+  ...props
+}) => {
   const { t } = useTranslation();
+  // if the target is the earpice, we are currently in loudspeaker mode.
+  const label = loudspeakerModeEnabled
+    ? t("settings.devices.loudspeaker")
+    : t("settings.devices.handset");
+  return (
+    <Tooltip label={label}>
+      <CpdButton
+        iconOnly
+        Icon={loudspeakerModeEnabled ? VolumeOnSolidIcon : VolumeOffSolidIcon}
+        {...props}
+        kind={loudspeakerModeEnabled ? "primary" : "secondary"}
+        aria-checked={loudspeakerModeEnabled}
+      />
+    </Tooltip>
+  );
+};
 
+function classNamesForScreenWidth(
+  className?: string,
+  forScreenWidth?: "wide" | "narrow",
+): string {
+  return classNames(className, {
+    [callFooterStyles.settingsOnlyShowWide]: forScreenWidth === "wide",
+    [callFooterStyles.settingsOnlyShowNarrow]: forScreenWidth === "narrow",
+  });
+}
+
+interface SettingsIconButtonProps extends ComponentPropsWithoutRef<"button"> {
+  /** If this buttons should be setup to be used in the app bar */
+  showForScreenWidth?: "wide" | "narrow";
+  kind?: "secondary" | "primary";
+}
+export const SettingsIconButton: FC<SettingsIconButtonProps> = ({
+  showForScreenWidth,
+  className,
+  ...props
+}) => {
+  const { t } = useTranslation();
+  const Icon =
+    platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon;
+  return (
+    <Tooltip label={t("common.settings")}>
+      <IconButton
+        className={classNamesForScreenWidth(className, showForScreenWidth)}
+        {...props}
+      >
+        <Icon aria-hidden />
+      </IconButton>
+    </Tooltip>
+  );
+};
+
+interface SettingsButtonProps extends ComponentPropsWithoutRef<"button"> {
+  size?: "md" | "lg";
+  /** If this buttons should be setup to be used in the app bar */
+  showForScreenWidth?: "wide" | "narrow";
+}
+export const SettingsButton: FC<SettingsButtonProps> = ({
+  showForScreenWidth,
+  className,
+  ...props
+}) => {
+  const { t } = useTranslation();
   return (
     <Tooltip label={t("common.settings")}>
       <CpdButton
+        className={classNamesForScreenWidth(className, showForScreenWidth)}
         iconOnly
-        Icon={SettingsSolidIcon}
-        kind="secondary"
+        Icon={
+          platform === "android" ? OverflowVerticalIcon : OverflowHorizontalIcon
+        }
+        kind={"secondary"}
         {...props}
       />
     </Tooltip>

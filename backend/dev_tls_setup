@@ -3,7 +3,7 @@
 # Step 1: Create a Root CA key and cert
 openssl genrsa -out dev_tls_local-ca.key 2048
 openssl req -x509 -new -nodes \
-  -days 3650 \
+  -days 800 \
   -subj "/CN=Element Call Dev CA" \
   -key dev_tls_local-ca.key \
   -out dev_tls_local-ca.crt \
@@ -21,7 +21,7 @@ openssl x509 \
   -CA dev_tls_local-ca.crt -CAkey dev_tls_local-ca.key \
   -CAcreateserial \
   -out dev_tls_m.localhost.crt \
-  -days 3650 \
+  -days 800 \
   -sha256 \
   -extfile <( cat <<EOF
 authorityKeyIdentifier=keyid,issuer
@@ -35,5 +35,6 @@ DNS.1 = localhost
 DNS.2 = m.localhost
 DNS.3 = *.m.localhost
 DNS.4 = *.othersite.m.localhost
+DNS.5 = *.nip.io
 EOF
 )

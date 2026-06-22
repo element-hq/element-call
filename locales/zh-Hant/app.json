@@ -15,12 +15,6 @@
     "submit": "遞交"
   },
   "analytics_notice": "參與此測試版即表示您同意蒐集匿名資料，我們使用這些資料來改進產品。您可以在我們的<2>隱私政策</2>與我們的 <5>Cookie 政策</5> 中找到關於我們追蹤哪些資料的更多資訊。",
-  "app_selection_modal": {
-    "continue_in_browser": "在瀏覽器中繼續",
-    "open_in_app": "在應用程式中開啟",
-    "text": "準備好加入了？",
-    "title": "選取應用程式"
-  },
   "call_ended_view": {
     "create_account_button": "建立帳號",
     "create_account_prompt": "<0>何不設定密碼以保留此帳號？</0><1>您可以保留暱稱並設定頭像，以便未來通話時使用</1>",

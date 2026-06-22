@@ -29,6 +29,9 @@ import {
   UserProfileIcon,
   VolumeOffSolidIcon,
   SwitchCameraSolidIcon,
+  VideoCallSolidIcon,
+  VoiceCallSolidIcon,
+  EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
   ContextMenu,
@@ -49,6 +52,7 @@ import { useBehavior } from "../useBehavior";
 import { type LocalUserMediaViewModel } from "../state/media/LocalUserMediaViewModel";
 import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaViewModel";
 import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
+import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
 
 interface TileProps {
   ref?: Ref<HTMLDivElement>;
@@ -56,21 +60,57 @@ interface TileProps {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
-  focusUrl: string | undefined;
   displayName: string;
   mxcAvatarUrl: string | undefined;
-  showSpeakingIndicators: boolean;
+  showNameTags: boolean;
   focusable: boolean;
 }
 
+interface RingingMediaTileProps extends TileProps {
+  vm: RingingMediaViewModel;
+}
+
+const RingingMediaTile: FC<RingingMediaTileProps> = ({
+  vm,
+  className,
+  ...props
+}) => {
+  const { t } = useTranslation();
+  const pickupState = useBehavior(vm.pickupState$);
+  const videoEnabled = useBehavior(vm.videoEnabled$);
+
+  return (
+    <MediaView
+      className={classNames(className, styles.tile)}
+      video={undefined}
+      userId={vm.userId}
+      unencryptedWarning={false}
+      status={
+        pickupState === "ringing"
+          ? {
+              text: t("video_tile.calling"),
+              Icon: videoEnabled ? VideoCallSolidIcon : VoiceCallSolidIcon,
+            }
+          : { text: t("video_tile.call_ended"), Icon: EndCallIcon }
+      }
+      videoEnabled={videoEnabled}
+      videoFit="cover"
+      mirror={false}
+      {...props}
+    />
+  );
+};
+
 interface UserMediaTileProps extends TileProps {
   vm: UserMediaViewModel;
+  showSpeakingIndicators: boolean;
   mirror: boolean;
   playbackMuted: boolean;
   waitingForMedia?: boolean;
   primaryButton?: ReactNode;
   menuStart?: ReactNode;
   menuEnd?: ReactNode;
+  focusUrl: string | undefined;
 }
 
 const UserMediaTile: FC<UserMediaTileProps> = ({
@@ -95,7 +135,6 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const { t } = useTranslation();
   const video = useBehavior(vm.video$);
   const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
-  const encryptionStatus = useBehavior(vm.encryptionStatus$);
   const audioStreamStats = useObservableEagerState<
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >(vm.audioStreamStats$);
@@ -153,7 +192,6 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       video={video}
       userId={vm.userId}
       unencryptedWarning={unencryptedWarning}
-      encryptionStatus={encryptionStatus}
       videoEnabled={videoEnabled}
       videoFit={videoFit}
       className={classNames(className, styles.tile, {
@@ -218,6 +256,7 @@ UserMediaTile.displayName = "UserMediaTile";
 
 interface LocalUserMediaTileProps extends TileProps {
   vm: LocalUserMediaViewModel;
+  showSpeakingIndicators: boolean;
   onOpenProfile: (() => void) | null;
 }
 
@@ -232,6 +271,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
   const mirror = useBehavior(vm.mirror$);
   const alwaysShow = useBehavior(vm.alwaysShow$);
   const switchCamera = useBehavior(vm.switchCamera$);
+  const focusUrl = useBehavior(vm.focusUrl$);
 
   const latestAlwaysShow = useLatest(alwaysShow);
   const onSelectAlwaysShow = useCallback(
@@ -278,6 +318,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
         )
       }
       focusable={focusable}
+      focusUrl={focusUrl}
       {...props}
     />
   );
@@ -287,6 +328,7 @@ LocalUserMediaTile.displayName = "LocalUserMediaTile";
 
 interface RemoteUserMediaTileProps extends TileProps {
   vm: RemoteUserMediaViewModel;
+  showSpeakingIndicators: boolean;
 }
 
 const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
@@ -298,6 +340,8 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
   const waitingForMedia = useBehavior(vm.waitingForMedia$);
   const playbackMuted = useBehavior(vm.playbackMuted$);
   const playbackVolume = useBehavior(vm.playbackVolume$);
+  const focusUrl = useBehavior(vm.focusUrl$);
+
   const onSelectMute = useCallback(
     (e: Event) => {
       e.preventDefault();
@@ -338,6 +382,7 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
           </MenuItem>
         </>
       }
+      focusUrl={focusUrl}
       {...props}
     />
   );
@@ -354,29 +399,40 @@ interface GridTileProps {
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicators: boolean;
+  showNameTags: boolean;
   focusable: boolean;
 }
 
 export const GridTile: FC<GridTileProps> = ({
   ref: theirRef,
   vm,
+  showSpeakingIndicators,
   onOpenProfile,
   ...props
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
   const media = useBehavior(vm.media$);
-  const focusUrl = useBehavior(media.focusUrl$);
   const displayName = useBehavior(media.displayName$);
   const mxcAvatarUrl = useBehavior(media.mxcAvatarUrl$);
 
-  if (media.local) {
+  if (media.type === "ringing") {
+    return (
+      <RingingMediaTile
+        ref={ref}
+        vm={media}
+        displayName={displayName}
+        mxcAvatarUrl={mxcAvatarUrl}
+        {...props}
+      />
+    );
+  } else if (media.local) {
     return (
       <LocalUserMediaTile
         ref={ref}
         vm={media}
+        showSpeakingIndicators={showSpeakingIndicators}
         onOpenProfile={onOpenProfile}
-        focusUrl={focusUrl}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
         {...props}
@@ -387,7 +443,7 @@ export const GridTile: FC<GridTileProps> = ({
       <RemoteUserMediaTile
         ref={ref}
         vm={media}
-        focusUrl={focusUrl}
+        showSpeakingIndicators={showSpeakingIndicators}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
         {...props}

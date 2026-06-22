@@ -4,6 +4,7 @@
     "module": "es2022",
     "jsx": "react-jsx",
     "lib": ["es2024", "dom", "dom.iterable"],
+    "skipLibCheck": true,
 
     // From Matrix-JS-SDK
     "strict": true,

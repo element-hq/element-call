@@ -149,7 +149,7 @@ class IndexedDBLogStore {
    * @return Resolves when the store is ready.
    */
   public async connect(): Promise<void> {
-    const req = this.indexedDB.open("logs");
+    const req = this.indexedDB.open("logs-element-call");
     return new Promise((resolve, reject) => {
       req.onsuccess = (): void => {
         this.db = req.result;
@@ -500,6 +500,13 @@ export async function init(): Promise<void> {
         global.mx_rage_logger.log(LogLevel[level], "matrix_sdk", ...args);
       }
     };
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    global.mx_rage_logger.log(
+      LogLevel.error,
+      `Unhandled promise rejection: ${event.reason}`,
+    );
   });
 
   return tryInitStorage();

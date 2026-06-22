@@ -55,31 +55,6 @@ export function createRoomMembers$(
 }
 
 /**
- * creates the member that this DM is with in case it is a DM (two members) otherwise null
- */
-export function createDMMember$(
-  scope: ObservableScope,
-  roomMembers$: Behavior<RoomMemberMap>,
-  matrixRoom: MatrixRoom,
-): Behavior<Pick<
-  RoomMember,
-  "userId" | "getMxcAvatarUrl" | "rawDisplayName"
-> | null> {
-  // We cannot use the normal direct check from matrix since we do not have access to the account data.
-  // use primitive member count === 2 check instead.
-  return scope.behavior(
-    roomMembers$.pipe(
-      map((membersMap) => {
-        // primitive appraoch do to no access to account data.
-        const isDM = membersMap.size === 2;
-        if (!isDM) return null;
-        return matrixRoom.getMember(matrixRoom.guessDMUserId());
-      }),
-    ),
-  );
-}
-
-/**
  * Displayname for each member of the call. This will disambiguate
  * any displayname that clashes with another member. Only members
  * joined to the call are considered here.
@@ -140,8 +115,14 @@ export const createMatrixMemberMetadata$ = (
   memberships$: Behavior<Pick<CallMembership, "userId">[]>,
   roomMembers$: Behavior<RoomMemberMap>,
 ): {
-  createDisplayNameBehavior$: (userId: string) => Behavior<string | undefined>;
-  createAvatarUrlBehavior$: (userId: string) => Behavior<string | undefined>;
+  createDisplayNameBehavior$: (
+    scope: ObservableScope,
+    userId: string,
+  ) => Behavior<string | undefined>;
+  createAvatarUrlBehavior$: (
+    scope: ObservableScope,
+    userId: string,
+  ) => Behavior<string | undefined>;
   displaynameMap$: Behavior<Map<string, string>>;
   avatarMap$: Behavior<Map<string, string | undefined>>;
 } => {
@@ -161,13 +142,13 @@ export const createMatrixMemberMetadata$ = (
     ),
   );
   return {
-    createDisplayNameBehavior$: (userId: string) =>
+    createDisplayNameBehavior$: (scope: ObservableScope, userId: string) =>
       scope.behavior(
         displaynameMap$.pipe(
           map((displaynameMap) => displaynameMap.get(userId)),
         ),
       ),
-    createAvatarUrlBehavior$: (userId: string) =>
+    createAvatarUrlBehavior$: (scope: ObservableScope, userId: string) =>
       scope.behavior(
         roomMembers$.pipe(
           map((roomMembers) => roomMembers.get(userId)?.getMxcAvatarUrl()),

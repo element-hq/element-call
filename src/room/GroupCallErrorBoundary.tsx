@@ -23,6 +23,7 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { Button } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { MatrixError } from "matrix-js-sdk";
 
 import {
   ConnectionLostError,
@@ -34,6 +35,7 @@ import {
 import { FullScreenView } from "../FullScreenView.tsx";
 import { ErrorView } from "../ErrorView.tsx";
 import { type WidgetHelpers } from "../widget.ts";
+import styles from "../ErrorView.module.css";
 
 export type CallErrorRecoveryAction = "reconnect"; // | "retry" ;
 
@@ -78,6 +80,9 @@ const ErrorPage: FC<ErrorPageProps> = ({
     });
   }
 
+  const technicalError =
+    error.cause instanceof MatrixError ? error.cause : null;
+
   return (
     <FullScreenView>
       <ErrorView
@@ -87,7 +92,26 @@ const ErrorPage: FC<ErrorPageProps> = ({
         widget={widget}
       >
         <p>
-          {error.localisedMessage ?? (
+          {error.localisedMessageKey ? (
+            <Trans
+              // @ts-expect-error - Dynamic i18nKey from error object
+              i18nKey={error.localisedMessageKey}
+              values={error.localisedMessageValues}
+              components={[
+                <a
+                  href={String(error.localisedMessageValues?.linkUrl || "#")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {/* Content injected by Trans component */}
+                </a>,
+                <b />,
+                <code />,
+              ]}
+            />
+          ) : error.localisedMessage ? (
+            error.localisedMessage
+          ) : (
             <Trans
               i18nKey="error.unexpected_ec_error"
               components={[<b />, <code />]}
@@ -95,6 +119,16 @@ const ErrorPage: FC<ErrorPageProps> = ({
             />
           )}
         </p>
+        {technicalError ? (
+          <details className={styles.technicalDetails}>
+            <summary className={styles.technicalDetailsSummary}>
+              {t("technical_details")}
+            </summary>
+            <pre className={styles.technicalDetailsPre}>
+              {technicalError.message}
+            </pre>
+          </details>
+        ) : null}
         {actions &&
           actions.map((action, index) => (
             <Button

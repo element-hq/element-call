@@ -22,7 +22,7 @@ import { useUpdateLayout, useVisibleTiles } from "./Grid";
 export const makeSpotlightLandscapeLayout: CallLayout<
   SpotlightLandscapeLayoutModel
 > = ({ minBounds$ }) => ({
-  scrollingOnTop: false,
+  foreground: "scrolling",
 
   fixed: function SpotlightLandscapeLayoutFixed({
     ref,

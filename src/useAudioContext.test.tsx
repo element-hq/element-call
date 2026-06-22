@@ -74,7 +74,26 @@ const panNode = vi.mocked(
  * It can also be used to mock the `AudioContext` constructor in tests:
  * `vi.stubGlobal("AudioContext", () => testAudioContext);`
  */
-export const testAudioContext = {
+export const testAudioContext: Partial<AudioContext> & {
+  gain: ReturnType<
+    typeof vi.mocked<{
+      connect: (node: AudioNode) => AudioNode;
+      gain: { setValueAtTime: ReturnType<typeof vi.fn>; value: number };
+    }>
+  >;
+  pan: ReturnType<
+    typeof vi.mocked<{
+      connect: (node: AudioNode) => AudioNode;
+      pan: { setValueAtTime: ReturnType<typeof vi.fn>; value: number };
+    }>
+  >;
+  setSinkId: ReturnType<typeof vi.fn>;
+  decodeAudioData: ReturnType<typeof vi.fn>;
+  createBufferSource: ReturnType<typeof vi.fn>;
+  createGain: ReturnType<typeof vi.fn>;
+  createStereoPanner: ReturnType<typeof vi.fn>;
+  close: ReturnType<typeof vi.fn>;
+} = {
   gain: gainNode,
   pan: panNode,
   setSinkId: vi.fn().mockResolvedValue(undefined),
@@ -90,11 +109,18 @@ export const testAudioContext = {
   createStereoPanner: vi.fn().mockReturnValue(panNode),
   close: vi.fn().mockResolvedValue(undefined),
 };
-export const TestAudioContextConstructor = vi.fn(() => testAudioContext);
+
+const TestAudioContext = vi.fn(
+  class {
+    public constructor() {
+      return testAudioContext;
+    }
+  },
+);
 
 let user: UserEvent;
 beforeEach(() => {
-  vi.stubGlobal("AudioContext", TestAudioContextConstructor);
+  vi.stubGlobal("AudioContext", TestAudioContext);
   user = userEvent.setup();
 });
 

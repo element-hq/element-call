@@ -22,12 +22,6 @@
     "upload_file": "Dosya Yükle"
   },
   "analytics_notice": "Bu beta sürümüne katılarak, ürünü geliştirmek için kullandığımız anonim verilerin toplanmasına izin vermiş olursunuz. Hangi verileri izlediğimiz hakkında daha fazla bilgiyi <2>Gizlilik Politikamızda</2> ve <6>Çerez Politikamızda bulabilirsiniz</6>..",
-  "app_selection_modal": {
-    "continue_in_browser": "Tarayıcıda devam et",
-    "open_in_app": "Uygulamada aç",
-    "text": "Katılmaya hazır mısınız?",
-    "title": "Uygulama seçin"
-  },
   "call_ended_view": {
     "create_account_button": "Hesap aç",
     "create_account_prompt": "<0>Hesabınızı tutmak için niye bir parola açmıyorsunuz?</0><1>Böylece ileriki aramalarda adınızı ve avatarınızı kullanabileceksiniz</1>",
@@ -69,8 +63,7 @@
     "livekit_server_info": "LiveKit Sunucu Bilgisi",
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix Kimliği: {{id}}",
-    "show_connection_stats": "Bağlantı istatistiklerini göster",
-    "show_non_member_tiles": "Üye olmayan kullanıcılar için ortam döşemelerini göster"
+    "show_connection_stats": "Bağlantı istatistiklerini göster"
   },
   "disconnected_banner": "Sunucuyla bağlantı kesildi.",
   "error": {
@@ -198,7 +191,6 @@
   "video_tile": {
     "always_show": "Her zaman göster",
     "camera_starting": "Video paylaşımı başlatılıyor...",
-    "change_fit_contain": "Çerçeveye sığdır",
     "collapse": "Daralt",
     "expand": "Genişlet",
     "mute_for_me": "Benim için sessize al",

@@ -22,12 +22,6 @@
     "upload_file": "Datei hochladen"
   },
   "analytics_notice": "Mit der Teilnahme an der Beta akzeptierst du die Sammlung von anonymen Daten, die wir zur Verbesserung des Produkts verwenden. Weitere Informationen zu den von uns erhobenen Daten findest du in unserer <2>Datenschutzerklärung</2> und unseren <6>Cookie-Richtlinien</6>.",
-  "app_selection_modal": {
-    "continue_in_browser": "Weiter im Browser",
-    "open_in_app": "In der App öffnen",
-    "text": "Bereit, beizutreten?",
-    "title": "App auswählen"
-  },
   "call_ended_view": {
     "create_account_button": "Konto erstellen",
     "create_account_prompt": "<0>Warum vergibst du nicht abschließend ein Passwort, um dein Konto zu erhalten?</0><1>Du kannst deinen Namen behalten und ein Profilbild für zukünftige Anrufe festlegen.</1>",
@@ -64,6 +58,14 @@
   "developer_mode": {
     "always_show_iphone_earpiece": "iPhone-Ohrhörer-Option auf allen Plattformen anzeigen",
     "crypto_version": "Krypto-Version: {{version}}",
+    "custom_livekit_url": {
+      "current_url": "Derzeit eingestellt auf: ",
+      "from_config": "Derzeit ist keine spezielle (benutzerdefinierte) URL eingestellt. Daher wird automatisch die URL verwendet, die entweder via „.well-known“ oder in der Webbrowser-Konfiguration („config“) hinterlegt ist.",
+      "label": "Benutzerdefinierte Livekit-URL",
+      "reset": "Zurücksetzen der benutzerdefinierten URL",
+      "save": "Speichern",
+      "saving": "Speichern..."
+    },
     "debug_tile_layout_label": "Kachel-Layout debuggen",
     "device_id": "Geräte-ID: {{id}}",
     "duplicate_tiles_label": "Anzahl zusätzlicher Kachelkopien pro Teilnehmer",
@@ -71,13 +73,25 @@
     "hostname": "Hostname: {{hostname}}",
     "livekit_server_info": "LiveKit-Server Informationen",
     "livekit_sfu": "LiveKit SFU: {{url}}",
+    "matrixRTCMode": {
+      "Comptibility": {
+        "description": "Kompatibel mit Homeservern ohne Sticky Events Support, wobei alle beteiligten Element Call Clients v0.17.0 oder neuer sein müssen.",
+        "label": "Kompatibilität: State Events & Multi-SFU"
+      },
+      "Legacy": {
+        "description": "Kompatibel mit älteren Versionen von Element Call, welche Multi-SFU nicht unterstützen",
+        "label": "Legacy: State Events und \"Oldest Membership\" SFU"
+      },
+      "Matrix_2_0": {
+        "description": "Nur mit Homeservern kompatibel, die Sticky Events unterstützen, wobei alle beteiligten Element Call Clients Version v0.17.0 oder neuer sein müssen.",
+        "label": "Matrix 2.0: Sticky Events und Multi-SFU"
+      },
+      "title": "MatrixRTC Modus"
+    },
     "matrix_id": "Matrix-ID: {{id}}",
     "mute_all_audio": "Stummschalten aller Audiosignale (Teilnehmer, Reaktionen, Beitrittsgeräusche)",
     "show_connection_stats": "Verbindungsstatistiken anzeigen",
-    "show_non_member_tiles": "Kacheln für Nicht-Mitgliedermedien anzeigen",
-    "url_params": "URL-Parameter",
-    "use_new_membership_manager": "Neuen MembershipManager verwenden",
-    "use_to_device_key_transport": "To-Device media E2EE Schlüssel-Transport verwenden. Falls ein anderer Teilnehmer bereits den Raumschlüssel-Transport verwendet, wird automatisch auf Raumschlüssel-Transport zurückgegriffen."
+    "url_params": "URL-Parameter"
   },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
   "error": {
@@ -88,13 +102,17 @@
     "connection_lost_description": "Ihre Verbindung zum Anruf wurde unterbrochen.",
     "e2ee_unsupported": "Inkompatibler Browser",
     "e2ee_unsupported_description": "Ihr Webbrowser unterstützt keine verschlüsselten Anrufe. Zu den unterstützten Browsern gehören Chrome, Safari und Firefox 117+.",
+    "failed_to_start_livekit": "LiveKit-Verbindung konnte nicht hergestellt werden",
     "generic": "Etwas ist schief gelaufen",
     "generic_description": "Durch das Senden von Debugprotokollen können wir das Problem leichter eingrenzen.",
     "insufficient_capacity": "Unzureichende Kapazität",
     "insufficient_capacity_description": "Der Server hat seine maximale Kapazität erreicht, daher ist ein Beitritt zum Anruf derzeit nicht möglich. Bitte später erneut versuchen oder den Serveradministrator kontaktieren, falls das Problem weiterhin besteht.",
-    "matrix_rtc_focus_missing": "Der Server ist nicht für die Verwendung mit {{brand}} konfiguriert. Bitte den Serveradministrator kontaktieren (Domain: {{domain}}, Fehlercode: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "Der Server ist nicht für die Verwendung mit {{brand}} konfiguriert. Bitte den Server Admin kontaktieren (Domain: {{domain}}, Fehlercode: {{ errorCode }}).",
+    "membership_manager": "Fehler im MatrixRTC Mitgliedschaftsmanager",
+    "membership_manager_description": "Der MatrixRTC Mitgliedschaftsmanager wurde unerwartet aufgrund fehlgeschlagener Netzwerkanfragen beendet.",
+    "no_matrix_2_authorization_service": "Der Autorisierungsdienst des Medien Servers (SFU) ist veraltet.",
     "open_elsewhere": "In einem anderen Tab geöffnet",
-    "open_elsewhere_description": "{{brand}} wurde in einem anderen Tab geöffnet. Wenn das nicht richtig klingt, versuchen Sie, die Seite neu zu laden.",
+    "open_elsewhere_description": "{{brand}} wurde in einem anderen Tab geöffnet. Wenn das nicht richtig klingt, versuche, die Seite neu zu laden.",
     "room_creation_restricted": "Anruf konnte nicht erstellt werden",
     "room_creation_restricted_description": "Das Erstellen von Anrufen ist nur für autorisierte Nutzer möglich. Versuche es später erneut oder kontaktiere deinen Serveradministrator, falls das Problem weiterhin besteht.",
     "unexpected_ec_error": "Ein unerwarteter Fehler ist aufgetreten (<0>Fehlercode: </0> <1>{{ errorCode }}</1>). Bitte den Serveradministrator kontaktieren."
@@ -200,9 +218,9 @@
     "opt_in_description": "<0></0><1></1>Du kannst deine Zustimmung durch Abwählen dieses Kästchens zurückziehen. Falls du dich aktuell in einem Anruf befindest, wird diese Einstellung nach dem Ende des Anrufs wirksam.",
     "preferences_tab": {
       "developer_mode_label": "Entwickler-Modus",
-      "developer_mode_label_description": "Aktivieren Sie den Entwicklermodus und zeigen Sie die Registerkarte mit den Entwicklereinstellungen an.",
+      "developer_mode_label_description": "Aktiviere den Entwicklermodus und zeige Entwicklereinstellungen an.",
       "introduction": "Hier können zusätzliche Optionen für individuelle Anforderungen eingestellt werden.",
-      "reactions_play_sound_description": "Spielen Sie einen Soundeffekt ab, wenn jemand eine Reaktion auf einen Anruf sendet.",
+      "reactions_play_sound_description": "Spiele einen Soundeffekt ab, wenn jemand eine Reaktion auf einen Anruf sendet.",
       "reactions_play_sound_label": "Reaktionstöne abspielen",
       "reactions_show_description": "Zeige eine Animation, wenn jemand eine Reaktion sendet.",
       "reactions_show_label": "Reaktionen anzeigen",
@@ -225,12 +243,14 @@
   "version": "{{productName}} Version: {{version}}",
   "video_tile": {
     "always_show": "Immer anzeigen",
+    "call_ended": "Anruf beendet",
+    "calling": "Anruf…",
     "camera_starting": "Video wird geladen...",
-    "change_fit_contain": "An Fenster anpassen",
     "collapse": "Minimieren",
     "expand": "Erweitern",
     "mute_for_me": "Für mich stumm schalten",
     "muted_for_me": "Für mich stumm geschaltet",
+    "screen_share_volume": "Lautstärke der Bildschirmfreigabe",
     "volume": "Lautstärke",
     "waiting_for_media": "Warten auf Medien..."
   }

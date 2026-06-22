@@ -87,7 +87,7 @@ export const RTCConnectionStats: FC<Props> = ({
         <div>
           <Button
             onClick={() => showFullModal("audio")}
-            size="sm"
+            size="md"
             kind="tertiary"
             Icon={MicOnSolidIcon}
           >
@@ -103,7 +103,7 @@ export const RTCConnectionStats: FC<Props> = ({
         <div>
           <Button
             onClick={() => showFullModal("video")}
-            size="sm"
+            size="md"
             kind="tertiary"
             Icon={VideoCallSolidIcon}
           >

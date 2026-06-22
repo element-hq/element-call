@@ -27,7 +27,7 @@ import { type LocalUserMediaViewModel } from "./LocalUserMediaViewModel";
 import {
   createMemberMedia,
   type MemberMediaInputs,
-  type MemberMediaViewModel,
+  type BaseMemberMediaViewModel,
 } from "./MemberMediaViewModel";
 import { type RemoteUserMediaViewModel } from "./RemoteUserMediaViewModel";
 import { type ObservableScope } from "../ObservableScope";
@@ -42,12 +42,13 @@ export type UserMediaViewModel =
   | LocalUserMediaViewModel
   | RemoteUserMediaViewModel;
 
-export interface BaseUserMediaViewModel extends MemberMediaViewModel {
+export interface BaseUserMediaViewModel extends BaseMemberMediaViewModel {
   type: "user";
   speaking$: Behavior<boolean>;
   audioEnabled$: Behavior<boolean>;
   videoEnabled$: Behavior<boolean>;
   videoFit$: Behavior<"cover" | "contain">;
+  videoOrientation$: Behavior<"landscape" | "portrait">;
   toggleCropVideo: () => void;
   /**
    * The expected identity of the LiveKit participant. Exposed for debugging.
@@ -104,6 +105,7 @@ export function createBaseUserMedia(
     { width: number; height: number } | undefined
   >(undefined);
 
+  const videoSize$ = videoSizeFromParticipant$(participant$);
   return {
     ...createMemberMedia(scope, {
       ...inputs,
@@ -129,11 +131,14 @@ export function createBaseUserMedia(
     videoEnabled$: scope.behavior(
       media$.pipe(map((m) => m?.cameraTrack?.isMuted === false)),
     ),
-    videoFit$: videoFit$(
-      scope,
-      videoSizeFromParticipant$(participant$),
-      targetSize$,
+    videoOrientation$: scope.behavior(
+      videoSize$.pipe(
+        map((s) => (s ? s.width / s.height : 1)),
+        map((aspect) => (aspect > 1 ? "landscape" : "portrait")),
+      ),
+      "portrait",
     ),
+    videoFit$: videoFit$(scope, videoSize$, targetSize$),
     toggleCropVideo: () => toggleCropVideo$.next(),
     rtcBackendIdentity,
     handRaised$,

@@ -49,12 +49,14 @@ test("can only interact with header and footer while reconnecting", async ({
   ).toBeVisible();
 
   // Tab order should jump directly from header to footer, skipping media tiles
-  await page.getByRole("button", { name: "Mute microphone" }).focus();
+  await page.getByRole("switch", { name: "Mute microphone" }).focus();
   await expect(
-    page.getByRole("button", { name: "Mute microphone" }),
+    page.getByRole("switch", { name: "Mute microphone" }),
   ).toBeFocused();
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("button", { name: "Stop video" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Microphone" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("switch", { name: "Stop video" })).toBeFocused();
   // Most critically, we should be able to press the hangup button
   await page.getByRole("button", { name: "End call" }).click();
 });

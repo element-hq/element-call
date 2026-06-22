@@ -100,7 +100,7 @@ export const SettingsModal: FC<Props> = ({
 
   const devices = useMediaDevices();
   useEffect(() => {
-    if (open) devices.requestDeviceNames();
+    if (open) devices.requestDeviceNames(); // No-op after the first call
   }, [open, devices]);
 
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
@@ -213,6 +213,7 @@ export const SettingsModal: FC<Props> = ({
         env={import.meta.env}
         client={client}
         livekitRooms={livekitRooms}
+        roomId={roomId}
       />
     ),
   };
