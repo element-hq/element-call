@@ -125,10 +125,9 @@ import {
   createConnectionManager$,
 } from "./remoteMembers/ConnectionManager.ts";
 import {
-  createMatrixLivekitMembers$,
+  createRemoteMatrixLivekitMembers$,
   type LocalMatrixLivekitMember,
   type RemoteMatrixLivekitMember,
-  type MatrixLivekitMember,
 } from "./remoteMembers/MatrixLivekitMembers.ts";
 import {
   type AutoLeaveReason,
@@ -300,7 +299,7 @@ export interface CallViewModel {
   /** Participants sorted by livekit room so they can be used in the audio rendering */
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
   /** use the layout instead, this is just for the sdk export. */
-  matrixLivekitMembers$: Behavior<RemoteMatrixLivekitMember[]>;
+  remoteMatrixLivekitMembers$: Behavior<RemoteMatrixLivekitMember[]>;
   localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null>;
   /** List of participants raising their hand */
   handsRaised$: Behavior<Record<string, RaisedHandInfo>>;
@@ -527,13 +526,15 @@ export function createCallViewModel$(
     ownMembershipIdentity,
   });
 
-  const matrixLivekitMembers$: Behavior<Epoch<RemoteMatrixLivekitMember[]>> =
-    createMatrixLivekitMembers$({
-      scope: scope,
-      membershipsWithTransport$:
-        membershipsAndTransports.membershipsWithTransport$,
-      connectionManager: connectionManager,
-    });
+  const remoteMatrixLivekitMembers$: Behavior<
+    Epoch<RemoteMatrixLivekitMember[]>
+  > = createRemoteMatrixLivekitMembers$({
+    scope: scope,
+    membershipsWithTransport$:
+      membershipsAndTransports.membershipsWithTransport$,
+    connectionManager: connectionManager,
+    localUser: { userId, deviceId },
+  });
 
   const connectOptions$ = scope.behavior(
     matrixRTCMode$.pipe(
@@ -610,6 +611,13 @@ export function createCallViewModel$(
       ),
     );
 
+  const matrixLivekitMembers$ = scope.behavior(
+    combineLatest(
+      [localMatrixLivekitMember$, remoteMatrixLivekitMembers$],
+      (local, remote) => [...(local === null ? [] : [local]), ...remote.value],
+    ),
+  );
+
   // ------------------------------------------------------------------------
   // matrixMemberMetadataStore
 
@@ -639,7 +647,7 @@ export function createCallViewModel$(
     connectionManager.connectionManagerData$.pipe(map((d) => d.value)),
   );
   const livekitRoomItems$ = scope.behavior(
-    matrixLivekitMembers$.pipe(
+    remoteMatrixLivekitMembers$.pipe(
       switchMap((members) => {
         const a$ = combineLatest(
           members.value.map((member) =>
@@ -705,43 +713,20 @@ export function createCallViewModel$(
    * List of user media (camera feeds) that we want tiles for.
    */
   const userMedia$ = scope.behavior<WrappedUserMediaViewModel[]>(
-    combineLatest([
-      localMatrixLivekitMember$,
-      matrixLivekitMembers$,
-      duplicateTiles.value$,
-    ]).pipe(
+    combineLatest([matrixLivekitMembers$, duplicateTiles.value$]).pipe(
       // Generate a collection of user media from the list of expected (whether
       // present or missing) LiveKit participants.
       generateItems(
         "CallViewModel userMedia$",
-        function* ([
-          localMatrixLivekitMember,
-          matrixLivekitMembers,
-          duplicateTiles,
-        ]) {
-          const computeMediaId = (m: MatrixLivekitMember): string =>
-            `${m.userId}:${m.membership$.value.deviceId}`;
-
-          const localUserMediaId = localMatrixLivekitMember
-            ? computeMediaId(localMatrixLivekitMember)
-            : undefined;
-
-          const localAsArray = localMatrixLivekitMember
-            ? [localMatrixLivekitMember]
-            : [];
-          const remoteWithoutLocal = matrixLivekitMembers.value.filter(
-            (m) => computeMediaId(m) !== localUserMediaId,
-          );
-          const allMatrixLivekitMembers = [
-            ...localAsArray,
-            ...remoteWithoutLocal,
-          ];
-
-          for (const matrixLivekitMember of allMatrixLivekitMembers) {
-            const { userId, participant, connection$, membership$ } =
-              matrixLivekitMember;
-            const rtcId = membership$.value.rtcBackendIdentity; // rtcBackendIdentity
-            const mediaId = computeMediaId(matrixLivekitMember);
+        function* ([members, duplicateTiles]) {
+          for (const {
+            userId,
+            participant,
+            connection$,
+            membership$,
+          } of members) {
+            const rtcId = membership$.value.rtcBackendIdentity;
+            const mediaId = `${userId}:${membership$.value.deviceId}`;
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
                 keys: [dup, mediaId, userId, participant, connection$, rtcId],
@@ -859,7 +844,7 @@ export function createCallViewModel$(
    *    multiple devices.
    */
   const participantCount$ = scope.behavior(
-    matrixLivekitMembers$.pipe(map((ms) => ms.value.length)),
+    matrixLivekitMembers$.pipe(map((ms) => ms.length)),
   );
 
   const leaveSoundEffect$ = userMedia$.pipe(
@@ -1760,8 +1745,8 @@ export function createCallViewModel$(
     setGridMode: setGridMode,
     layout$: layout$,
     localMatrixLivekitMember$,
-    matrixLivekitMembers$: scope.behavior(
-      matrixLivekitMembers$.pipe(
+    remoteMatrixLivekitMembers$: scope.behavior(
+      remoteMatrixLivekitMembers$.pipe(
         map((members) => members.value),
         tap((v) => {
           const listForLogs = v

@@ -76,9 +76,9 @@ interface MatrixRTCSdk {
   stop: () => void;
   data$: Observable<{ rtcBackendIdentity: string; data: string }>;
   /**
-   * flattened list of members
+   * flattened list of remote members
    */
-  members$: Behavior<
+  remoteMembers$: Behavior<
     {
       connection: Connection | null;
       membership: CallMembership;
@@ -86,7 +86,7 @@ interface MatrixRTCSdk {
     }[]
   >;
   /**
-   * flattened local members
+   * flattened local member
    */
   localMember$: Behavior<{
     connection: Connection | null;
@@ -338,8 +338,8 @@ export async function createMatrixRTCSdk(
       ),
     ),
     connected$: callViewModel.connected$,
-    members$: scope.behavior(
-      callViewModel.matrixLivekitMembers$.pipe(
+    remoteMembers$: scope.behavior(
+      callViewModel.remoteMatrixLivekitMembers$.pipe(
         switchMap((members) => {
           const listOfMemberObservables = members.map((member) =>
             combineLatest([

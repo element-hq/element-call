@@ -92,6 +92,7 @@ export function createMemberMedia(
   }: MemberMediaInputs,
 ): BaseMemberMediaViewModel {
   const trackBehavior$ = (
+    scope: ObservableScope,
     source: Track.Source,
   ): Behavior<TrackReference | undefined> =>
     scope.behavior(
@@ -102,8 +103,8 @@ export function createMemberMedia(
       ),
     );
 
-  const audio$ = trackBehavior$(audioSource);
-  const video$ = trackBehavior$(videoSource);
+  const audio$ = trackBehavior$(scope, audioSource);
+  const video$ = trackBehavior$(scope, videoSource);
 
   return {
     ...createBaseMedia(inputs),

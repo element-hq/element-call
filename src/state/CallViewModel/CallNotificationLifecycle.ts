@@ -161,6 +161,10 @@ export function createCallNotificationLifecycle$({
           recipient,
           outcome$: race(timeout$, accept$, decline$).pipe(
             take(1),
+            // Make this observable 'hot' to avoid running multiple timers. This
+            // is not actually a resource leak since there will be at most one
+            // active ring attempt at any given time.
+            // eslint-disable-next-line element-call/no-observablescope-leak
             scope.share,
           ),
         });
