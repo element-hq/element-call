@@ -44,7 +44,6 @@ import {
   createCallViewModel$,
 } from "../state/CallViewModel/CallViewModel.ts";
 import { Grid, type TileProps } from "../grid/Grid";
-import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -69,22 +68,23 @@ import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useMediaDevices } from "../MediaDevicesContext.ts";
 import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
-import { useAppBarHidden, useAppBarSecondaryButton } from "../AppBar.tsx";
+import {
+  useAppBarHidden,
+  useAppBarSecondaryButton,
+  useAppBarSubtitle,
+} from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
 import { Toast } from "../Toast.tsx";
 import overlayStyles from "../Overlay.module.css";
-import { prefetchSounds } from "../soundUtils";
-import { useAudioContext } from "../useAudioContext";
-import ringtoneMp3 from "../sound/ringtone.mp3?url";
-import ringtoneOgg from "../sound/ringtone.ogg?url";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
-import { useLatest } from "../useLatest.ts";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter.tsx";
 import { SettingsIconButton } from "../button/Button.tsx";
 import { createCallFooterViewModel } from "../components/CallFooterViewModel.tsx";
 import { type ViewModel } from "../state/ViewModel.ts";
+import { RingingStatus } from "../tile/RingingStatus.tsx";
+import { RingingAudioRenderer } from "./RingingAudioRenderer.tsx";
 
 declare module "react" {
   interface CSSProperties {
@@ -240,20 +240,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const { showControls, header: headerStyle } = useUrlParams();
 
   const muteAllAudio = useBehavior(muteAllAudio$);
-
-  // Preload a waiting and decline sounds
-  const pickupPhaseSoundCache = useInitial(async () => {
-    return prefetchSounds({
-      waiting: { mp3: ringtoneMp3, ogg: ringtoneOgg },
-    });
-  });
-
-  const pickupPhaseAudio = useAudioContext({
-    sounds: pickupPhaseSoundCache,
-    latencyHint: "interactive",
-    muted: muteAllAudio,
-  });
-  const latestPickupPhaseAudio = useLatest(pickupPhaseAudio);
   const toggleAudio = useBehavior(muteStates.audio.toggle$);
   const toggleVideo = useBehavior(muteStates.video.toggle$);
   const setAudioEnabled = useBehavior(muteStates.audio.setEnabled$);
@@ -266,7 +252,7 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
-  const ringingIntent = useBehavior(vm.ringingIntent$);
+  const ringingVm = useBehavior(vm.ringingVm$);
   const audioParticipants = useBehavior(vm.livekitRoomItems$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
@@ -285,22 +271,6 @@ export const InCallView: FC<InCallViewProps> = ({
     logger.debug("fatalCallError stop rendering", fatalCallError);
     throw fatalCallError;
   }
-
-  // While ringing, loop the ringtone
-  useEffect((): void | (() => void) => {
-    const audio = latestPickupPhaseAudio.current;
-    if (ringingIntent !== null && audio) {
-      const endSound = audio.playSoundLooping(
-        "waiting",
-        audio.soundDuration["waiting"] ?? 1,
-      );
-      return () => {
-        void endSound().catch((e) => {
-          logger.error("Failed to stop ringing sound", e);
-        });
-      };
-    }
-  }, [ringingIntent, latestPickupPhaseAudio]);
 
   // iOS Safari doesn't reliably fire `click` on plain <div>s, so we listen
   // for `pointerup` instead. Scrolls end in `pointercancel`, not `pointerup`,
@@ -363,6 +333,11 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   useAppBarHidden(!showHeader);
+  useAppBarSubtitle(
+    ringingVm && vm.ringingStatusLocation === "app_bar" && (
+      <RingingStatus vm={ringingVm} />
+    ),
+  );
 
   let header: ReactNode = null;
   switch (headerStyle) {
@@ -457,6 +432,7 @@ export const InCallView: FC<InCallViewProps> = ({
         );
         const showSpeakingIndicators = useBehavior(vm.showSpeakingIndicators$);
         const showNameTags = useBehavior(vm.showNameTags$);
+        const showRingingStatus = vm.ringingStatusLocation === "tile";
 
         return model instanceof GridTileViewModel ? (
           <GridTile
@@ -469,6 +445,7 @@ export const InCallView: FC<InCallViewProps> = ({
             style={style}
             showSpeakingIndicators={showSpeakingIndicators}
             showNameTags={showNameTags}
+            showRingingStatus={showRingingStatus}
             focusable={!contentObscured}
           />
         ) : (
@@ -481,6 +458,7 @@ export const InCallView: FC<InCallViewProps> = ({
             targetHeight={targetHeight}
             showIndicators={showSpotlightIndicators}
             showNameTags={showNameTags}
+            showRingingStatus={showRingingStatus}
             focusable={!contentObscured}
             className={classNames(className, styles.tile)}
             style={style}
@@ -515,6 +493,7 @@ export const InCallView: FC<InCallViewProps> = ({
           targetHeight={gridBounds.height}
           showIndicators={false}
           showNameTags={showNameTags}
+          showRingingStatus={vm.ringingStatusLocation === "tile"}
           focusable={!contentObscured}
           aria-hidden={contentObscured}
         />
@@ -626,6 +605,7 @@ export const InCallView: FC<InCallViewProps> = ({
       {renderContent()}
       <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
+      <RingingAudioRenderer vm={ringingVm} muted={muteAllAudio} />
       {reconnectingToast}
       {earpieceOverlay}
       <ReactionsOverlay vm={vm} />

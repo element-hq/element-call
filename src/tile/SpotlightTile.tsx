@@ -24,9 +24,6 @@ import {
   VolumeOnIcon,
   VolumeOffSolidIcon,
   VolumeOnSolidIcon,
-  VideoCallSolidIcon,
-  VoiceCallSolidIcon,
-  EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
 import { type Observable, map } from "rxjs";
@@ -34,7 +31,7 @@ import { useObservableRef } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
-import { Menu, MenuItem } from "@vector-im/compound-web";
+import { Menu, MenuItem, Text } from "@vector-im/compound-web";
 
 import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
 import FullScreenMinimiseIcon from "../icons/FullScreenMinimise.svg?react";
@@ -56,6 +53,7 @@ import { type MediaViewModel } from "../state/media/MediaViewModel";
 import { Slider } from "../Slider";
 import { platform } from "../Platform";
 import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
+import { RingingStatus } from "./RingingStatus";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
@@ -204,28 +202,26 @@ const SpotlightMemberMediaItem: FC<SpotlightMemberMediaItemProps> = ({
 
 interface SpotlightRingingMediaItemProps extends SpotlightItemBaseProps {
   vm: RingingMediaViewModel;
+  showStatus: boolean;
 }
 
 const SpotlightRingingMediaItem: FC<SpotlightRingingMediaItemProps> = ({
   vm,
+  showStatus,
   ...props
 }) => {
-  const { t } = useTranslation();
-  const pickupState = useBehavior(vm.pickupState$);
-
   return (
     <MediaView
       video={undefined}
       unencryptedWarning={false}
       status={
-        pickupState === "ringing"
-          ? {
-              text: t("video_tile.calling"),
-              Icon:
-                vm.intent === "video" ? VideoCallSolidIcon : VoiceCallSolidIcon,
-            }
-          : { text: t("video_tile.call_ended"), Icon: EndCallIcon }
+        showStatus && (
+          <Text as="span" size="md" weight="medium">
+            <RingingStatus vm={vm} />
+          </Text>
+        )
       }
+      avatarStyle="translucent"
       videoEnabled={false}
       videoFit="cover"
       mirror={false}
@@ -246,6 +242,7 @@ interface SpotlightItemProps {
    */
   targetHeight: number;
   showNameTags: boolean;
+  showRingingStatus: boolean;
   focusable: boolean;
   intersectionObserver$: Observable<IntersectionObserver>;
   /**
@@ -261,6 +258,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   targetWidth,
   targetHeight,
   showNameTags,
+  showRingingStatus,
   focusable,
   intersectionObserver$,
   snap,
@@ -302,7 +300,11 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   };
 
   return vm.type === "ringing" ? (
-    <SpotlightRingingMediaItem vm={vm} {...baseProps} />
+    <SpotlightRingingMediaItem
+      vm={vm}
+      showStatus={showRingingStatus}
+      {...baseProps}
+    />
   ) : (
     <SpotlightMemberMediaItem vm={vm} {...baseProps} />
   );
@@ -386,6 +388,7 @@ interface Props {
   targetHeight: number;
   showIndicators: boolean;
   showNameTags: boolean;
+  showRingingStatus: boolean;
   focusable: boolean;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
@@ -400,6 +403,7 @@ export const SpotlightTile: FC<Props> = ({
   targetHeight,
   showIndicators,
   showNameTags,
+  showRingingStatus,
   focusable = true,
   className,
   style,
@@ -510,6 +514,7 @@ export const SpotlightTile: FC<Props> = ({
             vm={vm}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
+            showRingingStatus={showRingingStatus}
             showNameTags={showNameTags}
             focusable={focusable}
             intersectionObserver$={intersectionObserver$}

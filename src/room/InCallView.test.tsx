@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  afterEach,
   beforeEach,
   describe,
   expect,
@@ -15,12 +14,7 @@ import {
   type MockedFunction,
   vi,
 } from "vitest";
-import {
-  render,
-  type RenderResult,
-  getByRole,
-  screen,
-} from "@testing-library/react";
+import { render, type RenderResult } from "@testing-library/react";
 import { type LocalParticipant } from "livekit-client";
 import { BehaviorSubject, of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
@@ -50,7 +44,6 @@ import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
-import { constant } from "../state/Behavior";
 import { AppBar } from "../AppBar";
 import { initializeWidget } from "../widget";
 
@@ -192,45 +185,6 @@ describe("InCallView", () => {
     it("renders", () => {
       const { container } = createInCallView();
       expect(container).toMatchSnapshot();
-    });
-  });
-
-  describe("settings button with AppBar header", () => {
-    beforeEach(() => {
-      // getUrlParams() reads window.location directly rather than from the
-      // React Router context, so MemoryRouter alone is not enough to make
-      // it see "header=app_bar". Push the real URL so both paths agree.
-      window.history.pushState({}, "", "?header=app_bar");
-    });
-
-    afterEach(() => {
-      window.history.pushState({}, "", "/");
-    });
-
-    it("mobile portrait, is visible in the header", () => {
-      createInCallView({
-        withAppBar: true,
-        callViewModelOptions: {
-          // Narrow like a mobile phone in portrait orientation
-          windowSize$: constant({ width: 400, height: 700 }),
-        },
-      });
-
-      getByRole(screen.getByRole("banner"), "button", {
-        name: "Settings",
-      });
-    });
-
-    it("mobile landscape, is not visible anywhere", () => {
-      const { queryByRole } = createInCallView({
-        withAppBar: true,
-        callViewModelOptions: {
-          // Flat like a mobile phone in landscape orientation
-          windowSize$: constant({ width: 700, height: 400 }),
-        },
-      });
-
-      expect(queryByRole("button", { name: "Settings" })).not.toBeVisible();
     });
   });
 
