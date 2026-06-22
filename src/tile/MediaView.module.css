@@ -126,13 +126,9 @@ unconditionally select the container so we can use cqmin units */
   margin-block-start: calc(var(--cpd-space-3x) - var(--fg-inset));
   margin-inline-start: calc(var(--cpd-space-4x) - var(--fg-inset));
 
-  span {
-    vertical-align: center;
-  }
-
   svg {
     color: var(--cpd-color-icon-tertiary);
-    vertical-align: center;
+    vertical-align: text-bottom;
     margin-inline-end: 3px;
     block-size: 1.2em;
     inline-size: 1.2em;

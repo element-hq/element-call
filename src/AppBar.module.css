@@ -84,7 +84,7 @@
     margin-inline-end: var(--cpd-space-2x);
     block-size: 1.2em;
     inline-size: 1.2em;
-    vertical-align: center;
+    vertical-align: text-bottom;
   }
 }
 
