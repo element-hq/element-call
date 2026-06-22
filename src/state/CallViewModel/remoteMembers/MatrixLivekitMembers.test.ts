@@ -89,7 +89,7 @@ test("should signal participant not yet connected to livekit", async () => {
     mockConnectionManagerData$,
   );
 
-  const matrixLivekitMember$ = createRemoteMatrixLivekitMembers$({
+  const remoteMatrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
     scope: testScope,
     membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
     connectionManager: {
@@ -99,7 +99,7 @@ test("should signal participant not yet connected to livekit", async () => {
   });
 
   await flushPromises();
-  expect(matrixLivekitMember$.value.value).toSatisfy(
+  expect(remoteMatrixLivekitMembers$.value.value).toSatisfy(
     (data: RemoteMatrixLivekitMember[]) => {
       expect(data.length).toEqual(1);
       expect(data[0].membership$.value).toBe(bobMembership);
@@ -159,7 +159,7 @@ test("should signal participant on a connection that is publishing", async () =>
     constant(dataWithPublisher),
   );
 
-  const matrixLivekitMember$ = createRemoteMatrixLivekitMembers$({
+  const remoteMatrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
     scope: testScope,
     membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
     connectionManager: {
@@ -169,7 +169,7 @@ test("should signal participant on a connection that is publishing", async () =>
   });
 
   await flushPromises();
-  expect(matrixLivekitMember$.value.value).toSatisfy(
+  expect(remoteMatrixLivekitMembers$.value.value).toSatisfy(
     (data: RemoteMatrixLivekitMember[]) => {
       expect(data.length).toEqual(1);
       expect(data[0].membership$.value).toBe(bobMembership);
@@ -200,7 +200,7 @@ test("should signal participant on a connection that is not publishing", async (
     constant(dataWithPublisher),
   );
 
-  const matrixLivekitMember$ = createRemoteMatrixLivekitMembers$({
+  const remoteMatrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
     scope: testScope,
     membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
     connectionManager: {
@@ -209,7 +209,7 @@ test("should signal participant on a connection that is not publishing", async (
     localUser: localRtcMember,
   });
   await flushPromises();
-  expect(matrixLivekitMember$.value.value).toSatisfy(
+  expect(remoteMatrixLivekitMembers$.value.value).toSatisfy(
     (data: RemoteMatrixLivekitMember[]) => {
       expect(data.length).toEqual(1);
       expect(data[0].membership$.value).toBe(bobMembership);
@@ -249,7 +249,7 @@ describe("Publication edge case", () => {
       constant(connectionWithPublisher),
     );
 
-    const matrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
+    const remoteMatrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
       connectionManager: {
@@ -258,7 +258,7 @@ describe("Publication edge case", () => {
       localUser: localRtcMember,
     });
     await flushPromises();
-    expect(matrixLivekitMembers$.value.value).toSatisfy(
+    expect(remoteMatrixLivekitMembers$.value.value).toSatisfy(
       (data: RemoteMatrixLivekitMember[]) => {
         expect(data.length).toEqual(2);
         expect(data[0].membership$.value).toBe(bobMembership);
@@ -308,7 +308,7 @@ test("bob is publishing in the wrong connection", async () => {
     connectionsWithPublisher$,
   );
 
-  const matrixLivekitMember$ = createRemoteMatrixLivekitMembers$({
+  const remoteMatrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
     scope: testScope,
     membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
     connectionManager: {
@@ -318,7 +318,7 @@ test("bob is publishing in the wrong connection", async () => {
   });
 
   await flushPromises();
-  expect(matrixLivekitMember$.value.value).toSatisfy(
+  expect(remoteMatrixLivekitMembers$.value.value).toSatisfy(
     (data: RemoteMatrixLivekitMember[]) => {
       expect(data.length).toEqual(2);
       expect(data[0].membership$.value).toBe(bobMembership);

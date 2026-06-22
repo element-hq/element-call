@@ -130,7 +130,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
       ownMembershipIdentity: ownMemberMock,
     });
 
-    const matrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
+    const remoteMatrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
       scope: testScope,
       membershipsWithTransport$:
         membershipsAndTransports.membershipsWithTransport$,
@@ -138,7 +138,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
       localUser: localRtcMember,
     });
 
-    expectObservable(matrixLivekitMembers$).toBe(vMarble, {
+    expectObservable(remoteMatrixLivekitMembers$).toBe(vMarble, {
       a: expect.toSatisfy((e: Epoch<RemoteMatrixLivekitMember[]>) => {
         const items = e.value;
         expect(items.length).toBe(1);
