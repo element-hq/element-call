@@ -333,7 +333,11 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   useAppBarHidden(!showHeader);
-  useAppBarSubtitle(ringingVm && <RingingStatus vm={ringingVm} />);
+  useAppBarSubtitle(
+    ringingVm && vm.ringingStatusLocation === "app_bar" && (
+      <RingingStatus vm={ringingVm} />
+    ),
+  );
 
   let header: ReactNode = null;
   switch (headerStyle) {
@@ -428,6 +432,7 @@ export const InCallView: FC<InCallViewProps> = ({
         );
         const showSpeakingIndicators = useBehavior(vm.showSpeakingIndicators$);
         const showNameTags = useBehavior(vm.showNameTags$);
+        const showRingingStatus = vm.ringingStatusLocation === "tile";
 
         return model instanceof GridTileViewModel ? (
           <GridTile
@@ -440,6 +445,7 @@ export const InCallView: FC<InCallViewProps> = ({
             style={style}
             showSpeakingIndicators={showSpeakingIndicators}
             showNameTags={showNameTags}
+            showRingingStatus={showRingingStatus}
             focusable={!contentObscured}
           />
         ) : (
@@ -452,6 +458,7 @@ export const InCallView: FC<InCallViewProps> = ({
             targetHeight={targetHeight}
             showIndicators={showSpotlightIndicators}
             showNameTags={showNameTags}
+            showRingingStatus={showRingingStatus}
             focusable={!contentObscured}
             className={classNames(className, styles.tile)}
             style={style}
@@ -486,6 +493,7 @@ export const InCallView: FC<InCallViewProps> = ({
           targetHeight={gridBounds.height}
           showIndicators={false}
           showNameTags={showNameTags}
+          showRingingStatus={vm.ringingStatusLocation === "tile"}
           focusable={!contentObscured}
           aria-hidden={contentObscured}
         />

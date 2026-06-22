@@ -67,10 +67,12 @@ interface TileProps {
 
 interface RingingMediaTileProps extends TileProps {
   vm: RingingMediaViewModel;
+  showStatus: boolean;
 }
 
 const RingingMediaTile: FC<RingingMediaTileProps> = ({
   vm,
+  showStatus,
   className,
   ...props
 }) => {
@@ -81,10 +83,13 @@ const RingingMediaTile: FC<RingingMediaTileProps> = ({
       userId={vm.userId}
       unencryptedWarning={false}
       status={
-        <Text as="span" size="sm" weight="medium">
-          <RingingStatus vm={vm} />
-        </Text>
+        showStatus && (
+          <Text as="span" size="sm" weight="medium">
+            <RingingStatus vm={vm} />
+          </Text>
+        )
       }
+      avatarStyle="translucent"
       videoEnabled={false}
       videoFit="cover"
       mirror={false}
@@ -392,6 +397,7 @@ interface GridTileProps {
   style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicators: boolean;
   showNameTags: boolean;
+  showRingingStatus: boolean;
   focusable: boolean;
 }
 
@@ -399,6 +405,7 @@ export const GridTile: FC<GridTileProps> = ({
   ref: theirRef,
   vm,
   showSpeakingIndicators,
+  showRingingStatus,
   onOpenProfile,
   ...props
 }) => {
@@ -415,6 +422,7 @@ export const GridTile: FC<GridTileProps> = ({
         vm={media}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        showStatus={showRingingStatus}
         {...props}
       />
     );

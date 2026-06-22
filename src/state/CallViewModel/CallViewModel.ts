@@ -232,6 +232,10 @@ export interface CallViewModel {
    * View model for info relating to ringing, timing out, calling back, etc.
    */
   ringingVm$: Behavior<RingingMediaViewModel | null>;
+  /**
+   * Which visual element the ringing status should be shown in.
+   */
+  ringingStatusLocation: "app_bar" | "tile";
   /** Observable that emits when the user should leave the call (hangup pressed, widget action, error).
    * THIS DOES NOT LEAVE THE CALL YET. The only way to leave the call (send the hangup event) is
    *  - by ending the scope
@@ -1701,6 +1705,8 @@ export function createCallViewModel$(
   return {
     autoLeave$: autoLeave$,
     ringingVm$: ringingMedia$,
+    ringingStatusLocation:
+      urlParams.header === HeaderStyle.AppBar ? "app_bar" : "tile",
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
     join: localMembership.requestJoinAndPublish,

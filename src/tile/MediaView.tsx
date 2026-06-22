@@ -42,6 +42,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   mxcAvatarUrl: string | undefined;
+  avatarStyle?: "solid" | "translucent";
   focusable: boolean;
   primaryButton?: ReactNode;
   raisedHandTime?: Date;
@@ -71,6 +72,7 @@ export const MediaView: FC<Props> = ({
   nameTagLeadingIcon,
   displayName,
   mxcAvatarUrl,
+  avatarStyle = "solid",
   focusable,
   primaryButton,
   status,
@@ -124,11 +126,8 @@ export const MediaView: FC<Props> = ({
           name={displayName}
           size={avatarSize}
           src={mxcAvatarUrl}
-          className={classNames(styles.avatar, {
-            // When the avatar is overlaid with a status, make it translucent
-            // for readability
-            [styles.translucent]: status,
-          })}
+          data-style={avatarStyle}
+          className={styles.avatar}
           style={{ display: video && videoEnabled ? "none" : "initial" }}
         />
         {video?.publication !== undefined && (

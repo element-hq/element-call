@@ -54,11 +54,12 @@ Please see LICENSE in the repository root for full details.
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
+  opacity: 100%;
+  transition: opacity 0.2s;
 }
 
-.translucent {
+.avatar[data-style="translucent"] {
   opacity: 50%;
-  mix-blend-mode: multiply;
 }
 
 /* CSS makes us put a condition here, even though all we want to do is

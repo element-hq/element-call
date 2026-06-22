@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, expect, vi } from "vitest";
-import { isInaccessible, render, screen } from "@testing-library/react";
+import { act, isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -65,6 +65,7 @@ test("SpotlightTile is accessible", async () => {
       onToggleExpanded={toggleExpanded}
       showIndicators
       showNameTags
+      showRingingStatus
       focusable={true}
     />,
   );
@@ -107,6 +108,7 @@ test("Screen share volume UI is shown when screen share has audio", async () => 
         onToggleExpanded={toggleExpanded}
         showIndicators
         showNameTags
+        showRingingStatus
         focusable
       />
     </TooltipProvider>,
@@ -137,6 +139,7 @@ test("Screen share volume UI is hidden when screen share has no audio", async ()
       onToggleExpanded={toggleExpanded}
       showIndicators
       showNameTags
+      showRingingStatus
       focusable
     />,
   );
@@ -172,11 +175,17 @@ test("SpotlightTile displays ringing media", async () => {
       onToggleExpanded={toggleExpanded}
       showIndicators
       showNameTags
+      showRingingStatus
       focusable={true}
     />,
   );
 
   expect(await axe(container)).toHaveNoViolations();
-  // Alice should be in the spotlight
+  // Alice should be in the spotlight with the right status
   screen.getByText("Alice");
+  screen.getByText("Calling…");
+
+  // Now we time out ringing to Alice
+  act(() => pickupState$.next("timeout"));
+  screen.getByText("Call ended");
 });
