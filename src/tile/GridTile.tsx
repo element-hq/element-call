@@ -398,6 +398,7 @@ interface GridTileProps {
   showSpeakingIndicators: boolean;
   showNameTags: boolean;
   showRingingStatus: boolean;
+  showOutline: boolean;
   focusable: boolean;
 }
 
@@ -406,7 +407,9 @@ export const GridTile: FC<GridTileProps> = ({
   vm,
   showSpeakingIndicators,
   showRingingStatus,
+  showOutline,
   onOpenProfile,
+  className,
   ...props
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
@@ -423,6 +426,7 @@ export const GridTile: FC<GridTileProps> = ({
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
         showStatus={showRingingStatus}
+        className={classNames(className, { [styles.outline]: showOutline })}
         {...props}
       />
     );
@@ -435,6 +439,7 @@ export const GridTile: FC<GridTileProps> = ({
         onOpenProfile={onOpenProfile}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        className={classNames(className, { [styles.outline]: showOutline })}
         {...props}
       />
     );
@@ -446,6 +451,7 @@ export const GridTile: FC<GridTileProps> = ({
         showSpeakingIndicators={showSpeakingIndicators}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        className={classNames(className, { [styles.outline]: showOutline })}
         {...props}
       />
     );

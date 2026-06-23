@@ -74,6 +74,7 @@ import {
   useAppBarSubtitle,
 } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
+import { constant } from "../state/Behavior.ts";
 import { Toast } from "../Toast.tsx";
 import overlayStyles from "../Overlay.module.css";
 import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
@@ -433,6 +434,11 @@ export const InCallView: FC<InCallViewProps> = ({
         const showSpeakingIndicators = useBehavior(vm.showSpeakingIndicators$);
         const showNameTags = useBehavior(vm.showNameTags$);
         const showRingingStatus = vm.ringingStatusLocation === "tile";
+        const showOutline = useBehavior(
+          model instanceof GridTileViewModel
+            ? model.showOutline$
+            : constant(false),
+        );
 
         return model instanceof GridTileViewModel ? (
           <GridTile
@@ -446,6 +452,7 @@ export const InCallView: FC<InCallViewProps> = ({
             showSpeakingIndicators={showSpeakingIndicators}
             showNameTags={showNameTags}
             showRingingStatus={showRingingStatus}
+            showOutline={showOutline}
             focusable={!contentObscured}
           />
         ) : (
