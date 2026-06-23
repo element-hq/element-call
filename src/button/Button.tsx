@@ -173,7 +173,7 @@ export const LoudspeakerButton: FC<LoudspeakerButtonProps> = ({
         iconOnly
         Icon={loudspeakerModeEnabled ? VolumeOnSolidIcon : VolumeOffSolidIcon}
         {...props}
-        kind={loudspeakerModeEnabled ? "primary" : "secondary"}
+        kind={loudspeakerModeEnabled ? "secondary" : "primary"}
         aria-checked={loudspeakerModeEnabled}
       />
     </Tooltip>
