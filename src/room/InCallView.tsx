@@ -95,7 +95,6 @@ declare module "react" {
 }
 
 const logger = rootLogger.getChild("[InCallView]");
-const noOutline$ = constant(false);
 
 export interface ActiveCallProps extends Omit<
   InCallViewProps,
@@ -436,7 +435,7 @@ export const InCallView: FC<InCallViewProps> = ({
         const showNameTags = useBehavior(vm.showNameTags$);
         const showRingingStatus = vm.ringingStatusLocation === "tile";
         const showOutline = useBehavior(
-          model instanceof GridTileViewModel ? model.showOutline$ : noOutline$,
+          model instanceof GridTileViewModel ? model.showOutline$ : constant(false),
         );
 
         return model instanceof GridTileViewModel ? (
