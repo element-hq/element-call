@@ -19,6 +19,7 @@ import { Config } from "./config/Config";
 import { type EncryptionSystem } from "./e2ee/sharedKeyManagement";
 import { E2eeType } from "./e2ee/e2eeType";
 import { platform } from "./Platform";
+import { redact } from "./utils/redact";
 
 interface RoomIdentifier {
   roomAlias: string | null;
@@ -494,7 +495,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     "intent:",
     intent,
     "\nproperties:",
-    properties,
+    redact(properties, "password"),
     "configuration:",
     configuration,
   );
