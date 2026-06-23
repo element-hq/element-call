@@ -167,19 +167,9 @@ body[data-platform="ios"] {
 
   /* Hide everything but the subtitle in small windows */
   @media (max-height: 450px) {
-    .bar {
-      display: none;
-    }
-
-    .bar:has(.subtitle) {
-      display: initial;
-      > header {
-        grid-template-rows: var(--cpd-space-4x) minmax(
-            var(--cpd-space-5x),
-            auto
-          );
-        grid-template-areas: "." "subtitle";
-      }
+    .bar:has(.subtitle) > header {
+      grid-template-rows: var(--cpd-space-4x) minmax(var(--cpd-space-5x), auto);
+      grid-template-areas: "." "subtitle";
     }
 
     .subtitle {
