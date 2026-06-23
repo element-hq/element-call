@@ -435,7 +435,9 @@ export const InCallView: FC<InCallViewProps> = ({
         const showNameTags = useBehavior(vm.showNameTags$);
         const showRingingStatus = vm.ringingStatusLocation === "tile";
         const showOutline = useBehavior(
-          model instanceof GridTileViewModel ? model.showOutline$ : constant(false),
+          model instanceof GridTileViewModel
+            ? model.showOutline$
+            : constant(false),
         );
 
         return model instanceof GridTileViewModel ? (
