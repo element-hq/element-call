@@ -71,15 +71,17 @@
 @media (max-height: 450px) {
   .bar {
     display: none;
+  }
+
+  .bar:has(.subtitle) {
+    display: initial;
+
     .title,
     .primaryButton,
     .secondaryButton {
       display: none;
     }
-  }
 
-  .bar:has(.subtitle) {
-    display: initial;
     > header {
       grid-template-columns: 1fr;
       grid-template-rows: var(--cpd-space-5x) minmax(var(--cpd-space-5x), auto);
