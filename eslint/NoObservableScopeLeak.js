@@ -41,7 +41,7 @@ const rule = ESLintUtils.RuleCreator(
           node.parent.object === node &&
           node.parent.property.type === "Identifier" &&
           !safeScopeMethods.includes(node.parent.property.name) &&
-          node.name.endsWith("cope")
+          /(^s|S)cope$/.test(node.name)
         ) {
           // TODO: Once oxlint supports lint rules that rely on TypeScript type-awareness,
           // Verify that the variable is actually of type ObservableScope rather than just
