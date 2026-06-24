@@ -47,56 +47,6 @@
     "no-restricted-imports": [
       "error",
       {
-        "paths": [
-          {
-            "name": "matrix-widget-api/src",
-            "message": "Please use matrix-widget-api instead"
-          },
-          {
-            "name": "matrix-widget-api/src/",
-            "message": "Please use matrix-widget-api instead"
-          },
-          {
-            "name": "matrix-widget-api/src/index",
-            "message": "Please use matrix-widget-api instead"
-          },
-          {
-            "name": "matrix-widget-api/lib",
-            "message": "Please use matrix-widget-api instead"
-          },
-          {
-            "name": "matrix-widget-api/lib/",
-            "message": "Please use matrix-widget-api instead"
-          },
-          {
-            "name": "matrix-widget-api/lib/index",
-            "message": "Please use matrix-widget-api instead"
-          },
-          {
-            "name": "matrix-js-sdk/src",
-            "message": "Please use matrix-js-sdk instead"
-          },
-          {
-            "name": "matrix-js-sdk/src/",
-            "message": "Please use matrix-js-sdk instead"
-          },
-          {
-            "name": "matrix-js-sdk/src/index",
-            "message": "Please use matrix-js-sdk instead"
-          },
-          {
-            "name": "matrix-js-sdk/lib",
-            "message": "Please use matrix-js-sdk instead"
-          },
-          {
-            "name": "matrix-js-sdk/lib/",
-            "message": "Please use matrix-js-sdk instead"
-          },
-          {
-            "name": "matrix-js-sdk/lib/index",
-            "message": "Please use matrix-js-sdk instead"
-          }
-        ],
         "patterns": [
           {
             "group": [
@@ -111,10 +61,12 @@
           },
           {
             "group": [
-              // We use /lib in lots of places, so allow for now.
               "matrix-js-sdk/src",
               "matrix-js-sdk/src/",
-              "matrix-js-sdk/src/**"
+              "matrix-js-sdk/src/**",
+              "matrix-js-sdk/lib",
+              "matrix-js-sdk/lib/",
+              "matrix-js-sdk/lib/index"
             ],
             "message": "Please use matrix-js-sdk instead"
           }
