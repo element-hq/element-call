@@ -12,6 +12,14 @@ Please see LICENSE in the repository root for full details.
  * @param keys Keys to be redacted in the object
  * @returns A new object with the specified properties redacted
  */
-export function redact<T extends object>(obj: T, ...keys: (keyof T)[]): T {
-  return { ...obj, ...Object.fromEntries(keys.map((k) => [k, "<redacted>"])) };
+export function redact<T extends object>(
+  obj: T,
+  ...keys: (keyof T)[]
+): Record<keyof T, unknown> {
+  const result: Record<keyof T, unknown> = { ...obj };
+  for (const key of keys)
+    if (key in result && result[key] != null) {
+      result[key] = "<redacted>";
+    }
+  return result;
 }

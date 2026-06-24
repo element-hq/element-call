@@ -34,3 +34,25 @@ test("no redaction of unrelated keys", () => {
     bar: "foo",
   });
 });
+
+test("no redaction of missing keys", () => {
+  expect(
+    redact({ foo: "bar" } as { foo: string; bar: string | undefined }, "bar"),
+  ).to.deep.equal({
+    foo: "bar",
+  });
+});
+
+test("no redaction of null values", () => {
+  expect(redact({ foo: "bar", bar: null }, "bar")).to.deep.equal({
+    foo: "bar",
+    bar: null,
+  });
+});
+
+test("no redaction of undefined values", () => {
+  expect(redact({ foo: "bar", bar: undefined }, "bar")).to.deep.equal({
+    foo: "bar",
+    bar: undefined,
+  });
+});
