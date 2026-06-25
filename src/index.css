@@ -74,15 +74,19 @@ layer(compound);
 
 body {
   background-color: var(--cpd-color-bg-canvas-default);
-  background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
   background-repeat: no-repeat;
-  background-position: center;
   color: var(--cpd-color-text-primary);
   color-scheme: dark;
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+}
+
+body[data-background="gradient"] {
+  background-image: var(--background-gradient);
+  background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
+  background-position: center;
 }
 
 /* This prohibits the view to scroll for pages smaller than 122px in width
