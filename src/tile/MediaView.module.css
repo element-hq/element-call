@@ -51,6 +51,54 @@ Please see LICENSE in the repository root for full details.
   background-color: var(--video-tile-background);
 }
 
+.waves {
+  transition: opacity ease 0.3s;
+}
+
+.waves[data-visible="true"] {
+  opacity: 1;
+}
+
+.waves[data-visible="false"] {
+  opacity: 0;
+
+  @media not (prefers-reduced-motion) {
+    .wave {
+      transform: translate(-50%, -50%) scale(0.9);
+    }
+  }
+}
+
+.wave {
+  border: var(--cpd-border-width-1) solid var(--cpd-color-alpha-gray-300);
+  transition: transform ease 0.2s;
+}
+
+.wave,
+.speakingBorder {
+  border-radius: var(--cpd-radius-pill-effect);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.speakingBorder {
+  background:
+    radial-gradient(#0467dd, #0bc491),
+    linear-gradient(0deg, #0467dd 0%, #0bc491 100%);
+  background-blend-mode: overlay, normal;
+  outline: var(--cpd-border-width-4) solid var(--cpd-color-bg-canvas-default);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: var(--cpd-border-width-2);
+    border-radius: var(--cpd-radius-pill-effect);
+    background: var(--cpd-color-bg-canvas-default);
+  }
+}
+
 .avatar {
   position: absolute;
   top: 50%;
@@ -72,6 +120,35 @@ unconditionally select the container so we can use cqmin units */
     /* Half of the smallest dimension of the tile */
     inline-size: 50cqmin;
     block-size: 50cqmin;
+  }
+
+  .waves + .avatar {
+    /* Make the avatar slightly smaller to accommodate sound waves, if present */
+    inline-size: 38cqmin;
+    block-size: 38cqmin;
+  }
+
+  .wave:nth-child(1) {
+    inline-size: calc(38cqmin + var(--cpd-space-5x) + 3 * var(--cpd-space-10x));
+    block-size: calc(38cqmin + var(--cpd-space-5x) + 3 * var(--cpd-space-10x));
+    background: var(--cpd-color-alpha-gray-200);
+  }
+
+  .wave:nth-child(2) {
+    inline-size: calc(38cqmin + var(--cpd-space-5x) + 2 * var(--cpd-space-10x));
+    block-size: calc(38cqmin + var(--cpd-space-5x) + 2 * var(--cpd-space-10x));
+    background: var(--cpd-color-alpha-gray-300);
+  }
+
+  .wave:nth-child(3) {
+    inline-size: calc(38cqmin + var(--cpd-space-5x) + var(--cpd-space-10x));
+    block-size: calc(38cqmin + var(--cpd-space-5x) + var(--cpd-space-10x));
+    background: var(--cpd-color-alpha-gray-400);
+  }
+
+  .speakingBorder {
+    inline-size: calc(38cqmin + var(--cpd-space-3x));
+    block-size: calc(38cqmin + var(--cpd-space-3x));
   }
 }
 

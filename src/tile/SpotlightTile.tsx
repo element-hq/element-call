@@ -79,6 +79,7 @@ interface SpotlightMemberMediaItemBaseProps extends SpotlightItemBaseProps {
 interface SpotlightUserMediaItemBaseProps extends SpotlightMemberMediaItemBaseProps {
   videoFit: "contain" | "cover";
   videoEnabled: boolean;
+  soundWaves: boolean | undefined;
 }
 
 interface SpotlightLocalUserMediaItemProps extends SpotlightUserMediaItemBaseProps {
@@ -121,6 +122,7 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
 }) => {
   const videoFit = useBehavior(vm.videoFit$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
+  const speaking = useBehavior(vm.speaking$);
 
   // Whenever target bounds change, inform the viewModel
   useEffect(() => {
@@ -133,6 +135,7 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
     RefAttributes<HTMLDivElement> = {
     videoFit,
     videoEnabled,
+    soundWaves: props.bgStyle === "transparent" ? speaking : undefined,
     targetWidth,
     targetHeight,
     ...props,

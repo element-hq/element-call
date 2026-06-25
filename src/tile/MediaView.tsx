@@ -34,6 +34,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   video: TrackReferenceOrPlaceholder | undefined;
   videoFit: "cover" | "contain";
   mirror: boolean;
+  soundWaves?: boolean;
   userId: string;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
@@ -66,6 +67,7 @@ export const MediaView: FC<Props> = ({
   video,
   videoFit,
   mirror,
+  soundWaves,
   userId,
   videoEnabled,
   unencryptedWarning,
@@ -92,7 +94,10 @@ export const MediaView: FC<Props> = ({
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
   const [showConnectionStats] = useSetting(showConnectionStatsSetting);
 
-  const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
+  const avatarSize = Math.round(
+    Math.min(targetWidth, targetHeight) *
+      (soundWaves === undefined ? 0.5 : 0.38),
+  );
 
   const warnings = unencryptedWarning && (
     <Tooltip
@@ -124,6 +129,14 @@ export const MediaView: FC<Props> = ({
       {...props}
     >
       <div className={styles.bg}>
+        {soundWaves !== undefined && (
+          <div className={styles.waves} data-visible={soundWaves}>
+            <div className={styles.wave} />
+            <div className={styles.wave} />
+            <div className={styles.wave} />
+            <div className={styles.speakingBorder} />
+          </div>
+        )}
         <Avatar
           id={userId}
           name={displayName}
