@@ -942,8 +942,8 @@ export function createCallViewModel$(
   );
 
   /**
-   * Local user media suitable for displaying in a PiP (undefined if not found
-   * or if user prefers to not see themselves).
+   * Local user media suitable for displaying in a PiP (undefined if not found,
+   * video is muted, or if user prefers to not see themselves).
    */
   const localUserMediaForPip$ = scope.behavior<
     LocalUserMediaViewModel | undefined
@@ -955,8 +955,10 @@ export function createCallViewModel$(
             m.type === "user" && m.local,
         );
         if (!localUserMedia) return of(undefined);
-        return localUserMedia.alwaysShow$.pipe(
-          map((alwaysShow) => (alwaysShow ? localUserMedia : undefined)),
+        return combineLatest(
+          [localUserMedia.videoEnabled$, localUserMedia.alwaysShow$],
+          (videoEnabled, alwaysShow) =>
+            videoEnabled && alwaysShow ? localUserMedia : undefined,
         );
       }),
     ),

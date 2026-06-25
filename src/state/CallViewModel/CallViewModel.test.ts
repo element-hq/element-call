@@ -22,6 +22,7 @@ import { SyncState } from "matrix-js-sdk";
 import {
   ConnectionState,
   type LocalTrackPublication,
+  type Participant,
   type RemoteParticipant,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
@@ -1031,6 +1032,10 @@ describe.each([
             a: [localRtcMember],
             b: [localRtcMember, aliceRtcMember],
           }),
+          videoEnabled: new Map<Participant, Behavior<boolean>>([
+            [localParticipant, constant(true)],
+            [aliceParticipant, constant(true)],
+          ]),
         },
         (vm) => {
           schedule(modeInputMarbles, {
@@ -1055,6 +1060,33 @@ describe.each([
               },
             },
           );
+        },
+      );
+    });
+  });
+
+  test("expanded spotlight layout hides PiP tile in one-on-one voice call", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant]),
+          roomMembers: [local, alice],
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          videoEnabled: new Map<Participant, Behavior<boolean>>([
+            [localParticipant, constant(false)],
+            [aliceParticipant, constant(false)],
+          ]),
+          windowSize$: constant({ width: 700, height: 380 }), // Mobile phone in landscape
+        },
+        (vm) => {
+          // Layout should show remote tile only
+          expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
+            a: {
+              type: "spotlight-expanded",
+              spotlight: [`${aliceId}:0`],
+              pip: undefined,
+            },
+          });
         },
       );
     });
@@ -1096,7 +1128,7 @@ describe.each([
               b: {
                 type: "spotlight-expanded",
                 spotlight: [`${aliceId}:0`],
-                pip: `${localId}:0`,
+                pip: undefined,
               },
               c: {
                 type: "grid",
