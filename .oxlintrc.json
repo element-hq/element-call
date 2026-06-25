@@ -31,7 +31,7 @@
   "rules": {
     "element-call/copyright-header": [
       "error",
-      "/*\nCopyright %%CURRENT_YEAR%% New Vector Ltd.\n\nSPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial\nPlease see LICENSE in the repository root for full details.\n*/\n\n"
+      "/*\nCopyright %%CURRENT_YEAR%% Element Creations Ltd.\n\nSPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial\nPlease see LICENSE in the repository root for full details.\n*/\n\n"
     ],
     "element-call/no-observablescope-leak": "error",
     "jsdoc/empty-tags": "error",
