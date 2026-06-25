@@ -41,11 +41,14 @@ Please see LICENSE in the repository root for full details.
 
 .bg {
   grid-area: content;
-  background-color: var(--video-tile-background);
   inline-size: 100%;
   block-size: 100%;
   border-radius: inherit;
   contain: strict;
+}
+
+.media[data-bg-style="solid"] .bg {
+  background-color: var(--video-tile-background);
 }
 
 .avatar {

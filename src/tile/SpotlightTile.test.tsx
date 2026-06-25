@@ -58,7 +58,13 @@ test("SpotlightTile is accessible", async () => {
   const toggleExpanded = vi.fn();
   const { container } = render(
     <SpotlightTile
-      vm={new SpotlightTileViewModel(constant([vm1, vm2]), constant(false))}
+      vm={
+        new SpotlightTileViewModel(
+          constant([vm1, vm2]),
+          constant(false),
+          constant("solid"),
+        )
+      }
       targetWidth={300}
       targetHeight={200}
       expanded={false}
@@ -101,7 +107,13 @@ test("Screen share volume UI is shown when screen share has audio", async () => 
   const { container } = render(
     <TooltipProvider>
       <SpotlightTile
-        vm={new SpotlightTileViewModel(constant([vm]), constant(false))}
+        vm={
+          new SpotlightTileViewModel(
+            constant([vm]),
+            constant(false),
+            constant("solid"),
+          )
+        }
         targetWidth={300}
         targetHeight={200}
         expanded={false}
@@ -132,7 +144,13 @@ test("Screen share volume UI is hidden when screen share has no audio", async ()
   const toggleExpanded = vi.fn();
   const { container } = render(
     <SpotlightTile
-      vm={new SpotlightTileViewModel(constant([vm]), constant(false))}
+      vm={
+        new SpotlightTileViewModel(
+          constant([vm]),
+          constant(false),
+          constant("solid"),
+        )
+      }
       targetWidth={300}
       targetHeight={200}
       expanded={false}
@@ -168,7 +186,13 @@ test("SpotlightTile displays ringing media", async () => {
   const toggleExpanded = vi.fn();
   const { container } = render(
     <SpotlightTile
-      vm={new SpotlightTileViewModel(constant([vm]), constant(false))}
+      vm={
+        new SpotlightTileViewModel(
+          constant([vm]),
+          constant(false),
+          constant("solid"),
+        )
+      }
       targetWidth={300}
       targetHeight={200}
       expanded={false}

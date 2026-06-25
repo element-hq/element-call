@@ -39,12 +39,29 @@ class SpotlightTileData {
     this.maximised$.next(value);
   }
 
+  private readonly bgStyle$: BehaviorSubject<"solid" | "transparent">;
+  public get bgStyle(): "solid" | "transparent" {
+    return this.bgStyle$.value;
+  }
+  public set bgStyle(value: "solid" | "transparent") {
+    this.bgStyle$.next(value);
+  }
+
   public readonly vm: SpotlightTileViewModel;
 
-  public constructor(media: MediaViewModel[], maximised: boolean) {
+  public constructor(
+    media: MediaViewModel[],
+    maximised: boolean,
+    bgStyle: "solid" | "transparent",
+  ) {
     this.media$ = new BehaviorSubject(media);
     this.maximised$ = new BehaviorSubject(maximised);
-    this.vm = new SpotlightTileViewModel(this.media$, this.maximised$);
+    this.bgStyle$ = new BehaviorSubject(bgStyle);
+    this.vm = new SpotlightTileViewModel(
+      this.media$,
+      this.maximised$,
+      this.bgStyle$,
+    );
   }
 }
 
@@ -157,7 +174,11 @@ export class TileStoreBuilder {
    * Sets the contents of the spotlight tile. If this is never called, there
    * will be no spotlight tile.
    */
-  public registerSpotlight(media: MediaViewModel[], maximised: boolean): void {
+  public registerSpotlight(
+    media: MediaViewModel[],
+    maximised: boolean,
+    bgStyle: "solid" | "transparent" = "solid",
+  ): void {
     if (DEBUG_ENABLED)
       logger.debug(
         `[TileStore, ${this.generation}] register spotlight: ${media.map((m) => m.displayName$.value)}`,
@@ -169,11 +190,12 @@ export class TileStoreBuilder {
 
     // Reuse the previous spotlight tile if it exists
     if (this.prevSpotlight === null) {
-      this.spotlight = new SpotlightTileData(media, maximised);
+      this.spotlight = new SpotlightTileData(media, maximised, bgStyle);
     } else {
       this.spotlight = this.prevSpotlight;
       this.spotlight.media = media;
       this.spotlight.maximised = maximised;
+      this.spotlight.bgStyle = bgStyle;
     }
   }
 
