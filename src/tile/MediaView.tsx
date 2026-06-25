@@ -124,6 +124,7 @@ export const MediaView: FC<Props> = ({
       style={style}
       ref={ref}
       data-testid="videoTile"
+      data-video-enabled={video && videoEnabled}
       data-video-fit={videoFit}
       data-bg-style={bgStyle}
       {...props}
@@ -152,7 +153,6 @@ export const MediaView: FC<Props> = ({
             // There's no reason for this to be focusable
             tabIndex={-1}
             disablePictureInPicture
-            style={{ display: video && videoEnabled ? "block" : "none" }}
             data-testid="video"
           />
         )}

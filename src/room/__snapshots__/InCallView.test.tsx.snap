@@ -164,7 +164,7 @@ exports[`InCallView > rendering > renders 1`] = `
       class="container"
     />
     <div
-      class="footer"
+      class="footer footer"
       data-testid="footer-container"
     >
       <div

@@ -254,6 +254,7 @@ interface SpotlightItemProps {
    * Whether this item should act as a scroll snapping point.
    */
   snap: boolean;
+  className?: string;
   "aria-hidden"?: boolean;
 }
 
@@ -268,6 +269,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   focusable,
   intersectionObserver$,
   snap,
+  className,
   "aria-hidden": ariaHidden,
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
@@ -294,7 +296,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   const baseProps: SpotlightItemBaseProps & RefAttributes<HTMLDivElement> = {
     ref,
     "data-id": vm.id,
-    className: classNames(styles.item, { [styles.snap]: snap }),
+    className: classNames(className, styles.item, { [styles.snap]: snap }),
     targetWidth,
     targetHeight,
     userId: vm.userId,
@@ -398,6 +400,10 @@ interface Props {
   showRingingStatus: boolean;
   focusable: boolean;
   className?: string;
+  /**
+   * CSS class of the individual spotlight items.
+   */
+  itemClassName?: string;
   style?: ComponentProps<typeof animated.div>["style"];
 }
 
@@ -413,6 +419,7 @@ export const SpotlightTile: FC<Props> = ({
   showRingingStatus,
   focusable = true,
   className,
+  itemClassName,
   style,
 }) => {
   const { t } = useTranslation();
@@ -500,9 +507,8 @@ export const SpotlightTile: FC<Props> = ({
   return (
     <animated.div
       ref={ref}
-      className={classNames(className, styles.tile, {
-        [styles.maximised]: maximised,
-      })}
+      className={classNames(className, styles.tile)}
+      data-maximised={maximised}
       style={style}
     >
       {canGoBack && (
@@ -532,6 +538,7 @@ export const SpotlightTile: FC<Props> = ({
             // remove all scroll snap points except for just the one media
             // that we want to bring into view
             snap={scrollToId === null || scrollToId === vm.id}
+            className={itemClassName}
             aria-hidden={(scrollToId ?? visibleId) !== vm.id}
           />
         ))}

@@ -27,6 +27,10 @@ Please see LICENSE in the repository root for full details.
   transform: translate(0);
 }
 
+.media[data-video-enabled="false"] video {
+  display: none;
+}
+
 .media.mirror video {
   transform: scaleX(-1);
 }

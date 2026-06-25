@@ -375,25 +375,11 @@ export class TestHelpers {
     frame: FrameLocator,
     count: number,
   ): Promise<void> {
-    // XXX we need to be better at our HTML markup and accessibility, it would make
-    // this kind of stuff way easier to test if we could look out for aria attributes.
-    await expect
-      .poll(
-        async () => {
-          return await frame
-            .locator("video")
-            .evaluateAll(
-              (videos: Element[]) =>
-                videos.filter(
-                  (v: Element) =>
-                    window.getComputedStyle(v).display === "block",
-                ).length,
-            );
-        },
-        {
-          timeout: 10000,
-        },
-      )
-      .toBe(count);
+    await expect(
+      frame
+        .getByRole("img")
+        .and(frame.locator("video"))
+        .filter({ visible: true }),
+    ).toHaveCount(count, { timeout: 10000 });
   }
 }
