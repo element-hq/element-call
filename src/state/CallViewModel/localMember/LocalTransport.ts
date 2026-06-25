@@ -180,9 +180,28 @@ export const createLocalTransport$ = ({
       distinctUntilChanged(areLivekitTransportsEqual),
     );
 
+  let lockedTransportAddress: string | undefined = undefined;
   const preferredTransport$ = combineLatest([preferredConfig$, delayId$]).pipe(
     switchMap(async ([transport, delayId]) => {
       try {
+        // We want to copy over the address from the first member on the same sfu.
+        if (lockedTransportAddress === undefined) {
+          const firstMemberOnSameSfu = memberships$.value.value.find(
+            (m) =>
+              m.transports[0].type === "livekit" &&
+              m.transports[0].livekit_service_url ===
+                transport.livekit_service_url,
+          );
+          const copiedFromMemberOnSameSfuAddress = (
+            firstMemberOnSameSfu?.transports[0] as LivekitTransportConfig
+          )?.address;
+          const defaultAddress = roomId + ownMembershipIdentity.memberId;
+          lockedTransportAddress = copiedFromMemberOnSameSfuAddress ?? defaultAddress;
+        }
+        transport.address = lockedTransportAddress;
+        logger.info(
+          `Update preferredTransport$ ${transport.livekit_service_url} ${transport.address} with delayId ${delayId}`,
+        );
         return await doOpenIdAndJWTFromUrl(
           transport,
           forceJwtEndpoint,
@@ -308,11 +327,12 @@ async function doOpenIdAndJWTFromUrl(
     OpenIDClientParts,
   delayId?: string,
 ): Promise<LocalTransportWithSFUConfig> {
+  const sfuAddress = transport.address ?? roomId;
   const sfuConfig = await getSFUConfigWithOpenID(
     client,
     membership,
     transport.livekit_service_url,
-    roomId,
+    sfuAddress,
     {
       forceJwtEndpoint: forceJwtEndpoint,
       delayEndpointBaseUrl: client.baseUrl,

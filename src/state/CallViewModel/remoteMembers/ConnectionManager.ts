@@ -45,7 +45,9 @@ export class ConnectionManagerData {
   private getKey(transport: LivekitTransportConfig): string {
     // This is enough as a key because the ConnectionManager is already scoped by room.
     // We also do not need to consider the slotId at this point since each `MatrixRTCSession` is already scoped by `slotDescription: {id, application}`.
-    return transport.livekit_service_url;
+    return (
+      transport.livekit_service_url +"|"+ (transport.address ?? "default_address")
+    );
   }
 
   public getConnections(): Connection[] {
@@ -171,6 +173,7 @@ export function createConnectionManager$({
                 keys: [
                   transport.transport.livekit_service_url,
                   transport.sfuConfig,
+                  transport.transport.address,
                 ],
                 data: undefined,
               };
@@ -179,18 +182,20 @@ export function createConnectionManager$({
                 keys: [
                   transport.livekit_service_url,
                   undefined as SFUConfig | undefined,
+                  transport.address,
                 ],
                 data: undefined,
               };
             }
           }
         },
-        (scope, _data$, serviceUrl, sfuConfig) => {
+        (scope, _data$, serviceUrl, sfuConfig, address) => {
           const connection = connectionFactory.createConnection(
             scope,
             {
               type: "livekit",
               livekit_service_url: serviceUrl,
+              address,
             },
             ownMembershipIdentity,
             logger,
