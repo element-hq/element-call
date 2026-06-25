@@ -160,6 +160,7 @@ export class TestHelpers {
     const expectedToasts = [
       { title: "Failed to load service worker", button: "OK" },
       { title: "Back up your chats", button: "Dismiss" },
+      { title: "Turn on key storage", button: "Dismiss" },
       { title: "Element does not support this browser", button: "Dismiss" },
     ];
 

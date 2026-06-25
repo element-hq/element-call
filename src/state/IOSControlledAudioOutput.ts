@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { combineLatest, merge, startWith, Subject, tap } from "rxjs";
 
+import type { RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
 import {
   availableOutputDevices$ as controlledAvailableOutputDevices$,
   outputDevice$ as controlledOutputSelection$,
@@ -24,7 +25,7 @@ import {
 
 // This hardcoded id is used in EX ios! It can only be changed in coordination with
 // the ios swift team.
-const EARPIECE_CONFIG_ID = "earpiece-id";
+export const EARPIECE_CONFIG_ID = "earpiece-id";
 
 /**
  * A special implementation of audio output that allows the hosting application
@@ -94,7 +95,7 @@ export class IOSControlledAudioOutput implements MediaDevice<
         ),
       ],
       (available, preferredId) => {
-        const id = preferredId ?? available.keys().next().value;
+        const id = preferredId ?? this.chooseDefaultId(available);
         return id === undefined
           ? undefined
           : { id, virtualEarpiece: id === EARPIECE_CONFIG_ID };
@@ -106,9 +107,41 @@ export class IOSControlledAudioOutput implements MediaDevice<
     ),
   );
 
+  /**
+   * Chooses the default output device when no explicit selection (from the user
+   * or the hosting application) has been made yet.
+   *
+   * For voice calls (`initialIntent === "audio"`) we want to start on the
+   * earpiece rather than the speaker, like a regular phone call. We only
+   * override when the device that would otherwise be the default is the
+   * speaker: if the host already routed to a headset (e.g. Bluetooth) — which
+   * is reported as a plain named device, not "speaker"/"earpiece" — we keep it.
+   * This mirrors the Android behaviour in {@link AndroidControlledAudioOutput}.
+   */
+  private chooseDefaultId(
+    available: Map<string, AudioOutputDeviceLabel>,
+  ): string | undefined {
+    const firstId = available.keys().next().value;
+    if (this.initialIntent === "audio") {
+      const firstLabel =
+        firstId !== undefined ? available.get(firstId) : undefined;
+      if (firstLabel?.type === "speaker") {
+        for (const [id, label] of available)
+          if (label.type === "earpiece") {
+            this.logger.info(
+              `IOS routing: default to earpiece ${id} instead of speaker for voice call`,
+            );
+            return id;
+          }
+      }
+    }
+    return firstId;
+  }
+
   public constructor(
     private readonly usingNames$: Behavior<boolean>,
     private readonly scope: ObservableScope,
+    private readonly initialIntent: RTCCallIntent | undefined = undefined,
   ) {
     this.selected$.subscribe((device) => {
       // Let the hosting application know which output device has been selected.
