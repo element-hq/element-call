@@ -64,7 +64,7 @@
     }
   ],
   "semanticCommits": "disabled",
-  "ignoreDeps": ["eslint-plugin-matrix-org"],
+  "ignoreDeps": [],
   "vulnerabilityAlerts": {
     "schedule": ["at any time"],
     "prHourlyLimit": 0,

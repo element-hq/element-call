@@ -47,7 +47,7 @@ export const FullScreenView: FC<FullScreenViewProps> = ({
 };
 
 interface ErrorPageProps {
-  error: Error | unknown;
+  error: unknown;
   widget: WidgetHelpers | null;
 }
 

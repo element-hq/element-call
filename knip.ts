@@ -32,6 +32,9 @@ export default {
     // https://github.com/webpro-nl/knip/issues/766
     "@vector-im/compound-web",
     "matrix-widget-api",
+    // Used by oxlint
+    "eslint-plugin-element-call",
+    "eslint-plugin-storybook",
   ],
   ignoreExportsUsedInFile: true,
 } satisfies KnipConfig;

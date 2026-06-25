@@ -131,9 +131,9 @@ export class TileStoreBuilder {
   private numGridEntries = 0;
   // A sparse array of grid entries which should be kept in the same spots as
   // which they appeared in the previous grid
-  private readonly stationaryGridEntries: GridTileData[] = new Array(
-    this.prevGrid.length,
-  );
+  private readonly stationaryGridEntries: GridTileData[] = Array.from({
+    length: this.prevGrid.length,
+  });
   // Grid entries which should now enter the visible section of the grid
   private readonly visibleGridEntries: GridTileData[] = [];
   // Grid entries which should now enter the invisible section of the grid

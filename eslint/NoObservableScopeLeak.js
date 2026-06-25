@@ -40,19 +40,23 @@ const rule = ESLintUtils.RuleCreator(
           node.parent?.type === "MemberExpression" &&
           node.parent.object === node &&
           node.parent.property.type === "Identifier" &&
-          !safeScopeMethods.includes(node.parent.property.name)
+          !safeScopeMethods.includes(node.parent.property.name) &&
+          /(^s|S)cope$/.test(node.name)
         ) {
-          // Verify that the variable is actually of type ObservableScope
-          // (expensive, so we check this last)
-          const services = ESLintUtils.getParserServices(context);
-          const type = services.getTypeAtLocation(node);
-          if (type.symbol?.name === "ObservableScope")
-            // This ObservableScope method call may be causing resource leaks.
-            context.report({
-              messageId: "scopeLeak",
-              loc: node.loc,
-              node,
-            });
+          // TODO: Once oxlint supports lint rules that rely on TypeScript type-awareness,
+          // Verify that the variable is actually of type ObservableScope rather than just
+          // checking its name. This is expensive so we should do this last.
+          //
+          // const services = ESLintUtils.getParserServices(context);
+          // const type = services.getTypeAtLocation(node);
+          // if (type.symbol?.name === "ObservableScope") { ... }
+
+          // This ObservableScope method call may be causing resource leaks.
+          context.report({
+            messageId: "scopeLeak",
+            loc: node.loc,
+            node,
+          });
         }
       },
     };

@@ -170,7 +170,7 @@ export const createLocalMembership$ = ({
   logger: parentLogger,
   muteStates,
   matrixRTCSession,
-  roomId: roomId,
+  roomId,
 }: Props): {
   /**
    * This request to start audio and video tracks.
