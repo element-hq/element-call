@@ -55,7 +55,6 @@ layer(compound);
   --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
   --big-drop-shadow: 0px 0px 24px 0px #1b1d221a;
   --subtle-drop-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-  --background-gradient: url("graphics/backgroundGradient.svg");
 
   --call-view-overlay-layer: 1;
   --call-view-header-footer-layer: 2;
@@ -74,7 +73,6 @@ layer(compound);
 
 body {
   background-color: var(--cpd-color-bg-canvas-default);
-  background-repeat: no-repeat;
   color: var(--cpd-color-text-primary);
   color-scheme: dark;
   margin: 0;
@@ -83,8 +81,18 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-body[data-background="gradient"] {
-  background-image: var(--background-gradient);
+body[data-background="gradient"]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("graphics/mobile-gradient.svg");
+  background-size: auto;
+  background-position: bottom;
+  background-repeat: no-repeat;
+}
+
+body[data-background="gradient"][data-platform="desktop"]::before {
+  background-image: url("graphics/desktop-gradient.svg");
   background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
   background-position: center;
 }
