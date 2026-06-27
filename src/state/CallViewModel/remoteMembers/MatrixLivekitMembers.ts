@@ -157,7 +157,10 @@ export function areLivekitTransportsEqual<T extends LivekitTransportConfig>(
   t2: T | null,
 ): boolean {
   if (t1 && t2) {
-    return t1.livekit_service_url === t2.livekit_service_url;
+    return (
+      t1.livekit_service_url === t2.livekit_service_url &&
+      t1.address === t2.address
+    );
   }
   return !t1 && !t2;
 }

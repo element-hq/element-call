@@ -138,7 +138,7 @@ export class Connection {
 
   // TODO: can we just keep the ConnectionOpts object instead of spreading?
   private readonly client: OpenIDClientParts;
-  private readonly roomId: string;
+  private readonly sfuAddress: string;
   private readonly logger: Logger;
   private readonly ownMembershipIdentity: CallMembershipIdentityParts;
   private readonly existingSFUConfig?: SFUConfig;
@@ -152,12 +152,12 @@ export class Connection {
   public constructor(opts: ConnectionOpts, logger: Logger) {
     this.ownMembershipIdentity = opts.ownMembershipIdentity;
     this.existingSFUConfig = opts.existingSFUConfig;
-    this.roomId = opts.roomId;
+    this.sfuAddress = opts.transport.address ?? opts.roomId;
     this.logger = logger.getChild(
       "[Connection " + opts.transport.livekit_service_url + "]",
     );
     this.logger.info(
-      `constructor: ${opts.transport.livekit_service_url} roomId: ${this.roomId} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
+      `constructor: ${opts.transport.livekit_service_url} sfuAddress: ${this.sfuAddress} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
     );
     const { transport, client, scope } = opts;
 
@@ -284,7 +284,7 @@ export class Connection {
       this.client,
       this.ownMembershipIdentity,
       this.transport.livekit_service_url,
-      this.roomId,
+      this.sfuAddress,
       // dont pass any custom opts for the subscribe only connections
       {},
       this.logger,

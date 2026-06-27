@@ -189,8 +189,8 @@ importers:
         specifier: ^1.9.1
         version: 1.9.2
       matrix-js-sdk:
-        specifier: github:matrix-org/matrix-js-sdk#develop
-        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7
+        specifier: github:matrix-org/matrix-js-sdk#toger5/address-for-transport
+        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8019fb027ab9c445d2e8e925e00268b93f4c85c1
       matrix-widget-api:
         specifier: ^1.16.1
         version: 1.17.0
@@ -380,6 +380,9 @@ packages:
   '@babel/runtime@7.29.2':
     resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
     engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@8.0.0':
+    resolution: {integrity: sha512-sL6cvO2IfkSu/iU+zs2S/w01B7A8V7suXSIKEN4hPFFdZoiPGxrj5pAG0lCaqLWiEIrjKzdznIWuaLcxPR53qw==}
 
   '@babel/template@7.29.7':
     resolution: {integrity: sha512-puq+Gf35oI24FeN11LkoUQFqv9uwNeWpxXZi/Ji3rRIoKAzKnxRaZ+Gkj0vKS9ZCiTESfng1N9LyOyXvo+m+Gg==}
@@ -4970,9 +4973,9 @@ packages:
   matrix-events-sdk@0.0.1:
     resolution: {integrity: sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7:
-    resolution: {gitHosted: true, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7}
-    version: 41.7.0
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8019fb027ab9c445d2e8e925e00268b93f4c85c1:
+    resolution: {gitHosted: true, integrity: sha512-rbovn06zGbwe21Q/S0vym1zldqiAN+Bd4qW43TOJqBvnPuRGUhi5bKlJ8i2hm+wi5s/i2lvIRLwM9gT2HzoLPA==, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8019fb027ab9c445d2e8e925e00268b93f4c85c1}
+    version: 41.8.0
     engines: {node: '>=22.0.0'}
 
   matrix-widget-api@1.17.0:
@@ -6609,6 +6612,8 @@ snapshots:
       '@babel/types': 7.29.7
 
   '@babel/runtime@7.29.2': {}
+
+  '@babel/runtime@8.0.0': {}
 
   '@babel/template@7.29.7':
     dependencies:
@@ -10781,9 +10786,9 @@ snapshots:
 
   matrix-events-sdk@0.0.1: {}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7:
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8019fb027ab9c445d2e8e925e00268b93f4c85c1:
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 8.0.0
       '@matrix-org/matrix-sdk-crypto-wasm': 18.3.1
       another-json: 0.2.0
       bs58: 6.0.0
