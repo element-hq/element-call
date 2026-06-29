@@ -9,7 +9,21 @@ import { ESLintUtils } from "@typescript-eslint/utils";
 
 // These ObservableScope methods will not generally cause resource leaks even if
 // called from a callback
-const safeScopeMethods = ["bind", "end"];
+const safeScopeMethods = new Set(["bind", "end"]);
+
+/**
+ * Determines whether the variable with the given name is local to
+ * the enclosing function or class scope.
+ */
+function isLocal(name, scope) {
+  // If it is nowhere to be found in the "through" scope, it is local.
+  if (!scope.through.some(({ identifier }) => identifier.name === name))
+    return true;
+  if (scope.type === "function" || scope.type === "class") return false;
+  // If this is something other than a function or class scope, check its outer
+  // scope.
+  return !scope.upper || isLocal(name, scope.upper);
+}
 
 const rule = ESLintUtils.RuleCreator(
   () => "https://github.com/element-hq/element-call",
@@ -32,15 +46,13 @@ const rule = ESLintUtils.RuleCreator(
       Identifier(node) {
         const scope = context.sourceCode.getScope(node);
         if (
-          // Is this a reference to a variable defined in an outer ("through") scope?
-          scope.through.some(
-            ({ identifier }) => identifier.name === node.name,
-          ) &&
+          // Is this a reference to a variable defined in an outer scope?
+          !isLocal(node.name, scope) &&
           // Exclude calls to "safe" ObservableScope methods
           node.parent?.type === "MemberExpression" &&
           node.parent.object === node &&
           node.parent.property.type === "Identifier" &&
-          !safeScopeMethods.includes(node.parent.property.name) &&
+          !safeScopeMethods.has(node.parent.property.name) &&
           /(^s|S)cope$/.test(node.name)
         ) {
           // TODO: Once oxlint supports lint rules that rely on TypeScript type-awareness,
