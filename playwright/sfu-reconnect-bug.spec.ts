@@ -90,7 +90,7 @@ test("When creator left, avoid reconnect to the same SFU", async ({
 
   await guestCPage.waitForTimeout(1000);
   if (wsConnectionCount === 2) {
-    logger.warn("wsConnectionCount is 2, expecting 1 after join")
+    logger.warn("wsConnectionCount is 2, expecting 1 after join");
   }
   const wsConnectionCountBeforeLeave = wsConnectionCount;
   // ========
