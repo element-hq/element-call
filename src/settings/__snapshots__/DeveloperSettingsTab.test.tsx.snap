@@ -274,7 +274,6 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         >
           <input
             aria-describedby="radix-_r_a_ radix-_r_c_ radix-_r_e_"
-            checked=""
             class="_input_1ug7n_18"
             id="radix-_r_9_"
             name="_r_0_"
@@ -315,6 +314,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         >
           <input
             aria-describedby="radix-_r_a_ radix-_r_c_ radix-_r_e_"
+            checked=""
             class="_input_1ug7n_18"
             id="radix-_r_b_"
             name="_r_0_"
