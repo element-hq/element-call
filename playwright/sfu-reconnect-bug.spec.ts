@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { expect, test } from "@playwright/test";
-import { logger } from "matrix-js-sdk/lib/logger";
 
 test("When creator left, avoid reconnect to the same SFU", async ({
   browser,
@@ -90,7 +89,7 @@ test("When creator left, avoid reconnect to the same SFU", async ({
 
   await guestCPage.waitForTimeout(1000);
   if (wsConnectionCount === 2) {
-    logger.warn("wsConnectionCount is 2, expecting 1 after join");
+    console.warn("wsConnectionCount is 2, expecting 1 after join");
   }
   const wsConnectionCountBeforeLeave = wsConnectionCount;
   // ========
