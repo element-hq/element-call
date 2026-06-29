@@ -10,26 +10,26 @@ import { expect, test } from "vitest";
 import { redact } from "./redact";
 
 test("empty object", () => {
-  expect(redact({})).to.deep.equal({});
+  expect(redact({})).toEqual({});
 });
 
 test("no keys", () => {
-  expect(redact({ foo: "bar" })).to.deep.equal({ foo: "bar" });
+  expect(redact({ foo: "bar" })).toEqual({ foo: "bar" });
 });
 
 test("redact one key", () => {
-  expect(redact({ foo: "bar" }, "foo")).to.deep.equal({ foo: "<redacted>" });
+  expect(redact({ foo: "bar" }, "foo")).toEqual({ foo: "<redacted>" });
 });
 
 test("redact two keys", () => {
-  expect(redact({ foo: "bar", bar: "foo" }, "foo", "bar")).to.deep.equal({
+  expect(redact({ foo: "bar", bar: "foo" }, "foo", "bar")).toEqual({
     foo: "<redacted>",
     bar: "<redacted>",
   });
 });
 
 test("no redaction of unrelated keys", () => {
-  expect(redact({ foo: "bar", bar: "foo" }, "foo")).to.deep.equal({
+  expect(redact({ foo: "bar", bar: "foo" }, "foo")).toEqual({
     foo: "<redacted>",
     bar: "foo",
   });
@@ -38,20 +38,20 @@ test("no redaction of unrelated keys", () => {
 test("no redaction of missing keys", () => {
   expect(
     redact({ foo: "bar" } as { foo: string; bar: string | undefined }, "bar"),
-  ).to.deep.equal({
+  ).toEqual({
     foo: "bar",
   });
 });
 
 test("no redaction of null values", () => {
-  expect(redact({ foo: "bar", bar: null }, "bar")).to.deep.equal({
+  expect(redact({ foo: "bar", bar: null }, "bar")).toEqual({
     foo: "bar",
     bar: null,
   });
 });
 
 test("no redaction of undefined values", () => {
-  expect(redact({ foo: "bar", bar: undefined }, "bar")).to.deep.equal({
+  expect(redact({ foo: "bar", bar: undefined }, "bar")).toEqual({
     foo: "bar",
     bar: undefined,
   });
