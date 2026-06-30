@@ -188,6 +188,12 @@ export class TestHelpers {
         break;
       }
     }
+
+    // Also dismiss the release announcement
+    await page
+      .getByRole("dialog", { name: "Introducing Sections" })
+      .getByRole("button", { name: "OK" })
+      .click();
   }
 
   public static async createRoom(
