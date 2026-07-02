@@ -47,7 +47,6 @@
     "@formatjs/intl-segmenter": "^11.7.3",
     "@livekit/components-core": "^0.12.0",
     "@livekit/components-react": "^2.0.0",
-    "@livekit/protocol": "^1.42.2",
     "@livekit/track-processors": "^0.7.1",
     "@mediapipe/tasks-vision": "^0.10.18",
     "@playwright/test": "^1.60.0",

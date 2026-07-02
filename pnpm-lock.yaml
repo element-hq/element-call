@@ -41,9 +41,6 @@ importers:
       '@livekit/components-react':
         specifier: ^2.0.0
         version: 2.9.21(livekit-client@2.19.2(@types/dom-mediacapture-record@1.0.22))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tslib@2.8.1)
-      '@livekit/protocol':
-        specifier: ^1.42.2
-        version: 1.48.0
       '@livekit/track-processors':
         specifier: ^0.7.1
         version: 0.7.2(@types/dom-mediacapture-transform@0.1.11)(livekit-client@2.19.2(@types/dom-mediacapture-record@1.0.22))
@@ -1176,9 +1173,6 @@ packages:
 
   '@livekit/protocol@1.45.8':
     resolution: {integrity: sha512-Q+l57E7w/xxOBFVWzdX5rkAZO7ffyF+rlDzNUYq2SU114+5aTyCq+PK4unaEVDNd4952Af7wteKr3sOgasGuaA==}
-
-  '@livekit/protocol@1.48.0':
-    resolution: {integrity: sha512-fYHYgltH6YavAsokl3qsHLkBdQeKCl4UORVTub5crS3t8JtKFZ0uinHDFQ+XXdNKS6Ub9gcOjV+UHcDiqnWXoQ==}
 
   '@livekit/track-processors@0.7.2':
     resolution: {integrity: sha512-lzARBKTbBwqycdR/SwTu6//N0l20BzfDd7grxCXl07676SwRApNtZAK1GJjL1m3dCM3KBqH1aVxjMpNcbOw5uQ==}
@@ -7164,10 +7158,6 @@ snapshots:
   '@livekit/mutex@1.1.1': {}
 
   '@livekit/protocol@1.45.8':
-    dependencies:
-      '@bufbuild/protobuf': 1.10.1
-
-  '@livekit/protocol@1.48.0':
     dependencies:
       '@bufbuild/protobuf': 1.10.1
 
