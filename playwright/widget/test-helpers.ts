@@ -188,12 +188,20 @@ export class TestHelpers {
         break;
       }
     }
+  }
 
-    // Also dismiss the release announcement
-    await page
-      .getByRole("dialog", { name: "Introducing Sections" })
-      .getByRole("button", { name: "OK" })
-      .click();
+  public static async closeReleaseAnnouncement(
+    page: Page,
+    name: string,
+  ): Promise<void> {
+    try {
+      await page
+        .getByRole("dialog", { name })
+        .getByRole("button", { name: "OK" })
+        .click({ timeout: 2000 });
+    } catch {
+      // Announcement not shown; nothing to do
+    }
   }
 
   public static async createRoom(
@@ -201,6 +209,8 @@ export class TestHelpers {
     page: Page,
     andInvite: string[] = [],
   ): Promise<void> {
+    await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
+
     await page
       .getByRole("navigation", { name: "Room list" })
       .getByRole("button", { name: "New conversation" })
