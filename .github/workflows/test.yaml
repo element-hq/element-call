@@ -56,8 +56,8 @@ jobs:
         run: pnpm exec playwright install --with-deps
       - name: Run backend components
         run: |
-          docker compose -f playwright-backend-docker-compose.yml -f playwright-backend-docker-compose.override.yml pull
-          docker compose -f playwright-backend-docker-compose.yml -f playwright-backend-docker-compose.override.yml up -d
+          docker compose -f docker-compose-dev.yml -f docker-compose-playwright.yml pull
+          docker compose -f docker-compose-dev.yml -f docker-compose-playwright.yml up -d
           docker ps
       - name: Run Playwright tests
         env:

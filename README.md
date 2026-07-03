@@ -212,7 +212,7 @@ See also:
 
 ### Backend
 
-A docker compose file `dev-backend-docker-compose.yml` is provided to start the
+A docker compose file `docker-compose-dev.yml` is provided to start the
 whole stack of components which is required for a local development environment
 including federation:
 
@@ -239,7 +239,7 @@ the backend components:
 ```sh
 pnpm backend
 # or for podman-compose:
-# podman-compose -f dev-backend-docker-compose.yml up
+# podman-compose -f docker-compose-dev.yml up
 ```
 
 > [!NOTE]
