@@ -859,6 +859,8 @@ export function enterRTCSession(
       makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
       membershipEventExpiryMs:
         matrixRtcSessionConfig?.membership_event_expiry_ms,
+      notificationLifetimeMs:
+        matrixRtcSessionConfig?.ring_notification_lifetime_ms,
       unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
       maximumNetworkErrorRetryCount: maximumNetworkErrorRetryCount,
     },
