@@ -177,6 +177,21 @@ export interface ConfigOptions {
      * This is what goes into the m.rtc.member event expiry field and is typically set to a number of hours.
      */
     membership_event_expiry_ms?: number;
+
+    /**
+     * How long (in milliseconds) a "ring" call notification should live for before the caller
+     * gives up waiting for the callee to pick up. This is sent as the `lifetime` field of the
+     * `m.rtc.notification` event, and is also used by the callee's client (e.g. a push
+     * notification handler) to know how long to keep ringing for.
+     *
+     * Increasing this value gives push notifications more time to arrive and for the callee's
+     * device to start ringing before the caller's client stops waiting for an answer.
+     *
+     * Defaults to the matrix-js-sdk default (currently 60000ms / 60 seconds). Note: this is
+     * capped to 90000ms (1.5 minutes) by receiving clients, see `parseCallNotificationContent`
+     * in matrix-js-sdk.
+     */
+    ring_notification_lifetime_ms?: number;
   };
 }
 
