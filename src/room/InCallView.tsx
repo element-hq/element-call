@@ -238,7 +238,7 @@ export const InCallView: FC<InCallViewProps> = ({
   // Merge the refs so they can attach to the same element
   const containerRef = useMergedRefs(containerRef1, containerRef2);
 
-  const { showControls, header: headerStyle } = useUrlParams();
+  const { showControls, header: headerStyle, callIntent } = useUrlParams();
 
   const muteAllAudio = useBehavior(muteAllAudio$);
   const toggleAudio = useBehavior(muteStates.audio.toggle$);
@@ -503,6 +503,8 @@ export const InCallView: FC<InCallViewProps> = ({
           showRingingStatus={vm.ringingStatusLocation === "tile"}
           focusable={!contentObscured}
           aria-hidden={contentObscured}
+          // Use the Circular rendering of the audio tile in PiP
+          circularAudioTile={callIntent === "audio"}
         />
       );
     }

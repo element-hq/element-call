@@ -62,6 +62,42 @@ Please see LICENSE in the repository root for full details.
   opacity: 50%;
 }
 
+/* When no video is shown, circular media has no tile box at all: just the
+avatar rendered on the app background */
+.media.circular .bg {
+  background-color: transparent;
+}
+
+/* A disc behind the avatar, poking out around its edge to form a circular
+speaking indicator. It uses the same gradient as the speaking border of grid
+tiles. */
+.media.circular .bg::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    linear-gradient(
+      119deg,
+      rgba(13, 92, 189, 0.7) 0%,
+      rgba(13, 189, 168, 0.7) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(13, 92, 189, 0.9) 0%,
+      rgba(13, 189, 168, 0.9) 100%
+    );
+  background-blend-mode: overlay, normal;
+  opacity: 0; /* Hidden unless speaking */
+  transition: opacity ease 0.15s;
+}
+
+.media.circular.speaking .bg::before {
+  opacity: 1;
+}
+
 /* CSS makes us put a condition here, even though all we want to do is
 unconditionally select the container so we can use cqmin units */
 @container mediaView (width > 0) {
@@ -69,6 +105,13 @@ unconditionally select the container so we can use cqmin units */
     /* Half of the smallest dimension of the tile */
     inline-size: 50cqmin;
     block-size: 50cqmin;
+  }
+
+  .media.circular .bg::before {
+    /* Sized so that the disc extends beyond the avatar by the width of the
+    speaking indicator */
+    inline-size: calc(50cqmin + 2 * var(--cpd-border-width-4));
+    block-size: calc(50cqmin + 2 * var(--cpd-border-width-4));
   }
 }
 

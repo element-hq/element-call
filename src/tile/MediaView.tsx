@@ -54,6 +54,9 @@ interface Props extends ComponentProps<typeof animated.div> {
   rtcBackendIdentity?: string;
   // The focus url, mainly for debugging purposes
   focusUrl?: string;
+  circularAudioTile?: boolean;
+  // render a circular speaking indicator if circularAudioTile is enabled.
+  circularSpeakingIndicator?: boolean;
 }
 
 export const MediaView: FC<Props> = ({
@@ -84,6 +87,8 @@ export const MediaView: FC<Props> = ({
   videoStreamStats,
   rtcBackendIdentity,
   focusUrl,
+  circularAudioTile,
+  circularSpeakingIndicator,
   ...props
 }) => {
   const { t } = useTranslation();
@@ -112,7 +117,9 @@ export const MediaView: FC<Props> = ({
   return (
     <animated.div
       className={classNames(styles.media, className, {
+        [styles.circular]: circularAudioTile && !videoEnabled,
         [styles.mirror]: mirror,
+        [styles.speaking]: circularSpeakingIndicator,
       })}
       style={style}
       ref={ref}

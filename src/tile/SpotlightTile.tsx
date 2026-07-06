@@ -66,6 +66,7 @@ interface SpotlightItemBaseProps {
   mxcAvatarUrl: string | undefined;
   showNameTags: boolean;
   focusable: boolean;
+  circularAudioTile?: boolean;
   "aria-hidden"?: boolean;
 }
 
@@ -103,8 +104,9 @@ const SpotlightRemoteUserMediaItem: FC<SpotlightRemoteUserMediaItemProps> = ({
   ...props
 }) => {
   const waitingForMedia = useBehavior(vm.waitingForMedia$);
+  const speaking = useBehavior(vm.speaking$);
   return (
-    <MediaView waitingForMedia={waitingForMedia} mirror={false} {...props} />
+    <MediaView waitingForMedia={waitingForMedia} mirror={false} {...props} circularSpeakingIndicator={speaking} />
   );
 };
 
@@ -243,6 +245,7 @@ interface SpotlightItemProps {
   targetHeight: number;
   showNameTags: boolean;
   showRingingStatus: boolean;
+  circularAudioTile?: boolean;
   focusable: boolean;
   intersectionObserver$: Observable<IntersectionObserver>;
   /**
@@ -259,6 +262,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   targetHeight,
   showNameTags,
   showRingingStatus,
+  circularAudioTile,
   focusable,
   intersectionObserver$,
   snap,
@@ -295,6 +299,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     displayName,
     mxcAvatarUrl,
     showNameTags,
+    circularAudioTile,
     focusable,
     "aria-hidden": ariaHidden,
   };
@@ -389,6 +394,7 @@ interface Props {
   showIndicators: boolean;
   showNameTags: boolean;
   showRingingStatus: boolean;
+  circularAudioTile?: boolean;
   focusable: boolean;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
@@ -404,6 +410,7 @@ export const SpotlightTile: FC<Props> = ({
   showIndicators,
   showNameTags,
   showRingingStatus,
+  circularAudioTile,
   focusable = true,
   className,
   style,
@@ -517,6 +524,7 @@ export const SpotlightTile: FC<Props> = ({
             showRingingStatus={showRingingStatus}
             showNameTags={showNameTags}
             focusable={focusable}
+            circularAudioTile={circularAudioTile}
             intersectionObserver$={intersectionObserver$}
             // This is how we get the container to scroll to the right media
             // when the previous/next buttons are clicked: we temporarily
