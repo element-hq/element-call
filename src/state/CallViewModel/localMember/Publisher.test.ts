@@ -286,6 +286,53 @@ describe("Publisher", () => {
     expect(track!.isUpstreamPaused).toBe(true);
   });
 
+  it("Resumes upstream for tracks published after startPublishing was called (slow camera)", async () => {
+    videoEnabled$.next(true);
+
+    // Simulate that the upstream ended up paused by the time the track gets
+    // published (e.g. paused while it was still unpublished).
+    const originalPublishTrack = localParticipant.publishTrack;
+    vi.mocked(localParticipant).publishTrack = vi
+      .fn()
+      .mockImplementation(async (track: LocalTrack) => {
+        await track.pauseUpstream();
+        return originalPublishTrack(track);
+      });
+
+    const resolvers = Promise.withResolvers<void>();
+    createTrackLock = resolvers.promise;
+
+    // Track creation is slow (e.g. camera hardware takes time to open)
+    await publisher.createAndSetupTracks();
+    // startPublishing runs before the camera track exists, so its
+    // resumeUpstreams call finds nothing to resume
+    await publisher.startPublishing();
+    expect(
+      localParticipant.getTrackPublication(Track.Source.Camera),
+    ).toBeUndefined();
+
+    // The camera opens and the track gets published
+    resolvers.resolve();
+    await flushPromises();
+
+    const track = localParticipant.getTrackPublication(
+      Track.Source.Camera,
+    )?.track;
+    expect(track).toBeDefined();
+    expect(track!.resumeUpstream).toHaveBeenCalled();
+    expect(track!.isUpstreamPaused).toBe(false);
+  });
+
+  it("Does not pause tracks published after the publisher was destroyed", async () => {
+    await publisher.destroy();
+
+    const track = createMockLocalTrack(Track.Source.Camera);
+    await localParticipant.publishTrack(track);
+    await flushPromises();
+
+    expect(track.pauseUpstream).not.toHaveBeenCalled();
+  });
+
   it("Ensure resume upstream when published is called", async () => {
     videoEnabled$.next(true);
     await publisher.createAndSetupTracks();

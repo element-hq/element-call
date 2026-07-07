@@ -80,11 +80,15 @@ export class Publisher {
 
     this.connection.livekitRoom.localParticipant.on(
       ParticipantEvent.LocalTrackPublished,
-      this.onLocalTrackPublished.bind(this),
+      this.onLocalTrackPublished,
     );
   }
 
   public async destroy(): Promise<void> {
+    this.connection.livekitRoom.localParticipant.off(
+      ParticipantEvent.LocalTrackPublished,
+      this.onLocalTrackPublished,
+    );
     this.scope.end();
     this.logger.info("Scope ended -> unset handler");
     this.muteStates.audio.unsetHandler();
@@ -106,9 +110,9 @@ export class Publisher {
   // So for that we use pauseUpStream():  Stops sending media to the server by replacing
   // the sender track with null, but keeps the local MediaStreamTrack active.
   // The user can still see/hear themselves locally, but remote participants see nothing.
-  private onLocalTrackPublished(
+  private onLocalTrackPublished = (
     localTrackPublication: LocalTrackPublication,
-  ): void {
+  ): void => {
     this.logger.info("Local track published", localTrackPublication);
     const lkRoom = this.connection.livekitRoom;
     if (!this.shouldPublish) {
@@ -116,6 +120,17 @@ export class Publisher {
       this.pauseUpstreams(lkRoom, [localTrackPublication.source]).catch((e) => {
         this.logger.error(`Failed to pause upstreams`, e);
       });
+    } else {
+      // If startPublishing() ran before this track existed (track creation is
+      // not awaited and e.g. camera hardware can take a while to open), its
+      // resumeUpstreams() call found no track and did nothing. Resume here so
+      // that a track published after startPublishing() actually sends media.
+      // This is a no-op if the upstream is not paused.
+      this.resumeUpstreams(lkRoom, [localTrackPublication.source]).catch(
+        (e) => {
+          this.logger.error(`Failed to resume upstreams`, e);
+        },
+      );
     }
     if (localTrackPublication.source === Track.Source.Microphone) {
       const muteState = this.muteStates.audio;
