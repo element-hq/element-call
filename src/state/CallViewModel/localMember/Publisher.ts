@@ -121,6 +121,7 @@ export class Publisher {
         this.logger.error(`Failed to pause upstreams`, e);
       });
     } else {
+      this.logger.info(`resumeUpstream onLocalTrackPublished`);
       // If startPublishing() ran before this track existed (track creation is
       // not awaited and e.g. camera hardware can take a while to open), its
       // resumeUpstreams() call found no track and did nothing. Resume here so
