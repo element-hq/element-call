@@ -14,7 +14,7 @@ import {
   AudioTrack,
   type AudioTrackProps,
 } from "@livekit/components-react";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
@@ -59,7 +59,7 @@ export function LivekitRoomAudioRenderer({
   validIdentities,
   muted,
 }: MatrixAudioRendererProps): ReactNode {
-  const prefixedLogger = logger.getChild("[MatrixAudioRenderer]");
+  const logger = rootLogger.getChild("[MatrixAudioRenderer]");
   const tracks = useTracks(
     [
       Track.Source.Microphone,
@@ -80,7 +80,7 @@ export function LivekitRoomAudioRenderer({
       if (!isValid) {
         // TODO make sure to also skip the warn logging for the local identity
         // Log that there is an invalid identity, that means that someone is publishing audio that is not expected to be in the call.
-        prefixedLogger.warn(
+        logger.warn(
           `Audio track ${ref.participant.identity} from ${url} has no matching matrix call member`,
           `current members: ${validIdentities.join()}`,
           `track will not get rendered`,
