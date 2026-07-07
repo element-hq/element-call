@@ -193,6 +193,7 @@ export const createLocalTransport$ = ({
           roomId,
           client,
           delayId ?? undefined,
+          logger,
         );
       } catch (e) {
         logger.error(
@@ -312,7 +313,7 @@ async function doOpenIdAndJWTFromUrl(
   > &
     OpenIDClientParts,
   delayId?: string,
-  logger: Logger,
+  logger?: Logger,
 ): Promise<LocalTransportWithSFUConfig> {
   const sfuConfig = await getSFUConfigWithOpenID(
     client,

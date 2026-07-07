@@ -40,7 +40,7 @@ import {
   timer,
   takeUntil,
 } from "rxjs";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   MembershipManagerEvent,
   type LivekitTransportConfig,
@@ -156,7 +156,6 @@ import {
   type RingingMediaViewModel,
 } from "../media/RingingMediaViewModel.ts";
 import { type GridTileViewModel } from "../TileViewModel.ts";
-
 
 //TODO
 // Larger rename
@@ -421,6 +420,7 @@ export function createCallViewModel$(
   const livekitKeyProvider = getE2eeKeyProvider(
     options.encryptionSystem,
     matrixRTCSession,
+    logger,
   );
   // matrix_rtc_mode in config.json overrides the user's Developer Settings choice.
   // It is validated at config load (src/config/Config.ts) so the cast is safe.
@@ -1798,6 +1798,7 @@ export function createCallViewModel$(
 function getE2eeKeyProvider(
   e2eeSystem: EncryptionSystem,
   rtcSession: MatrixRTCSession,
+  logger: Logger,
 ): BaseKeyProvider | undefined {
   if (e2eeSystem.kind === E2eeType.NONE) return undefined;
 
