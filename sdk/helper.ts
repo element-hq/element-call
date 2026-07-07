@@ -15,7 +15,6 @@ import { scan } from "rxjs";
 import { type WidgetHelpers } from "../src/widget";
 import { type LivekitRoomItem } from "../src/state/CallViewModel/CallViewModel";
 
-
 export const tryMakeSticky = (widget: WidgetHelpers): void => {
   const logger = rootLogger.getChild("[MatrixRTCSdk]");
   logger.info("try making sticky MatrixRTCSdk");

@@ -26,9 +26,9 @@ const rule = ESLintUtils.RuleCreator(
     type: "problem",
     docs: {
       description:
-      "Disallow calling logger.getChild() at the top level of a module." +
-      "`getChild` has to be called after the rageshake logger `init()`." +
-      "If it is called at the top level the child logger will never be setup for rageshakes.",
+        "Disallow calling logger.getChild() at the top level of a module." +
+        "`getChild` has to be called after the rageshake logger `init()`." +
+        "If it is called at the top level the child logger will never be setup for rageshakes.",
     },
     messages: {
       noTopLevelGetChild:

@@ -53,7 +53,7 @@ import { MuteStates } from "../src/state/MuteStates";
 import { MediaDevices } from "../src/state/MediaDevices";
 import { E2eeType } from "../src/e2ee/e2eeType";
 import { currentAndPrev, TEXT_LK_TOPIC, tryMakeSticky } from "./helper";
-import {logger as rootLogger} from "matrix-js-sdk/lib/logger"
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   ElementWidgetActions,
   widget as _widget,

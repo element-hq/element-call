@@ -94,8 +94,6 @@ declare module "react" {
   }
 }
 
-
-
 export interface ActiveCallProps extends Omit<
   InCallViewProps,
   "vm" | "livekitRoom" | "connState" | "footerVm"
