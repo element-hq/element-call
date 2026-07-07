@@ -39,8 +39,6 @@ import { type Behavior } from "../Behavior";
 import { type Epoch, type ObservableScope } from "../ObservableScope";
 import { type RoomMemberMap } from "./remoteMembers/MatrixMemberMetadata";
 
-const logger = rootLogger.getChild("[CallNotificationLifecycle]");
-
 export type AutoLeaveReason = "allOthersLeft" | "timeout" | "decline";
 
 export interface RingAttempt {
@@ -114,6 +112,7 @@ export function createCallNotificationLifecycle$({
    */
   autoLeave$: Observable<AutoLeaveReason>;
 } {
+  const logger = rootLogger.getChild("[CallNotificationLifecycle]");
   let ringAttempts$: Observable<RingAttempt> = NEVER;
   if (options.waitForCallPickup)
     ringAttempts$ = sentCallNotification$.pipe(

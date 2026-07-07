@@ -22,8 +22,6 @@ import {
 } from "../../../utils/displayname";
 import { type Behavior } from "../../Behavior";
 
-const logger = rootLogger.getChild("[MatrixMemberMetadata]");
-
 export type RoomMemberMap = Map<
   string,
   Pick<RoomMember, "userId" | "getMxcAvatarUrl" | "rawDisplayName">
@@ -67,6 +65,7 @@ export const memberDisplaynames$ = (
   memberships$: Behavior<Pick<CallMembership, "userId">[]>,
   roomMembers$: Behavior<RoomMemberMap>,
 ): Behavior<Map<string, string>> => {
+  const logger = rootLogger.getChild("[MatrixMemberMetadata]");
   // This map tracks userIds that at some point needed disambiguation.
   // This is a memory leak bound to the number of participants.
   // A call application will always increase the memory if there have been more members in a call.
