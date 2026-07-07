@@ -157,7 +157,7 @@ import {
 } from "../media/RingingMediaViewModel.ts";
 import { type GridTileViewModel } from "../TileViewModel.ts";
 
-const logger = rootLogger.getChild("[CallViewModel]");
+
 //TODO
 // Larger rename
 // member,membership -> rtcMember
@@ -411,6 +411,7 @@ export function createCallViewModel$(
   reactionsSubject$: Observable<Record<string, ReactionInfo>>,
   trackProcessorState$: Behavior<ProcessorState>,
 ): CallViewModel {
+  const logger = rootLogger.getChild("[CallViewModel]");
   const client = matrixRoom.client;
   const userId = client.getUserId();
   const deviceId = client.getDeviceId();

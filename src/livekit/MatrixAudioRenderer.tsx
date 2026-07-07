@@ -40,7 +40,6 @@ export interface MatrixAudioRendererProps {
   muted?: boolean;
 }
 
-const prefixedLogger = logger.getChild("[MatrixAudioRenderer]");
 /**
  * Takes care of handling remote participants’ audio tracks and makes sure that microphones and screen share are audible.
  *
@@ -60,6 +59,7 @@ export function LivekitRoomAudioRenderer({
   validIdentities,
   muted,
 }: MatrixAudioRendererProps): ReactNode {
+  const prefixedLogger = logger.getChild("[MatrixAudioRenderer]");
   const tracks = useTracks(
     [
       Track.Source.Microphone,
