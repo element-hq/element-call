@@ -126,11 +126,9 @@ export class Publisher {
       // resumeUpstreams() call found no track and did nothing. Resume here so
       // that a track published after startPublishing() actually sends media.
       // This is a no-op if the upstream is not paused.
-      this.resumeUpstreams(lkRoom, [localTrackPublication.source]).catch(
-        (e) => {
-          this.logger.error(`Failed to resume upstreams`, e);
-        },
-      );
+      localTrackPublication.resumeUpstream().catch((e) => {
+        this.logger.error(`Failed to resume upstreams`, e);
+      });
     }
     if (localTrackPublication.source === Track.Source.Microphone) {
       const muteState = this.muteStates.audio;
@@ -171,7 +169,7 @@ export class Publisher {
         }
       }
     }
-  }
+  };
   /**
    * Create and setup local audio and video tracks based on the current mute states.
    * It creates the tracks only if audio and/or video is enabled, to avoid unnecessary
