@@ -25,7 +25,7 @@ import {
   switchMap,
   tap,
 } from "rxjs";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { logger as rootLogger, type Logger } from "matrix-js-sdk/lib/logger";
 import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
@@ -45,8 +45,6 @@ import {
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 import { customLivekitUrl } from "../../../settings/settings.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
-
-const logger = rootLogger.getChild("[LocalTransport]");
 
 /*
  * It figures out “which LiveKit focus URL/alias the local user should use,”
@@ -140,9 +138,14 @@ export const createLocalTransport$ = ({
   forceJwtEndpoint,
   delayId$,
 }: Props): LocalTransport => {
+  const logger = rootLogger.getChild("[LocalTransport]");
   // The LiveKit transport in use by the oldest RTC membership. `null` when the
   // oldest member has no such transport.
-  const oldestMemberTransport$ = observerOldestMembership$(scope, memberships$);
+  const oldestMemberTransport$ = observerOldestMembership$(
+    scope,
+    memberships$,
+    logger,
+  );
 
   const transportDiscovery = new RtcTransportAutoDiscovery({
     client: client,
@@ -190,6 +193,7 @@ export const createLocalTransport$ = ({
           roomId,
           client,
           delayId ?? undefined,
+          logger,
         );
       } catch (e) {
         logger.error(
@@ -209,6 +213,7 @@ export const createLocalTransport$ = ({
       client,
       ownMembershipIdentity,
       roomId,
+      logger,
     );
   }
 
@@ -248,6 +253,7 @@ export const createLocalTransport$ = ({
 function observerOldestMembership$(
   scope: ObservableScope,
   memberships$: Behavior<Epoch<CallMembership[]>>,
+  logger: Logger,
 ): Behavior<LivekitTransportConfig | null> {
   return scope.behavior<LivekitTransportConfig | null>(
     memberships$.pipe(
@@ -307,6 +313,7 @@ async function doOpenIdAndJWTFromUrl(
   > &
     OpenIDClientParts,
   delayId?: string,
+  logger?: Logger,
 ): Promise<LocalTransportWithSFUConfig> {
   const sfuConfig = await getSFUConfigWithOpenID(
     client,
@@ -337,6 +344,7 @@ function observeLocalTransportForOldestMembership(
     OpenIDClientParts,
   ownMembershipIdentity: CallMembershipIdentityParts,
   roomId: string,
+  logger: Logger,
 ): LocalTransport {
   // Ensure we can authenticate with the SFU.
   const authenticatedOldestMemberTransport$ = oldestMemberTransport$.pipe(
@@ -355,6 +363,7 @@ function observeLocalTransportForOldestMembership(
           roomId,
           client,
           undefined,
+          logger,
         ),
       ).pipe(
         catchError((e: unknown) => {
