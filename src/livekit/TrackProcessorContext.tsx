@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   ProcessorWrapper,
-  supportsBackgroundProcessors,
+  supportsBackgroundProcessors as supportsBackgroundProcessorsLivekitSdk,
   type BackgroundOptions,
 } from "@livekit/track-processors";
 import {
@@ -29,6 +29,7 @@ import {
 import { BlurBackgroundTransformer } from "./BlurBackgroundTransformer";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
+import { platform } from "../Platform";
 
 //TODO-MULTI-SFU: This is not yet fully there.
 // it is a combination of exposing observable and react hooks.
@@ -104,6 +105,10 @@ export const useTrackProcessorSync = (
 
 interface Props {
   children: JSX.Element;
+}
+
+function supportsBackgroundProcessors(): boolean {
+  return supportsBackgroundProcessorsLivekitSdk() && platform === "desktop";
 }
 
 export const ProcessorProvider: FC<Props> = ({ children }) => {
