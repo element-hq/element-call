@@ -385,11 +385,9 @@ export class TestHelpers {
     frame: FrameLocator,
     count: number,
   ): Promise<void> {
-    await expect(
-      frame
-        .getByRole("img")
-        .and(frame.locator("video"))
-        .filter({ visible: true }),
-    ).toHaveCount(count, { timeout: 10000 });
+    await expect(frame.locator("video").filter({ visible: true })).toHaveCount(
+      count,
+      { timeout: 10000 },
+    );
   }
 }
