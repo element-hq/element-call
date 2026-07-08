@@ -573,7 +573,7 @@ export function createCallViewModel$(
         mediaDevices,
         muteStates,
         trackProcessorState$,
-        logger
+        logger,
         //   .getChild(
         //   "[Publisher " + connection.transport.livekit_service_url + "]",
         // ),
