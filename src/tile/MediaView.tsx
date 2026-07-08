@@ -44,7 +44,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   displayName: string;
   mxcAvatarUrl: string | undefined;
   avatarStyle?: "solid" | "translucent";
-  bgStyle?: "solid" | "transparent";
+  background?: "solid" | "transparent";
   focusable: boolean;
   primaryButton?: ReactNode;
   raisedHandTime?: Date;
@@ -76,7 +76,7 @@ export const MediaView: FC<Props> = ({
   displayName,
   mxcAvatarUrl,
   avatarStyle = "solid",
-  bgStyle = "solid",
+  background = "solid",
   focusable,
   primaryButton,
   status,
@@ -126,7 +126,7 @@ export const MediaView: FC<Props> = ({
       data-testid="videoTile"
       data-video-enabled={video && videoEnabled}
       data-video-fit={videoFit}
-      data-bg-style={bgStyle}
+      data-background={background}
       {...props}
     >
       <div className={styles.bg}>

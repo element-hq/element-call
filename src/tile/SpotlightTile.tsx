@@ -65,7 +65,7 @@ interface SpotlightItemBaseProps {
   displayName: string;
   mxcAvatarUrl: string | undefined;
   showNameTags: boolean;
-  bgStyle: "solid" | "transparent";
+  background: "solid" | "transparent";
   focusable: boolean;
   "aria-hidden"?: boolean;
 }
@@ -135,7 +135,7 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
     RefAttributes<HTMLDivElement> = {
     videoFit,
     videoEnabled,
-    soundWaves: props.bgStyle === "transparent" ? speaking : undefined,
+    soundWaves: props.background === "transparent" ? speaking : undefined,
     targetWidth,
     targetHeight,
     ...props,
@@ -247,7 +247,7 @@ interface SpotlightItemProps {
   targetHeight: number;
   showNameTags: boolean;
   showRingingStatus: boolean;
-  bgStyle: "solid" | "transparent";
+  background: "solid" | "transparent";
   focusable: boolean;
   intersectionObserver$: Observable<IntersectionObserver>;
   /**
@@ -265,7 +265,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   targetHeight,
   showNameTags,
   showRingingStatus,
-  bgStyle,
+  background,
   focusable,
   intersectionObserver$,
   snap,
@@ -303,7 +303,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
     displayName,
     mxcAvatarUrl,
     showNameTags,
-    bgStyle,
+    background,
     focusable,
     "aria-hidden": ariaHidden,
   };
@@ -426,7 +426,7 @@ export const SpotlightTile: FC<Props> = ({
   const [ourRef, root$] = useObservableRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
   const maximised = useBehavior(vm.maximised$);
-  const bgStyle = useBehavior(vm.bgStyle$);
+  const background = useBehavior(vm.background$);
   const media = useBehavior(vm.media$);
   const [visibleId, setVisibleId] = useState<string | undefined>(media[0]?.id);
   const latestMedia = useLatest(media);
@@ -530,7 +530,7 @@ export const SpotlightTile: FC<Props> = ({
             targetHeight={targetHeight}
             showRingingStatus={showRingingStatus}
             showNameTags={showNameTags}
-            bgStyle={bgStyle}
+            background={background}
             focusable={focusable}
             intersectionObserver$={intersectionObserver$}
             // This is how we get the container to scroll to the right media

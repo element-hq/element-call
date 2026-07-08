@@ -21,7 +21,7 @@ spotlight tile is maximised and displaying video, apply a gradient background. *
 .overflowing > .footer,
 .fixedGrid:has(
     > .tile[data-maximised="true"]
-      .spotlightItem[data-bg-style="transparent"][data-video-enabled="true"][aria-hidden="false"]
+      .spotlightItem[data-background="transparent"][data-video-enabled="true"][aria-hidden="false"]
   )
   ~ .footer {
   background: linear-gradient(

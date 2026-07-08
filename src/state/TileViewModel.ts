@@ -37,7 +37,7 @@ export class SpotlightTileViewModel {
   public constructor(
     public readonly media$: Behavior<MediaViewModel[]>,
     public readonly maximised$: Behavior<boolean>,
-    public readonly bgStyle$: Behavior<"solid" | "transparent">,
+    public readonly background$: Behavior<"solid" | "transparent">,
   ) {}
 }
 

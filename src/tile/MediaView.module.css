@@ -51,7 +51,7 @@ Please see LICENSE in the repository root for full details.
   contain: strict;
 }
 
-.media[data-bg-style="solid"] .bg {
+.media[data-background="solid"] .bg {
   background-color: var(--video-tile-background);
 }
 
