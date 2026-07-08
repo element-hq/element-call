@@ -31,11 +31,6 @@ import { type ObservableScope } from "../../ObservableScope";
 import { type Behavior } from "../../Behavior";
 import { type NodeStyleEventEmitter } from "../../../utils/test";
 
-/**
- * Logger instance (scoped child) for homeserver connection updates.
- */
-const logger = rootLogger.getChild("[HomeserverConnected]");
-
 export type HomeserverDisconnectReason = "sync" | "membership" | "probablyLeft";
 
 export interface HomeserverConnected {
@@ -70,6 +65,7 @@ export function createHomeserverConnected$(
     Pick<MatrixRTCSession, "membershipStatus" | "probablyLeft">,
   gracePeriodMs?: number,
 ): HomeserverConnected {
+  const logger = rootLogger.getChild("[HomeserverConnected]");
   // Get grace period from parameter or config (default 10000ms)
   const graceMs = gracePeriodMs ?? Config.get().sync_disconnect_grace_period_ms;
 

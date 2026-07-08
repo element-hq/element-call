@@ -34,6 +34,7 @@
       "/*\nCopyright %%CURRENT_YEAR%% Element Creations Ltd.\n\nSPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial\nPlease see LICENSE in the repository root for full details.\n*/\n\n"
     ],
     "element-call/no-observablescope-leak": "error",
+    "element-call/no-top-level-logger-get-child": "error",
     "jsdoc/empty-tags": "error",
     "jsdoc/check-property-names": "error",
     "jsdoc/require-param-description": "warn",
