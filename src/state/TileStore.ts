@@ -15,6 +15,8 @@ import { type MediaViewModel } from "./media/MediaViewModel";
 import { type UserMediaViewModel } from "./media/UserMediaViewModel";
 import { type RingingMediaViewModel } from "./media/RingingMediaViewModel";
 
+type BackgroundStyle = "solid" | "transparent";
+
 function debugEntries(entries: GridTileData[]): string[] {
   return entries.map((e) => e.media.displayName$.value);
 }
@@ -39,11 +41,11 @@ class SpotlightTileData {
     this.maximised$.next(value);
   }
 
-  private readonly bgStyle$: BehaviorSubject<"solid" | "transparent">;
-  public get bgStyle(): "solid" | "transparent" {
+  private readonly bgStyle$: BehaviorSubject<BackgroundStyle>;
+  public get bgStyle(): BackgroundStyle {
     return this.bgStyle$.value;
   }
-  public set bgStyle(value: "solid" | "transparent") {
+  public set bgStyle(value: BackgroundStyle) {
     this.bgStyle$.next(value);
   }
 
@@ -52,7 +54,7 @@ class SpotlightTileData {
   public constructor(
     media: MediaViewModel[],
     maximised: boolean,
-    bgStyle: "solid" | "transparent",
+    bgStyle: BackgroundStyle,
   ) {
     this.media$ = new BehaviorSubject(media);
     this.maximised$ = new BehaviorSubject(maximised);
@@ -177,7 +179,7 @@ export class TileStoreBuilder {
   public registerSpotlight(
     media: MediaViewModel[],
     maximised: boolean,
-    bgStyle: "solid" | "transparent" = "solid",
+    bgStyle: BackgroundStyle = "solid",
   ): void {
     if (DEBUG_ENABLED)
       logger.debug(
