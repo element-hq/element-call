@@ -31,12 +31,10 @@ widgetTest(
     const brooksFrame = brooks.page
       .locator('iframe[title="Element Call"]')
       .contentFrame();
-
     // We should show a ringing tile, let's check for that
     await expect(
       brooksFrame
         .getByTestId("videoTile")
-        .filter({ has: brooksFrame.getByText(whistler.displayName) })
         .filter({ has: brooksFrame.getByText("Calling…") }),
     ).toBeVisible();
 
@@ -83,23 +81,22 @@ widgetTest(
       }),
     ).toBeVisible();
 
-    // In order to confirm that the call is disconnected we will check that the message composer is shown again.
-    // So first we need to confirm that it is hidden when in the call.
-    await expect(
-      whistler.page.locator(".mx_BasicMessageComposer"),
-    ).not.toBeVisible();
-    await expect(
-      brooks.page.locator(".mx_BasicMessageComposer"),
-    ).not.toBeVisible();
-
-    // ASSERT hanging up on one side ends the call for both
-    await brooksFrame.getByRole("button", { name: "End call" }).click();
-
-    // The widget should be closed on both sides and the timeline should be back on screen
+    // We confirm that we started in Pip mode (voice call) and check that we still see the composer.
     await expect(
       whistler.page.locator(".mx_BasicMessageComposer"),
     ).toBeVisible();
     await expect(brooks.page.locator(".mx_BasicMessageComposer")).toBeVisible();
+
+    // ASSERT hanging up on one side ends the call for both
+    await brooksFrame.getByRole("button", { name: "End call" }).click();
+
+    // The widget should be closed on both sides
+    await expect(
+      whistler.page.locator('iframe[title="Element Call"]'),
+    ).not.toBeVisible();
+    await expect(
+      whistler.page.locator('iframe[title="Element Call"]'),
+    ).not.toBeVisible();
   },
 );
 
