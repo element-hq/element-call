@@ -205,7 +205,7 @@ exports[`LobbyView > renders with AppBar android 1`] = `
         </button>
         <button
           aria-labelledby="_r_40_"
-          class="_button_1nw83_8 endCall _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
+          class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
           data-kind="primary"
           data-size="lg"
           data-testid="incall_leave"
@@ -436,7 +436,7 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
         </button>
         <button
           aria-labelledby="_r_54_"
-          class="_button_1nw83_8 endCall _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
+          class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
           data-kind="primary"
           data-size="lg"
           data-testid="incall_leave"
@@ -817,7 +817,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
         </button>
         <button
           aria-labelledby="_r_q_"
-          class="_button_1nw83_8 endCall _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
+          class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
           data-kind="primary"
           data-size="lg"
           data-testid="incall_leave"
