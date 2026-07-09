@@ -205,6 +205,7 @@
     "blur_not_supported_by_browser": "(Background blur is not supported by this device.)",
     "developer_tab_title": "Developer",
     "devices": {
+      "activating": "Activating…",
       "camera": "Camera",
       "camera_numbered": "Camera {{n}}",
       "change_device_button": "Change audio device",

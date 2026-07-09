@@ -3,7 +3,7 @@
 exports[`MediaMuteAndSwitchButton > renders 1`] = `
 <div>
   <div
-    class="container"
+    class="_container_e649de"
   >
     <button
       aria-busy="false"
@@ -35,7 +35,7 @@ exports[`MediaMuteAndSwitchButton > renders 1`] = `
       aria-expanded="false"
       aria-haspopup="menu"
       aria-label="Microphone"
-      class="_button_1nw83_8 menuButton _has-icon_1nw83_60 _icon-only_1nw83_53"
+      class="_button_1nw83_8 _menuButton_e649de _has-icon_1nw83_60 _icon-only_1nw83_53"
       data-kind="tertiary"
       data-size="lg"
       data-state="closed"

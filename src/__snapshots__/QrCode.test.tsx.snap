@@ -2,7 +2,7 @@
 
 exports[`QrCode > renders 1`] = `
 <div
-  class="qrCode bar"
+  class="_qrCode_458264 bar"
 >
   <img
     alt="QR Code"

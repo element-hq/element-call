@@ -94,8 +94,6 @@ declare module "react" {
   }
 }
 
-const logger = rootLogger.getChild("[InCallView]");
-
 export interface ActiveCallProps extends Omit<
   InCallViewProps,
   "vm" | "livekitRoom" | "connState" | "footerVm"
@@ -116,7 +114,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const mediaDevices = useMediaDevices();
   const trackProcessorState$ = useTrackProcessorObservable$();
   useEffect(() => {
-    logger.info("START CALL VIEW SCOPE");
+    rootLogger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
     const reactionsReader = new ReactionsReader(scope, props.rtcSession);
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
@@ -218,6 +216,7 @@ export const InCallView: FC<InCallViewProps> = ({
   muteStates,
   onShareClick,
 }) => {
+  const logger = rootLogger.getChild("[InCallView]");
   const { t } = useTranslation();
   const { sendReaction, toggleRaisedHand } = useReactionsSender();
 
