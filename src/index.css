@@ -28,12 +28,6 @@ layer(compound);
   --font-size-title: calc(24px * var(--font-scale));
   --font-size-headline: calc(32px * var(--font-scale));
 
-  /* These colors are needed during the transitionary period between the old and
-  new Compound design systems, but should be removed ASAP */
-  --stopgap-color-on-solid-accent: var(--cpd-color-bg-canvas-default);
-  --stopgap-background-85: rgba(255, 255, 255, 0.85);
-  --stopgap-bgColor3: #444;
-
   --cpd-color-border-accent: var(--cpd-color-green-800);
   /* The distance to inset non-full-width content from the edge of the window
   along the inline axis. This ramps up from 16px for typical mobile windows, to
