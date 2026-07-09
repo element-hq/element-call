@@ -14,6 +14,23 @@ Please see LICENSE in the repository root for full details.
   overflow-y: auto;
 }
 
+/* Normally the footer uses a transparent background to allow our expressive
+page gradients to shine through. However, we sometimes need to visually separate
+it from the content underneath. If the call layout is overflowing, or if the
+spotlight tile is maximised and displaying video, apply a gradient background. */
+.overflowing > .footer,
+.fixedGrid:has(
+    > .tile[data-maximised="true"]
+      .spotlightItem[data-background="transparent"][data-video-enabled="true"][aria-hidden="false"]
+  )
+  ~ .footer {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    var(--cpd-color-bg-canvas-default) 100%
+  );
+}
+
 .header {
   position: sticky;
   flex-shrink: 0;
@@ -82,19 +99,18 @@ Please see LICENSE in the repository root for full details.
   /* Disable pointer events so the overlay doesn't block interaction with
   elements behind it */
   pointer-events: none;
-}
 
-.fixedGrid > :not(:first-child),
-.scrollingGrid > :not(:first-child) {
-  pointer-events: initial;
+  > :not(:first-child) {
+    pointer-events: initial;
+  }
+
+  .tile {
+    position: absolute;
+    inset-block-start: 0;
+  }
 }
 
 .tile {
-  position: absolute;
-  inset-block-start: 0;
-}
-
-.tile.maximised {
   position: relative;
   flex-grow: 1;
 }

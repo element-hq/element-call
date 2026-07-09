@@ -19,11 +19,6 @@ Please see LICENSE in the repository root for full details.
   padding-right: calc(env(safe-area-inset-right) + var(--cpd-space-6x));
   padding-block: var(--cpd-space-10x)
     calc(env(safe-area-inset-bottom) + var(--cpd-space-10x));
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0) 0%,
-    var(--cpd-color-bg-canvas-default) 100%
-  );
 }
 
 .footer.hidden {

@@ -180,12 +180,12 @@ describe("MediaMuteAndSwitchButton", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Microphone" }));
-    screen.getByRole("menuitem", { name: "Microphone 1" });
-    screen.getByRole("menuitem", { name: "Microphone 2" });
+    screen.getByRole("menuitemradio", { name: "Microphone 1" });
+    screen.getByRole("menuitemradio", { name: "Microphone 2" });
     await user.keyboard("[Escape]");
     await user.click(screen.getByRole("button", { name: "Camera" }));
-    screen.getByRole("menuitem", { name: "Camera 1" });
-    screen.getByRole("menuitem", { name: "Camera 2" });
+    screen.getByRole("menuitemradio", { name: "Camera 1" });
+    screen.getByRole("menuitemradio", { name: "Camera 2" });
   });
 
   test("calls select callback on menu click", async () => {
@@ -206,7 +206,9 @@ describe("MediaMuteAndSwitchButton", () => {
     );
 
     await user.click(getByRole("button", { name: "Microphone" }));
-    await user.click(screen.getByRole("menuitem", { name: "Microphone 2" }));
+    await user.click(
+      screen.getByRole("menuitemradio", { name: "Microphone 2" }),
+    );
 
     expect(onSelect).toHaveBeenCalledWith("mic2");
   });
@@ -228,7 +230,9 @@ describe("MediaMuteAndSwitchButton", () => {
     );
 
     await user.click(getByRole("button", { name: "Microphone" }));
-    await user.click(screen.getByRole("menuitem", { name: "Microphone 1" }));
+    await user.click(
+      screen.getByRole("menuitemradio", { name: "Microphone 1" }),
+    );
 
     expect(onSelect).not.toHaveBeenCalled();
   });
@@ -264,18 +268,24 @@ describe("MediaMuteAndSwitchButton", () => {
     const { getByRole } = renderComponent(<Wrapper />);
 
     await user.click(getByRole("button", { name: "Microphone" }));
-    await user.click(screen.getByRole("menuitem", { name: "Microphone 2" }));
+    await user.click(
+      screen.getByRole("menuitemradio", { name: "Microphone 2" }),
+    );
 
     expect(onSelectPressed).toHaveBeenCalled();
     expect(onOptionUpdated).not.toHaveBeenCalled();
     // After clicking, plannedSelection="mic2" but selectedOption is still "mic1",
-    // so a spinner should appear on the mic2 item
-    const mic2Item = screen.getByRole("menuitem", { name: "Microphone 2" });
-    expect(mic2Item.querySelector(".rotate")).toBeTruthy();
+    // so mic2 should be in an activating state
+    screen.getByRole("menuitemradio", {
+      name: "Microphone 2 Activating…",
+      checked: false,
+    });
 
-    // The currently-selected mic1 item should not have a spinner
-    const mic1Item = screen.getByRole("menuitem", { name: "Microphone 1" });
-    expect(mic1Item.querySelector(".rotate")).toBeNull();
+    // The currently-selected mic1 item should not be activating
+    screen.getByRole("menuitemradio", {
+      name: "Microphone 1",
+      checked: true,
+    });
     await act(async () => {
       // resolve the promise that acutally updates the select option.
       resolve();
@@ -284,7 +294,7 @@ describe("MediaMuteAndSwitchButton", () => {
 
     expect(onOptionUpdated).toHaveBeenCalled();
     // Spinner should now be gone since the selection has caught up
-    const mic2ItemAfter = screen.getByRole("menuitem", {
+    const mic2ItemAfter = screen.getByRole("menuitemradio", {
       name: "Microphone 2",
     });
     expect(mic2ItemAfter.querySelector(".rotate")).toBeNull();
@@ -336,11 +346,15 @@ describe("MediaMuteAndSwitchButton", () => {
     await user.click(getByRole("button", { name: "Microphone" }));
 
     // The selected item (mic2) renders both an IconOptions SVG and a CheckIcon SVG
-    const mic1Item = screen.getByRole("menuitem", { name: "Microphone 2" });
+    const mic1Item = screen.getByRole("menuitemradio", {
+      name: "Microphone 2",
+    });
     expect(mic1Item.querySelectorAll("svg").length).toBe(2);
 
     // The unselected item (mic1) only renders its IconOptions SVG
-    const mic2Item = screen.getByRole("menuitem", { name: "Microphone 1" });
+    const mic2Item = screen.getByRole("menuitemradio", {
+      name: "Microphone 1",
+    });
     expect(mic2Item.querySelectorAll("svg").length).toBe(1);
   });
 });

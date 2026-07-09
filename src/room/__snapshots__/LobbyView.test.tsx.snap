@@ -3,12 +3,12 @@
 exports[`LobbyView > renders with AppBar android 1`] = `
 <div>
   <div
-    class="bar"
+    class="_bar_221541"
   >
     <header>
       <button
         aria-labelledby="_r_36_"
-        class="_icon-button_1215g_8 primaryButton"
+        class="_icon-button_1215g_8 _primaryButton_221541"
         data-kind="primary"
         role="button"
         style="--cpd-icon-button-size: 32px;"
@@ -33,18 +33,18 @@ exports[`LobbyView > renders with AppBar android 1`] = `
         </div>
       </button>
       <div
-        class="secondaryButton"
+        class="_secondaryButton_221541"
       />
     </header>
   </div>
   <div
-    class="inRoom"
+    class="_inRoom_4e7ff8"
   >
     <div
-      class="content"
+      class="_content_f9ee84"
     >
       <div
-        class="preview"
+        class="_preview_dd2178"
       >
         <video
           disablepictureinpicture=""
@@ -52,7 +52,7 @@ exports[`LobbyView > renders with AppBar android 1`] = `
           tabindex="-1"
         />
         <div
-          class="avatarContainer"
+          class="_avatarContainer_dd2178"
         >
           <div>
             <span
@@ -68,11 +68,11 @@ exports[`LobbyView > renders with AppBar android 1`] = `
           </div>
         </div>
         <div
-          class="buttonBar"
+          class="_buttonBar_dd2178"
         >
           <button
             aria-disabled="true"
-            class="_button_1nw83_8 join wait"
+            class="_button_1nw83_8 _join_f9ee84 _wait_f9ee84"
             data-kind="primary"
             data-size="md"
             data-testid="lobby_joinCall"
@@ -94,15 +94,15 @@ exports[`LobbyView > renders with AppBar android 1`] = `
       </a>
     </div>
     <div
-      class="footer"
+      class="_footer_20b7b4"
       data-testid="footer-container"
     >
       <div
-        class="settingsLogoContainer"
+        class="_settingsLogoContainer_20b7b4"
       >
         <button
           aria-labelledby="_r_3c_"
-          class="_icon-button_1215g_8 settingsOnlyShowWide"
+          class="_icon-button_1215g_8 _settingsOnlyShowWide_20b7b4"
           data-kind="secondary"
           data-testid="settings-bottom-left"
           role="button"
@@ -129,11 +129,11 @@ exports[`LobbyView > renders with AppBar android 1`] = `
         </button>
       </div>
       <div
-        class="buttons"
+        class="_buttons_20b7b4"
       >
         <button
           aria-labelledby="_r_3h_"
-          class="_button_1nw83_8 settingsOnlyShowNarrow _has-icon_1nw83_60 _icon-only_1nw83_53"
+          class="_button_1nw83_8 _settingsOnlyShowNarrow_20b7b4 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="secondary"
           data-size="lg"
           data-testid="settings-bottom-center"
@@ -234,12 +234,12 @@ exports[`LobbyView > renders with AppBar android 1`] = `
 exports[`LobbyView > renders with AppBar ios 1`] = `
 <div>
   <div
-    class="bar"
+    class="_bar_221541"
   >
     <header>
       <button
         aria-labelledby="_r_4a_"
-        class="_icon-button_1215g_8 primaryButton"
+        class="_icon-button_1215g_8 _primaryButton_221541"
         data-kind="primary"
         role="button"
         style="--cpd-icon-button-size: 32px;"
@@ -264,18 +264,18 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
         </div>
       </button>
       <div
-        class="secondaryButton"
+        class="_secondaryButton_221541"
       />
     </header>
   </div>
   <div
-    class="inRoom"
+    class="_inRoom_4e7ff8"
   >
     <div
-      class="content"
+      class="_content_f9ee84"
     >
       <div
-        class="preview"
+        class="_preview_dd2178"
       >
         <video
           disablepictureinpicture=""
@@ -283,7 +283,7 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
           tabindex="-1"
         />
         <div
-          class="avatarContainer"
+          class="_avatarContainer_dd2178"
         >
           <div>
             <span
@@ -299,11 +299,11 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
           </div>
         </div>
         <div
-          class="buttonBar"
+          class="_buttonBar_dd2178"
         >
           <button
             aria-disabled="true"
-            class="_button_1nw83_8 join wait"
+            class="_button_1nw83_8 _join_f9ee84 _wait_f9ee84"
             data-kind="primary"
             data-size="md"
             data-testid="lobby_joinCall"
@@ -325,15 +325,15 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
       </a>
     </div>
     <div
-      class="footer"
+      class="_footer_20b7b4"
       data-testid="footer-container"
     >
       <div
-        class="settingsLogoContainer"
+        class="_settingsLogoContainer_20b7b4"
       >
         <button
           aria-labelledby="_r_4g_"
-          class="_icon-button_1215g_8 settingsOnlyShowWide"
+          class="_icon-button_1215g_8 _settingsOnlyShowWide_20b7b4"
           data-kind="secondary"
           data-testid="settings-bottom-left"
           role="button"
@@ -360,11 +360,11 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
         </button>
       </div>
       <div
-        class="buttons"
+        class="_buttons_20b7b4"
       >
         <button
           aria-labelledby="_r_4l_"
-          class="_button_1nw83_8 settingsOnlyShowNarrow _has-icon_1nw83_60 _icon-only_1nw83_53"
+          class="_button_1nw83_8 _settingsOnlyShowNarrow_20b7b4 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="secondary"
           data-size="lg"
           data-testid="settings-bottom-center"
@@ -465,21 +465,21 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
 exports[`LobbyView > renders with header and participant count 1`] = `
 <div>
   <div
-    class="inRoom"
+    class="_inRoom_4e7ff8"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <div
-          class="roomHeaderInfo"
+          class="_roomHeaderInfo_e4b327"
           data-size="lg"
         >
           <span
             aria-label="!room:example.org"
-            class="_avatar_va14e_8 roomAvatar _avatar-imageless_va14e_55"
+            class="_avatar_va14e_8 _roomAvatar_e4b327 _avatar-imageless_va14e_55"
             data-color="3"
             data-type="round"
             role="img"
@@ -488,7 +488,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
             T
           </span>
           <div
-            class="nameLine"
+            class="_nameLine_e4b327"
           >
             <h1
               class="_typography_6v6n8_153 _font-heading-md-semibold_6v6n8_112"
@@ -501,7 +501,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
             >
               <svg
                 aria-labelledby="_r_0_"
-                class="lock"
+                class="_lock_edc97d"
                 data-encrypted="false"
                 fill="currentColor"
                 height="16"
@@ -516,7 +516,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
             </span>
           </div>
           <div
-            class="participantsLine"
+            class="_participantsLine_e4b327"
           >
             <svg
               aria-label="Participants"
@@ -546,14 +546,14 @@ exports[`LobbyView > renders with header and participant count 1`] = `
         </div>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="content"
+      class="_content_f9ee84"
     >
       <div
-        class="preview"
+        class="_preview_dd2178"
       >
         <video
           disablepictureinpicture=""
@@ -561,7 +561,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
           tabindex="-1"
         />
         <div
-          class="avatarContainer"
+          class="_avatarContainer_dd2178"
         >
           <div>
             <span
@@ -577,10 +577,10 @@ exports[`LobbyView > renders with header and participant count 1`] = `
           </div>
         </div>
         <div
-          class="buttonBar"
+          class="_buttonBar_dd2178"
         >
           <button
-            class="_button_1nw83_8 join"
+            class="_button_1nw83_8 _join_f9ee84"
             data-kind="primary"
             data-size="lg"
             data-testid="lobby_joinCall"
@@ -602,15 +602,15 @@ exports[`LobbyView > renders with header and participant count 1`] = `
       </a>
     </div>
     <div
-      class="footer"
+      class="_footer_20b7b4"
       data-testid="footer-container"
     >
       <div
-        class="settingsLogoContainer"
+        class="_settingsLogoContainer_20b7b4"
       >
         <button
           aria-labelledby="_r_6_"
-          class="_icon-button_1215g_8 settingsOnlyShowWide"
+          class="_icon-button_1215g_8 _settingsOnlyShowWide_20b7b4"
           data-kind="secondary"
           data-testid="settings-bottom-left"
           role="button"
@@ -636,7 +636,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
           </div>
         </button>
         <div
-          class="logo"
+          class="_logo_20b7b4"
         >
           <svg
             aria-hidden="true"
@@ -741,11 +741,11 @@ exports[`LobbyView > renders with header and participant count 1`] = `
         </div>
       </div>
       <div
-        class="buttons"
+        class="_buttons_20b7b4"
       >
         <button
           aria-labelledby="_r_b_"
-          class="_button_1nw83_8 settingsOnlyShowNarrow _has-icon_1nw83_60 _icon-only_1nw83_53"
+          class="_button_1nw83_8 _settingsOnlyShowNarrow_20b7b4 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="secondary"
           data-size="lg"
           data-testid="settings-bottom-center"

@@ -3,12 +3,12 @@
 exports[`AppBar > renders 1`] = `
 <div>
   <div
-    class="bar"
+    class="_bar_221541"
   >
     <header>
       <button
         aria-labelledby="_r_0_"
-        class="_icon-button_1215g_8 primaryButton"
+        class="_icon-button_1215g_8 _primaryButton_221541"
         data-kind="primary"
         role="button"
         style="--cpd-icon-button-size: 24px;"
@@ -33,7 +33,7 @@ exports[`AppBar > renders 1`] = `
         </div>
       </button>
       <div
-        class="secondaryButton"
+        class="_secondaryButton_221541"
       />
     </header>
   </div>
@@ -46,12 +46,12 @@ exports[`AppBar > renders 1`] = `
 exports[`AppBar > renders with title and subtitle 1`] = `
 <div>
   <div
-    class="bar"
+    class="_bar_221541"
   >
     <header>
       <button
         aria-labelledby="_r_6_"
-        class="_icon-button_1215g_8 primaryButton"
+        class="_icon-button_1215g_8 _primaryButton_221541"
         data-kind="primary"
         role="button"
         style="--cpd-icon-button-size: 24px;"
@@ -76,17 +76,17 @@ exports[`AppBar > renders with title and subtitle 1`] = `
         </div>
       </button>
       <h1
-        class="_typography_6v6n8_153 _font-body-lg-medium_6v6n8_79 title"
+        class="_typography_6v6n8_153 _font-body-lg-medium_6v6n8_79 _title_221541"
       >
         Title
       </h1>
       <span
-        class="_typography_6v6n8_153 _font-body-lg-regular_6v6n8_69 subtitle"
+        class="_typography_6v6n8_153 _font-body-lg-regular_6v6n8_69 _subtitle_221541"
       >
         Subtitle
       </span>
       <div
-        class="secondaryButton"
+        class="_secondaryButton_221541"
       />
     </header>
   </div>

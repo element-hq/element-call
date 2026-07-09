@@ -18,10 +18,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     Device ID: DEVICE123
   </p>
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field inputField"
+      class="_field_1bd8c0 _inputField_1bd8c0"
     >
       <input
         aria-describedby="_r_1_"
@@ -38,10 +38,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     </div>
   </div>
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field checkboxField"
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
         aria-describedby="_r_2_"
@@ -52,7 +52,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         for="debugTileLayout"
       >
         <div
-          class="checkbox"
+          class="_checkbox_1bd8c0"
         >
           <svg
             fill="none"
@@ -75,10 +75,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     </div>
   </div>
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field checkboxField"
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
         aria-describedby="_r_3_"
@@ -89,7 +89,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         for="showConnectionStats"
       >
         <div
-          class="checkbox"
+          class="_checkbox_1bd8c0"
         >
           <svg
             fill="none"
@@ -112,10 +112,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     </div>
   </div>
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field checkboxField"
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
         aria-describedby="_r_4_"
@@ -126,7 +126,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         for="muteAllAudio"
       >
         <div
-          class="checkbox"
+          class="_checkbox_1bd8c0"
         >
           <svg
             fill="none"
@@ -150,10 +150,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
   </div>
    
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field checkboxField"
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
         aria-describedby="_r_5_"
@@ -164,7 +164,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         for="alwaysShowIphoneEarpiece"
       >
         <div
-          class="checkbox"
+          class="_checkbox_1bd8c0"
         >
           <svg
             fill="none"
@@ -187,10 +187,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     </div>
   </div>
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field checkboxField"
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
         aria-describedby="_r_6_"
@@ -201,7 +201,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         for="enableLivekitExtendedLogs"
       >
         <div
-          class="checkbox"
+          class="_checkbox_1bd8c0"
         >
           <svg
             fill="none"
@@ -386,7 +386,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     </div>
   </form>
   <div
-    class="livekit_room_box"
+    class="_livekit_room_box_2ddec4"
   >
     <h4>
       LiveKit SFU: wss://local-sfu.example.org
@@ -427,7 +427,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     <ul />
   </div>
   <div
-    class="livekit_room_box"
+    class="_livekit_room_box_2ddec4"
   >
     <h4>
       LiveKit SFU: wss://remote-sfu.example.org

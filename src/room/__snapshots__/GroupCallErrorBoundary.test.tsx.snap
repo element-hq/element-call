@@ -3,17 +3,17 @@
 exports[`ConnectionLostError: Action handling should reset error state 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -95,20 +95,20 @@ exports[`ConnectionLostError: Action handling should reset error state 1`] = `
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -161,17 +161,17 @@ exports[`ConnectionLostError: Action handling should reset error state 1`] = `
 exports[`LiveKit ConnectionError variants > should display LiveKit 'internal' error correctly 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -253,20 +253,20 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'internal' er
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -318,17 +318,17 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'internal' er
 exports[`LiveKit ConnectionError variants > should display LiveKit 'notAllowed' error correctly 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -410,20 +410,20 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'notAllowed' 
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -475,17 +475,17 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'notAllowed' 
 exports[`LiveKit ConnectionError variants > should display LiveKit 'serverUnreachable' error correctly 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -567,20 +567,20 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'serverUnreac
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -632,17 +632,17 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'serverUnreac
 exports[`LiveKit ConnectionError variants > should display LiveKit 'serviceNotFound' error correctly 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -724,20 +724,20 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'serviceNotFo
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -789,17 +789,17 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'serviceNotFo
 exports[`LiveKit ConnectionError variants > should display LiveKit 'timeout' error correctly 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -881,20 +881,20 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'timeout' err
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -946,17 +946,17 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'timeout' err
 exports[`LiveKit ConnectionError variants > should link to troubleshoot guide when timeout error 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -1038,20 +1038,20 @@ exports[`LiveKit ConnectionError variants > should link to troubleshoot guide wh
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -1103,17 +1103,17 @@ exports[`LiveKit ConnectionError variants > should link to troubleshoot guide wh
 exports[`should have a close button in widget mode 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -1195,20 +1195,20 @@ exports[`should have a close button in widget mode 1`] = `
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -1257,17 +1257,17 @@ exports[`should have a close button in widget mode 1`] = `
 exports[`should render the error page with link back to home 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -1349,20 +1349,20 @@ exports[`should render the error page with link back to home 1`] = `
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -1411,17 +1411,17 @@ exports[`should render the error page with link back to home 1`] = `
 exports[`should report correct error for 'Call is not supported' 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -1503,20 +1503,20 @@ exports[`should report correct error for 'Call is not supported' 1`] = `
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -1565,17 +1565,17 @@ exports[`should report correct error for 'Call is not supported' 1`] = `
 exports[`should report correct error for 'Connection lost' 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -1657,20 +1657,20 @@ exports[`should report correct error for 'Connection lost' 1`] = `
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -1723,17 +1723,17 @@ exports[`should report correct error for 'Connection lost' 1`] = `
 exports[`should report correct error for 'Homeserver does not support Matrix 2.â€¦' 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -1815,20 +1815,20 @@ exports[`should report correct error for 'Homeserver does not support Matrix 2.â
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -1877,17 +1877,17 @@ exports[`should report correct error for 'Homeserver does not support Matrix 2.â
 exports[`should report correct error for 'Incompatible browser' 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -1969,20 +1969,20 @@ exports[`should report correct error for 'Incompatible browser' 1`] = `
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
@@ -2026,17 +2026,17 @@ exports[`should report correct error for 'Incompatible browser' 1`] = `
 exports[`should report correct error for 'Insufficient capacity' 1`] = `
 <DocumentFragment>
   <div
-    class="page"
+    class="_page_4be5c0"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <a
           aria-label="Element Call Home"
-          class="headerLogo"
+          class="_headerLogo_e4b327"
           data-discover="true"
           href="/"
         >
@@ -2118,20 +2118,20 @@ exports[`should report correct error for 'Insufficient capacity' 1`] = `
         </a>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="container"
+      class="_container_4be5c0"
     >
       <div
-        class="content"
+        class="_content_4be5c0"
       >
         <div
-          class="error"
+          class="_error_a69dc5"
         >
           <div
-            class="_big-icon_1ssbv_8 icon"
+            class="_big-icon_1ssbv_8 _icon_a69dc5"
             data-kind="primary"
             data-size="lg"
           >
