@@ -26,7 +26,7 @@ export function oneOnOnePortraitLayout(
   prevTiles: TileStore,
 ): [OneOnOnePortraitLayout, TileStore] {
   const update = prevTiles.from(media.pip === undefined ? 0 : 1);
-  update.registerSpotlight([media.spotlight], true);
+  update.registerSpotlight([media.spotlight], true, "transparent");
   if (media.pip !== undefined) update.registerGridTile(media.pip);
   const tiles = update.build();
 

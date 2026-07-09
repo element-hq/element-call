@@ -65,6 +65,7 @@ interface SpotlightItemBaseProps {
   displayName: string;
   mxcAvatarUrl: string | undefined;
   showNameTags: boolean;
+  background: "solid" | "transparent";
   focusable: boolean;
   "aria-hidden"?: boolean;
 }
@@ -78,6 +79,7 @@ interface SpotlightMemberMediaItemBaseProps extends SpotlightItemBaseProps {
 interface SpotlightUserMediaItemBaseProps extends SpotlightMemberMediaItemBaseProps {
   videoFit: "contain" | "cover";
   videoEnabled: boolean;
+  soundWaves: boolean | undefined;
 }
 
 interface SpotlightLocalUserMediaItemProps extends SpotlightUserMediaItemBaseProps {
@@ -120,6 +122,7 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
 }) => {
   const videoFit = useBehavior(vm.videoFit$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
+  const speaking = useBehavior(vm.speaking$);
 
   // Whenever target bounds change, inform the viewModel
   useEffect(() => {
@@ -132,6 +135,7 @@ const SpotlightUserMediaItem: FC<SpotlightUserMediaItemProps> = ({
     RefAttributes<HTMLDivElement> = {
     videoFit,
     videoEnabled,
+    soundWaves: props.background === "transparent" ? speaking : undefined,
     targetWidth,
     targetHeight,
     ...props,
@@ -243,12 +247,14 @@ interface SpotlightItemProps {
   targetHeight: number;
   showNameTags: boolean;
   showRingingStatus: boolean;
+  background: "solid" | "transparent";
   focusable: boolean;
   intersectionObserver$: Observable<IntersectionObserver>;
   /**
    * Whether this item should act as a scroll snapping point.
    */
   snap: boolean;
+  className?: string;
   "aria-hidden"?: boolean;
 }
 
@@ -259,9 +265,11 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   targetHeight,
   showNameTags,
   showRingingStatus,
+  background,
   focusable,
   intersectionObserver$,
   snap,
+  className,
   "aria-hidden": ariaHidden,
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
@@ -288,13 +296,14 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   const baseProps: SpotlightItemBaseProps & RefAttributes<HTMLDivElement> = {
     ref,
     "data-id": vm.id,
-    className: classNames(styles.item, { [styles.snap]: snap }),
+    className: classNames(className, styles.item, { [styles.snap]: snap }),
     targetWidth,
     targetHeight,
     userId: vm.userId,
     displayName,
     mxcAvatarUrl,
     showNameTags,
+    background,
     focusable,
     "aria-hidden": ariaHidden,
   };
@@ -391,6 +400,10 @@ interface Props {
   showRingingStatus: boolean;
   focusable: boolean;
   className?: string;
+  /**
+   * CSS class of the individual spotlight items.
+   */
+  itemClassName?: string;
   style?: ComponentProps<typeof animated.div>["style"];
 }
 
@@ -406,12 +419,14 @@ export const SpotlightTile: FC<Props> = ({
   showRingingStatus,
   focusable = true,
   className,
+  itemClassName,
   style,
 }) => {
   const { t } = useTranslation();
   const [ourRef, root$] = useObservableRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
   const maximised = useBehavior(vm.maximised$);
+  const background = useBehavior(vm.background$);
   const media = useBehavior(vm.media$);
   const [visibleId, setVisibleId] = useState<string | undefined>(media[0]?.id);
   const latestMedia = useLatest(media);
@@ -492,9 +507,8 @@ export const SpotlightTile: FC<Props> = ({
   return (
     <animated.div
       ref={ref}
-      className={classNames(className, styles.tile, {
-        [styles.maximised]: maximised,
-      })}
+      className={classNames(className, styles.tile)}
+      data-maximised={maximised}
       style={style}
     >
       {canGoBack && (
@@ -516,6 +530,7 @@ export const SpotlightTile: FC<Props> = ({
             targetHeight={targetHeight}
             showRingingStatus={showRingingStatus}
             showNameTags={showNameTags}
+            background={background}
             focusable={focusable}
             intersectionObserver$={intersectionObserver$}
             // This is how we get the container to scroll to the right media
@@ -523,6 +538,7 @@ export const SpotlightTile: FC<Props> = ({
             // remove all scroll snap points except for just the one media
             // that we want to bring into view
             snap={scrollToId === null || scrollToId === vm.id}
+            className={itemClassName}
             aria-hidden={(scrollToId ?? visibleId) !== vm.id}
           />
         ))}

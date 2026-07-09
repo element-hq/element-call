@@ -112,11 +112,17 @@ export interface FooterState {
 }
 
 export interface FooterProps {
+  className?: string;
   ref?: Ref<HTMLDivElement>;
   children?: JSX.Element | JSX.Element[] | false;
   vm: ViewModel<FooterSnapshot>;
 }
-export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
+export const CallFooter: FC<FooterProps> = ({
+  className,
+  ref,
+  children,
+  vm,
+}) => {
   const asOverlay = useBehavior(vm.asOverlay$);
   const showFooter = useBehavior(vm.showFooter$);
   const hideControls = useBehavior(vm.hideControls$);
@@ -292,7 +298,7 @@ export const CallFooter: FC<FooterProps> = ({ ref, children, vm }) => {
     <div
       ref={ref}
       data-testid="footer-container"
-      className={classNames(styles.footer, {
+      className={classNames(className, styles.footer, {
         [styles.overlay]: asOverlay,
         [styles.hidden]: !showFooter,
       })}

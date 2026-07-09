@@ -45,6 +45,11 @@ export enum HeaderStyle {
   AppBar = "app_bar",
 }
 
+export enum BackgroundStyle {
+  Solid = "solid",
+  Gradient = "gradient",
+}
+
 /**
  * The UrlProperties are used to pass required data to the widget.
  * Those are different in different rooms, users, devices. They do not configure the behavior of the
@@ -145,6 +150,10 @@ export interface UrlProperties {
    * can be "light", "dark", "light-high-contrast" or "dark-high-contrast".
    */
   theme: string | null;
+  /**
+   * The visual style of the page background.
+   */
+  background: BackgroundStyle;
 }
 
 /**
@@ -452,6 +461,9 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     fonts: parser.getAllParams("font"),
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     theme: parser.getParam("theme"),
+    background:
+      parser.getEnumParam("background", BackgroundStyle) ??
+      BackgroundStyle.Gradient,
     viaServers: !isWidget ? parser.getParam("viaServers") : null,
     homeserver: !isWidget ? parser.getParam("homeserver") : null,
     posthogApiHost: parser.getParam("posthogApiHost"),

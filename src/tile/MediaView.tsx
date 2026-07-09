@@ -34,6 +34,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   video: TrackReferenceOrPlaceholder | undefined;
   videoFit: "cover" | "contain";
   mirror: boolean;
+  soundWaves?: boolean;
   userId: string;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
@@ -43,6 +44,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   displayName: string;
   mxcAvatarUrl: string | undefined;
   avatarStyle?: "solid" | "translucent";
+  background?: "solid" | "transparent";
   focusable: boolean;
   primaryButton?: ReactNode;
   raisedHandTime?: Date;
@@ -65,6 +67,7 @@ export const MediaView: FC<Props> = ({
   video,
   videoFit,
   mirror,
+  soundWaves,
   userId,
   videoEnabled,
   unencryptedWarning,
@@ -73,6 +76,7 @@ export const MediaView: FC<Props> = ({
   displayName,
   mxcAvatarUrl,
   avatarStyle = "solid",
+  background = "solid",
   focusable,
   primaryButton,
   status,
@@ -90,7 +94,10 @@ export const MediaView: FC<Props> = ({
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
   const [showConnectionStats] = useSetting(showConnectionStatsSetting);
 
-  const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
+  const avatarSize = Math.round(
+    Math.min(targetWidth, targetHeight) *
+      (soundWaves === undefined ? 0.5 : 0.38),
+  );
 
   const warnings = unencryptedWarning && (
     <Tooltip
@@ -117,10 +124,20 @@ export const MediaView: FC<Props> = ({
       style={style}
       ref={ref}
       data-testid="videoTile"
+      data-video-enabled={video && videoEnabled}
       data-video-fit={videoFit}
+      data-background={background}
       {...props}
     >
       <div className={styles.bg}>
+        {soundWaves !== undefined && (
+          <div className={styles.waves} data-visible={soundWaves}>
+            <div className={styles.wave} />
+            <div className={styles.wave} />
+            <div className={styles.wave} />
+            <div className={styles.speakingBorder} />
+          </div>
+        )}
         <Avatar
           id={userId}
           name={displayName}
@@ -136,7 +153,6 @@ export const MediaView: FC<Props> = ({
             // There's no reason for this to be focusable
             tabIndex={-1}
             disablePictureInPicture
-            style={{ display: video && videoEnabled ? "block" : "none" }}
             data-testid="video"
           />
         )}

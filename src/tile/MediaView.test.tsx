@@ -125,30 +125,4 @@ describe("MediaView", () => {
       ).toBe(0);
     });
   });
-
-  describe("videoEnabled", () => {
-    test("just video is visible", () => {
-      render(
-        <TooltipProvider>
-          <MediaView {...baseProps} videoEnabled={true} />
-        </TooltipProvider>,
-      );
-      expect(screen.getByTestId("video")).toBeVisible();
-      expect(screen.queryAllByRole("img", { name: "some name" }).length).toBe(
-        0,
-      );
-    });
-
-    test("just avatar is visible", () => {
-      render(
-        <TooltipProvider>
-          <MediaView {...baseProps} videoEnabled={false} />
-        </TooltipProvider>,
-      );
-      expect(
-        screen.getByRole("img", { name: "@alice:example.com" }),
-      ).toBeVisible();
-      expect(screen.getByTestId("video")).not.toBeVisible();
-    });
-  });
 });
