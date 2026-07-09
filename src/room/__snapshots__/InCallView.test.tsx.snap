@@ -3,28 +3,28 @@
 exports[`InCallView > rendering > renders 1`] = `
 <div>
   <div
-    class="inRoom"
+    class="_inRoom_4e7ff8"
   >
     <header
-      class="header header"
+      class="_header_e4b327 _header_4e7ff8"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <div
-          class="roomHeaderInfo"
+          class="_roomHeaderInfo_e4b327"
           data-size="lg"
         >
           <span
             aria-label=""
-            class="_avatar_va14e_8 roomAvatar _avatar-imageless_va14e_55"
+            class="_avatar_va14e_8 _roomAvatar_e4b327 _avatar-imageless_va14e_55"
             data-color="1"
             data-type="round"
             role="img"
             style="--cpd-avatar-size: 56px;"
           />
           <div
-            class="nameLine"
+            class="_nameLine_e4b327"
           >
             <h1
               class="_typography_6v6n8_153 _font-heading-md-semibold_6v6n8_112"
@@ -35,7 +35,7 @@ exports[`InCallView > rendering > renders 1`] = `
             >
               <svg
                 aria-labelledby="_r_0_"
-                class="lock"
+                class="_lock_edc97d"
                 data-encrypted="false"
                 fill="currentColor"
                 height="16"
@@ -50,7 +50,7 @@ exports[`InCallView > rendering > renders 1`] = `
             </span>
           </div>
           <div
-            class="participantsLine"
+            class="_participantsLine_e4b327"
           >
             <svg
               aria-label="Participants"
@@ -80,21 +80,21 @@ exports[`InCallView > rendering > renders 1`] = `
         </div>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="scrollingGrid grid"
+      class="_scrollingGrid_4e7ff8 _grid_b0d1cd"
     >
       <div
-        class="layer"
+        class="_layer_b00c5f"
       >
         <div
-          class="container slot"
+          class="_container_b00c5f _slot_b0d1cd"
           data-id="1"
         >
           <div
-            class="slot local slot"
+            class="_slot_b00c5f _local_b00c5f _slot_b0d1cd"
             data-block-alignment="start"
             data-id="0"
             data-inline-alignment="end"
@@ -103,22 +103,22 @@ exports[`InCallView > rendering > renders 1`] = `
       </div>
     </div>
     <div
-      class="fixedGrid grid"
+      class="_fixedGrid_4e7ff8 _grid_b0d1cd"
       style="inset-block-start: NaNpx;"
     >
       <div />
     </div>
     <div
-      class="bg animate"
+      class="_bg_2f5303 _animate_2f5303"
       data-state="closed"
     />
     <div
       aria-hidden="true"
-      class="overlay"
+      class="_overlay_eb6724"
       data-show="false"
     >
       <div
-        class="_big-icon_1ssbv_8 icon"
+        class="_big-icon_1ssbv_8 _icon_eb6724"
         data-kind="primary"
         data-size="lg"
       >
@@ -157,22 +157,22 @@ exports[`InCallView > rendering > renders 1`] = `
         Back to Speaker Mode
       </button>
       <div
-        class="spacer"
+        class="_spacer_eb6724"
       />
     </div>
     <div
-      class="container"
+      class="_container_8084b5"
     />
     <div
-      class="footer"
+      class="_footer_20b7b4"
       data-testid="footer-container"
     >
       <div
-        class="settingsLogoContainer"
+        class="_settingsLogoContainer_20b7b4"
       >
         <button
           aria-labelledby="_r_8_"
-          class="_icon-button_1215g_8 settingsOnlyShowWide"
+          class="_icon-button_1215g_8 _settingsOnlyShowWide_20b7b4"
           data-kind="secondary"
           data-testid="settings-bottom-left"
           role="button"
@@ -198,7 +198,7 @@ exports[`InCallView > rendering > renders 1`] = `
           </div>
         </button>
         <div
-          class="logo"
+          class="_logo_20b7b4"
         >
           <svg
             aria-hidden="true"
@@ -303,11 +303,11 @@ exports[`InCallView > rendering > renders 1`] = `
         </div>
       </div>
       <div
-        class="buttons"
+        class="_buttons_20b7b4"
       >
         <button
           aria-labelledby="_r_d_"
-          class="_button_1nw83_8 settingsOnlyShowNarrow _has-icon_1nw83_60 _icon-only_1nw83_53"
+          class="_button_1nw83_8 _settingsOnlyShowNarrow_20b7b4 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="secondary"
           data-size="lg"
           data-testid="settings-bottom-center"
@@ -382,7 +382,7 @@ exports[`InCallView > rendering > renders 1`] = `
           aria-expanded="false"
           aria-haspopup="true"
           aria-labelledby="_r_s_"
-          class="_button_1nw83_8 raiseHand _has-icon_1nw83_60 _icon-only_1nw83_53"
+          class="_button_1nw83_8 _raiseHand_20b7b4 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="secondary"
           data-size="lg"
           role="button"
@@ -405,7 +405,7 @@ exports[`InCallView > rendering > renders 1`] = `
         </button>
         <button
           aria-labelledby="_r_14_"
-          class="_button_1nw83_8 endCall _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
+          class="_button_1nw83_8 _endCall_204dcb _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
           data-kind="primary"
           data-size="lg"
           data-testid="incall_leave"
@@ -428,7 +428,7 @@ exports[`InCallView > rendering > renders 1`] = `
       </div>
       <fieldset
         aria-label="Layout"
-        class="_toggle_13rnk_9 layout"
+        class="_toggle_13rnk_9 _layout_20b7b4"
         data-size="lg"
       >
         <input
