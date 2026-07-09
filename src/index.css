@@ -81,20 +81,22 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-body[data-background="gradient"]::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image: url("graphics/mobile-gradient.svg");
-  background-size: auto;
-  background-position: bottom;
-  background-repeat: no-repeat;
-}
+@media (min-height: 330px) {
+  body[data-background="gradient"]::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("graphics/mobile-gradient.svg");
+    background-size: auto;
+    background-position: bottom;
+    background-repeat: no-repeat;
+  }
 
-body[data-background="gradient"][data-platform="desktop"]::before {
-  background-image: url("graphics/desktop-gradient.svg");
-  background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
-  background-position: center;
+  body[data-background="gradient"][data-platform="desktop"]::before {
+    background-image: url("graphics/desktop-gradient.svg");
+    background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
+    background-position: center;
+  }
 }
 
 /* This prohibits the view to scroll for pages smaller than 122px in width
