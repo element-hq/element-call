@@ -61,6 +61,15 @@
     {
       "groupName": "Pnpm",
       "matchDepNames": ["pnpm"]
+    },
+    {
+      "description": "Update the element-web image digest daily, in its own PR",
+      "groupName": "Element Web",
+      "matchPackageNames": ["ghcr.io/element-hq/element-web"],
+      "matchUpdateTypes": ["digest"],
+      "schedule": ["* 0-3 * * *"],
+      "minimumReleaseAge": null,
+      "automerge": true
     }
   ],
   "semanticCommits": "disabled",
