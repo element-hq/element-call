@@ -188,6 +188,13 @@ export interface UrlConfiguration {
   allowIceFallback: boolean;
 
   /**
+   * Whether the app may make client `.well-known` lookups against the user's
+   * homeserver `server_name` (the post-login well-known poll and the legacy
+   * MatrixRTC foci `.well-known` fallback). Defaults to true.
+   */
+  enableClientWellKnownLookups: boolean;
+
+  /**
    * Whether the app should use per participant keys for E2EE.
    */
   perParticipantE2EE: boolean;
@@ -371,6 +378,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     showControls: true,
     hideScreensharing: false,
     allowIceFallback: true,
+    enableClientWellKnownLookups: true,
     perParticipantE2EE: true,
     controlledAudioDevices: platform === "desktop" ? false : true,
     skipLobby: true,
@@ -426,6 +434,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
         showControls: true,
         hideScreensharing: false,
         allowIceFallback: false,
+        enableClientWellKnownLookups: true,
         perParticipantE2EE: false,
         controlledAudioDevices: false,
         skipLobby: false,
@@ -472,6 +481,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     showControls: parser.getFlag("showControls"),
     hideScreensharing: parser.getFlag("hideScreensharing"),
     allowIceFallback: parser.getFlag("allowIceFallback"),
+    enableClientWellKnownLookups: parser.getFlag("enableClientWellKnownLookups"),
     perParticipantE2EE: parser.getFlag("perParticipantE2EE"),
     controlledAudioDevices: parser.getFlag("controlledAudioDevices"),
     skipLobby: isWidget ? parser.getFlag("skipLobby") : false,

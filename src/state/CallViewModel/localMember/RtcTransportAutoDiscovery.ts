@@ -8,7 +8,11 @@ import {
   isLivekitTransportConfig,
   type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { type IClientWellKnown, type MatrixClient } from "matrix-js-sdk";
+import {
+  type IClientWellKnown,
+  type MatrixClient,
+  MatrixError,
+} from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import type { ResolvedConfigOptions } from "../../../config/ConfigOptions.ts";
@@ -22,13 +26,36 @@ type TransportDiscoveryClient = Pick<
 export interface RtcTransportAutoDiscoveryProps {
   client: TransportDiscoveryClient;
   resolvedConfig: ResolvedConfigOptions;
+  /**
+   * Whether client `.well-known` lookups against the homeserver's `server_name`
+   * are allowed. When false, the legacy MatrixRTC foci `.well-known` fallback is
+   * skipped entirely and only the backend endpoint and app config are used.
+   */
+  enableClientWellKnownLookups: boolean;
   wellKnownFetcher: (domain: string) => Promise<IClientWellKnown>;
   logger: Logger;
+}
+
+/**
+ * The outcome of querying the backend `/rtc/transports` endpoint.
+ */
+interface BackendTransportResult {
+  /** The livekit transport found via the backend endpoint, if any. */
+  transport: LivekitTransportConfig | null;
+  /**
+   * Whether the caller may fall back to the legacy `.well-known` lookup. True
+   * only when the backend endpoint is unavailable, i.e. it was not attempted
+   * (widget mode) or the homeserver does not implement it (404 M_UNRECOGNIZED).
+   * False when the endpoint answered authoritatively (a response without a
+   * livekit transport) or failed with any other error.
+   */
+  mayFallBackToWellKnown: boolean;
 }
 
 export class RtcTransportAutoDiscovery {
   private readonly client: TransportDiscoveryClient;
   private readonly resolvedConfig: ResolvedConfigOptions;
+  private readonly enableClientWellKnownLookups: boolean;
   private readonly wellKnownFetcher: (
     domain: string,
   ) => Promise<IClientWellKnown>;
@@ -37,38 +64,53 @@ export class RtcTransportAutoDiscovery {
   public constructor({
     client,
     resolvedConfig,
+    enableClientWellKnownLookups,
     wellKnownFetcher,
     logger,
   }: RtcTransportAutoDiscoveryProps) {
     this.client = client;
     this.resolvedConfig = resolvedConfig;
+    this.enableClientWellKnownLookups = enableClientWellKnownLookups;
     this.wellKnownFetcher = wellKnownFetcher;
     this.logger = logger.getChild("[RtcTransportAutoDiscovery]");
   }
 
   public async discoverPreferredTransport(): Promise<LivekitTransportConfig | null> {
     // 1) backend transports
-    const backendTransport = await this.tryBackendTransports();
-    if (backendTransport) {
+    const backend = await this.tryBackendTransports();
+    if (backend.transport) {
       this.logger.info(
-        `Found backend transport: ${backendTransport.livekit_service_url}`,
+        `Found backend transport: ${backend.transport.livekit_service_url}`,
       );
-      return backendTransport;
+      return backend.transport;
     }
 
-    this.logger.info("No backend transport found, falling back to well-known");
     // 2) .well-known transports
-    const wellKnownTransport = await this.tryWellKnownTransports();
-    if (wellKnownTransport) {
+    // Only consulted when the backend endpoint was inconclusive (not attempted
+    // or not implemented) and client `.well-known` lookups are enabled. This
+    // avoids contacting the homeserver's `server_name` both when a modern
+    // endpoint has already given an authoritative answer and when lookups are
+    // disabled by config.
+    if (backend.mayFallBackToWellKnown && this.enableClientWellKnownLookups) {
       this.logger.info(
-        `Found .well-known transport: ${wellKnownTransport.livekit_service_url}`,
+        "No backend transport found, falling back to well-known",
       );
-      return wellKnownTransport;
+      const wellKnownTransport = await this.tryWellKnownTransports();
+      if (wellKnownTransport) {
+        this.logger.info(
+          `Found .well-known transport: ${wellKnownTransport.livekit_service_url}`,
+        );
+        return wellKnownTransport;
+      }
+    } else {
+      this.logger.info(
+        this.enableClientWellKnownLookups
+          ? "Skipping .well-known lookup: backend endpoint gave an authoritative response"
+          : "Skipping .well-known lookup: client well-known lookups are disabled",
+      );
     }
 
-    this.logger.info(
-      "No .well-known transport found, falling back to app config",
-    );
+    this.logger.info("Falling back to app config");
 
     // 3) app config URL
     const configTransport = this.tryConfigTransport();
@@ -87,7 +129,7 @@ export class RtcTransportAutoDiscovery {
    * This will not throw errors, but instead just log them and return null if the expected config is not found or malformed.
    * @private
    */
-  private async tryBackendTransports(): Promise<LivekitTransportConfig | null> {
+  private async tryBackendTransports(): Promise<BackendTransportResult> {
     const client = this.client;
     // MSC4143: Attempt to fetch transports from backend.
     // TODO: Workaround for an issue in the js-sdk RoomWidgetClient that
@@ -104,21 +146,36 @@ export class RtcTransportAutoDiscovery {
         );
         const first = transportList.find(isLivekitTransportConfig);
         if (first) {
-          return first;
-        } else {
-          this.logger.info(
-            `No livekit transport found in getRTCTransports end point`,
-            transportList,
-          );
+          return { transport: first, mayFallBackToWellKnown: false };
         }
+        // The homeserver implements the endpoint but returned no livekit
+        // transport. This is an authoritative answer, so we do not fall back
+        // to the legacy `.well-known` lookup.
+        this.logger.info(
+          `No livekit transport found in getRTCTransports end point`,
+          transportList,
+        );
+        return { transport: null, mayFallBackToWellKnown: false };
       } catch (ex) {
-        this.logger.info(`Failed to use getRTCTransports end point: ${ex}`);
+        // Only a 404 M_UNRECOGNIZED means the homeserver does not implement the
+        // endpoint, which is the one case where falling back to the legacy
+        // `.well-known` lookup is appropriate. Any other error is transient or
+        // unexpected, so we do not fall back.
+        if (ex instanceof MatrixError && ex.errcode === "M_UNRECOGNIZED") {
+          this.logger.info(
+            "getRTCTransports end point not implemented by homeserver",
+          );
+          return { transport: null, mayFallBackToWellKnown: true };
+        }
+        this.logger.warn(`Failed to use getRTCTransports end point: ${ex}`);
+        return { transport: null, mayFallBackToWellKnown: false };
       }
-    } else {
-      this.logger.debug(`getRTCTransports end point not available`);
     }
 
-    return null;
+    // Not attempted (e.g. widget mode with no access token). Preserve the
+    // existing behaviour of allowing the legacy `.well-known` lookup.
+    this.logger.debug(`getRTCTransports end point not available`);
+    return { transport: null, mayFallBackToWellKnown: true };
   }
 
   /**

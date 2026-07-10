@@ -38,6 +38,11 @@ const wellKnownTransport: LivekitTransportConfig = {
   livekit_service_url: "https://well-known.example.org",
 };
 
+const configTransport: LivekitTransportConfig = {
+  type: "livekit",
+  livekit_service_url: "https://config.example.org",
+};
+
 function makeClient(): MockedObject<DiscoveryClient> {
   return {
     getDomain: vi.fn().mockReturnValue("example.org"),
@@ -65,10 +70,29 @@ function makeWellKnown(rtcFoci?: Transport[]): IClientWellKnown {
   } as unknown as IClientWellKnown;
 }
 
+// Error returned by a homeserver that does not implement the endpoint. This is
+// the only failure that permits falling back to the legacy `.well-known` lookup.
+const notImplementedError = new MatrixError({ errcode: "M_UNRECOGNIZED" }, 404);
+
+function makeDiscovery(
+  overrides: Partial<RtcTransportAutoDiscoveryProps> & {
+    client: DiscoveryClient;
+    wellKnownFetcher: RtcTransportAutoDiscoveryProps["wellKnownFetcher"];
+  },
+): RtcTransportAutoDiscovery {
+  return new RtcTransportAutoDiscovery({
+    resolvedConfig: makeResolvedConfig("https://config.example.org"),
+    enableClientWellKnownLookups: true,
+    logger: rootLogger,
+    ...overrides,
+  });
+}
+
 describe("RtcTransportAutoDiscovery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
   const VALID_TEST_CASES: Array<{ transports: Transport[] }> = [
     { transports: [backendTransport] },
     // will pick the first livekit transport in the list, even if there are other non-livekit transports
@@ -77,7 +101,6 @@ describe("RtcTransportAutoDiscovery", () => {
   it.each(VALID_TEST_CASES)(
     "prefers backend transport over well-known and app config $transports",
     async ({ transports }) => {
-      // it("prefers backend transport over well-known and app config", async () => {
       const client = makeClient();
       client._unstable_getRTCTransports.mockResolvedValue(transports);
 
@@ -85,12 +108,7 @@ describe("RtcTransportAutoDiscovery", () => {
         .fn<(domain: string) => Promise<IClientWellKnown>>()
         .mockResolvedValue(makeWellKnown([wellKnownTransport]));
 
-      const discovery = new RtcTransportAutoDiscovery({
-        client,
-        resolvedConfig: makeResolvedConfig("https://config.example.org"),
-        wellKnownFetcher,
-        logger: rootLogger,
-      });
+      const discovery = makeDiscovery({ client, wellKnownFetcher });
 
       await expect(
         discovery.discoverPreferredTransport(),
@@ -120,12 +138,7 @@ describe("RtcTransportAutoDiscovery", () => {
       .fn<(domain: string) => Promise<IClientWellKnown>>()
       .mockResolvedValue(makeWellKnown([wellKnownTransport]));
 
-    const discovery = new RtcTransportAutoDiscovery({
-      client,
-      resolvedConfig: makeResolvedConfig("https://config.example.org"),
-      wellKnownFetcher,
-      logger: rootLogger,
-    });
+    const discovery = makeDiscovery({ client, wellKnownFetcher });
 
     await expect(discovery.discoverPreferredTransport()).resolves.toStrictEqual(
       backendTransport,
@@ -135,12 +148,15 @@ describe("RtcTransportAutoDiscovery", () => {
     expect(wellKnownFetcher).not.toHaveBeenCalled();
   });
 
-  const INVALID_TEST_CASES: Array<{ transports: Transport[] }> = [
+  // A homeserver that implements the endpoint but returns no usable livekit
+  // transport has answered authoritatively, so we must NOT leak to the legacy
+  // `.well-known` lookup. Instead we fall straight through to app config.
+  const AUTHORITATIVE_EMPTY_CASES: Array<{ transports: Transport[] }> = [
     { transports: [] },
     { transports: [{ type: "not_livekit" }] },
   ];
-  it.each(INVALID_TEST_CASES)(
-    "falls back to well-known when backend has no (valid) livekit transports $transports",
+  it.each(AUTHORITATIVE_EMPTY_CASES)(
+    "does not fall back to well-known when the backend answers without a livekit transport $transports",
     async ({ transports }) => {
       const client = makeClient();
       client._unstable_getRTCTransports.mockResolvedValue(transports);
@@ -149,20 +165,53 @@ describe("RtcTransportAutoDiscovery", () => {
         .fn<(domain: string) => Promise<IClientWellKnown>>()
         .mockResolvedValue(makeWellKnown([wellKnownTransport]));
 
-      const discovery = new RtcTransportAutoDiscovery({
-        client,
-        resolvedConfig: makeResolvedConfig("https://config.example.org"),
-        wellKnownFetcher,
-        logger: rootLogger,
-      });
+      const discovery = makeDiscovery({ client, wellKnownFetcher });
 
       await expect(
         discovery.discoverPreferredTransport(),
-      ).resolves.toStrictEqual(wellKnownTransport);
+      ).resolves.toStrictEqual(configTransport);
 
-      expect(wellKnownFetcher).toHaveBeenCalledWith("example.org");
+      expect(wellKnownFetcher).not.toHaveBeenCalled();
     },
   );
+
+  it("falls back to well-known only when the backend returns 404 M_UNRECOGNIZED", async () => {
+    const client = makeClient();
+    client._unstable_getRTCTransports.mockRejectedValue(notImplementedError);
+
+    const wellKnownFetcher = vi
+      .fn<(domain: string) => Promise<IClientWellKnown>>()
+      .mockResolvedValue(makeWellKnown([wellKnownTransport]));
+
+    const discovery = makeDiscovery({ client, wellKnownFetcher });
+
+    await expect(discovery.discoverPreferredTransport()).resolves.toStrictEqual(
+      wellKnownTransport,
+    );
+
+    expect(wellKnownFetcher).toHaveBeenCalledWith("example.org");
+  });
+
+  it("does not fall back to well-known when the backend fails with a non-M_UNRECOGNIZED errcode", async () => {
+    const client = makeClient();
+    // Same 404 status as the not-implemented case, but a different errcode: only
+    // M_UNRECOGNIZED is treated as "endpoint not implemented".
+    client._unstable_getRTCTransports.mockRejectedValue(
+      new MatrixError({ errcode: "M_UNKNOWN" }, 404),
+    );
+
+    const wellKnownFetcher = vi
+      .fn<(domain: string) => Promise<IClientWellKnown>>()
+      .mockResolvedValue(makeWellKnown([wellKnownTransport]));
+
+    const discovery = makeDiscovery({ client, wellKnownFetcher });
+
+    await expect(discovery.discoverPreferredTransport()).resolves.toStrictEqual(
+      configTransport,
+    );
+
+    expect(wellKnownFetcher).not.toHaveBeenCalled();
+  });
 
   it("skips backend discovery in widget mode and uses well-known", async () => {
     const client = makeClient();
@@ -173,12 +222,7 @@ describe("RtcTransportAutoDiscovery", () => {
       .fn<(domain: string) => Promise<IClientWellKnown>>()
       .mockResolvedValue(makeWellKnown([wellKnownTransport]));
 
-    const discovery = new RtcTransportAutoDiscovery({
-      client,
-      resolvedConfig: makeResolvedConfig("https://config.example.org"),
-      wellKnownFetcher,
-      logger: rootLogger,
-    });
+    const discovery = makeDiscovery({ client, wellKnownFetcher });
 
     await expect(discovery.discoverPreferredTransport()).resolves.toStrictEqual(
       wellKnownTransport,
@@ -188,44 +232,58 @@ describe("RtcTransportAutoDiscovery", () => {
     expect(wellKnownFetcher).toHaveBeenCalledWith("example.org");
   });
 
-  it("falls back to app config when backend fails and well-known has no rtc_foci", async () => {
+  it("does not make well-known lookups when disabled by config, even in widget mode", async () => {
     const client = makeClient();
-    client._unstable_getRTCTransports.mockRejectedValue(
-      new MatrixError({ errcode: "M_UNKNOWN" }, 404),
+    // widget mode: backend endpoint is not attempted
+    client.getAccessToken.mockReturnValue(null);
+
+    const wellKnownFetcher = vi
+      .fn<(domain: string) => Promise<IClientWellKnown>>()
+      .mockResolvedValue(makeWellKnown([wellKnownTransport]));
+
+    const discovery = makeDiscovery({
+      client,
+      wellKnownFetcher,
+      enableClientWellKnownLookups: false,
+    });
+
+    // The legacy well-known fallback is skipped entirely; only app config is used.
+    await expect(discovery.discoverPreferredTransport()).resolves.toStrictEqual(
+      configTransport,
     );
+
+    expect(wellKnownFetcher).not.toHaveBeenCalled();
+  });
+
+  it("falls back to app config when the backend is not implemented and well-known has no rtc_foci", async () => {
+    const client = makeClient();
+    client._unstable_getRTCTransports.mockRejectedValue(notImplementedError);
 
     const wellKnownFetcher = vi
       .fn<(domain: string) => Promise<IClientWellKnown>>()
       .mockResolvedValue({} as IClientWellKnown);
 
-    const discovery = new RtcTransportAutoDiscovery({
-      client,
-      resolvedConfig: makeResolvedConfig("https://config.example.org"),
-      wellKnownFetcher,
-      logger: rootLogger,
-    });
+    const discovery = makeDiscovery({ client, wellKnownFetcher });
 
     await expect(discovery.discoverPreferredTransport()).resolves.toStrictEqual(
-      {
-        type: "livekit",
-        livekit_service_url: "https://config.example.org",
-      },
+      configTransport,
     );
+
+    expect(wellKnownFetcher).toHaveBeenCalledWith("example.org");
   });
 
   it("returns null when backend, well-known and config are all unavailable", async () => {
     const client = makeClient();
-    client._unstable_getRTCTransports.mockResolvedValue([]);
+    client._unstable_getRTCTransports.mockRejectedValue(notImplementedError);
 
     const wellKnownFetcher = vi
       .fn<(domain: string) => Promise<IClientWellKnown>>()
       .mockResolvedValue({} as IClientWellKnown);
 
-    const discovery = new RtcTransportAutoDiscovery({
+    const discovery = makeDiscovery({
       client,
-      resolvedConfig: makeResolvedConfig(undefined),
       wellKnownFetcher,
-      logger: rootLogger,
+      resolvedConfig: makeResolvedConfig(undefined),
     });
 
     await expect(discovery.discoverPreferredTransport()).resolves.toBeNull();

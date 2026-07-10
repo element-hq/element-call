@@ -82,6 +82,7 @@ export const initializeWidget = (
       baseUrl,
       e2eEnabled,
       allowIceFallback,
+      enableClientWellKnownLookups,
     } = getUrlParams();
 
     if (!roomId) throw new Error("Room ID must be supplied");
@@ -195,7 +196,13 @@ export const initializeWidget = (
         // Wait for the config file to be ready (we load very early on so it might not
         // be otherwise)
         await Config.init();
-        await client.startClient({ clientWellKnownPollPeriod: 60 * 10 });
+        // Leaving `clientWellKnownPollPeriod` unset stops the SDK polling the
+        // homeserver's `server_name` `.well-known` after login.
+        await client.startClient({
+          clientWellKnownPollPeriod: enableClientWellKnownLookups
+            ? 60 * 10
+            : undefined,
+        });
         return client;
       };
 

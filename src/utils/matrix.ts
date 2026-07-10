@@ -112,7 +112,7 @@ export async function initClient(
   // the values around, but we initialise the matrix client in
   // many different places so we'd have to pass it into all of
   // them.
-  const { e2eEnabled } = getUrlParams();
+  const { e2eEnabled, enableClientWellKnownLookups } = getUrlParams();
   if (!e2eEnabled) {
     logger.info("Disabling E2E: group call signalling will NOT be encrypted.");
   }
@@ -166,7 +166,11 @@ export async function initClient(
   // Otherwise, a sync may complete before the listener gets applied,
   // and we will miss it.
   const syncPromise = waitForSync(client);
-  await client.startClient({ clientWellKnownPollPeriod: 60 * 10 });
+  // Leaving `clientWellKnownPollPeriod` unset stops the SDK polling the
+  // homeserver's `server_name` `.well-known` after login.
+  await client.startClient({
+    clientWellKnownPollPeriod: enableClientWellKnownLookups ? 60 * 10 : undefined,
+  });
   await syncPromise;
 
   return client;
