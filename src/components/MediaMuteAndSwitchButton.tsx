@@ -191,6 +191,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                     width={24}
                     height={24}
                     className={styles.itemIcon}
+                    aria-hidden
                   />
                 )
               }
@@ -201,10 +202,23 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 onSelect?.(id);
               }}
               key={id}
+              role="menuitemradio"
+              aria-checked={selectedOption === id}
             >
-              {selectedOption === id && <CheckIcon width={24} height={24} />}
+              {selectedOption === id && (
+                <CheckIcon
+                  width={24}
+                  height={24}
+                  aria-hidden // A label would be redundant to aria-checked above
+                />
+              )}
               {selectedOption !== id && plannedSelection === id && (
-                <SpinnerIcon width={24} height={24} className={styles.rotate} />
+                <SpinnerIcon
+                  width={24}
+                  height={24}
+                  className={styles.rotate}
+                  aria-label={t("settings.devices.activating")}
+                />
               )}
             </MenuItem>
           );

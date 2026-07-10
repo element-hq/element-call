@@ -145,8 +145,7 @@ describe("LobbyView", () => {
       .querySelector("path")!
       .getAttribute("d");
     const primaryButtonSvgPath = container
-      .querySelector(".primaryButton")
-      ?.querySelector("path")
+      .querySelector("path")
       ?.getAttribute("d");
     expect(primaryButtonSvgPath).toBe(expectedSvgPath);
     expect(container).toMatchSnapshot();
@@ -169,8 +168,7 @@ describe("LobbyView", () => {
       .querySelector("path")!
       .getAttribute("d");
     const primaryButtonSvgPath = container
-      .querySelector(".primaryButton")
-      ?.querySelector("path")
+      .querySelector("path")
       ?.getAttribute("d");
     expect(primaryButtonSvgPath).toBe(expectedSvgPath);
     expect(container).toMatchSnapshot();

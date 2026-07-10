@@ -3,7 +3,7 @@
 exports[`Toast > renders 1`] = `
 <button
   aria-labelledby="radix-_r_4_"
-  class="overlay animate toast"
+  class="_overlay_2f5303 _animate_2f5303 _toast_15a045"
   data-state="open"
   id="radix-_r_3_"
   role="dialog"

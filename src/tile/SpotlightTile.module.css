@@ -23,7 +23,7 @@ Please see LICENSE in the repository root for full details.
   scroll-behavior: smooth; */
 }
 
-.tile.maximised .contents {
+.tile[data-maximised="true"] .contents {
   border-radius: 0;
 }
 
@@ -34,7 +34,7 @@ Please see LICENSE in the repository root for full details.
   --media-view-fg-inset: 10px;
 }
 
-.maximised .item {
+.tile[data-maximised="true"] .item {
   /* Ensure that foreground elements lie within the safe area */
   --media-view-fg-inset: calc(var(--call-view-safe-area-inset-top, 0px) + 10px)
     calc(env(safe-area-inset-right) + 10px)
@@ -191,7 +191,7 @@ Please see LICENSE in the repository root for full details.
   opacity: 1;
 }
 
-.maximised .indicators {
+.tile[data-maximised="true"] .indicators {
   inset-block-end: calc(-1 * var(--cpd-space-4x) - 2px);
   justify-content: center;
 }
