@@ -90,6 +90,19 @@ export class Config {
     return Config.get().default_server_config?.["m.homeserver"].server_name;
   }
 
+  /**
+   * Whether the app may make client `.well-known` lookups against the
+   * homeserver `server_name`. The embedded (widget) deployment sets this via
+   * the `enableClientWellKnownLookups` URL parameter; the standalone (SPA)
+   * deployment sets it via `enable_client_well_known_lookups` in config.json.
+   */
+  public static clientWellKnownLookupsEnabled(): boolean {
+    return (
+      getUrlParams().enableClientWellKnownLookups ??
+      Config.get().enable_client_well_known_lookups
+    );
+  }
+
   public config?: ResolvedConfigOptions;
   private initPromise?: Promise<void>;
 }

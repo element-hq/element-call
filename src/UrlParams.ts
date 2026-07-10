@@ -190,9 +190,10 @@ export interface UrlConfiguration {
   /**
    * Whether the app may make client `.well-known` lookups against the user's
    * homeserver `server_name` (the post-login well-known poll and the legacy
-   * MatrixRTC foci `.well-known` fallback). Defaults to true.
+   * MatrixRTC foci `.well-known` fallback). Set by the embedder in widget mode;
+   * when unset the `enable_client_well_known_lookups` config value applies.
    */
-  enableClientWellKnownLookups: boolean;
+  enableClientWellKnownLookups?: boolean;
 
   /**
    * Whether the app should use per participant keys for E2EE.
@@ -378,7 +379,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     showControls: true,
     hideScreensharing: false,
     allowIceFallback: true,
-    enableClientWellKnownLookups: true,
     perParticipantE2EE: true,
     controlledAudioDevices: platform === "desktop" ? false : true,
     skipLobby: true,
@@ -434,7 +434,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
         showControls: true,
         hideScreensharing: false,
         allowIceFallback: false,
-        enableClientWellKnownLookups: true,
         perParticipantE2EE: false,
         controlledAudioDevices: false,
         skipLobby: false,

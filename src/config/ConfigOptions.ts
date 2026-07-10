@@ -70,6 +70,16 @@ export interface ConfigOptions {
     };
   };
 
+  /**
+   * Whether the app may make client `.well-known` lookups against the user's
+   * homeserver `server_name` (the post-login well-known poll and the legacy
+   * MatrixRTC foci `.well-known` fallback). Set to false to keep the app on the
+   * homeserver base URL. This is the standalone (SPA) deployment control;
+   * embedded deployments set it via the `enableClientWellKnownLookups` URL
+   * parameter instead. Defaults to true.
+   */
+  enable_client_well_known_lookups?: boolean;
+
   // Describes the LiveKit configuration to be used.
   livekit?: {
     // The link to the service that returns a livekit url and token to use it.
@@ -189,6 +199,7 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       server_name: string;
     };
   };
+  enable_client_well_known_lookups: boolean;
   sync_disconnect_grace_period_ms: number;
   ssla: string;
   matrix_rtc_session: {
@@ -211,6 +222,7 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
   features: {
     feature_use_device_session_member_events: true,
   },
+  enable_client_well_known_lookups: true,
   sync_disconnect_grace_period_ms: 10000,
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
   matrix_rtc_session: {

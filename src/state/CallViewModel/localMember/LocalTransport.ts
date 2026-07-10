@@ -44,7 +44,6 @@ import {
 } from "../../../livekit/openIDSFU.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 import { customLivekitUrl } from "../../../settings/settings.ts";
-import { getUrlParams } from "../../../UrlParams.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
 
 const logger = rootLogger.getChild("[LocalTransport]");
@@ -148,7 +147,7 @@ export const createLocalTransport$ = ({
   const transportDiscovery = new RtcTransportAutoDiscovery({
     client: client,
     resolvedConfig: Config.get(),
-    enableClientWellKnownLookups: getUrlParams().enableClientWellKnownLookups,
+    enableClientWellKnownLookups: Config.clientWellKnownLookupsEnabled(),
     wellKnownFetcher: AutoDiscovery.getRawClientConfig.bind(AutoDiscovery),
     logger: logger,
   });

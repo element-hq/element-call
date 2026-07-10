@@ -123,6 +123,28 @@ describe("UrlParams", () => {
     });
   });
 
+  describe("enableClientWellKnownLookups", () => {
+    it("is undefined when not set (so the config value applies)", () => {
+      expect(
+        computeUrlParams().enableClientWellKnownLookups,
+      ).toBeUndefined();
+    });
+
+    it("is false when set to false", () => {
+      expect(
+        computeUrlParams("?enableClientWellKnownLookups=false")
+          .enableClientWellKnownLookups,
+      ).toBe(false);
+    });
+
+    it("is true when set to true", () => {
+      expect(
+        computeUrlParams("?enableClientWellKnownLookups=true")
+          .enableClientWellKnownLookups,
+      ).toBe(true);
+    });
+  });
+
   describe("returnToLobby", () => {
     it("is false in SPA mode", () => {
       expect(computeUrlParams("?returnToLobby=true").returnToLobby).toBe(false);
