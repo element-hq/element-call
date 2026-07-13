@@ -428,7 +428,7 @@ exports[`InCallView > rendering > renders 1`] = `
       </div>
       <fieldset
         aria-label="Layout"
-        class="_toggle_13rnk_9 _layout_20b7b4"
+        class="_toggle_1t5ha_9 _layout_20b7b4"
         data-size="lg"
       >
         <input
