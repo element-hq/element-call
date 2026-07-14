@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
 import {
-  SpotlightIcon,
+  SpotlightViewIcon,
   GridIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { Switch } from "@vector-im/compound-web";
@@ -323,7 +323,7 @@ export const CallFooter: FC<FooterProps> = ({
           aria-label={t("layout_switch_label")}
           leftLabel={t("layout_spotlight_label")}
           leftValue="spotlight"
-          leftIcon={SpotlightIcon}
+          leftIcon={SpotlightViewIcon}
           rightLabel={t("layout_grid_label")}
           rightValue="grid"
           rightIcon={GridIcon}
