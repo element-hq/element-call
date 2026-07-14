@@ -156,7 +156,7 @@ services:
   nginx:
     #  see backend/dev_tls_setup for how to generate the tls certs
     hostname: synapse.m.localhost
-    image: nginx:latest
+    image: nginx:latest@sha256:4ae259ae64fbedb67918c07d167fdcb0e05855a1615480ca445bea485e7d65ff
     pull_policy: always
     volumes:
       - ./backend/dev_nginx.conf:/etc/nginx/conf.d/default.conf:Z
