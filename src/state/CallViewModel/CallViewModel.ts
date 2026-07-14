@@ -1257,17 +1257,23 @@ export function createCallViewModel$(
               ),
             );
           case "flat":
-            return gridMode$.pipe(
-              switchMap((gridMode) => {
-                switch (gridMode) {
-                  case "grid":
-                    // Yes, grid mode actually gets you a "spotlight" layout in
-                    // this window mode.
-                    return spotlightLandscapeLayoutMedia$(true);
-                  case "spotlight":
-                    return spotlightExpandedLayoutMedia$(true);
-                }
-              }),
+            return oneOnOneMobileLayoutMedia$.pipe(
+              switchMap((oneOnOne) =>
+                oneOnOne === null
+                  ? gridMode$.pipe(
+                      switchMap((gridMode) => {
+                        switch (gridMode) {
+                          case "grid":
+                            // Yes, grid mode actually gets you a "spotlight" layout in
+                            // this window mode.
+                            return spotlightLandscapeLayoutMedia$(true);
+                          case "spotlight":
+                            return spotlightExpandedLayoutMedia$(true);
+                        }
+                      }),
+                    )
+                  : of(oneOnOne),
+              ),
             );
           case "pip":
             return pipLayoutMedia$;

@@ -532,6 +532,58 @@ describe.each([
     });
   });
 
+  test("landscape mobile layouts show screen shares and group call participants", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      // Starts as a one-on-one call, then Alice shares her screen, then Bob
+      // joins, and finally Alice stops sharing her screen
+      const participantInputMarbles = " a--b";
+      const aliceSharingInputMarbles = "ny-n";
+      // Starts in one-on-one mobile layout, then goes to spotlight layout for
+      // the screen sharing and group call cases
+      const expectedLayoutMarbles = "   ab-c";
+      withCallViewModel(
+        {
+          remoteParticipants$: behavior(participantInputMarbles, {
+            a: [aliceParticipant],
+            b: [aliceParticipant, bobParticipant],
+          }),
+          roomMembers: [local, alice, bob],
+          rtcMembers$: behavior(participantInputMarbles, {
+            a: [localRtcMember, aliceRtcMember],
+            b: [localRtcMember, aliceRtcMember, bobRtcMember],
+          }),
+          sharingScreen: new Map([
+            [aliceParticipant, behavior(aliceSharingInputMarbles, yesNo)],
+          ]),
+          windowSize$: constant({ width: 700, height: 380 }), // Mobile phone in landscape
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "one-on-one-mobile",
+                spotlight: [`${aliceId}:0`],
+                pip: undefined,
+                pipSize: "sm",
+              },
+              b: {
+                type: "spotlight-expanded",
+                spotlight: [`${aliceId}:0:screen-share`],
+                pip: `${aliceId}:0`,
+              },
+              c: {
+                type: "spotlight-expanded",
+                spotlight: [`${aliceId}:0`],
+                pip: undefined,
+              },
+            },
+          );
+        },
+      );
+    });
+  });
+
   test("participants stay in the same order unless to appear/disappear", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       const visibilityInputMarbles = "a";
@@ -1066,7 +1118,7 @@ describe.each([
   });
 
   test("expanded spotlight layout hides PiP tile in one-on-one voice call", () => {
-    withTestScheduler(({ expectObservable }) => {
+    withTestScheduler(({ schedule, expectObservable }) => {
       withCallViewModel(
         {
           remoteParticipants$: constant([aliceParticipant]),
@@ -1076,9 +1128,15 @@ describe.each([
             [localParticipant, constant(false)],
             [aliceParticipant, constant(false)],
           ]),
-          windowSize$: constant({ width: 700, height: 380 }), // Mobile phone in landscape
         },
         (vm) => {
+          schedule("s", {
+            s: () => vm.setGridMode("spotlight"),
+          });
+          schedule("a", {
+            a: () => vm.toggleSpotlightExpanded$.value!(),
+          });
+
           // Layout should show remote tile only
           expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
             a: {
