@@ -20,7 +20,12 @@ export default {
     // This is a shell built-in.
     "printf",
   ],
-  ignoreFiles: ["scripts/.pnpmfile.cjs"],
+  ignoreFiles: [
+    "scripts/.pnpmfile.cjs",
+    // Deliberately added prior to any component or business logic
+    // implementation
+    "src/state/ServiceInterruptionsViewModel.ts",
+  ],
   ignoreDependencies: [
     // Used in CSS
     "normalize.css",
