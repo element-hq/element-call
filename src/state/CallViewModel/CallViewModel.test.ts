@@ -144,13 +144,13 @@ export interface SpotlightExpandedLayoutSummary {
 }
 
 export interface OneOnOneLandscapeLayoutSummary {
-  type: "one-on-one-landscape";
+  type: "one-on-one-desktop";
   spotlight: string;
   pip: string;
 }
 
 export interface OneOnOnePortraitLayoutSummary {
-  type: "one-on-one-portrait";
+  type: "one-on-one-mobile";
   spotlight: string[];
   pip?: string;
   pipSize: "sm" | "lg";
@@ -205,7 +205,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
               pip: pip?.id,
             }),
           );
-        case "one-on-one-landscape":
+        case "one-on-one-desktop":
           return combineLatest(
             [l.spotlight.media$, l.pip.media$],
             (spotlight, pip) => ({
@@ -214,7 +214,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
               pip: pip.id,
             }),
           );
-        case "one-on-one-portrait":
+        case "one-on-one-mobile":
           return combineLatest(
             [
               l.spotlight.media$,
@@ -437,7 +437,7 @@ describe.each([
             expectedLayoutMarbles,
             {
               a: {
-                type: "one-on-one-landscape",
+                type: "one-on-one-desktop",
                 pip: `${localId}:0`,
                 spotlight: `${aliceId}:0`,
               },
@@ -453,7 +453,7 @@ describe.each([
     });
   });
 
-  test("one-on-one portrait layout shows local tile when video is enabled", () => {
+  test("one-on-one mobile layout shows local tile when video is enabled", () => {
     withTestScheduler(({ behavior, schedule, expectObservable }) => {
       // Local participant enables their video, then disables it
       const videoInputMarbles = "    ny--n";
@@ -480,19 +480,19 @@ describe.each([
             expectedLayoutMarbles,
             {
               a: {
-                type: "one-on-one-portrait",
+                type: "one-on-one-mobile",
                 spotlight: [`${aliceId}:0`],
                 pip: undefined,
                 pipSize: "lg",
               },
               b: {
-                type: "one-on-one-portrait",
+                type: "one-on-one-mobile",
                 spotlight: [`${aliceId}:0`],
                 pip: `${localId}:0`,
                 pipSize: "lg",
               },
               c: {
-                type: "one-on-one-portrait",
+                type: "one-on-one-mobile",
                 spotlight: [`${aliceId}:0`],
                 pip: `${localId}:0`,
                 pipSize: "sm",
@@ -504,7 +504,7 @@ describe.each([
     });
   });
 
-  test("one-on-one portrait layout shows name tags in room with 3 members", () => {
+  test("one-on-one mobile layout shows name tags in room with 3 members", () => {
     withTestScheduler(({ expectObservable }) => {
       withCallViewModel(
         {
@@ -512,13 +512,13 @@ describe.each([
           // Both Alice and Bob are with us in the room
           roomMembers: [local, alice, bob],
           rtcMembers$: constant([localRtcMember, aliceRtcMember]),
-          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone in portrait
+          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone
         },
         (vm) => {
-          // Uses one-on-one portrait layout
+          // Uses one-on-one mobile layout
           expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
             a: {
-              type: "one-on-one-portrait",
+              type: "one-on-one-mobile",
               spotlight: [`${aliceId}:0`],
               pip: undefined,
               pipSize: "lg",
@@ -706,14 +706,14 @@ describe.each([
             {
               a: {
                 // This is the expected one-on-one layout for a narrow window
-                type: "one-on-one-portrait",
+                type: "one-on-one-mobile",
                 spotlight: [`${aliceId}:0`],
                 pip: undefined,
                 pipSize: "lg",
               },
               b: {
-                // In a larger window, expect the normal one-on-one layout
-                type: "one-on-one-landscape",
+                // In a larger window, expect the one-on-one desktop layout
+                type: "one-on-one-desktop",
                 pip: `${localId}:0`,
                 spotlight: `${aliceId}:0`,
               },
@@ -1187,7 +1187,7 @@ describe.each([
                 grid: [`${localId}:0`],
               },
               b: {
-                type: "one-on-one-landscape",
+                type: "one-on-one-desktop",
                 pip: `${localId}:0`,
                 spotlight: `${aliceId}:0`,
               },
@@ -1230,7 +1230,7 @@ describe.each([
                 grid: [`${localId}:0`],
               },
               b: {
-                type: "one-on-one-landscape",
+                type: "one-on-one-desktop",
                 pip: `${localId}:0`,
                 spotlight: `${aliceId}:0`,
               },
@@ -1240,7 +1240,7 @@ describe.each([
                 grid: [`${localId}:0`, `${aliceId}:0`, `${daveId}:0`],
               },
               d: {
-                type: "one-on-one-landscape",
+                type: "one-on-one-desktop",
                 pip: `${localId}:0`,
                 spotlight: `${daveId}:0`,
               },
@@ -1464,7 +1464,7 @@ describe.each([
           // ringing the entire time (even once timed out)
           expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
             a: {
-              type: "one-on-one-landscape",
+              type: "one-on-one-desktop",
               spotlight: `${localId}:0`,
               pip: `ringing:${aliceUserId}`,
             },
@@ -1510,12 +1510,12 @@ describe.each([
           // ringing the entire time
           expectObservable(summarizeLayout$(vm.layout$)).toBe("a 20ms b", {
             a: {
-              type: "one-on-one-landscape",
+              type: "one-on-one-desktop",
               spotlight: `${localId}:0`,
               pip: `ringing:${aliceUserId}`,
             },
             b: {
-              type: "one-on-one-landscape",
+              type: "one-on-one-desktop",
               spotlight: `${aliceId}:0`,
               pip: `${localId}:0`,
             },

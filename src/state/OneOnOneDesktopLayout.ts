@@ -10,19 +10,19 @@ import { type BehaviorSubject } from "rxjs";
 
 import {
   type Alignment,
-  type OneOnOneLandscapeLayout,
-  type OneOnOneLandscapeLayoutMedia,
+  type OneOnOneDesktopLayout,
+  type OneOnOneDesktopLayoutMedia,
 } from "./layout-types";
 import { type TileStore } from "./TileStore";
 
 /**
- * Produces a one-on-one landscape layout with the given media.
+ * Produces a one-on-one desktop layout with the given media.
  */
-export function oneOnOneLandscapeLayout(
-  media: OneOnOneLandscapeLayoutMedia,
+export function oneOnOneDesktopLayout(
+  media: OneOnOneDesktopLayoutMedia,
   pipAlignment$: BehaviorSubject<Alignment>,
   prevTiles: TileStore,
-): [OneOnOneLandscapeLayout, TileStore] {
+): [OneOnOneDesktopLayout, TileStore] {
   const update = prevTiles.from(2);
   update.registerGridTile(media.pip);
   update.registerGridTile(media.spotlight);
