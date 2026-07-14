@@ -39,15 +39,16 @@ function testLayoutSwitch({
 }
 
 describe("default mode", () => {
-  test("uses grid layout by default", () =>
+  test("uses grid layout in normal window", () =>
     testLayoutSwitch({
+      windowMode: "      n",
       expectedGridMode: "g",
     }));
 
-  test("uses spotlight mode when window mode is flat", () =>
+  test("uses grid layout in flat window", () =>
     testLayoutSwitch({
       windowMode: "      f",
-      expectedGridMode: "s",
+      expectedGridMode: "g",
     }));
 });
 
@@ -101,32 +102,25 @@ test("switches manually to grid after screen share while manually in spotlight",
     expectedGridMode: "gs-g",
   }));
 
-test("auto-switches to spotlight when in flat window mode", () =>
-  testLayoutSwitch({
-    // First normal, then narrow, then flat.
-    windowMode: "      nNf",
-    expectedGridMode: "g-s",
-  }));
-
 test("allows switching modes manually when in flat window mode", () =>
   testLayoutSwitch({
-    // Window becomes flat, then user switches to grid and back.
+    // Window becomes flat, then user switches to spotlight and back.
     // Finally the window returns to a normal shape.
     windowMode: "      nf--n",
-    userSelection: "   --gs",
-    expectedGridMode: "gsgsg",
+    userSelection: "   --sg",
+    expectedGridMode: "g-sg",
   }));
 
-test("stays in spotlight while there are screen shares even when window mode changes", () =>
+test("switches to grid when in flat window mode even when there are screen shares", () =>
   testLayoutSwitch({
-    windowMode: "      nfn",
+    windowMode: "      nf",
     hasScreenShares: " y",
-    expectedGridMode: "s",
+    expectedGridMode: "sg",
   }));
 
-test("ignores end of screen share until window mode returns to normal", () =>
+test("ignores screen share until window mode returns to normal", () =>
   testLayoutSwitch({
-    windowMode: "      nf-n",
-    hasScreenShares: " y-n",
-    expectedGridMode: "s--g",
+    windowMode: "      f-n",
+    hasScreenShares: " ny-n",
+    expectedGridMode: "g-sg",
   }));

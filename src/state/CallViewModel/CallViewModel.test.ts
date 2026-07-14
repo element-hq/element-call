@@ -568,14 +568,14 @@ describe.each([
                 pipSize: "sm",
               },
               b: {
-                type: "spotlight-expanded",
+                type: "spotlight-landscape",
                 spotlight: [`${aliceId}:0:screen-share`],
-                pip: `${aliceId}:0`,
+                grid: [`${localId}:0`, `${aliceId}:0`],
               },
               c: {
-                type: "spotlight-expanded",
+                type: "spotlight-landscape",
                 spotlight: [`${aliceId}:0`],
-                pip: undefined,
+                grid: [`${localId}:0`, `${bobId}:0`],
               },
             },
           );
