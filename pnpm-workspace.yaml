@@ -29,12 +29,30 @@ overrides:
   # Security fixes:
   # - https://github.com/element-hq/element-call/security/dependabot/110
   # - https://github.com/element-hq/element-call/security/dependabot/122
-  "qs": "^6.14.1"
-  # Security fix: https://github.com/element-hq/element-call/security/dependabot/106
-  "js-yaml": "^4.1.1"
+  # - https://github.com/element-hq/element-call/security/dependabot/179
+  "qs": "^6.15.2"
+  # Security fixes:
+  # - https://github.com/element-hq/element-call/security/dependabot/106
+  # - https://github.com/element-hq/element-call/security/dependabot/203
+  "js-yaml": "^4.2.0"
   # Storybook declares support for 0.27.0 only but empirically works fine with 0.28.0.
   "esbuild": "^0.28.0"
-  # Multiple security fixes: https://github.com/nodejs/undici/releases/tag/v6.24.0
-  "undici": "^6.24.0"
+  # Security fixes:
+  # - https://github.com/nodejs/undici/releases/tag/v6.24.0
+  # - https://github.com/element-hq/element-call/security/dependabot/201
+  # - https://github.com/element-hq/element-call/security/dependabot/199
+  "undici": "^6.27.0"
   # Security fix: https://github.com/advisories/GHSA-rf6f-7fwh-wjgh
   "flatted": "^3.4.2"
+  # Security fix: https://github.com/element-hq/element-call/security/dependabot/184
+  "ws": "^8.21.0"
+  # Security fixes:
+  # - https://github.com/element-hq/element-call/security/dependabot/191
+  # - https://github.com/element-hq/element-call/security/dependabot/190
+  # - https://github.com/element-hq/element-call/security/dependabot/192
+  # - https://github.com/element-hq/element-call/security/dependabot/194
+  # - https://github.com/element-hq/element-call/security/dependabot/198
+  # - https://github.com/element-hq/element-call/security/dependabot/196
+  # - https://github.com/element-hq/element-call/security/dependabot/195
+  # - https://github.com/element-hq/element-call/security/dependabot/193
+  "dompurify": "^3.4.11"
