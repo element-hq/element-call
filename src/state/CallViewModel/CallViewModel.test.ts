@@ -327,8 +327,8 @@ describe.each([
         },
         (vm) => {
           schedule(modeInputMarbles, {
-            s: () => vm.setGridMode("spotlight"),
-            g: () => vm.setGridMode("grid"),
+            s: () => vm.layoutSwitchVm$.value!.setLayout("spotlight"),
+            g: () => vm.layoutSwitchVm$.value!.setLayout("grid"),
           });
 
           expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -815,7 +815,9 @@ describe.each([
           ]),
         },
         (vm) => {
-          schedule(modeInputMarbles, { s: () => vm.setGridMode("spotlight") });
+          schedule(modeInputMarbles, {
+            s: () => vm.layoutSwitchVm$.value!.setLayout("spotlight"),
+          });
 
           expectObservable(summarizeLayout$(vm.layout$)).toBe(
             expectedLayoutMarbles,
@@ -1021,7 +1023,7 @@ describe.each([
         },
         (vm) => {
           schedule(modeInputMarbles, {
-            s: () => vm.setGridMode("spotlight"),
+            s: () => vm.layoutSwitchVm$.value!.setLayout("spotlight"),
           });
           schedule(expandInputMarbles, {
             a: () => vm.toggleSpotlightExpanded$.value!(),
@@ -1091,7 +1093,7 @@ describe.each([
         },
         (vm) => {
           schedule(modeInputMarbles, {
-            s: () => vm.setGridMode("spotlight"),
+            s: () => vm.layoutSwitchVm$.value!.setLayout("spotlight"),
           });
           schedule(expandInputMarbles, {
             a: () => vm.toggleSpotlightExpanded$.value!(),
@@ -1131,7 +1133,7 @@ describe.each([
         },
         (vm) => {
           schedule("s", {
-            s: () => vm.setGridMode("spotlight"),
+            s: () => vm.layoutSwitchVm$.value!.setLayout("spotlight"),
           });
           schedule("a", {
             a: () => vm.toggleSpotlightExpanded$.value!(),
@@ -1168,8 +1170,8 @@ describe.each([
         },
         (vm) => {
           schedule(modeInputMarbles, {
-            s: () => vm.setGridMode("spotlight"),
-            g: () => vm.setGridMode("grid"),
+            s: () => vm.layoutSwitchVm$.value!.setLayout("spotlight"),
+            g: () => vm.layoutSwitchVm$.value!.setLayout("grid"),
           });
           schedule(expandInputMarbles, {
             a: () => vm.toggleSpotlightExpanded$.value!(),
@@ -1235,7 +1237,7 @@ describe.each([
           ]),
         },
         (vm) => {
-          vm.setGridMode("grid");
+          vm.layoutSwitchVm$.value!.setLayout("grid");
           expectObservable(summarizeLayout$(vm.layout$)).toBe(
             expectedLayoutMarbles,
             {
@@ -1278,7 +1280,7 @@ describe.each([
           }),
         },
         (vm) => {
-          vm.setGridMode("grid");
+          vm.layoutSwitchVm$.value!.setLayout("grid");
           expectObservable(summarizeLayout$(vm.layout$)).toBe(
             expectedLayoutMarbles,
             {

@@ -433,7 +433,7 @@ exports[`InCallView > rendering > renders 1`] = `
       >
         <input
           aria-labelledby="_r_19_"
-          name="layoutMode"
+          name="layout"
           type="radio"
           value="spotlight"
         />
@@ -454,7 +454,7 @@ exports[`InCallView > rendering > renders 1`] = `
         <input
           aria-labelledby="_r_1e_"
           checked=""
-          name="layoutMode"
+          name="layout"
           type="radio"
           value="grid"
         />

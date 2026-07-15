@@ -141,7 +141,10 @@ import {
 } from "./remoteMembers/MatrixMemberMetadata.ts";
 import { Publisher } from "./localMember/Publisher.ts";
 import { type Connection } from "./remoteMembers/Connection.ts";
-import { createLayoutModeSwitch } from "./LayoutSwitch.ts";
+import {
+  type LayoutSwitchViewModel,
+  createLayoutSwitchViewModel,
+} from "../LayoutSwitchViewModel.ts";
 import {
   createWrappedUserMedia,
   type WrappedUserMediaViewModel,
@@ -200,8 +203,6 @@ const smallMobileCallThreshold = 3;
 // How long the footer should be shown for when hovering over or interacting
 // with the interface
 const showFooterMs = 4000;
-
-export type GridMode = "grid" | "spotlight";
 
 export type WindowMode = "normal" | "narrow" | "flat" | "pip";
 
@@ -349,8 +350,7 @@ export interface CallViewModel {
   showNameTags$: Behavior<boolean>;
   spotlightExpanded$: Behavior<boolean>;
   toggleSpotlightExpanded$: Behavior<(() => void) | null>;
-  gridMode$: Behavior<GridMode>;
-  setGridMode: (value: GridMode) => void;
+  layoutSwitchVm$: Behavior<LayoutSwitchViewModel | null>;
 
   // header/footer visibility
   showHeader$: Behavior<boolean>;
@@ -1056,7 +1056,7 @@ export function createCallViewModel$(
     spotlightExpandedToggle$,
   );
 
-  const { setGridMode, gridMode$ } = createLayoutModeSwitch(
+  const layoutSwitchVm = createLayoutSwitchViewModel(
     scope,
     windowMode$,
     hasRemoteScreenShares$,
@@ -1223,9 +1223,9 @@ export function createCallViewModel$(
       switchMap((windowMode) => {
         switch (windowMode) {
           case "normal":
-            return gridMode$.pipe(
-              switchMap((gridMode) => {
-                switch (gridMode) {
+            return layoutSwitchVm.layout$.pipe(
+              switchMap((layout) => {
+                switch (layout) {
                   case "grid":
                     return oneOnOneDesktopLayoutMedia$.pipe(
                       switchMap((oneOnOne) =>
@@ -1260,9 +1260,9 @@ export function createCallViewModel$(
             return oneOnOneMobileLayoutMedia$.pipe(
               switchMap((oneOnOne) =>
                 oneOnOne === null
-                  ? gridMode$.pipe(
-                      switchMap((gridMode) => {
-                        switch (gridMode) {
+                  ? layoutSwitchVm.layout$.pipe(
+                      switchMap((layout) => {
+                        switch (layout) {
                           case "grid":
                             // Yes, grid mode actually gets you a "spotlight" layout in
                             // this window mode.
@@ -1775,8 +1775,7 @@ export function createCallViewModel$(
 
     spotlightExpanded$: spotlightExpanded$,
     toggleSpotlightExpanded$: toggleSpotlightExpanded$,
-    gridMode$: gridMode$,
-    setGridMode: setGridMode,
+    layoutSwitchVm$: constant(layoutSwitchVm),
     layout$: layout$,
     localMatrixLivekitMember$,
     remoteMatrixLivekitMembers$: scope.behavior(
