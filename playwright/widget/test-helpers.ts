@@ -73,9 +73,6 @@ export class TestHelpers {
     audioOnly: boolean = false,
     isDM: boolean = false,
   ): Promise<void> {
-    // XXX This using the notification toast to join the room.
-    // Not the button in the header
-
     await page.waitForTimeout(3000);
     const label = isDM
       ? audioOnly
@@ -85,7 +82,9 @@ export class TestHelpers {
     await expect(page.getByText(label)).toBeVisible({
       timeout: 10000,
     });
-    await page.getByRole("button", { name: "Join" }).click({
+    // XXX This using the notification toast to join the room.
+    // Not the buttons in the header or timeline
+    await page.getByRole("alert").getByRole("button", { name: "Join" }).click({
       timeout: 5000,
     });
   }
