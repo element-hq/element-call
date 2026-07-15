@@ -49,6 +49,7 @@ exports[`LobbyView > renders with AppBar android 1`] = `
         <video
           disablepictureinpicture=""
           playsinline=""
+          poster="/src/graphics/video-placeholder.gif"
           tabindex="-1"
         />
         <div
@@ -280,6 +281,7 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
         <video
           disablepictureinpicture=""
           playsinline=""
+          poster="/src/graphics/video-placeholder.gif"
           tabindex="-1"
         />
         <div
@@ -558,6 +560,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
         <video
           disablepictureinpicture=""
           playsinline=""
+          poster="/src/graphics/video-placeholder.gif"
           tabindex="-1"
         />
         <div
