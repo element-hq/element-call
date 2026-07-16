@@ -25,6 +25,7 @@ import {
 import { type ReactionOption } from "../reactions";
 import { ReactionIndicator } from "../reactions/ReactionIndicator";
 import { RTCConnectionStats } from "../RTCConnectionStats";
+import videoPlaceholder from "../graphics/video-placeholder.gif";
 
 interface Props extends ComponentProps<typeof animated.div> {
   className?: string;
@@ -154,6 +155,9 @@ export const MediaView: FC<Props> = ({
             tabIndex={-1}
             disablePictureInPicture
             data-testid="video"
+            // Set the placeholder to a small transparent image. (On Android web
+            // views the default poster image is particularly ugly.)
+            poster={videoPlaceholder}
           />
         )}
       </div>
