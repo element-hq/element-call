@@ -19,6 +19,7 @@ const createRoomWidgetClientSpy = vi.mocked(createRoomWidgetClient);
 vi.mock("./config/Config", () => ({
   Config: {
     init: vi.fn().mockImplementation(async () => Promise.resolve()),
+    clientWellKnownLookupsEnabled: vi.fn().mockReturnValue(true),
   },
 }));
 const configInitSpy = vi.mocked(Config.init);

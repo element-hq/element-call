@@ -125,9 +125,7 @@ describe("UrlParams", () => {
 
   describe("enableClientWellKnownLookups", () => {
     it("is undefined when not set (so the config value applies)", () => {
-      expect(
-        computeUrlParams().enableClientWellKnownLookups,
-      ).toBeUndefined();
+      expect(computeUrlParams().enableClientWellKnownLookups).toBeUndefined();
     });
 
     it("is false when set to false", () => {

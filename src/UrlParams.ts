@@ -480,7 +480,9 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     showControls: parser.getFlag("showControls"),
     hideScreensharing: parser.getFlag("hideScreensharing"),
     allowIceFallback: parser.getFlag("allowIceFallback"),
-    enableClientWellKnownLookups: parser.getFlag("enableClientWellKnownLookups"),
+    enableClientWellKnownLookups: parser.getFlag(
+      "enableClientWellKnownLookups",
+    ),
     perParticipantE2EE: parser.getFlag("perParticipantE2EE"),
     controlledAudioDevices: parser.getFlag("controlledAudioDevices"),
     skipLobby: isWidget ? parser.getFlag("skipLobby") : false,

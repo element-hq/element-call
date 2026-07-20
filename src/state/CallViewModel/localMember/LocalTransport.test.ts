@@ -19,6 +19,7 @@ import {
   type CallMembership,
   type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { MatrixError } from "matrix-js-sdk";
 import { BehaviorSubject, filter, lastValueFrom } from "rxjs";
 import fetchMock from "fetch-mock";
 
@@ -471,6 +472,11 @@ describe("LocalTransport", () => {
 
     it("supports getting transport via well-known", async () => {
       localTransportOpts.client.getDomain.mockReturnValue("example.org");
+      // Pretend the server doesn't implement the transports endpoint to trigger
+      // the .well-known fallback.
+      localTransportOpts.client._unstable_getRTCTransports.mockRejectedValue(
+        new MatrixError({ errcode: "M_UNRECOGNIZED" }, 404),
+      );
       fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
         "org.matrix.msc4143.rtc_foci": [
           { type: "livekit", livekit_service_url: "https://lk.example.org" },
@@ -501,6 +507,11 @@ describe("LocalTransport", () => {
 
     it("fails fast if the openId request fails for the well-known config", async () => {
       localTransportOpts.client.getDomain.mockReturnValue("example.org");
+      // Pretend the server doesn't implement the transports endpoint to trigger
+      // the .well-known fallback.
+      localTransportOpts.client._unstable_getRTCTransports.mockRejectedValue(
+        new MatrixError({ errcode: "M_UNRECOGNIZED" }, 404),
+      );
       fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
         "org.matrix.msc4143.rtc_foci": [
           { type: "livekit", livekit_service_url: "https://lk.example.org" },
