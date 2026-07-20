@@ -74,7 +74,6 @@
     "hostname": "Hostname: {{hostname}}",
     "livekit_server_info": "LiveKit Server Info",
     "livekit_sfu": "LiveKit SFU: {{url}}",
-    "matrix_id": "Matrix ID: {{id}}",
     "matrixRTCMode": {
       "Comptibility": {
         "description": "Compatible with homeservers that do not support sticky events (but all other EC clients are v0.17.0 or later)",
@@ -90,6 +89,7 @@
       },
       "title": "MatrixRTC mode"
     },
+    "matrix_id": "Matrix ID: {{id}}",
     "mute_all_audio": "Mute all audio (participants, reactions, join sounds)",
     "show_connection_stats": "Show connection statistics",
     "url_params": "URL parameters"
