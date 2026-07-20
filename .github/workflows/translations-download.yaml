@@ -40,6 +40,11 @@ jobs:
       - name: Fix the owner of the downloaded files
         run: "sudo chown runner:docker -R locales"
 
+      # Localazy doesn't write file contents in the same order that i18next-cli's
+      # extractor uses. We re-run the extractor after downloading to fix the order.
+      - name: i18n
+        run: pnpm i18n
+
       - name: Formatting
         run: pnpm format
 
@@ -53,7 +58,7 @@ jobs:
           title: Localazy Download
           commit-message: Translations updates
           labels: |
-            T-Task
+            PR-Task
 
       - name: Enable automerge
         run: gh pr merge --merge --auto "$PR_NUMBER"
