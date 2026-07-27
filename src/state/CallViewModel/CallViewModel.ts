@@ -1108,41 +1108,45 @@ export function createCallViewModel$(
       ),
     );
 
-  const oneOnOneLayoutMedia$: Observable<{
+  const oneOnOneLayoutMedia$: Behavior<{
     local: LocalUserMediaViewModel;
     remote: UserMediaViewModel | RingingMediaViewModel;
-  } | null> = combineLatest([userMedia$, screenShares$]).pipe(
-    switchMap(([userMedia, screenShares]) => {
-      // One-on-one layout only supports 2 user media, no screen shares
-      if (userMedia.length <= 2 && screenShares.length === 0) {
-        const local = userMedia.find(
-          (vm): vm is WrappedUserMediaViewModel & LocalUserMediaViewModel =>
-            vm.type === "user" && vm.local,
-        );
-
-        if (local !== undefined) {
-          const remote = userMedia.find(
-            (vm): vm is WrappedUserMediaViewModel & RemoteUserMediaViewModel =>
-              vm.type === "user" && !vm.local,
+  } | null> = scope.behavior(
+    combineLatest([userMedia$, screenShares$]).pipe(
+      switchMap(([userMedia, screenShares]) => {
+        // One-on-one layout only supports 2 user media, no screen shares
+        if (userMedia.length <= 2 && screenShares.length === 0) {
+          const local = userMedia.find(
+            (vm): vm is WrappedUserMediaViewModel & LocalUserMediaViewModel =>
+              vm.type === "user" && vm.local,
           );
 
-          if (remote !== undefined) return of({ local, remote });
-
-          // If there's no other user media in the call (could still happen in
-          // this branch due to the duplicate tiles option), we could possibly
-          // show ringing media instead
-          if (userMedia.length === 1)
-            return ringingMedia$.pipe(
-              map(
-                (ringingMedia) =>
-                  ringingMedia && { local, remote: ringingMedia },
-              ),
+          if (local !== undefined) {
+            const remote = userMedia.find(
+              (
+                vm,
+              ): vm is WrappedUserMediaViewModel & RemoteUserMediaViewModel =>
+                vm.type === "user" && !vm.local,
             );
-        }
-      }
 
-      return of(null);
-    }),
+            if (remote !== undefined) return of({ local, remote });
+
+            // If there's no other user media in the call (could still happen in
+            // this branch due to the duplicate tiles option), we could possibly
+            // show ringing media instead
+            if (userMedia.length === 1)
+              return ringingMedia$.pipe(
+                map(
+                  (ringingMedia) =>
+                    ringingMedia && { local, remote: ringingMedia },
+                ),
+              );
+          }
+        }
+
+        return of(null);
+      }),
+    ),
   );
 
   const oneOnOneDesktopLayoutMedia$: Observable<OneOnOneDesktopLayoutMedia | null> =
@@ -1356,6 +1360,22 @@ export function createCallViewModel$(
 
   const edgeToEdge$ = scope.behavior<boolean>(
     layoutMedia$.pipe(map(({ edgeToEdge }) => edgeToEdge)),
+  );
+
+  // Only show the layout switch in cases where it has an effect on the layout
+  const showLayoutSwitch$ = windowMode$.pipe(
+    switchMap((windowMode) => {
+      switch (windowMode) {
+        case "normal":
+          return of(true);
+        case "flat":
+          return oneOnOneLayoutMedia$.pipe(
+            map((oneOnOne) => oneOnOne === null),
+          );
+        default:
+          return of(false);
+      }
+    }),
   );
 
   const screenTap$ = new Subject<void>();
@@ -1775,7 +1795,9 @@ export function createCallViewModel$(
 
     spotlightExpanded$: spotlightExpanded$,
     toggleSpotlightExpanded$: toggleSpotlightExpanded$,
-    layoutSwitchVm$: constant(layoutSwitchVm),
+    layoutSwitchVm$: scope.behavior(
+      showLayoutSwitch$.pipe(map((show) => (show ? layoutSwitchVm : null))),
+    ),
     layout$: layout$,
     localMatrixLivekitMember$,
     remoteMatrixLivekitMembers$: scope.behavior(

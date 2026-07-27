@@ -536,11 +536,15 @@ describe.each([
     withTestScheduler(({ behavior, expectObservable }) => {
       // Starts as a one-on-one call, then Alice shares her screen, then Bob
       // joins, and finally Alice stops sharing her screen
-      const participantInputMarbles = " a--b";
-      const aliceSharingInputMarbles = "ny-n";
+      const participantInputMarbles = "    a--b";
+      const aliceSharingInputMarbles = "   ny-n";
       // Starts in one-on-one mobile layout, then goes to spotlight layout for
       // the screen sharing and group call cases
-      const expectedLayoutMarbles = "   ab-c";
+      const expectedLayoutMarbles = "      ab-c";
+      // Whether the layout switch is visible. It should be hidden while in
+      // one-on-one layout.
+      const expectedLayoutSwitchMarbles = "ny--";
+
       withCallViewModel(
         {
           remoteParticipants$: behavior(participantInputMarbles, {
@@ -579,6 +583,9 @@ describe.each([
               },
             },
           );
+          expectObservable(
+            vm.layoutSwitchVm$.pipe(map((vm) => vm !== null)),
+          ).toBe(expectedLayoutSwitchMarbles, yesNo);
         },
       );
     });
