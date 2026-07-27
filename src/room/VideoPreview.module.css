@@ -11,6 +11,7 @@ Please see LICENSE in the repository root for full details.
   min-block-size: 0;
   block-size: 50vh;
   aspect-ratio: 16 / 9;
+  max-width: 100%;
   border-radius: var(--cpd-space-4x);
   position: relative;
   overflow: hidden;
