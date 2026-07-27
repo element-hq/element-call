@@ -505,7 +505,7 @@ describe.each([
   });
 
   test("one-on-one portrait layout shows name tags in room with 3 members", () => {
-    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+    withTestScheduler(({ expectObservable }) => {
       withCallViewModel(
         {
           remoteParticipants$: constant([aliceParticipant]),
@@ -1066,7 +1066,7 @@ describe.each([
   });
 
   test("expanded spotlight layout hides PiP tile in one-on-one voice call", () => {
-    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+    withTestScheduler(({ expectObservable }) => {
       withCallViewModel(
         {
           remoteParticipants$: constant([aliceParticipant]),
