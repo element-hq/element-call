@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC } from "react";
+import { useId, type FC } from "react";
 import {
   SpotlightViewIcon,
   GridIcon,
@@ -24,10 +24,11 @@ interface Props {
 export const LayoutSwitch: FC<Props> = ({ vm, className }) => {
   const { t } = useTranslation();
   const layout = useBehavior(vm.layout$);
+  const name = useId();
 
   return (
     <Switch<"spotlight", "grid">
-      name="layout"
+      name={name}
       aria-label={t("layout_switch_label")}
       leftLabel={t("layout_spotlight_label")}
       leftValue="spotlight"
