@@ -70,8 +70,8 @@ import { setPipEnabled$ } from "../../controls";
 import { TileStore } from "../TileStore";
 import { gridLikeLayout } from "../GridLikeLayout";
 import { spotlightExpandedLayout } from "../SpotlightExpandedLayout";
-import { oneOnOneLandscapeLayout } from "../OneOnOneLandscapeLayout";
-import { oneOnOnePortraitLayout } from "../OneOnOnePortraitLayout";
+import { oneOnOneDesktopLayout } from "../OneOnOneDesktopLayout";
+import { oneOnOneMobileLayout } from "../OneOnOneMobileLayout";
 import { pipLayout } from "../PipLayout";
 import { type EncryptionSystem } from "../../e2ee/sharedKeyManagement";
 import {
@@ -93,8 +93,8 @@ import {
   type GridLayoutMedia,
   type Layout,
   type LayoutMedia,
-  type OneOnOneLandscapeLayoutMedia,
-  type OneOnOnePortraitLayoutMedia,
+  type OneOnOneDesktopLayoutMedia,
+  type OneOnOneMobileLayoutMedia,
   type SpotlightExpandedLayoutMedia,
   type SpotlightLandscapeLayoutMedia,
   type SpotlightPortraitLayoutMedia,
@@ -1145,19 +1145,19 @@ export function createCallViewModel$(
     }),
   );
 
-  const oneOnOneLandscapeLayoutMedia$: Observable<OneOnOneLandscapeLayoutMedia | null> =
+  const oneOnOneDesktopLayoutMedia$: Observable<OneOnOneDesktopLayoutMedia | null> =
     oneOnOneLayoutMedia$.pipe(
       map((media) => {
         if (media === null) return null;
         return media.remote.type === "ringing"
           ? {
-              type: "one-on-one-landscape" as const,
+              type: "one-on-one-desktop" as const,
               edgeToEdge: false,
               spotlight: media.local,
               pip: media.remote,
             }
           : {
-              type: "one-on-one-landscape" as const,
+              type: "one-on-one-desktop" as const,
               edgeToEdge: false,
               spotlight: media.remote,
               pip: media.local,
@@ -1165,13 +1165,13 @@ export function createCallViewModel$(
       }),
     );
 
-  const oneOnOnePortraitLayoutMedia$: Observable<OneOnOnePortraitLayoutMedia | null> =
+  const oneOnOneMobileLayoutMedia$: Observable<OneOnOneMobileLayoutMedia | null> =
     oneOnOneLayoutMedia$.pipe(
       switchMap((media) => {
         if (media === null) return of(null);
         return media.local.videoEnabled$.pipe(
           map((videoEnabled) => ({
-            type: "one-on-one-portrait" as const,
+            type: "one-on-one-mobile" as const,
             edgeToEdge: true as const,
             spotlight: media.remote,
             pip: videoEnabled ? media.local : undefined,
@@ -1227,7 +1227,7 @@ export function createCallViewModel$(
               switchMap((gridMode) => {
                 switch (gridMode) {
                   case "grid":
-                    return oneOnOneLandscapeLayoutMedia$.pipe(
+                    return oneOnOneDesktopLayoutMedia$.pipe(
                       switchMap((oneOnOne) =>
                         oneOnOne === null ? gridLayoutMedia$ : of(oneOnOne),
                       ),
@@ -1244,7 +1244,7 @@ export function createCallViewModel$(
               }),
             );
           case "narrow":
-            return oneOnOnePortraitLayoutMedia$.pipe(
+            return oneOnOneMobileLayoutMedia$.pipe(
               switchMap((oneOnOne) =>
                 oneOnOne === null
                   ? combineLatest([grid$, spotlight$], (grid, spotlight) =>
@@ -1257,17 +1257,23 @@ export function createCallViewModel$(
               ),
             );
           case "flat":
-            return gridMode$.pipe(
-              switchMap((gridMode) => {
-                switch (gridMode) {
-                  case "grid":
-                    // Yes, grid mode actually gets you a "spotlight" layout in
-                    // this window mode.
-                    return spotlightLandscapeLayoutMedia$(true);
-                  case "spotlight":
-                    return spotlightExpandedLayoutMedia$(true);
-                }
-              }),
+            return oneOnOneMobileLayoutMedia$.pipe(
+              switchMap((oneOnOne) =>
+                oneOnOne === null
+                  ? gridMode$.pipe(
+                      switchMap((gridMode) => {
+                        switch (gridMode) {
+                          case "grid":
+                            // Yes, grid mode actually gets you a "spotlight" layout in
+                            // this window mode.
+                            return spotlightLandscapeLayoutMedia$(true);
+                          case "spotlight":
+                            return spotlightExpandedLayoutMedia$(true);
+                        }
+                      }),
+                    )
+                  : of(oneOnOne),
+              ),
             );
           case "pip":
             return pipLayoutMedia$;
@@ -1295,8 +1301,8 @@ export function createCallViewModel$(
           // indicators. And in one-on-one layout there's no question as to who is
           // speaking.
           case "spotlight-expanded":
-          case "one-on-one-landscape":
-          case "one-on-one-portrait":
+          case "one-on-one-desktop":
+          case "one-on-one-mobile":
             return false;
           default:
             return true;
@@ -1308,7 +1314,7 @@ export function createCallViewModel$(
   const showNameTags$ = scope.behavior<boolean>(
     layoutMedia$.pipe(
       switchMap((l) =>
-        l.type === "pip" || l.type === "one-on-one-portrait"
+        l.type === "pip" || l.type === "one-on-one-mobile"
           ? matrixRoomMembers$.pipe(
               map(
                 (members) =>
@@ -1513,16 +1519,16 @@ export function createCallViewModel$(
                 prevTiles,
               );
               break;
-            case "one-on-one-landscape":
-              [layout, newTiles] = oneOnOneLandscapeLayout(
+            case "one-on-one-desktop":
+              [layout, newTiles] = oneOnOneDesktopLayout(
                 media,
                 landscapePipAlignment$,
                 prevTiles,
               );
               pip = layout.pip;
               break;
-            case "one-on-one-portrait":
-              [layout, newTiles] = oneOnOnePortraitLayout(
+            case "one-on-one-mobile":
+              [layout, newTiles] = oneOnOneMobileLayout(
                 media,
                 portraitPipSize$,
                 portraitPipAlignment$,

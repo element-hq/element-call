@@ -49,8 +49,8 @@ import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import { type CallLayoutOutputs } from "../grid/CallLayout";
-import { makeOneOnOneLandscapeLayout } from "../grid/OneOnOneLandscapeLayout";
-import { makeOneOnOnePortraitLayout } from "../grid/OneOnOnePortraitLayout";
+import { makeOneOnOneDesktopLayout } from "../grid/OneOnOneDesktopLayout";
+import { makeOneOnOneMobileLayout } from "../grid/OneOnOneMobileLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
@@ -483,8 +483,8 @@ export const InCallView: FC<InCallViewProps> = ({
       "spotlight-landscape": makeSpotlightLandscapeLayout(inputs),
       "spotlight-portrait": makeSpotlightPortraitLayout(inputs),
       "spotlight-expanded": makeSpotlightExpandedLayout(inputs),
-      "one-on-one-landscape": makeOneOnOneLandscapeLayout(inputs),
-      "one-on-one-portrait": makeOneOnOnePortraitLayout(inputs),
+      "one-on-one-desktop": makeOneOnOneDesktopLayout(inputs),
+      "one-on-one-mobile": makeOneOnOneMobileLayout(inputs),
     };
   }, [gridBoundsObservable$]);
 
