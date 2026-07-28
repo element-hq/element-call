@@ -141,7 +141,10 @@ import {
 } from "./remoteMembers/MatrixMemberMetadata.ts";
 import { Publisher } from "./localMember/Publisher.ts";
 import { type Connection } from "./remoteMembers/Connection.ts";
-import { createLayoutModeSwitch } from "./LayoutSwitch.ts";
+import {
+  type LayoutSwitchViewModel,
+  createLayoutSwitchViewModel,
+} from "../LayoutSwitchViewModel.ts";
 import {
   createWrappedUserMedia,
   type WrappedUserMediaViewModel,
@@ -200,8 +203,6 @@ const smallMobileCallThreshold = 3;
 // How long the footer should be shown for when hovering over or interacting
 // with the interface
 const showFooterMs = 4000;
-
-export type GridMode = "grid" | "spotlight";
 
 export type WindowMode = "normal" | "narrow" | "flat" | "pip";
 
@@ -349,8 +350,7 @@ export interface CallViewModel {
   showNameTags$: Behavior<boolean>;
   spotlightExpanded$: Behavior<boolean>;
   toggleSpotlightExpanded$: Behavior<(() => void) | null>;
-  gridMode$: Behavior<GridMode>;
-  setGridMode: (value: GridMode) => void;
+  layoutSwitchVm$: Behavior<LayoutSwitchViewModel | null>;
 
   // header/footer visibility
   showHeader$: Behavior<boolean>;
@@ -1056,7 +1056,7 @@ export function createCallViewModel$(
     spotlightExpandedToggle$,
   );
 
-  const { setGridMode, gridMode$ } = createLayoutModeSwitch(
+  const layoutSwitchVm = createLayoutSwitchViewModel(
     scope,
     windowMode$,
     hasRemoteScreenShares$,
@@ -1108,41 +1108,45 @@ export function createCallViewModel$(
       ),
     );
 
-  const oneOnOneLayoutMedia$: Observable<{
+  const oneOnOneLayoutMedia$: Behavior<{
     local: LocalUserMediaViewModel;
     remote: UserMediaViewModel | RingingMediaViewModel;
-  } | null> = combineLatest([userMedia$, screenShares$]).pipe(
-    switchMap(([userMedia, screenShares]) => {
-      // One-on-one layout only supports 2 user media, no screen shares
-      if (userMedia.length <= 2 && screenShares.length === 0) {
-        const local = userMedia.find(
-          (vm): vm is WrappedUserMediaViewModel & LocalUserMediaViewModel =>
-            vm.type === "user" && vm.local,
-        );
-
-        if (local !== undefined) {
-          const remote = userMedia.find(
-            (vm): vm is WrappedUserMediaViewModel & RemoteUserMediaViewModel =>
-              vm.type === "user" && !vm.local,
+  } | null> = scope.behavior(
+    combineLatest([userMedia$, screenShares$]).pipe(
+      switchMap(([userMedia, screenShares]) => {
+        // One-on-one layout only supports 2 user media, no screen shares
+        if (userMedia.length <= 2 && screenShares.length === 0) {
+          const local = userMedia.find(
+            (vm): vm is WrappedUserMediaViewModel & LocalUserMediaViewModel =>
+              vm.type === "user" && vm.local,
           );
 
-          if (remote !== undefined) return of({ local, remote });
-
-          // If there's no other user media in the call (could still happen in
-          // this branch due to the duplicate tiles option), we could possibly
-          // show ringing media instead
-          if (userMedia.length === 1)
-            return ringingMedia$.pipe(
-              map(
-                (ringingMedia) =>
-                  ringingMedia && { local, remote: ringingMedia },
-              ),
+          if (local !== undefined) {
+            const remote = userMedia.find(
+              (
+                vm,
+              ): vm is WrappedUserMediaViewModel & RemoteUserMediaViewModel =>
+                vm.type === "user" && !vm.local,
             );
-        }
-      }
 
-      return of(null);
-    }),
+            if (remote !== undefined) return of({ local, remote });
+
+            // If there's no other user media in the call (could still happen in
+            // this branch due to the duplicate tiles option), we could possibly
+            // show ringing media instead
+            if (userMedia.length === 1)
+              return ringingMedia$.pipe(
+                map(
+                  (ringingMedia) =>
+                    ringingMedia && { local, remote: ringingMedia },
+                ),
+              );
+          }
+        }
+
+        return of(null);
+      }),
+    ),
   );
 
   const oneOnOneDesktopLayoutMedia$: Observable<OneOnOneDesktopLayoutMedia | null> =
@@ -1223,9 +1227,9 @@ export function createCallViewModel$(
       switchMap((windowMode) => {
         switch (windowMode) {
           case "normal":
-            return gridMode$.pipe(
-              switchMap((gridMode) => {
-                switch (gridMode) {
+            return layoutSwitchVm.layout$.pipe(
+              switchMap((layout) => {
+                switch (layout) {
                   case "grid":
                     return oneOnOneDesktopLayoutMedia$.pipe(
                       switchMap((oneOnOne) =>
@@ -1260,9 +1264,9 @@ export function createCallViewModel$(
             return oneOnOneMobileLayoutMedia$.pipe(
               switchMap((oneOnOne) =>
                 oneOnOne === null
-                  ? gridMode$.pipe(
-                      switchMap((gridMode) => {
-                        switch (gridMode) {
+                  ? layoutSwitchVm.layout$.pipe(
+                      switchMap((layout) => {
+                        switch (layout) {
                           case "grid":
                             // Yes, grid mode actually gets you a "spotlight" layout in
                             // this window mode.
@@ -1356,6 +1360,22 @@ export function createCallViewModel$(
 
   const edgeToEdge$ = scope.behavior<boolean>(
     layoutMedia$.pipe(map(({ edgeToEdge }) => edgeToEdge)),
+  );
+
+  // Only show the layout switch in cases where it has an effect on the layout
+  const showLayoutSwitch$ = windowMode$.pipe(
+    switchMap((windowMode) => {
+      switch (windowMode) {
+        case "normal":
+          return of(true);
+        case "flat":
+          return oneOnOneLayoutMedia$.pipe(
+            map((oneOnOne) => oneOnOne === null),
+          );
+        default:
+          return of(false);
+      }
+    }),
   );
 
   const screenTap$ = new Subject<void>();
@@ -1775,8 +1795,9 @@ export function createCallViewModel$(
 
     spotlightExpanded$: spotlightExpanded$,
     toggleSpotlightExpanded$: toggleSpotlightExpanded$,
-    gridMode$: gridMode$,
-    setGridMode: setGridMode,
+    layoutSwitchVm$: scope.behavior(
+      showLayoutSwitch$.pipe(map((show) => (show ? layoutSwitchVm : null))),
+    ),
     layout$: layout$,
     localMatrixLivekitMember$,
     remoteMatrixLivekitMembers$: scope.behavior(

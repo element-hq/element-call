@@ -7,12 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
-import {
-  SpotlightViewIcon,
-  GridIcon,
-} from "@vector-im/compound-design-tokens/assets/web/icons";
-import { Switch } from "@vector-im/compound-web";
-import { t } from "i18next";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -28,13 +22,14 @@ import {
   type ReactionData,
 } from "../button";
 import styles from "./CallFooter.module.css";
-import { type GridMode } from "../state/CallViewModel/CallViewModel";
 import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
 import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
+import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
+import { LayoutSwitch } from "../room/LayoutSwitch";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -61,8 +56,6 @@ export interface FooterActions {
   /** Also controls if the videoMute button is disabled */
   toggleVideo: (() => void) | undefined;
   toggleBlur: (() => void) | undefined;
-  /** Also controls if the layout button is visible */
-  setLayoutMode: ((mode: GridMode) => void) | undefined;
   toggleScreenSharing: (() => void) | undefined;
   /** Also controls if the settings button is visible */
   openSettings: (() => void) | undefined;
@@ -87,7 +80,8 @@ export interface FooterState {
   buttonSize: "md" | "lg";
   showLogo: boolean;
 
-  layoutMode: GridMode | undefined;
+  /** Also controls if the layout switch is visible */
+  layoutSwitchVm: LayoutSwitchViewModel | null;
 
   sharingScreen: boolean;
 
@@ -126,8 +120,7 @@ export const CallFooter: FC<FooterProps> = ({
   const asOverlay = useBehavior(vm.asOverlay$);
   const showFooter = useBehavior(vm.showFooter$);
   const hideControls = useBehavior(vm.hideControls$);
-  const layoutMode = useBehavior(vm.layoutMode$);
-  const setLayoutMode = useBehavior(vm.setLayoutMode$);
+  const layoutSwitchVm = useBehavior(vm.layoutSwitchVm$);
   const openSettings = useBehavior(vm.openSettings$);
   const audioEnabled = useBehavior(vm.audioEnabled$);
   const audioBusy = useBehavior(vm.audioBusy$);
@@ -317,20 +310,8 @@ export const CallFooter: FC<FooterProps> = ({
         {(showLogo || debugTileLayout) && logoDebugContainer}
       </div>
       {!hideControls && <div className={styles.buttons}>{buttons}</div>}
-      {!hideControls && setLayoutMode && layoutMode && (
-        <Switch<"spotlight", "grid">
-          name="layoutMode"
-          aria-label={t("layout_switch_label")}
-          leftLabel={t("layout_spotlight_label")}
-          leftValue="spotlight"
-          leftIcon={SpotlightViewIcon}
-          rightLabel={t("layout_grid_label")}
-          rightValue="grid"
-          rightIcon={GridIcon}
-          className={styles.layout}
-          value={layoutMode}
-          onChange={setLayoutMode}
-        />
+      {!hideControls && layoutSwitchVm && (
+        <LayoutSwitch vm={layoutSwitchVm} className={styles.layout} />
       )}
     </div>
   );

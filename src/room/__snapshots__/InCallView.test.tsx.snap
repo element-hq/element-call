@@ -432,8 +432,8 @@ exports[`InCallView > rendering > renders 1`] = `
         data-size="lg"
       >
         <input
-          aria-labelledby="_r_19_"
-          name="layoutMode"
+          aria-labelledby="_r_1a_"
+          name="_r_19_"
           type="radio"
           value="spotlight"
         />
@@ -452,9 +452,9 @@ exports[`InCallView > rendering > renders 1`] = `
           />
         </svg>
         <input
-          aria-labelledby="_r_1e_"
+          aria-labelledby="_r_1f_"
           checked=""
-          name="layoutMode"
+          name="_r_19_"
           type="radio"
           value="grid"
         />
