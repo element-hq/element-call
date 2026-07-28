@@ -10,6 +10,8 @@ Please see LICENSE in the repository root for full details.
   margin-right: var(--content-inset-right);
   min-block-size: 0;
   block-size: 50vh;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
   border-radius: var(--cpd-space-4x);
   position: relative;
   overflow: hidden;
@@ -64,12 +66,6 @@ video.mirror {
     rgba(0, 0, 0, 0) 0%,
     var(--cpd-color-bg-canvas-default) 100%
   );
-}
-
-@media (min-aspect-ratio: 1 / 1) {
-  .preview > video {
-    aspect-ratio: 16 / 9;
-  }
 }
 
 @media (max-width: 550px) {
