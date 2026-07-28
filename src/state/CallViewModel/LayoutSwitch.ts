@@ -48,13 +48,15 @@ export function createLayoutModeSwitch(
   const naturalGridMode$ = scope.behavior<GridMode>(
     combineLatest(
       [hasRemoteScreenShares$, windowMode$],
-      (hasRemoteScreenShares, windowMode) =>
-        // When there are screen shares or the window is flat (as with a phone
-        // in landscape orientation), spotlight is a better experience.
-        // We want screen shares to be big and readable, and we want flipping
-        // your phone into landscape to be a quick way of maximising the
-        // spotlight tile.
-        hasRemoteScreenShares || windowMode === "flat" ? "spotlight" : "grid",
+      (hasRemoteScreenShares, windowMode) => {
+        // When the window is flat (as with a phone in landscape orientation),
+        // grid mode is preferable as there's usually more than enough
+        // horizontal space to fit in some grid tiles on the side.
+        if (windowMode === "flat") return "grid";
+        // When there are screen shares, spotlight is a better experience. We
+        // want them to be big and readable.
+        return hasRemoteScreenShares ? "spotlight" : "grid";
+      },
     ),
   );
 
