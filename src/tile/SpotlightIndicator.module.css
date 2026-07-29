@@ -1,0 +1,136 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.indicator {
+  appearance: none;
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--cpd-space-2x);
+  max-inline-size: 200px;
+  padding: var(--cpd-space-1x) var(--cpd-space-3x);
+  border: var(--cpd-border-width-1) solid
+    var(--cpd-color-border-interactive-secondary);
+  border-radius: var(--cpd-radius-pill-effect);
+  background: rgba(from var(--cpd-color-gray-100) r g b / 0.6);
+  color: var(--cpd-color-text-primary);
+  font: var(--cpd-font-body-sm-medium);
+  box-shadow: var(--small-drop-shadow);
+  transition:
+    background-color ease 0.15s,
+    border-color ease 0.15s,
+    color ease 0.15s;
+}
+
+.name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.indicator > svg {
+  flex-shrink: 0;
+  color: var(--cpd-color-icon-primary);
+}
+
+.indicator[data-visible="true"] {
+  background: var(--cpd-color-gray-1400);
+  border-color: var(--cpd-color-gray-1400);
+  color: var(--cpd-color-text-on-solid-primary);
+}
+
+.indicator[data-visible="true"] > svg {
+  color: var(--cpd-color-icon-on-solid-primary);
+}
+
+@media (hover) {
+  .indicator[data-visible="false"]:hover {
+    background: var(--cpd-color-gray-400);
+  }
+}
+
+.screenShare {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  inline-size: auto;
+  max-inline-size: none;
+  block-size: var(--spotlight-indicator-preview-height);
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--cpd-space-2x);
+}
+
+.screenShare .name {
+  position: absolute;
+  z-index: 1;
+  inset-block-end: 0;
+  inset-inline: 0;
+  padding: var(--cpd-space-3x) var(--cpd-space-2x) var(--cpd-space-1x);
+  text-align: start;
+  font: var(--cpd-font-body-xs-medium);
+  color: var(--cpd-color-text-primary);
+  background: linear-gradient(
+    0deg,
+    rgba(from var(--cpd-color-bg-canvas-default) r g b / 0.9) 0%,
+    rgba(from var(--cpd-color-bg-canvas-default) r g b / 0.7) 50%,
+    rgba(from var(--cpd-color-bg-canvas-default) r g b / 0) 100%
+  );
+}
+
+.preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  block-size: 100%;
+  inline-size: auto;
+  overflow: hidden;
+  background: var(--video-tile-background);
+}
+
+.preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(from var(--cpd-color-bg-canvas-default) r g b / 0.6);
+  opacity: 0;
+  transition: opacity ease 0.15s;
+  pointer-events: none;
+}
+
+.screenShare[data-visible="false"] .preview::after {
+  opacity: 1;
+}
+
+.screenShare[data-visible="false"]:focus-visible .preview::after {
+  opacity: 0.3;
+}
+
+@media (hover) {
+  .screenShare[data-visible="false"]:hover .preview::after {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion) {
+  .preview::after {
+    transition: none;
+  }
+}
+
+.previewVideo {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  /* Force Firefox to clip the video to the rounded container. */
+  transform: translate(0);
+}
+
+.previewFallback {
+  color: var(--cpd-color-icon-primary);
+}

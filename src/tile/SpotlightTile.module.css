@@ -168,6 +168,9 @@ Please see LICENSE in the repository root for full details.
   .tile:hover button {
     opacity: 1;
   }
+  .tile .indicators > button {
+    opacity: unset;
+  }
 }
 
 .tile:has(:focus-visible) > div > button,
@@ -180,32 +183,27 @@ Please see LICENSE in the repository root for full details.
   gap: var(--cpd-space-2x);
   position: absolute;
   inset-inline-start: 0;
-  inset-block-end: calc(-1 * var(--cpd-space-6x));
+  inset-block-start: calc(100% + var(--cpd-space-2x));
   width: 100%;
   justify-content: start;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
   transition: opacity ease 0.15s;
   opacity: 0;
+  pointer-events: none;
 }
 
-.indicators.show {
+.indicators.show,
+.indicators:has(:focus-visible) {
   opacity: 1;
+  pointer-events: auto;
 }
 
-.tile[data-maximised="true"] .indicators {
-  inset-block-end: calc(-1 * var(--cpd-space-4x) - 2px);
-  justify-content: center;
+.tile[data-maximised="true"] .indicators > button:first-child {
+  margin-inline-start: auto;
 }
 
-.indicators > .item {
-  flex-basis: 32px;
-  block-size: 2px;
-  transition: background-color ease 0.15s;
-}
-
-.indicators > .item[data-visible="false"] {
-  background: var(--cpd-color-alpha-gray-600);
-}
-
-.indicators > .item[data-visible="true"] {
-  background: var(--cpd-color-gray-1400);
+.tile[data-maximised="true"] .indicators > button:last-child {
+  margin-inline-end: auto;
 }

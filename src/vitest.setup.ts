@@ -51,6 +51,9 @@ window.matchMedia = global.matchMedia = (): MediaQueryList =>
     removeEventListener: () => {},
   }) as Partial<MediaQueryList> as MediaQueryList;
 
+// Not implemented by jsdom
+window.HTMLElement.prototype.scrollIntoView = (): void => {};
+
 const storage: Record<string, string> = {};
 const localStoragePolyfill = {
   getItem(key: string) {
