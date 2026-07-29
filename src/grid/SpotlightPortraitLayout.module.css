@@ -23,8 +23,11 @@ Please see LICENSE in the repository root for full details.
   margin-block-end: var(--cpd-space-4x);
 }
 
-.spotlight.withIndicators {
-  margin-block-end: calc(2 * var(--cpd-space-4x) + 2px);
+.spotlight.withPreviewIndicator {
+  margin-block-end: calc(
+    var(--cpd-space-4x) + var(--cpd-space-2x) +
+      var(--spotlight-indicator-height)
+  );
 }
 
 .spotlight > .slot {

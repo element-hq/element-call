@@ -52,6 +52,10 @@ layer(compound);
 
   --call-view-overlay-layer: 1;
   --call-view-header-footer-layer: 2;
+
+  /* Shared with spotlight layouts that reserve room for the indicator row. */
+  --spotlight-indicator-preview-height: clamp(40px, 12vh, 64px);
+  --spotlight-indicator-height: var(--spotlight-indicator-preview-height);
 }
 
 :root,
