@@ -33,6 +33,9 @@ Please see LICENSE in the repository root for full details.
 
 .media.mirror video {
   transform: scaleX(-1);
+  /* In FF if you add a transform: scale/translate/matrix filter on an element,
+  it'll ignore the parents' border-radius, so force back the radius to avoid UI glitch*/
+  border-radius: inherit;
 }
 
 .media[data-video-fit="cover"] video {
