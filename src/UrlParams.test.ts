@@ -16,11 +16,14 @@ import {
   HeaderStyle,
   getUrlParams,
 } from "../src/UrlParams";
+import { mockConfig } from "./utils/test";
 
 const ROOM_NAME = "roomNameHere";
 const ROOM_ID = "!d45f138fsd";
 const ORIGIN = "https://call.element.io";
 const HOMESERVER = "localhost";
+
+mockConfig();
 
 describe("UrlParams", () => {
   describe("handles URL with /room/", () => {
