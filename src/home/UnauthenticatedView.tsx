@@ -34,9 +34,11 @@ import { Config } from "../config/Config";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useOptInAnalytics } from "../settings/settings";
 import { ExternalLink, Link } from "../button/Link";
+import { useUrlParams } from "../UrlParams";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
+  const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
@@ -141,14 +143,16 @@ export const UnauthenticatedView: FC = () => {
   return (
     <>
       <div className={commonStyles.container}>
-        <Header>
-          <LeftNav>
-            <HeaderLogo />
-          </LeftNav>
-          <RightNav hideMobile>
-            <UserMenuContainer />
-          </RightNav>
-        </Header>
+        {header === "standard" && (
+          <Header>
+            <LeftNav>
+              <HeaderLogo />
+            </LeftNav>
+            <RightNav hideMobile>
+              <UserMenuContainer />
+            </RightNav>
+          </Header>
+        )}
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
           <Heading size="lg" weight="semibold">

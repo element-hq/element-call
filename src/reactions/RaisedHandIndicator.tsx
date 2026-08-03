@@ -22,11 +22,13 @@ export function RaisedHandIndicator({
   miniature,
   showTimer,
   onClick,
+  tabIndex,
 }: {
   raisedHandTime?: Date;
   miniature?: boolean;
   showTimer?: boolean;
   onClick?: () => void;
+  tabIndex?: number;
 }): ReactNode {
   const { t } = useTranslation();
   const [raisedHandDuration, setRaisedHandDuration] = useState("");
@@ -94,6 +96,7 @@ export function RaisedHandIndicator({
           background: "none",
         }}
         onClick={clickCallback}
+        tabIndex={tabIndex}
       >
         {content}
       </button>

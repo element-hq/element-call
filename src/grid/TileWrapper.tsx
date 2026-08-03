@@ -27,7 +27,13 @@ interface Props<M, R extends HTMLElement> {
       state: Parameters<Handler<"drag", EventTypes["drag"]>>[0],
     ) => void
   > | null;
+  /**
+   * The width this tile will have once its animations have settled.
+   */
   targetWidth: number;
+  /**
+   * The width this tile will have once its animations have settled.
+   */
   targetHeight: number;
   model: M;
   Tile: ComponentType<TileProps<M, R>>;
@@ -61,7 +67,12 @@ const TileWrapper_ = memo(
     useDrag((state) => onDrag?.current!(id, state), {
       target: ref,
       filterTaps: true,
-      preventScroll: true,
+      // Previous designs, which allowed tiles to be dragged and dropped around
+      // the scrolling grid, required us to set preventScroll to true here. But
+      // our designs no longer call for this, and meanwhile there's a bug in
+      // use-gesture that causes filterTaps + preventScroll to break buttons
+      // within tiles (like the 'switch camera' button) on mobile.
+      // https://github.com/pmndrs/use-gesture/issues/593
     });
 
     return (

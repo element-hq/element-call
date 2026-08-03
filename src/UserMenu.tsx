@@ -119,7 +119,7 @@ export const UserMenu: FC<Props> = ({
           key={key}
           Icon={Icon}
           label={label}
-          data-test-id={dataTestid}
+          data-testid={dataTestid}
           onSelect={() => onAction(key)}
         />
       ))}

@@ -5,39 +5,53 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useCallback, useMemo, useState, type JSX } from "react";
+import {
+  type FC,
+  useCallback,
+  useMemo,
+  useState,
+  type JSX,
+  useEffect,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
 import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { usePreviewTracks } from "@livekit/components-react";
-import { type LocalVideoTrack, Track } from "livekit-client";
-import { useObservable } from "observable-hooks";
-import { map } from "rxjs";
+import {
+  type CreateLocalTracksOptions,
+  type LocalVideoTrack,
+  Track,
+} from "livekit-client";
+import { useObservableEagerState } from "observable-hooks";
 import { useNavigate } from "react-router-dom";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { type MatrixInfo, VideoPreview } from "./VideoPreview";
-import { type MuteStates } from "./MuteStates";
+import { type MuteStates } from "../state/MuteStates";
 import { InviteButton } from "../button/InviteButton";
-import {
-  EndCallButton,
-  MicButton,
-  SettingsButton,
-  SwitchCameraButton,
-  VideoButton,
-} from "../button/Button";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useMediaQuery } from "../useMediaQuery";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
-import { useMediaDevices } from "../livekit/MediaDevicesContext";
+import { useMediaDevices } from "../MediaDevicesContext";
+import { ObservableScope } from "../state/ObservableScope";
 import { useInitial } from "../useInitial";
-import { useSwitchCamera } from "./useSwitchCamera";
+import {
+  useTrackProcessor,
+  useTrackProcessorSync,
+} from "../livekit/TrackProcessorContext";
 import { usePageTitle } from "../usePageTitle";
+import { getValue } from "../utils/observable";
+import { useBehavior } from "../useBehavior";
+import { CallFooter, type FooterSnapshot } from "../components/CallFooter";
+import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
+import { createLobbyFooterViewModel } from "../components/CallFooterViewModel";
+import { type ViewModel } from "../state/ViewModel";
+import { useAppBarPrimaryButtonIconKind } from "../AppBar";
 
 interface Props {
   client: MatrixClient;
@@ -64,20 +78,29 @@ export const LobbyView: FC<Props> = ({
   onShareClick,
   waitingForInvite,
 }) => {
-  const { t } = useTranslation();
-  usePageTitle(matrixInfo.roomName);
+  useEffect(() => {
+    logger.info("[Lifecycle] LobbyView Component mounted");
+    return (): void => {
+      logger.info("[Lifecycle] LobbyView Component unmounted");
+    };
+  }, []);
 
-  const onAudioPress = useCallback(
-    () => muteStates.audio.setEnabled?.((e) => !e),
-    [muteStates],
-  );
-  const onVideoPress = useCallback(
-    () => muteStates.video.setEnabled?.((e) => !e),
-    [muteStates],
-  );
+  const { t } = useTranslation();
+
+  usePageTitle(matrixInfo.roomName);
+  useAppBarPrimaryButtonIconKind("back");
+  const audioEnabled = useBehavior(muteStates.audio.enabled$);
+  const videoEnabled = useBehavior(muteStates.video.enabled$);
+  const toggleAudio = useBehavior(muteStates.audio.toggle$);
+  const toggleVideo = useBehavior(muteStates.video.toggle$);
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
+
+  // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
+  // TODO: Make sure that this module is resilient when it comes to camera/microphone availability!
+  // Next to the keyboard shortcuts, this is also responsible for catching escape key presses and forwarding the to mobile -> pip.
+  useCallViewKeyboardShortcuts(toggleAudio, toggleVideo, null, null, null);
 
   const openSettings = useCallback(
     () => setSettingsModalOpen(true),
@@ -94,6 +117,7 @@ export const LobbyView: FC<Props> = ({
       logger.error("Failed to navigate to /", error);
     });
   }, [navigate]);
+  const hangup = confineToRoom ? undefined : onLeaveClick;
 
   const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
   const recentsButton = !confineToRoom && (
@@ -103,16 +127,24 @@ export const LobbyView: FC<Props> = ({
   );
 
   const devices = useMediaDevices();
+  const videoInputId = useObservableEagerState(
+    devices.videoInput.selected$,
+  )?.id;
 
   // Capture the audio options as they were when we first mounted, because
   // we're not doing anything with the audio anyway so we don't need to
   // re-open the devices when they change (see below).
   const initialAudioOptions = useInitial(
     () =>
-      muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
+      audioEnabled && {
+        deviceId: getValue(devices.audioInput.selected$)?.id,
+      },
   );
 
-  const localTrackOptions = useMemo(
+  const { processor } = useTrackProcessor();
+
+  const initialProcessor = useInitial(() => processor);
+  const localTrackOptions = useMemo<CreateLocalTracksOptions>(
     () => ({
       // The only reason we request audio here is to get the audio permission
       // request over with at the same time. But changing the audio settings
@@ -121,24 +153,21 @@ export const LobbyView: FC<Props> = ({
       // We also pass in a clone because livekit mutates the object passed in,
       // which would cause the devices to be re-opened on the next render.
       audio: Object.assign({}, initialAudioOptions),
-      video: muteStates.video.enabled && {
-        deviceId: devices.videoInput.selectedId,
+      video: videoEnabled && {
+        deviceId: videoInputId,
+        processor: initialProcessor,
       },
     }),
-    [
-      initialAudioOptions,
-      devices.videoInput.selectedId,
-      muteStates.video.enabled,
-    ],
+    [initialAudioOptions, videoEnabled, videoInputId, initialProcessor],
   );
 
   const onError = useCallback(
     (error: Error) => {
       logger.error("Error while creating preview Tracks:", error);
-      muteStates.audio.setEnabled?.(false);
-      muteStates.video.setEnabled?.(false);
+      muteStates.audio.setEnabled$.value?.(false);
+      muteStates.video.setEnabled$.value?.(false);
     },
-    [muteStates.audio, muteStates.video],
+    [muteStates],
   );
 
   const tracks = usePreviewTracks(localTrackOptions, onError);
@@ -150,12 +179,37 @@ export const LobbyView: FC<Props> = ({
     [tracks],
   );
 
-  const switchCamera = useSwitchCamera(
-    useObservable(
-      (inputs$) => inputs$.pipe(map(([video]) => video)),
-      [videoTrack],
-    ),
+  useEffect(() => {
+    if (videoTrack && videoInputId === undefined) {
+      // If we have a video track but no videoInputId,
+      // we have to update the available devices. So that we select the first
+      // available video input device as the default instead of the `""` id.
+      devices.requestDeviceNames();
+    }
+  }, [devices, videoInputId, videoTrack]);
+
+  useTrackProcessorSync(videoTrack);
+
+  const [footerVm, setFooterVm] = useState<ViewModel<FooterSnapshot> | null>(
+    null,
   );
+  useEffect(() => {
+    const footerScope = new ObservableScope();
+    setFooterVm(
+      createLobbyFooterViewModel(
+        footerScope,
+        muteStates,
+        devices,
+        openSettings,
+        hangup,
+        // Logo and header are connected: only show the logo in SPA with header.
+        !hideHeader,
+      ),
+    );
+    return (): void => {
+      footerScope.end();
+    };
+  }, [devices, hangup, hideHeader, muteStates, onLeaveClick, openSettings]);
 
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
@@ -181,14 +235,15 @@ export const LobbyView: FC<Props> = ({
         <div className={styles.content}>
           <VideoPreview
             matrixInfo={matrixInfo}
-            muteStates={muteStates}
+            videoEnabled={videoEnabled}
             videoTrack={videoTrack}
           >
             <Button
               className={classNames(styles.join, {
                 [styles.wait]: waitingForInvite,
               })}
-              size={waitingForInvite ? "sm" : "lg"}
+              size={waitingForInvite ? "md" : "lg"}
+              disabled={waitingForInvite}
               onClick={() => {
                 if (!waitingForInvite) onEnter();
               }}
@@ -199,24 +254,11 @@ export const LobbyView: FC<Props> = ({
           </VideoPreview>
           {!recentsButtonInFooter && recentsButton}
         </div>
-        <div className={inCallStyles.footer}>
-          {recentsButtonInFooter && recentsButton}
-          <div className={inCallStyles.buttons}>
-            <MicButton
-              muted={!muteStates.audio.enabled}
-              onClick={onAudioPress}
-              disabled={muteStates.audio.setEnabled === null}
-            />
-            <VideoButton
-              muted={!muteStates.video.enabled}
-              onClick={onVideoPress}
-              disabled={muteStates.video.setEnabled === null}
-            />
-            {switchCamera && <SwitchCameraButton onClick={switchCamera} />}
-            <SettingsButton onClick={openSettings} />
-            {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
-          </div>
-        </div>
+        {footerVm !== null && (
+          <CallFooter vm={footerVm}>
+            {recentsButtonInFooter && recentsButton}
+          </CallFooter>
+        )}
       </div>
       {client && (
         <SettingsModal

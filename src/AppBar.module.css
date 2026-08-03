@@ -1,0 +1,179 @@
+.bar {
+  flex-shrink: 0;
+  position: relative;
+  z-index: var(--call-view-header-footer-layer);
+  padding-left: var(--content-inset-left);
+  padding-right: var(--content-inset-right);
+  padding-top: env(safe-area-inset-top);
+  opacity: 1;
+  transition: opacity 0.15s;
+}
+
+/* Pseudo-element for the gradient background */
+.bar::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  /* Extend the gradient beyond the bottom of the header for readability */
+  inset-block: 0 -16px;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0%,
+    var(--cpd-color-bg-canvas-default) 100%
+  );
+}
+
+.bar.hidden {
+  opacity: 0;
+  pointer-events: none;
+  /* Switch to position: absolute so the bar takes up no space in the layout
+    when hidden. */
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+}
+
+.bar:has(:focus-visible) {
+  opacity: 1;
+  pointer-events: initial;
+}
+
+.bar > header {
+  flex-shrink: 0;
+  position: sticky;
+  inset-inline: 0;
+  inset-block-start: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows:
+    var(--cpd-space-3x) minmax(var(--cpd-space-10x), auto)
+    var(--cpd-space-3x);
+  grid-template-areas:
+    ". . ."
+    "primaryButton title secondaryButton"
+    ". . .";
+  place-items: center;
+  column-gap: var(--cpd-space-2x);
+}
+
+.bar:has(.subtitle) > header {
+  grid-template-rows:
+    var(--cpd-space-3x) minmax(var(--cpd-space-10x), auto) var(--cpd-space-5x)
+    minmax(var(--cpd-space-8x), auto);
+  grid-template-areas:
+    ". . ."
+    "primaryButton title secondaryButton"
+    ". . ."
+    "subtitle subtitle subtitle";
+}
+
+/* Hide everything but the subtitle in small windows */
+@media (max-height: 450px) {
+  .bar {
+    display: none;
+  }
+
+  .bar:has(.subtitle) {
+    display: initial;
+
+    .title,
+    .primaryButton,
+    .secondaryButton {
+      display: none;
+    }
+
+    > header {
+      grid-template-columns: 1fr;
+      grid-template-rows: var(--cpd-space-5x) minmax(var(--cpd-space-5x), auto);
+      grid-template-areas: "." "subtitle";
+    }
+  }
+}
+
+.primaryButton {
+  grid-area: primaryButton;
+  justify-self: start;
+}
+
+.title {
+  grid-area: title;
+}
+
+.subtitle {
+  grid-area: subtitle;
+
+  svg {
+    color: var(--cpd-color-icon-tertiary);
+    margin-inline-end: var(--cpd-space-2x);
+    block-size: 1.2em;
+    inline-size: 1.2em;
+    vertical-align: text-bottom;
+  }
+}
+
+.title,
+.subtitle {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.secondaryButton {
+  grid-area: secondaryButton;
+  justify-self: end;
+}
+
+.primaryButton,
+.secondaryButton {
+  svg * {
+    color: var(--cpd-color-icon-primary);
+  }
+}
+
+body[data-platform="ios"] {
+  .bar > header {
+    grid-template-rows: minmax(var(--cpd-space-11x), auto) var(--cpd-space-4x);
+    grid-template-areas: "primaryButton title secondaryButton";
+  }
+
+  .bar:has(.subtitle) > header {
+    grid-template-rows:
+      minmax(var(--cpd-space-6x), auto) minmax(var(--cpd-space-5x), auto)
+      var(--cpd-space-4x);
+    grid-template-areas:
+      "primaryButton title secondaryButton"
+      "primaryButton subtitle secondaryButton";
+
+    .title {
+      align-self: end;
+      /* Nudge the title and subtitle even closer together to replicate native
+      iOS styles */
+      transform: translateY(2px);
+    }
+
+    .subtitle {
+      align-self: start;
+    }
+  }
+
+  .subtitle {
+    color: var(--cpd-color-text-secondary);
+
+    svg {
+      display: none;
+    }
+  }
+
+  /* Hide everything but the subtitle in small windows */
+  @media (max-height: 450px) {
+    .bar:has(.subtitle) > header {
+      grid-template-rows: var(--cpd-space-4x) minmax(var(--cpd-space-5x), auto);
+      grid-template-areas: "." "subtitle";
+    }
+
+    .subtitle {
+      color: var(--cpd-color-text-primary);
+    }
+  }
+}

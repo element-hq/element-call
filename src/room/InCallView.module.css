@@ -14,35 +14,16 @@ Please see LICENSE in the repository root for full details.
   overflow-y: auto;
 }
 
-.header {
-  position: sticky;
-  flex-shrink: 0;
-  inset-block-start: 0;
-  z-index: 1;
-  background: linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0) 0%,
-    var(--cpd-color-bg-canvas-default) 100%
-  );
-}
-
-.header.filler {
-  block-size: var(--cpd-space-6x);
-  background: none;
-}
-
-.footer {
-  position: sticky;
-  inset-block-end: 0;
-  z-index: 1;
-  display: grid;
-  grid-template-columns:
-    minmax(0, var(--inline-content-inset))
-    1fr auto 1fr minmax(0, var(--inline-content-inset));
-  grid-template-areas: ". logo buttons layout .";
-  align-items: center;
-  gap: var(--cpd-space-3x);
-  padding-block: var(--cpd-space-10x);
+/* Normally the footer uses a transparent background to allow our expressive
+page gradients to shine through. However, we sometimes need to visually separate
+it from the content underneath. If the call layout is overflowing, or if the
+spotlight tile is maximised and displaying video, apply a gradient background. */
+.overflowing > .footer,
+.fixedGrid:has(
+    > .tile[data-maximised="true"]
+      .spotlightItem[data-background="transparent"][data-video-enabled="true"][aria-hidden="false"]
+  )
+  ~ .footer {
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
@@ -50,98 +31,53 @@ Please see LICENSE in the repository root for full details.
   );
 }
 
-.footer.hidden {
+.header {
+  position: sticky;
+  flex-shrink: 0;
+  inset-block-start: 0;
+  z-index: var(--call-view-header-footer-layer);
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0%,
+    var(--cpd-color-bg-canvas-default) 100%
+  );
+}
+
+.header.hidden {
   display: none;
 }
 
-.footer.overlay {
-  position: absolute;
-  inset-block-end: 0;
-  inset-inline: 0;
+.header.overlay {
+  /* Note that the header is still position: sticky in this case so that certain
+    tiles can move down out of the way of the header when visible. */
   opacity: 1;
   transition: opacity 0.15s;
 }
 
-.footer.overlay.hidden {
-  display: grid;
+.header.overlay.hidden {
+  display: flex;
   opacity: 0;
+  pointer-events: none;
+  /* Switch to position: absolute so the header takes up no space in the layout
+    when hidden. */
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
 }
 
-.footer.overlay:has(:focus-visible) {
+.header.overlay:has(:focus-visible) {
   opacity: 1;
   pointer-events: initial;
 }
 
-.logo {
-  grid-area: logo;
-  justify-self: start;
-  display: flex;
-  align-items: center;
-  gap: var(--cpd-space-2x);
-  padding-inline-start: var(--cpd-space-1x);
+.header.filler {
+  block-size: var(--cpd-space-6x);
+  background: none;
 }
 
-.buttons {
-  grid-area: buttons;
-  justify-self: center;
-  display: flex;
-  gap: var(--cpd-space-3x);
-}
-
-.layout {
-  grid-area: layout;
-  justify-self: end;
-}
-
-@media (max-width: 660px) {
-  .footer {
-    grid-template-areas: ". buttons buttons buttons .";
-  }
-
-  .logo {
+@media (max-width: 320px) {
+  .invite {
     display: none;
-  }
-
-  .layout {
-    display: none !important;
-  }
-}
-
-@media (max-width: 370px) {
-  .raiseHand {
-    display: none;
-  }
-}
-
-@media (max-width: 340px) {
-  .invite,
-  .switchCamera,
-  .shareScreen {
-    display: none;
-  }
-
-  @media (max-height: 400px) {
-    .footer {
-      display: none;
-    }
-  }
-}
-
-@media (max-height: 400px) {
-  .footer {
-    padding-block: var(--cpd-space-4x);
-  }
-}
-
-@media (max-height: 800px) {
-  .footer {
-    padding-block: var(--cpd-space-8x);
-  }
-}
-
-@media (min-width: 800px) {
-  .buttons {
-    gap: var(--cpd-space-4x);
   }
 }
 
@@ -163,19 +99,18 @@ Please see LICENSE in the repository root for full details.
   /* Disable pointer events so the overlay doesn't block interaction with
   elements behind it */
   pointer-events: none;
-}
 
-.fixedGrid > :not(:first-child),
-.scrollingGrid > :not(:first-child) {
-  pointer-events: initial;
+  > :not(:first-child) {
+    pointer-events: initial;
+  }
+
+  .tile {
+    position: absolute;
+    inset-block-start: 0;
+  }
 }
 
 .tile {
-  position: absolute;
-  inset-block-start: 0;
-}
-
-.tile.maximised {
   position: relative;
   flex-grow: 1;
 }

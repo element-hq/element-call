@@ -1,0 +1,161 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.footer {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: var(--call-view-header-footer-layer);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-areas: ". buttons layout";
+  align-items: center;
+  gap: var(--cpd-space-3x);
+  /* Ensure that footer lies within the safe area */
+  padding-left: calc(env(safe-area-inset-left) + var(--cpd-space-6x));
+  padding-right: calc(env(safe-area-inset-right) + var(--cpd-space-6x));
+  padding-block: var(--cpd-space-10x)
+    calc(env(safe-area-inset-bottom) + var(--cpd-space-10x));
+}
+
+.footer.hidden {
+  display: none;
+}
+
+.footer.overlay {
+  /* Note that the footer is still position: sticky in this case so that certain
+    tiles can move up out of the way of the footer when visible. */
+  opacity: 1;
+  transition: opacity 0.15s;
+}
+
+.footer.overlay.hidden {
+  display: grid;
+  opacity: 0;
+  pointer-events: none;
+  /* Switch to position: absolute so the footer takes up no space in the layout
+    when hidden. */
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+}
+
+.footer.overlay:has(:focus-visible) {
+  opacity: 1;
+  pointer-events: initial;
+}
+
+.settingsLogoContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-4x);
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.logo {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-2x);
+  padding-inline-start: var(--cpd-space-1x);
+}
+
+.buttons {
+  grid-area: buttons;
+  justify-self: center;
+  display: flex;
+  gap: var(--cpd-space-3x);
+}
+
+.layout {
+  grid-area: layout;
+  justify-self: end;
+}
+
+/*First hide the logo*/
+@media (max-width: 750px) {
+  .logo {
+    display: none;
+  }
+}
+
+.settingsOnlyShowNarrow {
+  display: none;
+}
+.settingsOnlyShowWide {
+  display: inherit;
+}
+
+/*
+With the logo hidden >500px is enough space to show overflow, buttons, layout.
+Once we exceed 500 we hide everything except the buttons.
+*/
+@media (max-width: 500px) {
+  .footer {
+    grid-template-areas: "buttons buttons buttons";
+  }
+
+  .settingsOnlyShowNarrow {
+    display: inherit;
+  }
+  .settingsOnlyShowWide {
+    display: none;
+  }
+
+  .settingsLogoContainer {
+    display: none;
+  }
+
+  .layout {
+    display: none !important;
+  }
+}
+
+@media (max-height: 800px) {
+  .footer {
+    padding-block: var(--cpd-space-8x)
+      calc(env(safe-area-inset-bottom) + var(--cpd-space-8x));
+  }
+}
+
+@media (max-height: 400px) {
+  .footer {
+    padding-block: var(--cpd-space-4x)
+      calc(env(safe-area-inset-bottom) + var(--cpd-space-4x));
+  }
+}
+
+@media (max-width: 370px) {
+  .shareScreen {
+    display: none;
+  }
+
+  /* PIP custom css */
+  @media (max-height: 400px) {
+    .shareScreen {
+      display: flex;
+    }
+    .footer {
+      padding-block-start: var(--cpd-space-3x);
+      padding-block-end: calc(
+        env(safe-area-inset-bottom) + var(--cpd-space-2x)
+      );
+    }
+  }
+}
+
+@media (max-width: 320px) {
+  .raiseHand {
+    display: none;
+  }
+}
+
+@media (min-width: 800px) {
+  .buttons {
+    gap: var(--cpd-space-4x);
+  }
+}

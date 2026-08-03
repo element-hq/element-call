@@ -5,21 +5,21 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MutableRefObject, type RefCallback, useCallback } from "react";
+import { type RefCallback, type RefObject, useCallback } from "react";
 
 /**
  * Combines multiple refs into one, useful for attaching multiple refs to the
  * same DOM node.
  */
 export const useMergedRefs = <T>(
-  ...refs: (MutableRefObject<T | null> | RefCallback<T | null> | null)[]
+  ...refs: (RefObject<T | null> | RefCallback<T | null> | null | undefined)[]
 ): RefCallback<T | null> =>
   useCallback(
     (value) =>
       refs.forEach((ref) => {
         if (typeof ref === "function") {
           ref(value);
-        } else if (ref !== null) {
+        } else if (ref) {
           ref.current = value;
         }
       }),

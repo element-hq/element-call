@@ -1,0 +1,49 @@
+.overlay {
+  position: fixed;
+  z-index: var(--call-view-overlay-layer);
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cpd-space-2x);
+  transition: opacity 200ms;
+}
+
+.overlay[data-show="true"] {
+  opacity: 1;
+}
+
+.overlay[data-show="false"] {
+  opacity: 0;
+  pointer-events: none;
+  transition-duration: 130ms;
+}
+
+.overlay::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: var(--cpd-color-bg-canvas-default);
+  opacity: 0.94;
+}
+
+.icon {
+  margin-block-end: var(--cpd-space-4x);
+  background: var(--cpd-color-alpha-gray-600);
+  color: var(--cpd-color-icon-primary);
+}
+
+.overlay > h2 {
+  text-align: center;
+  margin: 0;
+}
+
+.overlay > p {
+  text-align: center;
+}
+
+.spacer {
+  min-height: var(--cpd-space-32x);
+}

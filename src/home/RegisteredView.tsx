@@ -37,12 +37,14 @@ import { Form } from "../form/Form";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useOptInAnalytics } from "../settings/settings";
+import { useUrlParams } from "../UrlParams";
 
 interface Props {
   client: MatrixClient;
 }
 
 export const RegisteredView: FC<Props> = ({ client }) => {
+  const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
@@ -114,14 +116,16 @@ export const RegisteredView: FC<Props> = ({ client }) => {
   return (
     <>
       <div className={commonStyles.container}>
-        <Header>
-          <LeftNav>
-            <HeaderLogo />
-          </LeftNav>
-          <RightNav>
-            <UserMenuContainer />
-          </RightNav>
-        </Header>
+        {header === "standard" && (
+          <Header>
+            <LeftNav>
+              <HeaderLogo />
+            </LeftNav>
+            <RightNav>
+              <UserMenuContainer />
+            </RightNav>
+          </Header>
+        )}
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
           <Heading size="lg" weight="semibold">

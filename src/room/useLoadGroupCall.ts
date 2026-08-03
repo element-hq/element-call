@@ -106,22 +106,18 @@ async function joinRoomAfterInvite(
 
 export class CallTerminatedMessage extends Error {
   /**
+   * Creates a new CallTerminatedMessage.
+   *
+   * @param icon The icon to display with the message
    * @param messageTitle The title of the call ended screen message (translated)
+   * @param messageBody The message explaining the kind of termination
+   * (kick, ban, knock reject, etc.) (translated)
+   * @param reason  The user-provided reason for the termination (kick/ban)
    */
   public constructor(
-    /**
-     * The icon to display with the message.
-     */
     public readonly icon: ComponentType<SVGAttributes<SVGElement>>,
     messageTitle: string,
-    /**
-     * The message explaining the kind of termination (kick, ban, knock reject,
-     * etc.) (translated)
-     */
     public readonly messageBody: string,
-    /**
-     * The user-provided reason for the termination (kick/ban)
-     */
     public readonly reason?: string,
   ) {
     super(messageTitle);

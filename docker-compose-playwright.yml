@@ -1,0 +1,19 @@
+# This file contains overrides to docker-compose-dev.yml and should
+# only be used in combination with that file.
+services:
+  synapse:
+    # Pin to a SHA so that upstream cannot break our tests. Renovate handles regular updates.
+    image: ghcr.io/element-hq/synapse:latest@sha256:da325af40104051923899e5f5a2f1d537e6e3ccf2f0f38285689ae9bbfdb190a
+    volumes:
+      - ./backend/playwright_homeserver.yaml:/data/cfg/homeserver.yaml:Z
+  synapse-1:
+    # Pin to a SHA so that upstream cannot break our tests. Renovate handles regular updates.
+    image: ghcr.io/element-hq/synapse:latest@sha256:da325af40104051923899e5f5a2f1d537e6e3ccf2f0f38285689ae9bbfdb190a
+    volumes:
+      - ./backend/playwright_homeserver-othersite.yaml:/data/cfg/homeserver.yaml:Z
+  element-web:
+    # Pin to a SHA so that upstream cannot break our tests. Renovate handles regular updates.
+    image: ghcr.io/element-hq/element-web:develop@sha256:d1841828a390d96da2ee64232949db641f11766fb506ec561374819d10533b9a
+  element-web-1:
+    # Pin to a SHA so that upstream cannot break our tests. Renovate handles regular updates.
+    image: ghcr.io/element-hq/element-web:develop@sha256:d1841828a390d96da2ee64232949db641f11766fb506ec561374819d10533b9a

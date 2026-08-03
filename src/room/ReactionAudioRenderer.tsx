@@ -12,7 +12,7 @@ import { GenericReaction, ReactionSet } from "../reactions";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
 import { useLatest } from "../useLatest";
-import { type CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 
 const soundMap = Object.fromEntries([
   ...ReactionSet.filter((v) => v.sound !== undefined).map((v) => [
@@ -24,8 +24,10 @@ const soundMap = Object.fromEntries([
 
 export function ReactionsAudioRenderer({
   vm,
+  muted,
 }: {
   vm: CallViewModel;
+  muted?: boolean;
 }): ReactNode {
   const [shouldPlay] = useSetting(playReactionsSound);
   const [soundCache, setSoundCache] = useState<ReturnType<
@@ -34,6 +36,7 @@ export function ReactionsAudioRenderer({
   const audioEngineCtx = useAudioContext({
     sounds: soundCache,
     latencyHint: "interactive",
+    muted,
   });
   const audioEngineRef = useLatest(audioEngineCtx);
 

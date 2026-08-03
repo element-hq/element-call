@@ -13,8 +13,8 @@ import { useTranslation } from "react-i18next";
 
 import { TileAvatar } from "../tile/TileAvatar";
 import styles from "./VideoPreview.module.css";
-import { type MuteStates } from "./MuteStates";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import videoPlaceholder from "../graphics/video-placeholder.gif";
 
 export type MatrixInfo = {
   userId: string;
@@ -29,14 +29,14 @@ export type MatrixInfo = {
 
 interface Props {
   matrixInfo: MatrixInfo;
-  muteStates: MuteStates;
+  videoEnabled: boolean;
   videoTrack: LocalVideoTrack | null;
   children: ReactNode;
 }
 
 export const VideoPreview: FC<Props> = ({
   matrixInfo,
-  muteStates,
+  videoEnabled,
   videoTrack,
   children,
 }) => {
@@ -56,8 +56,8 @@ export const VideoPreview: FC<Props> = ({
   }, [videoTrack]);
 
   const cameraIsStarting = useMemo(
-    () => muteStates.video.enabled && !videoTrack,
-    [muteStates.video.enabled, videoTrack],
+    () => videoEnabled && !videoTrack,
+    [videoEnabled, videoTrack],
   );
 
   return (
@@ -75,8 +75,11 @@ export const VideoPreview: FC<Props> = ({
         // There's no reason for this to be focusable
         tabIndex={-1}
         disablePictureInPicture
+        // Set the placeholder to a small transparent image. (On Android web
+        // views the default poster image is particularly ugly.)
+        poster={videoPlaceholder}
       />
-      {(!muteStates.video.enabled || cameraIsStarting) && (
+      {(!videoEnabled || cameraIsStarting) && (
         <>
           <div className={styles.avatarContainer}>
             {cameraIsStarting && (

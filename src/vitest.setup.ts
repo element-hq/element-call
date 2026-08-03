@@ -5,8 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import "global-jsdom/register";
-import "@formatjs/intl-durationformat/polyfill";
+import "@formatjs/intl-durationformat/polyfill.js";
 import "@formatjs/intl-segmenter/polyfill";
 import i18n from "i18next";
 import posthog from "posthog-js";
@@ -51,3 +50,53 @@ window.matchMedia = global.matchMedia = (): MediaQueryList =>
     addEventListener: () => {},
     removeEventListener: () => {},
   }) as Partial<MediaQueryList> as MediaQueryList;
+
+const storage: Record<string, string> = {};
+const localStoragePolyfill = {
+  getItem(key: string) {
+    return Object.prototype.hasOwnProperty.call(storage, key)
+      ? storage[key]
+      : null;
+  },
+  setItem(key: string, value: string) {
+    storage[key] = String(value);
+  },
+  removeItem(key: string) {
+    delete storage[key];
+  },
+  clear() {
+    for (const key in storage) {
+      delete storage[key];
+    }
+  },
+  key(index: number) {
+    const keys = Object.keys(storage);
+    return keys[index] ?? null;
+  },
+  get length() {
+    return Object.keys(storage).length;
+  },
+} as unknown as Storage;
+
+if (
+  typeof globalThis.localStorage === "undefined" ||
+  typeof globalThis.localStorage.clear !== "function"
+) {
+  Object.defineProperty(globalThis, "localStorage", {
+    value: localStoragePolyfill,
+    writable: true,
+    configurable: true,
+  });
+}
+
+if (
+  typeof window !== "undefined" &&
+  (typeof window.localStorage === "undefined" ||
+    typeof window.localStorage.clear !== "function")
+) {
+  Object.defineProperty(window, "localStorage", {
+    value: localStoragePolyfill,
+    writable: true,
+    configurable: true,
+  });
+}

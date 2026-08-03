@@ -28,23 +28,30 @@ layer(compound);
   --font-size-title: calc(24px * var(--font-scale));
   --font-size-headline: calc(32px * var(--font-scale));
 
-  /* These colors are needed during the transitionary period between the old and
-  new Compound design systems, but should be removed ASAP */
-  --stopgap-color-on-solid-accent: var(--cpd-color-bg-canvas-default);
-  --stopgap-background-85: rgba(255, 255, 255, 0.85);
-  --stopgap-bgColor3: #444;
-
   --cpd-color-border-accent: var(--cpd-color-green-800);
   /* The distance to inset non-full-width content from the edge of the window
   along the inline axis. This ramps up from 16px for typical mobile windows, to
-  96px for typical desktop windows. */
-  --inline-content-inset: min(
-    var(--cpd-space-24x),
-    max(var(--cpd-space-4x), calc((100vw - 900px) / 3))
+  96px for typical desktop windows, and accounts for the safe area. */
+  --content-inset-left: calc(
+    env(safe-area-inset-left) +
+      min(
+        var(--cpd-space-24x),
+        max(var(--cpd-space-4x), calc((100vw - 900px) / 3))
+      )
+  );
+  --content-inset-right: calc(
+    env(safe-area-inset-right) +
+      min(
+        var(--cpd-space-24x),
+        max(var(--cpd-space-4x), calc((100vw - 900px) / 3))
+      )
   );
   --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
+  --big-drop-shadow: 0px 0px 24px 0px #1b1d221a;
   --subtle-drop-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-  --background-gradient: url("graphics/backgroundGradient.svg");
+
+  --call-view-overlay-layer: 1;
+  --call-view-header-footer-layer: 2;
 }
 
 :root,
@@ -60,15 +67,37 @@ layer(compound);
 
 body {
   background-color: var(--cpd-color-bg-canvas-default);
-  background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
-  background-repeat: no-repeat;
-  background-position: center;
   color: var(--cpd-color-text-primary);
   color-scheme: dark;
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-height: 330px) {
+  body[data-background="gradient"]::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("graphics/mobile-gradient.svg");
+    background-size: auto;
+    background-position: bottom;
+    background-repeat: no-repeat;
+  }
+
+  body[data-background="gradient"][data-platform="desktop"]::before {
+    background-image: url("graphics/desktop-gradient.svg");
+    background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
+    background-position: center;
+  }
+}
+
+/* This prohibits the view to scroll for pages smaller than 122px in width
+we use this for mobile pip webviews */
+.no-scroll-body {
+  position: fixed;
+  width: 100%;
 }
 
 /* We use this to not render the page at all until we know the theme.*/

@@ -34,9 +34,12 @@ export function TabContainer<K extends Key>({
   return (
     <div className={styles.tabContainer}>
       <NavBar role="tablist" aria-label={label} className={styles.tabList}>
-        {tabs.map(({ key, name }) => (
+        {tabs.map(({ key, name }, index) => (
           <NavItem
+            key={key}
             aria-controls={`${idPrefix}[${key}]`}
+            aria-posinset={index + 1}
+            aria-setsize={tabs.length}
             onClick={() => onTabChange(key)}
             active={key === tab}
           >
@@ -46,6 +49,7 @@ export function TabContainer<K extends Key>({
       </NavBar>
       {tabs.map(({ key, content }) => (
         <div
+          key={key}
           id={`${idPrefix}[${key}]`}
           style={{ display: key === tab ? undefined : "none" }}
         >

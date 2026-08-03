@@ -7,8 +7,13 @@ on:
         type: string
       package:
         type: string # This would ideally be a `choice` type, but that isn't supported yet
-        description: The package type to be built. Must be one of 'full' or 'embedded'
+        description: The package type to be built. Must be one of 'full', 'embedded', or 'sdk'
         required: true
+      build_mode:
+        type: string # This would ideally be a `choice` type, but that isn't supported yet
+        description: The build mode for vite. Must be either 'development' or 'production'
+        required: false
+        default: production
     secrets:
       SENTRY_ORG:
         required: true
@@ -27,19 +32,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
-      - name: Yarn cache
-        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4
+      - name: pnpm cache
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          cache: "yarn"
+          cache: "pnpm"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "yarn install --immutable"
-      - name: Build full version
-        if: ${{ inputs.package == 'full' }}
-        run: "yarn run build:full"
+        # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
+        run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
+      - name: Build Element Call
+        run: pnpm run build:"$PACKAGE":"$BUILD_MODE"
         env:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -48,17 +55,8 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           VITE_APP_VERSION: ${{ inputs.vite_app_version }}
           NODE_OPTIONS: "--max-old-space-size=4096"
-      - name: Build embedded
-        if: ${{ inputs.package == 'embedded' }}
-        run: "yarn run build:embedded"
-        env:
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-          SENTRY_URL: ${{ secrets.SENTRY_URL }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          VITE_APP_VERSION: ${{ inputs.vite_app_version }}
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          PACKAGE: ${{ inputs.package }}
+          BUILD_MODE: ${{ inputs.build_mode }}
       - name: Upload Artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

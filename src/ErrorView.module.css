@@ -12,10 +12,29 @@
 
 .error > h1 {
   margin: 0;
+  text-align: center;
 }
 
 .error > p {
   font: var(--cpd-font-body-lg-regular);
   color: var(--cpd-color-text-secondary);
   text-align: center;
+}
+
+.technicalDetails {
+  margin-top: var(--cpd-space-1x);
+}
+
+.technicalDetailsSummary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.technicalDetailsPre {
+  margin-top: var(--cpd-space-2x);
+  padding: var(--cpd-space-2x);
+  background-color: var(--cpd-color-bg-subtle-secondary);
+  overflow: auto;
+  font-size: var(--cpd-font-size-body-sm);
+  white-space: pre-wrap;
 }

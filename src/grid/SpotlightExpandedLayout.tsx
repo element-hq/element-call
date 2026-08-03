@@ -5,13 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { forwardRef, useCallback } from "react";
-import { useObservableEagerState } from "observable-hooks";
+import { type ReactNode, useCallback } from "react";
 
-import { type SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/CallViewModel";
+import { type SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/layout-types.ts";
 import { type CallLayout } from "./CallLayout";
 import { type DragCallback, useUpdateLayout } from "./Grid";
 import styles from "./SpotlightExpandedLayout.module.css";
+import { useBehavior } from "../useBehavior";
 
 /**
  * An implementation of the "expanded spotlight" layout, in which the spotlight
@@ -19,13 +19,14 @@ import styles from "./SpotlightExpandedLayout.module.css";
  */
 export const makeSpotlightExpandedLayout: CallLayout<
   SpotlightExpandedLayoutModel
-> = ({ pipAlignment$ }) => ({
-  scrollingOnTop: true,
+> = () => ({
+  foreground: "scrolling",
 
-  fixed: forwardRef(function SpotlightExpandedLayoutFixed(
-    { model, Slot },
+  fixed: function SpotlightExpandedLayoutFixed({
     ref,
-  ) {
+    model,
+    Slot,
+  }): ReactNode {
     useUpdateLayout();
 
     return (
@@ -37,22 +38,23 @@ export const makeSpotlightExpandedLayout: CallLayout<
         />
       </div>
     );
-  }),
+  },
 
-  scrolling: forwardRef(function SpotlightExpandedLayoutScrolling(
-    { model, Slot },
+  scrolling: function SpotlightExpandedLayoutScrolling({
     ref,
-  ) {
+    model,
+    Slot,
+  }): ReactNode {
     useUpdateLayout();
-    const pipAlignmentValue = useObservableEagerState(pipAlignment$);
+    const pipAlignment = useBehavior(model.pipAlignment$);
 
     const onDragPip: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
-        pipAlignment$.next({
+        model.pipAlignment$.next({
           block: yRatio < 0.5 ? "start" : "end",
           inline: xRatio < 0.5 ? "start" : "end",
         }),
-      [],
+      [model.pipAlignment$],
     );
 
     return (
@@ -63,11 +65,11 @@ export const makeSpotlightExpandedLayout: CallLayout<
             id={model.pip.id}
             model={model.pip}
             onDrag={onDragPip}
-            data-block-alignment={pipAlignmentValue.block}
-            data-inline-alignment={pipAlignmentValue.inline}
+            data-block-alignment={pipAlignment.block}
+            data-inline-alignment={pipAlignment.inline}
           />
         )}
       </div>
     );
-  }),
+  },
 });

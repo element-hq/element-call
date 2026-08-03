@@ -5,81 +5,52 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  RoomAudioRenderer,
-  RoomContext,
-  useLocalParticipant,
-} from "@livekit/components-react";
-import { ConnectionState, type Room } from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk";
+import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   type FC,
-  type PointerEvent,
-  type PropsWithoutRef,
-  type TouchEvent,
-  forwardRef,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   type JSX,
+  type ReactNode,
 } from "react";
 import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
-import { BehaviorSubject, map } from "rxjs";
-import { useObservable, useObservableEagerState } from "observable-hooks";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { map } from "rxjs";
+import { useObservable } from "observable-hooks";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { useTranslation } from "react-i18next";
 
-import LogoMark from "../icons/LogoMark.svg?react";
-import LogoType from "../icons/LogoType.svg?react";
-import type { IWidgetApiRequest } from "matrix-widget-api";
-import {
-  EndCallButton,
-  MicButton,
-  VideoButton,
-  ShareScreenButton,
-  SettingsButton,
-  ReactionToggleButton,
-  SwitchCameraButton,
-} from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { useUrlParams } from "../UrlParams";
+import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
-import { ElementWidgetActions, widget } from "../widget";
+import { widget } from "../widget";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
-import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { useLiveKit } from "../livekit/useLiveKit";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
-import { type MuteStates } from "./MuteStates";
+import { type MuteStates } from "../state/MuteStates";
 import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
-import { LayoutToggle } from "./LayoutToggle";
-import { type ECConnectionState } from "../livekit/useECConnectionState";
-import { useOpenIDSFU } from "../livekit/openIDSFU";
 import {
-  CallViewModel,
-  type GridMode,
-  type Layout,
-} from "../state/CallViewModel";
+  type CallViewModel,
+  createCallViewModel$,
+} from "../state/CallViewModel/CallViewModel.ts";
 import { Grid, type TileProps } from "../grid/Grid";
-import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
-import {
-  type CallLayoutOutputs,
-  defaultPipAlignment,
-  defaultSpotlightAlignment,
-} from "../grid/CallLayout";
-import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
+import { type CallLayoutOutputs } from "../grid/CallLayout";
+import { makeOneOnOneDesktopLayout } from "../grid/OneOnOneDesktopLayout";
+import { makeOneOnOneMobileLayout } from "../grid/OneOnOneMobileLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
@@ -89,213 +60,243 @@ import {
   useReactionsSender,
 } from "../reactions/useReactionsSender";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
-import { useSwitchCamera } from "./useSwitchCamera";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
-import {
-  debugTileLayout as debugTileLayoutSetting,
-  useSetting,
-} from "../settings/settings";
+import { matrixRTCMode as matrixRTCModeSetting } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
-import { ConnectionLostError } from "../utils/errors.ts";
+import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer.tsx";
+import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
+import { useMediaDevices } from "../MediaDevicesContext.ts";
+import { EarpieceOverlay } from "./EarpieceOverlay.tsx";
+import {
+  useAppBarHidden,
+  useAppBarSecondaryButton,
+  useAppBarSubtitle,
+} from "../AppBar.tsx";
+import { useBehavior } from "../useBehavior.ts";
+import { constant } from "../state/Behavior.ts";
+import { Toast } from "../Toast.tsx";
+import overlayStyles from "../Overlay.module.css";
+import { useTrackProcessorObservable$ } from "../livekit/TrackProcessorContext.tsx";
+import { type Layout } from "../state/layout-types.ts";
+import { ObservableScope } from "../state/ObservableScope.ts";
+import { CallFooter, type FooterSnapshot } from "../components/CallFooter.tsx";
+import { SettingsIconButton } from "../button/Button.tsx";
+import { createCallFooterViewModel } from "../components/CallFooterViewModel.tsx";
+import { type ViewModel } from "../state/ViewModel.ts";
+import { RingingStatus } from "../tile/RingingStatus.tsx";
+import { RingingAudioRenderer } from "./RingingAudioRenderer.tsx";
 
-const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
+declare module "react" {
+  interface CSSProperties {
+    "--call-view-safe-area-inset-top"?: string;
+    "--call-view-safe-area-inset-bottom"?: string;
+  }
+}
 
-const maxTapDurationMs = 400;
-
-export interface ActiveCallProps
-  extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {
+export interface ActiveCallProps extends Omit<
+  InCallViewProps,
+  "vm" | "livekitRoom" | "connState" | "footerVm"
+> {
   e2eeSystem: EncryptionSystem;
+  // TODO refactor those reasons into an enum
+  onLeft: (
+    reason: "user" | "timeout" | "decline" | "allOthersLeft" | "error",
+  ) => void;
 }
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
-  const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
-  const { livekitRoom, connState } = useLiveKit(
-    props.rtcSession,
-    props.muteStates,
-    sfuConfig,
-    props.e2eeSystem,
-  );
-  const connStateObservable$ = useObservable(
-    (inputs$) => inputs$.pipe(map(([connState]) => connState)),
-    [connState],
-  );
   const [vm, setVm] = useState<CallViewModel | null>(null);
-
+  const [footerVm, setFooterVm] = useState<ViewModel<FooterSnapshot> | null>(
+    null,
+  );
+  const urlParams = useUrlParams();
+  const mediaDevices = useMediaDevices();
+  const trackProcessorState$ = useTrackProcessorObservable$();
   useEffect(() => {
+    rootLogger.info("START CALL VIEW SCOPE");
+    const scope = new ObservableScope();
+    const reactionsReader = new ReactionsReader(scope, props.rtcSession);
+    const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
+      urlParams;
+
+    const vm = createCallViewModel$(
+      scope,
+      props.rtcSession,
+      props.matrixRoom,
+      mediaDevices,
+      props.muteStates,
+      {
+        encryptionSystem: props.e2eeSystem,
+        autoLeaveWhenOthersLeft,
+        waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
+        matrixRTCMode$: matrixRTCModeSetting.value$,
+      },
+      reactionsReader.raisedHands$,
+      reactionsReader.reactions$,
+      scope.behavior(trackProcessorState$),
+    );
+    // TODO move this somewhere else once we use the callViewModel in the lobby as well!
+    vm.join();
+    setVm(vm);
+
+    vm.leave$.pipe(scope.bind()).subscribe(props.onLeft);
+
     return (): void => {
-      livekitRoom?.disconnect().catch((e) => {
-        logger.error("Failed to disconnect from livekit room", e);
-      });
+      scope.end();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    props.rtcSession,
+    props.matrixRoom,
+    props.muteStates,
+    props.e2eeSystem,
+    props.onLeft,
+    urlParams,
+    mediaDevices,
+    trackProcessorState$,
+    props.client,
+  ]);
 
   useEffect(() => {
-    if (livekitRoom !== undefined) {
-      const reactionsReader = new ReactionsReader(props.rtcSession);
-      const vm = new CallViewModel(
-        props.rtcSession,
-        livekitRoom,
-        props.e2eeSystem,
-        connStateObservable$,
-        reactionsReader.raisedHands$,
-        reactionsReader.reactions$,
-      );
-      setVm(vm);
-      return (): void => {
-        vm.destroy();
-        reactionsReader.destroy();
-      };
-    }
-  }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable$]);
+    if (vm === null) return;
 
-  if (livekitRoom === undefined || vm === null) return null;
+    const scope = new ObservableScope();
+    const footerVm = createCallFooterViewModel(
+      scope,
+      vm,
+      props.muteStates,
+      mediaDevices,
+      `${props.client.getUserId()}:${props.client.getDeviceId()}`,
+    );
+    setFooterVm(footerVm);
+
+    return (): void => {
+      scope.end();
+    };
+  }, [
+    props.rtcSession,
+    props.matrixRoom,
+    props.muteStates,
+    props.e2eeSystem,
+    props.onLeft,
+    urlParams,
+    mediaDevices,
+    trackProcessorState$,
+    props.client,
+    vm,
+  ]);
+
+  if (vm === null) return null;
+  if (footerVm === null) return null;
 
   return (
-    <RoomContext.Provider value={livekitRoom}>
-      <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
-        <InCallView
-          {...props}
-          vm={vm}
-          livekitRoom={livekitRoom}
-          connState={connState}
-        />
-      </ReactionsSenderProvider>
-    </RoomContext.Provider>
+    <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
+      <InCallView {...props} vm={vm} footerVm={footerVm} />
+    </ReactionsSenderProvider>
   );
 };
 
 export interface InCallViewProps {
   client: MatrixClient;
   vm: CallViewModel;
+  footerVm: ViewModel<FooterSnapshot>;
   matrixInfo: MatrixInfo;
   rtcSession: MatrixRTCSession;
-  livekitRoom: Room;
+  matrixRoom: MatrixRoom;
   muteStates: MuteStates;
-  participantCount: number;
-  /** Function to call when the user explicitly ends the call */
-  onLeave: () => void;
-  hideHeader: boolean;
-  otelGroupCallMembership?: OTelGroupCallMembership;
-  connState: ECConnectionState;
   onShareClick: (() => void) | null;
 }
 
 export const InCallView: FC<InCallViewProps> = ({
   client,
   vm,
+  footerVm,
   matrixInfo,
-  rtcSession,
-  livekitRoom,
+  matrixRoom,
   muteStates,
-  participantCount,
-  onLeave,
-  hideHeader,
-  connState,
   onShareClick,
 }) => {
-  const { supportsReactions, sendReaction, toggleRaisedHand } =
-    useReactionsSender();
+  const logger = rootLogger.getChild("[InCallView]");
+  const { t } = useTranslation();
+  const { sendReaction, toggleRaisedHand } = useReactionsSender();
 
   useWakeLock();
+  // TODO-MULTI-SFU This is unused now??
+  // const connectionState = useObservableEagerState(vm.livekitConnectionState$);
 
   // annoyingly we don't get the disconnection reason this way,
   // only by listening for the emitted event
-  if (connState === ConnectionState.Disconnected)
-    throw new ConnectionLostError();
+  // This needs to be done differential. with the vm connection state we start with Disconnected.
+  // TODO-MULTI-SFU decide how to handle this properly
+  // @BillCarsonFr
+  // if (connectionState === ConnectionState.Disconnected)
+  //   throw new ConnectionLostError();
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure();
   // Merge the refs so they can attach to the same element
   const containerRef = useMergedRefs(containerRef1, containerRef2);
 
-  const { hideScreensharing, showControls } = useUrlParams();
+  const { showControls, header: headerStyle } = useUrlParams();
 
-  const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
-    room: livekitRoom,
-  });
+  const muteAllAudio = useBehavior(muteAllAudio$);
+  const toggleAudio = useBehavior(muteStates.audio.toggle$);
+  const toggleVideo = useBehavior(muteStates.video.toggle$);
+  const setAudioEnabled = useBehavior(muteStates.audio.setEnabled$);
 
-  const toggleMicrophone = useCallback(
-    () => muteStates.audio.setEnabled?.((e) => !e),
-    [muteStates],
-  );
-  const toggleCamera = useCallback(
-    () => muteStates.video.setEnabled?.((e) => !e),
-    [muteStates],
-  );
-
-  // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
-  // TODO: Make sure that this module is resilient when it comes to camera/microphone availability!
   useCallViewKeyboardShortcuts(
-    containerRef1,
-    toggleMicrophone,
-    toggleCamera,
-    (muted) => muteStates.audio.setEnabled?.(!muted),
+    toggleAudio,
+    toggleVideo,
+    setAudioEnabled,
     (reaction) => void sendReaction(reaction),
     () => void toggleRaisedHand(),
   );
 
-  const windowMode = useObservableEagerState(vm.windowMode$);
-  const layout = useObservableEagerState(vm.layout$);
-  const tileStoreGeneration = useObservableEagerState(vm.tileStoreGeneration$);
-  const [debugTileLayout] = useSetting(debugTileLayoutSetting);
-  const gridMode = useObservableEagerState(vm.gridMode$);
-  const showHeader = useObservableEagerState(vm.showHeader$);
-  const showFooter = useObservableEagerState(vm.showFooter$);
-  const switchCamera = useSwitchCamera(vm.localVideo$);
+  const ringingVm = useBehavior(vm.ringingVm$);
+  const audioParticipants = useBehavior(vm.livekitRoomItems$);
+  const participantCount = useBehavior(vm.participantCount$);
+  const reconnecting = useBehavior(vm.reconnecting$);
+  const layout = useBehavior(vm.layout$);
+  const edgeToEdge = useBehavior(vm.edgeToEdge$);
+  const overflowing = useBehavior(vm.overflowing$);
+  const showNameTags = useBehavior(vm.showNameTags$);
+  const showHeader = useBehavior(vm.showHeader$);
+  const settingsOpen = useBehavior(vm.settingsOpen$);
+  const setSettingsOpen = useBehavior(vm.setSettingsOpen$);
+  const earpieceMode = useBehavior(vm.earpieceMode$);
+  const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
 
-  // Ideally we could detect taps by listening for click events and checking
-  // that the pointerType of the event is "touch", but this isn't yet supported
-  // in Safari: https://developer.mozilla.org/en-US/docs/Web/API/Element/click_event#browser_compatibility
-  // Instead we have to watch for sufficiently fast touch events.
-  const touchStart = useRef<number | null>(null);
-  const onTouchStart = useCallback(() => (touchStart.current = Date.now()), []);
-  const onTouchEnd = useCallback(() => {
-    const start = touchStart.current;
-    if (start !== null && Date.now() - start <= maxTapDurationMs)
-      vm.tapScreen();
-    touchStart.current = null;
-  }, [vm]);
-  const onTouchCancel = useCallback(() => (touchStart.current = null), []);
+  const fatalCallError = useBehavior(vm.fatalError$);
+  // Stop the rendering and throw for the error boundary
+  if (fatalCallError) {
+    logger.debug("fatalCallError stop rendering", fatalCallError);
+    throw fatalCallError;
+  }
 
-  // We also need to tell the footer controls to prevent touch events from
-  // bubbling up, or else the footer will be dismissed before a click/change
-  // event can be registered on the control
-  const onControlsTouchEnd = useCallback(
-    (e: TouchEvent) => {
-      // Somehow applying pointer-events: none to the controls when the footer
-      // is hidden is not enough to stop clicks from happening as the footer
-      // becomes visible, so we check manually whether the footer is shown
-      if (showFooter) {
-        e.stopPropagation();
-        vm.tapControls();
-      } else {
-        e.preventDefault();
-      }
+  // iOS Safari doesn't reliably fire `click` on plain <div>s, so we listen
+  // for `pointerup` instead. Scrolls end in `pointercancel`, not `pointerup`,
+  // so this still only fires for taps.
+  const onViewPointerUp = useCallback(
+    (e: ReactPointerEvent) => {
+      if (
+        e.pointerType === "touch" &&
+        // If an interactive element was tapped, don't count this as a tap on the screen
+        (e.target as Element).closest?.("button, input") === null
+      )
+        vm.tapScreen();
     },
-    [vm, showFooter],
+    [vm],
   );
 
   const onPointerMove = useCallback(
-    (e: PointerEvent) => {
+    (e: ReactPointerEvent) => {
       if (e.pointerType === "mouse") vm.hoverScreen();
     },
     [vm],
   );
   const onPointerOut = useCallback(() => vm.unhoverScreen(), [vm]);
 
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
-
-  const openSettings = useCallback(
-    () => setSettingsModalOpen(true),
-    [setSettingsModalOpen],
-  );
-  const closeSettings = useCallback(
-    () => setSettingsModalOpen(false),
-    [setSettingsModalOpen],
-  );
 
   const openProfile = useMemo(
     () =>
@@ -303,10 +304,10 @@ export const InCallView: FC<InCallViewProps> = ({
       widget === null
         ? (): void => {
             setSettingsTab("profile");
-            setSettingsModalOpen(true);
+            setSettingsOpen(true);
           }
         : null,
-    [setSettingsTab, setSettingsModalOpen],
+    [setSettingsTab, setSettingsOpen],
   );
 
   const [headerRef, headerBounds] = useMeasure();
@@ -317,15 +318,14 @@ export const InCallView: FC<InCallViewProps> = ({
       width: bounds.width,
       height:
         bounds.height -
-        headerBounds.height -
-        (windowMode === "flat" ? 0 : footerBounds.height),
+        (edgeToEdge ? 0 : headerBounds.height + footerBounds.height),
     }),
     [
       bounds.width,
       bounds.height,
       headerBounds.height,
       footerBounds.height,
-      windowMode,
+      edgeToEdge,
     ],
   );
   const gridBoundsObservable$ = useObservable(
@@ -333,78 +333,111 @@ export const InCallView: FC<InCallViewProps> = ({
     [gridBounds],
   );
 
-  const spotlightAlignment$ = useInitial(
-    () => new BehaviorSubject(defaultSpotlightAlignment),
-  );
-  const pipAlignment$ = useInitial(
-    () => new BehaviorSubject(defaultPipAlignment),
-  );
-
-  const setGridMode = useCallback(
-    (mode: GridMode) => vm.setGridMode(mode),
-    [vm],
+  useAppBarHidden(!showHeader);
+  useAppBarSubtitle(
+    ringingVm && vm.ringingStatusLocation === "app_bar" && (
+      <RingingStatus vm={ringingVm} />
+    ),
   );
 
-  useEffect(() => {
-    widget?.api.transport
-      .send(
-        gridMode === "grid"
-          ? ElementWidgetActions.TileLayout
-          : ElementWidgetActions.SpotlightLayout,
-        {},
-      )
-      .catch((e) => {
-        logger.error("Failed to send layout change to widget API", e);
-      });
-  }, [gridMode]);
-
-  useEffect(() => {
-    if (widget) {
-      const onTileLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        setGridMode("grid");
-        widget!.api.transport.reply(ev.detail, {});
-      };
-      const onSpotlightLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        setGridMode("spotlight");
-        widget!.api.transport.reply(ev.detail, {});
-      };
-
-      widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
-      widget.lazyActions.on(
-        ElementWidgetActions.SpotlightLayout,
-        onSpotlightLayout,
-      );
-
-      return (): void => {
-        widget!.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
-        widget!.lazyActions.off(
-          ElementWidgetActions.SpotlightLayout,
-          onSpotlightLayout,
-        );
-      };
+  let header: ReactNode = null;
+  switch (headerStyle) {
+    case HeaderStyle.AppBar: {
+      // dont build a header here. The AppBar will take care of it.
+      break;
     }
-  }, [setGridMode]);
+    case HeaderStyle.None:
+      // Cosmetic header to fill out space while still affecting the bounds of
+      // the grid
+      header = showHeader && (
+        <div
+          className={classNames(styles.header, styles.filler)}
+          ref={headerRef}
+        />
+      );
+      break;
+    case HeaderStyle.Standard:
+      header = (
+        <Header
+          className={classNames(styles.header, {
+            [styles.overlay]: edgeToEdge,
+            [styles.hidden]: !showHeader,
+          })}
+          ref={headerRef}
+          disconnectedBanner={false} // This screen has its own 'reconnecting' toast
+        >
+          <LeftNav>
+            <RoomHeaderInfo
+              id={matrixInfo.roomId}
+              name={matrixInfo.roomName}
+              avatarUrl={matrixInfo.roomAvatar}
+              encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
+              participantCount={participantCount}
+            />
+          </LeftNav>
+          <RightNav>
+            {showControls && onShareClick !== null && (
+              <InviteButton className={styles.invite} onClick={onShareClick} />
+            )}
+          </RightNav>
+        </Header>
+      );
+  }
+
+  // The reconnecting toast cannot be dismissed
+  const onDismissReconnectingToast = useCallback(() => {}, []);
+  // We need to use a non-modal toast to avoid trapping focus within the toast.
+  // However, a non-modal toast will not render any background overlay on its
+  // own, so we must render one manually.
+  const reconnectingToast = (
+    <>
+      <div
+        className={classNames(overlayStyles.bg, overlayStyles.animate)}
+        data-state={reconnecting ? "open" : "closed"}
+      />
+      <Toast
+        onDismiss={onDismissReconnectingToast}
+        open={reconnecting}
+        modal={false}
+      >
+        {t("common.reconnecting")}
+      </Toast>
+    </>
+  );
+
+  const earpieceOverlay = (
+    <EarpieceOverlay
+      show={earpieceMode && !reconnecting}
+      onBackToVideoPressed={audioOutputSwitcher?.switch}
+    />
+  );
+
+  // If the reconnecting toast or earpiece overlay obscures the media tiles, we
+  // need to remove them from the accessibility tree and block focus.
+  const contentObscured = reconnecting || earpieceMode;
 
   const Tile = useMemo(
     () =>
-      forwardRef<
-        HTMLDivElement,
-        PropsWithoutRef<TileProps<TileViewModel, HTMLDivElement>>
-      >(function Tile(
-        { className, style, targetWidth, targetHeight, model },
+      function Tile({
         ref,
-      ) {
-        const spotlightExpanded = useObservableEagerState(
-          vm.spotlightExpanded$,
-        );
-        const onToggleExpanded = useObservableEagerState(
-          vm.toggleSpotlightExpanded$,
-        );
-        const showSpeakingIndicatorsValue = useObservableEagerState(
-          vm.showSpeakingIndicators$,
-        );
-        const showSpotlightIndicatorsValue = useObservableEagerState(
+        className,
+        style,
+        targetWidth,
+        targetHeight,
+        model,
+      }: TileProps<TileViewModel, HTMLDivElement>): ReactNode {
+        const spotlightExpanded = useBehavior(vm.spotlightExpanded$);
+        const onToggleExpanded = useBehavior(vm.toggleSpotlightExpanded$);
+        const showSpotlightIndicators = useBehavior(
           vm.showSpotlightIndicators$,
+        );
+        const showSpeakingIndicators = useBehavior(vm.showSpeakingIndicators$);
+        const showNameTags = useBehavior(vm.showNameTags$);
+        const showRingingStatus = vm.ringingStatusLocation === "tile";
+        const showOutline = useBehavior(
+          model instanceof GridTileViewModel
+            ? model.showOutline$
+            : constant(false),
         );
 
         return model instanceof GridTileViewModel ? (
@@ -416,7 +449,11 @@ export const InCallView: FC<InCallViewProps> = ({
             targetHeight={targetHeight}
             className={classNames(className, styles.tile)}
             style={style}
-            showSpeakingIndicators={showSpeakingIndicatorsValue}
+            showSpeakingIndicators={showSpeakingIndicators}
+            showNameTags={showNameTags}
+            showRingingStatus={showRingingStatus}
+            showOutline={showOutline}
+            focusable={!contentObscured}
           />
         ) : (
           <SpotlightTile
@@ -426,41 +463,49 @@ export const InCallView: FC<InCallViewProps> = ({
             onToggleExpanded={onToggleExpanded}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
-            showIndicators={showSpotlightIndicatorsValue}
+            showIndicators={showSpotlightIndicators}
+            showNameTags={showNameTags}
+            showRingingStatus={showRingingStatus}
+            focusable={!contentObscured}
             className={classNames(className, styles.tile)}
+            itemClassName={styles.spotlightItem}
             style={style}
           />
         );
-      }),
-    [vm, openProfile],
+      },
+    [vm, openProfile, contentObscured],
   );
 
   const layouts = useMemo(() => {
-    const inputs = {
-      minBounds$: gridBoundsObservable$,
-      spotlightAlignment$,
-      pipAlignment$,
-    };
+    const inputs = { minBounds$: gridBoundsObservable$ };
     return {
       grid: makeGridLayout(inputs),
       "spotlight-landscape": makeSpotlightLandscapeLayout(inputs),
       "spotlight-portrait": makeSpotlightPortraitLayout(inputs),
       "spotlight-expanded": makeSpotlightExpandedLayout(inputs),
-      "one-on-one": makeOneOnOneLayout(inputs),
+      "one-on-one-desktop": makeOneOnOneDesktopLayout(inputs),
+      "one-on-one-mobile": makeOneOnOneMobileLayout(inputs),
     };
-  }, [gridBoundsObservable$, spotlightAlignment$, pipAlignment$]);
+  }, [gridBoundsObservable$]);
 
+  const showFooter = useBehavior(footerVm.showFooter$);
   const renderContent = (): JSX.Element => {
     if (layout.type === "pip") {
       return (
         <SpotlightTile
-          className={classNames(styles.tile, styles.maximised)}
+          className={styles.tile}
+          itemClassName={styles.spotlightItem}
+          data-maximised
           vm={layout.spotlight}
           expanded
           onToggleExpanded={null}
-          targetWidth={gridBounds.height}
-          targetHeight={gridBounds.width}
+          targetWidth={gridBounds.width}
+          targetHeight={gridBounds.height}
           showIndicators={false}
+          showNameTags={showNameTags}
+          showRingingStatus={vm.ringingStatusLocation === "tile"}
+          focusable={!contentObscured}
+          aria-hidden={contentObscured}
         />
       );
     }
@@ -471,12 +516,31 @@ export const InCallView: FC<InCallViewProps> = ({
         key="fixed"
         className={styles.fixedGrid}
         style={{
-          insetBlockStart: headerBounds.bottom,
-          height: gridBounds.height,
+          // If not edge-to-edge, consume the header insets right here.
+          insetBlockStart: edgeToEdge ? 0 : bounds.top + headerBounds.height,
+          height: edgeToEdge ? "100%" : gridBounds.height,
+          // If edge-to-edge, compute new safe area insets that account for the
+          // header and footer, passing them down to the tiles.
+          "--call-view-safe-area-inset-top":
+            edgeToEdge && headerStyle !== HeaderStyle.None && showHeader
+              ? // Header has two relevant cases: if it's an app bar, it lives
+                // outside the InCallView and consumes the safe area insets
+                // itself. Otherwise account for the safe area and header size
+                // as part of the InCallView.
+                headerStyle === HeaderStyle.AppBar
+                ? `${bounds.top}px`
+                : `calc(env(safe-area-inset-top) + ${headerBounds.height}px)`
+              : undefined,
+          "--call-view-safe-area-inset-bottom":
+            edgeToEdge && showFooter
+              ? // Footer always lives inside the InCallView.
+                `calc(env(safe-area-inset-bottom) + ${footerBounds.height}px)`
+              : undefined,
         }}
         model={layout}
         Layout={layers.fixed}
         Tile={Tile}
+        aria-hidden={contentObscured}
       />
     );
     const scrollingGrid = (
@@ -486,186 +550,76 @@ export const InCallView: FC<InCallViewProps> = ({
         model={layout}
         Layout={layers.scrolling}
         Tile={Tile}
+        aria-hidden={contentObscured}
       />
     );
-    // The grid tiles go *under* the spotlight in the portrait layout, but
-    // *over* the spotlight in the expanded layout
-    return layout.type === "spotlight-expanded" ? (
-      <>
-        {fixedGrid}
-        {scrollingGrid}
-      </>
-    ) : (
-      <>
-        {scrollingGrid}
-        {fixedGrid}
-      </>
-    );
+
+    // Put the right layer in the foreground for the requested layout
+    switch (layers.foreground) {
+      case "fixed":
+        return (
+          <>
+            {scrollingGrid}
+            {fixedGrid}
+          </>
+        );
+      case "scrolling":
+        return (
+          <>
+            {fixedGrid}
+            {scrollingGrid}
+          </>
+        );
+    }
   };
 
   const rageshakeRequestModalProps = useRageshakeRequestModal(
-    rtcSession.room.roomId,
+    matrixRoom.roomId,
   );
 
-  const toggleScreensharing = useCallback(() => {
-    localParticipant
-      .setScreenShareEnabled(!isScreenShareEnabled, {
-        audio: true,
-        selfBrowserSurface: "include",
-        surfaceSwitching: "include",
-        systemAudio: "include",
-      })
-      .catch(logger.error);
-  }, [localParticipant, isScreenShareEnabled]);
-
-  const buttons: JSX.Element[] = [];
-
-  buttons.push(
-    <MicButton
-      key="audio"
-      muted={!muteStates.audio.enabled}
-      onClick={toggleMicrophone}
-      onTouchEnd={onControlsTouchEnd}
-      disabled={muteStates.audio.setEnabled === null}
-      data-testid="incall_mute"
-    />,
-    <VideoButton
-      key="video"
-      muted={!muteStates.video.enabled}
-      onClick={toggleCamera}
-      onTouchEnd={onControlsTouchEnd}
-      disabled={muteStates.video.setEnabled === null}
-      data-testid="incall_videomute"
+  useAppBarSecondaryButton(
+    <SettingsIconButton
+      key="settings"
+      onClick={() => setSettingsOpen(true)}
+      data-testid="settings-app-bar"
     />,
   );
-  if (switchCamera !== null)
-    buttons.push(
-      <SwitchCameraButton
-        key="switch_camera"
-        className={styles.switchCamera}
-        onClick={switchCamera}
-        onTouchEnd={onControlsTouchEnd}
-      />,
-    );
-  if (canScreenshare && !hideScreensharing) {
-    buttons.push(
-      <ShareScreenButton
-        key="share_screen"
-        className={styles.shareScreen}
-        enabled={isScreenShareEnabled}
-        onClick={toggleScreensharing}
-        onTouchEnd={onControlsTouchEnd}
-        data-testid="incall_screenshare"
-      />,
-    );
-  }
-  if (supportsReactions) {
-    buttons.push(
-      <ReactionToggleButton
-        vm={vm}
-        key="raise_hand"
-        className={styles.raiseHand}
-        identifier={`${client.getUserId()}:${client.getDeviceId()}`}
-        onTouchEnd={onControlsTouchEnd}
-      />,
-    );
-  }
-  if (layout.type !== "pip")
-    buttons.push(
-      <SettingsButton
-        key="settings"
-        onClick={openSettings}
-        onTouchEnd={onControlsTouchEnd}
-      />,
-    );
 
-  buttons.push(
-    <EndCallButton
-      key="end_call"
-      onClick={function (): void {
-        onLeave();
-      }}
-      onTouchEnd={onControlsTouchEnd}
-      data-testid="incall_leave"
-    />,
+  // Only hide the settings button if we have an AppBar header and we are showing the header
+  const footer = footerVm !== null && (
+    <CallFooter className={styles.footer} ref={footerRef} vm={footerVm} />
   );
-  const footer = (
-    <div
-      ref={footerRef}
-      className={classNames(styles.footer, {
-        [styles.overlay]: windowMode === "flat",
-        [styles.hidden]: !showFooter || (!showControls && hideHeader),
-      })}
-    >
-      {!hideHeader && (
-        <div className={styles.logo}>
-          <LogoMark width={24} height={24} aria-hidden />
-          <LogoType
-            width={80}
-            height={11}
-            aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
-          />
-          {/* Don't mind this odd placement, it's just a little debug label */}
-          {debugTileLayout
-            ? `Tiles generation: ${tileStoreGeneration}`
-            : undefined}
-        </div>
-      )}
-      {showControls && <div className={styles.buttons}>{buttons}</div>}
-      {showControls && (
-        <LayoutToggle
-          className={styles.layout}
-          layout={gridMode}
-          setLayout={setGridMode}
-          onTouchEnd={onControlsTouchEnd}
-        />
-      )}
-    </div>
-  );
+  const allConnections = useBehavior(vm.allConnections$);
 
   return (
+    // The pointer handler here exists to control the visibility of the footer,
+    // and the footer is also viewable by moving focus into it, so this is fine.
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
-      className={styles.inRoom}
+      className={classNames(styles.inRoom, {
+        [styles.overflowing]: overflowing,
+      })}
       ref={containerRef}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchCancel}
+      onPointerUp={onViewPointerUp}
       onPointerMove={onPointerMove}
       onPointerOut={onPointerOut}
     >
-      {showHeader &&
-        (hideHeader ? (
-          // Cosmetic header to fill out space while still affecting the bounds
-          // of the grid
-          <div
-            className={classNames(styles.header, styles.filler)}
-            ref={headerRef}
-          />
-        ) : (
-          <Header className={styles.header} ref={headerRef}>
-            <LeftNav>
-              <RoomHeaderInfo
-                id={matrixInfo.roomId}
-                name={matrixInfo.roomName}
-                avatarUrl={matrixInfo.roomAvatar}
-                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
-                participantCount={participantCount}
-              />
-            </LeftNav>
-            <RightNav>
-              {showControls && onShareClick !== null && (
-                <InviteButton
-                  className={styles.invite}
-                  onClick={onShareClick}
-                />
-              )}
-            </RightNav>
-          </Header>
-        ))}
-      <RoomAudioRenderer />
+      {header}
+      {audioParticipants.map(({ livekitRoom, url, participants }) => (
+        <LivekitRoomAudioRenderer
+          key={url}
+          url={url}
+          livekitRoom={livekitRoom}
+          validIdentities={participants}
+          muted={muteAllAudio}
+        />
+      ))}
       {renderContent()}
-      <CallEventAudioRenderer vm={vm} />
-      <ReactionsAudioRenderer vm={vm} />
+      <CallEventAudioRenderer vm={vm} muted={muteAllAudio} />
+      <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
+      <RingingAudioRenderer vm={ringingVm} muted={muteAllAudio} />
+      {reconnectingToast}
+      {earpieceOverlay}
       <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (
@@ -673,12 +627,20 @@ export const InCallView: FC<InCallViewProps> = ({
           <RageshakeRequestModal {...rageshakeRequestModalProps} />
           <SettingsModal
             client={client}
-            roomId={rtcSession.room.roomId}
-            open={settingsModalOpen}
-            onDismiss={closeSettings}
+            roomId={matrixRoom.roomId}
+            open={settingsOpen}
+            onDismiss={(): void => setSettingsOpen(false)}
             tab={settingsTab}
             onTabChange={setSettingsTab}
-            livekitRoom={livekitRoom}
+            livekitRooms={allConnections
+              .getConnections()
+              .map((connectionItem) => ({
+                room: connectionItem.livekitRoom,
+                livekitAlias: connectionItem.livekitAlias,
+                // TODO compute is local or tag it in the livekit room items already
+                isLocal: undefined,
+                url: connectionItem.transport.livekit_service_url,
+              }))}
           />
         </>
       )}

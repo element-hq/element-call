@@ -1,0 +1,167 @@
+/*
+Copyright 2021-2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import {
+  loadEnv,
+  PluginOption,
+  searchForWorkspaceRoot,
+  type ConfigEnv,
+  type UserConfig,
+} from "vite";
+import svgrPlugin from "vite-plugin-svgr";
+import { createHtmlPlugin } from "vite-plugin-html";
+
+import { codecovVitePlugin } from "@codecov/vite-plugin";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
+import wasm from "vite-plugin-wasm";
+
+import react from "@vitejs/plugin-react";
+import { realpathSync } from "fs";
+import * as fs from "node:fs";
+
+export const vitePluginsConfig = ({
+  mode,
+}: Pick<ConfigEnv, "mode">): UserConfig => {
+  const env = loadEnv(mode, process.cwd());
+  const plugins: PluginOption[] = [
+    react(),
+    wasm(),
+    nodePolyfills({
+      // Enables the 'events' module, which is required by the matrix-js-sdk
+      include: ["events"],
+    }),
+    svgrPlugin({
+      svgrOptions: {
+        // This enables ref forwarding on SVGR components, which is needed, for
+        // example, to make tooltips on icons work
+        ref: true,
+      },
+    }),
+    codecovVitePlugin({
+      enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+      bundleName: "element-call",
+      uploadToken: process.env.CODECOV_TOKEN,
+    }),
+  ];
+
+  if (
+    process.env.SENTRY_ORG &&
+    process.env.SENTRY_PROJECT &&
+    process.env.SENTRY_AUTH_TOKEN &&
+    process.env.SENTRY_URL
+  ) {
+    plugins.push(
+      sentryVitePlugin({
+        release: {
+          name: process.env.VITE_APP_VERSION,
+        },
+      }),
+    );
+  }
+
+  if (!process.env.STORYBOOK && !process.env.VITEST) {
+    plugins.push(
+      createHtmlPlugin({
+        entry: "src/main.tsx",
+        inject: {
+          data: {
+            brand: env.VITE_PRODUCT_NAME || "Element Call",
+            packageType: process.env.VITE_PACKAGE,
+          },
+        },
+      }),
+    );
+  }
+
+  return { plugins };
+};
+// https://vitejs.dev/config/
+// Modified type helper from defineConfig to allow for packageType (see defineConfig from vite)
+export default ({
+  mode,
+  packageType,
+}: ConfigEnv & { packageType?: "full" | "embedded" }): UserConfig => {
+  // Environment variables with the VITE_ prefix are accessible at runtime.
+  // So, we set this to allow for build/package specific behavior.
+  // In future we might be able to do what is needed via code splitting at
+  // build time.
+  process.env.VITE_PACKAGE = packageType ?? "full";
+
+  // The crypto WASM module is imported dynamically. Since it's common
+  // for developers to use a linked copy of matrix-js-sdk or Rust
+  // crypto (which could reside anywhere on their file system), Vite
+  // needs to be told to recognize it as a legitimate file access.
+  const allow = [searchForWorkspaceRoot(process.cwd())];
+  for (const path of [
+    "node_modules/matrix-js-sdk/node_modules/@matrix-org/matrix-sdk-crypto-wasm",
+    "node_modules/@matrix-org/matrix-sdk-crypto-wasm",
+  ]) {
+    try {
+      allow.push(realpathSync(path));
+    } catch {}
+  }
+  console.log("Allowed vite paths:", allow);
+
+  return {
+    ...vitePluginsConfig({ mode }),
+    server: {
+      host: true,
+      port: 3000,
+      fs: { allow },
+      https: {
+        key: fs.readFileSync("./backend/dev_tls_m.localhost.key"),
+        cert: fs.readFileSync("./backend/dev_tls_m.localhost.crt"),
+      },
+    },
+    worker: {
+      format: "es",
+    },
+    build: {
+      minify: mode === "production" ? true : false,
+      sourcemap: true,
+      rollupOptions: {
+        output: {
+          assetFileNames: ({ originalFileNames }): string => {
+            if (originalFileNames) {
+              for (const name of originalFileNames) {
+                // Custom asset name for locales to include the locale code in the filename
+                const match = name.match(/locales\/([^/]+)\/(.+)\.json$/);
+                if (match) {
+                  const [, locale, filename] = match;
+                  return `assets/${locale}-${filename}-[hash].json`;
+                }
+              }
+            }
+
+            // Default naming fallback
+            return "assets/[name]-[hash][extname]";
+          },
+        },
+      },
+    },
+    resolve: {
+      alias: {
+        // matrix-widget-api has its transpiled lib/index.js as its entry point,
+        // which Vite for some reason refuses to work with, so we point it to
+        // src/index.ts instead
+        "matrix-widget-api": "matrix-widget-api/src/index.ts",
+      },
+      dedupe: [
+        "react",
+        "react-dom",
+        "matrix-js-sdk",
+        "react-use-measure",
+        // These packages modify the document based on some module-level global
+        // state, and don't play nicely with duplicate copies of themselves
+        // https://github.com/radix-ui/primitives/issues/1241#issuecomment-1847837850
+        "@radix-ui/react-focus-guards",
+        "@radix-ui/react-dismissable-layer",
+      ],
+    },
+  };
+};

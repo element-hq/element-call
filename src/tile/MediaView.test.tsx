@@ -13,12 +13,10 @@ import {
   type TrackReference,
   type TrackReferencePlaceholder,
 } from "@livekit/components-core";
-import { LocalTrackPublication, Track } from "livekit-client";
-import { TrackInfo } from "@livekit/protocol";
+import { type LocalTrackPublication, Track } from "livekit-client";
 import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
-import { EncryptionStatus } from "../state/MediaViewModel";
 import { mockLocalParticipant } from "../utils/test";
 
 describe("MediaView", () => {
@@ -29,10 +27,7 @@ describe("MediaView", () => {
   };
   const trackReference: TrackReference = {
     ...trackReferencePlaceholder,
-    publication: new LocalTrackPublication(
-      Track.Kind.Video,
-      new TrackInfo({ sid: "id", name: "name" }),
-    ),
+    publication: {} as Partial<LocalTrackPublication> as LocalTrackPublication,
   };
 
   const baseProps: ComponentProps<typeof MediaView> = {
@@ -41,12 +36,13 @@ describe("MediaView", () => {
     videoFit: "contain",
     targetWidth: 300,
     targetHeight: 200,
-    encryptionStatus: EncryptionStatus.Connecting,
     mirror: false,
     unencryptedWarning: false,
+    showNameTags: true,
     video: trackReference,
-    member: undefined,
-    localParticipant: false,
+    userId: "@alice:example.com",
+    mxcAvatarUrl: undefined,
+    focusable: true,
   };
 
   test("is accessible", async () => {
@@ -58,26 +54,19 @@ describe("MediaView", () => {
     test("neither video nor avatar are shown", () => {
       render(<MediaView {...baseProps} video={trackReferencePlaceholder} />);
       expect(screen.queryByTestId("video")).toBeNull();
-      expect(screen.queryAllByRole("img", { name: "some name" }).length).toBe(
-        0,
-      );
+      expect(
+        screen.queryAllByRole("img", { name: "@alice:example.com" }).length,
+      ).toBe(0);
     });
   });
 
-  describe("with no participant", () => {
-    it("shows avatar for local user", () => {
-      render(
-        <MediaView {...baseProps} video={undefined} localParticipant={true} />,
-      );
-      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
-      expect(screen.queryAllByText("Waiting for media...").length).toBe(0);
-    });
-    it("shows avatar and label for remote user", () => {
-      render(
-        <MediaView {...baseProps} video={undefined} localParticipant={false} />,
-      );
-      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
-      expect(screen.getByText("Waiting for media...")).toBeVisible();
+  describe("with no video", () => {
+    it("shows avatar", () => {
+      render(<MediaView {...baseProps} video={undefined} />);
+      expect(
+        screen.getByRole("img", { name: "@alice:example.com" }),
+      ).toBeVisible();
+      expect(screen.queryByTestId("video")).toBe(null);
     });
   });
 
@@ -85,6 +74,22 @@ describe("MediaView", () => {
     test("is shown with name", () => {
       render(<MediaView {...baseProps} displayName="Bob" />);
       expect(screen.getByTestId("name_tag")).toHaveTextContent("Bob");
+    });
+  });
+
+  describe("waitingForMedia", () => {
+    test("defaults to false", () => {
+      render(<MediaView {...baseProps} />);
+      expect(screen.queryAllByText("Waiting for media...").length).toBe(0);
+    });
+    test("shows and is accessible", async () => {
+      const { container } = render(
+        <TooltipProvider>
+          <MediaView {...baseProps} waitingForMedia={true} />
+        </TooltipProvider>,
+      );
+      expect(await axe(container)).toHaveNoViolations();
+      expect(screen.getByText("Waiting for media...")).toBeVisible();
     });
   });
 
@@ -99,6 +104,16 @@ describe("MediaView", () => {
       expect(screen.getByRole("img", { name: "Not encrypted" })).toBeTruthy();
     });
 
+    test("is shown and accessible even with name tag hidden", async () => {
+      const { container } = render(
+        <TooltipProvider>
+          <MediaView {...baseProps} unencryptedWarning showNameTags={false} />
+        </TooltipProvider>,
+      );
+      expect(await axe(container)).toHaveNoViolations();
+      screen.getByRole("img", { name: "Not encrypted" });
+    });
+
     test("is not shown", () => {
       render(
         <TooltipProvider>
@@ -108,30 +123,6 @@ describe("MediaView", () => {
       expect(
         screen.queryAllByRole("img", { name: "Not encrypted" }).length,
       ).toBe(0);
-    });
-  });
-
-  describe("videoEnabled", () => {
-    test("just video is visible", () => {
-      render(
-        <TooltipProvider>
-          <MediaView {...baseProps} videoEnabled={true} />
-        </TooltipProvider>,
-      );
-      expect(screen.getByTestId("video")).toBeVisible();
-      expect(screen.queryAllByRole("img", { name: "some name" }).length).toBe(
-        0,
-      );
-    });
-
-    test("just avatar is visible", () => {
-      render(
-        <TooltipProvider>
-          <MediaView {...baseProps} videoEnabled={false} />
-        </TooltipProvider>,
-      );
-      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
-      expect(screen.getByTestId("video")).not.toBeVisible();
     });
   });
 });

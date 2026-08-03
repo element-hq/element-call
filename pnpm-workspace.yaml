@@ -1,0 +1,58 @@
+minimumReleaseAgeExclude:
+  - "@vector-im/compound-design-tokens"
+  - "@vector-im/compound-web"
+  - matrix-js-sdk
+  - matrix-widget-api
+allowBuilds:
+  "@parcel/watcher": true
+  "@sentry/cli": true
+  "@swc/core": true
+  "core-js": true
+  "esbuild": true
+  "matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7": true
+  "protobufjs": true
+overrides:
+  # We need compatible versions of RxJS in our dependencies and LiveKit's dependencies, but
+  # LiveKit has pinned it to a very specific version which is now holding us back from updating.
+  # See livekit/components-js#1101 for a request for a proper solution.
+  "@livekit/components-core>rxjs": "^7.8.1"
+  # Dedupe Mediapipe dependencies.
+  "@livekit/track-processors>@mediapipe/tasks-vision": "^0.10.18"
+  # Security fix: https://security-tracker.debian.org/tracker/CVE-2026-31802
+  "tar": "^7.5.11"
+  # Security fixes:
+  # - https://github.com/advisories/GHSA-7r86-cg39-jmmj
+  # - https://github.com/advisories/GHSA-23c5-xmqv-rm74
+  "minimatch": "^10.2.3"
+  # Security fix: https://github.com/element-hq/element-call/security/dependabot/109
+  "glob": "^10.5.0"
+  # Security fixes:
+  # - https://github.com/element-hq/element-call/security/dependabot/110
+  # - https://github.com/element-hq/element-call/security/dependabot/122
+  # - https://github.com/element-hq/element-call/security/dependabot/179
+  "qs": "^6.15.2"
+  # Security fixes:
+  # - https://github.com/element-hq/element-call/security/dependabot/106
+  # - https://github.com/element-hq/element-call/security/dependabot/203
+  "js-yaml": "^4.2.0"
+  # Storybook declares support for 0.27.0 only but empirically works fine with 0.28.0.
+  "esbuild": "^0.28.0"
+  # Security fixes:
+  # - https://github.com/nodejs/undici/releases/tag/v6.24.0
+  # - https://github.com/element-hq/element-call/security/dependabot/201
+  # - https://github.com/element-hq/element-call/security/dependabot/199
+  "undici": "^6.27.0"
+  # Security fix: https://github.com/advisories/GHSA-rf6f-7fwh-wjgh
+  "flatted": "^3.4.2"
+  # Security fix: https://github.com/element-hq/element-call/security/dependabot/184
+  "ws": "^8.21.0"
+  # Security fixes:
+  # - https://github.com/element-hq/element-call/security/dependabot/191
+  # - https://github.com/element-hq/element-call/security/dependabot/190
+  # - https://github.com/element-hq/element-call/security/dependabot/192
+  # - https://github.com/element-hq/element-call/security/dependabot/194
+  # - https://github.com/element-hq/element-call/security/dependabot/198
+  # - https://github.com/element-hq/element-call/security/dependabot/196
+  # - https://github.com/element-hq/element-call/security/dependabot/195
+  # - https://github.com/element-hq/element-call/security/dependabot/193
+  "dompurify": "^3.4.11"

@@ -7,16 +7,25 @@ Please see LICENSE in the repository root for full details.
 
 import { type RemoteTrackPublication } from "livekit-client";
 import { test, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
-import { of } from "rxjs";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { BehaviorSubject } from "rxjs";
 
 import { GridTile } from "./GridTile";
-import { mockRtcMembership, withRemoteMedia } from "../utils/test";
+import {
+  mockRtcMembership,
+  mockRemoteMedia,
+  mockRemoteParticipant,
+} from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
-import type { CallViewModel } from "../state/CallViewModel";
+import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
+import { constant } from "../state/Behavior";
+import {
+  createRingingMedia,
+  type RingingMediaViewModel,
+} from "../state/media/RingingMediaViewModel";
 
 global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
@@ -24,52 +33,95 @@ global.IntersectionObserver = class MockIntersectionObserver {
   public disconnect(): void {}
 } as unknown as typeof IntersectionObserver;
 
+const fakeRtcSession = {
+  on: () => {},
+  off: () => {},
+  room: {
+    on: () => {},
+    off: () => {},
+    client: {
+      getUserId: () => null,
+      getDeviceId: () => null,
+      on: () => {},
+      off: () => {},
+    },
+  },
+  memberships: [],
+} as unknown as MatrixRTCSession;
+
+const callVm = {
+  reactions$: constant({}),
+  handsRaised$: constant({}),
+} as Partial<CallViewModel> as CallViewModel;
+
 test("GridTile is accessible", async () => {
-  await withRemoteMedia(
+  const vm = mockRemoteMedia(
     mockRtcMembership("@alice:example.org", "AAAA"),
     {
       rawDisplayName: "Alice",
       getMxcAvatarUrl: () => "mxc://adfsg",
     },
-    {
+    mockRemoteParticipant({
       setVolume() {},
       getTrackPublication: () =>
         ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
-    },
-    async (vm) => {
-      const fakeRtcSession = {
-        on: () => {},
-        off: () => {},
-        room: {
-          on: () => {},
-          off: () => {},
-          client: {
-            getUserId: () => null,
-            getDeviceId: () => null,
-            on: () => {},
-            off: () => {},
-          },
-        },
-        memberships: [],
-      } as unknown as MatrixRTCSession;
-      const cVm = {
-        reactions$: of({}),
-        handsRaised$: of({}),
-      } as Partial<CallViewModel> as CallViewModel;
-      const { container } = render(
-        <ReactionsSenderProvider vm={cVm} rtcSession={fakeRtcSession}>
-          <GridTile
-            vm={new GridTileViewModel(of(vm))}
-            onOpenProfile={() => {}}
-            targetWidth={300}
-            targetHeight={200}
-            showSpeakingIndicators
-          />
-        </ReactionsSenderProvider>,
-      );
-      expect(await axe(container)).toHaveNoViolations();
-      // Name should be visible
-      screen.getByText("Alice");
-    },
+    }),
   );
+
+  const { container } = render(
+    <ReactionsSenderProvider vm={callVm} rtcSession={fakeRtcSession}>
+      <GridTile
+        vm={new GridTileViewModel(constant(vm))}
+        onOpenProfile={() => {}}
+        targetWidth={300}
+        targetHeight={200}
+        showSpeakingIndicators
+        showNameTags
+        showRingingStatus
+        showOutline
+        focusable
+      />
+    </ReactionsSenderProvider>,
+  );
+  expect(await axe(container)).toHaveNoViolations();
+  // Name should be visible
+  screen.getByText("Alice");
+});
+
+test("GridTile displays ringing media", async () => {
+  const pickupState$ = new BehaviorSubject<
+    RingingMediaViewModel["pickupState$"]["value"]
+  >("ringing");
+  const vm = createRingingMedia({
+    pickupState$,
+    id: "test",
+    intent: "audio",
+    userId: "@alice:example.org",
+    displayName$: constant("Alice"),
+    mxcAvatarUrl$: constant(undefined),
+  });
+
+  const { container } = render(
+    <ReactionsSenderProvider vm={callVm} rtcSession={fakeRtcSession}>
+      <GridTile
+        vm={new GridTileViewModel(constant(vm))}
+        onOpenProfile={() => {}}
+        targetWidth={300}
+        targetHeight={200}
+        showSpeakingIndicators
+        showNameTags
+        showRingingStatus
+        showOutline
+        focusable
+      />
+    </ReactionsSenderProvider>,
+  );
+  expect(await axe(container)).toHaveNoViolations();
+  // Name and status should be visible
+  screen.getByText("Alice");
+  screen.getByText("Calling…");
+
+  // Alice declines the call
+  act(() => pickupState$.next("decline"));
+  screen.getByText("Call ended");
 });

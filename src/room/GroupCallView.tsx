@@ -13,7 +13,12 @@ import {
   useMemo,
   useState,
 } from "react";
-import { type MatrixClient, JoinRule, type Room } from "matrix-js-sdk";
+import {
+  type MatrixClient,
+  JoinRule,
+  type Room,
+  UnsupportedStickyEventsEndpointError,
+} from "matrix-js-sdk";
 import {
   Room as LivekitRoom,
   isE2EESupported as isE2EESupportedBrowser,
@@ -38,34 +43,49 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
 import { ActiveCall } from "./InCallView";
-import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
-import { useMediaDevices } from "../livekit/MediaDevicesContext";
+import { type MuteStates } from "../state/MuteStates";
+import { useMediaDevices } from "../MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
-import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
-import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  saveKeyForRoom,
+  useRoomEncryptionSystem,
+} from "../e2ee/sharedKeyManagement";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { useUrlParams } from "../UrlParams";
+import {
+  getUrlParams,
+  HeaderStyle,
+  type UrlParams,
+  useUrlParams,
+} from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
-import { callEventAudioSounds } from "./CallEventAudioRenderer";
+import {
+  callEventAudioSounds,
+  type CallEventSounds,
+} from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import {
+  ConnectionLostError,
   E2EENotSupportedError,
   ElementCallError,
-  ErrorCode,
-  RTCSessionError,
+  StickyEventsRequiredError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
-import {
-  useNewMembershipManagerSetting as useNewMembershipManagerSetting,
-  useSetting,
-} from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
+import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
+import { useAppBarTitle } from "../AppBar.tsx";
+import { useBehavior } from "../useBehavior.ts";
+
+/**
+ * If there already are this many participants in the call, we automatically mute
+ * the user.
+ */
+export const MUTE_PARTICIPANT_COUNT = 8;
 
 declare global {
   interface Window {
@@ -77,11 +97,11 @@ interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
   confineToRoom: boolean;
-  preload: boolean;
-  skipLobby: boolean;
-  hideHeader: boolean;
+  preload: UrlParams["preload"];
+  skipLobby: UrlParams["skipLobby"];
   rtcSession: MatrixRTCSession;
-  isJoined: boolean;
+  joined: boolean;
+  setJoined: (value: boolean) => void;
   muteStates: MuteStates;
   widget: WidgetHelpers | null;
 }
@@ -92,9 +112,9 @@ export const GroupCallView: FC<Props> = ({
   confineToRoom,
   preload,
   skipLobby,
-  hideHeader,
   rtcSession,
-  isJoined,
+  joined,
+  setJoined,
   muteStates,
   widget,
 }) => {
@@ -102,19 +122,38 @@ export const GroupCallView: FC<Props> = ({
   const [externalError, setExternalError] = useState<ElementCallError | null>(
     null,
   );
-
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
+
+  const muteAllAudio = useBehavior(muteAllAudio$);
   const leaveSoundContext = useLatest(
-    useAudioContext({
+    useAudioContext<CallEventSounds>({
       sounds: callEventAudioSounds,
       latencyHint: "interactive",
+      muted: muteAllAudio,
     }),
   );
   // This should use `useEffectEvent` (only available in experimental versions)
   useEffect(() => {
     if (memberships.length >= MUTE_PARTICIPANT_COUNT)
-      muteStates.audio.setEnabled?.(false);
+      muteStates.audio.setEnabled$.value?.(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    logger.info("[Lifecycle] GroupCallView Component mounted");
+    return (): void => {
+      logger.info("[Lifecycle] GroupCallView Component unmounted");
+    };
+  }, []);
+
+  // This CSS is the only way we could find to not make element call scroll for
+  // viewport sizes smaller than 122px width. (It is actually this exact number: 122px
+  // tested on different devices...)
+  useEffect(() => {
+    document.body.classList.add("no-scroll-body");
+    return (): void => {
+      document.body.classList.remove("no-scroll-body");
+    };
   }, []);
 
   useEffect(() => {
@@ -124,18 +163,27 @@ export const GroupCallView: FC<Props> = ({
     };
   }, [rtcSession]);
 
+  // TODO move this into the callViewModel LocalMembership.ts
+  // We might actually not need this at all. Since we get into fatalError on those errors already?
   useTypedEventEmitter(
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
     (error) => {
-      setExternalError(
-        new RTCSessionError(
-          ErrorCode.MEMBERSHIP_MANAGER_UNRECOVERABLE,
-          error.message ?? error,
-        ),
-      );
+      // When matrix_rtc_mode=matrix_2_0 is in effect but the homeserver does
+      // not advertise MSC4354 (sticky events), the SDK throws an
+      // `UnsupportedStickyEventsEndpointError`. The MembershipManager
+      // scheduler wraps it and exposes the original via `.cause`.
+      if (
+        error instanceof Error &&
+        error.cause instanceof UnsupportedStickyEventsEndpointError
+      ) {
+        setExternalError(new StickyEventsRequiredError());
+      } else {
+        setExternalError(new ConnectionLostError());
+      }
     },
   );
+
   useEffect(() => {
     // Sanity check the room object
     if (client.getRoom(rtcSession.room.roomId) !== rtcSession.room)
@@ -148,11 +196,21 @@ export const GroupCallView: FC<Props> = ({
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(room);
   const roomAvatar = useRoomAvatar(room);
-  const { perParticipantE2EE, returnToLobby } = useUrlParams();
+  const {
+    perParticipantE2EE,
+    returnToLobby,
+    password: passwordFromUrl,
+    header,
+  } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
-  const [useNewMembershipManager] = useSetting(useNewMembershipManagerSetting);
+
+  // Save the password once we start the groupCallView
+  useEffect(() => {
+    if (passwordFromUrl) saveKeyForRoom(room.roomId, passwordFromUrl);
+  }, [passwordFromUrl, room.roomId]);
 
   usePageTitle(roomName);
+  useAppBarTitle(roomName);
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -169,26 +227,19 @@ export const GroupCallView: FC<Props> = ({
 
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(
-    () => new Set<string>(memberships.map((m) => m.sender!)).size,
+    () => new Set<string>(memberships.map((m) => m.userId!)).size,
     [memberships],
   );
 
-  const deviceContext = useMediaDevices();
-  const latestDevices = useLatest(deviceContext);
+  const mediaDevices = useMediaDevices();
   const latestMuteStates = useLatest(muteStates);
 
   const enterRTCSessionOrError = useCallback(
-    async (
-      rtcSession: MatrixRTCSession,
-      perParticipantE2EE: boolean,
-      newMembershipManager: boolean,
-    ): Promise<void> => {
+    async (rtcSession: MatrixRTCSession): Promise<void> => {
       try {
-        await enterRTCSession(
-          rtcSession,
-          perParticipantE2EE,
-          newMembershipManager,
-        );
+        setJoined(true);
+        // TODO-MULTI-SFU what to do with error handling now that we don't use this function?
+        // @BillCarsonFr
       } catch (e) {
         if (e instanceof ElementCallError) {
           setExternalError(e);
@@ -200,8 +251,9 @@ export const GroupCallView: FC<Props> = ({
           setExternalError(error);
         }
       }
+      return Promise.resolve();
     },
-    [setExternalError],
+    [setJoined],
   );
 
   useEffect(() => {
@@ -220,12 +272,12 @@ export const GroupCallView: FC<Props> = ({
         if (!deviceId) {
           logger.warn("Unknown audio input: " + audioInput);
           // override the default mute state
-          latestMuteStates.current!.audio.setEnabled?.(false);
+          latestMuteStates.current!.audio.setEnabled$.value?.(false);
         } else {
           logger.debug(
             `Found audio input ID ${deviceId} for name ${audioInput}`,
           );
-          latestDevices.current!.audioInput.select(deviceId);
+          mediaDevices.audioInput.select(deviceId);
         }
       }
 
@@ -234,57 +286,35 @@ export const GroupCallView: FC<Props> = ({
         if (!deviceId) {
           logger.warn("Unknown video input: " + videoInput);
           // override the default mute state
-          latestMuteStates.current!.video.setEnabled?.(false);
+          latestMuteStates.current!.video.setEnabled$.value?.(false);
         } else {
           logger.debug(
             `Found video input ID ${deviceId} for name ${videoInput}`,
           );
-          latestDevices.current!.videoInput.select(deviceId);
+          mediaDevices.videoInput.select(deviceId);
         }
       }
     };
 
     if (skipLobby) {
-      if (widget) {
-        if (preload) {
-          // In preload mode without lobby we wait for a join action before entering
-          const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
-            (async (): Promise<void> => {
-              await defaultDeviceSetup(
-                ev.detail.data as unknown as JoinCallData,
-              );
-              await enterRTCSessionOrError(
-                rtcSession,
-                perParticipantE2EE,
-                useNewMembershipManager,
-              );
-              widget.api.transport.reply(ev.detail, {});
-            })().catch((e) => {
-              logger.error("Error joining RTC session", e);
-            });
-          };
-          widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
-          return (): void => {
-            widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
-          };
-        } else {
-          // No lobby and no preload: we enter the rtc session right away
+      if (widget && preload) {
+        // In preload mode without lobby we wait for a join action before entering
+        const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
           (async (): Promise<void> => {
-            await enterRTCSessionOrError(
-              rtcSession,
-              perParticipantE2EE,
-              useNewMembershipManager,
-            );
+            await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
+            setJoined(true);
+            widget.api.transport.reply(ev.detail, {});
           })().catch((e) => {
-            logger.error("Error joining RTC session", e);
+            logger.error("Error joining RTC session on preload", e);
           });
-        }
+        };
+        widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
+        return (): void => {
+          widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
+        };
       } else {
-        void enterRTCSessionOrError(
-          rtcSession,
-          perParticipantE2EE,
-          useNewMembershipManager,
-        );
+        // No lobby and no preload: we enter the rtc session right away
+        setJoined(true);
       }
     }
   }, [
@@ -293,60 +323,104 @@ export const GroupCallView: FC<Props> = ({
     preload,
     skipLobby,
     perParticipantE2EE,
-    latestDevices,
+    mediaDevices,
     latestMuteStates,
-    enterRTCSessionOrError,
-    useNewMembershipManager,
+    setJoined,
   ]);
 
+  // TODO refactor this + "joined" to just one callState
   const [left, setLeft] = useState(false);
 
   const navigate = useNavigate();
 
-  const onLeave = useCallback(
-    (cause: "user" | "error" = "user"): void => {
-      const audioPromise = leaveSoundContext.current?.playSound("left");
-      // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
-      // therefore we want the event to be sent instantly without getting queued/batched.
-      const sendInstantly = !!widget;
+  // TODO split this into leave and onDisconnect
+  const onLeft = useCallback(
+    (
+      reason: "timeout" | "user" | "allOthersLeft" | "decline" | "error",
+    ): void => {
+      let audioPromise: Promise<void> | undefined = undefined;
+      switch (reason) {
+        case "allOthersLeft":
+          // When "allOthersLeft", the leaveSoundEffect$ in CallEventAudioRenderer
+          // already plays the "left" sound when the remote participant's media
+          // disappears. We play it here silenced (volumeOverwrite = 0) so we have the right duration in the audioPromise.
+          // (used to destory the widget)
+          audioPromise = leaveSoundContext.current?.playSound("left", 0);
+          break;
+        case "timeout":
+        case "decline":
+          audioPromise = leaveSoundContext.current?.playSound(reason);
+          break;
+        default:
+          audioPromise = leaveSoundContext.current?.playSound("left");
+      }
+
+      setJoined(false);
       setLeft(true);
-      // we need to wait until the callEnded event is tracked on posthog.
-      // Otherwise the iFrame gets killed before the callEnded event got tracked.
+
+      // We need to wait until the callEnded event is tracked on PostHog,
+      // otherwise the iframe may get killed first.
       const posthogRequest = new Promise((resolve) => {
+        // To increase the likelihood of the PostHog event being sent out in
+        // widget mode before the iframe is killed, we ask it to skip the
+        // usual queuing/batching of requests.
+        const sendInstantly = widget !== null;
         PosthogAnalytics.instance.eventCallEnded.track(
           room.roomId,
           rtcSession.memberships.length,
           sendInstantly,
           rtcSession,
         );
+        // Unfortunately the PostHog library provides no way to await the
+        // tracking of an event, but we don't really want it to hold up the
+        // closing of the widget that long anyway, so giving it 10 ms will do.
         window.setTimeout(resolve, 10);
       });
 
-      leaveRTCSession(
-        rtcSession,
-        cause,
-        // Wait for the sound in widget mode (it's not long)
-        Promise.all([audioPromise, posthogRequest]),
-      )
-        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
+      void Promise.all([audioPromise, posthogRequest])
+        .catch((e) =>
+          logger.error(
+            "Failed to play leave audio and/or send PostHog leave event",
+            e,
+          ),
+        )
         .then(async () => {
           if (
             !isPasswordlessUser &&
             !confineToRoom &&
             !PosthogAnalytics.instance.isEnabled()
-          ) {
-            await navigate("/");
+          )
+            void navigate("/");
+
+          if (widget) {
+            // After this point the iframe could die at any moment!
+            try {
+              await widget.api.setAlwaysOnScreen(false);
+            } catch (e) {
+              logger.error(
+                "Failed to set call widget `alwaysOnScreen` to false",
+                e,
+              );
+            }
+            // On a normal user hangup we can shut down and close the widget. But if an
+            // error occurs we should keep the widget open until the user reads it.
+            if (reason != "error" && !getUrlParams().returnToLobby) {
+              try {
+                await widget.api.transport.send(ElementWidgetActions.Close, {});
+              } catch (e) {
+                logger.error("Failed to send close action", e);
+              }
+              widget.api.transport.stop();
+            }
           }
-        })
-        .catch((e) => {
-          logger.error("Error leaving RTC session", e);
         });
     },
     [
+      setJoined,
       leaveSoundContext,
       widget,
-      rtcSession,
       room.roomId,
+      rtcSession,
       isPasswordlessUser,
       confineToRoom,
       navigate,
@@ -354,25 +428,12 @@ export const GroupCallView: FC<Props> = ({
   );
 
   useEffect(() => {
-    if (widget && isJoined) {
+    if (widget && joined)
       // set widget to sticky once joined.
       widget.api.setAlwaysOnScreen(true).catch((e) => {
         logger.error("Error calling setAlwaysOnScreen(true)", e);
       });
-
-      const onHangup = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        widget.api.transport.reply(ev.detail, {});
-        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-        leaveRTCSession(rtcSession, "user").catch((e) => {
-          logger.error("Failed to leave RTC session", e);
-        });
-      };
-      widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
-      return (): void => {
-        widget.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
-      };
-    }
-  }, [widget, isJoined, rtcSession]);
+  }, [widget, joined, rtcSession]);
 
   const joinRule = useJoinRule(room);
 
@@ -407,15 +468,9 @@ export const GroupCallView: FC<Props> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={() =>
-          void enterRTCSessionOrError(
-            rtcSession,
-            perParticipantE2EE,
-            useNewMembershipManager,
-          )
-        }
+        onEnter={() => setJoined(true)}
         confineToRoom={confineToRoom}
-        hideHeader={hideHeader}
+        hideHeader={header !== HeaderStyle.Standard}
         participantCount={participantCount}
         onShareClick={onShareClick}
       />
@@ -431,7 +486,7 @@ export const GroupCallView: FC<Props> = ({
       throw externalError;
     };
     body = <ErrorComponent />;
-  } else if (isJoined) {
+  } else if (joined) {
     body = (
       <>
         {shareModal}
@@ -439,9 +494,8 @@ export const GroupCallView: FC<Props> = ({
           client={client}
           matrixInfo={matrixInfo}
           rtcSession={rtcSession as MatrixRTCSession}
-          participantCount={participantCount}
-          onLeave={onLeave}
-          hideHeader={hideHeader}
+          matrixRoom={room}
+          onLeft={onLeft}
           muteStates={muteStates}
           e2eeSystem={e2eeSystem}
           //otelGroupCallMembership={otelGroupCallMembership}
@@ -467,6 +521,7 @@ export const GroupCallView: FC<Props> = ({
           endedCallId={rtcSession.room.roomId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
+          hideHeader={header === HeaderStyle.None}
           confineToRoom={confineToRoom}
         />
       );
@@ -480,6 +535,7 @@ export const GroupCallView: FC<Props> = ({
     // Left in widget mode:
     body = returnToLobby ? lobbyView : null;
   } else if (preload || skipLobby) {
+    // The RTC session is not joined to yet (`isJoined`), but enterRTCSessionOrError should have been called.
     body = null;
   } else {
     body = lobbyView;
@@ -488,23 +544,18 @@ export const GroupCallView: FC<Props> = ({
   return (
     <GroupCallErrorBoundary
       widget={widget}
-      recoveryActionHandler={(action) => {
+      recoveryActionHandler={async (action) => {
+        setExternalError(null);
         if (action == "reconnect") {
           setLeft(false);
-          enterRTCSessionOrError(
-            rtcSession,
-            perParticipantE2EE,
-            useNewMembershipManager,
-          ).catch((e) => {
+          await enterRTCSessionOrError(rtcSession).catch((e) => {
             logger.error("Error re-entering RTC session", e);
           });
         }
       }}
-      onError={
-        (/**error*/) => {
-          if (rtcSession.isJoined()) onLeave("error");
-        }
-      }
+      onError={(_error) => {
+        if (rtcSession.isJoined()) onLeft("error");
+      }}
     >
       {body}
     </GroupCallErrorBoundary>

@@ -1,5 +1,7 @@
 name: Deploy previews for PRs
 on:
+  # zizmor: ignore[dangerous-triggers]
+  # Reason: This is now restricted to internal PRs only using the 'if' condition below.
   workflow_run:
     workflows: ["Build"]
     types:
@@ -7,7 +9,14 @@ on:
 
 jobs:
   prdetails:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
+    # Logic:
+    # 1. Build must be successful
+    # 2. Event must be a pull_request
+    # 3. Head repository must be the SAME as the base repository (No Forks!)
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     outputs:
       pr_number: ${{ steps.prdetails.outputs.pr_id }}
@@ -20,7 +29,7 @@ jobs:
           owner: ${{ github.event.workflow_run.head_repository.owner.login }}
           branch: ${{ github.event.workflow_run.head_branch }}
 
-  netlify:
+  netlify-full:
     needs: prdetails
     permissions:
       deployments: write
@@ -31,6 +40,42 @@ jobs:
       pr_head_full_name: ${{ github.event.workflow_run.head_repository.full_name }}
       pr_head_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.ref }}
       deployment_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.sha || github.ref || github.head_ref }}
+      package: full
+    secrets:
+      ELEMENT_BOT_TOKEN: ${{ secrets.ELEMENT_BOT_TOKEN }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  netlify-sdk:
+    needs: prdetails
+    permissions:
+      deployments: write
+    uses: ./.github/workflows/deploy-to-netlify.yaml
+    with:
+      artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
+      pr_number: ${{ needs.prdetails.outputs.pr_number }}
+      pr_head_full_name: ${{ github.event.workflow_run.head_repository.full_name }}
+      pr_head_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.ref }}
+      deployment_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.sha || github.ref || github.head_ref }}
+      package: sdk
+    secrets:
+      ELEMENT_BOT_TOKEN: ${{ secrets.ELEMENT_BOT_TOKEN }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  netlify-storybook:
+    needs: prdetails
+    if: ${{ needs.prdetails.outputs.pr_data_json && contains(fromJSON(needs.prdetails.outputs.pr_data_json).labels.*.name, 'storybook build') }}
+    permissions:
+      deployments: write
+    uses: ./.github/workflows/deploy-to-netlify.yaml
+    with:
+      artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
+      pr_number: ${{ needs.prdetails.outputs.pr_number }}
+      pr_head_full_name: ${{ github.event.workflow_run.head_repository.full_name }}
+      pr_head_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.ref }}
+      deployment_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.sha || github.ref || github.head_ref }}
+      package: storybook
     secrets:
       ELEMENT_BOT_TOKEN: ${{ secrets.ELEMENT_BOT_TOKEN }}
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
@@ -42,7 +87,9 @@ jobs:
     permissions:
       contents: write
       packages: write
+      id-token: write
     uses: ./.github/workflows/build-and-publish-docker.yaml
+    secrets: inherit
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |

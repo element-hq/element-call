@@ -31,18 +31,18 @@ jobs:
       - name: Determine filename
         run: echo "FILENAME_PREFIX=element-call-${VERSION:1}" >> "$GITHUB_ENV"
       - name: 📥 Download built element-call artifact
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id || github.run_id }}
           name: build-output-full
           path: ${{ env.FILENAME_PREFIX }}
       - name: Create Tarball
-        run: tar --numeric-owner --transform "s/dist/${{ env.FILENAME_PREFIX }}/" -cvzf ${{ env.FILENAME_PREFIX }}.tar.gz ${{ env.FILENAME_PREFIX }}
+        run: tar --numeric-owner --transform "s/dist/${FILENAME_PREFIX}/" -cvzf ${FILENAME_PREFIX}.tar.gz ${FILENAME_PREFIX}
       - name: Create Checksum
-        run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
+        run: find ${FILENAME_PREFIX} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${FILENAME_PREFIX}.sha256
       - name: Upload
-        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: |
             ${{ env.FILENAME_PREFIX }}.tar.gz
@@ -55,21 +55,23 @@ jobs:
     permissions:
       contents: write
       packages: write
+      id-token: write
     uses: ./.github/workflows/build-and-publish-docker.yaml
+    secrets: inherit
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |
         type=sha,format=short,event=branch
-        type=semver,pattern=v{{version}}
+        type=raw,value=${{ github.event.release.tag_name }}
+        type=raw,value=latest
+      # Like before, using ${{ env.VERSION }} above doesn't work
   add_docker_release_note:
     needs: publish_docker
     name: Add docker release note
     runs-on: ubuntu-latest
     steps:
-      - name: Get artifact version
-        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
       - name: Add release note
-        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           append_body: true
           body: |
@@ -79,5 +81,5 @@ jobs:
             The image provides a full build of Element Call that can be used both in standalone and as a widget (on a remote URL).
 
             ```
-            docker pull ghcr.io/element-hq/element-call:${{ env.ARTIFACT_VERSION }}
+            docker pull ghcr.io/element-hq/element-call:${{ env.VERSION }}
             ```

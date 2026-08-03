@@ -1,16 +1,20 @@
 /*
 Copyright 2023, 2024 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
+import { logger } from "matrix-js-sdk/lib/logger";
 
+import * as PlatformMod from "../src/Platform";
 import {
   getRoomIdentifierFromUrl,
+  computeUrlParams,
+  HeaderStyle,
   getUrlParams,
-  UserIntent,
 } from "../src/UrlParams";
 
 const ROOM_NAME = "roomNameHere";
@@ -82,6 +86,16 @@ describe("UrlParams", () => {
         getRoomIdentifierFromUrl("", `?roomId=${ROOM_ID}`, "").roomId,
       ).toBe(ROOM_ID);
     });
+    it("(roomId with unprintable characters)", () => {
+      const invisibleChar = "\u2066";
+      expect(
+        getRoomIdentifierFromUrl(
+          "",
+          `?roomId=${invisibleChar}${ROOM_ID}${invisibleChar}`,
+          "",
+        ).roomId,
+      ).toBe(ROOM_ID);
+    });
   });
 
   it("ignores room alias", () => {
@@ -93,16 +107,16 @@ describe("UrlParams", () => {
 
   describe("preload", () => {
     it("defaults to false", () => {
-      expect(getUrlParams().preload).toBe(false);
+      expect(computeUrlParams().preload).toBe(false);
     });
 
     it("ignored in SPA mode", () => {
-      expect(getUrlParams("?preload=true").preload).toBe(false);
+      expect(computeUrlParams("?preload=true").preload).toBe(false);
     });
 
     it("respected in widget mode", () => {
       expect(
-        getUrlParams(
+        computeUrlParams(
           "?preload=true&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
         ).preload,
       ).toBe(true);
@@ -111,19 +125,20 @@ describe("UrlParams", () => {
 
   describe("returnToLobby", () => {
     it("is false in SPA mode", () => {
-      expect(getUrlParams("?returnToLobby=true").returnToLobby).toBe(false);
+      expect(computeUrlParams("?returnToLobby=true").returnToLobby).toBe(false);
     });
 
     it("defaults to false in widget mode", () => {
       expect(
-        getUrlParams("?widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo")
-          .returnToLobby,
+        computeUrlParams(
+          "?widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
+        ).returnToLobby,
       ).toBe(false);
     });
 
     it("respected in widget mode", () => {
       expect(
-        getUrlParams(
+        computeUrlParams(
           "?returnToLobby=true&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
         ).returnToLobby,
       ).toBe(true);
@@ -132,12 +147,12 @@ describe("UrlParams", () => {
 
   describe("userId", () => {
     it("is ignored in SPA mode", () => {
-      expect(getUrlParams("?userId=asd").userId).toBe(null);
+      expect(computeUrlParams("?userId=asd").userId).toBe(null);
     });
 
     it("is parsed in widget mode", () => {
       expect(
-        getUrlParams(
+        computeUrlParams(
           "?userId=asd&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
         ).userId,
       ).toBe("asd");
@@ -146,12 +161,12 @@ describe("UrlParams", () => {
 
   describe("deviceId", () => {
     it("is ignored in SPA mode", () => {
-      expect(getUrlParams("?deviceId=asd").deviceId).toBe(null);
+      expect(computeUrlParams("?deviceId=asd").deviceId).toBe(null);
     });
 
     it("is parsed in widget mode", () => {
       expect(
-        getUrlParams(
+        computeUrlParams(
           "?deviceId=asd&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
         ).deviceId,
       ).toBe("asd");
@@ -160,12 +175,12 @@ describe("UrlParams", () => {
 
   describe("baseUrl", () => {
     it("is ignored in SPA mode", () => {
-      expect(getUrlParams("?baseUrl=asd").baseUrl).toBe(null);
+      expect(computeUrlParams("?baseUrl=asd").baseUrl).toBe(null);
     });
 
     it("is parsed in widget mode", () => {
       expect(
-        getUrlParams(
+        computeUrlParams(
           "?baseUrl=asd&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
         ).baseUrl,
       ).toBe("asd");
@@ -175,72 +190,235 @@ describe("UrlParams", () => {
   describe("viaServers", () => {
     it("is ignored in widget mode", () => {
       expect(
-        getUrlParams(
+        computeUrlParams(
           "?viaServers=asd&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
         ).viaServers,
       ).toBe(null);
     });
 
     it("is parsed in SPA mode", () => {
-      expect(getUrlParams("?viaServers=asd").viaServers).toBe("asd");
+      expect(computeUrlParams("?viaServers=asd").viaServers).toBe("asd");
     });
   });
 
   describe("homeserver", () => {
     it("is ignored in widget mode", () => {
       expect(
-        getUrlParams(
+        computeUrlParams(
           "?homeserver=asd&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
         ).homeserver,
       ).toBe(null);
     });
 
     it("is parsed in SPA mode", () => {
-      expect(getUrlParams("?homeserver=asd").homeserver).toBe("asd");
+      expect(computeUrlParams("?homeserver=asd").homeserver).toBe("asd");
     });
   });
 
   describe("intent", () => {
-    it("defaults to unknown", () => {
-      expect(getUrlParams().intent).toBe(UserIntent.Unknown);
+    const noIntentDefaults = {
+      confineToRoom: false,
+      preload: false,
+      header: HeaderStyle.Standard,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: false,
+      perParticipantE2EE: false,
+      controlledAudioDevices: false,
+      skipLobby: false,
+      returnToLobby: false,
+      sendNotificationType: undefined,
+    };
+    const startNewCallDefaults = (platform: string): object => ({
+      confineToRoom: true,
+      preload: false,
+      header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: true,
+      perParticipantE2EE: true,
+      controlledAudioDevices: platform === "desktop" ? false : true,
+      skipLobby: true,
+      returnToLobby: false,
+      sendNotificationType: platform === "desktop" ? "notification" : "ring",
+    });
+    const joinExistingCallDefaults = (platform: string): object => ({
+      confineToRoom: true,
+      preload: false,
+      header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+      showControls: true,
+      hideScreensharing: false,
+      allowIceFallback: true,
+      perParticipantE2EE: true,
+      controlledAudioDevices: platform === "desktop" ? false : true,
+      skipLobby: false,
+      returnToLobby: false,
+      sendNotificationType: "notification",
+    });
+    it("use no-intent-defaults with unknown intent", () => {
+      expect(computeUrlParams()).toMatchObject(noIntentDefaults);
     });
 
     it("ignores intent if it is not a valid value", () => {
-      expect(getUrlParams("?intent=foo").intent).toBe(UserIntent.Unknown);
+      expect(computeUrlParams("?intent=foo")).toMatchObject(noIntentDefaults);
     });
 
     it("accepts start_call", () => {
-      expect(getUrlParams("?intent=start_call").intent).toBe(
-        UserIntent.StartNewCall,
-      );
+      expect(
+        computeUrlParams(
+          "?intent=start_call&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...startNewCallDefaults("desktop"),
+        skipLobby: false,
+        callIntent: "video",
+      });
+    });
+
+    it("accepts start_call_dm mobile", () => {
+      vi.spyOn(PlatformMod, "platform", "get").mockReturnValue("android");
+      onTestFinished(() => {
+        vi.spyOn(PlatformMod, "platform", "get").mockReturnValue("desktop");
+      });
+      expect(
+        computeUrlParams(
+          "?intent=start_call_dm&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject(startNewCallDefaults("android"));
+    });
+
+    it("accepts start_call_dm mobile and prioritizes overwritten params", () => {
+      vi.spyOn(PlatformMod, "platform", "get").mockReturnValue("android");
+      onTestFinished(() => {
+        vi.spyOn(PlatformMod, "platform", "get").mockReturnValue("desktop");
+      });
+      expect(
+        computeUrlParams(
+          "?intent=start_call_dm&widgetId=1234&parentUrl=parent.org&sendNotificationType=notification",
+        ),
+      ).toMatchObject({
+        ...startNewCallDefaults("android"),
+        sendNotificationType: "notification",
+      });
     });
 
     it("accepts join_existing", () => {
-      expect(getUrlParams("?intent=join_existing").intent).toBe(
-        UserIntent.JoinExistingCall,
-      );
+      expect(
+        computeUrlParams(
+          "?intent=join_existing&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject(joinExistingCallDefaults("desktop"));
+    });
+
+    it("accepts start_call_voice", () => {
+      expect(
+        computeUrlParams(
+          "?intent=start_call_voice&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...startNewCallDefaults("desktop"),
+        skipLobby: false,
+        callIntent: "audio",
+      });
+    });
+
+    it("accepts join_existing_voice", () => {
+      expect(
+        computeUrlParams(
+          "?intent=join_existing_voice&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...joinExistingCallDefaults("desktop"),
+        callIntent: "audio",
+      });
     });
   });
 
   describe("skipLobby", () => {
     it("defaults to false", () => {
-      expect(getUrlParams().skipLobby).toBe(false);
+      expect(computeUrlParams().skipLobby).toBe(false);
     });
 
     it("defaults to false if intent is start_call in SPA mode", () => {
-      expect(getUrlParams("?intent=start_call").skipLobby).toBe(false);
+      expect(computeUrlParams("?intent=start_call").skipLobby).toBe(false);
     });
 
-    it("defaults to true if intent is start_call in widget mode", () => {
+    it("defaults to false if intent is start_call in widget mode", () => {
       expect(
-        getUrlParams(
+        computeUrlParams(
           "?intent=start_call&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
         ).skipLobby,
-      ).toBe(true);
+      ).toBe(false);
     });
 
     it("default to false if intent is join_existing", () => {
-      expect(getUrlParams("?intent=join_existing").skipLobby).toBe(false);
+      expect(computeUrlParams("?intent=join_existing").skipLobby).toBe(false);
+    });
+  });
+
+  describe("noiseSuppression", () => {
+    it("defaults to true", () => {
+      expect(computeUrlParams().noiseSuppression).toBe(true);
+    });
+
+    it("is parsed", () => {
+      expect(
+        computeUrlParams("?intent=start_call&noiseSuppression=true")
+          .noiseSuppression,
+      ).toBe(true);
+      expect(
+        computeUrlParams("?intent=start_call&noiseSuppression&bar=foo")
+          .noiseSuppression,
+      ).toBe(true);
+      expect(computeUrlParams("?noiseSuppression=false").noiseSuppression).toBe(
+        false,
+      );
+    });
+  });
+
+  describe("echoCancellation", () => {
+    it("defaults to true", () => {
+      expect(computeUrlParams().echoCancellation).toBe(true);
+    });
+
+    it("is parsed", () => {
+      expect(computeUrlParams("?echoCancellation=true").echoCancellation).toBe(
+        true,
+      );
+      expect(computeUrlParams("?echoCancellation=false").echoCancellation).toBe(
+        false,
+      );
+    });
+  });
+
+  describe("header", () => {
+    it("uses header if provided", () => {
+      expect(computeUrlParams("?header=app_bar&hideHeader=true").header).toBe(
+        "app_bar",
+      );
+      expect(computeUrlParams("?header=none&hideHeader=false").header).toBe(
+        "none",
+      );
+    });
+  });
+  describe("getUrlParams", () => {
+    it("uses cached values", () => {
+      const spy = vi.spyOn(logger, "info");
+      // call get once
+      const params = getUrlParams("?header=app_bar&hideHeader=true", "");
+      // call get twice
+      expect(getUrlParams("?header=app_bar&hideHeader=true", "")).toBe(params);
+      // expect compute to only be called once
+      // it will only log when it is computing the values
+      expect(spy).toHaveBeenCalledExactlyOnceWith(
+        "UrlParams: final set of url params\n",
+        "intent:",
+        "unknown",
+        "\nproperties:",
+        expect.any(Object),
+        "configuration:",
+        expect.any(Object),
+      );
     });
   });
 });

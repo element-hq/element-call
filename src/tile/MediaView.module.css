@@ -9,6 +9,11 @@ Please see LICENSE in the repository root for full details.
   container-name: mediaView;
   container-type: size;
   border-radius: var(--media-view-border-radius);
+  /*Add spacing for the hover boarder. Otherwise it might get clipped.*/
+  margin: var(--hover-space-margin);
+  display: grid;
+  grid-template-areas: "content";
+  place-items: stretch;
 }
 
 .media video {
@@ -20,6 +25,10 @@ Please see LICENSE in the repository root for full details.
   rendering path, one that actually clips the corners of <video> elements into
   the intended rounded shape. We can remove this if Firefox stops being broken. */
   transform: translate(0);
+}
+
+.media[data-video-enabled="false"] video {
+  display: none;
 }
 
 .media.mirror video {
@@ -35,11 +44,63 @@ Please see LICENSE in the repository root for full details.
 }
 
 .bg {
-  background-color: var(--video-tile-background);
+  grid-area: content;
   inline-size: 100%;
   block-size: 100%;
   border-radius: inherit;
   contain: strict;
+}
+
+.media[data-background="solid"] .bg {
+  background-color: var(--video-tile-background);
+}
+
+.waves {
+  transition: opacity ease 0.3s;
+}
+
+.waves[data-visible="true"] {
+  opacity: 1;
+}
+
+.waves[data-visible="false"] {
+  opacity: 0;
+
+  @media not (prefers-reduced-motion) {
+    .wave {
+      transform: translate(-50%, -50%) scale(0.9);
+    }
+  }
+}
+
+.wave {
+  border: var(--cpd-border-width-1) solid var(--cpd-color-alpha-gray-300);
+  transition: transform ease 0.2s;
+}
+
+.wave,
+.speakingBorder {
+  border-radius: var(--cpd-radius-pill-effect);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.speakingBorder {
+  background:
+    radial-gradient(#0467dd, #0bc491),
+    linear-gradient(0deg, #0467dd 0%, #0bc491 100%);
+  background-blend-mode: overlay, normal;
+  outline: var(--cpd-border-width-4) solid var(--cpd-color-bg-canvas-default);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: var(--cpd-border-width-2);
+    border-radius: var(--cpd-radius-pill-effect);
+    background: var(--cpd-color-bg-canvas-default);
+  }
 }
 
 .avatar {
@@ -48,6 +109,12 @@ Please see LICENSE in the repository root for full details.
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
+  opacity: 100%;
+  transition: opacity 0.2s;
+}
+
+.avatar[data-style="translucent"] {
+  opacity: 50%;
 }
 
 /* CSS makes us put a condition here, even though all we want to do is
@@ -57,6 +124,35 @@ unconditionally select the container so we can use cqmin units */
     /* Half of the smallest dimension of the tile */
     inline-size: 50cqmin;
     block-size: 50cqmin;
+  }
+
+  .waves + .avatar {
+    /* Make the avatar slightly smaller to accommodate sound waves, if present */
+    inline-size: 38cqmin;
+    block-size: 38cqmin;
+  }
+
+  .wave:nth-child(1) {
+    inline-size: calc(38cqmin + var(--cpd-space-5x) + 3 * var(--cpd-space-10x));
+    block-size: calc(38cqmin + var(--cpd-space-5x) + 3 * var(--cpd-space-10x));
+    background: var(--cpd-color-alpha-gray-200);
+  }
+
+  .wave:nth-child(2) {
+    inline-size: calc(38cqmin + var(--cpd-space-5x) + 2 * var(--cpd-space-10x));
+    block-size: calc(38cqmin + var(--cpd-space-5x) + 2 * var(--cpd-space-10x));
+    background: var(--cpd-color-alpha-gray-300);
+  }
+
+  .wave:nth-child(3) {
+    inline-size: calc(38cqmin + var(--cpd-space-5x) + var(--cpd-space-10x));
+    block-size: calc(38cqmin + var(--cpd-space-5x) + var(--cpd-space-10x));
+    background: var(--cpd-color-alpha-gray-400);
+  }
+
+  .speakingBorder {
+    inline-size: calc(38cqmin + var(--cpd-space-3x));
+    block-size: calc(38cqmin + var(--cpd-space-3x));
   }
 }
 
@@ -68,21 +164,31 @@ unconditionally select the container so we can use cqmin units */
 }
 
 .fg {
-  position: absolute;
-  inset: var(
+  grid-area: content;
+  --fg-inset: var(
     --media-view-fg-inset,
     calc(var(--media-view-border-radius) - var(--cpd-space-3x))
   );
+  padding: var(--fg-inset);
+  transition: padding 0.3s;
   display: grid;
-  grid-template-columns: 30px 1fr 30px;
+  grid-template-columns: 1fr auto;
   grid-template-rows: 1fr auto;
-  grid-template-areas: "reactions status ." "nameTag nameTag button";
+  grid-template-areas: "status reactions" "nameTag button";
   gap: var(--cpd-space-1x);
   place-items: start;
+  contain: strict;
+}
+
+@media (prefers-reduced-motion) {
+  .fg {
+    transition: none;
+  }
 }
 
 .nameTag {
   grid-area: nameTag;
+  place-self: end start;
   padding: var(--cpd-space-1x);
   padding-block: var(--cpd-space-1x);
   color: var(--cpd-color-text-primary);
@@ -99,25 +205,24 @@ unconditionally select the container so we can use cqmin units */
 
 .status {
   grid-area: status;
-  justify-self: center;
-  align-self: start;
-  padding: var(--cpd-space-2x);
-  padding-block: var(--cpd-space-2x);
   color: var(--cpd-color-text-primary);
-  background-color: var(--cpd-color-bg-canvas-default);
-  display: flex;
-  align-items: center;
-  border-radius: var(--cpd-radius-pill-effect);
   user-select: none;
   overflow: hidden;
-  box-shadow: var(--small-drop-shadow);
-  box-sizing: border-box;
-  max-inline-size: 100%;
-  text-align: center;
+  margin-block-start: calc(var(--cpd-space-3x) - var(--fg-inset));
+  margin-inline-start: calc(var(--cpd-space-4x) - var(--fg-inset));
+
+  svg {
+    color: var(--cpd-color-icon-tertiary);
+    vertical-align: text-bottom;
+    margin-inline-end: 3px;
+    block-size: 1.2em;
+    inline-size: 1.2em;
+  }
 }
 
 .reactions {
   grid-area: reactions;
+  place-self: start end;
   display: flex;
   gap: var(--cpd-space-1x);
 }
@@ -171,7 +276,7 @@ unconditionally select the container so we can use cqmin units */
 }
 
 .fg > button:active {
-  background: var(--cpd-color-bg-action-primary-pressed) !important;
+  background: var(--cpd-color-bg-action-primary-pressed);
 }
 
 .fg > button[data-state="open"] {
@@ -185,4 +290,5 @@ unconditionally select the container so we can use cqmin units */
 
 .fg > button:first-of-type {
   grid-area: button;
+  place-self: end;
 }

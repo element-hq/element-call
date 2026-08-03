@@ -6,28 +6,32 @@ Please see LICENSE in the repository root for full details.
 */
 
 import classNames from "classnames";
-import { type FormEventHandler, forwardRef, type ReactNode } from "react";
+import {
+  type FC,
+  type Ref,
+  type FormEventHandler,
+  type ReactNode,
+} from "react";
 
 import styles from "./Form.module.css";
 
 interface FormProps {
+  ref?: Ref<HTMLFormElement>;
   className: string;
   onSubmit: FormEventHandler<HTMLFormElement>;
   children: ReactNode[];
 }
 
-export const Form = forwardRef<HTMLFormElement, FormProps>(
-  ({ children, className, onSubmit }, ref) => {
-    return (
-      <form
-        onSubmit={onSubmit}
-        className={classNames(styles.form, className)}
-        ref={ref}
-      >
-        {children}
-      </form>
-    );
-  },
-);
+export const Form: FC<FormProps> = ({ ref, children, className, onSubmit }) => {
+  return (
+    <form
+      onSubmit={onSubmit}
+      className={classNames(styles.form, className)}
+      ref={ref}
+    >
+      {children}
+    </form>
+  );
+};
 
 Form.displayName = "Form";

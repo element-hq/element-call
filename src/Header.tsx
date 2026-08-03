@@ -6,12 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import classNames from "classnames";
-import {
-  type FC,
-  type HTMLAttributes,
-  type ReactNode,
-  forwardRef,
-} from "react";
+import { type Ref, type FC, type HTMLAttributes, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";
@@ -22,15 +17,29 @@ import Logo from "./icons/Logo.svg?react";
 import { Avatar, Size } from "./Avatar";
 import { EncryptionLock } from "./room/EncryptionLock";
 import { useMediaQuery } from "./useMediaQuery";
+import { DisconnectedBanner } from "./DisconnectedBanner";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
+  ref?: Ref<HTMLElement>;
   children: ReactNode;
   className?: string;
+  /**
+   * Whether the header should display an informational banner whenever the
+   * client is disconnected from the homeserver.
+   * @default true
+   */
+  disconnectedBanner?: boolean;
 }
 
-export const Header = forwardRef<HTMLElement, HeaderProps>(
-  ({ children, className, ...rest }, ref) => {
-    return (
+export const Header: FC<HeaderProps> = ({
+  ref,
+  children,
+  className,
+  disconnectedBanner = true,
+  ...rest
+}) => {
+  return (
+    <>
       <header
         ref={ref}
         className={classNames(styles.header, className)}
@@ -38,9 +47,10 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
       >
         {children}
       </header>
-    );
-  },
-);
+      {disconnectedBanner && <DisconnectedBanner />}
+    </>
+  );
+};
 
 Header.displayName = "Header";
 

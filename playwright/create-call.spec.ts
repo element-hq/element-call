@@ -22,8 +22,8 @@ test("Start a new call then leave and show the feedback screen", async ({
   await expect(page.getByTestId("lobby_joinCall")).toBeVisible();
 
   // Check the button toolbar
-  // await expect(page.getByRole('button', { name: 'Mute microphone' })).toBeVisible();
-  // await expect(page.getByRole('button', { name: 'Stop video' })).toBeVisible();
+  // await expect(page.getByRole('switch', { name: 'Mute microphone' })).toBeVisible();
+  // await expect(page.getByRole('switch', { name: 'Stop video' })).toBeVisible();
   await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
   await expect(page.getByRole("button", { name: "End call" })).toBeVisible();
 
@@ -40,6 +40,11 @@ test("Start a new call then leave and show the feedback screen", async ({
   // The tooltip with the name should be visible
   await expect(page.getByTestId("name_tag")).toContainText("John Doe");
 
+  // Resize the window to resemble a small mobile phone
+  await page.setViewportSize({ width: 350, height: 660 });
+  // We should still be able to send reactions at this screen size
+  await expect(page.getByRole("button", { name: "Reactions" })).toBeVisible();
+
   // leave the call
   await page.getByTestId("incall_leave").click();
   await expect(page.getByRole("heading")).toContainText(
@@ -52,4 +57,42 @@ test("Start a new call then leave and show the feedback screen", async ({
   await expect(
     page.getByRole("link", { name: "Not now, return to home screen" }),
   ).toBeVisible();
+});
+
+test("BugFix: When unmuting in lobby, you had to click twice to unmute in call", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  await page.getByTestId("home_callName").click();
+  await page.getByTestId("home_callName").fill("DoubleUnMute");
+  await page.getByTestId("home_displayName").click();
+  await page.getByTestId("home_displayName").fill("me");
+  await page.getByTestId("home_go").click();
+
+  const microphoneButton = page.getByTestId("incall_mute");
+  const cameraButton = page.getByTestId("incall_videomute");
+
+  // Wait for devices to enumerate before the button enables.
+  await expect(microphoneButton).toBeEnabled({ timeout: 10_000 });
+
+  await microphoneButton.click();
+  await cameraButton.click();
+
+  // Should be muted now
+  await expect(microphoneButton).toHaveAccessibleName("Unmute microphone");
+  await expect(cameraButton).toHaveAccessibleName("Start video");
+
+  // Create the call and join
+  await page.getByTestId("lobby_joinCall").click();
+
+  // Give sometime for the all to be connected
+  // Check the number of participants
+  await expect(page.locator("div").filter({ hasText: /^1$/ })).toBeVisible();
+
+  // Click again on the mute button. it should unmute
+  await microphoneButton.click();
+  await expect(microphoneButton).toHaveAccessibleName("Mute microphone");
+  await cameraButton.click();
+  await expect(cameraButton).toHaveAccessibleName("Stop video");
 });

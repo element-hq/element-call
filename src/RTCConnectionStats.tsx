@@ -19,10 +19,28 @@ import mediaViewStyles from "../src/tile/MediaView.module.css";
 interface Props {
   audio?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   video?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
+  focusUrl?: string;
+  rtcBackendIdentity?: string;
 }
 
+const extractDomain = (url: string): string => {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.hostname; // Returns "kdk.cpm"
+  } catch (error) {
+    console.error("Invalid URL:", error);
+    return url;
+  }
+};
+
 // This is only used in developer mode for debugging purposes, so we don't need full localization
-export const RTCConnectionStats: FC<Props> = ({ audio, video, ...rest }) => {
+export const RTCConnectionStats: FC<Props> = ({
+  audio,
+  video,
+  focusUrl,
+  rtcBackendIdentity,
+  ...rest
+}) => {
   const [showModal, setShowModal] = useState(false);
   const [modalContents, setModalContents] = useState<
     "video" | "audio" | "none"
@@ -55,11 +73,21 @@ export const RTCConnectionStats: FC<Props> = ({ audio, video, ...rest }) => {
           </pre>
         </div>
       </Modal>
+      <Text as="span" size="xs" title="rtcBackendIdentity">
+        rtcBackendIdentity:{rtcBackendIdentity}
+      </Text>
+      {focusUrl && (
+        <div>
+          <Text as="span" size="xs" title="focusURL">
+            &nbsp;{extractDomain(focusUrl)}
+          </Text>
+        </div>
+      )}
       {audio && (
         <div>
           <Button
             onClick={() => showFullModal("audio")}
-            size="sm"
+            size="md"
             kind="tertiary"
             Icon={MicOnSolidIcon}
           >
@@ -75,7 +103,7 @@ export const RTCConnectionStats: FC<Props> = ({ audio, video, ...rest }) => {
         <div>
           <Button
             onClick={() => showFullModal("video")}
-            size="sm"
+            size="md"
             kind="tertiary"
             Icon={VideoCallSolidIcon}
           >

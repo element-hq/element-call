@@ -11,7 +11,7 @@ import {
   useEffect,
   useState,
   createContext,
-  useContext,
+  use,
   useRef,
   useMemo,
   type JSX,
@@ -48,7 +48,6 @@ export type ValidClientState = {
   disconnected: boolean;
   supportedFeatures: {
     reactions: boolean;
-    thumbnails: boolean;
   };
   setClient: (client: MatrixClient, session: Session) => void;
 };
@@ -69,8 +68,7 @@ const ClientContext = createContext<ClientState | undefined>(undefined);
 
 export const ClientContextProvider = ClientContext.Provider;
 
-export const useClientState = (): ClientState | undefined =>
-  useContext(ClientContext);
+export const useClientState = (): ClientState | undefined => use(ClientContext);
 
 export function useClient(): {
   client?: MatrixClient;
@@ -250,7 +248,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
   const [isDisconnected, setIsDisconnected] = useState(false);
   const [supportsReactions, setSupportsReactions] = useState(false);
-  const [supportsThumbnails, setSupportsThumbnails] = useState(false);
 
   const state: ClientState | undefined = useMemo(() => {
     if (alreadyOpenedErr) {
@@ -276,7 +273,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       disconnected: isDisconnected,
       supportedFeatures: {
         reactions: supportsReactions,
-        thumbnails: supportsThumbnails,
       },
     };
   }, [
@@ -287,7 +283,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     setClient,
     isDisconnected,
     supportsReactions,
-    supportsThumbnails,
   ]);
 
   const onSync = useCallback(
@@ -313,8 +308,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     }
 
     if (initClientState.widgetApi) {
-      // There is currently no widget API for authenticated media thumbnails.
-      setSupportsThumbnails(false);
       const reactSend = initClientState.widgetApi.hasCapability(
         "org.matrix.msc2762.send.event:m.reaction",
       );
@@ -336,7 +329,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       }
     } else {
       setSupportsReactions(true);
-      setSupportsThumbnails(true);
     }
 
     return (): void => {
@@ -350,9 +342,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     return <ErrorPage widget={widget} error={alreadyOpenedErr} />;
   }
 
-  return (
-    <ClientContext.Provider value={state}>{children}</ClientContext.Provider>
-  );
+  return <ClientContext value={state}>{children}</ClientContext>;
 };
 
 export type InitResult = {

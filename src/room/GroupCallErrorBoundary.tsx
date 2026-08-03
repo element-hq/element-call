@@ -16,11 +16,14 @@ import {
 } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
-  ErrorIcon,
+  ErrorSolidIcon,
   HostIcon,
   OfflineIcon,
   WebBrowserIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { Button } from "@vector-im/compound-web";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { MatrixError } from "matrix-js-sdk";
 
 import {
   ConnectionLostError,
@@ -32,10 +35,13 @@ import {
 import { FullScreenView } from "../FullScreenView.tsx";
 import { ErrorView } from "../ErrorView.tsx";
 import { type WidgetHelpers } from "../widget.ts";
+import styles from "../ErrorView.module.css";
 
 export type CallErrorRecoveryAction = "reconnect"; // | "retry" ;
 
-export type RecoveryActionHandler = (action: CallErrorRecoveryAction) => void;
+export type RecoveryActionHandler = (
+  action: CallErrorRecoveryAction,
+) => Promise<void>;
 
 interface ErrorPageProps {
   error: ElementCallError;
@@ -50,7 +56,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
   widget,
 }: ErrorPageProps): ReactElement => {
   const { t } = useTranslation();
-
+  logger.error("Error boundary caught:", error);
   let icon: ComponentType<SVGAttributes<SVGElement>>;
   switch (error.category) {
     case ErrorCategory.CONFIGURATION_ISSUE:
@@ -63,16 +69,19 @@ const ErrorPage: FC<ErrorPageProps> = ({
       icon = WebBrowserIcon;
       break;
     default:
-      icon = ErrorIcon;
+      icon = ErrorSolidIcon;
   }
 
   const actions: { label: string; onClick: () => void }[] = [];
   if (error instanceof ConnectionLostError) {
     actions.push({
       label: t("call_ended_view.reconnect_button"),
-      onClick: () => recoveryActionHandler("reconnect"),
+      onClick: () => void recoveryActionHandler("reconnect"),
     });
   }
+
+  const technicalError =
+    error.cause instanceof MatrixError ? error.cause : null;
 
   return (
     <FullScreenView>
@@ -83,7 +92,26 @@ const ErrorPage: FC<ErrorPageProps> = ({
         widget={widget}
       >
         <p>
-          {error.localisedMessage ?? (
+          {error.localisedMessageKey ? (
+            <Trans
+              // @ts-expect-error - Dynamic i18nKey from error object
+              i18nKey={error.localisedMessageKey}
+              values={error.localisedMessageValues}
+              components={[
+                <a
+                  href={String(error.localisedMessageValues?.linkUrl || "#")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {/* Content injected by Trans component */}
+                </a>,
+                <b />,
+                <code />,
+              ]}
+            />
+          ) : error.localisedMessage ? (
+            error.localisedMessage
+          ) : (
             <Trans
               i18nKey="error.unexpected_ec_error"
               components={[<b />, <code />]}
@@ -91,11 +119,25 @@ const ErrorPage: FC<ErrorPageProps> = ({
             />
           )}
         </p>
+        {technicalError ? (
+          <details className={styles.technicalDetails}>
+            <summary className={styles.technicalDetailsSummary}>
+              {t("technical_details")}
+            </summary>
+            <pre className={styles.technicalDetailsPre}>
+              {technicalError.message}
+            </pre>
+          </details>
+        ) : null}
         {actions &&
           actions.map((action, index) => (
-            <button onClick={action.onClick} key={`action${index}`}>
+            <Button
+              kind="secondary"
+              onClick={action.onClick}
+              key={`action${index}`}
+            >
               {action.label}
-            </button>
+            </Button>
           ))}
       </ErrorView>
     </FullScreenView>
@@ -126,9 +168,9 @@ export const GroupCallErrorBoundary = ({
           widget={widget ?? null}
           error={callError}
           resetError={resetError}
-          recoveryActionHandler={(action: CallErrorRecoveryAction) => {
+          recoveryActionHandler={async (action: CallErrorRecoveryAction) => {
+            await recoveryActionHandler(action);
             resetError();
-            recoveryActionHandler(action);
           }}
         />
       );

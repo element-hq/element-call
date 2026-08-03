@@ -15,24 +15,15 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { logger } from "matrix-js-sdk/lib/logger";
-import {
-  setLogExtension as setLKLogExtension,
-  setLogLevel as setLKLogLevel,
-} from "livekit-client";
 
 import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
-
-window.setLKLogLevel = setLKLogLevel;
+import { AppViewModel } from "./state/AppViewModel";
+import { globalScope } from "./state/ObservableScope";
 
 initRageshake().catch((e) => {
   logger.error("Failed to initialize rageshake", e);
-});
-setLKLogLevel("warn");
-setLKLogExtension((level, msg, context) => {
-  // we pass a synthetic logger name of "livekit" to the rageshake to make it easier to read
-  global.mx_rage_logger.log(level, "livekit", msg, context);
 });
 
 logger.info(`Element Call ${import.meta.env.VITE_APP_VERSION || "dev"}`);
@@ -60,11 +51,11 @@ Initializer.initBeforeReact()
   .then(() => {
     root.render(
       <StrictMode>
-        <App />
+        <App vm={new AppViewModel(globalScope)} />
       </StrictMode>,
     );
   })
   .catch((e) => {
-    logger.error("Failed to initialize app", e);
+    logger.error(`Failed to initialize app ${e.message}`, e);
     root.render(e.message);
   });
