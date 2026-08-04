@@ -11,7 +11,6 @@ import {
   type ReactNode,
   type Ref,
   useCallback,
-  useEffect,
   useRef,
   useState,
 } from "react";
@@ -91,7 +90,6 @@ const RingingMediaTile: FC<RingingMediaTileProps> = ({
       }
       avatarStyle="translucent"
       videoEnabled={false}
-      videoFit="cover"
       mirror={false}
       {...props}
     />
@@ -141,18 +139,10 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
   const audioEnabled = useBehavior(vm.audioEnabled$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
   const speaking = useBehavior(vm.speaking$);
-  const videoFit = useBehavior(vm.videoFit$);
 
   const rtcBackendIdentity = vm.rtcBackendIdentity;
   const handRaised = useBehavior(vm.handRaised$);
   const reaction = useBehavior(vm.reaction$);
-
-  // Whenever bounds change, inform the viewModel
-  useEffect(() => {
-    if (targetWidth > 0 && targetHeight > 0) {
-      vm.setTargetDimensions(targetWidth, targetHeight);
-    }
-  }, [targetWidth, targetHeight, vm]);
 
   const AudioIcon = playbackMuted
     ? VolumeOffSolidIcon
@@ -190,7 +180,6 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       userId={vm.userId}
       unencryptedWarning={unencryptedWarning}
       videoEnabled={videoEnabled}
-      videoFit={videoFit}
       className={classNames(className, styles.tile, {
         [styles.speaking]: showSpeaking,
         [styles.handRaised]: !showSpeaking && handRaised,
@@ -233,6 +222,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       raisedHandOnClick={raisedHandOnClick}
       waitingForMedia={waitingForMedia}
       focusUrl={focusUrl}
+      setVideoAspectRatio={vm.setVideoAspectRatio}
       audioStreamStats={audioStreamStats}
       videoStreamStats={videoStreamStats}
       rtcBackendIdentity={rtcBackendIdentity}
