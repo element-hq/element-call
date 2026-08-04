@@ -32,9 +32,7 @@ export function observeRtpStreamStats$(
 > {
   return combineLatest([
     observeTrackReference$(participant, source),
-    // The update frequency is high because we use this value to update the PiP orientation and the fit/fill video tile props based on that
-    // We want it to be responsive. For just the debug tools 1s would be sufficient.
-    interval(350).pipe(startWith(0)),
+    interval(1000).pipe(startWith(0)),
   ]).pipe(
     switchMap(async ([trackReference]) => {
       const track = trackReference?.publication?.track;
