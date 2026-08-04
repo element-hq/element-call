@@ -86,10 +86,11 @@ to implement
 In the context of MatrixRTC, we suggest using a single hostname for backend
 communication by implementing endpoint routing within a reverse proxy setup. For
 the example above, this results in:
-| Service | Endpoint | Example |
-| -------- | ------- | ------- |
+
+| Service                                                                           | Endpoint       | Example                              |
+| --------------------------------------------------------------------------------- | -------------- | ------------------------------------ |
 | [Livekit SFU](https://github.com/livekit/livekit) WebSocket signalling connection | `/livekit/sfu` | `matrix-rtc.example.com/livekit/sfu` |
-| [MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service) | `/livekit/jwt` | `matrix-rtc.example.com/livekit/jwt` |
+| [MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service)   | `/livekit/jwt` | `matrix-rtc.example.com/livekit/jwt` |
 
 Using Nginx, you can achieve this by:
 
