@@ -53,6 +53,7 @@ widgetTest("Put call in PIP", async ({ addUser, browserName }) => {
   });
 
   // Switch to the other room, the call should go to PIP
+  await TestHelpers.expandRoomList(valere.page);
   await TestHelpers.switchToRoomNamed(valere.page, "DoubleTask");
 
   // We should see the PIP overlay
