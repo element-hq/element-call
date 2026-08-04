@@ -19,9 +19,14 @@ import {
   startWith,
   switchMap,
   map,
+  share,
 } from "rxjs";
 
 import { observeTrackReference$ } from "../observeTrackReference";
+
+// Use a shared timer for all the stats observers so that we don't clog up the
+// event loop with hundreds of timers in large calls
+const refreshStats$ = interval(1000).pipe(share());
 
 export function observeRtpStreamStats$(
   participant: Participant,
@@ -32,7 +37,7 @@ export function observeRtpStreamStats$(
 > {
   return combineLatest([
     observeTrackReference$(participant, source),
-    interval(1000).pipe(startWith(0)),
+    refreshStats$.pipe(startWith(0)),
   ]).pipe(
     switchMap(async ([trackReference]) => {
       const track = trackReference?.publication?.track;
