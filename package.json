@@ -105,7 +105,7 @@
     "pako": "^2.0.4",
     "postcss": "^8.4.41",
     "postcss-preset-env": "^10.0.0",
-    "posthog-js": "1.374.0",
+    "posthog-js": "1.408.2",
     "qrcode": "^1.5.4",
     "react": "19",
     "react-dom": "19",
