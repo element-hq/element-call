@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   loadEnv,
-  PluginOption,
+  type PluginOption,
   searchForWorkspaceRoot,
   type ConfigEnv,
   type UserConfig,
@@ -19,8 +19,8 @@ import { codecovVitePlugin } from "@codecov/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import wasm from "vite-plugin-wasm";
-
-import react from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { realpathSync } from "fs";
 import * as fs from "node:fs";
 
@@ -29,6 +29,9 @@ export const vitePluginsConfig = ({
 }: Pick<ConfigEnv, "mode">): UserConfig => {
   const env = loadEnv(mode, process.cwd());
   const plugins: PluginOption[] = [
+    babel({
+      presets: [reactCompilerPreset()],
+    }),
     react(),
     wasm(),
     nodePolyfills({
