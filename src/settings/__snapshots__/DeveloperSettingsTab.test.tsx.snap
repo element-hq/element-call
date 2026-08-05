@@ -491,10 +491,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     Camera quality
   </h4>
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field checkboxField"
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
         aria-describedby="_r_k_"
@@ -505,7 +505,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         for="cameraToggle"
       >
         <div
-          class="checkbox"
+          class="_checkbox_1bd8c0"
         >
           <svg
             fill="none"
@@ -526,7 +526,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         Advanced camera settings
       </label>
       <p
-        class="description"
+        class="_description_1bd8c0"
         id="_r_k_"
       >
         Configure resolution, framerate, bitrate, and codec for camera video. Changes apply on next call join.
@@ -543,10 +543,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     Screen sharing
   </h4>
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field checkboxField"
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
         aria-describedby="_r_l_"
@@ -557,7 +557,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         for="screenShareToggle"
       >
         <div
-          class="checkbox"
+          class="_checkbox_1bd8c0"
         >
           <svg
             fill="none"
@@ -578,7 +578,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         Advanced screen share settings
       </label>
       <p
-        class="description"
+        class="_description_1bd8c0"
         id="_r_l_"
       >
         Configure resolution, framerate, bitrate, and codec for screen sharing
@@ -598,10 +598,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     Changes apply on next call join.
   </p>
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field checkboxField"
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
         aria-describedby="_r_m_"
@@ -613,7 +613,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         for="echoCancellation"
       >
         <div
-          class="checkbox"
+          class="_checkbox_1bd8c0"
         >
           <svg
             fill="none"
@@ -636,10 +636,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     </div>
   </div>
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field checkboxField"
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
         aria-describedby="_r_n_"
@@ -651,7 +651,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         for="noiseSuppression"
       >
         <div
-          class="checkbox"
+          class="_checkbox_1bd8c0"
         >
           <svg
             fill="none"
@@ -674,10 +674,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     </div>
   </div>
   <div
-    class="fieldRow"
+    class="_fieldRow_1bd8c0"
   >
     <div
-      class="field checkboxField"
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
         aria-describedby="_r_o_"
@@ -689,7 +689,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         for="autoGainControl"
       >
         <div
-          class="checkbox"
+          class="_checkbox_1bd8c0"
         >
           <svg
             fill="none"
