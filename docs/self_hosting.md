@@ -191,10 +191,24 @@ backend mxrtc_auth_backend
 > [!IMPORTANT]
 > As defined in
 > [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143),
-> the MatrixRTC backend(s) must be announced to the client via your **Matrix site's
-> `.well-known/matrix/client`** file (e.g.
-> `example.com/.well-known/matrix/client` matching the site deployment example
-> from above). The configuration is a list of Foci configs:
+> the MatrixRTC backend(s) must be announced to the client via `/_matrix/client/unstable/org.matrix.msc4143/rtc/transports`.
+
+Enable the unstable feature flag `msc4143_enabled`, and update the synapse config file:
+
+```yaml
+
+matrix_rtc:
+  - transports:
+  - type: livekit
+    livekit_service_url: https://matrix-rtc.example.com/livekit/jwt
+```
+
+
+
+**⚠️ Well-known discovery will soon be deprecated, but needed if MSC4143 is not supported on your Homeserver**
+
+your **Matrix site's .well-known/matrix/client`** file (e.g. `example.com/.well-known/matrix/client` matching the site deployment example
+from above). The configuration is a list of Foci configs:
 
 ```json
 "org.matrix.msc4143.rtc_foci": [
