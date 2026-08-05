@@ -73,9 +73,6 @@ export class TestHelpers {
     audioOnly: boolean = false,
     isDM: boolean = false,
   ): Promise<void> {
-    // XXX This using the notification toast to join the room.
-    // Not the button in the header
-
     await page.waitForTimeout(3000);
     const label = isDM
       ? audioOnly
@@ -85,7 +82,9 @@ export class TestHelpers {
     await expect(page.getByText(label)).toBeVisible({
       timeout: 10000,
     });
-    await page.getByRole("button", { name: "Join" }).click({
+    // XXX This using the notification toast to join the room.
+    // Not the buttons in the header or timeline
+    await page.getByRole("alert").getByRole("button", { name: "Join" }).click({
       timeout: 5000,
     });
   }
@@ -160,6 +159,7 @@ export class TestHelpers {
     const expectedToasts = [
       { title: "Failed to load service worker", button: "OK" },
       { title: "Back up your chats", button: "Dismiss" },
+      { title: "Turn on key storage", button: "Dismiss" },
       { title: "Element does not support this browser", button: "Dismiss" },
     ];
 
@@ -189,11 +189,27 @@ export class TestHelpers {
     }
   }
 
+  public static async closeReleaseAnnouncement(
+    page: Page,
+    name: string,
+  ): Promise<void> {
+    try {
+      await page
+        .getByRole("dialog", { name })
+        .getByRole("button", { name: "OK" })
+        .click({ timeout: 2000 });
+    } catch {
+      // Announcement not shown; nothing to do
+    }
+  }
+
   public static async createRoom(
     name: string,
     page: Page,
     andInvite: string[] = [],
   ): Promise<void> {
+    await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
+
     await page
       .getByRole("navigation", { name: "Room list" })
       .getByRole("button", { name: "New conversation" })
@@ -330,6 +346,12 @@ export class TestHelpers {
     }
   }
 
+  public static async expandRoomList(page: Page): Promise<void> {
+    await page
+      .getByRole("separator", { name: "Click or drag to expand" })
+      .click();
+  }
+
   /**
    * Switches to a room in the room list by its name.
    * @param page - The EW page
@@ -368,25 +390,9 @@ export class TestHelpers {
     frame: FrameLocator,
     count: number,
   ): Promise<void> {
-    // XXX we need to be better at our HTML markup and accessibility, it would make
-    // this kind of stuff way easier to test if we could look out for aria attributes.
-    await expect
-      .poll(
-        async () => {
-          return await frame
-            .locator("video")
-            .evaluateAll(
-              (videos: Element[]) =>
-                videos.filter(
-                  (v: Element) =>
-                    window.getComputedStyle(v).display === "block",
-                ).length,
-            );
-        },
-        {
-          timeout: 10000,
-        },
-      )
-      .toBe(count);
+    await expect(frame.locator("video").filter({ visible: true })).toHaveCount(
+      count,
+      { timeout: 10000 },
+    );
   }
 }

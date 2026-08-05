@@ -135,21 +135,12 @@ interface EndCallButtonProps extends ComponentPropsWithoutRef<"button"> {
   size?: "md" | "lg";
 }
 
-export const EndCallButton: FC<EndCallButtonProps> = ({
-  className,
-  ...props
-}) => {
+export const EndCallButton: FC<EndCallButtonProps> = (props) => {
   const { t } = useTranslation();
 
   return (
     <Tooltip label={t("hangup_button_label")}>
-      <CpdButton
-        className={classNames(className, styles.endCall)}
-        iconOnly
-        Icon={EndCallIcon}
-        destructive
-        {...props}
-      />
+      <CpdButton iconOnly Icon={EndCallIcon} destructive {...props} />
     </Tooltip>
   );
 };
@@ -173,7 +164,7 @@ export const LoudspeakerButton: FC<LoudspeakerButtonProps> = ({
         iconOnly
         Icon={loudspeakerModeEnabled ? VolumeOnSolidIcon : VolumeOffSolidIcon}
         {...props}
-        kind={loudspeakerModeEnabled ? "primary" : "secondary"}
+        kind={loudspeakerModeEnabled ? "secondary" : "primary"}
         aria-checked={loudspeakerModeEnabled}
       />
     </Tooltip>

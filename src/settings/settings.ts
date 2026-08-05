@@ -150,7 +150,7 @@ export const enableExtendedLivekitLogs = new Setting<boolean>(
 
 export const matrixRTCMode = new Setting<MatrixRTCMode>(
   "matrix-rtc-mode",
-  MatrixRTCMode.Legacy,
+  MatrixRTCMode.Compatibility,
 );
 
 export const customLivekitUrl = new Setting<string | null>(

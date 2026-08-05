@@ -36,6 +36,7 @@ widgetTest("Footer interaction in PiP", async ({ addUser, browserName }) => {
   await valere.page.waitForTimeout(600);
 
   // Switch to the other room, the call should go to PIP
+  await TestHelpers.expandRoomList(valere.page);
   await TestHelpers.switchToRoomNamed(valere.page, "OtherRoom");
 
   // We should see the PIP overlay

@@ -3,7 +3,7 @@
 exports[`the content is rendered when the modal is open 1`] = `
 <div
   aria-labelledby="radix-_r_4_"
-  class="overlay animate modal dialog _glass_sepwu_8"
+  class="_overlay_2f5303 _animate_2f5303 _modal_dbeffe _dialog_dbeffe _glass_sepwu_8"
   data-state="open"
   id="radix-_r_3_"
   role="dialog"
@@ -11,10 +11,10 @@ exports[`the content is rendered when the modal is open 1`] = `
   tabindex="-1"
 >
   <div
-    class="content"
+    class="_content_dbeffe"
   >
     <div
-      class="header"
+      class="_header_dbeffe"
     >
       <h2
         class="_typography_6v6n8_153 _font-heading-md-semibold_6v6n8_112"
@@ -24,7 +24,7 @@ exports[`the content is rendered when the modal is open 1`] = `
       </h2>
     </div>
     <div
-      class="body"
+      class="_body_dbeffe"
     >
       <p>
         This is the content.
@@ -37,7 +37,7 @@ exports[`the content is rendered when the modal is open 1`] = `
 exports[`the modal renders as a drawer in mobile viewports 1`] = `
 <div
   aria-labelledby="radix-_r_a_"
-  class="overlay modal drawer"
+  class="_overlay_2f5303 _modal_dbeffe _drawer_dbeffe"
   data-state="open"
   data-vaul-animate="true"
   data-vaul-custom-container="false"
@@ -51,13 +51,13 @@ exports[`the modal renders as a drawer in mobile viewports 1`] = `
   tabindex="-1"
 >
   <div
-    class="content"
+    class="_content_dbeffe"
   >
     <div
-      class="header"
+      class="_header_dbeffe"
     >
       <div
-        class="handle"
+        class="_handle_dbeffe"
       />
       <h2
         id="radix-_r_a_"
@@ -67,7 +67,7 @@ exports[`the modal renders as a drawer in mobile viewports 1`] = `
       </h2>
     </div>
     <div
-      class="body"
+      class="_body_dbeffe"
     >
       <p>
         This is the content.

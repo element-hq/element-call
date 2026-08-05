@@ -120,6 +120,11 @@ export const widgetTest = test.extend<MyFixtures>({
           .getByRole("heading", { name: "Welcome Room" }),
       ).toBeVisible();
     } else if (callType === "dm") {
+      await TestHelpers.closeReleaseAnnouncement(
+        ewPage1,
+        "Introducing Sections",
+      );
+
       await ewPage1
         .getByRole("navigation", { name: "Room list" })
         .getByRole("button", { name: "New conversation" })

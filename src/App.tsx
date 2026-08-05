@@ -30,7 +30,7 @@ import { useTheme } from "./useTheme";
 import { ProcessorProvider } from "./livekit/TrackProcessorContext";
 import { type AppViewModel } from "./state/AppViewModel";
 import { MediaDevicesContext } from "./MediaDevicesContext";
-import { getUrlParams, HeaderStyle } from "./UrlParams";
+import { getUrlParams, HeaderStyle, useUrlParams } from "./UrlParams";
 import { AppBar } from "./AppBar";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
@@ -41,19 +41,17 @@ interface SimpleProviderProps {
 
 const BackgroundProvider: FC<SimpleProviderProps> = ({ children }) => {
   const { pathname } = useLocation();
+  const { background } = useUrlParams();
 
   useEffect(() => {
-    let backgroundImage = "";
-    if (!["/login", "/register"].includes(pathname) && !widget) {
-      backgroundImage = "var(--background-gradient)";
-    }
+    document
+      .getElementsByTagName("body")[0]
+      .setAttribute("data-background", background);
+  }, [pathname, background]);
 
-    document.getElementsByTagName("body")[0].style.backgroundImage =
-      backgroundImage;
-  }, [pathname]);
-
-  return <>{children}</>;
+  return children;
 };
+
 const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
   useTheme();
   return children;

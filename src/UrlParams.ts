@@ -19,6 +19,7 @@ import { Config } from "./config/Config";
 import { type EncryptionSystem } from "./e2ee/sharedKeyManagement";
 import { E2eeType } from "./e2ee/e2eeType";
 import { platform } from "./Platform";
+import { redact } from "./utils/redact";
 
 interface RoomIdentifier {
   roomAlias: string | null;
@@ -42,6 +43,11 @@ export enum HeaderStyle {
   None = "none",
   Standard = "standard",
   AppBar = "app_bar",
+}
+
+export enum BackgroundStyle {
+  Solid = "solid",
+  Gradient = "gradient",
 }
 
 /**
@@ -144,6 +150,10 @@ export interface UrlProperties {
    * can be "light", "dark", "light-high-contrast" or "dark-high-contrast".
    */
   theme: string | null;
+  /**
+   * The visual style of the page background.
+   */
+  background: BackgroundStyle;
 }
 
 /**
@@ -451,6 +461,9 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     fonts: parser.getAllParams("font"),
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     theme: parser.getParam("theme"),
+    background:
+      parser.getEnumParam("background", BackgroundStyle) ??
+      BackgroundStyle.Gradient,
     viaServers: !isWidget ? parser.getParam("viaServers") : null,
     homeserver: !isWidget ? parser.getParam("homeserver") : null,
     posthogApiHost: parser.getParam("posthogApiHost"),
@@ -494,7 +507,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     "intent:",
     intent,
     "\nproperties:",
-    properties,
+    redact(properties, "password"),
     "configuration:",
     configuration,
   );

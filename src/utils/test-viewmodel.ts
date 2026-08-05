@@ -128,8 +128,8 @@ export function getBasicRTCSession(
 
 /**
  * Construct a basic CallViewModel to test components that make use of it.
- * @param members
- * @param initialRtcMemberships
+ * @param members - Room members to include in the call.
+ * @param initialRtcMemberships - RTC memberships to start with.
  * @returns
  */
 export function getBasicCallViewModelEnvironment(

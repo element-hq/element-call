@@ -102,7 +102,7 @@ export class RtcTransportAutoDiscovery {
         const transportList = await doNetworkOperationWithRetry(async () =>
           client._unstable_getRTCTransports(),
         );
-        const first = transportList.filter(isLivekitTransportConfig)[0];
+        const first = transportList.find(isLivekitTransportConfig);
         if (first) {
           return first;
         } else {

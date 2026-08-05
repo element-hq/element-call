@@ -212,7 +212,7 @@ See also:
 
 ### Backend
 
-A docker compose file `dev-backend-docker-compose.yml` is provided to start the
+A docker compose file `docker-compose-dev.yml` is provided to start the
 whole stack of components which is required for a local development environment
 including federation:
 
@@ -239,7 +239,7 @@ the backend components:
 ```sh
 pnpm backend
 # or for podman-compose:
-# podman-compose -f dev-backend-docker-compose.yml up
+# podman-compose -f docker-compose-dev.yml up
 ```
 
 > [!NOTE]
@@ -358,6 +358,16 @@ To add a new translation key you can do these steps:
 Usage and other technical details about the project can be found here:
 
 [**Docs**](./docs/README.md)
+
+## GitHub Labels
+
+GitHub labels in this repository are maintained in the [`labels.yml`](.github/labels.yml) file and
+automatically synced to GitHub using the [`sync-labels` workflow](.github/workflows/sync-labels.yml).
+We do this so that we can reuse the labels between repositories.
+
+> [!WARNING]
+> Do not manually edit labels in the GitHub UI. Any manual changes will be overridden by the
+> workflow on its next invocation.
 
 ## 📝 Copyright & License
 

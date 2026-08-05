@@ -1,23 +1,487 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`LobbyView > renders with AppBar android 1`] = `
+<div>
+  <div
+    class="_bar_221541"
+  >
+    <header>
+      <button
+        aria-labelledby="_r_36_"
+        class="_icon-button_1215g_8 _primaryButton_221541"
+        data-kind="primary"
+        role="button"
+        style="--cpd-icon-button-size: 32px;"
+        tabindex="0"
+      >
+        <div
+          class="_indicator-icon_147l5_17"
+          style="--cpd-icon-button-size: 100%;"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="1em"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12.207 5.293a1 1 0 0 1 0 1.414L7.914 11H18.5a1 1 0 1 1 0 2H7.914l4.293 4.293a1 1 0 0 1-1.414 1.414l-6-6a1 1 0 0 1 0-1.414l6-6a1 1 0 0 1 1.414 0"
+            />
+          </svg>
+        </div>
+      </button>
+      <div
+        class="_secondaryButton_221541"
+      />
+    </header>
+  </div>
+  <div
+    class="_inRoom_4e7ff8"
+  >
+    <div
+      class="_content_f9ee84"
+    >
+      <div
+        class="_preview_dd2178"
+      >
+        <video
+          disablepictureinpicture=""
+          playsinline=""
+          poster="/src/graphics/video-placeholder.gif"
+          tabindex="-1"
+        />
+        <div
+          class="_avatarContainer_dd2178"
+        >
+          <div>
+            <span
+              aria-label="@user:example.org"
+              class="_avatar_va14e_8 _avatar-imageless_va14e_55"
+              data-color="6"
+              data-type="round"
+              role="img"
+              style="--cpd-avatar-size: NaNpx;"
+            >
+              T
+            </span>
+          </div>
+        </div>
+        <div
+          class="_buttonBar_dd2178"
+        >
+          <button
+            aria-disabled="true"
+            class="_button_1nw83_8 _join_f9ee84 _wait_f9ee84"
+            data-kind="primary"
+            data-size="md"
+            data-testid="lobby_joinCall"
+            role="button"
+            tabindex="0"
+          >
+            Join call
+          </button>
+        </div>
+      </div>
+      <a
+        class="_link_13esb_8"
+        data-kind="primary"
+        data-size="md"
+        href="/"
+        rel="noreferrer noopener"
+      >
+        Back to recents
+      </a>
+    </div>
+    <div
+      class="_footer_20b7b4"
+      data-testid="footer-container"
+    >
+      <div
+        class="_settingsLogoContainer_20b7b4"
+      >
+        <button
+          aria-labelledby="_r_3c_"
+          class="_icon-button_1215g_8 _settingsOnlyShowWide_20b7b4"
+          data-kind="secondary"
+          data-testid="settings-bottom-left"
+          role="button"
+          style="--cpd-icon-button-size: 32px;"
+          tabindex="0"
+        >
+          <div
+            class="_indicator-icon_147l5_17"
+            style="--cpd-icon-button-size: 100%;"
+          >
+            <svg
+              aria-hidden="true"
+              fill="currentColor"
+              height="1em"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 20q-.825 0-1.412-.587A1.93 1.93 0 0 1 10 18q0-.824.588-1.413A1.93 1.93 0 0 1 12 16q.825 0 1.412.587Q14 17.176 14 18t-.588 1.413A1.93 1.93 0 0 1 12 20m0-6q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 12q0-.825.588-1.412A1.93 1.93 0 0 1 12 10q.825 0 1.412.588Q14 11.175 14 12t-.588 1.412A1.93 1.93 0 0 1 12 14m0-6q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 6q0-.824.588-1.412A1.93 1.93 0 0 1 12 4q.825 0 1.412.588Q14 5.175 14 6q0 .824-.588 1.412A1.93 1.93 0 0 1 12 8"
+              />
+            </svg>
+          </div>
+        </button>
+      </div>
+      <div
+        class="_buttons_20b7b4"
+      >
+        <button
+          aria-labelledby="_r_3h_"
+          class="_button_1nw83_8 _settingsOnlyShowNarrow_20b7b4 _has-icon_1nw83_60 _icon-only_1nw83_53"
+          data-kind="secondary"
+          data-size="lg"
+          data-testid="settings-bottom-center"
+          role="button"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 20q-.825 0-1.412-.587A1.93 1.93 0 0 1 10 18q0-.824.588-1.413A1.93 1.93 0 0 1 12 16q.825 0 1.412.587Q14 17.176 14 18t-.588 1.413A1.93 1.93 0 0 1 12 20m0-6q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 12q0-.825.588-1.412A1.93 1.93 0 0 1 12 10q.825 0 1.412.588Q14 11.175 14 12t-.588 1.412A1.93 1.93 0 0 1 12 14m0-6q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 6q0-.824.588-1.412A1.93 1.93 0 0 1 12 4q.825 0 1.412.588Q14 5.175 14 6q0 .824-.588 1.412A1.93 1.93 0 0 1 12 8"
+            />
+          </svg>
+        </button>
+        <button
+          aria-busy="false"
+          aria-checked="false"
+          aria-disabled="true"
+          aria-labelledby="_r_3m_"
+          class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53"
+          data-kind="primary"
+          data-size="lg"
+          data-testid="incall_mute"
+          role="switch"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M8 8v-.006l6.831 6.832-.002.002 1.414 1.415.003-.003 1.414 1.414-.003.003L20.5 20.5a1 1 0 0 1-1.414 1.414l-3.022-3.022A7.95 7.95 0 0 1 13 19.938V21a1 1 0 0 1-2 0v-1.062A8 8 0 0 1 4 12a1 1 0 1 1 2 0 6 6 0 0 0 8.587 5.415l-1.55-1.55A4.005 4.005 0 0 1 8 12v-1.172L2.086 4.914A1 1 0 0 1 3.5 3.5zm9.417 6.583 1.478 1.477A7.96 7.96 0 0 0 20 12a1 1 0 0 0-2 0c0 .925-.21 1.8-.583 2.583M8.073 5.238l7.793 7.793q.132-.495.134-1.031V6a4 4 0 0 0-7.927-.762"
+            />
+          </svg>
+        </button>
+        <button
+          aria-busy="false"
+          aria-checked="false"
+          aria-disabled="true"
+          aria-labelledby="_r_3r_"
+          class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53"
+          data-kind="primary"
+          data-size="lg"
+          data-testid="incall_videomute"
+          role="switch"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2.747 2.753 4.35 4.355l.007-.003L18 17.994v.012l3.247 3.247a1 1 0 0 1-1.414 1.414l-2.898-2.898A2 2 0 0 1 16 20H6a4 4 0 0 1-4-4V8c0-.892.292-1.715.785-2.38L1.333 4.166a1 1 0 0 1 1.414-1.414M18 15.166 6.834 4H16a2 2 0 0 1 2 2v4.286l3.35-2.871a1 1 0 0 1 1.65.76v7.65a1 1 0 0 1-1.65.76L18 13.715z"
+            />
+          </svg>
+        </button>
+        <button
+          aria-labelledby="_r_40_"
+          class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
+          data-kind="primary"
+          data-size="lg"
+          data-testid="incall_leave"
+          role="button"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m2.765 16.02-2.47-2.416A1.02 1.02 0 0 1 0 12.852q0-.456.295-.751a15.6 15.6 0 0 1 5.316-3.786A15.9 15.9 0 0 1 12 7q3.355 0 6.39 1.329a16 16 0 0 1 5.315 3.772q.295.294.295.751t-.295.752l-2.47 2.416a1.047 1.047 0 0 1-1.396.108l-3.114-2.363a1.1 1.1 0 0 1-.322-.376 1.1 1.1 0 0 1-.108-.483v-2.27a13.6 13.6 0 0 0-2.12-.524C13.459 9.996 12 9.937 12 9.937s-1.459.059-2.174.175q-1.074.174-2.121.523v2.271q0 .268-.108.483a1.1 1.1 0 0 1-.322.376l-3.114 2.363a1.047 1.047 0 0 1-1.396-.107"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`LobbyView > renders with AppBar ios 1`] = `
+<div>
+  <div
+    class="_bar_221541"
+  >
+    <header>
+      <button
+        aria-labelledby="_r_4a_"
+        class="_icon-button_1215g_8 _primaryButton_221541"
+        data-kind="primary"
+        role="button"
+        style="--cpd-icon-button-size: 32px;"
+        tabindex="0"
+      >
+        <div
+          class="_indicator-icon_147l5_17"
+          style="--cpd-icon-button-size: 100%;"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="1em"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m13.3 17.3-4.6-4.6a.9.9 0 0 1-.213-.325A1.1 1.1 0 0 1 8.425 12q0-.2.062-.375A.9.9 0 0 1 8.7 11.3l4.6-4.6a.95.95 0 0 1 .7-.275q.425 0 .7.275a.95.95 0 0 1 .275.7.95.95 0 0 1-.275.7L10.8 12l3.9 3.9a.95.95 0 0 1 .275.7.95.95 0 0 1-.275.7.95.95 0 0 1-.7.275.95.95 0 0 1-.7-.275"
+            />
+          </svg>
+        </div>
+      </button>
+      <div
+        class="_secondaryButton_221541"
+      />
+    </header>
+  </div>
+  <div
+    class="_inRoom_4e7ff8"
+  >
+    <div
+      class="_content_f9ee84"
+    >
+      <div
+        class="_preview_dd2178"
+      >
+        <video
+          disablepictureinpicture=""
+          playsinline=""
+          poster="/src/graphics/video-placeholder.gif"
+          tabindex="-1"
+        />
+        <div
+          class="_avatarContainer_dd2178"
+        >
+          <div>
+            <span
+              aria-label="@user:example.org"
+              class="_avatar_va14e_8 _avatar-imageless_va14e_55"
+              data-color="6"
+              data-type="round"
+              role="img"
+              style="--cpd-avatar-size: NaNpx;"
+            >
+              T
+            </span>
+          </div>
+        </div>
+        <div
+          class="_buttonBar_dd2178"
+        >
+          <button
+            aria-disabled="true"
+            class="_button_1nw83_8 _join_f9ee84 _wait_f9ee84"
+            data-kind="primary"
+            data-size="md"
+            data-testid="lobby_joinCall"
+            role="button"
+            tabindex="0"
+          >
+            Join call
+          </button>
+        </div>
+      </div>
+      <a
+        class="_link_13esb_8"
+        data-kind="primary"
+        data-size="md"
+        href="/"
+        rel="noreferrer noopener"
+      >
+        Back to recents
+      </a>
+    </div>
+    <div
+      class="_footer_20b7b4"
+      data-testid="footer-container"
+    >
+      <div
+        class="_settingsLogoContainer_20b7b4"
+      >
+        <button
+          aria-labelledby="_r_4g_"
+          class="_icon-button_1215g_8 _settingsOnlyShowWide_20b7b4"
+          data-kind="secondary"
+          data-testid="settings-bottom-left"
+          role="button"
+          style="--cpd-icon-button-size: 32px;"
+          tabindex="0"
+        >
+          <div
+            class="_indicator-icon_147l5_17"
+            style="--cpd-icon-button-size: 100%;"
+          >
+            <svg
+              aria-hidden="true"
+              fill="currentColor"
+              height="1em"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6 14q-.824 0-1.412-.588A1.93 1.93 0 0 1 4 12q0-.825.588-1.412A1.93 1.93 0 0 1 6 10q.824 0 1.412.588Q8 11.175 8 12t-.588 1.412A1.93 1.93 0 0 1 6 14m6 0q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 12q0-.825.588-1.412A1.93 1.93 0 0 1 12 10q.825 0 1.412.588Q14 11.175 14 12t-.588 1.412A1.93 1.93 0 0 1 12 14m6 0q-.824 0-1.413-.588A1.93 1.93 0 0 1 16 12q0-.825.587-1.412A1.93 1.93 0 0 1 18 10q.824 0 1.413.588Q20 11.175 20 12t-.587 1.412A1.93 1.93 0 0 1 18 14"
+              />
+            </svg>
+          </div>
+        </button>
+      </div>
+      <div
+        class="_buttons_20b7b4"
+      >
+        <button
+          aria-labelledby="_r_4l_"
+          class="_button_1nw83_8 _settingsOnlyShowNarrow_20b7b4 _has-icon_1nw83_60 _icon-only_1nw83_53"
+          data-kind="secondary"
+          data-size="lg"
+          data-testid="settings-bottom-center"
+          role="button"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 14q-.824 0-1.412-.588A1.93 1.93 0 0 1 4 12q0-.825.588-1.412A1.93 1.93 0 0 1 6 10q.824 0 1.412.588Q8 11.175 8 12t-.588 1.412A1.93 1.93 0 0 1 6 14m6 0q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 12q0-.825.588-1.412A1.93 1.93 0 0 1 12 10q.825 0 1.412.588Q14 11.175 14 12t-.588 1.412A1.93 1.93 0 0 1 12 14m6 0q-.824 0-1.413-.588A1.93 1.93 0 0 1 16 12q0-.825.587-1.412A1.93 1.93 0 0 1 18 10q.824 0 1.413.588Q20 11.175 20 12t-.587 1.412A1.93 1.93 0 0 1 18 14"
+            />
+          </svg>
+        </button>
+        <button
+          aria-busy="false"
+          aria-checked="false"
+          aria-disabled="true"
+          aria-labelledby="_r_4q_"
+          class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53"
+          data-kind="primary"
+          data-size="lg"
+          data-testid="incall_mute"
+          role="switch"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M8 8v-.006l6.831 6.832-.002.002 1.414 1.415.003-.003 1.414 1.414-.003.003L20.5 20.5a1 1 0 0 1-1.414 1.414l-3.022-3.022A7.95 7.95 0 0 1 13 19.938V21a1 1 0 0 1-2 0v-1.062A8 8 0 0 1 4 12a1 1 0 1 1 2 0 6 6 0 0 0 8.587 5.415l-1.55-1.55A4.005 4.005 0 0 1 8 12v-1.172L2.086 4.914A1 1 0 0 1 3.5 3.5zm9.417 6.583 1.478 1.477A7.96 7.96 0 0 0 20 12a1 1 0 0 0-2 0c0 .925-.21 1.8-.583 2.583M8.073 5.238l7.793 7.793q.132-.495.134-1.031V6a4 4 0 0 0-7.927-.762"
+            />
+          </svg>
+        </button>
+        <button
+          aria-busy="false"
+          aria-checked="false"
+          aria-disabled="true"
+          aria-labelledby="_r_4v_"
+          class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53"
+          data-kind="primary"
+          data-size="lg"
+          data-testid="incall_videomute"
+          role="switch"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2.747 2.753 4.35 4.355l.007-.003L18 17.994v.012l3.247 3.247a1 1 0 0 1-1.414 1.414l-2.898-2.898A2 2 0 0 1 16 20H6a4 4 0 0 1-4-4V8c0-.892.292-1.715.785-2.38L1.333 4.166a1 1 0 0 1 1.414-1.414M18 15.166 6.834 4H16a2 2 0 0 1 2 2v4.286l3.35-2.871a1 1 0 0 1 1.65.76v7.65a1 1 0 0 1-1.65.76L18 13.715z"
+            />
+          </svg>
+        </button>
+        <button
+          aria-labelledby="_r_54_"
+          class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
+          data-kind="primary"
+          data-size="lg"
+          data-testid="incall_leave"
+          role="button"
+          tabindex="0"
+        >
+          <svg
+            aria-hidden="true"
+            fill="currentColor"
+            height="24"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m2.765 16.02-2.47-2.416A1.02 1.02 0 0 1 0 12.852q0-.456.295-.751a15.6 15.6 0 0 1 5.316-3.786A15.9 15.9 0 0 1 12 7q3.355 0 6.39 1.329a16 16 0 0 1 5.315 3.772q.295.294.295.751t-.295.752l-2.47 2.416a1.047 1.047 0 0 1-1.396.108l-3.114-2.363a1.1 1.1 0 0 1-.322-.376 1.1 1.1 0 0 1-.108-.483v-2.27a13.6 13.6 0 0 0-2.12-.524C13.459 9.996 12 9.937 12 9.937s-1.459.059-2.174.175q-1.074.174-2.121.523v2.271q0 .268-.108.483a1.1 1.1 0 0 1-.322.376l-3.114 2.363a1.047 1.047 0 0 1-1.396-.107"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
 exports[`LobbyView > renders with header and participant count 1`] = `
 <div>
   <div
-    class="inRoom"
+    class="_inRoom_4e7ff8"
   >
     <header
-      class="header"
+      class="_header_e4b327"
     >
       <div
-        class="nav leftNav"
+        class="_nav_e4b327 _leftNav_e4b327"
       >
         <div
-          class="roomHeaderInfo"
+          class="_roomHeaderInfo_e4b327"
           data-size="lg"
         >
           <span
             aria-label="!room:example.org"
-            class="_avatar_va14e_8 roomAvatar _avatar-imageless_va14e_55"
+            class="_avatar_va14e_8 _roomAvatar_e4b327 _avatar-imageless_va14e_55"
             data-color="3"
             data-type="round"
             role="img"
@@ -26,7 +490,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
             T
           </span>
           <div
-            class="nameLine"
+            class="_nameLine_e4b327"
           >
             <h1
               class="_typography_6v6n8_153 _font-heading-md-semibold_6v6n8_112"
@@ -39,7 +503,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
             >
               <svg
                 aria-labelledby="_r_0_"
-                class="lock"
+                class="_lock_edc97d"
                 data-encrypted="false"
                 fill="currentColor"
                 height="16"
@@ -54,7 +518,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
             </span>
           </div>
           <div
-            class="participantsLine"
+            class="_participantsLine_e4b327"
           >
             <svg
               aria-label="Participants"
@@ -84,22 +548,23 @@ exports[`LobbyView > renders with header and participant count 1`] = `
         </div>
       </div>
       <div
-        class="nav rightNav"
+        class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
     <div
-      class="content"
+      class="_content_f9ee84"
     >
       <div
-        class="preview"
+        class="_preview_dd2178"
       >
         <video
           disablepictureinpicture=""
           playsinline=""
+          poster="/src/graphics/video-placeholder.gif"
           tabindex="-1"
         />
         <div
-          class="avatarContainer"
+          class="_avatarContainer_dd2178"
         >
           <div>
             <span
@@ -115,10 +580,10 @@ exports[`LobbyView > renders with header and participant count 1`] = `
           </div>
         </div>
         <div
-          class="buttonBar"
+          class="_buttonBar_dd2178"
         >
           <button
-            class="_button_1nw83_8 join"
+            class="_button_1nw83_8 _join_f9ee84"
             data-kind="primary"
             data-size="lg"
             data-testid="lobby_joinCall"
@@ -130,7 +595,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
         </div>
       </div>
       <a
-        class="_link_k9ljz_8"
+        class="_link_13esb_8"
         data-kind="primary"
         data-size="md"
         href="/"
@@ -140,15 +605,15 @@ exports[`LobbyView > renders with header and participant count 1`] = `
       </a>
     </div>
     <div
-      class="footer"
+      class="_footer_20b7b4"
       data-testid="footer-container"
     >
       <div
-        class="settingsLogoContainer"
+        class="_settingsLogoContainer_20b7b4"
       >
         <button
           aria-labelledby="_r_6_"
-          class="_icon-button_1215g_8 settingsOnlyShowWide"
+          class="_icon-button_1215g_8 _settingsOnlyShowWide_20b7b4"
           data-kind="secondary"
           data-testid="settings-bottom-left"
           role="button"
@@ -168,13 +633,13 @@ exports[`LobbyView > renders with header and participant count 1`] = `
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M6 14q-.824 0-1.412-.588A1.93 1.93 0 0 1 4 12q0-.825.588-1.412A1.93 1.93 0 0 1 6 10q.824 0 1.412.588Q8 11.175 8 12t-.588 1.412A1.93 1.93 0 0 1 6 14m6 0q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 12q0-.825.588-1.412A1.93 1.93 0 0 1 12 10q.825 0 1.412.588Q14 11.175 14 12t-.588 1.412A1.93 1.93 0 0 1 12 14m6 0q-.824 0-1.413-.588A1.93 1.93 0 0 1 16 12q0-.825.587-1.412A1.93 1.93 0 0 1 18 10q.824 0 1.413.588Q20 11.175 20 12t-.587 1.412A1.93 1.93 0 0 1 18 14"
+                d="M12 20q-.825 0-1.412-.587A1.93 1.93 0 0 1 10 18q0-.824.588-1.413A1.93 1.93 0 0 1 12 16q.825 0 1.412.587Q14 17.176 14 18t-.588 1.413A1.93 1.93 0 0 1 12 20m0-6q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 12q0-.825.588-1.412A1.93 1.93 0 0 1 12 10q.825 0 1.412.588Q14 11.175 14 12t-.588 1.412A1.93 1.93 0 0 1 12 14m0-6q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 6q0-.824.588-1.412A1.93 1.93 0 0 1 12 4q.825 0 1.412.588Q14 5.175 14 6q0 .824-.588 1.412A1.93 1.93 0 0 1 12 8"
               />
             </svg>
           </div>
         </button>
         <div
-          class="logo"
+          class="_logo_20b7b4"
         >
           <svg
             aria-hidden="true"
@@ -279,11 +744,11 @@ exports[`LobbyView > renders with header and participant count 1`] = `
         </div>
       </div>
       <div
-        class="buttons"
+        class="_buttons_20b7b4"
       >
         <button
           aria-labelledby="_r_b_"
-          class="_button_1nw83_8 settingsOnlyShowNarrow _has-icon_1nw83_60 _icon-only_1nw83_53"
+          class="_button_1nw83_8 _settingsOnlyShowNarrow_20b7b4 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="secondary"
           data-size="lg"
           data-testid="settings-bottom-center"
@@ -299,7 +764,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              d="M6 14q-.824 0-1.412-.588A1.93 1.93 0 0 1 4 12q0-.825.588-1.412A1.93 1.93 0 0 1 6 10q.824 0 1.412.588Q8 11.175 8 12t-.588 1.412A1.93 1.93 0 0 1 6 14m6 0q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 12q0-.825.588-1.412A1.93 1.93 0 0 1 12 10q.825 0 1.412.588Q14 11.175 14 12t-.588 1.412A1.93 1.93 0 0 1 12 14m6 0q-.824 0-1.413-.588A1.93 1.93 0 0 1 16 12q0-.825.587-1.412A1.93 1.93 0 0 1 18 10q.824 0 1.413.588Q20 11.175 20 12t-.587 1.412A1.93 1.93 0 0 1 18 14"
+              d="M12 20q-.825 0-1.412-.587A1.93 1.93 0 0 1 10 18q0-.824.588-1.413A1.93 1.93 0 0 1 12 16q.825 0 1.412.587Q14 17.176 14 18t-.588 1.413A1.93 1.93 0 0 1 12 20m0-6q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 12q0-.825.588-1.412A1.93 1.93 0 0 1 12 10q.825 0 1.412.588Q14 11.175 14 12t-.588 1.412A1.93 1.93 0 0 1 12 14m0-6q-.825 0-1.412-.588A1.93 1.93 0 0 1 10 6q0-.824.588-1.412A1.93 1.93 0 0 1 12 4q.825 0 1.412.588Q14 5.175 14 6q0 .824-.588 1.412A1.93 1.93 0 0 1 12 8"
             />
           </svg>
         </button>
@@ -355,7 +820,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
         </button>
         <button
           aria-labelledby="_r_q_"
-          class="_button_1nw83_8 endCall _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
+          class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
           data-kind="primary"
           data-size="lg"
           data-testid="incall_leave"

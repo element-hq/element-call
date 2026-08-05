@@ -1,0 +1,154 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "eslint",
+    "import",
+    "jsdoc",
+    "jsx-a11y",
+    "promise",
+    "react",
+    "typescript",
+    "unicorn",
+    "vitest"
+  ],
+  "jsPlugins": [
+    "eslint-plugin-storybook",
+    "eslint-plugin-element-call"
+    // TODO: Re-enable once oxlint supports lint rules that rely on TypeScript type-awareness.
+    // "eslint-plugin-rxjs"
+  ],
+  "categories": {
+    "correctness": "error",
+    "perf": "error"
+  },
+  "options": {
+    "denyWarnings": true,
+    "typeAware": true
+  },
+  "env": {
+    "builtin": true
+  },
+  "rules": {
+    "element-call/copyright-header": [
+      "error",
+      "/*\nCopyright %%CURRENT_YEAR%% Element Creations Ltd.\n\nSPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial\nPlease see LICENSE in the repository root for full details.\n*/\n\n"
+    ],
+    "element-call/no-observablescope-leak": "error",
+    "element-call/no-top-level-logger-get-child": "error",
+    "jsdoc/empty-tags": "error",
+    "jsdoc/check-property-names": "error",
+    "jsdoc/require-param-description": "warn",
+    "react/display-name": "error",
+    // TODO: Re-enable once oxlint supports lint rules that rely on TypeScript type-awareness.
+    // "rxjs/no-exposed-subjects": "error",
+    // "rxjs/finnish": [
+    //   "error",
+    //   {
+    //     "names": {
+    //       "^this$": false
+    //     }
+    //   }
+    // ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": [
+              "matrix-widget-api/src",
+              "matrix-widget-api/src/",
+              "matrix-widget-api/src/**",
+              "matrix-widget-api/lib",
+              "matrix-widget-api/lib/",
+              "matrix-widget-api/lib/**"
+            ],
+            "message": "Please use matrix-widget-api instead"
+          },
+          {
+            "group": [
+              "matrix-js-sdk/src",
+              "matrix-js-sdk/src/",
+              "matrix-js-sdk/src/**",
+              "matrix-js-sdk/lib",
+              "matrix-js-sdk/lib/",
+              "matrix-js-sdk/lib/index"
+            ],
+            "message": "Please use matrix-js-sdk instead"
+          }
+        ]
+      }
+    ],
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/promise-function-async": "error",
+    "typescript/require-await": "error",
+    "typescript/await-thenable": "error",
+    // To help ensure that we get proper vite/rollup lazy loading (e.g. for matrix-js-sdk).
+    "typescript/consistent-type-imports": [
+      "error",
+      {
+        "fixStyle": "inline-type-imports"
+      }
+    ],
+    // TODO: These had to be disabled in the eslint -> oxlint migration. Would be nice to
+    // enable them in future or at least document why we're disabling them.
+    "eslint/no-await-in-loop": "off",
+    "eslint/no-unused-vars": ["error", { "args": "none" }],
+    "import/default": "off",
+    "jsdoc/check-tag-names": "off",
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "promise/no-callback-in-promise": "off",
+    "react/jsx-key": "off",
+    "react/jsx-no-constructed-context-values": "off",
+    "react/no-array-index-key": "off",
+    "react/no-children-prop": "off",
+    "react/no-object-type-as-default-prop": "off",
+    "typescript/no-misused-spread": "off",
+    "typescript/no-useless-default-assignment": "off",
+    "typescript/restrict-template-expressions": "off",
+    "typescript/unbound-method": "off",
+    "vitest/expect-expect": "off",
+    "vitest/no-conditional-expect": "off",
+    "vitest/no-disabled-tests": "off",
+    "vitest/require-mock-type-parameters": "off",
+    "vitest/require-to-throw-message": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/*/**"],
+      "rules": {
+        // In application code we should use the js-sdk logger, never console directly.
+        "no-console": "error"
+      }
+    },
+    {
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/test.ts",
+        "**/test.tsx",
+        "**/test-**"
+      ],
+      "rules": {
+        // Tests often initialize an ObservableScope in an outer scope in
+        // beforeEach, which is not actually a problem
+        "element-call/no-observablescope-leak": "off",
+        "jsdoc/empty-tags": "off",
+        "jsdoc/check-property-names": "off",
+        "jsdoc/require-param-description": "off",
+        "jsx-a11y/media-has-caption": "off"
+        // TODO: Enable once oxlint supports them.
+        // "jsdoc/check-values": "off",
+        // "jsdoc/check-param-names": "off",
+        // "jsdoc/no-types": "off",
+      }
+    },
+    {
+      "files": ["playwright/**"],
+      "rules": {
+        // Playwright as a `use` function that has nothing to do with React hooks.
+        "react-hooks/rules-of-hooks": "off"
+      }
+    }
+  ]
+}

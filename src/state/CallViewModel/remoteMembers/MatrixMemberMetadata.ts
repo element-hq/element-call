@@ -22,8 +22,6 @@ import {
 } from "../../../utils/displayname";
 import { type Behavior } from "../../Behavior";
 
-const logger = rootLogger.getChild("[MatrixMemberMetadata]");
-
 export type RoomMemberMap = Map<
   string,
   Pick<RoomMember, "userId" | "getMxcAvatarUrl" | "rawDisplayName">
@@ -67,6 +65,7 @@ export const memberDisplaynames$ = (
   memberships$: Behavior<Pick<CallMembership, "userId">[]>,
   roomMembers$: Behavior<RoomMemberMap>,
 ): Behavior<Map<string, string>> => {
+  const logger = rootLogger.getChild("[MatrixMemberMetadata]");
   // This map tracks userIds that at some point needed disambiguation.
   // This is a memory leak bound to the number of participants.
   // A call application will always increase the memory if there have been more members in a call.
@@ -115,8 +114,14 @@ export const createMatrixMemberMetadata$ = (
   memberships$: Behavior<Pick<CallMembership, "userId">[]>,
   roomMembers$: Behavior<RoomMemberMap>,
 ): {
-  createDisplayNameBehavior$: (userId: string) => Behavior<string | undefined>;
-  createAvatarUrlBehavior$: (userId: string) => Behavior<string | undefined>;
+  createDisplayNameBehavior$: (
+    scope: ObservableScope,
+    userId: string,
+  ) => Behavior<string | undefined>;
+  createAvatarUrlBehavior$: (
+    scope: ObservableScope,
+    userId: string,
+  ) => Behavior<string | undefined>;
   displaynameMap$: Behavior<Map<string, string>>;
   avatarMap$: Behavior<Map<string, string | undefined>>;
 } => {
@@ -136,13 +141,13 @@ export const createMatrixMemberMetadata$ = (
     ),
   );
   return {
-    createDisplayNameBehavior$: (userId: string) =>
+    createDisplayNameBehavior$: (scope: ObservableScope, userId: string) =>
       scope.behavior(
         displaynameMap$.pipe(
           map((displaynameMap) => displaynameMap.get(userId)),
         ),
       ),
-    createAvatarUrlBehavior$: (userId: string) =>
+    createAvatarUrlBehavior$: (scope: ObservableScope, userId: string) =>
       scope.behavior(
         roomMembers$.pipe(
           map((roomMembers) => roomMembers.get(userId)?.getMxcAvatarUrl()),

@@ -51,6 +51,7 @@ import { CallFooter, type FooterSnapshot } from "../components/CallFooter";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { createLobbyFooterViewModel } from "../components/CallFooterViewModel";
 import { type ViewModel } from "../state/ViewModel";
+import { useAppBarPrimaryButtonIconKind } from "../AppBar";
 
 interface Props {
   client: MatrixClient;
@@ -85,8 +86,9 @@ export const LobbyView: FC<Props> = ({
   }, []);
 
   const { t } = useTranslation();
-  usePageTitle(matrixInfo.roomName);
 
+  usePageTitle(matrixInfo.roomName);
+  useAppBarPrimaryButtonIconKind("back");
   const audioEnabled = useBehavior(muteStates.audio.enabled$);
   const videoEnabled = useBehavior(muteStates.video.enabled$);
   const toggleAudio = useBehavior(muteStates.audio.toggle$);

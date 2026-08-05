@@ -11,14 +11,21 @@ export default {
   vite: {
     config: ["vite.config.ts", "vite-embedded.config.ts", "vite-sdk.config.ts"],
   },
-  entry: ["src/main.tsx", "i18next.config.ts"],
+  entry: ["src/main.tsx", "eslint/index.js", "i18next.config.ts"],
   ignoreBinaries: [
     // This is deprecated, so Knip doesn't actually recognize it as a globally
     // installed binary. TODO We should switch to Compose v2:
     // https://docs.docker.com/compose/migrate/
     "docker-compose",
+    // This is a shell built-in.
+    "printf",
   ],
-  ignoreFiles: ["scripts/.pnpmfile.cjs"],
+  ignoreFiles: [
+    "scripts/.pnpmfile.cjs",
+    // Deliberately added prior to any component or business logic
+    // implementation
+    "src/state/ServiceInterruptionsViewModel.ts",
+  ],
   ignoreDependencies: [
     // Used in CSS
     "normalize.css",
@@ -30,6 +37,9 @@ export default {
     // https://github.com/webpro-nl/knip/issues/766
     "@vector-im/compound-web",
     "matrix-widget-api",
+    // Used by oxlint
+    "eslint-plugin-element-call",
+    "eslint-plugin-storybook",
   ],
   ignoreExportsUsedInFile: true,
 } satisfies KnipConfig;

@@ -376,7 +376,11 @@ export class MediaDevices {
           getUrlParams().callIntent,
           window.controls,
         )
-      : new IOSControlledAudioOutput(this.usingNames$, this.scope)
+      : new IOSControlledAudioOutput(
+          this.usingNames$,
+          this.scope,
+          getUrlParams().callIntent,
+        )
     : new AudioOutput(this.usingNames$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =

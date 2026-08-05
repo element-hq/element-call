@@ -7,13 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import {
-  type FC,
-  type ComponentProps,
-  type ReactNode,
-  type ComponentType,
-  type SVGAttributes,
-} from "react";
+import { type FC, type ComponentProps, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -31,6 +25,7 @@ import {
 import { type ReactionOption } from "../reactions";
 import { ReactionIndicator } from "../reactions/ReactionIndicator";
 import { RTCConnectionStats } from "../RTCConnectionStats";
+import videoPlaceholder from "../graphics/video-placeholder.gif";
 
 interface Props extends ComponentProps<typeof animated.div> {
   className?: string;
@@ -40,14 +35,17 @@ interface Props extends ComponentProps<typeof animated.div> {
   video: TrackReferenceOrPlaceholder | undefined;
   videoFit: "cover" | "contain";
   mirror: boolean;
+  soundWaves?: boolean;
   userId: string;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
-  status?: { text: string; Icon: ComponentType<SVGAttributes<SVGElement>> };
+  status?: ReactNode;
   showNameTags: boolean;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   mxcAvatarUrl: string | undefined;
+  avatarStyle?: "solid" | "translucent";
+  background?: "solid" | "transparent";
   focusable: boolean;
   primaryButton?: ReactNode;
   raisedHandTime?: Date;
@@ -70,6 +68,7 @@ export const MediaView: FC<Props> = ({
   video,
   videoFit,
   mirror,
+  soundWaves,
   userId,
   videoEnabled,
   unencryptedWarning,
@@ -77,6 +76,8 @@ export const MediaView: FC<Props> = ({
   nameTagLeadingIcon,
   displayName,
   mxcAvatarUrl,
+  avatarStyle = "solid",
+  background = "solid",
   focusable,
   primaryButton,
   status,
@@ -94,7 +95,10 @@ export const MediaView: FC<Props> = ({
   const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
   const [showConnectionStats] = useSetting(showConnectionStatsSetting);
 
-  const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
+  const avatarSize = Math.round(
+    Math.min(targetWidth, targetHeight) *
+      (soundWaves === undefined ? 0.5 : 0.38),
+  );
 
   const warnings = unencryptedWarning && (
     <Tooltip
@@ -121,20 +125,27 @@ export const MediaView: FC<Props> = ({
       style={style}
       ref={ref}
       data-testid="videoTile"
+      data-video-enabled={video && videoEnabled}
       data-video-fit={videoFit}
+      data-background={background}
       {...props}
     >
       <div className={styles.bg}>
+        {soundWaves !== undefined && (
+          <div className={styles.waves} data-visible={soundWaves}>
+            <div className={styles.wave} />
+            <div className={styles.wave} />
+            <div className={styles.wave} />
+            <div className={styles.speakingBorder} />
+          </div>
+        )}
         <Avatar
           id={userId}
           name={displayName}
           size={avatarSize}
           src={mxcAvatarUrl}
-          className={classNames(styles.avatar, {
-            // When the avatar is overlaid with a status, make it translucent
-            // for readability
-            [styles.translucent]: status,
-          })}
+          data-style={avatarStyle}
+          className={styles.avatar}
           style={{ display: video && videoEnabled ? "none" : "initial" }}
         />
         {video?.publication !== undefined && (
@@ -143,8 +154,10 @@ export const MediaView: FC<Props> = ({
             // There's no reason for this to be focusable
             tabIndex={-1}
             disablePictureInPicture
-            style={{ display: video && videoEnabled ? "block" : "none" }}
             data-testid="video"
+            // Set the placeholder to a small transparent image. (On Android web
+            // views the default poster image is particularly ugly.)
+            poster={videoPlaceholder}
           />
         )}
       </div>
@@ -180,14 +193,7 @@ export const MediaView: FC<Props> = ({
             />
           </>
         )}
-        {status && (
-          <div className={styles.status}>
-            <status.Icon width={16} height={16} aria-hidden />
-            <Text as="span" size="sm" weight="medium">
-              {status.text}
-            </Text>
-          </div>
-        )}
+        {status && <div className={styles.status}>{status}</div>}
         {/* TODO: Bring this back once encryption status is less broken */}
         {/*encryptionStatus !== EncryptionStatus.Okay && (
             <div className={styles.status}>

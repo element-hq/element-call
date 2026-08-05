@@ -102,11 +102,15 @@
     "connection_lost_description": "Hovor byl přerušen.",
     "e2ee_unsupported": "Nekompatibilní prohlížeč",
     "e2ee_unsupported_description": "Váš webový prohlížeč nepodporuje šifrované hovory. Mezi podporované prohlížeče patří Chrome, Safari a Firefox 117+.",
+    "failed_to_start_livekit": "Nepodařilo se navázat připojení k Livekitu",
     "generic": "Něco se pokazilo.",
     "generic_description": "Odeslání protokolů ladění nám pomůže vystopovat problém.",
     "insufficient_capacity": "Nedostatečná kapacita",
     "insufficient_capacity_description": "Server dosáhl své maximální kapacity a v tuto chvíli se nemůžete připojit k hovoru. Zkuste to později nebo se obraťte na správce serveru, pokud problém přetrvává.",
     "matrix_rtc_transport_missing": "Server není nakonfigurován pro práci s {{brand}}. Obraťte se na správce serveru (Doména: {{domain}}, Kód chyby: {{ errorCode }}).",
+    "membership_manager": "Chyba Správce členství",
+    "membership_manager_description": "Správce členství musel být ukončen. To je způsobeno mnoha po sobě jdoucími neúspěšnými síťovými požadavky.",
+    "no_matrix_2_authorization_service": "Autorizační služba vašeho mediálního serveru (SFU) je zastaralá.",
     "open_elsewhere": "Otevřeno na jiné kartě",
     "open_elsewhere_description": "{{brand}} byl otevřen v jiné záložce. Pokud to nezní správně, zkuste stránku znovu načíst.",
     "room_creation_restricted": "Nepodařilo se vytvořit hovor",
@@ -141,6 +145,7 @@
   },
   "layout_grid_label": "Mřížka",
   "layout_spotlight_label": "Soustředěný mód",
+  "layout_switch_label": "Rozvržení",
   "lobby": {
     "ask_to_join": "Žádost o připojení k hovoru",
     "join_as_guest": "Připojte se jako host",
@@ -241,11 +246,14 @@
   "version": "{{productName}}verze: {{version}}",
   "video_tile": {
     "always_show": "Vždy zobrazit",
+    "call_ended": "Hovor ukončen",
+    "calling": "Volání…",
     "camera_starting": "Načítání videa...",
     "collapse": "Sbalit",
     "expand": "Rozbalit",
     "mute_for_me": "Pro mě ztlumit",
     "muted_for_me": "Pro mě ztlumené",
+    "screen_share_volume": "Hlasitost sdílení obrazovky",
     "volume": "Hlasitost",
     "waiting_for_media": "Čekání na média..."
   }

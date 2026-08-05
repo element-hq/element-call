@@ -215,6 +215,7 @@
     "codec_label": "Codec",
     "developer_tab_title": "Developer",
     "devices": {
+      "activating": "Activating…",
       "camera": "Camera",
       "camera_numbered": "Camera {{n}}",
       "change_device_button": "Change audio device",

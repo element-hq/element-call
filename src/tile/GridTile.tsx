@@ -29,15 +29,13 @@ import {
   UserProfileIcon,
   VolumeOffSolidIcon,
   SwitchCameraSolidIcon,
-  VideoCallSolidIcon,
-  VoiceCallSolidIcon,
-  EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
   ContextMenu,
   MenuItem,
   ToggleMenuItem,
   Menu,
+  Text,
 } from "@vector-im/compound-web";
 import { useObservableEagerState } from "observable-hooks";
 
@@ -53,6 +51,7 @@ import { type LocalUserMediaViewModel } from "../state/media/LocalUserMediaViewM
 import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaViewModel";
 import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
 import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
+import { RingingStatus } from "./RingingStatus";
 
 interface TileProps {
   ref?: Ref<HTMLDivElement>;
@@ -68,17 +67,15 @@ interface TileProps {
 
 interface RingingMediaTileProps extends TileProps {
   vm: RingingMediaViewModel;
+  showStatus: boolean;
 }
 
 const RingingMediaTile: FC<RingingMediaTileProps> = ({
   vm,
+  showStatus,
   className,
   ...props
 }) => {
-  const { t } = useTranslation();
-  const pickupState = useBehavior(vm.pickupState$);
-  const videoEnabled = useBehavior(vm.videoEnabled$);
-
   return (
     <MediaView
       className={classNames(className, styles.tile)}
@@ -86,14 +83,14 @@ const RingingMediaTile: FC<RingingMediaTileProps> = ({
       userId={vm.userId}
       unencryptedWarning={false}
       status={
-        pickupState === "ringing"
-          ? {
-              text: t("video_tile.calling"),
-              Icon: videoEnabled ? VideoCallSolidIcon : VoiceCallSolidIcon,
-            }
-          : { text: t("video_tile.call_ended"), Icon: EndCallIcon }
+        showStatus && (
+          <Text as="span" size="sm" weight="medium">
+            <RingingStatus vm={vm} />
+          </Text>
+        )
       }
-      videoEnabled={videoEnabled}
+      avatarStyle="translucent"
+      videoEnabled={false}
       videoFit="cover"
       mirror={false}
       {...props}
@@ -400,6 +397,8 @@ interface GridTileProps {
   style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicators: boolean;
   showNameTags: boolean;
+  showRingingStatus: boolean;
+  showOutline: boolean;
   focusable: boolean;
 }
 
@@ -407,7 +406,10 @@ export const GridTile: FC<GridTileProps> = ({
   ref: theirRef,
   vm,
   showSpeakingIndicators,
+  showRingingStatus,
+  showOutline,
   onOpenProfile,
+  className,
   ...props
 }) => {
   const ourRef = useRef<HTMLDivElement | null>(null);
@@ -423,6 +425,8 @@ export const GridTile: FC<GridTileProps> = ({
         vm={media}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        showStatus={showRingingStatus}
+        className={classNames(className, { [styles.outline]: showOutline })}
         {...props}
       />
     );
@@ -435,6 +439,7 @@ export const GridTile: FC<GridTileProps> = ({
         onOpenProfile={onOpenProfile}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        className={classNames(className, { [styles.outline]: showOutline })}
         {...props}
       />
     );
@@ -446,6 +451,7 @@ export const GridTile: FC<GridTileProps> = ({
         showSpeakingIndicators={showSpeakingIndicators}
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
+        className={classNames(className, { [styles.outline]: showOutline })}
         {...props}
       />
     );

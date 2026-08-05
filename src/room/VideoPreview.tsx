@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { TileAvatar } from "../tile/TileAvatar";
 import styles from "./VideoPreview.module.css";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import videoPlaceholder from "../graphics/video-placeholder.gif";
 
 export type MatrixInfo = {
   userId: string;
@@ -74,6 +75,9 @@ export const VideoPreview: FC<Props> = ({
         // There's no reason for this to be focusable
         tabIndex={-1}
         disablePictureInPicture
+        // Set the placeholder to a small transparent image. (On Android web
+        // views the default poster image is particularly ugly.)
+        poster={videoPlaceholder}
       />
       {(!videoEnabled || cameraIsStarting) && (
         <>

@@ -13,8 +13,7 @@ import {
   type TrackReference,
   type TrackReferencePlaceholder,
 } from "@livekit/components-core";
-import { LocalTrackPublication, Track } from "livekit-client";
-import { TrackInfo } from "@livekit/protocol";
+import { type LocalTrackPublication, Track } from "livekit-client";
 import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
@@ -28,10 +27,7 @@ describe("MediaView", () => {
   };
   const trackReference: TrackReference = {
     ...trackReferencePlaceholder,
-    publication: new LocalTrackPublication(
-      Track.Kind.Video,
-      new TrackInfo({ sid: "id", name: "name" }),
-    ),
+    publication: {} as Partial<LocalTrackPublication> as LocalTrackPublication,
   };
 
   const baseProps: ComponentProps<typeof MediaView> = {
@@ -127,32 +123,6 @@ describe("MediaView", () => {
       expect(
         screen.queryAllByRole("img", { name: "Not encrypted" }).length,
       ).toBe(0);
-    });
-  });
-
-  describe("videoEnabled", () => {
-    test("just video is visible", () => {
-      render(
-        <TooltipProvider>
-          <MediaView {...baseProps} videoEnabled={true} />
-        </TooltipProvider>,
-      );
-      expect(screen.getByTestId("video")).toBeVisible();
-      expect(screen.queryAllByRole("img", { name: "some name" }).length).toBe(
-        0,
-      );
-    });
-
-    test("just avatar is visible", () => {
-      render(
-        <TooltipProvider>
-          <MediaView {...baseProps} videoEnabled={false} />
-        </TooltipProvider>,
-      );
-      expect(
-        screen.getByRole("img", { name: "@alice:example.com" }),
-      ).toBeVisible();
-      expect(screen.getByTestId("video")).not.toBeVisible();
     });
   });
 });

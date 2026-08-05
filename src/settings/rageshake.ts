@@ -149,7 +149,7 @@ class IndexedDBLogStore {
    * @return Resolves when the store is ready.
    */
   public async connect(): Promise<void> {
-    const req = this.indexedDB.open("logs");
+    const req = this.indexedDB.open("logs-element-call");
     return new Promise((resolve, reject) => {
       req.onsuccess = (): void => {
         this.db = req.result;
@@ -467,7 +467,7 @@ declare global {
   // eslint-disable-next-line no-var, camelcase
   var mx_rage_initStoragePromise: Promise<void> | undefined;
 }
-
+export let rageshakeLogger: Logger;
 /**
  * Configure rage shaking support for sending bug reports.
  * Modifies globals.
@@ -477,7 +477,8 @@ export async function init(): Promise<void> {
   global.mx_rage_logger = new ConsoleLogger();
 
   // configure loglevel based loggers:
-  setLogExtension(logger, global.mx_rage_logger.log);
+  rageshakeLogger = logger;
+  setLogExtension(rageshakeLogger, global.mx_rage_logger.log);
 
   // intercept console logging so that we can get matrix_sdk logs:
   // this is nasty, but no logging hooks are provided

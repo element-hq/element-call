@@ -19,14 +19,28 @@ Please see LICENSE in the repository root for full details.
   inset: var(--cpd-space-4x);
 }
 
+/* Give the PiP a landscape aspect ratio */
 .pip[data-size="sm"] {
-  inline-size: 88px;
-  block-size: 132px;
+  inline-size: 132px;
+  block-size: 88px;
 }
 
 .pip[data-size="lg"] {
-  inline-size: 140px;
-  block-size: 210px;
+  inline-size: 210px;
+  block-size: 140px;
+}
+
+@media (max-width: 600px) {
+  /* Give the PiP a portrait aspect ratio */
+  .pip[data-size="sm"] {
+    inline-size: 88px;
+    block-size: 132px;
+  }
+
+  .pip[data-size="lg"] {
+    inline-size: 140px;
+    block-size: 210px;
+  }
 }
 
 .pip[data-block-alignment="start"] {

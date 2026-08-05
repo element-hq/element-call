@@ -15,8 +15,7 @@ Please see LICENSE in the repository root for full details.
 @import url("@fontsource/inconsolata/700.css");
 
 @import url("normalize.css/normalize.css") layer(normalize);
-@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css")
-layer(compound);
+@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css") layer(compound);
 @import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
 
 :root {
@@ -27,12 +26,6 @@ layer(compound);
   --font-size-subtitle: calc(18px * var(--font-scale));
   --font-size-title: calc(24px * var(--font-scale));
   --font-size-headline: calc(32px * var(--font-scale));
-
-  /* These colors are needed during the transitionary period between the old and
-  new Compound design systems, but should be removed ASAP */
-  --stopgap-color-on-solid-accent: var(--cpd-color-bg-canvas-default);
-  --stopgap-background-85: rgba(255, 255, 255, 0.85);
-  --stopgap-bgColor3: #444;
 
   --cpd-color-border-accent: var(--cpd-color-green-800);
   /* The distance to inset non-full-width content from the edge of the window
@@ -55,7 +48,6 @@ layer(compound);
   --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
   --big-drop-shadow: 0px 0px 24px 0px #1b1d221a;
   --subtle-drop-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-  --background-gradient: url("graphics/backgroundGradient.svg");
 
   --call-view-overlay-layer: 1;
   --call-view-header-footer-layer: 2;
@@ -74,15 +66,30 @@ layer(compound);
 
 body {
   background-color: var(--cpd-color-bg-canvas-default);
-  background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
-  background-repeat: no-repeat;
-  background-position: center;
   color: var(--cpd-color-text-primary);
   color-scheme: dark;
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-height: 330px) {
+  body[data-background="gradient"]::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("graphics/mobile-gradient.svg");
+    background-size: auto;
+    background-position: bottom;
+    background-repeat: no-repeat;
+  }
+
+  body[data-background="gradient"][data-platform="desktop"]::before {
+    background-image: url("graphics/desktop-gradient.svg");
+    background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
+    background-position: center;
+  }
 }
 
 /* This prohibits the view to scroll for pages smaller than 122px in width

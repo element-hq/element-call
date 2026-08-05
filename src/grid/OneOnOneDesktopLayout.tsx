@@ -6,46 +6,44 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ReactNode, useCallback } from "react";
+import { type ReactNode, useCallback, useMemo } from "react";
+import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
-import { type OneOnOnePortraitLayout as OneOnOnePortraitLayoutModel } from "../state/layout-types.ts";
-import { type CallLayout } from "./CallLayout";
-import styles from "./OneOnOnePortraitLayout.module.css";
+import { type OneOnOneDesktopLayout as OneOnOneDesktopLayoutModel } from "../state/layout-types.ts";
+import { type CallLayout, arrangeTiles } from "./CallLayout";
+import styles from "./OneOnOneDesktopLayout.module.css";
 import { type DragCallback, useUpdateLayout } from "./Grid";
 import { useBehavior } from "../useBehavior";
 
 /**
- * An implementation of the "one-on-one" layout for portrait screens, in which
+ * An implementation of the "one-on-one" layout for desktop platforms, in which
  * the remote participant is shown at maximum size, overlaid by a small view of
  * the local participant.
  */
-export const makeOneOnOnePortraitLayout: CallLayout<
-  OneOnOnePortraitLayoutModel
-> = () => ({
-  foreground: "scrolling",
+export const makeOneOnOneDesktopLayout: CallLayout<
+  OneOnOneDesktopLayoutModel
+> = ({ minBounds$ }) => ({
+  foreground: "fixed",
 
-  fixed: function OneOnOnePortraitLayoutFixed({ ref, model, Slot }): ReactNode {
+  fixed: function OneOnOneDesktopLayoutFixed({ ref }): ReactNode {
     useUpdateLayout();
-    return (
-      <div ref={ref} className={styles.layer}>
-        <Slot
-          className={styles.spotlight}
-          id="spotlight"
-          model={model.spotlight}
-        />
-      </div>
-    );
+    return <div ref={ref} />;
   },
 
-  scrolling: function OneOnOnePortraitLayoutScrolling({
+  scrolling: function OneOnOneDesktopLayoutScrolling({
     ref,
     model,
     Slot,
   }): ReactNode {
     useUpdateLayout();
-    const pipSize = useBehavior(model.pipSize$);
+    const { width, height } = useObservableEagerState(minBounds$);
     const pipAlignment = useBehavior(model.pipAlignment$);
+    const { tileWidth, tileHeight } = useMemo(
+      () => arrangeTiles(width, height, 1),
+      [width, height],
+    );
+
     const onDragLocalTile: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
         model.pipAlignment$.next({
@@ -57,17 +55,21 @@ export const makeOneOnOnePortraitLayout: CallLayout<
 
     return (
       <div ref={ref} className={styles.layer}>
-        {model.pip && (
+        <Slot
+          id={model.spotlight.id}
+          model={model.spotlight}
+          className={styles.container}
+          style={{ width: tileWidth, height: tileHeight }}
+        >
           <Slot
-            className={classNames(styles.pip)}
+            className={classNames(styles.slot, styles.local)}
             id={model.pip.id}
             model={model.pip}
             onDrag={onDragLocalTile}
-            data-size={pipSize}
             data-block-alignment={pipAlignment.block}
             data-inline-alignment={pipAlignment.inline}
           />
-        )}
+        </Slot>
       </div>
     );
   },

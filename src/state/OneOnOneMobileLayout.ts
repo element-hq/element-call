@@ -10,23 +10,23 @@ import { type BehaviorSubject } from "rxjs";
 
 import {
   type Alignment,
-  type OneOnOnePortraitLayout,
-  type OneOnOnePortraitLayoutMedia,
+  type OneOnOneMobileLayout,
+  type OneOnOneMobileLayoutMedia,
 } from "./layout-types";
 import { type TileStore } from "./TileStore";
 import { type Behavior } from "./Behavior";
 
 /**
- * Produces a one-on-one portrait layout with the given media.
+ * Produces a one-on-one mobile layout with the given media.
  */
-export function oneOnOnePortraitLayout(
-  media: OneOnOnePortraitLayoutMedia,
+export function oneOnOneMobileLayout(
+  media: OneOnOneMobileLayoutMedia,
   pipSize$: Behavior<"sm" | "lg">,
   pipAlignment$: BehaviorSubject<Alignment>,
   prevTiles: TileStore,
-): [OneOnOnePortraitLayout, TileStore] {
+): [OneOnOneMobileLayout, TileStore] {
   const update = prevTiles.from(media.pip === undefined ? 0 : 1);
-  update.registerSpotlight([media.spotlight], true);
+  update.registerSpotlight([media.spotlight], true, "transparent");
   if (media.pip !== undefined) update.registerGridTile(media.pip);
   const tiles = update.build();
 

@@ -3,6 +3,7 @@
     "user_menu": "Käyttäjävalikko"
   },
   "action": {
+    "blur_background": "Sumenna tausta",
     "close": "Sulje",
     "copy_link": "Kopioi linkki",
     "edit": "Muokkaa",
@@ -107,14 +108,20 @@
     "generic_description": "Vianmäärityslokien lähettäminen auttaa meitä jäljittämään ongelman.",
     "insufficient_capacity": "Riittämätön kapasiteetti",
     "insufficient_capacity_description": "Palvelin on saavuttanut maksimikapasiteettinsa, etkä voi liittyä puheluun tällä hetkellä. Yritä myöhemmin uudelleen tai ota yhteyttä palvelimen ylläpitäjään, jos ongelma jatkuu.",
+    "livekit_connection_error": "Yhteyden muodostaminen Livekit-palvelimeen epäonnistui",
+    "livekit_connection_error_description": "Livekit-palvelimeen yhteyden muodostamisessa tapahtui virhe (<1>Syy: </1> <2>{{ reason }}</2>).",
     "matrix_rtc_transport_missing": "Palvelinta ei ole määritetty toimimaan {{brand}} -sovelluksen kanssa. Ota yhteyttä palvelimen ylläpitäjään (Verkkotunnus: {{domain}}, Virhekoodi: {{ errorCode }}).",
     "membership_manager": "Jäsenyydenhallinnan virhe",
     "membership_manager_description": "Jäsenyyshallinta jouduttiin sulkemaan. Tämä johtui useista peräkkäisistä epäonnistuneista verkkopyynnöistä.",
     "no_matrix_2_authorization_service": "Mediapalvelimesi (SFU) valtuutuspalvelu on vanhentunut.",
     "open_elsewhere": "Avattu toisessa välilehdessä",
     "open_elsewhere_description": "{{brand}} on avattu toisessa välilehdessä. Jos tämä ei kuulosta oikealta, yritä ladata sivu uudelleen.",
+    "peer_connection_timeout": "Yhteyden aikakatkaisu",
+    "peer_connection_timeout_description": "Yhteys mediapalvelimeen aikakatkaistiin. Kokeile vaihtaa verkkoa tai poistaa VPN käytöstä. Jos ongelma jatkuu, katso <0>vianetsintäoppaamme</0> tai ota yhteyttä palvelimesi ylläpitäjään.",
     "room_creation_restricted": "Puhelun luominen epäonnistui",
     "room_creation_restricted_description": "Puheluiden luominen saattaa olla rajoitettu vain valtuutetuille käyttäjille. Yritä myöhemmin uudelleen tai ota yhteyttä palvelimen ylläpitäjään, jos ongelma jatkuu.",
+    "sticky_events_required": "Kotipalvelin ei tue Matrix 2.0 -puheluita",
+    "sticky_events_required_description": "Tämä asennus on määritetty käyttämään Matrix 2.0 -puhelutilaa, mutta kotipalvelin ei mainosta tukea tarttuville tapahtumille (MSC4354). Pyydä palvelimen järjestelmänvalvojaa päivittämään tai vaihtamaan asennus yhteensopivaan tilaan.",
     "unexpected_ec_error": "Tapahtui odottamaton virhe (<0>Virhekoodi:</0> <1>{{ errorCode }}</1>). Ota yhteyttä palvelimen ylläpitäjään."
   },
   "group_call_loader": {
@@ -145,6 +152,7 @@
   },
   "layout_grid_label": "Ruudukko",
   "layout_spotlight_label": "Valokeila",
+  "layout_switch_label": "Asettelu",
   "lobby": {
     "ask_to_join": "Pyydä liittymistä puheluun",
     "join_as_guest": "Liity vieraana",
@@ -197,6 +205,7 @@
     "blur_not_supported_by_browser": "(Tämä laite ei tue taustan sumennusta.)",
     "developer_tab_title": "Kehittäjä",
     "devices": {
+      "activating": "Aktivoidaan…",
       "camera": "Kamera",
       "camera_numbered": "Kamera {{n}}",
       "change_device_button": "Vaihda äänilaite",
@@ -236,6 +245,7 @@
   "stop_video_button_label": "Lopeta video",
   "submitting": "Lähetetään…",
   "switch_camera": "Vaihda kameraa",
+  "technical_details": "Tekniset tiedot",
   "unauthenticated_view_body": "Etkö ole vielä rekisteröitynyt? <2>Luo tili</2>",
   "unauthenticated_view_login_button": "Kirjaudu tilillesi",
   "unauthenticated_view_ssla_caption": "Klikkaamalla \"Siirry\" hyväksyt <2>ohjelmisto- ja palvelulisenssisopimuksen (SSLA)</2>",

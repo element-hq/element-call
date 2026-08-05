@@ -15,6 +15,8 @@ import { type MediaViewModel } from "./media/MediaViewModel";
 import { type UserMediaViewModel } from "./media/UserMediaViewModel";
 import { type RingingMediaViewModel } from "./media/RingingMediaViewModel";
 
+type SpotlightBackground = "solid" | "transparent";
+
 function debugEntries(entries: GridTileData[]): string[] {
   return entries.map((e) => e.media.displayName$.value);
 }
@@ -39,12 +41,29 @@ class SpotlightTileData {
     this.maximised$.next(value);
   }
 
+  private readonly background$: BehaviorSubject<SpotlightBackground>;
+  public get background(): SpotlightBackground {
+    return this.background$.value;
+  }
+  public set background(value: SpotlightBackground) {
+    this.background$.next(value);
+  }
+
   public readonly vm: SpotlightTileViewModel;
 
-  public constructor(media: MediaViewModel[], maximised: boolean) {
+  public constructor(
+    media: MediaViewModel[],
+    maximised: boolean,
+    background: SpotlightBackground,
+  ) {
     this.media$ = new BehaviorSubject(media);
     this.maximised$ = new BehaviorSubject(maximised);
-    this.vm = new SpotlightTileViewModel(this.media$, this.maximised$);
+    this.background$ = new BehaviorSubject(background);
+    this.vm = new SpotlightTileViewModel(
+      this.media$,
+      this.maximised$,
+      this.background$,
+    );
   }
 }
 
@@ -131,9 +150,9 @@ export class TileStoreBuilder {
   private numGridEntries = 0;
   // A sparse array of grid entries which should be kept in the same spots as
   // which they appeared in the previous grid
-  private readonly stationaryGridEntries: GridTileData[] = new Array(
-    this.prevGrid.length,
-  );
+  private readonly stationaryGridEntries: GridTileData[] = Array.from({
+    length: this.prevGrid.length,
+  });
   // Grid entries which should now enter the visible section of the grid
   private readonly visibleGridEntries: GridTileData[] = [];
   // Grid entries which should now enter the invisible section of the grid
@@ -157,7 +176,11 @@ export class TileStoreBuilder {
    * Sets the contents of the spotlight tile. If this is never called, there
    * will be no spotlight tile.
    */
-  public registerSpotlight(media: MediaViewModel[], maximised: boolean): void {
+  public registerSpotlight(
+    media: MediaViewModel[],
+    maximised: boolean,
+    background: SpotlightBackground = "solid",
+  ): void {
     if (DEBUG_ENABLED)
       logger.debug(
         `[TileStore, ${this.generation}] register spotlight: ${media.map((m) => m.displayName$.value)}`,
@@ -169,11 +192,12 @@ export class TileStoreBuilder {
 
     // Reuse the previous spotlight tile if it exists
     if (this.prevSpotlight === null) {
-      this.spotlight = new SpotlightTileData(media, maximised);
+      this.spotlight = new SpotlightTileData(media, maximised, background);
     } else {
       this.spotlight = this.prevSpotlight;
       this.spotlight.media = media;
       this.spotlight.maximised = maximised;
+      this.spotlight.background = background;
     }
   }
 
