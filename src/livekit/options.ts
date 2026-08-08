@@ -25,6 +25,15 @@ const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   simulcast: true,
   videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360] as VideoPreset[],
   screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
+  // Screen shares are published as three layers rather than LiveKit's default
+  // two. The default low layer is only downscaled by 2 (960x540 at full
+  // framerate), which is far more than a small preview needs; adding an
+  // explicit 360p/3fps layer lets subscribers that only render a thumbnail
+  // (such as the spotlight switcher previews) pull a very cheap stream.
+  screenShareSimulcastLayers: [
+    ScreenSharePresets.h360fps3,
+    ScreenSharePresets.h720fps15,
+  ] as VideoPreset[],
   stopMicTrackOnMute: false,
   videoCodec: "vp8",
   videoEncoding: VideoPresets.h720.encoding,

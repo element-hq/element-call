@@ -22,6 +22,14 @@ Please see LICENSE in the repository root for full details.
   place-items: center;
 }
 
+/* Keep the indicator row above the edge-to-edge footer. */
+.spotlight.withPreviewIndicator {
+  padding-block-end: calc(
+    var(--call-view-safe-area-inset-bottom, 0px) + var(--cpd-space-2x) +
+      var(--spotlight-indicator-height)
+  );
+}
+
 /* CSS makes us put a condition here, even though all we want to do is
 unconditionally select the container so we can use cq units */
 @container spotlight (width > 0) {
