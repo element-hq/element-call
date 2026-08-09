@@ -17,7 +17,11 @@ import {
   WidgetApiToWidgetAction,
 } from "matrix-widget-api";
 
-import type { IWidgetApiRequest } from "matrix-widget-api";
+import type {
+  IWidgetApiRequest,
+  IWidgetApiRequestData,
+  IWidgetApiResponseData,
+} from "matrix-widget-api";
 import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
@@ -44,6 +48,17 @@ export enum ElementWidgetActions {
   //   video_enabled?: boolean
   // }
   DeviceMute = "io.element.device_mute",
+  ScreenShareAudioSession = "io.element.screen_share_audio_session",
+}
+
+export type ScreenShareAudioSessionRequest = IWidgetApiRequestData & {
+  version: 1;
+  state: "acquire" | "release";
+  session_id: string;
+};
+
+export interface ScreenShareAudioSessionResponse extends IWidgetApiResponseData {
+  accepted: boolean;
 }
 
 export interface JoinCallData {
