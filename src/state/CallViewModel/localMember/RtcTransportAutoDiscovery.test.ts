@@ -43,7 +43,6 @@ function makeClient(): MockedObject<DiscoveryClient> {
     getDomain: vi.fn().mockReturnValue("example.org"),
     baseUrl: "https://matrix.example.org",
     _unstable_getRTCTransports: vi.fn().mockResolvedValue([]),
-    getAccessToken: vi.fn().mockReturnValue("access_token"),
     getOpenIdToken: vi.fn(),
     getDeviceId: vi.fn(),
   } as unknown as MockedObject<DiscoveryClient>;
