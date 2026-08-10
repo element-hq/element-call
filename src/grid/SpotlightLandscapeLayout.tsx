@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ReactNode } from "react";
+import { type FC, type ReactNode } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
@@ -13,6 +13,9 @@ import { type CallLayout } from "./CallLayout";
 import { type SpotlightLandscapeLayout as SpotlightLandscapeLayoutModel } from "../state/layout-types.ts";
 import styles from "./SpotlightLandscapeLayout.module.css";
 import { useUpdateLayout, useVisibleTiles } from "./Grid";
+import { type MediaViewModel } from "../state/media/MediaViewModel.ts";
+import { type Behavior } from "../state/Behavior.ts";
+import { useBehavior } from "../useBehavior.ts";
 
 /**
  * An implementation of the "spotlight landscape" layout, in which the spotlight
@@ -54,16 +57,10 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
     useObservableEagerState(minBounds$);
-    const withIndicators =
-      useObservableEagerState(model.spotlight.media$).length > 1;
 
     return (
       <div ref={ref} className={styles.layer}>
-        <div
-          className={classNames(styles.spotlight, {
-            [styles.withIndicators]: withIndicators,
-          })}
-        />
+        <SpotlightSlot media$={model.spotlight.media$} />
         <div className={styles.grid}>
           {model.grid.map((m) => (
             <Slot key={m.id} className={styles.slot} id={m.id} model={m} />
@@ -73,3 +70,20 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     );
   },
 });
+
+interface SpotlightSlotProps {
+  media$: Behavior<MediaViewModel[]>;
+}
+
+// This component isolates the subscription to the spotlight media so that it
+// can change without causing the whole layout to re-render
+const SpotlightSlot: FC<SpotlightSlotProps> = ({ media$ }) => {
+  const withIndicators = useBehavior(media$).length > 1;
+  return (
+    <div
+      className={classNames(styles.spotlight, {
+        [styles.withIndicators]: withIndicators,
+      })}
+    />
+  );
+};
