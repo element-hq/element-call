@@ -346,6 +346,12 @@ export class TestHelpers {
     }
   }
 
+  public static async expandRoomList(page: Page): Promise<void> {
+    await page
+      .getByRole("separator", { name: "Click or drag to expand" })
+      .click();
+  }
+
   /**
    * Switches to a room in the room list by its name.
    * @param page - The EW page

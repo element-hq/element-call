@@ -15,8 +15,7 @@ Please see LICENSE in the repository root for full details.
 @import url("@fontsource/inconsolata/700.css");
 
 @import url("normalize.css/normalize.css") layer(normalize);
-@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css")
-layer(compound);
+@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css") layer(compound);
 @import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
 
 :root {

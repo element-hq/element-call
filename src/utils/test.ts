@@ -439,6 +439,12 @@ export function mockConfig(
   const spy = vi.spyOn(Config, "get").mockReturnValue({
     ...DEFAULT_CONFIG,
     ...config,
+    default_server_config: {
+      ["m.homeserver"]: {
+        base_url: "http://localhost:8008",
+        server_name: "localhost",
+      },
+    },
   });
   // simulate loading the config
   vi.spyOn(Config, "init").mockResolvedValue(void 0);

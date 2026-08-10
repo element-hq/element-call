@@ -7,10 +7,6 @@ jobs:
   vitest:
     name: Run unit tests
     runs-on: ubuntu-latest
-    container:
-      # Make sure to grab the latest version of the Playwright image
-      # https://playwright.dev/docs/docker#pull-the-image
-      image: mcr.microsoft.com/playwright:v1.61.1-noble
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -26,6 +22,18 @@ jobs:
       - name: Install dependencies
         # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
         run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
+      - name: Get Playwright version
+        run: echo "PLAYWRIGHT_VERSION=$(pnpm list @playwright/test --depth=0 --json | jq -r '.[0].devDependencies["@playwright/test"].version')" >> $GITHUB_ENV
+      - name: Cache Playwright binaries
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+      - name: Install Playwright binaries
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm playwright install --with-deps
       - name: Vitest
         run: "pnpm run test:coverage"
       - name: Upload to codecov
@@ -52,8 +60,18 @@ jobs:
       - name: Install dependencies
         # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
         run: pnpm install --frozen-lockfile --ignore-pnpmfile
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
+      - name: Get Playwright version
+        run: echo "PLAYWRIGHT_VERSION=$(pnpm list @playwright/test --depth=0 --json | jq -r '.[0].devDependencies["@playwright/test"].version')" >> $GITHUB_ENV
+      - name: Cache Playwright binaries
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+      - name: Install Playwright binaries
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm playwright install --with-deps
       - name: Run backend components
         run: |
           docker compose -f docker-compose-dev.yml -f docker-compose-playwright.yml pull

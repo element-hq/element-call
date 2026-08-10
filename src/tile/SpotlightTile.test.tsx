@@ -32,6 +32,7 @@ import {
 global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
   public unobserve(): void {}
+  public disconnect(): void {}
 } as unknown as typeof IntersectionObserver;
 
 test("SpotlightTile is accessible", async () => {

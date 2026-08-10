@@ -28,6 +28,10 @@ test("useTypedEventEmitterState reacts to events", async () => {
   const emitter = new TestEmitter();
 
   const Test: FC = () => {
+    // Disable the React Compiler to work around the following bug:
+    // https://github.com/react/react/issues/34901
+    "use no memo";
+
     const value = useTypedEventEmitterState(
       emitter,
       "change",
@@ -51,6 +55,10 @@ test("useTypedEventEmitterState reacts to changes made by an effect mounted on t
   const emitter = new TestEmitter();
 
   const Test: FC = () => {
+    // Disable the React Compiler to work around the following bug:
+    // https://github.com/react/react/issues/34901
+    "use no memo";
+
     useEffect(() => emitter.setState(2), []);
     const value = useTypedEventEmitterState(
       emitter,
@@ -69,6 +77,10 @@ test("useTypedEventEmitterState reacts to changes in getState", async () => {
   const emitter = new TestEmitter();
 
   const Test: FC = () => {
+    // Disable the React Compiler to work around the following bug:
+    // https://github.com/react/react/issues/34901
+    "use no memo";
+
     const [fn, setFn] = useState(() => emitter.getState);
     const value = useTypedEventEmitterState(emitter, "change", fn);
     return (
