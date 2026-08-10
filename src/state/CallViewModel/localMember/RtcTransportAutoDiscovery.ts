@@ -73,7 +73,7 @@ export class RtcTransportAutoDiscovery {
     this.logger.info("First try to use getRTCTransports end point ...");
     try {
       const transportList = await doNetworkOperationWithRetry(async () =>
-        client._unstable_getRTCTransports()
+        client._unstable_getRTCTransports(),
       );
       const first = transportList.find(isLivekitTransportConfig);
       if (first) {
@@ -81,7 +81,7 @@ export class RtcTransportAutoDiscovery {
       } else {
         this.logger.info(
           `No livekit transport found in getRTCTransports end point`,
-          transportList
+          transportList,
         );
       }
     } catch (ex) {

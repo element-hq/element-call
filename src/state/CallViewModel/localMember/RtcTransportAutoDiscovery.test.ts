@@ -81,14 +81,12 @@ describe("RtcTransportAutoDiscovery", () => {
         logger: rootLogger,
       });
 
-
-      const discoveredTransport = await  discovery.discoverPreferredTransport();
+      const discoveredTransport = await discovery.discoverPreferredTransport();
 
       expect(discoveredTransport).toStrictEqual(backendTransport);
       expect(discoveredTransport).not.toStrictEqual(configTransport);
 
       expect(client._unstable_getRTCTransports).toHaveBeenCalledTimes(1);
-
     },
   );
 
@@ -106,7 +104,6 @@ describe("RtcTransportAutoDiscovery", () => {
         ),
       )
       .mockResolvedValue([backendTransport]);
-
 
     const discovery = new RtcTransportAutoDiscovery({
       client,
@@ -140,14 +137,12 @@ describe("RtcTransportAutoDiscovery", () => {
       const discoveredTransport = await discovery.discoverPreferredTransport();
       expect(discoveredTransport).not.toStrictEqual(backendTransport);
       expect(discoveredTransport).toStrictEqual(configTransport);
-
     },
   );
 
   it("returns null when backend and config are all unavailable", async () => {
     const client = makeClient();
     client._unstable_getRTCTransports.mockResolvedValue([]);
-
 
     const discovery = new RtcTransportAutoDiscovery({
       client,

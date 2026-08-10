@@ -99,7 +99,7 @@ function renderTestComponent(
     ),
   } as unknown as Room;
 
-  if (explicitTracks?.length ?? 0 > 0) {
+  if ((explicitTracks?.length ?? 0) > 0) {
     tracks = explicitTracks!.map(({ participantId, source, kind }) => {
       const participant =
         liveKitParticipants.find((p) => p.identity === participantId) ??
