@@ -46,17 +46,30 @@ describe("buildLiveKitOptions", () => {
   });
 
   it("applies video resolution and encoding from config", () => {
-    const opts = buildLiveKitOptions({
-      video: {
-        max_resolution: 1080,
-        max_bitrate: 3_000_000,
-        max_framerate: 60,
-      },
+    const baseVideoConfig = {
+      max_resolution: 1080,
+      max_bitrate: 3_000_000,
+      max_framerate: 60,
+    };
+    const opts1080 = buildLiveKitOptions({
+      video: baseVideoConfig,
     });
-    expect(opts.videoCaptureDefaults?.resolution).toEqual(
+    const opts1440 = buildLiveKitOptions({
+      video: { ...baseVideoConfig, max_resolution: 1440 },
+    });
+    const opts2160 = buildLiveKitOptions({
+      video: { ...baseVideoConfig, max_resolution: 2160 },
+    });
+    expect(opts1080.videoCaptureDefaults?.resolution).toEqual(
       VideoPresets.h1080.resolution,
     );
-    expect(opts.publishDefaults?.videoEncoding).toEqual({
+    expect(opts1440.videoCaptureDefaults?.resolution).toEqual(
+      VideoPresets.h1440.resolution,
+    );
+    expect(opts2160.videoCaptureDefaults?.resolution).toEqual(
+      VideoPresets.h2160.resolution,
+    );
+    expect(opts1080.publishDefaults?.videoEncoding).toEqual({
       maxBitrate: 3_000_000,
       maxFramerate: 60,
     });
