@@ -26,7 +26,6 @@ import {
   tap,
 } from "rxjs";
 import { logger as rootLogger, type Logger } from "matrix-js-sdk/lib/logger";
-import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type Behavior } from "../../Behavior.ts";
@@ -150,7 +149,6 @@ export const createLocalTransport$ = ({
   const transportDiscovery = new RtcTransportAutoDiscovery({
     client: client,
     resolvedConfig: Config.get(),
-    wellKnownFetcher: AutoDiscovery.getRawClientConfig.bind(AutoDiscovery),
     logger: logger,
   });
 

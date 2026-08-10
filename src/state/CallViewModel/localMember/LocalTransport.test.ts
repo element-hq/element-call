@@ -433,51 +433,6 @@ describe("LocalTransport", () => {
       ).rejects.toThrow(expect.any(FailToGetOpenIdToken));
     });
 
-    it("supports getting transport via well-known", async () => {
-      localTransportOpts.client.getDomain.mockReturnValue("example.org");
-      fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
-        "org.matrix.msc4143.rtc_foci": [
-          { type: "livekit", livekit_service_url: "https://lk.example.org" },
-        ],
-      });
-      const { advertised$, active$ } =
-        createLocalTransport$(localTransportOpts);
-      openIdResolver.resolve?.(openIdResponse);
-      expect(advertised$.value).toBe(null);
-      expect(active$.value).toBe(null);
-      await flushPromises();
-      const expectedTransport = {
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
-      };
-      expect(advertised$.value).toStrictEqual(expectedTransport);
-      expect(active$.value).toStrictEqual({
-        transport: expectedTransport,
-        sfuConfig: {
-          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "Akph4alDMhen",
-          livekitIdentity: "@lk_user:ABCDEF",
-          url: "https://lk.example.org",
-        },
-      });
-      expect(fetchMock.done()).toEqual(true);
-    });
-
-    it("fails fast if the openId request fails for the well-known config", async () => {
-      localTransportOpts.client.getDomain.mockReturnValue("example.org");
-      fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
-        "org.matrix.msc4143.rtc_foci": [
-          { type: "livekit", livekit_service_url: "https://lk.example.org" },
-        ],
-      });
-      openIdResolver.reject(
-        new FailToGetOpenIdToken(new Error("Test driven error")),
-      );
-      await expect(async () =>
-        lastValueFrom(createLocalTransport$(localTransportOpts).active$),
-      ).rejects.toThrow(expect.any(FailToGetOpenIdToken));
-    });
-
     it("throws if no options are available", async () => {
       const { advertised$, active$ } = createLocalTransport$({
         scope: testScope(),
