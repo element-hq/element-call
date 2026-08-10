@@ -20,7 +20,6 @@ import {
   afterAll,
   beforeEach,
 } from "vitest";
-import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { BehaviorSubject, map, of } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type LocalParticipant, type LocalTrack } from "livekit-client";
@@ -78,33 +77,9 @@ describe("LocalMembership", () => {
         livekit_alias: "my-oldest-member-service-alias",
       };
 
-      const focusConfigFromWellKnown = {
-        type: "livekit",
-        livekit_service_url: "http://my-well-known-service-url.com",
-      };
-      const focusConfigFromWellKnown2 = {
-        type: "livekit",
-        livekit_service_url: "http://my-well-known-service-url2.com",
-      };
-      const clientWellKnown = {
-        "org.matrix.msc4143.rtc_foci": [
-          focusConfigFromWellKnown,
-          focusConfigFromWellKnown2,
-        ],
-      };
-
       mockConfig({
         livekit: { livekit_service_url: "http://my-default-service-url.com" },
       });
-
-      vi.spyOn(AutoDiscovery, "getRawClientConfig").mockImplementation(
-        async (domain) => {
-          if (domain === "example.org") {
-            return Promise.resolve(clientWellKnown);
-          }
-          return Promise.resolve({});
-        },
-      );
 
       const mockedSession = vi.mocked({
         room: {
@@ -132,7 +107,7 @@ describe("LocalMembership", () => {
         ownMemberMock,
         {
           livekit_alias: "roomId",
-          livekit_service_url: "http://my-well-known-service-url.com",
+          livekit_service_url: "http://my-livekit-service-url.com",
           type: "livekit",
         },
         {
@@ -150,7 +125,7 @@ describe("LocalMembership", () => {
         [
           {
             livekit_alias: "roomId",
-            livekit_service_url: "http://my-well-known-service-url.com",
+            livekit_service_url: "http://my-livekit-service-url.com",
             type: "livekit",
           },
         ],
@@ -159,50 +134,6 @@ describe("LocalMembership", () => {
           manageMediaKeys: true,
           useLegacyMemberEvents: false,
         }),
-      );
-    });
-
-    it("It should not fail with configuration error if homeserver config has livekit url but not fallback", () => {
-      mockConfig({});
-      vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({
-        "org.matrix.msc4143.rtc_foci": [
-          {
-            type: "livekit",
-            livekit_service_url: "http://my-well-known-service-url.com",
-          },
-        ],
-      });
-
-      const mockedSession = vi.mocked({
-        room: {
-          roomId: "roomId",
-          client: {
-            getDomain: vi.fn().mockReturnValue("example.org"),
-            getOpenIdToken: vi.fn().mockResolvedValue({
-              access_token: "ACCCESS_TOKEN",
-              token_type: "Bearer",
-              matrix_server_name: "localhost",
-              expires_in: 10000,
-            }),
-          },
-        },
-        memberships: [],
-        getFocusInUse: vi.fn(),
-        joinRTCSession: vi.fn(),
-      }) as unknown as MatrixRTCSession;
-
-      enterRTCSession(
-        mockedSession,
-        ownMemberMock,
-        {
-          livekit_alias: "roomId",
-          livekit_service_url: "http://my-well-known-service-url.com",
-          type: "livekit",
-        },
-        {
-          encryptMedia: true,
-          matrixRTCMode: MATRIX_RTC_MODE,
-        },
       );
     });
   });

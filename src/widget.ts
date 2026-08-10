@@ -195,7 +195,7 @@ export const initializeWidget = (
         // Wait for the config file to be ready (we load very early on so it might not
         // be otherwise)
         await Config.init();
-        await client.startClient({ clientWellKnownPollPeriod: 60 * 10 });
+        await client.startClient();
         return client;
       };
 

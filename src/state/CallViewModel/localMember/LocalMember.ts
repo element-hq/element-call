@@ -108,7 +108,6 @@ export type LocalMemberState =
     };
 
 /*
- * - get well known
  * - get oldest membership
  * - get transport to use
  * - get openId + jwt token

@@ -12,7 +12,7 @@ import { i18nKey } from "./i18n";
 
 export enum ErrorCode {
   /**
-   * Configuration problem due to no MatrixRTC backend/SFU is exposed via .well-known and no fallback configured.
+   * Configuration problem due to no MatrixRTC transport provided by homeserver and no fallback configured.
    */
   MISSING_MATRIX_RTC_TRANSPORT = "MISSING_MATRIX_RTC_TRANSPORT",
   CONNECTION_LOST_ERROR = "CONNECTION_LOST_ERROR",
@@ -67,7 +67,7 @@ export class ElementCallError extends Error {
 }
 
 /**
- * Configuration problem due to no MatrixRTC backend/SFU is exposed via .well-known and no fallback configured.
+ * Configuration problem due to no MatrixRTC transport provided by homeserver and no fallback configured.
  */
 export class MatrixRTCTransportMissingError extends ElementCallError {
   public domain: string;

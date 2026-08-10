@@ -71,7 +71,6 @@ describe("RtcTransportAutoDiscovery", () => {
   it.each(VALID_TEST_CASES)(
     "prefers backend transport other app config $transports",
     async ({ transports }) => {
-      // it("prefers backend transport over well-known and app config", async () => {
       const client = makeClient();
       client._unstable_getRTCTransports.mockResolvedValue(transports);
 

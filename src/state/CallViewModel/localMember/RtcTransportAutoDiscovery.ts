@@ -16,7 +16,7 @@ import { doNetworkOperationWithRetry } from "../../../utils/matrix.ts";
 
 type TransportDiscoveryClient = Pick<
   MatrixClient,
-  "getDomain" | "_unstable_getRTCTransports" | "getAccessToken"
+  "getDomain" | "_unstable_getRTCTransports"
 >;
 
 export interface RtcTransportAutoDiscoveryProps {

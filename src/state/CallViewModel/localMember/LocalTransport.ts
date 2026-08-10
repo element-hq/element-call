@@ -56,7 +56,7 @@ interface Props {
   memberships$: Behavior<Epoch<CallMembership[]>>;
   client: Pick<
     MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports" | "getAccessToken"
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
   > &
     OpenIDClientParts;
   // Used by the jwt service to create the livekit room and compute the livekit alias.
@@ -307,7 +307,7 @@ async function doOpenIdAndJWTFromUrl(
   roomId: string,
   client: Pick<
     MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports" | "getAccessToken"
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
   > &
     OpenIDClientParts,
   delayId?: string,
@@ -337,7 +337,7 @@ function observeLocalTransportForOldestMembership(
   preferredTransport$: Observable<LocalTransportWithSFUConfig>,
   client: Pick<
     MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports" | "getAccessToken"
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
   > &
     OpenIDClientParts,
   ownMembershipIdentity: CallMembershipIdentityParts,
