@@ -21,7 +21,8 @@ Please see LICENSE in the repository root for full details.
   margin-top: var(--cpd-space-2x);
 }
 
-.volumeSlider > label {
+.volumeSlider > label,
+.sliderLabel {
   margin-bottom: var(--cpd-space-1x);
   display: block;
 }
@@ -32,4 +33,34 @@ Please see LICENSE in the repository root for full details.
 
 .volumeSlider > p {
   color: var(--cpd-color-text-secondary);
+}
+
+.vadSection {
+  margin-block-start: var(--cpd-space-6x);
+}
+
+.vadHeading {
+  color: var(--cpd-color-text-secondary);
+  margin-block: var(--cpd-space-3x) 0;
+}
+
+.vadSeparator {
+  margin-block: 6px var(--cpd-space-4x);
+}
+
+.vadRampLabel {
+  display: block;
+  margin-block: var(--cpd-space-6x) var(--cpd-space-1x);
+}
+
+.vadRampForm {
+  margin-top: 0;
+}
+
+.vadSpacedSlider {
+  margin-block-start: var(--cpd-space-6x);
+}
+
+.restoreDefaults {
+  margin-top: var(--cpd-space-6x);
 }
