@@ -18,6 +18,12 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     Device ID: DEVICE123
   </p>
   <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
+  <div
     class="_fieldRow_1bd8c0"
   >
     <div
@@ -255,6 +261,12 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </span>
     </div>
   </form>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
   <h3
     class="_typography_6v6n8_153 _font-body-lg-semibold_6v6n8_74"
   >
@@ -463,24 +475,6 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     </p>
     <ul />
   </div>
-  <p>
-    Environment variables
-  </p>
-  <pre>
-    {
-  "MY_MOCK_ENV": 10,
-  "ENV": "test"
-}
-  </pre>
-  <p>
-    URL parameters
-  </p>
-  <pre>
-    {
-  "mocked": true,
-  "answer": 42
-}
-  </pre>
   <div
     class="_separator_13qwf_8"
     data-kind="primary"
@@ -711,5 +705,29 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </label>
     </div>
   </div>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
+  <p>
+    Environment variables
+  </p>
+  <pre>
+    {
+  "MY_MOCK_ENV": 10,
+  "ENV": "test"
+}
+  </pre>
+  <p>
+    URL parameters
+  </p>
+  <pre>
+    {
+  "mocked": true,
+  "answer": 42
+}
+  </pre>
 </div>
 `;

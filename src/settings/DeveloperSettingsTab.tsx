@@ -364,6 +364,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
           id: client.getDeviceId() || "unknown",
         })}
       </p>
+      <Separator />
       <FieldRow>
         <InputField
           id="duplicateTiles"
@@ -513,6 +514,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
           <ErrorMessage>{customLivekitUrlUpdateError}</ErrorMessage>
         )}
       </EditInPlace>
+      <Separator />
       <Heading as="h3" type="body" weight="semibold" size="lg">
         {t("developer_mode.matrixRTCMode.title")}
       </Heading>
@@ -601,10 +603,6 @@ export const DeveloperSettingsTab: FC<Props> = ({
           </ul>
         </div>
       ))}
-      <p>{t("developer_mode.environment_variables")}</p>
-      <pre>{JSON.stringify(env, null, 2)}</pre>
-      <p>{t("developer_mode.url_params")}</p>
-      <pre>{JSON.stringify(urlParams, null, 2)}</pre>
       <Separator />
       <MediaQualitySettings
         id="camera"
@@ -659,6 +657,11 @@ export const DeveloperSettingsTab: FC<Props> = ({
       />
       <Separator />
       <AudioProcessingSettings />
+      <Separator />
+      <p>{t("developer_mode.environment_variables")}</p>
+      <pre>{JSON.stringify(env, null, 2)}</pre>
+      <p>{t("developer_mode.url_params")}</p>
+      <pre>{JSON.stringify(urlParams, null, 2)}</pre>
     </>
   );
 };
