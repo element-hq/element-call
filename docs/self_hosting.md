@@ -68,10 +68,10 @@ As a prerequisite for the
 make sure that your Synapse server has either a `federation` or `openid`
 [listener configured](https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html#listeners).
 
-### MatrixRTC Backend
+### LiveKit backend
 
-In order to **guarantee smooth operation** of Element Call, a MatrixRTC backend is
-required for each site deployment.
+In order to **guarantee smooth operation** of Element Call, a dedicated LiveKit
+backend is required for each site deployment.
 
 ![MSC4195 compatible setup](MSC4195_setup.drawio.png)
 
@@ -165,7 +165,7 @@ Using Haproxy, you can achieve this by:
     use_backend mxrtc_auth_backend if is_mxrtc_auth matrixrtc_domain
 
 # Backend
-## MatrixRTC backend
+## LiveKit backend
 backend sfu_backend
     server livekit 127.0.0.1:7880
     http-request set-path %[path,regsub(^/livekit/sfu/,/)]
@@ -187,43 +187,22 @@ backend mxrtc_auth_backend
 
 ```
 
-#### MatrixRTC backend announcement
+#### MatrixRTC transport announcement
 
-> [!IMPORTANT]
-> As defined in
-> [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143),
-> the MatrixRTC backend(s) must be announced to the client via your **Matrix site's
-> `.well-known/matrix/client`** file (e.g.
-> `example.com/.well-known/matrix/client` matching the site deployment example
-> from above). The configuration is a list of Foci configs:
+Enable the unstable feature flag `msc4143_enabled`, and update the
+[`matrix_rtc` section](https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html#matrix_rtc)
+of your Synapse config file:
 
-```json
-"org.matrix.msc4143.rtc_foci": [
-    {
-        "type": "livekit",
-        "livekit_service_url": "https://matrix-rtc.example.com/livekit/jwt"
-    },
-    {
-        "type": "livekit",
-        "livekit_service_url": "https://matrix-rtc-2.example.com/livekit/jwt"
-    }
-]
+```yaml
+matrix_rtc:
+  transports:
+    - type: livekit
+      livekit_service_url: https://matrix-rtc.example.com/livekit/jwt
 ```
 
-Make sure this file is served with the correct MIME type (`application/json`).
-Additionally, ensure the appropriate CORS headers are set to allow web clients
-to access it across origins. For more details, refer to the
-[Matrix Client-Server API: 2. Web Browser Clients](https://spec.matrix.org/latest/client-server-api/#web-browser-clients).
-
-```
-Access-Control-Allow-Origin: *
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
-Access-Control-Allow-Headers: X-Requested-With, Content-Type, Authorization
-```
-
-> [!NOTE]  
-> Most `org.matrix.msc4143.rtc_foci` configurations will only have one entry in
-> the array.
+The transport you specify will be made available to clients over the
+`/_matrix/client/unstable/org.matrix.msc4143/rtc/transports` endpoint as defined
+in [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143).
 
 ## Building Element Call
 
@@ -278,7 +257,7 @@ runtime. Documentation and default values for `public/config.json` can be found
 in [ConfigOptions.ts](../src/config/ConfigOptions.ts).
 
 > [!CAUTION]
-> Please note configuring MatrixRTC backend via `config.json` of
+> Please note configuring LiveKit backend via `config.json` of
 > Element Call is only available for developing and debug purposes. Relying on
 > it might break Element Call going forward!
 

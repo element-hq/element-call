@@ -26,7 +26,6 @@ import {
   tap,
 } from "rxjs";
 import { logger as rootLogger, type Logger } from "matrix-js-sdk/lib/logger";
-import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type Behavior } from "../../Behavior.ts";
@@ -57,7 +56,7 @@ interface Props {
   memberships$: Behavior<Epoch<CallMembership[]>>;
   client: Pick<
     MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports" | "getAccessToken"
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
   > &
     OpenIDClientParts;
   // Used by the jwt service to create the livekit room and compute the livekit alias.
@@ -150,7 +149,6 @@ export const createLocalTransport$ = ({
   const transportDiscovery = new RtcTransportAutoDiscovery({
     client: client,
     resolvedConfig: Config.get(),
-    wellKnownFetcher: AutoDiscovery.getRawClientConfig.bind(AutoDiscovery),
     logger: logger,
   });
 
@@ -309,7 +307,7 @@ async function doOpenIdAndJWTFromUrl(
   roomId: string,
   client: Pick<
     MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports" | "getAccessToken"
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
   > &
     OpenIDClientParts,
   delayId?: string,
@@ -339,7 +337,7 @@ function observeLocalTransportForOldestMembership(
   preferredTransport$: Observable<LocalTransportWithSFUConfig>,
   client: Pick<
     MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports" | "getAccessToken"
+    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
   > &
     OpenIDClientParts,
   ownMembershipIdentity: CallMembershipIdentityParts,

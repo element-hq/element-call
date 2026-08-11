@@ -198,7 +198,7 @@ export const initializeWidget = (
         // be otherwise)
         await Config.init();
         seedSettingsFromConfig(Config.get().media_quality);
-        await client.startClient({ clientWellKnownPollPeriod: 60 * 10 });
+        await client.startClient();
         return client;
       };
 

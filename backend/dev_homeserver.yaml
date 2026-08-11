@@ -40,6 +40,8 @@ experimental_features:
   msc4222_enabled: true
   # sticky events for MatrixRTC user state
   msc4354_enabled: true
+  # MatrixRTC
+  msc4143_enabled: true
 
 # The maximum allowed duration by which sent events can be delayed, as
 # per MSC4140. Must be a positive value if set.  Defaults to no
@@ -54,7 +56,6 @@ enable_registration_without_verification: true
 registration_shared_secret: "test_shared_secret_for_local_dev_only"
 
 report_stats: false
-serve_server_wellknown: true
 
 # Ratelimiting settings for client actions (registration, login, messaging).
 #
@@ -67,3 +68,8 @@ rc_message:
   # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2s
   per_second: 0.5
   burst_count: 30
+
+matrix_rtc:
+  transports:
+    - type: livekit
+      livekit_service_url: https://matrix-rtc.m.localhost/livekit/jwt

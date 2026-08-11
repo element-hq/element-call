@@ -257,7 +257,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         class="_message_1o4d9_86 _help-message_1o4d9_92"
         id="radix-_r_8_"
       >
-        Currently, no overwrite is set. Url from well-known or config is used.
+        Currently, no overwrite is set. Url from config is used.
       </span>
     </div>
   </form>
