@@ -9,7 +9,7 @@ allowBuilds:
   "@swc/core": true
   "core-js": true
   "esbuild": true
-  "matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8c95727b6278fe7942c20d0b9485f984dd0694b7": true
+  "matrix-js-sdk@git+https://github.com/matrix-org/matrix-js-sdk.git": true
   "protobufjs": true
 overrides:
   # We need compatible versions of RxJS in our dependencies and LiveKit's dependencies, but

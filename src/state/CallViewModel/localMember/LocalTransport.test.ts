@@ -421,42 +421,6 @@ describe("LocalTransport", () => {
       });
     });
 
-    it("Should not call _unstable_getRTCTransports in widget mode but use well-known", async () => {
-      mockConfig({
-        livekit: { livekit_service_url: "https://do-not-use.lk.example.org" },
-      });
-
-      localTransportOpts.client.getDomain.mockReturnValue("example.org");
-
-      fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
-        "org.matrix.msc4143.rtc_foci": [
-          {
-            type: "livekit",
-            livekit_service_url: "https://use-me.jwt.call.example.org",
-          },
-        ],
-      });
-
-      localTransportOpts.client.getAccessToken.mockReturnValue(null);
-      const { advertised$, active$ } =
-        createLocalTransport$(localTransportOpts);
-      openIdResolver.resolve?.(openIdResponse);
-      expect(advertised$.value).toBe(null);
-      expect(active$.value).toBe(null);
-      await flushPromises();
-
-      expect(
-        localTransportOpts.client._unstable_getRTCTransports,
-      ).not.toHaveBeenCalled();
-
-      const expectedTransport = {
-        type: "livekit",
-        livekit_service_url: "https://use-me.jwt.call.example.org",
-      };
-
-      expect(advertised$.value).toStrictEqual(expectedTransport);
-    });
-
     it("fails fast if the openID request fails for backend config", async () => {
       localTransportOpts.client._unstable_getRTCTransports.mockResolvedValue([
         { type: "livekit", livekit_service_url: "https://lk.example.org" },

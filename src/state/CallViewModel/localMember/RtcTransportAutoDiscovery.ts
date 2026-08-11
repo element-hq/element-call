@@ -90,34 +90,23 @@ export class RtcTransportAutoDiscovery {
   private async tryBackendTransports(): Promise<LivekitTransportConfig | null> {
     const client = this.client;
     // MSC4143: Attempt to fetch transports from backend.
-    // TODO: Workaround for an issue in the js-sdk RoomWidgetClient that
-    // is not yet implementing _unstable_getRTCTransports properly (via widget API new action).
-    // For now we just skip this call if we are in a widget.
-    // In widget mode the client is a `RoomWidgetClient` which has no access token (it is using the widget API).
-    // Could be removed once the js-sdk is fixed (https://github.com/matrix-org/matrix-js-sdk/issues/5245)
-    const isSPA = !!client.getAccessToken();
-    if (isSPA && "_unstable_getRTCTransports" in client) {
-      this.logger.info("First try to use getRTCTransports end point ...");
-      try {
-        const transportList = await doNetworkOperationWithRetry(async () =>
-          client._unstable_getRTCTransports(),
+    this.logger.info("First try to use getRTCTransports end point ...");
+    try {
+      const transportList = await doNetworkOperationWithRetry(async () =>
+        client._unstable_getRTCTransports(),
+      );
+      const first = transportList.find(isLivekitTransportConfig);
+      if (first) {
+        return first;
+      } else {
+        this.logger.info(
+          `No livekit transport found in getRTCTransports end point`,
+          transportList,
         );
-        const first = transportList.find(isLivekitTransportConfig);
-        if (first) {
-          return first;
-        } else {
-          this.logger.info(
-            `No livekit transport found in getRTCTransports end point`,
-            transportList,
-          );
-        }
-      } catch (ex) {
-        this.logger.info(`Failed to use getRTCTransports end point: ${ex}`);
       }
-    } else {
-      this.logger.debug(`getRTCTransports end point not available`);
+    } catch (ex) {
+      this.logger.info(`Failed to use getRTCTransports end point: ${ex}`);
     }
-
     return null;
   }
 

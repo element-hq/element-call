@@ -164,30 +164,6 @@ describe("RtcTransportAutoDiscovery", () => {
     },
   );
 
-  it("skips backend discovery in widget mode and uses well-known", async () => {
-    const client = makeClient();
-    // widget mode is detected by the absence of an access token
-    client.getAccessToken.mockReturnValue(null);
-
-    const wellKnownFetcher = vi
-      .fn<(domain: string) => Promise<IClientWellKnown>>()
-      .mockResolvedValue(makeWellKnown([wellKnownTransport]));
-
-    const discovery = new RtcTransportAutoDiscovery({
-      client,
-      resolvedConfig: makeResolvedConfig("https://config.example.org"),
-      wellKnownFetcher,
-      logger: rootLogger,
-    });
-
-    await expect(discovery.discoverPreferredTransport()).resolves.toStrictEqual(
-      wellKnownTransport,
-    );
-
-    expect(client._unstable_getRTCTransports).not.toHaveBeenCalled();
-    expect(wellKnownFetcher).toHaveBeenCalledWith("example.org");
-  });
-
   it("falls back to app config when backend fails and well-known has no rtc_foci", async () => {
     const client = makeClient();
     client._unstable_getRTCTransports.mockRejectedValue(

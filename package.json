@@ -97,7 +97,7 @@
     "lodash-es": "^4.17.21",
     "loglevel": "^1.9.1",
     "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#develop",
-    "matrix-widget-api": "^1.16.1",
+    "matrix-widget-api": "^1.18.0",
     "node-stdlib-browser": "^1.3.1",
     "normalize.css": "^8.0.1",
     "observable-hooks": "^4.2.3",
@@ -131,5 +131,5 @@
     "vitest": "^4.1.5",
     "vitest-axe": "^1.0.0-pre.3"
   },
-  "packageManager": "pnpm@11.6.0+sha512.9a36518224080c6fe5165afdcfe79bfa118c29be703f3f462b1e32efe1e98e47e8750b148e08286250aad4113cc7993ca413c4e2cd447752708c2ee5751bc95f"
+  "packageManager": "pnpm@11.21.0+sha512.521705bce689924eac72f5a3587122f362689ef6571e55ba80076fd637c11132ecffada26fad4ea79c485bfddbfd3d5a2a5b05805a77e893de71ec8a6cca3bb1"
 }
