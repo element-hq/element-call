@@ -109,6 +109,7 @@ describe("widget", () => {
       sendToDevice: sendRecvToDevice,
       receiveToDevice: sendRecvToDevice,
       turnServers: false,
+      rtcTransports: true,
       sendDelayedEvents: true,
       updateDelayedEvents: true,
       sendSticky: true,
