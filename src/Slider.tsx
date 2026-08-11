@@ -31,6 +31,11 @@ interface Props {
   max: number;
   step: number;
   disabled?: boolean;
+  /**
+   * Custom formatter for the tooltip label. If not provided, the value is
+   * displayed as a percentage.
+   */
+  tooltipFormatter?: (value: number) => string;
 }
 
 /**
@@ -46,6 +51,7 @@ export const Slider: FC<Props> = ({
   max,
   step,
   disabled,
+  tooltipFormatter,
 }) => {
   const onValueChange = useCallback(
     ([v]: number[]) => onValueChangeProp(v),
@@ -71,7 +77,14 @@ export const Slider: FC<Props> = ({
         <Range className={styles.highlight} />
       </Track>
       {/* Note: This is expected not to be visible on mobile.*/}
-      <Tooltip placement="top" label={Math.round(value * 100).toString() + "%"}>
+      <Tooltip
+        placement="top"
+        label={
+          tooltipFormatter
+            ? tooltipFormatter(value)
+            : Math.round(value * 100).toString() + "%"
+        }
+      >
         <Thumb className={styles.handle} aria-label={label} />
       </Tooltip>
     </Root>

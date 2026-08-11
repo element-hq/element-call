@@ -22,6 +22,8 @@ import { useSubmitRageshake, getRageshakeSubmitUrl } from "./submit-rageshake";
 import { ClientContextProvider } from "../ClientContext";
 import { getUrlParams } from "../UrlParams";
 import { mockConfig } from "../utils/test";
+import { DEFAULT_CONFIG } from "../config/ConfigOptions";
+import { advancedCamera, advancedScreenShare } from "./settings";
 
 vi.mock("../UrlParams", () => ({ getUrlParams: vi.fn() }));
 
@@ -198,6 +200,60 @@ describe("useSubmitRageshake", () => {
       );
       expect(screen.getByTestId("clickError").textContent).toBe("");
       expect(screen.getByTestId("error").textContent).toBe("");
+    });
+  });
+
+  describe("media quality metadata", () => {
+    const submitAndGetBody = async (): Promise<FormData> => {
+      const fetchFn = vi.fn().mockResolvedValue({
+        status: 200,
+      });
+      vi.stubGlobal("fetch", fetchFn);
+
+      renderWithMockClient(() => "https://rageshake.localhost/foo", false);
+      screen.getByTestId("submit").click();
+      await waitFor(() => {
+        expect(screen.getByTestId("sent").textContent).toBe("true");
+      });
+      return fetchFn.mock.calls[0][1].body as FormData;
+    };
+
+    beforeEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    afterEach(() => {
+      advancedCamera.setValue(advancedCamera.defaultValue);
+      advancedScreenShare.setValue(advancedScreenShare.defaultValue);
+      vi.clearAllMocks();
+    });
+
+    it("omits media quality fields when config and settings are default", async () => {
+      mockConfig({});
+      const body = await submitAndGetBody();
+      expect(body.get("custom_media_quality_in_config")).toBeNull();
+      expect(body.get("devTools_advancedCameraSettings")).toBeNull();
+      expect(body.get("devTools_advancedScreenShareSetting")).toBeNull();
+    });
+
+    it("includes custom_media_quality_in_config when media_quality differs from default", async () => {
+      mockConfig({
+        media_quality: {
+          ...DEFAULT_CONFIG.media_quality,
+          video_codec: "h264",
+        },
+      });
+      const body = await submitAndGetBody();
+      expect(body.get("custom_media_quality_in_config")).toBe("true");
+    });
+
+    it("includes devTools flags when advanced media settings are enabled", async () => {
+      mockConfig({});
+      advancedCamera.setValue(true);
+      advancedScreenShare.setValue(true);
+      const body = await submitAndGetBody();
+      expect(body.get("devTools_advancedCameraSettings")).toBe("true");
+      expect(body.get("devTools_advancedScreenShareSetting")).toBe("true");
     });
   });
 
