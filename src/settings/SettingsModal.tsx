@@ -152,7 +152,13 @@ export const SettingsModal: FC<Props> = ({
           />
 
           <div className={styles.volumeSlider}>
-            <label>{t("settings.audio_tab.effect_volume_label")}</label>
+            <label>
+              {t("settings.audio_tab.effect_volume_label")}
+              {": "}
+              <span className={styles.settingValue}>
+                {Math.round(soundVolumeRaw * 100)}%
+              </span>
+            </label>
             <p>{t("settings.audio_tab.effect_volume_description")}</p>
             <Slider
               label={t("video_tile.volume")}

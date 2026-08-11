@@ -19,7 +19,10 @@ import { useClient } from "../ClientContext";
 import { Config } from "../config/Config";
 import { type RageshakeRequestModal } from "../room/RageshakeRequestModal";
 import { getUrlParams } from "../UrlParams";
-
+import { deepCompare } from "matrix-js-sdk/lib/utils";
+import { advancedCamera as advancedCameraSetting } from "./settings";
+import { advancedScreenShare as advancedScreenShareSetting } from "./settings";
+import { DEFAULT_CONFIG } from "../config/ConfigOptions";
 const gzip = async (text: string): Promise<Blob> => {
   // pako is relatively large (200KB), so we only import it when needed
   const { gzip: pakoGzip } = await import("pako");
@@ -243,6 +246,20 @@ export function useSubmitRageshake(
           } catch (e) {
             logger.warn("could not get storage access", e);
           }
+        }
+
+        // Add custom media related information to the rageshake issue description.
+        // Used to quickly identify issues due to untested configurations.
+        if (
+          !deepCompare(Config.get().media_quality, DEFAULT_CONFIG.media_quality)
+        ) {
+          body.append("custom_media_quality_in_config", "true");
+        }
+        if (advancedCameraSetting.getValue()) {
+          body.append("devTools_advancedCameraSettings", "true");
+        }
+        if (advancedScreenShareSetting.getValue()) {
+          body.append("devTools_advancedScreenShareSetting", "true");
         }
 
         if (navigator.storage && navigator.storage.estimate) {
