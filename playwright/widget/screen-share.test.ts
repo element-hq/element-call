@@ -51,7 +51,7 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
       .contentFrame();
 
     // Expect 3 video tiles
-    await expect(frame.locator("video")).toHaveCount(3, {
+    await expect(frame.getByTestId("video")).toHaveCount(3, {
       timeout: 10000,
     });
   }
@@ -72,12 +72,14 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
       .contentFrame();
 
     // Expect 4 (3 + screen share) video tiles
-    await expect(frame.locator("video")).toHaveCount(4, {
+    await expect(frame.getByTestId("video")).toHaveCount(4, {
       timeout: 5000,
     });
 
     await expect(
-      frame.locator('video[data-lk-source="screen_share"]'),
+      frame.locator(
+        'video[data-testid="video"][data-lk-source="screen_share"]',
+      ),
     ).toHaveCount(1);
   }
 
@@ -113,23 +115,25 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
       .contentFrame();
 
     // Expect 5 (2 + screen share) video tiles
-    await expect(frame.locator("video")).toHaveCount(5, {
+    await expect(frame.getByTestId("video")).toHaveCount(5, {
       timeout: 5000,
     });
 
     await expect(
-      frame.locator('video[data-lk-source="screen_share"]'),
+      frame.locator(
+        'video[data-testid="video"][data-lk-source="screen_share"]',
+      ),
     ).toHaveCount(2);
 
-    // Expect 2 indicators at the bottom
-    await expect(frame.getByTestId("screenshare-indicator")).toHaveCount(2);
+    await expect(frame.getByTestId("spotlight-indicator")).toHaveCount(2);
+    await expect(frame.getByTestId("spotlight-indicator-preview")).toHaveCount(
+      2,
+    );
 
     // Check the first indicator is visible
     await expect(
-      frame.getByTestId("screenshare-indicator").first(),
+      frame.getByTestId("spotlight-indicator").first(),
     ).toHaveAttribute("data-visible", "true");
-
-    await carol.page.pause();
 
     // now click on next
     await expect(frame.getByRole("button", { name: "Next" })).toBeVisible();
@@ -137,11 +141,11 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
 
     // Check the second indicator is visible
     await expect(
-      frame.getByTestId("screenshare-indicator").nth(1),
+      frame.getByTestId("spotlight-indicator").nth(1),
     ).toHaveAttribute("data-visible", "true");
     // the first one should be grayed out
     await expect(
-      frame.getByTestId("screenshare-indicator").first(),
+      frame.getByTestId("spotlight-indicator").first(),
     ).toHaveAttribute("data-visible", "false");
 
     // There should be a prev button now

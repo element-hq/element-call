@@ -31,10 +31,16 @@ export const makeSpotlightLandscapeLayout: CallLayout<
   }): ReactNode {
     useUpdateLayout();
     useObservableEagerState(minBounds$);
+    const hasPreviewIndicator =
+      useObservableEagerState(model.spotlight.media$).length > 1;
 
     return (
       <div ref={ref} className={styles.layer}>
-        <div className={styles.spotlight}>
+        <div
+          className={classNames(styles.spotlight, {
+            [styles.withPreviewIndicator]: hasPreviewIndicator,
+          })}
+        >
           <Slot
             className={styles.slot}
             id="spotlight"
@@ -54,16 +60,10 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
     useObservableEagerState(minBounds$);
-    const withIndicators =
-      useObservableEagerState(model.spotlight.media$).length > 1;
 
     return (
       <div ref={ref} className={styles.layer}>
-        <div
-          className={classNames(styles.spotlight, {
-            [styles.withIndicators]: withIndicators,
-          })}
-        />
+        <div className={styles.spotlight} />
         <div className={styles.grid}>
           {model.grid.map((m) => (
             <Slot key={m.id} className={styles.slot} id={m.id} model={m} />

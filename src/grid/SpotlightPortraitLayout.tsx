@@ -66,7 +66,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
       width,
       model.grid.length,
     );
-    const withIndicators = useBehavior(model.spotlight.media$).length > 1;
+    const hasPreviewIndicator = useBehavior(model.spotlight.media$).length > 1;
 
     return (
       <div
@@ -82,7 +82,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
       >
         <div
           className={classNames(styles.spotlight, {
-            [styles.withIndicators]: withIndicators,
+            [styles.withPreviewIndicator]: hasPreviewIndicator,
           })}
         />
         <div className={styles.grid}>

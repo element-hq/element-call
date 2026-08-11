@@ -54,6 +54,7 @@ import { Slider } from "../Slider";
 import { platform } from "../Platform";
 import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
 import { RingingStatus } from "./RingingStatus";
+import { SpotlightIndicator } from "./SpotlightIndicator";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
@@ -164,23 +165,37 @@ const SpotlightScreenShareItem: FC<SpotlightScreenShareItemProps> = ({
 
 interface SpotlightRemoteScreenShareItemProps extends SpotlightMemberMediaItemBaseProps {
   vm: RemoteScreenShareViewModel;
+  visibleInSpotlight: boolean;
 }
 
 const SpotlightRemoteScreenShareItem: FC<
   SpotlightRemoteScreenShareItemProps
-> = ({ vm, ...props }) => {
+> = ({ vm, visibleInSpotlight, ...props }) => {
   const videoEnabled = useBehavior(vm.videoEnabled$);
   return (
-    <SpotlightScreenShareItem vm={vm} videoEnabled={videoEnabled} {...props} />
+    <SpotlightScreenShareItem
+      vm={vm}
+      videoEnabled={videoEnabled && visibleInSpotlight}
+      {...props}
+    />
   );
 };
 
 interface SpotlightMemberMediaItemProps extends SpotlightItemBaseProps {
   vm: MemberMediaViewModel;
+  /**
+   * Whether any part of this item is currently scrolled into view.
+   *
+   * LiveKit sizes adaptive streams from the largest attached video element,
+   * even when it is off-screen. Hiding that element gives it zero dimensions,
+   * allowing the thumbnail to request the low-quality layer.
+   */
+  visibleInSpotlight: boolean;
 }
 
 const SpotlightMemberMediaItem: FC<SpotlightMemberMediaItemProps> = ({
   vm,
+  visibleInSpotlight,
   ...props
 }) => {
   const video = useBehavior(vm.video$);
@@ -198,9 +213,17 @@ const SpotlightMemberMediaItem: FC<SpotlightMemberMediaItemProps> = ({
   if (vm.type === "user")
     return <SpotlightUserMediaItem vm={vm} {...baseProps} />;
   return vm.local ? (
-    <SpotlightScreenShareItem vm={vm} videoEnabled {...baseProps} />
+    <SpotlightScreenShareItem
+      vm={vm}
+      videoEnabled={visibleInSpotlight}
+      {...baseProps}
+    />
   ) : (
-    <SpotlightRemoteScreenShareItem vm={vm} {...baseProps} />
+    <SpotlightRemoteScreenShareItem
+      vm={vm}
+      visibleInSpotlight={visibleInSpotlight}
+      {...baseProps}
+    />
   );
 };
 
@@ -251,6 +274,10 @@ interface SpotlightItemProps {
   focusable: boolean;
   intersectionObserver$: Observable<IntersectionObserver>;
   /**
+   * Whether any part of this item is currently scrolled into view.
+   */
+  visibleInSpotlight: boolean;
+  /**
    * Whether this item should act as a scroll snapping point.
    */
   snap: boolean;
@@ -268,6 +295,7 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
   background,
   focusable,
   intersectionObserver$,
+  visibleInSpotlight,
   snap,
   className,
   "aria-hidden": ariaHidden,
@@ -315,7 +343,11 @@ const SpotlightItem: FC<SpotlightItemProps> = ({
       {...baseProps}
     />
   ) : (
-    <SpotlightMemberMediaItem vm={vm} {...baseProps} />
+    <SpotlightMemberMediaItem
+      vm={vm}
+      visibleInSpotlight={visibleInSpotlight}
+      {...baseProps}
+    />
   );
 };
 
@@ -424,11 +456,17 @@ export const SpotlightTile: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const [ourRef, root$] = useObservableRef<HTMLDivElement | null>(null);
+  const indicatorsRef = useRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
   const maximised = useBehavior(vm.maximised$);
   const background = useBehavior(vm.background$);
   const media = useBehavior(vm.media$);
   const [visibleId, setVisibleId] = useState<string | undefined>(media[0]?.id);
+  // Track partially visible items separately so their video is shown before
+  // they become the active spotlight.
+  const [visibleInSpotlightIds, setVisibleInSpotlightIds] = useState<
+    ReadonlySet<string>
+  >(() => new Set(media[0] === undefined ? [] : [media[0].id]));
   const latestMedia = useLatest(media);
   const latestVisibleId = useLatest(visibleId);
   const visibleIndex = media.findIndex((vm) => vm.id === visibleId);
@@ -467,11 +505,24 @@ export const SpotlightTile: FC<Props> = ({
           (r) =>
             new IntersectionObserver(
               (entries) => {
-                const visible = entries.find((e) => e.isIntersecting);
+                const visible = entries.find((e) => e.intersectionRatio >= 0.5);
                 if (visible !== undefined)
                   setVisibleId(visible.target.getAttribute("data-id")!);
+                setVisibleInSpotlightIds((prev) => {
+                  const next = new Set(prev);
+                  for (const e of entries) {
+                    const id = e.target.getAttribute("data-id")!;
+                    if (e.isIntersecting) next.add(id);
+                    else next.delete(id);
+                  }
+                  return next;
+                });
               },
-              { root: r, threshold: 0.5 },
+              // The 0 threshold tells us which items are on screen at all,
+              // while 0.5 tells us which one is spotlighted. 1 is a safety
+              // net, since the ratio reported when crossing 0.5 can land
+              // fractionally below it
+              { root: r, threshold: [0, 0.5, 1] },
             ),
         ),
       ),
@@ -501,6 +552,31 @@ export const SpotlightTile: FC<Props> = ({
     if (visibleIndex !== -1 && visibleIndex !== media.length - 1)
       setScrollToId(media[visibleIndex + 1].id);
   }, [latestVisibleId, latestMedia, setScrollToId]);
+
+  const onPreviewIndicatorClick = useCallback(
+    (id: string) => setScrollToId(id),
+    [setScrollToId],
+  );
+
+  // Chrome re-snaps to the remaining snap point on its own, but Safari
+  // doesn't re-snap when the set of snap points changes, so we have to
+  // scroll to the target media explicitly
+  useEffect(() => {
+    if (scrollToId !== null) {
+      for (const item of ourRef.current?.querySelectorAll("[data-id]") ?? []) {
+        if (item.getAttribute("data-id") === scrollToId) {
+          item.scrollIntoView({ block: "nearest", inline: "nearest" });
+          break;
+        }
+      }
+      for (const indicator of indicatorsRef.current?.children ?? []) {
+        if (indicator.getAttribute("data-id") === scrollToId) {
+          indicator.scrollIntoView({ block: "nearest", inline: "nearest" });
+          break;
+        }
+      }
+    }
+  }, [scrollToId, ourRef, indicatorsRef]);
 
   const ToggleExpandIcon = expanded ? CollapseIcon : ExpandIcon;
 
@@ -533,6 +609,10 @@ export const SpotlightTile: FC<Props> = ({
             background={background}
             focusable={focusable}
             intersectionObserver$={intersectionObserver$}
+            // Show the target video before it reaches the spotlight.
+            visibleInSpotlight={
+              visibleInSpotlightIds.has(vm.id) || scrollToId === vm.id
+            }
             // This is how we get the container to scroll to the right media
             // when the previous/next buttons are clicked: we temporarily
             // remove all scroll snap points except for just the one media
@@ -582,18 +662,21 @@ export const SpotlightTile: FC<Props> = ({
           <ChevronRightIcon aria-hidden width={24} height={24} />
         </button>
       )}
-      {!expanded && (
+      {!expanded && media.length > 1 && (
         <div
+          ref={indicatorsRef}
           className={classNames(styles.indicators, {
-            [styles.show]: showIndicators && media.length > 1,
+            [styles.show]: showIndicators,
           })}
         >
           {media.map((vm) => (
-            <div
-              data-testid="screenshare-indicator"
+            <SpotlightIndicator
               key={vm.id}
-              className={styles.item}
-              data-visible={vm.id === visibleId}
+              vm={vm}
+              visible={vm.id === visibleId}
+              focusable={focusable}
+              showPreview={showIndicators}
+              onClick={onPreviewIndicatorClick}
             />
           ))}
         </div>
