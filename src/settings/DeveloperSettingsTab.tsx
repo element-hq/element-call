@@ -67,6 +67,7 @@ import styles from "./DeveloperSettingsTab.module.css";
 import settingsStyles from "./SettingsModal.module.css";
 import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
+import { type CallViewModel } from "../state/CallViewModel/CallViewModel.ts";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 
 interface Props {
@@ -79,6 +80,8 @@ interface Props {
     livekitAlias?: string;
   }[];
   env: ImportMetaEnv;
+  /** Only available while in a call. */
+  vm?: CallViewModel;
 }
 
 export const DeveloperSettingsTab: FC<Props> = ({
@@ -86,6 +89,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
   livekitRooms,
   roomId,
   env,
+  vm,
 }) => {
   const { t } = useTranslation();
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
