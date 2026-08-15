@@ -69,6 +69,23 @@ import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel.ts";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
+import { useBehavior } from "../useBehavior";
+
+/**
+ * Shows whether the call is large enough that MatrixRTC has stopped rotating the media key.
+ */
+const KeyRotationStatus: FC<{ vm: CallViewModel }> = ({ vm }) => {
+  const suppressed = useBehavior(vm.keyRotationSuppressed$);
+  const participantCount = useBehavior(vm.participantCount$);
+  return (
+    <p>
+      Media key rotation:{" "}
+      {suppressed
+        ? `suppressed, participant limit reached (${participantCount} participants)`
+        : `active (${participantCount} participants)`}
+    </p>
+  );
+};
 
 interface Props {
   client: MatrixClient;
@@ -368,6 +385,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
           id: client.getDeviceId() || "unknown",
         })}
       </p>
+      {vm && <KeyRotationStatus vm={vm} />}
       <Separator />
       <FieldRow>
         <InputField
