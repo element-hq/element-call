@@ -39,10 +39,10 @@ importers:
         version: 11.7.12
       '@livekit/components-core':
         specifier: ^0.12.0
-        version: 0.12.14(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)
+        version: 0.12.15(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)
       '@livekit/components-react':
         specifier: ^2.0.0
-        version: 2.9.23(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tslib@2.8.1)
+        version: 2.9.24(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tslib@2.8.1)
       '@livekit/track-processors':
         specifier: ^0.7.1
         version: 0.7.2(@types/dom-mediacapture-transform@0.1.11)(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))
@@ -1159,15 +1159,15 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@livekit/components-core@0.12.14':
-    resolution: {integrity: sha512-6OKP/1Ok2fCZewDLKd3SzaTb7KvfZl/6hjggI+TgUdhp0Y7HBg3+tHA7YmhZRc0BO8wIyVy4VgTPn7qkLHt2nQ==}
+  '@livekit/components-core@0.12.15':
+    resolution: {integrity: sha512-bDkK+jkPMgyT4a5lZmdcuc/hZ8fZUrXW+qQPNHVeSpXCBMzk5q9QWzx+HPtTsPJ8hnncWGfoT81RnXHBsy+Z8g==}
     engines: {node: '>=18'}
     peerDependencies:
       livekit-client: ^2.20.1
       tslib: ^2.6.2
 
-  '@livekit/components-react@2.9.23':
-    resolution: {integrity: sha512-clO+0g/u3YBpuOvnAjUSAJBH/o7w+RpUAseswjiSML9rHrXlTUhwBNm8LPk+qN5GOU3A6lzsNnFYVpUHUBVOkg==}
+  '@livekit/components-react@2.9.24':
+    resolution: {integrity: sha512-qw5Oy1EfPg1f/xrKYrFielSrmtxY8BZ9mDt6299G5aikotQIztmldBfTNosrVS7VSNit7qeYfOFSyKaML20W6Q==}
     engines: {node: '>=18'}
     peerDependencies:
       '@livekit/krisp-noise-filter': ^0.2.12 || ^0.3.0 || ^0.4.0
@@ -4462,6 +4462,9 @@ packages:
   jose@6.2.4:
     resolution: {integrity: sha512-N8acGzVsQy6M/fjFcxtysNc4Q379TcM5dM/qKkNtsHFji88yANnXTr7BLeP75iPnFwBfQzM/jg2BZ9+HZrHCZA==}
 
+  jose@6.2.9:
+    resolution: {integrity: sha512-XrchZOFZUl/T3vTwRe8XK+cJrGtMF4th1ARnDfwbBXFKThGhlsxEE4Zu03AD/bjJSt/9jT/mxrOCkJWOg77aPA==}
+
   js-tokens@10.0.0:
     resolution: {integrity: sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q==}
 
@@ -7061,7 +7064,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@livekit/components-core@0.12.14(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)':
+  '@livekit/components-core@0.12.15(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)':
     dependencies:
       '@floating-ui/dom': 1.7.6
       livekit-client: 2.21.0(@types/dom-mediacapture-record@1.0.22)
@@ -7069,12 +7072,12 @@ snapshots:
       rxjs: 7.8.2
       tslib: 2.8.1
 
-  '@livekit/components-react@2.9.23(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tslib@2.8.1)':
+  '@livekit/components-react@2.9.24(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tslib@2.8.1)':
     dependencies:
-      '@livekit/components-core': 0.12.14(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)
+      '@livekit/components-core': 0.12.15(livekit-client@2.21.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)
       clsx: 2.1.1
       events: 3.3.0
-      jose: 6.2.4
+      jose: 6.2.9
       livekit-client: 2.21.0(@types/dom-mediacapture-record@1.0.22)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -10051,6 +10054,8 @@ snapshots:
   jiti@2.7.0: {}
 
   jose@6.2.4: {}
+
+  jose@6.2.9: {}
 
   js-tokens@10.0.0: {}
 
