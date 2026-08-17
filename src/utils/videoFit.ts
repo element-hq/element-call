@@ -15,7 +15,8 @@ export function autoVideoFit(
   tileAspectRatio: number,
 ): "cover" | "contain" {
   if (Number.isNaN(videoAspectRatio) || Number.isNaN(tileAspectRatio)) {
-    // If we have invalid sizes (e.g. width or height is 0), default to cover to avoid black bars.
+    // If we have invalid sizes (e.g. useMeasure returns 0×0 on an initial render),
+    // default to cover to avoid black bars.
     return "cover";
   }
 
