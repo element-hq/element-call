@@ -26,6 +26,7 @@ import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
+import { type Behavior } from "../state/Behavior";
 import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
 import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
@@ -135,7 +136,6 @@ export const CallFooter: FC<FooterProps> = ({
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const hangup = useBehavior(vm.hangup$);
   const debugTileLayout = useBehavior(vm.debugTileLayout$);
-  const tileStoreGeneration = useBehavior(vm.tileStoreGeneration$);
   const videoOptions = useBehavior(vm.videoOptions$);
   const selectedVideo = useBehavior(vm.selectedVideo$);
   const audioOptions = useBehavior(vm.audioOptions$);
@@ -283,7 +283,9 @@ export const CallFooter: FC<FooterProps> = ({
           />
         </>
       )}
-      {debugTileLayout ? `Tiles generation: ${tileStoreGeneration}` : undefined}
+      {debugTileLayout ? (
+        <TilesDebugInfo generation$={vm.tileStoreGeneration$} />
+      ) : undefined}
     </div>
   );
 
@@ -315,4 +317,15 @@ export const CallFooter: FC<FooterProps> = ({
       )}
     </div>
   );
+};
+
+interface TilesDebugInfoProps {
+  generation$: Behavior<number | undefined>;
+}
+
+// Isolated in its own component since the layout generation updates frequently
+// and we can avoid re-rendering the footer this way
+const TilesDebugInfo: FC<TilesDebugInfoProps> = ({ generation$ }) => {
+  const generation = useBehavior(generation$);
+  return `Tiles generation: ${generation}`;
 };
