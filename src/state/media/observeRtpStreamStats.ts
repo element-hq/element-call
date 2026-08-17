@@ -19,9 +19,14 @@ import {
   startWith,
   switchMap,
   map,
+  share,
 } from "rxjs";
 
 import { observeTrackReference$ } from "../observeTrackReference";
+
+// Use a shared timer for all the stats observers so that we don't clog up the
+// event loop with hundreds of timers in large calls
+const refreshStats$ = interval(1000).pipe(share());
 
 export function observeRtpStreamStats$(
   participant: Participant,
@@ -32,9 +37,7 @@ export function observeRtpStreamStats$(
 > {
   return combineLatest([
     observeTrackReference$(participant, source),
-    // The update frequency is high because we use this value to update the PiP orientation and the fit/fill video tile props based on that
-    // We want it to be responsive. For just the debug tools 1s would be sufficient.
-    interval(350).pipe(startWith(0)),
+    refreshStats$.pipe(startWith(0)),
   ]).pipe(
     switchMap(async ([trackReference]) => {
       const track = trackReference?.publication?.track;
@@ -67,14 +70,5 @@ export function observeInboundRtpStreamStats$(
 ): Observable<RTCInboundRtpStreamStats | undefined> {
   return observeRtpStreamStats$(participant, source, "inbound-rtp").pipe(
     map((x) => x as RTCInboundRtpStreamStats | undefined),
-  );
-}
-
-export function observeOutboundRtpStreamStats$(
-  participant: Participant,
-  source: Track.Source,
-): Observable<RTCOutboundRtpStreamStats | undefined> {
-  return observeRtpStreamStats$(participant, source, "outbound-rtp").pipe(
-    map((x) => x as RTCOutboundRtpStreamStats | undefined),
   );
 }

@@ -33,7 +33,6 @@ describe("MediaView", () => {
   const baseProps: ComponentProps<typeof MediaView> = {
     displayName: "some name",
     videoEnabled: true,
-    videoFit: "contain",
     targetWidth: 300,
     targetHeight: 200,
     mirror: false,

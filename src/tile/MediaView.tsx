@@ -7,7 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import { type FC, type ComponentProps, type ReactNode } from "react";
+import {
+  type FC,
+  type ComponentProps,
+  type ReactNode,
+  type SyntheticEvent,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -26,6 +32,7 @@ import { type ReactionOption } from "../reactions";
 import { ReactionIndicator } from "../reactions/ReactionIndicator";
 import { RTCConnectionStats } from "../RTCConnectionStats";
 import videoPlaceholder from "../graphics/video-placeholder.gif";
+import { autoVideoFit } from "../utils/videoFit";
 
 interface Props extends ComponentProps<typeof animated.div> {
   className?: string;
@@ -33,7 +40,11 @@ interface Props extends ComponentProps<typeof animated.div> {
   targetWidth: number;
   targetHeight: number;
   video: TrackReferenceOrPlaceholder | undefined;
-  videoFit: "cover" | "contain";
+  /**
+   * How to fit the video content inside the tile. When undefined, MediaView
+   * chooses a smart default based on the aspect ratios of the tile and video.
+   */
+  videoFit?: "cover" | "contain";
   mirror: boolean;
   soundWaves?: boolean;
   userId: string;
@@ -55,8 +66,15 @@ interface Props extends ComponentProps<typeof animated.div> {
   audioStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   rtcBackendIdentity?: string;
-  // The focus url, mainly for debugging purposes
+  /**
+   * The focus url, mainly for debugging purposes.
+   */
   focusUrl?: string;
+  /**
+   * Called whenever the aspect ratio of the video content becomes known or
+   * otherwise changes.
+   */
+  setVideoAspectRatio?: (ratio: number) => void;
 }
 
 export const MediaView: FC<Props> = ({
@@ -89,6 +107,7 @@ export const MediaView: FC<Props> = ({
   videoStreamStats,
   rtcBackendIdentity,
   focusUrl,
+  setVideoAspectRatio: setTheirVideoAspectRatio,
   ...props
 }) => {
   const { t } = useTranslation();
@@ -99,6 +118,22 @@ export const MediaView: FC<Props> = ({
     Math.min(targetWidth, targetHeight) *
       (soundWaves === undefined ? 0.5 : 0.38),
   );
+
+  const [videoAspectRatio, setOurVideoAspectRatio] = useState<number>(NaN);
+  const tileAspectRatio = targetWidth / targetHeight;
+
+  // Propagate video dimensions
+  const setVideoAspectRatio = (ratio: number) => {
+    setOurVideoAspectRatio(ratio);
+    setTheirVideoAspectRatio?.(ratio);
+  };
+  const videoRef = (el: HTMLVideoElement | null) => {
+    if (el !== null) setVideoAspectRatio(el.videoWidth / el.videoHeight);
+  };
+  const onResize = (ev: SyntheticEvent<HTMLVideoElement>) =>
+    setVideoAspectRatio(
+      ev.currentTarget.videoWidth / ev.currentTarget.videoHeight,
+    );
 
   const warnings = unencryptedWarning && (
     <Tooltip
@@ -126,7 +161,9 @@ export const MediaView: FC<Props> = ({
       ref={ref}
       data-testid="videoTile"
       data-video-enabled={video && videoEnabled}
-      data-video-fit={videoFit}
+      data-video-fit={
+        videoFit ?? autoVideoFit(videoAspectRatio, tileAspectRatio)
+      }
       data-background={background}
       {...props}
     >
@@ -158,6 +195,8 @@ export const MediaView: FC<Props> = ({
             // Set the placeholder to a small transparent image. (On Android web
             // views the default poster image is particularly ugly.)
             poster={videoPlaceholder}
+            ref={videoRef}
+            onResize={onResize}
           />
         )}
       </div>

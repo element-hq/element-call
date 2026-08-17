@@ -33,7 +33,6 @@ import { type RemoteUserMediaViewModel } from "./RemoteUserMediaViewModel";
 import { type ObservableScope } from "../ObservableScope";
 import { showConnectionStats } from "../../settings/settings";
 import { observeRtpStreamStats$ } from "./observeRtpStreamStats";
-import { videoFit$, videoSizeFromParticipant$ } from "../../utils/videoFit.ts";
 
 /**
  * A participant's user media (i.e. their microphone and camera feed).
@@ -47,7 +46,6 @@ export interface BaseUserMediaViewModel extends BaseMemberMediaViewModel {
   speaking$: Behavior<boolean>;
   audioEnabled$: Behavior<boolean>;
   videoEnabled$: Behavior<boolean>;
-  videoFit$: Behavior<"cover" | "contain">;
   videoOrientation$: Behavior<"landscape" | "portrait">;
   toggleCropVideo: () => void;
   /**
@@ -63,12 +61,9 @@ export interface BaseUserMediaViewModel extends BaseMemberMediaViewModel {
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >;
   /**
-   * Set the target dimensions of the HTML element (final dimension after anim).
-   * This can be used to determine the best video fit (fit to frame / keep ratio).
-   * @param targetWidth - The target width of the HTML element displaying the video.
-   * @param targetHeight - The target height of the HTML element displaying the video.
+   * Set the aspect ratio of the video track to determine the orientation.
    */
-  setTargetDimensions: (targetWidth: number, targetHeight: number) => void;
+  setVideoAspectRatio: (ratio: number) => void;
 }
 
 export interface BaseUserMediaInputs extends Omit<
@@ -98,14 +93,8 @@ export function createBaseUserMedia(
     ),
   );
   const toggleCropVideo$ = new Subject<void>();
+  const videoAspectRatio$ = new BehaviorSubject(NaN);
 
-  // The target size of the video element, used to determine the best video fit.
-  // The target size is the final size of the HTML element after any animations have completed.
-  const targetSize$ = new BehaviorSubject<
-    { width: number; height: number } | undefined
-  >(undefined);
-
-  const videoSize$ = videoSizeFromParticipant$(participant$);
   return {
     ...createMemberMedia(scope, {
       ...inputs,
@@ -132,13 +121,11 @@ export function createBaseUserMedia(
       media$.pipe(map((m) => m?.cameraTrack?.isMuted === false)),
     ),
     videoOrientation$: scope.behavior(
-      videoSize$.pipe(
-        map((s) => (s ? s.width / s.height : 1)),
+      videoAspectRatio$.pipe(
         map((aspect) => (aspect > 1 ? "landscape" : "portrait")),
       ),
       "portrait",
     ),
-    videoFit$: videoFit$(scope, videoSize$, targetSize$),
     toggleCropVideo: () => toggleCropVideo$.next(),
     rtcBackendIdentity,
     handRaised$,
@@ -162,8 +149,6 @@ export function createBaseUserMedia(
         return observeRtpStreamStats$(p, Track.Source.Camera, statsType);
       }),
     ),
-    setTargetDimensions: (targetWidth: number, targetHeight: number): void => {
-      targetSize$.next({ width: targetWidth, height: targetHeight });
-    },
+    setVideoAspectRatio: (ratio) => videoAspectRatio$.next(ratio),
   };
 }
