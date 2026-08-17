@@ -13,6 +13,7 @@ import {
   useCallback,
   useRef,
   useState,
+  useMemo,
 } from "react";
 import { type animated } from "@react-spring/web";
 import classNames from "classnames";
@@ -103,20 +104,22 @@ interface UserMediaTileProps extends TileProps {
   playbackMuted: boolean;
   waitingForMedia?: boolean;
   primaryButton?: ReactNode;
-  menuStart?: ReactNode;
-  menuEnd?: ReactNode;
   focusUrl: string | undefined;
 }
 
-const UserMediaTile: FC<UserMediaTileProps> = ({
+/**
+ * A user media tile without a context menu.
+ */
+// The context menu is kept separate from this component for performance
+// reasons (c.f. UserMediaTile)
+const UserMediaTileInner: FC<UserMediaTileProps & { menu: ReactNode }> = ({
   ref,
   vm,
   showSpeakingIndicators,
   playbackMuted,
   waitingForMedia,
   primaryButton,
-  menuStart,
-  menuEnd,
+  menu,
   className,
   focusUrl,
   displayName,
@@ -156,24 +159,26 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       : t("microphone_off");
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const menu = (
-    <>
-      {menuStart}
-      {/*
-       No additional menu item (used to be the manual fit to frame.
-       Placeholder for future menu items that should be placed here.
-       */}
-      {menuEnd}
-    </>
+  const menuTrigger = useMemo(
+    () => (
+      <button
+        aria-label={t("common.options")}
+        tabIndex={focusable ? undefined : -1}
+      >
+        <OverflowHorizontalIcon aria-hidden width={20} height={20} />
+      </button>
+    ),
+    [t, focusable],
   );
 
-  const raisedHandOnClick = vm.local
-    ? (): void => void toggleRaisedHand()
-    : undefined;
+  const raisedHandOnClick = useMemo(
+    () => (vm.local ? (): void => void toggleRaisedHand() : undefined),
+    [vm.local, toggleRaisedHand],
+  );
 
   const showSpeaking = showSpeakingIndicators && speaking;
 
-  const tile = (
+  return (
     <MediaView
       ref={ref}
       video={video}
@@ -202,14 +207,7 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
             open={menuOpen}
             onOpenChange={setMenuOpen}
             title={displayName}
-            trigger={
-              <button
-                aria-label={t("common.options")}
-                tabIndex={focusable ? undefined : -1}
-              >
-                <OverflowHorizontalIcon aria-hidden width={20} height={20} />
-              </button>
-            }
+            trigger={menuTrigger}
             side="left"
             align="start"
           >
@@ -231,9 +229,37 @@ const UserMediaTile: FC<UserMediaTileProps> = ({
       {...props}
     />
   );
+};
 
+/**
+ * A user media tile enhanced with a context menu.
+ */
+const UserMediaTile: FC<
+  UserMediaTileProps & { menuStart?: ReactNode; menuEnd?: ReactNode }
+> = ({ menuStart, menuEnd, ...props }) => {
+  const menu = useMemo(
+    () => (
+      <>
+        {menuStart}
+        {/*
+       No additional menu item (used to be the manual fit to frame.
+       Placeholder for future menu items that should be placed here.
+       */}
+        {menuEnd}
+      </>
+    ),
+    [menuStart, menuEnd],
+  );
+
+  // ContextMenu is expensive to render, so we avoid subscribing to any
+  // frequently-changing behaviors here and instead keep them isolated in the
+  // UserMediaTileInner component
   return (
-    <ContextMenu title={displayName} trigger={tile} hasAccessibleAlternative>
+    <ContextMenu
+      title={props.displayName}
+      trigger={<UserMediaTileInner {...props} menu={menu} />}
+      hasAccessibleAlternative
+    >
       {menu}
     </ContextMenu>
   );
@@ -269,6 +295,29 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
     [vm, latestAlwaysShow],
   );
 
+  const menuStart = useMemo(
+    () => (
+      <ToggleMenuItem
+        Icon={VisibilityOnIcon}
+        label={t("video_tile.always_show")}
+        checked={alwaysShow}
+        onSelect={onSelectAlwaysShow}
+      />
+    ),
+    [t, alwaysShow, onSelectAlwaysShow],
+  );
+  const menuEnd = useMemo(
+    () =>
+      onOpenProfile && (
+        <MenuItem
+          Icon={UserProfileIcon}
+          label={t("common.profile")}
+          onSelect={onOpenProfile}
+        />
+      ),
+    [t, onOpenProfile],
+  );
+
   return (
     <UserMediaTile
       ref={ref}
@@ -287,23 +336,8 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
           </button>
         )
       }
-      menuStart={
-        <ToggleMenuItem
-          Icon={VisibilityOnIcon}
-          label={t("video_tile.always_show")}
-          checked={alwaysShow}
-          onSelect={onSelectAlwaysShow}
-        />
-      }
-      menuEnd={
-        onOpenProfile && (
-          <MenuItem
-            Icon={UserProfileIcon}
-            label={t("common.profile")}
-            onSelect={onOpenProfile}
-          />
-        )
-      }
+      menuStart={menuStart}
+      menuEnd={menuEnd}
       focusable={focusable}
       focusUrl={focusUrl}
       {...props}

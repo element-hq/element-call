@@ -63,8 +63,7 @@ describe("LocalTransport", () => {
       client: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         _unstable_getRTCTransports: async () => Promise.resolve([]),
-        getAccessToken: vi.fn().mockReturnValue("access_token"),
-        getDomain: () => "",
+        getDomain: () => "example.org",
         baseUrl: "example.org",
         // These won't be called in this error path but satisfy the type
         getOpenIdToken: vi.fn(),
@@ -77,9 +76,11 @@ describe("LocalTransport", () => {
     await flushPromises();
 
     expect(() => advertised$.value).toThrow(
-      new MatrixRTCTransportMissingError(""),
+      new MatrixRTCTransportMissingError("example.org"),
     );
-    expect(() => active$.value).toThrow(new MatrixRTCTransportMissingError(""));
+    expect(() => active$.value).toThrow(
+      new MatrixRTCTransportMissingError("example.org"),
+    );
   });
 
   it("throws FailToGetOpenIdToken when OpenID fetch fails", async () => {
@@ -103,10 +104,8 @@ describe("LocalTransport", () => {
       useOldestMember: false,
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
-        baseUrl: "https://lk.example.org",
-        // Use empty domain to skip .well-known and use config directly
-        getDomain: () => "",
-        getAccessToken: vi.fn().mockReturnValue("access_token"),
+        baseUrl: "https://example.org",
+        getDomain: () => "example.org",
         // eslint-disable-next-line @typescript-eslint/naming-convention
         _unstable_getRTCTransports: async () => Promise.resolve([]),
         getOpenIdToken: vi.fn(),
@@ -150,11 +149,10 @@ describe("LocalTransport", () => {
       client: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         _unstable_getRTCTransports: async () => Promise.resolve([]),
-        getDomain: () => "",
+        getDomain: () => "example.org",
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),
-        baseUrl: "https://lk.example.org",
-        getAccessToken: vi.fn().mockReturnValue("access_token"),
+        baseUrl: "https://example.org",
       },
       ownMembershipIdentity: ownMemberMock,
       forceJwtEndpoint: JwtEndpointVersion.Legacy,
@@ -221,13 +219,12 @@ describe("LocalTransport", () => {
         useOldestMember: true,
         memberships$: scope.behavior(memberships$.pipe(trackEpoch())),
         client: {
-          getDomain: () => "",
+          getDomain: () => "example.org",
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: async () => Promise.resolve([]),
-          getAccessToken: vi.fn().mockReturnValue("access_token"),
           getOpenIdToken: vi.fn(),
           getDeviceId: vi.fn(),
-          baseUrl: "https://lk.example.org",
+          baseUrl: "https://example.org",
         },
         ownMembershipIdentity: ownMemberMock,
         forceJwtEndpoint: JwtEndpointVersion.Legacy,
@@ -278,14 +275,13 @@ describe("LocalTransport", () => {
         useOldestMember: true,
         memberships$: scope.behavior(memberships$.pipe(trackEpoch())),
         client: {
-          getDomain: () => "",
+          getDomain: () => "example.org",
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: async () =>
             Promise.resolve([aliceTransport]),
-          getAccessToken: vi.fn().mockReturnValue("access_token"),
           getOpenIdToken: vi.fn(),
           getDeviceId: vi.fn(),
-          baseUrl: "https://lk.example.org",
+          baseUrl: "https://example.org",
         },
         ownMembershipIdentity: ownMemberMock,
         forceJwtEndpoint: JwtEndpointVersion.Legacy,
@@ -330,10 +326,9 @@ describe("LocalTransport", () => {
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {
           baseUrl: "https://example.org",
-          getDomain: vi.fn().mockReturnValue(""),
+          getDomain: vi.fn().mockReturnValue("example.org"),
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: vi.fn().mockResolvedValue([]),
-          getAccessToken: vi.fn().mockReturnValue("access_token"),
           getOpenIdToken: vi.fn(),
           getDeviceId: vi.fn(),
         },
@@ -421,91 +416,10 @@ describe("LocalTransport", () => {
       });
     });
 
-    it("Should not call _unstable_getRTCTransports in widget mode but use well-known", async () => {
-      mockConfig({
-        livekit: { livekit_service_url: "https://do-not-use.lk.example.org" },
-      });
-
-      localTransportOpts.client.getDomain.mockReturnValue("example.org");
-
-      fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
-        "org.matrix.msc4143.rtc_foci": [
-          {
-            type: "livekit",
-            livekit_service_url: "https://use-me.jwt.call.example.org",
-          },
-        ],
-      });
-
-      localTransportOpts.client.getAccessToken.mockReturnValue(null);
-      const { advertised$, active$ } =
-        createLocalTransport$(localTransportOpts);
-      openIdResolver.resolve?.(openIdResponse);
-      expect(advertised$.value).toBe(null);
-      expect(active$.value).toBe(null);
-      await flushPromises();
-
-      expect(
-        localTransportOpts.client._unstable_getRTCTransports,
-      ).not.toHaveBeenCalled();
-
-      const expectedTransport = {
-        type: "livekit",
-        livekit_service_url: "https://use-me.jwt.call.example.org",
-      };
-
-      expect(advertised$.value).toStrictEqual(expectedTransport);
-    });
-
     it("fails fast if the openID request fails for backend config", async () => {
       localTransportOpts.client._unstable_getRTCTransports.mockResolvedValue([
         { type: "livekit", livekit_service_url: "https://lk.example.org" },
       ]);
-      openIdResolver.reject(
-        new FailToGetOpenIdToken(new Error("Test driven error")),
-      );
-      await expect(async () =>
-        lastValueFrom(createLocalTransport$(localTransportOpts).active$),
-      ).rejects.toThrow(expect.any(FailToGetOpenIdToken));
-    });
-
-    it("supports getting transport via well-known", async () => {
-      localTransportOpts.client.getDomain.mockReturnValue("example.org");
-      fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
-        "org.matrix.msc4143.rtc_foci": [
-          { type: "livekit", livekit_service_url: "https://lk.example.org" },
-        ],
-      });
-      const { advertised$, active$ } =
-        createLocalTransport$(localTransportOpts);
-      openIdResolver.resolve?.(openIdResponse);
-      expect(advertised$.value).toBe(null);
-      expect(active$.value).toBe(null);
-      await flushPromises();
-      const expectedTransport = {
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
-      };
-      expect(advertised$.value).toStrictEqual(expectedTransport);
-      expect(active$.value).toStrictEqual({
-        transport: expectedTransport,
-        sfuConfig: {
-          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "Akph4alDMhen",
-          livekitIdentity: "@lk_user:ABCDEF",
-          url: "https://lk.example.org",
-        },
-      });
-      expect(fetchMock.done()).toEqual(true);
-    });
-
-    it("fails fast if the openId request fails for the well-known config", async () => {
-      localTransportOpts.client.getDomain.mockReturnValue("example.org");
-      fetchMock.getOnce("https://example.org/.well-known/matrix/client", {
-        "org.matrix.msc4143.rtc_foci": [
-          { type: "livekit", livekit_service_url: "https://lk.example.org" },
-        ],
-      });
       openIdResolver.reject(
         new FailToGetOpenIdToken(new Error("Test driven error")),
       );
@@ -524,11 +438,10 @@ describe("LocalTransport", () => {
         delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {
-          getDomain: () => "",
+          getDomain: () => "example.org",
           baseUrl: "https://example.org",
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: async () => Promise.resolve([]),
-          getAccessToken: vi.fn().mockReturnValue("access_token"),
           // These won't be called in this error path but satisfy the type
           getOpenIdToken: vi.fn(),
           getDeviceId: vi.fn(),
@@ -537,10 +450,10 @@ describe("LocalTransport", () => {
       await flushPromises();
 
       expect(() => advertised$.value).toThrow(
-        new MatrixRTCTransportMissingError(""),
+        new MatrixRTCTransportMissingError("example.org"),
       );
       expect(() => active$.value).toThrow(
-        new MatrixRTCTransportMissingError(""),
+        new MatrixRTCTransportMissingError("example.org"),
       );
     });
   });
@@ -565,11 +478,10 @@ describe("LocalTransport", () => {
       delayId$: delayId$,
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
-        getDomain: () => "",
+        getDomain: () => "example.org",
         baseUrl: "https://example.org",
         // eslint-disable-next-line @typescript-eslint/naming-convention
         _unstable_getRTCTransports: async () => Promise.resolve([]),
-        getAccessToken: vi.fn().mockReturnValue("access_token"),
         // These won't be called in this error path but satisfy the type
         getOpenIdToken: vi.fn(),
         getDeviceId: vi.fn(),

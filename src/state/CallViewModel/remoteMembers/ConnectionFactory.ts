@@ -12,7 +12,7 @@ import {
   type E2EEManagerOptions,
   type BaseE2EEManager,
 } from "livekit-client";
-import { type Logger } from "matrix-js-sdk/lib/logger";
+import { logger, type Logger } from "matrix-js-sdk/lib/logger";
 // imported as inline to support worker when loaded from a cdn (cross domain)
 import E2EEWorker from "livekit-client/e2ee-worker?worker&inline";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -27,7 +27,18 @@ import type {
 import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
-import { defaultLiveKitOptions } from "../../../livekit/options.ts";
+import { getLiveKitOptions } from "../../../livekit/options.ts";
+import {
+  advancedCamera,
+  cameraResolution,
+  cameraFramerate,
+  cameraBitrate,
+  cameraCodec,
+  parseResolution,
+  echoCancellationSetting,
+  noiseSuppressionSetting,
+  autoGainControlSetting,
+} from "../../../settings/settings.ts";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
@@ -53,8 +64,6 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param livekitKeyProvider - Optional key provider for end-to-end encryption.
    * @param controlledAudioDevices - Option to indicate whether audio output device is controlled externally (native mobile app).
    * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
-   * @param echoCancellation - Whether to enable echo cancellation for audio capture.
-   * @param noiseSuppression - Whether to enable noise suppression for audio capture.
    */
   public constructor(
     private client: OpenIDClientParts,
@@ -64,25 +73,22 @@ export class ECConnectionFactory implements ConnectionFactory {
     livekitKeyProvider: BaseKeyProvider | undefined,
     private controlledAudioDevices: boolean,
     livekitRoomFactory?: () => LivekitRoom,
-    echoCancellation: boolean = true,
-    noiseSuppression: boolean = true,
   ) {
-    const defaultFactory = (): LivekitRoom =>
-      new LivekitRoom(
-        generateRoomOption({
-          devices: this.devices,
-          processorState: this.processorState$.value,
-          e2eeLivekitOptions: livekitKeyProvider && {
-            keyProvider: livekitKeyProvider,
-            // It's important that every room use a separate E2EE worker.
-            // They get confused if given streams from multiple rooms.
-            worker: new E2EEWorker(),
-          },
-          controlledAudioDevices: this.controlledAudioDevices,
-          echoCancellation,
-          noiseSuppression,
-        }),
-      );
+    const defaultFactory = (): LivekitRoom => {
+      const roomOptions = generateRoomOption({
+        devices: this.devices,
+        processorState: this.processorState$.value,
+        e2eeLivekitOptions: livekitKeyProvider && {
+          keyProvider: livekitKeyProvider,
+          // It's important that every room use a separate E2EE worker.
+          // They get confused if given streams from multiple rooms.
+          worker: new E2EEWorker(),
+        },
+        controlledAudioDevices: this.controlledAudioDevices,
+      });
+      logger.info("[ECConnectionFactory] livekit room options: ", roomOptions);
+      return new LivekitRoom(roomOptions);
+    };
     this.livekitRoomFactory = livekitRoomFactory ?? defaultFactory;
   }
 
@@ -119,14 +125,13 @@ export class ECConnectionFactory implements ConnectionFactory {
 
 /**
  *  Generate the initial LiveKit RoomOptions based on the current media devices and processor state.
+ *  Reads audio processing and camera quality settings directly from Settings.
  */
 function generateRoomOption({
   devices,
   processorState,
   e2eeLivekitOptions,
   controlledAudioDevices,
-  echoCancellation,
-  noiseSuppression,
 }: {
   devices: MediaDevices;
   processorState: ProcessorState;
@@ -135,21 +140,44 @@ function generateRoomOption({
     | { e2eeManager: BaseE2EEManager }
     | undefined;
   controlledAudioDevices: boolean;
-  echoCancellation: boolean;
-  noiseSuppression: boolean;
 }): RoomOptions {
+  const liveKitOptions = getLiveKitOptions();
+
+  // Apply advanced camera settings if enabled
+  let videoCaptureDefaults = {
+    ...liveKitOptions.videoCaptureDefaults,
+    deviceId: devices.videoInput.selected$.value?.id,
+    processor: processorState.processor,
+  };
+  let publishDefaults = liveKitOptions.publishDefaults;
+
+  if (advancedCamera.getValue()) {
+    const { width, height } = parseResolution(cameraResolution.getValue());
+    const fps = cameraFramerate.getValue();
+    const bps = cameraBitrate.getValue();
+    const codec = cameraCodec.getValue();
+
+    videoCaptureDefaults = {
+      ...videoCaptureDefaults,
+      resolution: { width, height, frameRate: fps },
+    };
+    publishDefaults = {
+      ...publishDefaults,
+      videoEncoding: { maxBitrate: bps, maxFramerate: fps },
+      videoCodec: codec,
+    };
+  }
+
   return {
-    ...defaultLiveKitOptions,
-    videoCaptureDefaults: {
-      ...defaultLiveKitOptions.videoCaptureDefaults,
-      deviceId: devices.videoInput.selected$.value?.id,
-      processor: processorState.processor,
-    },
+    ...liveKitOptions,
+    videoCaptureDefaults,
+    publishDefaults,
     audioCaptureDefaults: {
-      ...defaultLiveKitOptions.audioCaptureDefaults,
+      ...liveKitOptions.audioCaptureDefaults,
       deviceId: devices.audioInput.selected$.value?.id,
-      echoCancellation,
-      noiseSuppression,
+      echoCancellation: echoCancellationSetting.getValue(),
+      noiseSuppression: noiseSuppressionSetting.getValue(),
+      autoGainControl: autoGainControlSetting.getValue(),
     },
     audioOutput: {
       // When using controlled audio devices, we don't want to set the

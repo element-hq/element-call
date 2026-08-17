@@ -18,6 +18,12 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     Device ID: DEVICE123
   </p>
   <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
+  <div
     class="_fieldRow_1bd8c0"
   >
     <div
@@ -251,10 +257,16 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         class="_message_1o4d9_86 _help-message_1o4d9_92"
         id="radix-_r_8_"
       >
-        Currently, no overwrite is set. Url from well-known or config is used.
+        Currently, no overwrite is set. Url from config is used.
       </span>
     </div>
   </form>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
   <h3
     class="_typography_6v6n8_153 _font-body-lg-semibold_6v6n8_74"
   >
@@ -463,6 +475,242 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     </p>
     <ul />
   </div>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
+  <h4>
+    Camera quality
+  </h4>
+  <div
+    class="_fieldRow_1bd8c0"
+  >
+    <div
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
+    >
+      <input
+        aria-describedby="_r_k_"
+        id="cameraToggle"
+        type="checkbox"
+      />
+      <label
+        for="cameraToggle"
+      >
+        <div
+          class="_checkbox_1bd8c0"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Advanced camera settings
+      </label>
+      <p
+        class="_description_1bd8c0"
+        id="_r_k_"
+      >
+        Configure resolution, framerate, bitrate, and codec for camera video. Changes apply on next call join.
+      </p>
+    </div>
+  </div>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
+  <h4>
+    Screen sharing
+  </h4>
+  <div
+    class="_fieldRow_1bd8c0"
+  >
+    <div
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
+    >
+      <input
+        aria-describedby="_r_l_"
+        id="screenShareToggle"
+        type="checkbox"
+      />
+      <label
+        for="screenShareToggle"
+      >
+        <div
+          class="_checkbox_1bd8c0"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Advanced screen share settings
+      </label>
+      <p
+        class="_description_1bd8c0"
+        id="_r_l_"
+      >
+        Configure resolution, framerate, bitrate, and codec for screen sharing
+      </p>
+    </div>
+  </div>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
+  <h4>
+    Audio processing
+  </h4>
+  <p>
+    Changes apply on next call join.
+  </p>
+  <div
+    class="_fieldRow_1bd8c0"
+  >
+    <div
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
+    >
+      <input
+        aria-describedby="_r_m_"
+        checked=""
+        id="echoCancellation"
+        type="checkbox"
+      />
+      <label
+        for="echoCancellation"
+      >
+        <div
+          class="_checkbox_1bd8c0"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Echo cancellation
+      </label>
+    </div>
+  </div>
+  <div
+    class="_fieldRow_1bd8c0"
+  >
+    <div
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
+    >
+      <input
+        aria-describedby="_r_n_"
+        checked=""
+        id="noiseSuppression"
+        type="checkbox"
+      />
+      <label
+        for="noiseSuppression"
+      >
+        <div
+          class="_checkbox_1bd8c0"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Noise suppression
+      </label>
+    </div>
+  </div>
+  <div
+    class="_fieldRow_1bd8c0"
+  >
+    <div
+      class="_field_1bd8c0 _checkboxField_1bd8c0"
+    >
+      <input
+        aria-describedby="_r_o_"
+        checked=""
+        id="autoGainControl"
+        type="checkbox"
+      />
+      <label
+        for="autoGainControl"
+      >
+        <div
+          class="_checkbox_1bd8c0"
+        >
+          <svg
+            fill="none"
+            height="24"
+            stroke="#000"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m20 6-11 11-5-5"
+            />
+          </svg>
+        </div>
+        Automatic gain control
+      </label>
+    </div>
+  </div>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
   <p>
     Environment variables
   </p>

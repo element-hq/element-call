@@ -22,6 +22,16 @@ import {
 } from "../../../utils/test.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import { constant } from "../../Behavior";
+import {
+  echoCancellationSetting,
+  noiseSuppressionSetting,
+  autoGainControlSetting,
+  advancedCamera,
+  cameraResolution,
+  cameraFramerate,
+  cameraBitrate,
+  cameraCodec,
+} from "../../../settings/settings.ts";
 
 // At the top of your test file, after imports
 vi.mock("livekit-client", async (importOriginal) => {
@@ -58,10 +68,13 @@ describe("ECConnectionFactory - Audio inputs options", () => {
     { echo: false, noise: true },
     { echo: false, noise: false },
   ])(
-    "it sets echoCancellation=$echo and noiseSuppression=$noise based on constructor parameters",
+    "it sets echoCancellation=$echo and noiseSuppression=$noise based on settings",
     ({ echo, noise }) => {
-      // test("it sets echoCancellation and noiseSuppression based on constructor parameters", () => {
       const RoomConstructor = vi.mocked(LivekitRoom);
+
+      // Set audio processing settings
+      echoCancellationSetting.setValue(echo);
+      noiseSuppressionSetting.setValue(noise);
 
       const ecConnectionFactory = new ECConnectionFactory(
         mockClient,
@@ -73,9 +86,6 @@ describe("ECConnectionFactory - Audio inputs options", () => {
         }),
         undefined,
         false,
-        undefined,
-        echo,
-        noise,
       );
       ecConnectionFactory.createConnection(
         testScope,
@@ -101,8 +111,12 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
   test.each([{ controlled: true }, { controlled: false }])(
     "it sets controlledAudioDevice=$controlled then uses deviceId accordingly",
     ({ controlled }) => {
-      // test("it sets echoCancellation and noiseSuppression based on constructor parameters", () => {
       const RoomConstructor = vi.mocked(LivekitRoom);
+
+      // Explicitly set audio settings so the test doesn't depend on defaults
+      echoCancellationSetting.setValue(true);
+      noiseSuppressionSetting.setValue(true);
+      autoGainControlSetting.setValue(true);
 
       const ecConnectionFactory = new ECConnectionFactory(
         mockClient,
@@ -120,9 +134,6 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
         }),
         undefined,
         controlled,
-        undefined,
-        false,
-        false,
       );
       ecConnectionFactory.createConnection(
         testScope,
@@ -141,6 +152,114 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
       );
     },
   );
+});
+
+describe("ECConnectionFactory - Camera quality settings", () => {
+  test("it uses default video options when advancedCamera is disabled", () => {
+    const RoomConstructor = vi.mocked(LivekitRoom);
+    advancedCamera.setValue(false);
+
+    const ecConnectionFactory = new ECConnectionFactory(
+      mockClient,
+      "!roomid:example.org",
+      mockMediaDevices({}),
+      new BehaviorSubject<ProcessorState>({
+        supported: true,
+        processor: undefined,
+      }),
+      undefined,
+      false,
+    );
+    ecConnectionFactory.createConnection(
+      testScope,
+      exampleTransport,
+      ownMemberMock,
+      logger,
+    );
+
+    // publishDefaults should use config defaults (vp8), not custom settings
+    expect(RoomConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        publishDefaults: expect.objectContaining({
+          videoCodec: "vp8",
+        }),
+      }),
+    );
+  });
+
+  test("it applies custom camera resolution, encoding, and codec when advancedCamera is enabled", () => {
+    const RoomConstructor = vi.mocked(LivekitRoom);
+
+    advancedCamera.setValue(true);
+    cameraResolution.setValue("1920x1080");
+    cameraFramerate.setValue(60);
+    cameraBitrate.setValue(4_000_000);
+    cameraCodec.setValue("vp9");
+
+    const ecConnectionFactory = new ECConnectionFactory(
+      mockClient,
+      "!roomid:example.org",
+      mockMediaDevices({}),
+      new BehaviorSubject<ProcessorState>({
+        supported: true,
+        processor: undefined,
+      }),
+      undefined,
+      false,
+    );
+    ecConnectionFactory.createConnection(
+      testScope,
+      exampleTransport,
+      ownMemberMock,
+      logger,
+    );
+
+    expect(RoomConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoCaptureDefaults: expect.objectContaining({
+          resolution: { width: 1920, height: 1080, frameRate: 60 },
+        }),
+        publishDefaults: expect.objectContaining({
+          videoEncoding: { maxBitrate: 4_000_000, maxFramerate: 60 },
+          videoCodec: "vp9",
+        }),
+      }),
+    );
+  });
+
+  test("it applies autoGainControl from settings", () => {
+    const RoomConstructor = vi.mocked(LivekitRoom);
+
+    autoGainControlSetting.setValue(false);
+    echoCancellationSetting.setValue(true);
+    noiseSuppressionSetting.setValue(true);
+
+    const ecConnectionFactory = new ECConnectionFactory(
+      mockClient,
+      "!roomid:example.org",
+      mockMediaDevices({}),
+      new BehaviorSubject<ProcessorState>({
+        supported: true,
+        processor: undefined,
+      }),
+      undefined,
+      false,
+    );
+    ecConnectionFactory.createConnection(
+      testScope,
+      exampleTransport,
+      ownMemberMock,
+      logger,
+    );
+
+    expect(RoomConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audioCaptureDefaults: expect.objectContaining({
+          autoGainControl: false,
+        }),
+      }),
+    );
+  });
 });
 
 afterEach(() => {

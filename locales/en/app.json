@@ -61,7 +61,7 @@
     "crypto_version": "Crypto version: {{version}}",
     "custom_livekit_url": {
       "current_url": "Currently set to: ",
-      "from_config": "Currently, no overwrite is set. Url from well-known or config is used.",
+      "from_config": "Currently, no overwrite is set. Url from config is used.",
       "label": "Custom Livekit-url",
       "reset": "Reset overwrite",
       "save": "Save",
@@ -196,13 +196,23 @@
   "room_auth_view_ssla_caption": "By clicking \"Join call now\", you agree to our <2>Software and Services License Agreement (SSLA)</2>",
   "screenshare_button_label": "Share screen",
   "settings": {
+    "advanced_camera_description": "Configure resolution, framerate, bitrate, and codec for camera video. Changes apply on next call join.",
+    "advanced_camera_label": "Advanced camera settings",
+    "advanced_screen_share_description": "Configure resolution, framerate, bitrate, and codec for screen sharing",
+    "advanced_screen_share_label": "Advanced screen share settings",
+    "audio_processing_description": "Changes apply on next call join.",
+    "audio_processing_header": "Audio processing",
     "audio_tab": {
       "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play.",
       "effect_volume_label": "Sound effect volume"
     },
+    "auto_gain_control_label": "Automatic gain control",
     "background_blur_header": "Background",
     "background_blur_label": "Blur the background of the video",
+    "bitrate_label": "Bitrate",
     "blur_not_supported_by_browser": "(Background blur is not supported by this device.)",
+    "camera_header": "Camera quality",
+    "codec_label": "Codec",
     "developer_tab_title": "Developer",
     "devices": {
       "activating": "Activating…",
@@ -218,12 +228,15 @@
       "speaker": "Speaker",
       "speaker_numbered": "Speaker {{n}}"
     },
+    "echo_cancellation_label": "Echo cancellation",
     "feedback_tab_body": "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
     "feedback_tab_description_label": "Your feedback",
     "feedback_tab_h4": "Submit feedback",
     "feedback_tab_send_logs_label": "Include debug logs",
     "feedback_tab_thank_you": "Thanks, we received your feedback!",
     "feedback_tab_title": "Feedback",
+    "framerate_label": "Framerate",
+    "noise_suppression_label": "Noise suppression",
     "opt_in_description": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
     "preferences_tab": {
       "developer_mode_label": "Developer mode",
@@ -235,7 +248,9 @@
       "reactions_show_label": "Show reactions",
       "show_hand_raised_timer_description": "Show a timer when a participant raises their hand",
       "show_hand_raised_timer_label": "Show hand raise duration"
-    }
+    },
+    "resolution_label": "Resolution",
+    "screen_share_header": "Screen sharing"
   },
   "star_rating_input_label_one": "{{count}} star",
   "star_rating_input_label_other": "{{count}} stars",
