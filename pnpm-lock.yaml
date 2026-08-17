@@ -192,7 +192,7 @@ importers:
         version: 1.9.2
       matrix-js-sdk:
         specifier: github:matrix-org/matrix-js-sdk#toger5/add-key-rotation-participant-size
-        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/f4a278c571bcb4e8e553ef031488ecdabe4e0ede
+        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/14aeb18fe5c6ca96a6325f9f02ab6a7639060f6a
       matrix-widget-api:
         specifier: ^1.18.0
         version: 1.18.0
@@ -4516,10 +4516,6 @@ packages:
   jsonfile@6.2.0:
     resolution: {integrity: sha512-FGuPw30AdOIUTRMC2OMRtQV+jkVj2cfPqSeWXv1NEAJ1qZ5zb1X6z1mFhbfOB/iy3ssJCD+3KuZ8r8C3uVFlAg==}
 
-  jwt-decode@4.0.0:
-    resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
-    engines: {node: '>=18'}
-
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
@@ -4683,9 +4679,9 @@ packages:
   matrix-events-sdk@0.0.1:
     resolution: {integrity: sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/f4a278c571bcb4e8e553ef031488ecdabe4e0ede:
-    resolution: {gitHosted: true, integrity: sha512-6iaM5Uyr063LCbDcjhDXI1qf5X8q270dMl0iLNb6S/mcOucqdKURw0ySWM6PWHAnbMw2rdkiTx3Mp37+J9F/pg==, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/f4a278c571bcb4e8e553ef031488ecdabe4e0ede}
-    version: 41.8.0
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/14aeb18fe5c6ca96a6325f9f02ab6a7639060f6a:
+    resolution: {gitHosted: true, integrity: sha512-nCscA1xab7FkNS7Cak1VmxeMBLJrtfcdH/+xKne44X6mKgGZrR0kKsBc0JKAjrSFJq6jwf/bHDxKi+UsNMmKUQ==, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/14aeb18fe5c6ca96a6325f9f02ab6a7639060f6a}
+    version: 42.1.0
     engines: {node: '>=22.0.0'}
 
   matrix-widget-api@1.18.0:
@@ -4826,10 +4822,6 @@ packages:
   obug@2.1.4:
     resolution: {integrity: sha512-4a+OsYv9UktOJKE+l1A4OufDgdRF9PifWj+tJnHURo/P+WOxpG4GzUFL9qCalmWauao6ogiG+QvnCovwPoyAWA==}
     engines: {node: '>=12.20.0'}
-
-  oidc-client-ts@3.5.0:
-    resolution: {integrity: sha512-l2q8l9CTCTOlbX+AnK4p3M+4CEpKpyQhle6blQkdFhm0IsBqsxm15bYaSa11G7pWdsYr6epdsRZxJpCyCRbT8A==}
-    engines: {node: '>=18'}
 
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
@@ -10124,8 +10116,6 @@ snapshots:
     optionalDependencies:
       graceful-fs: 4.2.11
 
-  jwt-decode@4.0.0: {}
-
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
@@ -10279,18 +10269,16 @@ snapshots:
 
   matrix-events-sdk@0.0.1: {}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/f4a278c571bcb4e8e553ef031488ecdabe4e0ede:
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/14aeb18fe5c6ca96a6325f9f02ab6a7639060f6a:
     dependencies:
       '@babel/runtime': 8.0.0
       '@matrix-org/matrix-sdk-crypto-wasm': 18.5.0
       another-json: 0.2.0
       bs58: 6.0.0
       content-type: 2.1.0
-      jwt-decode: 4.0.0
       loglevel: 1.9.2
       matrix-events-sdk: 0.0.1
       matrix-widget-api: 1.18.0
-      oidc-client-ts: 3.5.0
       p-retry: 8.0.0
       sdp-transform: 3.0.0
       unhomoglyph: 1.0.6
@@ -10439,10 +10427,6 @@ snapshots:
       rxjs: 7.8.2
 
   obug@2.1.4: {}
-
-  oidc-client-ts@3.5.0:
-    dependencies:
-      jwt-decode: 4.0.0
 
   once@1.4.0:
     dependencies:
