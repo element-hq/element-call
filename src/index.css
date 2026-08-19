@@ -74,7 +74,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-@media (min-height: 33px) {
+@media (min-height: 330px) {
   body[data-background="gradient"]::before {
     content: "";
     position: fixed;
