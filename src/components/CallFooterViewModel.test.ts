@@ -49,6 +49,7 @@ function buildMinimalCallViewModel(layout: Layout): CallViewModel {
     reactions$: constant({}),
     tileStoreGeneration$: constant(0),
     showFooter$: constant(true),
+    showModals$: constant(true),
     settingsOpen$: constant(false),
     setSettingsOpen$: constant(() => {}),
   } as unknown as CallViewModel;
