@@ -2,7 +2,7 @@ name: GitHub Actions Security Analysis with zizmor 🌈
 
 on:
   push:
-    branches: ["livekit", "full-mesh"]
+    branches: ["main", "full-mesh"]
   pull_request: {}
 
 permissions: {}
