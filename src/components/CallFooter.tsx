@@ -77,6 +77,7 @@ export interface FooterState {
   /** The footer should be used as an overlay.
    * (Over the Call Grid) This saves spaces on small screens. */
   asOverlay: boolean;
+  showModals: boolean;
 
   buttonSize: "md" | "lg";
   showLogo: boolean;
@@ -121,6 +122,7 @@ export const CallFooter: FC<FooterProps> = ({
   const asOverlay = useBehavior(vm.asOverlay$);
   const showFooter = useBehavior(vm.showFooter$);
   const hideControls = useBehavior(vm.hideControls$);
+  const showModals = useBehavior(vm.showModals$);
   const layoutSwitchVm = useBehavior(vm.layoutSwitchVm$);
   const openSettings = useBehavior(vm.openSettings$);
   const audioEnabled = useBehavior(vm.audioEnabled$);
@@ -235,7 +237,8 @@ export const CallFooter: FC<FooterProps> = ({
     );
   }
 
-  if (reactionIdentifier && reactionData) {
+  // Reaction button contains a pretty large menu, so treat it like a modal
+  if (reactionIdentifier && reactionData && showModals) {
     buttons.push(
       <ReactionToggleButton
         size={buttonSize}

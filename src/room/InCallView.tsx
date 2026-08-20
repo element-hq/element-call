@@ -261,6 +261,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const overflowing = useBehavior(vm.overflowing$);
   const showNameTags = useBehavior(vm.showNameTags$);
   const showHeader = useBehavior(vm.showHeader$);
+  const showModals = useBehavior(vm.showModals$);
   const settingsOpen = useBehavior(vm.settingsOpen$);
   const setSettingsOpen = useBehavior(vm.setSettingsOpen$);
   const earpieceMode = useBehavior(vm.earpieceMode$);
@@ -622,7 +623,7 @@ export const InCallView: FC<InCallViewProps> = ({
       {earpieceOverlay}
       <ReactionsOverlay vm={vm} />
       {footer}
-      {layout.type !== "pip" && (
+      {showModals && (
         <>
           <RageshakeRequestModal {...rageshakeRequestModalProps} />
           <SettingsModal

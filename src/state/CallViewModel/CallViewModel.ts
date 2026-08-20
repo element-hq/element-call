@@ -366,6 +366,11 @@ export interface CallViewModel {
    */
   overflowing$: Behavior<boolean>;
 
+  /**
+   * Whether modals such as settings and reactions should be accessible at all.
+   */
+  showModals$: Behavior<boolean>;
+
   settingsOpen$: Behavior<boolean>;
   setSettingsOpen$: Behavior<(open: boolean) => void>;
 
@@ -1450,6 +1455,11 @@ export function createCallViewModel$(
       map((naturallyShowFooter) => naturallyShowFooter && showFooterUrlParams),
     ),
   );
+
+  const showModals$ = scope.behavior(
+    windowMode$.pipe(map((mode) => mode !== "pip")),
+  );
+
   const settingsOpen$ = new BehaviorSubject(false);
   const setSettingsOpen$ = constant((open: boolean) => {
     settingsOpen$.next(open);
@@ -1826,6 +1836,7 @@ export function createCallViewModel$(
     showNameTags$,
     showHeader$: showHeader$,
     showFooter$: showFooter$,
+    showModals$,
     settingsOpen$: settingsOpen$,
     setSettingsOpen$: setSettingsOpen$,
     edgeToEdge$,
