@@ -9,7 +9,7 @@ on:
       - .github/labels.yml
       - .github/workflows/sync-labels.yml
 
-permissions: {} # We use ELEMENT_BOT_TOKEN instead
+permissions: {} # We use LABEL_SYNC_GITHUB_TOKEN instead
 
 jobs:
   sync-labels:
@@ -20,4 +20,4 @@ jobs:
       DELETE: true
       WET: true
     secrets:
-      ELEMENT_BOT_TOKEN: ${{ secrets.ELEMENT_BOT_TOKEN }}
+      ELEMENT_BOT_TOKEN: ${{ secrets.LABEL_SYNC_GITHUB_TOKEN }}
