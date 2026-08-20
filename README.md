@@ -34,17 +34,25 @@ You can find the latest development version continuously deployed to
 ## ✨ Key Features
 
 ✅ **Decentralized & Federated** – No central authority; works across Matrix
-homeservers.  
-✅ **End-to-End Encrypted** – Secure and private calls.  
+homeservers.
+
+✅ **End-to-End Encrypted** – Secure and private calls.
+
 ✅ **Standalone & Widget Mode** – Use as an independent app or embed in Matrix
-clients.  
-✅ **WebRTC-based** – No additional software required.  
+clients.
+
+✅ **WebRTC-based** – No additional software required.
+
 ✅ **Scalable with LiveKit** – Supports large meetings via SFU
-([MSC4195: MatrixRTC using LiveKit backend](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)).  
+([MSC4195: MatrixRTC using LiveKit backend](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)).
+
 ✅ **Raise Hand** – Participants can signal when they want to speak, helping to
-organize the flow of the meeting.  
+organize the flow of the meeting.
+
 ✅ **Emoji Reactions** – Users can react with emojis 👍️ 🎉 👏 🤘, adding
 engagement and interactivity to the conversation.
+
+✅ **Large Calls** – Scales to large calls with more than hundred particpants [Scaling and Performance](./docs/scaling_performance.md).
 
 ## 🚀 Deployment & Packaging Options
 
