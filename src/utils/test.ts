@@ -490,6 +490,8 @@ export class MockRTCSession extends TypedEventEmitter<
     return this.joined;
   }
 
+  public isKeyRotationSuppressed = false;
+
   public withMemberships(
     rtcMembers$: Behavior<Partial<CallMembership>[]>,
   ): MockRTCSession {

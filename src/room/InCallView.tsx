@@ -633,6 +633,7 @@ export const InCallView: FC<InCallViewProps> = ({
             onDismiss={(): void => setSettingsOpen(false)}
             tab={settingsTab}
             onTabChange={setSettingsTab}
+            vm={vm}
             livekitRooms={allConnections
               .getConnections()
               .map((connectionItem) => ({

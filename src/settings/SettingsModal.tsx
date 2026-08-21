@@ -34,6 +34,7 @@ import { FieldRow, InputField } from "../input/Input";
 import { useSubmitRageshake } from "./submit-rageshake";
 import { useUrlParams } from "../UrlParams";
 import { useBehavior } from "../useBehavior";
+import { type CallViewModel } from "../state/CallViewModel/CallViewModel.ts";
 
 type SettingsTab =
   | "audio"
@@ -56,6 +57,8 @@ interface Props {
     url: string;
     isLocal?: boolean;
   }[];
+  /** Only available while in a call. Used by the developer tab. */
+  vm?: CallViewModel;
 }
 
 export const defaultSettingsTab: SettingsTab = "audio";
@@ -68,6 +71,7 @@ export const SettingsModal: FC<Props> = ({
   client,
   roomId,
   livekitRooms,
+  vm,
 }) => {
   const { t } = useTranslation();
 
@@ -220,6 +224,7 @@ export const SettingsModal: FC<Props> = ({
         client={client}
         livekitRooms={livekitRooms}
         roomId={roomId}
+        vm={vm}
       />
     ),
   };

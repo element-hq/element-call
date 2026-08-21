@@ -230,6 +230,18 @@ export interface ConfigOptions {
      * This is what goes into the m.rtc.member event expiry field and is typically set to a number of hours.
      */
     membership_event_expiry_ms?: number;
+
+    /**
+     * The number of participants in the session at which the media encryption key will no longer
+     * be rotated.
+     *
+     * Rotating a key requires sending it to every participant device, so in large sessions the
+     * cost of rotating on every join/leave becomes prohibitive. At this limit the current key is
+     * kept and distributed to new joiners; no new keys are generated for joiners/leavers.
+     *
+     * Defaults to the js-sdk default (30).
+     */
+    key_rotation_participant_limit?: number;
   };
 }
 
@@ -263,6 +275,7 @@ export interface ResolvedConfigOptions extends ConfigOptions {
     delayed_leave_event_restart_ms?: number;
     network_error_retry_ms: number;
     membership_event_expiry_ms?: number;
+    key_rotation_participant_limit?: number;
   };
 }
 

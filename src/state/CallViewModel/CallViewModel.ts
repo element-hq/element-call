@@ -114,6 +114,7 @@ import {
   type LocalTransport,
 } from "./localMember/LocalTransport.ts";
 import {
+  createKeyRotationSuppressed$,
   createMemberships$,
   membershipsAndTransports$,
 } from "../SessionBehaviors.ts";
@@ -302,6 +303,12 @@ export interface CallViewModel {
    *    multiple devices.
    */
   participantCount$: Behavior<number>;
+  /**
+   * Whether the call has grown large enough that MatrixRTC has stopped rotating the media
+   * encryption key. While this is true the key in use is still shared with new joiners, but no new
+   * key is generated when someone joins or leaves.
+   */
+  keyRotationSuppressed$: Behavior<boolean>;
   allConnections$: Behavior<ConnectionManagerData>;
   /** Participants sorted by livekit room so they can be used in the audio rendering */
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
@@ -860,6 +867,11 @@ export function createCallViewModel$(
    */
   const participantCount$ = scope.behavior(
     matrixLivekitMembers$.pipe(map((ms) => ms.length)),
+  );
+
+  const keyRotationSuppressed$ = createKeyRotationSuppressed$(
+    scope,
+    matrixRTCSession,
   );
 
   const leaveSoundEffect$ = userMedia$.pipe(
@@ -1798,6 +1810,7 @@ export function createCallViewModel$(
     ),
     allConnections$,
     participantCount$: participantCount$,
+    keyRotationSuppressed$: keyRotationSuppressed$,
     handsRaised$: handsRaised$,
     reactions$: reactions$,
     joinSoundEffect$: joinSoundEffect$,
