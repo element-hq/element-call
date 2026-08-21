@@ -179,7 +179,8 @@ export interface ConfigOptions {
   /**
    * Pins the {@link MatrixRTCMode} for all clients on this deployment,
    * overriding any per-user choice from the Developer Settings. If unset,
-   * the user's Developer Settings choice (or its default of `Legacy`) wins.
+   * the user's Developer Settings choice (or its default of `Compatibility`)
+   * wins.
    */
   matrix_rtc_mode?: MatrixRTCMode;
 
