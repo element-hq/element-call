@@ -52,7 +52,7 @@ beforeEach(() => {
           transport,
           remoteParticipants$: new BehaviorSubject([]),
         } as unknown as Connection;
-        vi.mocked(mockConnection).start = vi.fn();
+        vi.mocked(mockConnection).start = vi.fn().mockResolvedValue(undefined);
         vi.mocked(mockConnection).stop = vi.fn();
         // Tie the connection's lifecycle to the scope to test scope lifecycle management
         scope.onEnd(() => {
@@ -235,7 +235,9 @@ describe("connectionManagerData$ stream", () => {
             transport,
             remoteParticipants$: getRemoteParticipantsFor(transport),
           } as unknown as Connection;
-          vi.mocked(mockConnection).start = vi.fn();
+          vi.mocked(mockConnection).start = vi
+            .fn()
+            .mockResolvedValue(undefined);
           vi.mocked(mockConnection).stop = vi.fn();
           // Tie the connection's lifecycle to the scope to test scope lifecycle management
           scope.onEnd(() => {
