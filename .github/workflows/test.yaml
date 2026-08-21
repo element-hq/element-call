@@ -2,7 +2,7 @@ name: Test
 on:
   pull_request: {}
   push:
-    branches: [livekit]
+    branches: [main]
 jobs:
   vitest:
     name: Run unit tests

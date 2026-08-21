@@ -4,7 +4,7 @@ on:
 
   push:
     branches:
-      - livekit
+      - main
     paths:
       - .github/labels.yml
       - .github/workflows/sync-labels.yml

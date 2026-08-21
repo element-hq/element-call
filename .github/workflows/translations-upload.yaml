@@ -2,7 +2,7 @@ name: Upload translation files to Localazy
 on:
   push:
     branches:
-      - livekit
+      - main
     paths-ignore:
       - ".github/**"
 
