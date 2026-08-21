@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, map, of, switchMap } from "rxjs";
+import { combineLatest, map, of, skipWhile, switchMap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -131,6 +131,12 @@ export function createConnectionManager$({
       // Combine local and remote transports into one transport array
       // and set the forceOldJwtEndpoint property on the local transport
       map(([remoteTransports, localTransport]) => {
+        if (!localTransport) {
+          // Dont return any transports as long as there is no local transport.
+          // Otherwise we might end up with two connections since the local transport will already connect to the SFU.
+          // The local transport needs to connect with dedicated logic to also setup delayed event delegation.
+          return new Epoch([]);
+        }
         let localTransportAsArray: LocalTransportWithSFUConfig[] = [];
         if (localTransport) {
           localTransportAsArray = [localTransport];
