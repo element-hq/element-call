@@ -436,7 +436,9 @@ describe("DeveloperSettingsTab", () => {
         expect(client.doesServerSupportUnstableFeature).toHaveBeenCalled(),
       );
 
-      expect(screen.getByText(/Media key rotation: active \(5 participants\)/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Media key rotation: active \(5 participants\)/),
+      ).toBeInTheDocument();
     });
 
     it("displays suppressed status when key rotation is suppressed", async () => {
@@ -460,7 +462,11 @@ describe("DeveloperSettingsTab", () => {
         expect(client.doesServerSupportUnstableFeature).toHaveBeenCalled(),
       );
 
-      expect(screen.getByText(/Media key rotation: suppressed, participant limit reached \(50 participants\)/)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Media key rotation: suppressed, participant limit reached \(50 participants\)/,
+        ),
+      ).toBeInTheDocument();
     });
 
     it("does not render KeyRotationStatus when vm is not provided", async () => {
