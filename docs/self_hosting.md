@@ -16,7 +16,7 @@
 The following [MSCs](https://github.com/matrix-org/matrix-spec-proposals) are
 required for Element Call to work properly:
 
-- **[MSC3266](https://github.com/deepbluev7/matrix-doc/blob/room-summaries/proposals/3266-room-summary.md):
+- **[MSC3266](https://github.com/deepbluev7/matrix-doc/blob/room-summaries/proposals/3266-room-summary.md)
   Room Summary API**: In Standalone mode Element Call is able to join rooms
   over federation using knocking. In this context MSC3266 is required as it
   allows to request a room summary of rooms you are not joined. The summary
@@ -29,19 +29,26 @@ required for Element Call to work properly:
   signalling. If disabled it is very likely that you end up with stuck calls in
   Matrix rooms.
 
+- **[MSC4519](https://github.com/matrix-org/matrix-spec-proposals/blob/travis/msc/voip-transports-registry/proposals/4519-rtc-transports-registry.md)
+  MatrixRTC Transports Registry**: Defines an endpoint that clients can use to
+  query the available MatrixRTC transports (i.e. find your LiveKit SFU).
+
 - **[MSC4222](https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sync_v2_state_after/proposals/4222-sync-v2-state-after.md)
   Adding `state_after` to sync v2**: Allow clients to opt-in to a change of the
   sync v2 API that allows them to correctly track the state of the room. This is
   required by Element Call to track room state reliably.
 
 If you're using [Synapse](https://github.com/element-hq/synapse/) as your
-homeserver, you'll need to additionally add the following config items to
-`homeserver.yaml` to comply with Element Call:
+homeserver, you can configure these features by adding the following entries to
+`homeserver.yaml`:
 
 ```yaml
 experimental_features:
   # MSC3266: Room summary API. Used for knocking over federation
   msc3266_enabled: true
+  # MSC4143: MatrixRTC. For historical reasons this flag enables the transports
+  # endpoint defined in MSC4519.
+  msc4143_enabled: true
   # MSC4222 needed for syncv2 state_after. This allow clients to
   # correctly track the state of the room.
   msc4222_enabled: true
@@ -61,6 +68,15 @@ rc_delayed_event_mgmt:
   # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2Hz
   per_second: 1
   burst_count: 20
+
+matrix_rtc:
+  transports:
+    # The transport you specify will be made available to clients over the
+    # /_matrix/client/unstable/org.matrix.msc4143/rtc/transports endpoint as
+    # defined in MSC4519.
+    - type: livekit
+      # Replace this with the actual URL of your MatrixRTC Authorization Service
+      livekit_service_url: https://matrix-rtc.example.com/livekit/jwt
 ```
 
 As a prerequisite for the
@@ -186,23 +202,6 @@ backend mxrtc_auth_backend
     option http-buffer-request
 
 ```
-
-#### MatrixRTC transport announcement
-
-Enable the unstable feature flag `msc4143_enabled`, and update the
-[`matrix_rtc` section](https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html#matrix_rtc)
-of your Synapse config file:
-
-```yaml
-matrix_rtc:
-  transports:
-    - type: livekit
-      livekit_service_url: https://matrix-rtc.example.com/livekit/jwt
-```
-
-The transport you specify will be made available to clients over the
-`/_matrix/client/unstable/org.matrix.msc4143/rtc/transports` endpoint as defined
-in [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143).
 
 ## Building Element Call
 

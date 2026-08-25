@@ -22,6 +22,9 @@ Please see LICENSE in the repository root for full details.
   height: 100%;
   object-fit: cover;
   background-color: var(--video-tile-background);
+  /* In FF if you add a transform: scale/translate/matrix filter on an element,
+  it'll ignore the parents' border-radius, so force back the radius to avoid UI glitch*/
+  border-radius: inherit;
 }
 
 video.mirror {

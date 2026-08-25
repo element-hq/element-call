@@ -41,6 +41,8 @@ import { TileWrapper } from "./TileWrapper";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { useInitial } from "../useInitial";
 
+const MAX_ANIMATED_TILES = 50; // Capped for performance reasons
+
 interface Rect {
   x: number;
   y: number;
@@ -285,7 +287,6 @@ export function Grid<
   const [visibleTilesCallback, setVisibleTilesCallback] =
     useState<VisibleTilesCallback | null>(null);
   const tiles = useInitial(() => new Map<string, Tile<TileModel>>());
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   const Slot: FC<SlotProps<TileModel>> = useMemo(
     () =>
@@ -372,6 +373,10 @@ export function Grid<
   // react-spring's imperative API during gestures to improve responsiveness
   const dragState = useRef<DragState | null>(null);
 
+  // If true, disables animations
+  const immediate =
+    usePrefersReducedMotion() || placedTiles.length > MAX_ANIMATED_TILES;
+
   const [tileTransitions, springRef] = useTransition(
     placedTiles,
     () => ({
@@ -389,9 +394,9 @@ export function Grid<
         y,
         width,
         height,
-        immediate: prefersReducedMotion,
+        immediate,
       }),
-      enter: { opacity: 1, scale: 1, immediate: prefersReducedMotion },
+      enter: { opacity: 1, scale: 1, immediate },
       update: ({
         id,
         x,
@@ -406,9 +411,9 @@ export function Grid<
               y,
               width,
               height,
-              immediate: prefersReducedMotion,
+              immediate,
             },
-      leave: { opacity: 0, scale: 0, immediate: prefersReducedMotion },
+      leave: { opacity: 0, scale: 0, immediate },
       config: { mass: 0.7, tension: 252, friction: 25 },
     }),
     // react-spring's types are bugged and can't infer the spring type
@@ -441,8 +446,7 @@ export function Grid<
               y: tile.y,
               width: tile.width,
               height: tile.height,
-              immediate:
-                prefersReducedMotion || ((key): boolean => key === "zIndex"),
+              immediate: immediate || ((key): boolean => key === "zIndex"),
               // Allow the tile's position to settle before pushing its
               // z-index back down
               delay: (key): number => (key === "zIndex" ? 500 : 0),
@@ -453,7 +457,7 @@ export function Grid<
               x: tileX,
               y: tileY,
               immediate:
-                prefersReducedMotion ||
+                immediate ||
                 ((key): boolean =>
                   key === "zIndex" || key === "x" || key === "y"),
             },

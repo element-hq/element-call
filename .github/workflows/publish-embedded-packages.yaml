@@ -9,7 +9,7 @@ on:
       - opened
       - labeled
   push:
-    branches: [livekit]
+    branches: [main]
 
 jobs:
   versioning:

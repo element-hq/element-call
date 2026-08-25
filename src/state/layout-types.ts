@@ -16,6 +16,7 @@ import {
   type SpotlightTileViewModel,
 } from "./TileViewModel.ts";
 import { type Behavior } from "./Behavior.ts";
+import { shallowEquals as arrayShallowEquals } from "../utils/array.ts";
 
 export interface GridLayoutMedia {
   type: "grid";
@@ -140,3 +141,30 @@ export type Layout =
   | OneOnOneDesktopLayout
   | OneOnOneMobileLayout
   | PipLayout;
+
+/**
+ * Tests whether the top-level properties and array elements of layout `a` are
+ * equal to those of layout `b`. Useful for deduping redundant layout updates.
+ */
+export function layoutShallowEquals(a: Layout, b: Layout): boolean {
+  // If a and b have the same number of keys and every key in a is also in b,
+  // then they have the same keys.
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+
+  for (const key of aKeys) {
+    if (!(key in b)) return false;
+
+    // Now check that they have the same values.
+    const aValue = (a as any)[key];
+    const bValue = (b as any)[key];
+    if (Array.isArray(aValue) && Array.isArray(bValue)) {
+      // Special case for arrays so we can detect when the grid tiles arrays are
+      // essentially the same.
+      if (!arrayShallowEquals(aValue, bValue)) return false;
+    } else if (aValue !== bValue) return false;
+  }
+
+  return true;
+}

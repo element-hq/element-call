@@ -79,7 +79,7 @@ import {
   type ReactionInfo,
   type ReactionOption,
 } from "../../reactions";
-import { shallowEquals } from "../../utils/array";
+import { shallowEquals as shallowArrayEquals } from "../../utils/array";
 import { type MediaDevices } from "../MediaDevices";
 import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
@@ -89,6 +89,7 @@ import { getUrlParams, HeaderStyle } from "../../UrlParams";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../../widget";
 import {
+  layoutShallowEquals,
   type Alignment,
   type GridLayoutMedia,
   type Layout,
@@ -364,6 +365,11 @@ export interface CallViewModel {
    * Whether the call layout is overflowing the interface (causing it to scroll).
    */
   overflowing$: Behavior<boolean>;
+
+  /**
+   * Whether modals such as settings and reactions should be accessible at all.
+   */
+  showModals$: Behavior<boolean>;
 
   settingsOpen$: Behavior<boolean>;
   setSettingsOpen$: Behavior<(open: boolean) => void>;
@@ -941,7 +947,7 @@ export function createCallViewModel$(
               bins.sort(([, bin1], [, bin2]) => bin1 - bin2).map(([m]) => m),
             );
       }),
-      distinctUntilChanged(shallowEquals),
+      distinctUntilChanged(shallowArrayEquals),
     ),
   );
 
@@ -1000,7 +1006,7 @@ export function createCallViewModel$(
   const spotlight$ = scope.behavior<MediaViewModel[]>(
     spotlightAndPip$.pipe(
       map(({ spotlight }) => spotlight),
-      distinctUntilChanged<MediaViewModel[]>(shallowEquals),
+      distinctUntilChanged<MediaViewModel[]>(shallowArrayEquals),
     ),
   );
 
@@ -1209,6 +1215,7 @@ export function createCallViewModel$(
         }
         return layout;
       }),
+      distinctUntilChanged(),
       scope.bind(),
     )
     .subscribe((orientation) => {
@@ -1448,6 +1455,11 @@ export function createCallViewModel$(
       map((naturallyShowFooter) => naturallyShowFooter && showFooterUrlParams),
     ),
   );
+
+  const showModals$ = scope.behavior(
+    windowMode$.pipe(map((mode) => mode !== "pip")),
+  );
+
   const settingsOpen$ = new BehaviorSubject(false);
   const setSettingsOpen$ = constant((open: boolean) => {
     settingsOpen$.next(open);
@@ -1574,7 +1586,11 @@ export function createCallViewModel$(
    * The layout of tiles in the call interface.
    */
   const layout$ = scope.behavior<Layout>(
-    layoutInternals$.pipe(map(({ layout }) => layout)),
+    layoutInternals$.pipe(
+      map(({ layout }) => layout),
+      // Drop redundant layout updates before they would hit React.
+      distinctUntilChanged<Layout>(layoutShallowEquals),
+    ),
   );
 
   const overflowing$ = scope.behavior<boolean>(
@@ -1820,6 +1836,7 @@ export function createCallViewModel$(
     showNameTags$,
     showHeader$: showHeader$,
     showFooter$: showFooter$,
+    showModals$,
     settingsOpen$: settingsOpen$,
     setSettingsOpen$: setSettingsOpen$,
     edgeToEdge$,
