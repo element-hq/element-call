@@ -19,6 +19,6 @@
     "delayed_leave_event_delay_ms": 18000,
     "delayed_leave_event_restart_ms": 4000,
     "network_error_retry_ms": 100,
-    "key_rotation_participant_limit": 30
+    "key_rotation_participant_limit": null
   }
 }

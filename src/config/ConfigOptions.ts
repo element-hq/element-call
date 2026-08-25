@@ -238,7 +238,7 @@ export interface ConfigOptions {
      * cost of rotating on every join/leave becomes prohibitive. At this limit the current key is
      * kept and distributed to new joiners; no new keys are generated for joiners/leavers.
      *
-     * Defaults to the js-sdk default (30).
+     * Defaults to the js-sdk default (undefined). Which means that rotation will always happen.
      */
     key_rotation_participant_limit?: number;
   };
