@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, type Mock, vi } from "vitest";
 import { render, waitFor, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@vector-im/compound-web";
+import { BehaviorSubject } from "rxjs";
 
 import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
@@ -411,5 +412,74 @@ describe("DeveloperSettingsTab", () => {
         expect(checkedValue).toBeChecked();
       },
     );
+  });
+
+  describe("KeyRotationStatus", () => {
+    it("displays active status when key rotation is not suppressed", async () => {
+      const client = createMockMatrixClient();
+      const mockVm = {
+        keyRotationSuppressed$: new BehaviorSubject(false),
+        participantCount$: new BehaviorSubject(5),
+      } as unknown as any;
+
+      render(
+        <TooltipProvider>
+          <DeveloperSettingsTab
+            client={client}
+            env={{} as unknown as ImportMetaEnv}
+            vm={mockVm}
+          />
+        </TooltipProvider>,
+      );
+
+      await waitFor(() =>
+        expect(client.doesServerSupportUnstableFeature).toHaveBeenCalled(),
+      );
+
+      expect(screen.getByText(/Media key rotation: active \(5 participants\)/)).toBeInTheDocument();
+    });
+
+    it("displays suppressed status when key rotation is suppressed", async () => {
+      const client = createMockMatrixClient();
+      const mockVm = {
+        keyRotationSuppressed$: new BehaviorSubject(true),
+        participantCount$: new BehaviorSubject(50),
+      } as unknown as any;
+
+      render(
+        <TooltipProvider>
+          <DeveloperSettingsTab
+            client={client}
+            env={{} as unknown as ImportMetaEnv}
+            vm={mockVm}
+          />
+        </TooltipProvider>,
+      );
+
+      await waitFor(() =>
+        expect(client.doesServerSupportUnstableFeature).toHaveBeenCalled(),
+      );
+
+      expect(screen.getByText(/Media key rotation: suppressed, participant limit reached \(50 participants\)/)).toBeInTheDocument();
+    });
+
+    it("does not render KeyRotationStatus when vm is not provided", async () => {
+      const client = createMockMatrixClient();
+
+      render(
+        <TooltipProvider>
+          <DeveloperSettingsTab
+            client={client}
+            env={{} as unknown as ImportMetaEnv}
+          />
+        </TooltipProvider>,
+      );
+
+      await waitFor(() =>
+        expect(client.doesServerSupportUnstableFeature).toHaveBeenCalled(),
+      );
+
+      expect(screen.queryByText(/Media key rotation:/)).not.toBeInTheDocument();
+    });
   });
 });
