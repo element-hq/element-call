@@ -13,7 +13,7 @@ services:
       - ./backend/playwright_homeserver-othersite.yaml:/data/cfg/homeserver.yaml:Z
   element-web:
     # Pin to a SHA so that upstream cannot break our tests. Renovate handles regular updates.
-    image: ghcr.io/element-hq/element-web:develop@sha256:07aa9a386878a0cc472b0b314504caae9438b05f6770ca25936d5c9f2de29ede
+    image: ghcr.io/element-hq/element-web:develop@sha256:0332028836603e91689053f157847b4deef9342bd19e3195eeb81793b7e4046e
   element-web-1:
     # Pin to a SHA so that upstream cannot break our tests. Renovate handles regular updates.
-    image: ghcr.io/element-hq/element-web:develop@sha256:07aa9a386878a0cc472b0b314504caae9438b05f6770ca25936d5c9f2de29ede
+    image: ghcr.io/element-hq/element-web:develop@sha256:0332028836603e91689053f157847b4deef9342bd19e3195eeb81793b7e4046e
