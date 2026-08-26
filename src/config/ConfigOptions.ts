@@ -12,9 +12,7 @@ Please see LICENSE in the repository root for full details.
  * Settings, or pinned for a deployment via `matrix_rtc_mode` in config.json.
  */
 export enum MatrixRTCMode {
-  /** Legacy single-SFU + user-keyed memberships + legacy JWT endpoint. */
-  Legacy = "legacy",
-  /** Multi-SFU transport, legacy JWT endpoint, no sticky events. */
+  /** Multi-SFU transport, legacy JWT endpoint, state events. */
   Compatibility = "compatibility",
   /**
    * Multi-SFU transport with:

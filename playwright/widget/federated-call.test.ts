@@ -12,9 +12,7 @@ import { HOST1, HOST2, type RtcMode, TestHelpers } from "./test-helpers";
 
 const modePairs: [RtcMode, RtcMode][] = [
   ["compat", "compat"],
-  ["legacy", "legacy"],
-  ["legacy", "compat"],
-  ["compat", "legacy"],
+  // TODO: Compatibility + Matrix 2.0?
 ];
 
 modePairs.forEach(([rtcMode1, rtcMode2]) => {

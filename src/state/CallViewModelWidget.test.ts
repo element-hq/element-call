@@ -35,11 +35,7 @@ vi.mock("../widget", () => ({
   },
 }));
 
-it.each([
-  [MatrixRTCMode.Legacy],
-  [MatrixRTCMode.Compatibility],
-  [MatrixRTCMode.Matrix_2_0],
-])(
+it.each([[MatrixRTCMode.Compatibility], [MatrixRTCMode.Matrix_2_0]])(
   "expect leave when ElementWidgetActions.HangupCall is called (%s mode)",
   async (mode) => {
     const pr = Promise.withResolvers<string>();

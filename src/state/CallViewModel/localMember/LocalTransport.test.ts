@@ -13,7 +13,6 @@ import {
   it,
   type MockedObject,
   vi,
-  type MockInstance,
 } from "vitest";
 import {
   type CallMembership,
@@ -26,7 +25,6 @@ import {
   mockConfig,
   flushPromises,
   ownMemberMock,
-  mockRtcMembership,
   testScope,
 } from "../../../utils/test";
 import {
@@ -35,7 +33,7 @@ import {
   type LocalTransportWithSFUConfig,
 } from "./LocalTransport";
 import { constant } from "../../Behavior";
-import { Epoch, ObservableScope, trackEpoch } from "../../ObservableScope";
+import { Epoch, ObservableScope } from "../../ObservableScope";
 import {
   MatrixRTCTransportMissingError,
   FailToGetOpenIdToken,
@@ -58,7 +56,6 @@ describe("LocalTransport", () => {
     const { advertised$, active$ } = createLocalTransport$({
       scope: testScope(),
       roomId: "!room:example.org",
-      useOldestMember: false,
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -101,7 +98,6 @@ describe("LocalTransport", () => {
     const { advertised$, active$ } = createLocalTransport$({
       scope,
       roomId: "!example_room_id",
-      useOldestMember: false,
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         baseUrl: "https://example.org",
@@ -144,7 +140,6 @@ describe("LocalTransport", () => {
     const { advertised$, active$ } = createLocalTransport$({
       scope: testScope(),
       roomId: "!room:example.org",
-      useOldestMember: false,
       memberships$: constant(new Epoch<CallMembership[]>([])),
       client: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -185,127 +180,6 @@ describe("LocalTransport", () => {
     });
   });
 
-  describe("oldest member mode", () => {
-    const aliceTransport: LivekitTransportConfig = {
-      type: "livekit",
-      livekit_service_url: "https://alice.example.org",
-    };
-    const bobTransport: LivekitTransportConfig = {
-      type: "livekit",
-      livekit_service_url: "https://bob.example.org",
-    };
-    const aliceMembership = mockRtcMembership("@alice:example.org", "AAA", {
-      fociPreferred: [aliceTransport],
-    });
-    const bobMembership = mockRtcMembership("@bob:example.org", "BBB", {
-      fociPreferred: [bobTransport],
-    });
-
-    let openIdSpy: MockInstance<(typeof openIDSFU)["getSFUConfigWithOpenID"]>;
-    beforeEach(() => {
-      openIdSpy = vi
-        .spyOn(openIDSFU, "getSFUConfigWithOpenID")
-        .mockResolvedValue(openIdResponse);
-    });
-
-    it("updates active transport when oldest member changes", async () => {
-      // Initially, Alice is the only member
-      const memberships$ = new BehaviorSubject([aliceMembership]);
-
-      const scope = testScope();
-      const { advertised$, active$ } = createLocalTransport$({
-        scope,
-        roomId: "!example_room_id",
-        useOldestMember: true,
-        memberships$: scope.behavior(memberships$.pipe(trackEpoch())),
-        client: {
-          getDomain: () => "example.org",
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          _unstable_getRTCTransports: async () => Promise.resolve([]),
-          getOpenIdToken: vi.fn(),
-          getDeviceId: vi.fn(),
-          baseUrl: "https://example.org",
-        },
-        ownMembershipIdentity: ownMemberMock,
-        forceJwtEndpoint: JwtEndpointVersion.Legacy,
-        delayId$: constant("delay_id_mock"),
-      });
-
-      expect(active$.value).toBe(null);
-      await flushPromises();
-      // SFU config should've been fetched
-      expect(openIdSpy).toHaveBeenCalled();
-      // Alice's transport should be active and advertised
-      expect(active$.value?.transport).toStrictEqual(aliceTransport);
-      expect(advertised$.value).toStrictEqual(aliceTransport);
-
-      // Now Bob joins the call, but Alice is still the oldest member
-      openIdSpy.mockClear();
-      memberships$.next([aliceMembership, bobMembership]);
-      await flushPromises();
-      // No new SFU config should've been fetched
-      expect(openIdSpy).not.toHaveBeenCalled();
-      // Alice's transport should still be active and advertised
-      expect(active$.value?.transport).toStrictEqual(aliceTransport);
-      expect(advertised$.value).toStrictEqual(aliceTransport);
-
-      // Now Bob takes Alice's place as the oldest member
-      openIdSpy.mockClear();
-      memberships$.next([bobMembership, aliceMembership]);
-      // Active transport should reset to null until we have Bob's SFU config
-      expect(active$.value).toStrictEqual(null);
-      await flushPromises();
-      // Bob's SFU config should've been fetched
-      expect(openIdSpy).toHaveBeenCalled();
-      // Bob's transport should be active, but Alice's should remain advertised
-      // (since we don't want the change in oldest member to cause a wave of new
-      // state events)
-      expect(active$.value?.transport).toStrictEqual(bobTransport);
-      expect(advertised$.value).toStrictEqual(aliceTransport);
-    });
-
-    it("advertises preferred transport when no other member exists", async () => {
-      // Initially, there are no members
-      const memberships$ = new BehaviorSubject<CallMembership[]>([]);
-
-      const scope = testScope();
-      const { advertised$, active$ } = createLocalTransport$({
-        scope,
-        roomId: "!example_room_id",
-        useOldestMember: true,
-        memberships$: scope.behavior(memberships$.pipe(trackEpoch())),
-        client: {
-          getDomain: () => "example.org",
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          _unstable_getRTCTransports: async () =>
-            Promise.resolve([aliceTransport]),
-          getOpenIdToken: vi.fn(),
-          getDeviceId: vi.fn(),
-          baseUrl: "https://example.org",
-        },
-        ownMembershipIdentity: ownMemberMock,
-        forceJwtEndpoint: JwtEndpointVersion.Legacy,
-        delayId$: constant("delay_id_mock"),
-      });
-
-      expect(active$.value).toBe(null);
-      await flushPromises();
-      // Our own preferred transport should be advertised
-      expect(advertised$.value).toStrictEqual(aliceTransport);
-      // No transport should be active however (there is still no oldest member)
-      expect(active$.value).toBe(null);
-
-      // Now Bob joins the call and becomes the oldest member
-      memberships$.next([bobMembership]);
-      await flushPromises();
-      // We should still advertise our own preferred transport (to avoid
-      // unnecessary state changes)
-      expect(advertised$.value).toStrictEqual(aliceTransport);
-      // Bob's transport should become active
-      expect(active$.value?.transport).toBe(bobTransport);
-    });
-  });
-
   type LocalTransportProps = Parameters<typeof createLocalTransport$>[0];
 
   describe("transport configuration mechanisms", () => {
@@ -320,7 +194,6 @@ describe("LocalTransport", () => {
         ownMembershipIdentity: ownMemberMock,
         scope: testScope(),
         roomId: "!example_room_id",
-        useOldestMember: false,
         forceJwtEndpoint: JwtEndpointVersion.Legacy,
         delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
@@ -433,7 +306,6 @@ describe("LocalTransport", () => {
         scope: testScope(),
         ownMembershipIdentity: ownMemberMock,
         roomId: "!example_room_id",
-        useOldestMember: false,
         forceJwtEndpoint: JwtEndpointVersion.Legacy,
         delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
@@ -473,7 +345,6 @@ describe("LocalTransport", () => {
       ownMembershipIdentity: ownMemberMock,
       roomId: "!example_room_id",
       // We want multi-sdu
-      useOldestMember: false,
       forceJwtEndpoint: JwtEndpointVersion.Legacy,
       delayId$: delayId$,
       memberships$: constant(new Epoch<CallMembership[]>([])),

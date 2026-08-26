@@ -258,11 +258,9 @@ function mockRingEvent(
   } as unknown as { event_id: string } & IRTCNotificationContent;
 }
 
-describe.each([
-  [MatrixRTCMode.Legacy],
-  [MatrixRTCMode.Compatibility],
-  [MatrixRTCMode.Matrix_2_0],
-])("CallViewModel (%s mode)", (mode) => {
+const modes = [[MatrixRTCMode.Compatibility], [MatrixRTCMode.Matrix_2_0]];
+
+describe.each(modes)("CallViewModel (%s mode)", (mode) => {
   const withCallViewModel = withCallViewModelInMode(mode);
 
   test("participants are retained during a focus switch", () => {
