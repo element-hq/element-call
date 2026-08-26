@@ -10,14 +10,7 @@ import {
   type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
-import {
-  combineLatest,
-  distinctUntilChanged,
-  from,
-  map,
-  of,
-  switchMap,
-} from "rxjs";
+import { distinctUntilChanged, from, map, of, switchMap } from "rxjs";
 import { logger as rootLogger, type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
@@ -54,7 +47,6 @@ interface Props {
   // Used by the jwt service to create the livekit room and compute the livekit alias.
   roomId: string;
   forceJwtEndpoint: JwtEndpointVersion;
-  delayId$: Behavior<string | null>;
 }
 
 export enum JwtEndpointVersion {
@@ -123,7 +115,6 @@ export const createLocalTransport$ = ({
   client,
   roomId,
   forceJwtEndpoint,
-  delayId$,
 }: Props): LocalTransport => {
   const logger = rootLogger.getChild("[LocalTransport]");
 
@@ -162,8 +153,8 @@ export const createLocalTransport$ = ({
       distinctUntilChanged(areLivekitTransportsEqual),
     );
 
-  const preferredTransport$ = combineLatest([preferredConfig$, delayId$]).pipe(
-    switchMap(async ([transport, delayId]) => {
+  const preferredTransport$ = preferredConfig$.pipe(
+    switchMap(async (transport) => {
       try {
         return await doOpenIdAndJWTFromUrl(
           transport,
@@ -171,7 +162,6 @@ export const createLocalTransport$ = ({
           ownMembershipIdentity,
           roomId,
           client,
-          delayId ?? undefined,
           logger,
         );
       } catch (e) {
@@ -223,7 +213,6 @@ export const createLocalTransport$ = ({
  *  @param membership The identity of the local member.
  *  @param roomId The room ID to use for the JWT.
  *  @param client The client to use for the OpenID token.
- *  @param delayId The delayId to use for the JWT.
  *
  *  @throws FailToGetOpenIdToken, NoMatrix2AuthorizationService
  */
@@ -232,12 +221,7 @@ async function doOpenIdAndJWTFromUrl(
   forceJwtEndpoint: JwtEndpointVersion,
   membership: CallMembershipIdentityParts,
   roomId: string,
-  client: Pick<
-    MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
-  > &
-    OpenIDClientParts,
-  delayId?: string,
+  client: Pick<MatrixClient, "_unstable_getRTCTransports"> & OpenIDClientParts,
   logger?: Logger,
 ): Promise<LocalTransportWithSFUConfig> {
   const sfuConfig = await getSFUConfigWithOpenID(
@@ -247,8 +231,6 @@ async function doOpenIdAndJWTFromUrl(
     roomId,
     {
       forceJwtEndpoint: forceJwtEndpoint,
-      delayEndpointBaseUrl: client.baseUrl,
-      delayId,
     },
     logger,
   );

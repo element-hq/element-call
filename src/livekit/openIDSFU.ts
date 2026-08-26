@@ -18,7 +18,6 @@ import {
   NoMatrix2AuthorizationService,
 } from "../utils/errors";
 import { doNetworkOperationWithRetry } from "../utils/matrix";
-import { Config } from "../config/Config";
 import { JwtEndpointVersion } from "../state/CallViewModel/localMember/LocalTransport";
 
 /**
@@ -85,8 +84,6 @@ export type OpenIDClientParts = Pick<
  * This function by default uses whatever is possible with the current jwt service installed next to the SFU.
  * For remote connections this does not matter, since we will not publish there we can rely on the newest option.
  * For our own connection we can only use the hashed version if we also send the new matrix2.0 sticky events.
- * @param opts.delayEndpointBaseUrl The URL of the matrix homeserver.
- * @param opts.delayId The delay id used for the jwt service to manage.
  * @param logger optional logger.
  * @returns Object containing the token information
  * @throws FailToGetOpenIdToken
@@ -98,8 +95,6 @@ export async function getSFUConfigWithOpenID(
   roomId: string,
   opts?: {
     forceJwtEndpoint?: JwtEndpointVersion;
-    delayEndpointBaseUrl?: string;
-    delayId?: string;
   },
   logger?: Logger,
 ): Promise<SFUConfig> {
@@ -121,20 +116,18 @@ export async function getSFUConfigWithOpenID(
   const forceMatrix2Jwt =
     opts?.forceJwtEndpoint === JwtEndpointVersion.Matrix_2_0;
 
-  // We want to start using the new endpoint (with optional delay delegation)
-  // if we can use both or if we are forced to use the new one.
+  // We want to start using the new endpoint if we can use both or if we are
+  // forced to use the new one.
   if (tryBothJwtEndpoints || forceMatrix2Jwt) {
     try {
       logger?.info(
         `Trying to get JWT with delegation for focus ${serviceUrl}...`,
       );
-      const sfuConfig = await getLiveKitJWTWithDelayDelegation(
+      const sfuConfig = await getLiveKitJWT(
         membership,
         serviceUrl,
         roomId,
         openIdToken,
-        opts?.delayEndpointBaseUrl,
-        opts?.delayId,
       );
 
       return extractFullConfigFromToken(sfuConfig);
@@ -154,13 +147,11 @@ export async function getSFUConfigWithOpenID(
     logger?.info(
       `Trying to get JWT with legacy endpoint for focus ${serviceUrl}...`,
     );
-    sfuConfig = await getLiveKitJWT(
+    sfuConfig = await getLiveKitJWTLegacy(
       membership.deviceId,
       serviceUrl,
       roomId,
       openIdToken,
-      opts?.delayEndpointBaseUrl,
-      opts?.delayId,
     );
     logger?.info(`Got JWT from call's active focus URL.`);
     return extractFullConfigFromToken(sfuConfig);
@@ -188,33 +179,14 @@ function extractFullConfigFromToken(sfuConfig: {
   };
 }
 
-async function getLiveKitJWT(
+async function getLiveKitJWTLegacy(
   deviceId: string,
   livekitServiceURL: string,
   matrixRoomId: string,
   openIDToken: IOpenIDToken,
-  delayEndpointBaseUrl?: string,
-  delayId?: string,
 ): Promise<{ url: string; jwt: string }> {
-  interface IDelayParams {
-    delay_id?: string;
-    delay_timeout?: number;
-    delay_cs_api_url?: string;
-  }
-  let bodyDalayParts: IDelayParams = {};
-  // Also check for empty string
-  if (delayId && delayEndpointBaseUrl) {
-    const delayTimeoutMs =
-      Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms;
-    bodyDalayParts = {
-      delay_id: delayId,
-      delay_timeout: delayTimeoutMs,
-      delay_cs_api_url: delayEndpointBaseUrl,
-    };
-  }
-
-  const makeRequest = async (delayParts: IDelayParams): Promise<Response> => {
-    return await fetch(livekitServiceURL + "/sfu/get", {
+  const res = await doNetworkOperationWithRetry(async () =>
+    fetch(livekitServiceURL + "/sfu/get", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -225,31 +197,9 @@ async function getLiveKitJWT(
         room: matrixRoomId,
         openid_token: openIDToken,
         device_id: deviceId,
-        ...delayParts,
       }),
-    });
-  };
-
-  const res = await doNetworkOperationWithRetry(async () => {
-    let response = await makeRequest(bodyDalayParts);
-
-    // Old service compatibility check
-    const oldServiceDoesNotSupportDelayParts =
-      response.status === 400 && Object.keys(bodyDalayParts).length > 0;
-    // If http status 400 with M_BAD_JSON and we sent delay parts, retry without them
-    if (oldServiceDoesNotSupportDelayParts) {
-      try {
-        const errorBody = await response.json();
-        if (errorBody.errcode === "M_BAD_JSON") {
-          response = await makeRequest({});
-        }
-      } catch {
-        // If we can't parse the error, treat as real error
-      }
-    }
-
-    return response;
-  });
+    }),
+  );
 
   if (!res.ok) {
     throw parseErrorResponse(res, await res.text());
@@ -264,17 +214,15 @@ class NotSupportedError extends Error {
   }
 }
 
-export async function getLiveKitJWTWithDelayDelegation(
+export async function getLiveKitJWT(
   membership: CallMembershipIdentityParts,
   livekitServiceURL: string,
   matrixRoomId: string,
   openIDToken: IOpenIDToken,
-  delayEndpointBaseUrl?: string,
-  delayId?: string,
 ): Promise<{ url: string; jwt: string }> {
   const { userId, deviceId, memberId } = membership;
 
-  const body = {
+  const body = JSON.stringify({
     room_id: matrixRoomId,
     slot_id: "m.call#ROOM",
     openid_token: openIDToken,
@@ -283,27 +231,13 @@ export async function getLiveKitJWTWithDelayDelegation(
       claimed_user_id: userId,
       claimed_device_id: deviceId,
     },
-  };
-
-  let bodyDalayParts = {};
-  // Also check for empty string
-  if (delayId && delayEndpointBaseUrl) {
-    const delayTimeoutMs =
-      Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms;
-    bodyDalayParts = {
-      delay_id: delayId,
-      delay_timeout: delayTimeoutMs,
-      delay_cs_api_url: delayEndpointBaseUrl,
-    };
-  }
+  });
 
   const res = await doNetworkOperationWithRetry(async () => {
     return await fetch(livekitServiceURL + "/get_token", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ...body, ...bodyDalayParts }),
+      headers: { "Content-Type": "application/json" },
+      body,
     });
   });
 

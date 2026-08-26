@@ -16,6 +16,11 @@ import {
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
+  type IOpenIDToken,
+  parseErrorResponse,
+  type MatrixClient,
+} from "matrix-js-sdk";
+import {
   Status as RTCSessionStatus,
   type LivekitTransport,
   type LivekitTransportConfig,
@@ -72,6 +77,7 @@ import {
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
+import { doNetworkOperationWithRetry } from "../../../utils/matrix.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -136,11 +142,14 @@ interface Props {
   joinMatrixRTC: (transport: LivekitTransportConfig) => void;
   homeserverConnected: HomeserverConnected;
   roomId: string;
+  ownMembershipIdentity: CallMembershipIdentityParts;
   localTransport$: Behavior<LocalTransport>;
+  client: Pick<MatrixClient, "getOpenIdToken" | "baseUrl">;
   matrixRTCSession: Pick<
     MatrixRTCSession,
-    "updateCallIntent" | "leaveRoomSession"
+    "slotId" | "updateCallIntent" | "leaveRoomSession"
   >;
+  delayId$: Behavior<string | null>;
   logger: Logger;
 }
 
@@ -176,8 +185,11 @@ export const createLocalMembership$ = ({
   joinMatrixRTC,
   logger: parentLogger,
   muteStates,
+  client,
   matrixRTCSession,
   roomId,
+  ownMembershipIdentity,
+  delayId$,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -636,6 +648,61 @@ export const createLocalMembership$ = ({
           logger.error("Error leaving RTC session", e);
         }
       });
+    },
+  );
+
+  scope.reconcile(
+    scope.behavior(combineLatest([delayId$, activeTransport$])),
+    async ([delayId, transport]) => {
+      if (delayId !== null && transport !== null) {
+        logger.info(
+          `Delegating delayed event ${delayId} to ${transport.livekit_service_url}…`,
+        );
+        let openIdToken: IOpenIDToken;
+        try {
+          openIdToken = await doNetworkOperationWithRetry(async () =>
+            client.getOpenIdToken(),
+          );
+        } catch (e) {
+          logger.error("Failed to get OpenID token for delegation", e);
+          return;
+        }
+        const body = JSON.stringify({
+          room_id: roomId,
+          slot_id: matrixRTCSession.slotId,
+          member: {
+            id: ownMembershipIdentity.memberId,
+            claimed_user_id: ownMembershipIdentity.userId,
+            claimed_device_id: ownMembershipIdentity.deviceId,
+          },
+          delay_id: delayId,
+          delay_timeout:
+            Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms,
+          delay_cs_api_url: client.baseUrl,
+          openid_token: openIdToken,
+        });
+        try {
+          const res = await doNetworkOperationWithRetry(async () =>
+            fetch(transport.livekit_service_url + "/delegate_delayed_leave", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body,
+            }),
+          );
+          if (!res.ok) {
+            if (res.status === 404)
+              logger.warn(
+                `Delayed event delegation not available on ${transport.livekit_service_url}`,
+              );
+            else throw parseErrorResponse(res, await res.text());
+          }
+        } catch (e) {
+          logger.error(
+            `Failed to delegate ${delayId} to ${transport.livekit_service_url}`,
+            e,
+          );
+        }
+      }
     },
   );
 
