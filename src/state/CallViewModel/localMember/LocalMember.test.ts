@@ -59,7 +59,7 @@ import {
 
 initializeWidget();
 
-const MATRIX_RTC_MODE = MatrixRTCMode.Legacy;
+const MATRIX_RTC_MODE = MatrixRTCMode.Compatibility;
 const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("../../../UrlParams", () => ({ getUrlParams }));
 vi.mock("@livekit/components-core", () => ({
@@ -71,12 +71,6 @@ vi.mock("@livekit/components-core", () => ({
 describe("LocalMembership", () => {
   describe("enterRTCSession", () => {
     it("It joins the correct Session", () => {
-      const focusFromOlderMembership = {
-        type: "livekit",
-        livekit_service_url: "http://my-oldest-member-service-url.com",
-        livekit_alias: "my-oldest-member-service-alias",
-      };
-
       mockConfig({
         livekit: { livekit_service_url: "http://my-default-service-url.com" },
       });
@@ -95,10 +89,6 @@ describe("LocalMembership", () => {
           },
         },
         memberships: [],
-        getFocusInUse: vi.fn().mockReturnValue(focusFromOlderMembership),
-        getOldestMembership: vi.fn().mockReturnValue({
-          getPreferredFoci: vi.fn().mockReturnValue([focusFromOlderMembership]),
-        }),
         joinRTCSession: vi.fn(),
       }) as unknown as MatrixRTCSession;
 
@@ -122,14 +112,12 @@ describe("LocalMembership", () => {
           memberId: "@alice:example.org:DEVICE",
           userId: "@alice:example.org",
         },
-        [
-          {
-            livekit_alias: "roomId",
-            livekit_service_url: "http://my-livekit-service-url.com",
-            type: "livekit",
-          },
-        ],
-        undefined,
+        [],
+        {
+          livekit_alias: "roomId",
+          livekit_service_url: "http://my-livekit-service-url.com",
+          type: "livekit",
+        },
         expect.objectContaining({ manageMediaKeys: true }),
       );
     });

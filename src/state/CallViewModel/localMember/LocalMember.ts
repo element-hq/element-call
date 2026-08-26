@@ -117,7 +117,6 @@ export type LocalMemberState =
     };
 
 /*
- * - get oldest membership
  * - get transport to use
  * - get openId + jwt token
  * - wait for createTrack() call

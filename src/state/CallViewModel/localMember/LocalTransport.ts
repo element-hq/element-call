@@ -7,23 +7,16 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type CallMembership,
-  isLivekitTransportConfig,
   type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
 import {
-  catchError,
   combineLatest,
   distinctUntilChanged,
-  first,
   from,
   map,
-  merge,
-  type Observable,
   of,
-  startWith,
   switchMap,
-  tap,
 } from "rxjs";
 import { logger as rootLogger, type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -47,8 +40,7 @@ import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
 
 /*
  * It figures out “which LiveKit focus URL/alias the local user should use,”
- * optionally aligning with the oldest member, and ensures the SFU path is primed
- * before advertising that choice.
+ * and ensures the SFU path is primed before advertising that choice.
  */
 interface Props {
   scope: ObservableScope;
@@ -61,7 +53,6 @@ interface Props {
     OpenIDClientParts;
   // Used by the jwt service to create the livekit room and compute the livekit alias.
   roomId: string;
-  useOldestMember: boolean;
   forceJwtEndpoint: JwtEndpointVersion;
   delayId$: Behavior<string | null>;
 }
@@ -119,8 +110,6 @@ export interface LocalTransport {
 /**
  * Connects to the JWT service and determines the transports that the local member should use.
  *
- * @prop useOldestMember Whether to use the same transport as the oldest member.
- * This will only update once the first oldest member appears. Will not recompute if the oldest member leaves.
  * @prop useOldJwtEndpoint Whether to set forceOldJwtEndpoint on the returned transport and to use the old JWT endpoint.
  * This is used when the connection manager needs to know if it has to use the legacy endpoint which implies a string concatenated rtcBackendIdentity.
  * (which is expected for non sticky event based rtc member events)
@@ -133,18 +122,10 @@ export const createLocalTransport$ = ({
   ownMembershipIdentity,
   client,
   roomId,
-  useOldestMember,
   forceJwtEndpoint,
   delayId$,
 }: Props): LocalTransport => {
   const logger = rootLogger.getChild("[LocalTransport]");
-  // The LiveKit transport in use by the oldest RTC membership. `null` when the
-  // oldest member has no such transport.
-  const oldestMemberTransport$ = observerOldestMembership$(
-    scope,
-    memberships$,
-    logger,
-  );
 
   const transportDiscovery = new RtcTransportAutoDiscovery({
     client: client,
@@ -203,19 +184,6 @@ export const createLocalTransport$ = ({
     }),
   );
 
-  if (useOldestMember) {
-    return observeLocalTransportForOldestMembership(
-      scope,
-      oldestMemberTransport$,
-      preferredTransport$,
-      client,
-      ownMembershipIdentity,
-      roomId,
-      logger,
-    );
-  }
-
-  // --- Multi-SFU mode ---
   // Always publish on and advertise the preferred transport.
   return {
     advertised$: scope.behavior(
@@ -242,47 +210,6 @@ export const createLocalTransport$ = ({
     ),
   };
 };
-
-/**
- * Observes the oldest member in the room and returns the transport that it uses if it is a livekit transport.
- * @param scope - The observable scope.
- * @param memberships$ - The observable of the call's memberships.'
- */
-function observerOldestMembership$(
-  scope: ObservableScope,
-  memberships$: Behavior<Epoch<CallMembership[]>>,
-  logger: Logger,
-): Behavior<LivekitTransportConfig | null> {
-  return scope.behavior<LivekitTransportConfig | null>(
-    memberships$.pipe(
-      map((memberships) => {
-        const oldestMember = memberships.value[0];
-        if (oldestMember === undefined) {
-          logger.info("Oldest member: not found");
-          return null;
-        }
-        const transport = oldestMember.getTransport(oldestMember);
-        if (transport === undefined) {
-          logger.warn(
-            `Oldest member: ${oldestMember.userId}|${oldestMember.deviceId}|${oldestMember.memberId} has no transport`,
-          );
-          return null;
-        }
-        if (!isLivekitTransportConfig(transport)) {
-          logger.warn(
-            `Oldest member: ${oldestMember.userId}|${oldestMember.deviceId}|${oldestMember.memberId} has invalid transport`,
-          );
-          return null;
-        }
-        logger.info(
-          "Oldest member: ${oldestMember.userId}|${oldestMember.deviceId}|${oldestMember.memberId} has valid transport",
-        );
-        return transport;
-      }),
-      distinctUntilChanged(areLivekitTransportsEqual),
-    ),
-  );
-}
 
 /**
  *  Utility to ensure the user can authenticate with the SFU.
@@ -328,85 +255,6 @@ async function doOpenIdAndJWTFromUrl(
   return {
     transport,
     sfuConfig,
-  };
-}
-
-function observeLocalTransportForOldestMembership(
-  scope: ObservableScope,
-  oldestMemberTransport$: Behavior<LivekitTransportConfig | null>,
-  preferredTransport$: Observable<LocalTransportWithSFUConfig>,
-  client: Pick<
-    MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
-  > &
-    OpenIDClientParts,
-  ownMembershipIdentity: CallMembershipIdentityParts,
-  roomId: string,
-  logger: Logger,
-): LocalTransport {
-  // Ensure we can authenticate with the SFU.
-  const authenticatedOldestMemberTransport$ = oldestMemberTransport$.pipe(
-    switchMap((transport) => {
-      // Oldest member not available -we are first- (or invalid SFU config).
-      if (transport === null) return of(null);
-
-      // Whenever there is transport change we want to revert
-      // to no transport while we do the authentication.
-      // So do a from(promise) here to be able to startWith(null)
-      return from(
-        doOpenIdAndJWTFromUrl(
-          transport,
-          JwtEndpointVersion.Legacy,
-          ownMembershipIdentity,
-          roomId,
-          client,
-          undefined,
-          logger,
-        ),
-      ).pipe(
-        catchError((e: unknown) => {
-          logger.error(
-            `Failed to authenticate to transport ${transport.livekit_service_url}`,
-            e,
-          );
-          throw mapAuthErrorToUserFriendlyError(e);
-        }),
-        startWith(null),
-      );
-    }),
-  );
-
-  // --- Oldest member mode ---
-  return {
-    // Never update the transport that we advertise in our membership. Just
-    // take the first valid oldest member or preferred transport that we learn
-    // about, and stick with that. This avoids unnecessary SFU hops and room
-    // state changes.
-    advertised$: scope.behavior(
-      merge(
-        authenticatedOldestMemberTransport$.pipe(
-          map((t) => t?.transport ?? null),
-        ),
-        preferredTransport$.pipe(map((t) => t.transport)),
-      ).pipe(
-        first((t) => t !== null),
-        tap((t) =>
-          logger.info(`Advertise transport: ${t.livekit_service_url}`),
-        ),
-      ),
-      null,
-    ),
-    // Publish on the transport used by the oldest member.
-    active$: scope.behavior(
-      authenticatedOldestMemberTransport$.pipe(
-        tap((t) =>
-          logger.info(
-            `Publish on transport: ${t?.transport.livekit_service_url}`,
-          ),
-        ),
-      ),
-      null,
-    ),
   };
 }
 

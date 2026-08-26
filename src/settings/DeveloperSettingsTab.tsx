@@ -524,22 +524,6 @@ export const DeveloperSettingsTab: FC<Props> = ({
           name={matrixRTCModeRadioGroup}
           control={
             <RadioControl
-              checked={effectiveMatrixRTCMode === MatrixRTCMode.Legacy}
-              value={MatrixRTCMode.Legacy}
-              disabled={matrixRTCModeForced}
-              onChange={onMatrixRTCModeChange}
-            />
-          }
-        >
-          <Label>{t("developer_mode.matrixRTCMode.Legacy.label")}</Label>
-          <HelpMessage>
-            {t("developer_mode.matrixRTCMode.Legacy.description")}
-          </HelpMessage>
-        </InlineField>
-        <InlineField
-          name={matrixRTCModeRadioGroup}
-          control={
-            <RadioControl
               checked={effectiveMatrixRTCMode === MatrixRTCMode.Compatibility}
               value={MatrixRTCMode.Compatibility}
               disabled={matrixRTCModeForced}

@@ -171,7 +171,7 @@ export function getBasicCallViewModelEnvironment(
           setE2EEEnabled: async () => Promise.resolve(),
         }),
       connectionState$: constant(ConnectionState.Connected),
-      matrixRTCMode$: constant(MatrixRTCMode.Legacy),
+      matrixRTCMode$: constant(MatrixRTCMode.Compatibility),
       ...callViewModelOptions,
     },
     handRaisedSubject$,

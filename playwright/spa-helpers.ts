@@ -101,9 +101,7 @@ async function setRtcModeFromSettings(
 
   // Move to Developer tab now
   await page.getByRole("tab", { name: "Developer" }).click();
-  if (mode == "legacy") {
-    await page.getByText("Legacy: state events").click();
-  } else if (mode == "2_0") {
+  if (mode == "2_0") {
     await page.getByText("Matrix 2.0").click();
   } else {
     // compat

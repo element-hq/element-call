@@ -441,7 +441,7 @@ export function createCallViewModel$(
   const matrixRTCMode$ =
     configMatrixRTCMode !== undefined
       ? constant(configMatrixRTCMode)
-      : (options.matrixRTCMode$ ?? constant(MatrixRTCMode.Legacy));
+      : (options.matrixRTCMode$ ?? constant(MatrixRTCMode.Compatibility));
 
   // Each hbar seperates a block of input variables required for the CallViewModel to function.
   // The outputs of this block is written under the hbar.
@@ -503,7 +503,6 @@ export function createCallViewModel$(
               mode === MatrixRTCMode.Matrix_2_0
                 ? JwtEndpointVersion.Matrix_2_0
                 : JwtEndpointVersion.Legacy,
-            useOldestMember: mode === MatrixRTCMode.Legacy,
           }),
       ),
     ),
