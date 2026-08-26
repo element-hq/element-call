@@ -130,10 +130,7 @@ describe("LocalMembership", () => {
           },
         ],
         undefined,
-        expect.objectContaining({
-          manageMediaKeys: true,
-          useLegacyMemberEvents: false,
-        }),
+        expect.objectContaining({ manageMediaKeys: true }),
       );
     });
   });
