@@ -851,9 +851,7 @@ export function enterRTCSession(
   // have started tracking by the time calls start getting created.
   // groupCallOTelMembership?.onJoinCall();
 
-  const { features, matrix_rtc_session: matrixRtcSessionConfig } = Config.get();
-  const useDeviceSessionMemberEvents =
-    features?.feature_use_device_session_member_events;
+  const { matrix_rtc_session: matrixRtcSessionConfig } = Config.get();
   const { sendNotificationType: notificationType, callIntent } = getUrlParams();
   const multiSFU =
     matrixRTCMode === MatrixRTCMode.Compatibility ||
@@ -895,9 +893,6 @@ export function enterRTCSession(
       notificationType,
       callIntent,
       manageMediaKeys: encryptMedia,
-      ...(useDeviceSessionMemberEvents !== undefined && {
-        useLegacyMemberEvents: !useDeviceSessionMemberEvents,
-      }),
       delayedLeaveEventRestartMs:
         matrixRtcSessionConfig?.delayed_leave_event_restart_ms,
       delayedLeaveEventDelayMs:
