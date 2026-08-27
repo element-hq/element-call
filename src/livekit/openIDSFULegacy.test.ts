@@ -17,7 +17,7 @@ import {
 import fetchMock from "fetch-mock";
 import { MatrixError } from "matrix-js-sdk";
 
-import { getSFUConfigWithOpenID, type OpenIDClientParts } from "./openIDSFU";
+import { getSFUConfigLegacyWithOpenID, type OpenIDClientParts } from "./openIDSFULegacy";
 import { testJWTToken } from "../utils/test-fixtures";
 import { ownMemberMock } from "../utils/test";
 import { FailToGetOpenIdToken } from "../utils/errors";
@@ -45,7 +45,7 @@ describe("getSFUConfigWithOpenID", () => {
         body: { url: sfuUrl, jwt: testJWTToken },
       };
     });
-    const config = await getSFUConfigWithOpenID(
+    const config = await getSFUConfigLegacyWithOpenID(
       matrixClient,
       ownMemberMock,
       "https://sfu.example.org",
@@ -71,7 +71,7 @@ describe("getSFUConfigWithOpenID", () => {
       };
     });
     try {
-      await getSFUConfigWithOpenID(
+      await getSFUConfigLegacyWithOpenID(
         matrixClient,
         ownMemberMock,
         "https://sfu.example.org",
@@ -123,7 +123,7 @@ describe("getSFUConfigWithOpenID", () => {
     );
 
     // Note: Assuming getSFUConfigWithOpenID eventually calls getLiveKitJWT
-    const config = await getSFUConfigWithOpenID(
+    const config = await getSFUConfigLegacyWithOpenID(
       matrixClient,
       ownMemberMock,
       "https://sfu.example.org",
@@ -164,7 +164,7 @@ describe("getSFUConfigWithOpenID", () => {
       { overwriteRoutes: true },
     );
 
-    const config = await getSFUConfigWithOpenID(
+    const config = await getSFUConfigLegacyWithOpenID(
       matrixClient,
       ownMemberMock,
       "https://sfu.example.org",
@@ -204,7 +204,7 @@ describe("getSFUConfigWithOpenID", () => {
       };
     });
     try {
-      await getSFUConfigWithOpenID(
+      await getSFUConfigLegacyWithOpenID(
         matrixClient,
         ownMemberMock,
         "https://sfu.example.org",
@@ -261,7 +261,7 @@ describe("getSFUConfigWithOpenID", () => {
       };
     });
     try {
-      await getSFUConfigWithOpenID(
+      await getSFUConfigLegacyWithOpenID(
         matrixClient,
         ownMemberMock,
         "https://sfu.example.org",
@@ -312,7 +312,7 @@ describe("getSFUConfigWithOpenID", () => {
         body: { url: sfuUrl, jwt: testJWTToken },
       };
     });
-    const config = await getSFUConfigWithOpenID(
+    const config = await getSFUConfigLegacyWithOpenID(
       matrixClient,
       ownMemberMock,
       "https://sfu.example.org",

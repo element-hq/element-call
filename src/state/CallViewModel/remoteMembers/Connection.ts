@@ -22,10 +22,10 @@ import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import {
-  getSFUConfigWithOpenID,
+  getSFUConfigLegacyWithOpenID,
   type OpenIDClientParts,
   type SFUConfig,
-} from "../../../livekit/openIDSFU.ts";
+} from "../../../livekit/openIDSFULegacy.ts";
 import { type Behavior } from "../../Behavior.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
 import {
@@ -280,7 +280,7 @@ export class Connection {
   protected async getSFUConfigForRemoteConnection(): Promise<SFUConfig> {
     // This will only be called for sfu's where we do not publish ourselves.
     // For the local connection we will use the existingJwtTokenData
-    return await getSFUConfigWithOpenID(
+    return await getSFUConfigLegacyWithOpenID(
       this.client,
       this.ownMembershipIdentity,
       this.transport.livekit_service_url,

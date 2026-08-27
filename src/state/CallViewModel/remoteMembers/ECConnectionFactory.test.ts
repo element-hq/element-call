@@ -14,7 +14,7 @@ import EventEmitter from "events";
 
 import { ObservableScope } from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
-import type { OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import type { OpenIDClientParts } from "../../../livekit/openIDSFULegacy.ts";
 import {
   exampleTransport,
   mockMediaDevices,

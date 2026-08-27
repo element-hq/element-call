@@ -37,10 +37,10 @@ import {
   NoMatrix2AuthorizationService,
 } from "../../../utils/errors.ts";
 import {
-  getSFUConfigWithOpenID,
+  getSFUConfigLegacyWithOpenID,
   type SFUConfig,
   type OpenIDClientParts,
-} from "../../../livekit/openIDSFU.ts";
+} from "../../../livekit/openIDSFULegacy.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 import { customLivekitUrl } from "../../../settings/settings.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
@@ -313,7 +313,7 @@ async function doOpenIdAndJWTFromUrl(
   delayId?: string,
   logger?: Logger,
 ): Promise<LocalTransportWithSFUConfig> {
-  const sfuConfig = await getSFUConfigWithOpenID(
+  const sfuConfig = await getSFUConfigLegacyWithOpenID(
     client,
     membership,
     transport.livekit_service_url,

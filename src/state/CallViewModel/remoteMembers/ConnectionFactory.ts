@@ -23,7 +23,7 @@ import { Connection } from "./Connection.ts";
 import type {
   OpenIDClientParts,
   SFUConfig,
-} from "../../../livekit/openIDSFU.ts";
+} from "../../../livekit/openIDSFULegacy.ts";
 import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";

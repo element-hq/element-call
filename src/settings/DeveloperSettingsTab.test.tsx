@@ -13,7 +13,7 @@ import { TooltipProvider } from "@vector-im/compound-web";
 import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
-import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
+import { getSFUConfigWithOpenID } from "../livekit/openIDSFULegacy";
 import {
   customLivekitUrl as customLivekitUrlSetting,
   enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
@@ -146,7 +146,7 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfigWithOpenID).not.toHaveBeenCalled();
+      expect(getSFUConfigLegacyWithOpenID).not.toHaveBeenCalled();
 
       expect(customLivekitUrlSetting.getValue()).toBe(null);
     });
@@ -168,7 +168,7 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfigWithOpenID).not.toHaveBeenCalled();
+      expect(getSFUConfigLegacyWithOpenID).not.toHaveBeenCalled();
 
       expect(customLivekitUrlSetting.getValue()).toBe(null);
     });
@@ -193,7 +193,7 @@ describe("DeveloperSettingsTab", () => {
         name: "Reset overwrite",
       });
       await user.click(cancelButton);
-      expect(getSFUConfigWithOpenID).not.toHaveBeenCalled();
+      expect(getSFUConfigLegacyWithOpenID).not.toHaveBeenCalled();
 
       expect(customLivekitUrlSetting.getValue()).toBe(null);
     });
@@ -216,7 +216,7 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfigWithOpenID).toHaveBeenCalledWith(
+      expect(getSFUConfigLegacyWithOpenID).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
         "wss://example.livekit.valid",
@@ -245,7 +245,7 @@ describe("DeveloperSettingsTab", () => {
       await user.type(input, "wss://example.livekit.valid");
 
       const saveButton = screen.getByRole("button", { name: "Save" });
-      (getSFUConfigWithOpenID as Mock).mockImplementation(() => {
+      (getSFUConfigLegacyWithOpenID as Mock).mockImplementation(() => {
         throw new Error("Invalid URL");
       });
       await user.click(saveButton);

@@ -22,7 +22,7 @@ import {
   isLocalTransportWithSFUConfig,
   type LocalTransportWithSFUConfig,
 } from "../localMember/LocalTransport.ts";
-import { type SFUConfig } from "../../../livekit/openIDSFU.ts";
+import { type SFUConfig } from "../../../livekit/openIDSFULegacy.ts";
 
 export class ConnectionManagerData {
   private readonly store: Map<

@@ -67,7 +67,7 @@ import styles from "./DeveloperSettingsTab.module.css";
 import settingsStyles from "./SettingsModal.module.css";
 import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
-import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
+import { getSFUConfigLegacyWithOpenID } from "../livekit/openIDSFULegacy";
 
 interface Props {
   client: MatrixClient;
@@ -481,7 +481,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
               if (userId === null || deviceId === null) {
                 throw new Error("Invalid user or device ID");
               }
-              await getSFUConfigWithOpenID(
+              await getSFUConfigLegacyWithOpenID(
                 client,
                 { userId, deviceId, memberId: "" },
                 customLivekitUrlTextBuffer,

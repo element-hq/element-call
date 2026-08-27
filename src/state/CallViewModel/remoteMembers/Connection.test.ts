@@ -35,7 +35,7 @@ import {
   type ConnectionOpts,
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
-import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import { type OpenIDClientParts } from "../../../livekit/openIDSFULegacy.ts";
 import {
   ElementCallError,
   FailToGetOpenIdToken,

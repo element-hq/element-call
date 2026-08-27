@@ -40,7 +40,7 @@ import {
   MatrixRTCTransportMissingError,
   FailToGetOpenIdToken,
 } from "../../../utils/errors";
-import * as openIDSFU from "../../../livekit/openIDSFU";
+import * as openIDSFU from "../../../livekit/openIDSFULegacy";
 import { customLivekitUrl } from "../../../settings/settings";
 import { testJWTToken } from "../../../utils/test-fixtures";
 
