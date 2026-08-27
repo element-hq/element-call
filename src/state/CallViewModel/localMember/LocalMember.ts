@@ -656,7 +656,7 @@ export const createLocalMembership$ = ({
     async ([delayId, transport]) => {
       if (delayId !== null && transport !== null) {
         logger.info(
-          `Delegating delayed event ${delayId} to ${transport.livekit_service_url}…`,
+          `Delegating delayed leave ${delayId} to ${transport.livekit_service_url}…`,
         );
         let openIdToken: IOpenIDToken;
         try {
@@ -689,13 +689,12 @@ export const createLocalMembership$ = ({
               body,
             }),
           );
-          if (!res.ok) {
-            if (res.status === 404)
-              logger.warn(
-                `Delayed event delegation not available on ${transport.livekit_service_url}`,
-              );
-            else throw parseErrorResponse(res, await res.text());
-          }
+          if (res.ok) logger.info(`Delayed leave delegation successful`);
+          else if (res.status === 404)
+            logger.warn(
+              `Delayed event delegation not available on ${transport.livekit_service_url}`,
+            );
+          else throw parseErrorResponse(res, await res.text());
         } catch (e) {
           logger.error(
             `Failed to delegate ${delayId} to ${transport.livekit_service_url}`,
