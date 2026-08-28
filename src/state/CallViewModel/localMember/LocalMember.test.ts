@@ -123,12 +123,6 @@ describe("LocalMembership", () => {
     });
 
     it("passes keyRotationParticipantLimit from config to joinRTCSession", () => {
-      const focusFromOlderMembership = {
-        type: "livekit",
-        livekit_service_url: "http://my-oldest-member-service-url.com",
-        livekit_alias: "my-oldest-member-service-alias",
-      };
-
       mockConfig({
         livekit: { livekit_service_url: "http://my-default-service-url.com" },
         matrix_rtc_session: {
@@ -152,10 +146,6 @@ describe("LocalMembership", () => {
           },
         },
         memberships: [],
-        getFocusInUse: vi.fn().mockReturnValue(focusFromOlderMembership),
-        getOldestMembership: vi.fn().mockReturnValue({
-          getPreferredFoci: vi.fn().mockReturnValue([focusFromOlderMembership]),
-        }),
         joinRTCSession: vi.fn(),
       }) as unknown as MatrixRTCSession;
 
