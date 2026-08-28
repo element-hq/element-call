@@ -165,8 +165,8 @@ describe("LocalMembership", () => {
 
       expect(mockedSession.joinRTCSession).toHaveBeenLastCalledWith(
         expect.any(Object),
-        expect.any(Array),
-        undefined,
+        [],
+        expect.any(Object),
         expect.objectContaining({
           keyRotationParticipantLimit: 50,
         }),
