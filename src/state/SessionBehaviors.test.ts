@@ -10,12 +10,12 @@ import { MatrixRTCSessionEvent } from "matrix-js-sdk/lib/matrixrtc";
 import { EventEmitter } from "events";
 
 import { createKeyRotationSuppressed$ } from "./SessionBehaviors";
-import { ObservableScope } from "./ObservableScope";
+import { testScope } from "../utils/test";
 
 describe("SessionBehaviors", () => {
   describe("createKeyRotationSuppressed$", () => {
     it("emits initial value from isKeyRotationSuppressed and updates when KeyRotationSuppressedChanged event is emitted", () => {
-      const scope = new ObservableScope();
+      const scope = testScope();
       const emitter = new EventEmitter();
       const mockSession = Object.assign(emitter, {
         on: vi.fn(),
@@ -36,7 +36,6 @@ describe("SessionBehaviors", () => {
       emitter.emit(MatrixRTCSessionEvent.KeyRotationSuppressedChanged, false);
 
       expect(keyRotationSuppressed$.value).toBe(false);
-      scope.end();
     });
   });
 });
