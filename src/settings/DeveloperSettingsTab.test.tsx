@@ -436,7 +436,7 @@ describe("DeveloperSettingsTab", () => {
       await waitFor(() =>
         expect(
           screen.getByText(/Media key rotation: active \(5 participants\)/),
-        ).toBeInTheDocument()
+        ).toBeInTheDocument(),
       );
     });
 
@@ -461,7 +461,7 @@ describe("DeveloperSettingsTab", () => {
           screen.getByText(
             /Media key rotation: suppressed, participant limit reached \(50 participants\)/,
           ),
-        ).toBeInTheDocument()
+        ).toBeInTheDocument(),
       );
     });
 
@@ -479,9 +479,10 @@ describe("DeveloperSettingsTab", () => {
       );
 
       await waitFor(() =>
-      expect(screen.queryByText(/Media key rotation:/)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText(/Media key rotation:/),
+        ).not.toBeInTheDocument(),
       );
-
     });
   });
 });
