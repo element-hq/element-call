@@ -9,11 +9,15 @@ import { afterEach, describe, expect, it, type Mock, vi } from "vitest";
 import { render, waitFor, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { BehaviorSubject } from "rxjs";
 
 import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
-import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
+import {
+  DeveloperSettingsTab,
+  type DeveloperSettingsSnapshot,
+} from "./DeveloperSettingsTab";
+import { outOfCallDeveloperSettingsTabViewModel } from "./DeveloperSettingsTabViewModel";
+import { createStaticViewModel } from "../state/ViewModel";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 import {
   customLivekitUrl as customLivekitUrlSetting,
@@ -108,6 +112,7 @@ describe("DeveloperSettingsTab", () => {
         roomId={"#room:example.org"}
         livekitRooms={livekitRooms}
         env={{ MY_MOCK_ENV: 10, ENV: "test" } as unknown as ImportMetaEnv}
+        vm={outOfCallDeveloperSettingsTabViewModel}
       />,
     );
 
@@ -137,6 +142,7 @@ describe("DeveloperSettingsTab", () => {
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -160,6 +166,7 @@ describe("DeveloperSettingsTab", () => {
             client={client}
             roomId="#testRoom"
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -182,6 +189,7 @@ describe("DeveloperSettingsTab", () => {
             client={client}
             roomId="#testRoom"
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -207,6 +215,7 @@ describe("DeveloperSettingsTab", () => {
             client={client}
             roomId="#testRoom"
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -237,6 +246,7 @@ describe("DeveloperSettingsTab", () => {
             client={client}
             roomId="#testRoom"
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -274,6 +284,7 @@ describe("DeveloperSettingsTab", () => {
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -306,6 +317,7 @@ describe("DeveloperSettingsTab", () => {
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -350,6 +362,7 @@ describe("DeveloperSettingsTab", () => {
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -389,6 +402,7 @@ describe("DeveloperSettingsTab", () => {
             <DeveloperSettingsTab
               client={client}
               env={{} as unknown as ImportMetaEnv}
+              vm={outOfCallDeveloperSettingsTabViewModel}
             />
           </TooltipProvider>,
         );
@@ -417,17 +431,16 @@ describe("DeveloperSettingsTab", () => {
   describe("KeyRotationStatus", () => {
     it("displays active status when key rotation is not suppressed", async () => {
       const client = createMockMatrixClient();
-      const mockVm = {
-        keyRotationSuppressed$: new BehaviorSubject(false),
-        participantCount$: new BehaviorSubject(5),
-      } as unknown as any;
+      const vm = createStaticViewModel<DeveloperSettingsSnapshot>({
+        keyRotation: { suppressed: false, participantCount: 5 },
+      });
 
       render(
         <TooltipProvider>
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
-            vm={mockVm}
+            vm={vm}
           />
         </TooltipProvider>,
       );
@@ -443,17 +456,16 @@ describe("DeveloperSettingsTab", () => {
 
     it("displays suppressed status when key rotation is suppressed", async () => {
       const client = createMockMatrixClient();
-      const mockVm = {
-        keyRotationSuppressed$: new BehaviorSubject(true),
-        participantCount$: new BehaviorSubject(50),
-      } as unknown as any;
+      const vm = createStaticViewModel<DeveloperSettingsSnapshot>({
+        keyRotation: { suppressed: true, participantCount: 50 },
+      });
 
       render(
         <TooltipProvider>
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
-            vm={mockVm}
+            vm={vm}
           />
         </TooltipProvider>,
       );
@@ -469,7 +481,7 @@ describe("DeveloperSettingsTab", () => {
       ).toBeInTheDocument();
     });
 
-    it("does not render KeyRotationStatus when vm is not provided", async () => {
+    it("does not render KeyRotationStatus when not in a call", async () => {
       const client = createMockMatrixClient();
 
       render(
@@ -477,6 +489,7 @@ describe("DeveloperSettingsTab", () => {
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );

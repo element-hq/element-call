@@ -67,25 +67,40 @@ import styles from "./DeveloperSettingsTab.module.css";
 import settingsStyles from "./SettingsModal.module.css";
 import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
-import { type CallViewModel } from "../state/CallViewModel/CallViewModel.ts";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 import { useBehavior } from "../useBehavior";
+import { type ViewModel } from "../state/ViewModel.ts";
+
+/**
+ * The state of MatrixRTC's media key rotation.
+ */
+export interface KeyRotationInfo {
+  /** Whether the call is large enough that MatrixRTC has stopped rotating the media key. */
+  suppressed: boolean;
+  participantCount: number;
+}
+
+/**
+ * The Snapshot combines all fields the developer settings tab needs from the
+ * surrounding call. Everything else in this tab is read from the settings store
+ * or the environment directly.
+ */
+export interface DeveloperSettingsSnapshot {
+  /** The media key rotation state, or `null` when we are not in a call. */
+  keyRotation: KeyRotationInfo | null;
+}
 
 /**
  * Shows whether the call is large enough that MatrixRTC has stopped rotating the media key.
  */
-const KeyRotationStatus: FC<{ vm: CallViewModel }> = ({ vm }) => {
-  const suppressed = useBehavior(vm.keyRotationSuppressed$);
-  const participantCount = useBehavior(vm.participantCount$);
-  return (
-    <p>
-      Media key rotation:{" "}
-      {suppressed
-        ? `suppressed, participant limit reached (${participantCount} participants)`
-        : `active (${participantCount} participants)`}
-    </p>
-  );
-};
+const KeyRotationStatus: FC<{ info: KeyRotationInfo }> = ({ info }) => (
+  <p>
+    Media key rotation:{" "}
+    {info.suppressed
+      ? `suppressed, participant limit reached (${info.participantCount} participants)`
+      : `active (${info.participantCount} participants)`}
+  </p>
+);
 
 interface Props {
   client: MatrixClient;
@@ -97,8 +112,7 @@ interface Props {
     livekitAlias?: string;
   }[];
   env: ImportMetaEnv;
-  /** Only available while in a call. */
-  vm?: CallViewModel;
+  vm: ViewModel<DeveloperSettingsSnapshot>;
 }
 
 export const DeveloperSettingsTab: FC<Props> = ({
@@ -109,6 +123,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
   vm,
 }) => {
   const { t } = useTranslation();
+  const keyRotation = useBehavior(vm.keyRotation$);
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
   const [debugTileLayout, setDebugTileLayout] = useSetting(
     debugTileLayoutSetting,
@@ -385,7 +400,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
           id: client.getDeviceId() || "unknown",
         })}
       </p>
-      {vm && <KeyRotationStatus vm={vm} />}
+      {keyRotation !== null && <KeyRotationStatus info={keyRotation} />}
       <Separator />
       <FieldRow>
         <InputField

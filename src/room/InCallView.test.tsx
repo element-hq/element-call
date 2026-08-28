@@ -122,12 +122,13 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       remoteParticipants$: of([remoteParticipant]),
     },
   );
-  const { vm, footerVm, rtcSession } = getBasicCallViewModelEnvironment(
-    [local, alice],
-    undefined,
-    mediaDevices,
-    args.callViewModelOptions,
-  );
+  const { vm, footerVm, developerSettingsVm, rtcSession } =
+    getBasicCallViewModelEnvironment(
+      [local, alice],
+      undefined,
+      mediaDevices,
+      args.callViewModelOptions,
+    );
 
   rtcSession.joined = true;
   const room = rtcSession.room;
@@ -140,6 +141,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       muteStates={muteState}
       vm={vm}
       footerVm={footerVm}
+      developerSettingsVm={developerSettingsVm}
       matrixInfo={{
         userId: "",
         displayName: "",
