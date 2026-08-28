@@ -14,29 +14,12 @@ import { ObservableScope } from "./ObservableScope";
 
 describe("SessionBehaviors", () => {
   describe("createKeyRotationSuppressed$", () => {
-    it("emits initial value from isKeyRotationSuppressed", () => {
-      const scope = new ObservableScope();
-
-      const mockSession = {
-        on: vi.fn(),
-        off: vi.fn(),
-        isKeyRotationSuppressed: false,
-      };
-
-      const keyRotationSuppressed$ = createKeyRotationSuppressed$(
-        scope,
-        mockSession as any,
-      );
-
-      expect(keyRotationSuppressed$.value).toBe(false);
-      scope.end();
-    });
-
-    it("updates when KeyRotationSuppressedChanged event is emitted", () => {
+    it("emits initial value from isKeyRotationSuppressed and updates when KeyRotationSuppressedChanged event is emitted", () => {
       const scope = new ObservableScope();
       const emitter = new EventEmitter();
-
       const mockSession = Object.assign(emitter, {
+        on: vi.fn(),
+        off: vi.fn(),
         isKeyRotationSuppressed: false,
       });
 
@@ -46,7 +29,6 @@ describe("SessionBehaviors", () => {
       );
 
       expect(keyRotationSuppressed$.value).toBe(false);
-
       emitter.emit(MatrixRTCSessionEvent.KeyRotationSuppressedChanged, true);
 
       expect(keyRotationSuppressed$.value).toBe(true);
