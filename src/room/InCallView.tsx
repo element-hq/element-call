@@ -173,9 +173,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       mediaDevices,
       `${props.client.getUserId()}:${props.client.getDeviceId()}`,
     );
-    const developerSettingsVm = createDeveloperSettingsTabViewModel(scope, vm);
     setFooterVm(footerVm);
-    setDeveloperSettingsVm(developerSettingsVm);
+    setDeveloperSettingsVm(createDeveloperSettingsTabViewModel(scope, vm));
 
     return (): void => {
       scope.end();
