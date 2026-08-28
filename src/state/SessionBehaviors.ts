@@ -88,3 +88,22 @@ export const createMemberships$ = (
     new Epoch(matrixRTCSession.memberships),
   );
 };
+
+/**
+ * Whether the session has grown large enough that MatrixRTC has stopped rotating the media
+ * encryption key. While this is true the key in use is still shared with new joiners, but no new
+ * key is generated when someone joins or leaves.
+ */
+export const createKeyRotationSuppressed$ = (
+  scope: ObservableScope,
+  matrixRTCSession: MatrixRTCSession,
+): Behavior<boolean> => {
+  return scope.behavior(
+    fromEvent(
+      matrixRTCSession,
+      MatrixRTCSessionEvent.KeyRotationSuppressedChanged,
+      (suppressed: boolean) => suppressed,
+    ),
+    matrixRTCSession.isKeyRotationSuppressed,
+  );
+};

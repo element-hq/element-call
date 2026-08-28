@@ -22,7 +22,7 @@ import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import userEvent from "@testing-library/user-event";
 
-import { InCallView } from "./InCallView";
+import { ActiveCall, InCallView } from "./InCallView";
 import {
   mockLivekitRoom,
   mockLocalParticipant,
@@ -33,7 +33,10 @@ import {
   type MockRTCSession,
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
-import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
+import {
+  getBasicCallViewModelEnvironment,
+  getBasicRTCSession,
+} from "../utils/test-viewmodel";
 import {
   type CallViewModel,
   type CallViewModelOptions,
@@ -45,6 +48,8 @@ import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { AppBar } from "../AppBar";
+import { type MatrixInfo } from "./VideoPreview";
+import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { initializeWidget } from "../widget";
 
 initializeWidget();
@@ -77,6 +82,17 @@ const localParticipant = mockLocalParticipant({
 const remoteParticipant = mockRemoteParticipant({
   identity: "@alice:example.org:AAAAAA",
 });
+
+const matrixInfo = {
+  userId: "",
+  displayName: "",
+  avatarUrl: "",
+  roomId: "",
+  roomName: "",
+  roomAlias: null,
+  roomAvatar: null,
+  e2eeSystem: { kind: E2eeType.NONE },
+} satisfies MatrixInfo;
 
 let useRoomEncryptionSystemMock: MockedFunction<typeof useRoomEncryptionSystem>;
 
@@ -122,12 +138,13 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       remoteParticipants$: of([remoteParticipant]),
     },
   );
-  const { vm, footerVm, rtcSession } = getBasicCallViewModelEnvironment(
-    [local, alice],
-    undefined,
-    mediaDevices,
-    args.callViewModelOptions,
-  );
+  const { vm, footerVm, developerSettingsVm, rtcSession } =
+    getBasicCallViewModelEnvironment(
+      [local, alice],
+      undefined,
+      mediaDevices,
+      args.callViewModelOptions,
+    );
 
   rtcSession.joined = true;
   const room = rtcSession.room;
@@ -140,18 +157,8 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       muteStates={muteState}
       vm={vm}
       footerVm={footerVm}
-      matrixInfo={{
-        userId: "",
-        displayName: "",
-        avatarUrl: "",
-        roomId: "",
-        roomName: "",
-        roomAlias: null,
-        roomAvatar: null,
-        e2eeSystem: {
-          kind: E2eeType.NONE,
-        },
-      }}
+      developerSettingsVm={developerSettingsVm}
+      matrixInfo={matrixInfo}
       matrixRoom={room}
       onShareClick={null}
     />
@@ -224,5 +231,36 @@ describe("InCallView", () => {
       // Clicking the button should call select -> switchFn with the earpiece device id
       expect(switchFn).toHaveBeenCalledWith("earpiece-id");
     });
+  });
+});
+
+describe("ActiveCall", () => {
+  it("creates the view models and renders the call", async () => {
+    const mediaDevices = mockMediaDevices({});
+    const { rtcSession, matrixRoom } = getBasicRTCSession([local, alice]);
+    const { findByTestId } = render(
+      <BrowserRouter>
+        <MediaDevicesContext value={mediaDevices}>
+          <ProcessorProvider>
+            <TooltipProvider>
+              <RoomContext value={mockLivekitRoom({ localParticipant })}>
+                <ActiveCall
+                  client={matrixRoom.client}
+                  rtcSession={rtcSession.asMockedSession()}
+                  matrixRoom={matrixRoom}
+                  muteStates={mockMuteStates()}
+                  matrixInfo={matrixInfo}
+                  onShareClick={null}
+                  e2eeSystem={{ kind: E2eeType.NONE }}
+                  onLeft={(): void => {}}
+                />
+              </RoomContext>
+            </TooltipProvider>
+          </ProcessorProvider>
+        </MediaDevicesContext>
+      </BrowserRouter>,
+    );
+    // Rendering at all proves ActiveCall created all of its view models
+    expect(await findByTestId("incall_leave")).toBeVisible();
   });
 });

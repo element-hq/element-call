@@ -42,6 +42,8 @@ import { MatrixRTCMode } from "../config/ConfigOptions";
 import { createCallFooterViewModel } from "../components/CallFooterViewModel";
 import { type FooterSnapshot } from "../components/CallFooter";
 import { type ViewModel } from "../state/ViewModel";
+import { createDeveloperSettingsTabViewModel } from "../settings/DeveloperSettingsTabViewModel";
+import { type DeveloperSettingsSnapshot } from "../settings/DeveloperSettingsTab";
 
 mockConfig({ livekit: { livekit_service_url: "https://example.com" } });
 
@@ -140,6 +142,7 @@ export function getBasicCallViewModelEnvironment(
 ): {
   vm: CallViewModel;
   footerVm: ViewModel<FooterSnapshot>;
+  developerSettingsVm: ViewModel<DeveloperSettingsSnapshot>;
   rtcMemberships$: BehaviorSubject<CallMembership[]>;
   rtcSession: MockRTCSession;
   handRaisedSubject$: BehaviorSubject<Record<string, RaisedHandInfo>>;
@@ -188,6 +191,7 @@ export function getBasicCallViewModelEnvironment(
   return {
     vm,
     footerVm,
+    developerSettingsVm: createDeveloperSettingsTabViewModel(testScope(), vm),
     rtcMemberships$,
     rtcSession,
     handRaisedSubject$: handRaisedSubject$,

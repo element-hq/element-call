@@ -83,6 +83,8 @@ import { ObservableScope } from "../state/ObservableScope.ts";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter.tsx";
 import { SettingsIconButton } from "../button/Button.tsx";
 import { createCallFooterViewModel } from "../components/CallFooterViewModel.tsx";
+import { createDeveloperSettingsTabViewModel } from "../settings/DeveloperSettingsTabViewModel.ts";
+import { type DeveloperSettingsSnapshot } from "../settings/DeveloperSettingsTab.tsx";
 import { type ViewModel } from "../state/ViewModel.ts";
 import { RingingStatus } from "../tile/RingingStatus.tsx";
 import { RingingAudioRenderer } from "./RingingAudioRenderer.tsx";
@@ -96,7 +98,7 @@ declare module "react" {
 
 export interface ActiveCallProps extends Omit<
   InCallViewProps,
-  "vm" | "livekitRoom" | "connState" | "footerVm"
+  "vm" | "livekitRoom" | "connState" | "footerVm" | "developerSettingsVm"
 > {
   e2eeSystem: EncryptionSystem;
   // TODO refactor those reasons into an enum
@@ -110,6 +112,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const [footerVm, setFooterVm] = useState<ViewModel<FooterSnapshot> | null>(
     null,
   );
+  const [developerSettingsVm, setDeveloperSettingsVm] =
+    useState<ViewModel<DeveloperSettingsSnapshot> | null>(null);
+
   const urlParams = useUrlParams();
   const mediaDevices = useMediaDevices();
   const trackProcessorState$ = useTrackProcessorObservable$();
@@ -169,6 +174,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       `${props.client.getUserId()}:${props.client.getDeviceId()}`,
     );
     setFooterVm(footerVm);
+    setDeveloperSettingsVm(createDeveloperSettingsTabViewModel(scope, vm));
 
     return (): void => {
       scope.end();
@@ -188,10 +194,16 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   if (vm === null) return null;
   if (footerVm === null) return null;
+  if (developerSettingsVm === null) return null;
 
   return (
     <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
-      <InCallView {...props} vm={vm} footerVm={footerVm} />
+      <InCallView
+        {...props}
+        vm={vm}
+        footerVm={footerVm}
+        developerSettingsVm={developerSettingsVm}
+      />
     </ReactionsSenderProvider>
   );
 };
@@ -200,6 +212,7 @@ export interface InCallViewProps {
   client: MatrixClient;
   vm: CallViewModel;
   footerVm: ViewModel<FooterSnapshot>;
+  developerSettingsVm: ViewModel<DeveloperSettingsSnapshot>;
   matrixInfo: MatrixInfo;
   rtcSession: MatrixRTCSession;
   matrixRoom: MatrixRoom;
@@ -211,6 +224,7 @@ export const InCallView: FC<InCallViewProps> = ({
   client,
   vm,
   footerVm,
+  developerSettingsVm,
   matrixInfo,
   matrixRoom,
   muteStates,
@@ -633,6 +647,7 @@ export const InCallView: FC<InCallViewProps> = ({
             onDismiss={(): void => setSettingsOpen(false)}
             tab={settingsTab}
             onTabChange={setSettingsTab}
+            developerSettingsVm={developerSettingsVm}
             livekitRooms={allConnections
               .getConnections()
               .map((connectionItem) => ({
