@@ -78,16 +78,19 @@ body {
   body[data-background="gradient"]::before {
     content: "";
     position: fixed;
-    inset: 0;
-    background-image: url("graphics/mobile-gradient.svg");
-    background-size: auto;
+    /* Chromium abruptly fades our images to fully transparent at the edge of
+    the element. If we just make the element a little bigger than the viewport,
+    this is no longer visible. */
+    inset: -20px;
+    background-image: url("graphics/mobile-gradient.png");
+    background-size: 1400px 305px;
     background-position: bottom;
     background-repeat: no-repeat;
   }
 
   body[data-background="gradient"][data-platform="desktop"]::before {
-    background-image: url("graphics/desktop-gradient.svg");
-    background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
+    background-image: url("graphics/desktop-gradient.png");
+    background-size: max(1440px, 100vw) max(1440px, 100vh);
     background-position: center;
   }
 }

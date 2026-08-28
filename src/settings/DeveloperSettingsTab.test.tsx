@@ -330,19 +330,15 @@ describe("DeveloperSettingsTab", () => {
 
   describe("matrix rtc mode", () => {
     afterEach(() => {
-      matrixRTCModeSetting.setValue(MatrixRTCMode.Legacy);
+      matrixRTCModeSetting.setValue(MatrixRTCMode.Compatibility);
       vi.restoreAllMocks();
     });
 
     function getModeRadios(): {
-      legacy: HTMLInputElement;
       compatibility: HTMLInputElement;
       matrix20: HTMLInputElement;
     } {
       return {
-        legacy: screen.getByDisplayValue(
-          MatrixRTCMode.Legacy,
-        ) as HTMLInputElement,
         compatibility: screen.getByDisplayValue(
           MatrixRTCMode.Compatibility,
         ) as HTMLInputElement,
@@ -373,27 +369,21 @@ describe("DeveloperSettingsTab", () => {
 
       const radios = getModeRadios();
       expect(radios.compatibility).toBeChecked();
-      expect(radios.legacy).not.toBeChecked();
       expect(radios.matrix20).not.toBeChecked();
       // None are disabled by config; only Matrix_2_0 may be disabled by sticky-events support.
-      expect(radios.legacy).not.toBeDisabled();
       expect(radios.compatibility).not.toBeDisabled();
     });
 
-    it.each([
-      MatrixRTCMode.Legacy,
-      MatrixRTCMode.Compatibility,
-      MatrixRTCMode.Matrix_2_0,
-    ])(
+    it.each([MatrixRTCMode.Compatibility, MatrixRTCMode.Matrix_2_0])(
       "disables all radios and shows the config value (%s) as checked when matrix_rtc_mode is set",
       async (configMode) => {
         mockConfig({ matrix_rtc_mode: configMode });
         // Local setting is intentionally different from the config value to
         // prove config wins.
         matrixRTCModeSetting.setValue(
-          configMode === MatrixRTCMode.Legacy
-            ? MatrixRTCMode.Compatibility
-            : MatrixRTCMode.Legacy,
+          configMode === MatrixRTCMode.Compatibility
+            ? MatrixRTCMode.Matrix_2_0
+            : MatrixRTCMode.Compatibility,
         );
         const client = createMockMatrixClient();
 
@@ -412,13 +402,11 @@ describe("DeveloperSettingsTab", () => {
         );
 
         const radios = getModeRadios();
-        expect(radios.legacy).toBeDisabled();
         expect(radios.compatibility).toBeDisabled();
         expect(radios.matrix20).toBeDisabled();
 
         const checkedValue = (
           {
-            [MatrixRTCMode.Legacy]: radios.legacy,
             [MatrixRTCMode.Compatibility]: radios.compatibility,
             [MatrixRTCMode.Matrix_2_0]: radios.matrix20,
           } as const

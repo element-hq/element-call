@@ -36,7 +36,6 @@ import {
   SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
-import { type JwtEndpointVersion } from "../localMember/LocalTransport.ts";
 
 export interface ConnectionOpts {
   /**
@@ -44,11 +43,6 @@ export interface ConnectionOpts {
    * On top the local transport will send additional data to the jwt server to use delayed event delegation.
    */
   existingSFUConfig?: SFUConfig;
-  /**
-   * For local connections that use the oldest member pattern. here we have not prefetched the sfuConfig
-   * and hence we need to let the connection do the jwt token fetching.
-   */
-  forceJwtEndpoint?: JwtEndpointVersion;
   /** The identity parts to use on this connection */
   ownMembershipIdentity: CallMembershipIdentityParts;
   /** The media transport to connect to. */

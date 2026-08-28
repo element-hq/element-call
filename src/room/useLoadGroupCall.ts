@@ -280,7 +280,7 @@ export const useLoadGroupCall = (
             );
           }
           if (
-            roomSummary === undefined ||
+            roomSummary?.join_rule === undefined ||
             roomSummary.join_rule === JoinRule.Public
           ) {
             room = await client.joinRoom(roomId, {

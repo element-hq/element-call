@@ -127,6 +127,7 @@ export const Default: Story = {
     showFooter: true,
     hideControls: false,
     asOverlay: false,
+    showModals: true,
     sharingScreen: false,
     audioOutputSwitcher: undefined,
     reactionIdentifier: undefined,

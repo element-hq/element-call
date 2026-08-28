@@ -8,9 +8,6 @@
   "livekit": {
     "livekit_service_url": "https://livekit-jwt.mydomain.com"
   },
-  "features": {
-    "feature_use_device_session_member_events": true
-  },
   "ssla": "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
   "matrix_rtc_mode": "compatibility",
   "matrix_rtc_session": {
