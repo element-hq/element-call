@@ -109,8 +109,14 @@ export async function getSFUConfigWithOpenID(
       client.getOpenIdToken(),
     );
   } catch (error) {
+    // Note that in widget mode this is the `get_openid` widget action rather
+    // than a homeserver request, so the hosting client is a likely culprit.
     throw new FailToGetOpenIdToken(
-      error instanceof Error ? error : new Error("Unknown error"),
+      new Error(
+        `Failed to get an OpenID token, needed to authenticate with the MatrixRTC backend at ${serviceUrl}` +
+          `${opts?.delayId ? " (re-authenticating to delegate delayed leave event " + opts.delayId + ")" : ""}`,
+        { cause: error },
+      ),
     );
   }
   logger?.debug("Got openID token", openIdToken);
@@ -142,7 +148,12 @@ export async function getSFUConfigWithOpenID(
       logger?.debug(`Failed fetching jwt with matrix 2.0 endpoint:`, e);
       // Make this throw a hard error in case we force the matrix2.0 endpoint.
       if (forceMatrix2Jwt) {
-        throw new NoMatrix2AuthorizationService(e as Error);
+        throw new NoMatrix2AuthorizationService(
+          new Error(
+            `Failed to get a JWT from the Matrix 2.0 endpoint of the MatrixRTC backend at ${serviceUrl}`,
+            { cause: e },
+          ),
+        );
       }
     }
   }
@@ -166,7 +177,10 @@ export async function getSFUConfigWithOpenID(
     return extractFullConfigFromToken(sfuConfig);
   } catch (ex) {
     throw new FailToGetOpenIdToken(
-      ex instanceof Error ? ex : new Error(`Unknown error ${ex}`),
+      new Error(
+        `Failed to get a JWT from the legacy endpoint of the MatrixRTC backend at ${serviceUrl}`,
+        { cause: ex },
+      ),
     );
   }
 }

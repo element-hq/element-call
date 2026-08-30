@@ -37,6 +37,7 @@ import {
 import { ObservableScope } from "../../ObservableScope.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
 import {
+  describeErrorChain,
   ElementCallError,
   FailToGetOpenIdToken,
 } from "../../../utils/errors.ts";
@@ -284,7 +285,9 @@ describe("Start connection states", () => {
       capturedState instanceof ElementCallError &&
       capturedState.cause instanceof Error
     ) {
-      expect(capturedState.cause.message).toContain(
+      // The homeserver error is wrapped in a context error naming the
+      // operation that failed, so assert against the whole cause chain.
+      expect(describeErrorChain(capturedState).join("\n")).toContain(
         "Failed to look up user info from homeserver",
       );
       expect(connection.transport.livekit_alias).toEqual(

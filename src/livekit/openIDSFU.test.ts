@@ -79,8 +79,14 @@ describe("getSFUConfigWithOpenID", () => {
       );
     } catch (ex: unknown) {
       expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
-      expect((ex as FailToGetOpenIdToken).cause).toBeInstanceOf(MatrixError);
-      const mxError = (ex as Error).cause as MatrixError;
+      // The cause is a wrapper naming the operation we were performing; the
+      // underlying MatrixError sits behind it.
+      const context = (ex as FailToGetOpenIdToken).cause as Error;
+      expect(context.message).toEqual(
+        "Failed to get a JWT from the legacy endpoint of the MatrixRTC backend at https://sfu.example.org",
+      );
+      expect(context.cause).toBeInstanceOf(MatrixError);
+      const mxError = context.cause as MatrixError;
       expect(mxError.message).toEqual(
         "MatrixError: [500] Failed to look up user info from homeserver",
       );
@@ -216,8 +222,14 @@ describe("getSFUConfigWithOpenID", () => {
       );
     } catch (ex) {
       expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
-      expect((ex as FailToGetOpenIdToken).cause).toBeInstanceOf(MatrixError);
-      const mxError = (ex as Error).cause as MatrixError;
+      // The cause is a wrapper naming the operation we were performing; the
+      // underlying MatrixError sits behind it.
+      const context = (ex as FailToGetOpenIdToken).cause as Error;
+      expect(context.message).toEqual(
+        "Failed to get a JWT from the legacy endpoint of the MatrixRTC backend at https://sfu.example.org",
+      );
+      expect(context.cause).toBeInstanceOf(MatrixError);
+      const mxError = context.cause as MatrixError;
       expect(mxError.message).toEqual(
         "MatrixError: [500] Failed to look up user info from homeserver",
       );

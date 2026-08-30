@@ -179,7 +179,11 @@ export const createLocalTransport$ = ({
           `Failed to authenticate to transport ${transport.livekit_service_url}`,
           e,
         );
-        throw mapAuthErrorToUserFriendlyError(e);
+        throw mapAuthErrorToUserFriendlyError(
+          e,
+          transport.livekit_service_url,
+          delayId,
+        );
       }
     }),
   );
@@ -258,16 +262,26 @@ async function doOpenIdAndJWTFromUrl(
   };
 }
 
-function mapAuthErrorToUserFriendlyError(e: unknown): Error {
+function mapAuthErrorToUserFriendlyError(
+  e: unknown,
+  serviceUrl: string,
+  delayId: string | null,
+): Error {
   if (
     e instanceof FailToGetOpenIdToken ||
     e instanceof NoMatrix2AuthorizationService
   ) {
-    // rethrow as is
+    // Already carries its own context, rethrow as is.
     return e;
   }
-  // Catch others and rethrow as FailToGetOpenIdToken that has user friendly message.
+  // Catch others and rethrow as FailToGetOpenIdToken that has user friendly
+  // message. Record what we were doing, since this branch is reached by
+  // anything unexpected and otherwise leaves no trace of it.
   return new FailToGetOpenIdToken(
-    e instanceof Error ? e : new Error(String(e)),
+    new Error(
+      `Unexpected error while authenticating with the MatrixRTC backend at ${serviceUrl}` +
+        `${delayId ? ` (re-authenticating to delegate delayed leave event ${delayId})` : ""}`,
+      { cause: e },
+    ),
   );
 }

@@ -23,10 +23,10 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { Button } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { MatrixError } from "matrix-js-sdk";
 
 import {
   ConnectionLostError,
+  describeErrorChain,
   ElementCallError,
   ErrorCategory,
   ErrorCode,
@@ -80,8 +80,13 @@ const ErrorPage: FC<ErrorPageProps> = ({
     });
   }
 
-  const technicalError =
-    error.cause instanceof MatrixError ? error.cause : null;
+  // Show the whole cause chain rather than just a `MatrixError` cause: the
+  // request that actually failed is often several wrappers deep, and errors
+  // that are not `MatrixError`s (widget API timeouts, LiveKit connection
+  // errors, ...) used to leave this section empty entirely. A chain of length
+  // one is just the error we already render above, so keep it hidden.
+  const errorChain = describeErrorChain(error);
+  const technicalDetails = errorChain.length > 1 ? errorChain.join("\n") : null;
 
   return (
     <FullScreenView>
@@ -119,14 +124,12 @@ const ErrorPage: FC<ErrorPageProps> = ({
             />
           )}
         </p>
-        {technicalError ? (
+        {technicalDetails ? (
           <details className={styles.technicalDetails}>
             <summary className={styles.technicalDetailsSummary}>
               {t("technical_details")}
             </summary>
-            <pre className={styles.technicalDetailsPre}>
-              {technicalError.message}
-            </pre>
+            <pre className={styles.technicalDetailsPre}>{technicalDetails}</pre>
           </details>
         ) : null}
         {actions &&
@@ -162,7 +165,13 @@ export const GroupCallErrorBoundary = ({
       const callError =
         error instanceof ElementCallError
           ? error
-          : new UnknownCallError(error instanceof Error ? error : new Error());
+          : new UnknownCallError(
+              error instanceof Error
+                ? error
+                : new Error(
+                    `Non-error value thrown during the call: ${String(error)}`,
+                  ),
+            );
       return (
         <ErrorPage
           widget={widget ?? null}

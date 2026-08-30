@@ -85,7 +85,10 @@ export class RtcTransportAutoDiscovery {
         );
       }
     } catch (ex) {
-      this.logger.info(`Failed to use getRTCTransports end point: ${ex}`);
+      // Expected against homeservers without MSC4143, so this is not a
+      // warning, but pass the error itself so the stack and any errcode
+      // survive into the logs rather than being flattened into a string.
+      this.logger.info("Failed to use getRTCTransports end point", ex);
     }
     return null;
   }

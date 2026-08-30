@@ -179,7 +179,13 @@ export const GroupCallView: FC<Props> = ({
       ) {
         setExternalError(new StickyEventsRequiredError());
       } else {
-        setExternalError(new ConnectionLostError());
+        logger.error("MembershipManager gave up on the session", error);
+        // Keep the original error as the cause: the scheduler only tells us
+        // that it shut down, while the request that actually failed (and its
+        // errcode) lives further down the cause chain.
+        setExternalError(
+          new ConnectionLostError(error instanceof Error ? error : undefined),
+        );
       }
     },
   );
