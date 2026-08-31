@@ -195,7 +195,7 @@ importers:
         version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24929be0e741be6a5d0a7226f1c682e245263b8a
       matrix-widget-api:
         specifier: ^1.18.0
-        version: 1.18.0
+        version: 1.19.0
       node-stdlib-browser:
         specifier: ^1.3.1
         version: 1.3.1
@@ -4690,8 +4690,8 @@ packages:
     version: 42.2.0
     engines: {node: '>=22.0.0'}
 
-  matrix-widget-api@1.18.0:
-    resolution: {integrity: sha512-4T2f2koWmx05p1BLcT/9YGGGPSXpPT+PA4Oap/5fjhXsWPxMGJiGL97YpANMYLKsnE1sScYFeuyxIgdc1Qo+Ew==}
+  matrix-widget-api@1.19.0:
+    resolution: {integrity: sha512-Qe7L6G1mQJphBC47/Bzp5ljPIK1UARgLiuGgS+/KmEs/eaNHkQ3+ArD0/0kvMV+d6kCGAZ9OKRqsnuPjizI+tw==}
 
   md5.js@1.3.5:
     resolution: {integrity: sha512-xitP+WxNPcTTOgnTJcrhM0xvdPepipPSf3I8EIpGKeFLjt3PlJLIDG3u8EX53ZIubkb+5U2+3rELYpEhHhzdkg==}
@@ -10284,12 +10284,12 @@ snapshots:
       content-type: 3.0.0
       loglevel: 1.9.2
       matrix-events-sdk: 0.0.1
-      matrix-widget-api: 1.18.0
+      matrix-widget-api: 1.19.0
       p-retry: 8.0.0
       sdp-transform: 3.0.0
       unhomoglyph: 1.0.6
 
-  matrix-widget-api@1.18.0:
+  matrix-widget-api@1.19.0:
     dependencies:
       '@types/events': 3.0.3
       events: 3.3.0
