@@ -11,12 +11,14 @@ import { type IThemeChangeActionRequest } from "matrix-widget-api";
 
 import { getUrlParams } from "./UrlParams";
 import { widget } from "./widget";
+import { useRootElement } from "./RootElementContext";
 
 export const useTheme = (): void => {
+  const rootElement = useRootElement();
   const [requestedTheme, setRequestedTheme] = useState(
     () => getUrlParams().theme,
   );
-  const previousTheme = useRef<string | null>(document.body.classList.item(0));
+  const previousTheme = useRef<string | null>(rootElement.classList.item(0));
 
   useEffect(() => {
     if (widget) {
@@ -47,15 +49,15 @@ export const useTheme = (): void => {
       : "";
     const themeString = "cpd-theme-" + theme + themeHighContrast;
     if (themeString !== previousTheme.current) {
-      document.body.classList.remove(
+      rootElement.classList.remove(
         "cpd-theme-light",
         "cpd-theme-dark",
         "cpd-theme-light-hc",
         "cpd-theme-dark-hc",
       );
-      document.body.classList.add(themeString);
+      rootElement.classList.add(themeString);
       previousTheme.current = themeString;
     }
-    document.body.classList.remove("no-theme");
-  }, [previousTheme, requestedTheme]);
+    rootElement.classList.remove("no-theme");
+  }, [previousTheme, requestedTheme, rootElement]);
 };

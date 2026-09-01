@@ -34,6 +34,7 @@ import { MediaDevicesContext } from "./MediaDevicesContext";
 import { getUrlParams, HeaderStyle, useUrlParams } from "./UrlParams";
 import { AppBar } from "./AppBar";
 import { i18n } from "./utils/i18n";
+import { useRootElement } from "./RootElementContext";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -44,12 +45,11 @@ interface SimpleProviderProps {
 const BackgroundProvider: FC<SimpleProviderProps> = ({ children }) => {
   const { pathname } = useLocation();
   const { background } = useUrlParams();
+  const rootElement = useRootElement();
 
   useEffect(() => {
-    document
-      .getElementsByTagName("body")[0]
-      .setAttribute("data-background", background);
-  }, [pathname, background]);
+    rootElement.setAttribute("data-background", background);
+  }, [pathname, background, rootElement]);
 
   return children;
 };

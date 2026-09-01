@@ -80,6 +80,7 @@ import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useAppBarTitle } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
+import { useRootElement } from "../RootElementContext.ts";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -123,6 +124,7 @@ export const GroupCallView: FC<Props> = ({
     null,
   );
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
+  const rootElement = useRootElement();
 
   const muteAllAudio = useBehavior(muteAllAudio$);
   const leaveSoundContext = useLatest(
@@ -150,11 +152,11 @@ export const GroupCallView: FC<Props> = ({
   // viewport sizes smaller than 122px width. (It is actually this exact number: 122px
   // tested on different devices...)
   useEffect(() => {
-    document.body.classList.add("no-scroll-body");
+    rootElement.classList.add("no-scroll-body");
     return (): void => {
-      document.body.classList.remove("no-scroll-body");
+      rootElement.classList.remove("no-scroll-body");
     };
-  }, []);
+  }, [rootElement]);
 
   useEffect(() => {
     window.rtcSession = rtcSession;
