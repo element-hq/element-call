@@ -17,6 +17,7 @@ import { BrowserRouter, Route, useLocation, Routes } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { I18nextProvider } from "react-i18next";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
@@ -32,6 +33,7 @@ import { type AppViewModel } from "./state/AppViewModel";
 import { MediaDevicesContext } from "./MediaDevicesContext";
 import { getUrlParams, HeaderStyle, useUrlParams } from "./UrlParams";
 import { AppBar } from "./AppBar";
+import { i18n } from "./utils/i18n";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -98,20 +100,22 @@ export const App: FC<Props> = ({ vm }) => {
   );
 
   return (
-    <BrowserRouter>
-      <BackgroundProvider>
-        <ThemeProvider>
-          <TooltipProvider>
-            <Suspense fallback={null}>
-              {header === HeaderStyle.AppBar ? (
-                <AppBar>{content}</AppBar>
-              ) : (
-                content
-              )}
-            </Suspense>
-          </TooltipProvider>
-        </ThemeProvider>
-      </BackgroundProvider>
-    </BrowserRouter>
+    <I18nextProvider i18n={i18n}>
+      <BrowserRouter>
+        <BackgroundProvider>
+          <ThemeProvider>
+            <TooltipProvider>
+              <Suspense fallback={null}>
+                {header === HeaderStyle.AppBar ? (
+                  <AppBar>{content}</AppBar>
+                ) : (
+                  content
+                )}
+              </Suspense>
+            </TooltipProvider>
+          </ThemeProvider>
+        </BackgroundProvider>
+      </BrowserRouter>
+    </I18nextProvider>
   );
 };

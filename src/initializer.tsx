@@ -6,12 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import React from "react";
-import i18n, {
+import {
   type BackendModule,
   type ReadCallback,
   type ResourceKey,
 } from "i18next";
-import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import * as Sentry from "@sentry/react";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -35,6 +34,7 @@ import { platform } from "./Platform";
 import { isFailure } from "./utils/fetch";
 import { initializeWidget } from "./widget";
 import { enableExtendedLivekitLogs } from "./settings/settings.ts";
+import { i18n } from "./utils/i18n.ts";
 
 // This generates a map of locale names to their URL (based on import.meta.url), which looks like this:
 // {
@@ -148,10 +148,12 @@ export class Initializer {
       document.documentElement.lang = lng;
     });
 
+    // Note: deliberately no `.use(initReactI18next)` — that would register this
+    // instance as react-i18next's global default, which is the very global we
+    // are avoiding. Components receive it through `<I18nextProvider>` instead.
     await i18n
       .use(Backend)
       .use(languageDetector)
-      .use(initReactI18next)
       .init({
         fallbackLng: "en",
         defaultNS: "app",
