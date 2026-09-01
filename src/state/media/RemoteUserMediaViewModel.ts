@@ -34,11 +34,21 @@ export interface RemoteUserMediaInputs extends Omit<
 > {
   participant$: Behavior<RemoteParticipant | null>;
   pretendToBeDisconnected$: Behavior<boolean>;
+  /**
+   * Whether other participants' video feeds should be hidden (and thus not
+   * downloaded, since LiveKit's adaptiveStream pauses tracks with no
+   * attached video element) to save bandwidth.
+   */
+  disableRemoteVideo$: Behavior<boolean>;
 }
 
 export function createRemoteUserMedia(
   scope: ObservableScope,
-  { pretendToBeDisconnected$, ...inputs }: RemoteUserMediaInputs,
+  {
+    pretendToBeDisconnected$,
+    disableRemoteVideo$,
+    ...inputs
+  }: RemoteUserMediaInputs,
 ): RemoteUserMediaViewModel {
   const baseUserMedia = createBaseUserMedia(scope, {
     ...inputs,
@@ -66,6 +76,11 @@ export function createRemoteUserMedia(
         switchMap((disconnected) =>
           disconnected ? of(false) : baseUserMedia.videoEnabled$,
         ),
+      ),
+    ),
+    video$: scope.behavior(
+      combineLatest([baseUserMedia.video$, disableRemoteVideo$]).pipe(
+        map(([video, disabled]) => (disabled ? undefined : video)),
       ),
     ),
     waitingForMedia$: scope.behavior(

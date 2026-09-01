@@ -137,6 +137,7 @@
   "hangup_button_label": "End call",
   "header_label": "Element Call Home",
   "header_participants_label": "Participants",
+  "hide_other_videos_button_label": "Hide other participants' video",
   "invite_modal": {
     "link_copied_toast": "Link copied to clipboard",
     "title": "Invite to this call"
@@ -248,6 +249,7 @@
     "resolution_label": "Resolution",
     "screen_share_header": "Screen sharing"
   },
+  "show_other_videos_button_label": "Show other participants' video",
   "star_rating_input_label_one": "{{count}} star",
   "star_rating_input_label_other": "{{count}} stars",
   "start_new_call": "Start new call",

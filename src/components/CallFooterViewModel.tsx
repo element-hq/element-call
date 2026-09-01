@@ -188,6 +188,9 @@ export function createCallFooterViewModel(
     sharingScreen$: callModel.sharingScreen$,
     toggleScreenSharing$: constant(callModel.toggleScreenSharing ?? undefined),
 
+    disableRemoteVideo$: callModel.disableRemoteVideo$,
+    toggleDisableRemoteVideo$: constant(callModel.toggleDisableRemoteVideo),
+
     audioOutputSwitcher$: scope.behavior(
       callModel.audioOutputSwitcher$.pipe(
         map((switcher) => switcher ?? undefined),
@@ -249,10 +252,12 @@ export function createLobbyFooterViewModel(
       toggleAudio: undefined,
       toggleVideo: undefined,
       toggleScreenSharing: undefined,
+      toggleDisableRemoteVideo: undefined,
       audioEnabled: undefined,
       audioBusy: false,
       videoEnabled: undefined,
       videoBusy: false,
+      disableRemoteVideo: false,
       layoutSwitchVm: null,
       sharingScreen: false,
       audioOutputSwitcher: undefined,
