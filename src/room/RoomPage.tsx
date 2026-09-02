@@ -29,7 +29,6 @@ import { GroupCallView } from "./GroupCallView";
 import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { HomePage } from "../home/HomePage";
-import { widget } from "../widget";
 import { useHostBridge } from "../HostBridge.ts";
 import { CallTerminatedMessage, useLoadGroupCall } from "./useLoadGroupCall";
 import { LobbyView } from "./LobbyView";
@@ -77,7 +76,7 @@ export const RoomPage: FC = (): ReactNode => {
         calculateInitialMuteState(
           urlParams.skipLobby,
           urlParams.callIntent,
-          widget !== null,
+          urlParams.isWidget,
         ),
         hostBridge,
       ),
@@ -88,7 +87,7 @@ export const RoomPage: FC = (): ReactNode => {
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
     // a URL param, automatically register a passwordless user
-    if (!loading && !authenticated && displayName && !widget) {
+    if (!loading && !authenticated && displayName && !urlParams.isWidget) {
       setIsRegistering(true);
       registerPasswordlessUser(displayName)
         .catch((e) => {
@@ -102,6 +101,7 @@ export const RoomPage: FC = (): ReactNode => {
     loading,
     authenticated,
     displayName,
+    urlParams.isWidget,
     setIsRegistering,
     registerPasswordlessUser,
   ]);

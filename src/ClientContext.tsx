@@ -21,9 +21,9 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
 
-import type { WidgetApi } from "matrix-widget-api";
 import { ErrorPage } from "./FullScreenView";
 import { widget } from "./widget";
+import { useHostBridge } from "./HostBridge";
 import {
   PosthogAnalytics,
   RegistrationType,
@@ -138,6 +138,7 @@ interface Props {
 
 export const ClientProvider: FC<Props> = ({ children }) => {
   const navigate = useNavigate();
+  const hostBridge = useHostBridge();
 
   // null = signed out, undefined = loading
   const [initClientState, setInitClientState] = useState<
@@ -201,7 +202,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
       saveSession(session);
       setInitClientState({
-        widgetApi: null,
         client,
         passwordlessUser: session.passwordlessUser,
       });
@@ -307,36 +307,16 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       initClientState.client.on(ClientEvent.Sync, onSync);
     }
 
-    if (initClientState.widgetApi) {
-      const reactSend = initClientState.widgetApi.hasCapability(
-        "org.matrix.msc2762.send.event:m.reaction",
-      );
-      const redactSend = initClientState.widgetApi.hasCapability(
-        "org.matrix.msc2762.send.event:m.room.redaction",
-      );
-      const reactRcv = initClientState.widgetApi.hasCapability(
-        "org.matrix.msc2762.receive.event:m.reaction",
-      );
-      const redactRcv = initClientState.widgetApi.hasCapability(
-        "org.matrix.msc2762.receive.event:m.room.redaction",
-      );
-
-      if (!reactSend || !reactRcv || !redactSend || !redactRcv) {
-        logger.warn("Widget does not support reactions");
-        setSupportsReactions(false);
-      } else {
-        setSupportsReactions(true);
-      }
-    } else {
-      setSupportsReactions(true);
-    }
+    if (!hostBridge.supportsReactions)
+      logger.warn("The host does not permit reactions");
+    setSupportsReactions(hostBridge.supportsReactions);
 
     return (): void => {
       if (initClientState.client) {
         initClientState.client.removeListener(ClientEvent.Sync, onSync);
       }
     };
-  }, [initClientState, onSync]);
+  }, [initClientState, onSync, hostBridge]);
 
   if (alreadyOpenedErr) {
     return <ErrorPage error={alreadyOpenedErr} />;
@@ -346,7 +326,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 };
 
 export type InitResult = {
-  widgetApi: WidgetApi | null;
   client: MatrixClient;
   passwordlessUser: boolean;
 };
@@ -357,7 +336,6 @@ async function loadClient(): Promise<InitResult | null> {
     logger.log("Using a matryoshka client");
     const client = await widget.client;
     return {
-      widgetApi: widget.api,
       client,
       passwordlessUser: false,
     };

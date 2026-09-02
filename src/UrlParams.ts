@@ -60,6 +60,17 @@ export interface UrlProperties {
   widgetId: string | null;
   parentUrl: string | null;
   /**
+   * Whether Element Call was started as a widget of a Matrix client, which is
+   * to say whether it was given a widget ID and a parent to talk to.
+   *
+   * Only meaningful to the standalone and widget builds, which own the URL —
+   * so use it for decisions that belong to the app shell, such as whether
+   * Element Call is responsible for authenticating the user. Anything the call
+   * interface itself needs to know about its host should come from the host
+   * bridge instead.
+   */
+  isWidget: boolean;
+  /**
    * Anything about what room we're pointed to should be from useRoomIdentifier which
    * parses the path and resolves alias with respect to the default server name, however
    * roomId is an exception as we need the room ID in embedded (matroyska) mode, and not
@@ -448,6 +459,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   const properties: UrlProperties = {
     widgetId,
     parentUrl,
+    isWidget,
     // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
     // what would we do if it were invalid? If the widget API says that's what
     // the room ID is, then that's what it is.

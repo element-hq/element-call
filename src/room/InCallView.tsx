@@ -28,7 +28,6 @@ import { useTranslation } from "react-i18next";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
-import { widget } from "../widget";
 import { useHostBridge } from "../HostBridge.ts";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
@@ -251,6 +250,7 @@ export const InCallView: FC<InCallViewProps> = ({
 }) => {
   const logger = rootLogger.getChild("[InCallView]");
   const { t } = useTranslation();
+  const hostBridge = useHostBridge();
   const { sendReaction, toggleRaisedHand } = useReactionsSender();
 
   useWakeLock();
@@ -334,14 +334,17 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const openProfile = useMemo(
     () =>
-      // Profile settings are unavailable in widget mode
-      widget === null
+      // A host that can dismiss us is a host that owns the user's account, so
+      // their profile is not ours to edit.
+      // TODO: another use of the close capability as a proxy — see the note in
+      // GroupCallView.
+      hostBridge.close === undefined
         ? (): void => {
             setSettingsTab("profile");
             setSettingsOpen(true);
           }
         : null,
-    [setSettingsTab, setSettingsOpen],
+    [setSettingsTab, setSettingsOpen, hostBridge],
   );
 
   const [headerRef, headerBounds] = useMeasure();
