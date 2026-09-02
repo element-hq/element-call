@@ -63,6 +63,7 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { type Behavior, constant } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
 import { MuteStates } from "../state/MuteStates";
+import { nullHostBridge } from "../HostBridge";
 import {
   createLocalUserMedia,
   type LocalUserMediaViewModel,
@@ -577,10 +578,12 @@ export function mockMuteStates(
   joined$: Observable<boolean> = of(true),
 ): MuteStates {
   const observableScope = new ObservableScope();
-  return new MuteStates(observableScope, mockMediaDevices({}), {
-    audioEnabled: false,
-    videoEnabled: false,
-  });
+  return new MuteStates(
+    observableScope,
+    mockMediaDevices({}),
+    { audioEnabled: false, videoEnabled: false },
+    nullHostBridge,
+  );
 }
 
 export class MockConnection extends Connection {

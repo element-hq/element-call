@@ -48,7 +48,6 @@ import {
   type RTCCallIntent,
   type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { type IWidgetApiRequest } from "matrix-widget-api";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { v4 as uuidv4 } from "uuid";
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
@@ -89,7 +88,7 @@ import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
 import { HeaderStyle } from "../../UrlParams";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
-import { ElementWidgetActions, widget } from "../../widget";
+import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
   layoutShallowEquals,
   type Alignment,
@@ -173,6 +172,11 @@ import { type GridTileViewModel } from "../TileViewModel.ts";
 // callMembership -> rtcMembership
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
+  /**
+   * The application hosting Element Call, which can ask it to hang up and wants
+   * to know when the user joins or leaves. Defaults to no host.
+   */
+  hostBridge?: HostBridge;
   /**
    * Whether the app hosting Element Call controls the audio output devices,
    * rather than the browser. Defaults to false.
@@ -457,6 +461,7 @@ export function createCallViewModel$(
   // Defaults match what the URL parameters resolve to outside of widget mode,
   // so that callers which don't care (chiefly tests) behave as they always have.
   const {
+    hostBridge = nullHostBridge,
     controlledAudioDevices = false,
     header = HeaderStyle.Standard,
     showControls = true,
@@ -632,6 +637,7 @@ export function createCallViewModel$(
     localTransport$,
     roomId: matrixRoom.roomId,
     hideScreensharing,
+    hostBridge,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
@@ -923,24 +929,16 @@ export function createCallViewModel$(
 
   const userHangup$ = new Subject<void>();
 
-  const widgetHangup$ =
-    widget === null
-      ? NEVER
-      : (
-          fromEvent(
-            widget.lazyActions,
-            ElementWidgetActions.HangupCall,
-          ) as Observable<CustomEvent<IWidgetApiRequest>>
-        ).pipe(
-          tap((ev) => {
-            widget!.api.transport.reply(ev.detail, {});
-          }),
-        );
+  const hostHangup$ = hostBridge.hangUp$.pipe(
+    tap((request) => {
+      request.reply();
+    }),
+  );
 
   const leave$: Observable<"user" | "timeout" | "decline" | "allOthersLeft"> =
     merge(
       autoLeave$,
-      merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
+      merge(userHangup$, hostHangup$).pipe(map(() => "user" as const)),
     ).pipe(scope.share);
 
   const spotlightSpeaker$ = scope.behavior<UserMediaViewModel | undefined>(

@@ -30,6 +30,7 @@ import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { HomePage } from "../home/HomePage";
 import { widget } from "../widget";
+import { useHostBridge } from "../HostBridge.ts";
 import { CallTerminatedMessage, useLoadGroupCall } from "./useLoadGroupCall";
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -44,6 +45,7 @@ import { calculateInitialMuteState } from "../state/initialMuteState.ts";
 
 export const RoomPage: FC = (): ReactNode => {
   const urlParams = useUrlParams();
+  const hostBridge = useHostBridge();
   const { confineToRoom, preload, header, displayName, skipLobby } = urlParams;
   const { t } = useTranslation();
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
@@ -77,10 +79,11 @@ export const RoomPage: FC = (): ReactNode => {
           urlParams.callIntent,
           widget !== null,
         ),
+        hostBridge,
       ),
     );
     return (): void => scope.end();
-  }, [devices, urlParams]);
+  }, [devices, urlParams, hostBridge]);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as

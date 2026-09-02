@@ -60,6 +60,7 @@ import {
   initializeWidget,
 } from "../src/widget";
 import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
+import { createWidgetHostBridge } from "../src/HostBridge";
 
 interface MatrixRTCSdk {
   /**
@@ -113,6 +114,7 @@ export async function createMatrixRTCSdk(
   const widget = _widget;
   if (!widget) throw Error("No widget. This webapp can only start as a widget");
   const client = await widget.client;
+  const hostBridge = createWidgetHostBridge(widget);
   logger.info("client created");
 
   // url params
@@ -132,10 +134,12 @@ export async function createMatrixRTCSdk(
     controlledAudioDevices,
     callIntent,
   });
-  const muteStates = new MuteStates(scope, mediaDevices, {
-    audioEnabled: false,
-    videoEnabled: false,
-  });
+  const muteStates = new MuteStates(
+    scope,
+    mediaDevices,
+    { audioEnabled: false, videoEnabled: false },
+    hostBridge,
+  );
 
   // call view model
   const callViewModel = createCallViewModel$(
@@ -146,6 +150,7 @@ export async function createMatrixRTCSdk(
     muteStates,
     {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      hostBridge,
       controlledAudioDevices,
       callIntent,
     },

@@ -29,6 +29,7 @@ import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { widget } from "../widget";
+import { useHostBridge } from "../HostBridge.ts";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
@@ -116,6 +117,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     useState<ViewModel<DeveloperSettingsSnapshot> | null>(null);
 
   const urlParams = useUrlParams();
+  const hostBridge = useHostBridge();
   const mediaDevices = useMediaDevices();
   const trackProcessorState$ = useTrackProcessorObservable$();
   useEffect(() => {
@@ -141,6 +143,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       props.muteStates,
       {
         encryptionSystem: props.e2eeSystem,
+        hostBridge,
         autoLeaveWhenOthersLeft,
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
         matrixRTCMode$: matrixRTCModeSetting.value$,
@@ -171,6 +174,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     props.e2eeSystem,
     props.onLeft,
     urlParams,
+    hostBridge,
     mediaDevices,
     trackProcessorState$,
     props.client,

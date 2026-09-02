@@ -53,7 +53,7 @@ import {
   MembershipManagerError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
-import { ElementWidgetActions, widget } from "../../../widget.ts";
+import { type HostBridge } from "../../../HostBridge.ts";
 
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
 import {
@@ -145,6 +145,8 @@ interface Props {
   >;
   /** Whether to hide the screen-sharing button. */
   hideScreensharing: boolean;
+  /** The application hosting Element Call, to be kept informed of join/leave. */
+  hostBridge: HostBridge;
   logger: Logger;
 }
 
@@ -165,6 +167,7 @@ interface Props {
  * @param props.matrixRTCSession The matrix RTC session to join.
  * @param props.roomId The room ID used as the call identifier in analytics events.
  * @param props.hideScreensharing Whether to hide the screen-sharing button.
+ * @param props.hostBridge The application hosting Element Call.
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
  *  - connected$: the current connection state. Including matrix server and livekit server connection. (only considering the livekit server we are using for our own media publication)
@@ -184,6 +187,7 @@ export const createLocalMembership$ = ({
   matrixRTCSession,
   roomId,
   hideScreensharing,
+  hostBridge,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -576,29 +580,24 @@ export const createLocalMembership$ = ({
       }
     });
 
-  // inform the widget about the connect and disconnect intent from the user.
+  // inform the host about the connect and disconnect intent from the user.
   scope
     .behavior(joinAndPublishRequested$.pipe(pairwise(), scope.bind()), [
       undefined,
       joinAndPublishRequested$.value,
     ])
     .subscribe(([prev, current]) => {
-      if (!widget) return;
       // JOIN prev=false (was left) => current-true (now joiend)
       if (!prev && current) {
-        widget.api.transport
-          .send(ElementWidgetActions.JoinCall, {})
-          .catch((e) => {
-            logger.error("Failed to send join action", e);
-          });
+        hostBridge.notifyJoined().catch((e) => {
+          logger.error("Failed to notify the host that we joined", e);
+        });
       }
       // LEAVE prev=false (was joined) => current-true (now left)
       if (prev && !current) {
-        widget.api.transport
-          .send(ElementWidgetActions.HangupCall, {})
-          .catch((e) => {
-            logger.error("Failed to send hangup action", e);
-          });
+        hostBridge.notifyHungUp().catch((e) => {
+          logger.error("Failed to notify the host that we hung up", e);
+        });
       }
     });
 
@@ -845,7 +844,7 @@ interface EnterRTCSessionOptions {
  * @param options - `encryptMedia`: Whether to encrypt media. `matrixRTCMode`: The
  *   Matrix RTC mode to use. `sendNotificationType`: Whether and what kind of
  *   notification to send on join. `callIntent`: The kind of call being placed.
- * @throws If the widget could not send ElementWidgetActions.JoinCall action.
+ * @throws If the host could not be told that we are joining.
  */
 // Exported for unit testing
 export function enterRTCSession(
