@@ -46,7 +46,10 @@ import {
 // Can this be done in the tsconfig.json
 import { type TextStreamInfo } from "../node_modules/livekit-client/dist/src/room/types";
 import { type Behavior, constant } from "../src/state/Behavior";
-import { createCallViewModel$ } from "../src/state/CallViewModel/CallViewModel";
+import {
+  callViewModelOptionsFromParams,
+  createCallViewModel$,
+} from "../src/state/CallViewModel/CallViewModel";
 import { ObservableScope } from "../src/state/ObservableScope";
 import { getUrlParams } from "../src/UrlParams";
 import { MuteStates } from "../src/state/MuteStates";
@@ -113,7 +116,8 @@ export async function createMatrixRTCSdk(
   logger.info("client created");
 
   // url params
-  const { roomId, controlledAudioDevices, callIntent } = getUrlParams();
+  const urlParams = getUrlParams();
+  const { roomId, controlledAudioDevices, callIntent } = urlParams;
   if (roomId === null) throw Error("could not get roomId from url params");
   const room = client.getRoom(roomId);
   if (room === null) throw Error("could not get room from client");
@@ -144,10 +148,9 @@ export async function createMatrixRTCSdk(
     mediaDevices,
     muteStates,
     {
+      ...callViewModelOptionsFromParams(urlParams),
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       hostBridge,
-      controlledAudioDevices,
-      callIntent,
     },
     of({}),
     of({}),

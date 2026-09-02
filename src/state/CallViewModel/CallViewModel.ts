@@ -86,7 +86,7 @@ import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
-import { HeaderStyle } from "../../UrlParams";
+import { HeaderStyle, type UrlParams } from "../../UrlParams";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
@@ -214,6 +214,40 @@ export interface CallViewModelOptions {
   matrixRTCMode$?: Behavior<MatrixRTCMode>;
   /** Optional behavior overriding for the screensharing, for testing */
   toggleScreensharing?: () => void;
+}
+
+/**
+ * The options {@link createCallViewModel$} takes from the parameters Element
+ * Call was started with.
+ *
+ * Callers share this rather than picking the fields out themselves. The
+ * defaults on {@link CallViewModelOptions} describe a standalone Element Call,
+ * so a widget or embedded caller that misses one does not get an error — it
+ * quietly gets standalone behaviour instead.
+ *
+ * Note `autoLeaveWhenOthersLeft` and `waitForCallPickup` are deliberately not
+ * here: unlike these, the view model never read them from the parameters
+ * itself, so they remain the caller's decision.
+ */
+export function callViewModelOptionsFromParams(
+  params: UrlParams,
+): Pick<
+  CallViewModelOptions,
+  | "controlledAudioDevices"
+  | "header"
+  | "showControls"
+  | "hideScreensharing"
+  | "sendNotificationType"
+  | "callIntent"
+> {
+  return {
+    controlledAudioDevices: params.controlledAudioDevices,
+    header: params.header,
+    showControls: params.showControls,
+    hideScreensharing: params.hideScreensharing,
+    sendNotificationType: params.sendNotificationType,
+    callIntent: params.callIntent,
+  };
 }
 
 // Do not play any sounds if the participant count has exceeded this
