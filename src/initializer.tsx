@@ -34,6 +34,10 @@ import { platform } from "./Platform";
 import { isFailure } from "./utils/fetch";
 import { initializeWidget } from "./widget";
 import { enableExtendedLivekitLogs } from "./settings/settings.ts";
+import {
+  type AnalyticsConfig,
+  PosthogAnalytics,
+} from "./analytics/PosthogAnalytics.ts";
 import { i18n } from "./utils/i18n.ts";
 
 // This generates a map of locale names to their URL (based on import.meta.url), which looks like this:
@@ -97,6 +101,36 @@ const Backend = {
     );
   },
 } satisfies BackendModule;
+
+/**
+ * Where analytics reporting is configured from.
+ *
+ * Note the two halves are decided differently, and deliberately so. *Where the
+ * PostHog credentials come from* depends on the package: an embedder passes
+ * them in through the URL because it is responsible for its own users'
+ * telemetry, whereas a standalone deployment is configured by whoever operates
+ * it. *Who owns the user's analytics identity*, on the other hand, depends on
+ * how Element Call is actually running right now — the full package can be used
+ * as a widget too.
+ */
+// Exported for testing
+export function analyticsConfigFromEnvironment(): AnalyticsConfig {
+  const { posthogApiKey, posthogApiHost, posthogUserId, isWidget } =
+    getUrlParams();
+  return {
+    matrixBackend: isWidget ? "embedded" : "jssdk",
+    hostAnalyticsId: posthogUserId,
+    ...(import.meta.env.VITE_PACKAGE === "embedded"
+      ? {
+          apiKey: posthogApiKey ?? undefined,
+          apiHost: posthogApiHost ?? undefined,
+        }
+      : {
+          apiKey: Config.get().posthog?.api_key,
+          apiHost: Config.get().posthog?.api_host,
+        }),
+  };
+}
 
 enum LoadState {
   None,
@@ -241,6 +275,7 @@ export class Initializer {
       Config.init().then(
         () => {
           seedSettingsFromConfig(Config.get().media_quality);
+          PosthogAnalytics.configure(analyticsConfigFromEnvironment());
           this.loadStates.config = LoadState.Loaded;
           this.initStep(resolve);
         },
