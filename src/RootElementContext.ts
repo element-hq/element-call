@@ -24,9 +24,10 @@ import { createContext, use } from "react";
  * be decorated correctly and styled incorrectly, silently. Until those are
  * scoped, treat this as preparation rather than a working seam.
  */
+// No provider is exported yet: nothing supplies a root element, so every
+// consumer falls back to the document body. M1 adds one along with the
+// component that mounts Element Call into a container.
 const RootElementContext = createContext<HTMLElement | null>(null);
-
-export const RootElementProvider = RootElementContext.Provider;
 
 /**
  * The element Element Call should decorate and portal into.
