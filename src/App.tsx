@@ -31,7 +31,13 @@ import { useTheme } from "./useTheme";
 import { ProcessorProvider } from "./livekit/TrackProcessorContext";
 import { type AppViewModel } from "./state/AppViewModel";
 import { MediaDevicesContext } from "./MediaDevicesContext";
-import { getUrlParams, HeaderStyle, useUrlParams } from "./UrlParams";
+import {
+  getUrlParams,
+  HeaderStyle,
+  UrlParamsProvider,
+  useUrlParams,
+  useUrlParamsFromLocation,
+} from "./UrlParams";
 import { AppBar } from "./AppBar";
 import { i18n } from "./utils/i18n";
 import { useRootElement } from "./RootElementContext";
@@ -41,6 +47,16 @@ const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 interface SimpleProviderProps {
   children: JSX.Element;
 }
+
+/**
+ * Supplies the URL-derived params to the rest of the app. Only the standalone
+ * and widget builds own the URL, so this lives here in the app shell rather
+ * than alongside the context itself.
+ */
+const LocationUrlParamsProvider: FC<SimpleProviderProps> = ({ children }) => {
+  const urlParams = useUrlParamsFromLocation();
+  return <UrlParamsProvider value={urlParams}>{children}</UrlParamsProvider>;
+};
 
 const BackgroundProvider: FC<SimpleProviderProps> = ({ children }) => {
   const { pathname } = useLocation();
@@ -102,19 +118,21 @@ export const App: FC<Props> = ({ vm }) => {
   return (
     <I18nextProvider i18n={i18n}>
       <BrowserRouter>
-        <BackgroundProvider>
-          <ThemeProvider>
-            <TooltipProvider>
-              <Suspense fallback={null}>
-                {header === HeaderStyle.AppBar ? (
-                  <AppBar>{content}</AppBar>
-                ) : (
-                  content
-                )}
-              </Suspense>
-            </TooltipProvider>
-          </ThemeProvider>
-        </BackgroundProvider>
+        <LocationUrlParamsProvider>
+          <BackgroundProvider>
+            <ThemeProvider>
+              <TooltipProvider>
+                <Suspense fallback={null}>
+                  {header === HeaderStyle.AppBar ? (
+                    <AppBar>{content}</AppBar>
+                  ) : (
+                    content
+                  )}
+                </Suspense>
+              </TooltipProvider>
+            </ThemeProvider>
+          </BackgroundProvider>
+        </LocationUrlParamsProvider>
       </BrowserRouter>
     </I18nextProvider>
   );
