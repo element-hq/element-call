@@ -12,9 +12,17 @@ import { createContext, use } from "react";
  *
  * Element Call decorates this element with the theme, layout and background
  * attributes its stylesheets key off, and portals its modals into it. When
- * Element Call owns the page this is simply the document body; when it is
- * embedded in a host application it is the container the host mounted it into,
- * so that Element Call does not reach outside its own subtree.
+ * Element Call owns the page this is simply the document body; the intent is
+ * that when embedded in a host application it becomes the container the host
+ * mounted it into, so that Element Call does not reach outside its own subtree.
+ *
+ * That intent is not yet achievable: several selectors still name `body`
+ * directly — `body[data-background="gradient"]` and `body[data-platform=…]` in
+ * `index.css`, and `body[data-platform="ios"]` in `AppBar.module.css` and
+ * `Modal.module.css` — and `Initializer.initBeforeReact` writes
+ * `data-platform` straight onto the body. So anything other than the body will
+ * be decorated correctly and styled incorrectly, silently. Until those are
+ * scoped, treat this as preparation rather than a working seam.
  */
 const RootElementContext = createContext<HTMLElement | null>(null);
 
