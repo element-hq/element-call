@@ -13,11 +13,11 @@ import { type FC } from "react";
 
 import { ClientProvider, useClientState } from "./ClientContext";
 
-const mockClient = (): MatrixClient =>
+const mockClient = (userId = "@alice:example.org"): MatrixClient =>
   ({
     on: vi.fn(),
     removeListener: vi.fn(),
-    getUserId: () => "@alice:example.org",
+    getUserId: () => userId,
     getDeviceId: () => "AAAA",
     stopClient: vi.fn(),
   }) as Partial<MatrixClient> as MatrixClient;
@@ -66,4 +66,29 @@ test("does not claim exclusive use of storage when given a client", () => {
   expect(postMessage).not.toHaveBeenCalled();
 
   postMessage.mockRestore();
+});
+
+test("follows the client when the host swaps it", () => {
+  const first = mockClient();
+  const second = mockClient("@bob:example.org");
+
+  const { container, rerender } = render(
+    <BrowserRouter>
+      <ClientProvider client={first}>
+        <ShowClientState />
+      </ClientProvider>
+    </BrowserRouter>,
+  );
+  expect(container.textContent).toBe("@alice:example.org");
+
+  // A host that re-authenticates hands us a new client on a mounted component
+  rerender(
+    <BrowserRouter>
+      <ClientProvider client={second}>
+        <ShowClientState />
+      </ClientProvider>
+    </BrowserRouter>,
+  );
+
+  expect(container.textContent).toBe("@bob:example.org");
 });

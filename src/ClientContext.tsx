@@ -163,7 +163,14 @@ export const ClientProvider: FC<Props> = ({ children, client }) => {
   const initializing = useRef(false);
   useEffect(() => {
     if (client !== undefined) {
-      // Nothing to load, but analytics still need to follow the user's choices.
+      // Nothing to load, but a host may hand us a different client later — on
+      // re-authenticating, say — so follow whichever one it has given us.
+      setInitClientState((current) =>
+        current?.client === client
+          ? current
+          : { client, passwordlessUser: false },
+      );
+      // Analytics still need to follow the user's choices.
       if (PosthogAnalytics.instance.isEnabled())
         PosthogAnalytics.instance.startListeningToSettingsChanges();
       return;
