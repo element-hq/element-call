@@ -134,19 +134,36 @@ const loadChannel =
 
 interface Props {
   children: JSX.Element;
+  /**
+   * The client Element Call should use.
+   *
+   * When a host embeds Element Call it already has a client, and owns the
+   * user's session; supplying it here means Element Call neither authenticates
+   * anyone nor manages their session. Left out, Element Call finds a client
+   * itself — from the widget API, or by restoring or creating a session of its
+   * own.
+   */
+  client?: MatrixClient;
 }
 
-export const ClientProvider: FC<Props> = ({ children }) => {
+export const ClientProvider: FC<Props> = ({ children, client }) => {
   const navigate = useNavigate();
   const hostBridge = useHostBridge();
 
   // null = signed out, undefined = loading
   const [initClientState, setInitClientState] = useState<
     InitResult | null | undefined
-  >(undefined);
+  >(
+    client === undefined
+      ? undefined
+      : // A supplied client belongs to the host, so there is no session of ours
+        // to restore and nothing to wait for.
+        { client, passwordlessUser: false },
+  );
 
   const initializing = useRef(false);
   useEffect(() => {
+    if (client !== undefined) return;
     // In case the component is mounted, unmounted, and remounted quickly (as
     // React does in strict mode), we need to make sure not to doubly initialize
     // the client.
@@ -161,7 +178,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       })
       .catch((err) => logger.error(err))
       .finally(() => (initializing.current = false));
-  }, []);
+  }, [client]);
 
   const changePassword = useCallback(
     async (password: string) => {
@@ -228,11 +245,13 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
   // To protect against multiple sessions writing to the same storage
   // simultaneously, we send a broadcast message that shuts down all other
-  // running instances of the app. This isn't necessary if the app is running in
-  // a widget though, since then it'll be mostly stateless.
+  // running instances of the app. Element Call only has storage of its own to
+  // protect when it created the session itself; given a client, or running as a
+  // widget, it is mostly stateless.
+  const ownsSession = client === undefined && widget === null;
   useEffect(() => {
-    if (!widget) loadChannel?.postMessage({});
-  }, []);
+    if (ownsSession) loadChannel?.postMessage({});
+  }, [ownsSession]);
 
   const [alreadyOpenedErr, setAlreadyOpenedErr] = useState<Error | undefined>(
     undefined,
