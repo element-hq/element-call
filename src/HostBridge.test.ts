@@ -10,7 +10,7 @@ import { type WidgetApi } from "matrix-widget-api";
 import EventEmitter from "events";
 
 import { createWidgetHostBridge, nullHostBridge } from "./HostBridge";
-import { type WidgetHelpers } from "./widget";
+import { ElementWidgetActions, type WidgetHelpers } from "./widget";
 
 function mockWidget(api: Partial<WidgetApi>): WidgetHelpers {
   return {
@@ -57,6 +57,36 @@ describe("createWidgetHostBridge", () => {
       await expect(bridge.downloadMedia!(mxcUri)).rejects.toThrow(
         "Downloaded file format is not supported",
       );
+    });
+  });
+
+  describe("close", () => {
+    test("asks the host to close, then stops the transport", async () => {
+      const transport = {
+        send: vi.fn().mockResolvedValue(undefined),
+        stop: vi.fn(),
+      };
+      const bridge = createWidgetHostBridge(mockWidget({ transport } as never));
+
+      await bridge.close!();
+
+      expect(transport.send).toHaveBeenCalledWith(
+        ElementWidgetActions.Close,
+        {},
+      );
+      expect(transport.stop).toHaveBeenCalledOnce();
+    });
+
+    test("stops the transport even when the host refuses to close", async () => {
+      const transport = {
+        send: vi.fn().mockRejectedValue(new Error("no")),
+        stop: vi.fn(),
+      };
+      const bridge = createWidgetHostBridge(mockWidget({ transport } as never));
+
+      // Leaving the messaging live would leave the close affordance dead
+      await expect(bridge.close!()).rejects.toThrow("no");
+      expect(transport.stop).toHaveBeenCalledOnce();
     });
   });
 

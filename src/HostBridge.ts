@@ -163,8 +163,14 @@ export function createWidgetHostBridge(widget: WidgetHelpers): HostBridge {
     notifyDeviceMute: async (state) =>
       send(ElementWidgetActions.DeviceMute, state),
     close: async () => {
-      await send(ElementWidgetActions.Close);
-      widget.api.transport.stop();
+      try {
+        await send(ElementWidgetActions.Close);
+      } finally {
+        // Stop regardless of whether the host acknowledged the request. A host
+        // that rejects or never answers would otherwise leave the messaging
+        // live, and the close affordance doing nothing at all.
+        widget.api.transport.stop();
+      }
     },
     themeChange$: requests(WidgetApiToWidgetAction.ThemeChange),
     join$: requests(ElementWidgetActions.JoinCall),
