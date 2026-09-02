@@ -5,14 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type FC,
-  type JSX,
-  Suspense,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { type FC, type JSX, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Route, useLocation, Routes } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -32,7 +25,6 @@ import { ProcessorProvider } from "./livekit/TrackProcessorContext";
 import { type AppViewModel } from "./state/AppViewModel";
 import { MediaDevicesContext } from "./MediaDevicesContext";
 import {
-  getUrlParams,
   HeaderStyle,
   UrlParamsProvider,
   useUrlParams,
@@ -75,6 +67,12 @@ const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
   return children;
 };
 
+/** Wraps the app in an {@link AppBar}, if the params ask for one. */
+const MaybeAppBar: FC<SimpleProviderProps> = ({ children }) => {
+  const { header } = useUrlParams();
+  return header === HeaderStyle.AppBar ? <AppBar>{children}</AppBar> : children;
+};
+
 interface Props {
   vm: AppViewModel;
 }
@@ -90,9 +88,6 @@ export const App: FC<Props> = ({ vm }) => {
       })
       .catch(logger.error);
   });
-
-  // Since we are outside the router component, we cannot use useUrlParams here
-  const { header } = useMemo(getUrlParams, []);
 
   const content = loaded ? (
     <ClientProvider>
@@ -123,11 +118,7 @@ export const App: FC<Props> = ({ vm }) => {
             <ThemeProvider>
               <TooltipProvider>
                 <Suspense fallback={null}>
-                  {header === HeaderStyle.AppBar ? (
-                    <AppBar>{content}</AppBar>
-                  ) : (
-                    content
-                  )}
+                  <MaybeAppBar>{content}</MaybeAppBar>
                 </Suspense>
               </TooltipProvider>
             </ThemeProvider>

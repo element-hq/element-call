@@ -20,6 +20,8 @@ import {
   type LivekitTransport,
   type LivekitTransportConfig,
   type MatrixRTCSession,
+  type RTCCallIntent,
+  type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   BehaviorSubject,
@@ -52,7 +54,7 @@ import {
   UnknownCallError,
 } from "../../../utils/errors.ts";
 import { ElementWidgetActions, widget } from "../../../widget.ts";
-import { getUrlParams } from "../../../UrlParams.ts";
+
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
 import {
   advancedScreenShare,
@@ -141,6 +143,8 @@ interface Props {
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
   >;
+  /** Whether to hide the screen-sharing button. */
+  hideScreensharing: boolean;
   logger: Logger;
 }
 
@@ -160,6 +164,7 @@ interface Props {
  * @param props.muteStates The mute states for video and audio.
  * @param props.matrixRTCSession The matrix RTC session to join.
  * @param props.roomId The room ID used as the call identifier in analytics events.
+ * @param props.hideScreensharing Whether to hide the screen-sharing button.
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
  *  - connected$: the current connection state. Including matrix server and livekit server connection. (only considering the livekit server we are using for our own media publication)
@@ -178,6 +183,7 @@ export const createLocalMembership$ = ({
   muteStates,
   matrixRTCSession,
   roomId,
+  hideScreensharing,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -709,7 +715,7 @@ export const createLocalMembership$ = ({
   let toggleScreenSharing: (() => void) | null = null;
   if (
     "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
-    !getUrlParams().hideScreensharing
+    !hideScreensharing
   ) {
     toggleScreenSharing = (): void => {
       const screenshareSettings: ScreenShareCaptureOptions = {
@@ -820,6 +826,10 @@ export function observeSharingScreen$(p: Participant): Observable<boolean> {
 interface EnterRTCSessionOptions {
   encryptMedia: boolean;
   matrixRTCMode: MatrixRTCMode;
+  /** Whether and what kind of notification to send when joining. */
+  sendNotificationType?: RTCNotificationType;
+  /** The kind of call being placed. */
+  callIntent?: RTCCallIntent;
 }
 
 /**
@@ -832,7 +842,9 @@ interface EnterRTCSessionOptions {
  * @param rtcSession - The MatrixRTCSession to join.
  * @param ownMembershipIdentity - Options for entering the RTC session.
  * @param transport - The LivekitTransport to use for this session.
- * @param options - `encryptMedia`: Whether to encrypt media `matrixRTCMode`: The Matrix RTC mode to use.
+ * @param options - `encryptMedia`: Whether to encrypt media. `matrixRTCMode`: The
+ *   Matrix RTC mode to use. `sendNotificationType`: Whether and what kind of
+ *   notification to send on join. `callIntent`: The kind of call being placed.
  * @throws If the widget could not send ElementWidgetActions.JoinCall action.
  */
 // Exported for unit testing
@@ -842,7 +854,12 @@ export function enterRTCSession(
   transport: LivekitTransportConfig,
   options: EnterRTCSessionOptions,
 ): void {
-  const { encryptMedia, matrixRTCMode } = options;
+  const {
+    encryptMedia,
+    matrixRTCMode,
+    sendNotificationType: notificationType,
+    callIntent,
+  } = options;
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
@@ -851,7 +868,6 @@ export function enterRTCSession(
   // groupCallOTelMembership?.onJoinCall();
 
   const { matrix_rtc_session: matrixRtcSessionConfig } = Config.get();
-  const { sendNotificationType: notificationType, callIntent } = getUrlParams();
   const multiSFU =
     matrixRTCMode === MatrixRTCMode.Compatibility ||
     matrixRTCMode === MatrixRTCMode.Matrix_2_0;

@@ -9,15 +9,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { WidgetApiToWidgetAction } from "matrix-widget-api";
 import { type IThemeChangeActionRequest } from "matrix-widget-api";
 
-import { getUrlParams } from "./UrlParams";
+import { useUrlParams } from "./UrlParams";
 import { widget } from "./widget";
 import { useRootElement } from "./RootElementContext";
 
 export const useTheme = (): void => {
   const rootElement = useRootElement();
-  const [requestedTheme, setRequestedTheme] = useState(
-    () => getUrlParams().theme,
-  );
+  const { theme } = useUrlParams();
+  const [requestedTheme, setRequestedTheme] = useState(theme);
   const previousTheme = useRef<string | null>(rootElement.classList.item(0));
 
   useEffect(() => {

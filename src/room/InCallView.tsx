@@ -122,8 +122,16 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     rootLogger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
     const reactionsReader = new ReactionsReader(scope, props.rtcSession);
-    const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
-      urlParams;
+    const {
+      autoLeaveWhenOthersLeft,
+      waitForCallPickup,
+      sendNotificationType,
+      controlledAudioDevices,
+      header,
+      showControls,
+      hideScreensharing,
+      callIntent,
+    } = urlParams;
 
     const vm = createCallViewModel$(
       scope,
@@ -136,6 +144,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         autoLeaveWhenOthersLeft,
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
         matrixRTCMode$: matrixRTCModeSetting.value$,
+        controlledAudioDevices,
+        header,
+        showControls,
+        hideScreensharing,
+        sendNotificationType,
+        callIntent,
       },
       reactionsReader.raisedHands$,
       reactionsReader.reactions$,
@@ -172,6 +186,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       props.muteStates,
       mediaDevices,
       `${props.client.getUserId()}:${props.client.getDeviceId()}`,
+      { showControls: urlParams.showControls, header: urlParams.header },
     );
     setFooterVm(footerVm);
     setDeveloperSettingsVm(createDeveloperSettingsTabViewModel(scope, vm));

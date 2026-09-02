@@ -40,6 +40,7 @@ import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "../state/Behavior";
 import { MatrixRTCMode } from "../config/ConfigOptions";
 import { createCallFooterViewModel } from "../components/CallFooterViewModel";
+import { HeaderStyle } from "../UrlParams";
 import { type FooterSnapshot } from "../components/CallFooter";
 import { type ViewModel } from "../state/ViewModel";
 import { createDeveloperSettingsTabViewModel } from "../settings/DeveloperSettingsTabViewModel";
@@ -187,6 +188,7 @@ export function getBasicCallViewModelEnvironment(
     muteStates,
     mediaDevices,
     "reactionId",
+    { showControls: true, header: HeaderStyle.Standard },
   );
   return {
     vm,

@@ -116,7 +116,7 @@ export async function createMatrixRTCSdk(
   logger.info("client created");
 
   // url params
-  const { roomId } = getUrlParams();
+  const { roomId, controlledAudioDevices, callIntent } = getUrlParams();
   if (roomId === null) throw Error("could not get roomId from url params");
   const room = client.getRoom(roomId);
   if (room === null) throw Error("could not get room from client");
@@ -128,7 +128,10 @@ export async function createMatrixRTCSdk(
   const rtcSession = rtcSessionManager.getRoomSession(room);
 
   // media devices
-  const mediaDevices = new MediaDevices(scope);
+  const mediaDevices = new MediaDevices(scope, {
+    controlledAudioDevices,
+    callIntent,
+  });
   const muteStates = new MuteStates(scope, mediaDevices, {
     audioEnabled: false,
     videoEnabled: false,
@@ -141,7 +144,11 @@ export async function createMatrixRTCSdk(
     room,
     mediaDevices,
     muteStates,
-    { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } },
+    {
+      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      controlledAudioDevices,
+      callIntent,
+    },
     of({}),
     of({}),
     constant({ supported: false, processor: undefined }),

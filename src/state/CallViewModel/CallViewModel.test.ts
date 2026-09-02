@@ -1593,12 +1593,13 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
 
   it.skip("audio output changes when toggling earpiece mode", () => {
     withTestScheduler(({ schedule, expectObservable }) => {
-      getUrlParams.mockReturnValue({ controlledAudioDevices: true });
       vi.mocked(ComponentsCore.createMediaDeviceObserver).mockReturnValue(
         of([]),
       );
 
-      const devices = new MediaDevices(testScope());
+      const devices = new MediaDevices(testScope(), {
+        controlledAudioDevices: true,
+      });
 
       window.controls.setAvailableAudioDevices([
         { id: "speaker", name: "Speaker", isSpeaker: true },

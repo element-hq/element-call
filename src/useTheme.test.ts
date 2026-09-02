@@ -19,10 +19,10 @@ import EventEmitter from "events";
 import { WidgetApiToWidgetAction } from "matrix-widget-api";
 
 import { useTheme } from "./useTheme";
-import { getUrlParams } from "./UrlParams";
+import { useUrlParams } from "./UrlParams";
 import { widget } from "./widget";
 
-vi.mock("./UrlParams", () => ({ getUrlParams: vi.fn() }));
+vi.mock("./UrlParams", () => ({ useUrlParams: vi.fn() }));
 vi.mock("./widget", () => ({
   widget: {
     api: { transport: { reply: vi.fn() } },
@@ -39,7 +39,7 @@ describe("useTheme", () => {
     vi.spyOn(originalClassList, "add");
     vi.spyOn(originalClassList, "remove");
     vi.spyOn(originalClassList, "item").mockReturnValue(null);
-    (getUrlParams as Mock).mockReturnValue({ theme: "dark" });
+    (useUrlParams as Mock).mockReturnValue({ theme: "dark" });
   });
 
   afterEach(() => {
@@ -53,7 +53,7 @@ describe("useTheme", () => {
     { setTheme: "light-high-contrast", add: ["cpd-theme-light-hc"] },
   ])("apply procedure", ({ setTheme, add }) => {
     test(`should apply ${add[0]} theme when ${setTheme} theme is specified`, () => {
-      (getUrlParams as Mock).mockReturnValue({ theme: setTheme });
+      (useUrlParams as Mock).mockReturnValue({ theme: setTheme });
 
       renderHook(() => useTheme());
 

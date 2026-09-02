@@ -45,6 +45,8 @@ import {
   MembershipManagerEvent,
   type LivekitTransportConfig,
   type MatrixRTCSession,
+  type RTCCallIntent,
+  type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IWidgetApiRequest } from "matrix-widget-api";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -85,7 +87,7 @@ import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
-import { getUrlParams, HeaderStyle } from "../../UrlParams";
+import { HeaderStyle } from "../../UrlParams";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { ElementWidgetActions, widget } from "../../widget";
 import {
@@ -171,6 +173,23 @@ import { type GridTileViewModel } from "../TileViewModel.ts";
 // callMembership -> rtcMembership
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
+  /**
+   * Whether the app hosting Element Call controls the audio output devices,
+   * rather than the browser. Defaults to false.
+   */
+  controlledAudioDevices?: boolean;
+  /** The style of header to show. Defaults to {@link HeaderStyle.Standard}. */
+  header?: HeaderStyle;
+  /** Whether the call controls should be shown. Defaults to true. */
+  showControls?: boolean;
+  /** Whether to hide the screen-sharing button. Defaults to false. */
+  hideScreensharing?: boolean;
+  /**
+   * Whether and what kind of notification to send when joining the call.
+   */
+  sendNotificationType?: RTCNotificationType;
+  /** The kind of call being placed. */
+  callIntent?: RTCCallIntent;
   autoLeaveWhenOthersLeft?: boolean;
   /**
    * If the call is started in a way where we want it to behave like a telephone usecase
@@ -435,6 +454,17 @@ export function createCallViewModel$(
   if (!(userId && deviceId))
     throw new UnknownCallError(new Error("userId and deviceId are required"));
 
+  // Defaults match what the URL parameters resolve to outside of widget mode,
+  // so that callers which don't care (chiefly tests) behave as they always have.
+  const {
+    controlledAudioDevices = false,
+    header = HeaderStyle.Standard,
+    showControls = true,
+    hideScreensharing = false,
+    sendNotificationType,
+    callIntent,
+  } = options;
+
   const livekitKeyProvider = getE2eeKeyProvider(
     options.encryptionSystem,
     matrixRTCSession,
@@ -523,7 +553,7 @@ export function createCallViewModel$(
       mediaDevices,
       trackProcessorState$,
       livekitKeyProvider,
-      getUrlParams().controlledAudioDevices,
+      controlledAudioDevices,
       options.livekitRoomFactory,
     );
 
@@ -563,6 +593,8 @@ export function createCallViewModel$(
         encryptMedia: livekitKeyProvider !== undefined,
         // TODO. This might need to get called again on each change of matrixRTCMode...
         matrixRTCMode: mode,
+        sendNotificationType,
+        callIntent,
       })),
     ),
   );
@@ -592,12 +624,14 @@ export function createCallViewModel$(
         logger.getChild(
           "[Publisher " + connection.transport.livekit_service_url + "]",
         ),
+        controlledAudioDevices,
       );
     },
     connectionManager,
     matrixRTCSession,
     localTransport$,
     roomId: matrixRoom.roomId,
+    hideScreensharing,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
@@ -1457,9 +1491,8 @@ export function createCallViewModel$(
     ),
   );
 
-  const urlParams = getUrlParams();
   const showFooterUrlParams = !(
-    urlParams.header === HeaderStyle.None && urlParams.showControls === false
+    header === HeaderStyle.None && showControls === false
   );
   const showFooter$ = scope.behavior(
     naturallyShowFooter$.pipe(
@@ -1778,8 +1811,7 @@ export function createCallViewModel$(
   return {
     autoLeave$: autoLeave$,
     ringingVm$: ringingMedia$,
-    ringingStatusLocation:
-      urlParams.header === HeaderStyle.AppBar ? "app_bar" : "tile",
+    ringingStatusLocation: header === HeaderStyle.AppBar ? "app_bar" : "tile",
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
     join: localMembership.requestJoinAndPublish,

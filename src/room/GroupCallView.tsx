@@ -54,12 +54,7 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import {
-  getUrlParams,
-  HeaderStyle,
-  type UrlParams,
-  useUrlParams,
-} from "../UrlParams";
+import { HeaderStyle, type UrlParams, useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
 import {
@@ -406,7 +401,7 @@ export const GroupCallView: FC<Props> = ({
             }
             // On a normal user hangup we can shut down and close the widget. But if an
             // error occurs we should keep the widget open until the user reads it.
-            if (reason != "error" && !getUrlParams().returnToLobby) {
+            if (reason != "error" && !returnToLobby) {
               try {
                 await widget.api.transport.send(ElementWidgetActions.Close, {});
               } catch (e) {
@@ -425,6 +420,7 @@ export const GroupCallView: FC<Props> = ({
       rtcSession,
       isPasswordlessUser,
       confineToRoom,
+      returnToLobby,
       navigate,
     ],
   );

@@ -199,6 +199,7 @@ describe("LocalMembership", () => {
       rtsSession$: constant(RTCMemberStatus.Connected),
     },
     roomId: "!test-room-id:example.org",
+    hideScreensharing: false,
   };
 
   it("throws error on missing RTC config error", () => {

@@ -29,7 +29,9 @@ const reactionData = {
   reactions$: new BehaviorSubject({}),
 };
 
-const mediaDevices = new MediaDevices(globalScope);
+const mediaDevices = new MediaDevices(globalScope, {
+  controlledAudioDevices: false,
+});
 
 /**
  * A wrapper component that is used for:
