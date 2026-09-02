@@ -49,7 +49,7 @@ if (fatalError !== null) {
 }
 
 Initializer.initBeforeReact()
-  .then(() => {
+  .then((widget) => {
     const { controlledAudioDevices, callIntent } = getUrlParams();
     root.render(
       <StrictMode>
@@ -60,6 +60,7 @@ Initializer.initBeforeReact()
               callIntent,
             })
           }
+          widget={widget}
         />
       </StrictMode>,
     );

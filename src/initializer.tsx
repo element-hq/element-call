@@ -32,7 +32,7 @@ import { Config } from "./config/Config";
 import { seedSettingsFromConfig } from "./settings/settings";
 import { platform } from "./Platform";
 import { isFailure } from "./utils/fetch";
-import { initializeWidget } from "./widget";
+import { initializeWidget, type WidgetHelpers } from "./widget";
 import { enableExtendedLivekitLogs } from "./settings/settings.ts";
 import {
   type AnalyticsConfig,
@@ -155,8 +155,8 @@ export class Initializer {
     return !!Initializer.internalInstance?.isInitialized;
   }
 
-  public static async initBeforeReact(): Promise<void> {
-    initializeWidget();
+  public static async initBeforeReact(): Promise<WidgetHelpers | null> {
+    const widget = initializeWidget();
 
     const polyfills: Promise<unknown>[] = [];
     if (shouldPolyfillSegmenter()) {
@@ -243,6 +243,8 @@ export class Initializer {
     });
 
     window.setLKLogLevel = setLKLogLevel;
+
+    return widget;
   }
 
   public static init(): Promise<void> | null {

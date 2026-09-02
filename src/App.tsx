@@ -10,6 +10,7 @@ import { BrowserRouter, Route, useLocation, Routes } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixClient } from "matrix-js-sdk";
 import { I18nextProvider } from "react-i18next";
 
 import { HomePage } from "./home/HomePage";
@@ -19,7 +20,7 @@ import { RoomPage } from "./room/RoomPage";
 import { ClientProvider } from "./ClientContext";
 import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { Initializer } from "./initializer";
-import { widget } from "./widget";
+import { type WidgetHelpers } from "./widget";
 import { useTheme } from "./useTheme";
 import { ProcessorProvider } from "./livekit/TrackProcessorContext";
 import { type AppViewModel } from "./state/AppViewModel";
@@ -81,9 +82,11 @@ const MaybeAppBar: FC<SimpleProviderProps> = ({ children }) => {
 
 interface Props {
   vm: AppViewModel;
+  /** A point of access to the widget API, if running as a widget. */
+  widget: WidgetHelpers | null;
 }
 
-export const App: FC<Props> = ({ vm }) => {
+export const App: FC<Props> = ({ vm, widget }) => {
   // The standalone build has no host; the widget build's host is the client it
   // is a widget of.
   const hostBridge = useInitial(() =>
@@ -100,26 +103,40 @@ export const App: FC<Props> = ({ vm }) => {
       .catch(logger.error);
   });
 
-  const content = loaded ? (
-    <ClientProvider>
-      <MediaDevicesContext value={vm.mediaDevices}>
-        <ProcessorProvider>
-          <Sentry.ErrorBoundary
-            fallback={(error) => <ErrorPage error={error} />}
-          >
-            <Routes>
-              <SentryRoute path="/" element={<HomePage />} />
-              <SentryRoute path="/login" element={<LoginPage />} />
-              <SentryRoute path="/register" element={<RegisterPage />} />
-              <SentryRoute path="*" element={<RoomPage />} />
-            </Routes>
-          </Sentry.ErrorBoundary>
-        </ProcessorProvider>
-      </MediaDevicesContext>
-    </ClientProvider>
-  ) : (
-    <LoadingPage />
+  // As a widget, the client comes from the host over the widget API. Standalone,
+  // Element Call finds one itself, so there is nothing to wait for here.
+  const [widgetClient, setWidgetClient] = useState<MatrixClient | undefined>(
+    undefined,
   );
+  useEffect(() => {
+    if (widget === null) return;
+    widget.client
+      .then(setWidgetClient)
+      .catch((e) => logger.error("Failed to obtain the host's client", e));
+  }, [widget]);
+  const clientReady = widget === null || widgetClient !== undefined;
+
+  const content =
+    loaded && clientReady ? (
+      <ClientProvider client={widgetClient}>
+        <MediaDevicesContext value={vm.mediaDevices}>
+          <ProcessorProvider>
+            <Sentry.ErrorBoundary
+              fallback={(error) => <ErrorPage error={error} />}
+            >
+              <Routes>
+                <SentryRoute path="/" element={<HomePage />} />
+                <SentryRoute path="/login" element={<LoginPage />} />
+                <SentryRoute path="/register" element={<RegisterPage />} />
+                <SentryRoute path="*" element={<RoomPage />} />
+              </Routes>
+            </Sentry.ErrorBoundary>
+          </ProcessorProvider>
+        </MediaDevicesContext>
+      </ClientProvider>
+    ) : (
+      <LoadingPage />
+    );
 
   return (
     <I18nextProvider i18n={i18n}>

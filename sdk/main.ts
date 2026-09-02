@@ -54,11 +54,7 @@ import { MediaDevices } from "../src/state/MediaDevices";
 import { E2eeType } from "../src/e2ee/e2eeType";
 import { currentAndPrev, TEXT_LK_TOPIC, tryMakeSticky } from "./helper";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import {
-  ElementWidgetActions,
-  widget as _widget,
-  initializeWidget,
-} from "../src/widget";
+import { initializeWidget } from "../src/widget";
 import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
 import { createWidgetHostBridge } from "../src/HostBridge";
 
@@ -110,8 +106,7 @@ export async function createMatrixRTCSdk(
   const scope = new ObservableScope();
 
   // widget client
-  initializeWidget(application, true);
-  const widget = _widget;
+  const widget = initializeWidget(application, true);
   if (!widget) throw Error("No widget. This webapp can only start as a widget");
   const client = await widget.client;
   const hostBridge = createWidgetHostBridge(widget);
@@ -294,18 +289,17 @@ export async function createMatrixRTCSdk(
       });
       await leaveResolver.promise;
       logger.info("send Unstick");
-      await widget.api
+      await hostBridge
         .setAlwaysOnScreen(false)
-        .catch((e) =>
-          logger.error(
-            "Failed to set call widget `alwaysOnScreen` to false",
-            e,
-          ),
+        .catch((e: unknown) =>
+          logger.error("Failed to set `alwaysOnScreen` to false", e),
         );
       logger.info("send Close");
-      await widget.api.transport
-        .send(ElementWidgetActions.Close, {})
-        .catch((e) => logger.error("Failed to send close action", e));
+      await hostBridge
+        .close?.()
+        .catch((e: unknown) =>
+          logger.error("Failed to ask the host to close", e),
+        );
     };
 
     // schedule close first and then leave (scope.end)

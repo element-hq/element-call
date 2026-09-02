@@ -22,7 +22,6 @@ import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
 
 import { ErrorPage } from "./FullScreenView";
-import { widget } from "./widget";
 import { useHostBridge } from "./HostBridge";
 import {
   PosthogAnalytics,
@@ -163,7 +162,12 @@ export const ClientProvider: FC<Props> = ({ children, client }) => {
 
   const initializing = useRef(false);
   useEffect(() => {
-    if (client !== undefined) return;
+    if (client !== undefined) {
+      // Nothing to load, but analytics still need to follow the user's choices.
+      if (PosthogAnalytics.instance.isEnabled())
+        PosthogAnalytics.instance.startListeningToSettingsChanges();
+      return;
+    }
     // In case the component is mounted, unmounted, and remounted quickly (as
     // React does in strict mode), we need to make sure not to doubly initialize
     // the client.
@@ -246,9 +250,9 @@ export const ClientProvider: FC<Props> = ({ children, client }) => {
   // To protect against multiple sessions writing to the same storage
   // simultaneously, we send a broadcast message that shuts down all other
   // running instances of the app. Element Call only has storage of its own to
-  // protect when it created the session itself; given a client, or running as a
-  // widget, it is mostly stateless.
-  const ownsSession = client === undefined && widget === null;
+  // protect when it created the session itself; given a client — by a host, or
+  // over the widget API — it is mostly stateless.
+  const ownsSession = client === undefined;
   useEffect(() => {
     if (ownsSession) loadChannel?.postMessage({});
   }, [ownsSession]);
@@ -349,19 +353,13 @@ export type InitResult = {
   passwordlessUser: boolean;
 };
 
+/**
+ * Restores or creates a session of Element Call's own. Only reached when no
+ * client was supplied for it to use.
+ */
 async function loadClient(): Promise<InitResult | null> {
-  if (widget) {
-    // We're inside a widget, so let's engage *matryoshka mode*
-    logger.log("Using a matryoshka client");
-    const client = await widget.client;
-    return {
-      client,
-      passwordlessUser: false,
-    };
-  } else {
-    const { initSPA } = await import("./utils/spa");
-    return initSPA(loadSession, clearSession);
-  }
+  const { initSPA } = await import("./utils/spa");
+  return initSPA(loadSession, clearSession);
 }
 
 export interface Session {
