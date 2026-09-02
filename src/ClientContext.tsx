@@ -339,7 +339,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   }, [initClientState, onSync]);
 
   if (alreadyOpenedErr) {
-    return <ErrorPage widget={widget} error={alreadyOpenedErr} />;
+    return <ErrorPage error={alreadyOpenedErr} />;
   }
 
   return <ClientContext value={state}>{children}</ClientContext>;

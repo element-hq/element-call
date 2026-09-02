@@ -1100,7 +1100,7 @@ exports[`LiveKit ConnectionError variants > should link to troubleshoot guide wh
 </DocumentFragment>
 `;
 
-exports[`should have a close button in widget mode 1`] = `
+exports[`should have a close button when the host can dismiss us 1`] = `
 <DocumentFragment>
   <div
     class="_page_4be5c0"

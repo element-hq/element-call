@@ -123,7 +123,6 @@ export const RoomPage: FC = (): ReactNode => {
         return (
           muteStates && (
             <GroupCallView
-              widget={widget}
               client={client!}
               rtcSession={groupCallState.rtcSession}
               joined={joined}
@@ -198,7 +197,6 @@ export const RoomPage: FC = (): ReactNode => {
               <ErrorView
                 Icon={UnknownSolidIcon}
                 title={t("error.call_not_found")}
-                widget={widget}
               >
                 <Trans i18nKey="error.call_not_found_description">
                   <p>
@@ -216,7 +214,6 @@ export const RoomPage: FC = (): ReactNode => {
               <ErrorView
                 Icon={groupCallState.error.icon}
                 title={groupCallState.error.message}
-                widget={widget}
               >
                 <p>{groupCallState.error.messageBody}</p>
                 {groupCallState.error.reason && (
@@ -230,7 +227,7 @@ export const RoomPage: FC = (): ReactNode => {
             </FullScreenView>
           );
         } else {
-          return <ErrorPage widget={widget} error={groupCallState.error} />;
+          return <ErrorPage error={groupCallState.error} />;
         }
       default:
         return <> </>;
@@ -238,7 +235,7 @@ export const RoomPage: FC = (): ReactNode => {
   };
 
   if (loading || isRegistering) return <LoadingPage />;
-  if (error) return <ErrorPage widget={widget} error={error} />;
+  if (error) return <ErrorPage error={error} />;
   if (!client) return <RoomAuthView />;
   // TODO: This doesn't belong here, the app routes need to be reworked
   if (!roomIdOrAlias) return <HomePage />;

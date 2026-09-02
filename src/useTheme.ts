@@ -6,39 +6,27 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { WidgetApiToWidgetAction } from "matrix-widget-api";
-import { type IThemeChangeActionRequest } from "matrix-widget-api";
 
 import { useUrlParams } from "./UrlParams";
-import { widget } from "./widget";
 import { useRootElement } from "./RootElementContext";
+import { useHostBridge } from "./HostBridge";
 
 export const useTheme = (): void => {
   const rootElement = useRootElement();
+  const hostBridge = useHostBridge();
   const { theme } = useUrlParams();
   const [requestedTheme, setRequestedTheme] = useState(theme);
   const previousTheme = useRef<string | null>(rootElement.classList.item(0));
 
   useEffect(() => {
-    if (widget) {
-      const onThemeChange = (
-        ev: CustomEvent<IThemeChangeActionRequest>,
-      ): void => {
-        ev.preventDefault();
-        if ("name" in ev.detail.data && typeof ev.detail.data.name === "string")
-          setRequestedTheme(ev.detail.data.name);
-        widget!.api.transport.reply(ev.detail, {});
-      };
-
-      widget.lazyActions.on(WidgetApiToWidgetAction.ThemeChange, onThemeChange);
-      return (): void => {
-        widget!.lazyActions.off(
-          WidgetApiToWidgetAction.ThemeChange,
-          onThemeChange,
-        );
-      };
-    }
-  }, []);
+    const subscription = hostBridge.themeChange$.subscribe(
+      ({ data, reply }) => {
+        if (typeof data.name === "string") setRequestedTheme(data.name);
+        reply();
+      },
+    );
+    return (): void => subscription.unsubscribe();
+  }, [hostBridge]);
 
   useLayoutEffect(() => {
     // If no theme has been explicitly requested we default to dark

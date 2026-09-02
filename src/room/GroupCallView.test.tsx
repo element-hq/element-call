@@ -36,7 +36,6 @@ import userEvent, {
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { type ITransport } from "matrix-widget-api";
 
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
@@ -52,8 +51,11 @@ import {
 } from "../utils/test";
 import { GroupCallView } from "./GroupCallView";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary";
-import { ElementWidgetActions, type WidgetHelpers } from "../widget";
-import { LazyEventEmitter } from "../LazyEventEmitter";
+import {
+  type HostBridge,
+  HostBridgeProvider,
+  nullHostBridge,
+} from "../HostBridge";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
@@ -134,7 +136,7 @@ beforeEach(() => {
 });
 
 function createGroupCallView(
-  widget: WidgetHelpers | null,
+  hostBridge: HostBridge,
   joined = true,
   options: {
     withErrorBoundary?: boolean;
@@ -184,7 +186,6 @@ function createGroupCallView(
       skipLobby={false}
       rtcSession={rtcSession.asMockedSession()}
       muteStates={muteState}
-      widget={widget}
       // TODO-MULTI-SFU: Make joined and setJoined work
       joined={true}
       setJoined={function (value: boolean): void {}}
@@ -192,22 +193,21 @@ function createGroupCallView(
   );
   const { getByText } = render(
     <BrowserRouter>
-      <TooltipProvider>
-        <MediaDevicesContext value={mockMediaDevices({})}>
-          <ProcessorProvider>
-            {options.withErrorBoundary ? (
-              <GroupCallErrorBoundary
-                recoveryActionHandler={vi.fn()}
-                widget={null}
-              >
-                {groupCallView}
-              </GroupCallErrorBoundary>
-            ) : (
-              groupCallView
-            )}
-          </ProcessorProvider>
-        </MediaDevicesContext>
-      </TooltipProvider>
+      <HostBridgeProvider value={hostBridge}>
+        <TooltipProvider>
+          <MediaDevicesContext value={mockMediaDevices({})}>
+            <ProcessorProvider>
+              {options.withErrorBoundary ? (
+                <GroupCallErrorBoundary recoveryActionHandler={vi.fn()}>
+                  {groupCallView}
+                </GroupCallErrorBoundary>
+              ) : (
+                groupCallView
+              )}
+            </ProcessorProvider>
+          </MediaDevicesContext>
+        </TooltipProvider>
+      </HostBridgeProvider>
     </BrowserRouter>,
   );
   return {
@@ -218,7 +218,7 @@ function createGroupCallView(
 
 test.skip("GroupCallView plays a leave sound asynchronously in SPA mode", async () => {
   const user = userEvent.setup();
-  const { getByText, rtcSession } = createGroupCallView(null);
+  const { getByText, rtcSession } = createGroupCallView(nullHostBridge);
   const leaveButton = getByText("Leave");
   await user.click(leaveButton);
   expect(playSound).toHaveBeenCalledWith("left");
@@ -235,12 +235,7 @@ test.skip("GroupCallView plays a leave sound asynchronously in SPA mode", async 
 
 test.skip("GroupCallView plays a leave sound synchronously in widget mode", async () => {
   const user = userEvent.setup();
-  const widget = {
-    api: {
-      setAlwaysOnScreen: async () => Promise.resolve(true),
-    } as Partial<WidgetHelpers["api"]>,
-    lazyActions: new LazyEventEmitter(),
-  };
+  const hostBridge: HostBridge = { ...nullHostBridge, close: vi.fn() };
   let resolvePlaySound: () => void;
   playSound = vi
     .fn()
@@ -253,9 +248,7 @@ test.skip("GroupCallView plays a leave sound synchronously in widget mode", asyn
     soundDuration: {},
   });
 
-  const { getByText, rtcSession } = createGroupCallView(
-    widget as WidgetHelpers,
-  );
+  const { getByText, rtcSession } = createGroupCallView(hostBridge);
   const leaveButton = getByText("Leave");
   await user.click(leaveButton);
   await flushPromises();
@@ -272,28 +265,13 @@ test.skip("GroupCallView plays a leave sound synchronously in widget mode", asyn
   expect(leaveRTCSession).toHaveBeenCalledOnce();
 });
 
-test("Should close widget when all other left and play a sound", async () => {
+test("Should ask the host to close when all other left and play a sound", async () => {
   const user = userEvent.setup();
-  let widgetClosedCalled = false;
-  const { promise: widgetClosedPromise, resolve: widgetClosedResolver } =
-    Promise.withResolvers<void>();
-  const widgetSendMock = vi.fn().mockImplementation((action: string) => {
-    if (action === ElementWidgetActions.Close) {
-      widgetClosedCalled = true;
-      widgetClosedResolver();
-    }
-  });
-  const widgetStopMock = vi.fn().mockResolvedValue(undefined);
-  const widget = {
-    api: {
-      setAlwaysOnScreen: vi.fn().mockResolvedValue(true),
-      transport: {
-        send: widgetSendMock,
-        reply: vi.fn().mockResolvedValue(undefined),
-        stop: widgetStopMock,
-      } as unknown as ITransport,
-    } as Partial<WidgetHelpers["api"]>,
-    lazyActions: new LazyEventEmitter(),
+  const close = vi.fn().mockResolvedValue(undefined);
+  const hostBridge: HostBridge = {
+    ...nullHostBridge,
+    setAlwaysOnScreen: vi.fn().mockResolvedValue(undefined),
+    close,
   };
   const resolvePlaySound = Promise.withResolvers<void>();
   playSound = vi.fn().mockReturnValue(resolvePlaySound.promise);
@@ -303,50 +281,38 @@ test("Should close widget when all other left and play a sound", async () => {
     soundDuration: {},
   });
 
-  const { getByText } = createGroupCallView(widget as WidgetHelpers);
+  const { getByText } = createGroupCallView(hostBridge);
   const leaveButton = getByText("SimulateOtherLeft");
   await user.click(leaveButton);
   await flushPromises();
-  expect(widgetClosedCalled).toBeFalsy();
+  expect(close).not.toHaveBeenCalled();
   resolvePlaySound.resolve();
 
   expect(playSound).toHaveBeenCalledWith("left", 0);
-  await widgetClosedPromise;
-  await flushPromises();
-  expect(widgetClosedCalled).toBeTruthy();
-  expect(widgetStopMock).toHaveBeenCalledOnce();
+  await waitFor(() => expect(close).toHaveBeenCalledOnce());
 }, 80000);
 
-test("Should not close widget when auto leave due to error", async () => {
+test("Should not ask the host to close when auto leave due to error", async () => {
   const user = userEvent.setup();
 
-  const widgetStopMock = vi.fn().mockResolvedValue(undefined);
-  const widgetSendMock = vi.fn().mockResolvedValue(undefined);
-  const widget = {
-    api: {
-      setAlwaysOnScreen: vi.fn().mockResolvedValue(true),
-      transport: {
-        send: widgetSendMock,
-        reply: vi.fn().mockResolvedValue(undefined),
-        stop: widgetStopMock,
-      } as unknown as ITransport,
-    } as Partial<WidgetHelpers["api"]>,
-    lazyActions: new LazyEventEmitter(),
+  const close = vi.fn().mockResolvedValue(undefined);
+  const setAlwaysOnScreen = vi.fn().mockResolvedValue(undefined);
+  const hostBridge: HostBridge = {
+    ...nullHostBridge,
+    setAlwaysOnScreen,
+    close,
   };
 
-  const alwaysOnScreenSpy = vi.spyOn(widget.api, "setAlwaysOnScreen");
-
-  const { getByText } = createGroupCallView(widget as WidgetHelpers);
+  const { getByText } = createGroupCallView(hostBridge);
   const leaveButton = getByText("SimulateErrorLeft");
   await user.click(leaveButton);
   await flushPromises();
 
   // When onLeft is called, we first set always on screen to false
-  await waitFor(() => expect(alwaysOnScreenSpy).toHaveBeenCalledWith(false));
+  await waitFor(() => expect(setAlwaysOnScreen).toHaveBeenCalledWith(false));
   await flushPromises();
-  // But then we do not close the widget automatically
-  expect(widgetStopMock).not.toHaveBeenCalledOnce();
-  expect(widgetSendMock).not.toHaveBeenCalledOnce();
+  // But then we do not ask to be closed automatically
+  expect(close).not.toHaveBeenCalled();
 });
 
 test.skip("GroupCallView leaves the session when an error occurs", async () => {
@@ -360,7 +326,7 @@ test.skip("GroupCallView leaves the session when an error occurs", async () => {
     );
   });
   const user = userEvent.setup();
-  const { rtcSession } = createGroupCallView(null);
+  const { rtcSession } = createGroupCallView(nullHostBridge);
   await user.click(screen.getByRole("button", { name: "Panic!" }));
   screen.getByText("Something went wrong");
   expect(leaveRTCSession).toHaveBeenCalledWith(
@@ -377,7 +343,7 @@ test.skip("GroupCallView shows errors that occur during joining", async () => {
   onTestFinished(() => {
     enterRTCSession.mockReset();
   });
-  createGroupCallView(null, false);
+  createGroupCallView(nullHostBridge, false);
   await user.click(screen.getByRole("button", { name: "Join call" }));
   screen.getByText("Call is not supported");
 });
@@ -396,7 +362,7 @@ test("translates wrapped UnsupportedStickyEventsEndpointError to the StickyEvent
     { cause: stickyError },
   );
 
-  const { rtcSession } = createGroupCallView(null, true, {
+  const { rtcSession } = createGroupCallView(nullHostBridge, true, {
     withErrorBoundary: true,
   });
 
@@ -408,7 +374,7 @@ test("translates wrapped UnsupportedStickyEventsEndpointError to the StickyEvent
 });
 
 test("falls back to ConnectionLostError for unrecognised membership manager errors", async () => {
-  const { rtcSession } = createGroupCallView(null, true, {
+  const { rtcSession } = createGroupCallView(nullHostBridge, true, {
     withErrorBoundary: true,
   });
 
@@ -424,7 +390,7 @@ test("falls back to ConnectionLostError for unrecognised membership manager erro
 
 test("user can reconnect after a membership manager error", async () => {
   const user = userEvent.setup();
-  const { rtcSession } = createGroupCallView(null, true);
+  const { rtcSession } = createGroupCallView(nullHostBridge, true);
   await act(() =>
     rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, undefined),
   );

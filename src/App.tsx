@@ -33,6 +33,12 @@ import {
 import { AppBar } from "./AppBar";
 import { i18n } from "./utils/i18n";
 import { useRootElement } from "./RootElementContext";
+import {
+  createWidgetHostBridge,
+  HostBridgeProvider,
+  nullHostBridge,
+} from "./HostBridge";
+import { useInitial } from "./useInitial";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -78,13 +84,18 @@ interface Props {
 }
 
 export const App: FC<Props> = ({ vm }) => {
+  // The standalone build has no host; the widget build's host is the client it
+  // is a widget of.
+  const hostBridge = useInitial(() =>
+    widget === null ? nullHostBridge : createWidgetHostBridge(widget),
+  );
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     Initializer.init()
       ?.then(async () => {
         if (loaded) return;
         setLoaded(true);
-        await widget?.api.sendContentLoaded();
+        await hostBridge.contentLoaded();
       })
       .catch(logger.error);
   });
@@ -94,7 +105,7 @@ export const App: FC<Props> = ({ vm }) => {
       <MediaDevicesContext value={vm.mediaDevices}>
         <ProcessorProvider>
           <Sentry.ErrorBoundary
-            fallback={(error) => <ErrorPage error={error} widget={widget} />}
+            fallback={(error) => <ErrorPage error={error} />}
           >
             <Routes>
               <SentryRoute path="/" element={<HomePage />} />
@@ -112,19 +123,21 @@ export const App: FC<Props> = ({ vm }) => {
 
   return (
     <I18nextProvider i18n={i18n}>
-      <BrowserRouter>
-        <LocationUrlParamsProvider>
-          <BackgroundProvider>
-            <ThemeProvider>
-              <TooltipProvider>
-                <Suspense fallback={null}>
-                  <MaybeAppBar>{content}</MaybeAppBar>
-                </Suspense>
-              </TooltipProvider>
-            </ThemeProvider>
-          </BackgroundProvider>
-        </LocationUrlParamsProvider>
-      </BrowserRouter>
+      <HostBridgeProvider value={hostBridge}>
+        <BrowserRouter>
+          <LocationUrlParamsProvider>
+            <BackgroundProvider>
+              <ThemeProvider>
+                <TooltipProvider>
+                  <Suspense fallback={null}>
+                    <MaybeAppBar>{content}</MaybeAppBar>
+                  </Suspense>
+                </TooltipProvider>
+              </ThemeProvider>
+            </BackgroundProvider>
+          </LocationUrlParamsProvider>
+        </BrowserRouter>
+      </HostBridgeProvider>
     </I18nextProvider>
   );
 };

@@ -30,12 +30,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { useNavigate } from "react-router-dom";
 
-import type { IWidgetApiRequest } from "matrix-widget-api";
-import {
-  ElementWidgetActions,
-  type JoinCallData,
-  type WidgetHelpers,
-} from "../widget";
+import { type JoinCallData } from "../widget";
 import { LobbyView } from "./LobbyView";
 import { type MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
@@ -76,6 +71,7 @@ import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useAppBarTitle } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
 import { useRootElement } from "../RootElementContext.ts";
+import { useHostBridge } from "../HostBridge.ts";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -99,7 +95,6 @@ interface Props {
   joined: boolean;
   setJoined: (value: boolean) => void;
   muteStates: MuteStates;
-  widget: WidgetHelpers | null;
 }
 
 export const GroupCallView: FC<Props> = ({
@@ -112,7 +107,6 @@ export const GroupCallView: FC<Props> = ({
   joined,
   setJoined,
   muteStates,
-  widget,
 }) => {
   // Used to thread through any errors that occur outside the error boundary
   const [externalError, setExternalError] = useState<ElementCallError | null>(
@@ -120,6 +114,14 @@ export const GroupCallView: FC<Props> = ({
   );
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const rootElement = useRootElement();
+  const hostBridge = useHostBridge();
+  // A host that can close us is a host that decides when we stop existing, so
+  // we neither show our own post-call screens nor assume we have time to
+  // finish what we are doing.
+  // TODO: this reads a capability as a proxy for who owns our lifetime. Worth
+  // finding a more direct way to express it — see the guidance in UrlParams.ts
+  // on naming behaviours rather than situations.
+  const hostControlsLifetime = hostBridge.close !== undefined;
 
   const muteAllAudio = useBehavior(muteAllAudio$);
   const leaveSoundContext = useLatest(
@@ -294,28 +296,26 @@ export const GroupCallView: FC<Props> = ({
     };
 
     if (skipLobby) {
-      if (widget && preload) {
+      // `preload` is only ever set when we have a host to be preloaded by.
+      if (preload) {
         // In preload mode without lobby we wait for a join action before entering
-        const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
+        const subscription = hostBridge.join$.subscribe(({ data, reply }) => {
           (async (): Promise<void> => {
-            await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
+            await defaultDeviceSetup(data);
             setJoined(true);
-            widget.api.transport.reply(ev.detail, {});
+            reply();
           })().catch((e) => {
             logger.error("Error joining RTC session on preload", e);
           });
-        };
-        widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
-        return (): void => {
-          widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
-        };
+        });
+        return (): void => subscription.unsubscribe();
       } else {
         // No lobby and no preload: we enter the rtc session right away
         setJoined(true);
       }
     }
   }, [
-    widget,
+    hostBridge,
     rtcSession,
     preload,
     skipLobby,
@@ -341,7 +341,7 @@ export const GroupCallView: FC<Props> = ({
           // When "allOthersLeft", the leaveSoundEffect$ in CallEventAudioRenderer
           // already plays the "left" sound when the remote participant's media
           // disappears. We play it here silenced (volumeOverwrite = 0) so we have the right duration in the audioPromise.
-          // (used to destory the widget)
+          // (which is what delays asking the host to close us)
           audioPromise = leaveSoundContext.current?.playSound("left", 0);
           break;
         case "timeout":
@@ -356,12 +356,12 @@ export const GroupCallView: FC<Props> = ({
       setLeft(true);
 
       // We need to wait until the callEnded event is tracked on PostHog,
-      // otherwise the iframe may get killed first.
+      // otherwise we may be torn down first.
       const posthogRequest = new Promise((resolve) => {
-        // To increase the likelihood of the PostHog event being sent out in
-        // widget mode before the iframe is killed, we ask it to skip the
-        // usual queuing/batching of requests.
-        const sendInstantly = widget !== null;
+        // To increase the likelihood of the PostHog event being sent out
+        // before the host disposes of us, we ask it to skip the usual
+        // queuing/batching of requests.
+        const sendInstantly = hostControlsLifetime;
         PosthogAnalytics.instance.eventCallEnded.track(
           room.roomId,
           rtcSession.memberships.length,
@@ -369,8 +369,8 @@ export const GroupCallView: FC<Props> = ({
           rtcSession,
         );
         // Unfortunately the PostHog library provides no way to await the
-        // tracking of an event, but we don't really want it to hold up the
-        // closing of the widget that long anyway, so giving it 10 ms will do.
+        // tracking of an event, but we don't really want it to hold up our
+        // disposal that long anyway, so giving it 10 ms will do.
         window.setTimeout(resolve, 10);
       });
 
@@ -389,25 +389,19 @@ export const GroupCallView: FC<Props> = ({
           )
             void navigate("/");
 
-          if (widget) {
-            // After this point the iframe could die at any moment!
+          // After this point the host could dispose of us at any moment!
+          try {
+            await hostBridge.setAlwaysOnScreen(false);
+          } catch (e) {
+            logger.error("Failed to set `alwaysOnScreen` to false", e);
+          }
+          // On a normal user hangup we can shut down and ask to be closed. But
+          // if an error occurs we should stay open until the user reads it.
+          if (reason != "error" && !returnToLobby) {
             try {
-              await widget.api.setAlwaysOnScreen(false);
+              await hostBridge.close?.();
             } catch (e) {
-              logger.error(
-                "Failed to set call widget `alwaysOnScreen` to false",
-                e,
-              );
-            }
-            // On a normal user hangup we can shut down and close the widget. But if an
-            // error occurs we should keep the widget open until the user reads it.
-            if (reason != "error" && !returnToLobby) {
-              try {
-                await widget.api.transport.send(ElementWidgetActions.Close, {});
-              } catch (e) {
-                logger.error("Failed to send close action", e);
-              }
-              widget.api.transport.stop();
+              logger.error("Failed to ask the host to close Element Call", e);
             }
           }
         });
@@ -415,7 +409,8 @@ export const GroupCallView: FC<Props> = ({
     [
       setJoined,
       leaveSoundContext,
-      widget,
+      hostBridge,
+      hostControlsLifetime,
       room.roomId,
       rtcSession,
       isPasswordlessUser,
@@ -426,12 +421,12 @@ export const GroupCallView: FC<Props> = ({
   );
 
   useEffect(() => {
-    if (widget && joined)
-      // set widget to sticky once joined.
-      widget.api.setAlwaysOnScreen(true).catch((e) => {
+    if (joined)
+      // ask to be kept on screen once joined.
+      hostBridge.setAlwaysOnScreen(true).catch((e) => {
         logger.error("Error calling setAlwaysOnScreen(true)", e);
       });
-  }, [widget, joined, rtcSession]);
+  }, [hostBridge, joined, rtcSession]);
 
   const joinRule = useJoinRule(room);
 
@@ -501,19 +496,16 @@ export const GroupCallView: FC<Props> = ({
         />
       </>
     );
-  } else if (left && widget === null) {
-    // Left in SPA mode:
+  } else if (left && !hostControlsLifetime) {
+    // Left, and it is up to us what to show next:
 
     // The call ended view is shown for two reasons: prompting guests to create
     // an account, and prompting users that have opted into analytics to provide
-    // feedback. We don't show a feedback prompt to widget users however (at
-    // least for now), because we don't yet have designs that would allow widget
-    // users to dismiss the feedback prompt and close the call window without
-    // submitting anything.
-    if (
-      isPasswordlessUser ||
-      (PosthogAnalytics.instance.isEnabled() && widget === null)
-    ) {
+    // feedback. We don't show a feedback prompt when a host owns our lifetime
+    // however (at least for now), because we don't yet have designs that would
+    // allow those users to dismiss the feedback prompt and close the call
+    // window without submitting anything.
+    if (isPasswordlessUser || PosthogAnalytics.instance.isEnabled()) {
       body = (
         <CallEndedView
           endedCallId={rtcSession.room.roomId}
@@ -529,8 +521,8 @@ export const GroupCallView: FC<Props> = ({
       // LobbyView again which would open capture devices again.
       body = null;
     }
-  } else if (left && widget !== null) {
-    // Left in widget mode:
+  } else if (left && hostControlsLifetime) {
+    // Left, and the host decides what happens next:
     body = returnToLobby ? lobbyView : null;
   } else if (preload || skipLobby) {
     // The RTC session is not joined to yet (`isJoined`), but enterRTCSessionOrError should have been called.
@@ -541,7 +533,6 @@ export const GroupCallView: FC<Props> = ({
 
   return (
     <GroupCallErrorBoundary
-      widget={widget}
       recoveryActionHandler={async (action) => {
         setExternalError(null);
         if (action == "reconnect") {
@@ -553,9 +544,10 @@ export const GroupCallView: FC<Props> = ({
       }}
       onError={(_error) => {
         if (rtcSession.isJoined()) onLeft("error");
-        // If there is an error we need to be able to close the widget. This is done in `onLeft` as well
-        // We need it here explicitly in case rtcSession.isJoined is false.
-        void widget?.api.setAlwaysOnScreen(false);
+        // If there is an error we need to be dismissible again. This is done in
+        // `onLeft` as well; we need it here explicitly in case
+        // rtcSession.isJoined is false.
+        void hostBridge.setAlwaysOnScreen(false);
       }}
     >
       {body}
