@@ -41,6 +41,7 @@ import {
   enterRTCSession,
   PublishState,
   TrackState,
+  watchScreenShareToggle,
 } from "./LocalMember";
 import {
   FailToGetOpenIdToken,
@@ -67,6 +68,31 @@ vi.mock("@livekit/components-core", () => ({
     .fn()
     .mockReturnValue(of({ isScreenShareEnabled: false })),
 }));
+
+describe("watchScreenShareToggle", () => {
+  it("reports nothing when the toggle completes", async () => {
+    const onError = vi.fn();
+    watchScreenShareToggle(Promise.resolve(), true, logger, onError);
+    await flushPromises();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("reports failures other than the user cancelling", async () => {
+    const onError = vi.fn();
+    const e = new Error("NotReadableError");
+    watchScreenShareToggle(Promise.reject(e), true, logger, onError);
+    await flushPromises();
+    expect(onError).toHaveBeenCalledWith(e);
+  });
+
+  it("does not report the user cancelling the picker", async () => {
+    const onError = vi.fn();
+    const cancelled = new DOMException("Permission denied", "NotAllowedError");
+    watchScreenShareToggle(Promise.reject(cancelled), true, logger, onError);
+    await flushPromises();
+    expect(onError).not.toHaveBeenCalled();
+  });
+});
 
 describe("LocalMembership", () => {
   describe("enterRTCSession", () => {

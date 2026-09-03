@@ -267,6 +267,11 @@ export interface CallViewModel {
    * Whether we are sharing our screen.
    */
   sharingScreen$: Behavior<boolean>;
+  /**
+   * The last error from toggling screen sharing, until dismissed.
+   */
+  screenShareError$: Behavior<Error | null>;
+  dismissScreenShareError: () => void;
 
   // UI interactions
   /**
@@ -1858,6 +1863,8 @@ export function createCallViewModel$(
     reconnecting$: localMembership.reconnecting$,
     livekitRoomItems$,
     connected$: localMembership.connected$,
+    screenShareError$: localMembership.screenShareError$,
+    dismissScreenShareError: localMembership.dismissScreenShareError,
   };
 }
 
