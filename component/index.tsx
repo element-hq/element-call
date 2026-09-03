@@ -48,9 +48,11 @@ import {
 } from "../src/HostBridge";
 import { RootElementProvider } from "../src/RootElementContext";
 import {
-  computeUrlParams,
+  configurationForIntent,
+  hostedProperties,
   type UrlParams,
   UrlParamsProvider,
+  UserIntent,
 } from "../src/UrlParams";
 import { MediaDevicesContext } from "../src/MediaDevicesContext";
 import { MediaDevices } from "../src/state/MediaDevices";
@@ -74,10 +76,17 @@ export { type JoinCallData } from "../src/widget";
 // The deployment-wide configuration, as distinct from ElementCallConfiguration
 // above, which is per call
 export { type ConfigOptions } from "../src/config/ConfigOptions";
+// The values that appear in ElementCallConfiguration and in the intent
+export {
+  BackgroundStyle,
+  HeaderStyle,
+  UserIntent,
+  type UrlConfiguration,
+} from "../src/UrlParams";
 
 /**
  * How Element Call should behave. Everything is optional; anything left out
- * takes the same default it would in the standalone app.
+ * takes the default that {@link ElementCallProps.intent} implies.
  */
 export type ElementCallConfiguration = Partial<UrlParams>;
 
@@ -89,7 +98,21 @@ export interface ElementCallProps {
   client: MatrixClient;
   /** The room to call in. The host's client must already know about it. */
   roomId: string;
-  /** How Element Call should behave. */
+  /**
+   * What the user asked for — whether they started the call or joined one that
+   * was already running, and whether it is a call in a group or a DM. Element
+   * Call decides what each of those means: whether to show the lobby first,
+   * whether to ring, and so on.
+   *
+   * Defaults to joining an existing group call, which is the most conservative
+   * reading, but a host that knows which button the user pressed should say so.
+   */
+  intent?: UserIntent;
+  /**
+   * How Element Call should behave, overriding whatever {@link intent} implies.
+   * A host that finds itself setting a lot of these probably wants a different
+   * intent instead.
+   */
   config?: ElementCallConfiguration;
   /**
    * How to reach the host while the call is running — to be told the user has
@@ -143,6 +166,7 @@ const Decoration: FC<{ children: JSX.Element }> = ({ children }) => {
 export const ElementCall: FC<ElementCallProps> = ({
   client,
   roomId,
+  intent = UserIntent.JoinExistingCall,
   config,
   hostBridge = nullHostBridge,
 }): ReactNode => {
@@ -150,10 +174,17 @@ export const ElementCall: FC<ElementCallProps> = ({
   // inside can render until we have it.
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
-  // The defaults are the standalone app's, with the host's wishes over the top
+  // Element Call has no URL of its own to read any of this from, and the
+  // host's URL is not Element Call's business, so the defaults come from the
+  // intent with the host's wishes over the top.
   const params = useMemo(
-    (): UrlParams => ({ ...computeUrlParams(), ...config }),
-    [config],
+    (): UrlParams => ({
+      ...hostedProperties,
+      roomId,
+      ...configurationForIntent(intent),
+      ...config,
+    }),
+    [roomId, intent, config],
   );
 
   const mediaDevices = useInitial(
