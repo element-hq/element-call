@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type RemoteParticipant } from "livekit-client";
 import { combineLatest, map, of, switchMap } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../Behavior";
 import { createVolumeControls, type VolumeControls } from "../VolumeControls";
@@ -45,6 +46,20 @@ export function createRemoteUserMedia(
     statsType: "inbound-rtp",
   });
 
+  const waitingForMedia$ = scope.behavior(
+    combineLatest(
+      [inputs.livekitRoom$, inputs.participant$],
+      (livekitRoom, participant) =>
+        // If livekitRoom is undefined, the user is not attempting to publish on
+        // any transport and so we shouldn't expect a participant. (They might
+        // be a subscribe-only bot for example.)
+        livekitRoom !== undefined && participant === null,
+    ),
+  );
+  waitingForMedia$.pipe(scope.bind()).subscribe((waiting) => {
+    logger.info(`[RemoteUserMedia ${inputs.id}] waitingForMedia=${waiting}`);
+  });
+
   return {
     ...baseUserMedia,
     ...createVolumeControls(scope, {
@@ -68,15 +83,6 @@ export function createRemoteUserMedia(
         ),
       ),
     ),
-    waitingForMedia$: scope.behavior(
-      combineLatest(
-        [inputs.livekitRoom$, inputs.participant$],
-        (livekitRoom, participant) =>
-          // If livekitRoom is undefined, the user is not attempting to publish on
-          // any transport and so we shouldn't expect a participant. (They might
-          // be a subscribe-only bot for example.)
-          livekitRoom !== undefined && participant === null,
-      ),
-    ),
+    waitingForMedia$,
   };
 }

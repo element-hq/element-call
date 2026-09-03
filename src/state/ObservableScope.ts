@@ -20,6 +20,8 @@ import {
   takeUntil,
 } from "rxjs";
 
+import { logger } from "matrix-js-sdk/lib/logger";
+
 import { type Behavior } from "./Behavior";
 
 type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
@@ -34,6 +36,12 @@ const nothing = Symbol("nothing");
  * A scope which limits the execution lifetime of its bound Observables.
  */
 export class ObservableScope {
+  /**
+   * Number of this scope's behaviors currently mid-delivery. Used to detect a
+   * scope being torn down synchronously from within one of its own emissions.
+   */
+  private delivering = 0;
+
   private readonly ended$ = new BehaviorSubject(false);
 
   private readonly bindImpl: MonoTypeOperator = takeUntil(
@@ -66,6 +74,9 @@ export class ObservableScope {
   public behavior<T>(
     setValue$: Observable<T>,
     initialValue: T | typeof nothing = nothing,
+    // An optional label used only in the re-entrancy warning below, so that a
+    // torn behavior can be identified from a rageshake.
+    tag?: string,
   ): Behavior<T> {
     const subject$ = new BehaviorSubject(initialValue);
     // Push values from the Observable into the BehaviorSubject.
@@ -73,11 +84,37 @@ export class ObservableScope {
     // they will no longer re-emit their current value upon subscription. We want
     // to support Observables that complete (for example `of({})`), so we have to
     // take care to not propagate the completion event.
+    // If a subscriber synchronously causes this same behavior to emit again,
+    // rxjs delivers the nested value to every subscriber first and then
+    // resumes delivering the outer (older) value to the remaining subscribers,
+    // leaving them permanently out of sync with the others. A single such
+    // re-entry can only strand a contiguous run of subscribers; stranding a
+    // subscriber in the middle of the list needs a nested (deeper) re-entry, so
+    // we report the depth and log each new depth (with a stack trace) rather
+    // than only the first occurrence, to make a nested re-entry visible.
+    let depth = 0;
+    let maxReportedDepth = 1;
     setValue$.pipe(this.bind(), distinctUntilChanged()).subscribe({
-      next(value) {
-        subject$.next(value);
+      next: (value) => {
+        if (depth > 0 && depth + 1 > maxReportedDepth) {
+          maxReportedDepth = depth + 1;
+          logger.warn(
+            `Behavior${tag ? ` (${tag})` : ""} re-entered at depth ${
+              depth + 1
+            } while delivering a value; later subscribers will be left with a stale value`,
+            new Error().stack,
+          );
+        }
+        depth++;
+        this.delivering++;
+        try {
+          subject$.next(value);
+        } finally {
+          depth--;
+          this.delivering--;
+        }
       },
-      error(err: unknown) {
+      error: (err: unknown) => {
         subject$.error(err);
       },
     });
@@ -90,6 +127,11 @@ export class ObservableScope {
    * Ends the scope, causing any bound Observables to complete.
    */
   public end(): void {
+    if (this.delivering > 0)
+      logger.warn(
+        `Scope ended while ${this.delivering} of its behaviors were still delivering a value; later subscribers will be left with a stale value`,
+        new Error().stack,
+      );
     this.ended$.next(true);
   }
 
@@ -171,7 +213,11 @@ export class ObservableScope {
     return Object.fromEntries(
       Object.keys(input$.value).map((key) => [
         `${key}$`,
-        this.behavior(input$.pipe(map((input) => input[key as keyof T]))),
+        this.behavior(
+          input$.pipe(map((input) => input[key as keyof T])),
+          nothing,
+          key,
+        ),
       ]),
     ) as SplitBehavior<T>;
   }

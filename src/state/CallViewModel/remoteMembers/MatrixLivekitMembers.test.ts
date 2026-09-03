@@ -5,7 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
   type LivekitTransport,
@@ -77,6 +78,7 @@ function epochMeWith$<T, U>(
 }
 
 test("should signal participant not yet connected to livekit", async () => {
+  const info = vi.spyOn(logger, "info");
   const mockedMemberships$ = new BehaviorSubject([bobMembership]);
   const mockConnectionManagerData$ = new BehaviorSubject(
     new ConnectionManagerData(),
@@ -107,6 +109,9 @@ test("should signal participant not yet connected to livekit", async () => {
       expect(data[0].connection$.value).toBe(null);
       return true;
     },
+  );
+  expect(info).toHaveBeenCalledWith(
+    "[RemoteMatrixLivekitMembers] @bob:example.org:DEV000: LiveKit participant missing on no connection",
   );
 });
 
