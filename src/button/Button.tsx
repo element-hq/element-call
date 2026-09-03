@@ -25,6 +25,8 @@ import {
   OverflowVerticalIcon,
   VolumeOnSolidIcon,
   VolumeOffSolidIcon,
+  VisibilityOnIcon,
+  VisibilityOffIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
@@ -98,6 +100,37 @@ export const VideoButton: FC<VideoButtonProps> = ({
           [styles.rotate]: !!busy,
         })}
         disabled={props.disabled || busy}
+      />
+    </Tooltip>
+  );
+};
+
+interface DisableRemoteVideoButtonProps
+  extends ComponentPropsWithoutRef<"button"> {
+  /** Whether other participants' video is currently being shown. */
+  enabled: boolean;
+  size?: "md" | "lg";
+}
+
+export const DisableRemoteVideoButton: FC<DisableRemoteVideoButtonProps> = ({
+  enabled,
+  ...props
+}) => {
+  const { t } = useTranslation();
+  const Icon = enabled ? VisibilityOnIcon : VisibilityOffIcon;
+  const label = enabled
+    ? t("hide_other_videos_button_label")
+    : t("show_other_videos_button_label");
+
+  return (
+    <Tooltip label={label}>
+      <CpdButton
+        iconOnly
+        Icon={Icon}
+        kind={enabled ? "secondary" : "primary"}
+        role="switch"
+        aria-checked={enabled}
+        {...props}
       />
     </Tooltip>
   );

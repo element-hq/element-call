@@ -268,6 +268,16 @@ export interface CallViewModel {
    */
   sharingScreen$: Behavior<boolean>;
 
+  /**
+   * Whether other participants' video feeds are hidden (and not downloaded)
+   * to save bandwidth. Resets to false at the start of every call.
+   */
+  disableRemoteVideo$: Behavior<boolean>;
+  /**
+   * Toggles disableRemoteVideo$.
+   */
+  toggleDisableRemoteVideo: () => void;
+
   // UI interactions
   /**
    * Callback for when the user taps the call view.
@@ -731,6 +741,18 @@ export function createCallViewModel$(
   );
 
   /**
+   * Whether other participants' video feeds are hidden to save bandwidth.
+   * This is intentionally not persisted: it resets to false at the start of
+   * every call.
+   */
+  const disableRemoteVideoToggle$ = new Subject<void>();
+  const disableRemoteVideo$ = createToggle$(
+    scope,
+    false,
+    disableRemoteVideoToggle$,
+  );
+
+  /**
    * List of user media (camera feeds) that we want tiles for.
    */
   const userMedia$ = scope.behavior<WrappedUserMediaViewModel[]>(
@@ -771,6 +793,7 @@ export function createCallViewModel$(
             ),
             mediaDevices,
             pretendToBeDisconnected$: localMembership.reconnecting$,
+            disableRemoteVideo$,
             displayName$: scope.behavior(
               matrixMemberMetadataStore
                 .createDisplayNameBehavior$(scope, userId)
@@ -1786,6 +1809,8 @@ export function createCallViewModel$(
     leave: localMembership.requestDisconnect,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
+    disableRemoteVideo$: disableRemoteVideo$,
+    toggleDisableRemoteVideo: (): void => disableRemoteVideoToggle$.next(),
 
     tapScreen: (): void => screenTap$.next(),
     tapControls: (): void => controlsTap$.next(),

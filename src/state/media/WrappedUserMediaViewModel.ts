@@ -89,6 +89,7 @@ interface WrappedUserMediaInputs extends Omit<
   participant: TaggedParticipant;
   mediaDevices: MediaDevices;
   pretendToBeDisconnected$: Behavior<boolean>;
+  disableRemoteVideo$: Behavior<boolean>;
 }
 
 export function createWrappedUserMedia(
@@ -97,6 +98,7 @@ export function createWrappedUserMedia(
     participant,
     mediaDevices,
     pretendToBeDisconnected$,
+    disableRemoteVideo$,
     ...inputs
   }: WrappedUserMediaInputs,
 ): WrappedUserMediaViewModel {
@@ -110,6 +112,7 @@ export function createWrappedUserMedia(
       : createRemoteUserMedia(scope, {
           participant$: participant.value$,
           pretendToBeDisconnected$,
+          disableRemoteVideo$,
           ...inputs,
         });
 

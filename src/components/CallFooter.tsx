@@ -19,6 +19,7 @@ import {
   ReactionToggleButton,
   LoudspeakerButton,
   SettingsIconButton,
+  DisableRemoteVideoButton,
   type ReactionData,
 } from "../button";
 import styles from "./CallFooter.module.css";
@@ -58,6 +59,8 @@ export interface FooterActions {
   toggleVideo: (() => void) | undefined;
   toggleBlur: (() => void) | undefined;
   toggleScreenSharing: (() => void) | undefined;
+  /** Also controls if the "hide other participants' video" button is visible */
+  toggleDisableRemoteVideo: (() => void) | undefined;
   /** Also controls if the settings button is visible */
   openSettings: (() => void) | undefined;
   /** Also controls if the hangup button is visible */
@@ -70,6 +73,8 @@ export interface FooterState {
   videoEnabled: boolean;
   videoBusy: boolean;
   videoBlurEnabled: boolean;
+  /** Whether other participants' video feeds are hidden to save bandwidth */
+  disableRemoteVideo: boolean;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -146,6 +151,8 @@ export const CallFooter: FC<FooterProps> = ({
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
   const toggleBlur = useBehavior(vm.toggleBlur$);
   const videoBlurEnabled = useBehavior(vm.videoBlurEnabled$);
+  const disableRemoteVideo = useBehavior(vm.disableRemoteVideo$);
+  const toggleDisableRemoteVideo = useBehavior(vm.toggleDisableRemoteVideo$);
   const buttonSize = useBehavior(vm.buttonSize$);
   const showLogo = useBehavior(vm.showLogo$);
 
@@ -220,6 +227,18 @@ export const CallFooter: FC<FooterProps> = ({
         onClick={toggleVideo}
         disabled={(videoBusy ?? false) || toggleVideo === undefined}
         data-testid="incall_videomute"
+      />,
+    );
+  }
+
+  if (toggleDisableRemoteVideo !== undefined) {
+    buttons.push(
+      <DisableRemoteVideoButton
+        size={buttonSize}
+        key="disable_remote_video"
+        enabled={!disableRemoteVideo}
+        onClick={toggleDisableRemoteVideo}
+        data-testid="incall_disable_remote_video"
       />,
     );
   }
