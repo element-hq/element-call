@@ -148,6 +148,28 @@ describe("UrlParams", () => {
     });
   });
 
+  describe("isolatedScreenShareAudio", () => {
+    const widgetParams =
+      "widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo";
+
+    it("defaults to false", () => {
+      expect(
+        computeUrlParams(`?${widgetParams}`).isolatedScreenShareAudio,
+      ).toBe(false);
+    });
+
+    it("is accepted only in widget mode", () => {
+      expect(
+        computeUrlParams(`?isolatedScreenShareAudio=true&${widgetParams}`)
+          .isolatedScreenShareAudio,
+      ).toBe(true);
+      expect(
+        computeUrlParams("?isolatedScreenShareAudio=true")
+          .isolatedScreenShareAudio,
+      ).toBe(false);
+    });
+  });
+
   describe("userId", () => {
     it("is ignored in SPA mode", () => {
       expect(computeUrlParams("?userId=asd").userId).toBe(null);
