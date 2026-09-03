@@ -30,7 +30,6 @@ import {
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { seedSettingsFromConfig } from "./settings/settings";
-import { platform } from "./Platform";
 import { isFailure } from "./utils/fetch";
 import { initializeWidget, type WidgetHelpers } from "./widget";
 import { enableExtendedLivekitLogs } from "./settings/settings.ts";
@@ -228,9 +227,6 @@ export class Initializer {
         fonts.map((f) => `"${f}"`).join(", "),
       );
     }
-
-    // Add the platform to the DOM, so CSS can query it
-    document.body.setAttribute("data-platform", platform);
 
     // livekit logging configuration
     setLKLogExtension((level, msg, context) => {

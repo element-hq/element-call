@@ -131,7 +131,7 @@
   }
 }
 
-body[data-platform="ios"] {
+[data-element-call-root][data-platform="ios"] {
   .bar > header {
     grid-template-rows: minmax(var(--cpd-space-11x), auto) var(--cpd-space-4x);
     grid-template-areas: "primaryButton title secondaryButton";

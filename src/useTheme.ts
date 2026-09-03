@@ -9,6 +9,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useUrlParams } from "./UrlParams";
 import { useRootElement } from "./RootElementContext";
+import { platform } from "./Platform";
 import { useHostBridge } from "./HostBridge";
 
 export const useTheme = (): void => {
@@ -27,6 +28,14 @@ export const useTheme = (): void => {
     );
     return (): void => subscription.unsubscribe();
   }, [hostBridge]);
+
+  // Mark the element as Element Call's root and record the platform on it, so
+  // that the stylesheets can find both without naming `body`. A layout effect,
+  // like the theme below, so that it lands before anything is painted.
+  useLayoutEffect(() => {
+    rootElement.setAttribute("data-element-call-root", "");
+    rootElement.setAttribute("data-platform", platform);
+  }, [rootElement]);
 
   useLayoutEffect(() => {
     // If no theme has been explicitly requested we default to dark

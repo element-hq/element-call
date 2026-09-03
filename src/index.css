@@ -75,7 +75,7 @@ body {
 }
 
 @media (min-height: 330px) {
-  body[data-background="gradient"]::before {
+  [data-element-call-root][data-background="gradient"]::before {
     content: "";
     position: fixed;
     /* Chromium abruptly fades our images to fully transparent at the edge of
@@ -88,7 +88,7 @@ body {
     background-repeat: no-repeat;
   }
 
-  body[data-background="gradient"][data-platform="desktop"]::before {
+  [data-element-call-root][data-background="gradient"][data-platform="desktop"]::before {
     background-image: url("graphics/desktop-gradient.png");
     background-size: max(1440px, 100vw) max(1440px, 100vh);
     background-position: center;
@@ -126,11 +126,11 @@ body,
 /* On Android and iOS, prefer native system fonts. The global.css file of
 Compound Web is where these variables ultimately get consumed to set the page's
 font-family. */
-body[data-platform="android"] {
+[data-element-call-root][data-platform="android"] {
   --cpd-font-family-sans: "Roboto", "Noto", "Inter", sans-serif;
 }
 
-body[data-platform="ios"] {
+[data-element-call-root][data-platform="ios"] {
   --cpd-font-family-sans:
     -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 }
