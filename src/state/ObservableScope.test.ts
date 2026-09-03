@@ -237,3 +237,30 @@ describe("Reconcile", () => {
     expect(setup).toHaveBeenCalledWith(1);
   });
 });
+
+describe("behavior", () => {
+  it("warns when a subscriber re-enters the behavior synchronously", () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    const scope = new ObservableScope();
+    const source$ = new Subject<number>();
+    const behavior$ = scope.behavior(source$, 0);
+    // A subscriber that reacts to the value 1 by synchronously emitting 2
+    behavior$.subscribe((v) => {
+      if (v === 1) source$.next(2);
+    });
+    const seen: number[] = [];
+    behavior$.subscribe((v) => seen.push(v));
+
+    source$.next(1);
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("Behavior re-entered"),
+      expect.any(String),
+    );
+    // Documents the hazard the warning is about: the later subscriber ends up
+    // with the stale value 1 even though the behavior's value is 2.
+    expect(behavior$.value).toBe(2);
+    expect(seen.at(-1)).toBe(1);
+    scope.end();
+  });
+});
