@@ -68,6 +68,9 @@ export class ObservableScope {
   public behavior<T>(
     setValue$: Observable<T>,
     initialValue: T | typeof nothing = nothing,
+    // An optional label used only in the re-entrancy warning below, so that a
+    // torn behavior can be identified from a rageshake.
+    tag?: string,
   ): Behavior<T> {
     const subject$ = new BehaviorSubject(initialValue);
     // Push values from the Observable into the BehaviorSubject.
@@ -78,25 +81,29 @@ export class ObservableScope {
     // If a subscriber synchronously causes this same behavior to emit again,
     // rxjs delivers the nested value to every subscriber first and then
     // resumes delivering the outer (older) value to the remaining subscribers,
-    // leaving them permanently out of sync with the others. Log the first
-    // occurrence with a stack trace so that the re-entrant path can be found.
-    let delivering = false;
-    let reentryReported = false;
+    // leaving them permanently out of sync with the others. A single such
+    // re-entry can only strand a contiguous run of subscribers; stranding a
+    // subscriber in the middle of the list needs a nested (deeper) re-entry, so
+    // we report the depth and log each new depth (with a stack trace) rather
+    // than only the first occurrence, to make a nested re-entry visible.
+    let depth = 0;
+    let maxReportedDepth = 1;
     setValue$.pipe(this.bind(), distinctUntilChanged()).subscribe({
       next(value) {
-        if (delivering && !reentryReported) {
-          reentryReported = true;
+        if (depth > 0 && depth + 1 > maxReportedDepth) {
+          maxReportedDepth = depth + 1;
           logger.warn(
-            "Behavior re-entered while delivering a value; later subscribers will be left with a stale value",
+            `Behavior${tag ? ` (${tag})` : ""} re-entered at depth ${
+              depth + 1
+            } while delivering a value; later subscribers will be left with a stale value`,
             new Error().stack,
           );
         }
-        const wasDelivering = delivering;
-        delivering = true;
+        depth++;
         try {
           subject$.next(value);
         } finally {
-          delivering = wasDelivering;
+          depth--;
         }
       },
       error(err: unknown) {
@@ -193,7 +200,11 @@ export class ObservableScope {
     return Object.fromEntries(
       Object.keys(input$.value).map((key) => [
         `${key}$`,
-        this.behavior(input$.pipe(map((input) => input[key as keyof T]))),
+        this.behavior(
+          input$.pipe(map((input) => input[key as keyof T])),
+          nothing,
+          key,
+        ),
       ]),
     ) as SplitBehavior<T>;
   }

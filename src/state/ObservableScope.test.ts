@@ -239,27 +239,33 @@ describe("Reconcile", () => {
 });
 
 describe("behavior", () => {
-  it("warns when a subscriber re-enters the behavior synchronously", () => {
+  it("warns with the tag and nesting depth, logging each new depth once", () => {
     const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
     const scope = new ObservableScope();
     const source$ = new Subject<number>();
-    const behavior$ = scope.behavior(source$, 0);
-    // A subscriber that reacts to the value 1 by synchronously emitting 2
+    const behavior$ = scope.behavior(source$, 0, "tagged");
+    // Re-enter once on value 1 (depth 2), then a nested re-entry on value 2
+    // (depth 3), which is the shape needed to strand a middle subscriber.
     behavior$.subscribe((v) => {
       if (v === 1) source$.next(2);
+    });
+    behavior$.subscribe((v) => {
+      if (v === 2) source$.next(3);
     });
     const seen: number[] = [];
     behavior$.subscribe((v) => seen.push(v));
 
     source$.next(1);
 
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("Behavior re-entered"),
-      expect.any(String),
-    );
-    // Documents the hazard the warning is about: the later subscriber ends up
-    // with the stale value 1 even though the behavior's value is 2.
-    expect(behavior$.value).toBe(2);
+    const messages = warn.mock.calls.map((c) => c[0] as string);
+    expect(messages).toEqual([
+      expect.stringContaining("Behavior (tagged) re-entered at depth 2"),
+      expect.stringContaining("Behavior (tagged) re-entered at depth 3"),
+    ]);
+    warn.mock.calls.forEach((c) => expect(c[1]).toEqual(expect.any(String)));
+    // The behavior settles on the newest value while the last subscriber is
+    // left stranded on the oldest.
+    expect(behavior$.value).toBe(3);
     expect(seen.at(-1)).toBe(1);
     scope.end();
   });
