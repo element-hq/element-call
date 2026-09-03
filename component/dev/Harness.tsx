@@ -37,16 +37,31 @@ const DEFAULT_CREDENTIALS: Credentials = {
   room: "",
 };
 
-/** The last credentials used, so that a reload does not mean typing them again. */
+/**
+ * The credentials to start with: the last ones used, so that a reload does not
+ * mean typing them again, overridden by anything in the query string.
+ *
+ * A host reading its own URL is entirely proper — it was Element Call doing so
+ * that was the mistake. It lets the end-to-end tests, or a shared link, say
+ * which account and room to use.
+ */
 function loadCredentials(): Credentials {
+  let stored: Partial<Credentials> = {};
   try {
-    const stored = localStorage.getItem(CREDENTIALS_KEY);
-    if (stored !== null)
-      return { ...DEFAULT_CREDENTIALS, ...(JSON.parse(stored) as Credentials) };
+    const json = localStorage.getItem(CREDENTIALS_KEY);
+    if (json !== null) stored = JSON.parse(json) as Credentials;
   } catch (e) {
     logger.warn("Could not read the stored harness credentials", e);
   }
-  return DEFAULT_CREDENTIALS;
+
+  const query = new URLSearchParams(location.search);
+  const fromUrl = Object.fromEntries(
+    (["homeserver", "username", "password", "room"] as const)
+      .map((name) => [name, query.get(name)])
+      .filter(([, value]) => value !== null),
+  ) as Partial<Credentials>;
+
+  return { ...DEFAULT_CREDENTIALS, ...stored, ...fromUrl };
 }
 
 interface Session {
@@ -88,7 +103,7 @@ const Pane: FC<{
   );
 
   return (
-    <section className={styles.pane}>
+    <section className={styles.pane} data-testid="call-pane">
       <div className={styles.paneBar}>
         <strong>{session.label}</strong>
         <code>{session.client.getDeviceId()}</code>
@@ -110,7 +125,7 @@ const Pane: FC<{
       </div>
       {/* Resizable, because how Element Call copes with the size it is given is
       one of the things we cannot find out from the standalone app */}
-      <div className={styles.paneCall}>
+      <div className={styles.paneCall} data-testid="call-container">
         {mounted && (
           <ElementCall
             client={session.client}
@@ -281,7 +296,7 @@ export const Harness: FC = (): ReactNode => {
           ))}
         </main>
       </div>
-      <section className={styles.log}>
+      <section className={styles.log} data-testid="bridge-log">
         <h2>Host bridge</h2>
         <ol>
           {entries.map((entry, i) => (
