@@ -10,7 +10,7 @@ import { type MatrixClient } from "matrix-js-sdk";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { GroupCallView } from "./room/GroupCallView";
-import { type MuteStates } from "./state/MuteStates";
+import { useMuteStates } from "./state/useMuteStates";
 import { type UrlParams } from "./UrlParams";
 
 interface Props {
@@ -18,8 +18,6 @@ interface Props {
   client: MatrixClient;
   /** The call to join. */
   rtcSession: MatrixRTCSession;
-  /** The audio and video mute state to start from, and keep in step with. */
-  muteStates: MuteStates;
   /**
    * Whether the user is signed in as a guest, and so should be offered the
    * chance to create an account when the call ends.
@@ -40,15 +38,10 @@ interface Props {
  * showing one: no routing, no authentication, no resolving of room aliases.
  * Those belong to whatever is hosting it — the standalone app's own shell, or
  * an application embedding Element Call directly.
- *
- * TODO: `muteStates` is still passed in, because the standalone shell shares
- * one with the lobby it shows while waiting to be let into a room. Ownership
- * moves here once that lobby has its own.
  */
 export const ElementCallView: FC<Props> = ({
   client,
   rtcSession,
-  muteStates,
   isPasswordlessUser,
   confineToRoom,
   preload,
@@ -56,6 +49,9 @@ export const ElementCallView: FC<Props> = ({
 }): ReactNode => {
   // Whether the user is in the call is the call's own business, not its host's.
   const [joined, setJoined] = useState(false);
+  const muteStates = useMuteStates();
+
+  if (muteStates === null) return null;
 
   return (
     <GroupCallView
