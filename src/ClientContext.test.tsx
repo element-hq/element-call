@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { expect, test, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { type MatrixClient } from "matrix-js-sdk";
 import { type FC } from "react";
@@ -91,4 +91,25 @@ test("follows the client when the host swaps it", () => {
   );
 
   expect(container.textContent).toBe("@bob:example.org");
+});
+
+test("finds a client of its own when the host supplies none", async () => {
+  const client = mockClient();
+  vi.doMock("./utils/spa", () => ({
+    initSPA: vi.fn().mockResolvedValue({ client, passwordlessUser: true }),
+  }));
+
+  const { container } = render(
+    <BrowserRouter>
+      <ClientProvider>
+        <ShowClientState />
+      </ClientProvider>
+    </BrowserRouter>,
+  );
+
+  // Nothing to show until a session has been restored or created
+  expect(container.textContent).toBe("loading");
+  await waitFor(() => expect(container.textContent).toBe("@alice:example.org"));
+
+  vi.doUnmock("./utils/spa");
 });

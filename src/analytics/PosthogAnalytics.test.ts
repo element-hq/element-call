@@ -15,6 +15,7 @@ import {
   afterAll,
 } from "vitest";
 import posthog, { type CaptureResult } from "posthog-js";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import {
   Anonymity,
@@ -23,6 +24,7 @@ import {
 } from "./PosthogAnalytics";
 import { mockConfig } from "../utils/test";
 import { analyticsConfigFromEnvironment } from "../initializer";
+import { optInAnalytics } from "../settings/settings";
 
 describe("PosthogAnalytics", () => {
   describe("enablement", () => {
@@ -279,5 +281,88 @@ describe("PosthogAnalytics", () => {
       );
       expect(out?.properties).not.toHaveProperty("$initial_person_info");
     });
+  });
+});
+
+describe("identifying the user", () => {
+  const credentials = {
+    apiKey: "api_key",
+    apiHost: "https://api.example.com.localhost",
+  };
+
+  function mockClient(accountDataId: string | null): MatrixClient {
+    return {
+      isGuest: () => false,
+      getCrypto: () => undefined,
+      getAccountDataFromServer: vi
+        .fn()
+        .mockResolvedValue(
+          accountDataId === null ? null : { id: accountDataId },
+        ),
+      setAccountData: vi.fn().mockResolvedValue({}),
+    } as Partial<MatrixClient> as MatrixClient;
+  }
+
+  beforeEach(() => {
+    PosthogAnalytics.resetInstance();
+    optInAnalytics.setValue(true);
+  });
+
+  it("reports under the ID its host assigned, and stores nothing", async () => {
+    const client = mockClient(null);
+    window.matrixclient = client;
+    PosthogAnalytics.configure({
+      ...credentials,
+      matrixBackend: "embedded",
+      hostAnalyticsId: "assigned-by-host",
+    });
+    const identify = vi.spyOn(posthog, "identify");
+
+    PosthogAnalytics.instance.startListeningToSettingsChanges();
+    await vi.waitFor(() =>
+      expect(identify).toHaveBeenCalledWith("assigned-by-host"),
+    );
+
+    // The host owns the user's account, so Element Call must not write to it
+    expect(client.setAccountData).not.toHaveBeenCalled();
+  });
+
+  it("keeps its own ID in account data when it owns the session", async () => {
+    const client = mockClient(null);
+    window.matrixclient = client;
+    PosthogAnalytics.configure({ ...credentials, matrixBackend: "jssdk" });
+
+    PosthogAnalytics.instance.startListeningToSettingsChanges();
+
+    // No ID on the server yet, so one is minted and stored for other devices
+    await vi.waitFor(() => expect(client.setAccountData).toHaveBeenCalled());
+  });
+
+  it("reuses the ID already in account data", async () => {
+    const client = mockClient("stored-earlier");
+    window.matrixclient = client;
+    PosthogAnalytics.configure({ ...credentials, matrixBackend: "jssdk" });
+    const identify = vi.spyOn(posthog, "identify");
+
+    PosthogAnalytics.instance.startListeningToSettingsChanges();
+    await vi.waitFor(() =>
+      expect(identify).toHaveBeenCalledWith("stored-earlier"),
+    );
+
+    expect(client.setAccountData).not.toHaveBeenCalled();
+  });
+
+  it("records how it reaches Matrix as a super property", async () => {
+    window.matrixclient = mockClient("stored-earlier");
+    PosthogAnalytics.configure({ ...credentials, matrixBackend: "embedded" });
+    const register = vi.spyOn(posthog, "register");
+
+    PosthogAnalytics.instance.startListeningToSettingsChanges();
+
+    await vi.waitFor(() =>
+      expect(register).toHaveBeenCalledWith(
+        expect.objectContaining({ matrixBackend: "embedded" }),
+      ),
+    );
   });
 });
