@@ -1,0 +1,24 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+/* The container a host mounts us into. It fills whatever space the host gives
+it, and establishes a stacking context of its own so that our overlays and
+modals cannot escape it — which is the whole reason for embedding rather than
+using an iframe. */
+.root {
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  block-size: 100%;
+  isolation: isolate;
+  position: relative;
+  background-color: var(--cpd-color-bg-canvas-default);
+  color: var(--cpd-color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}

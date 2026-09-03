@@ -1,3 +1,7 @@
+supportedArchitectures:
+  os: [current, linux]
+  cpu: [current, arm64]
+  libc: [current, glibc]
 minimumReleaseAgeExclude:
   - "@vector-im/compound-design-tokens"
   - "@vector-im/compound-web"

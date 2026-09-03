@@ -25,10 +25,13 @@ import { createContext, use } from "react";
  * `index.html` starts the body hidden with `no-theme` until the theme lands.
  * Neither applies when a host mounts Element Call into a container of its own.
  */
-// No provider is exported yet: nothing supplies a root element, so every
-// consumer falls back to the document body. One arrives with the entry point
-// that mounts Element Call into a container.
 const RootElementContext = createContext<HTMLElement | null>(null);
+
+/**
+ * Supplies the element Element Call should confine itself to. The standalone
+ * and widget builds need no provider, since for them that element is the body.
+ */
+export const RootElementProvider = RootElementContext.Provider;
 
 /**
  * The element Element Call should decorate and portal into.

@@ -9,7 +9,12 @@ import { type KnipConfig } from "knip";
 
 export default {
   vite: {
-    config: ["vite.config.ts", "vite-embedded.config.ts", "vite-sdk.config.ts"],
+    config: [
+      "vite.config.ts",
+      "vite-embedded.config.ts",
+      "vite-sdk.config.ts",
+      "vite-component.config.ts",
+    ],
   },
   entry: ["src/main.tsx", "eslint/index.js", "i18next.config.ts"],
   ignoreBinaries: [
