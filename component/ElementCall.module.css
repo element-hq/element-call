@@ -6,15 +6,26 @@ Please see LICENSE in the repository root for full details.
 */
 
 /* The container a host mounts us into. It fills whatever space the host gives
-it, and establishes a stacking context of its own so that our overlays and
-modals cannot escape it — which is the whole reason for embedding rather than
-using an iframe. */
+it, and nothing we draw may leave it.
+
+That takes two separate things, which are easy to mistake for one. `isolation`
+gives us a stacking context, so nothing inside can be layered above the host's
+own interface. Containment makes us the containing block for `position: fixed`
+descendants, and clips what we paint to our own box: without it, the modal
+scrim and dialog — which are positioned `fixed` and centred, since in the app
+they are meant to cover the page — resolve against the viewport and appear in
+the middle of the host's window rather than in the middle of the call.
+
+The clipping cuts both ways: a menu near the edge of a small container is
+trimmed rather than overflowing into the host. That is the trade being an
+embedded component makes. */
 .root {
   display: flex;
   flex-direction: column;
   inline-size: 100%;
   block-size: 100%;
   isolation: isolate;
+  contain: layout paint;
   position: relative;
   background-color: var(--cpd-color-bg-canvas-default);
   color: var(--cpd-color-text-primary);
