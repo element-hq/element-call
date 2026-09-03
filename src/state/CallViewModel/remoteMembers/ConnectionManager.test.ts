@@ -14,7 +14,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Epoch, mapEpoch, ObservableScope } from "../../ObservableScope.ts";
 import {
   createConnectionManager$,
-  type ConnectionManagerData,
+  ConnectionManagerData,
 } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
@@ -200,6 +200,24 @@ describe("connections$ stream", () => {
         }),
       });
     });
+  });
+});
+
+describe("ConnectionManagerData", () => {
+  test("warns when a second connection to the same URL is merged", () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    const data = new ConnectionManagerData(logger);
+    const connection = { transport: TRANSPORT_1 } as unknown as Connection;
+    const p = (identity: string): RemoteParticipant =>
+      ({ identity }) as unknown as RemoteParticipant;
+    data.add(connection, [p("a")]);
+    data.add({ ...connection } as Connection, [p("b")]);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "second connection to https://lk.example.org: existing [a], adding [b]",
+      ),
+    );
+    expect(data.getParticipantsForTransport(TRANSPORT_1)).toHaveLength(2);
   });
 });
 

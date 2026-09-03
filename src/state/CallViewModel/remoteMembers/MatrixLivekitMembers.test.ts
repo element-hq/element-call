@@ -111,7 +111,7 @@ test("should signal participant not yet connected to livekit", async () => {
     },
   );
   expect(info).toHaveBeenCalledWith(
-    "[RemoteMatrixLivekitMembers] @bob:example.org:DEV000: LiveKit participant missing",
+    "[RemoteMatrixLivekitMembers] @bob:example.org:DEV000: LiveKit participant missing on no connection",
   );
 });
 

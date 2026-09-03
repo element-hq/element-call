@@ -269,4 +269,26 @@ describe("behavior", () => {
     expect(seen.at(-1)).toBe(1);
     scope.end();
   });
+
+  it("warns when the scope is ended while a behavior is mid-delivery", () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    const scope = new ObservableScope();
+    const source$ = new Subject<number>();
+    const behavior$ = scope.behavior(source$, 0);
+    behavior$.subscribe((v) => {
+      if (v === 1) scope.end();
+    });
+    // A derived behavior is bound to the scope, so ending the scope
+    // mid-delivery unsubscribes it before the value reaches it.
+    const derived$ = scope.behavior(behavior$);
+
+    source$.next(1);
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("Scope ended while 1 of its behaviors"),
+      expect.any(String),
+    );
+    expect(behavior$.value).toBe(1);
+    expect(derived$.value).toBe(0);
+  });
 });

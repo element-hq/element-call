@@ -111,13 +111,17 @@ export function createRemoteMatrixLivekitMembers$({
             const participants = transport
               ? managerData.getParticipantsForTransport(transport)
               : [];
-            const participant =
-              participants.find(
-                (p) => p.identity == membership.rtcBackendIdentity,
-              ) ?? null;
+            const matches = participants.filter(
+              (p) => p.identity == membership.rtcBackendIdentity,
+            );
+            const participant = matches[0] ?? null;
             const connection = transport
               ? managerData.getConnectionForTransport(transport)
               : null;
+            if (matches.length > 1)
+              logger.warn(
+                `[RemoteMatrixLivekitMembers] ${membership.rtcBackendIdentity}: ${matches.length} LiveKit participants match (sids ${matches.map((p) => p.sid).join(", ")}), using ${participant?.sid}`,
+              );
 
             yield {
               // This could just be the backend identity without the other keys.
@@ -139,8 +143,9 @@ export function createRemoteMatrixLivekitMembers$({
           // Log whether the member could be matched to a LiveKit participant,
           // since a tile shows "waiting for media" for as long as it cannot.
           participant$.pipe(scope.bind()).subscribe((p) => {
+            const url = data$.value.connection?.transport.livekit_service_url;
             logger.info(
-              `[RemoteMatrixLivekitMembers] ${rtcBackendIdentity}: LiveKit participant ${p ? `matched (${p.sid})` : "missing"}`,
+              `[RemoteMatrixLivekitMembers] ${rtcBackendIdentity}: LiveKit participant ${p ? `matched (${p.sid})` : "missing"} on ${url ?? "no connection"}`,
             );
           });
           // will only get called once per backend identity.

@@ -36,6 +36,12 @@ const nothing = Symbol("nothing");
  * A scope which limits the execution lifetime of its bound Observables.
  */
 export class ObservableScope {
+  /**
+   * Number of this scope's behaviors currently mid-delivery. Used to detect a
+   * scope being torn down synchronously from within one of its own emissions.
+   */
+  private delivering = 0;
+
   private readonly ended$ = new BehaviorSubject(false);
 
   private readonly bindImpl: MonoTypeOperator = takeUntil(
@@ -89,7 +95,7 @@ export class ObservableScope {
     let depth = 0;
     let maxReportedDepth = 1;
     setValue$.pipe(this.bind(), distinctUntilChanged()).subscribe({
-      next(value) {
+      next: (value) => {
         if (depth > 0 && depth + 1 > maxReportedDepth) {
           maxReportedDepth = depth + 1;
           logger.warn(
@@ -100,13 +106,15 @@ export class ObservableScope {
           );
         }
         depth++;
+        this.delivering++;
         try {
           subject$.next(value);
         } finally {
           depth--;
+          this.delivering--;
         }
       },
-      error(err: unknown) {
+      error: (err: unknown) => {
         subject$.error(err);
       },
     });
@@ -119,6 +127,11 @@ export class ObservableScope {
    * Ends the scope, causing any bound Observables to complete.
    */
   public end(): void {
+    if (this.delivering > 0)
+      logger.warn(
+        `Scope ended while ${this.delivering} of its behaviors were still delivering a value; later subscribers will be left with a stale value`,
+        new Error().stack,
+      );
     this.ended$.next(true);
   }
 
