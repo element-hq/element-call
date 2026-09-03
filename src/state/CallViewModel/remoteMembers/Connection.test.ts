@@ -391,6 +391,34 @@ describe("Start connection states", () => {
     expect(connectedState).toEqual(ConnectionState.LivekitConnected);
   });
 
+  it("stopping while connecting does not report an error", async () => {
+    setupTest();
+    const connection = setupRemoteConnection();
+
+    const capturedStates: (ConnectionState | Error)[] = [];
+    const s = connection.state$.subscribe((value) => {
+      capturedStates.push(value);
+    });
+    onTestFinished(() => s.unsubscribe());
+
+    // livekit-client rejects a pending connect() when disconnect() is called.
+    const pendingConnect = Promise.withResolvers<void>();
+    fakeLivekitRoom.connect.mockReturnValue(pendingConnect.promise);
+    fakeLivekitRoom.disconnect.mockResolvedValue(undefined);
+
+    const started = connection.start();
+    await vi.waitFor(() => expect(fakeLivekitRoom.connect).toHaveBeenCalled());
+    const stopping = connection.stop();
+    pendingConnect.reject(new Error("Client initiated disconnect"));
+    await stopping;
+
+    // start() resolves rather than rejecting (it is not awaited by the
+    // ConnectionManager, so a rejection would be unhandled).
+    await expect(started).resolves.toBeUndefined();
+    expect(capturedStates.at(-1)).toEqual(ConnectionState.Stopped);
+    expect(capturedStates.some((st) => st instanceof Error)).toBe(false);
+  });
+
   it("shutting down the scope should stop the connection", async () => {
     setupTest();
     vi.useFakeTimers();
