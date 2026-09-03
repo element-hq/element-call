@@ -237,3 +237,32 @@ describe("Reconcile", () => {
     expect(setup).toHaveBeenCalledWith(1);
   });
 });
+
+describe("behavior", () => {
+  it("delivers a re-entrant emission to every subscriber, after the current one", () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    const scope = new ObservableScope();
+    const source$ = new Subject<number>();
+    const behavior$ = scope.behavior(source$, 0);
+    const seenFirst: number[] = [];
+    // A subscriber that reacts to the value 1 by synchronously emitting 2
+    behavior$.subscribe((v) => {
+      seenFirst.push(v);
+      if (v === 1) source$.next(2);
+    });
+    const seenSecond: number[] = [];
+    behavior$.subscribe((v) => seenSecond.push(v));
+
+    source$.next(1);
+
+    // Without queueing the second subscriber would be left on 1
+    expect(seenFirst).toEqual([0, 1, 2]);
+    expect(seenSecond).toEqual([0, 1, 2]);
+    expect(behavior$.value).toBe(2);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("Behavior re-entered"),
+      expect.any(String),
+    );
+    scope.end();
+  });
+});

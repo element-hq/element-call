@@ -20,6 +20,8 @@ import {
   takeUntil,
 } from "rxjs";
 
+import { logger } from "matrix-js-sdk/lib/logger";
+
 import { type Behavior } from "./Behavior";
 
 type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
@@ -73,9 +75,34 @@ export class ObservableScope {
     // they will no longer re-emit their current value upon subscription. We want
     // to support Observables that complete (for example `of({})`), so we have to
     // take care to not propagate the completion event.
+    // If a subscriber synchronously causes this same behavior to emit again,
+    // rxjs would deliver the nested value to every subscriber and then resume
+    // delivering the outer (older) value to the remaining subscribers, leaving
+    // them permanently out of sync. Queue nested emissions instead so that
+    // every subscriber sees every value, in order, and ends on the latest one.
+    const pending: T[] = [];
+    let delivering = false;
+    let reentryReported = false;
     setValue$.pipe(this.bind(), distinctUntilChanged()).subscribe({
       next(value) {
-        subject$.next(value);
+        pending.push(value);
+        if (delivering) {
+          if (!reentryReported) {
+            reentryReported = true;
+            logger.warn(
+              "Behavior re-entered while delivering a value; the nested value has been queued",
+              new Error().stack,
+            );
+          }
+          return;
+        }
+        delivering = true;
+        try {
+          while (pending.length > 0) subject$.next(pending.shift()!);
+        } finally {
+          delivering = false;
+          pending.length = 0;
+        }
       },
       error(err: unknown) {
         subject$.error(err);
