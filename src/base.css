@@ -1,0 +1,203 @@
+/*
+Copyright 2021-2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+/* The styles Element Call needs wherever it is shown: the design tokens, fonts
+and element defaults its own stylesheets build on top of.
+
+Split out from index.css so that Element Call embedded in a host application
+can have these without also being given the standalone page's layout, which
+would style the host's own document. What remains here does still reach outside
+Element Call's container — normalize.css and the typography below use bare
+element selectors, and the custom properties are declared on `:root` — so a
+host gets those too. Narrowing them needs a real host to check against, so it
+waits for the Element Web integration rather than being guessed at here.
+
+Nothing here should depend on where it lands relative to Element Call's
+component stylesheets: the bundler decides that, and it decides differently for
+the app and for the component build. */
+
+@layer normalize, compound-legacy, compound;
+
+@import url("@fontsource/inter/400.css");
+@import url("@fontsource/inter/500.css");
+@import url("@fontsource/inter/600.css");
+@import url("@fontsource/inter/700.css");
+@import url("@fontsource/inconsolata/400.css");
+@import url("@fontsource/inconsolata/700.css");
+
+@import url("normalize.css/normalize.css") layer(normalize);
+@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css") layer(compound);
+@import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
+
+:root {
+  --font-scale: 1;
+  --font-size-micro: calc(10px * var(--font-scale));
+  --font-size-caption: calc(12px * var(--font-scale));
+  --font-size-body: calc(15px * var(--font-scale));
+  --font-size-subtitle: calc(18px * var(--font-scale));
+  --font-size-title: calc(24px * var(--font-scale));
+  --font-size-headline: calc(32px * var(--font-scale));
+
+  --cpd-color-border-accent: var(--cpd-color-green-800);
+  /* The distance to inset non-full-width content from the edge of the window
+  along the inline axis. This ramps up from 16px for typical mobile windows, to
+  96px for typical desktop windows, and accounts for the safe area. */
+  --content-inset-left: calc(
+    env(safe-area-inset-left) +
+      min(
+        var(--cpd-space-24x),
+        max(var(--cpd-space-4x), calc((100vw - 900px) / 3))
+      )
+  );
+  --content-inset-right: calc(
+    env(safe-area-inset-right) +
+      min(
+        var(--cpd-space-24x),
+        max(var(--cpd-space-4x), calc((100vw - 900px) / 3))
+      )
+  );
+  --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
+  --big-drop-shadow: 0px 0px 24px 0px #1b1d221a;
+  --subtle-drop-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+
+  --call-view-overlay-layer: 1;
+  --call-view-header-footer-layer: 2;
+}
+
+:root,
+[class*="cpd-theme-"] {
+  --video-tile-background: var(--cpd-color-bg-subtle-secondary);
+}
+
+.cpd-theme-dark {
+  --cpd-color-border-accent: var(--cpd-color-green-1100);
+  --stopgap-color-on-solid-accent: var(--cpd-color-text-primary);
+  --stopgap-background-85: rgba(16, 19, 23, 0.85);
+}
+
+@media (min-height: 330px) {
+  [data-element-call-root][data-background="gradient"]::before {
+    content: "";
+    position: fixed;
+    /* Chromium abruptly fades our images to fully transparent at the edge of
+    the element. If we just make the element a little bigger than the viewport,
+    this is no longer visible. */
+    inset: -20px;
+    background-image: url("graphics/mobile-gradient.png");
+    background-size: 1400px 305px;
+    background-position: bottom;
+    background-repeat: no-repeat;
+  }
+
+  [data-element-call-root][data-background="gradient"][data-platform="desktop"]::before {
+    background-image: url("graphics/desktop-gradient.png");
+    background-size: max(1440px, 100vw) max(1440px, 100vh);
+    background-position: center;
+  }
+}
+
+/* We use this to not render the page at all until we know the theme.*/
+.no-theme {
+  opacity: 0;
+}
+
+/* On Android and iOS, prefer native system fonts. The global.css file of
+Compound Web is where these variables ultimately get consumed to set the page's
+font-family. */
+[data-element-call-root][data-platform="android"] {
+  --cpd-font-family-sans: "Roboto", "Noto", "Inter", sans-serif;
+}
+
+[data-element-call-root][data-platform="ios"] {
+  --cpd-font-family-sans:
+    -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+}
+
+@layer compound-legacy {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  a {
+    margin-top: 0;
+  }
+
+  /* Headline Semi Bold */
+  h1 {
+    font-weight: 600;
+    font-size: var(--font-size-headline);
+  }
+
+  /* Title */
+  h2 {
+    font-weight: 600;
+    font-size: var(--font-size-title);
+  }
+
+  /* Subtitle */
+  h3 {
+    font-weight: 600;
+    font-size: var(--font-size-subtitle);
+  }
+
+  /* Body Semi Bold */
+  h4 {
+    font-weight: 600;
+    font-size: var(--font-size-body);
+  }
+
+  h1,
+  h2,
+  h3 {
+    line-height: 1.2;
+  }
+
+  /* Body */
+  p {
+    font-size: var(--font-size-body);
+    line-height: var(--font-size-title);
+  }
+
+  hr {
+    width: calc(100% - 24px);
+    border: none;
+    border-top: 1px solid var(--cpd-color-border-interactive-secondary);
+    color: var(--cpd-color-border-interactive-secondary);
+    overflow: visible;
+    text-align: center;
+    height: 5px;
+    font-weight: 600;
+    font-size: var(--font-size-body);
+    line-height: 24px;
+    margin: 0 12px;
+  }
+
+  summary {
+    font-size: var(--font-size-body);
+  }
+
+  details > :not(summary) {
+    margin-left: var(--font-size-body);
+  }
+
+  details[open] > summary {
+    margin-bottom: var(--font-size-body);
+  }
+}
+
+/* normalize.css sets the focus rings on buttons in Firefox to an unusual custom
+outline, which is inconsistent with our other components and is not sufficiently
+visible to be accessible. This resets it back to 'auto'. */
+button:-moz-focusring,
+[type="button"]:-moz-focusring,
+[type="reset"]:-moz-focusring,
+[type="submit"]:-moz-focusring {
+  outline: auto;
+}

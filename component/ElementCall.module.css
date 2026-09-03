@@ -22,3 +22,11 @@ using an iframe. */
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* Compound's overlay container, which holds tooltips and popovers, has to fill
+the container for the elements inside it to be positioned against it. The
+standalone page does the same for the container under `#root`. */
+.root > [data-overlay-container] {
+  position: relative;
+  block-size: 100%;
+}

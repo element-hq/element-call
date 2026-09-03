@@ -17,6 +17,18 @@ Please see LICENSE in the repository root for full details.
  * host instead, or is confined to the container it is mounted in.
  */
 
+// The design tokens, fonts and element defaults every Element Call stylesheet
+// builds on.
+//
+// Where these land relative to the component stylesheets is the bundler's
+// choice — the standalone app puts them first, this build puts them in the
+// middle — so nothing in base.css may depend on winning or losing against a
+// component's own rules at equal specificity. It currently does not: what it
+// declares unlayered is custom properties on Element Call's root, which
+// components inherit rather than compete with, and everything from Compound
+// sits in a `@layer`, which loses to unlayered rules either way.
+import "../src/base.css";
+
 import { type FC, type JSX, type ReactNode, useMemo, useState } from "react";
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -26,6 +38,7 @@ import { TooltipProvider } from "@vector-im/compound-web";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
 import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill.js";
 
+import EN from "../locales/en/app.json";
 import { ElementCallView } from "../src/ElementCallView";
 import { ClientProvider } from "../src/ClientContext";
 import {
@@ -50,7 +63,17 @@ import { useTheme } from "../src/useTheme";
 import { useInitial } from "../src/useInitial";
 import styles from "./ElementCall.module.css";
 
-export { type HostBridge } from "../src/HostBridge";
+// Everything needed to implement a HostBridge, not just the interface itself
+export {
+  type DeviceMuteRequest,
+  type DeviceMuteState,
+  type HostBridge,
+  type HostRequest,
+} from "../src/HostBridge";
+export { type JoinCallData } from "../src/widget";
+// The deployment-wide configuration, as distinct from ElementCallConfiguration
+// above, which is per call
+export { type ConfigOptions } from "../src/config/ConfigOptions";
 
 /**
  * How Element Call should behave. Everything is optional; anything left out
@@ -102,6 +125,12 @@ export async function initializeElementCall(
     contextSeparator: "|",
     lng: "en",
     interpolation: { escapeValue: false },
+    // English only, bundled in. The standalone app fetches its locale files at
+    // runtime from URLs its own build emits, which a host serving the library
+    // from elsewhere could not resolve; bundling one language at least keeps
+    // the component self-contained. Letting a host supply the rest, or its own
+    // translations, is still to do.
+    resources: { en: { app: EN } },
   });
 }
 
