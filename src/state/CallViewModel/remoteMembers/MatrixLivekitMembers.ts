@@ -11,6 +11,7 @@ import {
   type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
@@ -133,8 +134,15 @@ export function createRemoteMatrixLivekitMembers$({
           }
         },
         // Each update where the key of the generator array do not change will result in updates to the `data$` behavior.
-        (scope, data$, userId, _deviceId, _memberId, _rtcBackendIdentity) => {
+        (scope, data$, userId, _deviceId, _memberId, rtcBackendIdentity) => {
           const { participant$, ...rest } = scope.splitBehavior(data$);
+          // Log whether the member could be matched to a LiveKit participant,
+          // since a tile shows "waiting for media" for as long as it cannot.
+          participant$.pipe(scope.bind()).subscribe((p) => {
+            logger.info(
+              `[RemoteMatrixLivekitMembers] ${rtcBackendIdentity}: LiveKit participant ${p ? `matched (${p.sid})` : "missing"}`,
+            );
+          });
           // will only get called once per backend identity.
           // updates to data$ and as a result to displayName$ and mxcAvatarUrl$ are more frequent.
           return {
