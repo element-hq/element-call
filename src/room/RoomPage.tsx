@@ -25,7 +25,7 @@ import {
 import { useClientLegacy } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
-import { GroupCallView } from "./GroupCallView";
+import { ElementCallView } from "../ElementCallView";
 import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { HomePage } from "../home/HomePage";
@@ -62,7 +62,6 @@ export const RoomPage: FC = (): ReactNode => {
   const { avatarUrl, displayName: userDisplayName } = useProfile(client);
 
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
-  const [joined, setJoined] = useState(false);
 
   const devices = useMediaDevices();
   const [muteStates, setMuteStates] = useState<MuteStates | null>(null);
@@ -125,11 +124,9 @@ export const RoomPage: FC = (): ReactNode => {
       case "loaded":
         return (
           muteStates && (
-            <GroupCallView
+            <ElementCallView
               client={client!}
               rtcSession={groupCallState.rtcSession}
-              joined={joined}
-              setJoined={setJoined}
               isPasswordlessUser={passwordlessUser}
               confineToRoom={confineToRoom}
               preload={preload}
