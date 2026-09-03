@@ -213,6 +213,23 @@ See also:
 
 - [Developing with linked packages](./docs/linking.md)
 
+#### Element Call as a component (experimental)
+
+Element Call can also be embedded directly into another React application
+rather than being loaded in an iframe as a widget. `pnpm build:component`
+builds it as a library, and
+
+```sh
+pnpm dev:component
+```
+
+serves a harness on port 3001 that stands in for such an application: it signs
+in twice against the development backend and shows two calls side by side, in
+resizable boxes, with page furniture of its own around them. Use it to see how
+Element Call behaves when it does not own the page — the size it is given,
+whether it stays inside its container, and what it says to its host, which is
+logged along the bottom.
+
 ### Backend
 
 A docker compose file `docker-compose-dev.yml` is provided to start the

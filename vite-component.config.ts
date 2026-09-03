@@ -15,7 +15,11 @@ import { vitePluginsConfig } from "./vite.config";
 // Deliberately not built on top of the full app's config, which exists to
 // produce a page and brings an HTML entry point along with it.
 export default defineConfig(({ mode }) => ({
-  ...vitePluginsConfig({ mode }),
+  ...vitePluginsConfig({ mode, html: false }),
+  // A library has no public directory to serve. Without this the build copies
+  // whatever is in `public` — including the developer's own config.json, which
+  // is not in the repository — into the output we would publish.
+  publicDir: false,
   build: {
     minify: mode === "production",
     sourcemap: true,
@@ -36,7 +40,10 @@ export default defineConfig(({ mode }) => ({
       // SDK as `matrix-js-sdk/lib/…`, and a bare "matrix-js-sdk" would not
       // catch those — while the pattern and callback forms of this option are
       // silently ignored by the bundler, so they cannot be used to cover them.
-      // `pnpm lint:externals` fails if an import appears that is not listed.
+      // `pnpm lint:externals` reads this list and fails if the source imports
+      // one of these packages by a path it does not name; a few entries below
+      // are there only because the standalone app imports them, which costs
+      // nothing.
       external: [
         "react",
         "react/jsx-runtime",
@@ -44,8 +51,10 @@ export default defineConfig(({ mode }) => ({
         "react-dom/client",
         "livekit-client",
         "matrix-js-sdk",
+        "matrix-js-sdk/lib/browser-index",
         "matrix-js-sdk/lib/client",
         "matrix-js-sdk/lib/crypto-api",
+        "matrix-js-sdk/lib/indexeddb-worker",
         "matrix-js-sdk/lib/logger",
         "matrix-js-sdk/lib/matrix",
         "matrix-js-sdk/lib/matrixrtc",
