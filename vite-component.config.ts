@@ -38,6 +38,10 @@ export default defineConfig(({ mode }) => {
     // confined to the element Element Call is mounted in
     css: { postcss: { plugins: [scopeStylesToRoot()] } },
     build: {
+      // Into the package directory, so that `component/package.json` describes
+      // what sits next to it and the directory can be installed as a package
+      // (see its `files` and `exports`).
+      outDir: "component/dist",
       minify: mode === "production",
       sourcemap: true,
       // One stylesheet rather than one per chunk, so a host has a single file to
