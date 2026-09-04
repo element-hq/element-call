@@ -29,6 +29,8 @@ import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { useHostBridge } from "../HostBridge.ts";
+import { useRootElement } from "../RootElementContext";
+import { observeElementSize$ } from "../utils/elementSize";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
@@ -120,6 +122,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const hostBridge = useHostBridge();
   const mediaDevices = useMediaDevices();
   const trackProcessorState$ = useTrackProcessorObservable$();
+  // The element we have to draw the call in: the page, or the container a host
+  // gave us. Its size, not the window's, decides how the call is laid out.
+  const rootElement = useRootElement();
   useEffect(() => {
     rootLogger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
@@ -140,6 +145,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         autoLeaveWhenOthersLeft,
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
         matrixRTCMode$: matrixRTCModeSetting.value$,
+        windowSize$: scope.behavior(observeElementSize$(rootElement)),
       },
       reactionsReader.raisedHands$,
       reactionsReader.reactions$,
@@ -165,6 +171,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     mediaDevices,
     trackProcessorState$,
     props.client,
+    rootElement,
   ]);
 
   useEffect(() => {
@@ -625,6 +632,9 @@ export const InCallView: FC<InCallViewProps> = ({
         [styles.overflowing]: overflowing,
       })}
       ref={containerRef}
+      // Which layout the call has settled on, for tests and for anyone
+      // wondering why the call looks the way it does at the size it was given
+      data-layout={layout.type}
       onPointerUp={onViewPointerUp}
       onPointerMove={onPointerMove}
       onPointerOut={onPointerOut}

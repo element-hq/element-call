@@ -230,6 +230,10 @@ Element Call behaves when it does not own the page — the size it is given,
 whether it stays inside its container, and what it says to its host, which is
 logged along the bottom.
 
+The call lays itself out for the size of the element it is mounted in, not the
+window: a host that shrinks the container to a corner of its page gets the
+picture-in-picture layout, just as a host that shrank the whole iframe used to.
+
 The component's stylesheet is confined to the element it is mounted in: the
 build rewrites every selector so that it matches only Element Call's root or
 what is inside it, with `html`, `body` and `:root` standing for that root (see

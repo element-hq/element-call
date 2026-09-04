@@ -132,3 +132,36 @@ test("tells its host what it is doing", async ({ page }) => {
     timeout: 30_000,
   });
 });
+
+test("lays itself out for the space it is given, not the page", async ({
+  page,
+}) => {
+  const { username, roomId } = await createUserAndRoom("containersize");
+  const panes = await startHarness(page, username, roomId);
+  const pane = panes.first();
+  const container = pane.getByTestId("call-container");
+  const call = pane.locator("[data-layout]");
+
+  await pane.getByTestId("lobby_joinCall").click({ timeout: 60_000 });
+  await expect(call).toBeVisible({ timeout: 60_000 });
+  await expect(call).not.toHaveAttribute("data-layout", "pip");
+
+  // As a widget, Element Call's container and its window were one and the same:
+  // a host wanting a picture-in-picture made the iframe small, and Element Call
+  // saw the window shrink. A component gets no such signal from the window,
+  // which stays as large as it ever was; only the container changes.
+  const resize = async (width: number, height: number): Promise<void> =>
+    container.evaluate(
+      (element, size) => {
+        element.style.width = `${size.width}px`;
+        element.style.height = `${size.height}px`;
+      },
+      { width, height },
+    );
+
+  await resize(300, 300);
+  await expect(call).toHaveAttribute("data-layout", "pip");
+
+  await resize(900, 700);
+  await expect(call).not.toHaveAttribute("data-layout", "pip");
+});

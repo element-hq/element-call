@@ -176,6 +176,7 @@ export function getBasicCallViewModelEnvironment(
         }),
       connectionState$: constant(ConnectionState.Connected),
       matrixRTCMode$: constant(MatrixRTCMode.Compatibility),
+      windowSize$: constant({ width: 1000, height: 800 }),
       ...callViewModelOptions,
     },
     handRaisedSubject$,
