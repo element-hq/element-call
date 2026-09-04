@@ -47,7 +47,7 @@ services:
       - ecbackend
 
   livekit:
-    image: livekit/livekit-server:v1.13.4
+    image: livekit/livekit-server:v1.13.6
     pull_policy: always
     hostname: livekit-sfu
     command: --dev --config /etc/livekit.yaml
@@ -70,7 +70,7 @@ services:
       - ecbackend
 
   livekit-1:
-    image: livekit/livekit-server:v1.13.4
+    image: livekit/livekit-server:v1.13.6
     pull_policy: always
     hostname: livekit-sfu-1
     command: --dev --config /etc/livekit.yaml
