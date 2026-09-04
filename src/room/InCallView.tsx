@@ -270,6 +270,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const audioParticipants = useBehavior(vm.livekitRoomItems$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
+  const screenShareError = useBehavior(vm.screenShareError$);
   const layout = useBehavior(vm.layout$);
   const edgeToEdge = useBehavior(vm.edgeToEdge$);
   const overflowing = useBehavior(vm.overflowing$);
@@ -398,6 +399,21 @@ export const InCallView: FC<InCallViewProps> = ({
         </Header>
       );
   }
+
+  const onDismissScreenShareToast = useCallback(
+    () => vm.dismissScreenShareError(),
+    [vm],
+  );
+  const screenShareToast = (
+    <Toast
+      onDismiss={onDismissScreenShareToast}
+      open={screenShareError !== null}
+      autoDismiss={5000}
+      modal={false}
+    >
+      {t("error.screen_share_failed")}
+    </Toast>
+  );
 
   // The reconnecting toast cannot be dismissed
   const onDismissReconnectingToast = useCallback(() => {}, []);
@@ -634,6 +650,7 @@ export const InCallView: FC<InCallViewProps> = ({
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
       <RingingAudioRenderer vm={ringingVm} muted={muteAllAudio} />
       {reconnectingToast}
+      {screenShareToast}
       {earpieceOverlay}
       <ReactionsOverlay vm={vm} />
       {footer}

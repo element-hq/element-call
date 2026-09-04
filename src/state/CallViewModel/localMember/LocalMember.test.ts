@@ -31,6 +31,7 @@ import {
   flushPromises,
   mockConfig,
   mockLivekitRoom,
+  mockLocalParticipant,
   mockMuteStates,
   withTestScheduler,
   ownMemberMock,
@@ -41,6 +42,7 @@ import {
   enterRTCSession,
   PublishState,
   TrackState,
+  watchScreenShareToggle,
 } from "./LocalMember";
 import {
   FailToGetOpenIdToken,
@@ -67,6 +69,31 @@ vi.mock("@livekit/components-core", () => ({
     .fn()
     .mockReturnValue(of({ isScreenShareEnabled: false })),
 }));
+
+describe("watchScreenShareToggle", () => {
+  it("reports nothing when the toggle completes", async () => {
+    const onError = vi.fn();
+    watchScreenShareToggle(Promise.resolve(), true, logger, onError);
+    await flushPromises();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("reports failures other than the user cancelling", async () => {
+    const onError = vi.fn();
+    const e = new Error("NotReadableError");
+    watchScreenShareToggle(Promise.reject(e), true, logger, onError);
+    await flushPromises();
+    expect(onError).toHaveBeenCalledWith(e);
+  });
+
+  it("does not report the user cancelling the picker", async () => {
+    const onError = vi.fn();
+    const cancelled = new DOMException("Permission denied", "NotAllowedError");
+    watchScreenShareToggle(Promise.reject(cancelled), true, logger, onError);
+    await flushPromises();
+    expect(onError).not.toHaveBeenCalled();
+  });
+});
 
 describe("LocalMembership", () => {
   describe("enterRTCSession", () => {
@@ -850,6 +877,100 @@ describe("LocalMembership", () => {
         "probablyLeft",
         expect.any(Number),
       );
+
+      scope.end();
+    });
+  });
+
+  describe("toggleScreenSharing", () => {
+    let originalMediaDevices: MediaDevices | undefined;
+
+    beforeAll(() => {
+      mockConfig();
+      // Screen sharing is only offered when getDisplayMedia is available.
+      originalMediaDevices = navigator.mediaDevices;
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: { getDisplayMedia: vi.fn() },
+      });
+    });
+
+    afterAll(() => {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: originalMediaDevices,
+      });
+    });
+
+    const createMembershipWithConnection = (
+      connection: Connection | null,
+    ): {
+      scope: ObservableScope;
+      localMembership: ReturnType<typeof createLocalMembership$>;
+    } => {
+      const scope = new ObservableScope();
+      const connectionManagerData = new ConnectionManagerData();
+      if (connection) connectionManagerData.add(connection, []);
+      const localMembership = createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        connectionManager: {
+          connectionManagerData$: constant(new Epoch(connectionManagerData)),
+        },
+        localTransport$: new BehaviorSubject({
+          advertised$: new BehaviorSubject(aTransport),
+          active$: new BehaviorSubject(aTransportWithSFUConfig),
+        }),
+      });
+      return { scope, localMembership };
+    };
+
+    it("surfaces a failure and clears it on dismiss", async () => {
+      const error = new Error("NotReadableError");
+      const setScreenShareEnabled = vi.fn().mockRejectedValue(error);
+      const connection = {
+        state$: constant(ConnectionState.LivekitConnected),
+        transport: aTransport,
+        livekitRoom: mockLivekitRoom({
+          localParticipant: mockLocalParticipant({
+            isScreenShareEnabled: false,
+            setScreenShareEnabled,
+          }),
+        }),
+      } as unknown as Connection;
+      const { scope, localMembership } =
+        createMembershipWithConnection(connection);
+      await flushPromises();
+
+      expect(localMembership.toggleScreenSharing).not.toBeNull();
+      expect(localMembership.screenShareError$.value).toBeNull();
+
+      localMembership.toggleScreenSharing!();
+      await flushPromises();
+
+      expect(setScreenShareEnabled).toHaveBeenCalledWith(
+        true,
+        expect.any(Object),
+        undefined,
+      );
+      expect(localMembership.screenShareError$.value).toBe(error);
+
+      localMembership.dismissScreenShareError();
+      expect(localMembership.screenShareError$.value).toBeNull();
+
+      scope.end();
+    });
+
+    it("does nothing when there is no local participant", async () => {
+      // No connection means participant$ never resolves to a participant.
+      const { scope, localMembership } = createMembershipWithConnection(null);
+      await flushPromises();
+
+      expect(localMembership.toggleScreenSharing).not.toBeNull();
+      localMembership.toggleScreenSharing!();
+      await flushPromises();
+
+      expect(localMembership.screenShareError$.value).toBeNull();
 
       scope.end();
     });

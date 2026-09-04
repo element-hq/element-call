@@ -196,6 +196,11 @@ export const createLocalMembership$ = ({
    * Callback to toggle screen sharing. If null, screen sharing is not possible.
    */
   toggleScreenSharing: (() => void) | null;
+  /**
+   * The last error from toggling screen sharing, until dismissed.
+   */
+  screenShareError$: Behavior<Error | null>;
+  dismissScreenShareError: () => void;
   // tracks$: Behavior<LocalTrack[]>;
   participant$: Behavior<LocalParticipant | null>;
   connection$: Behavior<Connection | null>;
@@ -706,6 +711,7 @@ export const createLocalMembership$ = ({
     ),
   );
 
+  const screenShareError$ = new BehaviorSubject<Error | null>(null);
   let toggleScreenSharing: (() => void) | null = null;
   if (
     "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
@@ -777,13 +783,18 @@ export const createLocalMembership$ = ({
       // We also allow screen sharing to be toggled even if the connection
       // is still initializing or publishing tracks, because there's no
       // technical reason to disallow this. LiveKit will publish if it can.
-      participant$.value
-        ?.setScreenShareEnabled(
+      const participant = participant$.value;
+      if (!participant) return;
+      watchScreenShareToggle(
+        participant.setScreenShareEnabled(
           targetScreenshareState,
           screenshareSettings,
           publishOptions,
-        )
-        .catch(logger.error);
+        ),
+        targetScreenshareState,
+        logger,
+        (e) => screenShareError$.next(e),
+      );
     };
   }
 
@@ -802,10 +813,43 @@ export const createLocalMembership$ = ({
     ),
     sharingScreen$,
     toggleScreenSharing,
+    screenShareError$,
+    dismissScreenShareError: () => screenShareError$.next(null),
     connection$: localConnection$,
     internalLoggerRef: logger,
   };
 };
+
+/**
+ * Logs the outcome of a screen share toggle and reports failures.
+ *
+ * getDisplayMedia may legitimately take a long time (the user is choosing
+ * what to share) or never settle at all, so nothing is inferred from silence:
+ * the request and its completion are logged with the elapsed time so that a
+ * hang is visible in the logs, and only an explicit rejection is reported.
+ *
+ * The user cancelling the picker rejects with a NotAllowedError; that is
+ * logged but not reported.
+ */
+export function watchScreenShareToggle(
+  toggle: Promise<unknown>,
+  enable: boolean,
+  logger: Logger,
+  onError: (e: Error) => void,
+): void {
+  const what = `Screen share ${enable ? "start" : "stop"}`;
+  const started = Date.now();
+  const elapsed = (): string => `${Date.now() - started} ms`;
+  logger.info(`${what} requested`);
+  toggle.then(
+    () => logger.info(`${what} completed in ${elapsed()}`),
+    (e: unknown) => {
+      logger.error(`${what} failed after ${elapsed()}:`, e);
+      if (e instanceof DOMException && e.name === "NotAllowedError") return;
+      onError(e instanceof Error ? e : new Error(String(e)));
+    },
+  );
+}
 
 export function observeSharingScreen$(p: Participant): Observable<boolean> {
   return observeParticipantEvents(
