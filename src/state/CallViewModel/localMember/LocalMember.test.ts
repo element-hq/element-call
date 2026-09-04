@@ -963,8 +963,7 @@ describe("LocalMembership", () => {
 
     it("does nothing when there is no local participant", async () => {
       // No connection means participant$ never resolves to a participant.
-      const { scope, localMembership } =
-        createMembershipWithConnection(null);
+      const { scope, localMembership } = createMembershipWithConnection(null);
       await flushPromises();
 
       expect(localMembership.toggleScreenSharing).not.toBeNull();
