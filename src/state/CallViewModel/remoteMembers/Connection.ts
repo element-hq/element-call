@@ -346,6 +346,15 @@ export class Connection {
       // If we were stopped while connecting, don't proceed to update state.
       if (this.stopped) return;
     } catch (error) {
+      if (this.stopped) {
+        // stop() was called while we were connecting, which makes the pending
+        // connect reject. That is the abort we asked for, not a failure, so
+        // don't record an error state on a stopped connection or rethrow it
+        // (start() is not awaited by the ConnectionManager, so a throw here
+        // becomes an unhandled promise rejection).
+        this.logger.debug(`Connect aborted because the connection was stopped`);
+        return;
+      }
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
       this._state$.next(
         error instanceof ElementCallError
@@ -384,9 +393,11 @@ export class Connection {
       `stop: disconnecing from lk room ${this.transport.livekit_service_url}`,
     );
     if (this.stopped) return;
+    // Mark as stopped before disconnecting so that a connect() aborted by the
+    // disconnect sees the flag and does not report the abort as an error.
+    this.stopped = true;
     await this.livekitRoom.disconnect();
     this._state$.next(ConnectionState.Stopped);
-    this.stopped = true;
     this.logger.debug(
       `stop: DONE disconnecing from lk room ${this.transport.livekit_service_url}`,
     );
