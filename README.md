@@ -230,6 +230,12 @@ Element Call behaves when it does not own the page — the size it is given,
 whether it stays inside its container, and what it says to its host, which is
 logged along the bottom.
 
+The component's stylesheet is confined to the element it is mounted in: the
+build rewrites every selector so that it matches only Element Call's root or
+what is inside it, with `html`, `body` and `:root` standing for that root (see
+`component/build/scopeStylesToRoot.ts`). A host's own page keeps its styles,
+and Element Call brings its own fonts and design tokens along.
+
 ### Backend
 
 A docker compose file `docker-compose-dev.yml` is provided to start the

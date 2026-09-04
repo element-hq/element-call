@@ -223,6 +223,9 @@ importers:
       postcss-preset-env:
         specifier: ^10.0.0
         version: 10.6.1(postcss@8.5.25)
+      postcss-selector-parser:
+        specifier: ^7.1.1
+        version: 7.1.1
       posthog-js:
         specifier: 1.408.2
         version: 1.408.2

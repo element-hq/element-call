@@ -10,6 +10,7 @@ import { realpathSync } from "node:fs";
 import * as fs from "node:fs";
 
 import { vitePluginsConfig } from "./vite.config";
+import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot";
 
 // Serves the harness under `component/dev`, which embeds Element Call as a
 // component the way a host application would. Development only: this is not
@@ -35,6 +36,9 @@ export default defineConfig(({ mode }) => {
   return {
     ...vitePluginsConfig({ mode, html: false }),
     root: "component/dev",
+    // The same scoping the library build applies, so the harness shows what a
+    // host will get — including whether its own page is left alone
+    css: { postcss: { plugins: [scopeStylesToRoot()] } },
     // So that the harness can read the same config.json the standalone app
     // does, if the developer has written one
     publicDir: "../../public",

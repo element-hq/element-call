@@ -77,6 +77,38 @@ test("keeps its modals inside the container it was given", async ({ page }) => {
   );
 });
 
+test("leaves the host's own page unstyled", async ({ page }) => {
+  const { username, roomId } = await createUserAndRoom("hoststyles");
+  const panes = await startHarness(page, username, roomId);
+  await expect(panes.first().getByTestId("lobby_joinCall")).toBeVisible({
+    timeout: 60_000,
+  });
+
+  // Element Call's stylesheet is written for a page of its own: normalize.css
+  // gives `html` a line height, Compound gives `body` its font and feature
+  // settings, and the design tokens live on `:root`. None of that may reach the
+  // host's document — the harness sets none of these itself, so anything other
+  // than the browser's defaults here came from us.
+  const host = await page.evaluate(() => {
+    const html = getComputedStyle(document.documentElement);
+    const body = getComputedStyle(document.body);
+    return {
+      lineHeight: html.lineHeight,
+      fontFeatureSettings: body.fontFeatureSettings,
+      token: html.getPropertyValue("--cpd-color-text-primary"),
+    };
+  });
+  expect(host).toEqual({
+    lineHeight: "normal",
+    fontFeatureSettings: "normal",
+    token: "",
+  });
+
+  // While inside the container, the same rules do apply
+  const root = panes.first().locator("[data-element-call-root]");
+  await expect(root).toHaveCSS("font-feature-settings", /"kern"/);
+});
+
 test("tells its host what it is doing", async ({ page }) => {
   const { username, roomId } = await createUserAndRoom("hostbridge");
   const panes = await startHarness(page, username, roomId);

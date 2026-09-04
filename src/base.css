@@ -10,11 +10,14 @@ and element defaults its own stylesheets build on top of.
 
 Split out from index.css so that Element Call embedded in a host application
 can have these without also being given the standalone page's layout, which
-would style the host's own document. What remains here does still reach outside
-Element Call's container — normalize.css and the typography below use bare
-element selectors, and the custom properties are declared on `:root` — so a
-host gets those too. Narrowing them needs a real host to check against, so it
-waits for the Element Web integration rather than being guessed at here.
+would style the host's own document. What remains here still speaks of the
+document — normalize.css and the typography below use bare element selectors,
+and the custom properties are declared on `:root` — which is right for the
+page, and is why the component build rewrites it: there every selector is
+confined to Element Call's root element (see component/build/scopeStylesToRoot.ts),
+with `html`, `body` and `:root` becoming that element. Nothing needs to be
+written differently here for that to work, but nothing here may rely on
+reaching the host's document either.
 
 Nothing here should depend on where it lands relative to Element Call's
 component stylesheets: the bundler decides that, and it decides differently for

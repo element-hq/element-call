@@ -18,7 +18,10 @@ Please see LICENSE in the repository root for full details.
  */
 
 // The design tokens, fonts and element defaults every Element Call stylesheet
-// builds on.
+// builds on. Written for a page, they speak of `html`, `body` and bare
+// elements; the component build confines them, and every other stylesheet in
+// this bundle, to the root element below (see build/scopeStylesToRoot.ts), so
+// that the host's document is left as it was.
 //
 // Where these land relative to the component stylesheets is the bundler's
 // choice — the standalone app puts them first, this build puts them in the
