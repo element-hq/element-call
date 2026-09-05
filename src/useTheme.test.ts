@@ -19,6 +19,7 @@ import {
 } from "vitest";
 
 import { useTheme } from "./useTheme";
+import { platform } from "./Platform";
 import { useUrlParams } from "./UrlParams";
 import {
   type HostBridge,
@@ -86,6 +87,20 @@ describe("useTheme", () => {
     // Ensure the 'no-theme' class is removed
     expect(document.body.classList.remove).toHaveBeenCalledWith("no-theme");
     expect(originalClassList.add).not.toHaveBeenCalled();
+  });
+
+  test("marks the element as Element Call's root, for the stylesheets", () => {
+    renderHook(() => useTheme(), { wrapper });
+
+    // The stylesheets find the root by this rather than by naming `body`, so
+    // that they still apply when Element Call is mounted into a container
+    expect(document.body.hasAttribute("data-element-call-root")).toBe(true);
+  });
+
+  test("records the platform on the root, for the stylesheets", () => {
+    renderHook(() => useTheme(), { wrapper });
+
+    expect(document.body.getAttribute("data-platform")).toBe(platform);
   });
 
   test("theme changes in response to host requests", () => {

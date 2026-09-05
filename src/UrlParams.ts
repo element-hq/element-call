@@ -355,6 +355,135 @@ export const getUrlParams = (
 };
 
 /**
+ * The configuration implied by what the user meant to do — if they pressed a
+ * Start Call button this would be `start_call`, and if they pressed Join Call,
+ * `join_existing`.
+ *
+ * These are platform-specific defaults, so that a host can start a call by
+ * saying what the user asked for rather than by setting every parameter itself,
+ * and so that what each intent means is Element Call's decision, made in one
+ * place. A host that wants something else states it alongside the intent.
+ *
+ * {@link UserIntent.Unknown} means no intent was stated, and gives the
+ * standalone app's defaults: Element Call owns the whole page, so it offers the
+ * way out of the room that a hosted call must not.
+ */
+export function configurationForIntent(intent: UserIntent): UrlConfiguration {
+  // Only constants and `platform` here, so that this depends on nothing but
+  // the intent.
+  let preset: UrlConfiguration = {
+    confineToRoom: true,
+    preload: false,
+    header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+    showControls: true,
+    hideScreensharing: false,
+    allowIceFallback: true,
+    perParticipantE2EE: true,
+    controlledAudioDevices: platform === "desktop" ? false : true,
+    skipLobby: true,
+    returnToLobby: false,
+    sendNotificationType: "notification",
+    autoLeaveWhenOthersLeft: false,
+    waitForCallPickup: false,
+  };
+  switch (intent) {
+    case UserIntent.StartNewCall:
+      preset.skipLobby = false;
+      preset.callIntent = "video";
+      break;
+    case UserIntent.JoinExistingCall:
+      // On desktop this will be overridden based on which button was used to join the call
+      preset.skipLobby = false;
+      preset.callIntent = "video";
+      break;
+    case UserIntent.StartNewCallVoice:
+      preset.skipLobby = false;
+      preset.callIntent = "audio";
+      break;
+    case UserIntent.JoinExistingCallVoice:
+      // On desktop this will be overridden based on which button was used to join the call
+      preset.skipLobby = false;
+      preset.callIntent = "audio";
+      break;
+    case UserIntent.StartNewCallDMVoice:
+      preset.callIntent = "audio";
+    // Fall through
+    case UserIntent.StartNewCallDM:
+      preset.skipLobby = true;
+      preset.sendNotificationType = "ring";
+      preset.autoLeaveWhenOthersLeft = true;
+      preset.waitForCallPickup = true;
+      preset.callIntent = preset.callIntent ?? "video";
+      break;
+    case UserIntent.JoinExistingCallDMVoice:
+      preset.callIntent = "audio";
+    // Fall through
+    case UserIntent.JoinExistingCallDM:
+      // On desktop this will be overridden based on which button was used to join the call
+      preset.skipLobby = true;
+      preset.autoLeaveWhenOthersLeft = true;
+      preset.callIntent = preset.callIntent ?? "video";
+      break;
+    // Non widget usecase defaults
+    default:
+      preset = {
+        confineToRoom: false,
+        preload: false,
+        header: HeaderStyle.Standard,
+        showControls: true,
+        hideScreensharing: false,
+        allowIceFallback: false,
+        perParticipantE2EE: false,
+        controlledAudioDevices: false,
+        skipLobby: false,
+        returnToLobby: false,
+        sendNotificationType: undefined,
+        autoLeaveWhenOthersLeft: false,
+        waitForCallPickup: false,
+      };
+  }
+  return preset;
+}
+
+/**
+ * The {@link UrlProperties} for Element Call embedded in a host application.
+ *
+ * It has no URL of its own to read these from, and it does not need most of
+ * them: the widget plumbing does not apply, the Matrix client and the analytics
+ * configuration come from the host by other routes, and what is left is either
+ * the host's to state through the component's props or Element Call's own
+ * default.
+ */
+export const hostedProperties: UrlProperties = {
+  widgetId: null,
+  parentUrl: null,
+  isWidget: false,
+  roomId: null,
+  userId: null,
+  displayName: null,
+  deviceId: null,
+  baseUrl: null,
+  lang: null,
+  fonts: [],
+  fontScale: null,
+  posthogUserId: null,
+  posthogApiHost: null,
+  posthogApiKey: null,
+  e2eEnabled: true,
+  password: null,
+  viaServers: null,
+  homeserver: null,
+  rageshakeSubmitUrl: null,
+  sentryDsn: null,
+  sentryEnvironment: null,
+  theme: null,
+  // Solid rather than the gradient the standalone app defaults to: the gradient
+  // is drawn by a `position: fixed` pseudo-element, which would escape the
+  // container Element Call was given and cover the host's own interface.
+  background: BackgroundStyle.Solid,
+};
+
+/**
  * Gets the app parameters for the current URL.
  * @param search The URL search string
  * @param hash The URL hash
@@ -383,78 +512,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   const intent = !isWidget
     ? UserIntent.Unknown
     : (parser.getEnumParam("intent", UserIntent) ?? UserIntent.Unknown);
-  // Here we only use constants and `platform` to determine the intent preset.
-  let intentPreset: UrlConfiguration = {
-    confineToRoom: true,
-    preload: false,
-    header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
-    showControls: true,
-    hideScreensharing: false,
-    allowIceFallback: true,
-    perParticipantE2EE: true,
-    controlledAudioDevices: platform === "desktop" ? false : true,
-    skipLobby: true,
-    returnToLobby: false,
-    sendNotificationType: "notification",
-    autoLeaveWhenOthersLeft: false,
-    waitForCallPickup: false,
-  };
-  switch (intent) {
-    case UserIntent.StartNewCall:
-      intentPreset.skipLobby = false;
-      intentPreset.callIntent = "video";
-      break;
-    case UserIntent.JoinExistingCall:
-      // On desktop this will be overridden based on which button was used to join the call
-      intentPreset.skipLobby = false;
-      intentPreset.callIntent = "video";
-      break;
-    case UserIntent.StartNewCallVoice:
-      intentPreset.skipLobby = false;
-      intentPreset.callIntent = "audio";
-      break;
-    case UserIntent.JoinExistingCallVoice:
-      // On desktop this will be overridden based on which button was used to join the call
-      intentPreset.skipLobby = false;
-      intentPreset.callIntent = "audio";
-      break;
-    case UserIntent.StartNewCallDMVoice:
-      intentPreset.callIntent = "audio";
-    // Fall through
-    case UserIntent.StartNewCallDM:
-      intentPreset.skipLobby = true;
-      intentPreset.sendNotificationType = "ring";
-      intentPreset.autoLeaveWhenOthersLeft = true;
-      intentPreset.waitForCallPickup = true;
-      intentPreset.callIntent = intentPreset.callIntent ?? "video";
-      break;
-    case UserIntent.JoinExistingCallDMVoice:
-      intentPreset.callIntent = "audio";
-    // Fall through
-    case UserIntent.JoinExistingCallDM:
-      // On desktop this will be overridden based on which button was used to join the call
-      intentPreset.skipLobby = true;
-      intentPreset.autoLeaveWhenOthersLeft = true;
-      intentPreset.callIntent = intentPreset.callIntent ?? "video";
-      break;
-    // Non widget usecase defaults
-    default:
-      intentPreset = {
-        confineToRoom: false,
-        preload: false,
-        header: HeaderStyle.Standard,
-        showControls: true,
-        hideScreensharing: false,
-        allowIceFallback: false,
-        perParticipantE2EE: false,
-        controlledAudioDevices: false,
-        skipLobby: false,
-        returnToLobby: false,
-        sendNotificationType: undefined,
-        autoLeaveWhenOthersLeft: false,
-        waitForCallPickup: false,
-      };
-  }
+  const intentPreset = configurationForIntent(intent);
 
   const properties: UrlProperties = {
     widgetId,

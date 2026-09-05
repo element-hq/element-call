@@ -1,0 +1,23 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+/* The host page's own styles. Deliberately plain, and deliberately not using
+Element Call's design tokens: the harness should look like it does because of
+this file, not because Element Call styled it. */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background-color: #f4f4f5;
+  color: #18181b;
+}

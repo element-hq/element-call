@@ -1,0 +1,20 @@
+{
+  // Declaration output for the component package (`pnpm build:component:types`).
+  // The root tsconfig only type-checks; this one emits `.d.ts` files, and nothing
+  // else, for everything the component's entry point reaches. The layout under
+  // `dist/types` mirrors the repository (`component/index.d.ts`, `src/…`), which
+  // is what `package.json` points its `types` at.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": false,
+    "rootDir": "..",
+    "outDir": "./dist/types"
+  },
+  // The entry point, plus the ambient declarations (CSS modules, `?react` SVGs,
+  // `import.meta.env`, …) that the sources it reaches rely on.
+  "include": ["./index.tsx", "../src/@types/*.d.ts"],
+  "exclude": []
+}

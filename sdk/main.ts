@@ -60,6 +60,7 @@ import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { initializeWidget } from "../src/widget";
 import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
 import { createWidgetHostBridge } from "../src/HostBridge";
+import { observeElementSize$ } from "../src/utils/elementSize";
 
 interface MatrixRTCSdk {
   /**
@@ -151,6 +152,8 @@ export async function createMatrixRTCSdk(
       ...callViewModelOptionsFromParams(urlParams),
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       hostBridge,
+      // The SDK owns its page, so the body is the space it has
+      windowSize$: scope.behavior(observeElementSize$(document.body)),
     },
     of({}),
     of({}),

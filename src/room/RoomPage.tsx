@@ -6,45 +6,28 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type FC,
-  useEffect,
-  useState,
-  type ReactNode,
-  useRef,
-  type JSX,
-} from "react";
+import { type FC, useEffect, useState, type ReactNode, useRef } from "react";
 import { type MatrixError } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { Trans, useTranslation } from "react-i18next";
-import {
-  CheckIcon,
-  UnknownSolidIcon,
-} from "@vector-im/compound-design-tokens/assets/web/icons";
+import { UnknownSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { useClientLegacy } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
-import { GroupCallView } from "./GroupCallView";
+import { ElementCallView } from "../ElementCallView";
 import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { HomePage } from "../home/HomePage";
-import { useHostBridge } from "../HostBridge.ts";
 import { CallTerminatedMessage, useLoadGroupCall } from "./useLoadGroupCall";
-import { LobbyView } from "./LobbyView";
-import { E2eeType } from "../e2ee/e2eeType";
+import { KnockLobbyView } from "./KnockLobbyView";
 import { useProfile } from "../profile/useProfile";
 import { useOptInAnalytics } from "../settings/settings";
 import { Link } from "../button/Link";
 import { ErrorView } from "../ErrorView";
-import { useMediaDevices } from "../MediaDevicesContext";
-import { MuteStates } from "../state/MuteStates";
-import { ObservableScope } from "../state/ObservableScope";
-import { calculateInitialMuteState } from "../state/initialMuteState.ts";
 
 export const RoomPage: FC = (): ReactNode => {
   const urlParams = useUrlParams();
-  const hostBridge = useHostBridge();
   const { confineToRoom, preload, header, displayName, skipLobby } = urlParams;
   const { t } = useTranslation();
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
@@ -62,27 +45,6 @@ export const RoomPage: FC = (): ReactNode => {
   const { avatarUrl, displayName: userDisplayName } = useProfile(client);
 
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
-  const [joined, setJoined] = useState(false);
-
-  const devices = useMediaDevices();
-  const [muteStates, setMuteStates] = useState<MuteStates | null>(null);
-
-  useEffect(() => {
-    const scope = new ObservableScope();
-    setMuteStates(
-      new MuteStates(
-        scope,
-        devices,
-        calculateInitialMuteState(
-          urlParams.skipLobby,
-          urlParams.callIntent,
-          urlParams.isWidget,
-        ),
-        hostBridge,
-      ),
-    );
-    return (): void => scope.end();
-  }, [devices, urlParams, hostBridge]);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
@@ -124,66 +86,34 @@ export const RoomPage: FC = (): ReactNode => {
     switch (groupCallState.kind) {
       case "loaded":
         return (
-          muteStates && (
-            <GroupCallView
-              client={client!}
-              rtcSession={groupCallState.rtcSession}
-              joined={joined}
-              setJoined={setJoined}
-              isPasswordlessUser={passwordlessUser}
-              confineToRoom={confineToRoom}
-              preload={preload}
-              skipLobby={skipLobby || wasInWaitForInviteState.current}
-              muteStates={muteStates}
-            />
-          )
+          <ElementCallView
+            client={client!}
+            rtcSession={groupCallState.rtcSession}
+            isPasswordlessUser={passwordlessUser}
+            confineToRoom={confineToRoom}
+            preload={preload}
+            skipLobby={skipLobby || wasInWaitForInviteState.current}
+          />
         );
       case "waitForInvite":
       case "canKnock": {
         wasInWaitForInviteState.current =
           wasInWaitForInviteState.current ||
           groupCallState.kind === "waitForInvite";
-        const knock =
-          groupCallState.kind === "canKnock" ? groupCallState.knock : null;
-        const label: string | JSX.Element =
-          groupCallState.kind === "canKnock" ? (
-            t("lobby.ask_to_join")
-          ) : (
-            <>
-              {t("lobby.waiting_for_invite")}
-              <CheckIcon />
-            </>
-          );
         return (
-          muteStates && (
-            <LobbyView
-              client={client!}
-              matrixInfo={{
-                userId: client!.getUserId() ?? "",
-                displayName: userDisplayName ?? "",
-                avatarUrl: avatarUrl ?? "",
-                roomAlias: null,
-                roomId: groupCallState.roomSummary.room_id,
-                roomName: groupCallState.roomSummary.name ?? "",
-                roomAvatar: groupCallState.roomSummary.avatar_url ?? null,
-                e2eeSystem: {
-                  kind: groupCallState.roomSummary[
-                    "im.nheko.summary.encryption"
-                  ]
-                    ? E2eeType.PER_PARTICIPANT
-                    : E2eeType.NONE,
-                },
-              }}
-              onEnter={(): void => knock?.()}
-              enterLabel={label}
-              waitingForInvite={groupCallState.kind === "waitForInvite"}
-              confineToRoom={confineToRoom}
-              hideHeader={header !== "standard"}
-              participantCount={null}
-              muteStates={muteStates}
-              onShareClick={null}
-            />
-          )
+          <KnockLobbyView
+            client={client!}
+            roomSummary={groupCallState.roomSummary}
+            profile={{
+              displayName: userDisplayName ?? "",
+              avatarUrl: avatarUrl ?? "",
+            }}
+            knock={
+              groupCallState.kind === "canKnock" ? groupCallState.knock : null
+            }
+            confineToRoom={confineToRoom}
+            hideHeader={header !== "standard"}
+          />
         );
       }
       case "loading":

@@ -3,8 +3,11 @@
   display: inline;
   z-index: 2;
   pointer-events: none;
-  width: 100vw;
-  height: 100vh;
+  /* Percentages, not viewport units: the containing block is the element
+  Element Call treats as its root, which is the page in the standalone app but
+  the container a host gave us when embedded. */
+  width: 100%;
+  height: 100%;
   left: 0;
   top: 0;
 }
@@ -16,7 +19,7 @@
   animation-name: reaction-up;
   width: fit-content;
   position: relative;
-  top: 80vh;
+  top: 80%;
 }
 
 @keyframes reaction-up {
@@ -24,7 +27,7 @@
     opacity: 1;
     translate: 0 0;
     scale: 200%;
-    top: 80vh;
+    top: 80%;
   }
 
   to {
@@ -48,7 +51,7 @@
   .reaction {
     font-size: 48pt;
     animation-name: reaction-up-reduced;
-    top: calc(-50vh + (48pt / 2));
-    left: calc(50vw - (48pt / 2)) !important;
+    top: calc(-50% + (48pt / 2));
+    left: calc(50% - (48pt / 2)) !important;
   }
 }

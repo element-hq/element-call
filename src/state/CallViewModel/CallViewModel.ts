@@ -204,8 +204,15 @@ export interface CallViewModelOptions {
   livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
   /** Optional behavior overriding the local connection state, mainly for testing purposes. */
   connectionState$?: Behavior<ConnectionState>;
-  /** Optional behavior overriding the computed window size, mainly for testing purposes. */
-  windowSize$?: Behavior<{ width: number; height: number }>;
+  /**
+   * The size of the space the call is drawn in: the page when Element Call
+   * owns it, or the container a host mounted it in when it is a component.
+   * The layout — whether the call is shown full size, flat, narrow or as a
+   * picture-in-picture — follows this rather than the size of the window, so
+   * that a component shrunk by its host adapts even though the window has not
+   * changed.
+   */
+  windowSize$: Behavior<{ width: number; height: number }>;
   /** Optional value overriding the local transport, for testing purposes. */
   localTransport?: LocalTransport;
   /** Optional value overriding the connection factory, for testing purposes. */
@@ -263,6 +270,11 @@ const smallMobileCallThreshold = 3;
 // with the interface
 const showFooterMs = 4000;
 
+/**
+ * The general shape of the space the call is drawn in. Called a window because
+ * that is what it is in the standalone app; for a component it is the container
+ * the host gave us, which may be a small corner of a large window.
+ */
 export type WindowMode = "normal" | "narrow" | "flat" | "pip";
 
 interface LayoutScanState {
@@ -1102,18 +1114,10 @@ export function createCallViewModel$(
 
   const pipEnabled$ = scope.behavior(setPipEnabled$, false);
 
-  const windowSize$ =
-    options.windowSize$ ??
-    scope.behavior<{ width: number; height: number }>(
-      fromEvent(window, "resize").pipe(
-        startWith(null),
-        map(() => ({ width: window.innerWidth, height: window.innerHeight })),
-      ),
-    );
-
-  // A guess at what the window's mode should be based on its size and shape.
+  // A guess at what the window's mode should be based on the size and shape of
+  // the space we have to draw in.
   const naturalWindowMode$ = scope.behavior<WindowMode>(
-    windowSize$.pipe(
+    options.windowSize$.pipe(
       map(({ width, height }) => {
         if (height <= 400 && width <= 340) return "pip";
         // Our layouts for flat windows are better at adapting to a small width

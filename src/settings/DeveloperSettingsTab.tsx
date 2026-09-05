@@ -680,9 +680,9 @@ export const DeveloperSettingsTab: FC<Props> = ({
       <AudioProcessingSettings />
       <Separator />
       <p>{t("developer_mode.environment_variables")}</p>
-      <pre>{JSON.stringify(env, null, 2)}</pre>
+      <pre className={styles.pre}>{JSON.stringify(env, null, 2)}</pre>
       <p>{t("developer_mode.url_params")}</p>
-      <pre>{JSON.stringify(urlParams, null, 2)}</pre>
+      <pre className={styles.pre}>{JSON.stringify(urlParams, null, 2)}</pre>
     </>
   );
 };

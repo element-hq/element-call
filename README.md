@@ -213,6 +213,48 @@ See also:
 
 - [Developing with linked packages](./docs/linking.md)
 
+#### Element Call as a component (experimental)
+
+Element Call can also be embedded directly into another React application
+rather than being loaded in an iframe as a widget. `pnpm build:component`
+builds it as a library into `component/dist` (the bundle, its stylesheet and
+type declarations), and
+
+```sh
+pnpm dev:component
+```
+
+serves a harness on port 3001 that stands in for such an application: it signs
+in twice against the development backend and shows two calls side by side, in
+resizable boxes, with page furniture of its own around them. Use it to see how
+Element Call behaves when it does not own the page — the size it is given,
+whether it stays inside its container, and what it says to its host, which is
+logged along the bottom.
+
+The call lays itself out for the size of the element it is mounted in, not the
+window: a host that shrinks the container to a corner of its page gets the
+picture-in-picture layout, just as a host that shrank the whole iframe used to.
+
+The component's stylesheet is confined to the element it is mounted in: the
+build rewrites every selector so that it matches only Element Call's root or
+what is inside it, with `html`, `body` and `:root` standing for that root (see
+`component/build/scopeStylesToRoot.ts`). A host's own page keeps its styles,
+and Element Call brings its own fonts and design tokens along.
+
+The package is not published yet. A host installs it as a git dependency on the
+`component` directory of this repository,
+
+```json
+"@element-hq/element-call-component": "github:element-hq/element-call#main&path:/component"
+```
+
+whose `prepare` script runs the build on install (the host's pnpm has to allow
+that: `allowBuilds` in its `pnpm-workspace.yaml`). It imports the component from
+`@element-hq/element-call-component` and the stylesheet from
+`@element-hq/element-call-component/style.css`, and has to provide `react`,
+`react-dom`, `matrix-js-sdk` and `livekit-client` itself, since the bundle leaves
+them external.
+
 ### Backend
 
 A docker compose file `docker-compose-dev.yml` is provided to start the

@@ -19,7 +19,12 @@
 }
 
 div.reactionPopupMenuRoot.reactionPopupMenuModal {
-  --overlay-top: 82vh;
+  /* Down near the footer it belongs to, rather than centred like other modals.
+  A percentage, not a viewport unit: the overlay is positioned `fixed`, so this
+  resolves against the page in the standalone app and against the container
+  when a host embeds us — where 82vh would put it below the container
+  entirely. */
+  --overlay-top: 82%;
   width: fit-content;
 }
 

@@ -1,0 +1,167 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import { expect, type Locator, test } from "@playwright/test";
+
+import { createUserAndRoom, expectWithin, startHarness } from "./harness.ts";
+
+/**
+ * Element Call embedded as a React component, driven through the development
+ * harness in `component/dev`.
+ *
+ * What these cover that the widget tests cannot is everything that follows from
+ * sharing a page with a host: whether Element Call stays inside the space it
+ * was given, and whether two of it can exist at once. As a widget, the iframe
+ * guaranteed both.
+ */
+
+/** The settings button, whichever of the two the footer is currently showing. */
+function settingsButton(pane: Locator): Locator {
+  return pane
+    .getByTestId("settings-bottom-left")
+    .or(pane.getByTestId("settings-bottom-center"))
+    .filter({ visible: true })
+    .first();
+}
+
+test("holds a call between two components on one page", async ({ page }) => {
+  const { username, roomId } = await createUserAndRoom("twocomponents");
+  const panes = await startHarness(page, username, roomId);
+
+  // Each component shows a lobby of its own, and neither has joined anything
+  // just by being rendered
+  for (const index of [0, 1])
+    await expect(panes.nth(index).getByTestId("lobby_joinCall")).toBeVisible({
+      timeout: 60_000,
+    });
+
+  for (const index of [0, 1])
+    await panes.nth(index).getByTestId("lobby_joinCall").click();
+
+  // Two devices of one account, so each component should see itself and the
+  // other. This is the part that proves two Element Calls in one page are two
+  // calls, and not one shared thing wearing two hats.
+  for (const index of [0, 1])
+    await expect(panes.nth(index).getByTestId("videoTile")).toHaveCount(2, {
+      timeout: 60_000,
+    });
+});
+
+test("keeps its modals inside the container it was given", async ({ page }) => {
+  const { username, roomId } = await createUserAndRoom("containment");
+  const panes = await startHarness(page, username, roomId);
+  const pane = panes.first();
+  const container = pane.getByTestId("call-container");
+
+  await pane.getByTestId("lobby_joinCall").click({ timeout: 60_000 });
+  await expect(pane.getByTestId("footer-container")).toBeVisible({
+    timeout: 60_000,
+  });
+
+  // Both of these are positioned `fixed`, and were centred on the window
+  // rather than the container until it was made a containing block. The
+  // settings dialog spilled over the host's interface; the reaction picker sat
+  // at 82vh, which put it below the container entirely and so out of sight.
+  await settingsButton(pane).click();
+  await expectWithin(pane.getByRole("dialog"), container);
+  await pane.getByTestId("modal_close").click();
+
+  await pane.getByRole("button", { name: "Reactions" }).click();
+  await expectWithin(
+    pane.getByRole("dialog", { name: "Pick reaction" }),
+    container,
+  );
+});
+
+test("leaves the host's own page unstyled", async ({ page }) => {
+  const { username, roomId } = await createUserAndRoom("hoststyles");
+  const panes = await startHarness(page, username, roomId);
+  await expect(panes.first().getByTestId("lobby_joinCall")).toBeVisible({
+    timeout: 60_000,
+  });
+
+  // Element Call's stylesheet is written for a page of its own: normalize.css
+  // gives `html` a line height, Compound gives `body` its font and feature
+  // settings, and the design tokens live on `:root`. None of that may reach the
+  // host's document — the harness sets none of these itself, so anything other
+  // than the browser's defaults here came from us.
+  const host = await page.evaluate(() => {
+    const html = getComputedStyle(document.documentElement);
+    const body = getComputedStyle(document.body);
+    return {
+      lineHeight: html.lineHeight,
+      fontFeatureSettings: body.fontFeatureSettings,
+      token: html.getPropertyValue("--cpd-color-text-primary"),
+    };
+  });
+  expect(host).toEqual({
+    lineHeight: "normal",
+    fontFeatureSettings: "normal",
+    token: "",
+  });
+
+  // While inside the container, the same rules do apply
+  const root = panes.first().locator("[data-element-call-root]");
+  await expect(root).toHaveCSS("font-feature-settings", /"kern"/);
+});
+
+test("tells its host what it is doing", async ({ page }) => {
+  const { username, roomId } = await createUserAndRoom("hostbridge");
+  const panes = await startHarness(page, username, roomId);
+  const pane = panes.first();
+  const log = page.getByTestId("bridge-log");
+
+  // Every component reports to its host through the bridge, whether that host
+  // is a widget container or an application embedding it directly
+  await expect(log).toContainText("contentLoaded", { timeout: 60_000 });
+
+  await pane.getByTestId("lobby_joinCall").click({ timeout: 60_000 });
+  await expect(log).toContainText("notifyJoined", { timeout: 60_000 });
+  await expect(log).toContainText("setAlwaysOnScreen(true)", {
+    timeout: 60_000,
+  });
+
+  // And takes instructions back: the host asking for a mute should come back
+  // as the component reporting the new state
+  await pane.getByRole("button", { name: "Mute" }).click();
+  await expect(log).toContainText("notifyDeviceMute(audio: false", {
+    timeout: 30_000,
+  });
+});
+
+test("lays itself out for the space it is given, not the page", async ({
+  page,
+}) => {
+  const { username, roomId } = await createUserAndRoom("containersize");
+  const panes = await startHarness(page, username, roomId);
+  const pane = panes.first();
+  const container = pane.getByTestId("call-container");
+  const call = pane.locator("[data-layout]");
+
+  await pane.getByTestId("lobby_joinCall").click({ timeout: 60_000 });
+  await expect(call).toBeVisible({ timeout: 60_000 });
+  await expect(call).not.toHaveAttribute("data-layout", "pip");
+
+  // As a widget, Element Call's container and its window were one and the same:
+  // a host wanting a picture-in-picture made the iframe small, and Element Call
+  // saw the window shrink. A component gets no such signal from the window,
+  // which stays as large as it ever was; only the container changes.
+  const resize = async (width: number, height: number): Promise<void> =>
+    container.evaluate(
+      (element, size) => {
+        element.style.width = `${size.width}px`;
+        element.style.height = `${size.height}px`;
+      },
+      { width, height },
+    );
+
+  await resize(300, 300);
+  await expect(call).toHaveAttribute("data-layout", "pip");
+
+  await resize(900, 700);
+  await expect(call).not.toHaveAttribute("data-layout", "pip");
+});

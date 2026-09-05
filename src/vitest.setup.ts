@@ -53,6 +53,15 @@ window.matchMedia = global.matchMedia = (): MediaQueryList =>
     removeEventListener: () => {},
   }) as Partial<MediaQueryList> as MediaQueryList;
 
+// jsdom does no layout and has no ResizeObserver. The call view observes the
+// size of its root element; this one reports nothing, so that element stays at
+// whatever size jsdom says it is (zero) unless a test says otherwise.
+window.ResizeObserver ??= class ResizeObserver {
+  public observe(): void {}
+  public unobserve(): void {}
+  public disconnect(): void {}
+};
+
 const storage: Record<string, string> = {};
 const localStoragePolyfill = {
   getItem(key: string) {
