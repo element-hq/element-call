@@ -29,7 +29,7 @@ import { GroupCallView } from "./GroupCallView";
 import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { HomePage } from "../home/HomePage";
-import { widget } from "../widget";
+import { useHostBridge } from "../HostBridge.ts";
 import { CallTerminatedMessage, useLoadGroupCall } from "./useLoadGroupCall";
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -44,6 +44,7 @@ import { calculateInitialMuteState } from "../state/initialMuteState.ts";
 
 export const RoomPage: FC = (): ReactNode => {
   const urlParams = useUrlParams();
+  const hostBridge = useHostBridge();
   const { confineToRoom, preload, header, displayName, skipLobby } = urlParams;
   const { t } = useTranslation();
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
@@ -75,17 +76,18 @@ export const RoomPage: FC = (): ReactNode => {
         calculateInitialMuteState(
           urlParams.skipLobby,
           urlParams.callIntent,
-          widget !== null,
+          urlParams.isWidget,
         ),
+        hostBridge,
       ),
     );
     return (): void => scope.end();
-  }, [devices, urlParams]);
+  }, [devices, urlParams, hostBridge]);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
     // a URL param, automatically register a passwordless user
-    if (!loading && !authenticated && displayName && !widget) {
+    if (!loading && !authenticated && displayName && !urlParams.isWidget) {
       setIsRegistering(true);
       registerPasswordlessUser(displayName)
         .catch((e) => {
@@ -99,6 +101,7 @@ export const RoomPage: FC = (): ReactNode => {
     loading,
     authenticated,
     displayName,
+    urlParams.isWidget,
     setIsRegistering,
     registerPasswordlessUser,
   ]);
@@ -123,7 +126,6 @@ export const RoomPage: FC = (): ReactNode => {
         return (
           muteStates && (
             <GroupCallView
-              widget={widget}
               client={client!}
               rtcSession={groupCallState.rtcSession}
               joined={joined}
@@ -198,7 +200,6 @@ export const RoomPage: FC = (): ReactNode => {
               <ErrorView
                 Icon={UnknownSolidIcon}
                 title={t("error.call_not_found")}
-                widget={widget}
               >
                 <Trans i18nKey="error.call_not_found_description">
                   <p>
@@ -216,7 +217,6 @@ export const RoomPage: FC = (): ReactNode => {
               <ErrorView
                 Icon={groupCallState.error.icon}
                 title={groupCallState.error.message}
-                widget={widget}
               >
                 <p>{groupCallState.error.messageBody}</p>
                 {groupCallState.error.reason && (
@@ -230,7 +230,7 @@ export const RoomPage: FC = (): ReactNode => {
             </FullScreenView>
           );
         } else {
-          return <ErrorPage widget={widget} error={groupCallState.error} />;
+          return <ErrorPage error={groupCallState.error} />;
         }
       default:
         return <> </>;
@@ -238,7 +238,7 @@ export const RoomPage: FC = (): ReactNode => {
   };
 
   if (loading || isRegistering) return <LoadingPage />;
-  if (error) return <ErrorPage widget={widget} error={error} />;
+  if (error) return <ErrorPage error={error} />;
   if (!client) return <RoomAuthView />;
   // TODO: This doesn't belong here, the app routes need to be reworked
   if (!roomIdOrAlias) return <HomePage />;

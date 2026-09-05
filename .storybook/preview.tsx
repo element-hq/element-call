@@ -7,14 +7,16 @@ Please see LICENSE in the repository root for full details.
 
 import type { Preview } from "@storybook/react-vite";
 import { TooltipProvider } from "@vector-im/compound-web";
-import i18n from "i18next";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import EN from "../locales/en/app.json";
 import { initReactI18next } from "react-i18next";
+import { i18n } from "../src/utils/i18n";
 import "../src/index.css";
 
-// Bare-minimum i18n config
+// Bare-minimum i18n config.
+// Unlike the app, stories register the instance as react-i18next's default
+// rather than wrapping every story in an <I18nextProvider>.
 i18n
   .use(initReactI18next)
   .init({

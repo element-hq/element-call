@@ -6,12 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import React from "react";
-import i18n, {
+import {
   type BackendModule,
   type ReadCallback,
   type ResourceKey,
 } from "i18next";
-import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import * as Sentry from "@sentry/react";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -33,8 +32,13 @@ import { Config } from "./config/Config";
 import { seedSettingsFromConfig } from "./settings/settings";
 import { platform } from "./Platform";
 import { isFailure } from "./utils/fetch";
-import { initializeWidget } from "./widget";
+import { initializeWidget, type WidgetHelpers } from "./widget";
 import { enableExtendedLivekitLogs } from "./settings/settings.ts";
+import {
+  type AnalyticsConfig,
+  PosthogAnalytics,
+} from "./analytics/PosthogAnalytics.ts";
+import { i18n } from "./utils/i18n.ts";
 
 // This generates a map of locale names to their URL (based on import.meta.url), which looks like this:
 // {
@@ -98,6 +102,36 @@ const Backend = {
   },
 } satisfies BackendModule;
 
+/**
+ * Where analytics reporting is configured from.
+ *
+ * Note the two halves are decided differently, and deliberately so. *Where the
+ * PostHog credentials come from* depends on the package: an embedder passes
+ * them in through the URL because it is responsible for its own users'
+ * telemetry, whereas a standalone deployment is configured by whoever operates
+ * it. *Who owns the user's analytics identity*, on the other hand, depends on
+ * how Element Call is actually running right now — the full package can be used
+ * as a widget too.
+ */
+// Exported for testing
+export function analyticsConfigFromEnvironment(): AnalyticsConfig {
+  const { posthogApiKey, posthogApiHost, posthogUserId, isWidget } =
+    getUrlParams();
+  return {
+    matrixBackend: isWidget ? "embedded" : "jssdk",
+    hostAnalyticsId: posthogUserId,
+    ...(import.meta.env.VITE_PACKAGE === "embedded"
+      ? {
+          apiKey: posthogApiKey ?? undefined,
+          apiHost: posthogApiHost ?? undefined,
+        }
+      : {
+          apiKey: Config.get().posthog?.api_key,
+          apiHost: Config.get().posthog?.api_host,
+        }),
+  };
+}
+
 enum LoadState {
   None,
   Loading,
@@ -121,8 +155,8 @@ export class Initializer {
     return !!Initializer.internalInstance?.isInitialized;
   }
 
-  public static async initBeforeReact(): Promise<void> {
-    initializeWidget();
+  public static async initBeforeReact(): Promise<WidgetHelpers | null> {
+    const widget = initializeWidget();
 
     const polyfills: Promise<unknown>[] = [];
     if (shouldPolyfillSegmenter()) {
@@ -148,10 +182,12 @@ export class Initializer {
       document.documentElement.lang = lng;
     });
 
+    // Note: deliberately no `.use(initReactI18next)` — that would register this
+    // instance as react-i18next's global default, which is the very global we
+    // are avoiding. Components receive it through `<I18nextProvider>` instead.
     await i18n
       .use(Backend)
       .use(languageDetector)
-      .use(initReactI18next)
       .init({
         fallbackLng: "en",
         defaultNS: "app",
@@ -207,6 +243,8 @@ export class Initializer {
     });
 
     window.setLKLogLevel = setLKLogLevel;
+
+    return widget;
   }
 
   public static init(): Promise<void> | null {
@@ -239,6 +277,7 @@ export class Initializer {
       Config.init().then(
         () => {
           seedSettingsFromConfig(Config.get().media_quality);
+          PosthogAnalytics.configure(analyticsConfigFromEnvironment());
           this.loadStates.config = LoadState.Loaded;
           this.initStep(resolve);
         },

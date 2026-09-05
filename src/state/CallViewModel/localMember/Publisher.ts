@@ -29,7 +29,7 @@ import {
   type ProcessorState,
   trackProcessorSync,
 } from "../../../livekit/TrackProcessorContext.tsx";
-import { getUrlParams } from "../../../UrlParams.ts";
+
 import { observeTrackReference$ } from "../../observeTrackReference";
 import { type Connection } from "../remoteMembers/Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
@@ -56,6 +56,8 @@ export class Publisher {
    * @param muteStates - The mute states for audio and video.
    * @param trackerProcessorState$ - The processor state for the video track processor (e.g. background blur).
    * @param logger - The logger to use for logging :D.
+   * @param controlledAudioDevices - Whether the app hosting Element Call
+   *   controls the audio output devices, rather than the browser.
    */
   public constructor(
     private connection: Pick<Connection, "livekitRoom" | "state$">, //setE2EEEnabled,
@@ -63,8 +65,8 @@ export class Publisher {
     private readonly muteStates: MuteStates,
     trackerProcessorState$: Behavior<ProcessorState>,
     private logger: Logger,
+    controlledAudioDevices: boolean,
   ) {
-    const { controlledAudioDevices } = getUrlParams();
     const room = connection.livekitRoom;
 
     room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {

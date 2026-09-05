@@ -46,7 +46,10 @@ import {
 // Can this be done in the tsconfig.json
 import { type TextStreamInfo } from "../node_modules/livekit-client/dist/src/room/types";
 import { type Behavior, constant } from "../src/state/Behavior";
-import { createCallViewModel$ } from "../src/state/CallViewModel/CallViewModel";
+import {
+  callViewModelOptionsFromParams,
+  createCallViewModel$,
+} from "../src/state/CallViewModel/CallViewModel";
 import { ObservableScope } from "../src/state/ObservableScope";
 import { getUrlParams } from "../src/UrlParams";
 import { MuteStates } from "../src/state/MuteStates";
@@ -54,12 +57,9 @@ import { MediaDevices } from "../src/state/MediaDevices";
 import { E2eeType } from "../src/e2ee/e2eeType";
 import { currentAndPrev, TEXT_LK_TOPIC, tryMakeSticky } from "./helper";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import {
-  ElementWidgetActions,
-  widget as _widget,
-  initializeWidget,
-} from "../src/widget";
+import { initializeWidget } from "../src/widget";
 import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
+import { createWidgetHostBridge } from "../src/HostBridge";
 
 interface MatrixRTCSdk {
   /**
@@ -109,14 +109,15 @@ export async function createMatrixRTCSdk(
   const scope = new ObservableScope();
 
   // widget client
-  initializeWidget(application, true);
-  const widget = _widget;
+  const widget = initializeWidget(application, true);
   if (!widget) throw Error("No widget. This webapp can only start as a widget");
   const client = await widget.client;
+  const hostBridge = createWidgetHostBridge(widget);
   logger.info("client created");
 
   // url params
-  const { roomId } = getUrlParams();
+  const urlParams = getUrlParams();
+  const { roomId, controlledAudioDevices, callIntent } = urlParams;
   if (roomId === null) throw Error("could not get roomId from url params");
   const room = client.getRoom(roomId);
   if (room === null) throw Error("could not get room from client");
@@ -128,11 +129,16 @@ export async function createMatrixRTCSdk(
   const rtcSession = rtcSessionManager.getRoomSession(room);
 
   // media devices
-  const mediaDevices = new MediaDevices(scope);
-  const muteStates = new MuteStates(scope, mediaDevices, {
-    audioEnabled: false,
-    videoEnabled: false,
+  const mediaDevices = new MediaDevices(scope, {
+    controlledAudioDevices,
+    callIntent,
   });
+  const muteStates = new MuteStates(
+    scope,
+    mediaDevices,
+    { audioEnabled: false, videoEnabled: false },
+    hostBridge,
+  );
 
   // call view model
   const callViewModel = createCallViewModel$(
@@ -141,7 +147,11 @@ export async function createMatrixRTCSdk(
     room,
     mediaDevices,
     muteStates,
-    { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } },
+    {
+      ...callViewModelOptionsFromParams(urlParams),
+      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      hostBridge,
+    },
     of({}),
     of({}),
     constant({ supported: false, processor: undefined }),
@@ -282,18 +292,17 @@ export async function createMatrixRTCSdk(
       });
       await leaveResolver.promise;
       logger.info("send Unstick");
-      await widget.api
+      await hostBridge
         .setAlwaysOnScreen(false)
-        .catch((e) =>
-          logger.error(
-            "Failed to set call widget `alwaysOnScreen` to false",
-            e,
-          ),
+        .catch((e: unknown) =>
+          logger.error("Failed to set `alwaysOnScreen` to false", e),
         );
       logger.info("send Close");
-      await widget.api.transport
-        .send(ElementWidgetActions.Close, {})
-        .catch((e) => logger.error("Failed to send close action", e));
+      await hostBridge
+        .close?.()
+        .catch((e: unknown) =>
+          logger.error("Failed to ask the host to close", e),
+        );
     };
 
     // schedule close first and then leave (scope.end)

@@ -54,6 +54,7 @@ import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
 import { ConnectionState, type Connection } from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
 import { initializeWidget } from "../../../widget";
+import { nullHostBridge } from "../../../HostBridge";
 import {
   type LocalTransport,
   type LocalTransportWithSFUConfig,
@@ -226,6 +227,8 @@ describe("LocalMembership", () => {
       rtsSession$: constant(RTCMemberStatus.Connected),
     },
     roomId: "!test-room-id:example.org",
+    hideScreensharing: false,
+    hostBridge: nullHostBridge,
   };
 
   it("throws error on missing RTC config error", () => {

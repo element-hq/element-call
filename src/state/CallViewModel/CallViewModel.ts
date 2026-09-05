@@ -45,8 +45,9 @@ import {
   MembershipManagerEvent,
   type LivekitTransportConfig,
   type MatrixRTCSession,
+  type RTCCallIntent,
+  type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { type IWidgetApiRequest } from "matrix-widget-api";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { v4 as uuidv4 } from "uuid";
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
@@ -85,9 +86,9 @@ import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
-import { getUrlParams, HeaderStyle } from "../../UrlParams";
+import { HeaderStyle, type UrlParams } from "../../UrlParams";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
-import { ElementWidgetActions, widget } from "../../widget";
+import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
   layoutShallowEquals,
   type Alignment,
@@ -171,6 +172,28 @@ import { type GridTileViewModel } from "../TileViewModel.ts";
 // callMembership -> rtcMembership
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
+  /**
+   * The application hosting Element Call, which can ask it to hang up and wants
+   * to know when the user joins or leaves. Defaults to no host.
+   */
+  hostBridge?: HostBridge;
+  /**
+   * Whether the app hosting Element Call controls the audio output devices,
+   * rather than the browser. Defaults to false.
+   */
+  controlledAudioDevices?: boolean;
+  /** The style of header to show. Defaults to {@link HeaderStyle.Standard}. */
+  header?: HeaderStyle;
+  /** Whether the call controls should be shown. Defaults to true. */
+  showControls?: boolean;
+  /** Whether to hide the screen-sharing button. Defaults to false. */
+  hideScreensharing?: boolean;
+  /**
+   * Whether and what kind of notification to send when joining the call.
+   */
+  sendNotificationType?: RTCNotificationType;
+  /** The kind of call being placed. */
+  callIntent?: RTCCallIntent;
   autoLeaveWhenOthersLeft?: boolean;
   /**
    * If the call is started in a way where we want it to behave like a telephone usecase
@@ -191,6 +214,40 @@ export interface CallViewModelOptions {
   matrixRTCMode$?: Behavior<MatrixRTCMode>;
   /** Optional behavior overriding for the screensharing, for testing */
   toggleScreensharing?: () => void;
+}
+
+/**
+ * The options {@link createCallViewModel$} takes from the parameters Element
+ * Call was started with.
+ *
+ * Callers share this rather than picking the fields out themselves. The
+ * defaults on {@link CallViewModelOptions} describe a standalone Element Call,
+ * so a widget or embedded caller that misses one does not get an error — it
+ * quietly gets standalone behaviour instead.
+ *
+ * Note `autoLeaveWhenOthersLeft` and `waitForCallPickup` are deliberately not
+ * here: unlike these, the view model never read them from the parameters
+ * itself, so they remain the caller's decision.
+ */
+export function callViewModelOptionsFromParams(
+  params: UrlParams,
+): Pick<
+  CallViewModelOptions,
+  | "controlledAudioDevices"
+  | "header"
+  | "showControls"
+  | "hideScreensharing"
+  | "sendNotificationType"
+  | "callIntent"
+> {
+  return {
+    controlledAudioDevices: params.controlledAudioDevices,
+    header: params.header,
+    showControls: params.showControls,
+    hideScreensharing: params.hideScreensharing,
+    sendNotificationType: params.sendNotificationType,
+    callIntent: params.callIntent,
+  };
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -440,6 +497,18 @@ export function createCallViewModel$(
   if (!(userId && deviceId))
     throw new UnknownCallError(new Error("userId and deviceId are required"));
 
+  // Defaults match what the URL parameters resolve to outside of widget mode,
+  // so that callers which don't care (chiefly tests) behave as they always have.
+  const {
+    hostBridge = nullHostBridge,
+    controlledAudioDevices = false,
+    header = HeaderStyle.Standard,
+    showControls = true,
+    hideScreensharing = false,
+    sendNotificationType,
+    callIntent,
+  } = options;
+
   const livekitKeyProvider = getE2eeKeyProvider(
     options.encryptionSystem,
     matrixRTCSession,
@@ -528,7 +597,7 @@ export function createCallViewModel$(
       mediaDevices,
       trackProcessorState$,
       livekitKeyProvider,
-      getUrlParams().controlledAudioDevices,
+      controlledAudioDevices,
       options.livekitRoomFactory,
     );
 
@@ -568,6 +637,8 @@ export function createCallViewModel$(
         encryptMedia: livekitKeyProvider !== undefined,
         // TODO. This might need to get called again on each change of matrixRTCMode...
         matrixRTCMode: mode,
+        sendNotificationType,
+        callIntent,
       })),
     ),
   );
@@ -597,12 +668,15 @@ export function createCallViewModel$(
         logger.getChild(
           "[Publisher " + connection.transport.livekit_service_url + "]",
         ),
+        controlledAudioDevices,
       );
     },
     connectionManager,
     matrixRTCSession,
     localTransport$,
     roomId: matrixRoom.roomId,
+    hideScreensharing,
+    hostBridge,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
@@ -894,24 +968,16 @@ export function createCallViewModel$(
 
   const userHangup$ = new Subject<void>();
 
-  const widgetHangup$ =
-    widget === null
-      ? NEVER
-      : (
-          fromEvent(
-            widget.lazyActions,
-            ElementWidgetActions.HangupCall,
-          ) as Observable<CustomEvent<IWidgetApiRequest>>
-        ).pipe(
-          tap((ev) => {
-            widget!.api.transport.reply(ev.detail, {});
-          }),
-        );
+  const hostHangup$ = hostBridge.hangUp$.pipe(
+    tap((request) => {
+      request.reply();
+    }),
+  );
 
   const leave$: Observable<"user" | "timeout" | "decline" | "allOthersLeft"> =
     merge(
       autoLeave$,
-      merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
+      merge(userHangup$, hostHangup$).pipe(map(() => "user" as const)),
     ).pipe(scope.share);
 
   const spotlightSpeaker$ = scope.behavior<UserMediaViewModel | undefined>(
@@ -1462,9 +1528,8 @@ export function createCallViewModel$(
     ),
   );
 
-  const urlParams = getUrlParams();
   const showFooterUrlParams = !(
-    urlParams.header === HeaderStyle.None && urlParams.showControls === false
+    header === HeaderStyle.None && showControls === false
   );
   const showFooter$ = scope.behavior(
     naturallyShowFooter$.pipe(
@@ -1783,8 +1848,7 @@ export function createCallViewModel$(
   return {
     autoLeave$: autoLeave$,
     ringingVm$: ringingMedia$,
-    ringingStatusLocation:
-      urlParams.header === HeaderStyle.AppBar ? "app_bar" : "tile",
+    ringingStatusLocation: header === HeaderStyle.AppBar ? "app_bar" : "tile",
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
     join: localMembership.requestJoinAndPublish,

@@ -28,7 +28,7 @@ import { useTranslation } from "react-i18next";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { HeaderStyle, useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
-import { widget } from "../widget";
+import { useHostBridge } from "../HostBridge.ts";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
@@ -41,6 +41,7 @@ import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import {
   type CallViewModel,
+  callViewModelOptionsFromParams,
   createCallViewModel$,
 } from "../state/CallViewModel/CallViewModel.ts";
 import { Grid, type TileProps } from "../grid/Grid";
@@ -116,6 +117,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     useState<ViewModel<DeveloperSettingsSnapshot> | null>(null);
 
   const urlParams = useUrlParams();
+  const hostBridge = useHostBridge();
   const mediaDevices = useMediaDevices();
   const trackProcessorState$ = useTrackProcessorObservable$();
   useEffect(() => {
@@ -132,7 +134,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       mediaDevices,
       props.muteStates,
       {
+        ...callViewModelOptionsFromParams(urlParams),
         encryptionSystem: props.e2eeSystem,
+        hostBridge,
         autoLeaveWhenOthersLeft,
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
         matrixRTCMode$: matrixRTCModeSetting.value$,
@@ -157,6 +161,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     props.e2eeSystem,
     props.onLeft,
     urlParams,
+    hostBridge,
     mediaDevices,
     trackProcessorState$,
     props.client,
@@ -172,6 +177,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       props.muteStates,
       mediaDevices,
       `${props.client.getUserId()}:${props.client.getDeviceId()}`,
+      { showControls: urlParams.showControls, header: urlParams.header },
     );
     setFooterVm(footerVm);
     setDeveloperSettingsVm(createDeveloperSettingsTabViewModel(scope, vm));
@@ -232,6 +238,7 @@ export const InCallView: FC<InCallViewProps> = ({
 }) => {
   const logger = rootLogger.getChild("[InCallView]");
   const { t } = useTranslation();
+  const hostBridge = useHostBridge();
   const { sendReaction, toggleRaisedHand } = useReactionsSender();
 
   useWakeLock();
@@ -316,14 +323,17 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const openProfile = useMemo(
     () =>
-      // Profile settings are unavailable in widget mode
-      widget === null
+      // A host that can dismiss us is a host that owns the user's account, so
+      // their profile is not ours to edit.
+      // TODO: another use of the close capability as a proxy — see the note in
+      // GroupCallView.
+      hostBridge.close === undefined
         ? (): void => {
             setSettingsTab("profile");
             setSettingsOpen(true);
           }
         : null,
-    [setSettingsTab, setSettingsOpen],
+    [setSettingsTab, setSettingsOpen, hostBridge],
   );
 
   const [headerRef, headerBounds] = useMeasure();

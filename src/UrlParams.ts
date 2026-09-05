@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useMemo } from "react";
+import { createContext, use, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
@@ -59,6 +59,17 @@ export interface UrlProperties {
   // Widget api related params
   widgetId: string | null;
   parentUrl: string | null;
+  /**
+   * Whether Element Call was started as a widget of a Matrix client, which is
+   * to say whether it was given a widget ID and a parent to talk to.
+   *
+   * Only meaningful to the standalone and widget builds, which own the URL —
+   * so use it for decisions that belong to the app shell, such as whether
+   * Element Call is responsible for authenticating the user. Anything the call
+   * interface itself needs to know about its host should come from the host
+   * bridge instead.
+   */
+  isWidget: boolean;
   /**
    * Anything about what room we're pointed to should be from useRoomIdentifier which
    * parses the path and resolves alias with respect to the default server name, however
@@ -448,6 +459,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   const properties: UrlProperties = {
     widgetId,
     parentUrl,
+    isWidget,
     // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
     // what would we do if it were invalid? If the widget API says that's what
     // the room ID is, then that's what it is.
@@ -519,11 +531,36 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   };
 };
 
+const UrlParamsContext = createContext<UrlParams | null>(null);
+
 /**
- * Hook to simplify use of getUrlParams.
- * @returns The app parameters for the current URL
+ * Supplies the parameters Element Call should run with.
+ *
+ * The standalone and widget builds derive these from the URL, but an embedder
+ * has no URL of its own to put them in, so it provides them directly instead.
+ *
+ * TODO: `UrlParams` is no longer an accurate name now that these need not come
+ * from a URL. Renaming it touches every consumer, so it is left until the rest
+ * of the de-globalisation work has settled.
  */
-export const useUrlParams = (): UrlParams => {
+export const UrlParamsProvider = UrlParamsContext.Provider;
+
+/**
+ * The parameters Element Call is running with.
+ *
+ * Falls back to parsing `window.location` when no provider is present, so that
+ * tests and stories keep working without one.
+ */
+export const useUrlParams = (): UrlParams =>
+  use(UrlParamsContext) ?? getUrlParams();
+
+/**
+ * Derives {@link UrlParams} from the current router location.
+ *
+ * Only meaningful when Element Call owns the URL; embedders provide the params
+ * directly through {@link UrlParamsProvider}.
+ */
+export const useUrlParamsFromLocation = (): UrlParams => {
   const { search, hash } = useLocation();
   return useMemo(() => getUrlParams(search, hash), [search, hash]);
 };

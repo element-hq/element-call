@@ -5,10 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { t } from "i18next";
 import { type ConnectionError } from "livekit-client";
 
-import { i18nKey } from "./i18n";
+import { i18n, i18nKey } from "./i18n";
 
 export enum ErrorCode {
   /**
@@ -78,10 +77,10 @@ export class MatrixRTCTransportMissingError extends ElementCallError {
    */
   public constructor(domain: string) {
     super(
-      t("error.call_is_not_supported"),
+      i18n.t("error.call_is_not_supported"),
       ErrorCode.MISSING_MATRIX_RTC_TRANSPORT,
       ErrorCategory.CONFIGURATION_ISSUE,
-      t("error.matrix_rtc_transport_missing", {
+      i18n.t("error.matrix_rtc_transport_missing", {
         domain,
         brand: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
         errorCode: ErrorCode.MISSING_MATRIX_RTC_TRANSPORT,
@@ -97,10 +96,10 @@ export class MatrixRTCTransportMissingError extends ElementCallError {
 export class ConnectionLostError extends ElementCallError {
   public constructor() {
     super(
-      t("error.connection_lost"),
+      i18n.t("error.connection_lost"),
       ErrorCode.CONNECTION_LOST_ERROR,
       ErrorCategory.NETWORK_CONNECTIVITY,
-      t("error.connection_lost_description"),
+      i18n.t("error.connection_lost_description"),
     );
   }
 }
@@ -117,10 +116,10 @@ export class MembershipManagerError extends ElementCallError {
    */
   public constructor(error: Error) {
     super(
-      t("error.membership_manager"),
+      i18n.t("error.membership_manager"),
       ErrorCode.INTERNAL_MEMBERSHIP_MANAGER,
       ErrorCategory.SYSTEM_FAILURE,
-      t("error.membership_manager_description"),
+      i18n.t("error.membership_manager_description"),
       error,
     );
   }
@@ -134,10 +133,10 @@ export class MembershipManagerError extends ElementCallError {
 export class StickyEventsRequiredError extends ElementCallError {
   public constructor() {
     super(
-      t("error.sticky_events_required"),
+      i18n.t("error.sticky_events_required"),
       ErrorCode.STICKY_EVENTS_NOT_SUPPORTED,
       ErrorCategory.CONFIGURATION_ISSUE,
-      t("error.sticky_events_required_description"),
+      i18n.t("error.sticky_events_required_description"),
     );
   }
 }
@@ -148,10 +147,10 @@ export class StickyEventsRequiredError extends ElementCallError {
 export class E2EENotSupportedError extends ElementCallError {
   public constructor() {
     super(
-      t("error.e2ee_unsupported"),
+      i18n.t("error.e2ee_unsupported"),
       ErrorCode.E2EE_NOT_SUPPORTED,
       ErrorCategory.CLIENT_CONFIGURATION,
-      t("error.e2ee_unsupported_description"),
+      i18n.t("error.e2ee_unsupported_description"),
     );
   }
 }
@@ -166,7 +165,7 @@ export class UnknownCallError extends ElementCallError {
    */
   public constructor(error: Error) {
     super(
-      t("error.generic"),
+      i18n.t("error.generic"),
       ErrorCode.UNKNOWN_ERROR,
       ErrorCategory.UNKNOWN,
       undefined,
@@ -186,7 +185,7 @@ export class FailToGetOpenIdToken extends ElementCallError {
    */
   public constructor(error: Error) {
     super(
-      t("error.generic"),
+      i18n.t("error.generic"),
       ErrorCode.OPEN_ID_ERROR,
       ErrorCategory.CONFIGURATION_ISSUE,
       undefined,
@@ -203,10 +202,10 @@ export class NoMatrix2AuthorizationService extends ElementCallError {
    */
   public constructor(error: Error) {
     super(
-      t("error.generic"),
+      i18n.t("error.generic"),
       ErrorCode.NO_MATRIX_2_AUTHORIZATION_SERVICE,
       ErrorCategory.CONFIGURATION_ISSUE,
-      t("error.no_matrix_2_authorization_service"),
+      i18n.t("error.no_matrix_2_authorization_service"),
       // Properly set it as a cause for a better reporting on sentry
       error,
     );
@@ -223,7 +222,7 @@ export class FailToStartLivekitConnection extends ElementCallError {
    */
   public constructor(e?: string) {
     super(
-      t("error.failed_to_start_livekit"),
+      i18n.t("error.failed_to_start_livekit"),
       ErrorCode.FAILED_TO_START_LIVEKIT,
       ErrorCategory.NETWORK_CONNECTIVITY,
       e,
@@ -237,10 +236,10 @@ export class FailToStartLivekitConnection extends ElementCallError {
 export class InsufficientCapacityError extends ElementCallError {
   public constructor() {
     super(
-      t("error.insufficient_capacity"),
+      i18n.t("error.insufficient_capacity"),
       ErrorCode.INSUFFICIENT_CAPACITY_ERROR,
       ErrorCategory.UNKNOWN,
-      t("error.insufficient_capacity_description"),
+      i18n.t("error.insufficient_capacity_description"),
     );
   }
 }
@@ -252,10 +251,10 @@ export class InsufficientCapacityError extends ElementCallError {
 export class SFURoomCreationRestrictedError extends ElementCallError {
   public constructor() {
     super(
-      t("error.room_creation_restricted"),
+      i18n.t("error.room_creation_restricted"),
       ErrorCode.SFU_ERROR,
       ErrorCategory.CONFIGURATION_ISSUE,
-      t("error.room_creation_restricted_description"),
+      i18n.t("error.room_creation_restricted_description"),
     );
   }
 }
@@ -266,7 +265,7 @@ export class SFURoomCreationRestrictedError extends ElementCallError {
 export class PeerConnectionTimeoutError extends ElementCallError {
   public constructor() {
     super(
-      t("error.peer_connection_timeout"),
+      i18n.t("error.peer_connection_timeout"),
       ErrorCode.SFU_ERROR,
       ErrorCategory.NETWORK_CONNECTIVITY,
     );
@@ -283,7 +282,7 @@ export class PeerConnectionTimeoutError extends ElementCallError {
 export class LivekitConnectionError extends ElementCallError {
   public constructor(cause: ConnectionError) {
     super(
-      t("error.livekit_connection_error"),
+      i18n.t("error.livekit_connection_error"),
       ErrorCode.SFU_ERROR,
       ErrorCategory.NETWORK_CONNECTIVITY,
     );

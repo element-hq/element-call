@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
+import { nullHostBridge } from "../HostBridge";
 import { MuteStates, MuteState } from "./MuteStates";
 import {
   type AudioOutputDeviceLabel,
@@ -228,10 +229,12 @@ describe("MuteStates", () => {
       videoInput: aVideoInput(),
       // other devices are not relevant for this test
     });
-    const muteStates = new MuteStates(testScope, mediaDevices, {
-      audioEnabled: false,
-      videoEnabled: false,
-    });
+    const muteStates = new MuteStates(
+      testScope,
+      mediaDevices,
+      { audioEnabled: false, videoEnabled: false },
+      nullHostBridge,
+    );
 
     let latestSyncedState: boolean | null = null;
     muteStates.video.setHandler(async (enabled: boolean): Promise<boolean> => {

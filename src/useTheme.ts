@@ -6,38 +6,27 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { WidgetApiToWidgetAction } from "matrix-widget-api";
-import { type IThemeChangeActionRequest } from "matrix-widget-api";
 
-import { getUrlParams } from "./UrlParams";
-import { widget } from "./widget";
+import { useUrlParams } from "./UrlParams";
+import { useRootElement } from "./RootElementContext";
+import { useHostBridge } from "./HostBridge";
 
 export const useTheme = (): void => {
-  const [requestedTheme, setRequestedTheme] = useState(
-    () => getUrlParams().theme,
-  );
-  const previousTheme = useRef<string | null>(document.body.classList.item(0));
+  const rootElement = useRootElement();
+  const hostBridge = useHostBridge();
+  const { theme } = useUrlParams();
+  const [requestedTheme, setRequestedTheme] = useState(theme);
+  const previousTheme = useRef<string | null>(rootElement.classList.item(0));
 
   useEffect(() => {
-    if (widget) {
-      const onThemeChange = (
-        ev: CustomEvent<IThemeChangeActionRequest>,
-      ): void => {
-        ev.preventDefault();
-        if ("name" in ev.detail.data && typeof ev.detail.data.name === "string")
-          setRequestedTheme(ev.detail.data.name);
-        widget!.api.transport.reply(ev.detail, {});
-      };
-
-      widget.lazyActions.on(WidgetApiToWidgetAction.ThemeChange, onThemeChange);
-      return (): void => {
-        widget!.lazyActions.off(
-          WidgetApiToWidgetAction.ThemeChange,
-          onThemeChange,
-        );
-      };
-    }
-  }, []);
+    const subscription = hostBridge.themeChange$.subscribe(
+      ({ data, reply }) => {
+        if (typeof data.name === "string") setRequestedTheme(data.name);
+        reply();
+      },
+    );
+    return (): void => subscription.unsubscribe();
+  }, [hostBridge]);
 
   useLayoutEffect(() => {
     // If no theme has been explicitly requested we default to dark
@@ -47,15 +36,15 @@ export const useTheme = (): void => {
       : "";
     const themeString = "cpd-theme-" + theme + themeHighContrast;
     if (themeString !== previousTheme.current) {
-      document.body.classList.remove(
+      rootElement.classList.remove(
         "cpd-theme-light",
         "cpd-theme-dark",
         "cpd-theme-light-hc",
         "cpd-theme-dark-hc",
       );
-      document.body.classList.add(themeString);
+      rootElement.classList.add(themeString);
       previousTheme.current = themeString;
     }
-    document.body.classList.remove("no-theme");
-  }, [previousTheme, requestedTheme]);
+    rootElement.classList.remove("no-theme");
+  }, [previousTheme, requestedTheme, rootElement]);
 };

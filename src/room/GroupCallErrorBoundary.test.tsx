@@ -36,7 +36,11 @@ import {
   UnknownCallError,
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
-import { ElementWidgetActions, type WidgetHelpers } from "../widget.ts";
+import {
+  type HostBridge,
+  HostBridgeProvider,
+  nullHostBridge,
+} from "../HostBridge.ts";
 
 test.each([
   {
@@ -79,7 +83,6 @@ test.each([
         <GroupCallErrorBoundary
           onError={onErrorMock}
           recoveryActionHandler={vi.fn()}
-          widget={null}
         >
           <TestComponent />
         </GroupCallErrorBoundary>
@@ -108,7 +111,6 @@ test("should render the error page with link back to home", async () => {
       <GroupCallErrorBoundary
         onError={onErrorMock}
         recoveryActionHandler={vi.fn()}
-        widget={null}
       >
         <TestComponent />
       </GroupCallErrorBoundary>
@@ -154,10 +156,7 @@ test("ConnectionLostError: Action handling should reset error state", async () =
 
     return (
       <BrowserRouter>
-        <GroupCallErrorBoundary
-          recoveryActionHandler={reconnectCallback}
-          widget={null}
-        >
+        <GroupCallErrorBoundary recoveryActionHandler={reconnectCallback}>
           <TestComponent fail={failState} />
         </GroupCallErrorBoundary>
       </BrowserRouter>
@@ -199,7 +198,6 @@ describe("Rageshake button", () => {
         <GroupCallErrorBoundary
           onError={vi.fn()}
           recoveryActionHandler={vi.fn()}
-          widget={null}
         >
           <TestComponent />
         </GroupCallErrorBoundary>
@@ -224,29 +222,27 @@ describe("Rageshake button", () => {
   });
 });
 
-test("should have a close button in widget mode", async () => {
+test("should have a close button when the host can dismiss us", async () => {
   const error = new MatrixRTCTransportMissingError("example.com");
   const TestComponent = (): ReactNode => {
     throw error;
   };
 
-  const mockWidget = {
-    api: {
-      transport: { send: vi.fn().mockResolvedValue(undefined), stop: vi.fn() },
-    },
-  } as unknown as WidgetHelpers;
+  const close = vi.fn().mockResolvedValue(undefined);
+  const hostBridge: HostBridge = { ...nullHostBridge, close };
 
   const user = userEvent.setup();
   const onErrorMock = vi.fn();
   const { asFragment } = render(
     <BrowserRouter>
-      <GroupCallErrorBoundary
-        widget={mockWidget}
-        onError={onErrorMock}
-        recoveryActionHandler={vi.fn()}
-      >
-        <TestComponent />
-      </GroupCallErrorBoundary>
+      <HostBridgeProvider value={hostBridge}>
+        <GroupCallErrorBoundary
+          onError={onErrorMock}
+          recoveryActionHandler={vi.fn()}
+        >
+          <TestComponent />
+        </GroupCallErrorBoundary>
+      </HostBridgeProvider>
     </BrowserRouter>,
   );
 
@@ -258,11 +254,7 @@ test("should have a close button in widget mode", async () => {
 
   await user.click(screen.getByRole("button", { name: "Close" }));
 
-  expect(mockWidget.api.transport.send).toHaveBeenCalledWith(
-    ElementWidgetActions.Close,
-    expect.anything(),
-  );
-  expect(mockWidget.api.transport.stop).toHaveBeenCalled();
+  expect(close).toHaveBeenCalled();
 });
 
 test("should show technical details when error has a matrixError cause", async () => {
@@ -282,11 +274,7 @@ test("should show technical details when error has a matrixError cause", async (
 
   render(
     <BrowserRouter>
-      <GroupCallErrorBoundary
-        onError={vi.fn()}
-        recoveryActionHandler={vi.fn()}
-        widget={null}
-      >
+      <GroupCallErrorBoundary onError={vi.fn()} recoveryActionHandler={vi.fn()}>
         <TestComponent />
       </GroupCallErrorBoundary>
     </BrowserRouter>,
@@ -315,11 +303,7 @@ test("should not show technical details when error has no matrix error cause", a
 
   render(
     <BrowserRouter>
-      <GroupCallErrorBoundary
-        onError={vi.fn()}
-        recoveryActionHandler={vi.fn()}
-        widget={null}
-      >
+      <GroupCallErrorBoundary onError={vi.fn()} recoveryActionHandler={vi.fn()}>
         <TestComponent />
       </GroupCallErrorBoundary>
     </BrowserRouter>,
@@ -376,7 +360,6 @@ describe("LiveKit ConnectionError variants", () => {
           <GroupCallErrorBoundary
             onError={vi.fn()}
             recoveryActionHandler={vi.fn()}
-            widget={null}
           >
             <TestComponent />
           </GroupCallErrorBoundary>
@@ -406,7 +389,6 @@ describe("LiveKit ConnectionError variants", () => {
         <GroupCallErrorBoundary
           onError={vi.fn()}
           recoveryActionHandler={vi.fn()}
-          widget={null}
         >
           <TestComponent />
         </GroupCallErrorBoundary>

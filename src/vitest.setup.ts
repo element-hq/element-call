@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import "@formatjs/intl-durationformat/polyfill.js";
 import "@formatjs/intl-segmenter/polyfill";
-import i18n from "i18next";
 import posthog from "posthog-js";
 import { initReactI18next } from "react-i18next";
 import { afterEach } from "vitest";
@@ -18,8 +17,11 @@ import "@testing-library/jest-dom/vitest";
 
 import EN from "../locales/en/app.json";
 import { Config } from "./config/Config";
+import { i18n } from "./utils/i18n";
 
-// Bare-minimum i18n config
+// Bare-minimum i18n config.
+// Unlike the app, tests register the instance as react-i18next's default rather
+// than wrapping every render in an <I18nextProvider>.
 i18n
   .use(initReactI18next)
   .init({
