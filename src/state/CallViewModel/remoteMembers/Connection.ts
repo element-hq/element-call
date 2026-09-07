@@ -243,7 +243,7 @@ export class Connection {
         `Encryption status of ${p?.identity ?? "unknown participant"}: encrypted=${encrypted}`,
       );
     // livekit-client throttles these per cryptor; they indicate frames being
-    // dropped (missing/invalid key), which is the other half of the picture.
+    // dropped (missing/invalid key).
     const onEncryptionError = (error: Error, p?: Participant): void =>
       log.warn(
         `Encryption error for ${p?.identity ?? "unknown participant"}:`,
