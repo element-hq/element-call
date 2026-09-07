@@ -71,7 +71,7 @@ video.mirror {
   );
 }
 
-@media (max-width: 550px) {
+@container element-call (max-width: 550px) {
   .preview {
     margin-inline: 0;
     border-radius: 0;

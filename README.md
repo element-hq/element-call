@@ -234,6 +234,9 @@ logged along the bottom.
 The call lays itself out for the size of the element it is mounted in, not the
 window: a host that shrinks the container to a corner of its page gets the
 picture-in-picture layout, just as a host that shrank the whole iframe used to.
+The breakpoints in Element Call's stylesheets are `@container element-call`
+queries against its root element for the same reason; for the standalone app
+the root is the page, so they mean what the media queries they replaced did.
 
 The component's stylesheet is confined to the element it is mounted in: the
 build rewrites every selector so that it matches only Element Call's root or

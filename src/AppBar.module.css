@@ -68,7 +68,7 @@
 }
 
 /* Hide everything but the subtitle in small windows */
-@media (max-height: 450px) {
+@container element-call (max-height: 450px) {
   .bar {
     display: none;
   }
@@ -166,7 +166,7 @@
   }
 
   /* Hide everything but the subtitle in small windows */
-  @media (max-height: 450px) {
+  @container element-call (max-height: 450px) {
     .bar:has(.subtitle) > header {
       grid-template-rows: var(--cpd-space-4x) minmax(var(--cpd-space-5x), auto);
       grid-template-areas: "." "subtitle";

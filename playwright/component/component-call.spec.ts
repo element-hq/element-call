@@ -5,9 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, type Locator, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { createUserAndRoom, expectWithin, startHarness } from "./harness.ts";
+import { SpaHelpers } from "../spa-helpers.ts";
 
 /**
  * Element Call embedded as a React component, driven through the development
@@ -164,4 +165,83 @@ test("lays itself out for the space it is given, not the page", async ({
 
   await resize(900, 700);
   await expect(call).not.toHaveAttribute("data-layout", "pip");
+});
+
+/**
+ * The shape of a call at whatever size it has been given: the layout it chose,
+ * how much of the height the tile and the footer take, and which controls the
+ * footer shows. Two calls with the same shape look the same, participants aside.
+ */
+async function callShape(scope: Page | Locator): Promise<{
+  layout: string | null;
+  tileHeight: number;
+  footerHeight: number;
+  buttons: (string | null)[];
+}> {
+  const call = scope.locator("[data-layout]");
+  const footer = scope.getByTestId("footer-container");
+  await expect(footer).toBeVisible();
+  const tile = scope.getByTestId("videoTile").first();
+  await expect(tile).toBeVisible();
+  const tileBox = (await tile.boundingBox())!;
+  const footerBox = (await footer.boundingBox())!;
+  const buttons = await footer
+    .getByRole("button")
+    .filter({ visible: true })
+    .evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute("aria-label")),
+    );
+  return {
+    layout: await call.getAttribute("data-layout"),
+    tileHeight: Math.round(tileBox.height),
+    footerHeight: Math.round(footerBox.height),
+    buttons,
+  };
+}
+
+test("looks the same in a small container as in a small window", async ({
+  page,
+  browser,
+}) => {
+  // Two calls to set up, one of them through the harness's two logins
+  test.setTimeout(240_000);
+  const size = { width: 300, height: 300 };
+
+  // The reference is Element Call owning a window of that size, which is what
+  // a mobile app's webview or a browser's picture-in-picture gives it, and
+  // what its small-window styling was written for.
+  const referenceContext = await browser.newContext({
+    viewport: size,
+    ignoreHTTPSErrors: true,
+    permissions: ["microphone", "camera"],
+  });
+  const referencePage = await referenceContext.newPage();
+  await referencePage.goto("/");
+  await SpaHelpers.createCall(referencePage, "Reference", "smallwindow", true);
+  const reference = await callShape(referencePage);
+  await referencePage.screenshot({
+    path: test.info().outputPath("small-window.png"),
+  });
+
+  // The component gets a container of that size, in a window that is far larger
+  const { username, roomId } = await createUserAndRoom("smallcontainer");
+  const panes = await startHarness(page, username, roomId);
+  const pane = panes.first();
+  const container = pane.getByTestId("call-container");
+  await container.evaluate((element, { width, height }) => {
+    element.style.width = `${width}px`;
+    element.style.height = `${height}px`;
+  }, size);
+  await pane.getByTestId("lobby_joinCall").click({ timeout: 60_000 });
+  await expect(pane.locator("[data-layout]")).toBeVisible({ timeout: 60_000 });
+  const component = await callShape(pane);
+  await container.screenshot({
+    path: test.info().outputPath("small-container.png"),
+  });
+  await referenceContext.close();
+
+  // The breakpoints in Element Call's stylesheets are container queries, so a
+  // small container gets the compact footer a small window does, rather than
+  // the full-width one the window's own size would call for
+  expect(component).toEqual(reference);
 });

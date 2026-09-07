@@ -77,7 +77,7 @@ Please see LICENSE in the repository root for full details.
 }
 
 /*First hide the logo*/
-@media (max-width: 750px) {
+@container element-call (max-width: 750px) {
   .logo {
     display: none;
   }
@@ -94,7 +94,7 @@ Please see LICENSE in the repository root for full details.
 With the logo hidden >500px is enough space to show overflow, buttons, layout.
 Once we exceed 500 we hide everything except the buttons.
 */
-@media (max-width: 500px) {
+@container element-call (max-width: 500px) {
   .footer {
     grid-template-areas: "buttons buttons buttons";
   }
@@ -115,27 +115,27 @@ Once we exceed 500 we hide everything except the buttons.
   }
 }
 
-@media (max-height: 800px) {
+@container element-call (max-height: 800px) {
   .footer {
     padding-block: var(--cpd-space-8x)
       calc(env(safe-area-inset-bottom) + var(--cpd-space-8x));
   }
 }
 
-@media (max-height: 400px) {
+@container element-call (max-height: 400px) {
   .footer {
     padding-block: var(--cpd-space-4x)
       calc(env(safe-area-inset-bottom) + var(--cpd-space-4x));
   }
 }
 
-@media (max-width: 370px) {
+@container element-call (max-width: 370px) {
   .shareScreen {
     display: none;
   }
 
   /* PIP custom css */
-  @media (max-height: 400px) {
+  @container element-call (max-height: 400px) {
     .shareScreen {
       display: flex;
     }
@@ -148,13 +148,13 @@ Once we exceed 500 we hide everything except the buttons.
   }
 }
 
-@media (max-width: 320px) {
+@container element-call (max-width: 320px) {
   .raiseHand {
     display: none;
   }
 }
 
-@media (min-width: 800px) {
+@container element-call (min-width: 800px) {
   .buttons {
     gap: var(--cpd-space-4x);
   }

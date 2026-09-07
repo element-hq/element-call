@@ -33,7 +33,8 @@ the app and for the component build. */
 @import url("@fontsource/inconsolata/700.css");
 
 @import url("normalize.css/normalize.css") layer(normalize);
-@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css") layer(compound);
+@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css")
+layer(compound);
 @import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
 
 :root {
@@ -74,6 +75,15 @@ the app and for the component build. */
 :root,
 [class*="cpd-theme-"] {
   --video-tile-background: var(--cpd-color-bg-subtle-secondary);
+}
+
+/* The breakpoints in Element Call's stylesheets are container queries against
+this element rather than media queries against the viewport. For the standalone
+app the two are the same thing, since the root is the page; for a host that
+embeds Element Call in a corner of its own page they are not, and it is the
+corner that the layout has to fit. */
+[data-element-call-root] {
+  container: element-call / size;
 }
 
 .cpd-theme-dark {

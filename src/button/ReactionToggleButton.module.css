@@ -10,7 +10,7 @@
   width: fit-content;
 }
 
-@media (max-width: 420px) {
+@container element-call (max-width: 420px) {
   .reactionPopupMenu {
     --reaction-button-padding: 8px;
     --reaction-button-fontsize: 16px;
