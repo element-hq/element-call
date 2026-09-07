@@ -204,11 +204,10 @@ async function getLiveKitJWT(
   let bodyDalayParts: IDelayParams = {};
   // Also check for empty string
   if (delayId && delayEndpointBaseUrl) {
-    const delayTimeoutMs =
-      Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms;
     bodyDalayParts = {
       delay_id: delayId,
-      delay_timeout: delayTimeoutMs,
+      delay_timeout:
+        Config.get().matrix_rtc_session.delegated_delayed_leave.delay_ms,
       delay_cs_api_url: delayEndpointBaseUrl,
     };
   }
@@ -288,11 +287,10 @@ export async function getLiveKitJWTWithDelayDelegation(
   let bodyDalayParts = {};
   // Also check for empty string
   if (delayId && delayEndpointBaseUrl) {
-    const delayTimeoutMs =
-      Config.get().matrix_rtc_session?.delayed_leave_event_delay_ms;
     bodyDalayParts = {
       delay_id: delayId,
-      delay_timeout: delayTimeoutMs,
+      delay_timeout:
+        Config.get().matrix_rtc_session.delegated_delayed_leave.delay_ms,
       delay_cs_api_url: delayEndpointBaseUrl,
     };
   }

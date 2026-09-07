@@ -114,13 +114,11 @@ export function getValue<T>(state$: Observable<T>): T {
 }
 
 /**
- * Creates an Observable that has a value of true whenever all its inputs are
- * true.
- *
- * @public
+ * Creates an Observable that has a value of true whenever some of its inputs
+ * are true.
  */
-export function and$(...inputs: Observable<boolean>[]): Observable<boolean> {
-  return combineLatest(inputs, (...flags) => flags.every((flag) => flag));
+export function or$(...inputs: Observable<boolean>[]): Observable<boolean> {
+  return combineLatest(inputs, (...flags) => flags.some((flag) => flag));
 }
 
 /**

@@ -64,7 +64,10 @@ import {
   showReactions,
 } from "../../settings/settings";
 import { Config } from "../../config/Config";
-import { MatrixRTCMode } from "../../config/ConfigOptions";
+import {
+  MatrixRTCMode,
+  type ResolvedDelayedLeaveTimings,
+} from "../../config/ConfigOptions";
 import { isFirefox, platform } from "../../Platform";
 import { setPipEnabled$ } from "../../controls";
 import { TileStore } from "../TileStore";
@@ -562,16 +565,6 @@ export function createCallViewModel$(
     localUser: { userId, deviceId },
   });
 
-  const connectOptions$ = scope.behavior(
-    matrixRTCMode$.pipe(
-      map((mode) => ({
-        encryptMedia: livekitKeyProvider !== undefined,
-        // TODO. This might need to get called again on each change of matrixRTCMode...
-        matrixRTCMode: mode,
-      })),
-    ),
-  );
-
   const localMembership = createLocalMembership$({
     scope,
     homeserverConnected: createHomeserverConnected$(
@@ -580,12 +573,21 @@ export function createCallViewModel$(
       matrixRTCSession,
     ),
     muteStates,
-    joinMatrixRTC: (transport: LivekitTransportConfig) => {
+    joinMatrixRTC: (
+      transport: LivekitTransportConfig,
+      delayedLeaveTimings: ResolvedDelayedLeaveTimings,
+    ) => {
       return enterRTCSession(
         matrixRTCSession,
         ownMembershipIdentity,
         transport,
-        connectOptions$.value,
+        {
+          encryptMedia: livekitKeyProvider !== undefined,
+          // We merely sample the current mode here, so the user would need to
+          // manually rejoin to switch to a different one
+          matrixRTCMode: matrixRTCMode$.value,
+          delayedLeaveTimings,
+        },
       );
     },
     createPublisherFactory: (connection: Connection) => {
@@ -603,6 +605,7 @@ export function createCallViewModel$(
     matrixRTCSession,
     localTransport$,
     roomId: matrixRoom.roomId,
+    baseUrl: client.baseUrl,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
