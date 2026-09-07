@@ -186,8 +186,11 @@ export class Connection {
   private logRemoteTrackEvents(): void {
     const room = this.livekitRoom;
     const log = this.logger.getChild("[RemoteTracks]");
+    // The encryption flag matters: if the publisher encrypts but this client
+    // believes the track is unencrypted, the cryptor is bypassed and raw
+    // ciphertext reaches the decoder (audible as loud noise bursts).
     const track = (pub: TrackPublication, p: Participant): string =>
-      `${pub.kind} ${pub.source} ${pub.trackSid} of ${p.identity}`;
+      `${pub.kind} ${pub.source} ${pub.trackSid} of ${p.identity} encrypted=${pub.isEncrypted}`;
 
     const onParticipantConnected = (p: RemoteParticipant): void =>
       log.info(`Participant connected: ${p.identity} (${p.sid})`);
@@ -232,6 +235,20 @@ export class Connection {
       state: Track.StreamState,
       p: RemoteParticipant,
     ): void => log.info(`Stream ${state}: ${track(pub, p)}`);
+    const onEncryptionStatusChanged = (
+      encrypted: boolean,
+      p?: Participant,
+    ): void =>
+      log.info(
+        `Encryption status of ${p?.identity ?? "unknown participant"}: encrypted=${encrypted}`,
+      );
+    // livekit-client throttles these per cryptor; they indicate frames being
+    // dropped (missing/invalid key), which is the other half of the picture.
+    const onEncryptionError = (error: Error, p?: Participant): void =>
+      log.warn(
+        `Encryption error for ${p?.identity ?? "unknown participant"}:`,
+        error,
+      );
 
     room
       .on(RoomEvent.ParticipantConnected, onParticipantConnected)
@@ -243,7 +260,12 @@ export class Connection {
       .on(RoomEvent.TrackSubscriptionFailed, onTrackSubscriptionFailed)
       .on(RoomEvent.TrackMuted, onTrackMuted)
       .on(RoomEvent.TrackUnmuted, onTrackUnmuted)
-      .on(RoomEvent.TrackStreamStateChanged, onTrackStreamStateChanged);
+      .on(RoomEvent.TrackStreamStateChanged, onTrackStreamStateChanged)
+      .on(
+        RoomEvent.ParticipantEncryptionStatusChanged,
+        onEncryptionStatusChanged,
+      )
+      .on(RoomEvent.EncryptionError, onEncryptionError);
     this.scope.onEnd(() => {
       room
         .off(RoomEvent.ParticipantConnected, onParticipantConnected)
@@ -255,7 +277,12 @@ export class Connection {
         .off(RoomEvent.TrackSubscriptionFailed, onTrackSubscriptionFailed)
         .off(RoomEvent.TrackMuted, onTrackMuted)
         .off(RoomEvent.TrackUnmuted, onTrackUnmuted)
-        .off(RoomEvent.TrackStreamStateChanged, onTrackStreamStateChanged);
+        .off(RoomEvent.TrackStreamStateChanged, onTrackStreamStateChanged)
+        .off(
+          RoomEvent.ParticipantEncryptionStatusChanged,
+          onEncryptionStatusChanged,
+        )
+        .off(RoomEvent.EncryptionError, onEncryptionError);
     });
   }
 
