@@ -7,7 +7,12 @@ Please see LICENSE in the repository root for full details.
 
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
-import { createUserAndRoom, expectWithin, startHarness } from "./harness.ts";
+import {
+  createUserAndRoom,
+  expectWithin,
+  resizeContainer,
+  startHarness,
+} from "./harness.ts";
 import { SpaHelpers } from "../spa-helpers.ts";
 
 /**
@@ -58,6 +63,10 @@ test("keeps its modals inside the container it was given", async ({ page }) => {
   const pane = panes.first();
   const container = pane.getByTestId("call-container");
 
+  // In the flat container the harness gives it by default, Element Call hides
+  // its controls a few seconds after the call starts, as it would in a flat
+  // window. A full-size container keeps them on screen to be clicked.
+  await resizeContainer(container, { width: 900, height: 640 });
   await pane.getByTestId("lobby_joinCall").click({ timeout: 60_000 });
   await expect(pane.getByTestId("footer-container")).toBeVisible({
     timeout: 60_000,
@@ -151,19 +160,10 @@ test("lays itself out for the space it is given, not the page", async ({
   // a host wanting a picture-in-picture made the iframe small, and Element Call
   // saw the window shrink. A component gets no such signal from the window,
   // which stays as large as it ever was; only the container changes.
-  const resize = async (width: number, height: number): Promise<void> =>
-    container.evaluate(
-      (element, size) => {
-        element.style.width = `${size.width}px`;
-        element.style.height = `${size.height}px`;
-      },
-      { width, height },
-    );
-
-  await resize(300, 300);
+  await resizeContainer(container, { width: 300, height: 300 });
   await expect(call).toHaveAttribute("data-layout", "pip");
 
-  await resize(900, 700);
+  await resizeContainer(container, { width: 900, height: 700 });
   await expect(call).not.toHaveAttribute("data-layout", "pip");
 });
 
@@ -181,12 +181,14 @@ async function callShape(scope: Page | Locator): Promise<{
   const call = scope.locator("[data-layout]");
   const footer = scope.getByTestId("footer-container");
   await expect(footer).toBeVisible();
+  // The tile arrives with the media connection, which can take a while
   const tile = scope.getByTestId("videoTile").first();
-  await expect(tile).toBeVisible();
+  await expect(tile).toBeVisible({ timeout: 60_000 });
   const tileBox = (await tile.boundingBox())!;
   const footerBox = (await footer.boundingBox())!;
+  // Buttons and switches alike: the mute controls are switches
   const buttons = await footer
-    .getByRole("button")
+    .locator("button")
     .filter({ visible: true })
     .evaluateAll((elements) =>
       elements.map((element) => element.getAttribute("aria-label")),
@@ -228,10 +230,7 @@ test("looks the same in a small container as in a small window", async ({
   const panes = await startHarness(page, username, roomId);
   const pane = panes.first();
   const container = pane.getByTestId("call-container");
-  await container.evaluate((element, { width, height }) => {
-    element.style.width = `${width}px`;
-    element.style.height = `${height}px`;
-  }, size);
+  await resizeContainer(container, size);
   await pane.getByTestId("lobby_joinCall").click({ timeout: 60_000 });
   await expect(pane.locator("[data-layout]")).toBeVisible({ timeout: 60_000 });
   const component = await callShape(pane);
@@ -244,4 +243,10 @@ test("looks the same in a small container as in a small window", async ({
   // small container gets the compact footer a small window does, rather than
   // the full-width one the window's own size would call for
   expect(component).toEqual(reference);
+  // And that footer is the compact one: a single row of controls, not the
+  // full-height bar with its logo and layout switch that a large window gets
+  expect(component.footerHeight).toBeLessThan(size.height / 3);
+  expect(component.tileHeight + component.footerHeight).toBeLessThanOrEqual(
+    size.height,
+  );
 });

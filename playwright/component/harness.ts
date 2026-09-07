@@ -108,3 +108,19 @@ export async function expectWithin(
     outerBox.y + outerBox.height + slack,
   );
 }
+
+/**
+ * Gives one of the harness's containers a new size. Element Call lays itself
+ * out for the size of its container, so this is how a test puts it into a
+ * particular mode: a flat or narrow one, a picture-in-picture, or a full-size
+ * window, without the window itself changing at all.
+ */
+export async function resizeContainer(
+  container: Locator,
+  size: { width: number; height: number },
+): Promise<void> {
+  await container.evaluate((element, { width, height }) => {
+    element.style.width = `${width}px`;
+    element.style.height = `${height}px`;
+  }, size);
+}
