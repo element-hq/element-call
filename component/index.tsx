@@ -32,7 +32,14 @@ Please see LICENSE in the repository root for full details.
 // sits in a `@layer`, which loses to unlayered rules either way.
 import "../src/base.css";
 
-import { type FC, type JSX, type ReactNode, useMemo, useState } from "react";
+import {
+  type FC,
+  type JSX,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { MemoryRouter } from "react-router-dom";
@@ -65,7 +72,6 @@ import { Config } from "../src/config/Config";
 import { type ConfigOptions } from "../src/config/ConfigOptions";
 import { i18n } from "../src/utils/i18n";
 import { useTheme } from "../src/useTheme";
-import { useInitial } from "../src/useInitial";
 import { useStableValue } from "../src/useStableValue";
 import styles from "./ElementCall.module.css";
 
@@ -200,13 +206,22 @@ export const ElementCall: FC<ElementCallProps> = ({
     [roomId, intent, stableConfig],
   );
 
-  const mediaDevices = useInitial(
-    () =>
-      new MediaDevices(new ObservableScope(), {
-        controlledAudioDevices: params.controlledAudioDevices,
-        callIntent: params.callIntent,
-      }),
-  );
+  // Created in an effect so that the scope it lives in ends when the component
+  // is unmounted (or these options change), rather than keeping its device
+  // observers running for the rest of the page's life. Null until then, which
+  // is one render.
+  const { controlledAudioDevices, callIntent } = params;
+  const [mediaDevices, setMediaDevices] = useState<MediaDevices | null>(null);
+  useEffect(() => {
+    const scope = new ObservableScope();
+    setMediaDevices(
+      new MediaDevices(scope, { controlledAudioDevices, callIntent }),
+    );
+    return (): void => {
+      setMediaDevices(null);
+      scope.end();
+    };
+  }, [controlledAudioDevices, callIntent]);
 
   const room = client.getRoom(roomId);
   const rtcSession = useMemo(
@@ -227,28 +242,30 @@ export const ElementCall: FC<ElementCallProps> = ({
           embedded cannot disturb the host's URL. */}
           <MemoryRouter>
             <div ref={setContainer} className={styles.root}>
-              {container !== null && rtcSession !== null && (
-                <RootElementProvider value={container}>
-                  <Decoration>
-                    <TooltipProvider>
-                      <ClientProvider client={client}>
-                        <MediaDevicesContext value={mediaDevices}>
-                          <ProcessorProvider>
-                            <ElementCallView
-                              client={client}
-                              rtcSession={rtcSession}
-                              isPasswordlessUser={false}
-                              confineToRoom={params.confineToRoom}
-                              preload={params.preload}
-                              skipLobby={params.skipLobby}
-                            />
-                          </ProcessorProvider>
-                        </MediaDevicesContext>
-                      </ClientProvider>
-                    </TooltipProvider>
-                  </Decoration>
-                </RootElementProvider>
-              )}
+              {container !== null &&
+                rtcSession !== null &&
+                mediaDevices !== null && (
+                  <RootElementProvider value={container}>
+                    <Decoration>
+                      <TooltipProvider>
+                        <ClientProvider client={client}>
+                          <MediaDevicesContext value={mediaDevices}>
+                            <ProcessorProvider>
+                              <ElementCallView
+                                client={client}
+                                rtcSession={rtcSession}
+                                isPasswordlessUser={false}
+                                confineToRoom={params.confineToRoom}
+                                preload={params.preload}
+                                skipLobby={params.skipLobby}
+                              />
+                            </ProcessorProvider>
+                          </MediaDevicesContext>
+                        </ClientProvider>
+                      </TooltipProvider>
+                    </Decoration>
+                  </RootElementProvider>
+                )}
             </div>
           </MemoryRouter>
         </UrlParamsProvider>
