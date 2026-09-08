@@ -126,9 +126,9 @@ export async function getSFUConfigWithOpenID(
   if (tryBothJwtEndpoints || forceMatrix2Jwt) {
     try {
       logger?.info(
-        `Trying to get JWT with delegation for focus ${serviceUrl}...`,
+        `Trying to get JWT via default endpoint for focus ${serviceUrl}...`,
       );
-      const sfuConfig = await getLiveKitJWTWithDelayDelegation(
+      const sfuConfig = await getLiveKitJWT(
         membership,
         serviceUrl,
         roomId,
@@ -154,7 +154,7 @@ export async function getSFUConfigWithOpenID(
     logger?.info(
       `Trying to get JWT with legacy endpoint for focus ${serviceUrl}...`,
     );
-    sfuConfig = await getLiveKitJWT(
+    sfuConfig = await getLiveKitJWTLegacy(
       membership.deviceId,
       serviceUrl,
       roomId,
@@ -188,7 +188,7 @@ function extractFullConfigFromToken(sfuConfig: {
   };
 }
 
-async function getLiveKitJWT(
+async function getLiveKitJWTLegacy(
   deviceId: string,
   livekitServiceURL: string,
   matrixRoomId: string,
@@ -263,7 +263,7 @@ class NotSupportedError extends Error {
   }
 }
 
-export async function getLiveKitJWTWithDelayDelegation(
+export async function getLiveKitJWT(
   membership: CallMembershipIdentityParts,
   livekitServiceURL: string,
   matrixRoomId: string,
