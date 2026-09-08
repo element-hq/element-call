@@ -96,8 +96,16 @@ export interface HostBridge {
   /** The host wants to change, or read back, the device mute state. */
   deviceMute$: Observable<HostRequest<DeviceMuteRequest, DeviceMuteState>>;
 
-  // What the host is capable of.
+  // What the host is, and is capable of.
 
+  /**
+   * Whether Element Call may offer to change the user's profile — their
+   * display name and avatar. Only when the account is Element Call's own,
+   * which is to say standalone: a widget's host and an application embedding
+   * Element Call both signed the user in themselves, so the profile is theirs
+   * to manage and Element Call must not offer to edit it.
+   */
+  readonly supportsProfileChanges: boolean;
   /** Whether the host permits Element Call to send and receive reactions. */
   readonly supportsReactions: boolean;
   /**
@@ -122,6 +130,9 @@ export const nullHostBridge: HostBridge = {
   join$: NEVER,
   hangUp$: NEVER,
   deviceMute$: NEVER,
+  // Standalone, the account is Element Call's own: it signed the user in, so
+  // it may offer to change the profile.
+  supportsProfileChanges: true,
   // Standalone Element Call reaches the homeserver itself, so nothing is
   // withholding these from it.
   supportsReactions: true,
@@ -176,6 +187,9 @@ export function createWidgetHostBridge(widget: WidgetHelpers): HostBridge {
     join$: requests(ElementWidgetActions.JoinCall),
     hangUp$: requests(ElementWidgetActions.HangupCall),
     deviceMute$: requests(ElementWidgetActions.DeviceMute),
+    // The client we are a widget of signed the user in, so the profile is its
+    // to manage
+    supportsProfileChanges: false,
     // Element Call needs the host's permission to send reactions on its behalf.
     // Read on access rather than up front: the widget API negotiates its
     // capabilities asynchronously, and the bridge is built before that settles.

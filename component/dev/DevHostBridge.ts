@@ -10,7 +10,7 @@ import { NEVER, Subject } from "rxjs";
 import {
   type DeviceMuteRequest,
   type DeviceMuteState,
-  type HostBridge,
+  type ElementCallHostBridge,
   type HostRequest,
 } from "../index";
 
@@ -19,7 +19,7 @@ import {
  * so that the harness can watch both directions of the conversation between
  * Element Call and its host.
  */
-export interface DevHostBridge extends HostBridge {
+export interface DevHostBridge extends ElementCallHostBridge {
   /** Tells Element Call the host has changed theme. */
   requestTheme(name: string): void;
   /** Tells Element Call to leave the call. */

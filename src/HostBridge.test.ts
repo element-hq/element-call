@@ -247,6 +247,11 @@ describe("createWidgetHostBridge", () => {
     });
   });
 
+  test("does not offer profile changes, since the host signed the user in", () => {
+    const bridge = createWidgetHostBridge(mockWidget({}));
+    expect(bridge.supportsProfileChanges).toBe(false);
+  });
+
   describe("supportsReactions", () => {
     const capabilities = [
       "org.matrix.msc2762.send.event:m.reaction",
@@ -276,6 +281,10 @@ describe("createWidgetHostBridge", () => {
 describe("nullHostBridge", () => {
   test("offers no way to close, so the interface falls back to navigation", () => {
     expect(nullHostBridge.close).toBeUndefined();
+  });
+
+  test("supports profile changes, since Element Call signed the user in itself", () => {
+    expect(nullHostBridge.supportsProfileChanges).toBe(true);
   });
 
   test("offers no media download, so Element Call uses its own client", () => {

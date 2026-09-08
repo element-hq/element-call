@@ -116,10 +116,8 @@ export const GroupCallView: FC<Props> = ({
   const hostBridge = useHostBridge();
   // A host that can close us is a host that decides when we stop existing, so
   // we neither show our own post-call screens nor assume we have time to
-  // finish what we are doing.
-  // TODO: this reads a capability as a proxy for who owns our lifetime. Worth
-  // finding a more direct way to express it — see the guidance in UrlParams.ts
-  // on naming behaviours rather than situations.
+  // finish what we are doing. (Whose account the user's is, by contrast, is
+  // stated outright: see `HostBridge.supportsProfileChanges`.)
   const hostControlsLifetime = hostBridge.close !== undefined;
 
   const muteAllAudio = useBehavior(muteAllAudio$);

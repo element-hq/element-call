@@ -235,9 +235,8 @@ export const SettingsModal: FC<Props> = ({
   };
 
   const tabs = [audioTab, videoTab];
-  // A host that can dismiss us is a host that owns the user's account, so their
-  // profile is not ours to edit.
-  if (hostBridge.close === undefined) tabs.push(profileTab);
+  // The profile is only ours to edit when the account is ours
+  if (hostBridge.supportsProfileChanges) tabs.push(profileTab);
   tabs.push(preferencesTab);
   if (isRageshakeAvailable || import.meta.env.VITE_PACKAGE === "full") {
     // for full package we want to show the analytics consent checkbox

@@ -100,6 +100,14 @@ export {
  */
 export type ElementCallConfiguration = Partial<UrlParams>;
 
+/**
+ * What a host embedding Element Call implements to talk to it. This is the
+ * {@link HostBridge} less what Element Call already knows about such a host:
+ * the account is the host's, since the client is, so the profile is not
+ * Element Call's to change.
+ */
+export type ElementCallHostBridge = Omit<HostBridge, "supportsProfileChanges">;
+
 export interface ElementCallProps {
   /**
    * The client to place the call with. Element Call does not authenticate
@@ -132,7 +140,7 @@ export interface ElementCallProps {
    * joined or hung up, to be asked to keep the call on screen, and so on.
    * Without one, Element Call assumes it has no host to talk to.
    */
-  hostBridge?: HostBridge;
+  hostBridge?: ElementCallHostBridge;
 }
 
 /**
@@ -181,8 +189,19 @@ export const ElementCall: FC<ElementCallProps> = ({
   roomId,
   intent = UserIntent.JoinExistingCall,
   config,
-  hostBridge = nullHostBridge,
+  hostBridge: suppliedHostBridge = nullHostBridge,
 }): ReactNode => {
+  // Whatever the host says or does not say, the account is its own: it signed
+  // the user in and handed us the client. So Element Call never offers to edit
+  // the profile from inside a component.
+  const hostBridge = useMemo(
+    (): HostBridge => ({
+      ...suppliedHostBridge,
+      supportsProfileChanges: false,
+    }),
+    [suppliedHostBridge],
+  );
+
   // The container is what Element Call decorates and portals into, so nothing
   // inside can render until we have it.
   const [container, setContainer] = useState<HTMLDivElement | null>(null);

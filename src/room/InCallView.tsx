@@ -329,11 +329,8 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const openProfile = useMemo(
     () =>
-      // A host that can dismiss us is a host that owns the user's account, so
-      // their profile is not ours to edit.
-      // TODO: another use of the close capability as a proxy — see the note in
-      // GroupCallView.
-      hostBridge.close === undefined
+      // The profile is only ours to edit when the account is ours
+      hostBridge.supportsProfileChanges
         ? (): void => {
             setSettingsTab("profile");
             setSettingsOpen(true);
