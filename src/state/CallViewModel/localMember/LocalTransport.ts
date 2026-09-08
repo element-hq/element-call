@@ -10,14 +10,7 @@ import {
   type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
-import {
-  combineLatest,
-  distinctUntilChanged,
-  from,
-  map,
-  of,
-  switchMap,
-} from "rxjs";
+import { distinctUntilChanged, from, map, of, switchMap } from "rxjs";
 import { logger as rootLogger, type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
@@ -47,15 +40,11 @@ interface Props {
   scope: ObservableScope;
   ownMembershipIdentity: CallMembershipIdentityParts;
   memberships$: Behavior<Epoch<CallMembership[]>>;
-  client: Pick<
-    MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
-  > &
+  client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports"> &
     OpenIDClientParts;
   // Used by the jwt service to create the livekit room and compute the livekit alias.
   roomId: string;
   matrixRTCMode: MatrixRTCMode;
-  delayId$: Behavior<string | null>;
 }
 
 // TODO livekit_alias-cleanup
@@ -119,7 +108,6 @@ export const createLocalTransport$ = ({
   client,
   roomId,
   matrixRTCMode,
-  delayId$,
 }: Props): LocalTransport => {
   const logger = rootLogger.getChild("[LocalTransport]");
 
@@ -134,32 +122,29 @@ export const createLocalTransport$ = ({
     transportDiscovery.discoverPreferredTransport(),
   );
 
-  const preferredConfig$ = customLivekitUrl.value$
-    .pipe(
-      switchMap((customUrl) => {
-        if (customUrl) {
-          return of({
-            type: "livekit",
-            livekit_service_url: customUrl,
-          } as LivekitTransportConfig);
-        } else {
-          return discoveredTransport$;
-        }
-      }),
-    )
-    .pipe(
-      map((config) => {
-        if (!config) {
-          // Bubbled up from the preferredConfig$ observable.
-          throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");
-        }
-        return config;
-      }),
-      distinctUntilChanged(areLivekitTransportsEqual),
-    );
+  const preferredConfig$ = customLivekitUrl.value$.pipe(
+    switchMap((customUrl) => {
+      if (customUrl) {
+        return of({
+          type: "livekit",
+          livekit_service_url: customUrl,
+        } as LivekitTransportConfig);
+      } else {
+        return discoveredTransport$;
+      }
+    }),
+    map((config) => {
+      if (!config) {
+        // Bubbled up from the preferredConfig$ observable.
+        throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");
+      }
+      return config;
+    }),
+    distinctUntilChanged(areLivekitTransportsEqual),
+  );
 
-  const preferredTransport$ = combineLatest([preferredConfig$, delayId$]).pipe(
-    switchMap(async ([transport, delayId]) => {
+  const preferredTransport$ = preferredConfig$.pipe(
+    switchMap(async (transport) => {
       try {
         return await doOpenIdAndJWTFromUrl(
           transport,
@@ -167,7 +152,6 @@ export const createLocalTransport$ = ({
           ownMembershipIdentity,
           roomId,
           client,
-          delayId ?? undefined,
           logger,
         );
       } catch (e) {
@@ -189,21 +173,7 @@ export const createLocalTransport$ = ({
       ),
       null,
     ),
-    active$: scope.behavior(
-      preferredTransport$.pipe(
-        // XXX: WORK AROUND due to a reconnection glitch.
-        // To remove when we have a proper way to refresh the delegation event ID without refreshing
-        // the whole credentials.
-        // We deliberately hide any changes to the SFU config because we
-        // do not want the app to reconnect whenever the JWT
-        // token changes due to us delegating a new delayed event. The
-        // initial SFU config for the transport is all the app needs.
-        distinctUntilChanged((prev, next) =>
-          areLivekitTransportsEqual(prev.transport, next.transport),
-        ),
-      ),
-      null,
-    ),
+    active$: scope.behavior(preferredTransport$, null),
   };
 };
 
@@ -219,7 +189,6 @@ export const createLocalTransport$ = ({
  *  @param membership The identity of the local member.
  *  @param roomId The room ID to use for the JWT.
  *  @param client The client to use for the OpenID token.
- *  @param delayId The delayId to use for the JWT.
  *
  *  @throws FailToGetOpenIdToken, NoMatrix2AuthorizationService
  */
@@ -228,12 +197,7 @@ async function doOpenIdAndJWTFromUrl(
   matrixRTCMode: MatrixRTCMode,
   membership: CallMembershipIdentityParts,
   roomId: string,
-  client: Pick<
-    MatrixClient,
-    "getDomain" | "baseUrl" | "_unstable_getRTCTransports"
-  > &
-    OpenIDClientParts,
-  delayId?: string,
+  client: Pick<MatrixClient, "_unstable_getRTCTransports"> & OpenIDClientParts,
   logger?: Logger,
 ): Promise<LocalTransportWithSFUConfig> {
   const sfuConfig = await getSFUConfigWithOpenID(
@@ -241,11 +205,7 @@ async function doOpenIdAndJWTFromUrl(
     membership,
     transport.livekit_service_url,
     roomId,
-    {
-      matrixRTCMode,
-      delayEndpointBaseUrl: client.baseUrl,
-      delayId,
-    },
+    { matrixRTCMode },
     logger,
   );
   return {

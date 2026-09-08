@@ -493,16 +493,6 @@ export function createCallViewModel$(
       memberships$: memberships$,
       ownMembershipIdentity,
       client,
-      delayId$: scope.behavior(
-        (
-          fromEvent(
-            matrixRTCSession,
-            MembershipManagerEvent.DelayIdChanged,
-            // The type of reemitted event includes the original emitted as the second arg.
-          ) as Observable<[string | undefined, IMembershipManager]>
-        ).pipe(map(([delayId]) => delayId ?? null)),
-        matrixRTCSession.delayId ?? null,
-      ),
       roomId: matrixRoom.roomId,
       matrixRTCMode,
     });
@@ -583,10 +573,22 @@ export function createCallViewModel$(
       );
     },
     connectionManager,
+    client,
     matrixRTCSession,
-    localTransport$,
+    localTransport,
     roomId: matrixRoom.roomId,
     baseUrl: client.baseUrl,
+    ownMembershipIdentity,
+    delayId$: scope.behavior(
+      (
+        fromEvent(
+          matrixRTCSession,
+          MembershipManagerEvent.DelayIdChanged,
+          // The type of reemitted event includes the original emitted as the second arg.
+        ) as Observable<[string | undefined, IMembershipManager]>
+      ).pipe(map(([delayId]) => delayId ?? null)),
+      matrixRTCSession.delayId ?? null,
+    ),
     matrixRTCMode,
     logger: logger.getChild(`[${Date.now()}]`),
   });

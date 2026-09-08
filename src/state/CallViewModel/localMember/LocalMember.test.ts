@@ -64,6 +64,7 @@ import {
   type LocalTransport,
   type LocalTransportWithSFUConfig,
 } from "./LocalTransport";
+import * as openIDSFU from "../../../livekit/openIDSFU";
 
 initializeWidget();
 
@@ -113,6 +114,17 @@ const delegatedTimings: ResolvedDelayedLeaveTimings = {
   restart_timeout_ms: timings.restart_timeout_ms! * 10,
 };
 
+const mockedClient = {
+  getDomain: vi.fn().mockReturnValue("example.org"),
+  getDeviceId: vi.fn().mockReturnValue("AAAA"),
+  getOpenIdToken: vi.fn().mockResolvedValue({
+    access_token: "ACCCESS_TOKEN",
+    token_type: "Bearer",
+    matrix_server_name: "localhost",
+    expires_in: 10000,
+  }),
+};
+
 describe("enterRTCSession", () => {
   const transport: LivekitTransportConfig = {
     livekit_alias: "roomId",
@@ -129,15 +141,7 @@ describe("enterRTCSession", () => {
   const mockedSession = vi.mocked({
     room: {
       roomId: "roomId",
-      client: {
-        getDomain: vi.fn().mockReturnValue("example.org"),
-        getOpenIdToken: vi.fn().mockResolvedValue({
-          access_token: "ACCCESS_TOKEN",
-          token_type: "Bearer",
-          matrix_server_name: "localhost",
-          expires_in: 10000,
-        }),
-      },
+      client: mockedClient,
     },
     memberships: [],
     joinRTCSession: vi.fn(),
@@ -230,6 +234,9 @@ describe("LocalMembership", () => {
     },
     roomId: "!test-room-id:example.org",
     baseUrl: "https://matrix.example.org",
+    ownMembershipIdentity: ownMemberMock,
+    client: mockedClient,
+    delayId$: constant(null),
     matrixRTCMode: MATRIX_RTC_MODE,
   };
 
@@ -276,7 +283,7 @@ describe("LocalMembership", () => {
         scope,
         ...defaultCreateLocalMemberValues,
         connectionManager: mockConnectionManager,
-        localTransport$: behavior("a", { a: aLocalTransport }),
+        localTransport: aLocalTransport,
       });
 
       expectObservable(localMembership.localMemberState$).toBe("ne", {
@@ -320,7 +327,7 @@ describe("LocalMembership", () => {
         scope,
         ...defaultCreateLocalMemberValues,
         connectionManager: mockConnectionManager,
-        localTransport$: constant(aLocalTransport),
+        localTransport: aLocalTransport,
       });
 
       expectObservable(localMembership.localMemberState$).toBe("n-e", {
@@ -337,8 +344,8 @@ describe("LocalMembership", () => {
     const scope = new ObservableScope();
 
     const aLocalTransport: LocalTransport = {
-      advertised$: new BehaviorSubject(aTransport),
-      active$: new BehaviorSubject(aTransportWithSFUConfig),
+      advertised$: constant(aTransport),
+      active$: constant(aTransportWithSFUConfig),
     };
 
     const mockConnectionManager = {
@@ -356,7 +363,7 @@ describe("LocalMembership", () => {
         leaveRoomSession: vi.fn(),
       },
       connectionManager: mockConnectionManager,
-      localTransport$: new BehaviorSubject(aLocalTransport),
+      localTransport: aLocalTransport,
     });
     const expextedLog =
       "'not connected yet' while updating the call intent (this is expected on startup)";
@@ -417,6 +424,11 @@ describe("LocalMembership", () => {
     livekitRoom: mockLivekitRoom({}),
   } as unknown as Connection;
 
+  const authCallSpy = vi
+    .spyOn(openIDSFU, "getSFUConfigWithOpenID")
+    .mockImplementation(() => mockedClient.getOpenIdToken());
+  afterEach(() => authCallSpy.mockClear());
+
   it.each([
     ["no", null, timings],
     [
@@ -429,14 +441,8 @@ describe("LocalMembership", () => {
     "joins session with %s delegation support",
     async (_serviceName, delegationUrl, delayedLeaveTimings) => {
       const scope = testScope();
-
-      const activeTransport$ = constant(aTransportWithSFUConfig);
-      const aLocalTransport: LocalTransport = {
-        advertised$: constant(aTransport),
-        active$: activeTransport$,
-      };
-      const connectionManagerData = new ConnectionManagerData();
       const joinMatrixRTC = vi.fn();
+      const delayId$ = new BehaviorSubject<string | null>(null);
 
       if (delegationUrl !== null)
         fetchMock.post(delegationUrl, () => ({ status: 401, body: {} }));
@@ -445,10 +451,16 @@ describe("LocalMembership", () => {
         scope,
         ...defaultCreateLocalMemberValues,
         connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
+          connectionManagerData$: constant(
+            new Epoch(new ConnectionManagerData()),
+          ),
         },
-        localTransport$: constant(aLocalTransport),
         joinMatrixRTC,
+        localTransport: {
+          advertised$: constant(aTransport),
+          active$: constant(aTransportWithSFUConfig),
+        },
+        delayId$,
       });
 
       localMembership.requestJoinAndPublish();
@@ -459,6 +471,34 @@ describe("LocalMembership", () => {
         aTransport,
         delayedLeaveTimings,
       );
+
+      expect(authCallSpy).not.toHaveBeenCalled();
+      delayId$.next("leave1");
+      await flushPromises();
+      if (delegationUrl === null) {
+        expect(authCallSpy).not.toHaveBeenCalled();
+      } else {
+        // Delegation is supported in this test case, so go on to check that
+        // LocalMember actually performs delegation
+        const expectDelegation = (delayId: string) =>
+          expect(authCallSpy).toHaveBeenLastCalledWith(
+            mockedClient,
+            ownMemberMock,
+            "a",
+            "!test-room-id:example.org",
+            {
+              matrixRTCMode: MATRIX_RTC_MODE,
+              delayEndpointBaseUrl: "https://matrix.example.org",
+              delayId,
+            },
+            expect.anything(),
+          );
+
+        expectDelegation("leave1");
+        delayId$.next("leave2"); // Can change delegated leaves
+        await flushPromises();
+        expectDelegation("leave2");
+      }
     },
   );
 
@@ -467,7 +507,7 @@ describe("LocalMembership", () => {
 
     const activeTransport$ = new BehaviorSubject(aTransportWithSFUConfig);
     const aLocalTransport: LocalTransport = {
-      advertised$: new BehaviorSubject(aTransport),
+      advertised$: constant(aTransport),
       active$: activeTransport$,
     };
 
@@ -505,7 +545,7 @@ describe("LocalMembership", () => {
       connectionManager: {
         connectionManagerData$: constant(new Epoch(connectionManagerData)),
       },
-      localTransport$: new BehaviorSubject(aLocalTransport),
+      localTransport: aLocalTransport,
     });
     await flushPromises();
     activeTransport$.next({
@@ -536,7 +576,7 @@ describe("LocalMembership", () => {
     const publishers: Publisher[] = [];
 
     const tracks$ = new BehaviorSubject<LocalTrack[]>([]);
-    const publishing$ = new BehaviorSubject<boolean>(false);
+    const publishing$ = constant<boolean>(false);
     defaultCreateLocalMemberValues.createPublisherFactory.mockImplementation(
       () => {
         const p = {
@@ -560,8 +600,8 @@ describe("LocalMembership", () => {
       >;
 
     const aLocalTransport: LocalTransport = {
-      advertised$: new BehaviorSubject(aTransport),
-      active$: new BehaviorSubject(aTransportWithSFUConfig),
+      advertised$: constant(aTransport),
+      active$: constant(aTransportWithSFUConfig),
     };
 
     const connectionManagerData = new ConnectionManagerData();
@@ -573,7 +613,7 @@ describe("LocalMembership", () => {
       connectionManager: {
         connectionManagerData$: constant(new Epoch(connectionManagerData)),
       },
-      localTransport$: new BehaviorSubject(aLocalTransport),
+      localTransport: aLocalTransport,
     });
     await flushPromises();
     expect(publisherFactory).toHaveBeenCalledOnce();
@@ -601,7 +641,7 @@ describe("LocalMembership", () => {
       new BehaviorSubject<null | LocalTransportWithSFUConfig>(null);
 
     const aLocalTransport: LocalTransport = {
-      advertised$: new BehaviorSubject(aTransport),
+      advertised$: constant(aTransport),
       active$: activeTransport$,
     };
 
@@ -644,7 +684,7 @@ describe("LocalMembership", () => {
       connectionManager: {
         connectionManagerData$,
       },
-      localTransport$: new BehaviorSubject(aLocalTransport),
+      localTransport: aLocalTransport,
     });
 
     await flushPromises();
@@ -779,10 +819,10 @@ describe("LocalMembership", () => {
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
-        localTransport$: new BehaviorSubject({
-          advertised$: new BehaviorSubject(aTransport),
-          active$: new BehaviorSubject(aTransportWithSFUConfig),
-        }),
+        localTransport: {
+          advertised$: constant(aTransport),
+          active$: constant(aTransportWithSFUConfig),
+        },
       });
 
       await flushPromises();
@@ -819,10 +859,10 @@ describe("LocalMembership", () => {
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
-        localTransport$: new BehaviorSubject({
-          advertised$: new BehaviorSubject(aTransport),
-          active$: new BehaviorSubject(aTransportWithSFUConfig),
-        }),
+        localTransport: {
+          advertised$: constant(aTransport),
+          active$: constant(aTransportWithSFUConfig),
+        },
       });
 
       await flushPromises();
@@ -861,18 +901,19 @@ describe("LocalMembership", () => {
         scope,
         ...defaultCreateLocalMemberValues,
         homeserverConnected: {
-          combined$: new BehaviorSubject<
-            [boolean, HomeserverDisconnectReason | null]
-          >([true, null]),
+          combined$: constant<[boolean, HomeserverDisconnectReason | null]>([
+            true,
+            null,
+          ]),
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
-        localTransport$: new BehaviorSubject({
-          advertised$: new BehaviorSubject(aTransport),
-          active$: new BehaviorSubject(aTransportWithSFUConfig),
-        }),
+        localTransport: {
+          advertised$: constant(aTransport),
+          active$: constant(aTransportWithSFUConfig),
+        },
       });
 
       await flushPromises();
@@ -913,10 +954,10 @@ describe("LocalMembership", () => {
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
-        localTransport$: new BehaviorSubject({
-          advertised$: new BehaviorSubject(aTransport),
-          active$: new BehaviorSubject(aTransportWithSFUConfig),
-        }),
+        localTransport: {
+          advertised$: constant(aTransport),
+          active$: constant(aTransportWithSFUConfig),
+        },
       });
 
       await flushPromises();
@@ -982,10 +1023,10 @@ describe("LocalMembership", () => {
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
-        localTransport$: new BehaviorSubject({
-          advertised$: new BehaviorSubject(aTransport),
-          active$: new BehaviorSubject(aTransportWithSFUConfig),
-        }),
+        localTransport: {
+          advertised$: constant(aTransport),
+          active$: constant(aTransportWithSFUConfig),
+        },
       });
       return { scope, localMembership };
     };

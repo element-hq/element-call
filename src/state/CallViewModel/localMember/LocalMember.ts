@@ -15,6 +15,7 @@ import {
   MediaDeviceFailure,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
+import { type MatrixClient } from "matrix-js-sdk";
 import {
   Status as RTCSessionStatus,
   type LivekitTransport,
@@ -76,6 +77,7 @@ import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 import { or$ } from "../../../utils/observable.ts";
+import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -143,12 +145,16 @@ interface Props {
   ) => void;
   homeserverConnected: HomeserverConnected;
   roomId: string;
+  ownMembershipIdentity: CallMembershipIdentityParts;
   localTransport: LocalTransport;
+  client: Pick<MatrixClient, "getDeviceId" | "getOpenIdToken">;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
   >;
   baseUrl: string;
+  delayId$: Behavior<string | null>;
+  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -168,6 +174,7 @@ interface Props {
  * @param props.muteStates The mute states for video and audio.
  * @param props.matrixRTCSession The matrix RTC session to join.
  * @param props.baseUrl Base URL of the homeserver.
+ * @param props.delayId$ ID of the delayed leave event to delegate to the SFU.
  * @param props.roomId The room ID used as the call identifier in analytics events.
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
@@ -179,15 +186,19 @@ interface Props {
 export const createLocalMembership$ = ({
   scope,
   connectionManager,
-  localTransport$,
+  localTransport,
   homeserverConnected,
   createPublisherFactory,
   joinMatrixRTC,
   logger: parentLogger,
   muteStates,
+  client,
   matrixRTCSession,
   baseUrl,
   roomId,
+  ownMembershipIdentity,
+  delayId$,
+  matrixRTCMode,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -709,6 +720,34 @@ export const createLocalMembership$ = ({
         logger.debug("participant$ updated:", p?.identity);
       }),
     ),
+  );
+
+  // Delegate delayed leaves to the SFU
+  scope.reconcile(
+    scope.behavior(combineLatest([joinParams$, delayId$])),
+    async ([joinParams, delayId]) => {
+      if (joinParams?.delegationSupported && delayId !== null) {
+        try {
+          // This will technically cause the service to issue a new JWT token,
+          // but it's safe to discard. We're only interested in triggering
+          // delegation.
+          await getSFUConfigWithOpenID(
+            client,
+            ownMembershipIdentity,
+            joinParams.transport.livekit_service_url,
+            roomId,
+            { matrixRTCMode, delayEndpointBaseUrl: baseUrl, delayId },
+            logger,
+          );
+        } catch (e) {
+          // TODO: Surface this to the user as a service interruption?
+          logger.error(
+            `Failed to delegate leave to ${joinParams.transport.livekit_service_url}`,
+            e,
+          );
+        }
+      }
+    },
   );
 
   // Pause upstream of all local media tracks when we're disconnected from
