@@ -11,6 +11,17 @@ import i18next, { type i18n as I18nInstance } from "i18next";
 export const i18nKey = (key: string): string => key;
 
 /**
+ * The language a locale file under `locales/` is for, from its path as a
+ * bundler glob reports it: `../locales/zh-Hans/app.json` is for `zh-Hans`.
+ */
+export function languageOfLocalePath(path: string): string {
+  const language = path.match(/\/([^/]+)\/[^/]+\.json$/)?.[1];
+  if (language === undefined)
+    throw new Error(`Could not parse locale path ${path}`);
+  return language;
+}
+
+/**
  * Element Call's own i18next instance.
  *
  * We deliberately do not use the global i18next singleton: when Element Call

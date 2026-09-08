@@ -17,7 +17,11 @@ import {
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { ElementCall, type ElementCallHandle } from "../index";
+import {
+  ElementCall,
+  type ElementCallHandle,
+  supportedLanguages,
+} from "../index";
 import { createDevHostBridge } from "./DevHostBridge";
 import { createSession, joinRoom } from "./session";
 import styles from "./Harness.module.css";
@@ -90,8 +94,9 @@ interface LogEntry {
 const Pane: FC<{
   session: Session;
   roomId: string;
+  language: string | undefined;
   log: (pane: string, message: string) => void;
-}> = ({ session, roomId, log }): ReactNode => {
+}> = ({ session, roomId, language, log }): ReactNode => {
   const [mounted, setMounted] = useState(true);
 
   const bridge = useMemo(
@@ -173,6 +178,7 @@ const Pane: FC<{
             client={session.client}
             roomId={roomId}
             hostBridge={bridge}
+            language={language}
           />
         )}
       </div>
@@ -226,6 +232,9 @@ export const Harness: FC = (): ReactNode => {
   const [state, setState] = useState<State>({ phase: "credentials" });
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  // The host's language setting, which Element Call follows. Undefined means
+  // the host has none and Element Call uses the browser's.
+  const [language, setLanguage] = useState<string | undefined>(undefined);
 
   const log = useCallback((pane: string, message: string): void => {
     setEntries((entries) =>
@@ -324,6 +333,20 @@ export const Harness: FC = (): ReactNode => {
         <button onClick={(): void => setDialogOpen(true)}>
           Open a host dialog
         </button>
+        <label>
+          Language{" "}
+          <select
+            value={language ?? ""}
+            onChange={(e): void => setLanguage(e.target.value || undefined)}
+          >
+            <option value="">Browser default</option>
+            {supportedLanguages.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag}
+              </option>
+            ))}
+          </select>
+        </label>
       </header>
       <div className={styles.middle}>
         <HostChrome />
@@ -333,6 +356,7 @@ export const Harness: FC = (): ReactNode => {
               key={session.label}
               session={session}
               roomId={state.roomId}
+              language={language}
               log={log}
             />
           ))}

@@ -244,6 +244,12 @@ what is inside it, with `html`, `body` and `:root` standing for that root (see
 `component/build/scopeStylesToRoot.ts`). A host's own page keeps its styles,
 and Element Call brings its own fonts and design tokens along.
 
+The component speaks every language the app does. English is bundled in; the
+other locales are split into chunks the host's bundler loads the first time
+they are needed. It starts in the browser's language, and follows the host's
+own language setting through the `language` prop (`supportedLanguages` lists
+the tags it accepts).
+
 The package is not published yet. A host installs it as a git dependency on the
 `component` directory of this repository,
 

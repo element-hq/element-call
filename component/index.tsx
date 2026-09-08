@@ -50,6 +50,8 @@ import { ErrorBoundary } from "@sentry/react";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
 import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill.js";
 
+import LanguageDetector from "i18next-browser-languagedetector";
+
 import EN from "../locales/en/app.json";
 import { CallView } from "../src/room/CallView";
 import { ErrorPage } from "../src/FullScreenView";
@@ -81,6 +83,10 @@ import {
   type ElementCallHostBridge,
   useComponentHostBridge,
 } from "./host";
+import { supportedLanguages, translationsBackend } from "./localization";
+
+// The languages Element Call can be shown in
+export { supportedLanguages } from "./localization";
 
 // How the host and Element Call talk to each other, and what they say
 export { type ElementCallHandle, type ElementCallHostBridge } from "./host";
@@ -152,6 +158,15 @@ export interface ElementCallProps {
    * Available once the component has rendered.
    */
   ref?: Ref<ElementCallHandle>;
+  /**
+   * The language to show Element Call in, as a BCP 47 tag: one of
+   * {@link supportedLanguages}, or something that falls back to one (`de-AT`
+   * to `de`). Left out, the browser's language is used.
+   *
+   * Translations are one thing shared by every Element Call on the page, so
+   * the most recently set language wins for all of them.
+   */
+  language?: string;
 }
 
 /**
@@ -171,22 +186,29 @@ export async function initializeElementCall(
   await Promise.all(polyfills);
 
   Config.initWith(config);
-  await i18n.init({
-    fallbackLng: "en",
-    defaultNS: "app",
-    keySeparator: ".",
-    nsSeparator: false,
-    pluralSeparator: "_",
-    contextSeparator: "|",
-    lng: "en",
-    interpolation: { escapeValue: false },
-    // English only, bundled in. The standalone app fetches its locale files at
-    // runtime from URLs its own build emits, which a host serving the library
-    // from elsewhere could not resolve; bundling one language at least keeps
-    // the component self-contained. Letting a host supply the rest, or its own
-    // translations, is still to do.
-    resources: { en: { app: EN } },
-  });
+  await i18n
+    .use(translationsBackend)
+    .use(new LanguageDetector())
+    .init({
+      fallbackLng: "en",
+      defaultNS: "app",
+      keySeparator: ".",
+      nsSeparator: false,
+      pluralSeparator: "_",
+      contextSeparator: "|",
+      supportedLngs: [...supportedLanguages],
+      interpolation: { escapeValue: false },
+      // English is bundled in, so the fallback never has to be loaded; every
+      // other language arrives from the backend when first asked for.
+      partialBundledLanguages: true,
+      resources: { en: { app: EN } },
+      detection: {
+        // The browser's language, until the host says otherwise through the
+        // `language` prop. Nothing is remembered: the choice is the host's.
+        order: ["navigator"],
+        caches: [],
+      },
+    });
 }
 
 /** Applies the theme and background to the container, before it is painted. */
@@ -207,8 +229,16 @@ export const ElementCall: FC<ElementCallProps> = ({
   config,
   hostBridge: suppliedHostBridge,
   ref,
+  language,
 }): ReactNode => {
   const hostBridge = useComponentHostBridge(suppliedHostBridge, ref);
+
+  useEffect(() => {
+    if (language !== undefined)
+      i18n
+        .changeLanguage(language)
+        .catch((e) => logger.error(`Could not switch to ${language}`, e));
+  }, [language]);
 
   // The container is what Element Call decorates and portals into, so nothing
   // inside can render until we have it.
