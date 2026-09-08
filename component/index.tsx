@@ -45,11 +45,13 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { MemoryRouter } from "react-router-dom";
 import { I18nextProvider } from "react-i18next";
 import { TooltipProvider } from "@vector-im/compound-web";
+import { ErrorBoundary } from "@sentry/react";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
 import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill.js";
 
 import EN from "../locales/en/app.json";
 import { ElementCallView } from "../src/ElementCallView";
+import { ErrorPage } from "../src/FullScreenView";
 import { ClientProvider } from "../src/ClientContext";
 import {
   type HostBridge,
@@ -265,24 +267,32 @@ export const ElementCall: FC<ElementCallProps> = ({
                 rtcSession !== null &&
                 mediaDevices !== null && (
                   <RootElementProvider value={container}>
-                    <Decoration>
-                      <TooltipProvider>
-                        <ClientProvider client={client}>
-                          <MediaDevicesContext value={mediaDevices}>
-                            <ProcessorProvider>
-                              <ElementCallView
-                                client={client}
-                                rtcSession={rtcSession}
-                                isPasswordlessUser={false}
-                                confineToRoom={params.confineToRoom}
-                                preload={params.preload}
-                                skipLobby={params.skipLobby}
-                              />
-                            </ProcessorProvider>
-                          </MediaDevicesContext>
-                        </ClientProvider>
-                      </TooltipProvider>
-                    </Decoration>
+                    {/* Whatever goes wrong in here is shown in here. Left to
+                    propagate, an error would unmount the host's own tree. */}
+                    <ErrorBoundary
+                      fallback={(error) => <ErrorPage error={error} />}
+                      // A broken call should not hold the host on screen
+                      onError={() => void hostBridge.setAlwaysOnScreen(false)}
+                    >
+                      <Decoration>
+                        <TooltipProvider>
+                          <ClientProvider client={client}>
+                            <MediaDevicesContext value={mediaDevices}>
+                              <ProcessorProvider>
+                                <ElementCallView
+                                  client={client}
+                                  rtcSession={rtcSession}
+                                  isPasswordlessUser={false}
+                                  confineToRoom={params.confineToRoom}
+                                  preload={params.preload}
+                                  skipLobby={params.skipLobby}
+                                />
+                              </ProcessorProvider>
+                            </MediaDevicesContext>
+                          </ClientProvider>
+                        </TooltipProvider>
+                      </Decoration>
+                    </ErrorBoundary>
                   </RootElementProvider>
                 )}
             </div>
