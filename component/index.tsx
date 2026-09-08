@@ -36,6 +36,7 @@ import {
   type FC,
   type JSX,
   type ReactNode,
+  type Ref,
   useEffect,
   useMemo,
   useState,
@@ -53,11 +54,7 @@ import EN from "../locales/en/app.json";
 import { ElementCallView } from "../src/ElementCallView";
 import { ErrorPage } from "../src/FullScreenView";
 import { ClientProvider } from "../src/ClientContext";
-import {
-  type HostBridge,
-  HostBridgeProvider,
-  nullHostBridge,
-} from "../src/HostBridge";
+import { HostBridgeProvider } from "../src/HostBridge";
 import { RootElementProvider } from "../src/RootElementContext";
 import {
   configurationForIntent,
@@ -76,13 +73,17 @@ import { i18n } from "../src/utils/i18n";
 import { useTheme } from "../src/useTheme";
 import { useStableValue } from "../src/useStableValue";
 import styles from "./ElementCall.module.css";
+import {
+  type ElementCallHandle,
+  type ElementCallHostBridge,
+  useComponentHostBridge,
+} from "./host";
 
-// Everything needed to implement a HostBridge, not just the interface itself
+// How the host and Element Call talk to each other, and what they say
+export { type ElementCallHandle, type ElementCallHostBridge } from "./host";
 export {
   type DeviceMuteRequest,
   type DeviceMuteState,
-  type HostBridge,
-  type HostRequest,
 } from "../src/HostBridge";
 export { type JoinCallData } from "../src/widget";
 // The deployment-wide configuration, as distinct from ElementCallConfiguration
@@ -101,14 +102,6 @@ export {
  * takes the default that {@link ElementCallProps.intent} implies.
  */
 export type ElementCallConfiguration = Partial<UrlParams>;
-
-/**
- * What a host embedding Element Call implements to talk to it. This is the
- * {@link HostBridge} less what Element Call already knows about such a host:
- * the account is the host's, since the client is, so the profile is not
- * Element Call's to change.
- */
-export type ElementCallHostBridge = Omit<HostBridge, "supportsProfileChanges">;
 
 export interface ElementCallProps {
   /**
@@ -138,11 +131,16 @@ export interface ElementCallProps {
    */
   config?: ElementCallConfiguration;
   /**
-   * How to reach the host while the call is running — to be told the user has
-   * joined or hung up, to be asked to keep the call on screen, and so on.
-   * Without one, Element Call assumes it has no host to talk to.
+   * What Element Call tells the host while the call is running: that the user
+   * has joined or hung up, that it would like to be kept on screen, and so on.
+   * Without one, Element Call assumes nobody is listening.
    */
   hostBridge?: ElementCallHostBridge;
+  /**
+   * What the host tells Element Call: to change theme, to hang up, to mute.
+   * Available once the component has rendered.
+   */
+  ref?: Ref<ElementCallHandle>;
 }
 
 /**
@@ -191,18 +189,10 @@ export const ElementCall: FC<ElementCallProps> = ({
   roomId,
   intent = UserIntent.JoinExistingCall,
   config,
-  hostBridge: suppliedHostBridge = nullHostBridge,
+  hostBridge: suppliedHostBridge,
+  ref,
 }): ReactNode => {
-  // Whatever the host says or does not say, the account is its own: it signed
-  // the user in and handed us the client. So Element Call never offers to edit
-  // the profile from inside a component.
-  const hostBridge = useMemo(
-    (): HostBridge => ({
-      ...suppliedHostBridge,
-      supportsProfileChanges: false,
-    }),
-    [suppliedHostBridge],
-  );
+  const hostBridge = useComponentHostBridge(suppliedHostBridge, ref);
 
   // The container is what Element Call decorates and portals into, so nothing
   // inside can render until we have it.

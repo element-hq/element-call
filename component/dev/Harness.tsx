@@ -11,12 +11,13 @@ import {
   type ReactNode,
   useCallback,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { ElementCall } from "../index";
+import { ElementCall, type ElementCallHandle } from "../index";
 import { createDevHostBridge } from "./DevHostBridge";
 import { createSession, joinRoom } from "./session";
 import styles from "./Harness.module.css";
@@ -102,6 +103,29 @@ const Pane: FC<{
     [log, session.label],
   );
 
+  // What the host asks of Element Call goes through the component's handle.
+  // Worth saying out loud when a request is refused — asking to hang up when
+  // there is no call, say — since that is the sort of thing the harness is for.
+  const handle = useRef<ElementCallHandle>(null);
+  const ask = (
+    name: string,
+    make: (handle: ElementCallHandle) => Promise<unknown>,
+  ): void => {
+    if (handle.current === null) {
+      log(session.label, `← ${name}: not mounted`);
+      return;
+    }
+    log(session.label, `← ${name}`);
+    make(handle.current).then(
+      (reply) =>
+        log(
+          session.label,
+          `→ ${name} acknowledged${reply === undefined ? "" : `: ${JSON.stringify(reply)}`}`,
+        ),
+      (e: unknown) => log(session.label, `→ ${name} refused: ${e}`),
+    );
+  };
+
   return (
     <section className={styles.pane} data-testid="call-pane">
       <div className={styles.paneBar}>
@@ -110,24 +134,42 @@ const Pane: FC<{
         <button onClick={(): void => setMounted((m) => !m)}>
           {mounted ? "Unmount" : "Mount"}
         </button>
-        <button onClick={(): void => bridge.requestTheme("light")}>
-          Light
-        </button>
-        <button onClick={(): void => bridge.requestTheme("dark")}>Dark</button>
         <button
           onClick={(): void =>
-            bridge.requestDeviceMute({ audio_enabled: false })
+            ask("setTheme(light)", async (h) => await h.setTheme("light"))
+          }
+        >
+          Light
+        </button>
+        <button
+          onClick={(): void =>
+            ask("setTheme(dark)", async (h) => await h.setTheme("dark"))
+          }
+        >
+          Dark
+        </button>
+        <button
+          onClick={(): void =>
+            ask(
+              "setDeviceMute(audio: false)",
+              async (h) => await h.setDeviceMute({ audio_enabled: false }),
+            )
           }
         >
           Mute
         </button>
-        <button onClick={(): void => bridge.requestHangUp()}>Hang up</button>
+        <button
+          onClick={(): void => ask("hangUp", async (h) => await h.hangUp())}
+        >
+          Hang up
+        </button>
       </div>
       {/* Resizable, because how Element Call copes with the size it is given is
       one of the things we cannot find out from the standalone app */}
       <div className={styles.paneCall} data-testid="call-container">
         {mounted && (
           <ElementCall
+            ref={handle}
             client={session.client}
             roomId={roomId}
             hostBridge={bridge}
