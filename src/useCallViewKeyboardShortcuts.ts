@@ -9,6 +9,7 @@ import { useCallback, useMemo, useRef } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useEventTarget } from "./useEvents";
+import { useRootElement } from "./RootElementContext";
 import {
   type ReactionOption,
   ReactionSet,
@@ -16,28 +17,37 @@ import {
 } from "./reactions";
 
 /**
- * Determines whether focus is in the same part of the tree as the given
- * element (specifically, if the element or an ancestor of it is focused).
+ * Whether what has focus is something a key press belongs to, rather than
+ * being free for a shortcut: a dialog (the settings, the invite modal, the
+ * reaction picker), or anything the user types into.
+ *
+ * Judged by what the focused element is, not by where it sits in the DOM:
+ * Element Call's modals are portalled to whatever it treats as its root, which
+ * is the body for the standalone app but a container inside the host's page
+ * for the component.
  */
-const mayReceiveKeyEvents = (): boolean => {
-  const root = document.getElementById("root");
-  if (root === null) {
-    logger.warn(
-      "[mayReceiveKeyEvents] Root element not found, always allow keyboard shortcuts (m,v,esc...)",
-    );
-    return true;
-  }
-  const focusElement = document.activeElement;
-  const nothingInFocus = focusElement === null;
-  const focusOnBody = focusElement === document.body;
-  const noPrimaryFocus =
-    nothingInFocus || root.contains(focusElement) || focusOnBody;
+const focusIsClaimed = (): boolean => {
+  const active = document.activeElement;
+  if (active === null || active === document.body) return false;
+  if (active.closest("dialog, [role='dialog']") !== null) return true;
+  return isTextEntry(active);
+};
 
-  logger.warn(
-    `[mayReceiveKeyEvents] nothingInFocus ${nothingInFocus}, focusOnBody ${focusOnBody}, noPrimaryFocus ${noPrimaryFocus}`,
-  );
-  // Only if we do not have a primary focus we allow keyboard shortcut events.
-  return noPrimaryFocus;
+const textInputTypes = new Set([
+  "text",
+  "search",
+  "email",
+  "url",
+  "password",
+  "number",
+  "tel",
+]);
+
+const isTextEntry = (element: Element): boolean => {
+  if (element instanceof HTMLTextAreaElement) return true;
+  if (element instanceof HTMLInputElement)
+    return textInputTypes.has(element.type);
+  return element instanceof HTMLElement && element.isContentEditable;
 };
 
 /**
@@ -54,10 +64,15 @@ const KeyToReactionMap: Record<string, ReactionOption> = Object.fromEntries(
 );
 
 /**
- * This hook sets up gloabl keyboard shortcuts. It will filter for keyboard presses that should be ignored due to user
- * currently focussing on a modal.
- * This is achieved by using the fact, that all modal inputs are outside the #root element and use react portals to get rendered.
- * The following shortcuts are auspported (optional):
+ * Sets up the call's keyboard shortcuts.
+ *
+ * They are listened for on the element Element Call treats as its root — the
+ * page, standalone, or the container a host mounted it in — so that a key
+ * pressed anywhere else on a host's page is none of Element Call's business,
+ * and two Element Calls on one page each only hear their own. Key presses that
+ * belong to something else — a dialog, a text field — are left alone.
+ *
+ * The following shortcuts are supported (optional):
  * @param toggleAudio - triggered on (m)
  * @param toggleVideo - triggered on (v)
  * @param setAudioEnabled - push to talk behavior controlled via (space)
@@ -76,17 +91,19 @@ export function useCallViewKeyboardShortcuts(
   toggleHandRaised: (() => void) | null,
 ): void {
   const spacebarHeld = useRef(false);
+  const rootElement = useRootElement();
 
-  // These event handlers are set on the window because we want users to be able
-  // to trigger them without going to the trouble of focusing something
+  // Listened for on the root rather than on what has focus, so that the user
+  // need not focus anything in particular for a shortcut to work: a key pressed
+  // with nothing focused reaches the body, which is the root standalone.
 
   useEventTarget(
-    window,
+    rootElement,
     "keydown",
     useCallback(
       (event: KeyboardEvent) => {
         logger.info("Keydown event", event);
-        if (!mayReceiveKeyEvents()) return;
+        if (focusIsClaimed()) return;
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
           return;
 
@@ -121,18 +138,18 @@ export function useCallViewKeyboardShortcuts(
         toggleHandRaised,
       ],
     ),
-    // Because this is set on the window, to prevent shortcuts from activating
+    // Because this is set on an ancestor, to prevent shortcuts from activating
     // another event callback at the same time, we need to preventDefault
     // *before* child elements receive the event by using capture mode
     useMemo(() => ({ capture: true }), []),
   );
 
   useEventTarget(
-    window,
+    rootElement,
     "keyup",
     useCallback(
       (event: KeyboardEvent) => {
-        if (!mayReceiveKeyEvents() || !mayReceiveSpaceKeyEvents()) return;
+        if (focusIsClaimed() || !mayReceiveSpaceKeyEvents()) return;
         if (event.key === " ") {
           spacebarHeld.current = false;
           setAudioEnabled?.(false);
@@ -142,6 +159,7 @@ export function useCallViewKeyboardShortcuts(
     ),
   );
 
+  // Losing the window is what releases a held spacebar, wherever we are in it
   useEventTarget(
     window,
     "blur",
