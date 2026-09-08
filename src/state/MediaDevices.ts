@@ -257,14 +257,21 @@ export class AudioOutput implements MediaDevice<
       map((availableRaw) => {
         let available: Map<string, AudioOutputDeviceLabel> =
           buildDeviceMap(availableRaw);
-        // Create a virtual default audio output for browsers that don't have one.
-        // Its device ID must be the empty string because that's what setSinkId
-        // recognizes.
+        // Create a virtual default audio output for browsers that don't have one
+        // (Firefox, Safari). Its device ID must be the empty string because
+        // that's what setSinkId recognizes. It goes first so that it is the
+        // fallback when no output has been explicitly chosen (or the chosen
+        // one disappears), rather than pinning the first physical device
+        // with setSinkId: pinned sinks are not re-routed by the browser, and
+        // Firefox leaves the audio elements silent when a pinned sink goes
+        // away (e.g. a Bluetooth headset switching profile when its
+        // microphone is opened). We can't know which physical device the
+        // browser default resolves to, so the entry carries no name.
         if (available.size && !available.has("") && !available.has("default"))
-          available.set("", {
-            type: "default",
-            name: availableRaw[0]?.label || null,
-          });
+          available = new Map<string, AudioOutputDeviceLabel>([
+            ["", { type: "default", name: null }],
+            ...available,
+          ]);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const isSafari = !!(window as any).GestureEvent; // non standard api only found on Safari. https://developer.mozilla.org/en-US/docs/Web/API/GestureEvent#browser_compatibility
         if (isSafari) {
