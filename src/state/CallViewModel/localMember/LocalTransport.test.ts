@@ -41,6 +41,7 @@ import {
 import * as openIDSFU from "../../../livekit/openIDSFU";
 import { customLivekitUrl } from "../../../settings/settings";
 import { testJWTToken } from "../../../utils/test-fixtures";
+import { MatrixRTCMode } from "../../../config/ConfigOptions";
 
 describe("LocalTransport", () => {
   const openIdResponse: openIDSFU.SFUConfig = {
@@ -67,7 +68,7 @@ describe("LocalTransport", () => {
         getDeviceId: vi.fn(),
       },
       ownMembershipIdentity: ownMemberMock,
-      forceJwtEndpoint: JwtEndpointVersion.Legacy,
+      matrixRTCMode: MatrixRTCMode.Compatibility,
       delayId$: constant("delay_id_mock"),
     });
     await flushPromises();
@@ -108,7 +109,7 @@ describe("LocalTransport", () => {
         getDeviceId: vi.fn(),
       },
       ownMembershipIdentity: ownMemberMock,
-      forceJwtEndpoint: JwtEndpointVersion.Legacy,
+      matrixRTCMode: MatrixRTCMode.Compatibility,
       delayId$: constant("delay_id_mock"),
     });
     active$.subscribe(
@@ -150,7 +151,7 @@ describe("LocalTransport", () => {
         baseUrl: "https://example.org",
       },
       ownMembershipIdentity: ownMemberMock,
-      forceJwtEndpoint: JwtEndpointVersion.Legacy,
+      matrixRTCMode: MatrixRTCMode.Compatibility,
       delayId$: constant("delay_id_mock"),
     });
 
@@ -194,7 +195,7 @@ describe("LocalTransport", () => {
         ownMembershipIdentity: ownMemberMock,
         scope: testScope(),
         roomId: "!example_room_id",
-        forceJwtEndpoint: JwtEndpointVersion.Legacy,
+        matrixRTCMode: MatrixRTCMode.Compatibility,
         delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {
@@ -306,7 +307,7 @@ describe("LocalTransport", () => {
         scope: testScope(),
         ownMembershipIdentity: ownMemberMock,
         roomId: "!example_room_id",
-        forceJwtEndpoint: JwtEndpointVersion.Legacy,
+        matrixRTCMode: MatrixRTCMode.Compatibility,
         delayId$: constant(null),
         memberships$: constant(new Epoch<CallMembership[]>([])),
         client: {

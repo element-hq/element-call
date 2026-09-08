@@ -135,7 +135,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         encryptionSystem: props.e2eeSystem,
         autoLeaveWhenOthersLeft,
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
-        matrixRTCMode$: matrixRTCModeSetting.value$,
+        // We merely sample the current mode here, so the user would need to
+        // manually rejoin to switch to a different one.
+        matrixRTCMode: matrixRTCModeSetting.value$.value,
       },
       reactionsReader.raisedHands$,
       reactionsReader.reactions$,
