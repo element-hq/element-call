@@ -64,12 +64,6 @@ export interface ElementCallHostBridge {
    * Defaults to true.
    */
   readonly supportsReactions?: boolean;
-  /**
-   * Fetches media on Element Call's behalf, for hosts that do not want it
-   * touching the homeserver's media endpoints itself. Absent, Element Call
-   * fetches media with the client it was given.
-   */
-  downloadMedia?(mxcUri: string): Promise<Blob>;
 }
 
 /**
@@ -164,13 +158,9 @@ export function useComponentHostBridge(
           ? undefined
           : async (): Promise<void> => await close();
       },
-      get downloadMedia() {
-        const downloadMedia = latest.current.downloadMedia;
-        return downloadMedia === undefined
-          ? undefined
-          : async (mxcUri: string): Promise<Blob> =>
-              await downloadMedia(mxcUri);
-      },
+      // Not offered to a component host: the client it hands over holds the
+      // credentials to fetch media itself. A widget's client does not, which
+      // is what the internal bridge's `downloadMedia` is for.
       get supportsReactions(): boolean {
         return latest.current.supportsReactions ?? true;
       },
