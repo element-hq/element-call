@@ -248,7 +248,8 @@ The component speaks every language the app does. English is bundled in; the
 other locales are split into chunks the host's bundler loads the first time
 they are needed. It starts in the browser's language, and follows the host's
 own language setting through the `language` prop (`supportedLanguages` lists
-the tags it accepts).
+the tags it accepts). The `theme` prop works the same way for `light` and
+`dark`; both can change while a call is running without disturbing it.
 
 The package is not published yet. A host installs it as a git dependency on the
 `component` directory of this repository,

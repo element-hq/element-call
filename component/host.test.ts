@@ -19,7 +19,7 @@ describe("useComponentHostBridge", () => {
   test("keeps one identity while the host supplies new objects", () => {
     const { result, rerender } = renderHook(
       ({ supplied }: { supplied: ElementCallHostBridge }) =>
-        useComponentHostBridge(supplied, undefined),
+        useComponentHostBridge(supplied, undefined, undefined),
       { initialProps: { supplied: {} } },
     );
     const first = result.current;
@@ -32,7 +32,7 @@ describe("useComponentHostBridge", () => {
     const after = vi.fn().mockResolvedValue(undefined);
     const { result, rerender } = renderHook(
       ({ supplied }: { supplied: ElementCallHostBridge }) =>
-        useComponentHostBridge(supplied, undefined),
+        useComponentHostBridge(supplied, undefined, undefined),
       { initialProps: { supplied: { notifyJoined: before } } },
     );
     rerender({ supplied: { notifyJoined: after } });
@@ -44,7 +44,7 @@ describe("useComponentHostBridge", () => {
 
   test("is quiet about what the host did not implement", async () => {
     const { result } = renderHook(() =>
-      useComponentHostBridge(undefined, undefined),
+      useComponentHostBridge(undefined, undefined, undefined),
     );
     await expect(result.current.contentLoaded()).resolves.toBeUndefined();
     await expect(
@@ -59,7 +59,7 @@ describe("useComponentHostBridge", () => {
   test("only has a close when the host has one, since that is a signal", () => {
     const { result, rerender } = renderHook(
       ({ supplied }: { supplied: ElementCallHostBridge }) =>
-        useComponentHostBridge(supplied, undefined),
+        useComponentHostBridge(supplied, undefined, undefined),
       { initialProps: { supplied: {} } },
     );
     expect(result.current.close).toBeUndefined();
@@ -71,7 +71,7 @@ describe("useComponentHostBridge", () => {
 
   test("never offers profile changes, since the account is the host's", () => {
     const { result } = renderHook(() =>
-      useComponentHostBridge(undefined, undefined),
+      useComponentHostBridge(undefined, undefined, undefined),
     );
     expect(result.current.supportsProfileChanges).toBe(false);
   });
@@ -80,7 +80,7 @@ describe("useComponentHostBridge", () => {
     test("delivers a request to what is listening and resolves on its reply", async () => {
       const ref = createRef<ElementCallHandle>();
       const { result } = renderHook(() =>
-        useComponentHostBridge(undefined, ref),
+        useComponentHostBridge(undefined, ref, undefined),
       );
 
       const received = vi.fn();
@@ -97,26 +97,50 @@ describe("useComponentHostBridge", () => {
 
     test("refuses a request nothing in Element Call is listening for", async () => {
       const ref = createRef<ElementCallHandle>();
-      renderHook(() => useComponentHostBridge(undefined, ref));
+      renderHook(() => useComponentHostBridge(undefined, ref, undefined));
 
       await expect(ref.current!.hangUp()).rejects.toThrow(
         "Nothing in Element Call can hang up right now",
       );
     });
+  });
 
-    test("passes the theme name through", async () => {
-      const ref = createRef<ElementCallHandle>();
+  describe("the theme", () => {
+    test("reaches a subscriber that arrives after it was set", () => {
       const { result } = renderHook(() =>
-        useComponentHostBridge(undefined, ref),
+        useComponentHostBridge(undefined, undefined, "light"),
       );
       const names: (string | undefined)[] = [];
-      result.current.themeChange$.subscribe(({ data, reply }) => {
-        names.push(data.name);
-        reply();
-      });
-
-      await ref.current!.setTheme("light");
+      result.current.themeChange$.subscribe(({ data }) =>
+        names.push(data.name),
+      );
       expect(names).toEqual(["light"]);
+    });
+
+    test("follows the prop", () => {
+      const { result, rerender } = renderHook(
+        ({ theme }: { theme: string | undefined }) =>
+          useComponentHostBridge(undefined, undefined, theme),
+        { initialProps: { theme: "light" } },
+      );
+      const names: (string | undefined)[] = [];
+      result.current.themeChange$.subscribe(({ data }) =>
+        names.push(data.name),
+      );
+
+      rerender({ theme: "dark" });
+      expect(names).toEqual(["light", "dark"]);
+    });
+
+    test("says nothing when the host leaves the theme to Element Call", () => {
+      const { result } = renderHook(() =>
+        useComponentHostBridge(undefined, undefined, undefined),
+      );
+      const names: (string | undefined)[] = [];
+      result.current.themeChange$.subscribe(({ data }) =>
+        names.push(data.name),
+      );
+      expect(names).toEqual([]);
     });
   });
 });

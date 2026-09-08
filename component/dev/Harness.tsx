@@ -94,9 +94,10 @@ interface LogEntry {
 const Pane: FC<{
   session: Session;
   roomId: string;
+  theme: string | undefined;
   language: string | undefined;
   log: (pane: string, message: string) => void;
-}> = ({ session, roomId, language, log }): ReactNode => {
+}> = ({ session, roomId, theme, language, log }): ReactNode => {
   const [mounted, setMounted] = useState(true);
 
   const bridge = useMemo(
@@ -141,20 +142,6 @@ const Pane: FC<{
         </button>
         <button
           onClick={(): void =>
-            ask("setTheme(light)", async (h) => await h.setTheme("light"))
-          }
-        >
-          Light
-        </button>
-        <button
-          onClick={(): void =>
-            ask("setTheme(dark)", async (h) => await h.setTheme("dark"))
-          }
-        >
-          Dark
-        </button>
-        <button
-          onClick={(): void =>
             ask(
               "setDeviceMute(audio: false)",
               async (h) => await h.setDeviceMute({ audio_enabled: false }),
@@ -178,6 +165,7 @@ const Pane: FC<{
             client={session.client}
             roomId={roomId}
             hostBridge={bridge}
+            theme={theme}
             language={language}
           />
         )}
@@ -235,6 +223,7 @@ export const Harness: FC = (): ReactNode => {
   // The host's language setting, which Element Call follows. Undefined means
   // the host has none and Element Call uses the browser's.
   const [language, setLanguage] = useState<string | undefined>(undefined);
+  const [theme, setTheme] = useState<string | undefined>(undefined);
 
   const log = useCallback((pane: string, message: string): void => {
     setEntries((entries) =>
@@ -334,6 +323,17 @@ export const Harness: FC = (): ReactNode => {
           Open a host dialog
         </button>
         <label>
+          Theme{" "}
+          <select
+            value={theme ?? ""}
+            onChange={(e): void => setTheme(e.target.value || undefined)}
+          >
+            <option value="">Element Call&apos;s choice</option>
+            <option value="light">light</option>
+            <option value="dark">dark</option>
+          </select>
+        </label>
+        <label>
           Language{" "}
           <select
             value={language ?? ""}
@@ -356,6 +356,7 @@ export const Harness: FC = (): ReactNode => {
               key={session.label}
               session={session}
               roomId={state.roomId}
+              theme={theme}
               language={language}
               log={log}
             />

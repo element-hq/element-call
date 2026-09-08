@@ -111,14 +111,15 @@ export {
  * takes the default that {@link ElementCallProps.intent} implies.
  *
  * This is the behaviour a widget can be configured with through its URL, plus
- * the two facts about the call a host has a say in: the theme to start in and
- * the background. The rest of what a widget's URL carries — who the user is,
- * how to reach the homeserver, where to report analytics, the shared secret of
- * a room that is encrypted with one — a component host supplies by other
- * routes, or not at all.
+ * the one fact about the call a host has a say in here, the background. The
+ * rest of what a widget's URL carries — who the user is, how to reach the
+ * homeserver, where to report analytics, the shared secret of a room that is
+ * encrypted with one — a component host supplies by other routes, or not at
+ * all; and what can change while the call is running, the theme and the
+ * language, is a prop of its own.
  */
 export type ElementCallConfiguration = Partial<UrlConfiguration> &
-  Partial<Pick<UrlProperties, "theme" | "background">>;
+  Partial<Pick<UrlProperties, "background">>;
 
 export interface ElementCallProps {
   /**
@@ -154,10 +155,15 @@ export interface ElementCallProps {
    */
   hostBridge?: ElementCallHostBridge;
   /**
-   * What the host tells Element Call: to change theme, to hang up, to mute.
-   * Available once the component has rendered.
+   * What the host tells Element Call: to hang up, to mute, to join. Available
+   * once the component has rendered.
    */
   ref?: Ref<ElementCallHandle>;
+  /**
+   * The theme to show Element Call in, `light` or `dark`. Left out, Element
+   * Call picks. Changes take effect at once, and cost nothing else.
+   */
+  theme?: string;
   /**
    * The language to show Element Call in, as a BCP 47 tag: one of
    * {@link supportedLanguages}, or something that falls back to one (`de-AT`
@@ -229,9 +235,10 @@ export const ElementCall: FC<ElementCallProps> = ({
   config,
   hostBridge: suppliedHostBridge,
   ref,
+  theme,
   language,
 }): ReactNode => {
-  const hostBridge = useComponentHostBridge(suppliedHostBridge, ref);
+  const hostBridge = useComponentHostBridge(suppliedHostBridge, ref, theme);
 
   useEffect(() => {
     if (language !== undefined)

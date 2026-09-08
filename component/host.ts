@@ -17,8 +17,8 @@ Please see LICENSE in the repository root for full details.
  * call `play()` on a video element. This module adapts the one to the other.
  */
 
-import { type Ref, useImperativeHandle } from "react";
-import { Subject } from "rxjs";
+import { type Ref, useEffect, useImperativeHandle } from "react";
+import { ReplaySubject, Subject } from "rxjs";
 
 import {
   type DeviceMuteRequest,
@@ -79,8 +79,6 @@ export interface ElementCallHostBridge {
  * when there is no call, say.
  */
 export interface ElementCallHandle {
-  /** Switches Element Call to the named theme, `light` or `dark`. */
-  setTheme(name: string): Promise<void>;
   /**
    * Joins the call, when Element Call was configured to `preload` and is
    * waiting to be told to. Says which devices to join with.
@@ -119,15 +117,27 @@ async function request<Data, Reply>(
 export function useComponentHostBridge(
   supplied: ElementCallHostBridge | undefined,
   ref: Ref<ElementCallHandle> | undefined,
+  /** The theme the host wants, or undefined to leave it to Element Call. */
+  theme: string | undefined,
 ): HostBridge {
   const latest = useLatest(supplied ?? {});
 
   const requests = useInitial(() => ({
-    themeChange$: new Subject<HostRequest<{ name?: string }>>(),
+    // The theme is state, not an event: a `theme` prop rather than a request
+    // on the handle. It travels this channel because that is how the rest of
+    // Element Call hears about a host's theme, and replays so that whatever
+    // subscribes after the host has set it — everything, on first render —
+    // still hears the current one.
+    themeChange$: new ReplaySubject<HostRequest<{ name?: string }>>(1),
     join$: new Subject<HostRequest<JoinCallData>>(),
     hangUp$: new Subject<HostRequest<Record<string, never>>>(),
     deviceMute$: new Subject<HostRequest<DeviceMuteRequest, DeviceMuteState>>(),
   }));
+
+  useEffect(() => {
+    if (theme !== undefined)
+      requests.themeChange$.next({ data: { name: theme }, reply: () => {} });
+  }, [requests, theme]);
 
   const bridge = useInitial(
     (): HostBridge => ({
@@ -175,8 +185,6 @@ export function useComponentHostBridge(
   useImperativeHandle(
     ref,
     (): ElementCallHandle => ({
-      setTheme: async (name) =>
-        await request(requests.themeChange$, "change theme", { name }),
       join: async (devices) =>
         await request(requests.join$, "join a call", devices),
       hangUp: async () => await request(requests.hangUp$, "hang up", {}),
