@@ -17,8 +17,8 @@ they are meant to cover the page — resolve against the viewport and appear in
 the middle of the host's window rather than in the middle of the call.
 
 The clipping cuts both ways: a menu near the edge of a small container is
-trimmed rather than overflowing into the host. That is the trade being an
-embedded component makes. */
+trimmed rather than overflowing into the host. That is the trade being a
+component rather than a page makes. */
 .root {
   display: flex;
   flex-direction: column;

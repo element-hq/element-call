@@ -229,7 +229,7 @@ export interface CallViewModelOptions {
  *
  * Callers share this rather than picking the fields out themselves. The
  * defaults on {@link CallViewModelOptions} describe a standalone Element Call,
- * so a widget or embedded caller that misses one does not get an error — it
+ * so a widget or component caller that misses one does not get an error — it
  * quietly gets standalone behaviour instead.
  *
  * Note `autoLeaveWhenOthersLeft` and `waitForCallPickup` are deliberately not

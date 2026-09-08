@@ -51,7 +51,7 @@ export interface HostRequest<Data, Reply = void> {
  * Element Call's view of the application hosting it.
  *
  * Element Call can run as its own page, as a widget inside a Matrix client, or
- * embedded directly into one. Only the last two give it a host, and each of
+ * as a component inside one. Only the last two give it a host, and each of
  * them reaches it by a different route — so everything Element Call needs from
  * whatever is hosting it goes through this interface, rather than being
  * expressed in terms of the widget API.
@@ -101,8 +101,8 @@ export interface HostBridge {
   /**
    * Whether Element Call may offer to change the user's profile — their
    * display name and avatar. Only when the account is Element Call's own,
-   * which is to say standalone: a widget's host and an application embedding
-   * Element Call both signed the user in themselves, so the profile is theirs
+   * which is to say standalone: a widget's host and an application hosting
+   * the component both signed the user in themselves, so the profile is theirs
    * to manage and Element Call must not offer to edit it.
    */
   readonly supportsProfileChanges: boolean;

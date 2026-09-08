@@ -83,7 +83,7 @@ interface LogEntry {
 }
 
 /**
- * One embedded Element Call, with the controls a host would have over it: the
+ * One Element Call component, with the controls a host would have over it: the
  * requests it can make of Element Call, and the ability to take it off screen
  * altogether.
  */
@@ -198,9 +198,9 @@ const HostChrome: FC = (): ReactNode => (
 );
 
 /**
- * A dialog of the host's own, over the top of the calls. Element Call embedded
- * in a host has to sit underneath this — being unable to is one of the reasons
- * for embedding it rather than putting it in an iframe.
+ * A dialog of the host's own, over the top of the calls. Element Call as a
+ * component has to sit underneath this — being unable to is one of the reasons
+ * for a component rather than an iframe.
  */
 const HostDialog: FC<{ onClose: () => void }> = ({ onClose }): ReactNode => (
   <div className={styles.dialogScrim}>
@@ -213,7 +213,7 @@ const HostDialog: FC<{ onClose: () => void }> = ({ onClose }): ReactNode => (
 );
 
 /**
- * Stands in for a host application embedding Element Call: it owns the Matrix
+ * Stands in for a host application using the Element Call component: it owns the Matrix
  * clients, the page and the space each call is given, and reaches Element Call
  * only through the component's public interface.
  *
@@ -299,8 +299,8 @@ export const Harness: FC = (): ReactNode => {
       <form className={styles.credentials} onSubmit={start}>
         <h1>Element Call component harness</h1>
         <p>
-          Signs in twice and shows Element Call embedded twice, in a page that
-          is not Element Call&apos;s own.
+          Signs in twice and shows the Element Call component twice, in a page
+          that is not Element Call&apos;s own.
         </p>
         {field("homeserver", "Homeserver")}
         {field("username", "Username")}

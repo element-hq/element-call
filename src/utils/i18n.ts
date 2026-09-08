@@ -13,10 +13,10 @@ export const i18nKey = (key: string): string => key;
 /**
  * Element Call's own i18next instance.
  *
- * We deliberately do not use the global i18next singleton: when Element Call is
- * embedded in a host application (rather than running as its own page), that
- * singleton belongs to the host, and configuring it would clobber the host's
- * translations.
+ * We deliberately do not use the global i18next singleton: when Element Call
+ * runs as a component inside a host application (rather than as its own page),
+ * that singleton belongs to the host, and configuring it would clobber the
+ * host's translations.
  *
  * It is configured by `Initializer.initBeforeReact` and made available to
  * components via `<I18nextProvider>`; tests and stories configure it directly.

@@ -41,7 +41,7 @@ const IS_ROOT = `:where(${ROOT_SELECTOR})`;
  *
  * As a page of its own, Element Call can style the document: normalize.css and
  * Compound speak of `html`, `body` and bare elements, and the design tokens are
- * declared on `:root`. Embedded in a host, all of that would land on the host's
+ * declared on `:root`. As a component, all of that would land on the host's
  * document too. This rewrites every selector so that it matches only the root
  * or its descendants:
  *

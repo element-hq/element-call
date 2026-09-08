@@ -12,9 +12,9 @@ import { createContext, use } from "react";
  *
  * Element Call decorates this element with the theme, layout and background
  * attributes its stylesheets key off, and portals its modals into it. When
- * Element Call owns the page this is simply the document body; the intent is
- * that when embedded in a host application it becomes the container the host
- * mounted it into, so that Element Call does not reach outside its own subtree.
+ * Element Call owns the page this is simply the document body; as a component
+ * it is the container the host mounted it into, so that Element Call does not
+ * reach outside its own subtree.
  *
  * The stylesheets find this element by its `data-element-call-root` attribute,
  * which {@link useTheme} sets along with the platform and theme, so they no

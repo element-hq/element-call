@@ -58,7 +58,7 @@ import { HostBridgeProvider } from "../src/HostBridge";
 import { RootElementProvider } from "../src/RootElementContext";
 import {
   configurationForIntent,
-  hostedProperties,
+  componentProperties,
   type UrlParams,
   UrlParamsProvider,
   UserIntent,
@@ -209,7 +209,7 @@ export const ElementCall: FC<ElementCallProps> = ({
   const stableConfig = useStableValue(config);
   const params = useMemo(
     (): UrlParams => ({
-      ...hostedProperties,
+      ...componentProperties,
       roomId,
       ...configurationForIntent(intent),
       ...stableConfig,
@@ -249,8 +249,8 @@ export const ElementCall: FC<ElementCallProps> = ({
     <I18nextProvider i18n={i18n}>
       <HostBridgeProvider value={hostBridge}>
         <UrlParamsProvider value={params}>
-          {/* Element Call's own navigation stays in memory, so that being
-          embedded cannot disturb the host's URL. */}
+          {/* Element Call's own navigation stays in memory, so that the
+          component cannot disturb the host's URL. */}
           <MemoryRouter>
             <div ref={setContainer} className={styles.root}>
               {container !== null &&

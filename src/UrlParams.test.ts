@@ -17,7 +17,7 @@ import {
   computeUrlParams,
   HeaderStyle,
   getUrlParams,
-  hostedProperties,
+  componentProperties,
   UserIntent,
 } from "../src/UrlParams";
 import { mockConfig } from "./utils/test";
@@ -433,7 +433,7 @@ describe("UrlParams", () => {
   // has no URL of its own for any of this to come from
   describe("hosted defaults", () => {
     it("assume nothing about a session or a page", () => {
-      expect(hostedProperties).toMatchObject({
+      expect(componentProperties).toMatchObject({
         // The host is not a widget host, and supplies the client itself, so
         // none of the widget or session plumbing applies
         isWidget: false,

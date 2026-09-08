@@ -8,9 +8,9 @@ Please see LICENSE in the repository root for full details.
 /* The styles Element Call needs wherever it is shown: the design tokens, fonts
 and element defaults its own stylesheets build on top of.
 
-Split out from index.css so that Element Call embedded in a host application
-can have these without also being given the standalone page's layout, which
-would style the host's own document. What remains here still speaks of the
+Split out from index.css so that Element Call as a component can have these
+without also being given the standalone page's layout, which would style the
+host's own document. What remains here still speaks of the
 document — normalize.css and the typography below use bare element selectors,
 and the custom properties are declared on `:root` — which is right for the
 page, and is why the component build rewrites it: there every selector is

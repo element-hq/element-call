@@ -31,8 +31,8 @@ import { useInitial } from "../src/useInitial";
 import { useLatest } from "../src/useLatest";
 
 /**
- * What Element Call tells the application embedding it. Everything is
- * optional: a host implements what it wants to hear about.
+ * What Element Call tells the application hosting it as a component.
+ * Everything is optional: a host implements what it wants to hear about.
  *
  * Compared by nothing — Element Call always calls whichever one it was most
  * recently given, so this may be written inline.

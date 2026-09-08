@@ -36,7 +36,7 @@ export class Config {
    *
    * Does nothing if the config has already been initialized, including by
    * {@link Config.initWith}, so that the regular startup path can run unchanged
-   * when an embedder has already supplied the config.
+   * when a component host has already supplied the config.
    */
   public static async init(): Promise<void> {
     if (!Config.internalInstance?.initPromise) {
@@ -66,16 +66,15 @@ export class Config {
   }
 
   /**
-   * Initializes the config from an object supplied by the embedder, instead of
-   * fetching `config.json`.
+   * Initializes the config from an object supplied by the application hosting
+   * the component, instead of fetching `config.json`.
    *
    * {@link Config.init} derives the location of `config.json` from
    * `window.location`, which only makes sense while Element Call owns the page.
-   * When it is embedded in a host application the host owns the configuration
-   * and passes it in here.
+   * As a component, the host owns the configuration and passes it in here.
    *
    * The config goes through the same validation and defaulting as a fetched
-   * one, so that an injected config behaves identically to a hosted one.
+   * one, so that a supplied config behaves identically to a fetched one.
    *
    * Replaces any config initialized earlier.
    */

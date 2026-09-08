@@ -446,7 +446,8 @@ export function configurationForIntent(intent: UserIntent): UrlConfiguration {
 }
 
 /**
- * The {@link UrlProperties} for Element Call embedded in a host application.
+ * The {@link UrlProperties} for Element Call running as a component inside a
+ * host application.
  *
  * It has no URL of its own to read these from, and it does not need most of
  * them: the widget plumbing does not apply, the Matrix client and the analytics
@@ -454,7 +455,7 @@ export function configurationForIntent(intent: UserIntent): UrlConfiguration {
  * the host's to state through the component's props or Element Call's own
  * default.
  */
-export const hostedProperties: UrlProperties = {
+export const componentProperties: UrlProperties = {
   widgetId: null,
   parentUrl: null,
   isWidget: false,
@@ -594,8 +595,9 @@ const UrlParamsContext = createContext<UrlParams | null>(null);
 /**
  * Supplies the parameters Element Call should run with.
  *
- * The standalone and widget builds derive these from the URL, but an embedder
- * has no URL of its own to put them in, so it provides them directly instead.
+ * The standalone and widget builds derive these from the URL, but the
+ * component has no URL of its own to read them from, so its host provides them
+ * directly instead.
  *
  * TODO: `UrlParams` is no longer an accurate name now that these need not come
  * from a URL. Renaming it touches every consumer, so it is left until the rest
@@ -615,8 +617,8 @@ export const useUrlParams = (): UrlParams =>
 /**
  * Derives {@link UrlParams} from the current router location.
  *
- * Only meaningful when Element Call owns the URL; embedders provide the params
- * directly through {@link UrlParamsProvider}.
+ * Only meaningful when Element Call owns the URL; the component is given its
+ * params directly through {@link UrlParamsProvider}.
  */
 export const useUrlParamsFromLocation = (): UrlParams => {
   const { search, hash } = useLocation();

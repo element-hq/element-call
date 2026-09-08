@@ -136,9 +136,9 @@ interface Props {
   /**
    * The client Element Call should use.
    *
-   * When a host embeds Element Call it already has a client, and owns the
-   * user's session; supplying it here means Element Call neither authenticates
-   * anyone nor manages their session. Left out, Element Call finds a client
+   * An application hosting Element Call as a component already has a client,
+   * and owns the user's session; supplying it here means Element Call neither
+   * authenticates anyone nor manages their session. Left out, Element Call finds a client
    * itself — from the widget API, or by restoring or creating a session of its
    * own.
    */
