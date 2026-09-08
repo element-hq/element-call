@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-// TODO-MULTI-SFU: Restore or discard these tests. The role of GroupCallView has
+// TODO-MULTI-SFU: Restore or discard these tests. The role of CallView has
 // changed (it no longer manages the connection to the same extent), so they may
 // need extra work to adapt.
 
@@ -49,7 +49,7 @@ import {
   mockRtcMembership,
   MockRTCSession,
 } from "../utils/test";
-import { GroupCallView } from "./GroupCallView";
+import { CallView } from "./CallView";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary";
 import {
   type HostBridge,
@@ -60,7 +60,6 @@ import { MatrixRTCTransportMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { constant } from "../state/Behavior";
-import { type MuteStates } from "../state/MuteStates.ts";
 
 vi.mock("../soundUtils");
 vi.mock("../useAudioContext");
@@ -119,7 +118,7 @@ beforeEach(() => {
     playSoundLooping: vi.fn(),
     soundDuration: {},
   });
-  // A trivial implementation of Active call to ensure we are testing GroupCallView exclusively here.
+  // A trivial implementation of Active call to ensure we are testing CallView exclusively here.
   (ActiveCall as MockedFunction<typeof ActiveCall>).mockImplementation(
     ({ onLeft: onLeave }) => {
       return (
@@ -135,7 +134,7 @@ beforeEach(() => {
   );
 });
 
-function createGroupCallView(
+function createCallView(
   hostBridge: HostBridge,
   joined = true,
   options: {
@@ -172,23 +171,15 @@ function createGroupCallView(
     constant([localRtcMember]),
   );
   rtcSession.joined = joined;
-  const muteState = {
-    audio: { enabled: false },
-    video: { enabled: false },
-    // TODO-MULTI-SFU: This cast isn't valid, it's likely the cause of some current test failures
-  } as unknown as MuteStates;
-  const groupCallView = (
-    <GroupCallView
+  const callView = (
+    <CallView
       client={client}
       isPasswordlessUser={false}
       confineToRoom={false}
       preload={false}
-      skipLobby={false}
+      // Straight into the (mocked) call, past the lobby
+      skipLobby
       rtcSession={rtcSession.asMockedSession()}
-      muteStates={muteState}
-      // TODO-MULTI-SFU: Make joined and setJoined work
-      joined={true}
-      setJoined={function (value: boolean): void {}}
     />
   );
   const { getByText } = render(
@@ -199,10 +190,10 @@ function createGroupCallView(
             <ProcessorProvider>
               {options.withErrorBoundary ? (
                 <GroupCallErrorBoundary recoveryActionHandler={vi.fn()}>
-                  {groupCallView}
+                  {callView}
                 </GroupCallErrorBoundary>
               ) : (
-                groupCallView
+                callView
               )}
             </ProcessorProvider>
           </MediaDevicesContext>
@@ -216,9 +207,9 @@ function createGroupCallView(
   };
 }
 
-test.skip("GroupCallView plays a leave sound asynchronously in SPA mode", async () => {
+test.skip("CallView plays a leave sound asynchronously in SPA mode", async () => {
   const user = userEvent.setup();
-  const { getByText, rtcSession } = createGroupCallView(nullHostBridge);
+  const { getByText, rtcSession } = createCallView(nullHostBridge);
   const leaveButton = getByText("Leave");
   await user.click(leaveButton);
   expect(playSound).toHaveBeenCalledWith("left");
@@ -233,7 +224,7 @@ test.skip("GroupCallView plays a leave sound asynchronously in SPA mode", async 
   await waitFor(() => expect(leaveRTCSession).toHaveResolved());
 });
 
-test.skip("GroupCallView plays a leave sound synchronously in widget mode", async () => {
+test.skip("CallView plays a leave sound synchronously in widget mode", async () => {
   const user = userEvent.setup();
   const hostBridge: HostBridge = { ...nullHostBridge, close: vi.fn() };
   let resolvePlaySound: () => void;
@@ -248,7 +239,7 @@ test.skip("GroupCallView plays a leave sound synchronously in widget mode", asyn
     soundDuration: {},
   });
 
-  const { getByText, rtcSession } = createGroupCallView(hostBridge);
+  const { getByText, rtcSession } = createCallView(hostBridge);
   const leaveButton = getByText("Leave");
   await user.click(leaveButton);
   await flushPromises();
@@ -281,7 +272,7 @@ test("Should ask the host to close when all other left and play a sound", async 
     soundDuration: {},
   });
 
-  const { getByText } = createGroupCallView(hostBridge);
+  const { getByText } = createCallView(hostBridge);
   const leaveButton = getByText("SimulateOtherLeft");
   await user.click(leaveButton);
   await flushPromises();
@@ -303,7 +294,7 @@ test("Should not ask the host to close when auto leave due to error", async () =
     close,
   };
 
-  const { getByText } = createGroupCallView(hostBridge);
+  const { getByText } = createCallView(hostBridge);
   const leaveButton = getByText("SimulateErrorLeft");
   await user.click(leaveButton);
   await flushPromises();
@@ -315,7 +306,7 @@ test("Should not ask the host to close when auto leave due to error", async () =
   expect(close).not.toHaveBeenCalled();
 });
 
-test.skip("GroupCallView leaves the session when an error occurs", async () => {
+test.skip("CallView leaves the session when an error occurs", async () => {
   (ActiveCall as MockedFunction<typeof ActiveCall>).mockImplementation(() => {
     const [error, setError] = useState<Error | null>(null);
     if (error !== null) throw error;
@@ -326,7 +317,7 @@ test.skip("GroupCallView leaves the session when an error occurs", async () => {
     );
   });
   const user = userEvent.setup();
-  const { rtcSession } = createGroupCallView(nullHostBridge);
+  const { rtcSession } = createCallView(nullHostBridge);
   await user.click(screen.getByRole("button", { name: "Panic!" }));
   screen.getByText("Something went wrong");
   expect(leaveRTCSession).toHaveBeenCalledWith(
@@ -336,14 +327,14 @@ test.skip("GroupCallView leaves the session when an error occurs", async () => {
   );
 });
 
-test.skip("GroupCallView shows errors that occur during joining", async () => {
+test.skip("CallView shows errors that occur during joining", async () => {
   const user = userEvent.setup();
   // This should not mock this error that deep. it should only mock the CallViewModel.
   enterRTCSession.mockRejectedValue(new MatrixRTCTransportMissingError(""));
   onTestFinished(() => {
     enterRTCSession.mockReset();
   });
-  createGroupCallView(nullHostBridge, false);
+  createCallView(nullHostBridge, false);
   await user.click(screen.getByRole("button", { name: "Join call" }));
   screen.getByText("Call is not supported");
 });
@@ -362,7 +353,7 @@ test("translates wrapped UnsupportedStickyEventsEndpointError to the StickyEvent
     { cause: stickyError },
   );
 
-  const { rtcSession } = createGroupCallView(nullHostBridge, true, {
+  const { rtcSession } = createCallView(nullHostBridge, true, {
     withErrorBoundary: true,
   });
 
@@ -374,7 +365,7 @@ test("translates wrapped UnsupportedStickyEventsEndpointError to the StickyEvent
 });
 
 test("falls back to ConnectionLostError for unrecognised membership manager errors", async () => {
-  const { rtcSession } = createGroupCallView(nullHostBridge, true, {
+  const { rtcSession } = createCallView(nullHostBridge, true, {
     withErrorBoundary: true,
   });
 
@@ -390,7 +381,7 @@ test("falls back to ConnectionLostError for unrecognised membership manager erro
 
 test("user can reconnect after a membership manager error", async () => {
   const user = userEvent.setup();
-  const { rtcSession } = createGroupCallView(nullHostBridge, true);
+  const { rtcSession } = createCallView(nullHostBridge, true);
   await act(() =>
     rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, undefined),
   );

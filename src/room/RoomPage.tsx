@@ -15,7 +15,7 @@ import { UnknownSolidIcon } from "@vector-im/compound-design-tokens/assets/web/i
 import { useClientLegacy } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
-import { ElementCallView } from "../ElementCallView";
+import { CallView } from "./CallView";
 import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { HomePage } from "../home/HomePage";
@@ -102,7 +102,7 @@ export const RoomPage: FC = (): ReactNode => {
     switch (groupCallState.kind) {
       case "loaded":
         return (
-          <ElementCallView
+          <CallView
             client={client!}
             rtcSession={groupCallState.rtcSession}
             isPasswordlessUser={passwordlessUser}

@@ -71,6 +71,7 @@ import { useAppBarTitle } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
 import { useRootElement } from "../RootElementContext.ts";
 import { useHostBridge } from "../HostBridge.ts";
+import { useMuteStates } from "../state/useMuteStates.ts";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -85,18 +86,67 @@ declare global {
 }
 
 interface Props {
+  /** The client to place the call with. */
   client: MatrixClient;
-  isPasswordlessUser: boolean;
-  confineToRoom: boolean;
-  preload: UrlParams["preload"];
-  skipLobby: UrlParams["skipLobby"];
+  /** The call to join. */
   rtcSession: MatrixRTCSession;
+  /**
+   * Whether the user is signed in as a guest, and so should be offered the
+   * chance to create an account when the call ends.
+   */
+  isPasswordlessUser: boolean;
+  /** Whether to keep the user in this call rather than letting them navigate. */
+  confineToRoom: boolean;
+  /** Whether to wait for the host to ask us to join. */
+  preload: UrlParams["preload"];
+  /** Whether to enter the call directly, without showing the lobby first. */
+  skipLobby: UrlParams["skipLobby"];
+}
+
+/**
+ * A call, from start to finish.
+ *
+ * This owns the whole lifecycle of being in a call: the lobby, where the user
+ * checks their camera and microphone before joining; the call itself; and the
+ * screen shown once it has ended. Not every call has every stage — the lobby
+ * is skipped when the user is put straight into the call, or when the host
+ * wants to say when to join; and after the call there may be a post-call
+ * screen, a return to the lobby, or nothing, depending on whether the host
+ * decides what comes next. The view decides which stages apply from the
+ * parameters it was started with and from what the host bridge says.
+ *
+ * It owns nothing about how Element Call came to be showing a call: no
+ * routing, no authentication, no resolving of room aliases. Those belong to
+ * whatever is hosting it — the standalone app's own shell, or an application
+ * embedding Element Call as a component. Both render this.
+ */
+export const CallView: FC<Props> = (props): ReactNode => {
+  // Whether the user is in the call is the call's own business, not its host's.
+  // Held here rather than below so that it survives the mute state being
+  // rebuilt.
+  const [joined, setJoined] = useState(false);
+  const muteStates = useMuteStates();
+
+  if (muteStates === null) return null;
+
+  return (
+    <LoadedCallView
+      {...props}
+      joined={joined}
+      setJoined={setJoined}
+      muteStates={muteStates}
+    />
+  );
+};
+
+interface LoadedProps extends Props {
   joined: boolean;
   setJoined: (value: boolean) => void;
   muteStates: MuteStates;
 }
 
-export const GroupCallView: FC<Props> = ({
+/** {@link CallView}, once it has the mute state everything below needs. */
+const LoadedCallView: FC<LoadedProps> = ({
   client,
   isPasswordlessUser,
   confineToRoom,
@@ -136,9 +186,9 @@ export const GroupCallView: FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    logger.info("[Lifecycle] GroupCallView Component mounted");
+    logger.info("[Lifecycle] CallView Component mounted");
     return (): void => {
-      logger.info("[Lifecycle] GroupCallView Component unmounted");
+      logger.info("[Lifecycle] CallView Component unmounted");
     };
   }, []);
 

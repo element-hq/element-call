@@ -51,7 +51,7 @@ import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmen
 import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill.js";
 
 import EN from "../locales/en/app.json";
-import { ElementCallView } from "../src/ElementCallView";
+import { CallView } from "../src/room/CallView";
 import { ErrorPage } from "../src/FullScreenView";
 import { ClientProvider } from "../src/ClientContext";
 import { HostBridgeProvider } from "../src/HostBridge";
@@ -269,7 +269,7 @@ export const ElementCall: FC<ElementCallProps> = ({
                           <ClientProvider client={client}>
                             <MediaDevicesContext value={mediaDevices}>
                               <ProcessorProvider>
-                                <ElementCallView
+                                <CallView
                                   client={client}
                                   rtcSession={rtcSession}
                                   isPasswordlessUser={false}
