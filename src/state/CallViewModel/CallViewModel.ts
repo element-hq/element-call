@@ -49,7 +49,6 @@ import {
 import { type IWidgetApiRequest } from "matrix-widget-api";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { v4 as uuidv4 } from "uuid";
-import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 
 import {
   createToggle$,
@@ -500,16 +499,6 @@ export function createCallViewModel$(
             memberships$: memberships$,
             ownMembershipIdentity,
             client,
-            delayId$: scope.behavior(
-              (
-                fromEvent(
-                  matrixRTCSession,
-                  MembershipManagerEvent.DelayIdChanged,
-                  // The type of reemitted event includes the original emitted as the second arg.
-                ) as Observable<[string | undefined, IMembershipManager]>
-              ).pipe(map(([delayId]) => delayId ?? null)),
-              matrixRTCSession.delayId ?? null,
-            ),
             roomId: matrixRoom.roomId,
             forceJwtEndpoint:
               mode === MatrixRTCMode.Matrix_2_0
@@ -600,9 +589,20 @@ export function createCallViewModel$(
       );
     },
     connectionManager,
+    client,
     matrixRTCSession,
     localTransport$,
     roomId: matrixRoom.roomId,
+    ownMembershipIdentity,
+    delayId$: scope.behavior(
+      (
+        fromEvent(
+          matrixRTCSession,
+          MembershipManagerEvent.DelayIdChanged,
+        ) as Observable<[string | undefined]>
+      ).pipe(map(([delayId]) => delayId ?? null)),
+      matrixRTCSession.delayId ?? null,
+    ),
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
