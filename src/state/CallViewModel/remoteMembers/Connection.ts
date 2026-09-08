@@ -13,8 +13,14 @@ import {
 import {
   ConnectionError,
   ConnectionErrorReason,
+  type Participant,
   type RemoteParticipant,
+  type RemoteTrackPublication,
   type Room as LivekitRoom,
+  RoomEvent,
+  type SubscriptionError,
+  type Track,
+  type TrackPublication,
 } from "livekit-client";
 import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, map } from "rxjs";
@@ -164,10 +170,119 @@ export class Connection {
       // Only tracks remote participants
       connectedParticipantsObserver(this.livekitRoom),
     );
+    this.logRemoteTrackEvents();
 
     scope.onEnd(() => {
       this.logger.info(`Connection scope ended, stopping connection`);
       void this.stop();
+    });
+  }
+
+  /**
+   * Logs the lifecycle of remote participants and their tracks as seen by
+   * livekit-client, so that rageshakes show what a tile should have been
+   * rendering (published, subscribed, muted, paused) for each remote member.
+   */
+  private logRemoteTrackEvents(): void {
+    const room = this.livekitRoom;
+    const log = this.logger.getChild("[RemoteTracks]");
+    // The encryption flag matters: if the publisher encrypts but this client
+    // believes the track is unencrypted, the cryptor is bypassed and raw
+    // ciphertext reaches the decoder (audible as loud noise bursts).
+    const track = (pub: TrackPublication, p: Participant): string =>
+      `${pub.kind} ${pub.source} ${pub.trackSid} of ${p.identity} encrypted=${pub.isEncrypted}`;
+
+    const onParticipantConnected = (p: RemoteParticipant): void =>
+      log.info(`Participant connected: ${p.identity} (${p.sid})`);
+    const onParticipantDisconnected = (p: RemoteParticipant): void =>
+      log.info(`Participant disconnected: ${p.identity} (${p.sid})`);
+    const onTrackPublished = (
+      pub: RemoteTrackPublication,
+      p: RemoteParticipant,
+    ): void => log.info(`Published: ${track(pub, p)} muted=${pub.isMuted}`);
+    const onTrackUnpublished = (
+      pub: RemoteTrackPublication,
+      p: RemoteParticipant,
+    ): void => log.info(`Unpublished: ${track(pub, p)}`);
+    const onTrackSubscribed = (
+      _t: Track,
+      pub: RemoteTrackPublication,
+      p: RemoteParticipant,
+    ): void => log.info(`Subscribed: ${track(pub, p)} muted=${pub.isMuted}`);
+    const onTrackUnsubscribed = (
+      _t: Track,
+      pub: RemoteTrackPublication,
+      p: RemoteParticipant,
+    ): void => log.info(`Unsubscribed: ${track(pub, p)}`);
+    const onTrackSubscriptionFailed = (
+      trackSid: string,
+      p: RemoteParticipant,
+      reason?: SubscriptionError,
+    ): void =>
+      log.warn(
+        `Subscription failed: ${trackSid} of ${p.identity} reason=${reason}`,
+      );
+    // Mute events also fire for the local participant, which the Publisher
+    // already logs.
+    const onTrackMuted = (pub: TrackPublication, p: Participant): void => {
+      if (!p.isLocal) log.info(`Muted: ${track(pub, p)}`);
+    };
+    const onTrackUnmuted = (pub: TrackPublication, p: Participant): void => {
+      if (!p.isLocal) log.info(`Unmuted: ${track(pub, p)}`);
+    };
+    const onTrackStreamStateChanged = (
+      pub: RemoteTrackPublication,
+      state: Track.StreamState,
+      p: RemoteParticipant,
+    ): void => log.info(`Stream ${state}: ${track(pub, p)}`);
+    const onEncryptionStatusChanged = (
+      encrypted: boolean,
+      p?: Participant,
+    ): void =>
+      log.info(
+        `Encryption status of ${p?.identity ?? "unknown participant"}: encrypted=${encrypted}`,
+      );
+    // livekit-client throttles these per cryptor; they indicate frames being
+    // dropped (missing/invalid key).
+    const onEncryptionError = (error: Error, p?: Participant): void =>
+      log.warn(
+        `Encryption error for ${p?.identity ?? "unknown participant"}:`,
+        error,
+      );
+
+    room
+      .on(RoomEvent.ParticipantConnected, onParticipantConnected)
+      .on(RoomEvent.ParticipantDisconnected, onParticipantDisconnected)
+      .on(RoomEvent.TrackPublished, onTrackPublished)
+      .on(RoomEvent.TrackUnpublished, onTrackUnpublished)
+      .on(RoomEvent.TrackSubscribed, onTrackSubscribed)
+      .on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed)
+      .on(RoomEvent.TrackSubscriptionFailed, onTrackSubscriptionFailed)
+      .on(RoomEvent.TrackMuted, onTrackMuted)
+      .on(RoomEvent.TrackUnmuted, onTrackUnmuted)
+      .on(RoomEvent.TrackStreamStateChanged, onTrackStreamStateChanged)
+      .on(
+        RoomEvent.ParticipantEncryptionStatusChanged,
+        onEncryptionStatusChanged,
+      )
+      .on(RoomEvent.EncryptionError, onEncryptionError);
+    this.scope.onEnd(() => {
+      room
+        .off(RoomEvent.ParticipantConnected, onParticipantConnected)
+        .off(RoomEvent.ParticipantDisconnected, onParticipantDisconnected)
+        .off(RoomEvent.TrackPublished, onTrackPublished)
+        .off(RoomEvent.TrackUnpublished, onTrackUnpublished)
+        .off(RoomEvent.TrackSubscribed, onTrackSubscribed)
+        .off(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed)
+        .off(RoomEvent.TrackSubscriptionFailed, onTrackSubscriptionFailed)
+        .off(RoomEvent.TrackMuted, onTrackMuted)
+        .off(RoomEvent.TrackUnmuted, onTrackUnmuted)
+        .off(RoomEvent.TrackStreamStateChanged, onTrackStreamStateChanged)
+        .off(
+          RoomEvent.ParticipantEncryptionStatusChanged,
+          onEncryptionStatusChanged,
+        )
+        .off(RoomEvent.EncryptionError, onEncryptionError);
     });
   }
 

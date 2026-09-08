@@ -30,7 +30,7 @@ export class ConnectionManagerData {
     { connection: Connection; participants: RemoteParticipant[] }
   > = new Map();
 
-  public constructor() {}
+  public constructor(private readonly logger?: Logger) {}
 
   public add(connection: Connection, participants: RemoteParticipant[]): void {
     const key = this.getKey(connection.transport);
@@ -38,6 +38,11 @@ export class ConnectionManagerData {
     if (!existing) {
       this.store.set(key, { connection, participants });
     } else {
+      // Transports are deduplicated by URL upstream, so this should never
+      // happen; if it does, members may be matched against the wrong room.
+      this.logger?.warn(
+        `Merging participants from a second connection to ${key}: existing [${existing.participants.map((p) => p.identity).join(", ")}], adding [${participants.map((p) => p.identity).join(", ")}]`,
+      );
       existing.participants.push(...participants);
     }
   }
@@ -239,7 +244,7 @@ export function createConnectionManager$({
                 lists.reduce((data, { connection, participants }) => {
                   data.add(connection, participants);
                   return data;
-                }, new ConnectionManagerData()),
+                }, new ConnectionManagerData(logger)),
                 epoch,
               ),
           ),

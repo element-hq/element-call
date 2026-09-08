@@ -16,7 +16,7 @@ import {
   ObservableScope,
   trackEpoch,
 } from "./ObservableScope";
-import { withTestScheduler } from "../utils/test";
+import { testScope, withTestScheduler } from "../utils/test";
 
 describe("Epoch", () => {
   it("should map the value correctly", () => {
@@ -87,7 +87,7 @@ describe("Epoch", () => {
   });
 
   it("behavior test", () => {
-    const scope = new ObservableScope();
+    const scope = testScope();
     const s$ = new Subject();
     const behavior$ = scope.behavior(s$, 0);
     behavior$.subscribe((value) => {
@@ -115,7 +115,7 @@ describe("Reconcile", () => {
 
   it("should wait clean up before processing next", async () => {
     vi.useFakeTimers();
-    const scope = new ObservableScope();
+    const scope = testScope();
     const behavior$ = new BehaviorSubject<number>(0);
 
     const setup = vi.fn().mockImplementation(async () => await sleep(100));
@@ -149,7 +149,7 @@ describe("Reconcile", () => {
 
   it("should skip intermediates values that are not setup", async () => {
     vi.useFakeTimers();
-    const scope = new ObservableScope();
+    const scope = testScope();
     const behavior$ = new BehaviorSubject<number>(0);
 
     const setup = vi
@@ -194,7 +194,7 @@ describe("Reconcile", () => {
 
   it("should wait for setup to complete before starting cleanup", async () => {
     vi.useFakeTimers();
-    const scope = new ObservableScope();
+    const scope = testScope();
     const behavior$ = new BehaviorSubject<number>(0);
 
     const setup = vi
@@ -235,5 +235,59 @@ describe("Reconcile", () => {
     await vi.advanceTimersByTimeAsync(100);
     // Now setup for 1 should have started
     expect(setup).toHaveBeenCalledWith(1);
+  });
+});
+
+describe("behavior", () => {
+  it("warns with the tag and nesting depth, logging each new depth once", () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    const scope = testScope();
+    const source$ = new Subject<number>();
+    const behavior$ = scope.behavior(source$, 0, "tagged");
+    // Re-enter once on value 1 (depth 2), then a nested re-entry on value 2
+    // (depth 3), which is the shape needed to strand a middle subscriber.
+    behavior$.subscribe((v) => {
+      if (v === 1) source$.next(2);
+    });
+    behavior$.subscribe((v) => {
+      if (v === 2) source$.next(3);
+    });
+    const seen: number[] = [];
+    behavior$.subscribe((v) => seen.push(v));
+
+    source$.next(1);
+
+    const messages = warn.mock.calls.map((c) => c[0] as string);
+    expect(messages).toEqual([
+      expect.stringContaining("Behavior (tagged) re-entered at depth 2"),
+      expect.stringContaining("Behavior (tagged) re-entered at depth 3"),
+    ]);
+    warn.mock.calls.forEach((c) => expect(c[1]).toEqual(expect.any(String)));
+    // The behavior settles on the newest value while the last subscriber is
+    // left stranded on the oldest.
+    expect(behavior$.value).toBe(3);
+    expect(seen.at(-1)).toBe(1);
+  });
+
+  it("warns when the scope is ended while a behavior is mid-delivery", () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    const scope = new ObservableScope();
+    const source$ = new Subject<number>();
+    const behavior$ = scope.behavior(source$, 0);
+    behavior$.subscribe((v) => {
+      if (v === 1) scope.end();
+    });
+    // A derived behavior is bound to the scope, so ending the scope
+    // mid-delivery unsubscribes it before the value reaches it.
+    const derived$ = scope.behavior(behavior$);
+
+    source$.next(1);
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("Scope ended while 1 of its behaviors"),
+      expect.any(String),
+    );
+    expect(behavior$.value).toBe(1);
+    expect(derived$.value).toBe(0);
   });
 });

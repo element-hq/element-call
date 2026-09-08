@@ -204,10 +204,13 @@ class IndexedDBLogStore {
   // Throttled function to flush logs. We use throttle rather
   // than debounce as we want logs to be written regularly, otherwise
   // if there's a constant stream of logging, we'd never write anything.
-  private throttledFlush = throttle(() => this.flush, MAX_FLUSH_INTERVAL_MS, {
-    leading: false,
-    trailing: true,
-  });
+  private throttledFlush = throttle(
+    () => {
+      this.flush().catch((e) => logger.error("Failed to flush logs", e));
+    },
+    MAX_FLUSH_INTERVAL_MS,
+    { leading: false, trailing: true },
+  );
 
   /**
    * Flush logs to disk.

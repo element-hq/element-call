@@ -172,7 +172,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="_settingsLogoContainer_20b7b4"
       >
         <button
-          aria-labelledby="_r_8_"
+          aria-labelledby="_r_b_"
           class="_icon-button_1215g_8 _settingsOnlyShowWide_20b7b4"
           data-kind="secondary"
           data-testid="settings-bottom-left"
@@ -307,7 +307,7 @@ exports[`InCallView > rendering > renders 1`] = `
         class="_buttons_20b7b4"
       >
         <button
-          aria-labelledby="_r_d_"
+          aria-labelledby="_r_g_"
           class="_button_1nw83_8 _settingsOnlyShowNarrow_20b7b4 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="secondary"
           data-size="lg"
@@ -332,7 +332,7 @@ exports[`InCallView > rendering > renders 1`] = `
           aria-busy="false"
           aria-checked="false"
           aria-disabled="true"
-          aria-labelledby="_r_i_"
+          aria-labelledby="_r_l_"
           class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="primary"
           data-size="lg"
@@ -357,7 +357,7 @@ exports[`InCallView > rendering > renders 1`] = `
           aria-busy="false"
           aria-checked="false"
           aria-disabled="true"
-          aria-labelledby="_r_n_"
+          aria-labelledby="_r_q_"
           class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="primary"
           data-size="lg"
@@ -382,7 +382,7 @@ exports[`InCallView > rendering > renders 1`] = `
           aria-disabled="false"
           aria-expanded="false"
           aria-haspopup="true"
-          aria-labelledby="_r_s_"
+          aria-labelledby="_r_v_"
           class="_button_1nw83_8 _raiseHand_20b7b4 _has-icon_1nw83_60 _icon-only_1nw83_53"
           data-kind="secondary"
           data-size="lg"
@@ -405,7 +405,7 @@ exports[`InCallView > rendering > renders 1`] = `
           </svg>
         </button>
         <button
-          aria-labelledby="_r_14_"
+          aria-labelledby="_r_17_"
           class="_button_1nw83_8 _has-icon_1nw83_60 _icon-only_1nw83_53 _destructive_1nw83_110"
           data-kind="primary"
           data-size="lg"
@@ -433,8 +433,8 @@ exports[`InCallView > rendering > renders 1`] = `
         data-size="lg"
       >
         <input
-          aria-labelledby="_r_1a_"
-          name="_r_19_"
+          aria-labelledby="_r_1d_"
+          name="_r_1c_"
           type="radio"
           value="spotlight"
         />
@@ -453,9 +453,9 @@ exports[`InCallView > rendering > renders 1`] = `
           />
         </svg>
         <input
-          aria-labelledby="_r_1f_"
+          aria-labelledby="_r_1i_"
           checked=""
-          name="_r_19_"
+          name="_r_1c_"
           type="radio"
           value="grid"
         />

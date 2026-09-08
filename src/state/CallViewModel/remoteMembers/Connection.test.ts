@@ -19,14 +19,17 @@ import {
 import {
   type LocalParticipant,
   type RemoteParticipant,
+  type RemoteTrack,
+  type RemoteTrackPublication,
   type Room as LivekitRoom,
   RoomEvent,
+  Track,
   ConnectionState as LivekitConnectionState,
 } from "livekit-client";
 import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
-import { logger } from "matrix-js-sdk/lib/logger";
+import { logger, type Logger } from "matrix-js-sdk/lib/logger";
 import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
@@ -506,6 +509,97 @@ describe("remote participants", () => {
     );
 
     expect(observedParticipants.length).toEqual(0);
+  });
+});
+
+describe("remote track logging", () => {
+  it("logs remote participant and track events on the connection logger", () => {
+    setupTest();
+    const info = vi.fn();
+    const warn = vi.fn();
+    const testLogger = {
+      getChild: (): unknown => testLogger,
+      info,
+      debug: vi.fn(),
+      warn,
+      error: vi.fn(),
+    } as unknown as Logger;
+    new Connection(
+      {
+        client,
+        roomId: ROOM_ID,
+        transport: livekitFocus,
+        scope: testScope,
+        ownMembershipIdentity: ownMemberMock,
+        livekitRoomFactory: () => fakeLivekitRoom,
+      },
+      testLogger,
+    );
+    info.mockClear(); // drop the constructor log line
+
+    const bob = mockRemoteParticipant({
+      identity: "@bob:example.org:DEV111",
+      sid: "PA_bob",
+    });
+    const pub = {
+      kind: "audio",
+      source: "microphone",
+      trackSid: "TR_mic",
+      isMuted: false,
+      isEncrypted: true,
+    } as unknown as RemoteTrackPublication;
+    const messages = (): string[] => info.mock.calls.map((c) => c[0] as string);
+
+    fakeLivekitRoom.emit(RoomEvent.ParticipantConnected, bob);
+    fakeLivekitRoom.emit(
+      RoomEvent.TrackSubscribed,
+      {} as RemoteTrack,
+      pub,
+      bob,
+    );
+    fakeLivekitRoom.emit(RoomEvent.TrackMuted, pub, bob);
+    fakeLivekitRoom.emit(
+      RoomEvent.TrackStreamStateChanged,
+      pub,
+      Track.StreamState.Paused,
+      bob,
+    );
+    expect(messages()).toEqual([
+      "Participant connected: @bob:example.org:DEV111 (PA_bob)",
+      "Subscribed: audio microphone TR_mic of @bob:example.org:DEV111 encrypted=true muted=false",
+      "Muted: audio microphone TR_mic of @bob:example.org:DEV111 encrypted=true",
+      "Stream paused: audio microphone TR_mic of @bob:example.org:DEV111 encrypted=true",
+    ]);
+
+    // Encryption status changes are logged; cryptor errors are warnings
+    fakeLivekitRoom.emit(
+      RoomEvent.ParticipantEncryptionStatusChanged,
+      false,
+      bob,
+    );
+    expect(messages().at(-1)).toBe(
+      "Encryption status of @bob:example.org:DEV111: encrypted=false",
+    );
+    const cryptorError = new Error("missing key at index 3");
+    fakeLivekitRoom.emit(RoomEvent.EncryptionError, cryptorError, bob);
+    expect(warn).toHaveBeenCalledWith(
+      "Encryption error for @bob:example.org:DEV111:",
+      cryptorError,
+    );
+
+    // Local mute events are already logged by the Publisher
+    fakeLivekitRoom.emit(RoomEvent.TrackMuted, pub, {
+      ...fakeLocalParticipant,
+      isLocal: true,
+    } as unknown as LocalParticipant);
+    expect(messages().filter((m) => m.startsWith("Muted"))).toHaveLength(1);
+
+    // Listeners are removed when the scope ends
+    testScope.end();
+    fakeLivekitRoom.emit(RoomEvent.ParticipantDisconnected, bob);
+    expect(
+      messages().filter((m) => m.startsWith("Participant disconnected")),
+    ).toHaveLength(0);
   });
 });
 
