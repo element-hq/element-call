@@ -25,6 +25,8 @@ import { useProfile } from "../profile/useProfile";
 import { useOptInAnalytics } from "../settings/settings";
 import { Link } from "../button/Link";
 import { ErrorView } from "../ErrorView";
+import { usePageTitle } from "../usePageTitle";
+import { useRoomName } from "./useRoomName";
 
 export const RoomPage: FC = (): ReactNode => {
   const urlParams = useUrlParams();
@@ -45,6 +47,20 @@ export const RoomPage: FC = (): ReactNode => {
   const { avatarUrl, displayName: userDisplayName } = useProfile(client);
 
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
+
+  // The page title is the page's to set, not the call's: a host embedding the
+  // call has a title of its own. So it is set here, for whichever room we have
+  // got as far as knowing about.
+  const roomName = useRoomName(
+    groupCallState.kind === "loaded" ? groupCallState.rtcSession.room : null,
+  );
+  usePageTitle(
+    roomName ??
+      (groupCallState.kind === "canKnock" ||
+      groupCallState.kind === "waitForInvite"
+        ? groupCallState.roomSummary.name
+        : undefined),
+  );
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as

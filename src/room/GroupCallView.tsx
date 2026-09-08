@@ -57,7 +57,6 @@ import {
   type CallEventSounds,
 } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
-import { usePageTitle } from "../usePageTitle";
 import {
   ConnectionLostError,
   E2EENotSupportedError,
@@ -208,7 +207,6 @@ export const GroupCallView: FC<Props> = ({
     if (passwordFromUrl) saveKeyForRoom(room.roomId, passwordFromUrl);
   }, [passwordFromUrl, room.roomId]);
 
-  usePageTitle(roomName);
   useAppBarTitle(roomName);
 
   const matrixInfo = useMemo((): MatrixInfo => {

@@ -44,7 +44,6 @@ import {
   useTrackProcessor,
   useTrackProcessorSync,
 } from "../livekit/TrackProcessorContext";
-import { usePageTitle } from "../usePageTitle";
 import { getValue } from "../utils/observable";
 import { useBehavior } from "../useBehavior";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter";
@@ -87,7 +86,6 @@ export const LobbyView: FC<Props> = ({
 
   const { t } = useTranslation();
 
-  usePageTitle(matrixInfo.roomName);
   useAppBarPrimaryButtonIconKind("back");
   const audioEnabled = useBehavior(muteStates.audio.enabled$);
   const videoEnabled = useBehavior(muteStates.video.enabled$);
