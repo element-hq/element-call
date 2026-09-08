@@ -20,7 +20,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { RageshakeButton } from "./settings/RageshakeButton";
 import styles from "./ErrorView.module.css";
 import { useUrlParams } from "./UrlParams";
-import { LinkButton } from "./button";
+import { useLeaveToHome } from "./LeaveToHomeContext";
 import { useHostBridge } from "./HostBridge.ts";
 
 interface Props {
@@ -50,6 +50,7 @@ export const ErrorView: FC<Props> = ({
   const { t } = useTranslation();
   const { confineToRoom } = useUrlParams();
   const hostBridge = useHostBridge();
+  const leaveToHome = useLeaveToHome();
 
   const onReload = useCallback(() => {
     window.location.href = "/";
@@ -73,21 +74,19 @@ export const ErrorView: FC<Props> = ({
   };
 
   // Whether the error is considered fatal or pathname is `/` then reload the all app.
-  // If not then navigate to home page.
-  const ReturnToHomeButton = (): ReactElement => {
-    if (fatal || location.pathname === "/") {
-      return (
-        <Button kind="tertiary" className={styles.homeLink} onClick={onReload}>
-          {t("return_home_button")}
-        </Button>
-      );
-    } else {
-      return (
-        <LinkButton kind="tertiary" className={styles.homeLink} to="/">
-          {t("return_home_button")}
-        </LinkButton>
-      );
-    }
+  // If not then navigate to home page. Neither applies when there is no home
+  // to go to.
+  const ReturnToHomeButton = (): ReactElement | null => {
+    if (leaveToHome === null) return null;
+    return (
+      <Button
+        kind="tertiary"
+        className={styles.homeLink}
+        onClick={fatal || location.pathname === "/" ? onReload : leaveToHome}
+      >
+        {t("return_home_button")}
+      </Button>
+    );
   };
 
   return (

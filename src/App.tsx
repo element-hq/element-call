@@ -5,8 +5,21 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type JSX, Suspense, useEffect, useState } from "react";
-import { BrowserRouter, Route, useLocation, Routes } from "react-router-dom";
+import {
+  type FC,
+  type JSX,
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+import {
+  BrowserRouter,
+  Route,
+  useLocation,
+  useNavigate,
+  Routes,
+} from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -40,6 +53,7 @@ import {
   nullHostBridge,
 } from "./HostBridge";
 import { useInitial } from "./useInitial";
+import { LeaveToHomeProvider } from "./LeaveToHomeContext";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -55,6 +69,20 @@ interface SimpleProviderProps {
 const LocationUrlParamsProvider: FC<SimpleProviderProps> = ({ children }) => {
   const urlParams = useUrlParamsFromLocation();
   return <UrlParamsProvider value={urlParams}>{children}</UrlParamsProvider>;
+};
+
+/**
+ * Supplies the way home. Only the app has one — its home page, with the list
+ * of recent calls — so this, too, lives in the app shell.
+ */
+const HomeProvider: FC<SimpleProviderProps> = ({ children }) => {
+  const navigate = useNavigate();
+  const leaveToHome = useCallback(() => {
+    navigate("/")?.catch((e) => logger.error("Failed to navigate home", e));
+  }, [navigate]);
+  return (
+    <LeaveToHomeProvider value={leaveToHome}>{children}</LeaveToHomeProvider>
+  );
 };
 
 const BackgroundProvider: FC<SimpleProviderProps> = ({ children }) => {
@@ -143,15 +171,17 @@ export const App: FC<Props> = ({ vm, widget }) => {
       <HostBridgeProvider value={hostBridge}>
         <BrowserRouter>
           <LocationUrlParamsProvider>
-            <BackgroundProvider>
-              <ThemeProvider>
-                <TooltipProvider>
-                  <Suspense fallback={null}>
-                    <MaybeAppBar>{content}</MaybeAppBar>
-                  </Suspense>
-                </TooltipProvider>
-              </ThemeProvider>
-            </BackgroundProvider>
+            <HomeProvider>
+              <BackgroundProvider>
+                <ThemeProvider>
+                  <TooltipProvider>
+                    <Suspense fallback={null}>
+                      <MaybeAppBar>{content}</MaybeAppBar>
+                    </Suspense>
+                  </TooltipProvider>
+                </ThemeProvider>
+              </BackgroundProvider>
+            </HomeProvider>
           </LocationUrlParamsProvider>
         </BrowserRouter>
       </HostBridgeProvider>

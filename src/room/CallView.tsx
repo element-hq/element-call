@@ -28,7 +28,6 @@ import {
   MatrixRTCSessionEvent,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { useNavigate } from "react-router-dom";
 
 import { type JoinCallData } from "../widget";
 import { LobbyView } from "./LobbyView";
@@ -72,6 +71,7 @@ import { useBehavior } from "../useBehavior.ts";
 import { useRootElement } from "../RootElementContext.ts";
 import { useHostBridge } from "../HostBridge.ts";
 import { useMuteStates } from "../state/useMuteStates.ts";
+import { useLeaveToHome } from "../LeaveToHomeContext.ts";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -374,7 +374,7 @@ const LoadedCallView: FC<LoadedProps> = ({
   // TODO refactor this + "joined" to just one callState
   const [left, setLeft] = useState(false);
 
-  const navigate = useNavigate();
+  const leaveToHome = useLeaveToHome();
 
   // TODO split this into leave and onDisconnect
   const onLeft = useCallback(
@@ -433,7 +433,7 @@ const LoadedCallView: FC<LoadedProps> = ({
             !confineToRoom &&
             !PosthogAnalytics.instance.isEnabled()
           )
-            void navigate("/");
+            leaveToHome?.();
 
           // After this point the host could dispose of us at any moment!
           try {
@@ -462,7 +462,7 @@ const LoadedCallView: FC<LoadedProps> = ({
       isPasswordlessUser,
       confineToRoom,
       returnToLobby,
-      navigate,
+      leaveToHome,
     ],
   );
 

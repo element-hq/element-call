@@ -44,7 +44,6 @@ import {
 } from "react";
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { MemoryRouter } from "react-router-dom";
 import { I18nextProvider } from "react-i18next";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { ErrorBoundary } from "@sentry/react";
@@ -266,44 +265,40 @@ export const ElementCall: FC<ElementCallProps> = ({
     <I18nextProvider i18n={i18n}>
       <HostBridgeProvider value={hostBridge}>
         <UrlParamsProvider value={params}>
-          {/* Element Call's own navigation stays in memory, so that the
-          component cannot disturb the host's URL. */}
-          <MemoryRouter>
-            <div ref={setContainer} className={styles.root}>
-              {container !== null &&
-                rtcSession !== null &&
-                mediaDevices !== null && (
-                  <RootElementProvider value={container}>
-                    {/* Whatever goes wrong in here is shown in here. Left to
+          <div ref={setContainer} className={styles.root}>
+            {container !== null &&
+              rtcSession !== null &&
+              mediaDevices !== null && (
+                <RootElementProvider value={container}>
+                  {/* Whatever goes wrong in here is shown in here. Left to
                     propagate, an error would unmount the host's own tree. */}
-                    <ErrorBoundary
-                      fallback={(error) => <ErrorPage error={error} />}
-                      // A broken call should not hold the host on screen
-                      onError={() => void hostBridge.setAlwaysOnScreen(false)}
-                    >
-                      <Decoration>
-                        <TooltipProvider>
-                          <ClientProvider client={client}>
-                            <MediaDevicesContext value={mediaDevices}>
-                              <ProcessorProvider>
-                                <CallView
-                                  client={client}
-                                  rtcSession={rtcSession}
-                                  isPasswordlessUser={false}
-                                  confineToRoom={params.confineToRoom}
-                                  preload={params.preload}
-                                  skipLobby={params.skipLobby}
-                                />
-                              </ProcessorProvider>
-                            </MediaDevicesContext>
-                          </ClientProvider>
-                        </TooltipProvider>
-                      </Decoration>
-                    </ErrorBoundary>
-                  </RootElementProvider>
-                )}
-            </div>
-          </MemoryRouter>
+                  <ErrorBoundary
+                    fallback={(error) => <ErrorPage error={error} />}
+                    // A broken call should not hold the host on screen
+                    onError={() => void hostBridge.setAlwaysOnScreen(false)}
+                  >
+                    <Decoration>
+                      <TooltipProvider>
+                        <ClientProvider client={client}>
+                          <MediaDevicesContext value={mediaDevices}>
+                            <ProcessorProvider>
+                              <CallView
+                                client={client}
+                                rtcSession={rtcSession}
+                                isPasswordlessUser={false}
+                                confineToRoom={params.confineToRoom}
+                                preload={params.preload}
+                                skipLobby={params.skipLobby}
+                              />
+                            </ProcessorProvider>
+                          </MediaDevicesContext>
+                        </ClientProvider>
+                      </TooltipProvider>
+                    </Decoration>
+                  </ErrorBoundary>
+                </RootElementProvider>
+              )}
+          </div>
         </UrlParamsProvider>
       </HostBridgeProvider>
     </I18nextProvider>

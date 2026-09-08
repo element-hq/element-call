@@ -16,13 +16,13 @@ import {
   useMemo,
   type JSX,
 } from "react";
-import { useNavigate } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
 
 import { ErrorPage } from "./FullScreenView";
 import { useHostBridge } from "./HostBridge";
+import { useLeaveToHome } from "./LeaveToHomeContext";
 import {
   PosthogAnalytics,
   RegistrationType,
@@ -146,7 +146,7 @@ interface Props {
 }
 
 export const ClientProvider: FC<Props> = ({ children, client }) => {
-  const navigate = useNavigate();
+  const leaveToHome = useLeaveToHome();
   const hostBridge = useHostBridge();
 
   // null = signed out, undefined = loading
@@ -249,10 +249,10 @@ export const ClientProvider: FC<Props> = ({ children, client }) => {
     await client.clearStores();
     clearSession();
     setInitClientState(null);
-    await navigate("/");
+    leaveToHome?.();
     PosthogAnalytics.instance.logout();
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
-  }, [navigate, initClientState?.client]);
+  }, [leaveToHome, initClientState?.client]);
 
   // To protect against multiple sessions writing to the same storage
   // simultaneously, we send a broadcast message that shuts down all other

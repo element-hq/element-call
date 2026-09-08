@@ -30,6 +30,11 @@ Please see LICENSE in the repository root for full details.
   display: none;
   align-items: center;
   text-decoration: none;
+  /* A button when it leads home, so undo the browser's button styling */
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .leftNav.hideMobile {
