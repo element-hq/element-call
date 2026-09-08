@@ -39,7 +39,7 @@ export function useMuteStates(): MuteStates | null {
         calculateInitialMuteState(
           urlParams.skipLobby,
           urlParams.callIntent,
-          urlParams.isWidget,
+          hostBridge.allowJoinUnmutedViaIntent,
         ),
         hostBridge,
       ),

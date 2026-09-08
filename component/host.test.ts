@@ -54,6 +54,21 @@ describe("useComponentHostBridge", () => {
       }),
     ).resolves.toBeUndefined();
     expect(result.current.supportsReactions).toBe(true);
+    // Starting the user unmuted unasked is something a host has to opt into
+    expect(result.current.allowJoinUnmutedViaIntent).toBe(false);
+  });
+
+  test("lets the host allow joining unmuted on the intent", () => {
+    const { result, rerender } = renderHook(
+      ({ supplied }: { supplied: ElementCallHostBridge }) =>
+        useComponentHostBridge(supplied, undefined, undefined),
+      { initialProps: { supplied: {} } },
+    );
+    expect(result.current.allowJoinUnmutedViaIntent).toBe(false);
+
+    // Read through to whatever the host most recently said
+    rerender({ supplied: { allowJoinUnmutedViaIntent: true } });
+    expect(result.current.allowJoinUnmutedViaIntent).toBe(true);
   });
 
   test("only has a close when the host has one, since that is a signal", () => {

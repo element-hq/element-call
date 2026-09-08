@@ -109,6 +109,14 @@ export interface HostBridge {
   /** Whether the host permits Element Call to send and receive reactions. */
   readonly supportsReactions: boolean;
   /**
+   * Whether the user may be put into a call unmuted on the strength of the
+   * intent alone, when the lobby is skipped and so they get no chance to check
+   * their devices first. A host that asked for the call on the user's behalf
+   * has that much of their trust; standalone Element Call does not, and starts
+   * them muted instead.
+   */
+  readonly allowJoinUnmutedViaIntent: boolean;
+  /**
    * Fetches media on Element Call's behalf, for hosts that do not give it
    * direct access to the homeserver. Absent when Element Call should fetch
    * media itself using its own client.
@@ -136,6 +144,9 @@ export const nullHostBridge: HostBridge = {
   // Standalone Element Call reaches the homeserver itself, so nothing is
   // withholding these from it.
   supportsReactions: true,
+  // Standalone, nobody vouched for the intent: it came from a URL, which is
+  // not enough to switch the user's camera and microphone on unasked.
+  allowJoinUnmutedViaIntent: false,
 };
 
 /** Bridges to a host that Element Call is a widget of. */
@@ -190,6 +201,9 @@ export function createWidgetHostBridge(widget: WidgetHelpers): HostBridge {
     // The client we are a widget of signed the user in, so the profile is its
     // to manage
     supportsProfileChanges: false,
+    // The client we are a widget of asked for this call on the user's behalf,
+    // so its intent may be trusted to say whether they start unmuted
+    allowJoinUnmutedViaIntent: true,
     // Element Call needs the host's permission to send reactions on its behalf.
     // Read on access rather than up front: the widget API negotiates its
     // capabilities asynchronously, and the bridge is built before that settles.

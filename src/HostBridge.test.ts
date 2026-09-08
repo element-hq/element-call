@@ -252,6 +252,11 @@ describe("createWidgetHostBridge", () => {
     expect(bridge.supportsProfileChanges).toBe(false);
   });
 
+  test("allows joining unmuted on the intent, since the host asked for the call", () => {
+    const bridge = createWidgetHostBridge(mockWidget({}));
+    expect(bridge.allowJoinUnmutedViaIntent).toBe(true);
+  });
+
   describe("supportsReactions", () => {
     const capabilities = [
       "org.matrix.msc2762.send.event:m.reaction",
@@ -293,5 +298,9 @@ describe("nullHostBridge", () => {
 
   test("supports reactions, since nothing is mediating its homeserver access", () => {
     expect(nullHostBridge.supportsReactions).toBe(true);
+  });
+
+  test("does not allow joining unmuted on the intent, since nobody vouched for it", () => {
+    expect(nullHostBridge.allowJoinUnmutedViaIntent).toBe(false);
   });
 });

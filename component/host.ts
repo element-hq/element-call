@@ -64,6 +64,14 @@ export interface ElementCallHostBridge {
    * Defaults to true.
    */
   readonly supportsReactions?: boolean;
+  /**
+   * Whether the user may start unmuted when the intent skips the lobby, so
+   * that they never see their devices before joining. Defaults to false: the
+   * user starts muted and unmutes themselves. A host that chose the intent on
+   * the user's behalf, and is sure they expect to be heard and seen at once,
+   * says so here — as a Matrix client hosting Element Call as a widget does.
+   */
+  readonly allowJoinUnmutedViaIntent?: boolean;
 }
 
 /**
@@ -163,6 +171,9 @@ export function useComponentHostBridge(
       // is what the internal bridge's `downloadMedia` is for.
       get supportsReactions(): boolean {
         return latest.current.supportsReactions ?? true;
+      },
+      get allowJoinUnmutedViaIntent(): boolean {
+        return latest.current.allowJoinUnmutedViaIntent ?? false;
       },
       // Whatever the host says or does not say, the account is its own: it
       // signed the user in and handed us the client. So Element Call never
