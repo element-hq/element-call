@@ -75,7 +75,6 @@ import {
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
-import { doNetworkOperationWithRetry } from "../../../utils/matrix.ts";
 import { or$ } from "../../../utils/observable.ts";
 
 export enum TransportState {
@@ -253,10 +252,12 @@ export const createLocalMembership$ = ({
   ): Promise<boolean> {
     logger.info(`Checking whether ${serviceName} supports delegation…`);
     try {
-      // Bluntly hit the endpoint without auth to check for a 404
-      const res = await doNetworkOperationWithRetry(async () =>
-        fetch(endpointUrl, { method: "POST" }),
-      );
+      // Bluntly hit the endpoint without auth to check for a 404. Unfortunately
+      // we can't wrap this in a retry loop, as many servers don't just disable
+      // delegation support, but in fact are from a time before the endpoint
+      // existed at all, therefore we can hit CORS errors which would just gum
+      // up the retry loop. (May be revisited after Matrix 2.0.)
+      const res = await fetch(endpointUrl, { method: "POST" });
       if (res.status === 404) {
         logger.warn(`${serviceName} does not support delegation`);
         return false;
