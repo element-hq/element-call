@@ -33,8 +33,7 @@ the app and for the component build. */
 @import url("@fontsource/inconsolata/700.css");
 
 @import url("normalize.css/normalize.css") layer(normalize);
-@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css")
-layer(compound);
+@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css") layer(compound);
 @import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
 
 :root {
