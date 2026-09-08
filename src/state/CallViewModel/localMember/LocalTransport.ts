@@ -37,6 +37,7 @@ import {
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 import { customLivekitUrl } from "../../../settings/settings.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
+import { type MatrixRTCMode } from "../../../config/ConfigOptions.ts";
 
 /*
  * It figures out “which LiveKit focus URL/alias the local user should use,”
@@ -53,13 +54,8 @@ interface Props {
     OpenIDClientParts;
   // Used by the jwt service to create the livekit room and compute the livekit alias.
   roomId: string;
-  forceJwtEndpoint: JwtEndpointVersion;
+  matrixRTCMode: MatrixRTCMode;
   delayId$: Behavior<string | null>;
-}
-
-export enum JwtEndpointVersion {
-  Legacy = "legacy",
-  Matrix_2_0 = "matrix_2_0",
 }
 
 // TODO livekit_alias-cleanup
@@ -122,7 +118,7 @@ export const createLocalTransport$ = ({
   ownMembershipIdentity,
   client,
   roomId,
-  forceJwtEndpoint,
+  matrixRTCMode,
   delayId$,
 }: Props): LocalTransport => {
   const logger = rootLogger.getChild("[LocalTransport]");
@@ -167,7 +163,7 @@ export const createLocalTransport$ = ({
       try {
         return await doOpenIdAndJWTFromUrl(
           transport,
-          forceJwtEndpoint,
+          matrixRTCMode,
           ownMembershipIdentity,
           roomId,
           client,
@@ -219,7 +215,7 @@ export const createLocalTransport$ = ({
  *  use we don't want to risk any issues by re-using a token.
  *
  *  @param transport The transport to authenticate with.
- *  @param forceJwtEndpoint Whether to force the JWT endpoint to be used.
+ *  @param matrixRTCMode Whether to force the JWT endpoint to be used.
  *  @param membership The identity of the local member.
  *  @param roomId The room ID to use for the JWT.
  *  @param client The client to use for the OpenID token.
@@ -229,7 +225,7 @@ export const createLocalTransport$ = ({
  */
 async function doOpenIdAndJWTFromUrl(
   transport: LivekitTransportConfig,
-  forceJwtEndpoint: JwtEndpointVersion,
+  matrixRTCMode: MatrixRTCMode,
   membership: CallMembershipIdentityParts,
   roomId: string,
   client: Pick<
@@ -246,7 +242,7 @@ async function doOpenIdAndJWTFromUrl(
     transport.livekit_service_url,
     roomId,
     {
-      forceJwtEndpoint: forceJwtEndpoint,
+      matrixRTCMode,
       delayEndpointBaseUrl: client.baseUrl,
       delayId,
     },

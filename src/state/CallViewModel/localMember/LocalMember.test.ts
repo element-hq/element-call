@@ -230,6 +230,7 @@ describe("LocalMembership", () => {
     },
     roomId: "!test-room-id:example.org",
     baseUrl: "https://matrix.example.org",
+    matrixRTCMode: MATRIX_RTC_MODE,
   };
 
   beforeEach(() => {

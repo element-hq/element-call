@@ -143,7 +143,7 @@ interface Props {
   ) => void;
   homeserverConnected: HomeserverConnected;
   roomId: string;
-  localTransport$: Behavior<LocalTransport>;
+  localTransport: LocalTransport;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
@@ -163,7 +163,7 @@ interface Props {
  * @param props.createPublisherFactory Factory to create a publisher once we have a connection.
  * @param props.joinMatrixRTC Callback to join the matrix RTC session once we have a transport.
  * @param props.homeserverConnected The homeserver connected state.
- * @param props.localTransport$ The transport to advertise in our membership.
+ * @param props.localTransport The transport to advertise in our membership.
  * @param props.logger The logger to use.
  * @param props.muteStates The mute states for video and audio.
  * @param props.matrixRTCSession The matrix RTC session to join.
@@ -282,8 +282,7 @@ export const createLocalMembership$ = ({
 
   // The transport that we will advertise in our membership, paired with info as
   // to whether delayed event delegation is supported
-  const joinParams$ = localTransport$.pipe(
-    switchMap((lt) => lt.advertised$),
+  const joinParams$ = localTransport.advertised$.pipe(
     catchError(handleTransportError),
     distinctUntilChanged(areLivekitTransportsEqual),
     switchMap((transport) => {
@@ -304,16 +303,12 @@ export const createLocalMembership$ = ({
 
   // Unwrap the local transport and set the state of the LocalMembership to error in case the transport is an error.
   const activeTransport$ = scope.behavior(
-    localTransport$.pipe(
-      switchMap((lt) => {
-        return combineLatest([lt.active$, lt.advertised$]).pipe(
-          map(([active, advertised]) => {
-            // Our policy is to not publish to another transport if our prefered transport is miss-configured
-            if (advertised == null) return null;
+    combineLatest([localTransport.active$, localTransport.advertised$]).pipe(
+      map(([active, advertised]) => {
+        // Our policy is to not publish to another transport if our prefered transport is miss-configured
+        if (advertised == null) return null;
 
-            return active?.transport ?? null;
-          }),
-        );
+        return active?.transport ?? null;
       }),
       catchError(handleTransportError),
       distinctUntilChanged(areLivekitTransportsEqual),

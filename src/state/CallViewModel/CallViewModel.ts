@@ -54,7 +54,6 @@ import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembership
 import {
   createToggle$,
   filterBehavior,
-  generateItem,
   generateItems,
   pauseWhen,
 } from "../../utils/observable";
@@ -113,7 +112,6 @@ import {
 } from "./localMember/LocalMember.ts";
 import {
   createLocalTransport$,
-  JwtEndpointVersion,
   type LocalTransport,
 } from "./localMember/LocalTransport.ts";
 import {
@@ -191,7 +189,7 @@ export interface CallViewModelOptions {
   /** Optional value overriding the connection factory, for testing purposes. */
   connectionFactory?: ConnectionFactory;
   /** The version & compatibility mode of MatrixRTC that we should use. */
-  matrixRTCMode$?: Behavior<MatrixRTCMode>;
+  matrixRTCMode?: MatrixRTCMode;
   /** Optional behavior overriding for the screensharing, for testing */
   toggleScreensharing?: () => void;
 }
@@ -453,10 +451,8 @@ export function createCallViewModel$(
   const configMatrixRTCMode = Config.get().matrix_rtc_mode as
     | MatrixRTCMode
     | undefined;
-  const matrixRTCMode$ =
-    configMatrixRTCMode !== undefined
-      ? constant(configMatrixRTCMode)
-      : (options.matrixRTCMode$ ?? constant(MatrixRTCMode.Compatibility));
+  const matrixRTCMode =
+    configMatrixRTCMode ?? options.matrixRTCMode ?? MatrixRTCMode.Compatibility;
 
   // Each hbar seperates a block of input variables required for the CallViewModel to function.
   // The outputs of this block is written under the hbar.
@@ -490,38 +486,26 @@ export function createCallViewModel$(
     memberId: uuidv4(),
   };
 
-  const localTransport$ = scope.behavior(
-    matrixRTCMode$.pipe(
-      generateItem(
-        "CallViewModel localTransport$",
-        // Re-create LocalTransport whenever the mode changes
-        (mode) => ({ keys: [mode], data: undefined }),
-        (scope, _data$, mode) =>
-          options.localTransport ??
-          createLocalTransport$({
-            scope: scope,
-            memberships$: memberships$,
-            ownMembershipIdentity,
-            client,
-            delayId$: scope.behavior(
-              (
-                fromEvent(
-                  matrixRTCSession,
-                  MembershipManagerEvent.DelayIdChanged,
-                  // The type of reemitted event includes the original emitted as the second arg.
-                ) as Observable<[string | undefined, IMembershipManager]>
-              ).pipe(map(([delayId]) => delayId ?? null)),
-              matrixRTCSession.delayId ?? null,
-            ),
-            roomId: matrixRoom.roomId,
-            forceJwtEndpoint:
-              mode === MatrixRTCMode.Matrix_2_0
-                ? JwtEndpointVersion.Matrix_2_0
-                : JwtEndpointVersion.Legacy,
-          }),
+  const localTransport =
+    options.localTransport ??
+    createLocalTransport$({
+      scope: scope,
+      memberships$: memberships$,
+      ownMembershipIdentity,
+      client,
+      delayId$: scope.behavior(
+        (
+          fromEvent(
+            matrixRTCSession,
+            MembershipManagerEvent.DelayIdChanged,
+            // The type of reemitted event includes the original emitted as the second arg.
+          ) as Observable<[string | undefined, IMembershipManager]>
+        ).pipe(map(([delayId]) => delayId ?? null)),
+        matrixRTCSession.delayId ?? null,
       ),
-    ),
-  );
+      roomId: matrixRoom.roomId,
+      matrixRTCMode,
+    });
 
   const connectionFactory =
     options.connectionFactory ??
@@ -539,8 +523,7 @@ export function createCallViewModel$(
     scope: scope,
     connectionFactory: connectionFactory,
     localTransport$: scope.behavior(
-      localTransport$.pipe(
-        switchMap((t) => t.active$),
+      localTransport.active$.pipe(
         catchError((e: unknown) => {
           logger.info(
             "could not pass local transport to createConnectionManager$. localTransport$ threw an error",
@@ -583,9 +566,7 @@ export function createCallViewModel$(
         transport,
         {
           encryptMedia: livekitKeyProvider !== undefined,
-          // We merely sample the current mode here, so the user would need to
-          // manually rejoin to switch to a different one
-          matrixRTCMode: matrixRTCMode$.value,
+          matrixRTCMode,
           delayedLeaveTimings,
         },
       );
@@ -606,6 +587,7 @@ export function createCallViewModel$(
     localTransport$,
     roomId: matrixRoom.roomId,
     baseUrl: client.baseUrl,
+    matrixRTCMode,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 

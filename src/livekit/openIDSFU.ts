@@ -19,7 +19,7 @@ import {
 } from "../utils/errors";
 import { doNetworkOperationWithRetry } from "../utils/matrix";
 import { Config } from "../config/Config";
-import { JwtEndpointVersion } from "../state/CallViewModel/localMember/LocalTransport";
+import { MatrixRTCMode } from "../config/ConfigOptions";
 
 /**
  * Configuration and access tokens provided by the SFU on successful authentication.
@@ -80,11 +80,10 @@ export type OpenIDClientParts = Pick<
  * @param serviceUrl The URL of the livekit SFU service
  * @param roomId The room id used in the jwt request. This is NOT the livekit_alias. The jwt service will provide the alias. It maps matrix room ids <-> Livekit aliases.
  * @param opts Additional options to modify which endpoint with which data will be used to acquire the jwt token.
- * @param opts.forceJwtEndpoint This will use the old jwt endpoint which will create the rtc backend identity based on string concatenation
- * instead of a hash.
+ * @param opts.matrixRTCMode Determines which version of the JWT endpoint to use, which affects whether the
+ * RTC backend identity is based on string concatenation (legacy) or a hash (Matrix 2.0).
  * This function by default uses whatever is possible with the current jwt service installed next to the SFU.
  * For remote connections this does not matter, since we will not publish there we can rely on the newest option.
- * For our own connection we can only use the hashed version if we also send the new matrix2.0 sticky events.
  * @param opts.delayEndpointBaseUrl The URL of the matrix homeserver.
  * @param opts.delayId The delay id used for the jwt service to manage.
  * @param logger optional logger.
@@ -97,7 +96,7 @@ export async function getSFUConfigWithOpenID(
   serviceUrl: string,
   roomId: string,
   opts?: {
-    forceJwtEndpoint?: JwtEndpointVersion;
+    matrixRTCMode?: MatrixRTCMode;
     delayEndpointBaseUrl?: string;
     delayId?: string;
   },
@@ -116,10 +115,9 @@ export async function getSFUConfigWithOpenID(
   logger?.debug("Got openID token", openIdToken);
   let sfuConfig: { url: string; jwt: string } | undefined;
 
-  const tryBothJwtEndpoints = opts?.forceJwtEndpoint === undefined; // This is for SFUs where we do not publish.
+  const tryBothJwtEndpoints = opts?.matrixRTCMode === undefined; // This is for SFUs where we do not publish.
 
-  const forceMatrix2Jwt =
-    opts?.forceJwtEndpoint === JwtEndpointVersion.Matrix_2_0;
+  const forceMatrix2Jwt = opts?.matrixRTCMode === MatrixRTCMode.Matrix_2_0;
 
   // We want to start using the new endpoint (with optional delay delegation)
   // if we can use both or if we are forced to use the new one.
