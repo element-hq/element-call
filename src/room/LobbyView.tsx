@@ -34,7 +34,7 @@ import { type MatrixInfo, VideoPreview } from "./VideoPreview";
 import { type MuteStates } from "../state/MuteStates";
 import { InviteButton } from "../button/InviteButton";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
-import { useMediaQuery } from "../useMediaQuery";
+import { useRootSizeMatches } from "../useRootSize";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
 import { useMediaDevices } from "../MediaDevicesContext";
@@ -117,7 +117,9 @@ export const LobbyView: FC<Props> = ({
   }, [navigate]);
   const hangup = confineToRoom ? undefined : onLeaveClick;
 
-  const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
+  const recentsButtonInFooter = useRootSizeMatches(
+    ({ height }) => height <= 500,
+  );
   const recentsButton = !confineToRoom && (
     <Link className={styles.recents} to="/">
       {t("lobby.leave_button")}

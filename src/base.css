@@ -46,21 +46,23 @@ the app and for the component build. */
   --font-size-headline: calc(32px * var(--font-scale));
 
   --cpd-color-border-accent: var(--cpd-color-green-800);
-  /* The distance to inset non-full-width content from the edge of the window
-  along the inline axis. This ramps up from 16px for typical mobile windows, to
-  96px for typical desktop windows, and accounts for the safe area. */
+  /* The distance to inset non-full-width content from the edge of Element
+  Call's root along the inline axis. This ramps up from 16px for typical mobile
+  windows, to 96px for typical desktop windows, and accounts for the safe area.
+  Container units resolve where the property is used, so this must only be used
+  by elements whose nearest query container is the root. */
   --content-inset-left: calc(
     env(safe-area-inset-left) +
       min(
         var(--cpd-space-24x),
-        max(var(--cpd-space-4x), calc((100vw - 900px) / 3))
+        max(var(--cpd-space-4x), calc((100cqw - 900px) / 3))
       )
   );
   --content-inset-right: calc(
     env(safe-area-inset-right) +
       min(
         var(--cpd-space-24x),
-        max(var(--cpd-space-4x), calc((100vw - 900px) / 3))
+        max(var(--cpd-space-4x), calc((100cqw - 900px) / 3))
       )
   );
   --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
@@ -80,7 +82,13 @@ the app and for the component build. */
 this element rather than media queries against the viewport. For the standalone
 app the two are the same thing, since the root is the page; for a host that
 embeds Element Call in a corner of its own page they are not, and it is the
-corner that the layout has to fit. */
+corner that the layout has to fit.
+
+For the same reason, lengths that were once a share of the viewport (`100vw`)
+are a share of the nearest query container (`100cqw`). Container units cannot
+name their container, so they only mean this element where no other query
+container — a spotlight layout, a media tile — lies in between; check that
+before using one further down the tree. */
 [data-element-call-root] {
   container: element-call / size;
 }
@@ -107,7 +115,7 @@ corner that the layout has to fit. */
 
   [data-element-call-root][data-background="gradient"][data-platform="desktop"]::before {
     background-image: url("graphics/desktop-gradient.png");
-    background-size: max(1440px, 100vw) max(1440px, 100vh);
+    background-size: max(1440px, 100cqw) max(1440px, 100cqh);
     background-position: center;
   }
 }

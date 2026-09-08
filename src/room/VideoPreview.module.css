@@ -9,7 +9,9 @@ Please see LICENSE in the repository root for full details.
   margin-left: var(--content-inset-left);
   margin-right: var(--content-inset-right);
   min-block-size: 0;
-  block-size: 50vh;
+  /* Half the height of Element Call's root, not of the viewport: embedded,
+  the two differ (see the note on container units in base.css) */
+  block-size: 50cqh;
   aspect-ratio: 16 / 9;
   max-width: 100%;
   border-radius: var(--cpd-space-4x);

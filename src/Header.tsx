@@ -16,7 +16,7 @@ import styles from "./Header.module.css";
 import Logo from "./icons/Logo.svg?react";
 import { Avatar, Size } from "./Avatar";
 import { EncryptionLock } from "./room/EncryptionLock";
-import { useMediaQuery } from "./useMediaQuery";
+import { useRootSizeMatches } from "./useRootSize";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
@@ -142,7 +142,7 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
   participantCount,
 }) => {
   const { t } = useTranslation();
-  const size = useMediaQuery("(max-width: 550px)") ? "sm" : "lg";
+  const size = useRootSizeMatches(({ width }) => width <= 550) ? "sm" : "lg";
 
   return (
     <div className={styles.roomHeaderInfo} data-size={size}>

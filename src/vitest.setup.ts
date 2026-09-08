@@ -55,12 +55,26 @@ window.matchMedia = global.matchMedia = (): MediaQueryList =>
 
 // jsdom does no layout and has no ResizeObserver. The call view observes the
 // size of its root element; this one reports nothing, so that element stays at
-// whatever size jsdom says it is (zero) unless a test says otherwise.
+// whatever size jsdom says it is unless a test says otherwise.
 window.ResizeObserver ??= class ResizeObserver {
   public observe(): void {}
   public unobserve(): void {}
   public disconnect(): void {}
 };
+
+// And what jsdom says is zero, for everything — which would have every size
+// query against Element Call's root (the body, with no provider) read as a tiny
+// window. Give the body the size of a typical desktop window instead, the same
+// answer the media query mock above gives. A test that wants another size
+// supplies a root element of its own.
+for (const [property, value] of [
+  ["clientWidth", 1024],
+  ["clientHeight", 768],
+] as const)
+  Object.defineProperty(document.body, property, {
+    get: () => value,
+    configurable: true,
+  });
 
 const storage: Record<string, string> = {};
 const localStoragePolyfill = {
