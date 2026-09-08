@@ -66,6 +66,7 @@ import { type ConfigOptions } from "../src/config/ConfigOptions";
 import { i18n } from "../src/utils/i18n";
 import { useTheme } from "../src/useTheme";
 import { useInitial } from "../src/useInitial";
+import { useStableValue } from "../src/useStableValue";
 import styles from "./ElementCall.module.css";
 
 // Everything needed to implement a HostBridge, not just the interface itself
@@ -115,6 +116,9 @@ export interface ElementCallProps {
    * How Element Call should behave, overriding whatever {@link intent} implies.
    * A host that finds itself setting a lot of these probably wants a different
    * intent instead.
+   *
+   * Compared by value, so it is fine to write this inline; only a change to
+   * what it says restarts anything.
    */
   config?: ElementCallConfiguration;
   /**
@@ -180,14 +184,20 @@ export const ElementCall: FC<ElementCallProps> = ({
   // Element Call has no URL of its own to read any of this from, and the
   // host's URL is not Element Call's business, so the defaults come from the
   // intent with the host's wishes over the top.
+  //
+  // Everything downstream — the mute state, the call view model and with it
+  // the media connection — is keyed on the identity of this object, so it has
+  // to be stable for as long as its contents are. A host writing `config`
+  // inline would otherwise tear the call down on every render.
+  const stableConfig = useStableValue(config);
   const params = useMemo(
     (): UrlParams => ({
       ...hostedProperties,
       roomId,
       ...configurationForIntent(intent),
-      ...config,
+      ...stableConfig,
     }),
-    [roomId, intent, config],
+    [roomId, intent, stableConfig],
   );
 
   const mediaDevices = useInitial(
