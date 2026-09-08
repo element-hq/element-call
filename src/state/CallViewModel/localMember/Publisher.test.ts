@@ -12,9 +12,10 @@ import {
   type LocalTrack,
   type LocalTrackPublication,
   ParticipantEvent,
+  type Room as LivekitRoom,
   Track,
 } from "livekit-client";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, NEVER } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { ObservableScope } from "../../ObservableScope";
@@ -23,10 +24,12 @@ import {
   flushPromises,
   mockLivekitRoom,
   mockMediaDevices,
+  deviceStub,
 } from "../../../utils/test";
 import { Publisher } from "./Publisher";
 import { type Connection } from "../remoteMembers/Connection";
 import { type MuteStates } from "../../MuteStates";
+import { type MediaDevices } from "../../MediaDevices";
 
 let scope: ObservableScope;
 
@@ -180,6 +183,53 @@ beforeEach(() => {
       localParticipant: localParticipant,
     }),
   } as unknown as Connection;
+});
+
+describe("Publisher device sync", () => {
+  it("does not pin a device for the virtual browser default input", async () => {
+    const selected$ = new BehaviorSubject<
+      { id: string; hardwareDeviceChange$: typeof NEVER } | undefined
+    >({ id: "", hardwareDeviceChange$: NEVER });
+    const switchActiveDevice = vi.fn().mockResolvedValue(true);
+    const livekitRoom = mockLivekitRoom({
+      localParticipant,
+      state: LivekitConnectionState.Connected,
+      // ConnectionFactory leaves the deviceId out for the browser default
+      options: { audioCaptureDefaults: {} },
+      switchActiveDevice,
+      getActiveDevice: () => "hardware-id-of-whatever-the-browser-chose",
+    } as unknown as Partial<LivekitRoom>);
+
+    const publisher = new Publisher(
+      { ...connection, livekitRoom },
+      mockMediaDevices({
+        audioInput: { ...deviceStub, selected$ },
+      } as unknown as Partial<MediaDevices>),
+      muteStates,
+      constant({ supported: false, processor: undefined }),
+      logger,
+    );
+
+    // Already capturing from the browser default: nothing to switch, even
+    // though LiveKit reports the physical device it ended up with.
+    expect(switchActiveDevice).not.toHaveBeenCalled();
+
+    selected$.next({ id: "headset", hardwareDeviceChange$: NEVER });
+    expect(switchActiveDevice).toHaveBeenLastCalledWith(
+      "audioinput",
+      "headset",
+    );
+
+    selected$.next({ id: "", hardwareDeviceChange$: NEVER });
+    expect(switchActiveDevice).toHaveBeenLastCalledWith(
+      "audioinput",
+      "default",
+      false,
+    );
+    expect(switchActiveDevice).toHaveBeenCalledTimes(2);
+
+    await publisher.destroy();
+  });
 });
 
 describe("Publisher", () => {

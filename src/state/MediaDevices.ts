@@ -36,11 +36,14 @@ export type DeviceLabel =
   | { type: "name"; name: string }
   | { type: "number"; number: number };
 
-export type AudioOutputDeviceLabel =
+export type AudioInputDeviceLabel =
   | DeviceLabel
-  | { type: "speaker" }
-  | { type: "earpiece" }
   | { type: "default"; name: string | null };
+
+export type AudioOutputDeviceLabel =
+  | AudioInputDeviceLabel
+  | { type: "speaker" }
+  | { type: "earpiece" };
 
 /**
  * Base selected-device value shared by all media kinds.
@@ -191,7 +194,10 @@ function selectDevice$<Label>(
   });
 }
 
-class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
+class AudioInput implements MediaDevice<
+  AudioInputDeviceLabel,
+  SelectedAudioInputDevice
+> {
   private logger = rootLogger.getChild("[MediaDevices AudioInput]");
 
   private readonly availableRaw$: Behavior<MediaDeviceInfo[]> =
@@ -203,7 +209,29 @@ class AudioInput implements MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
     );
 
   public readonly available$ = this.scope.behavior(
-    this.availableRaw$.pipe(map(buildDeviceMap)),
+    this.availableRaw$.pipe(
+      map((availableRaw) => {
+        const available: Map<string, AudioInputDeviceLabel> =
+          buildDeviceMap(availableRaw);
+        // Browsers without a "default" pseudo-device (Firefox, Safari, and
+        // in particular iOS) get a virtual default entry, listed first so
+        // that it is what we use when the user has not chosen a microphone.
+        // Its ID is the empty string, which consumers translate into "no
+        // deviceId constraint": the browser then captures from whatever the
+        // OS routes as the default input (a wired or Bluetooth headset when
+        // one is connected) instead of EC pinning whichever device happens
+        // to be enumerated first, which on iOS is the built-in microphone.
+        // Unlike Chrome's "default" device, a stream opened this way does
+        // not follow later changes of the OS default on desktop browsers;
+        // iOS re-routes the audio session itself.
+        if (available.size && !available.has("") && !available.has("default"))
+          return new Map<string, AudioInputDeviceLabel>([
+            ["", { type: "default", name: null }],
+            ...available,
+          ]);
+        return available;
+      }),
+    ),
   );
 
   public readonly selected$ = this.scope.behavior(
@@ -271,9 +299,6 @@ export class AudioOutput implements MediaDevice<
           // set to empty map if we are on Safari, because it does not support setSinkId
           available = new Map();
         }
-        // Note: creating virtual default input devices would be another problem
-        // entirely, because requesting a media stream from deviceId "" won't
-        // automatically track the default device.
         return available;
       }),
     ),
@@ -361,7 +386,7 @@ export class MediaDevices {
     false,
   );
   public readonly audioInput: MediaDevice<
-    DeviceLabel,
+    AudioInputDeviceLabel,
     SelectedAudioInputDevice
   > = new AudioInput(this.usingNames$, this.scope);
 

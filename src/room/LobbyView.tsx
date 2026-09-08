@@ -137,7 +137,8 @@ export const LobbyView: FC<Props> = ({
   const initialAudioOptions = useInitial(
     () =>
       audioEnabled && {
-        deviceId: getValue(devices.audioInput.selected$)?.id,
+        // "" is the virtual browser default: no deviceId constraint
+        deviceId: getValue(devices.audioInput.selected$)?.id || undefined,
       },
   );
 
