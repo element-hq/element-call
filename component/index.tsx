@@ -38,6 +38,7 @@ import {
   type ReactNode,
   type Ref,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from "react";
@@ -55,13 +56,16 @@ import { CallView } from "../src/room/CallView";
 import { ErrorPage } from "../src/FullScreenView";
 import { ClientProvider } from "../src/ClientContext";
 import { HostBridgeProvider } from "../src/HostBridge";
-import { RootElementProvider } from "../src/RootElementContext";
+import { RootElementProvider, useRootElement } from "../src/RootElementContext";
 import {
   configurationForIntent,
   componentProperties,
+  type UrlConfiguration,
   type UrlParams,
   UrlParamsProvider,
+  type UrlProperties,
   UserIntent,
+  useUrlParams,
 } from "../src/UrlParams";
 import { MediaDevicesContext } from "../src/MediaDevicesContext";
 import { MediaDevices } from "../src/state/MediaDevices";
@@ -100,8 +104,16 @@ export {
 /**
  * How Element Call should behave. Everything is optional; anything left out
  * takes the default that {@link ElementCallProps.intent} implies.
+ *
+ * This is the behaviour a widget can be configured with through its URL, plus
+ * the two facts about the call a host has a say in: the theme to start in and
+ * the background. The rest of what a widget's URL carries — who the user is,
+ * how to reach the homeserver, where to report analytics, the shared secret of
+ * a room that is encrypted with one — a component host supplies by other
+ * routes, or not at all.
  */
-export type ElementCallConfiguration = Partial<UrlParams>;
+export type ElementCallConfiguration = Partial<UrlConfiguration> &
+  Partial<Pick<UrlProperties, "theme" | "background">>;
 
 export interface ElementCallProps {
   /**
@@ -178,9 +190,14 @@ export async function initializeElementCall(
   });
 }
 
-/** Applies the theme to the container, before it is painted. */
+/** Applies the theme and background to the container, before it is painted. */
 const Decoration: FC<{ children: JSX.Element }> = ({ children }) => {
   useTheme();
+  const { background } = useUrlParams();
+  const rootElement = useRootElement();
+  useLayoutEffect(() => {
+    rootElement.setAttribute("data-background", background);
+  }, [rootElement, background]);
   return children;
 };
 
