@@ -36,8 +36,9 @@ You can find the latest development version continuously deployed to
 ✅ **Decentralized & Federated** – No central authority; works across Matrix
 homeservers.  
 ✅ **End-to-End Encrypted** – Secure and private calls.  
-✅ **Standalone & Widget Mode** – Use as an independent app or embed in Matrix
-clients.  
+✅ **Standalone, Widget & Component Mode** – Use as an independent app, embed
+in Matrix clients as a widget, or (experimentally) mount it as a React component
+inside your own application.  
 ✅ **WebRTC-based** – No additional software required.  
 ✅ **Scalable with LiveKit** – Supports large meetings via SFU
 ([MSC4195: MatrixRTC using LiveKit backend](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)).  
@@ -90,7 +91,9 @@ and voice calls within Matrix rooms.
 
 Element Call offers two packaging options: one for standalone or widget
 deployment, and another for seamless widget-based integration into messenger
-apps. Below is an overview of each option.
+apps. A third, experimental option builds it as a React component library for
+applications that want to render a call inside their own page rather than in an
+iframe. Below is an overview of each option.
 
 **Full Package** – Supports both **Standalone** and **Widget** mode. It is
 hosted as a static web page and can be accessed via a URL when used as a widget.
@@ -106,6 +109,11 @@ recommended method for embedding Element Call.
 <p align="center">
   <img src="./docs/embedded_package.drawio.png" alt="Element Call Embedded Package">
 </p>
+
+**Component Package (experimental)** – A library build of Element Call as a
+React component, consumed as a dependency by a host application that already
+has a Matrix client. See
+[Element Call as a component](#element-call-as-a-component-experimental) below.
 
 For more details on the packages, see the
 [Embedded vs. Standalone Guide](./docs/embedded_standalone.md).
@@ -229,14 +237,20 @@ in twice against the development backend and shows two calls side by side, in
 resizable boxes, with page furniture of its own around them. Use it to see how
 Element Call behaves when it does not own the page — the size it is given,
 whether it stays inside its container, and what it says to its host, which is
-logged along the bottom.
+logged along the bottom. The harness is served with the same development
+certificate as the app, so unless the development CA is trusted, the browser
+needs a certificate exception for `https://localhost:3001` as well (see the
+note under [Backend](#backend)). It reads the same `public/config.json` as
+`pnpm dev` if one exists, and runs with Element Call's defaults otherwise.
 
 The call lays itself out for the size of the element it is mounted in, not the
 window: a host that shrinks the container to a corner of its page gets the
 picture-in-picture layout, just as a host that shrank the whole iframe used to.
-The breakpoints in Element Call's stylesheets are `@container element-call`
-queries against its root element for the same reason; for the standalone app
-the root is the page, so they mean what the media queries they replaced did.
+The breakpoints in the stylesheets the component uses are
+`@container element-call` queries against its root element for the same reason;
+for the standalone app the root is the page, so they mean what the media queries
+they replaced did. (The standalone-only views, such as the home and login pages,
+still use plain media queries, since the component never shows them.)
 
 The component's stylesheet is confined to the element it is mounted in: the
 build rewrites every selector so that it matches only Element Call's root or
@@ -248,8 +262,32 @@ The component speaks every language the app does. English is bundled in; the
 other locales are split into chunks the host's bundler loads the first time
 they are needed. It starts in the browser's language, and follows the host's
 own language setting through the `language` prop (`supportedLanguages` lists
-the tags it accepts). The `theme` prop works the same way for `light` and
-`dark`; both can change while a call is running without disturbing it.
+the tags it accepts, and anything else falls back to its base language or to
+English). The `theme` prop works the same way and takes the same values as the
+widget's `theme` URL parameter: `light`, `dark`, `light-high-contrast` or
+`dark-high-contrast`. Both can change while a call is running without
+disturbing it.
+
+A host must call and await `initializeElementCall(config)` once before
+rendering the component: it loads the `Intl` polyfills, applies the
+deployment-wide `config.json`-style configuration and sets up translations.
+The component itself takes the host's `client` and the `roomId` to call in, an
+`intent` saying what the user asked for (which decides whether to show the
+lobby, ring, and so on), an optional `config` overriding what the intent
+implies, and an optional `hostBridge` through which Element Call tells the host
+that the user has joined or hung up, that it wants to stay on screen, and so
+on. The host makes its own requests (`join`, `hangUp`, `setDeviceMute`) through
+the handle exposed on `ref`. The full API is documented in the type declarations
+(`component/index.tsx` and `component/host.ts`).
+
+A few things differ from the widget on purpose: the component draws a solid
+background rather than a gradient unless told otherwise, never offers to edit
+the user's profile (the account is the host's), scopes its keyboard shortcuts to
+its own root element so that several instances can share a page, and only shows
+its own post-call and error screens when the host has not supplied a `close()`
+callback; with one, it asks the host to unmount it instead. The
+[global JS controls](./docs/controls.md) on `window` are unchanged and remain
+page-wide, so with several instances on one page they apply to all of them.
 
 The package is not published yet. A host installs it as a git dependency on the
 `component` directory of this repository,
@@ -258,8 +296,14 @@ The package is not published yet. A host installs it as a git dependency on the
 "@element-hq/element-call-component": "github:element-hq/element-call#main&path:/component"
 ```
 
-whose `prepare` script runs the build on install (the host's pnpm has to allow
-that: `allowBuilds` in its `pnpm-workspace.yaml`). It imports the component from
+whose `prepare` script runs the build on install. That build needs pnpm (via
+Corepack) on the host's machine, runs a full `pnpm install` of this repository
+and is memory-hungry, since it inherits the `--max-old-space-size` setting of
+the app build; the host's pnpm also has to allow it to run at all
+(`allowBuilds` in its `pnpm-workspace.yaml`). Note that `component/` is a pnpm
+project of its own for this reason, so pnpm commands run from inside that
+directory target it rather than the repository; run them from the repository
+root. The host imports the component from
 `@element-hq/element-call-component` and the stylesheet from
 `@element-hq/element-call-component/style.css`, and has to provide `react`,
 `react-dom`, `matrix-js-sdk` and `livekit-client` itself, since the bundle leaves
@@ -326,7 +370,10 @@ running Playwright by following
 
 However the Playwright tests are run, an element-call instance must be running
 on https://localhost:3000 (this is configured in `playwright.config.ts`) - this
-is what will be tested.
+is what will be tested. The tests under `playwright/component` instead drive
+the component harness (`pnpm dev:component`) on https://localhost:3001, which
+Playwright starts as a second web server; it is always a Vite dev server, even
+when the app itself is served from Docker with `USE_DOCKER`.
 
 The local backend environment should be running for the test to work:
 `pnpm backend`
@@ -425,7 +472,7 @@ We do this so that we can reuse the labels between repositories.
 
 ## 📝 Copyright & License
 
-Copyright 2021-2025 New Vector Ltd
+Copyright 2021-2026 New Vector Ltd
 
 This software is dual-licensed by New Vector Ltd (Element). It can be used
 either:
