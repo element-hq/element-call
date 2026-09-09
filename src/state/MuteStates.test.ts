@@ -6,15 +6,22 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, NEVER, Subject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { nullHostBridge } from "../HostBridge";
+import {
+  type DeviceMuteRequest,
+  type DeviceMuteState,
+  type HostBridge,
+  type HostRequest,
+  nullHostBridge,
+} from "../HostBridge";
 import { MuteStates, MuteState } from "./MuteStates";
 import {
   type AudioOutputDeviceLabel,
   type DeviceLabel,
   type MediaDevice,
+  type SelectedAudioInputDevice,
   type SelectedAudioOutputDevice,
   type SelectedDevice,
 } from "./MediaDevices";
@@ -220,6 +227,80 @@ describe("MuteStates", () => {
       },
     };
   }
+
+  function aAudioInput(): MediaDevice<DeviceLabel, SelectedAudioInputDevice> {
+    return {
+      available$: constant(
+        new Map<string, DeviceLabel>([
+          ["mic0", { type: "name", name: "Built-in Microphone" }],
+        ]),
+      ),
+      selected$: constant({ id: "mic0", hardwareDeviceChange$: NEVER }),
+      select(): void {},
+    };
+  }
+
+  test("keeps the host informed and applies its mute requests", async () => {
+    const deviceMute$ = new Subject<
+      HostRequest<DeviceMuteRequest, DeviceMuteState>
+    >();
+    const notifyDeviceMute = vi.fn(async (): Promise<void> => {});
+    const hostBridge: HostBridge = {
+      ...nullHostBridge,
+      notifyDeviceMute,
+      deviceMute$,
+    };
+    const muteStates = new MuteStates(
+      testScope,
+      mockMediaDevices({
+        audioInput: aAudioInput(),
+        videoInput: aVideoInput(),
+      }),
+      { audioEnabled: true, videoEnabled: false },
+      hostBridge,
+    );
+    await flushPromises();
+
+    // The host hears the state we started in
+    expect(notifyDeviceMute).toHaveBeenLastCalledWith({
+      audio_enabled: true,
+      video_enabled: false,
+    });
+
+    // The host asks for the camera on, saying nothing about the microphone,
+    // which is left as it is
+    const reply = vi.fn();
+    deviceMute$.next({ data: { video_enabled: true }, reply });
+    await flushPromises();
+    expect(reply).toHaveBeenCalledExactlyOnceWith({
+      audio_enabled: true,
+      video_enabled: true,
+    });
+    expect(muteStates.audio.enabled$.value).toBe(true);
+    expect(muteStates.video.enabled$.value).toBe(true);
+    expect(notifyDeviceMute).toHaveBeenLastCalledWith({
+      audio_enabled: true,
+      video_enabled: true,
+    });
+
+    // Then for everything off
+    const replyAgain = vi.fn();
+    deviceMute$.next({
+      data: { audio_enabled: false, video_enabled: false },
+      reply: replyAgain,
+    });
+    await flushPromises();
+    expect(replyAgain).toHaveBeenCalledExactlyOnceWith({
+      audio_enabled: false,
+      video_enabled: false,
+    });
+    expect(muteStates.audio.enabled$.value).toBe(false);
+    expect(muteStates.video.enabled$.value).toBe(false);
+    expect(notifyDeviceMute).toHaveBeenLastCalledWith({
+      audio_enabled: false,
+      video_enabled: false,
+    });
+  });
 
   test("should mute camera when in earpiece mode", async () => {
     const audioOutputDevice = aAudioOutputDevices();

@@ -36,6 +36,8 @@ import userEvent, {
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
+import { Subject } from "rxjs";
+import { Room as LivekitRoom } from "livekit-client";
 
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
@@ -54,8 +56,10 @@ import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary";
 import {
   type HostBridge,
   HostBridgeProvider,
+  type HostRequest,
   nullHostBridge,
 } from "../HostBridge";
+import { type JoinCallData } from "../widget";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
@@ -139,6 +143,8 @@ function createCallView(
   joined = true,
   options: {
     withErrorBoundary?: boolean;
+    /** Wait for the host to say when to join, rather than joining at once. */
+    preload?: boolean;
   } = {},
 ): {
   rtcSession: MatrixRTCSession;
@@ -176,7 +182,7 @@ function createCallView(
       client={client}
       isPasswordlessUser={false}
       confineToRoom={false}
-      preload={false}
+      preload={options.preload ?? false}
       // Straight into the (mocked) call, past the lobby
       skipLobby
       rtcSession={rtcSession.asMockedSession()}
@@ -282,6 +288,26 @@ test("Should ask the host to close when all other left and play a sound", async 
   expect(playSound).toHaveBeenCalledWith("left", 0);
   await waitFor(() => expect(close).toHaveBeenCalledOnce());
 }, 80000);
+
+test("Waits for the host to say when to join, when preloaded", async () => {
+  // Nothing to match device names against; the host names none anyway
+  vi.spyOn(LivekitRoom, "getLocalDevices").mockResolvedValue([]);
+  const join$ = new Subject<HostRequest<JoinCallData>>();
+  const hostBridge: HostBridge = { ...nullHostBridge, join$ };
+
+  createCallView(hostBridge, false, { preload: true });
+  await flushPromises();
+  // Past the lobby, but not in the call: the host has not asked yet
+  expect(screen.queryByText("Leave")).toBeNull();
+
+  const reply = vi.fn();
+  act(() =>
+    join$.next({ data: { audioInput: null, videoInput: null }, reply }),
+  );
+  // Then in the call, and the host told so
+  await waitFor(() => expect(reply).toHaveBeenCalledOnce());
+  expect(screen.getByText("Leave")).toBeInTheDocument();
+});
 
 test("Should not ask the host to close when auto leave due to error", async () => {
   const user = userEvent.setup();

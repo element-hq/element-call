@@ -339,6 +339,50 @@ describe("UrlParams", () => {
         callIntent: "audio",
       });
     });
+
+    it("accepts start_call_dm_voice", () => {
+      expect(
+        computeUrlParams(
+          "?intent=start_call_dm_voice&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...startNewCallDefaults("desktop"),
+        // A DM rings the other side and waits for them, whichever platform
+        sendNotificationType: "ring",
+        autoLeaveWhenOthersLeft: true,
+        waitForCallPickup: true,
+        callIntent: "audio",
+      });
+    });
+
+    it("accepts join_existing_dm", () => {
+      expect(
+        computeUrlParams(
+          "?intent=join_existing_dm&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...joinExistingCallDefaults("desktop"),
+        // Straight in: the other side is already waiting
+        skipLobby: true,
+        autoLeaveWhenOthersLeft: true,
+        waitForCallPickup: false,
+        callIntent: "video",
+      });
+    });
+
+    it("accepts join_existing_dm_voice", () => {
+      expect(
+        computeUrlParams(
+          "?intent=join_existing_dm_voice&widgetId=1234&parentUrl=parent.org",
+        ),
+      ).toMatchObject({
+        ...joinExistingCallDefaults("desktop"),
+        skipLobby: true,
+        autoLeaveWhenOthersLeft: true,
+        waitForCallPickup: false,
+        callIntent: "audio",
+      });
+    });
   });
 
   describe("skipLobby", () => {
