@@ -5,7 +5,7 @@
 > Every PR must have a linked issue
 > that a maintainer has reviewed and approved **before you started writing code**.
 > PRs that don't meet this requirement will not be reviewed.
-> See [CONTRIBUTING.md](https://github.com/element-hq/element-call/blob/livekit/CONTRIBUTING.md) for ElementCall decided for this approach.
+> See [CONTRIBUTING.md](https://github.com/element-hq/element-call/blob/main/CONTRIBUTING.md) for ElementCall decided for this approach.
 
 ## Content
 
@@ -39,7 +39,7 @@ Uncomment the markdown table below and fill in the last line:
 ## Checklist
 
 - [ ] A linked, pre-approved issue exists for this feature or UI change.
-- [ ] I have read [CONTRIBUTING.md](https://github.com/element-hq/element-call/blob/livekit/CONTRIBUTING.md) in full.
+- [ ] I have read [CONTRIBUTING.md](https://github.com/element-hq/element-call/blob/main/CONTRIBUTING.md) in full.
 - [ ] Pull request includes screenshots or videos for any UI changes.
 - [ ] Tests written for new code (and existing touched code where feasible).
 - [ ] Linter and other CI checks pass.

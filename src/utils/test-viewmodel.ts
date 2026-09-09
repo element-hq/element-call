@@ -175,7 +175,7 @@ export function getBasicCallViewModelEnvironment(
           setE2EEEnabled: async () => Promise.resolve(),
         }),
       connectionState$: constant(ConnectionState.Connected),
-      matrixRTCMode$: constant(MatrixRTCMode.Compatibility),
+      matrixRTCMode: MatrixRTCMode.Compatibility,
       windowSize$: constant({ width: 1000, height: 800 }),
       ...callViewModelOptions,
     },

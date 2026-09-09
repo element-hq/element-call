@@ -144,7 +144,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         hostBridge,
         autoLeaveWhenOthersLeft,
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
-        matrixRTCMode$: matrixRTCModeSetting.value$,
+        // We merely sample the current mode here, so the user would need to
+        // manually rejoin to switch to a different one.
+        matrixRTCMode: matrixRTCModeSetting.value$.value,
         windowSize$: scope.behavior(observeElementSize$(rootElement)),
       },
       reactionsReader.raisedHands$,
