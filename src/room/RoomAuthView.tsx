@@ -85,7 +85,7 @@ export const RoomAuthView: FC = () => {
             </FieldRow>
             <Text size="sm">
               <Trans i18nKey="room_auth_view_ssla_caption">
-                By clicking "Join call now", you agree to our{" "}
+                By clicking "Continue", you agree to our{" "}
                 <ExternalLink href={Config.get().ssla}>
                   Software and Services License Agreement (SSLA)
                 </ExternalLink>
