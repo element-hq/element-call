@@ -15,6 +15,7 @@ import {
   MediaDeviceFailure,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
+import { type MatrixClient } from "matrix-js-sdk";
 import {
   Status as RTCSessionStatus,
   type LivekitTransport,
@@ -62,7 +63,10 @@ import {
   screenShareCodec,
   parseResolution,
 } from "../../../settings/settings.ts";
-import { MatrixRTCMode } from "../../../config/ConfigOptions.ts";
+import {
+  MatrixRTCMode,
+  type ResolvedDelayedLeaveTimings,
+} from "../../../config/ConfigOptions.ts";
 import { Config } from "../../../config/Config.ts";
 import {
   ConnectionState,
@@ -72,6 +76,8 @@ import {
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
 import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
+import { or$ } from "../../../utils/observable.ts";
+import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -133,14 +139,22 @@ interface Props {
   muteStates: MuteStates;
   connectionManager: IConnectionManager;
   createPublisherFactory: (connection: Connection) => Publisher;
-  joinMatrixRTC: (transport: LivekitTransportConfig) => void;
+  joinMatrixRTC: (
+    transport: LivekitTransportConfig,
+    delayedLeaveTimings: ResolvedDelayedLeaveTimings,
+  ) => void;
   homeserverConnected: HomeserverConnected;
   roomId: string;
-  localTransport$: Behavior<LocalTransport>;
+  ownMembershipIdentity: CallMembershipIdentityParts;
+  localTransport: LocalTransport;
+  client: Pick<MatrixClient, "getDeviceId" | "getOpenIdToken">;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
   >;
+  baseUrl: string;
+  delayId$: Behavior<string | null>;
+  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -155,10 +169,12 @@ interface Props {
  * @param props.createPublisherFactory Factory to create a publisher once we have a connection.
  * @param props.joinMatrixRTC Callback to join the matrix RTC session once we have a transport.
  * @param props.homeserverConnected The homeserver connected state.
- * @param props.localTransport$ The transport to advertise in our membership.
+ * @param props.localTransport The transport to advertise in our membership.
  * @param props.logger The logger to use.
  * @param props.muteStates The mute states for video and audio.
  * @param props.matrixRTCSession The matrix RTC session to join.
+ * @param props.baseUrl Base URL of the homeserver.
+ * @param props.delayId$ ID of the delayed leave event to delegate to the SFU.
  * @param props.roomId The room ID used as the call identifier in analytics events.
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
@@ -170,14 +186,19 @@ interface Props {
 export const createLocalMembership$ = ({
   scope,
   connectionManager,
-  localTransport$,
+  localTransport,
   homeserverConnected,
   createPublisherFactory,
   joinMatrixRTC,
   logger: parentLogger,
   muteStates,
+  client,
   matrixRTCSession,
+  baseUrl,
   roomId,
+  ownMembershipIdentity,
+  delayId$,
+  matrixRTCMode,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -236,25 +257,69 @@ export const createLocalMembership$ = ({
     return of(null);
   };
 
-  // This is the transport that we will advertise in our membership.
-  const advertisedTransport$ = localTransport$.pipe(
-    switchMap((lt) => lt.advertised$),
+  async function checkDelegationSupport(
+    endpointUrl: string,
+    serviceName: string,
+  ): Promise<boolean> {
+    logger.info(`Checking whether ${serviceName} supports delegation…`);
+    try {
+      // Bluntly hit the endpoint without auth to check for a 404. Unfortunately
+      // we can't wrap this in a retry loop, as many servers don't just disable
+      // delegation support, but in fact are from a time before the endpoint
+      // existed at all, therefore we can hit CORS errors which would just gum
+      // up the retry loop. (May be revisited after Matrix 2.0.)
+      const res = await fetch(endpointUrl, { method: "POST" });
+      if (res.status === 404) {
+        logger.warn(`${serviceName} does not support delegation`);
+        return false;
+      } else {
+        logger.info(`${serviceName} supports delegation`);
+        return true;
+      }
+    } catch (e) {
+      logger.warn(
+        `Failed to determine whether ${serviceName} supports delegation, assuming no support`,
+        e,
+      );
+      return false;
+    }
+  }
+
+  const homeserverSupportsDelegation = checkDelegationSupport(
+    baseUrl +
+      "/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave",
+    "homeserver",
+  );
+
+  // The transport that we will advertise in our membership, paired with info as
+  // to whether delayed event delegation is supported
+  const joinParams$ = localTransport.advertised$.pipe(
     catchError(handleTransportError),
     distinctUntilChanged(areLivekitTransportsEqual),
+    switchMap((transport) => {
+      if (transport === null) return of(null);
+      const transportSupportsDelegation = checkDelegationSupport(
+        transport.livekit_service_url + "/delegate_delayed_leave",
+        `transport ${transport.livekit_service_url}`,
+      );
+      return or$(
+        from(homeserverSupportsDelegation),
+        from(transportSupportsDelegation),
+      ).pipe(
+        map((delegationSupported) => ({ transport, delegationSupported })),
+        startWith(null),
+      );
+    }),
   );
 
   // Unwrap the local transport and set the state of the LocalMembership to error in case the transport is an error.
   const activeTransport$ = scope.behavior(
-    localTransport$.pipe(
-      switchMap((lt) => {
-        return combineLatest([lt.active$, lt.advertised$]).pipe(
-          map(([active, advertised]) => {
-            // Our policy is to not publish to another transport if our prefered transport is miss-configured
-            if (advertised == null) return null;
+    combineLatest([localTransport.active$, localTransport.advertised$]).pipe(
+      map(([active, advertised]) => {
+        // Our policy is to not publish to another transport if our prefered transport is miss-configured
+        if (advertised == null) return null;
 
-            return active?.transport ?? null;
-          }),
-        );
+        return active?.transport ?? null;
       }),
       catchError(handleTransportError),
       distinctUntilChanged(areLivekitTransportsEqual),
@@ -617,16 +682,20 @@ export const createLocalMembership$ = ({
 
   // Keep matrix rtc session in sync with advertisedTransport$, connectRequested$
   scope.reconcile(
-    scope.behavior(
-      combineLatest([advertisedTransport$, joinAndPublishRequested$]),
-    ),
-    async ([transport, shouldConnect]) => {
-      if (!transport) return;
+    scope.behavior(combineLatest([joinParams$, joinAndPublishRequested$])),
+    async ([joinParams, shouldConnect]) => {
+      if (!joinParams) return;
       // if shouldConnect=false we will do the disconnect as the cleanup from the previous reconcile iteration.
       if (!shouldConnect) return;
+      const sessionConfig = Config.get().matrix_rtc_session;
 
       try {
-        joinMatrixRTC(transport);
+        joinMatrixRTC(
+          joinParams.transport,
+          joinParams.delegationSupported
+            ? sessionConfig.delegated_delayed_leave
+            : sessionConfig.delayed_leave,
+        );
       } catch (error) {
         logger.error("Error entering RTC session", error);
         if (error instanceof Error)
@@ -651,6 +720,34 @@ export const createLocalMembership$ = ({
         logger.debug("participant$ updated:", p?.identity);
       }),
     ),
+  );
+
+  // Delegate delayed leaves to the SFU
+  scope.reconcile(
+    scope.behavior(combineLatest([joinParams$, delayId$])),
+    async ([joinParams, delayId]) => {
+      if (joinParams?.delegationSupported && delayId !== null) {
+        try {
+          // This will technically cause the service to issue a new JWT token,
+          // but it's safe to discard. We're only interested in triggering
+          // delegation.
+          await getSFUConfigWithOpenID(
+            client,
+            ownMembershipIdentity,
+            joinParams.transport.livekit_service_url,
+            roomId,
+            { matrixRTCMode, delayEndpointBaseUrl: baseUrl, delayId },
+            logger,
+          );
+        } catch (e) {
+          // TODO: Surface this to the user as a service interruption?
+          logger.error(
+            `Failed to delegate leave to ${joinParams.transport.livekit_service_url}`,
+            e,
+          );
+        }
+      }
+    },
   );
 
   // Pause upstream of all local media tracks when we're disconnected from
@@ -864,6 +961,7 @@ export function observeSharingScreen$(p: Participant): Observable<boolean> {
 interface EnterRTCSessionOptions {
   encryptMedia: boolean;
   matrixRTCMode: MatrixRTCMode;
+  delayedLeaveTimings: ResolvedDelayedLeaveTimings;
 }
 
 /**
@@ -876,6 +974,7 @@ interface EnterRTCSessionOptions {
  * @param rtcSession - The MatrixRTCSession to join.
  * @param ownMembershipIdentity - Options for entering the RTC session.
  * @param transport - The LivekitTransport to use for this session.
+ * @param delayedLeaveTimings - The preferred timings for delayed leave events.
  * @param options - `encryptMedia`: Whether to encrypt media `matrixRTCMode`: The Matrix RTC mode to use.
  * @throws If the widget could not send ElementWidgetActions.JoinCall action.
  */
@@ -884,9 +983,8 @@ export function enterRTCSession(
   rtcSession: MatrixRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
   transport: LivekitTransportConfig,
-  options: EnterRTCSessionOptions,
+  { encryptMedia, matrixRTCMode, delayedLeaveTimings }: EnterRTCSessionOptions,
 ): void {
-  const { encryptMedia, matrixRTCMode } = options;
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
@@ -894,7 +992,11 @@ export function enterRTCSession(
   // have started tracking by the time calls start getting created.
   // groupCallOTelMembership?.onJoinCall();
 
-  const { matrix_rtc_session: matrixRtcSessionConfig } = Config.get();
+  const {
+    sync_disconnect_grace_period_ms: gracePeriod,
+    matrix_rtc_session: sessionConfig,
+  } = Config.get();
+  const retryInterval = sessionConfig.network_error_retry_ms;
   const { sendNotificationType: notificationType, callIntent } = getUrlParams();
   const multiSFU =
     matrixRTCMode === MatrixRTCMode.Compatibility ||
@@ -912,16 +1014,11 @@ export function enterRTCSession(
     };
   }
 
-  // Calculates `maximumNetworkErrorRetryCount`. The connection is failed if EITHER:
-  // - The /sync loop is unresponsive for > `gracePeriod` ms, or
-  // - A delayed leave event is emitted (after `leaveDelay` ms period).
-  // Note: Use leaveDelay >> gracePeriod for delegated leave events.
-  const gracePeriod = Config.get().sync_disconnect_grace_period_ms;
-  const leaveDelay = matrixRtcSessionConfig?.delayed_leave_event_delay_ms;
-  const retryInterval = matrixRtcSessionConfig?.network_error_retry_ms;
-
+  // Set maximumNetworkErrorRetryCount such that we will consider the client
+  // disconnected as soon as either it fails to sync for longer than the grace
+  // period, or it is likely that a delayed leave event has been sent.
   // Math.min is used to account for the respective worst case: /sync not available or leave event emitted.
-  const maxWaitTime = Math.min(gracePeriod, leaveDelay);
+  const maxWaitTime = Math.min(gracePeriod, delayedLeaveTimings.delay_ms);
   const maximumNetworkErrorRetryCount =
     Math.ceil(maxWaitTime / retryInterval) + 1;
 
@@ -936,18 +1033,14 @@ export function enterRTCSession(
       notificationType,
       callIntent,
       manageMediaKeys: encryptMedia,
-      delayedLeaveEventRestartMs:
-        matrixRtcSessionConfig?.delayed_leave_event_restart_ms,
-      delayedLeaveEventDelayMs:
-        matrixRtcSessionConfig?.delayed_leave_event_delay_ms,
+      delayedLeaveEventRestartMs: delayedLeaveTimings.restart_ms,
+      delayedLeaveEventDelayMs: delayedLeaveTimings.delay_ms,
       delayedLeaveEventRestartLocalTimeoutMs:
-        matrixRtcSessionConfig?.delayed_leave_event_restart_local_timeout_ms,
-      networkErrorRetryMs: matrixRtcSessionConfig?.network_error_retry_ms,
-      makeKeyDelay: matrixRtcSessionConfig?.wait_for_key_rotation_ms,
-      membershipEventExpiryMs:
-        matrixRtcSessionConfig?.membership_event_expiry_ms,
-      keyRotationParticipantLimit:
-        matrixRtcSessionConfig?.key_rotation_participant_limit,
+        delayedLeaveTimings.restart_timeout_ms,
+      networkErrorRetryMs: sessionConfig.network_error_retry_ms,
+      makeKeyDelay: sessionConfig.wait_for_key_rotation_ms,
+      membershipEventExpiryMs: sessionConfig.membership_event_expiry_ms,
+      keyRotationParticipantLimit: sessionConfig.key_rotation_participant_limit,
       unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
       maximumNetworkErrorRetryCount: maximumNetworkErrorRetryCount,
     },

@@ -9,8 +9,29 @@ import { expect, test } from "vitest";
 import { type Observable, of, Subject, switchMap } from "rxjs";
 
 import { withTestScheduler } from "./test";
-import { filterBehavior, generateItems, pauseWhen } from "./observable";
+import { or$, filterBehavior, generateItems, pauseWhen } from "./observable";
 import { type Behavior } from "../state/Behavior";
+
+const yesNo = {
+  y: true,
+  n: false,
+};
+
+test("or$", () => {
+  withTestScheduler(({ behavior, expectObservable }) => {
+    const input1Marbles = "ny--n--";
+    const input2Marbles = "n-y--n-";
+    const input3Marbles = "n--y--n";
+    const outputMarbles = "nyyyyyn";
+    expectObservable(
+      or$(
+        behavior(input1Marbles, yesNo),
+        behavior(input2Marbles, yesNo),
+        behavior(input3Marbles, yesNo),
+      ),
+    ).toBe(outputMarbles, yesNo);
+  });
+});
 
 test("pauseWhen", () => {
   withTestScheduler(({ behavior, expectObservable }) => {
