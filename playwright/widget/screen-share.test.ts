@@ -129,8 +129,6 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
       frame.getByTestId("screenshare-indicator").first(),
     ).toHaveAttribute("data-visible", "true");
 
-    await carol.page.pause();
-
     // now click on next
     await expect(frame.getByRole("button", { name: "Next" })).toBeVisible();
     await frame.getByRole("button", { name: "Next" }).click();

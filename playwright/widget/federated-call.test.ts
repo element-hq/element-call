@@ -37,8 +37,6 @@ modePairs.forEach(([rtcMode1, rtcMode2]) => {
 
       await TestHelpers.acceptRoomInvite(roomName, timo.page);
 
-      await florian.page.pause();
-
       await TestHelpers.openWidgetSetEmbeddedElementCallRtcModeCloseWidget(
         florian.page,
         rtcMode1,

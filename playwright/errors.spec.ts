@@ -114,8 +114,6 @@ test("Should show error screen if call creation is restricted", async ({
       }),
   );
 
-  await page.pause();
-
   await page.getByTestId("home_callName").click();
   await page.getByTestId("home_callName").fill("HelloCall");
   await page.getByTestId("home_displayName").click();
@@ -125,7 +123,6 @@ test("Should show error screen if call creation is restricted", async ({
   // Join the call
   await page.getByTestId("lobby_joinCall").click();
 
-  await page.pause();
   // Should fail
   await expect(page.getByText("Failed to create call")).toBeVisible();
   await expect(
