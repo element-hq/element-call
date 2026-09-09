@@ -4,6 +4,7 @@ exports[`InCallView > rendering > renders 1`] = `
 <div>
   <div
     class="_inRoom_4e7ff8"
+    data-layout="one-on-one-desktop"
   >
     <header
       class="_header_e4b327 _header_4e7ff8"

@@ -68,7 +68,7 @@
 }
 
 /* Hide everything but the subtitle in small windows */
-@media (max-height: 450px) {
+@container element-call (max-height: 450px) {
   .bar {
     display: none;
   }
@@ -131,7 +131,7 @@
   }
 }
 
-body[data-platform="ios"] {
+[data-element-call-root][data-platform="ios"] {
   .bar > header {
     grid-template-rows: minmax(var(--cpd-space-11x), auto) var(--cpd-space-4x);
     grid-template-areas: "primaryButton title secondaryButton";
@@ -166,7 +166,7 @@ body[data-platform="ios"] {
   }
 
   /* Hide everything but the subtitle in small windows */
-  @media (max-height: 450px) {
+  @container element-call (max-height: 450px) {
     .bar:has(.subtitle) > header {
       grid-template-rows: var(--cpd-space-4x) minmax(var(--cpd-space-5x), auto);
       grid-template-areas: "." "subtitle";

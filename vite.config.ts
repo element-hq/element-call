@@ -26,7 +26,15 @@ import * as fs from "node:fs";
 
 export const vitePluginsConfig = ({
   mode,
-}: Pick<ConfigEnv, "mode">): UserConfig => {
+  html = true,
+}: Pick<ConfigEnv, "mode"> & {
+  /**
+   * Whether to inject Element Call's entry point into the HTML page. Builds
+   * that produce a library, or serve a page of their own, must not have this:
+   * it would pull the standalone app in alongside whatever they are building.
+   */
+  html?: boolean;
+}): UserConfig => {
   const env = loadEnv(mode, process.cwd());
   const plugins: PluginOption[] = [
     babel({
@@ -67,7 +75,7 @@ export const vitePluginsConfig = ({
     );
   }
 
-  if (!process.env.STORYBOOK && !process.env.VITEST) {
+  if (html && !process.env.STORYBOOK && !process.env.VITEST) {
     plugins.push(
       createHtmlPlugin({
         entry: "src/main.tsx",

@@ -1,0 +1,14 @@
+# Makes `component/` a pnpm project of its own rather than a directory inside
+# the repository's workspace. That matters when a host installs the component
+# straight from this repository (`github:element-hq/element-call#…&path:/component`):
+# pnpm prepares such a dependency by running `pnpm install` in this directory,
+# and only a project root gets its `prepare` script (see package.json) run, which
+# is what builds `dist/`. Inside the repository's own workspace the install
+# would silently target the repository instead and build nothing.
+#
+# Consequence for development: pnpm commands run from within this directory see
+# this project, not the repository; run them from the repository root.
+
+# Nothing to install here: the peers in package.json are the host's, and the
+# build runs against the repository's own node_modules (see `prepare`).
+autoInstallPeers: false

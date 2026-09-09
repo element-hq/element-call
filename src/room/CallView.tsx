@@ -28,14 +28,8 @@ import {
   MatrixRTCSessionEvent,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { useNavigate } from "react-router-dom";
 
-import type { IWidgetApiRequest } from "matrix-widget-api";
-import {
-  ElementWidgetActions,
-  type JoinCallData,
-  type WidgetHelpers,
-} from "../widget";
+import { type JoinCallData } from "../widget";
 import { LobbyView } from "./LobbyView";
 import { type MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
@@ -54,12 +48,7 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import {
-  getUrlParams,
-  HeaderStyle,
-  type UrlParams,
-  useUrlParams,
-} from "../UrlParams";
+import { HeaderStyle, type UrlParams, useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useAudioContext } from "../useAudioContext";
 import {
@@ -67,7 +56,6 @@ import {
   type CallEventSounds,
 } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
-import { usePageTitle } from "../usePageTitle";
 import {
   ConnectionLostError,
   E2EENotSupportedError,
@@ -80,6 +68,10 @@ import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useAppBarTitle } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
+import { useRootElement } from "../RootElementContext.ts";
+import { useHostBridge } from "../HostBridge.ts";
+import { useMuteStates } from "../state/useMuteStates.ts";
+import { useLeaveToHome } from "../LeaveToHomeContext.ts";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -94,19 +86,67 @@ declare global {
 }
 
 interface Props {
+  /** The client to place the call with. */
   client: MatrixClient;
-  isPasswordlessUser: boolean;
-  confineToRoom: boolean;
-  preload: UrlParams["preload"];
-  skipLobby: UrlParams["skipLobby"];
+  /** The call to join. */
   rtcSession: MatrixRTCSession;
+  /**
+   * Whether the user is signed in as a guest, and so should be offered the
+   * chance to create an account when the call ends.
+   */
+  isPasswordlessUser: boolean;
+  /** Whether to keep the user in this call rather than letting them navigate. */
+  confineToRoom: boolean;
+  /** Whether to wait for the host to ask us to join. */
+  preload: UrlParams["preload"];
+  /** Whether to enter the call directly, without showing the lobby first. */
+  skipLobby: UrlParams["skipLobby"];
+}
+
+/**
+ * A call, from start to finish.
+ *
+ * This owns the whole lifecycle of being in a call: the lobby, where the user
+ * checks their camera and microphone before joining; the call itself; and the
+ * screen shown once it has ended. Not every call has every stage — the lobby
+ * is skipped when the user is put straight into the call, or when the host
+ * wants to say when to join; and after the call there may be a post-call
+ * screen, a return to the lobby, or nothing, depending on whether the host
+ * decides what comes next. The view decides which stages apply from the
+ * parameters it was started with and from what the host bridge says.
+ *
+ * It owns nothing about how Element Call came to be showing a call: no
+ * routing, no authentication, no resolving of room aliases. Those belong to
+ * whatever is hosting it — the standalone app's own shell, or an application
+ * embedding Element Call as a component. Both render this.
+ */
+export const CallView: FC<Props> = (props): ReactNode => {
+  // Whether the user is in the call is the call's own business, not its host's.
+  // Held here rather than below so that it survives the mute state being
+  // rebuilt.
+  const [joined, setJoined] = useState(false);
+  const muteStates = useMuteStates();
+
+  if (muteStates === null) return null;
+
+  return (
+    <LoadedCallView
+      {...props}
+      joined={joined}
+      setJoined={setJoined}
+      muteStates={muteStates}
+    />
+  );
+};
+
+interface LoadedProps extends Props {
   joined: boolean;
   setJoined: (value: boolean) => void;
   muteStates: MuteStates;
-  widget: WidgetHelpers | null;
 }
 
-export const GroupCallView: FC<Props> = ({
+/** {@link CallView}, once it has the mute state everything below needs. */
+const LoadedCallView: FC<LoadedProps> = ({
   client,
   isPasswordlessUser,
   confineToRoom,
@@ -116,13 +156,19 @@ export const GroupCallView: FC<Props> = ({
   joined,
   setJoined,
   muteStates,
-  widget,
 }) => {
   // Used to thread through any errors that occur outside the error boundary
   const [externalError, setExternalError] = useState<ElementCallError | null>(
     null,
   );
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
+  const rootElement = useRootElement();
+  const hostBridge = useHostBridge();
+  // A host that can close us is a host that decides when we stop existing, so
+  // we neither show our own post-call screens nor assume we have time to
+  // finish what we are doing. (Whose account the user's is, by contrast, is
+  // stated outright: see `HostBridge.supportsProfileChanges`.)
+  const hostControlsLifetime = hostBridge.close !== undefined;
 
   const muteAllAudio = useBehavior(muteAllAudio$);
   const leaveSoundContext = useLatest(
@@ -140,9 +186,9 @@ export const GroupCallView: FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    logger.info("[Lifecycle] GroupCallView Component mounted");
+    logger.info("[Lifecycle] CallView Component mounted");
     return (): void => {
-      logger.info("[Lifecycle] GroupCallView Component unmounted");
+      logger.info("[Lifecycle] CallView Component unmounted");
     };
   }, []);
 
@@ -150,11 +196,11 @@ export const GroupCallView: FC<Props> = ({
   // viewport sizes smaller than 122px width. (It is actually this exact number: 122px
   // tested on different devices...)
   useEffect(() => {
-    document.body.classList.add("no-scroll-body");
+    rootElement.classList.add("no-scroll-body");
     return (): void => {
-      document.body.classList.remove("no-scroll-body");
+      rootElement.classList.remove("no-scroll-body");
     };
-  }, []);
+  }, [rootElement]);
 
   useEffect(() => {
     window.rtcSession = rtcSession;
@@ -209,7 +255,6 @@ export const GroupCallView: FC<Props> = ({
     if (passwordFromUrl) saveKeyForRoom(room.roomId, passwordFromUrl);
   }, [passwordFromUrl, room.roomId]);
 
-  usePageTitle(roomName);
   useAppBarTitle(roomName);
 
   const matrixInfo = useMemo((): MatrixInfo => {
@@ -297,28 +342,26 @@ export const GroupCallView: FC<Props> = ({
     };
 
     if (skipLobby) {
-      if (widget && preload) {
+      // `preload` is only ever set when we have a host to be preloaded by.
+      if (preload) {
         // In preload mode without lobby we wait for a join action before entering
-        const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
+        const subscription = hostBridge.join$.subscribe(({ data, reply }) => {
           (async (): Promise<void> => {
-            await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
+            await defaultDeviceSetup(data);
             setJoined(true);
-            widget.api.transport.reply(ev.detail, {});
+            reply();
           })().catch((e) => {
             logger.error("Error joining RTC session on preload", e);
           });
-        };
-        widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
-        return (): void => {
-          widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
-        };
+        });
+        return (): void => subscription.unsubscribe();
       } else {
         // No lobby and no preload: we enter the rtc session right away
         setJoined(true);
       }
     }
   }, [
-    widget,
+    hostBridge,
     rtcSession,
     preload,
     skipLobby,
@@ -331,7 +374,7 @@ export const GroupCallView: FC<Props> = ({
   // TODO refactor this + "joined" to just one callState
   const [left, setLeft] = useState(false);
 
-  const navigate = useNavigate();
+  const leaveToHome = useLeaveToHome();
 
   // TODO split this into leave and onDisconnect
   const onLeft = useCallback(
@@ -344,7 +387,7 @@ export const GroupCallView: FC<Props> = ({
           // When "allOthersLeft", the leaveSoundEffect$ in CallEventAudioRenderer
           // already plays the "left" sound when the remote participant's media
           // disappears. We play it here silenced (volumeOverwrite = 0) so we have the right duration in the audioPromise.
-          // (used to destory the widget)
+          // (which is what delays asking the host to close us)
           audioPromise = leaveSoundContext.current?.playSound("left", 0);
           break;
         case "timeout":
@@ -359,12 +402,12 @@ export const GroupCallView: FC<Props> = ({
       setLeft(true);
 
       // We need to wait until the callEnded event is tracked on PostHog,
-      // otherwise the iframe may get killed first.
+      // otherwise we may be torn down first.
       const posthogRequest = new Promise((resolve) => {
-        // To increase the likelihood of the PostHog event being sent out in
-        // widget mode before the iframe is killed, we ask it to skip the
-        // usual queuing/batching of requests.
-        const sendInstantly = widget !== null;
+        // To increase the likelihood of the PostHog event being sent out
+        // before the host disposes of us, we ask it to skip the usual
+        // queuing/batching of requests.
+        const sendInstantly = hostControlsLifetime;
         PosthogAnalytics.instance.eventCallEnded.track(
           room.roomId,
           rtcSession.memberships.length,
@@ -372,8 +415,8 @@ export const GroupCallView: FC<Props> = ({
           rtcSession,
         );
         // Unfortunately the PostHog library provides no way to await the
-        // tracking of an event, but we don't really want it to hold up the
-        // closing of the widget that long anyway, so giving it 10 ms will do.
+        // tracking of an event, but we don't really want it to hold up our
+        // disposal that long anyway, so giving it 10 ms will do.
         window.setTimeout(resolve, 10);
       });
 
@@ -390,27 +433,21 @@ export const GroupCallView: FC<Props> = ({
             !confineToRoom &&
             !PosthogAnalytics.instance.isEnabled()
           )
-            void navigate("/");
+            leaveToHome?.();
 
-          if (widget) {
-            // After this point the iframe could die at any moment!
+          // After this point the host could dispose of us at any moment!
+          try {
+            await hostBridge.setAlwaysOnScreen(false);
+          } catch (e) {
+            logger.error("Failed to set `alwaysOnScreen` to false", e);
+          }
+          // On a normal user hangup we can shut down and ask to be closed. But
+          // if an error occurs we should stay open until the user reads it.
+          if (reason != "error" && !returnToLobby) {
             try {
-              await widget.api.setAlwaysOnScreen(false);
+              await hostBridge.close?.();
             } catch (e) {
-              logger.error(
-                "Failed to set call widget `alwaysOnScreen` to false",
-                e,
-              );
-            }
-            // On a normal user hangup we can shut down and close the widget. But if an
-            // error occurs we should keep the widget open until the user reads it.
-            if (reason != "error" && !getUrlParams().returnToLobby) {
-              try {
-                await widget.api.transport.send(ElementWidgetActions.Close, {});
-              } catch (e) {
-                logger.error("Failed to send close action", e);
-              }
-              widget.api.transport.stop();
+              logger.error("Failed to ask the host to close Element Call", e);
             }
           }
         });
@@ -418,22 +455,24 @@ export const GroupCallView: FC<Props> = ({
     [
       setJoined,
       leaveSoundContext,
-      widget,
+      hostBridge,
+      hostControlsLifetime,
       room.roomId,
       rtcSession,
       isPasswordlessUser,
       confineToRoom,
-      navigate,
+      returnToLobby,
+      leaveToHome,
     ],
   );
 
   useEffect(() => {
-    if (widget && joined)
-      // set widget to sticky once joined.
-      widget.api.setAlwaysOnScreen(true).catch((e) => {
+    if (joined)
+      // ask to be kept on screen once joined.
+      hostBridge.setAlwaysOnScreen(true).catch((e) => {
         logger.error("Error calling setAlwaysOnScreen(true)", e);
       });
-  }, [widget, joined, rtcSession]);
+  }, [hostBridge, joined, rtcSession]);
 
   const joinRule = useJoinRule(room);
 
@@ -503,19 +542,16 @@ export const GroupCallView: FC<Props> = ({
         />
       </>
     );
-  } else if (left && widget === null) {
-    // Left in SPA mode:
+  } else if (left && !hostControlsLifetime) {
+    // Left, and it is up to us what to show next:
 
     // The call ended view is shown for two reasons: prompting guests to create
     // an account, and prompting users that have opted into analytics to provide
-    // feedback. We don't show a feedback prompt to widget users however (at
-    // least for now), because we don't yet have designs that would allow widget
-    // users to dismiss the feedback prompt and close the call window without
-    // submitting anything.
-    if (
-      isPasswordlessUser ||
-      (PosthogAnalytics.instance.isEnabled() && widget === null)
-    ) {
+    // feedback. We don't show a feedback prompt when a host owns our lifetime
+    // however (at least for now), because we don't yet have designs that would
+    // allow those users to dismiss the feedback prompt and close the call
+    // window without submitting anything.
+    if (isPasswordlessUser || PosthogAnalytics.instance.isEnabled()) {
       body = (
         <CallEndedView
           endedCallId={rtcSession.room.roomId}
@@ -531,8 +567,8 @@ export const GroupCallView: FC<Props> = ({
       // LobbyView again which would open capture devices again.
       body = null;
     }
-  } else if (left && widget !== null) {
-    // Left in widget mode:
+  } else if (left && hostControlsLifetime) {
+    // Left, and the host decides what happens next:
     body = returnToLobby ? lobbyView : null;
   } else if (preload || skipLobby) {
     // The RTC session is not joined to yet (`isJoined`), but enterRTCSessionOrError should have been called.
@@ -543,7 +579,6 @@ export const GroupCallView: FC<Props> = ({
 
   return (
     <GroupCallErrorBoundary
-      widget={widget}
       recoveryActionHandler={async (action) => {
         setExternalError(null);
         if (action == "reconnect") {
@@ -555,9 +590,10 @@ export const GroupCallView: FC<Props> = ({
       }}
       onError={(_error) => {
         if (rtcSession.isJoined()) onLeft("error");
-        // If there is an error we need to be able to close the widget. This is done in `onLeft` as well
-        // We need it here explicitly in case rtcSession.isJoined is false.
-        void widget?.api.setAlwaysOnScreen(false);
+        // If there is an error we need to be dismissible again. This is done in
+        // `onLeft` as well; we need it here explicitly in case
+        // rtcSession.isJoined is false.
+        void hostBridge.setAlwaysOnScreen(false);
       }}
     >
       {body}

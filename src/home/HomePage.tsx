@@ -13,7 +13,6 @@ import { ErrorPage, LoadingPage } from "../FullScreenView";
 import { UnauthenticatedView } from "./UnauthenticatedView";
 import { RegisteredView } from "./RegisteredView";
 import { usePageTitle } from "../usePageTitle";
-import { widget } from "../widget.ts";
 
 export const HomePage: FC = () => {
   const { t } = useTranslation();
@@ -24,7 +23,7 @@ export const HomePage: FC = () => {
   if (!clientState) {
     return <LoadingPage />;
   } else if (clientState.state === "error") {
-    return <ErrorPage widget={widget} error={clientState.error} />;
+    return <ErrorPage error={clientState.error} />;
   } else {
     return clientState.authenticated ? (
       <RegisteredView client={clientState.authenticated.client} />

@@ -68,6 +68,8 @@ import {
 } from "./CallViewModelTestUtils.ts";
 import { MatrixRTCMode } from "../../config/ConfigOptions.ts";
 import { initializeWidget } from "../../widget.ts";
+import { computeUrlParams } from "../../UrlParams.ts";
+import { callViewModelOptionsFromParams } from "./CallViewModel.ts";
 
 initializeWidget();
 
@@ -82,9 +84,6 @@ vi.mock("@livekit/components-core");
 vi.mock("livekit-client/e2ee-worker?worker");
 
 vi.mock("../e2ee/matrixKeyProvider");
-
-const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
-vi.mock("../UrlParams", () => ({ getUrlParams }));
 
 const getPlatform = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../../Platform", () => ({
@@ -1593,12 +1592,13 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
 
   it.skip("audio output changes when toggling earpiece mode", () => {
     withTestScheduler(({ schedule, expectObservable }) => {
-      getUrlParams.mockReturnValue({ controlledAudioDevices: true });
       vi.mocked(ComponentsCore.createMediaDeviceObserver).mockReturnValue(
         of([]),
       );
 
-      const devices = new MediaDevices(testScope());
+      const devices = new MediaDevices(testScope(), {
+        controlledAudioDevices: true,
+      });
 
       window.controls.setAvailableAudioDevices([
         { id: "speaker", name: "Speaker", isSpeaker: true },
@@ -1697,6 +1697,45 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
           );
         },
       );
+    });
+  });
+});
+
+describe("callViewModelOptionsFromParams", () => {
+  // The defaults on CallViewModelOptions describe a standalone Element Call, so
+  // a widget caller that drops one of these gets standalone behaviour rather
+  // than an error. These check the whole chain from URL to options, which is
+  // where that went wrong for the SDK.
+  const widgetUrl = (extra: string): string =>
+    `#?widgetId=id&parentUrl=${encodeURIComponent("http://parent")}&${extra}`;
+
+  it("carries an explicitly requested notification type", () => {
+    const params = computeUrlParams("", widgetUrl("sendNotificationType=ring"));
+    expect(callViewModelOptionsFromParams(params).sendNotificationType).toBe(
+      "ring",
+    );
+  });
+
+  it("carries the notification type an intent implies", () => {
+    const params = computeUrlParams("", widgetUrl("intent=start_call_dm"));
+    expect(callViewModelOptionsFromParams(params).sendNotificationType).toBe(
+      "ring",
+    );
+  });
+
+  it("carries hideScreensharing", () => {
+    const params = computeUrlParams("", widgetUrl("hideScreensharing=true"));
+    expect(callViewModelOptionsFromParams(params).hideScreensharing).toBe(true);
+  });
+
+  it("carries controlledAudioDevices and the call intent", () => {
+    const params = computeUrlParams(
+      "",
+      widgetUrl("controlledAudioDevices=true&intent=start_call_voice"),
+    );
+    expect(callViewModelOptionsFromParams(params)).toMatchObject({
+      controlledAudioDevices: true,
+      callIntent: "audio",
     });
   });
 });

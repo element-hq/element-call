@@ -25,7 +25,6 @@ import {
   Track,
 } from "livekit-client";
 import { useObservableEagerState } from "observable-hooks";
-import { useNavigate } from "react-router-dom";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -34,9 +33,10 @@ import { type MatrixInfo, VideoPreview } from "./VideoPreview";
 import { type MuteStates } from "../state/MuteStates";
 import { InviteButton } from "../button/InviteButton";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
-import { useMediaQuery } from "../useMediaQuery";
+import { useRootSizeMatches } from "../useRootSize";
 import { E2eeType } from "../e2ee/e2eeType";
-import { Link } from "../button/Link";
+import { LeaveToHomeLink } from "../button/LeaveToHomeLink";
+import { useLeaveToHome } from "../LeaveToHomeContext";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { ObservableScope } from "../state/ObservableScope";
 import { useInitial } from "../useInitial";
@@ -44,7 +44,6 @@ import {
   useTrackProcessor,
   useTrackProcessorSync,
 } from "../livekit/TrackProcessorContext";
-import { usePageTitle } from "../usePageTitle";
 import { getValue } from "../utils/observable";
 import { useBehavior } from "../useBehavior";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter";
@@ -87,7 +86,6 @@ export const LobbyView: FC<Props> = ({
 
   const { t } = useTranslation();
 
-  usePageTitle(matrixInfo.roomName);
   useAppBarPrimaryButtonIconKind("back");
   const audioEnabled = useBehavior(muteStates.audio.enabled$);
   const videoEnabled = useBehavior(muteStates.video.enabled$);
@@ -111,19 +109,19 @@ export const LobbyView: FC<Props> = ({
     [setSettingsModalOpen],
   );
 
-  const navigate = useNavigate();
-  const onLeaveClick = useCallback(() => {
-    navigate("/")?.catch((error) => {
-      logger.error("Failed to navigate to /", error);
-    });
-  }, [navigate]);
-  const hangup = confineToRoom ? undefined : onLeaveClick;
+  // Leaving the lobby means going back to wherever the user came from, if
+  // there is such a place
+  const leaveToHome = useLeaveToHome();
+  const hangup =
+    confineToRoom || leaveToHome === null ? undefined : leaveToHome;
 
-  const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
+  const recentsButtonInFooter = useRootSizeMatches(
+    ({ height }) => height <= 500,
+  );
   const recentsButton = !confineToRoom && (
-    <Link className={styles.recents} to="/">
+    <LeaveToHomeLink className={styles.recents}>
       {t("lobby.leave_button")}
-    </Link>
+    </LeaveToHomeLink>
   );
 
   const devices = useMediaDevices();
@@ -209,7 +207,7 @@ export const LobbyView: FC<Props> = ({
     return (): void => {
       footerScope.end();
     };
-  }, [devices, hangup, hideHeader, muteStates, onLeaveClick, openSettings]);
+  }, [devices, hangup, hideHeader, muteStates, openSettings]);
 
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS

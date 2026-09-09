@@ -48,7 +48,7 @@ Please see LICENSE in the repository root for full details.
   --handle-inset-block-end: var(--cpd-space-4x);
 }
 
-body[data-platform="ios"] .drawer {
+[data-element-call-root][data-platform="ios"] .drawer {
   --border-radius: 10px;
   --handle-block-size: 5px;
   --handle-inline-size: 36px;

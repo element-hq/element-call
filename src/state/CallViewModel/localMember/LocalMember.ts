@@ -21,6 +21,8 @@ import {
   type LivekitTransport,
   type LivekitTransportConfig,
   type MatrixRTCSession,
+  type RTCCallIntent,
+  type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   BehaviorSubject,
@@ -52,8 +54,8 @@ import {
   MembershipManagerError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
-import { ElementWidgetActions, widget } from "../../../widget.ts";
-import { getUrlParams } from "../../../UrlParams.ts";
+import { type HostBridge } from "../../../HostBridge.ts";
+
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics.ts";
 import {
   advancedScreenShare,
@@ -152,6 +154,10 @@ interface Props {
     MatrixRTCSession,
     "updateCallIntent" | "leaveRoomSession"
   >;
+  /** Whether to hide the screen-sharing button. */
+  hideScreensharing: boolean;
+  /** The application hosting Element Call, to be kept informed of join/leave. */
+  hostBridge: HostBridge;
   baseUrl: string;
   delayId$: Behavior<string | null>;
   matrixRTCMode: MatrixRTCMode;
@@ -176,6 +182,8 @@ interface Props {
  * @param props.baseUrl Base URL of the homeserver.
  * @param props.delayId$ ID of the delayed leave event to delegate to the SFU.
  * @param props.roomId The room ID used as the call identifier in analytics events.
+ * @param props.hideScreensharing Whether to hide the screen-sharing button.
+ * @param props.hostBridge The application hosting Element Call.
  * @returns
  *  - publisher: The handle to create tracks and publish them to the room.
  *  - connected$: the current connection state. Including matrix server and livekit server connection. (only considering the livekit server we are using for our own media publication)
@@ -196,6 +204,8 @@ export const createLocalMembership$ = ({
   matrixRTCSession,
   baseUrl,
   roomId,
+  hideScreensharing,
+  hostBridge,
   ownMembershipIdentity,
   delayId$,
   matrixRTCMode,
@@ -640,29 +650,24 @@ export const createLocalMembership$ = ({
       }
     });
 
-  // inform the widget about the connect and disconnect intent from the user.
+  // inform the host about the connect and disconnect intent from the user.
   scope
     .behavior(joinAndPublishRequested$.pipe(pairwise(), scope.bind()), [
       undefined,
       joinAndPublishRequested$.value,
     ])
     .subscribe(([prev, current]) => {
-      if (!widget) return;
       // JOIN prev=false (was left) => current-true (now joiend)
       if (!prev && current) {
-        widget.api.transport
-          .send(ElementWidgetActions.JoinCall, {})
-          .catch((e) => {
-            logger.error("Failed to send join action", e);
-          });
+        hostBridge.notifyJoined().catch((e) => {
+          logger.error("Failed to notify the host that we joined", e);
+        });
       }
       // LEAVE prev=false (was joined) => current-true (now left)
       if (prev && !current) {
-        widget.api.transport
-          .send(ElementWidgetActions.HangupCall, {})
-          .catch((e) => {
-            logger.error("Failed to send hangup action", e);
-          });
+        hostBridge.notifyHungUp().catch((e) => {
+          logger.error("Failed to notify the host that we hung up", e);
+        });
       }
     });
 
@@ -812,7 +817,7 @@ export const createLocalMembership$ = ({
   let toggleScreenSharing: (() => void) | null = null;
   if (
     "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
-    !getUrlParams().hideScreensharing
+    !hideScreensharing
   ) {
     toggleScreenSharing = (): void => {
       const screenshareSettings: ScreenShareCaptureOptions = {
@@ -962,6 +967,10 @@ interface EnterRTCSessionOptions {
   encryptMedia: boolean;
   matrixRTCMode: MatrixRTCMode;
   delayedLeaveTimings: ResolvedDelayedLeaveTimings;
+  /** Whether and what kind of notification to send when joining. */
+  sendNotificationType?: RTCNotificationType;
+  /** The kind of call being placed. */
+  callIntent?: RTCCallIntent;
 }
 
 /**
@@ -974,16 +983,24 @@ interface EnterRTCSessionOptions {
  * @param rtcSession - The MatrixRTCSession to join.
  * @param ownMembershipIdentity - Options for entering the RTC session.
  * @param transport - The LivekitTransport to use for this session.
- * @param delayedLeaveTimings - The preferred timings for delayed leave events.
- * @param options - `encryptMedia`: Whether to encrypt media `matrixRTCMode`: The Matrix RTC mode to use.
- * @throws If the widget could not send ElementWidgetActions.JoinCall action.
+ * @param options - `encryptMedia`: Whether to encrypt media. `matrixRTCMode`: The
+ *   Matrix RTC mode to use. `delayedLeaveTimings`: The preferred timings for
+ *   delayed leave events. `sendNotificationType`: Whether and what kind of
+ *   notification to send on join. `callIntent`: The kind of call being placed.
+ * @throws If the host could not be told that we are joining.
  */
 // Exported for unit testing
 export function enterRTCSession(
   rtcSession: MatrixRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
   transport: LivekitTransportConfig,
-  { encryptMedia, matrixRTCMode, delayedLeaveTimings }: EnterRTCSessionOptions,
+  {
+    encryptMedia,
+    matrixRTCMode,
+    delayedLeaveTimings,
+    sendNotificationType: notificationType,
+    callIntent,
+  }: EnterRTCSessionOptions,
 ): void {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
@@ -997,7 +1014,6 @@ export function enterRTCSession(
     matrix_rtc_session: sessionConfig,
   } = Config.get();
   const retryInterval = sessionConfig.network_error_retry_ms;
-  const { sendNotificationType: notificationType, callIntent } = getUrlParams();
   const multiSFU =
     matrixRTCMode === MatrixRTCMode.Compatibility ||
     matrixRTCMode === MatrixRTCMode.Matrix_2_0;

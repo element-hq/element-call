@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useMemo } from "react";
+import { createContext, use, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
@@ -59,6 +59,17 @@ export interface UrlProperties {
   // Widget api related params
   widgetId: string | null;
   parentUrl: string | null;
+  /**
+   * Whether Element Call was started as a widget of a Matrix client, which is
+   * to say whether it was given a widget ID and a parent to talk to.
+   *
+   * Only meaningful to the standalone and widget builds, which own the URL —
+   * so use it for decisions that belong to the app shell, such as whether
+   * Element Call is responsible for authenticating the user. Anything the call
+   * interface itself needs to know about its host should come from the host
+   * bridge instead.
+   */
+  isWidget: boolean;
   /**
    * Anything about what room we're pointed to should be from useRoomIdentifier which
    * parses the path and resolves alias with respect to the default server name, however
@@ -344,6 +355,136 @@ export const getUrlParams = (
 };
 
 /**
+ * The configuration implied by what the user meant to do — if they pressed a
+ * Start Call button this would be `start_call`, and if they pressed Join Call,
+ * `join_existing`.
+ *
+ * These are platform-specific defaults, so that a host can start a call by
+ * saying what the user asked for rather than by setting every parameter itself,
+ * and so that what each intent means is Element Call's decision, made in one
+ * place. A host that wants something else states it alongside the intent.
+ *
+ * {@link UserIntent.Unknown} means no intent was stated, and gives the
+ * standalone app's defaults: Element Call owns the whole page, so it offers the
+ * way out of the room that a hosted call must not.
+ */
+export function configurationForIntent(intent: UserIntent): UrlConfiguration {
+  // Only constants and `platform` here, so that this depends on nothing but
+  // the intent.
+  let preset: UrlConfiguration = {
+    confineToRoom: true,
+    preload: false,
+    header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
+    showControls: true,
+    hideScreensharing: false,
+    allowIceFallback: true,
+    perParticipantE2EE: true,
+    controlledAudioDevices: platform === "desktop" ? false : true,
+    skipLobby: true,
+    returnToLobby: false,
+    sendNotificationType: "notification",
+    autoLeaveWhenOthersLeft: false,
+    waitForCallPickup: false,
+  };
+  switch (intent) {
+    case UserIntent.StartNewCall:
+      preset.skipLobby = false;
+      preset.callIntent = "video";
+      break;
+    case UserIntent.JoinExistingCall:
+      // On desktop this will be overridden based on which button was used to join the call
+      preset.skipLobby = false;
+      preset.callIntent = "video";
+      break;
+    case UserIntent.StartNewCallVoice:
+      preset.skipLobby = false;
+      preset.callIntent = "audio";
+      break;
+    case UserIntent.JoinExistingCallVoice:
+      // On desktop this will be overridden based on which button was used to join the call
+      preset.skipLobby = false;
+      preset.callIntent = "audio";
+      break;
+    case UserIntent.StartNewCallDMVoice:
+      preset.callIntent = "audio";
+    // Fall through
+    case UserIntent.StartNewCallDM:
+      preset.skipLobby = true;
+      preset.sendNotificationType = "ring";
+      preset.autoLeaveWhenOthersLeft = true;
+      preset.waitForCallPickup = true;
+      preset.callIntent = preset.callIntent ?? "video";
+      break;
+    case UserIntent.JoinExistingCallDMVoice:
+      preset.callIntent = "audio";
+    // Fall through
+    case UserIntent.JoinExistingCallDM:
+      // On desktop this will be overridden based on which button was used to join the call
+      preset.skipLobby = true;
+      preset.autoLeaveWhenOthersLeft = true;
+      preset.callIntent = preset.callIntent ?? "video";
+      break;
+    // Non widget usecase defaults
+    default:
+      preset = {
+        confineToRoom: false,
+        preload: false,
+        header: HeaderStyle.Standard,
+        showControls: true,
+        hideScreensharing: false,
+        allowIceFallback: false,
+        perParticipantE2EE: false,
+        controlledAudioDevices: false,
+        skipLobby: false,
+        returnToLobby: false,
+        sendNotificationType: undefined,
+        autoLeaveWhenOthersLeft: false,
+        waitForCallPickup: false,
+      };
+  }
+  return preset;
+}
+
+/**
+ * The {@link UrlProperties} for Element Call running as a component inside a
+ * host application.
+ *
+ * It has no URL of its own to read these from, and it does not need most of
+ * them: the widget plumbing does not apply, the Matrix client and the analytics
+ * configuration come from the host by other routes, and what is left is either
+ * the host's to state through the component's props or Element Call's own
+ * default.
+ */
+export const componentProperties: UrlProperties = {
+  widgetId: null,
+  parentUrl: null,
+  isWidget: false,
+  roomId: null,
+  userId: null,
+  displayName: null,
+  deviceId: null,
+  baseUrl: null,
+  lang: null,
+  fonts: [],
+  fontScale: null,
+  posthogUserId: null,
+  posthogApiHost: null,
+  posthogApiKey: null,
+  e2eEnabled: true,
+  password: null,
+  viaServers: null,
+  homeserver: null,
+  rageshakeSubmitUrl: null,
+  sentryDsn: null,
+  sentryEnvironment: null,
+  theme: null,
+  // Solid rather than the gradient the standalone app defaults to: the gradient
+  // is drawn by a `position: fixed` pseudo-element, which would escape the
+  // container Element Call was given and cover the host's own interface.
+  background: BackgroundStyle.Solid,
+};
+
+/**
  * Gets the app parameters for the current URL.
  * @param search The URL search string
  * @param hash The URL hash
@@ -372,82 +513,12 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   const intent = !isWidget
     ? UserIntent.Unknown
     : (parser.getEnumParam("intent", UserIntent) ?? UserIntent.Unknown);
-  // Here we only use constants and `platform` to determine the intent preset.
-  let intentPreset: UrlConfiguration = {
-    confineToRoom: true,
-    preload: false,
-    header: platform === "desktop" ? HeaderStyle.None : HeaderStyle.AppBar,
-    showControls: true,
-    hideScreensharing: false,
-    allowIceFallback: true,
-    perParticipantE2EE: true,
-    controlledAudioDevices: platform === "desktop" ? false : true,
-    skipLobby: true,
-    returnToLobby: false,
-    sendNotificationType: "notification",
-    autoLeaveWhenOthersLeft: false,
-    waitForCallPickup: false,
-  };
-  switch (intent) {
-    case UserIntent.StartNewCall:
-      intentPreset.skipLobby = false;
-      intentPreset.callIntent = "video";
-      break;
-    case UserIntent.JoinExistingCall:
-      // On desktop this will be overridden based on which button was used to join the call
-      intentPreset.skipLobby = false;
-      intentPreset.callIntent = "video";
-      break;
-    case UserIntent.StartNewCallVoice:
-      intentPreset.skipLobby = false;
-      intentPreset.callIntent = "audio";
-      break;
-    case UserIntent.JoinExistingCallVoice:
-      // On desktop this will be overridden based on which button was used to join the call
-      intentPreset.skipLobby = false;
-      intentPreset.callIntent = "audio";
-      break;
-    case UserIntent.StartNewCallDMVoice:
-      intentPreset.callIntent = "audio";
-    // Fall through
-    case UserIntent.StartNewCallDM:
-      intentPreset.skipLobby = true;
-      intentPreset.sendNotificationType = "ring";
-      intentPreset.autoLeaveWhenOthersLeft = true;
-      intentPreset.waitForCallPickup = true;
-      intentPreset.callIntent = intentPreset.callIntent ?? "video";
-      break;
-    case UserIntent.JoinExistingCallDMVoice:
-      intentPreset.callIntent = "audio";
-    // Fall through
-    case UserIntent.JoinExistingCallDM:
-      // On desktop this will be overridden based on which button was used to join the call
-      intentPreset.skipLobby = true;
-      intentPreset.autoLeaveWhenOthersLeft = true;
-      intentPreset.callIntent = intentPreset.callIntent ?? "video";
-      break;
-    // Non widget usecase defaults
-    default:
-      intentPreset = {
-        confineToRoom: false,
-        preload: false,
-        header: HeaderStyle.Standard,
-        showControls: true,
-        hideScreensharing: false,
-        allowIceFallback: false,
-        perParticipantE2EE: false,
-        controlledAudioDevices: false,
-        skipLobby: false,
-        returnToLobby: false,
-        sendNotificationType: undefined,
-        autoLeaveWhenOthersLeft: false,
-        waitForCallPickup: false,
-      };
-  }
+  const intentPreset = configurationForIntent(intent);
 
   const properties: UrlProperties = {
     widgetId,
     parentUrl,
+    isWidget,
     // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
     // what would we do if it were invalid? If the widget API says that's what
     // the room ID is, then that's what it is.
@@ -519,11 +590,37 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
   };
 };
 
+const UrlParamsContext = createContext<UrlParams | null>(null);
+
 /**
- * Hook to simplify use of getUrlParams.
- * @returns The app parameters for the current URL
+ * Supplies the parameters Element Call should run with.
+ *
+ * The standalone and widget builds derive these from the URL, but the
+ * component has no URL of its own to read them from, so its host provides them
+ * directly instead.
+ *
+ * TODO: `UrlParams` is no longer an accurate name now that these need not come
+ * from a URL. Renaming it touches every consumer, so it is left until the rest
+ * of the de-globalisation work has settled.
  */
-export const useUrlParams = (): UrlParams => {
+export const UrlParamsProvider = UrlParamsContext.Provider;
+
+/**
+ * The parameters Element Call is running with.
+ *
+ * Falls back to parsing `window.location` when no provider is present, so that
+ * tests and stories keep working without one.
+ */
+export const useUrlParams = (): UrlParams =>
+  use(UrlParamsContext) ?? getUrlParams();
+
+/**
+ * Derives {@link UrlParams} from the current router location.
+ *
+ * Only meaningful when Element Call owns the URL; the component is given its
+ * params directly through {@link UrlParamsProvider}.
+ */
+export const useUrlParamsFromLocation = (): UrlParams => {
   const { search, hash } = useLocation();
   return useMemo(() => getUrlParams(search, hash), [search, hash]);
 };

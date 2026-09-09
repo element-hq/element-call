@@ -16,6 +16,7 @@ import {
 } from "rxjs";
 import { createMediaDeviceObserver } from "@livekit/components-core";
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
@@ -25,7 +26,6 @@ import {
 } from "../settings/settings";
 import { type ObservableScope } from "./ObservableScope";
 import { availableOutputDevices$ as controlledAvailableOutputDevices$ } from "../controls";
-import { getUrlParams } from "../UrlParams";
 import { platform } from "../Platform";
 import { switchWhen } from "../utils/observable";
 import { type Behavior, constant } from "./Behavior";
@@ -338,6 +338,22 @@ class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
   }
 }
 
+/**
+ * How Element Call should manage audio output.
+ */
+export interface AudioOutputOptions {
+  /**
+   * Whether the list of output devices is controlled by the app hosting Element
+   * Call, through the global JS controls, rather than by the browser.
+   */
+  controlledAudioDevices: boolean;
+  /**
+   * The kind of call being placed, which decides the initial output route when
+   * the host controls the devices.
+   */
+  callIntent?: RTCCallIntent;
+}
+
 export class MediaDevices {
   private readonly deviceNamesRequest$ = new Subject<void>();
   /**
@@ -368,23 +384,28 @@ export class MediaDevices {
   public readonly audioOutput: MediaDevice<
     AudioOutputDeviceLabel,
     SelectedAudioOutputDevice
-  > = getUrlParams().controlledAudioDevices
+  > = this.audioOutputOptions.controlledAudioDevices
     ? platform == "android"
       ? new AndroidControlledAudioOutput(
           controlledAvailableOutputDevices$,
           this.scope,
-          getUrlParams().callIntent,
+          this.audioOutputOptions.callIntent,
           window.controls,
         )
       : new IOSControlledAudioOutput(
           this.usingNames$,
           this.scope,
-          getUrlParams().callIntent,
+          this.audioOutputOptions.callIntent,
         )
     : new AudioOutput(this.usingNames$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
     new VideoInput(this.usingNames$, this.scope);
 
-  public constructor(private readonly scope: ObservableScope) {}
+  // Note: both parameters are read by the field initializers above, which is
+  // safe because TypeScript assigns parameter properties before running them.
+  public constructor(
+    private readonly scope: ObservableScope,
+    private readonly audioOutputOptions: AudioOutputOptions,
+  ) {}
 }

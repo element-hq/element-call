@@ -20,8 +20,8 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { RageshakeButton } from "./settings/RageshakeButton";
 import styles from "./ErrorView.module.css";
 import { useUrlParams } from "./UrlParams";
-import { LinkButton } from "./button";
-import { ElementWidgetActions, type WidgetHelpers } from "./widget.ts";
+import { useLeaveToHome } from "./LeaveToHomeContext";
+import { useHostBridge } from "./HostBridge.ts";
 
 interface Props {
   Icon: ComponentType<SVGAttributes<SVGElement>>;
@@ -38,7 +38,6 @@ interface Props {
    */
   fatal?: boolean;
   children: ReactNode;
-  widget: WidgetHelpers | null;
 }
 
 export const ErrorView: FC<Props> = ({
@@ -47,53 +46,47 @@ export const ErrorView: FC<Props> = ({
   rageshake,
   fatal,
   children,
-  widget,
 }) => {
   const { t } = useTranslation();
   const { confineToRoom } = useUrlParams();
+  const hostBridge = useHostBridge();
+  const leaveToHome = useLeaveToHome();
 
   const onReload = useCallback(() => {
     window.location.href = "/";
   }, []);
 
-  const CloseWidgetButton: FC<{ widget: WidgetHelpers }> = ({
-    widget,
+  const CloseButton: FC<{ close: () => Promise<void> }> = ({
+    close,
   }): ReactElement => {
-    // in widget mode we don't want to show the return home button but a close button
-    const closeWidget = (): void => {
-      widget.api.transport
-        .send(ElementWidgetActions.Close, {})
-        .catch((e) => {
-          // What to do here?
-          logger.error("Failed to send close action", e);
-        })
-        .finally(() => {
-          widget.api.transport.stop();
-        });
+    // When the host can dismiss us, offer that instead of a link home
+    const onClose = (): void => {
+      close().catch((e) => {
+        // What to do here?
+        logger.error("Failed to ask the host to close Element Call", e);
+      });
     };
     return (
-      <Button kind="primary" onClick={closeWidget}>
+      <Button kind="primary" onClick={onClose}>
         {t("action.close")}
       </Button>
     );
   };
 
   // Whether the error is considered fatal or pathname is `/` then reload the all app.
-  // If not then navigate to home page.
-  const ReturnToHomeButton = (): ReactElement => {
-    if (fatal || location.pathname === "/") {
-      return (
-        <Button kind="tertiary" className={styles.homeLink} onClick={onReload}>
-          {t("return_home_button")}
-        </Button>
-      );
-    } else {
-      return (
-        <LinkButton kind="tertiary" className={styles.homeLink} to="/">
-          {t("return_home_button")}
-        </LinkButton>
-      );
-    }
+  // If not then navigate to home page. Neither applies when there is no home
+  // to go to.
+  const ReturnToHomeButton = (): ReactElement | null => {
+    if (leaveToHome === null) return null;
+    return (
+      <Button
+        kind="tertiary"
+        className={styles.homeLink}
+        onClick={fatal || location.pathname === "/" ? onReload : leaveToHome}
+      >
+        {t("return_home_button")}
+      </Button>
+    );
   };
 
   return (
@@ -108,8 +101,8 @@ export const ErrorView: FC<Props> = ({
       {rageshake && (
         <RageshakeButton description={`***Error View***: ${title}`} />
       )}
-      {widget ? (
-        <CloseWidgetButton widget={widget} />
+      {hostBridge.close ? (
+        <CloseButton close={hostBridge.close} />
       ) : (
         !confineToRoom && <ReturnToHomeButton />
       )}
