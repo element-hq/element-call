@@ -141,47 +141,45 @@ export function useComponentHostBridge(
       requests.themeChange$.next({ data: { name: theme }, reply: () => {} });
   }, [requests, theme]);
 
-  const bridge = useInitial(
-    (): HostBridge => ({
-      setAlwaysOnScreen: async (alwaysOnScreen) => {
-        await latest.current.setAlwaysOnScreen?.(alwaysOnScreen);
-      },
-      contentLoaded: async () => {
-        await latest.current.contentLoaded?.();
-      },
-      notifyJoined: async () => {
-        await latest.current.notifyJoined?.();
-      },
-      notifyHungUp: async () => {
-        await latest.current.notifyHungUp?.();
-      },
-      notifyDeviceMute: async (state) => {
-        await latest.current.notifyDeviceMute?.(state);
-      },
-      // Whether these exist is itself information, so they are read through
-      // rather than wrapped unconditionally
-      get close() {
-        const close = latest.current.close;
-        return close === undefined
-          ? undefined
-          : async (): Promise<void> => await close();
-      },
-      // Not offered to a component host: the client it hands over holds the
-      // credentials to fetch media itself. A widget's client does not, which
-      // is what the internal bridge's `downloadMedia` is for.
-      get supportsReactions(): boolean {
-        return latest.current.supportsReactions ?? true;
-      },
-      get allowJoinUnmutedViaIntent(): boolean {
-        return latest.current.allowJoinUnmutedViaIntent ?? false;
-      },
-      // Whatever the host says or does not say, the account is its own: it
-      // signed the user in and handed us the client. So Element Call never
-      // offers to edit the profile from inside a component.
-      supportsProfileChanges: false,
-      ...requests,
-    }),
-  );
+  const bridge = useInitial((): HostBridge => ({
+    setAlwaysOnScreen: async (alwaysOnScreen) => {
+      await latest.current.setAlwaysOnScreen?.(alwaysOnScreen);
+    },
+    contentLoaded: async () => {
+      await latest.current.contentLoaded?.();
+    },
+    notifyJoined: async () => {
+      await latest.current.notifyJoined?.();
+    },
+    notifyHungUp: async () => {
+      await latest.current.notifyHungUp?.();
+    },
+    notifyDeviceMute: async (state) => {
+      await latest.current.notifyDeviceMute?.(state);
+    },
+    // Whether these exist is itself information, so they are read through
+    // rather than wrapped unconditionally
+    get close() {
+      const close = latest.current.close;
+      return close === undefined
+        ? undefined
+        : async (): Promise<void> => await close();
+    },
+    // Not offered to a component host: the client it hands over holds the
+    // credentials to fetch media itself. A widget's client does not, which
+    // is what the internal bridge's `downloadMedia` is for.
+    get supportsReactions(): boolean {
+      return latest.current.supportsReactions ?? true;
+    },
+    get allowJoinUnmutedViaIntent(): boolean {
+      return latest.current.allowJoinUnmutedViaIntent ?? false;
+    },
+    // Whatever the host says or does not say, the account is its own: it
+    // signed the user in and handed us the client. So Element Call never
+    // offers to edit the profile from inside a component.
+    supportsProfileChanges: false,
+    ...requests,
+  }));
 
   useImperativeHandle(
     ref,

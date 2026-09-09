@@ -40,6 +40,7 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { type MatrixClient } from "matrix-js-sdk";
@@ -298,43 +299,57 @@ export const ElementCall: FC<ElementCallProps> = ({
       `Element Call was asked to call in ${roomId}, which its host's client does not know about`,
     );
 
+  // Everything the call needs is in hand once these exist, and the first
+  // render with them is where the call itself appears: the moment the host
+  // is told that Element Call has loaded, as the widget tells its client once
+  // its own initialisation is over. Once per mount, however often the pieces
+  // are later swapped out.
+  const ready =
+    container !== null && rtcSession !== null && mediaDevices !== null;
+  const announcedLoaded = useRef(false);
+  useEffect(() => {
+    if (!ready || announcedLoaded.current) return;
+    announcedLoaded.current = true;
+    hostBridge
+      .contentLoaded()
+      .catch((e) => logger.error("Could not tell the host we had loaded", e));
+  }, [ready, hostBridge]);
+
   return (
     <I18nextProvider i18n={i18n}>
       <HostBridgeProvider value={hostBridge}>
         <UrlParamsProvider value={params}>
           <div ref={setContainer} className={styles.root}>
-            {container !== null &&
-              rtcSession !== null &&
-              mediaDevices !== null && (
-                <RootElementProvider value={container}>
-                  {/* Whatever goes wrong in here is shown in here. Left to
-                    propagate, an error would unmount the host's own tree. */}
-                  <ErrorBoundary
-                    fallback={(error) => <ErrorPage error={error} />}
-                    // A broken call should not hold the host on screen
-                    onError={() => void hostBridge.setAlwaysOnScreen(false)}
-                  >
-                    <Decoration>
-                      <TooltipProvider>
-                        <ClientProvider client={client}>
-                          <MediaDevicesContext value={mediaDevices}>
-                            <ProcessorProvider>
-                              <CallView
-                                client={client}
-                                rtcSession={rtcSession}
-                                isPasswordlessUser={false}
-                                confineToRoom={params.confineToRoom}
-                                preload={params.preload}
-                                skipLobby={params.skipLobby}
-                              />
-                            </ProcessorProvider>
-                          </MediaDevicesContext>
-                        </ClientProvider>
-                      </TooltipProvider>
-                    </Decoration>
-                  </ErrorBoundary>
-                </RootElementProvider>
-              )}
+            {ready && (
+              <RootElementProvider value={container}>
+                {/* Whatever goes wrong in here is shown in here. Left to
+                  propagate, an error would unmount the host's own tree. */}
+                <ErrorBoundary
+                  fallback={(error) => <ErrorPage error={error} />}
+                  // A broken call should not hold the host on screen
+                  onError={() => void hostBridge.setAlwaysOnScreen(false)}
+                >
+                  <Decoration>
+                    <TooltipProvider>
+                      <ClientProvider client={client}>
+                        <MediaDevicesContext value={mediaDevices}>
+                          <ProcessorProvider>
+                            <CallView
+                              client={client}
+                              rtcSession={rtcSession}
+                              isPasswordlessUser={false}
+                              confineToRoom={params.confineToRoom}
+                              preload={params.preload}
+                              skipLobby={params.skipLobby}
+                            />
+                          </ProcessorProvider>
+                        </MediaDevicesContext>
+                      </ClientProvider>
+                    </TooltipProvider>
+                  </Decoration>
+                </ErrorBoundary>
+              </RootElementProvider>
+            )}
           </div>
         </UrlParamsProvider>
       </HostBridgeProvider>

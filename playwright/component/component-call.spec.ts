@@ -25,6 +25,11 @@ import { SpaHelpers } from "../spa-helpers.ts";
  * guaranteed both.
  */
 
+// Each test signs in twice, sets up crypto twice and syncs twice before
+// anything is on screen, and then waits for media to connect; the waits below
+// are sized for that, so the tests have to be too
+test.describe.configure({ timeout: 180_000 });
+
 /** The settings button, whichever of the two the footer is currently showing. */
 function settingsButton(pane: Locator): Locator {
   return pane
@@ -206,16 +211,18 @@ test("looks the same in a small container as in a small window", async ({
   browser,
 }) => {
   // Two calls to set up, one of them through the harness's two logins
-  test.setTimeout(240_000);
+  test.setTimeout(300_000);
   const size = { width: 300, height: 300 };
 
   // The reference is Element Call owning a window of that size, which is what
   // a mobile app's webview or a browser's picture-in-picture gives it, and
   // what its small-window styling was written for.
+  // No permissions to grant: each browser is launched with fake media that is
+  // handed out without asking (see playwright.config.ts), and Firefox rejects
+  // a request for `camera` or `microphone` outright
   const referenceContext = await browser.newContext({
     viewport: size,
     ignoreHTTPSErrors: true,
-    permissions: ["microphone", "camera"],
   });
   const referencePage = await referenceContext.newPage();
   await referencePage.goto("/");

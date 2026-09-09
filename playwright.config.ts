@@ -86,6 +86,11 @@ export default defineConfig({
             // enumerateDevices work on CI runners without real hardware.
             "media.navigator.streams.fake": true,
             "media.navigator.permission.disabled": true,
+            // Vite serves HTTPS over HTTP/2, and Firefox intermittently stalls
+            // on Node's HTTP/2 server with a page that never finishes loading
+            // (one run in five or so, locally). Every server in the suite
+            // still speaks HTTP/1.1, so nothing is lost by insisting on it.
+            "network.http.http2.enabled": false,
           },
         },
       },
