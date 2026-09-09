@@ -114,13 +114,11 @@ export function getValue<T>(state$: Observable<T>): T {
 }
 
 /**
- * Creates an Observable that has a value of true whenever all its inputs are
- * true.
- *
- * @public
+ * Creates an Observable that has a value of true whenever some of its inputs
+ * are true.
  */
-export function and$(...inputs: Observable<boolean>[]): Observable<boolean> {
-  return combineLatest(inputs, (...flags) => flags.every((flag) => flag));
+export function or$(...inputs: Observable<boolean>[]): Observable<boolean> {
+  return combineLatest(inputs, (...flags) => flags.some((flag) => flag));
 }
 
 /**
@@ -226,38 +224,6 @@ export function filterBehavior<T, S extends T>(
         return null;
       }, null),
       distinctUntilChanged(),
-    );
-}
-
-/**
- * Maps a changing input value to an item whose lifetime is tied to a certain
- * computed key. The item may capture some dynamic data from the input.
- */
-export function generateItem<
-  Input,
-  Keys extends [unknown, ...unknown[]],
-  Data,
-  Item,
->(
-  name: string,
-  generator: (input: Input) => { keys: readonly [...Keys]; data: Data },
-  factory: (
-    scope: ObservableScope,
-    data$: Behavior<Data>,
-    ...keys: Keys
-  ) => Item,
-): OperatorFunction<Input, Item> {
-  return (input$) =>
-    input$.pipe(
-      generateItemsInternal(
-        name,
-        function* (input) {
-          yield generator(input);
-        },
-        factory,
-        (items) => items,
-      ),
-      map(([item]) => item),
     );
 }
 
