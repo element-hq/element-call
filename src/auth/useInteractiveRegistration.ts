@@ -50,11 +50,16 @@ export const useInteractiveRegistration = (
   useEffect(() => {
     if (isWidget) return;
     // An empty registerRequest is used to get the privacy policy and recaptcha key.
+    // A 401 carrying the flow parameters is the expected answer, so this
+    // rejection is the success path, and some homeservers answer it with no
+    // params at all.
     authClient.current!.registerRequest({}).catch((error) => {
+      logger.debug("Registration flow parameters", error);
       setPrivacyPolicyUrl(
-        error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url,
+        error.data?.params?.["m.login.terms"]?.policies?.privacy_policy?.en
+          ?.url,
       );
-      setRecaptchaKey(error.data?.params["m.login.recaptcha"]?.public_key);
+      setRecaptchaKey(error.data?.params?.["m.login.recaptcha"]?.public_key);
     });
   }, [isWidget]);
 
