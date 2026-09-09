@@ -5,10 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, type Mock } from "vitest";
+import { type ReactNode } from "react";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import EventEmitter from "events";
 import {
+  ClientEvent,
   EventType,
   JoinRule,
   KnownMembership,
@@ -24,6 +26,13 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { mockMatrixRoom } from "../utils/test";
+import {
+  type HostBridge,
+  HostBridgeProvider,
+  nullHostBridge,
+} from "../HostBridge";
+import { getUrlParams, UrlParamsProvider } from "../UrlParams";
+import { MembershipUnsupportedError } from "./membership";
 import { type LobbyJoinState } from "./LobbyJoinState";
 import {
   useLoadGroupCall,
@@ -117,10 +126,23 @@ const summary = (extra: Record<string, unknown>): RoomSummary =>
     ...extra,
   }) as RoomSummary;
 
+/**
+ * Renders the hook, as a widget of `host` when one is given.
+ */
 const renderLoad = (
   client: MatrixClient,
+  host?: HostBridge,
 ): ReturnType<typeof renderHook<GroupCallStatus, unknown>> =>
-  renderHook(() => useLoadGroupCall(client, roomId, viaServers));
+  renderHook(() => useLoadGroupCall(client, roomId, viaServers), {
+    wrapper: ({ children }): ReactNode =>
+      host === undefined ? (
+        children
+      ) : (
+        <UrlParamsProvider value={{ ...getUrlParams(), isWidget: true }}>
+          <HostBridgeProvider value={host}>{children}</HostBridgeProvider>
+        </UrlParamsProvider>
+      ),
+  });
 
 const lobby = (state: GroupCallStatus): GroupCallLobby => {
   expect(state.kind).toBe("lobby");
@@ -315,5 +337,190 @@ describe("useLoadGroupCall in the standalone app", () => {
     });
     const { result } = renderLoad(client);
     await waitForJoinState(result, "not-allowed");
+  });
+});
+
+describe("useLoadGroupCall as a widget", () => {
+  /** A host that answers membership changes with `changeMembership`. */
+  const host = (
+    changeMembership: Mock = vi.fn().mockResolvedValue(KnownMembership.Knock),
+  ): HostBridge => ({ ...nullHostBridge, changeMembership });
+
+  it("proceeds straight to the call when the host has joined us", async () => {
+    const room = mockRoom({ membership: KnownMembership.Join });
+    const client = mockClient({ getRoom: vi.fn().mockReturnValue(room) });
+    const { result } = renderLoad(client, host());
+    await waitFor(() => expect(result.current.kind).toBe("loaded"));
+  });
+
+  it.each([
+    ["a ban", { membership: KnownMembership.Ban }, "banned"],
+    [
+      "a pending request",
+      { membership: KnownMembership.Knock },
+      "waiting-for-approval",
+    ],
+    [
+      "an invite that replaced a request",
+      {
+        membership: KnownMembership.Invite,
+        prevMembership: KnownMembership.Knock,
+      },
+      "waiting-for-approval",
+    ],
+    ["a plain invite", { membership: KnownMembership.Invite }, "can-join"],
+    [
+      "a declined request",
+      {
+        membership: KnownMembership.Leave,
+        prevMembership: KnownMembership.Knock,
+      },
+      "denied",
+    ],
+    [
+      "a public room",
+      { membership: KnownMembership.Leave, joinRule: JoinRule.Public },
+      "can-join",
+    ],
+    [
+      "a restricted room",
+      { membership: KnownMembership.Leave, joinRule: JoinRule.Restricted },
+      "can-join",
+    ],
+    [
+      "a knock_restricted room",
+      { membership: KnownMembership.Leave, joinRule: "knock_restricted" },
+      "can-join",
+    ],
+    [
+      "a knock room",
+      { membership: KnownMembership.Leave, joinRule: JoinRule.Knock },
+      "can-ask-to-join",
+    ],
+    [
+      "a knock room with no membership",
+      { joinRule: JoinRule.Knock },
+      "can-ask-to-join",
+    ],
+    [
+      "an invite-only room",
+      { membership: KnownMembership.Leave, joinRule: JoinRule.Invite },
+      "not-allowed",
+    ],
+    [
+      "a room with no join rule",
+      { membership: KnownMembership.Leave },
+      "not-allowed",
+    ],
+  ])("opens the lobby of %s", async (_case, spec, expected) => {
+    const client = mockClient({
+      getRoom: vi.fn().mockReturnValue(mockRoom(spec)),
+    });
+    const { result } = renderLoad(client, host());
+    await waitForJoinState(result, expected as LobbyJoinState["kind"]);
+  });
+
+  it("warns when the host has not shared the join rule", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    const client = mockClient({
+      getRoom: vi
+        .fn()
+        .mockReturnValue(mockRoom({ membership: KnownMembership.Leave })),
+    });
+    const { result } = renderLoad(client, host());
+    await waitForJoinState(result, "not-allowed");
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("m.room.join_rules"),
+    );
+  });
+
+  it("waits for approval when the host knocked instead of joining", async () => {
+    const changeMembership = vi.fn().mockResolvedValue(KnownMembership.Knock);
+    const client = mockClient({
+      getRoom: vi.fn().mockReturnValue(
+        mockRoom({
+          membership: KnownMembership.Leave,
+          joinRule: "knock_restricted",
+        }),
+      ),
+    });
+    const { result } = renderLoad(client, host(changeMembership));
+    const canJoin = await waitForJoinState(result, "can-join");
+    act(() => canJoin.join());
+    await waitForJoinState(result, "waiting-for-approval");
+    expect(changeMembership).toHaveBeenCalledWith({ action: "join" });
+  });
+
+  it("returns to the lobby when the host does not answer", async () => {
+    const changeMembership = vi
+      .fn()
+      .mockRejectedValue(new Error("Request timed out"));
+    const client = mockClient({
+      getRoom: vi.fn().mockReturnValue(
+        mockRoom({
+          membership: KnownMembership.Leave,
+          joinRule: JoinRule.Knock,
+        }),
+      ),
+    });
+    const { result } = renderLoad(client, host(changeMembership));
+    const canAsk = await waitForJoinState(result, "can-ask-to-join");
+    act(() => canAsk.askToJoin("let me in"));
+    expect(await waitForJoinState(result, "can-ask-to-join")).toMatchObject({
+      error: "request_failed",
+    });
+    expect(changeMembership).toHaveBeenCalledWith({
+      action: "knock",
+      reason: "let me in",
+    });
+  });
+
+  it("gives up when the host has no membership action", async () => {
+    const client = mockClient({
+      getRoom: vi.fn().mockReturnValue(
+        mockRoom({
+          membership: KnownMembership.Leave,
+          joinRule: JoinRule.Knock,
+        }),
+      ),
+    });
+    const { result } = renderLoad(
+      client,
+      host(vi.fn().mockRejectedValue(new MembershipUnsupportedError())),
+    );
+    const canAsk = await waitForJoinState(result, "can-ask-to-join");
+    act(() => canAsk.askToJoin());
+    await waitForJoinState(result, "not-allowed");
+  });
+
+  it("resolves when the host joined us before we could listen", async () => {
+    const room = mockRoom({ membership: KnownMembership.Knock });
+    (room as { getMyMembership: () => Membership }).getMyMembership = vi
+      .fn()
+      .mockReturnValueOnce(KnownMembership.Knock)
+      .mockReturnValue(KnownMembership.Join);
+    const client = mockClient({ getRoom: vi.fn().mockReturnValue(room) });
+    const { result } = renderLoad(client, host());
+    await waitFor(() => expect(result.current.kind).toBe("loaded"));
+  });
+
+  it("adds no listener as the join state changes, and removes them all on unmount", async () => {
+    const client = mockClient({
+      getRoom: vi.fn().mockReturnValue(
+        mockRoom({
+          membership: KnownMembership.Leave,
+          joinRule: JoinRule.Knock,
+        }),
+      ),
+    });
+    const { result, unmount } = renderLoad(client, host());
+    const canAsk = await waitForJoinState(result, "can-ask-to-join");
+    const listeners = client.listenerCount(RoomEvent.MyMembership);
+    act(() => canAsk.askToJoin());
+    await waitForJoinState(result, "waiting-for-approval");
+    expect(client.listenerCount(RoomEvent.MyMembership)).toBe(listeners);
+    unmount();
+    expect(client.listenerCount(RoomEvent.MyMembership)).toBe(0);
+    expect(client.listenerCount(ClientEvent.Sync)).toBe(0);
   });
 });

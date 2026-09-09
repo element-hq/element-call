@@ -85,6 +85,7 @@ describe("widget", () => {
       { eventType: EventType.RoomName },
       { eventType: EventType.RoomMember },
       { eventType: EventType.RoomEncryption },
+      { eventType: EventType.RoomJoinRules },
       { eventType: EventType.GroupCallMemberPrefix },
     ];
 

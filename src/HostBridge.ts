@@ -10,14 +10,22 @@ import { fromEvent, map, NEVER, type Observable } from "rxjs";
 import {
   type IWidgetApiRequest,
   type IWidgetApiRequestData,
+  type IWidgetApiResponseData,
+  WidgetApiResponseError,
   WidgetApiToWidgetAction,
 } from "matrix-widget-api";
+import { MatrixError, type Membership } from "matrix-js-sdk";
 
 import {
   ElementWidgetActions,
   type JoinCallData,
   type WidgetHelpers,
 } from "./widget";
+import {
+  type ChangeMembership,
+  type MembershipChange,
+  MembershipUnsupportedError,
+} from "./room/membership";
 
 // Note: these are type aliases rather than interfaces so that they satisfy the
 // widget API's index-signature payload types.
@@ -122,6 +130,12 @@ export interface HostBridge {
    * media itself using its own client.
    */
   downloadMedia?(mxcUri: string): Promise<Blob>;
+  /**
+   * Changes the user's membership of the room on Element Call's behalf, for
+   * hosts that do not give it direct access to the homeserver. Absent when
+   * Element Call should change the membership itself using its own client.
+   */
+  changeMembership?: ChangeMembership;
 }
 
 /**
@@ -220,6 +234,23 @@ export function createWidgetHostBridge(widget: WidgetHelpers): HostBridge {
           "org.matrix.msc2762.receive.event:m.room.redaction",
         )
       );
+    },
+    changeMembership: async (change) => {
+      try {
+        const { membership } = await widget.api.transport.send<
+          MembershipChange & IWidgetApiRequestData,
+          IWidgetApiResponseData & { membership: Membership }
+        >(ElementWidgetActions.Membership, change);
+        return membership;
+      } catch (e) {
+        if (!(e instanceof WidgetApiResponseError)) throw e;
+        // A host that made the request on our behalf answers with the
+        // homeserver's own error. One without means it made no request: it
+        // does not know the action, or refused it outright.
+        throw e.data.matrix_api_error
+          ? MatrixError.fromWidgetApiErrorData(e.data.matrix_api_error)
+          : new MembershipUnsupportedError(e.message);
+      }
     },
     downloadMedia: async (mxcUri) => {
       const { file } = await widget.api.downloadFile(mxcUri);

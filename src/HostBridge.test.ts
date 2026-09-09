@@ -6,8 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, expect, test, vi } from "vitest";
-import { type WidgetApi, WidgetApiToWidgetAction } from "matrix-widget-api";
+import {
+  type ITransport,
+  type WidgetApi,
+  WidgetApiResponseError,
+  WidgetApiToWidgetAction,
+} from "matrix-widget-api";
 import EventEmitter from "events";
+import { KnownMembership, MatrixError } from "matrix-js-sdk";
 
 import { type Observable } from "rxjs";
 
@@ -17,6 +23,7 @@ import {
   nullHostBridge,
 } from "./HostBridge";
 import { ElementWidgetActions, type WidgetHelpers } from "./widget";
+import { MembershipUnsupportedError } from "./room/membership";
 
 function mockWidget(api: Partial<WidgetApi>): WidgetHelpers {
   return {
@@ -217,6 +224,81 @@ describe("createWidgetHostBridge", () => {
     });
   });
 
+  describe("changeMembership", () => {
+    const bridgeReplying = (
+      send: ReturnType<typeof vi.fn>,
+    ): ReturnType<typeof createWidgetHostBridge> =>
+      createWidgetHostBridge(
+        mockWidget({ transport: { send } as unknown as ITransport }),
+      );
+
+    test("asks the host to knock, and reports what it ended up with", async () => {
+      const send = vi
+        .fn()
+        .mockResolvedValue({ membership: KnownMembership.Knock });
+      const bridge = bridgeReplying(send);
+
+      await expect(
+        bridge.changeMembership!({ action: "knock", reason: "let me in" }),
+      ).resolves.toBe(KnownMembership.Knock);
+      expect(send).toHaveBeenCalledWith("io.element.membership", {
+        action: "knock",
+        reason: "let me in",
+      });
+    });
+
+    test("turns a refusal by the homeserver into a MatrixError", async () => {
+      const bridge = bridgeReplying(
+        vi.fn().mockRejectedValue(
+          new WidgetApiResponseError("Failed to knock", {
+            matrix_api_error: {
+              http_status: 403,
+              http_headers: {},
+              url: "/_matrix/client/v3/knock/!call:example.org",
+              response: {
+                errcode: "M_FORBIDDEN",
+                error: "You are not invited",
+              },
+            },
+          }),
+        ),
+      );
+
+      await expect(
+        bridge.changeMembership!({ action: "knock" }),
+      ).rejects.toSatisfy(
+        (error) =>
+          error instanceof MatrixError && error.errcode === "M_FORBIDDEN",
+      );
+    });
+
+    test("reports a host that does not implement the action", async () => {
+      const bridge = bridgeReplying(
+        vi
+          .fn()
+          .mockRejectedValue(
+            new WidgetApiResponseError(
+              "Unknown or unsupported from-widget action: io.element.membership",
+              {},
+            ),
+          ),
+      );
+
+      await expect(
+        bridge.changeMembership!({ action: "knock" }),
+      ).rejects.toBeInstanceOf(MembershipUnsupportedError);
+    });
+
+    test("passes a transport failure through", async () => {
+      const timeout = new Error("Request timed out");
+      const bridge = bridgeReplying(vi.fn().mockRejectedValue(timeout));
+
+      await expect(bridge.changeMembership!({ action: "join" })).rejects.toBe(
+        timeout,
+      );
+    });
+  });
+
   describe("close", () => {
     test("asks the host to close, then stops the transport", async () => {
       const transport = {
@@ -294,6 +376,10 @@ describe("nullHostBridge", () => {
 
   test("offers no media download, so Element Call uses its own client", () => {
     expect(nullHostBridge.downloadMedia).toBeUndefined();
+  });
+
+  test("changes no membership, so Element Call uses its own client", () => {
+    expect(nullHostBridge.changeMembership).toBeUndefined();
   });
 
   test("supports reactions, since nothing is mediating its homeserver access", () => {

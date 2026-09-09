@@ -35,12 +35,17 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { useUrlParams } from "../UrlParams";
+import { useHostBridge } from "../HostBridge";
 import { type LobbyJoinState } from "./LobbyJoinState";
 import {
   preJoinRoomInfoFromRoom,
   preJoinRoomInfoFromSummary,
   type PreJoinRoomInfo,
 } from "./preJoinRoomInfo";
+import {
+  changeMembershipWithClient,
+  MembershipUnsupportedError,
+} from "./membership";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -71,42 +76,6 @@ export type GroupCallStatus =
   | GroupCallLoadFailed
   | GroupCallLoading
   | GroupCallLobby;
-
-const MAX_ATTEMPTS_FOR_INVITE_JOIN_FAILURE = 3;
-const DELAY_MS_FOR_INVITE_JOIN_FAILURE = 3000;
-
-/**
- * Join a room, and retry on M_FORBIDDEN error in order to work
- * around a potential race when joining rooms over federation.
- *
- * Will wait up to to `DELAY_MS_FOR_INVITE_JOIN_FAILURE` per attempt.
- * Will try up to `MAX_ATTEMPTS_FOR_INVITE_JOIN_FAILURE` times.
- *
- * @see https://github.com/element-hq/element-call/issues/2634
- * @param client The matrix client
- * @param attempt Number of attempts made.
- * @param params Parameters to pass to client.joinRoom
- */
-async function joinRoomAfterInvite(
-  client: MatrixClient,
-  attempt = 0,
-  ...params: Parameters<MatrixClient["joinRoom"]>
-): ReturnType<MatrixClient["joinRoom"]> {
-  try {
-    return await client.joinRoom(...params);
-  } catch (ex) {
-    if (
-      ex instanceof MatrixError &&
-      ex.errcode === "M_FORBIDDEN" &&
-      attempt < MAX_ATTEMPTS_FOR_INVITE_JOIN_FAILURE
-    ) {
-      // If we were invited and got a M_FORBIDDEN, it's highly likely the server hasn't caught up yet.
-      await new Promise((r) => setTimeout(r, DELAY_MS_FOR_INVITE_JOIN_FAILURE));
-      return joinRoomAfterInvite(client, attempt + 1, ...params);
-    }
-    throw ex;
-  }
-}
 
 export class CallTerminatedMessage extends Error {
   /**
@@ -146,6 +115,7 @@ export const useLoadGroupCall = (
   const activeRoom = useRef<Room | undefined>(undefined);
   const { t } = useTranslation();
   const { isWidget } = useUrlParams();
+  const hostBridge = useHostBridge();
 
   useEffect(() => {
     if (!client || !roomIdOrAlias) {
@@ -257,6 +227,9 @@ export const useLoadGroupCall = (
       entry: LobbyEntry,
     ): Promise<Room> => {
       const roomId = room.roomId;
+      const changeMembership =
+        hostBridge.changeMembership ??
+        changeMembershipWithClient(client, roomId, viaServers);
       let requestInFlight = false;
       let withdrawing = false;
 
@@ -272,14 +245,34 @@ export const useLoadGroupCall = (
 
       const canJoin = (): void => setLobby({ kind: "can-join", join });
 
+      const onRequestResult = (
+        membership: Membership,
+        operation: string,
+        onFailure: () => void,
+      ): void => {
+        requestInFlight = false;
+        // A join resolves the promise this lobby is parked on, so there is
+        // nothing left to show.
+        if (membership === KnownMembership.Join) return;
+        if (membership === KnownMembership.Knock) return waitForApproval();
+        logger.error(
+          `${operation} on ${roomId} left us with membership ${membership}`,
+        );
+        onFailure();
+      };
+
       const onRequestError = (
         error: unknown,
         operation: string,
         onFailure: () => void,
       ): void => {
         requestInFlight = false;
-        // A refusal by the server means this user cannot get in this way at all.
-        if (error instanceof MatrixError && error.errcode === "M_FORBIDDEN") {
+        // A refusal by the server, or a host with no implementation of the
+        // operation, means this user cannot get in this way at all.
+        if (
+          error instanceof MembershipUnsupportedError ||
+          (error instanceof MatrixError && error.errcode === "M_FORBIDDEN")
+        ) {
           logger.warn(`${operation} on ${roomId} was refused`, error);
           setLobby({ kind: "not-allowed" });
         } else {
@@ -291,13 +284,9 @@ export const useLoadGroupCall = (
       const join = (): void => {
         if (requestInFlight) return;
         requestInFlight = true;
-        // A join of our own resolves the promise this lobby is parked on, so
-        // there is nothing to show on success.
-        client.joinRoom(roomId, { viaServers }).then(
-          () => {
-            requestInFlight = false;
-          },
-          (error: unknown) => onRequestError(error, "Joining", canJoin),
+        changeMembership({ action: "join" }).then(
+          (membership) => onRequestResult(membership, "Joining", canJoin),
+          (error) => onRequestError(error, "Joining", canJoin),
         );
       };
 
@@ -305,15 +294,10 @@ export const useLoadGroupCall = (
         if (requestInFlight) return;
         requestInFlight = true;
         setLobby({ kind: "sending-request" });
-        client.knockRoom(roomId, { viaServers, reason }).then(
-          () => {
-            requestInFlight = false;
-            waitForApproval();
-          },
-          (error: unknown) =>
-            onRequestError(error, "Asking to join", () =>
-              canAskToJoin("request_failed"),
-            ),
+        const failed = (): void => canAskToJoin("request_failed");
+        changeMembership({ action: "knock", reason }).then(
+          (membership) => onRequestResult(membership, "Asking to join", failed),
+          (error) => onRequestError(error, "Asking to join", failed),
         );
       };
 
@@ -323,7 +307,7 @@ export const useLoadGroupCall = (
         // Drop the link while the withdrawal is on its way, so it cannot be
         // pressed twice.
         setLobby({ kind: "waiting-for-approval" });
-        client.leave(roomId).catch((error: unknown) => {
+        changeMembership({ action: "cancel_knock" }).catch((error: unknown) => {
           withdrawing = false;
           logger.error("Failed to withdraw the request to join", error);
           waitForApproval();
@@ -336,9 +320,11 @@ export const useLoadGroupCall = (
           activeRoom.current = changed;
           switch (membership) {
             case KnownMembership.Invite:
+              // A host that changes memberships on our behalf also performs the
+              // join an accepted request entitles us to.
               if (prevMembership !== KnownMembership.Knock) canJoin();
-              else
-                joinRoomAfterInvite(client, 0, roomId, { viaServers }).then(
+              else if (hostBridge.changeMembership === undefined)
+                changeMembership({ action: "join" }).then(
                   () => logger.info(`Joined ${roomId} once accepted`),
                   (error: unknown) =>
                     logger.error(
@@ -390,6 +376,58 @@ export const useLoadGroupCall = (
       return joined;
     };
 
+    /**
+     * What the lobby of a room the host has pushed to us offers, from our
+     * membership, the membership it replaced, and the join rule.
+     */
+    const widgetLobbyEntry = (
+      room: Room,
+      membership: Membership | undefined,
+    ): LobbyEntry => {
+      const prevMembership = room.currentState
+        .getStateEvents(EventType.RoomMember, room.myUserId)
+        ?.getPrevContent().membership as Membership | undefined;
+
+      if (membership === KnownMembership.Ban) return "banned";
+      if (membership === KnownMembership.Knock) return "waiting-for-approval";
+      if (membership === KnownMembership.Invite)
+        // An invite that replaced a request means the host is mid-join.
+        return prevMembership === KnownMembership.Knock
+          ? "waiting-for-approval"
+          : "can-join";
+      if (prevMembership === KnownMembership.Knock) return "denied";
+
+      // An absent join rule is not `invite`: it means the host granted no
+      // capability to read the state event.
+      const joinRules = room.currentState.getStateEvents(
+        EventType.RoomJoinRules,
+        "",
+      );
+      if (joinRules === null) {
+        logger.warn(
+          `No ${EventType.RoomJoinRules} state in ${room.roomId}; the host has not shared the join rule`,
+        );
+        return "not-allowed";
+      }
+      const joinRule = joinRules.getContent().join_rule as string;
+      switch (joinRule) {
+        // The widget cannot evaluate `allowed_room_ids`, since it does not know
+        // the user's other rooms, so it offers a join and lets the host decide.
+        case JoinRule.Public:
+        case JoinRule.Restricted:
+        // `JoinRule` in the js-sdk has no member for knock_restricted yet.
+        case "knock_restricted":
+          return "can-join";
+        case JoinRule.Knock:
+          return "can-ask-to-join";
+        default:
+          logger.info(
+            `Room ${room.roomId} takes neither joins nor knocks (join rule ${joinRule})`,
+          );
+          return "not-allowed";
+      }
+    };
+
     const fetchOrCreateRoom = async (): Promise<Room> => {
       if (roomIdOrAlias[0] === "#") {
         const room = await getRoomByAlias(roomIdOrAlias);
@@ -405,11 +443,17 @@ export const useLoadGroupCall = (
       const membership = room?.getMyMembership();
       if (membership === KnownMembership.Join) return room!;
 
-      if (isWidget)
-        // in widget mode we never should reach this point. (getRoom should return the room.)
-        throw new Error(
-          "Room not found. The widget-api did not pass over the relevant room events/information.",
+      if (isWidget) {
+        if (!room)
+          // In widget mode we never should reach this point. (getRoom should return the room.)
+          throw new Error(
+            "Room not found. The widget-api did not pass over the relevant room events/information.",
+          );
+        return await enterFromLobby(
+          preJoinRoomInfoFromRoom(room),
+          widgetLobbyEntry(room, membership),
         );
+      }
 
       if (room && membership === KnownMembership.Ban)
         return await enterFromLobby(preJoinRoomInfoFromRoom(room), "banned");
@@ -512,7 +556,7 @@ export const useLoadGroupCall = (
       });
 
     return (): void => controller.abort();
-  }, [client, isWidget, roomIdOrAlias, viaServers, t]);
+  }, [client, hostBridge, isWidget, roomIdOrAlias, viaServers, t]);
 
   return state;
 };

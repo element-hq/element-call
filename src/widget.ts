@@ -44,6 +44,13 @@ export enum ElementWidgetActions {
   //   video_enabled?: boolean
   // }
   DeviceMute = "io.element.device_mute",
+  // fromWidget: asks the host to change our membership of its room, for hosts
+  // that keep the access token to themselves.
+  // Data: `{ action: "join" | "knock" | "cancel_knock", reason?: string }`,
+  // reply `{ membership }`, the membership the request resulted in. An error
+  // reply carries `matrix_api_error` when the homeserver is the one that
+  // refused it.
+  Membership = "io.element.membership",
 }
 
 export interface JoinCallData {
@@ -147,6 +154,7 @@ export const initializeWidget = (
         { eventType: EventType.RoomName },
         { eventType: EventType.RoomMember },
         { eventType: EventType.RoomEncryption },
+        { eventType: EventType.RoomJoinRules },
         { eventType: EventType.GroupCallMemberPrefix },
       ];
 
