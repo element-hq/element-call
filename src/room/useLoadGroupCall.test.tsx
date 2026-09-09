@@ -236,6 +236,53 @@ describe("useLoadGroupCall in the standalone app", () => {
     expect(client.waitUntilRoomReadyForGroupCalls).toHaveBeenCalledWith(roomId);
   });
 
+  it("joins straight away when a request was accepted before this load", async () => {
+    const spec: RoomSpec = {
+      membership: KnownMembership.Invite,
+      prevMembership: KnownMembership.Knock,
+    };
+    const room = mockRoom(spec);
+    const client = mockClient({
+      getRoom: vi.fn().mockReturnValue(room),
+      joinRoom: vi.fn().mockResolvedValue(room),
+    });
+    const { result } = renderLoad(client);
+    await waitForJoinState(result, "joining");
+    expect(client.joinRoom).toHaveBeenCalledWith(roomId, { viaServers });
+    spec.membership = KnownMembership.Join;
+    emitMembership(client, room, KnownMembership.Join, KnownMembership.Invite);
+    await waitFor(() => expect(result.current.kind).toBe("loaded"));
+    expect(client.getRoomSummary).not.toHaveBeenCalled();
+  });
+
+  it("offers a join of our own when an accepted request cannot be taken up", async () => {
+    const error = vi.spyOn(logger, "error").mockImplementation(() => {});
+    const room = mockRoom({
+      membership: KnownMembership.Invite,
+      prevMembership: KnownMembership.Knock,
+    });
+    const client = mockClient({
+      getRoom: vi.fn().mockReturnValue(room),
+      joinRoom: vi.fn().mockRejectedValue(new Error("offline")),
+    });
+    const { result } = renderLoad(client);
+    expect(await waitForJoinState(result, "can-join")).toMatchObject({
+      notice: "request_accepted",
+    });
+    expect(error).toHaveBeenCalled();
+  });
+
+  it("joins an invite that answers no request without a lobby", async () => {
+    const room = mockRoom({ membership: KnownMembership.Invite });
+    const client = mockClient({
+      getRoom: vi.fn().mockReturnValue(room),
+      joinRoom: vi.fn().mockResolvedValue(room),
+    });
+    const { result } = renderLoad(client);
+    await waitFor(() => expect(result.current.kind).toBe("loaded"));
+    expect(client.joinRoom).toHaveBeenCalledWith(roomId, { viaServers });
+  });
+
   it("shows a declined request in the lobby", async () => {
     const spec: RoomSpec = { membership: KnownMembership.Knock };
     const room = mockRoom(spec);
@@ -366,7 +413,7 @@ describe("useLoadGroupCall as a widget", () => {
         membership: KnownMembership.Invite,
         prevMembership: KnownMembership.Knock,
       },
-      "waiting-for-approval",
+      "joining",
     ],
     ["a plain invite", { membership: KnownMembership.Invite }, "can-join"],
     [
@@ -416,7 +463,12 @@ describe("useLoadGroupCall as a widget", () => {
     const client = mockClient({
       getRoom: vi.fn().mockReturnValue(mockRoom(spec)),
     });
-    const { result } = renderLoad(client, host());
+    // A request the host never answers, so that the state a lobby opens on is
+    // the one under test.
+    const { result } = renderLoad(
+      client,
+      host(vi.fn().mockReturnValue(new Promise(() => {}))),
+    );
     await waitForJoinState(result, expected as LobbyJoinState["kind"]);
   });
 
@@ -491,6 +543,90 @@ describe("useLoadGroupCall as a widget", () => {
     const canAsk = await waitForJoinState(result, "can-ask-to-join");
     act(() => canAsk.askToJoin());
     await waitForJoinState(result, "not-allowed");
+  });
+
+  it("asks the host to join us as soon as a request is accepted", async () => {
+    const changeMembership = vi.fn().mockReturnValue(new Promise(() => {}));
+    const spec: RoomSpec = { membership: KnownMembership.Knock };
+    const room = mockRoom(spec);
+    const client = mockClient({ getRoom: vi.fn().mockReturnValue(room) });
+    const { result } = renderLoad(client, host(changeMembership));
+    await waitForJoinState(result, "waiting-for-approval");
+    spec.membership = KnownMembership.Invite;
+    emitMembership(client, room, KnownMembership.Invite, KnownMembership.Knock);
+    await waitForJoinState(result, "joining");
+    expect(changeMembership).toHaveBeenCalledWith({ action: "join" });
+  });
+
+  it("enters the call when the host reports us joined", async () => {
+    const spec: RoomSpec = {
+      membership: KnownMembership.Invite,
+      prevMembership: KnownMembership.Knock,
+    };
+    const room = mockRoom(spec);
+    const client = mockClient({ getRoom: vi.fn().mockReturnValue(room) });
+    // The host joins us as it answers, so no membership event of our own
+    // follows the reply.
+    const joinAsHost = vi.fn(async (): Promise<Membership> => {
+      spec.membership = KnownMembership.Join;
+      return await Promise.resolve(KnownMembership.Join);
+    });
+    const { result } = renderLoad(client, host(joinAsHost));
+    await waitFor(() => expect(result.current.kind).toBe("loaded"));
+  });
+
+  it("stays in the call when the host answers our join late", async () => {
+    const error = vi.spyOn(logger, "error").mockImplementation(() => {});
+    let refuse!: (error: Error) => void;
+    const spec: RoomSpec = {
+      membership: KnownMembership.Invite,
+      prevMembership: KnownMembership.Knock,
+    };
+    const room = mockRoom(spec);
+    const client = mockClient({ getRoom: vi.fn().mockReturnValue(room) });
+    const { result } = renderLoad(
+      client,
+      host(
+        vi.fn().mockReturnValue(
+          new Promise((_resolve, reject) => {
+            refuse = reject;
+          }),
+        ),
+      ),
+    );
+    await waitForJoinState(result, "joining");
+    spec.membership = KnownMembership.Join;
+    emitMembership(client, room, KnownMembership.Join, KnownMembership.Invite);
+    await waitFor(() => expect(result.current.kind).toBe("loaded"));
+    const loaded = result.current;
+    refuse(new Error("Request timed out"));
+    await waitFor(() => expect(error).toHaveBeenCalled());
+    expect(result.current).toBe(loaded);
+  });
+
+  it("offers a join of our own when the host cannot answer", async () => {
+    const error = vi.spyOn(logger, "error").mockImplementation(() => {});
+    const changeMembership = vi
+      .fn()
+      .mockRejectedValue(new Error("Request timed out"));
+    const client = mockClient({
+      getRoom: vi.fn().mockReturnValue(
+        mockRoom({
+          membership: KnownMembership.Invite,
+          prevMembership: KnownMembership.Knock,
+        }),
+      ),
+    });
+    const { result } = renderLoad(client, host(changeMembership));
+    const canJoin = await waitForJoinState(result, "can-join");
+    expect(canJoin).toMatchObject({ notice: "request_accepted" });
+    expect(error).toHaveBeenCalled();
+    act(() => canJoin.join());
+    await waitForJoinState(result, "joining");
+    expect(await waitForJoinState(result, "can-join")).toMatchObject({
+      notice: "request_accepted",
+    });
+    expect(changeMembership).toHaveBeenCalledTimes(2);
   });
 
   it("resolves when the host joined us before we could listen", async () => {

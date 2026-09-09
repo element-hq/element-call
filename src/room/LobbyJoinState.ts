@@ -10,8 +10,11 @@ Please see LICENSE in the repository root for full details.
  * the lobby offers them. Everything the lobby needs to know about membership.
  */
 export type LobbyJoinState =
-  /** The user may enter the call right away. */
-  | { kind: "can-join"; join: () => void }
+  /**
+   * The user may enter the call right away. `notice` is set when they got here
+   * by having a request accepted, but the join it entitles them to failed.
+   */
+  | { kind: "can-join"; join: () => void; notice?: "request_accepted" }
   /**
    * The room only takes knocks. `error` is set when a previous request failed
    * to send.
@@ -23,6 +26,8 @@ export type LobbyJoinState =
     }
   /** The request is on its way to the server. */
   | { kind: "sending-request" }
+  /** The user's join is on its way. */
+  | { kind: "joining" }
   /**
    * The request is with the room's moderators. `cancelRequest` is absent while
    * a withdrawal is on its way, and where withdrawing is not supported.

@@ -97,10 +97,18 @@ export class CallTerminatedMessage extends Error {
   }
 }
 
+/** The membership the local user's current one replaced, if any. */
+function previousMembership(room: Room): Membership | undefined {
+  return room.currentState
+    .getStateEvents(EventType.RoomMember, room.myUserId)
+    ?.getPrevContent().membership as Membership | undefined;
+}
+
 /** The join state a lobby opens on, before the user acts on it. */
 type LobbyEntry =
   | "can-join"
   | "can-ask-to-join"
+  | "joining"
   | "waiting-for-approval"
   | "denied"
   | "banned"
@@ -196,22 +204,31 @@ export const useLoadGroupCall = (
     };
 
     /**
-     * Resolve once the local user has joined the room, including when they
-     * already have: the host may have joined us before we could listen.
+     * Watch for the local user joining the room. `check` re-tests the room as
+     * it stands, for a join that happened without an event we saw, such as one
+     * the host had already applied.
      */
-    const waitForJoin = async (roomId: string): Promise<Room> =>
-      await new Promise<Room>((resolve) => {
-        const reached = (room: Room | null): boolean => {
+    const watchForJoin = (
+      roomId: string,
+    ): { reached: Promise<Room>; check: () => void } => {
+      let check = (): void => {};
+      const reached = new Promise<Room>((resolve) => {
+        const test = (room: Room | null): boolean => {
           if (room?.getMyMembership() !== KnownMembership.Join) return false;
           activeRoom.current = room;
           resolve(room);
           return true;
         };
         const off = onMyMembership((room) => {
-          if (room.roomId === roomId && reached(room)) off();
+          if (room.roomId === roomId && test(room)) off();
         });
-        if (reached(client.getRoom(roomId))) off();
+        check = (): void => {
+          if (test(client.getRoom(roomId))) off();
+        };
+        check();
       });
+      return { reached, check };
+    };
 
     /**
      * Show the lobby and resolve once the local user has joined. Denial, ban
@@ -232,9 +249,16 @@ export const useLoadGroupCall = (
         changeMembershipWithClient(client, roomId, viaServers);
       let requestInFlight = false;
       let withdrawing = false;
+      let entered = false;
 
+      // Listening before anything is sent, so that a join landing while a
+      // request is in flight is not missed.
+      const { reached, check } = watchForJoin(roomId);
+
+      /** Sets the lobby state, unless the user is already through the lobby. */
       const setLobby = (joinState: LobbyJoinState): void => {
-        if (!signal.aborted) setState({ kind: "lobby", room, joinState });
+        if (!entered && !signal.aborted)
+          setState({ kind: "lobby", room, joinState });
       };
 
       const waitForApproval = (): void =>
@@ -245,15 +269,24 @@ export const useLoadGroupCall = (
 
       const canJoin = (): void => setLobby({ kind: "can-join", join });
 
+      /** The request was accepted, but the join it entitles us to failed. */
+      const acceptedButNotJoined = (): void =>
+        setLobby({
+          kind: "can-join",
+          join: joinOnceAccepted,
+          notice: "request_accepted",
+        });
+
       const onRequestResult = (
         membership: Membership,
         operation: string,
         onFailure: () => void,
       ): void => {
         requestInFlight = false;
-        // A join resolves the promise this lobby is parked on, so there is
-        // nothing left to show.
-        if (membership === KnownMembership.Join) return;
+        // A membership the room already holds reaches us in the reply rather
+        // than in an event of its own, so the join this lobby is parked on is
+        // re-tested here.
+        if (membership === KnownMembership.Join) return check();
         if (membership === KnownMembership.Knock) return waitForApproval();
         logger.error(
           `${operation} on ${roomId} left us with membership ${membership}`,
@@ -284,9 +317,31 @@ export const useLoadGroupCall = (
       const join = (): void => {
         if (requestInFlight) return;
         requestInFlight = true;
+        setLobby({ kind: "joining" });
         changeMembership({ action: "join" }).then(
           (membership) => onRequestResult(membership, "Joining", canJoin),
           (error) => onRequestError(error, "Joining", canJoin),
+        );
+      };
+
+      /** Takes up the invite an accepted request has earned us. */
+      const joinOnceAccepted = (): void => {
+        if (requestInFlight) return;
+        requestInFlight = true;
+        setLobby({ kind: "joining" });
+        changeMembership({ action: "join" }).then(
+          (membership) =>
+            onRequestResult(
+              membership,
+              "Joining once accepted",
+              acceptedButNotJoined,
+            ),
+          (error) =>
+            onRequestError(
+              error,
+              "Joining once accepted",
+              acceptedButNotJoined,
+            ),
         );
       };
 
@@ -320,18 +375,10 @@ export const useLoadGroupCall = (
           activeRoom.current = changed;
           switch (membership) {
             case KnownMembership.Invite:
-              // A host that changes memberships on our behalf also performs the
-              // join an accepted request entitles us to.
-              if (prevMembership !== KnownMembership.Knock) canJoin();
-              else if (hostBridge.changeMembership === undefined)
-                changeMembership({ action: "join" }).then(
-                  () => logger.info(`Joined ${roomId} once accepted`),
-                  (error: unknown) =>
-                    logger.error(
-                      `Joining ${roomId} once accepted failed`,
-                      error,
-                    ),
-                );
+              // An invite that replaced a request is ours to take up: nothing
+              // else is going to turn it into a join.
+              if (prevMembership === KnownMembership.Knock) joinOnceAccepted();
+              else canJoin();
               break;
             case KnownMembership.Ban:
               setLobby({ kind: "banned", reason: leaveReason() });
@@ -357,6 +404,9 @@ export const useLoadGroupCall = (
         case "can-ask-to-join":
           canAskToJoin();
           break;
+        case "joining":
+          joinOnceAccepted();
+          break;
         case "waiting-for-approval":
           waitForApproval();
           break;
@@ -371,7 +421,8 @@ export const useLoadGroupCall = (
           break;
       }
 
-      const joined = await waitForJoin(roomId);
+      const joined = await reached;
+      entered = true;
       offTransitions();
       return joined;
     };
@@ -384,16 +435,13 @@ export const useLoadGroupCall = (
       room: Room,
       membership: Membership | undefined,
     ): LobbyEntry => {
-      const prevMembership = room.currentState
-        .getStateEvents(EventType.RoomMember, room.myUserId)
-        ?.getPrevContent().membership as Membership | undefined;
+      const prevMembership = previousMembership(room);
 
       if (membership === KnownMembership.Ban) return "banned";
       if (membership === KnownMembership.Knock) return "waiting-for-approval";
       if (membership === KnownMembership.Invite)
-        // An invite that replaced a request means the host is mid-join.
         return prevMembership === KnownMembership.Knock
-          ? "waiting-for-approval"
+          ? "joining"
           : "can-join";
       if (prevMembership === KnownMembership.Knock) return "denied";
 
@@ -457,9 +505,11 @@ export const useLoadGroupCall = (
 
       if (room && membership === KnownMembership.Ban)
         return await enterFromLobby(preJoinRoomInfoFromRoom(room), "banned");
-      if (membership === KnownMembership.Invite)
+      if (room && membership === KnownMembership.Invite)
         return await readyForGroupCalls(
-          await client.joinRoom(roomId, { viaServers }),
+          previousMembership(room) === KnownMembership.Knock
+            ? await enterFromLobby(preJoinRoomInfoFromRoom(room), "joining")
+            : await client.joinRoom(roomId, { viaServers }),
         );
 
       // If the room does not exist we first search for it with viaServers

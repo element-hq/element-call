@@ -236,6 +236,7 @@ export const LobbyView: FC<Props> = ({
           </Button>
         );
       case "sending-request":
+      case "joining":
         return (
           <Button
             className={classNames(styles.join, buttonStyles.rotate)}
@@ -245,7 +246,11 @@ export const LobbyView: FC<Props> = ({
             aria-busy
             data-testid="lobby_joinCall"
           >
-            {t("lobby.ask_to_join")}
+            {t(
+              joinState.kind === "joining"
+                ? "lobby.joining"
+                : "lobby.ask_to_join",
+            )}
           </Button>
         );
       case "waiting-for-approval":
@@ -269,6 +274,10 @@ export const LobbyView: FC<Props> = ({
 
   const joinMessage = ((): ReactNode => {
     switch (joinState.kind) {
+      case "can-join":
+        return joinState.notice === undefined ? null : (
+          <Text size="sm">{t("lobby.request_accepted")}</Text>
+        );
       case "can-ask-to-join":
         return joinState.error === undefined ? null : (
           <Text size="sm">{t("error.generic")}</Text>
@@ -317,8 +326,8 @@ export const LobbyView: FC<Props> = ({
         );
       case "not-allowed":
         return <Text size="sm">{t("lobby.invite_only_body")}</Text>;
-      case "can-join":
       case "sending-request":
+      case "joining":
         return null;
     }
   })();

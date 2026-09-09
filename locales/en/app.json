@@ -156,7 +156,9 @@
     "invite_only_body": "You need an invite to join this call.",
     "join_as_guest": "Join as guest",
     "join_button": "Join call",
+    "joining": "Joining…",
     "leave_button": "Back to recents",
+    "request_accepted": "Your request to join was accepted.",
     "request_sent": "Request to join sent",
     "request_sent_body": "You will receive an invite to join the call if your request is accepted."
   },

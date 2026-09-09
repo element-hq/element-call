@@ -204,6 +204,22 @@ describe("LobbyView", () => {
         message: null,
       },
       {
+        joinState: { kind: "joining" },
+        button: "Joining",
+        disabled: true,
+        message: null,
+      },
+      {
+        joinState: {
+          kind: "can-join",
+          join: () => {},
+          notice: "request_accepted",
+        },
+        button: "Join call",
+        disabled: false,
+        message: "Your request to join was accepted.",
+      },
+      {
         joinState: { kind: "waiting-for-approval" },
         button: "Request to join sent",
         disabled: true,
@@ -268,6 +284,16 @@ describe("LobbyView", () => {
       expect(canJoin.getByTestId("lobby_joinCall")).not.toHaveClass(
         lobbyStyles.wait,
       );
+    });
+
+    it("does nothing while the join is on its way", async () => {
+      const { getByTestId } = renderLobbyView({
+        joinState: { kind: "joining" },
+      });
+      const button = getByTestId("lobby_joinCall");
+      expect(button).toHaveAttribute("aria-busy", "true");
+      await userEvent.click(button);
+      expect(button).toHaveAttribute("aria-disabled", "true");
     });
 
     it("joins when the join button is pressed", async () => {
