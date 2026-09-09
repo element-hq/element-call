@@ -7,16 +7,20 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type FC,
+  type ReactNode,
   useCallback,
   useMemo,
   useState,
-  type JSX,
   useEffect,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
-import { Button } from "@vector-im/compound-web";
+import { Button, Heading, InlineSpinner, Text } from "@vector-im/compound-web";
 import classNames from "classnames";
+import {
+  CheckIcon,
+  SpinnerIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { usePreviewTracks } from "@livekit/components-react";
 import {
@@ -28,6 +32,7 @@ import { useObservableEagerState } from "observable-hooks";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
+import buttonStyles from "../button/Button.module.css";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { type MatrixInfo, VideoPreview } from "./VideoPreview";
 import { type MuteStates } from "../state/MuteStates";
@@ -51,31 +56,28 @@ import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { createLobbyFooterViewModel } from "../components/CallFooterViewModel";
 import { type ViewModel } from "../state/ViewModel";
 import { useAppBarPrimaryButtonIconKind } from "../AppBar";
+import { type LobbyJoinState } from "./LobbyJoinState";
 
 interface Props {
   client: MatrixClient;
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
-  onEnter: () => void;
-  enterLabel?: JSX.Element | string;
+  joinState: LobbyJoinState;
   confineToRoom: boolean;
   hideHeader: boolean;
   participantCount: number | null;
   onShareClick: (() => void) | null;
-  waitingForInvite?: boolean;
 }
 
 export const LobbyView: FC<Props> = ({
   client,
   matrixInfo,
   muteStates,
-  onEnter,
-  enterLabel,
+  joinState,
   confineToRoom,
   hideHeader,
   participantCount,
   onShareClick,
-  waitingForInvite,
 }) => {
   useEffect(() => {
     logger.info("[Lifecycle] LobbyView Component mounted");
@@ -209,6 +211,118 @@ export const LobbyView: FC<Props> = ({
     };
   }, [devices, hangup, hideHeader, muteStates, openSettings]);
 
+  const joinButton = ((): ReactNode => {
+    switch (joinState.kind) {
+      case "can-join":
+        return (
+          <Button
+            className={styles.join}
+            size="lg"
+            onClick={joinState.join}
+            data-testid="lobby_joinCall"
+          >
+            {t("lobby.join_button")}
+          </Button>
+        );
+      case "can-ask-to-join":
+        return (
+          <Button
+            className={styles.join}
+            size="lg"
+            onClick={() => joinState.askToJoin()}
+            data-testid="lobby_joinCall"
+          >
+            {t("lobby.ask_to_join")}
+          </Button>
+        );
+      case "sending-request":
+        return (
+          <Button
+            className={classNames(styles.join, buttonStyles.rotate)}
+            size="lg"
+            Icon={SpinnerIcon}
+            disabled
+            aria-busy
+            data-testid="lobby_joinCall"
+          >
+            {t("lobby.ask_to_join")}
+          </Button>
+        );
+      case "waiting-for-approval":
+        return (
+          <Button
+            className={classNames(styles.join, styles.wait)}
+            size="md"
+            disabled
+            data-testid="lobby_joinCall"
+          >
+            {t("lobby.request_sent")}
+            <CheckIcon />
+          </Button>
+        );
+      case "denied":
+      case "banned":
+      case "not-allowed":
+        return null;
+    }
+  })();
+
+  const joinMessage = ((): ReactNode => {
+    switch (joinState.kind) {
+      case "can-ask-to-join":
+        return joinState.error === undefined ? null : (
+          <Text size="sm">{t("error.generic")}</Text>
+        );
+      case "waiting-for-approval":
+        return (
+          <>
+            <div className={styles.waiting}>
+              <InlineSpinner aria-label={t("common.loading")} />
+              <Text size="sm">{t("lobby.request_sent_body")}</Text>
+            </div>
+            {joinState.cancelRequest !== undefined && (
+              <Button
+                kind="tertiary"
+                size="md"
+                onClick={joinState.cancelRequest}
+                data-testid="lobby_cancelRequest"
+              >
+                {t("lobby.cancel_request")}
+              </Button>
+            )}
+          </>
+        );
+      case "denied":
+        return (
+          <>
+            <Heading as="h2" weight="semibold" size="sm">
+              {t("group_call_loader.knock_reject_heading")}
+            </Heading>
+            <Text size="sm">{t("group_call_loader.knock_reject_body")}</Text>
+          </>
+        );
+      case "banned":
+        return (
+          <>
+            <Heading as="h2" weight="semibold" size="sm">
+              {t("group_call_loader.banned_heading")}
+            </Heading>
+            <Text size="sm">{t("group_call_loader.banned_body")}</Text>
+            {joinState.reason !== undefined && (
+              <Text size="sm">
+                {t("group_call_loader.reason", { reason: joinState.reason })}
+              </Text>
+            )}
+          </>
+        );
+      case "not-allowed":
+        return <Text size="sm">{t("lobby.invite_only_body")}</Text>;
+      case "can-join":
+      case "sending-request":
+        return null;
+    }
+  })();
+
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
   return (
@@ -236,20 +350,13 @@ export const LobbyView: FC<Props> = ({
             videoEnabled={videoEnabled}
             videoTrack={videoTrack}
           >
-            <Button
-              className={classNames(styles.join, {
-                [styles.wait]: waitingForInvite,
-              })}
-              size={waitingForInvite ? "md" : "lg"}
-              disabled={waitingForInvite}
-              onClick={() => {
-                if (!waitingForInvite) onEnter();
-              }}
-              data-testid="lobby_joinCall"
-            >
-              {enterLabel ?? t("lobby.join_button")}
-            </Button>
+            {joinButton}
           </VideoPreview>
+          {joinMessage !== null && (
+            <div className={styles.joinMessage} data-testid="lobby_joinMessage">
+              {joinMessage}
+            </div>
+          )}
           {!recentsButtonInFooter && recentsButton}
         </div>
         {footerVm !== null && (

@@ -507,7 +507,7 @@ const LoadedCallView: FC<LoadedProps> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={() => setJoined(true)}
+        joinState={{ kind: "can-join", join: () => setJoined(true) }}
         confineToRoom={confineToRoom}
         hideHeader={header !== HeaderStyle.Standard}
         participantCount={participantCount}

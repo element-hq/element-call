@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { LeaveToHomeProvider } from "../LeaveToHomeContext";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
@@ -17,6 +18,7 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { LobbyView } from "./LobbyView";
+import { type LobbyJoinState } from "./LobbyJoinState";
 import { E2eeType } from "../e2ee/e2eeType";
 import { mockMediaDevices, mockMuteStates } from "../utils/test";
 import { MediaDevicesContext } from "../MediaDevicesContext";
@@ -87,7 +89,7 @@ function renderLobbyView(
       client={mockClient}
       matrixInfo={matrixInfo}
       muteStates={muteStates}
-      onEnter={() => {}}
+      joinState={{ kind: "can-join", join: () => {} }}
       confineToRoom={false}
       hideHeader={hideHeader}
       participantCount={3}
@@ -125,18 +127,9 @@ describe("LobbyView", () => {
     }
   });
 
-  it("renders with waiting for invite state", () => {
-    const { getByTestId } = renderLobbyView({
-      waitingForInvite: true,
-    });
-    expect(getByTestId("lobby_joinCall")).toHaveClass(lobbyStyles.wait);
-  });
-
   it("renders with AppBar android", async () => {
     const { container, getByRole } = renderLobbyView(
-      {
-        waitingForInvite: true,
-      },
+      { joinState: { kind: "waiting-for-approval" } },
       true,
       "android",
     );
@@ -157,9 +150,7 @@ describe("LobbyView", () => {
 
   it("renders with AppBar ios", async () => {
     const { container, getByRole } = renderLobbyView(
-      {
-        waitingForInvite: true,
-      },
+      { joinState: { kind: "waiting-for-approval" } },
       true,
       "ios",
     );
@@ -176,5 +167,160 @@ describe("LobbyView", () => {
     expect(primaryButtonSvgPath).toBe(expectedSvgPath);
     expect(container).toMatchSnapshot();
     expect(await axe(container)).toHaveNoViolations();
+  });
+  describe("join states", () => {
+    const cases: {
+      joinState: LobbyJoinState;
+      button: string | null;
+      disabled: boolean;
+      message: string | null;
+    }[] = [
+      {
+        joinState: { kind: "can-join", join: () => {} },
+        button: "Join call",
+        disabled: false,
+        message: null,
+      },
+      {
+        joinState: { kind: "can-ask-to-join", askToJoin: () => {} },
+        button: "Request to join call",
+        disabled: false,
+        message: null,
+      },
+      {
+        joinState: {
+          kind: "can-ask-to-join",
+          askToJoin: () => {},
+          error: "request_failed",
+        },
+        button: "Request to join call",
+        disabled: false,
+        message: "Something went wrong",
+      },
+      {
+        joinState: { kind: "sending-request" },
+        button: "Request to join call",
+        disabled: true,
+        message: null,
+      },
+      {
+        joinState: { kind: "waiting-for-approval" },
+        button: "Request to join sent",
+        disabled: true,
+        message: "You will receive an invite",
+      },
+      {
+        joinState: { kind: "denied" },
+        button: null,
+        disabled: false,
+        message: "Your request to join was declined.",
+      },
+      {
+        joinState: { kind: "banned" },
+        button: null,
+        disabled: false,
+        message: "You have been banned from the room.",
+      },
+      {
+        joinState: { kind: "not-allowed" },
+        button: null,
+        disabled: false,
+        message: "You need an invite to join this call.",
+      },
+    ];
+
+    it.each(cases)(
+      "renders $joinState.kind",
+      async ({ joinState, button, disabled, message }) => {
+        const { container, queryByTestId } = renderLobbyView({ joinState });
+        const joinButton = queryByTestId("lobby_joinCall");
+        if (button === null) {
+          expect(joinButton).toBeNull();
+        } else {
+          expect(joinButton).toHaveTextContent(button);
+          // Compound buttons are soft-disabled: they keep focus and expose
+          // `aria-disabled` rather than the DOM `disabled` attribute.
+          if (disabled) {
+            expect(joinButton).toHaveAttribute("aria-disabled", "true");
+          } else {
+            expect(joinButton).not.toHaveAttribute("aria-disabled", "true");
+          }
+        }
+        const messageBlock = queryByTestId("lobby_joinMessage");
+        if (message === null) {
+          expect(messageBlock).toBeNull();
+        } else {
+          expect(messageBlock).toHaveTextContent(message);
+        }
+        expect(await axe(container)).toHaveNoViolations();
+      },
+    );
+
+    it("only marks the waiting button as waiting", () => {
+      const waiting = renderLobbyView({
+        joinState: { kind: "waiting-for-approval" },
+      });
+      expect(waiting.getByTestId("lobby_joinCall")).toHaveClass(
+        lobbyStyles.wait,
+      );
+      waiting.unmount();
+      const canJoin = renderLobbyView();
+      expect(canJoin.getByTestId("lobby_joinCall")).not.toHaveClass(
+        lobbyStyles.wait,
+      );
+    });
+
+    it("joins when the join button is pressed", async () => {
+      const join = vi.fn();
+      const { getByTestId } = renderLobbyView({
+        joinState: { kind: "can-join", join },
+      });
+      await userEvent.click(getByTestId("lobby_joinCall"));
+      expect(join).toHaveBeenCalled();
+    });
+
+    it("asks to join when the request button is pressed", async () => {
+      const askToJoin = vi.fn();
+      const { getByTestId } = renderLobbyView({
+        joinState: { kind: "can-ask-to-join", askToJoin },
+      });
+      await userEvent.click(getByTestId("lobby_joinCall"));
+      expect(askToJoin).toHaveBeenCalled();
+    });
+
+    it("does nothing while the request is being sent", async () => {
+      const { getByTestId } = renderLobbyView({
+        joinState: { kind: "sending-request" },
+      });
+      const button = getByTestId("lobby_joinCall");
+      expect(button).toHaveAttribute("aria-busy", "true");
+      await userEvent.click(button);
+      expect(button).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("withdraws the request when cancel is pressed", async () => {
+      const cancelRequest = vi.fn();
+      const { getByTestId } = renderLobbyView({
+        joinState: { kind: "waiting-for-approval", cancelRequest },
+      });
+      await userEvent.click(getByTestId("lobby_cancelRequest"));
+      expect(cancelRequest).toHaveBeenCalled();
+    });
+
+    it("offers no cancel link when withdrawing is unsupported", () => {
+      const { queryByTestId } = renderLobbyView({
+        joinState: { kind: "waiting-for-approval" },
+      });
+      expect(queryByTestId("lobby_cancelRequest")).toBeNull();
+    });
+
+    it("shows the ban reason", () => {
+      const { getByTestId } = renderLobbyView({
+        joinState: { kind: "banned", reason: "Not today" },
+      });
+      expect(getByTestId("lobby_joinMessage")).toHaveTextContent(
+        "Reason: Not today",
+      );
+    });
   });
 });

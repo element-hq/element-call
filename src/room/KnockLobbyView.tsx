@@ -5,26 +5,22 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type JSX, type ReactNode } from "react";
-import { type MatrixClient, type RoomSummary } from "matrix-js-sdk";
-import { useTranslation } from "react-i18next";
-import { CheckIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { type FC, type ReactNode } from "react";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { LobbyView } from "./LobbyView";
-import { E2eeType } from "../e2ee/e2eeType";
 import { useMuteStates } from "../state/useMuteStates";
+import { type LobbyJoinState } from "./LobbyJoinState";
+import { type PreJoinRoomInfo } from "./preJoinRoomInfo";
 
 interface Props {
   client: MatrixClient;
-  /** What we know about the room from peeking at it. */
-  roomSummary: RoomSummary;
+  /** What we know about the room without being in it. */
+  room: PreJoinRoomInfo;
   /** The user's own name and avatar, to show in their own tile. */
   profile: { displayName: string; avatarUrl: string };
-  /**
-   * Asks to be let in, if the room allows it. Absent once we have asked and
-   * are waiting for an answer.
-   */
-  knock: (() => void) | null;
+  /** How the user may get into the call, and what they may do about it. */
+  joinState: LobbyJoinState;
   confineToRoom: boolean;
   hideHeader: boolean;
 }
@@ -41,26 +37,15 @@ interface Props {
  */
 export const KnockLobbyView: FC<Props> = ({
   client,
-  roomSummary,
+  room,
   profile,
-  knock,
+  joinState,
   confineToRoom,
   hideHeader,
 }): ReactNode => {
-  const { t } = useTranslation();
   const muteStates = useMuteStates();
 
   if (muteStates === null) return null;
-
-  const waitingForInvite = knock === null;
-  const enterLabel: string | JSX.Element = waitingForInvite ? (
-    <>
-      {t("lobby.waiting_for_invite")}
-      <CheckIcon />
-    </>
-  ) : (
-    t("lobby.ask_to_join")
-  );
 
   return (
     <LobbyView
@@ -69,19 +54,9 @@ export const KnockLobbyView: FC<Props> = ({
         userId: client.getUserId() ?? "",
         displayName: profile.displayName,
         avatarUrl: profile.avatarUrl,
-        roomAlias: null,
-        roomId: roomSummary.room_id,
-        roomName: roomSummary.name ?? "",
-        roomAvatar: roomSummary.avatar_url ?? null,
-        e2eeSystem: {
-          kind: roomSummary["im.nheko.summary.encryption"]
-            ? E2eeType.PER_PARTICIPANT
-            : E2eeType.NONE,
-        },
+        ...room,
       }}
-      onEnter={(): void => knock?.()}
-      enterLabel={enterLabel}
-      waitingForInvite={waitingForInvite}
+      joinState={joinState}
       confineToRoom={confineToRoom}
       hideHeader={hideHeader}
       participantCount={null}

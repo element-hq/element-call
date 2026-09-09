@@ -152,10 +152,13 @@
   "layout_switch_label": "Layout",
   "lobby": {
     "ask_to_join": "Request to join call",
+    "cancel_request": "Cancel request",
+    "invite_only_body": "You need an invite to join this call.",
     "join_as_guest": "Join as guest",
     "join_button": "Join call",
     "leave_button": "Back to recents",
-    "waiting_for_invite": "Request sent! Waiting for permission to join…"
+    "request_sent": "Request to join sent",
+    "request_sent_body": "You will receive an invite to join the call if your request is accepted."
   },
   "log_in": "Log In",
   "logging_in": "Logging in…",

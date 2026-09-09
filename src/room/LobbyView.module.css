@@ -39,3 +39,19 @@ Please see LICENSE in the repository root for full details.
     gap: var(--cpd-space-10x);
   }
 }
+
+.joinMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cpd-space-2x);
+  max-inline-size: 40ch;
+  text-align: center;
+  color: var(--cpd-color-text-secondary);
+}
+
+.waiting {
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-2x);
+}

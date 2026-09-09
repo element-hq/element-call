@@ -9,13 +9,16 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { type MatrixClient, type RoomSummary } from "matrix-js-sdk";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { KnockLobbyView } from "./KnockLobbyView";
+import { type LobbyJoinState } from "./LobbyJoinState";
 import { LeaveToHomeProvider } from "../LeaveToHomeContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { mockMediaDevices } from "../utils/test";
+import { E2eeType } from "../e2ee/e2eeType";
+import { type PreJoinRoomInfo } from "./preJoinRoomInfo";
 
 vi.mock("@livekit/components-react", () => ({
   usePreviewTracks: (): unknown[] => [],
@@ -44,22 +47,24 @@ const client = {
 } as Partial<MatrixClient> as MatrixClient;
 
 // What peeking at a room we are not in tells us about it
-const roomSummary = {
-  room_id: "!room:example.org",
-  name: "Knock Room",
-  "im.nheko.summary.encryption": "m.megolm.v1.aes-sha2",
-} as Partial<RoomSummary> as RoomSummary;
+const room: PreJoinRoomInfo = {
+  roomId: "!room:example.org",
+  roomName: "Knock Room",
+  roomAlias: null,
+  roomAvatar: null,
+  e2eeSystem: { kind: E2eeType.PER_PARTICIPANT },
+};
 
-function renderKnockLobby(knock: (() => void) | null): void {
+function renderKnockLobby(joinState: LobbyJoinState): void {
   render(
     <LeaveToHomeProvider value={vi.fn()}>
       <MediaDevicesContext value={mockMediaDevices({})}>
         <TooltipProvider>
           <KnockLobbyView
             client={client}
-            roomSummary={roomSummary}
+            room={room}
             profile={{ displayName: "Test User", avatarUrl: "" }}
-            knock={knock}
+            joinState={joinState}
             confineToRoom={false}
             hideHeader={false}
           />
@@ -71,8 +76,8 @@ function renderKnockLobby(knock: (() => void) | null): void {
 
 describe("KnockLobbyView", () => {
   it("offers to ask to join, with what it knows of the room", async () => {
-    const knock = vi.fn();
-    renderKnockLobby(knock);
+    const askToJoin = vi.fn();
+    renderKnockLobby({ kind: "can-ask-to-join", askToJoin });
 
     // The mute state arrives asynchronously, and the lobby with it
     const button = await screen.findByTestId("lobby_joinCall");
@@ -81,14 +86,14 @@ describe("KnockLobbyView", () => {
     expect(screen.getByText("Knock Room")).toBeInTheDocument();
 
     await userEvent.setup().click(button);
-    expect(knock).toHaveBeenCalledOnce();
+    expect(askToJoin).toHaveBeenCalledOnce();
   });
 
   it("waits once it has asked", async () => {
-    renderKnockLobby(null);
+    renderKnockLobby({ kind: "waiting-for-approval" });
 
     const button = await screen.findByTestId("lobby_joinCall");
-    expect(button).toHaveTextContent("Request sent!");
+    expect(button).toHaveTextContent("Request to join sent");
     // Compound's button keeps focusable, saying so through ARIA instead
     expect(button).toHaveAttribute("aria-disabled", "true");
   });

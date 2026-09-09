@@ -56,9 +56,8 @@ export const RoomPage: FC = (): ReactNode => {
   );
   usePageTitle(
     roomName ??
-      (groupCallState.kind === "canKnock" ||
-      groupCallState.kind === "waitForInvite"
-        ? groupCallState.roomSummary.name
+      (groupCallState.kind === "lobby"
+        ? groupCallState.room.roomName
         : undefined),
   );
 
@@ -90,10 +89,10 @@ export const RoomPage: FC = (): ReactNode => {
     if (optInAnalytics === null && setOptInAnalytics) setOptInAnalytics(true);
   }, [optInAnalytics, setOptInAnalytics]);
 
-  const wasInWaitForInviteState = useRef<boolean>(false);
+  const wasWaitingForApproval = useRef<boolean>(false);
 
   useEffect(() => {
-    if (groupCallState.kind === "loaded" && wasInWaitForInviteState.current) {
+    if (groupCallState.kind === "loaded" && wasWaitingForApproval.current) {
       logger.log("Play join sound 'Not yet implemented'");
     }
   }, [groupCallState.kind]);
@@ -108,25 +107,22 @@ export const RoomPage: FC = (): ReactNode => {
             isPasswordlessUser={passwordlessUser}
             confineToRoom={confineToRoom}
             preload={preload}
-            skipLobby={skipLobby || wasInWaitForInviteState.current}
+            skipLobby={skipLobby || wasWaitingForApproval.current}
           />
         );
-      case "waitForInvite":
-      case "canKnock": {
-        wasInWaitForInviteState.current =
-          wasInWaitForInviteState.current ||
-          groupCallState.kind === "waitForInvite";
+      case "lobby": {
+        wasWaitingForApproval.current =
+          wasWaitingForApproval.current ||
+          groupCallState.joinState.kind === "waiting-for-approval";
         return (
           <KnockLobbyView
             client={client!}
-            roomSummary={groupCallState.roomSummary}
+            room={groupCallState.room}
             profile={{
               displayName: userDisplayName ?? "",
               avatarUrl: avatarUrl ?? "",
             }}
-            knock={
-              groupCallState.kind === "canKnock" ? groupCallState.knock : null
-            }
+            joinState={groupCallState.joinState}
             confineToRoom={confineToRoom}
             hideHeader={header !== "standard"}
           />
@@ -139,7 +135,7 @@ export const RoomPage: FC = (): ReactNode => {
           </FullScreenView>
         );
       case "failed":
-        wasInWaitForInviteState.current = false;
+        wasWaitingForApproval.current = false;
         if ((groupCallState.error as MatrixError).errcode === "M_NOT_FOUND") {
           return (
             <FullScreenView>
