@@ -92,6 +92,32 @@ test("keeps its modals inside the container it was given", async ({ page }) => {
   );
 });
 
+test("keeps the call inside the container, wherever the host put it", async ({
+  page,
+}) => {
+  const { username, roomId } = await createUserAndRoom("tileswithin");
+  const panes = await startHarness(page, username, roomId);
+  const pane = panes.first();
+  const container = pane.getByTestId("call-container");
+
+  // Large enough for the layout switch to be offered
+  await resizeContainer(container, { width: 900, height: 640 });
+  await pane.getByTestId("lobby_joinCall").click({ timeout: 60_000 });
+  await expect(pane.getByTestId("footer-container")).toBeVisible({
+    timeout: 60_000,
+  });
+
+  // The spotlight layout draws its tile in the fixed grid, which is positioned
+  // against Element Call's root rather than laid out in flow. The harness puts
+  // the container below a header of its own, so a grid offset measured from
+  // the top of the page instead of from the root would land the tile on top of
+  // the footer and out of the bottom of the container.
+  await pane.getByRole("radio", { name: "Spotlight" }).check();
+  const tile = pane.getByTestId("videoTile").first();
+  await expect(tile).toBeVisible({ timeout: 60_000 });
+  await expectWithin(tile, container);
+});
+
 test("leaves the host's own page unstyled", async ({ page }) => {
   const { username, roomId } = await createUserAndRoom("hoststyles");
   const panes = await startHarness(page, username, roomId);

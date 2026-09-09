@@ -267,6 +267,20 @@ export const InCallView: FC<InCallViewProps> = ({
   // Merge the refs so they can attach to the same element
   const containerRef = useMergedRefs(containerRef1, containerRef2);
 
+  // The fixed grid is positioned against Element Call's root, so offsets
+  // handed to it have to be measured from there rather than from the
+  // viewport. Standalone the two are the same, the root being the page; for a
+  // component the root sits wherever the host put it, and measuring from the
+  // viewport would push the grid down by that much again. Taken at the same
+  // moment as `bounds`, so that the two agree however the host has scrolled.
+  const rootElement = useRootElement();
+  const rootTop = useMemo(
+    () => rootElement.getBoundingClientRect().top,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rootElement, bounds],
+  );
+  const topWithinRoot = bounds.top - rootTop;
+
   const { showControls, header: headerStyle } = useUrlParams();
 
   const muteAllAudio = useBehavior(muteAllAudio$);
@@ -564,7 +578,7 @@ export const InCallView: FC<InCallViewProps> = ({
         className={styles.fixedGrid}
         style={{
           // If not edge-to-edge, consume the header insets right here.
-          insetBlockStart: edgeToEdge ? 0 : bounds.top + headerBounds.height,
+          insetBlockStart: edgeToEdge ? 0 : topWithinRoot + headerBounds.height,
           height: edgeToEdge ? "100%" : gridBounds.height,
           // If edge-to-edge, compute new safe area insets that account for the
           // header and footer, passing them down to the tiles.
@@ -575,7 +589,7 @@ export const InCallView: FC<InCallViewProps> = ({
                 // itself. Otherwise account for the safe area and header size
                 // as part of the InCallView.
                 headerStyle === HeaderStyle.AppBar
-                ? `${bounds.top}px`
+                ? `${topWithinRoot}px`
                 : `calc(env(safe-area-inset-top) + ${headerBounds.height}px)`
               : undefined,
           "--call-view-safe-area-inset-bottom":
