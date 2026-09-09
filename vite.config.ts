@@ -125,8 +125,14 @@ export default ({
       port: 3000,
       fs: { allow },
       https: {
-        key: fs.readFileSync("./backend/dev_tls_m.localhost.key"),
-        cert: fs.readFileSync("./backend/dev_tls_m.localhost.crt"),
+        // EC_DEV_TLS_KEY / EC_DEV_TLS_CERT let a developer serve a certificate
+        // their browser already trusts (e.g. one signed by a local mkcert root).
+        key: fs.readFileSync(
+          process.env.EC_DEV_TLS_KEY ?? "./backend/dev_tls_m.localhost.key",
+        ),
+        cert: fs.readFileSync(
+          process.env.EC_DEV_TLS_CERT ?? "./backend/dev_tls_m.localhost.crt",
+        ),
       },
     },
     worker: {
