@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, fn, userEvent, within } from "storybook/test";
+import { expect, fn, screen, userEvent, within } from "storybook/test";
 import { BehaviorSubject } from "rxjs";
 import { type JSX, type ReactNode } from "react";
 import { Link } from "@vector-im/compound-web";
@@ -103,6 +103,7 @@ const meta = {
     toggleAudio: fnArgType,
     toggleVideo: fnArgType,
     hangup: fnArgType,
+    selectAudioOutputOption: fnArgType,
   },
 } satisfies Meta<typeof CallFooterStoryWrapper>;
 
@@ -142,6 +143,9 @@ export const Default: Story = {
     selectedVideo: undefined,
     selectAudioButtonOption: undefined,
     selectVideoButtonOption: undefined,
+    audioOutputOptions: [],
+    selectedAudioOutput: undefined,
+    selectAudioOutputOption: undefined,
   },
   parameters: {
     layout: "fullscreen",
@@ -413,5 +417,68 @@ export const LobbyRecentButtonMobile: Story = {
   },
   parameters: {
     ...Default.parameters,
+  },
+};
+
+/** The microphone chevron opens the audio menu: microphones and speakers. */
+export const WithAudioMenu: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    audioEnabled: true,
+    audioOptions: [
+      { label: { type: "name", name: "MacBook Pro Microphone" }, id: "1" },
+      { label: { type: "name", name: "Jabra Evolve 65" }, id: "2" },
+    ],
+    selectedAudio: "1",
+    selectAudioButtonOption: fn(),
+    audioOutputOptions: [
+      { label: { type: "default", name: "MacBook Pro Speakers" }, id: "" },
+      { label: { type: "name", name: "Jabra Evolve 65" }, id: "2" },
+    ],
+    selectedAudioOutput: "",
+    selectAudioOutputOption: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+
+    const menu = within(await screen.findByRole("menu"));
+    await expect(
+      menu.getByRole("heading", { name: "Audio controls" }),
+    ).toBeInTheDocument();
+    // The headset appears in both groups under the same name, as a real one
+    // does. The speaker rows are the scroll area's own children; the
+    // microphone rows sit one level deeper, inside their group.
+    const scroll = menu.getByTestId("audio_menu_scroll");
+    const outputs = [...scroll.children].filter(
+      (el) => el.getAttribute("role") === "menuitemradio",
+    );
+    await userEvent.click(outputs[1]);
+    await expect(args.selectAudioOutputOption).toHaveBeenCalledWith("2");
+    // The menu stays open after a selection.
+    await expect(screen.getByRole("menu")).toBeInTheDocument();
+  },
+};
+
+/** One output only: the speaker group names it without offering a choice. */
+export const WithSingleAudioOutput: Story = {
+  ...WithAudioMenu,
+  args: {
+    ...WithAudioMenu.args,
+    audioOutputOptions: [
+      { label: { type: "default", name: "MacBook Pro Speakers" }, id: "" },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+
+    await expect(
+      await screen.findByTestId("speaker_readonly"),
+    ).toHaveTextContent("MacBook Pro Speakers");
+    await expect(
+      screen.queryByRole("menuitemradio", { name: /Speakers/ }),
+    ).toBe(null);
   },
 };

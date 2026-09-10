@@ -11,7 +11,10 @@ import userEvent from "@testing-library/user-event";
 import { type JSX, useState, type ReactNode } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
 
-import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
+import {
+  MediaMuteAndSwitchButton,
+  type AudioControls,
+} from "./MediaMuteAndSwitchButton";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices } from "../state/MediaDevices";
 
@@ -357,4 +360,154 @@ describe("MediaMuteAndSwitchButton", () => {
     });
     expect(mic2Item.querySelectorAll("svg").length).toBe(1);
   });
+});
+
+describe("audio menu", () => {
+  test("audio menu switches microphone and stays open", async () => {
+    const onSelect = vi.fn();
+    const user = await openAudioMenu({ onSelect });
+
+    await user.click(
+      screen.getByRole("menuitemradio", { name: "Headset Microphone" }),
+    );
+
+    expect(onSelect).toHaveBeenCalledWith("mic-2");
+    // Selecting a device must not dismiss the menu: the user needs to see the
+    // choice take effect and may want to change it again.
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+  });
+
+  test("audio menu switches audio output and stays open", async () => {
+    const controls = audioControls();
+    const user = await openAudioMenu({ audioControls: controls });
+
+    await user.click(screen.getByRole("menuitemradio", { name: "Headset" }));
+
+    expect(controls.onSelectOutput).toHaveBeenCalledWith("out-2");
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+  });
+
+  test("audio menu marks the active output below the microphones", async () => {
+    await openAudioMenu();
+
+    expect(
+      screen.getByRole("menuitemradio", { name: "Built-in Speakers" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(
+      screen.getByRole("menuitemradio", { name: "Headset" }),
+    ).toHaveAttribute("aria-checked", "false");
+    // One rule between the microphone group and the speaker group.
+    expect(screen.getByRole("menu").querySelectorAll("hr")).toHaveLength(1);
+  });
+
+  test("audio menu does not reselect the active output", async () => {
+    const controls = audioControls();
+    const user = await openAudioMenu({ audioControls: controls });
+
+    await user.click(
+      screen.getByRole("menuitemradio", { name: "Built-in Speakers" }),
+    );
+
+    expect(controls.onSelectOutput).not.toHaveBeenCalled();
+  });
+
+  test("audio menu shows single audio output as non-selectable", async () => {
+    await openAudioMenu({
+      audioControls: audioControls({
+        outputOptions: [
+          { label: { type: "name", name: "Built-in Speakers" }, id: "out-1" },
+        ],
+      }),
+    });
+
+    expect(screen.getByTestId("speaker_readonly")).toHaveTextContent(
+      "Built-in Speakers",
+    );
+    // The one output must not present itself as a choice.
+    expect(
+      screen.queryByRole("menuitemradio", { name: "Built-in Speakers" }),
+    ).toBe(null);
+  });
+
+  test("audio menu names the default output where none can be chosen", async () => {
+    await openAudioMenu({
+      audioControls: audioControls({ outputOptions: [] }),
+    });
+    expect(screen.getByTestId("speaker_readonly")).toHaveTextContent("Default");
+  });
+
+  test("audio menu labels every kind of output", async () => {
+    await openAudioMenu({
+      audioControls: audioControls({
+        outputOptions: [
+          { label: { type: "default", name: "Built-in Speakers" }, id: "" },
+          { label: { type: "default", name: null }, id: "default" },
+          { label: { type: "number", number: 2 }, id: "out-2" },
+          { label: { type: "speaker" }, id: "speaker" },
+          { label: { type: "earpiece" }, id: "earpiece" },
+        ],
+        selectedOutput: "",
+      }),
+    });
+
+    for (const name of [
+      "Default (Built-in Speakers)",
+      "Default",
+      "Speaker 2",
+      "Loudspeaker",
+      "Handset",
+    ])
+      expect(screen.getByRole("menuitemradio", { name })).toBeInTheDocument();
+  });
+
+  const micOptions = [
+    {
+      label: { type: "name" as const, name: "Built-in Microphone" },
+      id: "mic-1",
+    },
+    {
+      label: { type: "name" as const, name: "Headset Microphone" },
+      id: "mic-2",
+    },
+  ];
+
+  function audioControls(over: Partial<AudioControls> = {}): AudioControls {
+    return {
+      outputOptions: [
+        {
+          label: { type: "name" as const, name: "Built-in Speakers" },
+          id: "out-1",
+        },
+        { label: { type: "name" as const, name: "Headset" }, id: "out-2" },
+      ],
+      selectedOutput: "out-1",
+      onSelectOutput: vi.fn(),
+      ...over,
+    };
+  }
+
+  /** Renders the microphone button with the audio menu and opens the menu. */
+  async function openAudioMenu(
+    props: {
+      audioControls?: AudioControls;
+      onSelect?: (id: string) => void;
+    } = {},
+  ): Promise<ReturnType<typeof userEvent.setup>> {
+    const user = userEvent.setup();
+    renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Audio controls"
+        iconsAndLabels="audio"
+        enabled
+        onMuteClick={vi.fn()}
+        options={micOptions}
+        selectedOption="mic-1"
+        onSelect={props.onSelect ?? vi.fn()}
+        audioControls={props.audioControls ?? audioControls()}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Microphone" }));
+    await screen.findByRole("menu");
+    return user;
+  }
 });

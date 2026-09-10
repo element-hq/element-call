@@ -35,3 +35,15 @@ Please see LICENSE in the repository root for full details.
     transform: rotate(360deg);
   }
 }
+
+/* The speaker group's one row where there is no choice to make: it names the
+   output in use wherever audio cannot be redirected. Laid out like a menu item
+   so it lines up with the rows around it. */
+.readOnlyRow {
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-4x);
+  padding: var(--cpd-space-3x) var(--cpd-space-4x);
+  color: var(--cpd-color-text-primary);
+  font: var(--cpd-font-body-md-regular);
+}

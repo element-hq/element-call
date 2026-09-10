@@ -13,9 +13,14 @@ import { constant } from "../state/Behavior";
 import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
 import type { Alignment, Layout } from "../state/layout-types";
 import type { SpotlightTileViewModel } from "../state/TileViewModel";
-import type { DeviceLabel } from "../state/MediaDevices";
+import type {
+  AudioOutputDeviceLabel,
+  DeviceLabel,
+} from "../state/MediaDevices";
 import { createCallFooterViewModel } from "./CallFooterViewModel";
 import { HeaderStyle } from "../UrlParams";
+import { type FooterSnapshot } from "./CallFooter";
+import { type ViewModel } from "../state/ViewModel";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../Platform", () => ({
@@ -95,7 +100,62 @@ const twoMicsAndOneCamMediaDevices = mockMediaDevices({
   },
 });
 
+const selectOutput = vi.fn();
+const twoOutputsMediaDevices = mockMediaDevices({
+  audioOutput: {
+    available$: constant(
+      new Map<string, AudioOutputDeviceLabel>([
+        ["", { type: "default", name: "Built-in Speakers" }],
+        ["out2", { type: "name", name: "Headset" }],
+      ]),
+    ),
+    selected$: constant({ id: "out2", virtualEarpiece: false }),
+    select: selectOutput,
+  },
+});
+
 describe("createCallFooterViewModel", () => {
+  describe("audio output", () => {
+    function createVm(
+      platform: string,
+      layout: Layout,
+    ): ViewModel<FooterSnapshot> {
+      platformMock.mockReturnValue(platform);
+      return createCallFooterViewModel(
+        testScope(),
+        buildMinimalCallViewModel(layout),
+        mockMuteStates(),
+        twoOutputsMediaDevices,
+        /* reactionIdentifier */ undefined,
+        { showControls: true, header: HeaderStyle.Standard },
+      );
+    }
+
+    it("offers no audio menu when the platform is iOS", () => {
+      const vm = createVm("ios", gridLayout);
+      expect(vm.audioOutputOptions$.value).toEqual([]);
+      expect(vm.selectAudioOutputOption$.value).toBeUndefined();
+    });
+
+    it("offers no audio menu when the layout is pip", () => {
+      const vm = createVm("desktop", pipLayout);
+      expect(vm.audioOutputOptions$.value).toEqual([]);
+      expect(vm.selectAudioOutputOption$.value).toBeUndefined();
+    });
+
+    it("lists the outputs and the selection on desktop", () => {
+      const vm = createVm("desktop", gridLayout);
+      expect(vm.audioOutputOptions$.value).toEqual([
+        { id: "", label: { type: "default", name: "Built-in Speakers" } },
+        { id: "out2", label: { type: "name", name: "Headset" } },
+      ]);
+      expect(vm.selectedAudioOutput$.value).toBe("out2");
+
+      vm.selectAudioOutputOption$.value?.("");
+      expect(selectOutput).toHaveBeenCalledWith("");
+    });
+  });
+
   describe("audioOptions and videoOptions", () => {
     function checkEmptyFor(platform: string, layout: Layout): void {
       platformMock.mockReturnValue(platform);

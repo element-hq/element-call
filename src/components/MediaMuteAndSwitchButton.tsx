@@ -5,7 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ComponentType, useState, type FC, useEffect } from "react";
+import {
+  type ComponentType,
+  useState,
+  type FC,
+  useEffect,
+  type JSX,
+} from "react";
 import {
   Button,
   Menu,
@@ -19,18 +25,41 @@ import {
   MicOnIcon,
   SpinnerIcon,
   VideoCallIcon,
+  VolumeOnIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
 import styles from "./MediaMuteAndSwitchButton.module.css";
 import { MicButton, VideoButton } from "../button";
-import { type DeviceLabel } from "../state/MediaDevices";
+import {
+  type AudioOutputDeviceLabel,
+  type DeviceLabel,
+} from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
 
 export interface MenuOptions {
   label: DeviceLabel;
   id: string;
+}
+
+export interface OutputMenuOptions {
+  label: AudioOutputDeviceLabel;
+  id: string;
+}
+
+/**
+ * The controls that turn the microphone chevron menu into the audio menu: a
+ * speaker group below the microphone list. Absent for the camera menu.
+ */
+export interface AudioControls {
+  /**
+   * The audio outputs to choose from. Empty where the browser does not allow
+   * choosing one; the menu then names the default output instead.
+   */
+  outputOptions: OutputMenuOptions[];
+  selectedOutput: string | undefined;
+  onSelectOutput: (id: string) => void;
 }
 
 export interface MediaMuteAndSwitchButtonProps {
@@ -49,6 +78,8 @@ export interface MediaMuteAndSwitchButtonProps {
   selectedOption?: string;
   videoBlurToggleClick?: () => void;
   videoBlurEnabled?: boolean;
+  /** When present, the menu renders the speaker group below the microphone list. */
+  audioControls?: AudioControls;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
@@ -69,6 +100,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   videoBlurEnabled,
   videoBlurToggleClick,
   onSelect,
+  audioControls,
 }) => {
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -223,6 +255,16 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             </MenuItem>
           );
         })}
+        {audioControls && (
+          <>
+            <hr />
+            <SpeakerSection
+              options={audioControls.outputOptions}
+              selected={audioControls.selectedOutput}
+              onSelect={audioControls.onSelectOutput}
+            />
+          </>
+        )}
         {(toggles?.length ?? 0) > 0 && <hr />}
         {toggles?.map((toggle) => (
           <ToggleMenuItem
@@ -239,3 +281,82 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     </div>
   );
 };
+
+interface SpeakerSectionProps {
+  options: OutputMenuOptions[];
+  selected: string | undefined;
+  onSelect: (id: string) => void;
+}
+
+/**
+ * The speaker group of the audio menu.
+ *
+ * With more than one output to choose from this is a radio group. With one or
+ * none it still names the output in use, as a plain row: knowing where audio
+ * goes is useful even where it cannot be redirected, as in browsers that do
+ * not support choosing an output at all.
+ */
+function SpeakerSection({
+  options,
+  selected,
+  onSelect,
+}: SpeakerSectionProps): JSX.Element {
+  const { t } = useTranslation();
+  const labelText = (label: AudioOutputDeviceLabel): string => {
+    switch (label.type) {
+      case "name":
+        return label.name;
+      case "number":
+        return t("settings.devices.speaker_numbered", { n: label.number });
+      case "speaker":
+        return t("settings.devices.loudspeaker");
+      case "earpiece":
+        return t("settings.devices.handset");
+      case "default":
+        return label.name === null
+          ? t("settings.devices.default")
+          : `${t("settings.devices.default")} (${label.name})`;
+    }
+  };
+  const icon = (
+    <VolumeOnIcon
+      width={24}
+      height={24}
+      className={styles.itemIcon}
+      aria-hidden
+    />
+  );
+
+  if (options.length <= 1) {
+    const only = options[0];
+    return (
+      <div className={styles.readOnlyRow} data-testid="speaker_readonly">
+        {icon}
+        <span>
+          {only ? labelText(only.label) : t("settings.devices.default")}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {options.map(({ id, label }) => (
+        <MenuItem
+          hideChevron
+          key={id}
+          label={labelText(label)}
+          Icon={icon}
+          onSelect={(e) => {
+            e.preventDefault();
+            if (id !== selected) onSelect(id);
+          }}
+          role="menuitemradio"
+          aria-checked={selected === id}
+        >
+          {selected === id && <CheckIcon width={24} height={24} aria-hidden />}
+        </MenuItem>
+      ))}
+    </>
+  );
+}
