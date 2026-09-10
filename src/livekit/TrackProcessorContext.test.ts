@@ -14,7 +14,7 @@ import {
 
 import { applyProcessor, trackProcessorSync } from "./TrackProcessorContext";
 import { constant } from "../state/Behavior";
-import { testScope } from "../utils/test";
+import { flushPromises, testScope } from "../utils/test";
 
 const processor = {} as ProcessorWrapper<BackgroundOptions>;
 
@@ -51,7 +51,7 @@ describe("applyProcessor", () => {
     const unhandled = vi.fn();
     process.on("unhandledRejection", unhandled);
     applyProcessor(track, processor);
-    await new Promise((r) => setTimeout(r, 0));
+    await flushPromises();
     process.off("unhandledRejection", unhandled);
     expect(unhandled).not.toHaveBeenCalled();
   });
@@ -68,7 +68,7 @@ describe("applyProcessor", () => {
     const unhandled = vi.fn();
     process.on("unhandledRejection", unhandled);
     applyProcessor(track, undefined);
-    await new Promise((r) => setTimeout(r, 0));
+    await flushPromises();
     process.off("unhandledRejection", unhandled);
     expect(unhandled).not.toHaveBeenCalled();
   });
