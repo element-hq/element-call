@@ -12,7 +12,9 @@ import {
   type ProcessorWrapper,
 } from "@livekit/track-processors";
 
-import { applyProcessor } from "./TrackProcessorContext";
+import { applyProcessor, trackProcessorSync } from "./TrackProcessorContext";
+import { constant } from "../state/Behavior";
+import { testScope } from "../utils/test";
 
 const processor = {} as ProcessorWrapper<BackgroundOptions>;
 
@@ -58,5 +60,28 @@ describe("applyProcessor", () => {
     const track = mockTrack("live", processor);
     applyProcessor(track, undefined);
     expect(track.stopProcessor).toHaveBeenCalled();
+  });
+
+  it("does not surface a rejected stopProcessor", async () => {
+    const track = mockTrack("live", processor);
+    vi.mocked(track.stopProcessor).mockRejectedValue(new Error("nope"));
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+    applyProcessor(track, undefined);
+    await new Promise((r) => setTimeout(r, 0));
+    process.off("unhandledRejection", unhandled);
+    expect(unhandled).not.toHaveBeenCalled();
+  });
+});
+
+describe("trackProcessorSync", () => {
+  it("applies the processor to the current track", () => {
+    const track = mockTrack("live");
+    trackProcessorSync(
+      testScope(),
+      constant(track),
+      constant({ supported: true, processor }),
+    );
+    expect(track.setProcessor).toHaveBeenCalledWith(processor);
   });
 });
