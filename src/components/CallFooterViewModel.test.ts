@@ -17,7 +17,10 @@ import type {
   AudioOutputDeviceLabel,
   DeviceLabel,
 } from "../state/MediaDevices";
-import { createCallFooterViewModel } from "./CallFooterViewModel";
+import {
+  createCallFooterViewModel,
+  createLobbyFooterViewModel,
+} from "./CallFooterViewModel";
 import { HeaderStyle } from "../UrlParams";
 import { type FooterSnapshot } from "./CallFooter";
 import { type ViewModel } from "../state/ViewModel";
@@ -146,6 +149,23 @@ describe("createCallFooterViewModel", () => {
       expect(vm.audioOutputOptions$.value).toEqual([]);
       expect(vm.selectAudioOutputOption$.value).toBeUndefined();
       expect(vm.setSoundEffectVolume$.value).toBeUndefined();
+    });
+
+    it("audio menu is present pre-join on every platform", () => {
+      for (const platform of ["desktop", "android", "ios"]) {
+        platformMock.mockReturnValue(platform);
+        const vm = createLobbyFooterViewModel(
+          testScope(),
+          mockMuteStates(),
+          twoOutputsMediaDevices,
+          undefined,
+          undefined,
+          false,
+        );
+        expect(vm.audioOutputOptions$.value).toHaveLength(2);
+        expect(vm.selectAudioOutputOption$.value).toBeDefined();
+        expect(vm.setSoundEffectVolume$.value).toBeDefined();
+      }
     });
 
     it("reads and writes the sound-effect volume setting on desktop", () => {

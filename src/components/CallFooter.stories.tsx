@@ -361,10 +361,29 @@ export const MobileLayout: Story = {
   },
 };
 
+/** Devices and controls of the audio menu, as the lobby offers them. */
+const audioMenuArgs = {
+  audioOptions: [
+    { label: { type: "name", name: "MacBook Pro Microphone" }, id: "1" },
+    { label: { type: "name", name: "Jabra Evolve 65" }, id: "2" },
+  ],
+  selectedAudio: "1",
+  selectAudioButtonOption: fn(),
+  audioOutputOptions: [
+    { label: { type: "default", name: "MacBook Pro Speakers" }, id: "" },
+    { label: { type: "name", name: "Jabra Evolve 65" }, id: "2" },
+  ],
+  selectedAudioOutput: "",
+  selectAudioOutputOption: fn(),
+  soundEffectVolume: 0.5,
+  setSoundEffectVolume: fn(),
+} satisfies Partial<FooterSnapshot>;
+
 export const Lobby: Story = {
   ...Default,
   args: {
     ...Default.args,
+    ...audioMenuArgs,
     showLogo: false,
     openSettings: undefined,
     layout: null,
@@ -379,6 +398,7 @@ export const LobbyMobile: Story = {
   ...Default,
   args: {
     ...Default.args,
+    ...audioMenuArgs,
     showLogo: false,
 
     layout: null,
@@ -429,19 +449,7 @@ export const WithAudioMenu: Story = {
   args: {
     ...Default.args,
     audioEnabled: true,
-    audioOptions: [
-      { label: { type: "name", name: "MacBook Pro Microphone" }, id: "1" },
-      { label: { type: "name", name: "Jabra Evolve 65" }, id: "2" },
-    ],
-    selectedAudio: "1",
-    selectAudioButtonOption: fn(),
-    audioOutputOptions: [
-      { label: { type: "default", name: "MacBook Pro Speakers" }, id: "" },
-      { label: { type: "name", name: "Jabra Evolve 65" }, id: "2" },
-    ],
-    selectedAudioOutput: "",
-    selectAudioOutputOption: fn(),
-    setSoundEffectVolume: fn(),
+    ...audioMenuArgs,
   },
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
