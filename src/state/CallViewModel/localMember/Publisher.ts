@@ -355,8 +355,19 @@ export class Publisher {
     const syncDevice = (
       kind: MediaDeviceKind,
       selected$: Observable<SelectedDevice | undefined>,
-    ): Subscription =>
-      selected$.pipe(scope.bind()).subscribe((device) => {
+    ): Subscription => {
+      // The ID we last asked LiveKit for. Needed for the virtual browser
+      // default input ("") because LiveKit reports the physical device it
+      // ended up capturing from, which never equals "".
+      // ConnectionFactory already applied the selection when the room was
+      // created; a browser-default input is represented there by an absent
+      // deviceId.
+      let requestedId: string | undefined =
+        kind === "audioinput" &&
+        lkRoom.options.audioCaptureDefaults?.deviceId === undefined
+          ? ""
+          : undefined;
+      return selected$.pipe(scope.bind()).subscribe((device) => {
         if (lkRoom.state != LivekitConnectionState.Connected) return;
         // if (this.connectionState$.value !== ConnectionState.Connected) return;
         this.logger.info(
@@ -365,20 +376,25 @@ export class Publisher {
           " !== ",
           device?.id,
         );
-        if (
-          device !== undefined &&
-          lkRoom.getActiveDevice(kind) !== device.id
-        ) {
-          lkRoom
-            .switchActiveDevice(kind, device.id)
-            .catch((e: Error) =>
-              this.logger.error(
-                `Failed to sync ${kind} device with LiveKit`,
-                e,
-              ),
-            );
+        if (device === undefined) return;
+        const browserDefaultInput = device.id === "" && kind !== "audiooutput";
+        if (browserDefaultInput) {
+          if (requestedId === "") return;
+        } else if (lkRoom.getActiveDevice(kind) === device.id) {
+          return;
         }
+        requestedId = device.id;
+        // For the browser default input, ask for "default" as a non-exact
+        // constraint: browsers that have no such device ignore it and capture
+        // from the OS default input.
+        (browserDefaultInput
+          ? lkRoom.switchActiveDevice(kind, "default", false)
+          : lkRoom.switchActiveDevice(kind, device.id)
+        ).catch((e: Error) =>
+          this.logger.error(`Failed to sync ${kind} device with LiveKit`, e),
+        );
       });
+    };
 
     syncDevice("audioinput", devices.audioInput.selected$);
     if (!controlledAudioDevices)
