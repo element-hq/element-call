@@ -3,12 +3,18 @@
 services:
   synapse:
     # Pin to a SHA so that upstream cannot break our tests. Renovate handles regular updates.
-    image: ghcr.io/element-hq/synapse:latest@sha256:da325af40104051923899e5f5a2f1d537e6e3ccf2f0f38285689ae9bbfdb190a
+    # develop (not latest) is required for application service C-S/S-S proxying
+    # (MSC4512) and membership look-ups (MSC4502), which are not in a stable
+    # release yet.
+    image: ghcr.io/element-hq/synapse:develop@sha256:337921fd22be310d453344b2265f6c9942315446595df3cf81866f71ca2055a7
     volumes:
       - ./backend/playwright_homeserver.yaml:/data/cfg/homeserver.yaml:Z
   synapse-1:
     # Pin to a SHA so that upstream cannot break our tests. Renovate handles regular updates.
-    image: ghcr.io/element-hq/synapse:latest@sha256:da325af40104051923899e5f5a2f1d537e6e3ccf2f0f38285689ae9bbfdb190a
+    # develop (not latest) is required for application service C-S/S-S proxying
+    # (MSC4512) and membership look-ups (MSC4502), which are not in a stable
+    # release yet.
+    image: ghcr.io/element-hq/synapse:develop@sha256:337921fd22be310d453344b2265f6c9942315446595df3cf81866f71ca2055a7
     volumes:
       - ./backend/playwright_homeserver-othersite.yaml:/data/cfg/homeserver.yaml:Z
   element-web:

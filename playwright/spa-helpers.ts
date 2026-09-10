@@ -112,6 +112,24 @@ async function setRtcModeFromSettings(
 }
 
 /**
+ * Makes the delayed-leave delegation support probes fail so that the client
+ * manages its delayed leave event itself instead of delegating it to the
+ * backend.
+ *
+ * Must be installed before the page joins a call.
+ */
+async function disableLeaveDelegation(page: Page): Promise<void> {
+  // Covers both the transport probe (<livekit_service_url>/delegate_delayed_leave)
+  // and the homeserver probe (MSC4195, .../rtc/livekit/delegate_delayed_leave).
+  await page.route("**/delegate_delayed_leave", async (route) =>
+    route.fulfill({
+      status: 404,
+      headers: { "Access-Control-Allow-Origin": "*" },
+    }),
+  );
+}
+
+/**
  * Expect a certain number of video tiles to be present and visible.
  */
 async function expectVideoTilesCount(page: Page, count: number): Promise<void> {
@@ -133,5 +151,6 @@ export const SpaHelpers = {
   createCall,
   getCallInviteLink,
   joinCallFromInviteLink,
+  disableLeaveDelegation,
   expectVideoTilesCount,
 };
