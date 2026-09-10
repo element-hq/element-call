@@ -19,6 +19,7 @@ import {
   useMemo,
 } from "react";
 import { type LocalVideoTrack } from "livekit-client";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { combineLatest, map, type Observable } from "rxjs";
 import { useObservable } from "observable-hooks";
 
@@ -66,6 +67,34 @@ export function useTrackProcessorObservable$(): Observable<ProcessorState> {
 }
 
 /**
+ * Attaches or detaches the processor so that the track matches the desired
+ * state, without throwing.
+ */
+export function applyProcessor(
+  videoTrack: LocalVideoTrack,
+  processor: ProcessorWrapper<BackgroundOptions> | undefined,
+): void {
+  if (processor && !videoTrack.getProcessor()) {
+    // A MediaStreamTrackProcessor cannot be constructed on an ended track
+    // (e.g. the camera was stopped while the processor was being applied),
+    // and setProcessor rejects with a TypeError. The track is going away
+    // anyway, so there is nothing to attach to.
+    if (videoTrack.mediaStreamTrack.readyState === "ended") {
+      logger.debug("Not attaching video processor to an ended track");
+      return;
+    }
+    videoTrack.setProcessor(processor).catch((e) => {
+      logger.warn("Failed to attach video processor", e);
+    });
+  }
+  if (!processor && videoTrack.getProcessor()) {
+    videoTrack.stopProcessor().catch((e) => {
+      logger.warn("Failed to stop video processor", e);
+    });
+  }
+}
+
+/**
  * Updates your video tracks to always use the given processor.
  */
 export const trackProcessorSync = (
@@ -78,13 +107,7 @@ export const trackProcessorSync = (
     .subscribe(([videoTrack, processorState]) => {
       if (!processorState) return;
       if (!videoTrack) return;
-      const { processor } = processorState;
-      if (processor && !videoTrack.getProcessor()) {
-        void videoTrack.setProcessor(processor);
-      }
-      if (!processor && videoTrack.getProcessor()) {
-        void videoTrack.stopProcessor();
-      }
+      applyProcessor(videoTrack, processorState.processor);
     });
 };
 
@@ -94,12 +117,7 @@ export const useTrackProcessorSync = (
   const { processor } = useTrackProcessor();
   useEffect(() => {
     if (!videoTrack) return;
-    if (processor && !videoTrack.getProcessor()) {
-      void videoTrack.setProcessor(processor);
-    }
-    if (!processor && videoTrack.getProcessor()) {
-      void videoTrack.stopProcessor();
-    }
+    applyProcessor(videoTrack, processor);
   }, [processor, videoTrack]);
 };
 
