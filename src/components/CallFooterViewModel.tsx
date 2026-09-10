@@ -17,6 +17,7 @@ import { type MediaDevices } from "../state/MediaDevices";
 import {
   backgroundBlur as backgroundBlurSettings,
   debugTileLayout as debugTileLayoutSetting,
+  soundEffectVolume as soundEffectVolumeSetting,
 } from "../settings/settings";
 import { type Behavior, constant } from "../state/Behavior";
 import type { ObservableScope } from "../state/ObservableScope";
@@ -57,10 +58,10 @@ function buildMuteBehaviors(
 }
 
 /**
- * Shared helper: maps MediaDevices into every device behavior FooterSnapshot
- * needs, for the switcher menus and the audio menu alike. The output list is
- * empty wherever the browser cannot switch output; the menu then names the
- * default rather than hiding the group.
+ * Shared helper: maps MediaDevices and the sound-effect setting into every
+ * device behavior FooterSnapshot needs, for the switcher menus and the audio
+ * menu alike. The output list is empty wherever the browser cannot switch
+ * output; the menu then names the default rather than hiding the group.
  */
 function buildDeviceBehaviors(
   scope: ObservableScope,
@@ -80,6 +81,8 @@ function buildDeviceBehaviors(
   | "audioOutputOptions$"
   | "selectedAudioOutput$"
   | "selectAudioOutputOption$"
+  | "soundEffectVolume$"
+  | "setSoundEffectVolume$"
 > {
   return {
     audioOptions$: scope.behavior(
@@ -159,6 +162,17 @@ function buildDeviceBehaviors(
           disable
             ? undefined
             : (id: string): void => mediaDevices.audioOutput.select(id),
+        ),
+      ),
+    ),
+    soundEffectVolume$: soundEffectVolumeSetting.value$,
+    setSoundEffectVolume$: scope.behavior(
+      disableSwitcher$.pipe(
+        map((disable) =>
+          disable
+            ? undefined
+            : (volume: number): void =>
+                soundEffectVolumeSetting.setValue(volume),
         ),
       ),
     ),

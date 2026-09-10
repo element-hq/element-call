@@ -66,6 +66,53 @@ Please see LICENSE in the repository root for full details.
   margin-inline: var(--cpd-border-width-1);
 }
 
+/* Bound the whole menu to the space Radix reports for it, so that the scroll
+   area below can shrink while the heading and the slider, its flex siblings,
+   keep their size and stay on screen. The bound has to cover the menu's own
+   padding, or the padding lands outside it and carries the heading off the
+   top of the viewport; the 2x keeps a small gap to the viewport edge. */
+.menu {
+  box-sizing: border-box;
+  max-block-size: calc(
+    var(--radix-dropdown-menu-content-available-height) - var(--cpd-space-2x)
+  );
+}
+
+.scrollArea {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  /* The menu lays its children out as a flex column; the scroll area has to
+     repeat that for the children it now owns. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-1x);
+}
+
+.volumeRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-2x);
+  padding: var(--cpd-space-3x) var(--cpd-space-4x);
+}
+
+.volumeLabel {
+  font: var(--cpd-font-body-md-medium);
+  color: var(--cpd-color-text-primary);
+}
+
+.volumeControl {
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-3x);
+}
+
+.volumeSlider {
+  flex: 1;
+}
+
 /* Radix moves DOM focus onto whichever item the pointer is over, so the
    browser's own focus ring shows up during mouse use. Keyboard navigation
    gets the border; the pointer gets the hover background and nothing else. */

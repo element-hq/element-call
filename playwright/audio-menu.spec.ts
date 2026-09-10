@@ -90,6 +90,88 @@ test("level indicator moves with microphone input", async ({
     .toBeGreaterThan(0);
 });
 
+test("audio menu is keyboard operable in a real browser", async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(
+    browserName === "firefox",
+    'Firefox headless drives page.keyboard.press("Tab") unreliably, as reconnect.spec.ts records.',
+  );
+  const context = await browser.newContext({ reducedMotion: "reduce" });
+  const page = await context.newPage();
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Keys", "Keyboard menu", true);
+  await expect(page.getByTestId("videoTile")).toHaveCount(1);
+
+  // Open from the chevron; the first device row takes focus.
+  await page.getByRole("button", { name: "Microphone" }).focus();
+  await page.keyboard.press("Enter");
+  const menu = page.getByRole("menu");
+  await expect(menu).toBeVisible();
+  const rows = menu.getByRole("menuitemradio");
+  await expect(rows.first()).toBeFocused();
+
+  // Arrow keys walk the device rows, where the browser lists more than one.
+  if ((await rows.count()) > 1) {
+    await page.keyboard.press("ArrowDown");
+    await expect(rows.nth(1)).toBeFocused();
+  }
+
+  // Tab reaches the meter and then the slider; arrows adjust the slider and
+  // leave the menu open.
+  await page.keyboard.press("Tab");
+  await expect(menu.getByRole("meter")).toBeFocused();
+  await page.keyboard.press("Tab");
+  const slider = menu.getByRole("slider");
+  await expect(slider).toBeFocused();
+  const before = Number(await slider.getAttribute("aria-valuenow"));
+  await page.keyboard.press("ArrowRight");
+  await expect
+    .poll(async () => Number(await slider.getAttribute("aria-valuenow")))
+    .toBeGreaterThan(before);
+  await expect(menu).toBeVisible();
+
+  // Shift+Tab goes back; Escape closes.
+  await page.keyboard.press("Shift+Tab");
+  await expect(menu.getByRole("meter")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(menu).not.toBeVisible();
+});
+
+test("audio menu stays inside a short window", async ({ browser }) => {
+  const context = await browser.newContext({
+    reducedMotion: "reduce",
+    viewport: { width: 1280, height: 560 },
+  });
+  const page = await context.newPage();
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Devices", "Long lists", true);
+  await page.getByTestId("videoTile").first().waitFor();
+
+  await page.getByRole("button", { name: "Microphone" }).focus();
+  await page.keyboard.press("Enter");
+  const menu = page.getByRole("menu");
+  await expect(menu).toBeVisible();
+
+  // However many devices the browser reports, the menu fits the window and
+  // the heading and the slider are on screen with it. How many devices that
+  // is differs between browsers, so the case where the lists actually
+  // overflow is covered by the CallFooter "With Many Devices" story, which
+  // fixes the device count.
+  await expect(menu).toBeInViewport({ ratio: 1 });
+  await expect(
+    menu.getByRole("heading", { name: "Audio controls" }),
+  ).toBeInViewport({ ratio: 1 });
+  await expect(menu.getByRole("slider")).toBeInViewport({ ratio: 1 });
+
+  // The menu itself never becomes the scroller: that would carry the heading
+  // out of view, which is what the scroll area exists to prevent.
+  await expect
+    .poll(async () => menu.evaluate((el) => el.scrollHeight <= el.clientHeight))
+    .toBe(true);
+});
+
 async function firstUncheckedIndex(
   rows: Locator,
   count: number,

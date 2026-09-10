@@ -484,7 +484,7 @@ describe("audio menu", () => {
     expect(screen.getByRole("menu")).toBeInTheDocument();
   });
 
-  test("audio menu marks the active output below the microphones", async () => {
+  test("audio menu marks the active output", async () => {
     await openAudioMenu();
 
     expect(
@@ -493,8 +493,88 @@ describe("audio menu", () => {
     expect(
       screen.getByRole("menuitemradio", { name: "Headset" }),
     ).toHaveAttribute("aria-checked", "false");
-    // One rule between the microphone group and the speaker group.
-    expect(screen.getByRole("menu").querySelectorAll("hr")).toHaveLength(1);
+  });
+
+  test("audio menu separates microphone speaker and sound effects groups", async () => {
+    await openAudioMenu();
+
+    // One rule after the microphone group, one after the speaker group.
+    expect(screen.getByRole("menu").querySelectorAll("hr")).toHaveLength(2);
+    expect(screen.getByTestId("mic_level_meter")).toBeInTheDocument();
+    expect(screen.getByTestId("sound_effect_volume")).toBeInTheDocument();
+  });
+
+  test("audio menu keeps its title and volume slider out of the scrolling area", async () => {
+    await openAudioMenu();
+
+    // Machines with many inputs and outputs produce a device list taller than
+    // the menu can be. Only that list scrolls; the heading above it and the
+    // sound-effect slider below it stay put.
+    const scroll = screen.getByTestId("audio_menu_scroll");
+    expect(scroll).toContainElement(
+      screen.getByRole("menuitemradio", { name: "Headset Microphone" }),
+    );
+    expect(scroll).toContainElement(
+      screen.getByRole("menuitemradio", { name: "Headset" }),
+    );
+    expect(scroll).not.toContainElement(
+      screen.getByTestId("sound_effect_volume"),
+    );
+    expect(scroll).not.toContainElement(
+      screen.getByRole("heading", { name: "Audio controls" }),
+    );
+  });
+
+  test("audio menu is fully operable from the keyboard", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const controls = audioControls();
+    renderAudioMenu({ onSelect, audioControls: controls });
+
+    // Open from the chevron; the first device row takes focus.
+    await user.tab();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Microphone" })).toHaveFocus();
+    await user.keyboard("[Enter]");
+    await screen.findByRole("menu");
+    expect(
+      screen.getByRole("menuitemradio", { name: "Built-in Microphone" }),
+    ).toHaveFocus();
+
+    // Arrow keys walk the microphone rows; Enter selects and keeps the menu.
+    await user.keyboard("[ArrowDown]");
+    const headsetMic = screen.getByRole("menuitemradio", {
+      name: /Headset Microphone/,
+    });
+    expect(headsetMic).toHaveFocus();
+    await user.keyboard("[Enter]");
+    expect(onSelect).toHaveBeenCalledWith("mic-2");
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    // Tab reaches the meter below the microphones, then the slider; arrow
+    // keys adjust the slider without moving the menu's focus.
+    await user.tab();
+    expect(screen.getByRole("meter")).toHaveFocus();
+    await user.tab();
+    const slider = screen.getByRole("slider", { name: /Sound effect volume/ });
+    expect(slider).toHaveFocus();
+    await user.keyboard("[ArrowRight]");
+    expect(controls.onSoundEffectVolumeCommit).toHaveBeenCalledWith(0.51);
+    expect(slider).toHaveFocus();
+
+    // Shift+Tab walks back to the meter and the current row; from there the
+    // arrow keys carry on into the speaker rows.
+    await user.tab({ shift: true });
+    expect(screen.getByRole("meter")).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(headsetMic).toHaveFocus();
+    await user.keyboard("[ArrowDown][ArrowDown]");
+    expect(
+      screen.getByRole("menuitemradio", { name: "Headset" }),
+    ).toHaveFocus();
+    await user.keyboard("[Enter]");
+    expect(controls.onSelectOutput).toHaveBeenCalledWith("out-2");
+    expect(screen.getByRole("menu")).toBeInTheDocument();
   });
 
   test("audio menu does not reselect the active output", async () => {
@@ -620,6 +700,8 @@ describe("audio menu", () => {
       selectedOutput: "out-1",
       onSelectOutput: vi.fn(),
       micDeviceId: "mic-1",
+      soundEffectVolume: 0.5,
+      onSoundEffectVolumeCommit: vi.fn(),
       ...over,
     };
   }

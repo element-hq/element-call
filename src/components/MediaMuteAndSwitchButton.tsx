@@ -11,6 +11,7 @@ import {
   type FC,
   useEffect,
   type JSX,
+  type KeyboardEvent,
 } from "react";
 import {
   Button,
@@ -39,6 +40,7 @@ import {
 import { useMediaDevices } from "../MediaDevicesContext";
 import { AudioLevelMeter } from "./AudioLevelMeter";
 import { useMicrophoneLevel } from "./useMicrophoneLevel";
+import { Slider } from "../Slider";
 
 export interface MenuOptions {
   label: DeviceLabel;
@@ -52,7 +54,8 @@ export interface OutputMenuOptions {
 
 /**
  * The controls that turn the microphone chevron menu into the audio menu: a
- * speaker group below the microphone list. Absent for the camera menu.
+ * speaker group and the sound-effect volume below the microphone list. Absent
+ * for the camera menu.
  */
 export interface AudioControls {
   /**
@@ -64,6 +67,8 @@ export interface AudioControls {
   onSelectOutput: (id: string) => void;
   /** The microphone the level meter follows. */
   micDeviceId: string | undefined;
+  soundEffectVolume: number;
+  onSoundEffectVolumeCommit: (volume: number) => void;
 }
 
 export interface MediaMuteAndSwitchButtonProps {
@@ -92,6 +97,17 @@ export interface MediaMuteAndSwitchButtonProps {
 }
 
 const BLUR_ID = "blur";
+/** The keys a slider reads; inside the menu they must not move focus. */
+const SLIDER_KEYS = new Set([
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+  "Home",
+  "End",
+  "PageUp",
+  "PageDown",
+]);
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
@@ -269,18 +285,34 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         }
       >
         {audioControls ? (
+          // Only the device lists scroll; the title above and the slider below
+          // stay put. Tab moves between the device rows, the meter and the
+          // slider; see keepTabInsideMenu.
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
           <div
-            className={styles.micSection}
-            data-testid="audio_menu_mic_section"
+            className={styles.scrollArea}
+            data-testid="audio_menu_scroll"
+            onKeyDown={keepTabInsideMenu}
           >
-            {deviceItems}
-            {/* The meter reads the microphone, so it travels with the
-                microphone list rather than sitting among the output controls;
-                pinned to the foot of the list, it stays on screen for as long
-                as any microphone is. */}
-            <div className={styles.stickyMeter}>
-              <AudioLevelMeter state={micLevel} />
+            <div
+              className={styles.micSection}
+              data-testid="audio_menu_mic_section"
+            >
+              {deviceItems}
+              {/* The meter reads the microphone, so it travels with the
+                  microphone list rather than sitting among the output
+                  controls; pinned to the foot of the scroll port, it stays on
+                  screen for as long as any microphone is. */}
+              <div className={styles.stickyMeter}>
+                <AudioLevelMeter state={micLevel} />
+              </div>
             </div>
+            <hr />
+            <SpeakerSection
+              options={audioControls.outputOptions}
+              selected={audioControls.selectedOutput}
+              onSelect={audioControls.onSelectOutput}
+            />
           </div>
         ) : (
           deviceItems
@@ -288,10 +320,9 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         {audioControls && (
           <>
             <hr />
-            <SpeakerSection
-              options={audioControls.outputOptions}
-              selected={audioControls.selectedOutput}
-              onSelect={audioControls.onSelectOutput}
+            <SoundEffectVolume
+              volume={audioControls.soundEffectVolume}
+              onCommit={audioControls.onSoundEffectVolumeCommit}
             />
           </>
         )}
@@ -389,4 +420,76 @@ function SpeakerSection({
       ))}
     </>
   );
+}
+
+interface SoundEffectVolumeProps {
+  volume: number;
+  onCommit: (volume: number) => void;
+}
+
+/** The sound-effect volume slider: the same stored value as in settings. */
+function SoundEffectVolume({
+  volume,
+  onCommit,
+}: SoundEffectVolumeProps): JSX.Element {
+  const { t } = useTranslation();
+  const label = t("settings.audio_tab.effect_volume_label");
+  // Tracked locally so dragging is smooth; only the committed value is
+  // stored. A change made in settings while the menu is open resets it.
+  const [raw, setRaw] = useState(volume);
+  const [committed, setCommitted] = useState(volume);
+  if (volume !== committed) {
+    setCommitted(volume);
+    setRaw(volume);
+  }
+
+  return (
+    // The menu treats the slider's keys as navigation between its items, which
+    // would otherwise stop the slider from ever receiving them. The handler has
+    // to sit on the wrapper because Slider takes no key handler of its own.
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    <div
+      className={styles.volumeRow}
+      data-testid="sound_effect_volume"
+      role="group"
+      aria-label={label}
+      onKeyDown={(e) => {
+        if (SLIDER_KEYS.has(e.key)) e.stopPropagation();
+        else keepTabInsideMenu(e);
+      }}
+    >
+      <span className={styles.volumeLabel}>{label}</span>
+      <div className={styles.volumeControl}>
+        <VolumeOnIcon
+          width={24}
+          height={24}
+          className={styles.itemIcon}
+          aria-hidden
+        />
+        <Slider
+          className={styles.volumeSlider}
+          label={label}
+          value={raw}
+          onValueChange={setRaw}
+          onValueCommit={onCommit}
+          min={0}
+          max={1}
+          step={0.01}
+          // Slider names its thumb after the tooltip, so the tooltip has to
+          // carry what the control is, not just its value.
+          tooltipFormatter={(v) => `${label}: ${Math.round(v * 100)}%`}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Lets Tab move focus between the device rows, the level meter and the
+ * sound-effect slider. The menu swallows Tab so that its items are walked
+ * with the arrow keys; kept from it, the browser's own focus order takes over,
+ * and the menu's focus trap keeps that order inside the menu.
+ */
+function keepTabInsideMenu(e: KeyboardEvent<HTMLElement>): void {
+  if (e.key === "Tab") e.stopPropagation();
 }

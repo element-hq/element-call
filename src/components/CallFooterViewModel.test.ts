@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
 
 import { testScope, mockMuteStates, mockMediaDevices } from "../utils/test";
@@ -21,6 +21,7 @@ import { createCallFooterViewModel } from "./CallFooterViewModel";
 import { HeaderStyle } from "../UrlParams";
 import { type FooterSnapshot } from "./CallFooter";
 import { type ViewModel } from "../state/ViewModel";
+import { soundEffectVolume } from "../settings/settings";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../Platform", () => ({
@@ -115,7 +116,9 @@ const twoOutputsMediaDevices = mockMediaDevices({
 });
 
 describe("createCallFooterViewModel", () => {
-  describe("audio output", () => {
+  describe("audio menu", () => {
+    afterEach(() => soundEffectVolume.setValue(0.5));
+
     function createVm(
       platform: string,
       layout: Layout,
@@ -135,12 +138,23 @@ describe("createCallFooterViewModel", () => {
       const vm = createVm("ios", gridLayout);
       expect(vm.audioOutputOptions$.value).toEqual([]);
       expect(vm.selectAudioOutputOption$.value).toBeUndefined();
+      expect(vm.setSoundEffectVolume$.value).toBeUndefined();
     });
 
     it("offers no audio menu when the layout is pip", () => {
       const vm = createVm("desktop", pipLayout);
       expect(vm.audioOutputOptions$.value).toEqual([]);
       expect(vm.selectAudioOutputOption$.value).toBeUndefined();
+      expect(vm.setSoundEffectVolume$.value).toBeUndefined();
+    });
+
+    it("reads and writes the sound-effect volume setting on desktop", () => {
+      const vm = createVm("desktop", gridLayout);
+      expect(vm.soundEffectVolume$.value).toBe(0.5);
+
+      vm.setSoundEffectVolume$.value?.(0.2);
+      expect(soundEffectVolume.value$.value).toBe(0.2);
+      expect(vm.soundEffectVolume$.value).toBe(0.2);
     });
 
     it("lists the outputs and the selection on desktop", () => {

@@ -5,12 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BehaviorSubject } from "rxjs";
 import { Root as Form, TooltipProvider } from "@vector-im/compound-web";
-import { type ReactNode } from "react";
+import { type JSX, type ReactNode } from "react";
 
 import { CallFooter } from "./CallFooter";
 import { DeviceSelection } from "../settings/DeviceSelection";
@@ -23,10 +23,54 @@ import {
 } from "../state/MediaDevices";
 import { constant } from "../state/Behavior";
 import { mockMediaDevices } from "../utils/test";
+import {
+  soundEffectVolume as soundEffectVolumeSetting,
+  useSetting,
+} from "../settings/settings";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local } from "../utils/test-fixtures";
 
 describe("CallFooter", () => {
+  afterEach(() => soundEffectVolumeSetting.setValue(0.5));
+
+  test("sound effects volume from the menu applies to the next effect", async () => {
+    const user = userEvent.setup();
+    renderFooter(mediaDevicesWithOutputs());
+
+    await user.click(screen.getByRole("button", { name: "Microphone" }));
+    await screen.findByRole("menu");
+    await user.keyboard("[ArrowDown]");
+    await user.tab();
+    await user.tab();
+    await user.keyboard("[ArrowRight]");
+
+    // The committed value lands in the setting the sound-effect player reads,
+    // so the next effect plays at the new level.
+    expect(soundEffectVolumeSetting.value$.value).toBe(0.51);
+  });
+
+  test("sound effects volume is shared between menu and settings", async () => {
+    const user = userEvent.setup();
+    renderFooter(mediaDevicesWithOutputs(), <SettingsVolume />);
+
+    // Set from the menu, shown in settings.
+    await user.click(screen.getByRole("button", { name: "Microphone" }));
+    await screen.findByRole("menu");
+    await user.keyboard("[ArrowDown]");
+    await user.tab();
+    await user.tab();
+    await user.keyboard("[ArrowRight]");
+    await user.keyboard("[Escape]");
+    expect(screen.getByRole("status")).toHaveTextContent("51%");
+
+    // Set from settings, shown in the menu.
+    await user.click(screen.getByRole("button", { name: "Set to 20%" }));
+    await user.click(screen.getByRole("button", { name: "Microphone" }));
+    expect(
+      await screen.findByRole("slider", { name: /Sound effect volume/ }),
+    ).toHaveAttribute("aria-valuenow", "0.2");
+  });
+
   test("audio menu is headed Audio controls", async () => {
     const user = userEvent.setup();
     renderFooter(mediaDevicesWithOutputs());
@@ -98,6 +142,17 @@ describe("CallFooter", () => {
           </ReactionsSenderContext>
         </MediaDevicesContext>
       </TooltipProvider>,
+    );
+  }
+
+  /** Reads and writes the volume the way the settings dialog does. */
+  function SettingsVolume(): JSX.Element {
+    const [volume, setVolume] = useSetting(soundEffectVolumeSetting);
+    return (
+      <>
+        <output>{Math.round(volume * 100)}%</output>
+        <button onClick={() => setVolume(0.2)}>Set to 20%</button>
+      </>
     );
   }
 

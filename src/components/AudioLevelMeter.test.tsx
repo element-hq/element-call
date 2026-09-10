@@ -50,9 +50,13 @@ describe("AudioLevelMeter", () => {
 
     // Nothing is announced until the user puts the meter in focus, so the
     // level does not talk over the rest of the menu.
-    expect(meter.textContent).not.toContain("Picking up sound");
+    const announcer = meter.querySelector("[aria-live]");
+    expect(announcer).toHaveAttribute("aria-live", "off");
     await user.tab();
     expect(meter).toHaveFocus();
-    expect(meter.textContent).toContain("Picking up sound");
+    expect(announcer).toHaveAttribute("aria-live", "polite");
+    expect(announcer).toHaveTextContent("Picking up sound");
+    await user.tab();
+    expect(announcer).toHaveAttribute("aria-live", "off");
   });
 });

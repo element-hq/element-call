@@ -104,6 +104,7 @@ const meta = {
     toggleVideo: fnArgType,
     hangup: fnArgType,
     selectAudioOutputOption: fnArgType,
+    setSoundEffectVolume: fnArgType,
   },
 } satisfies Meta<typeof CallFooterStoryWrapper>;
 
@@ -146,6 +147,8 @@ export const Default: Story = {
     audioOutputOptions: [],
     selectedAudioOutput: undefined,
     selectAudioOutputOption: undefined,
+    soundEffectVolume: 0.5,
+    setSoundEffectVolume: undefined,
   },
   parameters: {
     layout: "fullscreen",
@@ -438,6 +441,7 @@ export const WithAudioMenu: Story = {
     ],
     selectedAudioOutput: "",
     selectAudioOutputOption: fn(),
+    setSoundEffectVolume: fn(),
   },
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
@@ -458,6 +462,9 @@ export const WithAudioMenu: Story = {
     await expect(args.selectAudioOutputOption).toHaveBeenCalledWith("2");
     // The menu stays open after a selection.
     await expect(screen.getByRole("menu")).toBeInTheDocument();
+    await expect(
+      menu.getByRole("slider", { name: /Sound effect volume/ }),
+    ).toBeInTheDocument();
   },
 };
 
@@ -480,5 +487,52 @@ export const WithSingleAudioOutput: Story = {
     await expect(
       screen.queryByRole("menuitemradio", { name: /Speakers/ }),
     ).toBe(null);
+  },
+};
+
+/**
+ * More devices than fit on screen: the heading and the slider stay put while
+ * the device lists scroll between them.
+ */
+export const WithManyDevices: Story = {
+  ...WithAudioMenu,
+  args: {
+    ...WithAudioMenu.args,
+    audioOptions: Array.from({ length: 12 }, (_, i) => ({
+      label: { type: "name", name: `Microphone ${i + 1} (USB Audio Device)` },
+      id: `mic-${i}`,
+    })),
+    selectedAudio: "mic-0",
+    audioOutputOptions: Array.from({ length: 8 }, (_, i) => ({
+      label: { type: "name", name: `Speaker ${i + 1} (DisplayPort)` },
+      id: `out-${i}`,
+    })),
+    selectedAudioOutput: "out-0",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+    const menu = await screen.findByRole("menu");
+    const heading = within(menu).getByRole("heading", {
+      name: "Audio controls",
+    });
+    const slider = within(menu).getByRole("slider");
+    const scroll = within(menu).getByTestId("audio_menu_scroll");
+
+    // The menu slides in; measure once it has settled.
+    await Promise.all(
+      menu.getAnimations({ subtree: true }).map(async (a) => a.finished),
+    );
+
+    // The whole menu is on screen, so the heading and the slider are too.
+    const menuBox = menu.getBoundingClientRect();
+    await expect(menuBox.top).toBeGreaterThanOrEqual(0);
+    await expect(menuBox.bottom).toBeLessThanOrEqual(window.innerHeight);
+    await expect(heading.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+    await expect(slider.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      window.innerHeight,
+    );
+    // Only the device lists scroll.
+    await expect(scroll.scrollHeight).toBeGreaterThan(scroll.clientHeight);
   },
 };

@@ -116,6 +116,9 @@ export interface FooterState {
   selectedAudioOutput: string | undefined;
   /** Also controls whether the microphone chevron opens the audio menu */
   selectAudioOutputOption: ((deviceId: string) => void) | undefined;
+  soundEffectVolume: number;
+  /** Also controls whether the microphone chevron opens the audio menu */
+  setSoundEffectVolume: ((volume: number) => void) | undefined;
 }
 
 export interface FooterProps {
@@ -159,6 +162,8 @@ export const CallFooter: FC<FooterProps> = ({
   const audioOutputOptions = useBehavior(vm.audioOutputOptions$);
   const selectedAudioOutput = useBehavior(vm.selectedAudioOutput$);
   const selectAudioOutputOption = useBehavior(vm.selectAudioOutputOption$);
+  const soundEffectVolume = useBehavior(vm.soundEffectVolume$);
+  const setSoundEffectVolume = useBehavior(vm.setSoundEffectVolume$);
   const toggleBlur = useBehavior(vm.toggleBlur$);
   const videoBlurEnabled = useBehavior(vm.videoBlurEnabled$);
   const buttonSize = useBehavior(vm.buttonSize$);
@@ -180,16 +185,18 @@ export const CallFooter: FC<FooterProps> = ({
     );
   }
 
-  // The audio menu exists wherever an output can be selected. It names the
-  // output in use even when there is no microphone to list.
+  // The audio menu exists wherever its actions do. It names the output in use
+  // even when there is no microphone to list.
   const audioControls =
-    selectAudioOutputOption === undefined
+    selectAudioOutputOption === undefined || setSoundEffectVolume === undefined
       ? undefined
       : {
           outputOptions: audioOutputOptions ?? [],
           selectedOutput: selectedAudioOutput,
           onSelectOutput: selectAudioOutputOption,
           micDeviceId: selectedAudio,
+          soundEffectVolume: soundEffectVolume ?? 0,
+          onSoundEffectVolumeCommit: setSoundEffectVolume,
         };
 
   if ((audioOptions?.length ?? 0) > 0 || audioControls !== undefined) {

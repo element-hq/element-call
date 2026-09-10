@@ -88,10 +88,13 @@ export const AudioLevelMeter: FC<AudioLevelMeterProps> = ({ state }) => {
           />
         ))}
       </div>
-      {/* Only announces while the meter holds focus, so the level does not
-          interrupt a screen reader reading the rest of the menu. */}
-      <span className={styles.srOnly} aria-live="polite">
-        {focused ? stateText : ""}
+      {/* Announces changes only while the meter holds focus, so the level does
+          not talk over a screen reader reading the rest of the menu. The text
+          stays in the DOM either way: removing it on blur would hand the
+          menu's focus trap an empty active element mid-Tab, and it would pull
+          focus back into the menu instead of letting it reach the slider. */}
+      <span className={styles.srOnly} aria-live={focused ? "polite" : "off"}>
+        {stateText}
       </span>
     </div>
   );
