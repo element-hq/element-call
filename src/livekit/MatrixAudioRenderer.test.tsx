@@ -24,10 +24,12 @@ import { testAudioContext } from "../useAudioContext.test";
 import * as MediaDevicesContext from "../MediaDevicesContext";
 import { LivekitRoomAudioRenderer } from "./MatrixAudioRenderer";
 import {
+  mockLocalParticipant,
   mockMediaDevices,
   mockRemoteParticipant,
   mockTrack,
 } from "../utils/test";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { initializeWidget } from "../widget";
 initializeWidget();
 export const TestAudioContextConstructor = vi.fn(
@@ -129,6 +131,57 @@ it("should render for member", () => {
   );
   expect(container).toBeTruthy();
   expect(queryAllByTestId("audio")).toHaveLength(1);
+});
+
+function spyOnWarn(): ReturnType<typeof vi.fn> {
+  const warn = vi.fn();
+  vi.spyOn(rootLogger, "getChild").mockReturnValue({
+    warn,
+  } as unknown as typeof rootLogger);
+  return warn;
+}
+
+it("should not render or warn for the local participant", () => {
+  const warn = spyOnWarn();
+  const local = mockLocalParticipant({ identity: "@alice:DEV0" });
+  vi.mocked(useTracks).mockReturnValue([mockTrack(local)]);
+  const { queryAllByTestId } = render(
+    <MediaDevicesProvider value={mockMediaDevices({})}>
+      <LivekitRoomAudioRenderer
+        validIdentities={[]}
+        livekitRoom={{ remoteParticipants: new Map() } as unknown as Room}
+        url={""}
+      />
+    </MediaDevicesProvider>,
+  );
+  expect(queryAllByTestId("audio")).toHaveLength(0);
+  expect(warn).not.toHaveBeenCalled();
+});
+
+it("should warn only once per unexpected participant", () => {
+  const warn = spyOnWarn();
+  const { rerender } = renderTestComponent(
+    [{ userId: "@bob", deviceId: "DEV0" }],
+    ["@alice:DEV0"],
+    [
+      {
+        participantId: "@alice:DEV0",
+        kind: Track.Kind.Audio,
+        source: Track.Source.Microphone,
+      },
+    ],
+  );
+  expect(warn).toHaveBeenCalledTimes(1);
+  rerender(
+    <MediaDevicesProvider value={mockMediaDevices({})}>
+      <LivekitRoomAudioRenderer
+        validIdentities={[]}
+        livekitRoom={{ remoteParticipants: new Map() } as unknown as Room}
+        url={""}
+      />
+    </MediaDevicesProvider>,
+  );
+  expect(warn).toHaveBeenCalledTimes(1);
 });
 
 it("should not render without member", () => {
