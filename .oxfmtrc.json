@@ -2,5 +2,5 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "printWidth": 80,
   "sortPackageJson": false,
-  "ignorePatterns": ["pnpm-lock.yaml", "node_modules", "dist"]
+  "ignorePatterns": ["pnpm-lock.yaml", "node_modules", "dist", "FEATURES_SPEC"]
 }
