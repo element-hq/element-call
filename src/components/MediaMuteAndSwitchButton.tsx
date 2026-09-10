@@ -37,6 +37,8 @@ import {
   type DeviceLabel,
 } from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
+import { AudioLevelMeter } from "./AudioLevelMeter";
+import { useMicrophoneLevel } from "./useMicrophoneLevel";
 
 export interface MenuOptions {
   label: DeviceLabel;
@@ -60,6 +62,8 @@ export interface AudioControls {
   outputOptions: OutputMenuOptions[];
   selectedOutput: string | undefined;
   onSelectOutput: (id: string) => void;
+  /** The microphone the level meter follows. */
+  micDeviceId: string | undefined;
 }
 
 export interface MediaMuteAndSwitchButtonProps {
@@ -111,6 +115,13 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   useEffect(() => {
     if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
   }, [menuOpen, devices]);
+
+  // The meter's capture is bound to the menu being open, so the microphone is
+  // only ever held while the user is looking at the level.
+  const micLevel = useMicrophoneLevel(
+    audioControls?.micDeviceId,
+    menuOpen && audioControls !== undefined,
+  );
 
   let button;
   let toggles: { label: string; enabled: boolean; id: string }[] = [];
@@ -174,6 +185,59 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       break;
   }
 
+  const deviceItems = options?.map(({ label, id }) => {
+    let labelText: string;
+    switch (label.type) {
+      case "name":
+        labelText = label.name;
+        break;
+      case "number":
+        labelText = numberedLabel(label.number);
+        break;
+    }
+    return (
+      <MenuItem
+        hideChevron
+        label={labelText}
+        Icon={
+          IconOptions && (
+            <IconOptions
+              width={24}
+              height={24}
+              className={styles.itemIcon}
+              aria-hidden
+            />
+          )
+        }
+        onSelect={(e) => {
+          e.preventDefault();
+          if (id === selectedOption) return;
+          setPlannedSelection(id);
+          onSelect?.(id);
+        }}
+        key={id}
+        role="menuitemradio"
+        aria-checked={selectedOption === id}
+      >
+        {selectedOption === id && (
+          <CheckIcon
+            width={24}
+            height={24}
+            aria-hidden // A label would be redundant to aria-checked above
+          />
+        )}
+        {selectedOption !== id && plannedSelection === id && (
+          <SpinnerIcon
+            width={24}
+            height={24}
+            className={styles.rotate}
+            aria-label={t("settings.devices.activating")}
+          />
+        )}
+      </MenuItem>
+    );
+  });
+
   return (
     <div
       className={classNames({
@@ -184,6 +248,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       {/* The mute button lives inside */}
       {button}
       <Menu
+        className={styles.menu}
         title={title}
         showTitle={true}
         open={menuOpen}
@@ -203,58 +268,23 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        {options?.map(({ label, id }) => {
-          let labelText: string;
-          switch (label.type) {
-            case "name":
-              labelText = label.name;
-              break;
-            case "number":
-              labelText = numberedLabel(label.number);
-              break;
-          }
-          return (
-            <MenuItem
-              hideChevron
-              label={labelText}
-              Icon={
-                IconOptions && (
-                  <IconOptions
-                    width={24}
-                    height={24}
-                    className={styles.itemIcon}
-                    aria-hidden
-                  />
-                )
-              }
-              onSelect={(e) => {
-                e.preventDefault();
-                if (id === selectedOption) return;
-                setPlannedSelection(id);
-                onSelect?.(id);
-              }}
-              key={id}
-              role="menuitemradio"
-              aria-checked={selectedOption === id}
-            >
-              {selectedOption === id && (
-                <CheckIcon
-                  width={24}
-                  height={24}
-                  aria-hidden // A label would be redundant to aria-checked above
-                />
-              )}
-              {selectedOption !== id && plannedSelection === id && (
-                <SpinnerIcon
-                  width={24}
-                  height={24}
-                  className={styles.rotate}
-                  aria-label={t("settings.devices.activating")}
-                />
-              )}
-            </MenuItem>
-          );
-        })}
+        {audioControls ? (
+          <div
+            className={styles.micSection}
+            data-testid="audio_menu_mic_section"
+          >
+            {deviceItems}
+            {/* The meter reads the microphone, so it travels with the
+                microphone list rather than sitting among the output controls;
+                pinned to the foot of the list, it stays on screen for as long
+                as any microphone is. */}
+            <div className={styles.stickyMeter}>
+              <AudioLevelMeter state={micLevel} />
+            </div>
+          </div>
+        ) : (
+          deviceItems
+        )}
         {audioControls && (
           <>
             <hr />

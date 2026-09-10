@@ -47,3 +47,33 @@ Please see LICENSE in the repository root for full details.
   color: var(--cpd-color-text-primary);
   font: var(--cpd-font-body-md-regular);
 }
+
+.micSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-1x);
+}
+
+.stickyMeter {
+  position: sticky;
+  inset-block-end: 0;
+  /* Opaque, so the device rows scrolling underneath do not show through. */
+  background: var(--cpd-color-bg-canvas-default);
+  padding-block-start: var(--cpd-space-1x);
+  /* The menu draws its border as an outline inset by one border width. This
+     row is positioned and opaque, so without the matching inset it paints over
+     that border at the left and right edges. */
+  margin-inline: var(--cpd-border-width-1);
+}
+
+/* Radix moves DOM focus onto whichever item the pointer is over, so the
+   browser's own focus ring shows up during mouse use. Keyboard navigation
+   gets the border; the pointer gets the hover background and nothing else. */
+.menu [role^="menuitem"]:focus {
+  outline: none;
+}
+
+.menu [role^="menuitem"]:focus-visible {
+  outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
+  outline-offset: calc(-1 * var(--cpd-border-width-2));
+}

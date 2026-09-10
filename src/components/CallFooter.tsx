@@ -189,6 +189,7 @@ export const CallFooter: FC<FooterProps> = ({
           outputOptions: audioOutputOptions ?? [],
           selectedOutput: selectedAudioOutput,
           onSelectOutput: selectAudioOutputOption,
+          micDeviceId: selectedAudio,
         };
 
   if ((audioOptions?.length ?? 0) > 0 || audioControls !== undefined) {

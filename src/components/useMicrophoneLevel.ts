@@ -57,6 +57,11 @@ export function useMicrophoneLevel(
       setState({ type: "inactive" });
       return;
     }
+    // Insecure contexts have no media devices at all; nothing can be metered.
+    if (!("mediaDevices" in navigator)) {
+      setState({ type: "unavailable" });
+      return;
+    }
 
     // Guards every asynchronous continuation below: the effect can be cleaned
     // up while getUserMedia is still in flight, and the stream it eventually

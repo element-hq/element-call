@@ -5,8 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, test, vi } from "vitest";
-import { act, render, screen, type RenderResult } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  act,
+  render,
+  screen,
+  waitFor,
+  type RenderResult,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type JSX, useState, type ReactNode } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -363,6 +369,97 @@ describe("MediaMuteAndSwitchButton", () => {
 });
 
 describe("audio menu", () => {
+  test("level indicator responds while muted", async () => {
+    await openAudioMenu({ enabled: false });
+
+    // Muting must not stop the meter: checking the microphone before unmuting
+    // is the whole point of it.
+    await waitFor(() =>
+      expect(getUserMedia).toHaveBeenCalledWith({
+        audio: { deviceId: { exact: "mic-1" } },
+      }),
+    );
+    expect(screen.getByRole("meter")).toBeInTheDocument();
+  });
+
+  test("audio menu starts capture on open and stops on close", async () => {
+    const user = userEvent.setup();
+    renderAudioMenu();
+    expect(getUserMedia).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Microphone" }));
+    await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(1));
+
+    await user.keyboard("[Escape]");
+    await waitFor(() => expect(stop).toHaveBeenCalled());
+  });
+
+  test("level indicator follows a microphone change", async () => {
+    const user = userEvent.setup();
+    function Wrapper(): JSX.Element {
+      const [mic, setMic] = useState("mic-1");
+      return (
+        <MediaMuteAndSwitchButton
+          title="Audio controls"
+          iconsAndLabels="audio"
+          enabled
+          onMuteClick={vi.fn()}
+          options={micOptions}
+          selectedOption={mic}
+          onSelect={setMic}
+          audioControls={audioControls({ micDeviceId: mic })}
+        />
+      );
+    }
+    renderComponent(<Wrapper />);
+    await user.click(screen.getByRole("button", { name: "Microphone" }));
+    await waitFor(() =>
+      expect(getUserMedia).toHaveBeenLastCalledWith({
+        audio: { deviceId: { exact: "mic-1" } },
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("menuitemradio", { name: "Headset Microphone" }),
+    );
+
+    await waitFor(() =>
+      expect(getUserMedia).toHaveBeenLastCalledWith({
+        audio: { deviceId: { exact: "mic-2" } },
+      }),
+    );
+    expect(stop).toHaveBeenCalled();
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(screen.getByRole("meter")).toBeInTheDocument();
+  });
+
+  test("audio menu hints when microphone permission is denied", async () => {
+    getUserMedia.mockRejectedValue(
+      Object.assign(new Error("no"), { name: "NotAllowedError" }),
+    );
+    await openAudioMenu();
+
+    expect(await screen.findByTestId("mic_level_denied")).toHaveTextContent(
+      /microphone access is blocked/i,
+    );
+    expect(screen.queryByRole("meter")).toBe(null);
+  });
+
+  test("level indicator stays with the microphone list rather than the speakers", async () => {
+    await openAudioMenu();
+
+    // The meter reads the microphone, so it belongs to that group and never
+    // sits among the output controls.
+    const micSection = screen.getByTestId("audio_menu_mic_section");
+    expect(micSection).toContainElement(
+      screen.getByRole("menuitemradio", { name: "Headset Microphone" }),
+    );
+    expect(micSection).toContainElement(screen.getByTestId("mic_level_meter"));
+    expect(micSection).not.toContainElement(
+      screen.getByRole("menuitemradio", { name: "Headset" }),
+    );
+  });
+
   test("audio menu switches microphone and stays open", async () => {
     const onSelect = vi.fn();
     const user = await openAudioMenu({ onSelect });
@@ -460,6 +557,46 @@ describe("audio menu", () => {
       expect(screen.getByRole("menuitemradio", { name })).toBeInTheDocument();
   });
 
+  const stop = vi.fn();
+  const getUserMedia = vi.fn();
+
+  beforeEach(() => {
+    stop.mockClear();
+    getUserMedia.mockReset().mockResolvedValue({
+      getTracks: () => [{ stop }],
+    } as unknown as MediaStream);
+    // Define only mediaDevices: replacing the whole navigator drops the
+    // prototype getters that user-event relies on.
+    Object.defineProperty(navigator, "mediaDevices", {
+      value: { getUserMedia },
+      configurable: true,
+    });
+    // jsdom has no AudioContext; the meter only needs a silent analyser.
+    vi.stubGlobal(
+      "AudioContext",
+      class {
+        public createAnalyser(): unknown {
+          return {
+            fftSize: 1024,
+            getFloatTimeDomainData: (out: Float32Array): void => {
+              out.fill(0);
+            },
+          };
+        }
+        public createMediaStreamSource(): { connect: () => void } {
+          return { connect: (): void => {} };
+        }
+        public async resume(): Promise<void> {}
+        public async close(): Promise<void> {}
+      },
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(navigator, "mediaDevices");
+  });
+
   const micOptions = [
     {
       label: { type: "name" as const, name: "Built-in Microphone" },
@@ -482,23 +619,24 @@ describe("audio menu", () => {
       ],
       selectedOutput: "out-1",
       onSelectOutput: vi.fn(),
+      micDeviceId: "mic-1",
       ...over,
     };
   }
 
-  /** Renders the microphone button with the audio menu and opens the menu. */
-  async function openAudioMenu(
-    props: {
-      audioControls?: AudioControls;
-      onSelect?: (id: string) => void;
-    } = {},
-  ): Promise<ReturnType<typeof userEvent.setup>> {
-    const user = userEvent.setup();
+  interface AudioMenuProps {
+    enabled?: boolean;
+    audioControls?: AudioControls;
+    onSelect?: (id: string) => void;
+  }
+
+  /** Renders the microphone button with the audio menu, closed. */
+  function renderAudioMenu(props: AudioMenuProps = {}): void {
     renderComponent(
       <MediaMuteAndSwitchButton
         title="Audio controls"
         iconsAndLabels="audio"
-        enabled
+        enabled={props.enabled ?? true}
         onMuteClick={vi.fn()}
         options={micOptions}
         selectedOption="mic-1"
@@ -506,6 +644,14 @@ describe("audio menu", () => {
         audioControls={props.audioControls ?? audioControls()}
       />,
     );
+  }
+
+  /** Renders the microphone button with the audio menu and opens the menu. */
+  async function openAudioMenu(
+    props: AudioMenuProps = {},
+  ): Promise<ReturnType<typeof userEvent.setup>> {
+    const user = userEvent.setup();
+    renderAudioMenu(props);
     await user.click(screen.getByRole("button", { name: "Microphone" }));
     await screen.findByRole("menu");
     return user;

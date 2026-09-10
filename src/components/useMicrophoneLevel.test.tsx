@@ -154,6 +154,13 @@ describe("useMicrophoneLevel", () => {
     );
   });
 
+  test("level indicator is unavailable where the page has no media devices", () => {
+    vi.stubGlobal("navigator", {});
+
+    const { result } = renderHook(() => useMicrophoneLevel("mic-1", true));
+    expect(result.current).toEqual({ type: "unavailable" });
+  });
+
   test("no capture is taken while metering is disabled", () => {
     const getUserMedia = vi.fn();
     vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });

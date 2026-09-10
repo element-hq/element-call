@@ -63,6 +63,33 @@ test("audio menu leaves participants visible while switching output", async ({
   await SpaHelpers.expectVideoTilesCount(page, 2);
 });
 
+test("level indicator moves with microphone input", async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(
+    browserName === "firefox",
+    "Firefox has no audio backend on the CI runner, so the level stays at zero there. It passes against Firefox elsewhere, including CI's own Docker image over plain HTTP.",
+  );
+  const context = await browser.newContext({ reducedMotion: "reduce" });
+  const page = await context.newPage();
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Speaker", "Level meter", true);
+  await expect(page.getByTestId("videoTile")).toHaveCount(1);
+
+  await page.getByRole("button", { name: "Microphone" }).click();
+  const meter = page.getByRole("menu").getByRole("meter");
+  await expect(meter).toBeVisible();
+
+  // The browser's fake microphone plays a tone, so the meter has to leave its
+  // resting level while the menu is open.
+  await expect
+    .poll(async () => Number(await meter.getAttribute("aria-valuenow")), {
+      timeout: 15_000,
+    })
+    .toBeGreaterThan(0);
+});
+
 async function firstUncheckedIndex(
   rows: Locator,
   count: number,
