@@ -227,6 +227,17 @@ describe("useMicrophoneLevel", () => {
     expect(result.current).toEqual({ type: "unavailable" });
   });
 
+  test("a missing microphone is reported as absent, not as silence", () => {
+    const getUserMedia = vi.fn();
+    vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });
+
+    const { result } = renderHook(() =>
+      useMicrophoneLevel(undefined, true, STEPS),
+    );
+    expect(result.current).toEqual({ type: "absent" });
+    expect(getUserMedia).not.toHaveBeenCalled();
+  });
+
   test("no capture is taken while metering is disabled", () => {
     const getUserMedia = vi.fn();
     vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });

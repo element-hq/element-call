@@ -369,6 +369,17 @@ describe("MediaMuteAndSwitchButton", () => {
 });
 
 describe("audio menu", () => {
+  test("level indicator is on screen as soon as the menu opens", async () => {
+    // A microphone takes a moment to open. The meter waits at rest rather
+    // than appearing late and pushing the rest of the menu down.
+    getUserMedia.mockReturnValue(new Promise<MediaStream>(() => {}));
+    await openAudioMenu();
+
+    const meter = screen.getByRole("meter");
+    expect(meter).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.queryByTestId("mic_absent")).toBe(null);
+  });
+
   test("level indicator responds while muted", async () => {
     await openAudioMenu({ enabled: false });
 
@@ -482,6 +493,25 @@ describe("audio menu", () => {
 
     expect(controls.onSelectOutput).toHaveBeenCalledWith("out-2");
     expect(screen.getByRole("menu")).toBeInTheDocument();
+  });
+
+  test("audio menu says when there is no microphone", async () => {
+    await openAudioMenu({
+      micOptions: [],
+      audioControls: audioControls({ micDeviceId: undefined }),
+    });
+
+    // A meter resting at zero would read as a microphone that hears nothing,
+    // so the group names the absence instead.
+    expect(screen.getByTestId("mic_absent")).toHaveTextContent(
+      /no microphone found/i,
+    );
+    expect(screen.queryByRole("meter")).toBe(null);
+    // The rest of the menu is unaffected.
+    expect(
+      screen.getByRole("menuitemradio", { name: "Built-in Speakers" }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("sound_effect_volume")).toBeInTheDocument();
   });
 
   test("audio menu marks the active output", async () => {
@@ -710,6 +740,7 @@ describe("audio menu", () => {
     enabled?: boolean;
     audioControls?: AudioControls;
     onSelect?: (id: string) => void;
+    micOptions?: typeof micOptions;
   }
 
   /** Renders the microphone button with the audio menu, closed. */
@@ -720,7 +751,7 @@ describe("audio menu", () => {
         iconsAndLabels="audio"
         enabled={props.enabled ?? true}
         onMuteClick={vi.fn()}
-        options={micOptions}
+        options={props.micOptions ?? micOptions}
         selectedOption="mic-1"
         onSelect={props.onSelect ?? vi.fn()}
         audioControls={props.audioControls ?? audioControls()}

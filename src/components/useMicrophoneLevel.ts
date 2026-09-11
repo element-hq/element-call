@@ -12,13 +12,16 @@ import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
  * The state of the microphone level indicator.
  *
  * `inactive` is the resting state: nothing is being captured, because nothing
- * has asked for a level yet. `active` means we hold a capture and `level` is
- * the current signal level in the range 0..1. `denied` and `unavailable` are
- * the two failure modes we distinguish, because they need different UI: the
- * first is recoverable by the user, the second is not.
+ * has asked for a level yet. `absent` means there is no microphone to capture
+ * from, which is not the same as one that hears nothing. `active` means we
+ * hold a capture and `level` is the current signal level in the range 0..1.
+ * `denied` and `unavailable` are the two failure modes we distinguish, because
+ * they need different UI: the first is recoverable by the user, the second is
+ * not.
  */
 export type MicrophoneLevelState =
   | { type: "inactive" }
+  | { type: "absent" }
   | { type: "active"; level: number }
   | { type: "denied" }
   | { type: "unavailable" };
@@ -57,8 +60,12 @@ export function useMicrophoneLevel(
   });
 
   useEffect(() => {
-    if (!enabled || deviceId === undefined) {
+    if (!enabled) {
       setState({ type: "inactive" });
+      return;
+    }
+    if (deviceId === undefined) {
+      setState({ type: "absent" });
       return;
     }
     // Insecure contexts have no media devices at all; nothing can be metered.

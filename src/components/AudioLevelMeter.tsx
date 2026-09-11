@@ -43,6 +43,16 @@ export const AudioLevelMeter: FC<AudioLevelMeterProps> = ({ state }) => {
   const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
 
+  // Bars resting at zero would read as a microphone that hears nothing, which
+  // is a different thing and the one people act on.
+  if (state.type === "absent")
+    return (
+      <div className={styles.message} data-testid="mic_absent">
+        <MicOffIcon width={24} height={24} aria-hidden />
+        <span>{t("audio_menu.mic_absent")}</span>
+      </div>
+    );
+
   if (state.type === "denied")
     return (
       <div className={styles.message} data-testid="mic_level_denied">

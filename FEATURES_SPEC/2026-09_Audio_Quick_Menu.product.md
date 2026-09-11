@@ -63,7 +63,7 @@ Join and leave chimes and reaction sounds are too loud during a call. The partic
 
 - The menu is opened while muted: the operating system's "microphone in use" indicator turns on even though the participant is muted. No disclosure in the menu is required — that indicator is expected to behave the same whether the participant is muted or not, and mute state and microphone sampling are independent of one another.
 - The active microphone or speaker is unplugged while the menu is open — the menu must settle on a device that exists rather than showing a stale selection.
-- No microphone is present at all: the microphone section and the level indicator have nothing to show.
+- No microphone is present at all: the menu says so where the level indicator would be. An indicator at rest is what a working but silent microphone shows, so the two must not look alike.
 - Microphone permission has not been granted yet — most likely when the menu is opened in the lobby before joining.
 - Another application or browser tab holds the microphone exclusively, so the level indicator receives no signal even though the device is fine. Rare on current operating systems, which share the microphone between applications; where it does happen, the indicator shows a greyed-out state.
 - Sound-effects volume is set to zero: effects are silent but the rest of the call audio is unaffected.

@@ -150,6 +150,9 @@ Test names are the anchor; tests are created with exactly these names.
 - AC27 [SC-003] — Every menu control is reachable and operable by keyboard alone in
   Chromium and Firefox.
   - check: `pnpm test:playwright --project=chromium --project=firefox -g "audio menu is keyboard operable in a real browser"`
+- AC28 [review: #4254] — With no microphone present, the menu names the absence in place
+  of the level indicator, rather than an indicator at rest.
+  - check: `pnpm vitest run --project=unit -t "audio menu says when there is no microphone"`
 
 ## Rejected alternatives
 
@@ -297,6 +300,15 @@ is what holds it there.
 - Out of scope for this spec: the fix is to give the portal the root element as its
   container, which Compound does not expose today. Raised separately. The audio menu behaves
   as specified standalone and as a widget, which is where its acceptance criteria are checked.
+
+### 2026-09-11 — review finding: a missing microphone read as a silent one (#4254)
+- The product spec's edge case for no microphone mapped to no FR and so to no acceptance
+  criterion, and the menu drew a level indicator at rest, which is what a working but
+  silent microphone draws. The owner chose a hint in the indicator's place, as FR-018
+  requires for a denied permission, over omitting the microphone group entirely. The level
+  state now tells a microphone that is absent from one that is silent.
+- Added as AC28 and the product spec's edge case reworded to match, both with the owner's
+  authorisation, since acceptance criteria and the product spec are human-owned.
 
 ## PRs
 

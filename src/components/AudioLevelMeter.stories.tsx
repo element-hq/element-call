@@ -55,6 +55,15 @@ export const Unavailable: Story = {
   },
 };
 
+export const NoMicrophone: Story = {
+  args: { state: { type: "absent" } },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByRole("meter")).toBe(null);
+    await expect(canvas.getByText(/No microphone found/)).toBeInTheDocument();
+  },
+};
+
 export const PermissionDenied: Story = {
   args: { state: { type: "denied" } },
   play: async ({ canvasElement }) => {

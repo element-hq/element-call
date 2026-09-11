@@ -297,8 +297,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                   screen for as long as any microphone is. */}
               <div className={styles.stickyMeter}>
                 {/* The capture is bound to the menu being open, so the
-                    microphone is only ever held while the user is looking
-                    at the level. */}
+                    microphone is only ever held while the user is looking at
+                    the level. */}
                 <MicrophoneLevel
                   deviceId={audioControls.micDeviceId}
                   active={menuOpen}

@@ -12,6 +12,16 @@ import userEvent from "@testing-library/user-event";
 import { AudioLevelMeter } from "./AudioLevelMeter";
 
 describe("AudioLevelMeter", () => {
+  test("a missing microphone is named rather than drawn as silence", () => {
+    render(<AudioLevelMeter state={{ type: "absent" }} />);
+    expect(screen.getByTestId("mic_absent")).toHaveTextContent(
+      /no microphone found/i,
+    );
+    // Bars resting at zero would read as a microphone that hears nothing,
+    // which is a different thing and the one people act on.
+    expect(screen.queryByRole("meter")).toBe(null);
+  });
+
   test("a denied microphone renders a hint instead of the meter", () => {
     render(<AudioLevelMeter state={{ type: "denied" }} />);
     expect(screen.getByTestId("mic_level_denied")).toHaveTextContent(
