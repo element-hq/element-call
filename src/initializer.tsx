@@ -25,6 +25,7 @@ import {
 import {
   setLogExtension as setLKLogExtension,
   setLogLevel as setLKLogLevel,
+  LoggerNames as LKLoggerNames,
 } from "livekit-client";
 
 import { getUrlParams } from "./UrlParams";
@@ -226,6 +227,9 @@ export class Initializer {
 
     enableExtendedLivekitLogs.value$.subscribe((enabled) => {
       setLKLogLevel(enabled ? "trace" : "info");
+      // ICE candidate types and connection states are what you need to diagnose
+      // "could not establish pc connection", so always keep those in the rageshake
+      setLKLogLevel("debug", LKLoggerNames.ICE);
     });
 
     window.setLKLogLevel = setLKLogLevel;
