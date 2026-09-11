@@ -38,8 +38,7 @@ import {
   type DeviceLabel,
 } from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
-import { AudioLevelMeter } from "./AudioLevelMeter";
-import { useMicrophoneLevel } from "./useMicrophoneLevel";
+import { MicrophoneLevel } from "./AudioLevelMeter";
 import { Slider } from "../Slider";
 
 export interface MenuOptions {
@@ -131,13 +130,6 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   useEffect(() => {
     if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
   }, [menuOpen, devices]);
-
-  // The meter's capture is bound to the menu being open, so the microphone is
-  // only ever held while the user is looking at the level.
-  const micLevel = useMicrophoneLevel(
-    audioControls?.micDeviceId,
-    menuOpen && audioControls !== undefined,
-  );
 
   let button;
   let toggles: { label: string; enabled: boolean; id: string }[] = [];
@@ -304,7 +296,13 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                   controls; pinned to the foot of the scroll port, it stays on
                   screen for as long as any microphone is. */}
               <div className={styles.stickyMeter}>
-                <AudioLevelMeter state={micLevel} />
+                {/* The capture is bound to the menu being open, so the
+                    microphone is only ever held while the user is looking
+                    at the level. */}
+                <MicrophoneLevel
+                  deviceId={audioControls.micDeviceId}
+                  active={menuOpen}
+                />
               </div>
             </div>
             <hr />

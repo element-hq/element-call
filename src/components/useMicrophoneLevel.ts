@@ -25,6 +25,7 @@ export type MicrophoneLevelState =
 
 /** Signal at or below this many dBFS reads as silence. */
 const FLOOR_DB = -60;
+
 /**
  * Smoothing applied to the displayed level. Rises are followed almost
  * immediately so speech registers at once; falls are eased so the bars do not
@@ -43,10 +44,13 @@ const RELEASE = 0.12;
  *
  * @param deviceId - The microphone to observe, or undefined if none is selected.
  * @param enabled - Whether to hold a capture at all.
+ * @param steps - How many levels the caller can tell apart. The level is
+ *   rounded to one of them, and movement within a step reports nothing new.
  */
 export function useMicrophoneLevel(
   deviceId: string | undefined,
   enabled: boolean,
+  steps: number,
 ): MicrophoneLevelState {
   const [state, setState] = useState<MicrophoneLevelState>({
     type: "inactive",
@@ -109,7 +113,16 @@ export function useMicrophoneLevel(
           const level = amplitudeToLevel(rms(samples));
           smoothed +=
             (level - smoothed) * (level > smoothed ? ATTACK : RELEASE);
-          setState({ type: "active", level: smoothed });
+          // Keep the last value when the level has not moved a whole step:
+          // a frame that would redraw the same picture must not re-render
+          // anything. Silence therefore costs nothing at all, since the level
+          // rests at zero.
+          const stepped = Math.round(smoothed * steps) / steps;
+          setState((previous) =>
+            previous.type === "active" && previous.level === stepped
+              ? previous
+              : { type: "active", level: stepped },
+          );
           frame = requestAnimationFrame(tick);
         };
         setState({ type: "active", level: 0 });
@@ -124,7 +137,7 @@ export function useMicrophoneLevel(
       });
 
     return dispose;
-  }, [deviceId, enabled]);
+  }, [deviceId, enabled, steps]);
 
   return state;
 }

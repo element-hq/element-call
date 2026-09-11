@@ -6,9 +6,16 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, render, renderHook, waitFor } from "@testing-library/react";
+import { useEffect } from "react";
 
-import { useMicrophoneLevel } from "./useMicrophoneLevel";
+import {
+  useMicrophoneLevel,
+  type MicrophoneLevelState,
+} from "./useMicrophoneLevel";
+
+/** However many levels a caller says it can draw; the meter asks for 18. */
+const STEPS = 18;
 
 describe("useMicrophoneLevel", () => {
   test("level indicator follows the microphone signal level", async () => {
@@ -16,7 +23,9 @@ describe("useMicrophoneLevel", () => {
     const getUserMedia = vi.fn().mockResolvedValue(stream);
     vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });
 
-    const { result } = renderHook(() => useMicrophoneLevel("mic-1", true));
+    const { result } = renderHook(() =>
+      useMicrophoneLevel("mic-1", true, STEPS),
+    );
     await waitFor(() => expect(result.current.type).toBe("active"));
     expect(result.current).toEqual({ type: "active", level: 0 });
 
@@ -40,12 +49,65 @@ describe("useMicrophoneLevel", () => {
       mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) },
     });
 
-    const { result } = renderHook(() => useMicrophoneLevel("mic-1", true));
+    const { result } = renderHook(() =>
+      useMicrophoneLevel("mic-1", true, STEPS),
+    );
     await waitFor(() => expect(result.current.type).toBe("active"));
 
     // A suspended context reports silence however loud the microphone is,
     // which is what Firefox hands us when the page has no user activation.
     expect(resumed).toBe(1);
+  });
+
+  test("a silent microphone re-renders nothing", async () => {
+    const { stream } = fakeStream();
+    vi.stubGlobal("navigator", {
+      mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) },
+    });
+    const probe = renderProbe();
+    await waitFor(() => expect(probe.state().type).toBe("active"));
+
+    // The capture keeps sampling, but a frame that would draw the same bars
+    // must not re-render the menu the meter sits in.
+    const before = probe.renders();
+    tick(30);
+    expect(probe.renders() - before).toBeLessThanOrEqual(1);
+  });
+
+  test("a steady tone re-renders only until the level settles", async () => {
+    const { stream } = fakeStream();
+    vi.stubGlobal("navigator", {
+      mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) },
+    });
+    const probe = renderProbe();
+    await waitFor(() => expect(probe.state().type).toBe("active"));
+
+    amplitude = 0.2;
+    tick(20);
+    expect(probe.state()).toEqual({
+      type: "active",
+      level: expect.any(Number),
+    });
+
+    const before = probe.renders();
+    tick(20);
+    expect(probe.renders() - before).toBeLessThanOrEqual(1);
+  });
+
+  test("the reported level is one the meter can draw", async () => {
+    const { stream } = fakeStream();
+    vi.stubGlobal("navigator", {
+      mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) },
+    });
+    const { result } = renderHook(() =>
+      useMicrophoneLevel("mic-1", true, STEPS),
+    );
+    await waitFor(() => expect(result.current.type).toBe("active"));
+
+    amplitude = 0.2;
+    tick(6);
+    const { level } = result.current as { level: number };
+    expect(level * STEPS).toBeCloseTo(Math.round(level * STEPS), 9);
   });
 
   test("level indicator stays idle for a silent microphone", async () => {
@@ -54,7 +116,9 @@ describe("useMicrophoneLevel", () => {
       mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) },
     });
 
-    const { result } = renderHook(() => useMicrophoneLevel("mic-1", true));
+    const { result } = renderHook(() =>
+      useMicrophoneLevel("mic-1", true, STEPS),
+    );
     await waitFor(() => expect(result.current.type).toBe("active"));
     tick(10);
     expect(result.current).toEqual({ type: "active", level: 0 });
@@ -70,7 +134,7 @@ describe("useMicrophoneLevel", () => {
     vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });
 
     const { result, rerender } = renderHook(
-      ({ id }: { id: string }) => useMicrophoneLevel(id, true),
+      ({ id }: { id: string }) => useMicrophoneLevel(id, true, STEPS),
       { initialProps: { id: "mic-1" } },
     );
     await waitFor(() => expect(result.current.type).toBe("active"));
@@ -99,7 +163,7 @@ describe("useMicrophoneLevel", () => {
     vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });
 
     const { result, rerender } = renderHook(
-      ({ on }: { on: boolean }) => useMicrophoneLevel("mic-1", on),
+      ({ on }: { on: boolean }) => useMicrophoneLevel("mic-1", on, STEPS),
       { initialProps: { on: true } },
     );
 
@@ -122,7 +186,7 @@ describe("useMicrophoneLevel", () => {
     });
 
     const { result, rerender } = renderHook(
-      ({ on }: { on: boolean }) => useMicrophoneLevel("mic-1", on),
+      ({ on }: { on: boolean }) => useMicrophoneLevel("mic-1", on, STEPS),
       { initialProps: { on: true } },
     );
     await waitFor(() => expect(result.current.type).toBe("active"));
@@ -143,7 +207,7 @@ describe("useMicrophoneLevel", () => {
     vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });
 
     const { result, rerender } = renderHook(
-      ({ id }: { id: string }) => useMicrophoneLevel(id, true),
+      ({ id }: { id: string }) => useMicrophoneLevel(id, true, STEPS),
       { initialProps: { id: "mic-1" } },
     );
     await waitFor(() => expect(result.current).toEqual({ type: "denied" }));
@@ -157,7 +221,9 @@ describe("useMicrophoneLevel", () => {
   test("level indicator is unavailable where the page has no media devices", () => {
     vi.stubGlobal("navigator", {});
 
-    const { result } = renderHook(() => useMicrophoneLevel("mic-1", true));
+    const { result } = renderHook(() =>
+      useMicrophoneLevel("mic-1", true, STEPS),
+    );
     expect(result.current).toEqual({ type: "unavailable" });
   });
 
@@ -165,7 +231,9 @@ describe("useMicrophoneLevel", () => {
     const getUserMedia = vi.fn();
     vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });
 
-    const { result } = renderHook(() => useMicrophoneLevel("mic-1", false));
+    const { result } = renderHook(() =>
+      useMicrophoneLevel("mic-1", false, STEPS),
+    );
     expect(getUserMedia).not.toHaveBeenCalled();
     expect(result.current).toEqual({ type: "inactive" });
   });
@@ -226,6 +294,30 @@ describe("useMicrophoneLevel", () => {
       getTracks: () => [{ stop }],
     } as unknown as MediaStream;
     return { stream, stop };
+  }
+
+  /**
+   * Renders a component around the hook and counts how often it renders, which
+   * is what the menu around the meter would pay on every animation frame.
+   */
+  function renderProbe(): {
+    renders: () => number;
+    state: () => MicrophoneLevelState;
+  } {
+    let renders = 0;
+    let state: MicrophoneLevelState = { type: "inactive" };
+    function Probe(): null {
+      const current = useMicrophoneLevel("mic-1", true, STEPS);
+      // An effect with no dependencies runs once per commit, so a frame
+      // React bails out of is not counted.
+      useEffect(() => {
+        renders++;
+        state = current;
+      });
+      return null;
+    }
+    render(<Probe />);
+    return { renders: () => renders, state: () => state };
   }
 
   /** Runs one animation frame, if the hook has asked for one. */

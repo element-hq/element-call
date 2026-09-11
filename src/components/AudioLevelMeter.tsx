@@ -14,10 +14,13 @@ import {
 import classNames from "classnames";
 
 import styles from "./AudioLevelMeter.module.css";
-import { type MicrophoneLevelState } from "./useMicrophoneLevel";
+import {
+  useMicrophoneLevel,
+  type MicrophoneLevelState,
+} from "./useMicrophoneLevel";
 
-// The bars share the row evenly, so the count is what sets their width: more
-// bars means thinner ones, and a finer-grained reading of the level.
+// The level is quantised into this many bars. They share the row, so the
+// count also sets how thick they are.
 const BAR_COUNT = 18;
 /**
  * Level below which the meter reads as silent. Above the noise floor of a
@@ -99,3 +102,22 @@ export const AudioLevelMeter: FC<AudioLevelMeterProps> = ({ state }) => {
     </div>
   );
 };
+
+export interface MicrophoneLevelProps {
+  /** The microphone to follow, or undefined if none is selected. */
+  deviceId: string | undefined;
+  /** Whether to hold a capture and report a level at all. */
+  active: boolean;
+}
+
+/**
+ * The level meter, following a microphone of its own.
+ *
+ * Re-renders when the level moves to another bar, and only itself.
+ */
+export const MicrophoneLevel: FC<MicrophoneLevelProps> = ({
+  deviceId,
+  active,
+}) => (
+  <AudioLevelMeter state={useMicrophoneLevel(deviceId, active, BAR_COUNT)} />
+);
