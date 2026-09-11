@@ -16,8 +16,8 @@ host's page. It is the MatrixRTC reference implementation.
   `@media`, global `i18next` or the `widget` global — take it from a provider.
 - The change works standalone, as a widget and as a component. Say what you checked.
 - Every gate below is green before you push.
-- Hand off after the first implementation, before the quality pass. Commit when the
-  user confirms direction, not before.
+- Hand off after the first implementation, before the quality pass. Then commit on
+  the user's word where the setup allows it, or hand them the message.
 
 ## Read before you
 
@@ -48,5 +48,7 @@ pnpm i18n:check
 - View model + marble tests, thin view, a story per state, an e2e spec.
 - Any new shared component called out explicitly, with why nothing existing fit.
 - Template filled for real: what, why, before/after screenshots, repro steps.
+- Anything that redraws continuously — an animation frame, a stream — says what it
+  costs, or better, counts the redraws in a test.
 - Branch `<handle>/<topic>`. Plain imperative commit subjects, no prefixes.
 - Once review starts, fix forward. Never force-push a regeneration over a review.

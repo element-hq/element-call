@@ -12,6 +12,8 @@ lines a PR touches.
 - Reuse the factories in `src/utils/test.ts` — `mockRemoteParticipant`,
   `mockMatrixRoom`, `mockLivekitRoom`, `MockRTCSession`. Hand-rolled mocks drift.
 - Snapshots live in `__snapshots__/`; update with `pnpm test <Name> -u`.
+- How often something redraws is testable: drive the frames and count commits, not
+  render calls. An effect with no dependency array runs once per commit.
 - `component/**/*.test.ts` runs in the same jsdom project as `src`.
 
 ## Storybook

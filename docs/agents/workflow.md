@@ -39,10 +39,12 @@ Git-ignored. One kebab-case subfolder per task, matching the branch topic:
 
 ## Commit and PR readiness
 
-- Commit once the user confirms direction, or asks for one. Not before.
-- Before committing, every gate in [AGENTS.md](../../AGENTS.md#gates) is green and
-  the change is covered at the layers [testing.md](./testing.md) asks for. Read the
-  diff against [code-style.md](./code-style.md).
-- Re-run the whole checklist after any fix. Commit only on green.
+- Commit once the user confirms direction, or asks for one. Not before. Where the
+  setup has no git identity, a sandbox included, write the message to
+  `commit-msg.txt` and hand it over instead.
+- Ready means every gate in [AGENTS.md](../../AGENTS.md#gates) is green and the
+  change is covered at the layers [testing.md](./testing.md) asks for. Read the diff
+  against [code-style.md](./code-style.md) first.
+- Re-run the whole checklist after any fix. Only on green, either way.
 - Once a human has started reviewing, fix forward — never force-push a
   regeneration over a review in progress.
