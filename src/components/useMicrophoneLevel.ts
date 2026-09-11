@@ -82,8 +82,8 @@ export function useMicrophoneLevel(
     let context: AudioContext | undefined;
     let frame: number | undefined;
 
-    const dispose = (): void => {
-      disposed = true;
+    /** Gives back whatever has been acquired so far. */
+    const release = (): void => {
       if (frame !== undefined) cancelAnimationFrame(frame);
       stream?.getTracks().forEach((t) => t.stop());
       // close() rejects if the context is already closed, which is possible if
@@ -92,6 +92,11 @@ export function useMicrophoneLevel(
       stream = undefined;
       context = undefined;
       frame = undefined;
+    };
+
+    const dispose = (): void => {
+      disposed = true;
+      release();
     };
 
     navigator.mediaDevices
@@ -137,6 +142,11 @@ export function useMicrophoneLevel(
       })
       .catch((e: unknown) => {
         if (disposed) return;
+        // The microphone may already be open: building the audio graph can
+        // fail after getUserMedia has resolved, and the capture would then
+        // outlive its own failure, holding the microphone-in-use indicator on
+        // behind a meter that says the microphone is unavailable.
+        release();
         rootLogger
           .getChild("[useMicrophoneLevel]")
           .warn("Could not open microphone for level metering", e);

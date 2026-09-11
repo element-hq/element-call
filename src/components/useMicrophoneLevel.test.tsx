@@ -227,6 +227,33 @@ describe("useMicrophoneLevel", () => {
     expect(result.current).toEqual({ type: "unavailable" });
   });
 
+  test("a capture is released when the audio graph fails to build", async () => {
+    const { stream, stop } = fakeStream();
+    vi.stubGlobal("navigator", {
+      mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) },
+    });
+    // Whatever the browser does after the microphone is already open.
+    vi.stubGlobal(
+      "AudioContext",
+      class {
+        public constructor() {
+          throw new Error("no audio backend");
+        }
+      },
+    );
+
+    const { result } = renderHook(() =>
+      useMicrophoneLevel("mic-1", true, STEPS),
+    );
+    await waitFor(() =>
+      expect(result.current).toEqual({ type: "unavailable" }),
+    );
+
+    // Otherwise the microphone stays open, and its in-use light on, behind a
+    // meter that says it is unavailable.
+    expect(stop).toHaveBeenCalled();
+  });
+
   test("a missing microphone is reported as absent, not as silence", () => {
     const getUserMedia = vi.fn();
     vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });
