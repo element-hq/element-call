@@ -172,6 +172,40 @@ test("audio menu stays inside a short window", async ({ browser }) => {
     .toBe(true);
 });
 
+test("the focus border follows the keyboard and not the pointer", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ reducedMotion: "reduce" });
+  const page = await context.newPage();
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Focus", "Focus border", true);
+  await page.getByTestId("videoTile").first().waitFor();
+
+  const chevron = page.getByRole("button", { name: "Microphone" });
+  const rows = page.getByRole("menu").getByRole("menuitemradio");
+  const borderOfFocused = async (): Promise<string> =>
+    page.evaluate(() => {
+      const el = document.activeElement;
+      return el === null ? "none" : getComputedStyle(el).outlineStyle;
+    });
+
+  // Reached with the pointer: the hover background carries it, no border.
+  await chevron.click();
+  await page.getByRole("menu").waitFor();
+  await rows.nth(1).hover();
+  expect(await borderOfFocused()).toBe("none");
+
+  // Reached with the keyboard: a border marks where the keyboard is. The menu
+  // moves focus to whatever the pointer is over, so the browser cannot tell
+  // these two apart on its own.
+  await page.keyboard.press("ArrowDown");
+  expect(await borderOfFocused()).toBe("solid");
+
+  // And back, on the next movement of the pointer.
+  await rows.nth(0).hover();
+  expect(await borderOfFocused()).toBe("none");
+});
+
 async function firstUncheckedIndex(
   rows: Locator,
   count: number,

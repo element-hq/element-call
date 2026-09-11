@@ -555,6 +555,26 @@ describe("audio menu", () => {
     );
   });
 
+  test("the focus border marks keyboard use and never the pointer", async () => {
+    const user = await openAudioMenu();
+    const menu = screen.getByRole("menu");
+    const rows = screen.getAllByRole("menuitemradio");
+
+    // Opened and driven by pointer: the hover background alone.
+    await user.hover(rows[1]);
+    expect(menu.className).not.toMatch(/keyboardNav/);
+
+    // One arrow key, and the border marks where the keyboard is.
+    await user.keyboard("[ArrowDown]");
+    expect(menu.className).toMatch(/keyboardNav/);
+
+    // Back to the pointer, and the border goes with it: the browser calls
+    // every focus after a key press keyboard-driven, so this cannot be left
+    // to :focus-visible.
+    await user.hover(rows[0]);
+    expect(menu.className).not.toMatch(/keyboardNav/);
+  });
+
   test("audio menu is fully operable from the keyboard", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();

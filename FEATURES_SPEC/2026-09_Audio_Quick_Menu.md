@@ -112,7 +112,10 @@ Test names are the anchor; tests are created with exactly these names.
   - check: `pnpm vitest run --project=unit -t "audio menu hints when microphone permission is denied"`
 - AC15 [D7] — When the selected microphone cannot be opened because another application holds
   it, the indicator renders in a greyed-out state.
-  - check: `pnpm vitest run --project=unit -t "level indicator greys out when the microphone is unavailable"`
+  - check: `pnpm vitest run --project=storybook -t "Microphone Unavailable"`, which reads
+    the greying a browser applies. The unit test
+    `-t "level indicator greys out when the microphone is unavailable"` covers the state
+    the stylesheet keys off, and cannot fail on the greying itself.
 - AC16 [FR-012] — Moving the sound-effects slider changes the level at which the next sound
   effect plays.
   - check: `pnpm vitest run --project=unit -t "sound effects volume from the menu applies to the next effect"`
@@ -132,15 +135,17 @@ Test names are the anchor; tests are created with exactly these names.
     confirm the announced state changes with the signal.
 - AC22 [D11] — With more devices than fit on screen, the heading and the sound-effect slider
   stay visible while the device lists scroll.
-  - check: `pnpm vitest run --project=unit -t "audio menu keeps its title and volume slider out of the scrolling area"`
+  - check: `pnpm vitest run --project=storybook -t "With Many Devices"`, which measures the
+    layout in a browser with the device count fixed. The unit test
+    `-t "audio menu keeps its title and volume slider out of the scrolling area"` and the
+    e2e `-g "audio menu stays inside a short window"` cover the structure and the window
+    bound; neither can fail on layout alone.
 - AC23 [D12] — The level indicator stays with the microphone list and never sits among the
   output controls.
   - check: `pnpm vitest run --project=unit -t "level indicator stays with the microphone list rather than the speakers"`
 - AC24 [D13] — Moving through the menu by keyboard marks the current item with a border;
   moving over it with a pointer marks it with a background and no border.
-  - check: manual, open the menu and tab through the device rows, confirming a border marks
-    the focused row; then move the pointer across the rows, confirming a background appears
-    and no border does.
+  - check: `pnpm test:playwright --project=chromium --project=firefox -g "the focus border follows the keyboard and not the pointer"`
 - AC25 [SC-001] — Selecting an output from the menu during a call leaves the other
   participants visible throughout.
   - check: `pnpm test:playwright --project=chromium -g "audio menu leaves participants visible while switching output"`
@@ -309,6 +314,33 @@ is what holds it there.
   state now tells a microphone that is absent from one that is silent.
 - Added as AC28 and the product spec's edge case reworded to match, both with the owner's
   authorisation, since acceptance criteria and the product spec are human-owned.
+
+### 2026-09-11 — finding: `:focus-visible` cannot express D13 (#4254)
+- The menu moves focus onto whichever item the pointer is over, so the browser decides the
+  modality for a focus it did not see the user cause. Chromium calls every focus after any
+  key press keyboard-driven, so one Escape left the border following the mouse for the rest
+  of the session; Firefox never calls a programmatic focus keyboard-driven, so the border
+  never appeared there at all. Neither matches D13.
+- The menu now tracks which way each item was reached — a key press on the trigger or on an
+  item, against pointer movement over one — and the border follows that. Verified in both
+  browsers: the border appears only after a key press and leaves again on the next pointer
+  move. AC24's manual check could now name a unit test; owner's call.
+
+### 2026-09-11 — acceptance checks that could not fail (#4254)
+- Raised in review: AC22's check ran in jsdom, which lays nothing out, so it passed whatever
+  the layout did — the defect it exists for went unseen until a screenshot. Its check now
+  names the `CallFooter` "With Many Devices" story, which measures the geometry in a browser
+  with the device count fixed. The unit test and the short-window e2e stay as they are; the
+  criterion names the one that would fail.
+- AC24 was a manual check, and the border it describes turned out to be wrong in both
+  browsers for different reasons. Its check now names an e2e test that reads the painted
+  outline as the pointer and the keyboard take turns.
+- The same audit found AC15: its check asserted the attribute the stylesheet keys off, not
+  the greying, so losing the CSS rule would not have failed it. Re-anchored to the meter's
+  own story, which reads the applied opacity.
+- Every edit to `## Acceptance criteria` was made with the owner's authorisation. The
+  remaining manual checks are AC6, which needs Safari, and AC21, which needs a screen
+  reader.
 
 ## PRs
 

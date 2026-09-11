@@ -47,11 +47,16 @@ export const Loud: Story = {
   args: { state: { type: "active", level: 0.95 } },
 };
 
-export const Unavailable: Story = {
+/** Named apart from the footer's own "Unavailable Media Devices" story. */
+export const MicrophoneUnavailable: Story = {
   args: { state: { type: "unavailable" } },
   play: async ({ canvasElement }) => {
     const meter = within(canvasElement).getByRole("meter");
     await expect(meter).toHaveAttribute("data-unavailable", "true");
+    // The greying is the point, and it is done in CSS: an attribute alone
+    // would still be there with the rule gone.
+    const bar = meter.querySelector("span");
+    await expect(Number(getComputedStyle(bar!).opacity)).toBeLessThan(1);
   },
 };
 

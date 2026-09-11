@@ -123,6 +123,13 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 }) => {
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Which of the two reached the current item, since `:focus-visible` cannot
+  // tell: the menu focuses whatever the pointer is over.
+  const [keyboardNav, setKeyboardNav] = useState(false);
+  const modality = {
+    onKeyDown: (): void => setKeyboardNav(true),
+    onPointerMove: (): void => setKeyboardNav(false),
+  };
   const isBusy = busy ?? false;
   const { t } = useTranslation();
   const devices = useMediaDevices();
@@ -226,6 +233,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         key={id}
         role="menuitemradio"
         aria-checked={selectedOption === id}
+        {...modality}
       >
         {selectedOption === id && (
           <CheckIcon
@@ -256,7 +264,9 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       {/* The mute button lives inside */}
       {button}
       <Menu
-        className={styles.menu}
+        className={classNames(styles.menu, {
+          [styles.keyboardNav]: keyboardNav,
+        })}
         title={title}
         showTitle={true}
         open={menuOpen}
@@ -273,6 +283,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             kind={"tertiary"}
             size="lg"
             aria-label={optionsButtonLabel}
+            onKeyDown={() => setKeyboardNav(true)}
+            onPointerDown={() => setKeyboardNav(false)}
           />
         }
       >
@@ -295,7 +307,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                   microphone list rather than sitting among the output
                   controls; pinned to the foot of the scroll port, it stays on
                   screen for as long as any microphone is. */}
-              <div className={styles.stickyMeter}>
+              <div className={styles.stickyMeter} {...modality}>
                 {/* The capture is bound to the menu being open, so the
                     microphone is only ever held while the user is looking at
                     the level. */}
@@ -310,6 +322,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               options={audioControls.outputOptions}
               selected={audioControls.selectedOutput}
               onSelect={audioControls.onSelectOutput}
+              modality={modality}
             />
           </div>
         ) : (
@@ -321,12 +334,14 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             <SoundEffectVolume
               volume={audioControls.soundEffectVolume}
               onCommit={audioControls.onSoundEffectVolumeCommit}
+              onPointerMove={modality.onPointerMove}
             />
           </>
         )}
         {(toggles?.length ?? 0) > 0 && <hr />}
         {toggles?.map((toggle) => (
           <ToggleMenuItem
+            {...modality}
             label={toggle.label}
             onSelect={(e) => {
               videoBlurToggleClick?.();
@@ -345,6 +360,11 @@ interface SpeakerSectionProps {
   options: OutputMenuOptions[];
   selected: string | undefined;
   onSelect: (id: string) => void;
+  /** Reports whether a row was reached by pointer or by keyboard. */
+  modality: {
+    onKeyDown: () => void;
+    onPointerMove: () => void;
+  };
 }
 
 /**
@@ -359,6 +379,7 @@ function SpeakerSection({
   options,
   selected,
   onSelect,
+  modality,
 }: SpeakerSectionProps): JSX.Element {
   const { t } = useTranslation();
   const labelText = (label: AudioOutputDeviceLabel): string => {
@@ -412,6 +433,7 @@ function SpeakerSection({
           }}
           role="menuitemradio"
           aria-checked={selected === id}
+          {...modality}
         >
           {selected === id && <CheckIcon width={24} height={24} aria-hidden />}
         </MenuItem>
@@ -423,12 +445,14 @@ function SpeakerSection({
 interface SoundEffectVolumeProps {
   volume: number;
   onCommit: (volume: number) => void;
+  onPointerMove: () => void;
 }
 
 /** The sound-effect volume slider: the same stored value as in settings. */
 function SoundEffectVolume({
   volume,
   onCommit,
+  onPointerMove,
 }: SoundEffectVolumeProps): JSX.Element {
   const { t } = useTranslation();
   const label = t("settings.audio_tab.effect_volume_label");
@@ -451,6 +475,7 @@ function SoundEffectVolume({
       data-testid="sound_effect_volume"
       role="group"
       aria-label={label}
+      onPointerMove={onPointerMove}
       onKeyDown={(e) => {
         if (SLIDER_KEYS.has(e.key)) e.stopPropagation();
         else keepTabInsideMenu(e);

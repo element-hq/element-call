@@ -113,14 +113,14 @@ Please see LICENSE in the repository root for full details.
   flex: 1;
 }
 
-/* Radix moves DOM focus onto whichever item the pointer is over, so the
+/* The menu moves focus onto whichever item the pointer is over, so the
    browser's own focus ring shows up during mouse use. Keyboard navigation
    gets the border; the pointer gets the hover background and nothing else. */
 .menu [role^="menuitem"]:focus {
   outline: none;
 }
 
-.menu [role^="menuitem"]:focus-visible {
+.keyboardNav [role^="menuitem"]:focus {
   outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
   outline-offset: calc(-1 * var(--cpd-border-width-2));
 }
