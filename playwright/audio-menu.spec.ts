@@ -181,8 +181,15 @@ test("the focus border follows the keyboard and not the pointer", async ({
   await SpaHelpers.createCall(page, "Focus", "Focus border", true);
   await page.getByTestId("videoTile").first().waitFor();
 
-  const chevron = page.getByRole("button", { name: "Microphone" });
-  const rows = page.getByRole("menu").getByRole("menuitemradio");
+  await page.getByRole("button", { name: "Microphone" }).click();
+  const menu = page.getByRole("menu");
+  await expect(menu).toBeVisible();
+
+  // However many devices this browser reports, there is at least one row.
+  const row = menu.getByRole("menuitemradio").first();
+  const box = await row.boundingBox();
+  if (box === null) throw new Error("Expected the row to be laid out");
+  const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   const borderOfFocused = async (): Promise<string> =>
     page.evaluate(() => {
       const el = document.activeElement;
@@ -190,20 +197,19 @@ test("the focus border follows the keyboard and not the pointer", async ({
     });
 
   // Reached with the pointer: the hover background carries it, no border.
-  await chevron.click();
-  await page.getByRole("menu").waitFor();
-  await rows.nth(1).hover();
-  expect(await borderOfFocused()).toBe("none");
+  await page.mouse.move(centre.x, centre.y);
+  await expect.poll(borderOfFocused).toBe("none");
 
   // Reached with the keyboard: a border marks where the keyboard is. The menu
   // moves focus to whatever the pointer is over, so the browser cannot tell
   // these two apart on its own.
   await page.keyboard.press("ArrowDown");
-  expect(await borderOfFocused()).toBe("solid");
+  await expect.poll(borderOfFocused).toBe("solid");
 
-  // And back, on the next movement of the pointer.
-  await rows.nth(0).hover();
-  expect(await borderOfFocused()).toBe("none");
+  // And gone again on the next movement of the pointer. A point the pointer
+  // is not already at, so that the move is one.
+  await page.mouse.move(centre.x + 4, centre.y + 2);
+  await expect.poll(borderOfFocused).toBe("none");
 });
 
 async function firstUncheckedIndex(

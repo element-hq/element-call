@@ -342,6 +342,14 @@ is what holds it there.
   remaining manual checks are AC6, which needs Safari, and AC21, which needs a screen
   reader.
 
+### 2026-09-11 — e2e tests must not assume how many devices a browser reports
+- Twice now a new e2e test has failed in CI for the same reason: how many devices a browser
+  invents differs between them and from a developer machine. Chromium reports several
+  microphones and outputs; Firefox in CI reports one microphone and no outputs, so the menu
+  holds a single selectable row. A test that hovered the second row timed out there.
+- Tests in `playwright/audio-menu.spec.ts` now assert only what holds at any device count.
+  Where a fixed device list is what makes the check meaningful, it belongs in a story.
+
 ## PRs
 
 - #4254 — draft, one commit per slice — AC1–AC27 (AC6, AC21, AC24 manual by the reviewer;
