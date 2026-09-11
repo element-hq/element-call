@@ -9,11 +9,15 @@ import { combineLatest, map, switchMap } from "rxjs";
 import { supportsBackgroundProcessors } from "@livekit/track-processors";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
-import { type MenuOptions } from "./MediaMuteAndSwitchButton";
+import {
+  type MenuOptions,
+  type OutputMenuOptions,
+} from "./MediaMuteAndSwitchButton";
 import { type MediaDevices } from "../state/MediaDevices";
 import {
   backgroundBlur as backgroundBlurSettings,
   debugTileLayout as debugTileLayoutSetting,
+  soundEffectVolume as soundEffectVolumeSetting,
 } from "../settings/settings";
 import { type Behavior, constant } from "../state/Behavior";
 import type { ObservableScope } from "../state/ObservableScope";
@@ -54,8 +58,10 @@ function buildMuteBehaviors(
 }
 
 /**
- * Shared helper: maps MediaDevices into the audio/video device-list behaviors
- * needed by FooterSnapshot (options, selection, callbacks, blur toggle).
+ * Shared helper: maps MediaDevices and the sound-effect setting into every
+ * device behavior FooterSnapshot needs, for the switcher menus and the audio
+ * menu alike. The output list is empty wherever the browser cannot switch
+ * output; the menu then names the default rather than hiding the group.
  */
 function buildDeviceBehaviors(
   scope: ObservableScope,
@@ -72,6 +78,11 @@ function buildDeviceBehaviors(
   | "selectVideoButtonOption$"
   | "toggleBlur$"
   | "videoBlurEnabled$"
+  | "audioOutputOptions$"
+  | "selectedAudioOutput$"
+  | "selectAudioOutputOption$"
+  | "soundEffectVolume$"
+  | "setSoundEffectVolume$"
 > {
   return {
     audioOptions$: scope.behavior(
@@ -126,6 +137,45 @@ function buildDeviceBehaviors(
       ),
     ),
     videoBlurEnabled$: backgroundBlurSettings.value$,
+    audioOutputOptions$: scope.behavior(
+      disableSwitcher$.pipe(
+        switchMap((disable) =>
+          disable
+            ? constant([] as OutputMenuOptions[])
+            : mediaDevices.audioOutput.available$.pipe(
+                map((available) =>
+                  [...available.entries()].map(([id, label]) => ({
+                    id,
+                    label,
+                  })),
+                ),
+              ),
+        ),
+      ),
+    ),
+    selectedAudioOutput$: scope.behavior(
+      mediaDevices.audioOutput.selected$.pipe(map((s) => s?.id)),
+    ),
+    selectAudioOutputOption$: scope.behavior(
+      disableSwitcher$.pipe(
+        map((disable) =>
+          disable
+            ? undefined
+            : (id: string): void => mediaDevices.audioOutput.select(id),
+        ),
+      ),
+    ),
+    soundEffectVolume$: soundEffectVolumeSetting.value$,
+    setSoundEffectVolume$: scope.behavior(
+      disableSwitcher$.pipe(
+        map((disable) =>
+          disable
+            ? undefined
+            : (volume: number): void =>
+                soundEffectVolumeSetting.setValue(volume),
+        ),
+      ),
+    ),
   };
 }
 
@@ -270,6 +320,8 @@ export function createLobbyFooterViewModel(
       selectVideoButtonOption: undefined,
     }),
     ...buildMuteBehaviors(scope, muteStates),
+    // Nothing is gated before joining: the chevron already exists on every
+    // platform there, and a device check matters most before a call starts.
     ...buildDeviceBehaviors(scope, mediaDevices, constant(false)),
   };
 }

@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
 
 import { testScope, mockMuteStates, mockMediaDevices } from "../utils/test";
@@ -13,9 +13,18 @@ import { constant } from "../state/Behavior";
 import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
 import type { Alignment, Layout } from "../state/layout-types";
 import type { SpotlightTileViewModel } from "../state/TileViewModel";
-import type { DeviceLabel } from "../state/MediaDevices";
-import { createCallFooterViewModel } from "./CallFooterViewModel";
+import type {
+  AudioOutputDeviceLabel,
+  DeviceLabel,
+} from "../state/MediaDevices";
+import {
+  createCallFooterViewModel,
+  createLobbyFooterViewModel,
+} from "./CallFooterViewModel";
 import { HeaderStyle } from "../UrlParams";
+import { type FooterSnapshot } from "./CallFooter";
+import { type ViewModel } from "../state/ViewModel";
+import { soundEffectVolume } from "../settings/settings";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../Platform", () => ({
@@ -95,7 +104,92 @@ const twoMicsAndOneCamMediaDevices = mockMediaDevices({
   },
 });
 
+const selectOutput = vi.fn();
+const twoOutputsMediaDevices = mockMediaDevices({
+  audioOutput: {
+    available$: constant(
+      new Map<string, AudioOutputDeviceLabel>([
+        ["", { type: "default", name: "Built-in Speakers" }],
+        ["out2", { type: "name", name: "Headset" }],
+      ]),
+    ),
+    selected$: constant({ id: "out2", virtualEarpiece: false }),
+    select: selectOutput,
+  },
+});
+
 describe("createCallFooterViewModel", () => {
+  describe("audio menu", () => {
+    afterEach(() => soundEffectVolume.setValue(0.5));
+
+    function createVm(
+      platform: string,
+      layout: Layout,
+    ): ViewModel<FooterSnapshot> {
+      platformMock.mockReturnValue(platform);
+      return createCallFooterViewModel(
+        testScope(),
+        buildMinimalCallViewModel(layout),
+        mockMuteStates(),
+        twoOutputsMediaDevices,
+        /* reactionIdentifier */ undefined,
+        { showControls: true, header: HeaderStyle.Standard },
+      );
+    }
+
+    it("offers no audio menu when the platform is iOS", () => {
+      const vm = createVm("ios", gridLayout);
+      expect(vm.audioOutputOptions$.value).toEqual([]);
+      expect(vm.selectAudioOutputOption$.value).toBeUndefined();
+      expect(vm.setSoundEffectVolume$.value).toBeUndefined();
+    });
+
+    it("offers no audio menu when the layout is pip", () => {
+      const vm = createVm("desktop", pipLayout);
+      expect(vm.audioOutputOptions$.value).toEqual([]);
+      expect(vm.selectAudioOutputOption$.value).toBeUndefined();
+      expect(vm.setSoundEffectVolume$.value).toBeUndefined();
+    });
+
+    it("audio menu is present pre-join on every platform", () => {
+      for (const platform of ["desktop", "android", "ios"]) {
+        platformMock.mockReturnValue(platform);
+        const vm = createLobbyFooterViewModel(
+          testScope(),
+          mockMuteStates(),
+          twoOutputsMediaDevices,
+          undefined,
+          undefined,
+          false,
+        );
+        expect(vm.audioOutputOptions$.value).toHaveLength(2);
+        expect(vm.selectAudioOutputOption$.value).toBeDefined();
+        expect(vm.setSoundEffectVolume$.value).toBeDefined();
+      }
+    });
+
+    it("reads and writes the sound-effect volume setting on desktop", () => {
+      const vm = createVm("desktop", gridLayout);
+      expect(vm.soundEffectVolume$.value).toBe(0.5);
+
+      vm.setSoundEffectVolume$.value?.(0.2);
+      expect(soundEffectVolume.value$.value).toBe(0.2);
+      expect(vm.soundEffectVolume$.value).toBe(0.2);
+    });
+
+    it("lists the outputs and the selection on desktop", () => {
+      const vm = createVm("desktop", gridLayout);
+      expect(vm.audioOutputOptions$.value).toEqual([
+        { id: "", label: { type: "default", name: "Built-in Speakers" } },
+        { id: "out2", label: { type: "name", name: "Headset" } },
+      ]);
+      expect(vm.selectedAudioOutput$.value).toBe("out2");
+
+      vm.selectAudioOutputOption$.value?.("");
+      expect(selectOutput).toHaveBeenCalledWith("");
+    });
+  });
+
   describe("audioOptions and videoOptions", () => {
     function checkEmptyFor(platform: string, layout: Layout): void {
       platformMock.mockReturnValue(platform);

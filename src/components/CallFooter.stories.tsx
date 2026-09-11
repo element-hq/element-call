@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, fn, userEvent, within } from "storybook/test";
+import { expect, fn, screen, userEvent, within } from "storybook/test";
 import { BehaviorSubject } from "rxjs";
 import { type JSX, type ReactNode } from "react";
 import { Link } from "@vector-im/compound-web";
@@ -103,6 +103,8 @@ const meta = {
     toggleAudio: fnArgType,
     toggleVideo: fnArgType,
     hangup: fnArgType,
+    selectAudioOutputOption: fnArgType,
+    setSoundEffectVolume: fnArgType,
   },
 } satisfies Meta<typeof CallFooterStoryWrapper>;
 
@@ -142,6 +144,11 @@ export const Default: Story = {
     selectedVideo: undefined,
     selectAudioButtonOption: undefined,
     selectVideoButtonOption: undefined,
+    audioOutputOptions: [],
+    selectedAudioOutput: undefined,
+    selectAudioOutputOption: undefined,
+    soundEffectVolume: 0.5,
+    setSoundEffectVolume: undefined,
   },
   parameters: {
     layout: "fullscreen",
@@ -354,10 +361,29 @@ export const MobileLayout: Story = {
   },
 };
 
+/** Devices and controls of the audio menu, as the lobby offers them. */
+const audioMenuArgs = {
+  audioOptions: [
+    { label: { type: "name", name: "MacBook Pro Microphone" }, id: "1" },
+    { label: { type: "name", name: "Jabra Evolve 65" }, id: "2" },
+  ],
+  selectedAudio: "1",
+  selectAudioButtonOption: fn(),
+  audioOutputOptions: [
+    { label: { type: "default", name: "MacBook Pro Speakers" }, id: "" },
+    { label: { type: "name", name: "Jabra Evolve 65" }, id: "2" },
+  ],
+  selectedAudioOutput: "",
+  selectAudioOutputOption: fn(),
+  soundEffectVolume: 0.5,
+  setSoundEffectVolume: fn(),
+} satisfies Partial<FooterSnapshot>;
+
 export const Lobby: Story = {
   ...Default,
   args: {
     ...Default.args,
+    ...audioMenuArgs,
     showLogo: false,
     openSettings: undefined,
     layout: null,
@@ -372,6 +398,7 @@ export const LobbyMobile: Story = {
   ...Default,
   args: {
     ...Default.args,
+    ...audioMenuArgs,
     showLogo: false,
 
     layout: null,
@@ -413,5 +440,107 @@ export const LobbyRecentButtonMobile: Story = {
   },
   parameters: {
     ...Default.parameters,
+  },
+};
+
+/** The microphone chevron opens the audio menu: microphones and speakers. */
+export const WithAudioMenu: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    audioEnabled: true,
+    ...audioMenuArgs,
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+
+    const menu = within(await screen.findByRole("menu"));
+    await expect(
+      menu.getByRole("heading", { name: "Audio controls" }),
+    ).toBeInTheDocument();
+    // The headset appears in both groups under the same name, as a real one
+    // does. The speaker rows are the scroll area's own children; the
+    // microphone rows sit one level deeper, inside their group.
+    const scroll = menu.getByTestId("audio_menu_scroll");
+    const outputs = [...scroll.children].filter(
+      (el) => el.getAttribute("role") === "menuitemradio",
+    );
+    await userEvent.click(outputs[1]);
+    await expect(args.selectAudioOutputOption).toHaveBeenCalledWith("2");
+    // The menu stays open after a selection.
+    await expect(screen.getByRole("menu")).toBeInTheDocument();
+    await expect(
+      menu.getByRole("slider", { name: /Sound effect volume/ }),
+    ).toBeInTheDocument();
+  },
+};
+
+/** One output only: the speaker group names it without offering a choice. */
+export const WithSingleAudioOutput: Story = {
+  ...WithAudioMenu,
+  args: {
+    ...WithAudioMenu.args,
+    audioOutputOptions: [
+      { label: { type: "default", name: "MacBook Pro Speakers" }, id: "" },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+
+    await expect(
+      await screen.findByTestId("speaker_readonly"),
+    ).toHaveTextContent("MacBook Pro Speakers");
+    await expect(
+      screen.queryByRole("menuitemradio", { name: /Speakers/ }),
+    ).toBe(null);
+  },
+};
+
+/**
+ * More devices than fit on screen: the heading and the slider stay put while
+ * the device lists scroll between them.
+ */
+export const WithManyDevices: Story = {
+  ...WithAudioMenu,
+  args: {
+    ...WithAudioMenu.args,
+    audioOptions: Array.from({ length: 12 }, (_, i) => ({
+      label: { type: "name", name: `Microphone ${i + 1} (USB Audio Device)` },
+      id: `mic-${i}`,
+    })),
+    selectedAudio: "mic-0",
+    audioOutputOptions: Array.from({ length: 8 }, (_, i) => ({
+      label: { type: "name", name: `Speaker ${i + 1} (DisplayPort)` },
+      id: `out-${i}`,
+    })),
+    selectedAudioOutput: "out-0",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+    const menu = await screen.findByRole("menu");
+    const heading = within(menu).getByRole("heading", {
+      name: "Audio controls",
+    });
+    const slider = within(menu).getByRole("slider");
+    const scroll = within(menu).getByTestId("audio_menu_scroll");
+
+    // The menu slides in; measure once it has settled.
+    await Promise.all(
+      menu.getAnimations({ subtree: true }).map(async (a) => a.finished),
+    );
+
+    // The whole menu is on screen, so the heading and the slider are too.
+    const menuBox = menu.getBoundingClientRect();
+    await expect(menuBox.top).toBeGreaterThanOrEqual(0);
+    await expect(menuBox.bottom).toBeLessThanOrEqual(window.innerHeight);
+    await expect(heading.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+    await expect(slider.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      window.innerHeight,
+    );
+    // Only the device lists scroll.
+    await expect(scroll.scrollHeight).toBeGreaterThan(scroll.clientHeight);
   },
 };

@@ -1,0 +1,133 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import { type FC, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  MicOnIcon,
+  MicOffIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
+import classNames from "classnames";
+
+import styles from "./AudioLevelMeter.module.css";
+import {
+  useMicrophoneLevel,
+  type MicrophoneLevelState,
+} from "./useMicrophoneLevel";
+
+// The level is quantised into this many bars. They share the row, so the
+// count also sets how thick they are.
+const BAR_COUNT = 18;
+/**
+ * Level below which the meter reads as silent. Above the noise floor of a
+ * typical desk microphone, so an idle room does not announce itself as sound.
+ */
+const SPEECH_THRESHOLD = 0.06;
+
+export interface AudioLevelMeterProps {
+  state: MicrophoneLevelState;
+}
+
+/**
+ * A live indicator of the signal level at the selected microphone.
+ *
+ * Focusable, so that a screen reader user can put it in focus and hear whether
+ * the microphone is picking anything up; the bars alone carry that information
+ * for everyone else.
+ */
+export const AudioLevelMeter: FC<AudioLevelMeterProps> = ({ state }) => {
+  const { t } = useTranslation();
+  const [focused, setFocused] = useState(false);
+
+  // Bars resting at zero would read as a microphone that hears nothing, which
+  // is a different thing and the one people act on.
+  if (state.type === "absent")
+    return (
+      <div className={styles.message} data-testid="mic_absent">
+        <MicOffIcon width={24} height={24} aria-hidden />
+        <span>{t("audio_menu.mic_absent")}</span>
+      </div>
+    );
+
+  if (state.type === "denied")
+    return (
+      <div className={styles.message} data-testid="mic_level_denied">
+        <MicOffIcon width={24} height={24} aria-hidden />
+        <span>{t("audio_menu.mic_permission_denied")}</span>
+      </div>
+    );
+
+  const unavailable = state.type === "unavailable";
+  const level = state.type === "active" ? state.level : 0;
+  const litBars = unavailable ? 0 : Math.round(level * BAR_COUNT);
+  const speaking = !unavailable && level >= SPEECH_THRESHOLD;
+  const stateText = unavailable
+    ? t("audio_menu.mic_unavailable")
+    : speaking
+      ? t("audio_menu.mic_level_active")
+      : t("audio_menu.mic_level_silent");
+
+  return (
+    <div
+      className={classNames(styles.meter, {
+        [styles.unavailable]: unavailable,
+      })}
+      data-testid="mic_level_meter"
+      data-unavailable={unavailable || undefined}
+      role="meter"
+      // The meter is the only place the "is my microphone working?" answer
+      // lives, so it has to be reachable without a pointer even though a
+      // meter is not an interactive control.
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      aria-label={t("audio_menu.mic_level_label")}
+      aria-valuemin={0}
+      aria-valuemax={1}
+      aria-valuenow={level}
+      aria-valuetext={stateText}
+    >
+      <MicOnIcon width={24} height={24} className={styles.icon} aria-hidden />
+      <div className={styles.bars}>
+        {Array.from({ length: BAR_COUNT }, (_, i) => (
+          <span
+            key={i}
+            className={classNames(styles.bar, { [styles.lit]: i < litBars })}
+          />
+        ))}
+      </div>
+      {/* Announces changes only while the meter holds focus, so the level does
+          not talk over a screen reader reading the rest of the menu. The text
+          stays in the DOM either way: removing it on blur would hand the
+          menu's focus trap an empty active element mid-Tab, and it would pull
+          focus back into the menu instead of letting it reach the slider. */}
+      <span className={styles.srOnly} aria-live={focused ? "polite" : "off"}>
+        {stateText}
+      </span>
+    </div>
+  );
+};
+
+export interface MicrophoneLevelProps {
+  /** The microphone to follow, or undefined if none is selected. */
+  deviceId: string | undefined;
+  /** Whether to hold a capture and report a level at all. */
+  active: boolean;
+}
+
+/**
+ * The level meter, following a microphone of its own.
+ *
+ * Re-renders when the level moves to another bar, and only itself.
+ */
+export const MicrophoneLevel: FC<MicrophoneLevelProps> = ({
+  deviceId,
+  active,
+}) => (
+  <AudioLevelMeter state={useMicrophoneLevel(deviceId, active, BAR_COUNT)} />
+);

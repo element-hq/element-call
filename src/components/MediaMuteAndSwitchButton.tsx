@@ -5,7 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ComponentType, useState, type FC, useEffect } from "react";
+import {
+  type ComponentType,
+  useState,
+  type FC,
+  useEffect,
+  type JSX,
+  type KeyboardEvent,
+} from "react";
 import {
   Button,
   Menu,
@@ -19,18 +26,48 @@ import {
   MicOnIcon,
   SpinnerIcon,
   VideoCallIcon,
+  VolumeOnIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
 import styles from "./MediaMuteAndSwitchButton.module.css";
 import { MicButton, VideoButton } from "../button";
-import { type DeviceLabel } from "../state/MediaDevices";
+import {
+  type AudioOutputDeviceLabel,
+  type DeviceLabel,
+} from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
+import { MicrophoneLevel } from "./AudioLevelMeter";
+import { Slider } from "../Slider";
 
 export interface MenuOptions {
   label: DeviceLabel;
   id: string;
+}
+
+export interface OutputMenuOptions {
+  label: AudioOutputDeviceLabel;
+  id: string;
+}
+
+/**
+ * The controls that turn the microphone chevron menu into the audio menu: a
+ * speaker group and the sound-effect volume below the microphone list. Absent
+ * for the camera menu.
+ */
+export interface AudioControls {
+  /**
+   * The audio outputs to choose from. Empty where the browser does not allow
+   * choosing one; the menu then names the default output instead.
+   */
+  outputOptions: OutputMenuOptions[];
+  selectedOutput: string | undefined;
+  onSelectOutput: (id: string) => void;
+  /** The microphone the level meter follows. */
+  micDeviceId: string | undefined;
+  soundEffectVolume: number;
+  onSoundEffectVolumeCommit: (volume: number) => void;
 }
 
 export interface MediaMuteAndSwitchButtonProps {
@@ -49,6 +86,8 @@ export interface MediaMuteAndSwitchButtonProps {
   selectedOption?: string;
   videoBlurToggleClick?: () => void;
   videoBlurEnabled?: boolean;
+  /** When present, the menu renders the speaker group below the microphone list. */
+  audioControls?: AudioControls;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
@@ -57,6 +96,17 @@ export interface MediaMuteAndSwitchButtonProps {
 }
 
 const BLUR_ID = "blur";
+/** The keys a slider reads; inside the menu they must not move focus. */
+const SLIDER_KEYS = new Set([
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+  "Home",
+  "End",
+  "PageUp",
+  "PageDown",
+]);
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
@@ -69,9 +119,17 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   videoBlurEnabled,
   videoBlurToggleClick,
   onSelect,
+  audioControls,
 }) => {
   const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Which of the two reached the current item, since `:focus-visible` cannot
+  // tell: the menu focuses whatever the pointer is over.
+  const [keyboardNav, setKeyboardNav] = useState(false);
+  const modality = {
+    onKeyDown: (): void => setKeyboardNav(true),
+    onPointerMove: (): void => setKeyboardNav(false),
+  };
   const isBusy = busy ?? false;
   const { t } = useTranslation();
   const devices = useMediaDevices();
@@ -142,6 +200,60 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       break;
   }
 
+  const deviceItems = options?.map(({ label, id }) => {
+    let labelText: string;
+    switch (label.type) {
+      case "name":
+        labelText = label.name;
+        break;
+      case "number":
+        labelText = numberedLabel(label.number);
+        break;
+    }
+    return (
+      <MenuItem
+        hideChevron
+        label={labelText}
+        Icon={
+          IconOptions && (
+            <IconOptions
+              width={24}
+              height={24}
+              className={styles.itemIcon}
+              aria-hidden
+            />
+          )
+        }
+        onSelect={(e) => {
+          e.preventDefault();
+          if (id === selectedOption) return;
+          setPlannedSelection(id);
+          onSelect?.(id);
+        }}
+        key={id}
+        role="menuitemradio"
+        aria-checked={selectedOption === id}
+        {...modality}
+      >
+        {selectedOption === id && (
+          <CheckIcon
+            width={24}
+            height={24}
+            aria-hidden // A label would be redundant to aria-checked above
+          />
+        )}
+        {selectedOption !== id && plannedSelection === id && (
+          <SpinnerIcon
+            width={24}
+            height={24}
+            className={styles.rotate}
+            aria-label={t("settings.devices.activating")}
+          />
+        )}
+      </MenuItem>
+    );
+  });
+
   return (
     <div
       className={classNames({
@@ -152,6 +264,9 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       {/* The mute button lives inside */}
       {button}
       <Menu
+        className={classNames(styles.menu, {
+          [styles.keyboardNav]: keyboardNav,
+        })}
         title={title}
         showTitle={true}
         open={menuOpen}
@@ -168,64 +283,65 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             kind={"tertiary"}
             size="lg"
             aria-label={optionsButtonLabel}
+            onKeyDown={() => setKeyboardNav(true)}
+            onPointerDown={() => setKeyboardNav(false)}
           />
         }
       >
-        {options?.map(({ label, id }) => {
-          let labelText: string;
-          switch (label.type) {
-            case "name":
-              labelText = label.name;
-              break;
-            case "number":
-              labelText = numberedLabel(label.number);
-              break;
-          }
-          return (
-            <MenuItem
-              hideChevron
-              label={labelText}
-              Icon={
-                IconOptions && (
-                  <IconOptions
-                    width={24}
-                    height={24}
-                    className={styles.itemIcon}
-                    aria-hidden
-                  />
-                )
-              }
-              onSelect={(e) => {
-                e.preventDefault();
-                if (id === selectedOption) return;
-                setPlannedSelection(id);
-                onSelect?.(id);
-              }}
-              key={id}
-              role="menuitemradio"
-              aria-checked={selectedOption === id}
+        {audioControls ? (
+          // Only the device lists scroll; the title above and the slider below
+          // stay put. Tab moves between the device rows, the meter and the
+          // slider; see keepTabInsideMenu.
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div
+            className={styles.scrollArea}
+            data-testid="audio_menu_scroll"
+            onKeyDown={keepTabInsideMenu}
+          >
+            <div
+              className={styles.micSection}
+              data-testid="audio_menu_mic_section"
             >
-              {selectedOption === id && (
-                <CheckIcon
-                  width={24}
-                  height={24}
-                  aria-hidden // A label would be redundant to aria-checked above
+              {deviceItems}
+              {/* The meter reads the microphone, so it travels with the
+                  microphone list rather than sitting among the output
+                  controls; pinned to the foot of the scroll port, it stays on
+                  screen for as long as any microphone is. */}
+              <div className={styles.stickyMeter} {...modality}>
+                {/* The capture is bound to the menu being open, so the
+                    microphone is only ever held while the user is looking at
+                    the level. */}
+                <MicrophoneLevel
+                  deviceId={audioControls.micDeviceId}
+                  active={menuOpen}
                 />
-              )}
-              {selectedOption !== id && plannedSelection === id && (
-                <SpinnerIcon
-                  width={24}
-                  height={24}
-                  className={styles.rotate}
-                  aria-label={t("settings.devices.activating")}
-                />
-              )}
-            </MenuItem>
-          );
-        })}
+              </div>
+            </div>
+            <hr />
+            <SpeakerSection
+              options={audioControls.outputOptions}
+              selected={audioControls.selectedOutput}
+              onSelect={audioControls.onSelectOutput}
+              modality={modality}
+            />
+          </div>
+        ) : (
+          deviceItems
+        )}
+        {audioControls && (
+          <>
+            <hr />
+            <SoundEffectVolume
+              volume={audioControls.soundEffectVolume}
+              onCommit={audioControls.onSoundEffectVolumeCommit}
+              onPointerMove={modality.onPointerMove}
+            />
+          </>
+        )}
         {(toggles?.length ?? 0) > 0 && <hr />}
         {toggles?.map((toggle) => (
           <ToggleMenuItem
+            {...modality}
             label={toggle.label}
             onSelect={(e) => {
               videoBlurToggleClick?.();
@@ -239,3 +355,164 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     </div>
   );
 };
+
+interface SpeakerSectionProps {
+  options: OutputMenuOptions[];
+  selected: string | undefined;
+  onSelect: (id: string) => void;
+  /** Reports whether a row was reached by pointer or by keyboard. */
+  modality: {
+    onKeyDown: () => void;
+    onPointerMove: () => void;
+  };
+}
+
+/**
+ * The speaker group of the audio menu.
+ *
+ * With more than one output to choose from this is a radio group. With one or
+ * none it still names the output in use, as a plain row: knowing where audio
+ * goes is useful even where it cannot be redirected, as in browsers that do
+ * not support choosing an output at all.
+ */
+function SpeakerSection({
+  options,
+  selected,
+  onSelect,
+  modality,
+}: SpeakerSectionProps): JSX.Element {
+  const { t } = useTranslation();
+  const labelText = (label: AudioOutputDeviceLabel): string => {
+    switch (label.type) {
+      case "name":
+        return label.name;
+      case "number":
+        return t("settings.devices.speaker_numbered", { n: label.number });
+      case "speaker":
+        return t("settings.devices.loudspeaker");
+      case "earpiece":
+        return t("settings.devices.handset");
+      case "default":
+        return label.name === null
+          ? t("settings.devices.default")
+          : t("settings.devices.default_named_plain", { name: label.name });
+    }
+  };
+  const icon = (
+    <VolumeOnIcon
+      width={24}
+      height={24}
+      className={styles.itemIcon}
+      aria-hidden
+    />
+  );
+
+  if (options.length <= 1) {
+    const only = options[0];
+    return (
+      <div className={styles.readOnlyRow} data-testid="speaker_readonly">
+        {icon}
+        <span>
+          {only ? labelText(only.label) : t("settings.devices.default")}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {options.map(({ id, label }) => (
+        <MenuItem
+          hideChevron
+          key={id}
+          label={labelText(label)}
+          Icon={icon}
+          onSelect={(e) => {
+            e.preventDefault();
+            if (id !== selected) onSelect(id);
+          }}
+          role="menuitemradio"
+          aria-checked={selected === id}
+          {...modality}
+        >
+          {selected === id && <CheckIcon width={24} height={24} aria-hidden />}
+        </MenuItem>
+      ))}
+    </>
+  );
+}
+
+interface SoundEffectVolumeProps {
+  volume: number;
+  onCommit: (volume: number) => void;
+  onPointerMove: () => void;
+}
+
+/** The sound-effect volume slider: the same stored value as in settings. */
+function SoundEffectVolume({
+  volume,
+  onCommit,
+  onPointerMove,
+}: SoundEffectVolumeProps): JSX.Element {
+  const { t } = useTranslation();
+  const label = t("settings.audio_tab.effect_volume_label");
+  // Tracked locally so dragging is smooth; only the committed value is
+  // stored. A change made in settings while the menu is open resets it.
+  const [raw, setRaw] = useState(volume);
+  const [committed, setCommitted] = useState(volume);
+  if (volume !== committed) {
+    setCommitted(volume);
+    setRaw(volume);
+  }
+
+  return (
+    // The menu treats the slider's keys as navigation between its items, which
+    // would otherwise stop the slider from ever receiving them. The handler has
+    // to sit on the wrapper because Slider takes no key handler of its own.
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    <div
+      className={styles.volumeRow}
+      data-testid="sound_effect_volume"
+      role="group"
+      aria-label={label}
+      onPointerMove={onPointerMove}
+      onKeyDown={(e) => {
+        if (SLIDER_KEYS.has(e.key)) e.stopPropagation();
+        else keepTabInsideMenu(e);
+      }}
+    >
+      <span className={styles.volumeLabel}>{label}</span>
+      <div className={styles.volumeControl}>
+        <VolumeOnIcon
+          width={24}
+          height={24}
+          className={styles.itemIcon}
+          aria-hidden
+        />
+        <Slider
+          className={styles.volumeSlider}
+          label={label}
+          value={raw}
+          onValueChange={setRaw}
+          onValueCommit={onCommit}
+          min={0}
+          max={1}
+          step={0.01}
+          // Slider names its thumb after the tooltip, so the tooltip has to
+          // carry what the control is, not just its value.
+          tooltipFormatter={(v) => `${label}: ${Math.round(v * 100)}%`}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Lets Tab move focus between the device rows, the level meter and the
+ * sound-effect slider. The menu swallows Tab so that its items are walked
+ * with the arrow keys; kept from it, the browser's own focus order takes over,
+ * and the menu's focus trap keeps that order inside the menu.
+ */
+function keepTabInsideMenu(e: KeyboardEvent<HTMLElement>): void {
+  if (e.key === "Tab") e.stopPropagation();
+}

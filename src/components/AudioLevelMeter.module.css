@@ -1,0 +1,76 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.meter {
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-3x);
+  padding-block: var(--cpd-space-2x);
+  padding-inline-start: var(--cpd-space-4x);
+  /* Stop the bars where the device labels stop rather than at the menu edge:
+     a menu item keeps a 4x margin after its label plus a 2x column reserved
+     for the chevron, on top of the menu's own 4x padding. */
+  padding-inline-end: calc(2 * var(--cpd-space-4x) + var(--cpd-space-2x));
+  border-radius: var(--cpd-radius-pill-effect);
+}
+
+.meter:focus-visible {
+  outline: 2px solid var(--cpd-color-border-focused);
+  outline-offset: -2px;
+}
+
+.icon {
+  color: var(--cpd-color-icon-secondary);
+  flex-shrink: 0;
+}
+
+.bars {
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-2x);
+  flex: 1;
+}
+
+.bar {
+  /* The bars share out whatever the gaps leave over, so the gap above and the
+     bar count together set how thick a bar is. Across the inset row that lands
+     near 6px per bar against the 8px gap, as in the design. */
+  flex: 1;
+  height: 20px;
+  border-radius: var(--cpd-radius-pill-effect);
+  background-color: var(--cpd-color-bg-subtle-primary);
+  transition: background-color 60ms linear;
+}
+
+.lit {
+  background-color: var(--cpd-color-icon-accent-primary);
+}
+
+.unavailable .icon,
+.unavailable .bar {
+  opacity: 0.5;
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-3x);
+  padding-block: var(--cpd-space-2x);
+  padding-inline-start: var(--cpd-space-4x);
+  padding-inline-end: calc(2 * var(--cpd-space-4x) + var(--cpd-space-2x));
+  color: var(--cpd-color-text-secondary);
+  font: var(--cpd-font-body-sm-regular);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
