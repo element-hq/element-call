@@ -374,7 +374,7 @@ function SpeakerSection({
       case "default":
         return label.name === null
           ? t("settings.devices.default")
-          : `${t("settings.devices.default")} (${label.name})`;
+          : t("settings.devices.default_named_plain", { name: label.name });
     }
   };
   const icon = (
