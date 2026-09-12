@@ -9,8 +9,12 @@ import { expect, onTestFinished, test, vi } from "vitest";
 import {
   type LocalTrackPublication,
   LocalVideoTrack,
+  ParticipantEvent,
+  type RemoteAudioTrack,
+  type RemoteTrackPublication,
   Track,
   TrackEvent,
+  TrackPublication,
 } from "livekit-client";
 import { waitFor } from "@testing-library/dom";
 
@@ -23,6 +27,7 @@ import {
   withTestScheduler,
   mockRemoteParticipant,
   mockRemoteScreenShare,
+  mockEmitter,
 } from "../../utils/test";
 import { constant } from "../Behavior";
 
@@ -157,6 +162,50 @@ test("control a participant's screen share volume", () => {
       f: 0,
       g: 0.8,
     });
+  });
+});
+
+test("re-applies the playback volume when an audio element is attached", () => {
+  // A participant whose microphone track does not exist yet (they joined muted)
+  const track = mockEmitter<RemoteAudioTrack>() as unknown as RemoteAudioTrack;
+  let micPublication: Partial<RemoteTrackPublication> = {};
+  const setVolumeSpy = vi.fn();
+  const participant = mockRemoteParticipant({
+    setVolume: setVolumeSpy,
+    getTrackPublication: (source) =>
+      (source === Track.Source.Microphone
+        ? micPublication
+        : {}) as RemoteTrackPublication,
+  });
+  const vm = mockRemoteMedia(rtcMembership, {}, participant);
+  withTestScheduler(({ expectObservable, schedule }) => {
+    schedule("-a-b-c|", {
+      a() {
+        vm.togglePlaybackMuted();
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(0);
+        setVolumeSpy.mockClear();
+      },
+      b() {
+        // The participant unmutes: their track gets published and subscribed,
+        // then the renderer attaches an audio element to it
+        micPublication = { track };
+        participant.emit(
+          ParticipantEvent.TrackSubscriptionStatusChanged,
+          micPublication as RemoteTrackPublication,
+          TrackPublication.SubscriptionStatus.Subscribed,
+        );
+        expect(setVolumeSpy).not.toHaveBeenCalled();
+        track.emit(TrackEvent.ElementAttached, {} as HTMLMediaElement);
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(0);
+        setVolumeSpy.mockClear();
+      },
+      c() {
+        // ...and again for every further attach (e.g. a re-render)
+        track.emit(TrackEvent.ElementAttached, {} as HTMLMediaElement);
+        expect(setVolumeSpy).toHaveBeenLastCalledWith(0);
+      },
+    });
+    expectObservable(vm.playbackMuted$).toBe("ab", { a: false, b: true });
   });
 });
 
