@@ -592,7 +592,13 @@ export const createLocalMembership$ = ({
     combineLatest([
       homeserverConnected.combined$,
       localConnectionState$.pipe(
-        map((state) => state === ConnectionState.LivekitConnected),
+        // A signal-only reconnect keeps the peer connection (and so the
+        // media) up, so we don't tell the user we're reconnecting for it.
+        map(
+          (state) =>
+            state === ConnectionState.LivekitConnected ||
+            state === ConnectionState.LivekitSignalReconnecting,
+        ),
       ),
     ]).pipe(
       map(([[hsConnected, hsReason], livekitConnected]) => {
