@@ -266,7 +266,7 @@ export class TestHelpers {
     await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
     await TestHelpers.expandAllSections(page);
     await page
-      .getByRole("button", { name: /^Open room ${roomName}/ })
+      .getByRole("button", { name: new RegExp(`^Open room ${roomName}`) })
       .click({ timeout: 10000 });
     await page.getByRole("button", { name: "Accept" }).click({
       timeout: 5000,
@@ -371,7 +371,9 @@ export class TestHelpers {
     page: Page,
     roomName: string,
   ): Promise<void> {
-    await page.getByRole("button", { name: `Open room ${roomName}` }).click();
+    await page
+      .getByRole("button", { name: new RegExp(`^Open room ${roomName}`) })
+      .click();
   }
 
   public static async dismissInviteUnknownUserModal(page: Page): Promise<void> {
