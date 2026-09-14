@@ -109,10 +109,11 @@ export const widgetTest = test.extend<MyFixtures>({
       await TestHelpers.dismissInviteUnknownUserModal(ewPage1);
 
       // Accept the invite
+      await TestHelpers.closeReleaseAnnouncement(ewPage2, "Introducing Sections");
       await expect(
-        ewPage2.getByRole("option", { name: "Welcome Room" }),
+        ewPage2.getByRole("button", { name: "Open room Welcome Room" }),
       ).toBeVisible();
-      await ewPage2.getByRole("option", { name: "Welcome Room" }).click();
+      await ewPage2.getByRole("button", { name: "Open room Welcome Room" }).click();
       await ewPage2.getByRole("button", { name: "Accept" }).click();
       await expect(
         ewPage2

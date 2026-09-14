@@ -253,7 +253,8 @@ export class TestHelpers {
     roomName: string,
     page: Page,
   ): Promise<void> {
-    await page.getByRole("option", { name: roomName }).click({
+    await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
+    await page.getByRole("button", { name: `Open room ${roomName}` }).click({
       timeout: 10000,
     });
     await page.getByRole("button", { name: "Accept" }).click({
@@ -359,7 +360,7 @@ export class TestHelpers {
     page: Page,
     roomName: string,
   ): Promise<void> {
-    await page.getByRole("option", { name: `Open room ${roomName}` }).click();
+    await page.getByRole("button", { name: `Open room ${roomName}` }).click();
   }
 
   public static async dismissInviteUnknownUserModal(page: Page): Promise<void> {
