@@ -113,11 +113,12 @@ export const widgetTest = test.extend<MyFixtures>({
         ewPage2,
         "Introducing Sections",
       );
+      await TestHelpers.expandAllSections(ewPage2);
       await expect(
-        ewPage2.getByRole("button", { name: "Open room Welcome Room" }),
+        ewPage2.getByRole("button", { name: /^Open room Welcome Room/ }),
       ).toBeVisible();
       await ewPage2
-        .getByRole("button", { name: "Open room Welcome Room" })
+        .getByRole("button", { name: /^Open room Welcome Room/ })
         .click();
       await ewPage2.getByRole("button", { name: "Accept" }).click();
       await expect(

@@ -203,6 +203,16 @@ export class TestHelpers {
     }
   }
 
+  public static async expandAllSections(page: Page): Promise<void> {
+    try {
+      await page
+        .getByRole("button", { name: "Expand all sections" })
+        .click({ timeout: 2000 });
+    } catch {
+      // Already expanded or button not present
+    }
+  }
+
   public static async createRoom(
     name: string,
     page: Page,
@@ -254,9 +264,10 @@ export class TestHelpers {
     page: Page,
   ): Promise<void> {
     await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
-    await page.getByRole("button", { name: `Open room ${roomName}` }).click({
-      timeout: 10000,
-    });
+    await TestHelpers.expandAllSections(page);
+    await page
+      .getByRole("button", { name: /^Open room ${roomName}/ })
+      .click({ timeout: 10000 });
     await page.getByRole("button", { name: "Accept" }).click({
       timeout: 5000,
     });
