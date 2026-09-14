@@ -159,8 +159,16 @@ export const widgetTest = test.extend<MyFixtures>({
       ).toBeVisible();
 
       // Accept the DM invite from brooks
-      // This how playwright record selects the DM invite in the room list
-      await ewPage2.getByRole("button", { name: "Open room" }).click();
+      await TestHelpers.closeReleaseAnnouncement(
+        ewPage2,
+        "Introducing Sections",
+      );
+      await TestHelpers.expandAllSections(ewPage2);
+      await ewPage2
+        .getByRole("button", {
+          name: new RegExp(`^Open room ${brooksDisplayName}`),
+        })
+        .click();
       await ewPage2.getByRole("button", { name: "Start chatting" }).click();
     }
 
