@@ -11,6 +11,7 @@ import {
   type JSHandle,
   type Page,
   type FrameLocator,
+  type Locator,
 } from "@playwright/test";
 import { type MatrixClient } from "matrix-js-sdk";
 
@@ -265,9 +266,7 @@ export class TestHelpers {
   ): Promise<void> {
     await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
     await TestHelpers.expandAllSections(page);
-    await page
-      .getByRole("button", { name: new RegExp(`^Open room ${roomName}`) })
-      .click({ timeout: 10000 });
+    await TestHelpers.roomListItem(page, roomName).click({ timeout: 10000 });
     await page.getByRole("button", { name: "Accept" }).click({
       timeout: 5000,
     });
@@ -363,6 +362,17 @@ export class TestHelpers {
   }
 
   /**
+   * Locates a room in the room list by its name.
+   *
+   * Matches on the aria-label prefix because the item's role differs between
+   * the flat room list (`option`) and the sectioned room list (`button`), and
+   * the label may carry a suffix such as " invitation.".
+   */
+  public static roomListItem(page: Page, roomName: string): Locator {
+    return page.locator(`[aria-label^="Open room ${roomName}"]`);
+  }
+
+  /**
    * Switches to a room in the room list by its name.
    * @param page - The EW page
    * @param roomName - The name of the room to switch to
@@ -371,9 +381,8 @@ export class TestHelpers {
     page: Page,
     roomName: string,
   ): Promise<void> {
-    await page
-      .getByRole("button", { name: new RegExp(`^Open room ${roomName}`) })
-      .click();
+    await TestHelpers.expandAllSections(page);
+    await TestHelpers.roomListItem(page, roomName).click();
   }
 
   public static async dismissInviteUnknownUserModal(page: Page): Promise<void> {

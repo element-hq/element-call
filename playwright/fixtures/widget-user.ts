@@ -115,11 +115,9 @@ export const widgetTest = test.extend<MyFixtures>({
       );
       await TestHelpers.expandAllSections(ewPage2);
       await expect(
-        ewPage2.getByRole("button", { name: /^Open room Welcome Room/ }),
+        TestHelpers.roomListItem(ewPage2, "Welcome Room"),
       ).toBeVisible();
-      await ewPage2
-        .getByRole("button", { name: /^Open room Welcome Room/ })
-        .click();
+      await TestHelpers.roomListItem(ewPage2, "Welcome Room").click();
       await ewPage2.getByRole("button", { name: "Accept" }).click();
       await expect(
         ewPage2
@@ -164,11 +162,7 @@ export const widgetTest = test.extend<MyFixtures>({
         "Introducing Sections",
       );
       await TestHelpers.expandAllSections(ewPage2);
-      await ewPage2
-        .getByRole("button", {
-          name: new RegExp(`^Open room ${brooksDisplayName}`),
-        })
-        .click();
+      await TestHelpers.roomListItem(ewPage2, brooksDisplayName).click();
       await ewPage2.getByRole("button", { name: "Start chatting" }).click();
     }
 
