@@ -56,6 +56,11 @@ interface Props extends ComponentProps<typeof animated.div> {
   displayName: string;
   mxcAvatarUrl: string | undefined;
   avatarStyle?: "solid" | "translucent";
+  /**
+   * Whether to show an avatar when there is no video. Off for media that has no
+   * Matrix user behind it.
+   */
+  showAvatar?: boolean;
   background?: "solid" | "transparent";
   focusable: boolean;
   primaryButton?: ReactNode;
@@ -95,6 +100,7 @@ export const MediaView: FC<Props> = ({
   displayName,
   mxcAvatarUrl,
   avatarStyle = "solid",
+  showAvatar = true,
   background = "solid",
   focusable,
   primaryButton,
@@ -176,15 +182,17 @@ export const MediaView: FC<Props> = ({
             <div className={styles.speakingBorder} />
           </div>
         )}
-        <Avatar
-          id={userId}
-          name={displayName}
-          size={avatarSize}
-          src={mxcAvatarUrl}
-          data-style={avatarStyle}
-          className={styles.avatar}
-          style={{ display: video && videoEnabled ? "none" : "initial" }}
-        />
+        {showAvatar && (
+          <Avatar
+            id={userId}
+            name={displayName}
+            size={avatarSize}
+            src={mxcAvatarUrl}
+            data-style={avatarStyle}
+            className={styles.avatar}
+            style={{ display: video && videoEnabled ? "none" : "initial" }}
+          />
+        )}
         {video?.publication !== undefined && (
           <VideoTrack
             trackRef={video}

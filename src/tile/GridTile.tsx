@@ -51,6 +51,7 @@ import { type LocalUserMediaViewModel } from "../state/media/LocalUserMediaViewM
 import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaViewModel";
 import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
 import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
+import { type UnknownParticipantMediaViewModel } from "../state/media/UnknownParticipantMediaViewModel";
 import { RingingStatus } from "./RingingStatus";
 
 interface TileProps {
@@ -96,6 +97,44 @@ const RingingMediaTile: FC<RingingMediaTileProps> = ({
     />
   );
 };
+
+interface UnknownParticipantTileProps extends Omit<
+  TileProps,
+  "displayName" | "mxcAvatarUrl"
+> {
+  vm: UnknownParticipantMediaViewModel;
+}
+
+/**
+ * A blank tile standing in for a LiveKit participant that cannot be mapped to
+ * any MatrixRTC member. MSC4143 asks clients to surface such streams rather
+ * than ignore them. No media is rendered for them.
+ */
+const UnknownParticipantTile: FC<UnknownParticipantTileProps> = ({
+  vm,
+  className,
+  ...props
+}) => {
+  const { t } = useTranslation();
+  return (
+    <MediaView
+      className={classNames(className, styles.tile)}
+      video={undefined}
+      userId={vm.userId}
+      unencryptedWarning={false}
+      videoEnabled={false}
+      mirror={false}
+      showAvatar={false}
+      displayName={t("video_tile.unknown_participant")}
+      mxcAvatarUrl={undefined}
+      rtcBackendIdentity={vm.rtcBackendIdentity}
+      focusUrl={vm.focusUrl}
+      {...props}
+    />
+  );
+};
+
+UnknownParticipantTile.displayName = "UnknownParticipantTile";
 
 interface UserMediaTileProps extends TileProps {
   vm: UserMediaViewModel;
@@ -450,6 +489,15 @@ export const GridTile: FC<GridTileProps> = ({
         displayName={displayName}
         mxcAvatarUrl={mxcAvatarUrl}
         showStatus={showRingingStatus}
+        className={classNames(className, { [styles.outline]: showOutline })}
+        {...props}
+      />
+    );
+  } else if (media.type === "unknown participant") {
+    return (
+      <UnknownParticipantTile
+        ref={ref}
+        vm={media}
         className={classNames(className, { [styles.outline]: showOutline })}
         {...props}
       />

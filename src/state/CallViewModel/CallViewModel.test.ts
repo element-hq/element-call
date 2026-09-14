@@ -52,8 +52,10 @@ import {
   aliceRtcMember,
   aliceUserId,
   bob,
+  bobDeviceId,
   bobId,
   bobRtcMember,
+  bobUserId,
   local,
   localId,
   localRtcMember,
@@ -117,6 +119,19 @@ const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
 const bobParticipant = mockRemoteParticipant({ identity: bobId });
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
+
+// A LiveKit participant that no MatrixRTC membership accounts for
+const rogueParticipant = mockRemoteParticipant({ identity: "rogue" });
+const rogueId = `unknown:${exampleTransport.livekit_service_url}:rogue`;
+
+const otherTransport: LivekitTransport = {
+  type: "livekit",
+  livekit_service_url: "https://lk.other.example.org",
+  livekit_alias: "!alias:other.example.org",
+};
+const bobOnOtherFocusRtcMember = mockRtcMembership(bobUserId, bobDeviceId, {
+  fociPreferred: [otherTransport],
+});
 
 export interface GridLayoutSummary {
   type: "grid";
@@ -442,6 +457,113 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
                 type: "grid",
                 spotlight: [`${localId}:0:screen-share`],
                 grid: [`${localId}:0`, `${aliceId}:0`],
+              },
+            },
+          );
+        },
+      );
+    });
+  });
+
+  test("LiveKit participants without a membership get an unknown participant tile", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      // A participant nobody's membership accounts for connects on frame 1 and
+      // disconnects on frame 2
+      const participantInputMarbles = "aba";
+      // It gets a tile at the end of the grid for as long as it is connected
+      const expectedLayoutMarbles = "  aba";
+
+      withCallViewModel(
+        {
+          remoteParticipants$: behavior(participantInputMarbles, {
+            a: [aliceParticipant, bobParticipant],
+            b: [aliceParticipant, bobParticipant, rogueParticipant],
+          }),
+          rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "grid",
+                spotlight: undefined,
+                grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
+              },
+              b: {
+                type: "grid",
+                spotlight: undefined,
+                grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`, rogueId],
+              },
+            },
+          );
+        },
+      );
+    });
+  });
+
+  test("an unknown participant takes the call out of one-on-one layout", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      // A participant nobody's membership accounts for connects on frame 1 and
+      // disconnects on frame 2
+      const participantInputMarbles = "aba";
+      // The one-on-one layout would hide the unknown participant, so we must
+      // fall back to the grid while they are present
+      const expectedLayoutMarbles = "  aba";
+
+      withCallViewModel(
+        {
+          remoteParticipants$: behavior(participantInputMarbles, {
+            a: [aliceParticipant],
+            b: [aliceParticipant, rogueParticipant],
+          }),
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "one-on-one-desktop",
+                pip: `${localId}:0`,
+                spotlight: `${aliceId}:0`,
+              },
+              b: {
+                type: "grid",
+                spotlight: undefined,
+                grid: [`${localId}:0`, `${aliceId}:0`, rogueId],
+              },
+            },
+          );
+        },
+      );
+    });
+  });
+
+  test("a member seen on a focus other than their own is not an unknown participant", () => {
+    withTestScheduler(({ expectObservable }) => {
+      // Bob publishes to another focus, but also connects to ours to subscribe
+      // (the mock reports the same participants on every connection). Matching
+      // by identity rather than per transport keeps him from being flagged.
+      const expectedLayoutMarbles = "a";
+
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant, bobParticipant]),
+          rtcMembers$: constant([
+            localRtcMember,
+            aliceRtcMember,
+            bobOnOtherFocusRtcMember,
+          ]),
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "grid",
+                spotlight: undefined,
+                grid: [`${localId}:0`, `${aliceId}:0`, `${bobId}:0`],
               },
             },
           );
@@ -1211,15 +1333,18 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
     });
   });
 
-  test("participants must have a MatrixRTCSession to be visible", () => {
+  test("participants without a MatrixRTC membership are shown as unknown, without media", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       // iterate through a number of combinations of participants and MatrixRTC memberships
       // Bob never has an MatrixRTC membership
       const participantInputMarbles = "abcd-c";
       // Bob even tries to share his screen at the end
       const bobSharingInputMarbles = " n---yn";
-      // Bob should never be visible
-      const expectedLayoutMarbles = "  a-bc-b";
+      // Bob gets an unknown participant tile (MSC4143) rather than a tile of
+      // his own, and his screen share never shows up. His presence also keeps
+      // the call out of the one-on-one layout, which would hide him.
+      const expectedLayoutMarbles = "  abcd-c";
+      const bobUnknownId = `unknown:${exampleTransport.livekit_service_url}:${bobId}`;
 
       withCallViewModel(
         {
@@ -1251,14 +1376,25 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
                 grid: [`${localId}:0`],
               },
               b: {
-                type: "one-on-one-desktop",
-                pip: `${localId}:0`,
-                spotlight: `${aliceId}:0`,
+                type: "grid",
+                spotlight: undefined,
+                grid: [`${localId}:0`, bobUnknownId],
               },
+              // Tiles keep their positions, so Bob stays ahead of the others
               c: {
                 type: "grid",
                 spotlight: undefined,
-                grid: [`${localId}:0`, `${aliceId}:0`, `${daveId}:0`],
+                grid: [`${localId}:0`, bobUnknownId, `${aliceId}:0`],
+              },
+              d: {
+                type: "grid",
+                spotlight: undefined,
+                grid: [
+                  `${localId}:0`,
+                  bobUnknownId,
+                  `${aliceId}:0`,
+                  `${daveId}:0`,
+                ],
               },
             },
           );
