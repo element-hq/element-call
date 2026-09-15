@@ -26,6 +26,15 @@ export default {
     // This is a shell built-in.
     "printf",
   ],
+  // uniffi-generated bindings (scripts/sync-matrix-rtc-sdk.sh): every
+  // export the crate has, most of them unused here by design
+  ignore: [
+    "src/matrix-rtc-sdk/generated/**",
+    // The host-facing driver seam, landed ahead of its consumers (the
+    // `CallParticipation` layer and the hosts, see element-call-oxidation-plan.md)
+    "src/driver/**",
+    "src/state/rtc/**",
+  ],
   ignoreFiles: [
     "scripts/.pnpmfile.cjs",
     // Deliberately added prior to any component or business logic

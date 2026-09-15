@@ -110,6 +110,8 @@
     "membership_manager": "Membership Manager Error",
     "membership_manager_description": "The Membership Manager had to shut down. This is caused by many consecutive failed network requests.",
     "no_matrix_2_authorization_service": "The authorization service for your media server (SFU) is out of date.",
+    "no_open_slot": "No call to join here",
+    "no_open_slot_description": "Nobody has started a call in this room yet, and you do not have permission to start one. Ask a room admin to start the call, or to allow you to start calls.",
     "open_elsewhere": "Opened in another tab",
     "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page.",
     "peer_connection_timeout": "Connection timeout",

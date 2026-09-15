@@ -28,6 +28,9 @@
   "env": {
     "builtin": true
   },
+  // uniffi-generated bindings and wasm-bindgen glue, vendored by
+  // scripts/sync-matrix-rtc-sdk.sh; not ours to lint
+  "ignorePatterns": ["src/matrix-rtc-sdk/generated/**"],
   "rules": {
     "element-call/copyright-header": [
       "error",

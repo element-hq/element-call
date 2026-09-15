@@ -82,6 +82,7 @@
     "@types/react-dom": "^19.0.0",
     "@types/sdp-transform": "^2.4.5",
     "@typescript-eslint/utils": "^8.61.0",
+    "@ubjs/core": "0.31.0-5",
     "@use-gesture/react": "^10.2.11",
     "@vector-im/compound-design-tokens": "^10.0.0",
     "@vector-im/compound-web": "^10.0.0",

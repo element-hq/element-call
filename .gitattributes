@@ -1,0 +1,3 @@
+# uniffi-generated MatrixRTC SDK bindings, vendored by scripts/sync-matrix-rtc-sdk.sh
+src/matrix-rtc-sdk/generated/** linguist-generated=true
+src/matrix-rtc-sdk/generated/**/*.wasm binary
