@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, expect, test, vi } from "vitest";
+import { axe } from "vitest-axe";
 import { act, render, screen, type RenderResult } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type JSX, useState, type ReactNode } from "react";
@@ -431,6 +432,98 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(
       screen.getByRole("menuitemcheckbox", { name: "Blur background" }),
     ).toBeInTheDocument();
+  });
+
+  test("marks focus as keyboard-driven only when the keyboard moved it", async () => {
+    const user = userEvent.setup();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic1"
+        onSelect={vi.fn()}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Microphone" }));
+    const list = screen
+      .getByRole("menuitemradio", { name: "Microphone 1" })
+      .closest("[data-focus-modality]");
+
+    // The menu focuses whatever the pointer is over, so focus alone says
+    // nothing about how someone is navigating.
+    expect(list).toHaveAttribute("data-focus-modality", "pointer");
+
+    await user.keyboard("{ArrowDown}");
+    expect(list).toHaveAttribute("data-focus-modality", "keyboard");
+
+    await user.pointer({
+      target: screen.getByRole("menuitemradio", { name: "Microphone 2" }),
+      coords: { clientX: 10, clientY: 10 },
+    });
+    expect(list).toHaveAttribute("data-focus-modality", "pointer");
+  });
+
+  test("marks the selected device with the accent fill", async () => {
+    const user = userEvent.setup();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic2"
+        onSelect={vi.fn()}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Microphone" }));
+
+    const selected = screen
+      .getByRole("menuitemradio", { name: "Microphone 2" })
+      .querySelector("input[type=radio]");
+    expect(selected).toBeChecked();
+    // A read-only control is painted muted, which loses the accent fill that
+    // marks the selection and makes the menu differ from settings.
+    expect(selected).not.toHaveAttribute("readonly");
+  });
+
+  test("the open menu has no accessibility violations", async () => {
+    const user = userEvent.setup();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic1"
+        onSelect={vi.fn()}
+        outputOptions={[
+          { label: { type: "name", name: "Speakers" }, id: "spk1" },
+          { label: { type: "name", name: "Headset" }, id: "spk2" },
+        ]}
+        selectedOutputOption="spk1"
+        onSelectOutput={vi.fn()}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Microphone" }));
+
+    // Includes the menu's own structure: wrappers between the menu and its
+    // items break the relationship the roles describe.
+    const menu = document.querySelector('[role="menu"]');
+    expect(await axe(menu as HTMLElement)).toHaveNoViolations();
   });
 
   test("lists speaker and microphone sections", async () => {

@@ -117,8 +117,33 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   // can size it against the call. Measure the call area rather than the window,
   // or the menu is wrong wherever Element Call is not the whole page. Measured
   // when the menu opens: it is short-lived enough not to need watching.
+  // Radix focuses whatever the pointer is over, so the browser's own
+  // :focus-visible cannot tell us whether a person is navigating by keyboard:
+  // Chromium answers yes to everything after any key press, Firefox answers no
+  // to programmatic focus. Track it ourselves and let the styling follow.
+  const [focusModality, setFocusModality] = useState<"keyboard" | "pointer">(
+    "pointer",
+  );
+  useEffect(() => {
+    if (!menuOpen) return;
+    // Watched at the document, and only while the menu is open. Which modality
+    // someone is using is not a property of any one element: the first arrow
+    // key arrives while the menu itself holds focus, above anything we render,
+    // and Radix moves focus around as the pointer travels.
+    const usedKeyboard = (): void => setFocusModality("keyboard");
+    const usedPointer = (): void => setFocusModality("pointer");
+    document.addEventListener("keydown", usedKeyboard, true);
+    document.addEventListener("pointermove", usedPointer, true);
+    return (): void => {
+      document.removeEventListener("keydown", usedKeyboard, true);
+      document.removeEventListener("pointermove", usedPointer, true);
+    };
+  }, [menuOpen]);
   const rootElement = useRootElement();
   const [listMaxHeight, setListMaxHeight] = useState<number>();
+  useEffect(() => {
+    if (menuOpen) setFocusModality("pointer");
+  }, [menuOpen]);
   useEffect(() => {
     if (menuOpen)
       setListMaxHeight(
@@ -247,15 +272,20 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         disabled={disabled}
         label={labelText(label, numbered)}
         Icon={
-          <RadioInput
-            // Decoration: aria-checked on the menu item is what conveys the
-            // selection, and Radix owns focus within the menu.
-            aria-hidden
-            tabIndex={-1}
-            checked={selected === id}
-            disabled={disabled}
-            readOnly
-          />
+          // Inert, not aria-hidden: a form control inside a menu item must be
+          // out of the focus order and out of the accessibility tree, and
+          // aria-hidden alone leaves it focusable. The item's aria-checked is
+          // what conveys the selection.
+          <span inert>
+            <RadioInput
+              checked={selected === id}
+              disabled={disabled}
+              // Not readOnly: that styles the control as muted, losing the
+              // accent fill that marks the selection. The menu item owns the
+              // interaction, so the change handler has nothing to do.
+              onChange={(): void => {}}
+            />
+          </span>
         }
         onSelect={(e) => {
           e.preventDefault();
@@ -314,7 +344,11 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         }
       >
         <div
+          // Transparent to assistive technology, so the menu still sees its
+          // items as its own children.
+          role="none"
           className={styles.deviceList}
+          data-focus-modality={focusModality}
           style={
             {
               "--device-list-max-height":
@@ -324,34 +358,47 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         >
           {iconsAndLabels === "audio" && outputOptions && (
             <>
-              <MenuTitle title={t("settings.devices.speaker")} />
-              {deviceItems(
-                "output",
-                outputOptions,
-                selectedOutputOption,
-                onSelectOutput,
-                (n) => t("settings.devices.speaker_numbered", { n }),
-              )}
+              {/* A menu may only contain items, separators and groups, so each
+                  heading belongs to a group rather than sitting beside the
+                  items it names. */}
+              <div role="group" aria-label={t("settings.devices.speaker")}>
+                {/* The heading is decoration: the group carries the name, and
+                    a menu may only contain items, separators and groups. */}
+                <div aria-hidden>
+                  <MenuTitle title={t("settings.devices.speaker")} />
+                </div>
+                {deviceItems(
+                  "output",
+                  outputOptions,
+                  selectedOutputOption,
+                  onSelectOutput,
+                  (n) => t("settings.devices.speaker_numbered", { n }),
+                )}
+              </div>
               <Separator />
             </>
           )}
-          <MenuTitle title={optionsButtonLabel} />
-          {/* The heading sits outside, so the meter can never ride up over it:
+          <div role="group" aria-label={optionsButtonLabel}>
+            <div aria-hidden>
+              <MenuTitle title={optionsButtonLabel} />
+            </div>
+            {/* The heading sits outside, so the meter can never ride up over it:
               sticky only holds while this block is in view. */}
-          <div>
-            {deviceItems(
-              "input",
-              options,
-              selectedOption,
-              onSelect,
-              numberedLabel,
-            )}
-            {iconsAndLabels === "audio" && (
-              <MicrophoneLevelMeter
-                state={microphoneState}
-                className={styles.stickyMeter}
-              />
-            )}
+            <div role="none">
+              {deviceItems(
+                "input",
+                options,
+                selectedOption,
+                onSelect,
+                numberedLabel,
+              )}
+              {iconsAndLabels === "audio" && (
+                <MicrophoneLevelMeter
+                  state={microphoneState}
+                  className={styles.stickyMeter}
+                />
+              )}
+            </div>
           </div>
         </div>
         {(toggles?.length ?? 0) > 0 && <hr />}

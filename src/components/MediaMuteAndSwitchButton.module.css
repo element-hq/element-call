@@ -83,3 +83,17 @@ Please see LICENSE in the repository root for full details.
   margin-inline: var(--cpd-border-width-1);
   margin-block-end: var(--cpd-border-width-1);
 }
+
+/* Radix focuses whatever the pointer is over, so the browser's own ring marks
+   the item under the mouse. It cannot distinguish the two modalities here, so
+   it is suppressed and replaced by one that can. */
+.deviceList [role="menuitemradio"]:focus,
+.deviceList [role="menuitemradio"]:focus-visible {
+  outline: none;
+}
+
+/* Shown only when the keyboard is what moved the focus. */
+.deviceList[data-focus-modality="keyboard"] [role="menuitemradio"]:focus {
+  outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
+  outline-offset: calc(-1 * var(--cpd-border-width-2));
+}
