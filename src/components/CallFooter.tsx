@@ -175,7 +175,6 @@ export const CallFooter: FC<FooterProps> = ({
   if ((audioOptions?.length ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
-        title={"Mic Source"}
         key="audio"
         iconsAndLabels="audio"
         enabled={audioEnabled ?? false}
@@ -207,7 +206,6 @@ export const CallFooter: FC<FooterProps> = ({
   if ((videoOptions?.length ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
-        title={"Camera Source"}
         key="video"
         iconsAndLabels="video"
         enabled={videoEnabled ?? false}

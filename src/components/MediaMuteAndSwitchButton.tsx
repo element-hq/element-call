@@ -46,8 +46,12 @@ export interface MenuOptions {
 }
 
 export interface MediaMuteAndSwitchButtonProps {
-  /** The title used in the Switcher modal. */
-  title: string;
+  /**
+   * The accessible name of the menu. Defaults to a translated name for the
+   * media kind; the menu's own title is not shown, since each section carries
+   * its own heading.
+   */
+  title?: string;
   /** If the Mute button is enabled */
   enabled?: boolean;
   /** Callback if the mute button is clicked */
@@ -153,17 +157,20 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 
   let IconOptions: ComponentType<React.SVGAttributes<SVGElement>> | undefined;
   let optionsButtonLabel: string;
+  let defaultMenuTitle: string;
   let numberedLabel: (number: number) => string;
   switch (iconsAndLabels) {
     case "video":
       IconOptions = VideoCallIcon;
       optionsButtonLabel = t("settings.devices.camera");
+      defaultMenuTitle = t("settings.devices.camera_source");
       numberedLabel = (n): string =>
         t("settings.devices.camera_numbered", { n });
       break;
     case "audio":
       IconOptions = MicOnIcon;
       optionsButtonLabel = t("settings.devices.microphone");
+      defaultMenuTitle = t("settings.devices.mic_source");
       numberedLabel = (n): string =>
         t("settings.devices.microphone_numbered", { n });
       break;
@@ -257,8 +264,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       {/* The mute button lives inside */}
       {button}
       <Menu
-        title={title}
-        showTitle={true}
+        title={title ?? defaultMenuTitle}
+        // Each section carries its own heading, so the menu's own title would
+        // sit on top of the first one. Kept for the accessible name only.
+        showTitle={false}
         open={menuOpen}
         onOpenChange={setMenuOpen}
         side="top"
@@ -287,9 +296,9 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               VolumeOnIcon,
             )}
             <Separator />
-            <MenuTitle title={t("settings.devices.microphone")} />
           </>
         )}
+        <MenuTitle title={optionsButtonLabel} />
         {deviceItems(
           options,
           selectedOption,
