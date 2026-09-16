@@ -67,6 +67,9 @@ function buildDeviceBehaviors(
   | "audioOptions$"
   | "selectedAudio$"
   | "selectAudioButtonOption$"
+  | "audioOutputOptions$"
+  | "selectedAudioOutput$"
+  | "selectAudioOutputOption$"
   | "videoOptions$"
   | "selectedVideo$"
   | "selectVideoButtonOption$"
@@ -94,6 +97,26 @@ function buildDeviceBehaviors(
       mediaDevices.audioInput.selected$.pipe(map((s) => s?.id)),
     ),
     selectAudioButtonOption$: constant(mediaDevices.audioInput.select),
+    audioOutputOptions$: scope.behavior(
+      disableSwitcher$.pipe(
+        switchMap((disable) =>
+          disable
+            ? constant([] as MenuOptions[])
+            : mediaDevices.audioOutput.available$.pipe(
+                map((available) =>
+                  [...available.entries()].map(([id, label]) => ({
+                    id,
+                    label,
+                  })),
+                ),
+              ),
+        ),
+      ),
+    ),
+    selectedAudioOutput$: scope.behavior(
+      mediaDevices.audioOutput.selected$.pipe(map((s) => s?.id)),
+    ),
+    selectAudioOutputOption$: constant(mediaDevices.audioOutput.select),
     videoOptions$: scope.behavior(
       disableSwitcher$.pipe(
         switchMap((disable) =>
@@ -263,10 +286,13 @@ export function createLobbyFooterViewModel(
       reactionData: undefined,
       tileStoreGeneration: undefined,
       audioOptions: undefined,
+      audioOutputOptions: undefined,
       videoOptions: undefined,
       selectedAudio: undefined,
+      selectedAudioOutput: undefined,
       selectedVideo: undefined,
       selectAudioButtonOption: undefined,
+      selectAudioOutputOption: undefined,
       selectVideoButtonOption: undefined,
     }),
     ...buildMuteBehaviors(scope, muteStates),

@@ -5,11 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ComponentType, useState, type FC, useEffect } from "react";
+import {
+  type ComponentType,
+  useState,
+  type FC,
+  useEffect,
+  type ReactElement,
+} from "react";
 import {
   Button,
   Menu,
   MenuItem,
+  MenuTitle,
+  Separator,
   ToggleMenuItem,
 } from "@vector-im/compound-web";
 import {
@@ -19,17 +27,21 @@ import {
   MicOnIcon,
   SpinnerIcon,
   VideoCallIcon,
+  VolumeOnIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
 import styles from "./MediaMuteAndSwitchButton.module.css";
 import { MicButton, VideoButton } from "../button";
-import { type DeviceLabel } from "../state/MediaDevices";
+import {
+  type AudioOutputDeviceLabel,
+  type DeviceLabel,
+} from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
 
 export interface MenuOptions {
-  label: DeviceLabel;
+  label: DeviceLabel | AudioOutputDeviceLabel;
   id: string;
 }
 
@@ -47,6 +59,18 @@ export interface MediaMuteAndSwitchButtonProps {
   options?: MenuOptions[];
   /** The option that will currently be rendered as the selected option */
   selectedOption?: string;
+  /**
+   * Output (speaker) devices, shown as their own section above the input
+   * section. Audio menu only; omitted entirely for video.
+   */
+  outputOptions?: MenuOptions[];
+  /** The output option currently rendered as selected */
+  selectedOutputOption?: string;
+  /**
+   * Called when an output device is picked. Undefined means the platform does
+   * not permit choosing an output, and the section renders disabled.
+   */
+  onSelectOutput?: (id: string) => void;
   videoBlurToggleClick?: () => void;
   videoBlurEnabled?: boolean;
   /**
@@ -66,6 +90,9 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   iconsAndLabels,
   options,
   selectedOption,
+  outputOptions,
+  selectedOutputOption,
+  onSelectOutput,
   videoBlurEnabled,
   videoBlurToggleClick,
   onSelect,
@@ -142,6 +169,84 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       break;
   }
 
+  const labelToText = (
+    label: MenuOptions["label"],
+    numbered: (n: number) => string,
+  ): string => {
+    switch (label.type) {
+      case "name":
+        return label.name;
+      case "number":
+        return numbered(label.number);
+      case "default":
+        return label.name === null
+          ? t("settings.devices.default")
+          : t("settings.devices.default_named_plain", { name: label.name });
+      case "speaker":
+        return t("settings.devices.loudspeaker");
+      case "earpiece":
+        return t("settings.devices.handset");
+    }
+  };
+
+  const deviceItems = (
+    items: MenuOptions[] | undefined,
+    selected: string | undefined,
+    select: ((id: string) => void) | undefined,
+    numbered: (n: number) => string,
+    Icon: ComponentType<React.SVGAttributes<SVGElement>> | undefined,
+  ): ReactElement[] => {
+    const list = items ?? [];
+    // Shown but not choosable when the platform will not switch this kind of
+    // device, or when there is only one of them. The entry stays visible so the
+    // menu keeps the same shape everywhere.
+    const disabled = select === undefined || list.length <= 1;
+    return list.map(({ label, id }) => (
+      <MenuItem
+        hideChevron
+        disabled={disabled}
+        label={labelToText(label, numbered)}
+        Icon={
+          Icon && (
+            <Icon
+              width={24}
+              height={24}
+              className={styles.itemIcon}
+              aria-hidden
+            />
+          )
+        }
+        onSelect={(e) => {
+          e.preventDefault();
+          if (id === selected) return;
+          setPlannedSelection(id);
+          select?.(id);
+        }}
+        key={id}
+        role="menuitemradio"
+        aria-checked={selected === id}
+      >
+        {selected === id && (
+          <CheckIcon
+            width={24}
+            height={24}
+            aria-hidden // A label would be redundant to aria-checked above
+          />
+        )}
+        {selected !== id && plannedSelection === id && (
+          <SpinnerIcon
+            width={24}
+            height={24}
+            className={styles.rotate}
+            aria-label={t("settings.devices.activating")}
+          />
+        )}
+      </MenuItem>
+    ));
+  };
+
+  const showOutputSection = iconsAndLabels === "audio" && outputOptions;
+
   return (
     <div
       className={classNames({
@@ -171,58 +276,27 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        {options?.map(({ label, id }) => {
-          let labelText: string;
-          switch (label.type) {
-            case "name":
-              labelText = label.name;
-              break;
-            case "number":
-              labelText = numberedLabel(label.number);
-              break;
-          }
-          return (
-            <MenuItem
-              hideChevron
-              label={labelText}
-              Icon={
-                IconOptions && (
-                  <IconOptions
-                    width={24}
-                    height={24}
-                    className={styles.itemIcon}
-                    aria-hidden
-                  />
-                )
-              }
-              onSelect={(e) => {
-                e.preventDefault();
-                if (id === selectedOption) return;
-                setPlannedSelection(id);
-                onSelect?.(id);
-              }}
-              key={id}
-              role="menuitemradio"
-              aria-checked={selectedOption === id}
-            >
-              {selectedOption === id && (
-                <CheckIcon
-                  width={24}
-                  height={24}
-                  aria-hidden // A label would be redundant to aria-checked above
-                />
-              )}
-              {selectedOption !== id && plannedSelection === id && (
-                <SpinnerIcon
-                  width={24}
-                  height={24}
-                  className={styles.rotate}
-                  aria-label={t("settings.devices.activating")}
-                />
-              )}
-            </MenuItem>
-          );
-        })}
+        {showOutputSection && (
+          <>
+            <MenuTitle title={t("settings.devices.speaker")} />
+            {deviceItems(
+              outputOptions,
+              selectedOutputOption,
+              onSelectOutput,
+              (n) => t("settings.devices.speaker_numbered", { n }),
+              VolumeOnIcon,
+            )}
+            <Separator />
+            <MenuTitle title={t("settings.devices.microphone")} />
+          </>
+        )}
+        {deviceItems(
+          options,
+          selectedOption,
+          onSelect,
+          numberedLabel,
+          IconOptions,
+        )}
         {(toggles?.length ?? 0) > 0 && <hr />}
         {toggles?.map((toggle) => (
           <ToggleMenuItem
