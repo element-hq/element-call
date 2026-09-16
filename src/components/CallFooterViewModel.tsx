@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { combineLatest, map, type Observable, switchMap } from "rxjs";
 import { supportsBackgroundProcessors } from "@livekit/track-processors";
+import { supportsAudioOutputSelection } from "livekit-client";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
@@ -103,7 +104,13 @@ function buildDeviceBehaviors(
     selectedAudioOutput$: scope.behavior(
       mediaDevices.audioOutput.selected$.pipe(map((s) => s?.id)),
     ),
-    selectAudioOutputOption$: constant(mediaDevices.audioOutput.select),
+    // Safari and most Firefox builds cannot route audio to a chosen device at
+    // all. Withholding the callback is what renders the section disabled.
+    selectAudioOutputOption$: constant(
+      supportsAudioOutputSelection()
+        ? mediaDevices.audioOutput.select
+        : undefined,
+    ),
     videoOptions$: scope.behavior(options$(mediaDevices.videoInput.available$)),
     selectedVideo$: scope.behavior(
       mediaDevices.videoInput.selected$.pipe(map((s) => s?.id)),

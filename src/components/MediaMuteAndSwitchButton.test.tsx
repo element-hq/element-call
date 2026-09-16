@@ -348,6 +348,63 @@ describe("MediaMuteAndSwitchButton", () => {
     screen.getByRole("menuitemradio", { name: "Microphone 1", checked: false });
   });
 
+  test("disables every device while a selection is settling", async () => {
+    const user = userEvent.setup();
+    const { promise, resolve } = Promise.withResolvers<void>();
+    function Wrapper(): JSX.Element {
+      const [selectedOption, setSelectedOption] = useState("mic1");
+      return (
+        <MediaMuteAndSwitchButton
+          title="Switcher"
+          iconsAndLabels="audio"
+          enabled={true}
+          options={[
+            { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+            { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+          ]}
+          selectedOption={selectedOption}
+          onSelect={(id) => {
+            void promise.then(() => setSelectedOption(id));
+          }}
+          outputOptions={[
+            { label: { type: "name", name: "Speakers" }, id: "spk1" },
+            { label: { type: "name", name: "Headset" }, id: "spk2" },
+          ]}
+          selectedOutputOption="spk1"
+          onSelectOutput={vi.fn()}
+        />
+      );
+    }
+
+    const { getByRole } = renderComponent(<Wrapper />);
+    await user.click(getByRole("button", { name: "Microphone" }));
+    await user.click(
+      screen.getByRole("menuitemradio", { name: "Microphone 2" }),
+    );
+
+    // In flight: nothing else can be picked, in either section, so a second
+    // request cannot overtake the first.
+    for (const name of ["Microphone 1", "Speakers", "Headset"]) {
+      expect(screen.getByRole("menuitemradio", { name })).toHaveAttribute(
+        "aria-disabled",
+        "true",
+      );
+    }
+
+    await act(async () => {
+      resolve();
+      await promise;
+    });
+
+    // Settled: choosable again.
+    expect(
+      screen.getByRole("menuitemradio", { name: "Microphone 1" }),
+    ).not.toHaveAttribute("aria-disabled", "true");
+    expect(
+      screen.getByRole("menuitemradio", { name: "Headset" }),
+    ).not.toHaveAttribute("aria-disabled", "true");
+  });
+
   test("lists speaker and microphone sections", async () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
@@ -435,7 +492,7 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(only).toHaveAttribute("aria-disabled", "true");
   });
 
-  test("shows the speaker section disabled when no output can be chosen", async () => {
+  test("shows the speaker section disabled when output selection is unsupported", async () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton

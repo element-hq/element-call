@@ -30,6 +30,11 @@ vi.mock("@livekit/track-processors", () => ({
   supportsBackgroundProcessors: (): boolean => false,
 }));
 
+const outputSelectionMock = vi.hoisted(() => vi.fn(() => true));
+vi.mock("livekit-client", () => ({
+  supportsAudioOutputSelection: (): boolean => outputSelectionMock(),
+}));
+
 /**
  * Returns the minimum set of CallViewModel fields required by
  * createCallFooterViewModel, with all other properties stubbed to
@@ -96,6 +101,31 @@ const twoMicsAndOneCamMediaDevices = mockMediaDevices({
 });
 
 describe("createCallFooterViewModel", () => {
+  describe("selectAudioOutputOption", () => {
+    function buildFooterVm(): ReturnType<typeof createCallFooterViewModel> {
+      platformMock.mockReturnValue("desktop");
+      return createCallFooterViewModel(
+        testScope(),
+        buildMinimalCallViewModel(gridLayout),
+        mockMuteStates(),
+        twoMicsAndOneCamMediaDevices,
+        /* reactionIdentifier */ undefined,
+        { showControls: true, header: HeaderStyle.Standard },
+      );
+    }
+
+    it("is withheld where the platform cannot route audio to a chosen device", () => {
+      outputSelectionMock.mockReturnValue(false);
+      // Undefined is what renders the speaker section disabled.
+      expect(buildFooterVm().selectAudioOutputOption$.value).toBeUndefined();
+    });
+
+    it("is offered where the platform can route audio to a chosen device", () => {
+      outputSelectionMock.mockReturnValue(true);
+      expect(buildFooterVm().selectAudioOutputOption$.value).toBeDefined();
+    });
+  });
+
   describe("audioOptions and videoOptions", () => {
     function checkEmptyFor(platform: string, layout: Layout): void {
       platformMock.mockReturnValue(platform);

@@ -30,6 +30,8 @@ import {
   type DeviceLabel,
 } from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
+import { MicrophoneLevelMeter } from "./MicrophoneLevelMeter";
+import { useMicrophoneLevel } from "./useMicrophoneLevel";
 
 export interface MenuOptions {
   label: DeviceLabel | AudioOutputDeviceLabel;
@@ -91,11 +93,23 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   videoBlurToggleClick,
   onSelect,
 }) => {
-  const [plannedSelection, setPlannedSelection] = useState<string | null>(null);
+  // Which device we have asked for but not yet been given. Carries the kind as
+  // well as the id, because an input and an output can share an id: "default"
+  // names both on Chrome.
+  const [plannedSelection, setPlannedSelection] = useState<{
+    kind: "input" | "output";
+    id: string;
+  } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const isBusy = busy ?? false;
   const { t } = useTranslation();
   const devices = useMediaDevices();
+  // Only while the menu is open, so nothing holds a second capture of the
+  // microphone for the length of a call.
+  const microphoneState = useMicrophoneLevel(
+    selectedOption,
+    menuOpen && iconsAndLabels === "audio",
+  );
 
   useEffect(() => {
     if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
@@ -184,7 +198,17 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     }
   };
 
+  // A device we asked for that has not arrived yet. Until it does, nothing in
+  // the menu can be picked, so a second request cannot overtake the first.
+  const settling =
+    plannedSelection !== null &&
+    plannedSelection.id !==
+      (plannedSelection.kind === "output"
+        ? selectedOutputOption
+        : selectedOption);
+
   const deviceItems = (
+    kind: "input" | "output",
     items: MenuOptions[] | undefined,
     selected: string | undefined,
     select: ((id: string) => void) | undefined,
@@ -194,7 +218,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     // Shown but not choosable when nothing can be picked here, or when there is
     // only one device. The entry stays visible so the menu keeps the same shape
     // on every platform.
-    const disabled = select === undefined || list.length <= 1;
+    const disabled = select === undefined || list.length <= 1 || settling;
     return list.map(({ label, id }) => (
       <MenuItem
         // A radio input inside a button is invalid, and the menu needs an
@@ -217,21 +241,23 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         onSelect={(e) => {
           e.preventDefault();
           if (id === selected) return;
-          setPlannedSelection(id);
+          setPlannedSelection({ kind, id });
           select?.(id);
         }}
         key={id}
         role="menuitemradio"
         aria-checked={selected === id}
       >
-        {selected !== id && plannedSelection === id && (
-          <SpinnerIcon
-            width={24}
-            height={24}
-            className={styles.rotate}
-            aria-label={t("settings.devices.activating")}
-          />
-        )}
+        {selected !== id &&
+          plannedSelection?.kind === kind &&
+          plannedSelection.id === id && (
+            <SpinnerIcon
+              width={24}
+              height={24}
+              className={styles.rotate}
+              aria-label={t("settings.devices.activating")}
+            />
+          )}
       </MenuItem>
     ));
   };
@@ -271,6 +297,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           <>
             <MenuTitle title={t("settings.devices.speaker")} />
             {deviceItems(
+              "output",
               outputOptions,
               selectedOutputOption,
               onSelectOutput,
@@ -280,7 +307,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           </>
         )}
         <MenuTitle title={optionsButtonLabel} />
-        {deviceItems(options, selectedOption, onSelect, numberedLabel)}
+        {deviceItems("input", options, selectedOption, onSelect, numberedLabel)}
+        {iconsAndLabels === "audio" && (
+          <MicrophoneLevelMeter state={microphoneState} />
+        )}
         {(toggles?.length ?? 0) > 0 && <hr />}
         {toggles?.map((toggle) => (
           <ToggleMenuItem

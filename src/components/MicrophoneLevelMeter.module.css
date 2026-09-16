@@ -1,0 +1,46 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.meter {
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-3x);
+  padding-block: var(--cpd-space-2x);
+  padding-inline: var(--cpd-space-4x);
+}
+
+.icon {
+  color: var(--cpd-color-icon-secondary);
+  flex-shrink: 0;
+}
+
+.segments {
+  /* Spans the menu by spreading the gaps, so the bars keep their proportion
+     instead of growing to fill the space. */
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.segment {
+  flex: none;
+  inline-size: var(--cpd-space-1x);
+  block-size: var(--cpd-space-4x);
+  border-radius: var(--cpd-space-1x);
+  background: var(--cpd-color-bg-subtle-primary);
+}
+
+/* Filled segments carry the level by count as well as by colour, so the meter
+   stays readable without relying on hue. */
+.segmentLit {
+  background: var(--cpd-color-bg-accent-rest);
+}
+
+.message {
+  color: var(--cpd-color-text-secondary);
+}
