@@ -18,6 +18,7 @@ import {
 import {
   FfiDisconnectCause,
   FfiElementCallCompat,
+  FfiEventOrigin,
   FfiStatus,
   type FfiMediaKey,
 } from "../../matrix-rtc-sdk";
@@ -84,6 +85,65 @@ const peer = {
 describe("CallParticipation", () => {
   beforeAll(async () => {
     await initMatrixRtcSdkForTests();
+  });
+
+  it("in compatibility mode joins with a legacy state event and no slot", async () => {
+    // a room that never had a slot, as every pre-slot room is
+    const driver = new MockRtcMatrixDriver();
+    const callParticipation = new CallParticipation(
+      testScope(),
+      driver,
+      driver.roomId,
+      driver.userId,
+      driver.deviceId,
+      {
+        config: participationConfig({
+          mode: MatrixRTCMode.Compatibility,
+          manageMediaKeys: false,
+          session,
+        }),
+      },
+    );
+    // no power to open a slot, and none is needed
+    await callParticipation.join(receiveOnly(), joinParams, {
+      encrypted: false,
+      canOpen: false,
+    });
+    expect(
+      FfiStatus.Connected.instanceOf(callParticipation.status$.value),
+    ).toBe(true);
+    const stateEvents = driver.calls("stateEvent");
+    expect(stateEvents.map((c) => c.eventType)).toEqual([
+      "org.matrix.msc3401.call.member",
+    ]);
+    expect(stateEvents[0].stateKey).toBe(
+      `_${driver.userId}_${driver.deviceId}_m.call`,
+    );
+    // our own legacy membership echoes back into the roster
+    await waitFor(
+      "own membership",
+      () => callParticipation.ownMembership$.value !== null,
+    );
+    expect(callParticipation.ownMemberId$.value).toBe(
+      `${driver.userId}:${driver.deviceId}`,
+    );
+  });
+
+  it("session$ follows the seed and the slot without a join", async () => {
+    const driver = new MockRtcMatrixDriver();
+    const callParticipation = create(driver);
+    expect(callParticipation.session$.value.seeded).toBe(false);
+    await waitFor("the seed", () => callParticipation.session$.value.seeded);
+    expect(callParticipation.session$.value.slotOpen).not.toBe(true);
+    // somebody else starts the call
+    driver.emitRoomEvent(
+      slotEvent({ status: "open" }),
+      new FfiEventOrigin.Cleartext(),
+    );
+    await waitFor(
+      "the slot to open",
+      () => callParticipation.session$.value.slotOpen === true,
+    );
   });
 
   it("starts disconnected and follows a remote member in and out", async () => {
@@ -355,7 +415,7 @@ describe("CallParticipation", () => {
       FfiElementCallCompat.StateEvents,
     );
     expect(compatForMode(MatrixRTCMode.Matrix_2_0)).toBe(
-      FfiElementCallCompat.StickyEvents,
+      FfiElementCallCompat.Off,
     );
     expect(joinParams).toEqual({
       applicationType: "m.call",
@@ -365,6 +425,7 @@ describe("CallParticipation", () => {
       keepAliveTimeoutMs: 15_000n,
       degradedLifetimeMs: undefined,
       delegateDelayedLeave: false,
+      delegatedDelayMs: 3_600_000n,
     });
     expect(
       joinParamsFromConfig({

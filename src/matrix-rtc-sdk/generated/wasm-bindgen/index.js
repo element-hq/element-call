@@ -148,6 +148,19 @@ export function ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_own_mem
 
 /**
  * @param {bigint} ptr
+ * @param {RustCallStatus} f_status_
+ * @returns {Uint8Array}
+ */
+export function ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_status(ptr, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_status(ptr, f_status_.__wbg_ptr);
+    var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    return v1;
+}
+
+/**
+ * @param {bigint} ptr
  * @param {Uint8Array} intent
  * @returns {bigint}
  */
@@ -225,21 +238,6 @@ export function ubrn_uniffi_matrix_rtc_fn_free_keyrejectedlistener(handle, f_sta
  */
 export function ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_keyrejectedlistener(vtable) {
     wasm.ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_keyrejectedlistener(vtable);
-}
-
-/**
- * @param {bigint} ptr
- * @param {Uint8Array} member_id
- * @param {Uint8Array} reason
- * @param {RustCallStatus} f_status_
- */
-export function ubrn_uniffi_matrix_rtc_fn_method_keyrejectedlistener_on_key_rejected(ptr, member_id, reason, f_status_) {
-    const ptr0 = passArray8ToWasm0(member_id, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passArray8ToWasm0(reason, wasm.__wbindgen_malloc);
-    const len1 = WASM_VECTOR_LEN;
-    _assertClass(f_status_, RustCallStatus);
-    wasm.ubrn_uniffi_matrix_rtc_fn_method_keyrejectedlistener_on_key_rejected(ptr, ptr0, len0, ptr1, len1, f_status_.__wbg_ptr);
 }
 
 /**
@@ -326,6 +324,16 @@ export function ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_set_mem
  * @param {bigint} listener
  * @param {RustCallStatus} f_status_
  */
+export function ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_set_session_listener(ptr, listener, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    wasm.ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_set_session_listener(ptr, listener, f_status_.__wbg_ptr);
+}
+
+/**
+ * @param {bigint} ptr
+ * @param {bigint} listener
+ * @param {RustCallStatus} f_status_
+ */
 export function ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_set_status_listener(ptr, listener, f_status_) {
     _assertClass(f_status_, RustCallStatus);
     wasm.ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_set_status_listener(ptr, listener, f_status_.__wbg_ptr);
@@ -333,15 +341,17 @@ export function ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_set_sta
 
 /**
  * @param {bigint} ptr
+ * @param {Uint8Array} member_id
+ * @param {Uint8Array} reason
  * @param {RustCallStatus} f_status_
- * @returns {Uint8Array}
  */
-export function ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_status(ptr, f_status_) {
+export function ubrn_uniffi_matrix_rtc_fn_method_keyrejectedlistener_on_key_rejected(ptr, member_id, reason, f_status_) {
+    const ptr0 = passArray8ToWasm0(member_id, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray8ToWasm0(reason, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
     _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_status(ptr, f_status_.__wbg_ptr);
-    var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
-    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-    return v1;
+    wasm.ubrn_uniffi_matrix_rtc_fn_method_keyrejectedlistener_on_key_rejected(ptr, ptr0, len0, ptr1, len1, f_status_.__wbg_ptr);
 }
 
 /**
@@ -365,10 +375,30 @@ export function ubrn_uniffi_matrix_rtc_fn_free_matrixdrivercallback(handle, f_st
 }
 
 /**
- * @param {any} vtable
+ * @param {bigint} ptr
+ * @param {Uint8Array} recipients
+ * @param {Uint8Array} event_type
+ * @param {Uint8Array} content_json
+ * @returns {bigint}
  */
-export function ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_matrixdrivercallback(vtable) {
-    wasm.ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_matrixdrivercallback(vtable);
+export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_send_to_device(ptr, recipients, event_type, content_json) {
+    const ptr0 = passArray8ToWasm0(recipients, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray8ToWasm0(event_type, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passArray8ToWasm0(content_json, wasm.__wbindgen_malloc);
+    const len2 = WASM_VECTOR_LEN;
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_send_to_device(ptr, ptr0, len0, ptr1, len1, ptr2, len2);
+    return BigInt.asUintN(64, ret);
+}
+
+/**
+ * @param {bigint} ptr
+ * @returns {bigint}
+ */
+export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_get_rtc_transports(ptr) {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_get_rtc_transports(ptr);
+    return BigInt.asUintN(64, ret);
 }
 
 /**
@@ -445,24 +475,10 @@ export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_subscribe_
 }
 
 /**
- * @param {bigint} ptr
- * @param {RustCallStatus} f_status_
- * @returns {number}
+ * @param {any} vtable
  */
-export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_is_homeserver_connected(ptr, f_status_) {
-    _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_is_homeserver_connected(ptr, f_status_.__wbg_ptr);
-    return ret;
-}
-
-/**
- * @param {bigint} ptr
- * @param {bigint} sink
- * @param {RustCallStatus} f_status_
- */
-export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_subscribe_connectivity(ptr, sink, f_status_) {
-    _assertClass(f_status_, RustCallStatus);
-    wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_subscribe_connectivity(ptr, sink, f_status_.__wbg_ptr);
+export function ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_matrixdrivercallback(vtable) {
+    wasm.ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_matrixdrivercallback(vtable);
 }
 
 /**
@@ -581,54 +597,47 @@ export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_cancel_del
 
 /**
  * @param {bigint} ptr
- * @param {Uint8Array} room_id
- * @param {Uint8Array} slot_id
- * @param {Uint8Array} member_json
- * @param {Uint8Array} delay_id
- * @param {Uint8Array} livekit_service_url
- * @param {bigint} delay_ms
+ * @param {Uint8Array} request
  * @returns {bigint}
  */
-export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_delegate_livekit_delayed_leave(ptr, room_id, slot_id, member_json, delay_id, livekit_service_url, delay_ms) {
-    const ptr0 = passArray8ToWasm0(room_id, wasm.__wbindgen_malloc);
+export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_delegate_delayed_leave_via_homeserver(ptr, request) {
+    const ptr0 = passArray8ToWasm0(request, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passArray8ToWasm0(slot_id, wasm.__wbindgen_malloc);
-    const len1 = WASM_VECTOR_LEN;
-    const ptr2 = passArray8ToWasm0(member_json, wasm.__wbindgen_malloc);
-    const len2 = WASM_VECTOR_LEN;
-    const ptr3 = passArray8ToWasm0(delay_id, wasm.__wbindgen_malloc);
-    const len3 = WASM_VECTOR_LEN;
-    const ptr4 = passArray8ToWasm0(livekit_service_url, wasm.__wbindgen_malloc);
-    const len4 = WASM_VECTOR_LEN;
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_delegate_livekit_delayed_leave(ptr, ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, delay_ms);
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_delegate_delayed_leave_via_homeserver(ptr, ptr0, len0);
     return BigInt.asUintN(64, ret);
 }
 
 /**
  * @param {bigint} ptr
- * @param {Uint8Array} recipients
- * @param {Uint8Array} event_type
- * @param {Uint8Array} content_json
+ * @param {Uint8Array} request
  * @returns {bigint}
  */
-export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_send_to_device(ptr, recipients, event_type, content_json) {
-    const ptr0 = passArray8ToWasm0(recipients, wasm.__wbindgen_malloc);
+export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_delegate_delayed_leave_via_transport(ptr, request) {
+    const ptr0 = passArray8ToWasm0(request, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passArray8ToWasm0(event_type, wasm.__wbindgen_malloc);
-    const len1 = WASM_VECTOR_LEN;
-    const ptr2 = passArray8ToWasm0(content_json, wasm.__wbindgen_malloc);
-    const len2 = WASM_VECTOR_LEN;
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_send_to_device(ptr, ptr0, len0, ptr1, len1, ptr2, len2);
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_delegate_delayed_leave_via_transport(ptr, ptr0, len0);
     return BigInt.asUintN(64, ret);
 }
 
 /**
  * @param {bigint} ptr
- * @returns {bigint}
+ * @param {RustCallStatus} f_status_
+ * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_get_rtc_transports(ptr) {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_get_rtc_transports(ptr);
-    return BigInt.asUintN(64, ret);
+export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_is_homeserver_connected(ptr, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_is_homeserver_connected(ptr, f_status_.__wbg_ptr);
+    return ret;
+}
+
+/**
+ * @param {bigint} ptr
+ * @param {bigint} sink
+ * @param {RustCallStatus} f_status_
+ */
+export function ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_subscribe_connectivity(ptr, sink, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    wasm.ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_subscribe_connectivity(ptr, sink, f_status_.__wbg_ptr);
 }
 
 /**
@@ -652,182 +661,15 @@ export function ubrn_uniffi_matrix_rtc_fn_free_membershipslistener(handle, f_sta
 }
 
 /**
- * @param {any} vtable
- */
-export function ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_membershipslistener(vtable) {
-    wasm.ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_membershipslistener(vtable);
-}
-
-/**
  * @param {bigint} ptr
- * @param {Uint8Array} memberships
+ * @param {Uint8Array} session
  * @param {RustCallStatus} f_status_
  */
-export function ubrn_uniffi_matrix_rtc_fn_method_membershipslistener_on_memberships_change(ptr, memberships, f_status_) {
-    const ptr0 = passArray8ToWasm0(memberships, wasm.__wbindgen_malloc);
+export function ubrn_uniffi_matrix_rtc_fn_method_sessionlistener_on_session_change(ptr, session, f_status_) {
+    const ptr0 = passArray8ToWasm0(session, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
     _assertClass(f_status_, RustCallStatus);
-    wasm.ubrn_uniffi_matrix_rtc_fn_method_membershipslistener_on_memberships_change(ptr, ptr0, len0, f_status_.__wbg_ptr);
-}
-
-/**
- * @param {any} vtable
- */
-export function ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_statuslistener(vtable) {
-    wasm.ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_statuslistener(vtable);
-}
-
-/**
- * @param {bigint} ptr
- * @param {Uint8Array} status
- * @param {RustCallStatus} f_status_
- */
-export function ubrn_uniffi_matrix_rtc_fn_method_statuslistener_on_status_change(ptr, status, f_status_) {
-    const ptr0 = passArray8ToWasm0(status, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    _assertClass(f_status_, RustCallStatus);
-    wasm.ubrn_uniffi_matrix_rtc_fn_method_statuslistener_on_status_change(ptr, ptr0, len0, f_status_.__wbg_ptr);
-}
-
-/**
- * @param {bigint} handle
- * @param {RustCallStatus} f_status_
- * @returns {bigint}
- */
-export function ubrn_uniffi_matrix_rtc_fn_clone_todevicesink(handle, f_status_) {
-    _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_clone_todevicesink(handle, f_status_.__wbg_ptr);
-    return BigInt.asUintN(64, ret);
-}
-
-/**
- * @param {bigint} handle
- * @param {RustCallStatus} f_status_
- */
-export function ubrn_uniffi_matrix_rtc_fn_free_todevicesink(handle, f_status_) {
-    _assertClass(f_status_, RustCallStatus);
-    wasm.ubrn_uniffi_matrix_rtc_fn_free_todevicesink(handle, f_status_.__wbg_ptr);
-}
-
-/**
- * @param {bigint} ptr
- * @param {Uint8Array} event_type
- * @param {Uint8Array} sender
- * @param {Uint8Array} content_json
- * @param {Uint8Array} origin
- * @param {Uint8Array} sender_cross_signed
- * @param {RustCallStatus} f_status_
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_fn_method_todevicesink_emit(ptr, event_type, sender, content_json, origin, sender_cross_signed, f_status_) {
-    const ptr0 = passArray8ToWasm0(event_type, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passArray8ToWasm0(sender, wasm.__wbindgen_malloc);
-    const len1 = WASM_VECTOR_LEN;
-    const ptr2 = passArray8ToWasm0(content_json, wasm.__wbindgen_malloc);
-    const len2 = WASM_VECTOR_LEN;
-    const ptr3 = passArray8ToWasm0(origin, wasm.__wbindgen_malloc);
-    const len3 = WASM_VECTOR_LEN;
-    const ptr4 = passArray8ToWasm0(sender_cross_signed, wasm.__wbindgen_malloc);
-    const len4 = WASM_VECTOR_LEN;
-    _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_todevicesink_emit(ptr, ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, f_status_.__wbg_ptr);
-    return ret;
-}
-
-/**
- * @param {Uint8Array} events_json
- * @param {Uint8Array} compat
- * @param {RustCallStatus} f_status_
- * @returns {Uint8Array}
- */
-export function ubrn_uniffi_matrix_rtc_fn_func_compute_sessions_from_events(events_json, compat, f_status_) {
-    const ptr0 = passArray8ToWasm0(events_json, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passArray8ToWasm0(compat, wasm.__wbindgen_malloc);
-    const len1 = WASM_VECTOR_LEN;
-    _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_func_compute_sessions_from_events(ptr0, len0, ptr1, len1, f_status_.__wbg_ptr);
-    var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
-    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-    return v3;
-}
-
-/**
- * @param {Uint8Array} impairment
- * @param {RustCallStatus} f_status_
- * @returns {Uint8Array}
- */
-export function ubrn_uniffi_matrix_rtc_fn_func_impairment_severity(impairment, f_status_) {
-    const ptr0 = passArray8ToWasm0(impairment, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_func_impairment_severity(ptr0, len0, f_status_.__wbg_ptr);
-    var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
-    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-    return v2;
-}
-
-/**
- * @param {bigint} handle
- * @param {any} callback
- * @param {bigint} callback_data
- */
-export function ubrn_ffi_matrix_rtc_rust_future_poll_u8(handle, callback, callback_data) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_u8(handle, callback, callback_data);
-}
-
-/**
- * @param {bigint} handle
- */
-export function ubrn_ffi_matrix_rtc_rust_future_cancel_u8(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_u8(handle);
-}
-
-/**
- * @param {bigint} handle
- * @param {RustCallStatus} f_status_
- */
-export function ubrn_uniffi_matrix_rtc_fn_free_connectionslistener(handle, f_status_) {
-    _assertClass(f_status_, RustCallStatus);
-    wasm.ubrn_uniffi_matrix_rtc_fn_free_connectionslistener(handle, f_status_.__wbg_ptr);
-}
-
-/**
- * @param {bigint} handle
- * @param {RustCallStatus} f_status_
- * @returns {bigint}
- */
-export function ubrn_uniffi_matrix_rtc_fn_clone_roomeventsink(handle, f_status_) {
-    _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_clone_roomeventsink(handle, f_status_.__wbg_ptr);
-    return BigInt.asUintN(64, ret);
-}
-
-/**
- * @param {bigint} handle
- * @param {RustCallStatus} f_status_
- */
-export function ubrn_uniffi_matrix_rtc_fn_free_roomeventsink(handle, f_status_) {
-    _assertClass(f_status_, RustCallStatus);
-    wasm.ubrn_uniffi_matrix_rtc_fn_free_roomeventsink(handle, f_status_.__wbg_ptr);
-}
-
-/**
- * @param {bigint} ptr
- * @param {Uint8Array} event_json
- * @param {Uint8Array} origin
- * @param {RustCallStatus} f_status_
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_fn_method_roomeventsink_emit(ptr, event_json, origin, f_status_) {
-    const ptr0 = passArray8ToWasm0(event_json, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passArray8ToWasm0(origin, wasm.__wbindgen_malloc);
-    const len1 = WASM_VECTOR_LEN;
-    _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_roomeventsink_emit(ptr, ptr0, len0, ptr1, len1, f_status_.__wbg_ptr);
-    return ret;
+    wasm.ubrn_uniffi_matrix_rtc_fn_method_sessionlistener_on_session_change(ptr, ptr0, len0, f_status_.__wbg_ptr);
 }
 
 /**
@@ -885,130 +727,178 @@ export function ubrn_uniffi_matrix_rtc_fn_free_statuslistener(handle, f_status_)
 }
 
 /**
- * @param {bigint} handle
+ * @param {any} vtable
  */
-export function ubrn_ffi_matrix_rtc_rust_future_free_u8(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_free_u8(handle);
+export function ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_statuslistener(vtable) {
+    wasm.ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_statuslistener(vtable);
+}
+
+/**
+ * @param {bigint} ptr
+ * @param {Uint8Array} status
+ * @param {RustCallStatus} f_status_
+ */
+export function ubrn_uniffi_matrix_rtc_fn_method_statuslistener_on_status_change(ptr, status, f_status_) {
+    const ptr0 = passArray8ToWasm0(status, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    _assertClass(f_status_, RustCallStatus);
+    wasm.ubrn_uniffi_matrix_rtc_fn_method_statuslistener_on_status_change(ptr, ptr0, len0, f_status_.__wbg_ptr);
 }
 
 /**
  * @param {bigint} handle
  * @param {RustCallStatus} f_status_
+ * @returns {bigint}
+ */
+export function ubrn_uniffi_matrix_rtc_fn_clone_todevicesink(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_clone_todevicesink(handle, f_status_.__wbg_ptr);
+    return BigInt.asUintN(64, ret);
+}
+
+/**
+ * @param {bigint} handle
+ * @param {RustCallStatus} f_status_
+ */
+export function ubrn_uniffi_matrix_rtc_fn_free_connectionslistener(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    wasm.ubrn_uniffi_matrix_rtc_fn_free_connectionslistener(handle, f_status_.__wbg_ptr);
+}
+
+/**
+ * @param {any} vtable
+ */
+export function ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_membershipslistener(vtable) {
+    wasm.ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_membershipslistener(vtable);
+}
+
+/**
+ * @param {bigint} ptr
+ * @param {Uint8Array} memberships
+ * @param {RustCallStatus} f_status_
+ */
+export function ubrn_uniffi_matrix_rtc_fn_method_membershipslistener_on_memberships_change(ptr, memberships, f_status_) {
+    const ptr0 = passArray8ToWasm0(memberships, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    _assertClass(f_status_, RustCallStatus);
+    wasm.ubrn_uniffi_matrix_rtc_fn_method_membershipslistener_on_memberships_change(ptr, ptr0, len0, f_status_.__wbg_ptr);
+}
+
+/**
+ * @param {bigint} handle
+ * @param {RustCallStatus} f_status_
+ * @returns {bigint}
+ */
+export function ubrn_uniffi_matrix_rtc_fn_clone_roomeventsink(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_clone_roomeventsink(handle, f_status_.__wbg_ptr);
+    return BigInt.asUintN(64, ret);
+}
+
+/**
+ * @param {bigint} handle
+ * @param {RustCallStatus} f_status_
+ */
+export function ubrn_uniffi_matrix_rtc_fn_free_roomeventsink(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    wasm.ubrn_uniffi_matrix_rtc_fn_free_roomeventsink(handle, f_status_.__wbg_ptr);
+}
+
+/**
+ * @param {bigint} ptr
+ * @param {Uint8Array} event_json
+ * @param {Uint8Array} origin
+ * @param {RustCallStatus} f_status_
  * @returns {number}
  */
-export function ubrn_ffi_matrix_rtc_rust_future_complete_u8(handle, f_status_) {
+export function ubrn_uniffi_matrix_rtc_fn_method_roomeventsink_emit(ptr, event_json, origin, f_status_) {
+    const ptr0 = passArray8ToWasm0(event_json, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray8ToWasm0(origin, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
     _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_u8(handle, f_status_.__wbg_ptr);
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_roomeventsink_emit(ptr, ptr0, len0, ptr1, len1, f_status_.__wbg_ptr);
     return ret;
 }
 
 /**
  * @param {bigint} handle
- * @param {any} callback
- * @param {bigint} callback_data
+ * @param {RustCallStatus} f_status_
+ * @returns {bigint}
  */
-export function ubrn_ffi_matrix_rtc_rust_future_poll_i8(handle, callback, callback_data) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_i8(handle, callback, callback_data);
-}
-
-/**
- * @param {bigint} handle
- */
-export function ubrn_ffi_matrix_rtc_rust_future_free_i16(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_free_i16(handle);
+export function ubrn_uniffi_matrix_rtc_fn_clone_sessionlistener(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_clone_sessionlistener(handle, f_status_.__wbg_ptr);
+    return BigInt.asUintN(64, ret);
 }
 
 /**
  * @param {bigint} handle
  * @param {RustCallStatus} f_status_
+ */
+export function ubrn_uniffi_matrix_rtc_fn_free_sessionlistener(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    wasm.ubrn_uniffi_matrix_rtc_fn_free_sessionlistener(handle, f_status_.__wbg_ptr);
+}
+
+/**
+ * @param {any} vtable
+ */
+export function ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_sessionlistener(vtable) {
+    wasm.ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_sessionlistener(vtable);
+}
+
+/**
+ * @param {bigint} handle
+ * @param {RustCallStatus} f_status_
+ */
+export function ubrn_uniffi_matrix_rtc_fn_free_todevicesink(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    wasm.ubrn_uniffi_matrix_rtc_fn_free_todevicesink(handle, f_status_.__wbg_ptr);
+}
+
+/**
+ * @param {bigint} ptr
+ * @param {Uint8Array} event_type
+ * @param {Uint8Array} sender
+ * @param {Uint8Array} content_json
+ * @param {Uint8Array} origin
+ * @param {Uint8Array} sender_cross_signed
+ * @param {RustCallStatus} f_status_
  * @returns {number}
  */
-export function ubrn_ffi_matrix_rtc_rust_future_complete_i16(handle, f_status_) {
+export function ubrn_uniffi_matrix_rtc_fn_method_todevicesink_emit(ptr, event_type, sender, content_json, origin, sender_cross_signed, f_status_) {
+    const ptr0 = passArray8ToWasm0(event_type, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray8ToWasm0(sender, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passArray8ToWasm0(content_json, wasm.__wbindgen_malloc);
+    const len2 = WASM_VECTOR_LEN;
+    const ptr3 = passArray8ToWasm0(origin, wasm.__wbindgen_malloc);
+    const len3 = WASM_VECTOR_LEN;
+    const ptr4 = passArray8ToWasm0(sender_cross_signed, wasm.__wbindgen_malloc);
+    const len4 = WASM_VECTOR_LEN;
     _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_i16(handle, f_status_.__wbg_ptr);
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_method_todevicesink_emit(ptr, ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, f_status_.__wbg_ptr);
     return ret;
 }
 
 /**
- * @param {bigint} handle
- * @param {any} callback
- * @param {bigint} callback_data
- */
-export function ubrn_ffi_matrix_rtc_rust_future_poll_u32(handle, callback, callback_data) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_u32(handle, callback, callback_data);
-}
-
-/**
- * @param {bigint} handle
- */
-export function ubrn_ffi_matrix_rtc_rust_future_cancel_u32(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_u32(handle);
-}
-
-/**
- * @param {bigint} handle
- */
-export function ubrn_ffi_matrix_rtc_rust_future_free_u32(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_free_u32(handle);
-}
-
-/**
- * @param {bigint} handle
+ * @param {Uint8Array} events_json
+ * @param {Uint8Array} compat
  * @param {RustCallStatus} f_status_
- * @returns {number}
+ * @returns {Uint8Array}
  */
-export function ubrn_ffi_matrix_rtc_rust_future_complete_u32(handle, f_status_) {
+export function ubrn_uniffi_matrix_rtc_fn_func_compute_sessions_from_events(events_json, compat, f_status_) {
+    const ptr0 = passArray8ToWasm0(events_json, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray8ToWasm0(compat, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
     _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_u32(handle, f_status_.__wbg_ptr);
-    return ret >>> 0;
-}
-
-/**
- * @param {bigint} handle
- * @param {any} callback
- * @param {bigint} callback_data
- */
-export function ubrn_ffi_matrix_rtc_rust_future_poll_i32(handle, callback, callback_data) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_i32(handle, callback, callback_data);
-}
-
-/**
- * @param {bigint} handle
- */
-export function ubrn_ffi_matrix_rtc_rust_future_cancel_i32(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_i32(handle);
-}
-
-/**
- * @param {bigint} handle
- */
-export function ubrn_ffi_matrix_rtc_rust_future_free_i32(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_free_i32(handle);
-}
-
-/**
- * @param {bigint} handle
- */
-export function ubrn_ffi_matrix_rtc_rust_future_cancel_i8(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_i8(handle);
-}
-
-/**
- * @param {bigint} handle
- */
-export function ubrn_ffi_matrix_rtc_rust_future_free_i8(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_free_i8(handle);
-}
-
-/**
- * @param {bigint} handle
- * @param {RustCallStatus} f_status_
- * @returns {number}
- */
-export function ubrn_ffi_matrix_rtc_rust_future_complete_i8(handle, f_status_) {
-    _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_i8(handle, f_status_.__wbg_ptr);
-    return ret;
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_func_compute_sessions_from_events(ptr0, len0, ptr1, len1, f_status_.__wbg_ptr);
+    var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    return v3;
 }
 
 /**
@@ -1063,12 +953,19 @@ export function ubrn_ffi_matrix_rtc_rust_future_cancel_i16(handle) {
 
 /**
  * @param {bigint} handle
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_free_i16(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_free_i16(handle);
+}
+
+/**
+ * @param {bigint} handle
  * @param {RustCallStatus} f_status_
  * @returns {number}
  */
-export function ubrn_ffi_matrix_rtc_rust_future_complete_i32(handle, f_status_) {
+export function ubrn_ffi_matrix_rtc_rust_future_complete_i16(handle, f_status_) {
     _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_i32(handle, f_status_.__wbg_ptr);
+    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_i16(handle, f_status_.__wbg_ptr);
     return ret;
 }
 
@@ -1077,15 +974,46 @@ export function ubrn_ffi_matrix_rtc_rust_future_complete_i32(handle, f_status_) 
  * @param {any} callback
  * @param {bigint} callback_data
  */
-export function ubrn_ffi_matrix_rtc_rust_future_poll_u64(handle, callback, callback_data) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_u64(handle, callback, callback_data);
+export function ubrn_ffi_matrix_rtc_rust_future_poll_u32(handle, callback, callback_data) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_u32(handle, callback, callback_data);
+}
+
+/**
+ * @param {Uint8Array} impairment
+ * @param {RustCallStatus} f_status_
+ * @returns {Uint8Array}
+ */
+export function ubrn_uniffi_matrix_rtc_fn_func_impairment_severity(impairment, f_status_) {
+    const ptr0 = passArray8ToWasm0(impairment, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    _assertClass(f_status_, RustCallStatus);
+    const ret = wasm.ubrn_uniffi_matrix_rtc_fn_func_impairment_severity(ptr0, len0, f_status_.__wbg_ptr);
+    var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    return v2;
+}
+
+/**
+ * @param {bigint} handle
+ * @param {any} callback
+ * @param {bigint} callback_data
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_poll_u8(handle, callback, callback_data) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_u8(handle, callback, callback_data);
 }
 
 /**
  * @param {bigint} handle
  */
-export function ubrn_ffi_matrix_rtc_rust_future_cancel_u64(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_u64(handle);
+export function ubrn_ffi_matrix_rtc_rust_future_cancel_u8(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_u8(handle);
+}
+
+/**
+ * @param {bigint} handle
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_free_u8(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_free_u8(handle);
 }
 
 /**
@@ -1093,9 +1021,9 @@ export function ubrn_ffi_matrix_rtc_rust_future_cancel_u64(handle) {
  * @param {RustCallStatus} f_status_
  * @returns {number}
  */
-export function ubrn_ffi_matrix_rtc_rust_future_complete_f32(handle, f_status_) {
+export function ubrn_ffi_matrix_rtc_rust_future_complete_u8(handle, f_status_) {
     _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_f32(handle, f_status_.__wbg_ptr);
+    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_u8(handle, f_status_.__wbg_ptr);
     return ret;
 }
 
@@ -1104,22 +1032,22 @@ export function ubrn_ffi_matrix_rtc_rust_future_complete_f32(handle, f_status_) 
  * @param {any} callback
  * @param {bigint} callback_data
  */
-export function ubrn_ffi_matrix_rtc_rust_future_poll_f64(handle, callback, callback_data) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_f64(handle, callback, callback_data);
+export function ubrn_ffi_matrix_rtc_rust_future_poll_i8(handle, callback, callback_data) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_i8(handle, callback, callback_data);
 }
 
 /**
  * @param {bigint} handle
  */
-export function ubrn_ffi_matrix_rtc_rust_future_cancel_f64(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_f64(handle);
+export function ubrn_ffi_matrix_rtc_rust_future_cancel_i8(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_i8(handle);
 }
 
 /**
  * @param {bigint} handle
  */
-export function ubrn_ffi_matrix_rtc_rust_future_free_f64(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_free_f64(handle);
+export function ubrn_ffi_matrix_rtc_rust_future_free_i8(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_free_i8(handle);
 }
 
 /**
@@ -1127,60 +1055,35 @@ export function ubrn_ffi_matrix_rtc_rust_future_free_f64(handle) {
  * @param {RustCallStatus} f_status_
  * @returns {number}
  */
-export function ubrn_ffi_matrix_rtc_rust_future_complete_f64(handle, f_status_) {
+export function ubrn_ffi_matrix_rtc_rust_future_complete_i8(handle, f_status_) {
     _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_f64(handle, f_status_.__wbg_ptr);
+    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_i8(handle, f_status_.__wbg_ptr);
     return ret;
 }
 
 /**
  * @param {bigint} handle
- * @param {any} callback
- * @param {bigint} callback_data
  */
-export function ubrn_ffi_matrix_rtc_rust_future_poll_rust_buffer(handle, callback, callback_data) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_rust_buffer(handle, callback, callback_data);
+export function ubrn_ffi_matrix_rtc_rust_future_cancel_u32(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_u32(handle);
 }
 
 /**
  * @param {bigint} handle
  */
-export function ubrn_ffi_matrix_rtc_rust_future_cancel_rust_buffer(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_rust_buffer(handle);
-}
-
-/**
- * @param {bigint} handle
- */
-export function ubrn_ffi_matrix_rtc_rust_future_free_rust_buffer(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_free_rust_buffer(handle);
-}
-
-/**
- * @param {bigint} handle
- */
-export function ubrn_ffi_matrix_rtc_rust_future_free_u64(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_free_u64(handle);
+export function ubrn_ffi_matrix_rtc_rust_future_free_u32(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_free_u32(handle);
 }
 
 /**
  * @param {bigint} handle
  * @param {RustCallStatus} f_status_
- * @returns {bigint}
+ * @returns {number}
  */
-export function ubrn_ffi_matrix_rtc_rust_future_complete_u64(handle, f_status_) {
+export function ubrn_ffi_matrix_rtc_rust_future_complete_u32(handle, f_status_) {
     _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_u64(handle, f_status_.__wbg_ptr);
-    return BigInt.asUintN(64, ret);
-}
-
-/**
- * @param {bigint} handle
- * @param {any} callback
- * @param {bigint} callback_data
- */
-export function ubrn_ffi_matrix_rtc_rust_future_poll_i64(handle, callback, callback_data) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_i64(handle, callback, callback_data);
+    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_u32(handle, f_status_.__wbg_ptr);
+    return ret >>> 0;
 }
 
 /**
@@ -1234,14 +1137,12 @@ export function ubrn_ffi_matrix_rtc_rust_future_free_f32(handle) {
 /**
  * @param {bigint} handle
  * @param {RustCallStatus} f_status_
- * @returns {Uint8Array}
+ * @returns {number}
  */
-export function ubrn_ffi_matrix_rtc_rust_future_complete_rust_buffer(handle, f_status_) {
+export function ubrn_ffi_matrix_rtc_rust_future_complete_f32(handle, f_status_) {
     _assertClass(f_status_, RustCallStatus);
-    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_rust_buffer(handle, f_status_.__wbg_ptr);
-    var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
-    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-    return v1;
+    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_f32(handle, f_status_.__wbg_ptr);
+    return ret;
 }
 
 /**
@@ -1249,118 +1150,119 @@ export function ubrn_ffi_matrix_rtc_rust_future_complete_rust_buffer(handle, f_s
  * @param {any} callback
  * @param {bigint} callback_data
  */
-export function ubrn_ffi_matrix_rtc_rust_future_poll_void(handle, callback, callback_data) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_void(handle, callback, callback_data);
+export function ubrn_ffi_matrix_rtc_rust_future_poll_f64(handle, callback, callback_data) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_f64(handle, callback, callback_data);
+}
+
+/**
+ * @param {bigint} handle
+ * @param {any} callback
+ * @param {bigint} callback_data
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_poll_i32(handle, callback, callback_data) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_i32(handle, callback, callback_data);
 }
 
 /**
  * @param {bigint} handle
  */
-export function ubrn_ffi_matrix_rtc_rust_future_cancel_void(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_void(handle);
+export function ubrn_ffi_matrix_rtc_rust_future_cancel_i32(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_i32(handle);
 }
 
 /**
  * @param {bigint} handle
  */
-export function ubrn_ffi_matrix_rtc_rust_future_free_void(handle) {
-    wasm.ubrn_ffi_matrix_rtc_rust_future_free_void(handle);
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_debug_snapshot() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_debug_snapshot();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_is_homeserver_connected() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_is_homeserver_connected();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_join() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_join();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_key_map() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_key_map();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_leave() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_leave();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_memberships() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_memberships();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_open_slot() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_open_slot();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_member_id() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_member_id();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_membership() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_membership();
-    return ret;
-}
-
-/**
- * @param {any} vtable
- */
-export function ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_connectionslistener(vtable) {
-    wasm.ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_connectionslistener(vtable);
+export function ubrn_ffi_matrix_rtc_rust_future_free_i32(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_free_i32(handle);
 }
 
 /**
  * @param {bigint} handle
  * @param {RustCallStatus} f_status_
+ * @returns {number}
  */
-export function ubrn_ffi_matrix_rtc_rust_future_complete_void(handle, f_status_) {
+export function ubrn_ffi_matrix_rtc_rust_future_complete_i32(handle, f_status_) {
     _assertClass(f_status_, RustCallStatus);
-    wasm.ubrn_ffi_matrix_rtc_rust_future_complete_void(handle, f_status_.__wbg_ptr);
+    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_i32(handle, f_status_.__wbg_ptr);
+    return ret;
 }
 
 /**
+ * @param {bigint} handle
+ * @param {any} callback
+ * @param {bigint} callback_data
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_poll_u64(handle, callback, callback_data) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_u64(handle, callback, callback_data);
+}
+
+/**
+ * @param {bigint} handle
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_cancel_u64(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_u64(handle);
+}
+
+/**
+ * @param {bigint} handle
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_free_u64(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_free_u64(handle);
+}
+
+/**
+ * @param {bigint} handle
+ * @param {RustCallStatus} f_status_
+ * @returns {bigint}
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_complete_u64(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_u64(handle, f_status_.__wbg_ptr);
+    return BigInt.asUintN(64, ret);
+}
+
+/**
+ * @param {bigint} handle
+ * @param {any} callback
+ * @param {bigint} callback_data
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_poll_i64(handle, callback, callback_data) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_i64(handle, callback, callback_data);
+}
+
+/**
+ * @param {bigint} handle
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_cancel_f64(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_f64(handle);
+}
+
+/**
+ * @param {bigint} handle
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_free_f64(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_free_f64(handle);
+}
+
+/**
+ * @param {bigint} handle
+ * @param {RustCallStatus} f_status_
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_func_compute_sessions_from_events() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_func_compute_sessions_from_events();
+export function ubrn_ffi_matrix_rtc_rust_future_complete_f64(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_f64(handle, f_status_.__wbg_ptr);
     return ret;
+}
+
+/**
+ * @param {bigint} handle
+ * @param {any} callback
+ * @param {bigint} callback_data
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_poll_rust_buffer(handle, callback, callback_data) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_rust_buffer(handle, callback, callback_data);
 }
 
 /**
@@ -1414,120 +1316,130 @@ export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_c
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_transport_identity() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_transport_identity();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_debug_snapshot() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_debug_snapshot();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_session() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_session();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_is_homeserver_connected() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_is_homeserver_connected();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_connections_listener() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_connections_listener();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_join() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_join();
+    return ret;
+}
+
+/**
+ * @param {any} vtable
+ */
+export function ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_connectionslistener(vtable) {
+    wasm.ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_connectionslistener(vtable);
+}
+
+/**
+ * @param {bigint} handle
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_cancel_rust_buffer(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_rust_buffer(handle);
+}
+
+/**
+ * @param {bigint} handle
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_free_rust_buffer(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_free_rust_buffer(handle);
+}
+
+/**
+ * @param {bigint} handle
+ * @param {RustCallStatus} f_status_
+ * @returns {Uint8Array}
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_complete_rust_buffer(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    const ret = wasm.ubrn_ffi_matrix_rtc_rust_future_complete_rust_buffer(handle, f_status_.__wbg_ptr);
+    var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    return v1;
+}
+
+/**
+ * @param {bigint} handle
+ * @param {any} callback
+ * @param {bigint} callback_data
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_poll_void(handle, callback, callback_data) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_poll_void(handle, callback, callback_data);
+}
+
+/**
+ * @param {bigint} handle
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_cancel_void(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_cancel_void(handle);
+}
+
+/**
+ * @param {bigint} handle
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_free_void(handle) {
+    wasm.ubrn_ffi_matrix_rtc_rust_future_free_void(handle);
+}
+
+/**
+ * @param {bigint} handle
+ * @param {RustCallStatus} f_status_
+ */
+export function ubrn_ffi_matrix_rtc_rust_future_complete_void(handle, f_status_) {
+    _assertClass(f_status_, RustCallStatus);
+    wasm.ubrn_ffi_matrix_rtc_rust_future_complete_void(handle, f_status_.__wbg_ptr);
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_func_compute_sessions_from_events() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_func_compute_sessions_from_events();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_state_event() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_state_event();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_key_map() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_key_map();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_delayed_event() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_delayed_event();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_leave() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_leave();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_delayed_state_event() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_delayed_state_event();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_memberships() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_memberships();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_restart_delayed_event() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_restart_delayed_event();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_cancel_delayed_event() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_cancel_delayed_event();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_livekit_delayed_leave() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_livekit_delayed_leave();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_to_device() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_to_device();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_rtc_transports() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_rtc_transports();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_livekit_token() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_livekit_token();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_key_map_listener() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_key_map_listener();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_key_rejected_listener() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_key_rejected_listener();
-    return ret;
-}
-
-/**
- * @returns {number}
- */
-export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_memberships_listener() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_memberships_listener();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_session_listener() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_session_listener();
     return ret;
 }
 
@@ -1582,56 +1494,112 @@ export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_events() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_events();
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_state_event() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_state_event();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_state() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_state();
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_delayed_event() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_delayed_event();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_room_events() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_room_events();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_open_slot() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_open_slot();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_constructor_ffimatrixdriver_new() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_constructor_ffimatrixdriver_new();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_member_id() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_member_id();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_constructor_ffiparticipationmanager_new() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_constructor_ffiparticipationmanager_new();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_membership() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_membership();
     return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_ffi_matrix_rtc_uniffi_contract_version() {
-    const ret = wasm.ubrn_ffi_matrix_rtc_uniffi_contract_version();
-    return ret >>> 0;
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_transport_identity() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_own_transport_identity();
+    return ret;
 }
 
 /**
  * @returns {number}
  */
-export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_to_device_events() {
-    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_to_device_events();
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_session() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_session();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_connections_listener() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_connections_listener();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_key_map_listener() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_key_map_listener();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_key_rejected_listener() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_key_rejected_listener();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_memberships_listener() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_memberships_listener();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_delayed_state_event() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_delayed_state_event();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_restart_delayed_event() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_restart_delayed_event();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_cancel_delayed_event() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_cancel_delayed_event();
     return ret;
 }
 
@@ -1678,6 +1646,14 @@ export function ubrn_uniffi_matrix_rtc_checksum_method_roomeventsink_emit() {
 /**
  * @returns {number}
  */
+export function ubrn_uniffi_matrix_rtc_checksum_method_sessionlistener_on_session_change() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_sessionlistener_on_session_change();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
 export function ubrn_uniffi_matrix_rtc_checksum_method_stateupdatesink_emit() {
     const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_stateupdatesink_emit();
     return ret;
@@ -1694,9 +1670,105 @@ export function ubrn_uniffi_matrix_rtc_checksum_method_statuslistener_on_status_
 /**
  * @returns {number}
  */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_delayed_leave_via_homeserver() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_delayed_leave_via_homeserver();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_delayed_leave_via_transport() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_delayed_leave_via_transport();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_to_device() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_to_device();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_rtc_transports() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_rtc_transports();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_livekit_token() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_livekit_token();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_events() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_events();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_state() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_state();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_room_events() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_room_events();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_to_device_events() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_to_device_events();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
 export function ubrn_uniffi_matrix_rtc_checksum_method_todevicesink_emit() {
     const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_method_todevicesink_emit();
     return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_constructor_ffimatrixdriver_new() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_constructor_ffimatrixdriver_new();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_uniffi_matrix_rtc_checksum_constructor_ffiparticipationmanager_new() {
+    const ret = wasm.ubrn_uniffi_matrix_rtc_checksum_constructor_ffiparticipationmanager_new();
+    return ret;
+}
+
+/**
+ * @returns {number}
+ */
+export function ubrn_ffi_matrix_rtc_uniffi_contract_version() {
+    const ret = wasm.ubrn_ffi_matrix_rtc_uniffi_contract_version();
+    return ret >>> 0;
 }
 
 /**
@@ -1927,7 +1999,7 @@ function __wbg_adapter_24(arg0, arg1) {
 }
 
 function __wbg_adapter_27(arg0, arg1, arg2) {
-    wasm.closure531_externref_shim(arg0, arg1, arg2);
+    wasm.closure562_externref_shim(arg0, arg1, arg2);
 }
 
 const ForeignFutureCompleteF32Finalization = (typeof FinalizationRegistry === 'undefined')
@@ -2390,22 +2462,14 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_call_02529374d31ad97c = function(arg0, arg1, arg2) {
         arg0.call(arg1, BigInt.asUintN(64, arg2));
     };
-    imports.wbg.__wbg_call_0433755a93443d6e = function(arg0, arg1, arg2, arg3) {
-        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), BigInt.asUintN(64, arg3));
-        return ret;
-    };
-    imports.wbg.__wbg_call_05dc34bdb8662702 = function(arg0, arg1, arg2, arg3) {
-        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), BigInt.asUintN(64, arg3));
-        return ret;
-    };
-    imports.wbg.__wbg_call_0ba4077697ab1405 = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
+    imports.wbg.__wbg_call_03c16dfcbc9e20c2 = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6) {
         var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
         wasm.__wbindgen_free(arg3, arg4 * 1, 1);
-        var v1 = getArrayU8FromWasm0(arg5, arg6).slice();
-        wasm.__wbindgen_free(arg5, arg6 * 1, 1);
-        var v2 = getArrayU8FromWasm0(arg7, arg8).slice();
-        wasm.__wbindgen_free(arg7, arg8 * 1, 1);
-        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, v1, v2, ForeignFutureCompleteRustBuffer.__wrap(arg9), BigInt.asUintN(64, arg10));
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, ForeignFutureCompleteRustBuffer.__wrap(arg5), BigInt.asUintN(64, arg6));
+        return ret;
+    };
+    imports.wbg.__wbg_call_0433755a93443d6e = function(arg0, arg1, arg2, arg3) {
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), BigInt.asUintN(64, arg3));
         return ret;
     };
     imports.wbg.__wbg_call_21960420ca81bc05 = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12) {
@@ -2437,12 +2501,6 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_call_45ca295cb4469524 = function(arg0, arg1, arg2, arg3) {
         arg0.call(arg1, BigInt.asUintN(64, arg2), arg3);
     };
-    imports.wbg.__wbg_call_45f35e4128d6c004 = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6) {
-        var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
-        wasm.__wbindgen_free(arg3, arg4 * 1, 1);
-        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, ForeignFutureCompleteRustBuffer.__wrap(arg5), BigInt.asUintN(64, arg6));
-        return ret;
-    };
     imports.wbg.__wbg_call_4614c0a573de577f = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13) {
         var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
         wasm.__wbindgen_free(arg3, arg4 * 1, 1);
@@ -2455,16 +2513,14 @@ function __wbg_get_imports() {
         const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, v1, v2, v3, BigInt.asUintN(64, arg11), ForeignFutureCompleteRustBuffer.__wrap(arg12), BigInt.asUintN(64, arg13));
         return ret;
     };
-    imports.wbg.__wbg_call_496b92421c092b65 = function(arg0, arg1, arg2) {
-        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2));
-        return ret;
-    };
-    imports.wbg.__wbg_call_571d4611879307e7 = function(arg0, arg1, arg2, arg3) {
-        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), BigInt.asUintN(64, arg3));
-        return ret;
-    };
-    imports.wbg.__wbg_call_65221d24e12159bf = function(arg0, arg1, arg2, arg3, arg4) {
-        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), ForeignFutureCompleteRustBuffer.__wrap(arg3), BigInt.asUintN(64, arg4));
+    imports.wbg.__wbg_call_5718592162c98368 = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
+        var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
+        wasm.__wbindgen_free(arg3, arg4 * 1, 1);
+        var v1 = getArrayU8FromWasm0(arg5, arg6).slice();
+        wasm.__wbindgen_free(arg5, arg6 * 1, 1);
+        var v2 = getArrayU8FromWasm0(arg7, arg8).slice();
+        wasm.__wbindgen_free(arg7, arg8 * 1, 1);
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, v1, v2, ForeignFutureCompleteRustBuffer.__wrap(arg9), BigInt.asUintN(64, arg10));
         return ret;
     };
     imports.wbg.__wbg_call_65360e4d1b0f41fa = function(arg0, arg1, arg2) {
@@ -2474,6 +2530,10 @@ function __wbg_get_imports() {
         const ret = arg0.call(arg1);
         return ret;
     }, arguments) };
+    imports.wbg.__wbg_call_6791e83bb1bb6601 = function(arg0, arg1, arg2) {
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2));
+        return ret;
+    };
     imports.wbg.__wbg_call_67bcb4b184601516 = function(arg0, arg1, arg2) {
         arg0.call(arg1, BigInt.asUintN(64, arg2));
     };
@@ -2487,18 +2547,26 @@ function __wbg_get_imports() {
         const ret = arg0.call(arg1, arg2);
         return ret;
     }, arguments) };
-    imports.wbg.__wbg_call_85dc743acd81f8e1 = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15) {
+    imports.wbg.__wbg_call_87edfa0175375a83 = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
         var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
         wasm.__wbindgen_free(arg3, arg4 * 1, 1);
         var v1 = getArrayU8FromWasm0(arg5, arg6).slice();
         wasm.__wbindgen_free(arg5, arg6 * 1, 1);
-        var v2 = getArrayU8FromWasm0(arg7, arg8).slice();
-        wasm.__wbindgen_free(arg7, arg8 * 1, 1);
-        var v3 = getArrayU8FromWasm0(arg9, arg10).slice();
-        wasm.__wbindgen_free(arg9, arg10 * 1, 1);
-        var v4 = getArrayU8FromWasm0(arg11, arg12).slice();
-        wasm.__wbindgen_free(arg11, arg12 * 1, 1);
-        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, v1, v2, v3, v4, BigInt.asUintN(64, arg13), ForeignFutureCompleteVoid.__wrap(arg14), BigInt.asUintN(64, arg15));
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, v1, ForeignFutureCompleteRustBuffer.__wrap(arg7), BigInt.asUintN(64, arg8));
+        return ret;
+    };
+    imports.wbg.__wbg_call_9108746ed497928f = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
+        var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
+        wasm.__wbindgen_free(arg3, arg4 * 1, 1);
+        var v1 = getArrayU8FromWasm0(arg5, arg6).slice();
+        wasm.__wbindgen_free(arg5, arg6 * 1, 1);
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, v1, arg7 >>> 0, ForeignFutureCompleteRustBuffer.__wrap(arg8), BigInt.asUintN(64, arg9));
+        return ret;
+    };
+    imports.wbg.__wbg_call_98882f14cac8324a = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6) {
+        var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
+        wasm.__wbindgen_free(arg3, arg4 * 1, 1);
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, ForeignFutureCompleteVoid.__wrap(arg5), BigInt.asUintN(64, arg6));
         return ret;
     };
     imports.wbg.__wbg_call_9a894f10d06a53c9 = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
@@ -2534,17 +2602,28 @@ function __wbg_get_imports() {
         const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0);
         return ret;
     };
+    imports.wbg.__wbg_call_ac8db65a5eb7c738 = function(arg0, arg1, arg2, arg3, arg4) {
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), ForeignFutureCompleteRustBuffer.__wrap(arg3), BigInt.asUintN(64, arg4));
+        return ret;
+    };
     imports.wbg.__wbg_call_b66d526ecf55c81d = function(arg0, arg1, arg2) {
         const ret = arg0.call(arg1, BigInt.asUintN(64, arg2));
         return ret;
     };
-    imports.wbg.__wbg_call_bd883beab9425b7c = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
+    imports.wbg.__wbg_call_b9d1054c432bc102 = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6) {
         var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
         wasm.__wbindgen_free(arg3, arg4 * 1, 1);
-        var v1 = getArrayU8FromWasm0(arg5, arg6).slice();
-        wasm.__wbindgen_free(arg5, arg6 * 1, 1);
-        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, v1, arg7 >>> 0, ForeignFutureCompleteRustBuffer.__wrap(arg8), BigInt.asUintN(64, arg9));
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, ForeignFutureCompleteVoid.__wrap(arg5), BigInt.asUintN(64, arg6));
         return ret;
+    };
+    imports.wbg.__wbg_call_bd656bf95b67af57 = function(arg0, arg1, arg2, arg3, arg4) {
+        var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
+        wasm.__wbindgen_free(arg3, arg4 * 1, 1);
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0);
+        return ret;
+    };
+    imports.wbg.__wbg_call_c7fa2ece3851d664 = function(arg0, arg1, arg2) {
+        arg0.call(arg1, BigInt.asUintN(64, arg2));
     };
     imports.wbg.__wbg_call_c9c4e766b640b52d = function(arg0, arg1, arg2, arg3) {
         const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), BigInt.asUintN(64, arg3));
@@ -2572,18 +2651,18 @@ function __wbg_get_imports() {
         const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, v1, v2, BigInt.asUintN(64, arg9), ForeignFutureCompleteRustBuffer.__wrap(arg10), BigInt.asUintN(64, arg11));
         return ret;
     };
-    imports.wbg.__wbg_call_dd8fc90cc1eed1a0 = function(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
-        var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
-        wasm.__wbindgen_free(arg3, arg4 * 1, 1);
-        var v1 = getArrayU8FromWasm0(arg5, arg6).slice();
-        wasm.__wbindgen_free(arg5, arg6 * 1, 1);
-        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0, v1, ForeignFutureCompleteRustBuffer.__wrap(arg7), BigInt.asUintN(64, arg8));
-        return ret;
-    };
     imports.wbg.__wbg_call_df53672c5883e9e7 = function(arg0, arg1, arg2, arg3, arg4) {
         var v0 = getArrayU8FromWasm0(arg3, arg4).slice();
         wasm.__wbindgen_free(arg3, arg4 * 1, 1);
         const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), v0);
+        return ret;
+    };
+    imports.wbg.__wbg_call_e1d35efce0e1a1e6 = function(arg0, arg1, arg2) {
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2));
+        return ret;
+    };
+    imports.wbg.__wbg_call_e561c9090f51461d = function(arg0, arg1, arg2, arg3) {
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), BigInt.asUintN(64, arg3));
         return ret;
     };
     imports.wbg.__wbg_call_f95ee156aae25631 = function(arg0, arg1, arg2) {
@@ -2599,6 +2678,10 @@ function __wbg_get_imports() {
     };
     imports.wbg.__wbg_call_ff7e7c3b656ecebf = function(arg0, arg1, arg2) {
         const ret = arg0.call(arg1, BigInt.asUintN(64, arg2));
+        return ret;
+    };
+    imports.wbg.__wbg_call_ffd94e4913c24a7a = function(arg0, arg1, arg2, arg3) {
+        const ret = arg0.call(arg1, BigInt.asUintN(64, arg2), BigInt.asUintN(64, arg3));
         return ret;
     };
     imports.wbg.__wbg_callstatus_ab813cdd9fb59b5c = function(arg0) {
@@ -2627,8 +2710,12 @@ function __wbg_get_imports() {
         const ret = arg0.crypto;
         return ret;
     };
-    imports.wbg.__wbg_delegatelivekitdelayedleave_991fce363b53064f = function(arg0) {
-        const ret = arg0.delegate_livekit_delayed_leave;
+    imports.wbg.__wbg_delegatedelayedleaveviahomeserver_d871a6b6bc347229 = function(arg0) {
+        const ret = arg0.delegate_delayed_leave_via_homeserver;
+        return ret;
+    };
+    imports.wbg.__wbg_delegatedelayedleaveviatransport_aa4b046ef4e220a1 = function(arg0) {
+        const ret = arg0.delegate_delayed_leave_via_transport;
         return ret;
     };
     imports.wbg.__wbg_errorbuf_59fafcd45c02f900 = function(arg0, arg1) {
@@ -2652,11 +2739,11 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_getRandomValues_b3f15fcbfabb0f8b = function() { return handleError(function (arg0, arg1) {
         arg0.getRandomValues(arg1);
     }, arguments) };
-    imports.wbg.__wbg_getlivekittoken_269ca0b4c594770a = function(arg0) {
+    imports.wbg.__wbg_getlivekittoken_5f81591c0acaddc6 = function(arg0) {
         const ret = arg0.get_livekit_token;
         return ret;
     };
-    imports.wbg.__wbg_getrtctransports_8be200fadbe143dc = function(arg0) {
+    imports.wbg.__wbg_getrtctransports_3911836191336767 = function(arg0) {
         const ret = arg0.get_rtc_transports;
         return ret;
     };
@@ -2664,7 +2751,7 @@ function __wbg_get_imports() {
         const ret = arg0.handle;
         return ret;
     };
-    imports.wbg.__wbg_ishomeserverconnected_dc5057f7242a591e = function(arg0) {
+    imports.wbg.__wbg_ishomeserverconnected_751e70b3c02b3223 = function(arg0) {
         const ret = arg0.is_homeserver_connected;
         return ret;
     };
@@ -2712,6 +2799,10 @@ function __wbg_get_imports() {
         const ret = arg0.on_memberships_change;
         return ret;
     };
+    imports.wbg.__wbg_onsessionchange_799b89dbe5987804 = function(arg0) {
+        const ret = arg0.on_session_change;
+        return ret;
+    };
     imports.wbg.__wbg_onstatuschange_926e83644f91f32d = function(arg0) {
         const ret = arg0.on_status_change;
         return ret;
@@ -2734,11 +2825,11 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_randomFillSync_f8c153b79f285817 = function() { return handleError(function (arg0, arg1) {
         arg0.randomFillSync(arg1);
     }, arguments) };
-    imports.wbg.__wbg_readevents_98385cdfe47bdeee = function(arg0) {
+    imports.wbg.__wbg_readevents_73801c97c6d3e238 = function(arg0) {
         const ret = arg0.read_events;
         return ret;
     };
-    imports.wbg.__wbg_readstate_a52da7153b66ed2b = function(arg0) {
+    imports.wbg.__wbg_readstate_98bb4b03f7217a30 = function(arg0) {
         const ret = arg0.read_state;
         return ret;
     };
@@ -2817,7 +2908,7 @@ function __wbg_get_imports() {
         const ret = arg0.send_sticky_event;
         return ret;
     };
-    imports.wbg.__wbg_sendtodevice_a3e33fb31230ba64 = function(arg0) {
+    imports.wbg.__wbg_sendtodevice_7aac4e0ebd535903 = function(arg0) {
         const ret = arg0.send_to_device;
         return ret;
     };
@@ -2848,19 +2939,19 @@ function __wbg_get_imports() {
         const ret = arg0.subarray(arg1 >>> 0, arg2 >>> 0);
         return ret;
     };
-    imports.wbg.__wbg_subscribeconnectivity_a75e094330a03e3e = function(arg0) {
+    imports.wbg.__wbg_subscribeconnectivity_8fdd26bf00625517 = function(arg0) {
         const ret = arg0.subscribe_connectivity;
         return ret;
     };
-    imports.wbg.__wbg_subscriberoomevents_2e4d5ca6372fe4cd = function(arg0) {
+    imports.wbg.__wbg_subscriberoomevents_d547d19b370bf4a1 = function(arg0) {
         const ret = arg0.subscribe_room_events;
         return ret;
     };
-    imports.wbg.__wbg_subscribestateupdates_06939632cde2db00 = function(arg0) {
+    imports.wbg.__wbg_subscribestateupdates_376ee2dec3ce8226 = function(arg0) {
         const ret = arg0.subscribe_state_updates;
         return ret;
     };
-    imports.wbg.__wbg_subscribetodeviceevents_afcc4eb08f3d890c = function(arg0) {
+    imports.wbg.__wbg_subscribetodeviceevents_a2b80a0df19c8813 = function(arg0) {
         const ret = arg0.subscribe_to_device_events;
         return ret;
     };
@@ -2873,6 +2964,10 @@ function __wbg_get_imports() {
         return ret;
     };
     imports.wbg.__wbg_unifficlone_6471a1309ee8fc26 = function(arg0) {
+        const ret = arg0.uniffi_clone;
+        return ret;
+    };
+    imports.wbg.__wbg_unifficlone_6b800bc71dff8203 = function(arg0) {
         const ret = arg0.uniffi_clone;
         return ret;
     };
@@ -2908,6 +3003,10 @@ function __wbg_get_imports() {
         const ret = arg0.uniffi_free;
         return ret;
     };
+    imports.wbg.__wbg_uniffifree_8bebc19643df1faf = function(arg0) {
+        const ret = arg0.uniffi_free;
+        return ret;
+    };
     imports.wbg.__wbg_uniffifree_af6c094a1e08186f = function(arg0) {
         const ret = arg0.uniffi_free;
         return ret;
@@ -2929,12 +3028,12 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper2151 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 520, __wbg_adapter_24);
+    imports.wbg.__wbindgen_closure_wrapper2259 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 551, __wbg_adapter_24);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper2175 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 532, __wbg_adapter_27);
+    imports.wbg.__wbindgen_closure_wrapper2283 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 563, __wbg_adapter_27);
         return ret;
     };
     imports.wbg.__wbindgen_init_externref_table = function() {

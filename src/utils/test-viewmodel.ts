@@ -21,7 +21,7 @@ import { ConnectionState, type Room as LivekitRoom } from "livekit-client";
 import { E2eeType } from "../e2ee/e2eeType";
 import {
   type CallViewModel,
-  createCallViewModel$,
+  createJsClientCallViewModel$,
   type CallViewModelOptions,
 } from "../state/CallViewModel/CallViewModel";
 import {
@@ -159,7 +159,7 @@ export function getBasicCallViewModelEnvironment(
   const scope = testScope();
   const muteStates = mockMuteStates();
   const mediaDevices = mediaDevicesOverride ?? mockMediaDevices({});
-  const vm = createCallViewModel$(
+  const vm = createJsClientCallViewModel$(
     scope,
     rtcSession.asMockedSession(),
     matrixRoom,

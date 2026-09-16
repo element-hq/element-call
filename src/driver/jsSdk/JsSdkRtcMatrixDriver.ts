@@ -27,6 +27,7 @@ import {
   type MatrixClient,
   type MatrixEvent,
   MatrixError,
+  Method,
   type ReceivedToDeviceMessage,
   type Room,
   RoomEvent,
@@ -52,6 +53,8 @@ import {
   type FfiSendEventResponse,
   type FfiToDeviceDelivery,
   type FfiToDeviceRecipient,
+  type FfiHomeserverDelegationRequest,
+  type FfiTransportDelegationRequest,
   type RoomEventSinkLike,
   type StateUpdateSinkLike,
   type ToDeviceSinkLike,
@@ -200,38 +203,59 @@ export class JsSdkRtcMatrixDriver implements RtcMatrixDriver {
   }
 
   /**
-   * MSC4195, the way Element Call has always done it: the MatrixRTC
-   * authorisation service takes over the delayed leave when asked for a token
-   * with `delay_id`, `delay_timeout` and the homeserver it should restart it
-   * at. The token in the answer is discarded. (Interim: plan item C5 moves
-   * the choice of route into the crate and leaves only primitives here.)
+   * MSC4195 through the homeserver's CS API (a homeserver proxying
+   * `rtc/livekit/*` to the authorisation service, MSC4512). One
+   * authenticated request with the body lk-jwt-service 0.7 accepts; the
+   * crate decides when to make it and what to try when it fails. Widget: the
+   * widget client has no access token, so this is `Unsupported` there.
    */
-  public async delegateLivekitDelayedLeave(
-    roomId: string,
-    slotId: string,
-    memberJson: string,
-    delayId: string,
-    livekitServiceUrl: string | undefined,
-    delayMs: bigint,
+  public async delegateDelayedLeaveViaHomeserver(
+    request: FfiHomeserverDelegationRequest,
   ): Promise<void> {
-    if (livekitServiceUrl === undefined)
+    if (this.widget)
       throw new RtcError.Unsupported(
-        "A receive-only member has no transport to delegate to",
+        "A widget client cannot make authenticated homeserver requests",
       );
     await guard(async () => {
-      const member = JSON.parse(memberJson) as MemberClaims;
-      const delegation = {
-        delay_id: delayId,
-        delay_timeout: Number(delayMs),
-        delay_cs_api_url: this.client.baseUrl,
-      };
+      await this.client.http.authedRequest(
+        Method.Post,
+        "/rtc/livekit/delegate_delayed_leave",
+        undefined,
+        {
+          // The SFU our token named; the service checks it is its own.
+          url: request.sfuUrl,
+          room_id: request.roomId,
+          slot_id: request.slotId,
+          member: JSON.parse(request.memberJson) as MemberClaims,
+          delay_id: request.delayId,
+          // Optional once the homeserver can be asked for the delay by id.
+          delay_timeout: Number(request.delayTimeoutMs),
+        },
+        { prefix: "/_matrix/client/unstable/io.element.msc4195" },
+      );
+    });
+  }
+
+  /**
+   * MSC4195 through the authorisation service: the token request Element Call
+   * has always made, with `delay_id`, `delay_timeout` and this client's
+   * homeserver URL added. The token in the answer is discarded.
+   */
+  public async delegateDelayedLeaveViaTransport(
+    request: FfiTransportDelegationRequest,
+  ): Promise<void> {
+    await guard(async () => {
       await this.requestToken(
-        livekitServiceUrl,
-        roomId,
-        slotId,
-        member,
-        false,
-        delegation,
+        request.livekitServiceUrl,
+        request.roomId,
+        request.slotId,
+        JSON.parse(request.memberJson) as MemberClaims,
+        request.legacySfuGet,
+        {
+          delay_id: request.delayId,
+          delay_timeout: Number(request.delayTimeoutMs),
+          delay_cs_api_url: this.client.baseUrl,
+        },
       );
     });
   }

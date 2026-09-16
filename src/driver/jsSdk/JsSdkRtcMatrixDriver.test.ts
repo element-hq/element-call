@@ -250,19 +250,45 @@ describe("JsSdkRtcMatrixDriver", () => {
       ).rejects.toSatisfy((e) => RtcError.Unsupported.instanceOf(e));
     });
 
-    it("delegates the delayed leave through the authorisation service's token endpoint", async () => {
-      const { driver } = fullClient();
+    it("offers both delegation primitives: the homeserver endpoint and the token endpoint", async () => {
+      const { client, driver } = fullClient();
+      client.http = { authedRequest: vi.fn(async () => Promise.resolve({})) };
+      await driver.delegateDelayedLeaveViaHomeserver({
+        sfuUrl: "wss://sfu.example.org",
+        livekitServiceUrl: LK,
+        roomId: ROOM_ID,
+        slotId: "m.call#ROOM",
+        memberJson,
+        delayId: "delay-1",
+        delayTimeoutMs: 3_600_000n,
+      });
+      expect(client.http.authedRequest).toHaveBeenCalledWith(
+        "POST",
+        "/rtc/livekit/delegate_delayed_leave",
+        undefined,
+        {
+          url: "wss://sfu.example.org",
+          room_id: ROOM_ID,
+          slot_id: "m.call#ROOM",
+          member: JSON.parse(memberJson),
+          delay_id: "delay-1",
+          delay_timeout: 3_600_000,
+        },
+        { prefix: "/_matrix/client/unstable/io.element.msc4195" },
+      );
+
       fetchMock.mockImplementation(async () =>
         Promise.resolve(jsonResponse({ jwt: "discarded" })),
       );
-      await driver.delegateLivekitDelayedLeave(
-        ROOM_ID,
-        "m.call#ROOM",
+      await driver.delegateDelayedLeaveViaTransport({
+        livekitServiceUrl: LK,
+        roomId: ROOM_ID,
+        slotId: "m.call#ROOM",
         memberJson,
-        "delay-1",
-        LK,
-        3_600_000n,
-      );
+        delayId: "delay-1",
+        delayTimeoutMs: 3_600_000n,
+        legacySfuGet: false,
+      });
       const [endpoint, init] = fetchMock.mock.calls[0] as unknown as [
         string,
         RequestInit,
@@ -273,17 +299,6 @@ describe("JsSdkRtcMatrixDriver", () => {
         delay_timeout: 3_600_000,
         delay_cs_api_url: "https://hs.example.org",
       });
-      // receive-only: nothing to delegate to
-      await expect(
-        driver.delegateLivekitDelayedLeave(
-          ROOM_ID,
-          "m.call#ROOM",
-          memberJson,
-          "delay-1",
-          undefined,
-          1n,
-        ),
-      ).rejects.toSatisfy((e) => RtcError.Unsupported.instanceOf(e));
     });
 
     it("feeds sticky events and state updates into the crate's sinks with their origin", async () => {
@@ -416,6 +431,21 @@ describe("JsSdkRtcMatrixDriver", () => {
       ];
       expect(senderDeviceOf(origin)).toBe("ADEV");
       expect(crossSigned).toBeUndefined();
+    });
+
+    it("cannot delegate through the homeserver, so the crate falls back to the service", async () => {
+      const { driver } = widgetClient();
+      await expect(
+        driver.delegateDelayedLeaveViaHomeserver({
+          sfuUrl: "wss://sfu.example.org",
+          livekitServiceUrl: LK,
+          roomId: ROOM_ID,
+          slotId: "m.call#ROOM",
+          memberJson,
+          delayId: "delay-1",
+          delayTimeoutMs: 3_600_000n,
+        }),
+      ).rejects.toSatisfy((e) => RtcError.Unsupported.instanceOf(e));
     });
 
     it("treats member events in an encrypted room as encrypted by the claimed device", async () => {

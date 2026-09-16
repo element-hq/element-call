@@ -109,6 +109,11 @@ export const memberDisplaynames$ = (
   );
 };
 
+/** Per-member display names and avatars, disambiguated over the call. */
+export type MatrixMemberMetadata = ReturnType<
+  typeof createMatrixMemberMetadata$
+>;
+
 export const createMatrixMemberMetadata$ = (
   scope: ObservableScope,
   memberships$: Behavior<Pick<CallMembership, "userId">[]>,

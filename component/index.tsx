@@ -78,6 +78,10 @@ import { type ConfigOptions } from "../src/config/ConfigOptions";
 import { i18n } from "../src/utils/i18n";
 import { useTheme } from "../src/useTheme";
 import { useStableValue } from "../src/useStableValue";
+import { type RtcMatrixDriver } from "../src/driver/RtcMatrixDriver";
+import { type ElementCallMatrixClientDriver } from "../src/driver/ElementCallMatrixClientDriver";
+import { JsSdkRtcMatrixDriver } from "../src/driver/jsSdk/JsSdkRtcMatrixDriver";
+import { JsSdkElementCallMatrixClientDriver } from "../src/driver/jsSdk/JsSdkElementCallMatrixClientDriver";
 import styles from "./ElementCall.module.css";
 import {
   type ElementCallHandle,
@@ -88,6 +92,20 @@ import { supportedLanguages, translationsBackend } from "./localization";
 
 // The languages Element Call can be shown in
 export { supportedLanguages } from "./localization";
+
+// What a host implements to drive Element Call with its own Matrix stack, and
+// the implementations of both over a matrix-js-sdk client
+export { type RtcMatrixDriver } from "../src/driver/RtcMatrixDriver";
+export {
+  type ElementCallMatrixClientDriver,
+  type DriverCapabilities,
+  type RoomInfo,
+  type RoomMemberProfile,
+  type TimelineEvent,
+  type OwnProfile,
+} from "../src/driver/ElementCallMatrixClientDriver";
+export { JsSdkRtcMatrixDriver } from "../src/driver/jsSdk/JsSdkRtcMatrixDriver";
+export { JsSdkElementCallMatrixClientDriver } from "../src/driver/jsSdk/JsSdkElementCallMatrixClientDriver";
 
 // How the host and Element Call talk to each other, and what they say
 export { type ElementCallHandle, type ElementCallHostBridge } from "./host";
@@ -124,12 +142,25 @@ export type ElementCallConfiguration = Partial<UrlConfiguration> &
 
 export interface ElementCallProps {
   /**
-   * The client to place the call with. Element Call does not authenticate
-   * anyone or manage a session of its own; this one is the host's.
+   * The MatrixRTC side of the host's Matrix stack, bound to the room to call
+   * in: what the crate needs to publish a membership, exchange keys and mint
+   * transport tokens. Element Call does not authenticate anyone or manage a
+   * session of its own; both drivers are the host's.
    */
-  client: MatrixClient;
-  /** The room to call in. The host's client must already know about it. */
-  roomId: string;
+  rtcDriver: RtcMatrixDriver;
+  /**
+   * Everything else Element Call asks of a Matrix client for that room: who
+   * is in it, its name and avatar, the timeline for reactions and
+   * notifications, the user's own profile.
+   */
+  clientDriver: ElementCallMatrixClientDriver;
+  /**
+   * The room to call in. Optional, and when given it must be the room the
+   * drivers are bound to (`clientDriver.roomId`). Kept for one release so
+   * that hosts written for the client-based component can move over one
+   * prop at a time; then it goes.
+   */
+  roomId?: string;
   /**
    * What the user asked for — whether they started the call or joined one that
    * was already running, and whether it is a call in a group or a DM. Element
@@ -175,6 +206,24 @@ export interface ElementCallProps {
    */
   language?: string;
 }
+
+/**
+ * {@link ElementCall} for a host with a matrix-js-sdk client: the two drivers
+ * are built here from the client and the room, so the host hands over the
+ * client as it always has.
+ */
+export type ElementCallClientBasedProps = Omit<
+  ElementCallProps,
+  "rtcDriver" | "clientDriver" | "roomId"
+> & {
+  /**
+   * The client to place the call with. Element Call does not authenticate
+   * anyone or manage a session of its own; this one is the host's.
+   */
+  client: MatrixClient;
+  /** The room to call in. The host's client must already know about it. */
+  roomId: string;
+};
 
 /**
  * Prepares the things Element Call needs before it can be shown: translations,
@@ -230,8 +279,9 @@ const Decoration: FC<{ children: JSX.Element }> = ({ children }) => {
 };
 
 export const ElementCall: FC<ElementCallProps> = ({
-  client,
-  roomId,
+  rtcDriver,
+  clientDriver,
+  roomId: suppliedRoomId,
   intent = UserIntent.JoinExistingCall,
   config,
   hostBridge: suppliedHostBridge,
@@ -240,6 +290,11 @@ export const ElementCall: FC<ElementCallProps> = ({
   language,
 }): ReactNode => {
   const hostBridge = useComponentHostBridge(suppliedHostBridge, ref, theme);
+  const roomId = clientDriver.roomId;
+  if (suppliedRoomId !== undefined && suppliedRoomId !== roomId)
+    throw new Error(
+      `Element Call was asked to call in ${suppliedRoomId} with drivers bound to ${roomId}`,
+    );
 
   useEffect(() => {
     if (language !== undefined)
@@ -288,16 +343,23 @@ export const ElementCall: FC<ElementCallProps> = ({
     };
   }, [controlledAudioDevices, callIntent]);
 
-  const room = client.getRoom(roomId);
+  // Until the React tree below reads the drivers (plan slice S4), it runs on
+  // matrix-js-sdk directly, so for now the drivers have to be the matrix-js-sdk
+  // ones and the client is taken back out of them. `ElementCallClientBased`
+  // is the way to get here in the meantime; a host with drivers of its own
+  // cannot be served yet.
+  if (!(clientDriver instanceof JsSdkElementCallMatrixClientDriver))
+    throw new Error(
+      "Element Call cannot yet run on drivers other than the matrix-js-sdk ones; use ElementCallClientBased",
+    );
+  // `rtcDriver` is what the call will run on once the tree reads it; for now
+  // it is only checked to be there.
+  void rtcDriver;
+  const { client, room } = clientDriver;
   const rtcSession = useMemo(
-    () => (room === null ? null : client.matrixRTC.getRoomSession(room)),
+    () => client.matrixRTC.getRoomSession(room),
     [client, room],
   );
-
-  if (rtcSession === null)
-    logger.error(
-      `Element Call was asked to call in ${roomId}, which its host's client does not know about`,
-    );
 
   // Everything the call needs is in hand once these exist, and the first
   // render with them is where the call itself appears: the moment the host
@@ -355,4 +417,36 @@ export const ElementCall: FC<ElementCallProps> = ({
       </HostBridgeProvider>
     </I18nextProvider>
   );
+};
+
+export const ElementCallClientBased: FC<ElementCallClientBasedProps> = ({
+  client,
+  roomId,
+  ...props
+}): ReactNode => {
+  const room = client.getRoom(roomId);
+  const drivers = useMemo(
+    () =>
+      room === null
+        ? null
+        : {
+            rtcDriver: new JsSdkRtcMatrixDriver(client, room),
+            clientDriver: new JsSdkElementCallMatrixClientDriver(client, room),
+          },
+    [client, room],
+  );
+  // The RTC driver hooks client listeners for the crate's sinks; let go of
+  // them with the drivers.
+  useEffect(() => {
+    if (drivers === null) return;
+    return (): void => drivers.rtcDriver.detach();
+  }, [drivers]);
+
+  if (drivers === null) {
+    logger.error(
+      `Element Call was asked to call in ${roomId}, which its host's client does not know about`,
+    );
+    return null;
+  }
+  return <ElementCall {...props} {...drivers} />;
 };

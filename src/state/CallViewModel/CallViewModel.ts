@@ -109,6 +109,7 @@ import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts
 import {
   createLocalMembership$,
   enterRTCSession,
+  type LocalMembership,
   TransportState,
 } from "./localMember/LocalMember.ts";
 import {
@@ -138,10 +139,13 @@ import {
   createCallNotificationLifecycle$,
   createReceivedDecline$,
   createSentCallNotification$,
+  type RingAttempt,
 } from "./CallNotificationLifecycle.ts";
 import {
   createMatrixMemberMetadata$,
   createRoomMembers$,
+  type MatrixMemberMetadata,
+  type RoomMemberMap,
 } from "./remoteMembers/MatrixMemberMetadata.ts";
 import { Publisher } from "./localMember/Publisher.ts";
 import { type Connection } from "./remoteMembers/Connection.ts";
@@ -163,6 +167,25 @@ import {
   type RingingMediaViewModel,
 } from "../media/RingingMediaViewModel.ts";
 import { type GridTileViewModel } from "../TileViewModel.ts";
+import { mapEpoch } from "../ObservableScope.ts";
+import { type CallParticipation } from "../rtc/CallParticipation.ts";
+import { joinParamsFromConfig } from "../rtc/joinParams.ts";
+import { type FfiJoinParams } from "../../matrix-rtc-sdk";
+import { type ElementCallMatrixClientDriver } from "../../driver/ElementCallMatrixClientDriver.ts";
+import { observeDriver } from "../../driver/observe.ts";
+import { ParticipationKeyProvider } from "../../e2ee/participationKeyProvider.ts";
+import { customLivekitUrl } from "../../settings/settings.ts";
+import { createParticipationConnectionManager$ } from "./remoteMembers/ParticipationConnections.ts";
+import {
+  callMemberOf,
+  createParticipationRemoteMembers$,
+} from "./remoteMembers/ParticipationMembers.ts";
+import { createParticipationRoomMembers$ } from "./remoteMembers/ParticipationMemberMetadata.ts";
+import { createParticipationLocalMembership$ } from "./localMember/ParticipationLocalMember.ts";
+import {
+  createParticipationReceivedDecline$,
+  createParticipationSentCallNotification$,
+} from "./ParticipationCallNotification.ts";
 
 //TODO
 // Larger rename
@@ -222,6 +245,12 @@ export interface CallViewModelOptions {
   matrixRTCMode?: MatrixRTCMode;
   /** Optional behavior overriding for the screensharing, for testing */
   toggleScreensharing?: () => void;
+  /**
+   * How to join the MatrixRTC session. Only {@link createCallViewModel$}
+   * reads it; defaults to {@link joinParamsFromConfig} over the deployment's
+   * `matrix_rtc_session` configuration and {@link callIntent}.
+   */
+  joinParams?: FfiJoinParams;
 }
 
 /**
@@ -491,7 +520,7 @@ export interface CallViewModel {
 // Throughout this class and related code we must distinguish between MatrixRTC
 // state and LiveKit state. We use the common terminology of room "members", RTC
 // "memberships", and LiveKit "participants".
-export function createCallViewModel$(
+export function createJsClientCallViewModel$(
   scope: ObservableScope,
   // A call is permanently tied to a single Matrix room
   matrixRTCSession: MatrixRTCSession,
@@ -515,8 +544,6 @@ export function createCallViewModel$(
   const {
     hostBridge = nullHostBridge,
     controlledAudioDevices = false,
-    header = HeaderStyle.Standard,
-    showControls = true,
     hideScreensharing = false,
     sendNotificationType,
     callIntent,
@@ -741,9 +768,86 @@ export function createCallViewModel$(
     options,
     localUser: { userId, deviceId },
   });
+  const keyRotationSuppressed$ = createKeyRotationSuppressed$(
+    scope,
+    matrixRTCSession,
+  );
+
+  return assembleCallViewModel(
+    scope,
+    {
+      localMembership,
+      matrixLivekitMembers$,
+      remoteMatrixLivekitMembers$,
+      localMatrixLivekitMember$,
+      matrixMemberMetadataStore,
+      matrixRoomMembers$,
+      ringAttempts$,
+      autoLeave$,
+      connectionManagerData$: connectionManager.connectionManagerData$,
+      keyRotationSuppressed$,
+    },
+    options,
+    mediaDevices,
+    handsRaisedSubject$,
+    reactionsSubject$,
+  );
+}
+
+/**
+ * The Matrix-side inputs the call view model is assembled from: what a
+ * MatrixRTC implementation has to provide so that the rest — tiles, layout,
+ * sounds, header and footer — is the same whichever one it is.
+ *
+ * {@link createJsClientCallViewModel$} builds it from matrix-js-sdk's
+ * `MatrixRTCSession`; {@link createCallViewModel$} from a
+ * {@link CallParticipation} over the drivers.
+ */
+export interface CallViewModelCore {
+  localMembership: LocalMembership;
+  matrixLivekitMembers$: Behavior<
+    (LocalMatrixLivekitMember | RemoteMatrixLivekitMember)[]
+  >;
+  remoteMatrixLivekitMembers$: Behavior<Epoch<RemoteMatrixLivekitMember[]>>;
+  localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null>;
+  matrixMemberMetadataStore: MatrixMemberMetadata;
+  /** The room's members, for the ringing name and the name-tag threshold. */
+  matrixRoomMembers$: Behavior<RoomMemberMap>;
+  ringAttempts$: Observable<RingAttempt>;
+  autoLeave$: Observable<AutoLeaveReason>;
+  connectionManagerData$: Behavior<Epoch<ConnectionManagerData>>;
+  keyRotationSuppressed$: Behavior<boolean>;
+}
+
+/** The half of the view model that does not care where the call comes from. */
+function assembleCallViewModel(
+  scope: ObservableScope,
+  {
+    localMembership,
+    matrixLivekitMembers$,
+    remoteMatrixLivekitMembers$,
+    localMatrixLivekitMember$,
+    matrixMemberMetadataStore,
+    matrixRoomMembers$,
+    ringAttempts$,
+    autoLeave$,
+    connectionManagerData$,
+    keyRotationSuppressed$,
+  }: CallViewModelCore,
+  options: CallViewModelOptions,
+  mediaDevices: MediaDevices,
+  handsRaisedSubject$: Observable<Record<string, RaisedHandInfo>>,
+  reactionsSubject$: Observable<Record<string, ReactionInfo>>,
+): CallViewModel {
+  const logger = rootLogger.getChild("[CallViewModel]");
+  const {
+    hostBridge = nullHostBridge,
+    header = HeaderStyle.Standard,
+    showControls = true,
+  } = options;
 
   const allConnections$ = scope.behavior(
-    connectionManager.connectionManagerData$.pipe(map((d) => d.value)),
+    connectionManagerData$.pipe(map((d) => d.value)),
   );
   const livekitRoomItems$ = scope.behavior(
     remoteMatrixLivekitMembers$.pipe(
@@ -838,7 +942,9 @@ export function createCallViewModel$(
           createWrappedUserMedia(scope, {
             id: `${mediaId}:${dup}`,
             userId,
-            rtcBackendIdentity: rtcId,
+            // Shown for debugging only; a member whose identity is not yet
+            // known has none to show.
+            rtcBackendIdentity: rtcId ?? "",
             participant,
             encryptionSystem: options.encryptionSystem,
             livekitRoom$: scope.behavior(
@@ -944,11 +1050,6 @@ export function createCallViewModel$(
    */
   const participantCount$ = scope.behavior(
     matrixLivekitMembers$.pipe(map((ms) => ms.length)),
-  );
-
-  const keyRotationSuppressed$ = createKeyRotationSuppressed$(
-    scope,
-    matrixRTCSession,
   );
 
   const leaveSoundEffect$ = userMedia$.pipe(
@@ -1921,6 +2022,242 @@ export function createCallViewModel$(
     screenShareError$: localMembership.screenShareError$,
     dismissScreenShareError: localMembership.dismissScreenShareError,
   };
+}
+
+/**
+ * The call view model over the host's drivers: a {@link CallParticipation}
+ * (the crate: memberships, connections and their tokens, media keys, our own
+ * membership) and an {@link ElementCallMatrixClientDriver} (the room's
+ * members and metadata, the timeline for notifications).
+ *
+ * The counterpart of {@link createJsClientCallViewModel$}, which reads the
+ * same things from matrix-js-sdk; both assemble the same view model.
+ */
+export function createCallViewModel$(
+  scope: ObservableScope,
+  participation: CallParticipation,
+  clientDriver: ElementCallMatrixClientDriver,
+  mediaDevices: MediaDevices,
+  muteStates: MuteStates,
+  options: CallViewModelOptions,
+  handsRaisedSubject$: Observable<Record<string, RaisedHandInfo>>,
+  reactionsSubject$: Observable<Record<string, ReactionInfo>>,
+  trackProcessorState$: Behavior<ProcessorState>,
+): CallViewModel {
+  const logger = rootLogger.getChild("[CallViewModel]");
+  const { userId, deviceId, roomId } = clientDriver;
+  const {
+    hostBridge = nullHostBridge,
+    controlledAudioDevices = false,
+    hideScreensharing = false,
+    callIntent,
+  } = options;
+
+  const livekitKeyProvider = getParticipationKeyProvider(
+    options.encryptionSystem,
+    scope,
+    participation,
+    logger,
+  );
+
+  // ------------------------------------------------------------------------
+  // connections and remote members
+
+  const connectionFactory =
+    options.connectionFactory ??
+    new ECConnectionFactory(
+      // The crate mints every token; no connection fetches its own.
+      null,
+      roomId,
+      mediaDevices,
+      trackProcessorState$,
+      livekitKeyProvider,
+      controlledAudioDevices,
+      options.livekitRoomFactory,
+    );
+
+  const connectionManager = createParticipationConnectionManager$({
+    scope,
+    participation,
+    connectionFactory,
+    ownIdentity: { userId, deviceId },
+    logger,
+  });
+
+  const remoteMatrixLivekitMembers$ = createParticipationRemoteMembers$({
+    scope,
+    participation,
+    connectionManager,
+  });
+
+  // ------------------------------------------------------------------------
+  // localMembership
+
+  const roomInfo$ = observeDriver(
+    scope,
+    () => clientDriver.getRoomInfo(),
+    (listener) => clientDriver.subscribeRoomInfo(listener),
+  );
+  // Whether the homeserver takes sticky events decides how a failed first
+  // send reads; assume it does until the driver says otherwise.
+  let stickyEventsSupported = true;
+  clientDriver.getCapabilities().then(
+    (capabilities) => {
+      stickyEventsSupported = capabilities.stickyEvents;
+    },
+    (e) => logger.warn("Could not read the driver's capabilities", e),
+  );
+
+  const localMembership = createParticipationLocalMembership$({
+    scope,
+    participation,
+    connectionManager,
+    createPublisherFactory: (connection: Connection) =>
+      new Publisher(
+        connection,
+        mediaDevices,
+        muteStates,
+        trackProcessorState$,
+        logger.getChild(
+          "[Publisher " + connection.transport.livekit_service_url + "]",
+        ),
+        controlledAudioDevices,
+      ),
+    muteStates,
+    hideScreensharing,
+    hostBridge,
+    joinParams:
+      options.joinParams ??
+      joinParamsFromConfig({
+        session: Config.get().matrix_rtc_session,
+        callIntent,
+      }),
+    slotPolicy$: scope.behavior(
+      roomInfo$.pipe(
+        map((info) => ({
+          encrypted: info.encrypted,
+          canOpen: info.canOpenSlot,
+        })),
+      ),
+    ),
+    customLivekitUrl$: customLivekitUrl.value$,
+    disconnectContext: () => ({
+      domain: userId.slice(userId.indexOf(":") + 1),
+      stickyEventsSupported,
+    }),
+    roomId,
+    logger: logger.getChild(`[${Date.now()}]`),
+  });
+
+  const localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null> =
+    scope.behavior(
+      participation.ownMembership$.pipe(
+        map((membership) =>
+          membership === null ? null : callMemberOf(membership),
+        ),
+        filterBehavior((member) => member !== null),
+        map((membership$) => {
+          if (membership$ === null) return null;
+          return {
+            membership$,
+            participant: {
+              type: "local" as const,
+              value$: localMembership.participant$,
+            },
+            connection$: localMembership.connection$,
+            userId,
+          };
+        }),
+      ),
+    );
+
+  const matrixLivekitMembers$ = scope.behavior(
+    combineLatest(
+      [localMatrixLivekitMember$, remoteMatrixLivekitMembers$],
+      (local, remote) => [...(local === null ? [] : [local]), ...remote.value],
+    ),
+  );
+
+  // ------------------------------------------------------------------------
+  // matrixMemberMetadataStore
+
+  const matrixRoomMembers$ = createParticipationRoomMembers$(
+    scope,
+    clientDriver,
+  );
+  const callMemberUserIds$ = scope.behavior(
+    participation.memberships$.pipe(
+      mapEpoch((memberships) =>
+        memberships.map((m) => ({ userId: m.member.userId })),
+      ),
+    ),
+  );
+  const matrixMemberMetadataStore = createMatrixMemberMetadata$(
+    scope,
+    scope.behavior(callMemberUserIds$.pipe(map((ms) => ms.value))),
+    matrixRoomMembers$,
+  );
+
+  // ------------------------------------------------------------------------
+  // callLifecycle
+
+  const { ringAttempts$, autoLeave$ } = createCallNotificationLifecycle$({
+    scope,
+    memberships$: callMemberUserIds$,
+    matrixRoomMembers$,
+    sentCallNotification$: createParticipationSentCallNotification$({
+      scope,
+      participation,
+      timeline: clientDriver,
+      options,
+      logger,
+    }),
+    receivedDecline$: createParticipationReceivedDecline$(clientDriver),
+    options,
+    localUser: { userId, deviceId },
+  });
+
+  return assembleCallViewModel(
+    scope,
+    {
+      localMembership,
+      matrixLivekitMembers$,
+      remoteMatrixLivekitMembers$,
+      localMatrixLivekitMember$,
+      matrixMemberMetadataStore,
+      matrixRoomMembers$,
+      ringAttempts$,
+      autoLeave$,
+      connectionManagerData$: connectionManager.connectionManagerData$,
+      // The crate has no participant limit for key rotation.
+      keyRotationSuppressed$: constant(false),
+    },
+    options,
+    mediaDevices,
+    handsRaisedSubject$,
+    reactionsSubject$,
+  );
+}
+
+function getParticipationKeyProvider(
+  e2eeSystem: EncryptionSystem,
+  scope: ObservableScope,
+  participation: CallParticipation,
+  logger: Logger,
+): BaseKeyProvider | undefined {
+  if (e2eeSystem.kind === E2eeType.NONE) return undefined;
+
+  if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
+    const keyProvider = new ParticipationKeyProvider();
+    keyProvider.attach(scope, participation);
+    return keyProvider;
+  } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
+    const keyProvider = new ExternalE2EEKeyProvider();
+    keyProvider
+      .setKey(e2eeSystem.secret)
+      .catch((e) => logger.error("Failed to set shared key for E2EE", e));
+    return keyProvider;
+  }
 }
 
 function getE2eeKeyProvider(

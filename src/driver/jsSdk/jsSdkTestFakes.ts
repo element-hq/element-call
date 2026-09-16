@@ -47,6 +47,7 @@ export interface FakeClient extends EventEmitter {
   redactEvent: Fn;
   getSyncState: Fn;
   getUser: (userId: string) => User | null;
+  http: { authedRequest: Fn };
 }
 
 export interface FakeRoom extends EventEmitter {

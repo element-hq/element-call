@@ -32,6 +32,8 @@ import {
   type FfiSessionSnapshot,
   type FfiToDeviceDelivery,
   type FfiToDeviceRecipient,
+  type FfiHomeserverDelegationRequest,
+  type FfiTransportDelegationRequest,
   type FfiTransportIntent,
   type ConnectivitySinkLike,
   type RoomEventSinkLike,
@@ -41,7 +43,12 @@ import {
 import { type Behavior } from "../Behavior";
 import { Epoch, type ObservableScope, trackEpoch } from "../ObservableScope";
 import { NoOpenSlotError } from "../../utils/errors";
-import { ELEMENT_CALL_APPLICATION, ELEMENT_CALL_SLOT_ID } from "./slot";
+import {
+  ELEMENT_CALL_APPLICATION,
+  ELEMENT_CALL_SLOT_ID,
+  LEGACY_SLOT_ID,
+  slotIdForCompat,
+} from "./slot";
 import { LIVEKIT_TRANSPORT_TYPE } from "./transportIntent";
 
 /**
@@ -61,7 +68,10 @@ export interface SlotPolicy {
 const SLOT_WAIT_MS = 15_000;
 
 export interface CallParticipationOptions {
-  /** One manager per `(room, slot)`; Element Call has one slot per room. */
+  /**
+   * One manager per `(room, slot)`; Element Call has one slot per room.
+   * Defaults to the slot for the config's dialect ({@link slotIdForCompat}).
+   */
   slotId?: string;
   config: FfiParticipationConfig;
   /**
@@ -90,6 +100,7 @@ export class CallParticipation {
   private readonly matrixDriver: FfiMatrixDriver;
   private readonly manager: FfiParticipationManager;
   private ended = false;
+  private readonly slotId: string;
 
   private readonly membershipsSubject$: BehaviorSubject<FfiMembership[]>;
   private readonly connectionsSubject$: BehaviorSubject<
@@ -145,9 +156,10 @@ export class CallParticipation {
             this.logger,
           );
     this.matrixDriver = new FfiMatrixDriver(rtcDriver);
+    this.slotId = options.slotId ?? slotIdForCompat(options.config.compat);
     this.manager = new FfiParticipationManager(
       roomId,
-      options.slotId ?? ELEMENT_CALL_SLOT_ID,
+      this.slotId,
       userId,
       deviceId,
       this.matrixDriver,
@@ -174,6 +186,13 @@ export class CallParticipation {
         this.membershipsSubject$.next(joinedOnly(memberships));
         this.sessionSubject$.next(this.manager.session());
         this.refreshOwnIdentity();
+      },
+    });
+    // The room's view of the session moves without any membership or status
+    // of ours changing: the seed completing, somebody opening the slot.
+    this.manager.setSessionListener({
+      onSessionChange: (session) => {
+        if (!this.ended) this.sessionSubject$.next(session);
       },
     });
     this.manager.setConnectionsListener({
@@ -248,6 +267,8 @@ export class CallParticipation {
   }
 
   private async ensureOpenSlot(slot: SlotPolicy): Promise<void> {
+    // The pre-slot generation has no slot to open or check.
+    if (this.slotId === LEGACY_SLOT_ID) return;
     // The crate's own `join` waits for the seed too, but the slot check has
     // to come first: a slot read that has not finished looks like no slot.
     await this.waitUntil(
@@ -289,6 +310,17 @@ export class CallParticipation {
     } finally {
       this.refreshAll();
     }
+  }
+
+  /**
+   * Change the call intent (`m.call.intent`) of our membership while
+   * joined; the crate re-publishes it (C11). Rejects with the crate's
+   * `NotJoined` error otherwise, which a caller that merely mirrors the
+   * camera state can ignore.
+   */
+  public async updateApplication(intent: string | undefined): Promise<void> {
+    if (this.ended) throw new Error("The participation has ended");
+    await this.manager.updateApplication(intent);
   }
 
   /** The crate's diagnostics dump, for rageshakes. Not a UI contract. */
@@ -434,22 +466,15 @@ class TransportFallbackDriver implements RtcMatrixDriver {
   ): Promise<void> {
     return this.inner.cancelDelayedEvent(roomId, delayId);
   }
-  public async delegateLivekitDelayedLeave(
-    roomId: string,
-    slotId: string,
-    memberJson: string,
-    delayId: string,
-    livekitServiceUrl: string | undefined,
-    delayMs: bigint,
+  public async delegateDelayedLeaveViaHomeserver(
+    request: FfiHomeserverDelegationRequest,
   ): Promise<void> {
-    return this.inner.delegateLivekitDelayedLeave(
-      roomId,
-      slotId,
-      memberJson,
-      delayId,
-      livekitServiceUrl,
-      delayMs,
-    );
+    return this.inner.delegateDelayedLeaveViaHomeserver(request);
+  }
+  public async delegateDelayedLeaveViaTransport(
+    request: FfiTransportDelegationRequest,
+  ): Promise<void> {
+    return this.inner.delegateDelayedLeaveViaTransport(request);
   }
   public async sendToDevice(
     recipients: FfiToDeviceRecipient[],

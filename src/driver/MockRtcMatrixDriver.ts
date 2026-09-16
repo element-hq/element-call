@@ -29,6 +29,8 @@ import {
   type FfiSendEventResponse,
   type FfiToDeviceDelivery,
   type FfiToDeviceRecipient,
+  type FfiHomeserverDelegationRequest,
+  type FfiTransportDelegationRequest,
   type RoomEventSinkLike,
   type StateUpdateSinkLike,
   type ToDeviceSinkLike,
@@ -78,14 +80,8 @@ export type OutboundCall =
     }
   | { kind: "restartDelayed"; roomId: string; delayId: string }
   | { kind: "cancelDelayed"; roomId: string; delayId: string }
-  | {
-      kind: "delegateDelayedLeave";
-      roomId: string;
-      slotId: string;
-      delayId: string;
-      livekitServiceUrl: string | undefined;
-      delayMs: bigint;
-    }
+  | { kind: "delegateViaHomeserver"; request: FfiHomeserverDelegationRequest }
+  | { kind: "delegateViaTransport"; request: FfiTransportDelegationRequest }
   | {
       kind: "toDevice";
       recipients: FfiToDeviceRecipient[];
@@ -137,6 +133,10 @@ export class MockRtcMatrixDriver implements RtcMatrixDriver {
   public refuseStickyEvents = false;
   /** Make `getRtcTransports` fail rather than answer. */
   public failTransportDiscovery = false;
+  /** No MSC4195 endpoint on the homeserver: the crate falls back to the service. */
+  public refuseHomeserverDelegation = false;
+  /** The authorisation service refuses the delegation too. */
+  public refuseTransportDelegation = false;
   public roomState: RawEvent[];
   public transports: FfiRtcTransport[];
   /** Simulated peers answer our media key with theirs (index 0). */
@@ -299,22 +299,21 @@ export class MockRtcMatrixDriver implements RtcMatrixDriver {
     return Promise.resolve();
   }
 
-  public async delegateLivekitDelayedLeave(
-    roomId: string,
-    slotId: string,
-    _memberJson: string,
-    delayId: string,
-    livekitServiceUrl: string | undefined,
-    delayMs: bigint,
+  public async delegateDelayedLeaveViaHomeserver(
+    request: FfiHomeserverDelegationRequest,
   ): Promise<void> {
-    this.record({
-      kind: "delegateDelayedLeave",
-      roomId,
-      slotId,
-      delayId,
-      livekitServiceUrl,
-      delayMs,
-    });
+    this.record({ kind: "delegateViaHomeserver", request });
+    if (this.refuseHomeserverDelegation)
+      throw new RtcError.Unsupported("M_UNRECOGNIZED: no delegation endpoint");
+    return Promise.resolve();
+  }
+
+  public async delegateDelayedLeaveViaTransport(
+    request: FfiTransportDelegationRequest,
+  ): Promise<void> {
+    this.record({ kind: "delegateViaTransport", request });
+    if (this.refuseTransportDelegation)
+      throw new RtcError.Http("503: the service refused");
     return Promise.resolve();
   }
 

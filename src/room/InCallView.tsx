@@ -44,7 +44,7 @@ import { InviteButton } from "../button/InviteButton";
 import {
   type CallViewModel,
   callViewModelOptionsFromParams,
-  createCallViewModel$,
+  createJsClientCallViewModel$,
 } from "../state/CallViewModel/CallViewModel.ts";
 import { Grid, type TileProps } from "../grid/Grid";
 import { SpotlightTile } from "../tile/SpotlightTile";
@@ -132,7 +132,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
       urlParams;
 
-    const vm = createCallViewModel$(
+    const vm = createJsClientCallViewModel$(
       scope,
       props.rtcSession,
       props.matrixRoom,

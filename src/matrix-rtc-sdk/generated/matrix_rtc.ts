@@ -4,7 +4,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import * as wasmBundle from "./wasm-bindgen/index.js";
-import { type UniffiRustFutureContinuationCallback, type UniffiForeignFutureDroppedCallback, type UniffiForeignFutureDroppedCallbackStruct, type UniffiVTableCallbackInterfaceMatrixRtcConnectionsListener, type UniffiVTableCallbackInterfaceMatrixRtcKeyMapListener, type UniffiVTableCallbackInterfaceMatrixRtcKeyRejectedListener, type UniffiForeignFutureResultRustBuffer, type UniffiForeignFutureCompleterustBuffer, type UniffiForeignFutureResultVoid, type UniffiForeignFutureCompletevoid, type UniffiVTableCallbackInterfaceMatrixRtcMatrixDriverCallback, type UniffiVTableCallbackInterfaceMatrixRtcMembershipsListener, type UniffiVTableCallbackInterfaceMatrixRtcStatusListener,
+import { type UniffiRustFutureContinuationCallback, type UniffiForeignFutureDroppedCallback, type UniffiForeignFutureDroppedCallbackStruct, type UniffiVTableCallbackInterfaceMatrixRtcConnectionsListener, type UniffiVTableCallbackInterfaceMatrixRtcKeyMapListener, type UniffiVTableCallbackInterfaceMatrixRtcKeyRejectedListener, type UniffiForeignFutureResultRustBuffer, type UniffiForeignFutureCompleterustBuffer, type UniffiForeignFutureResultVoid, type UniffiForeignFutureCompletevoid, type UniffiVTableCallbackInterfaceMatrixRtcMatrixDriverCallback, type UniffiVTableCallbackInterfaceMatrixRtcMembershipsListener, type UniffiVTableCallbackInterfaceMatrixRtcSessionListener, type UniffiVTableCallbackInterfaceMatrixRtcStatusListener,
 } from "./matrix_rtc-ffi";
 import { type FfiConverter, type UniffiByteArray, type UniffiGcObject, type UniffiHandle, type UniffiObjectFactory, type UniffiReferenceHolder, type UniffiRustCallStatus, AbstractFfiConverterByteArray, Cursor, FfiConverterArray, FfiConverterArrayBuffer, FfiConverterBool, FfiConverterObject, FfiConverterObjectWithCallbacks, FfiConverterOptional, FfiConverterUInt32, FfiConverterUInt64, FfiConverterUInt8, RustBuffer, UniffiAbstractObject, UniffiEnum, UniffiError, UniffiInternalError, UniffiResult, UniffiRustCaller, destructorGuardSymbol, pointerLiteralSymbol, uniffiCreateFfiConverterString, uniffiCreateRecord, uniffiRustCallAsync, uniffiTraitInterfaceCall, uniffiTraitInterfaceCallAsyncWithError, uniffiTypeNameSymbol, variantOrdinalSymbol,
 } from "@ubjs/core";
@@ -554,6 +554,86 @@ const FfiConverterTypeFfiExcludedCandidate = (() => {
     return new FFIConverter();
 })();
 
+/**
+ * See `driver::TransportDelegationRequest`: the token request with the
+ * MSC4195 through the homeserver: `POST
+ * /_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave`
+ * with the body `{ url, room_id, slot_id, member, delay_id, delay_timeout }`
+ * — `url` is `sfu_url`, `member` is `member_json` parsed, `delay_timeout`
+ * is `delay_timeout_ms`.
+ */
+export type FfiHomeserverDelegationRequest = {
+    /**
+     * The SFU websocket URL our token named: the service checks it is its own.
+     */
+    sfuUrl: string,
+    /**
+     * The authorisation service of the transport we publish on.
+     */
+    livekitServiceUrl: string,
+    roomId: string,
+    slotId: string,
+    /**
+     * MSC4195 member claims `{ id, claimed_user_id, claimed_device_id }`.
+     */
+    memberJson: string,
+    delayId: string,
+    delayTimeoutMs: bigint
+}
+
+/**
+ * Generated factory for {@link FfiHomeserverDelegationRequest} record objects.
+ */
+export const FfiHomeserverDelegationRequest = (() => {
+    const defaults = () => ({
+    });
+    const create = (() => {
+        return uniffiCreateRecord<FfiHomeserverDelegationRequest, ReturnType<typeof defaults>>(defaults);
+    })();
+    return Object.freeze({
+        create,
+        new: create,
+        defaults: () => Object.freeze(defaults()) as Partial<FfiHomeserverDelegationRequest>,
+    });
+})();
+
+const FfiConverterTypeFfiHomeserverDelegationRequest = (() => {
+    type TypeName = FfiHomeserverDelegationRequest;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            return {
+                sfuUrl: FfiConverterString.readFromCursor(c), 
+                livekitServiceUrl: FfiConverterString.readFromCursor(c), 
+                roomId: FfiConverterString.readFromCursor(c), 
+                slotId: FfiConverterString.readFromCursor(c), 
+                memberJson: FfiConverterString.readFromCursor(c), 
+                delayId: FfiConverterString.readFromCursor(c), 
+                delayTimeoutMs: FfiConverterUInt64.readFromCursor(c)
+            };
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            FfiConverterString.writeIntoCursor(value.sfuUrl, c);
+            FfiConverterString.writeIntoCursor(value.livekitServiceUrl, c);
+            FfiConverterString.writeIntoCursor(value.roomId, c);
+            FfiConverterString.writeIntoCursor(value.slotId, c);
+            FfiConverterString.writeIntoCursor(value.memberJson, c);
+            FfiConverterString.writeIntoCursor(value.delayId, c);
+            FfiConverterUInt64.writeIntoCursor(value.delayTimeoutMs, c);
+        }
+        allocationSize(value: TypeName): number {
+            return FfiConverterString.allocationSize(value.sfuUrl) +
+             FfiConverterString.allocationSize(value.livekitServiceUrl) +
+             FfiConverterString.allocationSize(value.roomId) +
+             FfiConverterString.allocationSize(value.slotId) +
+             FfiConverterString.allocationSize(value.memberJson) +
+             FfiConverterString.allocationSize(value.delayId) +
+             FfiConverterUInt64.allocationSize(value.delayTimeoutMs);
+            
+        }
+    };
+    return new FFIConverter();
+})();
+
 export type FfiJoinParams = {
     applicationType: string,
     /**
@@ -566,7 +646,17 @@ export type FfiJoinParams = {
      * Lifetime when the homeserver refuses delayed events (default 5 min).
      */
     degradedLifetimeMs?: bigint,
-    delegateDelayedLeave: boolean
+    /**
+     * Hand the delayed leave to the SFU (MSC4195): the crate tries the
+     * homeserver, then the authorisation service, then keeps restarting the
+     * leave itself.
+     */
+    delegateDelayedLeave: boolean,
+    /**
+     * The delay of the delegated leave (MSC4195 asks for ≥ 1 h); the short
+     * `keep_alive_timeout_ms` leave stays armed until delegation is confirmed.
+     */
+    delegatedDelayMs: bigint
 }
 
 /**
@@ -595,7 +685,8 @@ const FfiConverterTypeFfiJoinParams = (() => {
                 stickyDurationMs: FfiConverterUInt64.readFromCursor(c), 
                 keepAliveTimeoutMs: FfiConverterUInt64.readFromCursor(c), 
                 degradedLifetimeMs: FfiConverterOptionalUInt64.readFromCursor(c), 
-                delegateDelayedLeave: FfiConverterBool.readFromCursor(c)
+                delegateDelayedLeave: FfiConverterBool.readFromCursor(c), 
+                delegatedDelayMs: FfiConverterUInt64.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
@@ -605,6 +696,7 @@ const FfiConverterTypeFfiJoinParams = (() => {
             FfiConverterUInt64.writeIntoCursor(value.keepAliveTimeoutMs, c);
             FfiConverterOptionalUInt64.writeIntoCursor(value.degradedLifetimeMs, c);
             FfiConverterBool.writeIntoCursor(value.delegateDelayedLeave, c);
+            FfiConverterUInt64.writeIntoCursor(value.delegatedDelayMs, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterString.allocationSize(value.applicationType) +
@@ -612,7 +704,8 @@ const FfiConverterTypeFfiJoinParams = (() => {
              FfiConverterUInt64.allocationSize(value.stickyDurationMs) +
              FfiConverterUInt64.allocationSize(value.keepAliveTimeoutMs) +
              FfiConverterOptionalUInt64.allocationSize(value.degradedLifetimeMs) +
-             FfiConverterBool.allocationSize(value.delegateDelayedLeave);
+             FfiConverterBool.allocationSize(value.delegateDelayedLeave) +
+             FfiConverterUInt64.allocationSize(value.delegatedDelayMs);
             
         }
     };
@@ -915,7 +1008,13 @@ export type FfiMediaKeyState = {
     /**
      * Why their most recent key was discarded, while we still lack one.
      */
-    rejection?: FfiKeyRejection
+    rejection?: FfiKeyRejection,
+    /**
+     * MSC4153: whether the device that sent the key we hold from them is
+     * cross-signed by its owner; `None` while we hold none or the host
+     * could not tell. Reported whether or not the check is enforced.
+     */
+    senderCrossSigned?: boolean
 }
 
 /**
@@ -941,18 +1040,21 @@ const FfiConverterTypeFfiMediaKeyState = (() => {
             return {
                 holdsOurKey: FfiConverterBool.readFromCursor(c), 
                 haveTheirKey: FfiConverterBool.readFromCursor(c), 
-                rejection: FfiConverterOptionalTypeFfiKeyRejection.readFromCursor(c)
+                rejection: FfiConverterOptionalTypeFfiKeyRejection.readFromCursor(c), 
+                senderCrossSigned: FfiConverterOptionalBoolean.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
             FfiConverterBool.writeIntoCursor(value.holdsOurKey, c);
             FfiConverterBool.writeIntoCursor(value.haveTheirKey, c);
             FfiConverterOptionalTypeFfiKeyRejection.writeIntoCursor(value.rejection, c);
+            FfiConverterOptionalBoolean.writeIntoCursor(value.senderCrossSigned, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterBool.allocationSize(value.holdsOurKey) +
              FfiConverterBool.allocationSize(value.haveTheirKey) +
-             FfiConverterOptionalTypeFfiKeyRejection.allocationSize(value.rejection);
+             FfiConverterOptionalTypeFfiKeyRejection.allocationSize(value.rejection) +
+             FfiConverterOptionalBoolean.allocationSize(value.senderCrossSigned);
             
         }
     };
@@ -1136,7 +1238,6 @@ const FfiConverterTypeFfiMembershipPublication = (() => {
  */
 export enum FfiElementCallCompat {
     Off,
-    StickyEvents,
     StateEvents
 }
 
@@ -1146,16 +1247,14 @@ const FfiConverterTypeFfiElementCallCompat = (() => {
         readFromCursor(c: Cursor): TypeName {
             switch (c.readI32()) {
                 case 1: return FfiElementCallCompat.Off;
-                case 2: return FfiElementCallCompat.StickyEvents;
-                case 3: return FfiElementCallCompat.StateEvents;
+                case 2: return FfiElementCallCompat.StateEvents;
                 default: throw new UniffiInternalError.UnexpectedEnumCase();
             }
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
             switch (value) {
                 case FfiElementCallCompat.Off: return c.writeI32(1);
-                case FfiElementCallCompat.StickyEvents: return c.writeI32(2);
-                case FfiElementCallCompat.StateEvents: return c.writeI32(3);
+                case FfiElementCallCompat.StateEvents: return c.writeI32(2);
             }
         }
         allocationSize(value: TypeName): number {
@@ -1519,6 +1618,76 @@ const FfiConverterTypeFfiToDeviceDelivery = (() => {
 })();
 
 /**
+ * MSC4195 delay fields, sent to `{livekit_service_url}/get_token` (or
+ * `/sfu/get` with `legacy_sfu_get`).
+ */
+export type FfiTransportDelegationRequest = {
+    livekitServiceUrl: string,
+    roomId: string,
+    slotId: string,
+    /**
+     * MSC4195 member claims `{ id, claimed_user_id, claimed_device_id }`.
+     */
+    memberJson: string,
+    delayId: string,
+    delayTimeoutMs: bigint,
+    legacySfuGet: boolean
+}
+
+/**
+ * Generated factory for {@link FfiTransportDelegationRequest} record objects.
+ */
+export const FfiTransportDelegationRequest = (() => {
+    const defaults = () => ({
+    });
+    const create = (() => {
+        return uniffiCreateRecord<FfiTransportDelegationRequest, ReturnType<typeof defaults>>(defaults);
+    })();
+    return Object.freeze({
+        create,
+        new: create,
+        defaults: () => Object.freeze(defaults()) as Partial<FfiTransportDelegationRequest>,
+    });
+})();
+
+const FfiConverterTypeFfiTransportDelegationRequest = (() => {
+    type TypeName = FfiTransportDelegationRequest;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            return {
+                livekitServiceUrl: FfiConverterString.readFromCursor(c), 
+                roomId: FfiConverterString.readFromCursor(c), 
+                slotId: FfiConverterString.readFromCursor(c), 
+                memberJson: FfiConverterString.readFromCursor(c), 
+                delayId: FfiConverterString.readFromCursor(c), 
+                delayTimeoutMs: FfiConverterUInt64.readFromCursor(c), 
+                legacySfuGet: FfiConverterBool.readFromCursor(c)
+            };
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            FfiConverterString.writeIntoCursor(value.livekitServiceUrl, c);
+            FfiConverterString.writeIntoCursor(value.roomId, c);
+            FfiConverterString.writeIntoCursor(value.slotId, c);
+            FfiConverterString.writeIntoCursor(value.memberJson, c);
+            FfiConverterString.writeIntoCursor(value.delayId, c);
+            FfiConverterUInt64.writeIntoCursor(value.delayTimeoutMs, c);
+            FfiConverterBool.writeIntoCursor(value.legacySfuGet, c);
+        }
+        allocationSize(value: TypeName): number {
+            return FfiConverterString.allocationSize(value.livekitServiceUrl) +
+             FfiConverterString.allocationSize(value.roomId) +
+             FfiConverterString.allocationSize(value.slotId) +
+             FfiConverterString.allocationSize(value.memberJson) +
+             FfiConverterString.allocationSize(value.delayId) +
+             FfiConverterUInt64.allocationSize(value.delayTimeoutMs) +
+             FfiConverterBool.allocationSize(value.legacySfuGet);
+            
+        }
+    };
+    return new FFIConverter();
+})();
+
+/**
  * Which pump stopped, for [`FfiDisconnectCause::ManagerStopped`].
  */
 export enum FfiComponent {
@@ -1582,6 +1751,43 @@ const FfiConverterTypeFfiDelayedLeaveOutcome = (() => {
             switch (value) {
                 case FfiDelayedLeaveOutcome.Cancelled: return c.writeI32(1);
                 case FfiDelayedLeaveOutcome.MayStillFire: return c.writeI32(2);
+            }
+        }
+        allocationSize(value: TypeName): number {
+            return 4;
+        }
+    }
+    return new FFIConverter();
+})();
+
+/**
+ * How the delayed leave was handed to the SFU (MSC4195).
+ */
+export enum FfiDelegationRoute {
+    /**
+     * The homeserver's CS API endpoint.
+     */
+    Homeserver,
+    /**
+     * The authorisation service's token endpoint with the delay fields.
+     */
+    AuthorisationService
+}
+
+const FfiConverterTypeFfiDelegationRoute = (() => {
+    type TypeName = FfiDelegationRoute;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            switch (c.readI32()) {
+                case 1: return FfiDelegationRoute.Homeserver;
+                case 2: return FfiDelegationRoute.AuthorisationService;
+                default: throw new UniffiInternalError.UnexpectedEnumCase();
+            }
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            switch (value) {
+                case FfiDelegationRoute.Homeserver: return c.writeI32(1);
+                case FfiDelegationRoute.AuthorisationService: return c.writeI32(2);
             }
         }
         allocationSize(value: TypeName): number {
@@ -3319,7 +3525,7 @@ inner: {delayMs: bigint; lastRestartTs: bigint; firesAtTs: bigint }): Armed_ {
     type Delegated__interface = {
         tag: FfiKeepAlive_Tags.Delegated;
         inner: 
-Readonly<{delegatedAtTs: bigint; earliestFireTs: bigint}>
+Readonly<{delegatedAtTs: bigint; earliestFireTs: bigint; via: FfiDelegationRoute}>
     };
     /**
      * Handed to the SFU (MSC4195): we no longer restart it, so a frozen
@@ -3333,15 +3539,15 @@ Readonly<{delegatedAtTs: bigint; earliestFireTs: bigint}>
         readonly [uniffiTypeNameSymbol] = "FfiKeepAlive";
         readonly tag = FfiKeepAlive_Tags.Delegated;
         readonly inner: 
-Readonly<{delegatedAtTs: bigint; earliestFireTs: bigint}>;
+Readonly<{delegatedAtTs: bigint; earliestFireTs: bigint; via: FfiDelegationRoute}>;
         constructor(
-inner: {delegatedAtTs: bigint; earliestFireTs: bigint }) {
+inner: {delegatedAtTs: bigint; earliestFireTs: bigint; via: FfiDelegationRoute }) {
             super("FfiKeepAlive", "Delegated");
 
             this.inner = Object.freeze(inner);
         }
         static new(
-inner: {delegatedAtTs: bigint; earliestFireTs: bigint }): Delegated_ {
+inner: {delegatedAtTs: bigint; earliestFireTs: bigint; via: FfiDelegationRoute }): Delegated_ {
             return new Delegated_(inner);
         }
 
@@ -3485,7 +3691,7 @@ const FfiConverterTypeFfiKeepAlive = (() => {
         readFromCursor(c: Cursor): TypeName {
             switch (c.readI32()) {
                 case 1: return new FfiKeepAlive.Armed({delayMs: FfiConverterUInt64.readFromCursor(c), lastRestartTs: FfiConverterUInt64.readFromCursor(c), firesAtTs: FfiConverterUInt64.readFromCursor(c) });
-                case 2: return new FfiKeepAlive.Delegated({delegatedAtTs: FfiConverterUInt64.readFromCursor(c), earliestFireTs: FfiConverterUInt64.readFromCursor(c) });
+                case 2: return new FfiKeepAlive.Delegated({delegatedAtTs: FfiConverterUInt64.readFromCursor(c), earliestFireTs: FfiConverterUInt64.readFromCursor(c), via: FfiConverterTypeFfiDelegationRoute.readFromCursor(c) });
                 case 3: return new FfiKeepAlive.RestartFailing({sinceTs: FfiConverterUInt64.readFromCursor(c), firesAtTs: FfiConverterUInt64.readFromCursor(c), lastError: FfiConverterString.readFromCursor(c) });
                 case 4: return new FfiKeepAlive.Expired({sinceTs: FfiConverterUInt64.readFromCursor(c) });
                 case 5: return new FfiKeepAlive.Unavailable({permanent: FfiConverterBool.readFromCursor(c), nextProbeTs: FfiConverterOptionalUInt64.readFromCursor(c) });
@@ -3507,6 +3713,7 @@ const FfiConverterTypeFfiKeepAlive = (() => {
                     const inner = value.inner;
                     FfiConverterUInt64.writeIntoCursor(inner.delegatedAtTs, c);
                     FfiConverterUInt64.writeIntoCursor(inner.earliestFireTs, c);
+                    FfiConverterTypeFfiDelegationRoute.writeIntoCursor(inner.via, c);
                     return;
                 }
                 case FfiKeepAlive_Tags.RestartFailing: {
@@ -3550,6 +3757,7 @@ const FfiConverterTypeFfiKeepAlive = (() => {
                     let size = 4;
                     size += FfiConverterUInt64.allocationSize(inner.delegatedAtTs);
                     size += FfiConverterUInt64.allocationSize(inner.earliestFireTs);
+                    size += FfiConverterTypeFfiDelegationRoute.allocationSize(inner.via);
                     return size;
                 }
                 case FfiKeepAlive_Tags.RestartFailing: {
@@ -5928,6 +6136,171 @@ const uniffiCallbackInterfaceMembershipsListener: { vtable: any; register: () =>
     },
 };
 
+export interface SessionListener {
+    
+/**
+ * The room's view of the session changed (seed done, slot opened or
+ * closed, roster moved): what `session()` answers now.
+ */
+    onSessionChange(session: FfiSessionSnapshot): void;
+}
+
+
+export class SessionListenerImpl extends UniffiAbstractObject implements SessionListener {
+
+    readonly [uniffiTypeNameSymbol] = "SessionListenerImpl";
+    readonly [destructorGuardSymbol]: UniffiGcObject;
+    readonly [pointerLiteralSymbol]: UniffiHandle;
+    // No primary constructor declared for this class.
+private constructor(pointer: UniffiHandle) {
+    super();
+    this[pointerLiteralSymbol] = pointer;
+    this[destructorGuardSymbol] = uniffiTypeSessionListenerImplObjectFactory.bless(pointer);
+}
+
+    
+
+    
+/**
+ * The room's view of the session changed (seed done, slot opened or
+ * closed, roster moved): what `session()` answers now.
+ */
+    onSessionChange(session: FfiSessionSnapshot): void {uniffiCaller.rustCall(
+            /*caller:*/ (callStatus) => { nativeModule().ubrn_uniffi_matrix_rtc_fn_method_sessionlistener_on_session_change(
+                uniffiTypeSessionListenerImplObjectFactory.clonePointer(this),
+        FfiConverterTypeFfiSessionSnapshot.lower(session, nativeModule().rustbuffer_alloc),
+                callStatus);
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+    );
+    }
+    
+
+    uniffiDestroy(): void {
+        const ptr = (this as any)[destructorGuardSymbol];
+        if (ptr !== undefined) {
+            const pointer = uniffiTypeSessionListenerImplObjectFactory.pointer(this);
+            uniffiTypeSessionListenerImplObjectFactory.freePointer(pointer);
+            uniffiTypeSessionListenerImplObjectFactory.unbless(ptr);
+            delete (this as any)[destructorGuardSymbol];
+        }
+    }
+
+    static instanceOf(obj_: any): obj_ is SessionListenerImpl {
+        return uniffiTypeSessionListenerImplObjectFactory.isConcreteType(obj_);
+    }
+
+    
+}
+
+const uniffiTypeSessionListenerImplObjectFactory: UniffiObjectFactory<SessionListener> = (() => {
+    
+    /// <reference lib="es2021" />
+    const registry = typeof FinalizationRegistry !== 'undefined' ? new FinalizationRegistry<UniffiHandle>((heldValue: UniffiHandle) => {
+        uniffiTypeSessionListenerImplObjectFactory.freePointer(heldValue);
+    }) : null;
+    
+    return {
+    create(pointer: UniffiHandle): SessionListener {
+        const instance = Object.create(SessionListenerImpl.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = "SessionListenerImpl";
+        return instance;
+    },
+
+    
+    bless(p: UniffiHandle): UniffiGcObject {
+        const ptr = {
+            p, // make sure this object doesn't get optimized away.
+            markDestroyed: () => undefined,
+        };
+        if (registry) {
+            registry.register(ptr, p, ptr);
+        }
+        return ptr;
+    },
+
+    unbless(ptr_: UniffiGcObject) {
+        if (registry) {
+            registry.unregister(ptr_);
+        }
+    },
+
+    pointer(obj_: SessionListener): UniffiHandle {
+        if ((obj_ as any)[destructorGuardSymbol] === undefined) {
+            throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj_ as any)[pointerLiteralSymbol];
+    },
+
+    clonePointer(obj_: SessionListener): UniffiHandle {
+        const pointer = this.pointer(obj_);
+        return uniffiCaller.rustCall(
+            /*caller:*/ (callStatus) => nativeModule().ubrn_uniffi_matrix_rtc_fn_clone_sessionlistener(pointer, callStatus),
+            /*liftString:*/ FfiConverterString.lift
+        );
+    },
+
+    freePointer(pointer: UniffiHandle): void {
+        uniffiCaller.rustCall(
+            /*caller:*/ (callStatus) => nativeModule().ubrn_uniffi_matrix_rtc_fn_free_sessionlistener(pointer, callStatus),
+            /*liftString:*/ FfiConverterString.lift
+        );
+    },
+
+    isConcreteType(obj_: any): obj_ is SessionListener {
+        return obj_[destructorGuardSymbol] && obj_[uniffiTypeNameSymbol] === "SessionListenerImpl";
+    },
+}})();
+const FfiConverterTypeSessionListener = new FfiConverterObjectWithCallbacks(uniffiTypeSessionListenerImplObjectFactory);
+
+// Add a vtable for the callbacks that go in SessionListener.
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+const uniffiCallbackInterfaceSessionListener: { vtable: any; register: () => void; } = {
+    // Create the VTable using a series of closures.
+    // ts automatically converts these into C callback functions.
+    vtable: {
+        on_session_change: (
+            uniffiHandle: bigint,
+            session: Uint8Array,) => {
+            const uniffiMakeCall = 
+            ()
+            : void => {
+                const jsCallback = FfiConverterTypeSessionListener.lift(uniffiHandle);
+                return jsCallback.onSessionChange(
+                    FfiConverterTypeFfiSessionSnapshot.lift(session)
+                )
+            };
+            const uniffiResult = UniffiResult.ready<void>();
+            const uniffiHandleSuccess = (obj: any) => {};
+            const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+                UniffiResult.writeError(uniffiResult, code, errBuf);
+            };
+            uniffiTraitInterfaceCall(
+                /*makeCall:*/ uniffiMakeCall,
+                /*handleSuccess:*/ uniffiHandleSuccess,
+                /*handleError:*/ uniffiHandleError,
+                /*lowerString:*/ FfiConverterString.lower.bind(FfiConverterString),
+                /*alloc:*/ nativeModule().rustbuffer_alloc,
+            )
+            return uniffiResult;
+        },
+        uniffi_free: (uniffiHandle: UniffiHandle): void => {
+            // this will throw a stale handle error if the handle isn't found.
+            FfiConverterTypeSessionListener.drop(uniffiHandle);
+        },
+        uniffi_clone: (uniffiHandle: UniffiHandle): UniffiHandle => {
+            return FfiConverterTypeSessionListener.clone(uniffiHandle);
+        }
+    },
+    register: () => {nativeModule().ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_sessionlistener(
+            uniffiCallbackInterfaceSessionListener.vtable
+        );
+    },
+};
+
 export interface StatusListener {
     
     onStatusChange(status: FfiStatus): void;
@@ -6150,6 +6523,7 @@ export interface FfiParticipationManagerLike {
     setKeyMapListener(listener: KeyMapListener): void;
     setKeyRejectedListener(listener: KeyRejectedListener): void;
     setMembershipsListener(listener: MembershipsListener): void;
+    setSessionListener(listener: SessionListener): void;
     setStatusListener(listener: StatusListener): void;
     status(): FfiStatus;
 /**
@@ -6507,6 +6881,16 @@ export class FfiParticipationManager extends UniffiAbstractObject implements Ffi
             /*caller:*/ (callStatus) => { nativeModule().ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_set_memberships_listener(
                 uniffiTypeFfiParticipationManagerObjectFactory.clonePointer(this),
         FfiConverterTypeMembershipsListener.lower(listener, nativeModule().rustbuffer_alloc),
+                callStatus);
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+    );
+    }
+    
+    setSessionListener(listener: SessionListener): void {uniffiCaller.rustCall(
+            /*caller:*/ (callStatus) => { nativeModule().ubrn_uniffi_matrix_rtc_fn_method_ffiparticipationmanager_set_session_listener(
+                uniffiTypeFfiParticipationManagerObjectFactory.clonePointer(this),
+        FfiConverterTypeSessionListener.lower(listener, nativeModule().rustbuffer_alloc),
                 callStatus);
             },
             /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
@@ -7082,8 +7466,21 @@ export interface MatrixDriverCallback {
  * the transport we publish on (`None` for a receive-only member) and
  * `delay_ms` the armed delay — what an adapter that delegates through
  * the authorisation service's token endpoint needs.
+ * MSC4195 via the homeserver: one authenticated
+ * `POST /_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave`
+ * with `{ url, room_id, slot_id, member, delay_id, delay_timeout }` (see
+ * `FfiHomeserverDelegationRequest`). A client that cannot make
+ * authenticated homeserver calls (a widget) throws `Unsupported`; the
+ * crate then tries the authorisation service.
  */
-    delegateLivekitDelayedLeave(roomId: string, slotId: string, memberJson: string, delayId: string, livekitServiceUrl: string | undefined, delayMs: bigint, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
+    delegateDelayedLeaveViaHomeserver(request: FfiHomeserverDelegationRequest, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
+/**
+ * MSC4195 via the authorisation service: the `get_token` (or, with
+ * `legacy_sfu_get`, `sfu/get`) request the adapter already makes, with
+ * `delay_id`, `delay_timeout` (= `delay_timeout_ms`) and the adapter's
+ * own CS API URL (`delay_cs_api_url`) added. Discard the token.
+ */
+    delegateDelayedLeaveViaTransport(request: FfiTransportDelegationRequest, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     sendToDevice(recipients: Array<FfiToDeviceRecipient>, eventType: string, contentJson: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<FfiToDeviceDelivery>>;
 /**
  * `GET /_matrix/client/v1/rtc/transports`, with well-known fallback.
@@ -7340,13 +7737,44 @@ private constructor(pointer: UniffiHandle) {
  * the transport we publish on (`None` for a receive-only member) and
  * `delay_ms` the armed delay — what an adapter that delegates through
  * the authorisation service's token endpoint needs.
+ * MSC4195 via the homeserver: one authenticated
+ * `POST /_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave`
+ * with `{ url, room_id, slot_id, member, delay_id, delay_timeout }` (see
+ * `FfiHomeserverDelegationRequest`). A client that cannot make
+ * authenticated homeserver calls (a widget) throws `Unsupported`; the
+ * crate then tries the authorisation service.
  */
-    async delegateLivekitDelayedLeave(roomId: string, slotId: string, memberJson: string, delayId: string, livekitServiceUrl: string | undefined, delayMs: bigint, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    async delegateDelayedLeaveViaHomeserver(request: FfiHomeserverDelegationRequest, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
     return await uniffiRustCallAsync(
             /*rustCaller:*/ uniffiCaller,
             /*rustFutureFunc:*/ () => {
-                return nativeModule().ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_delegate_livekit_delayed_leave(
-                    uniffiTypeMatrixDriverCallbackImplObjectFactory.clonePointer(this),FfiConverterString.lower(roomId, nativeModule().rustbuffer_alloc),FfiConverterString.lower(slotId, nativeModule().rustbuffer_alloc),FfiConverterString.lower(memberJson, nativeModule().rustbuffer_alloc),FfiConverterString.lower(delayId, nativeModule().rustbuffer_alloc),FfiConverterOptionalString.lower(livekitServiceUrl, nativeModule().rustbuffer_alloc),FfiConverterUInt64.lower(delayMs, nativeModule().rustbuffer_alloc)
+                return nativeModule().ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_delegate_delayed_leave_via_homeserver(
+                    uniffiTypeMatrixDriverCallbackImplObjectFactory.clonePointer(this),FfiConverterTypeFfiHomeserverDelegationRequest.lower(request, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_matrix_rtc_rust_future_poll_void,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_matrix_rtc_rust_future_cancel_void,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_matrix_rtc_rust_future_complete_void,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_matrix_rtc_rust_future_free_void,
+            /*liftFunc:*/ (_v) => {},
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeRtcError.lift.bind(FfiConverterTypeRtcError)
+        );
+    }
+    
+/**
+ * MSC4195 via the authorisation service: the `get_token` (or, with
+ * `legacy_sfu_get`, `sfu/get`) request the adapter already makes, with
+ * `delay_id`, `delay_timeout` (= `delay_timeout_ms`) and the adapter's
+ * own CS API URL (`delay_cs_api_url`) added. Discard the token.
+ */
+    async delegateDelayedLeaveViaTransport(request: FfiTransportDelegationRequest, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_matrix_rtc_fn_method_matrixdrivercallback_delegate_delayed_leave_via_transport(
+                    uniffiTypeMatrixDriverCallbackImplObjectFactory.clonePointer(this),FfiConverterTypeFfiTransportDelegationRequest.lower(request, nativeModule().rustbuffer_alloc)
                 );
             },
             /*pollFunc:*/ nativeModule().ubrn_ffi_matrix_rtc_rust_future_poll_void,
@@ -7992,27 +8420,60 @@ const uniffiCallbackInterfaceMatrixDriverCallback: { vtable: any; register: () =
             );
             return uniffiForeignFuture;
         },
-        delegate_livekit_delayed_leave: (
+        delegate_delayed_leave_via_homeserver: (
             uniffiHandle: bigint,
-            roomId: Uint8Array,
-            slotId: Uint8Array,
-            memberJson: Uint8Array,
-            delayId: Uint8Array,
-            livekitServiceUrl: Uint8Array,
-            delayMs: bigint,
+            request: Uint8Array,
             uniffiFutureCallback: UniffiForeignFutureCompletevoid,
             uniffiCallbackData: bigint) => {
             const uniffiMakeCall = 
             async (signal: AbortSignal)
             : Promise<void> => {
                 const jsCallback = FfiConverterTypeMatrixDriverCallback.lift(uniffiHandle);
-                return await jsCallback.delegateLivekitDelayedLeave(
-                    FfiConverterString.lift(roomId), 
-                    FfiConverterString.lift(slotId), 
-                    FfiConverterString.lift(memberJson), 
-                    FfiConverterString.lift(delayId), 
-                    FfiConverterOptionalString.lift(livekitServiceUrl), 
-                    FfiConverterUInt64.lift(delayMs), { signal }
+                return await jsCallback.delegateDelayedLeaveViaHomeserver(
+                    FfiConverterTypeFfiHomeserverDelegationRequest.lift(request), { signal }
+                )
+            };
+            const uniffiHandleSuccess = (returnValue: void) => {
+                uniffiFutureCallback.call(
+                    uniffiFutureCallback,
+                    uniffiCallbackData,
+                    /* UniffiForeignFutureResultVoid */{
+                        call_status: uniffiCaller.createCallStatus()
+                    }
+                );
+            };
+            const uniffiHandleError = (code: number, errorBuf: UniffiByteArray) => {
+                uniffiFutureCallback.call(
+                    uniffiFutureCallback,
+                    uniffiCallbackData,
+                    /* UniffiForeignFutureResultVoid */{
+                        // TODO create callstatus with error.
+                        call_status: uniffiCaller.createErrorStatus(code, errorBuf),
+                    }
+                );
+            };
+            const uniffiForeignFuture = uniffiTraitInterfaceCallAsyncWithError(
+                /*makeCall:*/ uniffiMakeCall,
+                /*handleSuccess:*/ uniffiHandleSuccess,
+                /*handleError:*/ uniffiHandleError,
+                /*isErrorType:*/ RtcError.instanceOf,
+                /*lowerError:*/ FfiConverterTypeRtcError.lower.bind(FfiConverterTypeRtcError),
+                /*lowerString:*/ FfiConverterString.lower.bind(FfiConverterString),
+                /*alloc:*/ nativeModule().rustbuffer_alloc,
+            );
+            return uniffiForeignFuture;
+        },
+        delegate_delayed_leave_via_transport: (
+            uniffiHandle: bigint,
+            request: Uint8Array,
+            uniffiFutureCallback: UniffiForeignFutureCompletevoid,
+            uniffiCallbackData: bigint) => {
+            const uniffiMakeCall = 
+            async (signal: AbortSignal)
+            : Promise<void> => {
+                const jsCallback = FfiConverterTypeMatrixDriverCallback.lift(uniffiHandle);
+                return await jsCallback.delegateDelayedLeaveViaTransport(
+                    FfiConverterTypeFfiTransportDelegationRequest.lift(request), { signal }
                 )
             };
             const uniffiHandleSuccess = (returnValue: void) => {
@@ -8435,11 +8896,11 @@ const FfiConverterSequenceTypeFfiMember = new FfiConverterArray(FfiConverterType
 // FfiConverter for FfiKeyRejection | undefined
 const FfiConverterOptionalTypeFfiKeyRejection = new FfiConverterOptional(FfiConverterTypeFfiKeyRejection);
 
-// FfiConverter for FfiMediaKeyState | undefined
-const FfiConverterOptionalTypeFfiMediaKeyState = new FfiConverterOptional(FfiConverterTypeFfiMediaKeyState);
-
 // FfiConverter for boolean | undefined
 const FfiConverterOptionalBoolean = new FfiConverterOptional(FfiConverterBool);
+
+// FfiConverter for FfiMediaKeyState | undefined
+const FfiConverterOptionalTypeFfiMediaKeyState = new FfiConverterOptional(FfiConverterTypeFfiMediaKeyState);
 
 // FfiConverter for Array<FfiSessionRead>
 const FfiConverterSequenceTypeFfiSessionRead = new FfiConverterArray(FfiConverterTypeFfiSessionRead);
@@ -8568,6 +9029,9 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_memberships_listener() !== 46727) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_memberships_listener");
     }
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_session_listener() !== 784) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_session_listener");
+    }
     if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_status_listener() !== 8439) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_ffiparticipationmanager_set_status_listener");
     }
@@ -8601,37 +9065,40 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_cancel_delayed_event() !== 48021) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_cancel_delayed_event");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_livekit_delayed_leave() !== 31950) {
-        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_livekit_delayed_leave");
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_delayed_leave_via_homeserver() !== 43539) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_delayed_leave_via_homeserver");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_to_device() !== 29274) {
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_delayed_leave_via_transport() !== 6420) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_delegate_delayed_leave_via_transport");
+    }
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_to_device() !== 43316) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_to_device");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_rtc_transports() !== 55674) {
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_rtc_transports() !== 33640) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_rtc_transports");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_livekit_token() !== 36238) {
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_livekit_token() !== 25518) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_get_livekit_token");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_events() !== 18104) {
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_events() !== 28203) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_events");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_state() !== 58428) {
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_state() !== 63481) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_read_state");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_room_events() !== 31129) {
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_room_events() !== 8803) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_room_events");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_to_device_events() !== 55587) {
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_to_device_events() !== 45060) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_to_device_events");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_state_updates() !== 53493) {
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_state_updates() !== 58784) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_state_updates");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_is_homeserver_connected() !== 28631) {
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_is_homeserver_connected() !== 56819) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_is_homeserver_connected");
     }
-    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_connectivity() !== 46098) {
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_connectivity() !== 55109) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_subscribe_connectivity");
     }
     if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_membershipslistener_on_memberships_change() !== 29319) {
@@ -8639,6 +9106,9 @@ function uniffiEnsureInitialized() {
     }
     if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_roomeventsink_emit() !== 34604) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_roomeventsink_emit");
+    }
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_sessionlistener_on_session_change() !== 30825) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_sessionlistener_on_session_change");
     }
     if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_stateupdatesink_emit() !== 7988) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_stateupdatesink_emit");
@@ -8654,6 +9124,7 @@ function uniffiEnsureInitialized() {
     uniffiCallbackInterfaceKeyMapListener.register();
     uniffiCallbackInterfaceKeyRejectedListener.register();
     uniffiCallbackInterfaceMembershipsListener.register();
+    uniffiCallbackInterfaceSessionListener.register();
     uniffiCallbackInterfaceStatusListener.register();
     uniffiCallbackInterfaceMatrixDriverCallback.register();
     }
@@ -8669,12 +9140,14 @@ export default Object.freeze({
     FfiConverterTypeFfiConnectionProblemKind,
     FfiConverterTypeFfiConnectionWithMembers,
     FfiConverterTypeFfiDelayedLeaveOutcome,
+    FfiConverterTypeFfiDelegationRoute,
     FfiConverterTypeFfiDeviceAttribution,
     FfiConverterTypeFfiDisconnectCause,
     FfiConverterTypeFfiElementCallCompat,
     FfiConverterTypeFfiEncryptionStatus,
     FfiConverterTypeFfiEventOrigin,
     FfiConverterTypeFfiExcludedCandidate,
+    FfiConverterTypeFfiHomeserverDelegationRequest,
     FfiConverterTypeFfiImpairment,
     FfiConverterTypeFfiJoinError,
     FfiConverterTypeFfiJoinExclusionReason,
@@ -8702,6 +9175,7 @@ export default Object.freeze({
     FfiConverterTypeFfiStatus,
     FfiConverterTypeFfiToDeviceDelivery,
     FfiConverterTypeFfiToDeviceRecipient,
+    FfiConverterTypeFfiTransportDelegationRequest,
     FfiConverterTypeFfiTransportIntent,
     FfiConverterTypeKeyMapListener,
     FfiConverterTypeKeyRejectedListener,
@@ -8709,6 +9183,7 @@ export default Object.freeze({
     FfiConverterTypeMembershipsListener,
     FfiConverterTypeRoomEventSink,
     FfiConverterTypeRtcError,
+    FfiConverterTypeSessionListener,
     FfiConverterTypeStateUpdateSink,
     FfiConverterTypeStatusListener,
     FfiConverterTypeToDeviceSink,

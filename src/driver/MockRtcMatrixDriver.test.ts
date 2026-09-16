@@ -28,7 +28,7 @@ import {
 } from "./MockRtcMatrixDriver";
 
 const config: FfiParticipationConfig = {
-  compat: FfiElementCallCompat.StickyEvents,
+  compat: FfiElementCallCompat.Off,
   manageMediaKeys: true,
   requireCrossSignedSender: false,
   useKeyDelayMs: 50n,
@@ -41,6 +41,7 @@ const joinParams = {
   keepAliveTimeoutMs: 15_000n,
   degradedLifetimeMs: undefined,
   delegateDelayedLeave: false,
+  delegatedDelayMs: 3_600_000n,
 };
 
 const publish = (): FfiTransportIntent =>
@@ -117,10 +118,15 @@ describe("MockRtcMatrixDriver as the crate's driver", () => {
     await waitFor("key exchange", () =>
       manager.keyMap().some((k) => k.memberId === peer.memberId),
     );
-    // StickyEvents compat: our key went out in the deployed dialect
+    // spec MSC4143: the key message Element X's crates read too
     expect(driver.calls("toDevice")[0].eventType).toBe(
-      "io.element.call.encryption_keys",
+      "org.matrix.msc4143.rtc.encryption_key",
     );
+    // the tile carries the sender's MSC4153 verdict even with the check off
+    expect(
+      manager.memberships().find((m) => m.member.memberId === peer.memberId)
+        ?.mediaKey?.senderCrossSigned,
+    ).toBe(true);
     driver.peerLeaves(peer);
     expect(
       manager.memberships().find((m) => m.member.memberId === peer.memberId)

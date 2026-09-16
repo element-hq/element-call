@@ -31,7 +31,6 @@ import {
   tap,
 } from "rxjs";
 import {
-  type CallMembership,
   MatrixRTCSessionEvent,
   MatrixRTCSessionManager,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -48,7 +47,7 @@ import { type TextStreamInfo } from "../node_modules/livekit-client/dist/src/roo
 import { type Behavior, constant } from "../src/state/Behavior";
 import {
   callViewModelOptionsFromParams,
-  createCallViewModel$,
+  createJsClientCallViewModel$,
 } from "../src/state/CallViewModel/CallViewModel";
 import { ObservableScope } from "../src/state/ObservableScope";
 import { getUrlParams } from "../src/UrlParams";
@@ -59,6 +58,7 @@ import { currentAndPrev, TEXT_LK_TOPIC, tryMakeSticky } from "./helper";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { initializeWidget } from "../src/widget";
 import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
+import { type CallMember } from "../src/state/CallViewModel/remoteMembers/MatrixLivekitMembers";
 import { createWidgetHostBridge } from "../src/HostBridge";
 import { observeElementSize$ } from "../src/utils/elementSize";
 
@@ -83,7 +83,7 @@ interface MatrixRTCSdk {
   remoteMembers$: Behavior<
     {
       connection: Connection | null;
-      membership: CallMembership;
+      membership: CallMember;
       participant: LocalParticipant | RemoteParticipant | null;
     }[]
   >;
@@ -92,7 +92,7 @@ interface MatrixRTCSdk {
    */
   localMember$: Behavior<{
     connection: Connection | null;
-    membership: CallMembership;
+    membership: CallMember;
     participant: LocalParticipant | null;
   } | null>;
   /** Use the LocalMemberConnectionState returned from `join` for a more detailed connection state  */
@@ -142,7 +142,7 @@ export async function createMatrixRTCSdk(
   );
 
   // call view model
-  const callViewModel = createCallViewModel$(
+  const callViewModel = createJsClientCallViewModel$(
     scope,
     rtcSession,
     room,

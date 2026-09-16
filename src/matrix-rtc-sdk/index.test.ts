@@ -53,7 +53,7 @@ describe("matrix-rtc-sdk", () => {
     });
     const [session] = computeSessionsFromEvents(
       [join],
-      FfiElementCallCompat.StickyEvents,
+      FfiElementCallCompat.Off,
     );
     expect(session.memberCount).toBe(1);
     expect(session.members[0].eventId).toBe("$1");
@@ -69,7 +69,7 @@ describe("matrix-rtc-sdk", () => {
       "MYDEV",
       driver,
       {
-        compat: FfiElementCallCompat.StickyEvents,
+        compat: FfiElementCallCompat.Off,
         manageMediaKeys: false,
         requireCrossSignedSender: false,
         useKeyDelayMs: 1000n,
@@ -102,7 +102,10 @@ class InertDriver implements MatrixDriverCallback {
   public async cancelDelayedEvent(): Promise<void> {
     return Promise.resolve();
   }
-  public async delegateLivekitDelayedLeave(): Promise<void> {
+  public async delegateDelayedLeaveViaHomeserver(): Promise<void> {
+    return Promise.resolve();
+  }
+  public async delegateDelayedLeaveViaTransport(): Promise<void> {
     return Promise.resolve();
   }
   public async sendToDevice(
