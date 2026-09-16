@@ -35,3 +35,37 @@ Please see LICENSE in the repository root for full details.
     transform: rotate(360deg);
   }
 }
+
+/* The menu is portalled outside the call root, so it cannot be sized against
+   the app's container. Radix measures the space it actually has and publishes
+   it here, which is neither a viewport unit nor a guessed pixel height. */
+.menu {
+  display: flex;
+  flex-direction: column;
+  max-block-size: var(--radix-dropdown-menu-content-available-height);
+}
+
+/* Only the device lists scroll; the level meter stays put beneath them. */
+.deviceList {
+  overflow-y: auto;
+  min-block-size: 0;
+}
+
+/* The meter belongs to the microphone section: it stays at the bottom of the
+   scrollport while that section is in view, and leaves with it when the list
+   is scrolled up to the speakers. The wrapper is deliberately unpositioned —
+   a positioned one paints above the menu's outline and swallows the frame
+   along this whole section. Sticky is resolved against the scroll container,
+   so it does not need one. */
+
+.stickyMeter {
+  position: sticky;
+  inset-block-end: 0;
+  /* Opaque, so the list does not show through it as it scrolls past. The menu
+     draws its frame as an outline inset by one border width, and the device
+     rows are transparent at rest, so this is the only thing that can cover it:
+     hold it clear on the sides and the bottom. */
+  background: var(--cpd-color-bg-canvas-default);
+  margin-inline: var(--cpd-border-width-1);
+  margin-block-end: var(--cpd-border-width-1);
+}

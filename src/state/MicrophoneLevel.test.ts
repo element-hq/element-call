@@ -7,7 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, test } from "vitest";
 
-import { METER_SEGMENTS, segmentsForVolume } from "./MicrophoneLevel";
+import {
+  ATTACK_MS,
+  METER_SEGMENTS,
+  RELEASE_MS,
+  segmentsForVolume,
+  smoothVolume,
+} from "./MicrophoneLevel";
 
 describe("segmentsForVolume", () => {
   test("shows nothing for silence", () => {
@@ -45,5 +51,40 @@ describe("segmentsForVolume", () => {
   test("treats a missing reading as silence", () => {
     expect(segmentsForVolume(NaN)).toBe(0);
     expect(segmentsForVolume(-1)).toBe(0);
+  });
+});
+
+describe("smoothVolume", () => {
+  test("rises faster than it falls", () => {
+    const rise = smoothVolume(0, 1, 50);
+    const fall = 1 - smoothVolume(1, 0, 50);
+
+    expect(rise).toBeGreaterThan(fall);
+  });
+
+  test("registers a syllable as it starts", () => {
+    // Most of the way there within one attack time constant, so speech does
+    // not lag the speaker.
+    expect(smoothVolume(0, 1, ATTACK_MS)).toBeGreaterThan(0.6);
+  });
+
+  test("rides over the gaps between words", () => {
+    // A pause of a few tens of milliseconds should not collapse the meter, or
+    // it flickers rather than reading as a level.
+    expect(smoothVolume(1, 0, 30)).toBeGreaterThan(0.7);
+    // A real silence still brings it down.
+    expect(smoothVolume(1, 0, RELEASE_MS * 3)).toBeLessThan(0.1);
+  });
+
+  test("behaves the same whatever the frame rate", () => {
+    const oneStep = smoothVolume(0, 1, 32);
+    let twoSteps = smoothVolume(0, 1, 16);
+    twoSteps = smoothVolume(twoSteps, 1, 16);
+
+    expect(twoSteps).toBeCloseTo(oneStep, 5);
+  });
+
+  test("holds still when no time has passed", () => {
+    expect(smoothVolume(0.5, 1, 0)).toBe(0.5);
   });
 });

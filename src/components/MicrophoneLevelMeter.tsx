@@ -16,6 +16,7 @@ import { METER_SEGMENTS, type MicrophoneState } from "../state/MicrophoneLevel";
 
 interface Props {
   state: MicrophoneState;
+  className?: string;
 }
 
 /**
@@ -25,13 +26,13 @@ interface Props {
  * as whether the user is being heard: it keeps moving while muted, and the mute
  * control is what says nothing is transmitted.
  */
-export const MicrophoneLevelMeter: FC<Props> = ({ state }) => {
+export const MicrophoneLevelMeter: FC<Props> = ({ state, className }) => {
   const { t } = useTranslation();
 
   if (state.type !== "level")
     return (
-      <div className={styles.meter}>
-        <MicOnIcon width={20} height={20} className={styles.icon} aria-hidden />
+      <div className={classNames(styles.meter, className)}>
+        <MicOnIcon width={24} height={24} className={styles.icon} aria-hidden />
         <Text size="sm" className={styles.message}>
           {state.type === "permission-denied"
             ? t("microphone_level.permission_denied")
@@ -41,8 +42,8 @@ export const MicrophoneLevelMeter: FC<Props> = ({ state }) => {
     );
 
   return (
-    <div className={styles.meter}>
-      <MicOnIcon width={20} height={20} className={styles.icon} aria-hidden />
+    <div className={classNames(styles.meter, className)}>
+      <MicOnIcon width={24} height={24} className={styles.icon} aria-hidden />
       <div
         className={styles.segments}
         role="meter"

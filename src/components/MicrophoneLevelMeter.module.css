@@ -10,12 +10,20 @@ Please see LICENSE in the repository root for full details.
   align-items: center;
   gap: var(--cpd-space-3x);
   padding-block: var(--cpd-space-2x);
-  padding-inline: var(--cpd-space-4x);
+  /* Aligned with the device rows above: a menu item reserves a trailing column
+     for its chevron and gives its label an end margin, so the text stops well
+     short of the item's own padding. Without the same inset the bars run past
+     where the device names end. */
+  padding-inline-start: var(--cpd-space-4x);
+  padding-inline-end: calc(var(--cpd-space-4x) * 2 + var(--cpd-space-2x));
 }
 
 .icon {
   color: var(--cpd-color-icon-secondary);
   flex-shrink: 0;
+  /* Same width as a device row's icon column, so the bars start where the
+     device names start. */
+  inline-size: 24px;
 }
 
 .segments {

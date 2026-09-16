@@ -272,6 +272,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       {/* The mute button lives inside */}
       {button}
       <Menu
+        className={styles.menu}
         title={title ?? defaultMenuTitle}
         // Each section carries its own heading, so the menu's own title would
         // sit on top of the first one. Kept for the accessible name only.
@@ -293,24 +294,44 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        {iconsAndLabels === "audio" && outputOptions && (
-          <>
-            <MenuTitle title={t("settings.devices.speaker")} />
+        <div className={styles.deviceList}>
+          {iconsAndLabels === "audio" && outputOptions && (
+            <>
+              <MenuTitle title={t("settings.devices.speaker")} />
+              {deviceItems(
+                "output",
+                outputOptions,
+                selectedOutputOption,
+                onSelectOutput,
+                (n) => t("settings.devices.speaker_numbered", { n }),
+              )}
+              <Separator />
+            </>
+          )}
+          <MenuTitle title={optionsButtonLabel} />
+          {/* The heading sits outside, so the meter can never ride up over it:
+              sticky only holds while this block is in view. */}
+          <div>
             {deviceItems(
-              "output",
-              outputOptions,
-              selectedOutputOption,
-              onSelectOutput,
-              (n) => t("settings.devices.speaker_numbered", { n }),
+              "input",
+              options,
+              selectedOption,
+              onSelect,
+              numberedLabel,
             )}
-            <Separator />
-          </>
-        )}
-        <MenuTitle title={optionsButtonLabel} />
-        {deviceItems("input", options, selectedOption, onSelect, numberedLabel)}
-        {iconsAndLabels === "audio" && (
-          <MicrophoneLevelMeter state={microphoneState} />
-        )}
+            {iconsAndLabels === "audio" && (
+              <>
+                <MicrophoneLevelMeter
+                  state={microphoneState}
+                  className={styles.stickyMeter}
+                />
+                {/* Closes the microphone section. The meter stays pinned until
+                    this line reaches it, then leaves with the section. */}
+                <Separator />
+              </>
+            )}
+          </div>
+        </div>
         {(toggles?.length ?? 0) > 0 && <hr />}
         {toggles?.map((toggle) => (
           <ToggleMenuItem

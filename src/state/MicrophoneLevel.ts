@@ -22,7 +22,7 @@ export type MicrophoneState =
  * Enough of them that they sit close together across the width of the menu:
  * the bars keep a fixed size, so too few leaves visible gaps between them.
  */
-export const METER_SEGMENTS = 32;
+export const METER_SEGMENTS = 24;
 
 /**
  * Loudness below which the microphone is treated as picking up nothing.
@@ -49,4 +49,35 @@ export function segmentsForVolume(volume: number): number {
     METER_SEGMENTS,
     Math.ceil(Math.sqrt(aboveFloor) * METER_SEGMENTS),
   );
+}
+
+/**
+ * How quickly the meter follows a rise in loudness, as a time constant in
+ * milliseconds. Short, so a syllable registers the moment it starts.
+ */
+export const ATTACK_MS = 50;
+
+/**
+ * How quickly the meter follows a fall. Longer than the attack: speech is full
+ * of gaps a few tens of milliseconds long, and a meter that tracked them
+ * exactly would flicker rather than read as a level.
+ */
+export const RELEASE_MS = 120;
+
+/**
+ * Moves a displayed level towards a new reading, fast upwards and slowly
+ * downwards.
+ *
+ * Framed in elapsed time rather than frames, so the meter behaves the same on a
+ * 60Hz and a 120Hz display, and does not jump when a frame is dropped.
+ */
+export function smoothVolume(
+  displayed: number,
+  reading: number,
+  elapsedMs: number,
+): number {
+  if (elapsedMs <= 0) return displayed;
+  const timeConstant = reading > displayed ? ATTACK_MS : RELEASE_MS;
+  const towards = 1 - Math.exp(-elapsedMs / timeConstant);
+  return displayed + (reading - displayed) * towards;
 }

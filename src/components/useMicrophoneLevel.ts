@@ -11,6 +11,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type MicrophoneState,
   segmentsForVolume,
+  smoothVolume,
 } from "../state/MicrophoneLevel";
 
 /**
@@ -65,6 +66,8 @@ export function useMicrophoneLevel(
       analyser.fftSize = 1024;
       context.createMediaStreamSource(stream).connect(analyser);
       const samples = new Uint8Array(analyser.fftSize);
+      let displayed = 0;
+      let previousFrame = performance.now();
 
       const read = (): void => {
         analyser.getByteTimeDomainData(samples);
@@ -75,7 +78,14 @@ export function useMicrophoneLevel(
           const centred = (sample - 128) / 128;
           sum += centred * centred;
         }
-        const level = segmentsForVolume(Math.sqrt(sum / samples.length));
+        const now = performance.now();
+        displayed = smoothVolume(
+          displayed,
+          Math.sqrt(sum / samples.length),
+          now - previousFrame,
+        );
+        previousFrame = now;
+        const level = segmentsForVolume(displayed);
         setState((current) =>
           current.type === "level" && current.level === level
             ? current
