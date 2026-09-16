@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/react";
-import { BrowserRouter } from "react-router-dom";
+import { LeaveToHomeProvider } from "../LeaveToHomeContext";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
 import { axe } from "vitest-axe";
@@ -25,6 +25,9 @@ import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import lobbyStyles from "./LobbyView.module.css";
 import headerStyles from "../Header.module.css";
 import { AppBar } from "../AppBar";
+
+// Somewhere to go home to, so that the lobby offers the way back
+const leaveToHome = vi.fn();
 
 vi.mock("@livekit/components-react", () => ({
   usePreviewTracks: (): unknown[] => [],
@@ -93,14 +96,14 @@ function renderLobbyView(
     />
   );
   return render(
-    <BrowserRouter>
+    <LeaveToHomeProvider value={leaveToHome}>
       <MediaDevicesContext value={mediaDevices}>
         <TooltipProvider>
           {withAppBar && <AppBar>{lobbyView}</AppBar>}
           {!withAppBar && lobbyView}
         </TooltipProvider>
       </MediaDevicesContext>
-    </BrowserRouter>,
+    </LeaveToHomeProvider>,
   );
 }
 

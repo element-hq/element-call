@@ -30,7 +30,7 @@ Please see LICENSE in the repository root for full details.
   block-size: 140px;
 }
 
-@media (max-width: 600px) {
+@container element-call (max-width: 600px) {
   /* Give the PiP a portrait aspect ratio */
   .pip[data-size="sm"] {
     inline-size: 88px;

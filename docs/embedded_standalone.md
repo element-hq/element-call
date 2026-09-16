@@ -3,6 +3,9 @@
 Element Call is available as two different packages: Full Package and Embedded Package.
 
 The Full Package is designed for standalone use, while the Embedded Package is designed for widget mode only.
+There is also an experimental third option, a build of Element Call as a React component for applications
+that want to render a call inside their own page rather than in an iframe; see
+[Element Call as a component](../README.md#element-call-as-a-component-experimental) in the README.
 
 The table below provides a comparison of the two packages:
 

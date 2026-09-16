@@ -25,6 +25,7 @@ import { Text } from "@vector-im/compound-web";
 
 import styles from "./Toast.module.css";
 import overlayStyles from "./Overlay.module.css";
+import { useRootElement } from "./RootElementContext";
 
 interface Props {
   /**
@@ -64,6 +65,7 @@ export const Toast: FC<Props> = ({
   Icon,
   modal = true,
 }) => {
+  const rootElement = useRootElement();
   const onOpenChange = useCallback(
     (open: boolean) => {
       if (!open) onDismiss();
@@ -104,7 +106,11 @@ export const Toast: FC<Props> = ({
 
   return (
     <DialogRoot open={open} onOpenChange={onOpenChange} modal={modal}>
-      {modal ? <DialogPortal>{content}</DialogPortal> : content}
+      {modal ? (
+        <DialogPortal container={rootElement}>{content}</DialogPortal>
+      ) : (
+        content
+      )}
     </DialogRoot>
   );
 };

@@ -6,6 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { act, renderHook } from "@testing-library/react";
+import { createElement, type FC, type PropsWithChildren } from "react";
+import { Subject } from "rxjs";
 import {
   afterEach,
   beforeEach,
@@ -15,31 +17,36 @@ import {
   test,
   vi,
 } from "vitest";
-import EventEmitter from "events";
-import { WidgetApiToWidgetAction } from "matrix-widget-api";
 
 import { useTheme } from "./useTheme";
-import { getUrlParams } from "./UrlParams";
-import { widget } from "./widget";
+import { platform } from "./Platform";
+import { useUrlParams } from "./UrlParams";
+import {
+  type HostBridge,
+  HostBridgeProvider,
+  type HostRequest,
+  nullHostBridge,
+} from "./HostBridge";
 
-vi.mock("./UrlParams", () => ({ getUrlParams: vi.fn() }));
-vi.mock("./widget", () => ({
-  widget: {
-    api: { transport: { reply: vi.fn() } },
-    lazyActions: new EventEmitter(),
-  },
-}));
+vi.mock("./UrlParams", () => ({ useUrlParams: vi.fn() }));
 
 describe("useTheme", () => {
   let originalClassList: DOMTokenList;
+  let themeChange$: Subject<HostRequest<{ name?: string }>>;
+  let wrapper: FC<PropsWithChildren>;
+
   beforeEach(() => {
+    themeChange$ = new Subject();
+    const hostBridge: HostBridge = { ...nullHostBridge, themeChange$ };
+    wrapper = ({ children }) =>
+      createElement(HostBridgeProvider, { value: hostBridge }, children);
     // Save the original classList to setup spies
     originalClassList = document.body.classList;
 
     vi.spyOn(originalClassList, "add");
     vi.spyOn(originalClassList, "remove");
     vi.spyOn(originalClassList, "item").mockReturnValue(null);
-    (getUrlParams as Mock).mockReturnValue({ theme: "dark" });
+    (useUrlParams as Mock).mockReturnValue({ theme: "dark" });
   });
 
   afterEach(() => {
@@ -53,9 +60,9 @@ describe("useTheme", () => {
     { setTheme: "light-high-contrast", add: ["cpd-theme-light-hc"] },
   ])("apply procedure", ({ setTheme, add }) => {
     test(`should apply ${add[0]} theme when ${setTheme} theme is specified`, () => {
-      (getUrlParams as Mock).mockReturnValue({ theme: setTheme });
+      (useUrlParams as Mock).mockReturnValue({ theme: setTheme });
 
-      renderHook(() => useTheme());
+      renderHook(() => useTheme(), { wrapper });
 
       expect(originalClassList.remove).toHaveBeenCalledWith(
         "cpd-theme-light",
@@ -71,7 +78,7 @@ describe("useTheme", () => {
     // Simulate a previous theme
     originalClassList.item = vi.fn().mockReturnValue("cpd-theme-dark");
 
-    renderHook(() => useTheme());
+    renderHook(() => useTheme(), { wrapper });
 
     expect(document.body.classList.add).not.toHaveBeenCalledWith(
       "cpd-theme-dark",
@@ -82,18 +89,27 @@ describe("useTheme", () => {
     expect(originalClassList.add).not.toHaveBeenCalled();
   });
 
-  test("theme changes in response to widget actions", async () => {
-    renderHook(() => useTheme());
+  test("marks the element as Element Call's root, for the stylesheets", () => {
+    renderHook(() => useTheme(), { wrapper });
+
+    // The stylesheets find the root by this rather than by naming `body`, so
+    // that they still apply when Element Call is mounted into a container
+    expect(document.body.hasAttribute("data-element-call-root")).toBe(true);
+  });
+
+  test("records the platform on the root, for the stylesheets", () => {
+    renderHook(() => useTheme(), { wrapper });
+
+    expect(document.body.getAttribute("data-platform")).toBe(platform);
+  });
+
+  test("theme changes in response to host requests", () => {
+    renderHook(() => useTheme(), { wrapper });
 
     expect(originalClassList.add).toHaveBeenCalledWith("cpd-theme-dark");
-    await act(() =>
-      widget!.lazyActions.emit(
-        WidgetApiToWidgetAction.ThemeChange,
-        new CustomEvent(WidgetApiToWidgetAction.ThemeChange, {
-          detail: { data: { name: "light" } },
-        }),
-      ),
-    );
+    const reply = vi.fn();
+    act(() => themeChange$.next({ data: { name: "light" }, reply }));
+    expect(reply).toHaveBeenCalledOnce();
     expect(originalClassList.remove).toHaveBeenCalledWith(
       "cpd-theme-light",
       "cpd-theme-dark",

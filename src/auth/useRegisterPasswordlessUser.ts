@@ -12,7 +12,7 @@ import { useClient } from "../ClientContext";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { generateRandomName } from "../auth/generateRandomName";
 import { useRecaptcha } from "../auth/useRecaptcha";
-import { widget } from "../widget";
+import { useUrlParams } from "../UrlParams";
 
 interface UseRegisterPasswordlessUserType {
   privacyPolicyUrl?: string;
@@ -22,6 +22,7 @@ interface UseRegisterPasswordlessUserType {
 
 export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
   const { setClient } = useClient();
+  const { isWidget } = useUrlParams();
   const { privacyPolicyUrl, recaptchaKey, register } =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
@@ -31,7 +32,7 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
       if (!setClient) {
         throw new Error("No client context");
       }
-      if (widget) {
+      if (isWidget) {
         throw new Error(
           "Registration was skipped: We should never try to register password-less user in embedded mode.",
         );
@@ -53,7 +54,7 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
         throw e;
       }
     },
-    [execute, reset, register, setClient],
+    [execute, reset, register, setClient, isWidget],
   );
 
   return { privacyPolicyUrl, registerPasswordlessUser, recaptchaId };

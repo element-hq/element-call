@@ -109,10 +109,15 @@ export const widgetTest = test.extend<MyFixtures>({
       await TestHelpers.dismissInviteUnknownUserModal(ewPage1);
 
       // Accept the invite
+      await TestHelpers.closeReleaseAnnouncement(
+        ewPage2,
+        "Introducing Sections",
+      );
+      await TestHelpers.expandAllSections(ewPage2);
       await expect(
-        ewPage2.getByRole("option", { name: "Welcome Room" }),
+        TestHelpers.roomListItem(ewPage2, "Welcome Room"),
       ).toBeVisible();
-      await ewPage2.getByRole("option", { name: "Welcome Room" }).click();
+      await TestHelpers.roomListItem(ewPage2, "Welcome Room").click();
       await ewPage2.getByRole("button", { name: "Accept" }).click();
       await expect(
         ewPage2
@@ -152,8 +157,12 @@ export const widgetTest = test.extend<MyFixtures>({
       ).toBeVisible();
 
       // Accept the DM invite from brooks
-      // This how playwright record selects the DM invite in the room list
-      await ewPage2.getByRole("button", { name: "Open room" }).click();
+      await TestHelpers.closeReleaseAnnouncement(
+        ewPage2,
+        "Introducing Sections",
+      );
+      await TestHelpers.expandAllSections(ewPage2);
+      await TestHelpers.roomListItem(ewPage2, brooksDisplayName).click();
       await ewPage2.getByRole("button", { name: "Start chatting" }).click();
     }
 

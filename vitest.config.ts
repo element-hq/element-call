@@ -21,7 +21,11 @@ export default defineConfig((configEnv) =>
               css: { include: /.+/ },
               setupFiles: ["src/vitest.setup.ts"],
               environment: "jsdom",
-              include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+              include: [
+                "src/**/*.test.ts",
+                "src/**/*.test.tsx",
+                "component/**/*.test.ts",
+              ],
             },
           },
           {

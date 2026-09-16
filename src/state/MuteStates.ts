@@ -6,14 +6,12 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type IWidgetApiRequest } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
   firstValueFrom,
-  fromEvent,
   map,
   merge,
   Observable,
@@ -24,7 +22,7 @@ import {
 } from "rxjs";
 
 import { type MediaDevices, type MediaDevice } from "../state/MediaDevices";
-import { ElementWidgetActions, widget } from "../widget";
+import { type DeviceMuteState, type HostBridge } from "../HostBridge";
 import { type ObservableScope } from "./ObservableScope";
 import { type Behavior, constant } from "./Behavior";
 
@@ -216,58 +214,51 @@ export class MuteStates {
       audioEnabled: boolean;
       videoEnabled: boolean;
     },
+    hostBridge: HostBridge,
   ) {
-    if (widget !== null) {
-      // Sync our mute states with the hosting client
-      const widgetApiState$ = combineLatest(
-        [this.audio.enabled$, this.video.enabled$],
-        (audio, video) => ({ audio_enabled: audio, video_enabled: video }),
-      );
-      widgetApiState$.pipe(this.scope.bind()).subscribe((state) => {
-        widget!.api.transport
-          .send(ElementWidgetActions.DeviceMute, state)
-          .catch((e) =>
-            logger.warn("Could not send DeviceMute action to widget", e),
-          );
-      });
+    // Keep the host informed of our mute state
+    const muteState$ = combineLatest(
+      [this.audio.enabled$, this.video.enabled$],
+      (audio, video): DeviceMuteState => ({
+        audio_enabled: audio,
+        video_enabled: video,
+      }),
+    );
+    muteState$.pipe(this.scope.bind()).subscribe((state) => {
+      hostBridge
+        .notifyDeviceMute(state)
+        .catch((e) => logger.warn("Could not send mute state to the host", e));
+    });
 
-      // Also sync the hosting client's mute states back with ours
-      const muteActions$ = fromEvent(
-        widget.lazyActions,
-        ElementWidgetActions.DeviceMute,
-      ) as Observable<CustomEvent<IWidgetApiRequest>>;
-      muteActions$
-        .pipe(
-          withLatestFrom(
-            widgetApiState$,
-            this.audio.setEnabled$,
-            this.video.setEnabled$,
-          ),
-          this.scope.bind(),
-        )
-        .subscribe(([ev, state, setAudioEnabled, setVideoEnabled]) => {
-          // First copy the current state into our new state
-          const newState = { ...state };
-          // Update new state if there are any requested changes from the widget
-          // action in `ev.detail.data`.
-          if (
-            ev.detail.data.audio_enabled != null &&
-            typeof ev.detail.data.audio_enabled === "boolean" &&
-            setAudioEnabled !== null
-          ) {
-            newState.audio_enabled = ev.detail.data.audio_enabled;
-            setAudioEnabled(newState.audio_enabled);
-          }
-          if (
-            ev.detail.data.video_enabled != null &&
-            typeof ev.detail.data.video_enabled === "boolean" &&
-            setVideoEnabled !== null
-          ) {
-            newState.video_enabled = ev.detail.data.video_enabled;
-            setVideoEnabled(newState.video_enabled);
-          }
-          widget!.api.transport.reply(ev.detail, newState);
-        });
-    }
+    // And apply the changes the host asks for
+    hostBridge.deviceMute$
+      .pipe(
+        withLatestFrom(
+          muteState$,
+          this.audio.setEnabled$,
+          this.video.setEnabled$,
+        ),
+        this.scope.bind(),
+      )
+      .subscribe(([request, state, setAudioEnabled, setVideoEnabled]) => {
+        // First copy the current state into our new state
+        const newState = { ...state };
+        // Then apply whichever changes the host asked for
+        if (
+          typeof request.data.audio_enabled === "boolean" &&
+          setAudioEnabled !== null
+        ) {
+          newState.audio_enabled = request.data.audio_enabled;
+          setAudioEnabled(newState.audio_enabled);
+        }
+        if (
+          typeof request.data.video_enabled === "boolean" &&
+          setVideoEnabled !== null
+        ) {
+          newState.video_enabled = request.data.video_enabled;
+          setVideoEnabled(newState.video_enabled);
+        }
+        request.reply(newState);
+      });
   }
 }

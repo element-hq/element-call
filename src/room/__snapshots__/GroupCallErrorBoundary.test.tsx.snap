@@ -11,11 +11,10 @@ exports[`ConnectionLostError: Action handling should reset error state 1`] = `
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -92,7 +91,7 @@ exports[`ConnectionLostError: Action handling should reset error state 1`] = `
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -169,11 +168,10 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'internal' er
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -250,7 +248,7 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'internal' er
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -326,11 +324,10 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'notAllowed' 
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -407,7 +404,7 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'notAllowed' 
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -483,11 +480,10 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'serverUnreac
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -564,7 +560,7 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'serverUnreac
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -640,11 +636,10 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'serviceNotFo
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -721,7 +716,7 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'serviceNotFo
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -797,11 +792,10 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'timeout' err
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -878,7 +872,7 @@ exports[`LiveKit ConnectionError variants > should display LiveKit 'timeout' err
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -954,11 +948,10 @@ exports[`LiveKit ConnectionError variants > should link to troubleshoot guide wh
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -1035,7 +1028,7 @@ exports[`LiveKit ConnectionError variants > should link to troubleshoot guide wh
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -1100,7 +1093,7 @@ exports[`LiveKit ConnectionError variants > should link to troubleshoot guide wh
 </DocumentFragment>
 `;
 
-exports[`should have a close button in widget mode 1`] = `
+exports[`should have a close button when the host can dismiss us 1`] = `
 <DocumentFragment>
   <div
     class="_page_4be5c0"
@@ -1111,11 +1104,10 @@ exports[`should have a close button in widget mode 1`] = `
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -1192,7 +1184,7 @@ exports[`should have a close button in widget mode 1`] = `
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -1265,11 +1257,10 @@ exports[`should render the error page with link back to home 1`] = `
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -1346,7 +1337,7 @@ exports[`should render the error page with link back to home 1`] = `
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -1419,11 +1410,10 @@ exports[`should report correct error for 'Call is not supported' 1`] = `
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -1500,7 +1490,7 @@ exports[`should report correct error for 'Call is not supported' 1`] = `
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -1573,11 +1563,10 @@ exports[`should report correct error for 'Connection lost' 1`] = `
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -1654,7 +1643,7 @@ exports[`should report correct error for 'Connection lost' 1`] = `
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -1731,11 +1720,10 @@ exports[`should report correct error for 'Homeserver does not support Matrix 2.â
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -1812,7 +1800,7 @@ exports[`should report correct error for 'Homeserver does not support Matrix 2.â
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -1885,11 +1873,10 @@ exports[`should report correct error for 'Incompatible browser' 1`] = `
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -1966,7 +1953,7 @@ exports[`should report correct error for 'Incompatible browser' 1`] = `
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"
@@ -2034,11 +2021,10 @@ exports[`should report correct error for 'Insufficient capacity' 1`] = `
       <div
         class="_nav_e4b327 _leftNav_e4b327"
       >
-        <a
+        <button
           aria-label="Element Call Home"
           class="_headerLogo_e4b327"
-          data-discover="true"
-          href="/"
+          type="button"
         >
           <svg
             fill="none"
@@ -2115,7 +2101,7 @@ exports[`should report correct error for 'Insufficient capacity' 1`] = `
               fill="white"
             />
           </svg>
-        </a>
+        </button>
       </div>
       <div
         class="_nav_e4b327 _rightNav_e4b327"

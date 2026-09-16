@@ -74,7 +74,7 @@ Please see LICENSE in the repository root for full details.
   margin-bottom: 44px;
 }
 
-@media (min-width: 800px) {
+@container element-call (min-width: 800px) {
   .logo {
     display: none;
   }

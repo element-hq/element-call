@@ -14,7 +14,9 @@ import { MediaDevicesContext } from "../MediaDevicesContext";
 import { MediaDevices } from "../state/MediaDevices";
 import { globalScope } from "../state/ObservableScope";
 
-const mediaDevices = new MediaDevices(globalScope);
+const mediaDevices = new MediaDevices(globalScope, {
+  controlledAudioDevices: false,
+});
 
 const meta = {
   component: MediaMuteAndSwitchButton,

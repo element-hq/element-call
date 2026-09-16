@@ -18,7 +18,7 @@ import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import { iosDeviceMenu$ } from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
-import { widget } from "../widget";
+import { useHostBridge } from "../HostBridge";
 import {
   useSetting,
   soundEffectVolume as soundEffectVolumeSetting,
@@ -123,6 +123,7 @@ export const SettingsModal: FC<Props> = ({
   // On EC, we decided that it is less confusing for the user if they see those options in the output section
   // rather than the input section.
   const { controlledAudioDevices } = useUrlParams();
+  const hostBridge = useHostBridge();
   // If we are on iOS we will show a button to open the native audio device picker.
   const iosDeviceMenu = useBehavior(iosDeviceMenu$);
 
@@ -234,7 +235,8 @@ export const SettingsModal: FC<Props> = ({
   };
 
   const tabs = [audioTab, videoTab];
-  if (widget === null) tabs.push(profileTab);
+  // The profile is only ours to edit when the account is ours
+  if (hostBridge.supportsProfileChanges) tabs.push(profileTab);
   tabs.push(preferencesTab);
   if (isRageshakeAvailable || import.meta.env.VITE_PACKAGE === "full") {
     // for full package we want to show the analytics consent checkbox

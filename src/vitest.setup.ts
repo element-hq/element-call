@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import "@formatjs/intl-durationformat/polyfill.js";
 import "@formatjs/intl-segmenter/polyfill";
-import i18n from "i18next";
 import posthog from "posthog-js";
 import { initReactI18next } from "react-i18next";
 import { afterEach } from "vitest";
@@ -18,8 +17,11 @@ import "@testing-library/jest-dom/vitest";
 
 import EN from "../locales/en/app.json";
 import { Config } from "./config/Config";
+import { i18n } from "./utils/i18n";
 
-// Bare-minimum i18n config
+// Bare-minimum i18n config.
+// Unlike the app, tests register the instance as react-i18next's default rather
+// than wrapping every render in an <I18nextProvider>.
 i18n
   .use(initReactI18next)
   .init({
@@ -50,6 +52,29 @@ window.matchMedia = global.matchMedia = (): MediaQueryList =>
     addEventListener: () => {},
     removeEventListener: () => {},
   }) as Partial<MediaQueryList> as MediaQueryList;
+
+// jsdom does no layout and has no ResizeObserver. The call view observes the
+// size of its root element; this one reports nothing, so that element stays at
+// whatever size jsdom says it is unless a test says otherwise.
+window.ResizeObserver ??= class ResizeObserver {
+  public observe(): void {}
+  public unobserve(): void {}
+  public disconnect(): void {}
+};
+
+// And what jsdom says is zero, for everything — which would have every size
+// query against Element Call's root (the body, with no provider) read as a tiny
+// window. Give the body the size of a typical desktop window instead, the same
+// answer the media query mock above gives. A test that wants another size
+// supplies a root element of its own.
+for (const [property, value] of [
+  ["clientWidth", 1024],
+  ["clientHeight", 768],
+] as const)
+  Object.defineProperty(document.body, property, {
+    get: () => value,
+    configurable: true,
+  });
 
 const storage: Record<string, string> = {};
 const localStoragePolyfill = {

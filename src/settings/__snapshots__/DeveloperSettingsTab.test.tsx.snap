@@ -380,7 +380,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       local
       )
     </p>
-    <pre>
+    <pre
+      class="_pre_2ddec4"
+    >
       {
   "region": "local",
   "version": "1.2.3"
@@ -390,7 +392,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     <p>
       Local Participant
     </p>
-    <pre>
+    <pre
+      class="_pre_2ddec4"
+    >
       localParticipantIdentity
     </pre>
     <p>
@@ -417,7 +421,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       remote
       )
     </p>
-    <pre>
+    <pre
+      class="_pre_2ddec4"
+    >
       {
   "region": "remote",
   "version": "4.5.6"
@@ -427,7 +433,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     <p>
       Local Participant
     </p>
-    <pre>
+    <pre
+      class="_pre_2ddec4"
+    >
       localParticipantIdentity
     </pre>
     <p>
@@ -674,7 +682,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
   <p>
     Environment variables
   </p>
-  <pre>
+  <pre
+    class="_pre_2ddec4"
+  >
     {
   "MY_MOCK_ENV": 10,
   "ENV": "test"
@@ -683,7 +693,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
   <p>
     URL parameters
   </p>
-  <pre>
+  <pre
+    class="_pre_2ddec4"
+  >
     {
   "mocked": true,
   "answer": 42

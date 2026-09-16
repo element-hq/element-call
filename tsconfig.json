@@ -53,7 +53,9 @@
     "./src/**/*.ts",
     "./src/**/*.tsx",
     "./playwright/**/*.ts",
-    "./sdk/**/*.ts"
+    "./sdk/**/*.ts",
+    "./component/**/*.ts",
+    "./component/**/*.tsx"
   ],
   "exclude": ["**.test.ts"]
 }

@@ -27,8 +27,6 @@ export default defineConfig((env) =>
             data: {
               matrix_rtc_session: {
                 wait_for_key_rotation_ms: 5000,
-                delayed_leave_event_restart_ms: 4000,
-                delayed_leave_event_delay_ms: 18000,
               },
             },
           },
