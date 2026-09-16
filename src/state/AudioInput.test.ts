@@ -58,7 +58,9 @@ describe("AudioInput", () => {
         cold("a", { a: [BUILT_IN_MIC, HEADSET_MIC] }),
       );
 
-      const { audioInput } = new MediaDevices(testScope);
+      const { audioInput } = new MediaDevices(testScope, {
+        controlledAudioDevices: false,
+      });
 
       expectObservable(audioInput.available$).toBe("a", {
         a: new Map([
@@ -79,7 +81,9 @@ describe("AudioInput", () => {
         cold("a", { a: [CHROME_DEFAULT, BUILT_IN_MIC, HEADSET_MIC] }),
       );
 
-      const { audioInput } = new MediaDevices(testScope);
+      const { audioInput } = new MediaDevices(testScope, {
+        controlledAudioDevices: false,
+      });
 
       expectObservable(audioInput.selected$).toBe("a", {
         a: expect.objectContaining({ id: "default" }),
@@ -96,7 +100,9 @@ describe("AudioInput", () => {
         }),
       );
 
-      const { audioInput } = new MediaDevices(testScope);
+      const { audioInput } = new MediaDevices(testScope, {
+        controlledAudioDevices: false,
+      });
 
       schedule("--a", { a: () => audioInput.select(HEADSET_MIC.deviceId) });
 

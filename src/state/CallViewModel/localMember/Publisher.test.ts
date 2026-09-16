@@ -236,6 +236,7 @@ describe("Publisher device sync", () => {
       muteStates,
       constant({ supported: false, processor: undefined }),
       logger,
+      false,
     );
 
     return { publisher, switchActiveDevice };
