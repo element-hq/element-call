@@ -392,6 +392,7 @@ export class Publisher {
         ) {
           return;
         }
+        const previousRequestedId = requestedId;
         requestedId = device.id;
         // For the browser default input, ask for "default" as a non-exact
         // constraint: browsers that have no such device ignore it and capture
@@ -399,9 +400,13 @@ export class Publisher {
         (browserDefaultInput
           ? lkRoom.switchActiveDevice(kind, "default", false)
           : lkRoom.switchActiveDevice(kind, device.id)
-        ).catch((e: Error) =>
-          this.logger.error(`Failed to sync ${kind} device with LiveKit`, e),
-        );
+        ).catch((e: Error) => {
+          // LiveKit keeps capturing from the previous device, so record that
+          // again to leave the next selection of this device something to do.
+          // A selection made while the switch was in flight wins, though.
+          if (requestedId === device.id) requestedId = previousRequestedId;
+          this.logger.error(`Failed to sync ${kind} device with LiveKit`, e);
+        });
       });
     };
 

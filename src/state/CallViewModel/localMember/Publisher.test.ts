@@ -212,12 +212,13 @@ describe("Publisher device sync", () => {
     selected$,
     capturedDeviceId,
     activeDeviceId,
+    switchActiveDevice = vi.fn().mockResolvedValue(true),
   }: {
     selected$: BehaviorSubject<SelectedInput>;
     capturedDeviceId?: string;
     activeDeviceId: string;
+    switchActiveDevice?: Mock;
   }): { publisher: Publisher; switchActiveDevice: Mock } {
-    const switchActiveDevice = vi.fn().mockResolvedValue(true);
     const livekitRoom = mockLivekitRoom({
       localParticipant,
       state: LivekitConnectionState.Connected,
@@ -290,6 +291,41 @@ describe("Publisher device sync", () => {
     // Once pinned, re-emitting the same selection is a no-op again
     selected$.next(selectedInput("built-in-mic"));
     expect(switchActiveDevice).toHaveBeenCalledTimes(1);
+
+    await publisher.destroy();
+  });
+
+  it("retries the same selection after a failed switch", async () => {
+    const selected$ = new BehaviorSubject<SelectedInput>(selectedInput(""));
+    const switchActiveDevice = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("could not open the device"))
+      .mockResolvedValue(true);
+    const { publisher } = createDeviceSyncPublisher({
+      selected$,
+      // Pinned to the headset, so moving to the browser default is a switch
+      capturedDeviceId: "headset",
+      activeDeviceId: "headset",
+      switchActiveDevice,
+    });
+
+    expect(switchActiveDevice).toHaveBeenCalledTimes(1);
+    await flushPromises();
+
+    // The failed switch left us on the headset, so selecting the browser
+    // default again has to try once more rather than count as already done
+    selected$.next(selectedInput(""));
+    expect(switchActiveDevice).toHaveBeenCalledTimes(2);
+    expect(switchActiveDevice).toHaveBeenLastCalledWith(
+      "audioinput",
+      "default",
+      false,
+    );
+    await flushPromises();
+
+    // This time it worked, so there is nothing left to do
+    selected$.next(selectedInput(""));
+    expect(switchActiveDevice).toHaveBeenCalledTimes(2);
 
     await publisher.destroy();
   });
