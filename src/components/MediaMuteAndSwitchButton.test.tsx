@@ -405,6 +405,34 @@ describe("MediaMuteAndSwitchButton", () => {
     ).not.toHaveAttribute("aria-disabled", "true");
   });
 
+  test("camera menu uses the same selection pattern and keeps the blur toggle", async () => {
+    const user = userEvent.setup();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="video"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Camera 1" }, id: "cam1" },
+          { label: { type: "name", name: "Camera 2" }, id: "cam2" },
+        ]}
+        selectedOption="cam1"
+        onSelect={vi.fn()}
+        videoBlurToggleClick={vi.fn()}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Camera" }));
+
+    // Same selection pattern as the microphone menu.
+    screen.getByRole("menuitemradio", { name: "Camera 1", checked: true });
+    screen.getByRole("menuitemradio", { name: "Camera 2", checked: false });
+    // And background blur is still reachable from here.
+    expect(
+      screen.getByRole("menuitemcheckbox", { name: "Blur background" }),
+    ).toBeInTheDocument();
+  });
+
   test("lists speaker and microphone sections", async () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(

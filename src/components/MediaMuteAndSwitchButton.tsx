@@ -5,7 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useState, type FC, useEffect, type ReactElement } from "react";
+import {
+  useState,
+  type CSSProperties,
+  type FC,
+  useEffect,
+  type ReactElement,
+} from "react";
 import {
   Button,
   Menu,
@@ -30,6 +36,7 @@ import {
   type DeviceLabel,
 } from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
+import { useRootElement } from "../RootElementContext";
 import { MicrophoneLevelMeter } from "./MicrophoneLevelMeter";
 import { useMicrophoneLevel } from "./useMicrophoneLevel";
 
@@ -106,6 +113,18 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   const devices = useMediaDevices();
   // Only while the menu is open, so nothing holds a second capture of the
   // microphone for the length of a call.
+  // The menu is portalled outside the call root, so nothing in the stylesheets
+  // can size it against the call. Measure the call area rather than the window,
+  // or the menu is wrong wherever Element Call is not the whole page. Measured
+  // when the menu opens: it is short-lived enough not to need watching.
+  const rootElement = useRootElement();
+  const [listMaxHeight, setListMaxHeight] = useState<number>();
+  useEffect(() => {
+    if (menuOpen)
+      setListMaxHeight(
+        Math.max(160, Math.round(rootElement.clientHeight * 0.6)),
+      );
+  }, [menuOpen, rootElement]);
   const microphoneState = useMicrophoneLevel(
     selectedOption,
     menuOpen && iconsAndLabels === "audio",
@@ -294,7 +313,15 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        <div className={styles.deviceList}>
+        <div
+          className={styles.deviceList}
+          style={
+            {
+              "--device-list-max-height":
+                listMaxHeight === undefined ? undefined : `${listMaxHeight}px`,
+            } as CSSProperties
+          }
+        >
           {iconsAndLabels === "audio" && outputOptions && (
             <>
               <MenuTitle title={t("settings.devices.speaker")} />
@@ -320,15 +347,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               numberedLabel,
             )}
             {iconsAndLabels === "audio" && (
-              <>
-                <MicrophoneLevelMeter
-                  state={microphoneState}
-                  className={styles.stickyMeter}
-                />
-                {/* Closes the microphone section. The meter stays pinned until
-                    this line reaches it, then leaves with the section. */}
-                <Separator />
-              </>
+              <MicrophoneLevelMeter
+                state={microphoneState}
+                className={styles.stickyMeter}
+              />
             )}
           </div>
         </div>

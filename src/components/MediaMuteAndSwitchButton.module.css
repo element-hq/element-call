@@ -36,19 +36,27 @@ Please see LICENSE in the repository root for full details.
   }
 }
 
-/* The menu is portalled outside the call root, so it cannot be sized against
-   the app's container. Radix measures the space it actually has and publishes
-   it here, which is neither a viewport unit nor a guessed pixel height. */
 .menu {
   display: flex;
   flex-direction: column;
-  max-block-size: var(--radix-dropdown-menu-content-available-height);
 }
 
-/* Only the device lists scroll; the level meter stays put beneath them. */
+/* Compound underlines every menu heading. The design has a single line, the
+   one dividing the speaker list from the microphone list, so the headings
+   carry none and that divider is drawn explicitly. */
+.menu h3 {
+  border-block-end: none;
+  padding-block-end: var(--cpd-space-2x);
+}
+
+/* Only the device lists scroll; the level meter stays put beneath them.
+   The bound comes from the measured height of the call area, set by the
+   component: the menu is portalled outside the root, so neither a container
+   query nor a viewport unit describes the space it is allowed to fill. */
 .deviceList {
   overflow-y: auto;
   min-block-size: 0;
+  max-block-size: var(--device-list-max-height);
 }
 
 /* The meter belongs to the microphone section: it stays at the bottom of the
