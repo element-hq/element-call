@@ -376,9 +376,20 @@ export class Publisher {
         );
         if (device === undefined) return;
         const browserDefaultInput = device.id === "" && kind !== "audiooutput";
+        // While we capture from the browser default, LiveKit reports the
+        // physical device it resolved to, which can be any of the devices the
+        // user could also pick explicitly. getActiveDevice therefore can't
+        // tell an explicit pin apart from the default resolving to the same
+        // device, and only requestedId can: without this, picking the device
+        // the default happens to use would leave the loose constraint in
+        // place, and the capture would keep following the OS default.
+        const capturingBrowserDefault = requestedId === "";
         if (browserDefaultInput) {
-          if (requestedId === "") return;
-        } else if (lkRoom.getActiveDevice(kind) === device.id) {
+          if (capturingBrowserDefault) return;
+        } else if (
+          !capturingBrowserDefault &&
+          lkRoom.getActiveDevice(kind) === device.id
+        ) {
           return;
         }
         requestedId = device.id;

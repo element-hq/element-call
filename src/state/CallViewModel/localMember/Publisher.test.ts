@@ -5,7 +5,16 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  test,
+  vi,
+} from "vitest";
 import {
   ConnectionState as LivekitConnectionState,
   LocalParticipant,
@@ -186,18 +195,36 @@ beforeEach(() => {
 });
 
 describe("Publisher device sync", () => {
-  it("does not pin a device for the virtual browser default input", async () => {
-    const selected$ = new BehaviorSubject<
-      { id: string; hardwareDeviceChange$: typeof NEVER } | undefined
-    >({ id: "", hardwareDeviceChange$: NEVER });
+  type SelectedInput =
+    | { id: string; hardwareDeviceChange$: typeof NEVER }
+    | undefined;
+
+  function selectedInput(id: string): SelectedInput {
+    return { id, hardwareDeviceChange$: NEVER };
+  }
+
+  /**
+   * Creates a Publisher whose LiveKit room starts out capturing from
+   * capturedDeviceId (undefined meaning no deviceId constraint, i.e. the
+   * browser default) and reports activeDeviceId as its active audio input.
+   */
+  function createDeviceSyncPublisher({
+    selected$,
+    capturedDeviceId,
+    activeDeviceId,
+  }: {
+    selected$: BehaviorSubject<SelectedInput>;
+    capturedDeviceId?: string;
+    activeDeviceId: string;
+  }): { publisher: Publisher; switchActiveDevice: Mock } {
     const switchActiveDevice = vi.fn().mockResolvedValue(true);
     const livekitRoom = mockLivekitRoom({
       localParticipant,
       state: LivekitConnectionState.Connected,
       // ConnectionFactory leaves the deviceId out for the browser default
-      options: { audioCaptureDefaults: {} },
+      options: { audioCaptureDefaults: { deviceId: capturedDeviceId } },
       switchActiveDevice,
-      getActiveDevice: () => "hardware-id-of-whatever-the-browser-chose",
+      getActiveDevice: () => activeDeviceId,
     } as unknown as Partial<LivekitRoom>);
 
     const publisher = new Publisher(
@@ -210,23 +237,74 @@ describe("Publisher device sync", () => {
       logger,
     );
 
+    return { publisher, switchActiveDevice };
+  }
+
+  it("does not pin a device for the virtual browser default input", async () => {
+    const selected$ = new BehaviorSubject<SelectedInput>(selectedInput(""));
+    const { publisher, switchActiveDevice } = createDeviceSyncPublisher({
+      selected$,
+      activeDeviceId: "hardware-id-of-whatever-the-browser-chose",
+    });
+
     // Already capturing from the browser default: nothing to switch, even
     // though LiveKit reports the physical device it ended up with.
     expect(switchActiveDevice).not.toHaveBeenCalled();
 
-    selected$.next({ id: "headset", hardwareDeviceChange$: NEVER });
+    selected$.next(selectedInput("headset"));
     expect(switchActiveDevice).toHaveBeenLastCalledWith(
       "audioinput",
       "headset",
     );
 
-    selected$.next({ id: "", hardwareDeviceChange$: NEVER });
+    selected$.next(selectedInput(""));
     expect(switchActiveDevice).toHaveBeenLastCalledWith(
       "audioinput",
       "default",
       false,
     );
     expect(switchActiveDevice).toHaveBeenCalledTimes(2);
+
+    await publisher.destroy();
+  });
+
+  it("pins the device the browser default resolved to when picked explicitly", async () => {
+    const selected$ = new BehaviorSubject<SelectedInput>(selectedInput(""));
+    const { publisher, switchActiveDevice } = createDeviceSyncPublisher({
+      selected$,
+      // The browser default happens to capture from the built-in microphone
+      activeDeviceId: "built-in-mic",
+    });
+
+    expect(switchActiveDevice).not.toHaveBeenCalled();
+
+    // Picking that same microphone has to replace the loose constraint with a
+    // pin, or the capture would keep following the OS default
+    selected$.next(selectedInput("built-in-mic"));
+    expect(switchActiveDevice).toHaveBeenCalledTimes(1);
+    expect(switchActiveDevice).toHaveBeenLastCalledWith(
+      "audioinput",
+      "built-in-mic",
+    );
+
+    // Once pinned, re-emitting the same selection is a no-op again
+    selected$.next(selectedInput("built-in-mic"));
+    expect(switchActiveDevice).toHaveBeenCalledTimes(1);
+
+    await publisher.destroy();
+  });
+
+  it("does not switch when the room already captures from the selected device", async () => {
+    const selected$ = new BehaviorSubject<SelectedInput>(
+      selectedInput("headset"),
+    );
+    const { publisher, switchActiveDevice } = createDeviceSyncPublisher({
+      selected$,
+      capturedDeviceId: "headset",
+      activeDeviceId: "headset",
+    });
+
+    expect(switchActiveDevice).not.toHaveBeenCalled();
 
     await publisher.destroy();
   });
