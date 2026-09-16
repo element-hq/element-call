@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { combineLatest, map, switchMap } from "rxjs";
+import { combineLatest, map, type Observable, switchMap } from "rxjs";
 import { supportsBackgroundProcessors } from "@livekit/track-processors";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
@@ -76,63 +76,35 @@ function buildDeviceBehaviors(
   | "toggleBlur$"
   | "videoBlurEnabled$"
 > {
-  return {
-    audioOptions$: scope.behavior(
-      disableSwitcher$.pipe(
-        switchMap((disable) =>
-          disable
-            ? constant([] as MenuOptions[])
-            : mediaDevices.audioInput.available$.pipe(
-                map((available) =>
-                  [...available.entries()].map(([id, label]) => ({
-                    id,
-                    label,
-                  })),
-                ),
+  const options$ = (
+    available$: Behavior<Map<string, MenuOptions["label"]>>,
+  ): Observable<MenuOptions[]> =>
+    disableSwitcher$.pipe(
+      switchMap((disable) =>
+        disable
+          ? constant([] as MenuOptions[])
+          : available$.pipe(
+              map((available) =>
+                [...available.entries()].map(([id, label]) => ({ id, label })),
               ),
-        ),
+            ),
       ),
-    ),
+    );
+
+  return {
+    audioOptions$: scope.behavior(options$(mediaDevices.audioInput.available$)),
     selectedAudio$: scope.behavior(
       mediaDevices.audioInput.selected$.pipe(map((s) => s?.id)),
     ),
     selectAudioButtonOption$: constant(mediaDevices.audioInput.select),
     audioOutputOptions$: scope.behavior(
-      disableSwitcher$.pipe(
-        switchMap((disable) =>
-          disable
-            ? constant([] as MenuOptions[])
-            : mediaDevices.audioOutput.available$.pipe(
-                map((available) =>
-                  [...available.entries()].map(([id, label]) => ({
-                    id,
-                    label,
-                  })),
-                ),
-              ),
-        ),
-      ),
+      options$(mediaDevices.audioOutput.available$),
     ),
     selectedAudioOutput$: scope.behavior(
       mediaDevices.audioOutput.selected$.pipe(map((s) => s?.id)),
     ),
     selectAudioOutputOption$: constant(mediaDevices.audioOutput.select),
-    videoOptions$: scope.behavior(
-      disableSwitcher$.pipe(
-        switchMap((disable) =>
-          disable
-            ? constant([] as MenuOptions[])
-            : mediaDevices.videoInput.available$.pipe(
-                map((available) =>
-                  [...available.entries()].map(([id, label]) => ({
-                    id,
-                    label,
-                  })),
-                ),
-              ),
-        ),
-      ),
-    ),
+    videoOptions$: scope.behavior(options$(mediaDevices.videoInput.available$)),
     selectedVideo$: scope.behavior(
       mediaDevices.videoInput.selected$.pipe(map((s) => s?.id)),
     ),

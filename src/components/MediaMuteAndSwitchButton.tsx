@@ -5,29 +5,20 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type ComponentType,
-  useState,
-  type FC,
-  useEffect,
-  type ReactElement,
-} from "react";
+import { useState, type FC, useEffect, type ReactElement } from "react";
 import {
   Button,
   Menu,
   MenuItem,
   MenuTitle,
+  RadioInput,
   Separator,
   ToggleMenuItem,
 } from "@vector-im/compound-web";
 import {
-  CheckIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  MicOnIcon,
   SpinnerIcon,
-  VideoCallIcon,
-  VolumeOnIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -48,8 +39,7 @@ export interface MenuOptions {
 export interface MediaMuteAndSwitchButtonProps {
   /**
    * The accessible name of the menu. Defaults to a translated name for the
-   * media kind; the menu's own title is not shown, since each section carries
-   * its own heading.
+   * media kind. Never shown: each section carries its own heading.
    */
   title?: string;
   /** If the Mute button is enabled */
@@ -71,8 +61,8 @@ export interface MediaMuteAndSwitchButtonProps {
   /** The output option currently rendered as selected */
   selectedOutputOption?: string;
   /**
-   * Called when an output device is picked. Undefined means the platform does
-   * not permit choosing an output, and the section renders disabled.
+   * Called when an output device is picked. Undefined means no output can be
+   * chosen here, and the section renders disabled.
    */
   onSelectOutput?: (id: string) => void;
   videoBlurToggleClick?: () => void;
@@ -155,20 +145,17 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       break;
   }
 
-  let IconOptions: ComponentType<React.SVGAttributes<SVGElement>> | undefined;
   let optionsButtonLabel: string;
   let defaultMenuTitle: string;
   let numberedLabel: (number: number) => string;
   switch (iconsAndLabels) {
     case "video":
-      IconOptions = VideoCallIcon;
       optionsButtonLabel = t("settings.devices.camera");
       defaultMenuTitle = t("settings.devices.camera_source");
       numberedLabel = (n): string =>
         t("settings.devices.camera_numbered", { n });
       break;
     case "audio":
-      IconOptions = MicOnIcon;
       optionsButtonLabel = t("settings.devices.microphone");
       defaultMenuTitle = t("settings.devices.mic_source");
       numberedLabel = (n): string =>
@@ -176,7 +163,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       break;
   }
 
-  const labelToText = (
+  /** The text shown for a device, whichever kind of label it carries. */
+  const labelText = (
     label: MenuOptions["label"],
     numbered: (n: number) => string,
   ): string => {
@@ -201,27 +189,30 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     selected: string | undefined,
     select: ((id: string) => void) | undefined,
     numbered: (n: number) => string,
-    Icon: ComponentType<React.SVGAttributes<SVGElement>> | undefined,
   ): ReactElement[] => {
     const list = items ?? [];
-    // Shown but not choosable when the platform will not switch this kind of
-    // device, or when there is only one of them. The entry stays visible so the
-    // menu keeps the same shape everywhere.
+    // Shown but not choosable when nothing can be picked here, or when there is
+    // only one device. The entry stays visible so the menu keeps the same shape
+    // on every platform.
     const disabled = select === undefined || list.length <= 1;
     return list.map(({ label, id }) => (
       <MenuItem
+        // A radio input inside a button is invalid, and the menu needs an
+        // element it can give menuitemradio semantics to.
+        as="div"
         hideChevron
         disabled={disabled}
-        label={labelToText(label, numbered)}
+        label={labelText(label, numbered)}
         Icon={
-          Icon && (
-            <Icon
-              width={24}
-              height={24}
-              className={styles.itemIcon}
-              aria-hidden
-            />
-          )
+          <RadioInput
+            // Decoration: aria-checked on the menu item is what conveys the
+            // selection, and Radix owns focus within the menu.
+            aria-hidden
+            tabIndex={-1}
+            checked={selected === id}
+            disabled={disabled}
+            readOnly
+          />
         }
         onSelect={(e) => {
           e.preventDefault();
@@ -233,13 +224,6 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         role="menuitemradio"
         aria-checked={selected === id}
       >
-        {selected === id && (
-          <CheckIcon
-            width={24}
-            height={24}
-            aria-hidden // A label would be redundant to aria-checked above
-          />
-        )}
         {selected !== id && plannedSelection === id && (
           <SpinnerIcon
             width={24}
@@ -251,8 +235,6 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       </MenuItem>
     ));
   };
-
-  const showOutputSection = iconsAndLabels === "audio" && outputOptions;
 
   return (
     <div
@@ -285,7 +267,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        {showOutputSection && (
+        {iconsAndLabels === "audio" && outputOptions && (
           <>
             <MenuTitle title={t("settings.devices.speaker")} />
             {deviceItems(
@@ -293,19 +275,12 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               selectedOutputOption,
               onSelectOutput,
               (n) => t("settings.devices.speaker_numbered", { n }),
-              VolumeOnIcon,
             )}
             <Separator />
           </>
         )}
         <MenuTitle title={optionsButtonLabel} />
-        {deviceItems(
-          options,
-          selectedOption,
-          onSelect,
-          numberedLabel,
-          IconOptions,
-        )}
+        {deviceItems(options, selectedOption, onSelect, numberedLabel)}
         {(toggles?.length ?? 0) > 0 && <hr />}
         {toggles?.map((toggle) => (
           <ToggleMenuItem

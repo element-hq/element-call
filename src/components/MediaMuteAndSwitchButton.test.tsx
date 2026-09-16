@@ -327,7 +327,7 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(onVideoBlurToggle).toHaveBeenCalled();
   });
 
-  test("renders check icon to mark the selected menu item", async () => {
+  test("marks the selected menu item as checked", async () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
@@ -342,19 +342,133 @@ describe("MediaMuteAndSwitchButton", () => {
       />,
     );
 
-    // open menu
     await user.click(getByRole("button", { name: "Microphone" }));
 
-    // The selected item (mic2) renders both an IconOptions SVG and a CheckIcon SVG
-    const mic1Item = screen.getByRole("menuitemradio", {
-      name: "Microphone 2",
-    });
-    expect(mic1Item.querySelectorAll("svg").length).toBe(2);
+    screen.getByRole("menuitemradio", { name: "Microphone 2", checked: true });
+    screen.getByRole("menuitemradio", { name: "Microphone 1", checked: false });
+  });
 
-    // The unselected item (mic1) only renders its IconOptions SVG
-    const mic2Item = screen.getByRole("menuitemradio", {
-      name: "Microphone 1",
+  test("lists speaker and microphone sections", async () => {
+    const user = userEvent.setup();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic1"
+        onSelect={vi.fn()}
+        outputOptions={[
+          {
+            label: { type: "default", name: "Built-in Output" },
+            id: "default",
+          },
+          { label: { type: "name", name: "Headset" }, id: "spk2" },
+        ]}
+        selectedOutputOption="default"
+        onSelectOutput={vi.fn()}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Microphone" }));
+
+    screen.getByRole("menuitemradio", {
+      name: "Default (Built-in Output)",
+      checked: true,
     });
-    expect(mic2Item.querySelectorAll("svg").length).toBe(1);
+    screen.getByRole("menuitemradio", { name: "Headset", checked: false });
+    screen.getByRole("menuitemradio", { name: "Microphone 1", checked: true });
+    screen.getByRole("menuitemradio", { name: "Microphone 2", checked: false });
+  });
+
+  test("calls the output select callback on speaker click", async () => {
+    const user = userEvent.setup();
+    const onSelectOutput = vi.fn();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic1"
+        outputOptions={[
+          { label: { type: "name", name: "Speakers" }, id: "spk1" },
+          { label: { type: "name", name: "Headset" }, id: "spk2" },
+        ]}
+        selectedOutputOption="spk1"
+        onSelectOutput={onSelectOutput}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Microphone" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Headset" }));
+
+    expect(onSelectOutput).toHaveBeenCalledWith("spk2");
+  });
+
+  test("shows a single device entry disabled", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+        ]}
+        selectedOption="mic1"
+        onSelect={onSelect}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Microphone" }));
+
+    // Shown rather than hidden, so the menu keeps its shape, but not choosable.
+    const only = screen.getByRole("menuitemradio", { name: "Microphone 1" });
+    expect(only).toHaveAttribute("aria-disabled", "true");
+  });
+
+  test("shows the speaker section disabled when no output can be chosen", async () => {
+    const user = userEvent.setup();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic1"
+        onSelect={vi.fn()}
+        outputOptions={[
+          { label: { type: "name", name: "Speakers" }, id: "spk1" },
+          { label: { type: "name", name: "Headset" }, id: "spk2" },
+        ]}
+        selectedOutputOption="spk1"
+        // No callback: nothing can be picked here.
+        onSelectOutput={undefined}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Microphone" }));
+
+    expect(
+      screen.getByRole("menuitemradio", { name: "Speakers" }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(
+      screen.getByRole("menuitemradio", { name: "Headset" }),
+    ).toHaveAttribute("aria-disabled", "true");
+    // The microphone section is unaffected.
+    expect(
+      screen.getByRole("menuitemradio", { name: "Microphone 2" }),
+    ).not.toHaveAttribute("aria-disabled", "true");
   });
 });

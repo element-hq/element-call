@@ -113,3 +113,87 @@ export const VideoUnmute: Story = {
     selectedOption: "2",
   },
 };
+
+export const SpeakerAndMicrophoneSections: Story = {
+  args: {
+    ...Default.args,
+    title: "Microphone",
+    iconsAndLabels: "audio",
+    enabled: true,
+    options: [
+      { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+      { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+    ],
+    selectedOption: "mic1",
+    outputOptions: [
+      { label: { type: "default", name: "Built-in Output" }, id: "default" },
+      { label: { type: "name", name: "Headset" }, id: "spk2" },
+    ],
+    selectedOutputOption: "default",
+    onSelectOutput: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+
+    const headset = await within(document.body).findByRole("menuitemradio", {
+      name: "Headset",
+    });
+    await userEvent.click(headset);
+    await expect(args.onSelectOutput).toHaveBeenCalledWith("spk2");
+  },
+};
+
+export const OutputCannotBeChosen: Story = {
+  args: {
+    ...Default.args,
+    title: "Microphone",
+    iconsAndLabels: "audio",
+    enabled: true,
+    options: [
+      { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+      { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+    ],
+    selectedOption: "mic1",
+    outputOptions: [
+      { label: { type: "name", name: "Speakers" }, id: "spk1" },
+      { label: { type: "name", name: "Headset" }, id: "spk2" },
+    ],
+    selectedOutputOption: "spk1",
+    // No callback: the speakers are listed, but none can be picked.
+    onSelectOutput: undefined,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+
+    const speakers = await within(document.body).findByRole("menuitemradio", {
+      name: "Speakers",
+    });
+    await expect(speakers).toHaveAttribute("aria-disabled", "true");
+  },
+};
+
+export const OnlyOneDevice: Story = {
+  args: {
+    ...Default.args,
+    title: "Microphone",
+    iconsAndLabels: "audio",
+    enabled: true,
+    options: [{ label: { type: "name", name: "Microphone 1" }, id: "mic1" }],
+    selectedOption: "mic1",
+    outputOptions: [{ label: { type: "name", name: "Speakers" }, id: "spk1" }],
+    selectedOutputOption: "spk1",
+    onSelectOutput: fn(),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+
+    // Shown rather than hidden, so the menu keeps its shape everywhere.
+    const only = await within(document.body).findByRole("menuitemradio", {
+      name: "Microphone 1",
+    });
+    await expect(only).toHaveAttribute("aria-disabled", "true");
+  },
+};
