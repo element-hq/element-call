@@ -49,6 +49,12 @@ Please see LICENSE in the repository root for full details.
   padding-block-end: var(--cpd-space-2x);
 }
 
+/* The menu zeroes separator spacing, but the design gives the heading below
+   the divider room to breathe. */
+.menu [role="separator"] {
+  margin-block-end: var(--cpd-space-5x);
+}
+
 /* Only the device lists scroll; the level meter stays put beneath them.
    The bound comes from the measured height of the call area, set by the
    component: the menu is portalled outside the root, so neither a container
