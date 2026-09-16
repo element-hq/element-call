@@ -24,6 +24,18 @@ export enum MatrixRTCMode {
   Matrix_2_0 = "matrix_2_0",
 }
 
+/**
+ * Which MatrixRTC implementation carries a call: matrix-js-sdk's
+ * `MatrixRTCSession`, or the Rust `matrix-rtc` crate through the host's
+ * drivers. Both are in the build while the crate path is being proven, so a
+ * broken call can be compared against the other path in the same session;
+ * the js-sdk path and this choice go away together.
+ */
+export enum CallViewModelImplementation {
+  MatrixJsSdk = "matrix-js-sdk",
+  MatrixRtc = "matrix-rtc",
+}
+
 export interface DelayedLeaveTimings {
   /**
    * The delay (in milliseconds) with which delayed leave events are sent.
@@ -201,6 +213,14 @@ export interface ConfigOptions {
    * wins.
    */
   matrix_rtc_mode?: MatrixRTCMode;
+
+  /**
+   * Pins the {@link CallViewModelImplementation} for all clients on this
+   * deployment, overriding any per-user choice from the Developer Settings.
+   * If unset, the user's Developer Settings choice (or its default) wins.
+   * Temporary: goes away with the matrix-js-sdk implementation.
+   */
+  call_view_model_implementation?: CallViewModelImplementation;
 
   /**
    * These are low level options that are used to configure the MatrixRTC session.

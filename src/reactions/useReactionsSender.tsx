@@ -5,20 +5,18 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { EventType, RelationType } from "matrix-js-sdk";
+import { EventType, type MatrixClient, RelationType } from "matrix-js-sdk";
 import {
   createContext,
   use,
   type ReactNode,
   useCallback,
-  useMemo,
   type JSX,
 } from "react";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { useClientState } from "../ClientContext";
+import { type TimelineDriver } from "../driver/ElementCallMatrixClientDriver";
 import { ElementCallReactionEventType, type ReactionOption } from ".";
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { useBehavior } from "../useBehavior";
@@ -44,116 +42,108 @@ export const useReactionsSender = (): ReactionsSenderContextType => {
 /**
  * Provider that handles sending a reaction or hand raised event to a call.
  */
+/** How to send and take back a reaction: a room event, and a redaction. */
+export type ReactionsTimeline = Pick<
+  TimelineDriver,
+  "sendRoomEvent" | "redactEvent"
+>;
+
+/** {@link ReactionsTimeline} over a matrix-js-sdk client. */
+export function jsSdkReactionsTimeline(
+  client: Pick<MatrixClient, "sendEvent" | "redactEvent">,
+  roomId: string,
+): ReactionsTimeline {
+  return {
+    sendRoomEvent: async (eventType, content) => {
+      const { event_id: eventId } = await client.sendEvent(
+        roomId,
+        eventType as never,
+        content as never,
+      );
+      return { eventId };
+    },
+    redactEvent: async (eventId) => {
+      await client.redactEvent(roomId, eventId);
+    },
+  };
+}
+
 export const ReactionsSenderProvider = ({
   children,
-  rtcSession,
   vm,
+  ownIdentifier,
+  ownMembershipEventId,
+  timeline,
 }: {
   children: ReactNode;
-  rtcSession: MatrixRTCSession;
   vm: CallViewModel;
+  /** Our key in `vm.reactions$` / `vm.handsRaised$` (`${userId}:${deviceId}`). */
+  ownIdentifier: string;
+  /** The event id of our current membership, which reactions relate to. */
+  ownMembershipEventId: string | undefined;
+  timeline: ReactionsTimeline;
 }): JSX.Element => {
-  const memberships = useMatrixRTCSessionMemberships(rtcSession);
+  // A widget host may forbid reactions; without a client state (the
+  // component, the crate path) there is nobody to forbid them.
   const clientState = useClientState();
   const supportsReactions =
-    clientState?.state === "valid" && clientState.supportedFeatures.reactions;
-  const room = rtcSession.room;
-  const myUserId = room.client.getUserId();
-  const myDeviceId = room.client.getDeviceId();
-  const myMembershipIdentifier = `${myUserId}:${myDeviceId}`;
-
-  const myMembershipEvent = useMemo(
-    () =>
-      memberships.find(
-        (m) => m.userId === myUserId && m.deviceId === myDeviceId,
-      )?.eventId,
-    [memberships, myUserId, myDeviceId],
-  );
+    clientState === undefined ||
+    (clientState.state === "valid" && clientState.supportedFeatures.reactions);
 
   const reactions = useBehavior(vm.reactions$);
-  const myReaction = useMemo(
-    () =>
-      myMembershipIdentifier !== undefined
-        ? reactions[myMembershipIdentifier]
-        : undefined,
-    [myMembershipIdentifier, reactions],
-  );
+  const myReaction = reactions[ownIdentifier];
 
   const handsRaised = useBehavior(vm.handsRaised$);
-  const myRaisedHand = useMemo(
-    () =>
-      myMembershipIdentifier !== undefined
-        ? handsRaised[myMembershipIdentifier]
-        : undefined,
-    [myMembershipIdentifier, handsRaised],
-  );
+  const myRaisedHand = handsRaised[ownIdentifier];
 
   const toggleRaisedHand = useCallback(async () => {
-    if (!myMembershipIdentifier) {
-      return;
-    }
     const myReactionId = myRaisedHand?.reactionEventId;
 
     if (!myReactionId) {
       try {
-        if (!myMembershipEvent) {
+        if (!ownMembershipEventId) {
           throw new Error("Cannot find own membership event");
         }
-        const reaction = await room.client.sendEvent(
-          rtcSession.room.roomId,
-          EventType.Reaction,
-          {
-            "m.relates_to": {
-              rel_type: RelationType.Annotation,
-              event_id: myMembershipEvent,
-              key: "🖐️",
-            },
+        const { eventId } = await timeline.sendRoomEvent(EventType.Reaction, {
+          "m.relates_to": {
+            rel_type: RelationType.Annotation,
+            event_id: ownMembershipEventId,
+            key: "🖐️",
           },
-        );
-        logger.debug("Sent raise hand event", reaction.event_id);
+        });
+        logger.debug("Sent raise hand event", eventId);
       } catch (ex) {
         logger.error("Failed to send raised hand", ex);
       }
     } else {
       try {
-        await room.client.redactEvent(rtcSession.room.roomId, myReactionId);
+        await timeline.redactEvent(myReactionId);
         logger.debug("Redacted raise hand event");
       } catch (ex) {
         logger.error("Failed to redact reaction event", myReactionId, ex);
         throw ex;
       }
     }
-  }, [
-    myMembershipEvent,
-    myMembershipIdentifier,
-    myRaisedHand,
-    rtcSession,
-    room,
-  ]);
+  }, [ownMembershipEventId, myRaisedHand, timeline]);
 
   const sendReaction = useCallback(
     async (reaction: ReactionOption) => {
-      if (!myMembershipIdentifier || myReaction) {
-        // We're still reacting
+      if (myReaction) {
         return;
       }
-      if (!myMembershipEvent) {
+      if (!ownMembershipEventId) {
         throw new Error("Cannot find own membership event");
       }
-      await room.client.sendEvent(
-        rtcSession.room.roomId,
-        ElementCallReactionEventType,
-        {
-          "m.relates_to": {
-            rel_type: RelationType.Reference,
-            event_id: myMembershipEvent,
-          },
-          emoji: reaction.emoji,
-          name: reaction.name,
+      await timeline.sendRoomEvent(ElementCallReactionEventType, {
+        "m.relates_to": {
+          rel_type: RelationType.Reference,
+          event_id: ownMembershipEventId,
         },
-      );
+        emoji: reaction.emoji,
+        name: reaction.name,
+      });
     },
-    [myMembershipEvent, myReaction, room, myMembershipIdentifier, rtcSession],
+    [ownMembershipEventId, myReaction, timeline],
   );
 
   return (

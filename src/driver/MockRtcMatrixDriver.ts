@@ -145,7 +145,7 @@ export class MockRtcMatrixDriver implements RtcMatrixDriver {
   private roomEventSink?: RoomEventSinkLike;
   private toDeviceSink?: ToDeviceSinkLike;
   private stateUpdateSink?: StateUpdateSinkLike;
-  private connectivitySink?: ConnectivitySinkLike;
+  private readonly connectivitySinks = new Set<ConnectivitySinkLike>();
   private homeserverConnected = true;
 
   private nextDelayId = 0;
@@ -403,7 +403,7 @@ export class MockRtcMatrixDriver implements RtcMatrixDriver {
   }
 
   public subscribeConnectivity(sink: ConnectivitySinkLike): void {
-    this.connectivitySink = sink;
+    this.connectivitySinks.add(sink);
   }
 
   public isHomeserverConnected(): boolean {
@@ -413,7 +413,8 @@ export class MockRtcMatrixDriver implements RtcMatrixDriver {
   /** The homeserver comes or goes, as a syncing client would report it. */
   public setHomeserverConnected(connected: boolean): void {
     this.homeserverConnected = connected;
-    this.connectivitySink?.emit(connected);
+    for (const sink of this.connectivitySinks)
+      if (!sink.emit(connected)) this.connectivitySinks.delete(sink);
   }
 
   /** Emit any room event — sticky or state; the crate dispatches on type. */

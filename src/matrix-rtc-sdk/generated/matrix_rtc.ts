@@ -4,7 +4,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import * as wasmBundle from "./wasm-bindgen/index.js";
-import { type UniffiRustFutureContinuationCallback, type UniffiForeignFutureDroppedCallback, type UniffiForeignFutureDroppedCallbackStruct, type UniffiVTableCallbackInterfaceMatrixRtcConnectionsListener, type UniffiVTableCallbackInterfaceMatrixRtcKeyMapListener, type UniffiVTableCallbackInterfaceMatrixRtcKeyRejectedListener, type UniffiForeignFutureResultRustBuffer, type UniffiForeignFutureCompleterustBuffer, type UniffiForeignFutureResultVoid, type UniffiForeignFutureCompletevoid, type UniffiVTableCallbackInterfaceMatrixRtcMatrixDriverCallback, type UniffiVTableCallbackInterfaceMatrixRtcMembershipsListener, type UniffiVTableCallbackInterfaceMatrixRtcSessionListener, type UniffiVTableCallbackInterfaceMatrixRtcStatusListener,
+import { type UniffiRustFutureContinuationCallback, type UniffiForeignFutureDroppedCallback, type UniffiForeignFutureDroppedCallbackStruct, type UniffiVTableCallbackInterfaceMatrixRtcConnectionsListener, type UniffiVTableCallbackInterfaceMatrixRtcKeyMapListener, type UniffiVTableCallbackInterfaceMatrixRtcKeyRejectedListener, type UniffiVTableCallbackInterfaceMatrixRtcLogSink, type UniffiForeignFutureResultRustBuffer, type UniffiForeignFutureCompleterustBuffer, type UniffiForeignFutureResultVoid, type UniffiForeignFutureCompletevoid, type UniffiVTableCallbackInterfaceMatrixRtcMatrixDriverCallback, type UniffiVTableCallbackInterfaceMatrixRtcMembershipsListener, type UniffiVTableCallbackInterfaceMatrixRtcSessionListener, type UniffiVTableCallbackInterfaceMatrixRtcStatusListener,
 } from "./matrix_rtc-ffi";
 import { type FfiConverter, type UniffiByteArray, type UniffiGcObject, type UniffiHandle, type UniffiObjectFactory, type UniffiReferenceHolder, type UniffiRustCallStatus, AbstractFfiConverterByteArray, Cursor, FfiConverterArray, FfiConverterArrayBuffer, FfiConverterBool, FfiConverterObject, FfiConverterObjectWithCallbacks, FfiConverterOptional, FfiConverterUInt32, FfiConverterUInt64, FfiConverterUInt8, RustBuffer, UniffiAbstractObject, UniffiEnum, UniffiError, UniffiInternalError, UniffiResult, UniffiRustCaller, destructorGuardSymbol, pointerLiteralSymbol, uniffiCreateFfiConverterString, uniffiCreateRecord, uniffiRustCallAsync, uniffiTraitInterfaceCall, uniffiTraitInterfaceCallAsyncWithError, uniffiTypeNameSymbol, variantOrdinalSymbol,
 } from "@ubjs/core";
@@ -73,6 +73,23 @@ export function impairmentSeverity(impairment: FfiImpairment): FfiSeverity {
     } finally {
         nativeModule().rustbuffer_free(__rb);
     }
+    }
+
+/**
+ * Routes the crate's log lines to `sink`, at `max_level` and above. Call
+ * once after the bindings are initialised; calling again replaces the sink
+ * and the level. The `log` facade accepts one logger per process, so if the
+ * host already installed a Rust logger of its own (a native host with
+ * `tracing`), that one keeps the lines and the sink stays silent.
+ */
+export function setLogSink(sink: LogSink, maxLevel: FfiLogLevel): void {uniffiCaller.rustCall(
+            /*caller:*/ (callStatus) => { nativeModule().ubrn_uniffi_matrix_rtc_fn_func_set_log_sink(
+        FfiConverterTypeLogSink.lower(sink, nativeModule().rustbuffer_alloc),
+        FfiConverterTypeFfiLogLevel.lower(maxLevel, nativeModule().rustbuffer_alloc),
+                callStatus);
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+    );
     }
 
 const stringConverter = (() => {
@@ -3788,6 +3805,46 @@ const FfiConverterTypeFfiKeepAlive = (() => {
     return new FFIConverter();
 })();
 
+/**
+ * The `log` crate's levels, for a [`LogSink`].
+ */
+export enum FfiLogLevel {
+    Error,
+    Warn,
+    Info,
+    Debug,
+    Trace
+}
+
+const FfiConverterTypeFfiLogLevel = (() => {
+    type TypeName = FfiLogLevel;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            switch (c.readI32()) {
+                case 1: return FfiLogLevel.Error;
+                case 2: return FfiLogLevel.Warn;
+                case 3: return FfiLogLevel.Info;
+                case 4: return FfiLogLevel.Debug;
+                case 5: return FfiLogLevel.Trace;
+                default: throw new UniffiInternalError.UnexpectedEnumCase();
+            }
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            switch (value) {
+                case FfiLogLevel.Error: return c.writeI32(1);
+                case FfiLogLevel.Warn: return c.writeI32(2);
+                case FfiLogLevel.Info: return c.writeI32(3);
+                case FfiLogLevel.Debug: return c.writeI32(4);
+                case FfiLogLevel.Trace: return c.writeI32(5);
+            }
+        }
+        allocationSize(value: TypeName): number {
+            return 4;
+        }
+    }
+    return new FFIConverter();
+})();
+
 
 // Enum: FfiRosterPresence
 export enum FfiRosterPresence_Tags {
@@ -7028,6 +7085,189 @@ const uniffiTypeFfiParticipationManagerObjectFactory: UniffiObjectFactory<FfiPar
 const FfiConverterTypeFfiParticipationManager = new FfiConverterObject(uniffiTypeFfiParticipationManagerObjectFactory);
 
 /**
+ * Where the crate's log lines go. Nothing is logged until a host installs
+ * one with [`set_log_sink`]: the crate speaks through the `log` facade and
+ * has no output of its own, so that its lines land in the host's log (and
+ * its rageshakes) rather than on a console the host does not read.
+ *
+ * `target` is the Rust module path (`matrix_rtc::own_membership::machine`),
+ * `message` the formatted line. Called synchronously from wherever the
+ * crate logs; keep it cheap and never call back into the crate from it.
+ */
+export interface LogSink {
+    
+    log(level: FfiLogLevel, target: string, message: string): void;
+}
+
+
+/**
+ * Where the crate's log lines go. Nothing is logged until a host installs
+ * one with [`set_log_sink`]: the crate speaks through the `log` facade and
+ * has no output of its own, so that its lines land in the host's log (and
+ * its rageshakes) rather than on a console the host does not read.
+ *
+ * `target` is the Rust module path (`matrix_rtc::own_membership::machine`),
+ * `message` the formatted line. Called synchronously from wherever the
+ * crate logs; keep it cheap and never call back into the crate from it.
+ */
+export class LogSinkImpl extends UniffiAbstractObject implements LogSink {
+
+    readonly [uniffiTypeNameSymbol] = "LogSinkImpl";
+    readonly [destructorGuardSymbol]: UniffiGcObject;
+    readonly [pointerLiteralSymbol]: UniffiHandle;
+    // No primary constructor declared for this class.
+private constructor(pointer: UniffiHandle) {
+    super();
+    this[pointerLiteralSymbol] = pointer;
+    this[destructorGuardSymbol] = uniffiTypeLogSinkImplObjectFactory.bless(pointer);
+}
+
+    
+
+    
+    log(level: FfiLogLevel, target: string, message: string): void {uniffiCaller.rustCall(
+            /*caller:*/ (callStatus) => { nativeModule().ubrn_uniffi_matrix_rtc_fn_method_logsink_log(
+                uniffiTypeLogSinkImplObjectFactory.clonePointer(this),
+        FfiConverterTypeFfiLogLevel.lower(level, nativeModule().rustbuffer_alloc),
+        FfiConverterString.lower(target, nativeModule().rustbuffer_alloc),
+        FfiConverterString.lower(message, nativeModule().rustbuffer_alloc),
+                callStatus);
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+    );
+    }
+    
+
+    uniffiDestroy(): void {
+        const ptr = (this as any)[destructorGuardSymbol];
+        if (ptr !== undefined) {
+            const pointer = uniffiTypeLogSinkImplObjectFactory.pointer(this);
+            uniffiTypeLogSinkImplObjectFactory.freePointer(pointer);
+            uniffiTypeLogSinkImplObjectFactory.unbless(ptr);
+            delete (this as any)[destructorGuardSymbol];
+        }
+    }
+
+    static instanceOf(obj_: any): obj_ is LogSinkImpl {
+        return uniffiTypeLogSinkImplObjectFactory.isConcreteType(obj_);
+    }
+
+    
+}
+
+const uniffiTypeLogSinkImplObjectFactory: UniffiObjectFactory<LogSink> = (() => {
+    
+    /// <reference lib="es2021" />
+    const registry = typeof FinalizationRegistry !== 'undefined' ? new FinalizationRegistry<UniffiHandle>((heldValue: UniffiHandle) => {
+        uniffiTypeLogSinkImplObjectFactory.freePointer(heldValue);
+    }) : null;
+    
+    return {
+    create(pointer: UniffiHandle): LogSink {
+        const instance = Object.create(LogSinkImpl.prototype);
+        instance[pointerLiteralSymbol] = pointer;
+        instance[destructorGuardSymbol] = this.bless(pointer);
+        instance[uniffiTypeNameSymbol] = "LogSinkImpl";
+        return instance;
+    },
+
+    
+    bless(p: UniffiHandle): UniffiGcObject {
+        const ptr = {
+            p, // make sure this object doesn't get optimized away.
+            markDestroyed: () => undefined,
+        };
+        if (registry) {
+            registry.register(ptr, p, ptr);
+        }
+        return ptr;
+    },
+
+    unbless(ptr_: UniffiGcObject) {
+        if (registry) {
+            registry.unregister(ptr_);
+        }
+    },
+
+    pointer(obj_: LogSink): UniffiHandle {
+        if ((obj_ as any)[destructorGuardSymbol] === undefined) {
+            throw new UniffiInternalError.UnexpectedNullPointer();
+        }
+        return (obj_ as any)[pointerLiteralSymbol];
+    },
+
+    clonePointer(obj_: LogSink): UniffiHandle {
+        const pointer = this.pointer(obj_);
+        return uniffiCaller.rustCall(
+            /*caller:*/ (callStatus) => nativeModule().ubrn_uniffi_matrix_rtc_fn_clone_logsink(pointer, callStatus),
+            /*liftString:*/ FfiConverterString.lift
+        );
+    },
+
+    freePointer(pointer: UniffiHandle): void {
+        uniffiCaller.rustCall(
+            /*caller:*/ (callStatus) => nativeModule().ubrn_uniffi_matrix_rtc_fn_free_logsink(pointer, callStatus),
+            /*liftString:*/ FfiConverterString.lift
+        );
+    },
+
+    isConcreteType(obj_: any): obj_ is LogSink {
+        return obj_[destructorGuardSymbol] && obj_[uniffiTypeNameSymbol] === "LogSinkImpl";
+    },
+}})();
+const FfiConverterTypeLogSink = new FfiConverterObjectWithCallbacks(uniffiTypeLogSinkImplObjectFactory);
+
+// Add a vtable for the callbacks that go in LogSink.
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+const uniffiCallbackInterfaceLogSink: { vtable: any; register: () => void; } = {
+    // Create the VTable using a series of closures.
+    // ts automatically converts these into C callback functions.
+    vtable: {
+        log: (
+            uniffiHandle: bigint,
+            level: Uint8Array,
+            target: Uint8Array,
+            message: Uint8Array,) => {
+            const uniffiMakeCall = 
+            ()
+            : void => {
+                const jsCallback = FfiConverterTypeLogSink.lift(uniffiHandle);
+                return jsCallback.log(
+                    FfiConverterTypeFfiLogLevel.lift(level), 
+                    FfiConverterString.lift(target), 
+                    FfiConverterString.lift(message)
+                )
+            };
+            const uniffiResult = UniffiResult.ready<void>();
+            const uniffiHandleSuccess = (obj: any) => {};
+            const uniffiHandleError = (code: number, errBuf: UniffiByteArray) => {
+                UniffiResult.writeError(uniffiResult, code, errBuf);
+            };
+            uniffiTraitInterfaceCall(
+                /*makeCall:*/ uniffiMakeCall,
+                /*handleSuccess:*/ uniffiHandleSuccess,
+                /*handleError:*/ uniffiHandleError,
+                /*lowerString:*/ FfiConverterString.lower.bind(FfiConverterString),
+                /*alloc:*/ nativeModule().rustbuffer_alloc,
+            )
+            return uniffiResult;
+        },
+        uniffi_free: (uniffiHandle: UniffiHandle): void => {
+            // this will throw a stale handle error if the handle isn't found.
+            FfiConverterTypeLogSink.drop(uniffiHandle);
+        },
+        uniffi_clone: (uniffiHandle: UniffiHandle): UniffiHandle => {
+            return FfiConverterTypeLogSink.clone(uniffiHandle);
+        }
+    },
+    register: () => {nativeModule().ubrn_uniffi_matrix_rtc_fn_init_callback_vtable_logsink(
+            uniffiCallbackInterfaceLogSink.vtable
+        );
+    },
+};
+
+/**
  * One end of a driver event stream: Rust-exported objects handed to the
  * foreign driver through the `subscribe_*` methods. The host calls `emit`
  * from its own event handlers (e.g. matrix-js-sdk listeners); `false` means
@@ -8963,6 +9203,9 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_func_impairment_severity() !== 9139) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_func_impairment_severity");
     }
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_func_set_log_sink() !== 7798) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_func_set_log_sink");
+    }
     if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_connectionslistener_on_connections_change() !== 24219) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_connectionslistener_on_connections_change");
     }
@@ -9047,6 +9290,9 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_keyrejectedlistener_on_key_rejected() !== 53044) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_keyrejectedlistener_on_key_rejected");
     }
+    if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_logsink_log() !== 15220) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_logsink_log");
+    }
     if (nativeModule().ubrn_uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_sticky_event() !== 39725) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_matrix_rtc_checksum_method_matrixdrivercallback_send_sticky_event");
     }
@@ -9126,6 +9372,7 @@ function uniffiEnsureInitialized() {
     uniffiCallbackInterfaceMembershipsListener.register();
     uniffiCallbackInterfaceSessionListener.register();
     uniffiCallbackInterfaceStatusListener.register();
+    uniffiCallbackInterfaceLogSink.register();
     uniffiCallbackInterfaceMatrixDriverCallback.register();
     }
 
@@ -9157,6 +9404,7 @@ export default Object.freeze({
     FfiConverterTypeFfiKeyRejection,
     FfiConverterTypeFfiLivekitToken,
     FfiConverterTypeFfiLivekitTokenRequest,
+    FfiConverterTypeFfiLogLevel,
     FfiConverterTypeFfiMatrixDriver,
     FfiConverterTypeFfiMediaKey,
     FfiConverterTypeFfiMediaKeyState,
@@ -9179,6 +9427,7 @@ export default Object.freeze({
     FfiConverterTypeFfiTransportIntent,
     FfiConverterTypeKeyMapListener,
     FfiConverterTypeKeyRejectedListener,
+    FfiConverterTypeLogSink,
     FfiConverterTypeMatrixDriverCallback,
     FfiConverterTypeMembershipsListener,
     FfiConverterTypeRoomEventSink,

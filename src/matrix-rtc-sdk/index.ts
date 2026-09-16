@@ -18,6 +18,7 @@ Please see LICENSE in the repository root for full details.
 
 import initAsync, { type InitInput } from "./generated/wasm-bindgen/index.js";
 import bindings from "./generated/matrix_rtc";
+import { installMatrixRtcLogSink } from "./logSink";
 
 export {
   FfiMatrixDriver,
@@ -31,6 +32,8 @@ export {
   FfiImpairment,
   FfiJoinError,
   FfiKeepAlive,
+  FfiLogLevel,
+  setLogSink,
   FfiMembershipState,
   FfiTransportIntent,
   RtcError,
@@ -54,6 +57,7 @@ export type {
   FfiToDeviceRecipient,
   FfiTransportDelegationRequest,
   ConnectivitySinkLike,
+  LogSink,
   MatrixDriverCallback,
   RoomEventSinkLike,
   StateUpdateSinkLike,
@@ -83,6 +87,8 @@ export async function initMatrixRtcSdk(
   loading ??= (async (): Promise<void> => {
     await initAsync({ module_or_path: source ?? (await bundledWasm()) });
     bindings.initialize();
+    // The crate is silent until told where to log.
+    installMatrixRtcLogSink();
   })();
   await loading;
 }

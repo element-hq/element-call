@@ -36,6 +36,14 @@ export type UniffiVTableCallbackInterfaceMatrixRtcKeyRejectedListener = {
   uniffi_clone: UniffiCallbackInterfaceCloneMatrixRtcKeyRejectedListener;
   on_key_rejected: UniffiCallbackInterfaceMatrixRtcKeyRejectedListenerMethod0;
 };
+type UniffiCallbackInterfaceMatrixRtcLogSinkMethod0 = (uniffiHandle: bigint, level: Uint8Array, target: Uint8Array, message: Uint8Array) => UniffiResult<void>;
+type UniffiCallbackInterfaceCloneMatrixRtcLogSink = (handle: bigint) => UniffiResult<void>;
+type UniffiCallbackInterfaceFreeMatrixRtcLogSink = (handle: bigint) => void;
+export type UniffiVTableCallbackInterfaceMatrixRtcLogSink = {
+  uniffi_free: UniffiCallbackInterfaceFreeMatrixRtcLogSink;
+  uniffi_clone: UniffiCallbackInterfaceCloneMatrixRtcLogSink;
+  log: UniffiCallbackInterfaceMatrixRtcLogSinkMethod0;
+};
 export type UniffiForeignFutureResultRustBuffer = {
   return_value: Uint8Array;
   call_status: UniffiRustCallStatus;

@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixClient, type Room as MatrixRoom } from "matrix-js-sdk";
+import { type MatrixClient } from "matrix-js-sdk";
 import {
   type FC,
   type PointerEvent as ReactPointerEvent,
@@ -44,6 +44,7 @@ import { InviteButton } from "../button/InviteButton";
 import {
   type CallViewModel,
   callViewModelOptionsFromParams,
+  createCallViewModel$,
   createJsClientCallViewModel$,
 } from "../state/CallViewModel/CallViewModel.ts";
 import { Grid, type TileProps } from "../grid/Grid";
@@ -86,11 +87,20 @@ import { ObservableScope } from "../state/ObservableScope.ts";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter.tsx";
 import { SettingsIconButton } from "../button/Button.tsx";
 import { createCallFooterViewModel } from "../components/CallFooterViewModel.tsx";
+import { type CallParticipation } from "../state/rtc/CallParticipation.ts";
+import { useOptionalMatrixDrivers } from "../driver/MatrixDriverContext.tsx";
+import { ParticipationReactionsReader } from "../reactions/ParticipationReactionsReader.ts";
+import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships.ts";
+import { jsSdkReactionsTimeline } from "../reactions/useReactionsSender.tsx";
+import { CallViewModelImplementation } from "../config/ConfigOptions.ts";
 import { createDeveloperSettingsTabViewModel } from "../settings/DeveloperSettingsTabViewModel.ts";
 import { type DeveloperSettingsSnapshot } from "../settings/DeveloperSettingsTab.tsx";
 import { type ViewModel } from "../state/ViewModel.ts";
 import { RingingStatus } from "../tile/RingingStatus.tsx";
 import { RingingAudioRenderer } from "./RingingAudioRenderer.tsx";
+
+/** What `ownMembership$` reads as when matrix-js-sdk carries the call. */
+const NO_OWN_MEMBERSHIP = constant(null);
 
 declare module "react" {
   interface CSSProperties {
@@ -104,6 +114,12 @@ export interface ActiveCallProps extends Omit<
   "vm" | "livekitRoom" | "connState" | "footerVm" | "developerSettingsVm"
 > {
   e2eeSystem: EncryptionSystem;
+  /**
+   * The crate's participation in the session when the Rust implementation
+   * carries this call (see `CallViewModelImplementation`); null when
+   * matrix-js-sdk's `rtcSession` does.
+   */
+  participation: CallParticipation | null;
   // TODO refactor those reasons into an enum
   onLeft: (
     reason: "user" | "timeout" | "decline" | "allOthersLeft" | "error",
@@ -125,34 +141,77 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   // The element we have to draw the call in: the page, or the container a host
   // gave us. Its size, not the window's, decides how the call is laid out.
   const rootElement = useRootElement();
+  // The drivers, where a host provided them; required with a participation.
+  const drivers = useOptionalMatrixDrivers();
+  const { participation, rtcSession, client, roomId } = props;
+  if (participation !== null && drivers === null)
+    throw new Error(
+      "A call over the matrix-rtc crate needs the Matrix drivers to be provided",
+    );
+  if (
+    participation === null &&
+    (rtcSession === undefined || client === undefined)
+  )
+    throw new Error(
+      "A call needs either a participation (the crate) or a matrix-js-sdk client and session",
+    );
   useEffect(() => {
     rootLogger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
-    const reactionsReader = new ReactionsReader(scope, props.rtcSession);
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
       urlParams;
+    const options = {
+      ...callViewModelOptionsFromParams(urlParams),
+      encryptionSystem: props.e2eeSystem,
+      hostBridge,
+      autoLeaveWhenOthersLeft,
+      waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
+      // We merely sample the current mode here, so the user would need to
+      // manually rejoin to switch to a different one.
+      matrixRTCMode: matrixRTCModeSetting.value$.value,
+      windowSize$: scope.behavior(observeElementSize$(rootElement)),
+    };
 
-    const vm = createJsClientCallViewModel$(
-      scope,
-      props.rtcSession,
-      props.matrixRoom,
-      mediaDevices,
-      props.muteStates,
-      {
-        ...callViewModelOptionsFromParams(urlParams),
-        encryptionSystem: props.e2eeSystem,
-        hostBridge,
-        autoLeaveWhenOthersLeft,
-        waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
-        // We merely sample the current mode here, so the user would need to
-        // manually rejoin to switch to a different one.
-        matrixRTCMode: matrixRTCModeSetting.value$.value,
-        windowSize$: scope.behavior(observeElementSize$(rootElement)),
-      },
-      reactionsReader.raisedHands$,
-      reactionsReader.reactions$,
-      scope.behavior(trackProcessorState$),
-    );
+    let vm: CallViewModel;
+    if (participation !== null && drivers !== null) {
+      rootLogger.info(
+        `Call view model implementation: ${CallViewModelImplementation.MatrixRtc}`,
+      );
+      const reactionsReader = new ParticipationReactionsReader(
+        scope,
+        participation,
+        drivers.clientDriver,
+      );
+      vm = createCallViewModel$(
+        scope,
+        participation,
+        drivers.clientDriver,
+        mediaDevices,
+        props.muteStates,
+        options,
+        reactionsReader.raisedHands$,
+        reactionsReader.reactions$,
+        scope.behavior(trackProcessorState$),
+      );
+    } else if (rtcSession !== undefined) {
+      rootLogger.info(
+        `Call view model implementation: ${CallViewModelImplementation.MatrixJsSdk}`,
+      );
+      const reactionsReader = new ReactionsReader(scope, rtcSession);
+      vm = createJsClientCallViewModel$(
+        scope,
+        rtcSession,
+        rtcSession.room,
+        mediaDevices,
+        props.muteStates,
+        options,
+        reactionsReader.raisedHands$,
+        reactionsReader.reactions$,
+        scope.behavior(trackProcessorState$),
+      );
+    } else {
+      return; // unreachable: checked above
+    }
     // TODO move this somewhere else once we use the callViewModel in the lobby as well!
     vm.join();
     setVm(vm);
@@ -163,8 +222,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       scope.end();
     };
   }, [
-    props.rtcSession,
-    props.matrixRoom,
+    rtcSession,
+    client,
     props.muteStates,
     props.e2eeSystem,
     props.onLeft,
@@ -172,9 +231,38 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     hostBridge,
     mediaDevices,
     trackProcessorState$,
-    props.client,
     rootElement,
+    participation,
+    drivers,
   ]);
+
+  // Who we are, as the tiles, hands and reactions are keyed. Both drivers
+  // and client name the same identity; the drivers are always there.
+  const ownIdentifier =
+    drivers !== null
+      ? `${drivers.clientDriver.userId}:${drivers.clientDriver.deviceId}`
+      : `${client?.getUserId()}:${client?.getDeviceId()}`;
+
+  // Reactions relate to our current membership event, wherever that lives.
+  const jsSdkMemberships = useMatrixRTCSessionMemberships(rtcSession);
+  const ownParticipationMembership = useBehavior(
+    participation?.ownMembership$ ?? NO_OWN_MEMBERSHIP,
+  );
+  const ownMembershipEventId =
+    participation !== null
+      ? ownParticipationMembership?.member.eventId
+      : jsSdkMemberships.find(
+          (m) =>
+            m.userId === client?.getUserId() &&
+            m.deviceId === client?.getDeviceId(),
+        )?.eventId;
+  const reactionsTimeline = useMemo(
+    () =>
+      participation === null && client !== undefined
+        ? jsSdkReactionsTimeline(client, roomId)
+        : drivers!.clientDriver,
+    [participation, drivers, client, roomId],
+  );
 
   useEffect(() => {
     if (vm === null) return;
@@ -185,7 +273,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       vm,
       props.muteStates,
       mediaDevices,
-      `${props.client.getUserId()}:${props.client.getDeviceId()}`,
+      ownIdentifier,
       { showControls: urlParams.showControls, header: urlParams.header },
     );
     setFooterVm(footerVm);
@@ -195,15 +283,15 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       scope.end();
     };
   }, [
-    props.rtcSession,
-    props.matrixRoom,
+    rtcSession,
+    client,
     props.muteStates,
     props.e2eeSystem,
     props.onLeft,
     urlParams,
     mediaDevices,
     trackProcessorState$,
-    props.client,
+    ownIdentifier,
     vm,
   ]);
 
@@ -212,7 +300,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   if (developerSettingsVm === null) return null;
 
   return (
-    <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
+    <ReactionsSenderProvider
+      vm={vm}
+      ownIdentifier={ownIdentifier}
+      ownMembershipEventId={ownMembershipEventId}
+      timeline={reactionsTimeline}
+    >
       <InCallView
         {...props}
         vm={vm}
@@ -224,13 +317,15 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 };
 
 export interface InCallViewProps {
-  client: MatrixClient;
+  /** The matrix-js-sdk client, when that implementation carries the call. */
+  client?: MatrixClient;
   vm: CallViewModel;
   footerVm: ViewModel<FooterSnapshot>;
   developerSettingsVm: ViewModel<DeveloperSettingsSnapshot>;
   matrixInfo: MatrixInfo;
-  rtcSession: MatrixRTCSession;
-  matrixRoom: MatrixRoom;
+  /** The matrix-js-sdk session, when that implementation carries the call. */
+  rtcSession?: MatrixRTCSession;
+  roomId: string;
   muteStates: MuteStates;
   onShareClick: (() => void) | null;
 }
@@ -241,7 +336,7 @@ export const InCallView: FC<InCallViewProps> = ({
   footerVm,
   developerSettingsVm,
   matrixInfo,
-  matrixRoom,
+  roomId,
   muteStates,
   onShareClick,
 }) => {
@@ -634,9 +729,7 @@ export const InCallView: FC<InCallViewProps> = ({
     }
   };
 
-  const rageshakeRequestModalProps = useRageshakeRequestModal(
-    matrixRoom.roomId,
-  );
+  const rageshakeRequestModalProps = useRageshakeRequestModal(roomId);
 
   useAppBarSecondaryButton(
     <SettingsIconButton
@@ -692,7 +785,7 @@ export const InCallView: FC<InCallViewProps> = ({
           <RageshakeRequestModal {...rageshakeRequestModalProps} />
           <SettingsModal
             client={client}
-            roomId={matrixRoom.roomId}
+            roomId={roomId}
             open={settingsOpen}
             onDismiss={(): void => setSettingsOpen(false)}
             tab={settingsTab}

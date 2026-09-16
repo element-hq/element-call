@@ -42,7 +42,10 @@ import {
   type CallViewModelOptions,
 } from "../state/CallViewModel/CallViewModel";
 import { alice, local } from "../utils/test-fixtures";
-import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
+import {
+  jsSdkReactionsTimeline,
+  ReactionsSenderProvider,
+} from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
@@ -160,7 +163,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       footerVm={footerVm}
       developerSettingsVm={developerSettingsVm}
       matrixInfo={matrixInfo}
-      matrixRoom={room}
+      roomId={room.roomId}
       onShareClick={null}
     />
   );
@@ -172,7 +175,9 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       <MediaDevicesContext value={mediaDevices}>
         <ReactionsSenderProvider
           vm={vm}
-          rtcSession={rtcSession.asMockedSession()}
+          ownIdentifier={`${client.getUserId()}:${client.getDeviceId()}`}
+          ownMembershipEventId={undefined}
+          timeline={jsSdkReactionsTimeline(client, room.roomId)}
         >
           <TooltipProvider>
             <RoomContext value={livekitRoom}>{content}</RoomContext>
@@ -248,7 +253,8 @@ describe("ActiveCall", () => {
                 <ActiveCall
                   client={matrixRoom.client}
                   rtcSession={rtcSession.asMockedSession()}
-                  matrixRoom={matrixRoom}
+                  participation={null}
+                  roomId={matrixRoom.roomId}
                   muteStates={mockMuteStates()}
                   matrixInfo={matrixInfo}
                   onShareClick={null}
@@ -298,7 +304,8 @@ describe("ActiveCall", () => {
                     <ActiveCall
                       client={matrixRoom.client}
                       rtcSession={rtcSession.asMockedSession()}
-                      matrixRoom={matrixRoom}
+                      participation={null}
+                      roomId={matrixRoom.roomId}
                       muteStates={mockMuteStates()}
                       matrixInfo={matrixInfo}
                       onShareClick={null}

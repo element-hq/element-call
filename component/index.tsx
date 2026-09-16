@@ -43,7 +43,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { type MatrixClient } from "matrix-js-sdk";
+import { type MatrixClient, type Room } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { I18nextProvider } from "react-i18next";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -56,7 +56,6 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import EN from "../locales/en/app.json";
 import { CallView } from "../src/room/CallView";
 import { ErrorPage } from "../src/FullScreenView";
-import { ClientProvider } from "../src/ClientContext";
 import { HostBridgeProvider } from "../src/HostBridge";
 import { RootElementProvider, useRootElement } from "../src/RootElementContext";
 import {
@@ -80,8 +79,15 @@ import { useTheme } from "../src/useTheme";
 import { useStableValue } from "../src/useStableValue";
 import { type RtcMatrixDriver } from "../src/driver/RtcMatrixDriver";
 import { type ElementCallMatrixClientDriver } from "../src/driver/ElementCallMatrixClientDriver";
-import { JsSdkRtcMatrixDriver } from "../src/driver/jsSdk/JsSdkRtcMatrixDriver";
-import { JsSdkElementCallMatrixClientDriver } from "../src/driver/jsSdk/JsSdkElementCallMatrixClientDriver";
+import { useJsSdkDrivers } from "../src/driver/jsSdk/useJsSdkDrivers";
+import {
+  initMatrixRtcSdk,
+  type MatrixRtcWasmSource,
+} from "../src/matrix-rtc-sdk";
+import {
+  type MatrixDrivers,
+  MatrixDriverProvider,
+} from "../src/driver/MatrixDriverContext";
 import styles from "./ElementCall.module.css";
 import {
   type ElementCallHandle,
@@ -231,10 +237,24 @@ export type ElementCallClientBasedProps = Omit<
  *
  * Await this once, before rendering {@link ElementCall}.
  */
+export interface InitializeElementCallOptions {
+  /**
+   * Where to load the MatrixRTC SDK's wasm from, for a host that serves it
+   * from somewhere other than next to this bundle. Left out, the bundled
+   * copy is loaded when the first call needs it.
+   */
+  matrixRtcWasm?: MatrixRtcWasmSource;
+}
+
 export async function initializeElementCall(
   config: ConfigOptions = {},
+  { matrixRtcWasm }: InitializeElementCallOptions = {},
 ): Promise<void> {
   const polyfills: Promise<unknown>[] = [];
+  // The call runs on the Rust MatrixRTC crate; its wasm is loaded up front
+  // when the host says where from, and lazily otherwise.
+  if (matrixRtcWasm !== undefined)
+    polyfills.push(initMatrixRtcSdk(matrixRtcWasm));
   if (shouldPolyfillSegmenter())
     polyfills.push(import("@formatjs/intl-segmenter/polyfill-force"));
   if (shouldPolyfillDurationFormat())
@@ -343,22 +363,11 @@ export const ElementCall: FC<ElementCallProps> = ({
     };
   }, [controlledAudioDevices, callIntent]);
 
-  // Until the React tree below reads the drivers (plan slice S4), it runs on
-  // matrix-js-sdk directly, so for now the drivers have to be the matrix-js-sdk
-  // ones and the client is taken back out of them. `ElementCallClientBased`
-  // is the way to get here in the meantime; a host with drivers of its own
-  // cannot be served yet.
-  if (!(clientDriver instanceof JsSdkElementCallMatrixClientDriver))
-    throw new Error(
-      "Element Call cannot yet run on drivers other than the matrix-js-sdk ones; use ElementCallClientBased",
-    );
-  // `rtcDriver` is what the call will run on once the tree reads it; for now
-  // it is only checked to be there.
-  void rtcDriver;
-  const { client, room } = clientDriver;
-  const rtcSession = useMemo(
-    () => client.matrixRTC.getRoomSession(room),
-    [client, room],
+  // The call runs on the Rust MatrixRTC crate over these two drivers; no
+  // matrix-js-sdk client is involved.
+  const drivers = useMemo(
+    (): MatrixDrivers => ({ rtcDriver, clientDriver }),
+    [rtcDriver, clientDriver],
   );
 
   // Everything the call needs is in hand once these exist, and the first
@@ -366,8 +375,7 @@ export const ElementCall: FC<ElementCallProps> = ({
   // is told that Element Call has loaded, as the widget tells its client once
   // its own initialisation is over. Once per mount, however often the pieces
   // are later swapped out.
-  const ready =
-    container !== null && rtcSession !== null && mediaDevices !== null;
+  const ready = container !== null && mediaDevices !== null;
   const announcedLoaded = useRef(false);
   useEffect(() => {
     if (!ready || announcedLoaded.current) return;
@@ -393,12 +401,10 @@ export const ElementCall: FC<ElementCallProps> = ({
                 >
                   <Decoration>
                     <TooltipProvider>
-                      <ClientProvider client={client}>
+                      <MatrixDriverProvider value={drivers}>
                         <MediaDevicesContext value={mediaDevices}>
                           <ProcessorProvider>
                             <CallView
-                              client={client}
-                              rtcSession={rtcSession}
                               isPasswordlessUser={false}
                               confineToRoom={params.confineToRoom}
                               preload={params.preload}
@@ -406,7 +412,7 @@ export const ElementCall: FC<ElementCallProps> = ({
                             />
                           </ProcessorProvider>
                         </MediaDevicesContext>
-                      </ClientProvider>
+                      </MatrixDriverProvider>
                     </TooltipProvider>
                   </Decoration>
                 </ErrorBoundary>
@@ -425,28 +431,19 @@ export const ElementCallClientBased: FC<ElementCallClientBasedProps> = ({
   ...props
 }): ReactNode => {
   const room = client.getRoom(roomId);
-  const drivers = useMemo(
-    () =>
-      room === null
-        ? null
-        : {
-            rtcDriver: new JsSdkRtcMatrixDriver(client, room),
-            clientDriver: new JsSdkElementCallMatrixClientDriver(client, room),
-          },
-    [client, room],
-  );
-  // The RTC driver hooks client listeners for the crate's sinks; let go of
-  // them with the drivers.
-  useEffect(() => {
-    if (drivers === null) return;
-    return (): void => drivers.rtcDriver.detach();
-  }, [drivers]);
-
-  if (drivers === null) {
+  if (room === null) {
     logger.error(
       `Element Call was asked to call in ${roomId}, which its host's client does not know about`,
     );
     return null;
   }
+  return <ClientBasedCall client={client} room={room} {...props} />;
+};
+
+/** {@link ElementCallClientBased} once the room is known: builds the drivers. */
+const ClientBasedCall: FC<
+  Omit<ElementCallClientBasedProps, "roomId"> & { room: Room }
+> = ({ client, room, ...props }): ReactNode => {
+  const drivers = useJsSdkDrivers(client, room);
   return <ElementCall {...props} {...drivers} />;
 };

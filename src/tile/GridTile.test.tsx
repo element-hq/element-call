@@ -12,7 +12,6 @@ import {
 import { test, expect } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject } from "rxjs";
 
 import { GridTile } from "./GridTile";
@@ -25,7 +24,10 @@ import {
   mockMediaDevices,
 } from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
-import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
+import {
+  ReactionsSenderProvider,
+  type ReactionsTimeline,
+} from "../reactions/useReactionsSender";
 import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { constant } from "../state/Behavior";
 import {
@@ -39,21 +41,10 @@ global.IntersectionObserver = class MockIntersectionObserver {
   public disconnect(): void {}
 } as unknown as typeof IntersectionObserver;
 
-const fakeRtcSession = {
-  on: () => {},
-  off: () => {},
-  room: {
-    on: () => {},
-    off: () => {},
-    client: {
-      getUserId: () => null,
-      getDeviceId: () => null,
-      on: () => {},
-      off: () => {},
-    },
-  },
-  memberships: [],
-} as unknown as MatrixRTCSession;
+const fakeTimeline: ReactionsTimeline = {
+  sendRoomEvent: async () => Promise.resolve({ eventId: "$reaction" }),
+  redactEvent: async () => Promise.resolve(),
+};
 
 const callVm = {
   reactions$: constant({}),
@@ -75,7 +66,12 @@ test("GridTile displays remote media", async () => {
   );
 
   const { container } = render(
-    <ReactionsSenderProvider vm={callVm} rtcSession={fakeRtcSession}>
+    <ReactionsSenderProvider
+      vm={callVm}
+      ownIdentifier="@local:example.org:LOCALDEV"
+      ownMembershipEventId={undefined}
+      timeline={fakeTimeline}
+    >
       <GridTile
         vm={new GridTileViewModel(constant(vm))}
         onOpenProfile={() => {}}
@@ -109,7 +105,12 @@ test("GridTile displays local media", async () => {
   );
 
   const { container } = render(
-    <ReactionsSenderProvider vm={callVm} rtcSession={fakeRtcSession}>
+    <ReactionsSenderProvider
+      vm={callVm}
+      ownIdentifier="@local:example.org:LOCALDEV"
+      ownMembershipEventId={undefined}
+      timeline={fakeTimeline}
+    >
       <GridTile
         vm={new GridTileViewModel(constant(vm))}
         onOpenProfile={() => {}}
@@ -142,7 +143,12 @@ test("GridTile displays ringing media", async () => {
   });
 
   const { container } = render(
-    <ReactionsSenderProvider vm={callVm} rtcSession={fakeRtcSession}>
+    <ReactionsSenderProvider
+      vm={callVm}
+      ownIdentifier="@local:example.org:LOCALDEV"
+      ownMembershipEventId={undefined}
+      timeline={fakeTimeline}
+    >
       <GridTile
         vm={new GridTileViewModel(constant(vm))}
         onOpenProfile={() => {}}

@@ -67,6 +67,14 @@ export interface SlotPolicy {
 /** How long to wait for the seed, and for our own slot event to echo back. */
 const SLOT_WAIT_MS = 15_000;
 
+/** Media keys sent and received over a participation; see {@link CallParticipation.mediaKeyStatistics}. */
+export interface MediaKeyStatistics {
+  sent: number;
+  received: number;
+  /** Sum of the ages of the received keys on arrival, in ms. */
+  receivedTotalAge: number;
+}
+
 export interface CallParticipationOptions {
   /**
    * One manager per `(room, slot)`; Element Call has one slot per room.
@@ -203,6 +211,7 @@ export class CallParticipation {
     this.manager.setKeyMapListener({
       onKeyMapChange: (keyMap, change) => {
         if (this.ended) return;
+        this.countKey(change);
         this.keyMapSubject$.next(keyMap);
         this.keyChangesSubject$.next(change);
       },
@@ -299,6 +308,34 @@ export class CallParticipation {
         throw new Error(`Timed out waiting for ${what}`);
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
+  }
+
+  private readonly keyStatistics: MediaKeyStatistics = {
+    sent: 0,
+    received: 0,
+    receivedTotalAge: 0,
+  };
+
+  private countKey(change: FfiMediaKey): void {
+    if (change.memberId === this.manager.ownMemberId()) {
+      this.keyStatistics.sent++;
+    } else {
+      this.keyStatistics.received++;
+      this.keyStatistics.receivedTotalAge += Math.max(
+        0,
+        Date.now() - Number(change.creationTsMs),
+      );
+    }
+  }
+
+  /**
+   * How many media keys this participation has sent and received so far,
+   * and how old the received ones were on arrival (summed), for the
+   * ended-call analytics. Counted from the crate's key changes: one of ours
+   * per index we rotate to, one of theirs per key that reaches us.
+   */
+  public mediaKeyStatistics(): MediaKeyStatistics {
+    return { ...this.keyStatistics };
   }
 
   /** Leave the session. A no-op when not joined. */

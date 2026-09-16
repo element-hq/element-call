@@ -6,13 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, type FormEventHandler, useCallback, useState } from "react";
-import { type MatrixClient } from "matrix-js-sdk";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@vector-im/compound-web";
 
 import styles from "./CallEndedView.module.css";
 import feedbackStyle from "../input/FeedbackInput.module.css";
-import { useProfile } from "../profile/useProfile";
+import { useOwnProfile } from "../profile/useOwnProfile";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { FieldRow, InputField } from "../input/Input";
@@ -22,7 +21,6 @@ import { LeaveToHomeLink } from "../button/LeaveToHomeLink";
 import { useLeaveToHome } from "../LeaveToHomeContext";
 
 interface Props {
-  client: MatrixClient;
   isPasswordlessUser: boolean;
   hideHeader: boolean;
   confineToRoom: boolean;
@@ -30,7 +28,6 @@ interface Props {
 }
 
 export const CallEndedView: FC<Props> = ({
-  client,
   isPasswordlessUser,
   hideHeader,
   confineToRoom,
@@ -39,7 +36,7 @@ export const CallEndedView: FC<Props> = ({
   const { t } = useTranslation();
   const leaveToHome = useLeaveToHome();
 
-  const { displayName } = useProfile(client);
+  const { displayName } = useOwnProfile();
   const [surveySubmitted, setSurveySubmitted] = useState(false);
   const [starRating, setStarRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);

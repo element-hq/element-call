@@ -53,7 +53,8 @@ import { type ViewModel } from "../state/ViewModel";
 import { useAppBarPrimaryButtonIconKind } from "../AppBar";
 
 interface Props {
-  client: MatrixClient;
+  /** The matrix-js-sdk client, for what the developer settings still read from it. */
+  client?: MatrixClient;
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
   onEnter: () => void;
@@ -258,15 +259,13 @@ export const LobbyView: FC<Props> = ({
           </CallFooter>
         )}
       </div>
-      {client && (
-        <SettingsModal
-          client={client}
-          open={settingsModalOpen}
-          onDismiss={closeSettings}
-          tab={settingsTab}
-          onTabChange={setSettingsTab}
-        />
-      )}
+      <SettingsModal
+        client={client}
+        open={settingsModalOpen}
+        onDismiss={closeSettings}
+        tab={settingsTab}
+        onTabChange={setSettingsTab}
+      />
     </>
   );
 };

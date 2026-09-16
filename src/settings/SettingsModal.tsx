@@ -54,7 +54,8 @@ interface Props {
   onDismiss: () => void;
   tab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
-  client: MatrixClient;
+  /** The matrix-js-sdk client, for what the developer tab still reads from it. */
+  client?: MatrixClient;
   roomId?: string;
   livekitRooms?: {
     room: LivekitRoom;
@@ -211,7 +212,7 @@ export const SettingsModal: FC<Props> = ({
   const profileTab: Tab<SettingsTab> = {
     key: "profile",
     name: t("common.profile"),
-    content: <ProfileSettingsTab client={client} />,
+    content: <ProfileSettingsTab />,
   };
 
   const feedbackTab: Tab<SettingsTab> = {

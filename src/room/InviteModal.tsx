@@ -13,7 +13,6 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { type Room } from "matrix-js-sdk";
 import { Button, Text } from "@vector-im/compound-web";
 import {
   LinkIcon,
@@ -25,22 +24,29 @@ import { Modal } from "../Modal";
 import { getAbsoluteRoomUrl } from "../utils/matrix";
 import styles from "./InviteModal.module.css";
 import { Toast } from "../Toast";
-import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { QrCode } from "../QrCode";
 
 interface Props {
-  room: Room;
+  roomId: string;
+  roomName: string;
+  e2eeSystem: EncryptionSystem;
   open: boolean;
   onDismiss: () => void;
 }
 
-export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
+export const InviteModal: FC<Props> = ({
+  roomId,
+  roomName,
+  e2eeSystem,
+  open,
+  onDismiss,
+}) => {
   const { t } = useTranslation();
-  const e2eeSystem = useRoomEncryptionSystem(room.roomId);
 
   const url = useMemo(
-    () => getAbsoluteRoomUrl(room.roomId, e2eeSystem, room.name),
-    [e2eeSystem, room.name, room.roomId],
+    () => getAbsoluteRoomUrl(roomId, e2eeSystem, roomName),
+    [e2eeSystem, roomName, roomId],
   );
   const [toastOpen, setToastOpen] = useState(false);
   const onToastDismiss = useCallback(() => setToastOpen(false), [setToastOpen]);

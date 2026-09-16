@@ -24,7 +24,11 @@ export interface ParticipationRoster {
   ownMemberId$: Behavior<string | null>;
 }
 
-/** The crate's membership as a tile sees it. */
+/**
+ * The crate's membership as a tile sees it. `deviceId` falls back to the
+ * member id so that `${userId}:${deviceId}` is the member's media id
+ * (`memberMediaId` in `src/state/rtc/mediaId.ts`).
+ */
 export function callMemberOf(membership: FfiMembership): CallMember {
   const { member } = membership;
   return {

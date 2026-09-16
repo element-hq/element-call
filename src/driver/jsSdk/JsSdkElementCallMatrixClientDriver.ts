@@ -64,13 +64,8 @@ export class JsSdkElementCallMatrixClientDriver implements ElementCallMatrixClie
   private capabilities: Promise<DriverCapabilities> | null = null;
 
   public constructor(
-    /**
-     * The client and room this driver wraps. Public only for the React tree
-     * that still runs on matrix-js-sdk directly (`CallView` and below); once
-     * that tree reads the drivers (plan slice S4) these become private.
-     */
-    public readonly client: MatrixClient,
-    public readonly room: Room,
+    private readonly client: MatrixClient,
+    private readonly room: Room,
     options: JsSdkElementCallMatrixClientDriverOptions = {},
   ) {
     const userId = client.getUserId();
@@ -271,7 +266,11 @@ export class JsSdkElementCallMatrixClientDriver implements ElementCallMatrixClie
     await this.client.setDisplayName(name);
   }
 
-  public async setAvatar(file: Blob): Promise<void> {
+  public async setAvatar(file: Blob | null): Promise<void> {
+    if (file === null) {
+      await this.client.setAvatarUrl("");
+      return;
+    }
     const { content_uri: uri } = await this.client.uploadContent(file);
     await this.client.setAvatarUrl(uri);
   }

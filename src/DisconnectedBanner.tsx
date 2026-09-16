@@ -11,6 +11,8 @@ import { useTranslation } from "react-i18next";
 
 import styles from "./DisconnectedBanner.module.css";
 import { type ValidClientState, useClientState } from "./ClientContext";
+import { useOptionalMatrixDrivers } from "./driver/MatrixDriverContext";
+import { useHomeserverConnected } from "./driver/useHomeserverConnected";
 
 interface Props extends HTMLAttributes<HTMLElement> {
   children?: ReactNode;
@@ -23,10 +25,16 @@ export const DisconnectedBanner: FC<Props> = ({
   ...rest
 }) => {
   const { t } = useTranslation();
+  // Under a call the host's RTC driver says whether the homeserver is
+  // reachable; the shell outside a call only has the client's sync state.
+  const drivers = useOptionalMatrixDrivers();
+  const homeserverConnected = useHomeserverConnected(drivers);
   const clientState = useClientState();
   let shouldShowBanner = false;
 
-  if (clientState?.state === "valid") {
+  if (drivers !== null) {
+    shouldShowBanner = !homeserverConnected;
+  } else if (clientState?.state === "valid") {
     const validClientState = clientState as ValidClientState;
     shouldShowBanner = validClientState.disconnected;
   }

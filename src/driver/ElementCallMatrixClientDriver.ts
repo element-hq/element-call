@@ -125,7 +125,8 @@ export interface ProfileDriver {
   getOwnProfile(): OwnProfile;
   subscribeOwnProfile(listener: (profile: OwnProfile) => void): Unsubscribe;
   setDisplayName?(name: string): Promise<void>;
-  setAvatar?(file: Blob): Promise<void>;
+  /** Sets the avatar to `file`, or removes it with `null`. */
+  setAvatar?(file: Blob | null): Promise<void>;
 }
 
 export interface MediaDriver {

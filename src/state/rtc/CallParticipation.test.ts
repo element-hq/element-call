@@ -306,6 +306,11 @@ describe("CallParticipation", () => {
       callParticipation.keyMap$.value.some((k) => k.memberId === peer.memberId),
     );
     expect(changes.some((k) => k.memberId === peer.memberId)).toBe(true);
+    // Counted for the ended-call analytics: theirs received, ours sent.
+    expect(callParticipation.mediaKeyStatistics()).toMatchObject({
+      received: 1,
+      sent: changes.filter((k) => k.memberId !== peer.memberId).length,
+    });
     driver.peerLeaves(peer);
     // the crate keeps a LeftWithKeys entry; the behavior does not
     await waitFor(

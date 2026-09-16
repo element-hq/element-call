@@ -5,10 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, onTestFinished, vi } from "vitest";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import { initMatrixRtcSdkForTests } from "../utils/test-matrix-rtc";
+import { installMatrixRtcLogSink, matrixRtcLogSink } from "./logSink";
 import {
+  FfiLogLevel,
+  setLogSink,
   FfiElementCallCompat,
   FfiMatrixDriver,
   FfiParticipationManager,
@@ -79,6 +83,62 @@ describe("matrix-rtc-sdk", () => {
     expect(manager.memberships()).toEqual([]);
     expect(manager.ownTransportIdentity()).toBeUndefined();
     manager.uniffiDestroy();
+  });
+
+  it("routes the crate's log lines to the installed sink", () => {
+    const lines: { level: FfiLogLevel; target: string; message: string }[] = [];
+    setLogSink(
+      {
+        log: (level, target, message) => {
+          lines.push({ level, target, message });
+        },
+      },
+      FfiLogLevel.Debug,
+    );
+    // Put the default sink back for the other suites.
+    onTestFinished(() => installMatrixRtcLogSink());
+
+    const driver = new FfiMatrixDriver(new InertDriver());
+    const manager = new FfiParticipationManager(
+      ROOM_ID,
+      "m.call#ROOM",
+      "@me:example.org",
+      "MYDEV",
+      driver,
+      {
+        compat: FfiElementCallCompat.Off,
+        manageMediaKeys: false,
+        requireCrossSignedSender: false,
+        useKeyDelayMs: 1000n,
+      },
+    );
+    manager.uniffiDestroy();
+
+    const created = lines.find((l) => l.message.includes("session created"));
+    expect(created).toBeDefined();
+    expect(created?.level).toBe(FfiLogLevel.Info);
+    expect(created?.target).toMatch(/^matrix_rtc::/);
+  });
+
+  it("maps the crate's levels onto a matrix-js-sdk logger", () => {
+    const target = {
+      error: vi.fn(),
+      warn: vi.fn(),
+      info: vi.fn(),
+      debug: vi.fn(),
+      trace: vi.fn(),
+    };
+    const sink = matrixRtcLogSink(target as unknown as Logger);
+    sink.log(FfiLogLevel.Error, "matrix_rtc::a", "boom");
+    sink.log(FfiLogLevel.Warn, "matrix_rtc::a", "hm");
+    sink.log(FfiLogLevel.Info, "matrix_rtc::a", "fyi");
+    sink.log(FfiLogLevel.Debug, "matrix_rtc::a", "dbg");
+    sink.log(FfiLogLevel.Trace, "matrix_rtc::a", "trc");
+    expect(target.error).toHaveBeenCalledWith("[matrix_rtc::a] boom");
+    expect(target.warn).toHaveBeenCalledWith("[matrix_rtc::a] hm");
+    expect(target.info).toHaveBeenCalledWith("[matrix_rtc::a] fyi");
+    expect(target.debug).toHaveBeenCalledWith("[matrix_rtc::a] dbg");
+    expect(target.trace).toHaveBeenCalledWith("[matrix_rtc::a] trc");
   });
 });
 

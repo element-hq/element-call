@@ -44,9 +44,17 @@ jobs:
           flags: unittests
           fail_ci_if_error: true
   playwright:
-    name: Run end-to-end tests
+    name: Run end-to-end tests (${{ matrix.call_implementation }})
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both MatrixRTC implementations, until matrix-rtc becomes the
+        # default and matrix-js-sdk goes (oxidation plan §5.15). The
+        # matrix-rtc run does not block until it has passed once.
+        call_implementation: [matrix-js-sdk, matrix-rtc]
+    continue-on-error: ${{ matrix.call_implementation == 'matrix-rtc' }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -80,11 +88,12 @@ jobs:
       - name: Run Playwright tests
         env:
           USE_DOCKER: 1
+          CALL_VIEW_MODEL_IMPLEMENTATION: ${{ matrix.call_implementation }}
         run: pnpm exec playwright test
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ !cancelled() }}
         with:
-          name: html-report
+          name: html-report-${{ matrix.call_implementation }}
           path: playwright-report
           if-no-files-found: error
           retention-days: 4

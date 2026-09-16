@@ -16,6 +16,7 @@ import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
 
 import { useClientState } from "./ClientContext";
+import { useOptionalMatrixDrivers } from "./driver/MatrixDriverContext";
 import { useHostBridge } from "./HostBridge";
 
 export enum Size {
@@ -76,6 +77,9 @@ export const Avatar: FC<Props> = ({
 }) => {
   const clientState = useClientState();
   const hostBridge = useHostBridge();
+  // Under a call the host's client driver resolves media; the shell outside
+  // a call still has only the client.
+  const drivers = useOptionalMatrixDrivers();
 
   const sizePx = useMemo(
     () =>
@@ -95,16 +99,30 @@ export const Avatar: FC<Props> = ({
       return;
     }
 
-    let blob: Promise<Blob>;
+    let url: Promise<string | null>;
 
     if (hostBridge.downloadMedia) {
-      blob = hostBridge.downloadMedia(src);
+      url = hostBridge
+        .downloadMedia(src)
+        .then((blob) => URL.createObjectURL(blob));
+    } else if (drivers !== null) {
+      const px = Math.floor(sizePx * window.devicePixelRatio);
+      url = drivers.clientDriver.thumbnailUrl(
+        src,
+        px,
+        px,
+        sizePx <= 96 ? "crop" : "scale",
+      );
     } else if (
       clientState?.state === "valid" &&
       clientState.authenticated?.client &&
       sizePx
     ) {
-      blob = getAvatarFromServer(clientState.authenticated.client, src, sizePx);
+      url = getAvatarFromServer(
+        clientState.authenticated.client,
+        src,
+        sizePx,
+      ).then((blob) => URL.createObjectURL(blob));
     } else {
       setAvatarUrl(undefined);
       return;
@@ -112,13 +130,14 @@ export const Avatar: FC<Props> = ({
 
     let objectUrl: string | undefined;
     let stale = false;
-    blob
-      .then((blob) => {
-        if (stale) {
+    url
+      .then((resolved) => {
+        if (stale || resolved === null) {
           return;
         }
-        objectUrl = URL.createObjectURL(blob);
-        setAvatarUrl(objectUrl);
+        // Only what we created (or the driver created for us) is ours to revoke.
+        if (resolved.startsWith("blob:")) objectUrl = resolved;
+        setAvatarUrl(resolved);
       })
       .catch((ex) => {
         if (stale) {
@@ -133,7 +152,7 @@ export const Avatar: FC<Props> = ({
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [clientState, hostBridge, src, sizePx]);
+  }, [clientState, hostBridge, drivers, src, sizePx]);
 
   return (
     <CompoundAvatar

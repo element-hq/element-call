@@ -175,6 +175,7 @@ membership, roster, encryption, impairments} | Leaving`.
 | C11 | No way to change `application["m.call.intent"]` while joined; Element Call flips it between `audio` and `video` when the camera is toggled (`updateCallIntent`).                                                                                                                                                                                                                                                                                        | `update_application(intent)` on the own-membership manager, facade and FFI: while connected the membership is re-published at once on the refresh path (a failure retries like a refresh); during a join the join event carries it; refused with `NotJoined` otherwise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | C12 | Homeserver connectivity lived only in Element Call's driver; the crate could not tell a dead homeserver from a quiet one, and a participation's status said nothing about it.                                                                                                                                                                                                                                                                           | **Done.** `ConnectivityDriver` (`is_homeserver_connected`, `subscribe_connectivity`) joins the `MatrixDriver` sum; the FFI adds `ConnectivitySink`, the two callback methods and `FfiParticipationManager.is_homeserver_connected()`; the facade pump consumes the stream and reports `Impairment::HomeserverUnreachable { since_ts }` (Critical, sorted first) in every non-disconnected status until the driver reports the homeserver back. The web-test-app mock and js-sdk driver implement it. A matrix-rust-sdk adapter implements the same two methods later.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | C13 | `session()` moved (seed done, slot opened by somebody else) without any listener firing, so a host's `session$` stayed stale until a membership or status change happened to refresh it. Found by the real-backend check.                                                                                                                                                                                                                               | **Done.** `SessionListener` / `set_session_listener` on the FFI manager (`on_session_change` on the facade), fired publish-on-change from `refresh_outputs`; `CallParticipation.session$` is fed from it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| C14 | The crate logs through the `log` facade (104 call sites) but installed no logger, so in wasm every line was dropped: seeding, joins, delegation fallbacks and key rotation left no trace in a rageshake.                                                                                                                                                                                                                                                | **Done (2026-09-16).** `LogSink` foreign trait (`log(level, target, message)`), `FfiLogLevel`, and `set_log_sink(sink, max_level)`, which installs a `log::Log` forwarding to the sink (a host that already installed a Rust logger keeps it). Element Call installs `matrixRtcLogSink` under `[matrix-rtc]` on the js-sdk root logger from `initMatrixRtcSdk()` at debug; the web-test-app installs a console sink (warn in tests).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 No crate work is deferred: `update_application` is C11.
 
@@ -512,8 +513,11 @@ RateLimited`, 403 → `Rejected`, 404/`M_UNRECOGNIZED` → `Unsupported`.
    `assetsInlineLimit`; `?url&no-inline` emits a file. App builds use `?url`;
    the component build uses `?url&no-inline` plus an `exports` entry for
    `./dist/assets/*`, and `initializeElementCall(config, { matrixRtcWasm })`
-   lets a host point elsewhere. vitest reads the file from disk; wasm boot is
-   **lazy** (only suites that need it call `initMatrixRtcSdk()`), never in
+   lets a host point elsewhere. Wasm boot is **lazy** everywhere: in the app
+   `useCallParticipation` awaits `initMatrixRtcSdk()` before constructing
+   the participation (so the js-sdk path never fetches it, §5.15), not the
+   `Initializer`; vitest reads the file from disk and only suites that need
+   it call `initMatrixRtcSdk()`, never in
    `src/vitest.setup.ts`; Storybook boots it in `.storybook/preview.tsx`
    `beforeAll`. Suites using `vi.useFakeTimers` never share a file with
    real-wasm tests (pumps sleep on `setTimeout`).
@@ -557,6 +561,24 @@ RateLimited`, 403 → `Rejected`, 404/`M_UNRECOGNIZED` → `Unsupported`.
     redactions), as they are with the js-sdk MatrixRTC code today. The driver
     decrypts them on the way in; the sticky marker (`msc4354_sticky`) stays in
     the clear. To cross-check against Element X before relying on it.
+15. **The two view models stay switchable for one release.** A developer
+    setting, `callViewModelImplementation` (`"matrix-js-sdk"` |
+    `"matrix-rtc"`, `src/settings/settings.ts`, next to `matrixRTCMode`),
+    picks between `createJsClientCallViewModel$` and the driver-based
+    `createCallViewModel$` in the same build. Like `matrixRTCMode` it is
+    shown in the Developer Settings tab, sampled when the call is joined
+    (switching mid-call needs a rejoin), and a deployment can pin it through
+    `config.json` (`call_view_model_implementation`), which overrides the
+    user's choice and greys the control out. The default is
+    `"matrix-js-sdk"` when the setting lands (S4a) and flips to
+    `"matrix-rtc"` once the S5 gate is green; S6 removes the setting together
+    with the js-sdk path. The point is that a broken call can be compared
+    against the old path in the same session, and that Playwright can run
+    both paths from one build. Everything the js-sdk path needs (the client,
+    the `MatrixRTCSession`, `ReactionsReader` over the session) therefore
+    stays reachable from `CallView` until S6, and the `CallParticipation` is
+    created only when the crate path is selected, so neither path pays for
+    the other.
 
 ---
 
@@ -663,19 +685,116 @@ participation, clientDriver, …)` sits next to it; both build a
   LiveKit: join → connection → own tile → peer → leave; transport-missing →
   `fatalError$`), plus one file per module.
 
-### S4 — React tree, two slices ☐
+### S4 — React tree, two slices ☑ (2026-09-16)
 
+- **S4a-0, the switch (§5.15) ☑:** `CallViewModelImplementation` enum,
+  `callViewModelImplementation` setting (`src/settings/settings.ts`),
+  `call_view_model_implementation` pin (`ConfigOptions.ts`, validated in
+  `Config.ts`), the radio group in `DeveloperSettingsTab.tsx`, the
+  implementation logged at join and sent as `call_view_model_implementation`
+  in rageshakes, `effectiveCallViewModelImplementation()` in
+  `src/state/rtc/implementation.ts`. `CallView` samples it once per mount;
+  with `matrix-rtc` and no drivers it warns and lets matrix-js-sdk carry the
+  call. Still open from this item: the Playwright helper and the second CI
+  run.
+- **S4a done so far:** `MatrixDriverProvider` / `useMatrixDrivers()`
+  (`src/driver/MatrixDriverContext.tsx`), provided by the component from its
+  props and by `RoomPage` through `useJsSdkDrivers(client, room)`;
+  `useCallParticipation(drivers, config)` owned by `CallView`, created only
+  when the crate path is selected; `ActiveCall` takes `participation` and
+  builds either view model; the lobby's member count, the big-call auto-mute
+  and the error boundary's "were we joined" read from whichever side carries
+  the call; `window.matrixRtc = { participation }` next to `window.rtcSession`.
+- (The original S4a-0 description follows for reference.) `callViewModelImplementation` setting and
+  `config.json` pin (`ConfigOptions.ts`, validated at load like
+  `matrix_rtc_mode`); a radio group in `DeveloperSettingsTab.tsx` beside the
+  MatrixRTC mode; `ActiveCall` reads the sampled value and calls either
+  factory — for `"matrix-rtc"` it takes the drivers from the
+  `MatrixDriverProvider` and the `CallParticipation` from `CallView`, for
+  `"matrix-js-sdk"` it keeps `rtcSession`/`matrixRoom` as today. The chosen
+  implementation is logged at join and added to the rageshake fields so a
+  report says which path it came from. Playwright gets a helper that sets
+  the setting (local storage) before the call so every call spec can run
+  under both values; CI runs the suite twice until the default flips.
+  Lands first in S4a, before anything else in the tree moves, so that every
+  later S4 change is verifiable against the old path.
 - **S4a** views/hooks/settings on the driver: `CallView.tsx` (owns
-  `CallParticipation`), `InCallView.tsx`, `LobbyView.tsx`, `CallEndedView.tsx`,
+  `CallParticipation` when the crate path is selected), `InCallView.tsx`, `LobbyView.tsx`, `CallEndedView.tsx`,
   `VideoPreview.tsx`, `useRoomInfo()` (replaces `useRoomName/Avatar/JoinRule/State`),
   `InviteModal.tsx`, `Avatar.tsx`, `useOwnProfile.ts`, `ProfileSettingsTab.tsx`,
   `SettingsModal.tsx`, `DeveloperSettingsTab.tsx`, `submit-rageshake.ts`,
   `DisconnectedBanner.tsx`, `analytics/PosthogEvents.ts`, `controls.ts`, and a
   first `CallView.stories.tsx` (lobby, in call, ended) driven by
   `MockMatrixDriver`.
-- **S4b** reactions and notifications: `useReactionsSender.tsx`,
-  `ReactionsReader` keyed by `memberId`, `CallNotificationLifecycle` sending
-  through the driver; tests incl. a membership re-send mid-call.
+- **S4b ☑ (2026-09-16):** `ReactionsSenderProvider` takes `ownIdentifier`,
+  `ownMembershipEventId` and a `ReactionsTimeline` (`jsSdkReactionsTimeline`
+  over a client, or the client driver); `ParticipationReactionsReader`
+  (`src/reactions/`) reads hands and reactions from the participation and
+  the timeline driver, keyed by the member's media id
+  (`memberMediaId`, `src/state/rtc/mediaId.ts`), and re-resolves a hand on a
+  re-sent membership instead of dropping it blindly. Notifications went
+  through the driver in S3d. Tests: `ParticipationReactionsReader.test.ts`,
+  `useCallParticipation.test.tsx`, three `CallView.test.tsx` cases for the
+  switch.
+- **S4a views on the drivers (2026-09-16):** `CallView` now requires the
+  drivers (`useMatrixDrivers()`; both hosts provide them) and reads the
+  room through `useRoomInfo()` (`src/room/useRoomInfo.ts`; `useRoomAvatar`,
+  `useJoinRule`, `useRoomState` deleted, `useRoomName` stays for `RoomPage`),
+  our own profile through `useOwnProfile()` (`src/profile/useOwnProfile.ts`)
+  and the encryption system through `useEncryptionSystemFor(roomId,
+roomInfo.encrypted)` (`useRoomEncryptionSystem` keeps the client for the
+  home page). `MatrixInfo` is built from those. `InviteModal` takes
+  `roomId`/`roomName`/`e2eeSystem`; `CallEndedView` lost its `client` prop;
+  `Avatar` resolves thumbnails through `clientDriver.thumbnailUrl` when
+  drivers are provided (host `downloadMedia` first, client fallback for the
+  shell); rageshakes carry the driver's `getDiagnostics()` as `driver_*`
+  fields and the crate's `matrix_rtc_snapshot`.
+- **The component is client-free (2026-09-16):** `CallView`'s `client` and
+  `rtcSession` are optional; without them the crate carries the call
+  whatever the setting says (`useMatrixRtc = setting || no session`), and
+  every js-sdk-only piece (the `MembershipManagerError` listener, the room
+  sanity check, `ReactionsReader`, `mediaKeyStatisticsOf`) is skipped.
+  `ActiveCall`/`InCallView` take `roomId` instead of `matrixRoom`, and
+  `client`/`rtcSession` optionally. `ProfileSettingsTab` edits through the
+  client driver's optional `setDisplayName`/`setAvatar(file | null)` and
+  shows read-only fields without them; `DeveloperSettingsTab` reads the
+  sticky probe from `getCapabilities()`, the crypto version from
+  `getDiagnostics()` and validates a custom LiveKit URL through
+  `rtcDriver.getLivekitToken` when there is no client; the rageshake request
+  event goes through the client driver's timeline; reactions are supported
+  unless a client state forbids them. `ElementCall` renders no
+  `ClientProvider` and no shim — it hands its two drivers down and nothing
+  below asks for a client; `initializeElementCall(config, { matrixRtcWasm })`
+  can preload the wasm. `PosthogEvents.eventCallEnded.track` takes
+  `MediaKeyStatistics` (from the session on the js-sdk path, zero on the
+  crate path until the crate counts). `useTypedEventEmitter` and the js-sdk
+  client driver's public `client`/`room` are gone. **Consequence:** the
+  component and its dev harness (`ElementCallClientBased`) now run every
+  call on the crate.
+- **Banner on the driver (2026-09-16):** `useHomeserverConnected(drivers,
+graceMs)` (`src/driver/`) follows `rtcDriver.isHomeserverConnected()` /
+  `subscribeConnectivity` and reports a lapse only after
+  `sync_disconnect_grace_period_ms`, since the driver reports every sync
+  hiccup where the client state waited for a `ConnectionError`;
+  `DisconnectedBanner` uses it whenever drivers are provided and falls back
+  to the client state for the shell. The mock RTC driver keeps several
+  connectivity sinks (the crate's and the UI's).
+- **S4 closed (2026-09-16):** `CallView.stories.tsx` (Lobby with a peer,
+  NoTransport as the error path, Ended) over the mock drivers, no client;
+  `.storybook/preview.tsx` initialises the config; the Storybook vitest
+  project passes. The Playwright switch is `CALL_VIEW_MODEL_IMPLEMENTATION`
+  read by `playwright.config.ts` into `use.storageState` (the developer
+  setting in local storage for every context), and the CI Playwright job is
+  a matrix over both implementations (`matrix-rtc` non-blocking until it
+  has passed once). `CallParticipation.mediaKeyStatistics()` counts sent
+  and received keys and their age from the crate's key changes for the
+  ended-call event. Found on the way: `CallView` rendered `ActiveCall`
+  before the participation existed (wasm loads on first use) — it now waits;
+  and `onLeft` had gained the member count as a dependency, which rebuilt
+  the view model on every roster change on both paths — read through
+  `useLatest` now. `create-call.spec.ts` passes in Chromium on both
+  implementations with two view model creations each (StrictMode): the
+  crate path's first full call in a browser.
 
 ### S5 — hosts ☐ (component props done 2026-09-15)
 
@@ -708,6 +827,9 @@ participation, clientDriver, …)` sits next to it; both build a
   `src/IndexedDBWorker.ts`, `src/room/KnockLobbyView.tsx`, `src/settings/rageshake.ts`)
   banning `matrix-js-sdk` except `matrix-js-sdk/lib/logger`.
 - `ServiceInterruptionsViewModel` fed from `status$.impairments`.
+- `callViewModelImplementation` setting, its `config.json` pin and the
+  Developer Settings control removed with `createJsClientCallViewModel$`
+  (§5.15); Playwright runs the suite once again.
 - `docs/agents/architecture.md`, `docs/matrix_rtc_modes.md` updated;
   `src/@types/matrix-js-sdk.d.ts` removed if nothing merges into js-sdk types.
 
@@ -807,3 +929,35 @@ props moved to the two drivers with `ElementCallClientBased` on top. Gates:
 participation (S4b), the `?url&no-inline` wasm asset for the component build
 (the wasm is loaded lazily and inlined into the component bundle today), and
 the S6 deletions.
+
+**S4 (2026-09-16):** the implementation switch (§5.15) is in with its
+config pin, developer control and rageshake field; `CallView` owns a
+`CallParticipation` when the crate path is selected and `ActiveCall` builds
+the matching view model; the reactions reader and sender have participation
+and driver counterparts. Both paths run in the same build. Gates: `pnpm
+lint`, `format:check`, `i18n:check`, `test:unit` (815), `build:component`
+green. Not verified: a real call on the crate path through the UI (the
+`pnpm backend` check covers the view model's Matrix side; the browser run is
+the S5 gate).
+
+**Logging (2026-09-16):** C14 — the crate's log lines reach the host through
+a `LogSink`; Element Call routes them to its rageshake logger under
+`[matrix-rtc]`, the web-test-app to the console. Verified by a unit test that
+sees the crate's "session created" line through the sink.
+
+**S4 views (2026-09-16):** room info, own profile, encryption system,
+avatars, the invite and ended views and the rageshake fields read the
+drivers; `CallView` requires drivers. Three room hooks deleted. Gates:
+`pnpm lint`, `format:check`, `test:unit` (819), `build:component` green.
+
+**Client-free component (2026-09-16):** `CallView` and everything under it
+run without a matrix-js-sdk client on the crate path; the component passes
+only its drivers. Gates: `pnpm lint`, `format:check`, `test:unit` (819),
+`build:component` green. Not yet done: a browser run of the component on
+the crate path (the dev harness now is that run).
+
+**S4 done (2026-09-16):** stories, Playwright switch and CI matrix, key
+statistics. `create-call.spec.ts` green on `matrix-js-sdk` and `matrix-rtc`
+in Chromium against the dev server; the rest of the suite under
+`matrix-rtc` is the S5 gate. Gates: `pnpm lint`, `format:check`,
+`test:unit` (822), `test:storybook` (28), `build:component` green.
