@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
-import { FfiLogLevel, type LogSink, setLogSink } from "./generated/matrix_rtc";
+import { FfiLogLevel, type LogSink, setLogSink } from "@element-hq/matrix-rtc";
 
 /**
  * A {@link LogSink} that writes the crate's lines to a matrix-js-sdk logger,

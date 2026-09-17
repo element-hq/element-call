@@ -29,6 +29,9 @@ Instead, create a file named `.links.cjs` in the Element Call project directory 
 module.exports = {
   "matrix-js-sdk": "../your/path/matrix-js-sdk",
   "matrix-widget-api": "../your/path/matrix-widget-api",
+  // The MatrixRTC SDK: run `npm run build` in that directory first
+  "@element-hq/matrix-rtc":
+    "../your/path/matrix-rust-rtc/MatrixSdkArchitectureDraft/web-test-app",
 };
 ```
 

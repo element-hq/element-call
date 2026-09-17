@@ -25,6 +25,9 @@ importers:
       '@codecov/vite-plugin':
         specifier: ^1.3.0
         version: 1.9.1(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))
+      '@element-hq/matrix-rtc':
+        specifier: npm:@billcarsonfr/matrix-rtc@next
+        version: '@billcarsonfr/matrix-rtc@0.1.0-next.7.c5a5a80(matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24929be0e741be6a5d0a7226f1c682e245263b8a)'
       '@fontsource/inconsolata':
         specifier: ^5.1.0
         version: 5.3.0
@@ -127,9 +130,6 @@ importers:
       '@typescript-eslint/utils':
         specifier: ^8.61.0
         version: 8.69.0(eslint@8.57.1(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
-      '@ubjs/core':
-        specifier: 0.31.0-5
-        version: 0.31.0-5
       '@use-gesture/react':
         specifier: ^10.2.11
         version: 10.3.1(react@19.2.8)
@@ -411,6 +411,13 @@ packages:
   '@bcoe/v8-coverage@1.0.2':
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
+
+  '@billcarsonfr/matrix-rtc@0.1.0-next.7.c5a5a80':
+    resolution: {integrity: sha512-6Ti4jQZahHPI2Y9F/6dUplSEvoDdWP0OTLJXFUe708YFa13nRwW3t7QoRRbsSB5O0eWQHwu9hHVJQHEjpx4EwA==, tarball: https://npm.pkg.github.com/download/@billcarsonfr/matrix-rtc/0.1.0-next.7.c5a5a80/55919d699c12752b2316ad6d97a00c4b78088057}
+    version: 0.1.0-next.7.c5a5a80
+    engines: {node: '>=20'}
+    peerDependencies:
+      matrix-js-sdk: '>=42'
 
   '@blazediff/core@1.9.1':
     resolution: {integrity: sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==}
@@ -6364,6 +6371,11 @@ snapshots:
       '@babel/helper-validator-identifier': 7.29.7
 
   '@bcoe/v8-coverage@1.0.2': {}
+
+  '@billcarsonfr/matrix-rtc@0.1.0-next.7.c5a5a80(matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24929be0e741be6a5d0a7226f1c682e245263b8a)':
+    dependencies:
+      '@ubjs/core': 0.31.0-5
+      matrix-js-sdk: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24929be0e741be6a5d0a7226f1c682e245263b8a
 
   '@blazediff/core@1.9.1': {}
 

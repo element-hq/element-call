@@ -7,17 +7,18 @@ Please see LICENSE in the repository root for full details.
 
 /**
  * The MatrixRTC SDK: the Rust `matrix-rtc` crate through its uniffi web
- * bindings. Everything Element Call needs to *participate* in a MatrixRTC
- * session — the session projection, our own membership with its keep-alive,
- * transport tokens and the media key exchange — lives in the crate; this
- * module loads it and re-exports the surface Element Call uses.
+ * bindings, shipped as the `@element-hq/matrix-rtc` npm package. Everything
+ * Element Call needs to *participate* in a MatrixRTC session — the session
+ * projection, our own membership with its keep-alive, transport tokens and
+ * the media key exchange — lives in the crate; this module loads it and
+ * re-exports the surface Element Call uses.
  *
- * The bindings under `generated/` are vendored by
- * `scripts/sync-matrix-rtc-sdk.sh` and never edited by hand.
+ * Nothing else imports the package directly: the boot below is the one place
+ * the wasm is loaded and the crate's logging is wired up, so a caller cannot
+ * end up with a silent or half-initialised SDK.
  */
 
-import initAsync, { type InitInput } from "./generated/wasm-bindgen/index.js";
-import bindings from "./generated/matrix_rtc";
+import { initAsync, type WasmSource } from "@element-hq/matrix-rtc";
 import { installMatrixRtcLogSink } from "./logSink";
 
 export {
@@ -38,7 +39,7 @@ export {
   FfiTransportIntent,
   RtcError,
   computeSessionsFromEvents,
-} from "./generated/matrix_rtc";
+} from "@element-hq/matrix-rtc";
 export type {
   FfiConnectionData,
   FfiConnectionWithMembers,
@@ -62,14 +63,14 @@ export type {
   RoomEventSinkLike,
   StateUpdateSinkLike,
   ToDeviceSinkLike,
-} from "./generated/matrix_rtc";
+} from "@element-hq/matrix-rtc";
 
 /**
  * Where to load the wasm from. A URL (or anything `fetch` accepts) in a
  * browser; bytes or a compiled module where there is nothing to fetch from,
  * such as tests.
  */
-export type MatrixRtcWasmSource = InitInput;
+export type MatrixRtcWasmSource = WasmSource;
 
 let loading: Promise<void> | null = null;
 
@@ -77,25 +78,28 @@ let loading: Promise<void> | null = null;
  * Loads and initialises the SDK. Idempotent: the first call decides the
  * source, later calls await the same load.
  *
- * Without a `source`, the wasm is the one bundled next to this module (an
- * asset URL in the app builds). A host that serves the file from somewhere
- * else, or a test runner with no server, passes its own.
+ * Without a `source`, the wasm is the package's own copy as the bundler
+ * placed it (an asset URL in the app builds). A host that serves the file
+ * from somewhere else, or a test runner with no server, passes its own.
  */
 export async function initMatrixRtcSdk(
   source?: MatrixRtcWasmSource,
 ): Promise<void> {
   loading ??= (async (): Promise<void> => {
-    await initAsync({ module_or_path: source ?? (await bundledWasm()) });
-    bindings.initialize();
+    await initAsync(source ?? (await bundledWasm()));
     // The crate is silent until told where to log.
     installMatrixRtcLogSink();
   })();
   await loading;
 }
 
-/** The wasm as the bundler placed it, resolved lazily so nothing is fetched until needed. */
+/**
+ * The wasm as the bundler placed it, resolved lazily so nothing is fetched
+ * until needed. Asked for explicitly, rather than leaving the package to its
+ * `import.meta.url` default, so that the dev server's dependency
+ * pre-bundling, which rewrites module URLs, cannot lose track of it.
+ */
 async function bundledWasm(): Promise<string> {
-  const { default: url } =
-    await import("./generated/wasm-bindgen/index_bg.wasm?url");
+  const { default: url } = await import("@element-hq/matrix-rtc/wasm?url");
   return url;
 }

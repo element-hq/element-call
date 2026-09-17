@@ -59,8 +59,9 @@ files it touches are listed there.
   `src/utils/logger.ts` (S6) so a later swap is one line.
 - Writing a matrix-rust-sdk-backed driver (Element X). The interface is shaped
   so one can be written; none is written here.
-- Publishing the crate as an npm package. Until it exists, the generated
-  bindings are vendored (§5.1).
+- Publishing the crate as an npm package: done upstream (`@element-hq/matrix-rtc`,
+  built and published by `npm-web-bindings.yml` in matrix-rust-rtc; consumed
+  here since 2026-09-16, §5.1).
 - Turning on MSC4153 (cross-signed sender) enforcement. Parity first (§5.8).
 
 ---
@@ -501,13 +502,24 @@ RateLimited`, 403 → `Rejected`, 404/`M_UNRECOGNIZED` → `Unsupported`.
 
 ## 5. Decisions and assumptions
 
-1. **Vendored bindings.** `src/matrix-rtc-sdk/generated/` holds `matrix_rtc.ts`,
-   `matrix_rtc-ffi.ts`, `wasm-bindgen/index.js`, `index_bg.wasm` and a
-   hand-written `wasm-bindgen/index.d.ts` (no `allowJs` in `tsconfig.json`),
-   synced by `scripts/sync-matrix-rtc-sdk.sh` (runs `ubrn build web` in the
-   draft **without** the `runtime-probe` feature, copies). Committed so CI
-   works. `@ubjs/core` becomes a dependency. The wasm is ~6.5 MB unoptimised.
-   **Assumption:** committing the binary is acceptable for the draft phase.
+1. **The SDK is an npm package.** `@element-hq/matrix-rtc` (the draft's
+   `web-test-app/`, built by `npm-web-bindings.yml`: uniffi bindings, the
+   wasm-bindgen glue, a `wasm-opt`'d ~760 KB wasm, `.d.ts`, and `@ubjs/core`
+   as its own dependency) is a devDependency, aliased in `package.json` to
+   `@billcarsonfr/matrix-rtc@next` while it is published from the fork, so
+   the imports already say `@element-hq/matrix-rtc`. It lives on the GitHub
+   Packages registry: `.npmrc` maps the scope, a `read:packages` token goes
+   in `~/.npmrc` (CI: the `MATRIX_RTC_NPM_TOKEN` secret). **The GitHub
+   Packages registry is a stop-gap** for the phase in which the crate's API
+   moves with every push; once the SDK is ready for consumers beyond Element
+   Call it belongs on npmjs.com as `@element-hq/matrix-rtc`, which drops the
+   alias, `.npmrc`, the CI secret and every token requirement
+   (`docs/matrix_rtc_sdk.md`). `src/matrix-rtc-sdk/`
+   keeps only the loader (`initMatrixRtcSdk`: package `initAsync` + our log
+   sink, wasm via `@element-hq/matrix-rtc/wasm?url`) and the curated
+   re-exports. _History:_ until 2026-09-16 the bindings were vendored under
+   `src/matrix-rtc-sdk/generated/` by `scripts/sync-matrix-rtc-sdk.sh`; local
+   crate work now goes through `pnpm links:on` (`docs/linking.md`).
 2. **Wasm loading.** Verified: Vite 8 library mode inlines `?url` and
    `new URL(…, import.meta.url)` assets as base64 regardless of
    `assetsInlineLimit`; `?url&no-inline` emits a file. App builds use `?url`;
@@ -599,12 +611,14 @@ Gate: `cargo test --features uniffi`, `cargo clippy --all-targets --features uni
 
 ### S0b — SDK intake ☑
 
-- `scripts/sync-matrix-rtc-sdk.sh`, `src/matrix-rtc-sdk/generated/**`,
+- ~~`scripts/sync-matrix-rtc-sdk.sh`, `src/matrix-rtc-sdk/generated/**`~~
+  (replaced by the `@element-hq/matrix-rtc` package on 2026-09-16, §5.1),
   `src/matrix-rtc-sdk/index.ts` (loader + curated re-exports),
   `src/matrix-rtc-sdk/index.test.ts` (boot, one join round-trip against the
   TS mock driver).
-- `package.json` (`@ubjs/core`), `knip.ts` (`ignore` for `generated/**`),
-  `.oxlintrc.json` `ignorePatterns`, `.oxfmtrc.json` ignore,
+- `package.json` (~~`@ubjs/core`~~ now `@element-hq/matrix-rtc`; the
+  `generated/**` carve-outs in `knip.ts`, `.oxlintrc.json`, `.oxfmtrc.json`,
+  `vitest.config.ts` and `.gitattributes` went with the vendored files),
   `vite.config.ts` (nothing needed for `?url`; verified `vite-plugin-wasm`
   ignores it), `tsconfig.json` untouched thanks to the `.d.ts`.
 - Gate: `pnpm lint && pnpm format:check && pnpm test:unit`.
