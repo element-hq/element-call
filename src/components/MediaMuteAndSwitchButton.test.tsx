@@ -7,7 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, test, vi } from "vitest";
 import { axe } from "vitest-axe";
-import { act, render, screen, type RenderResult } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  within,
+  type RenderResult,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type JSX, useState, type ReactNode } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -611,6 +617,46 @@ describe("MediaMuteAndSwitchButton", () => {
     // Shown rather than hidden, so the menu keeps its shape, but not choosable.
     const only = screen.getByRole("menuitemradio", { name: "Microphone 1" });
     expect(only).toHaveAttribute("aria-disabled", "true");
+  });
+
+  test("shows a default speaker where the platform lists none", async () => {
+    const user = userEvent.setup();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic1"
+        onSelect={vi.fn()}
+        // Safari enumerates no output devices at all, and offers no way to
+        // choose one.
+        outputOptions={[]}
+        selectedOutputOption={undefined}
+        onSelectOutput={undefined}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Microphone" }));
+
+    // A heading with nothing under it says the feature is broken. Audio is
+    // playing somewhere, so the section names that somewhere and disables it.
+    const speakers = screen
+      .getAllByRole("group")
+      .find((group) => group.getAttribute("aria-label") === "Speaker")!;
+    const entries = within(speakers).getAllByRole("menuitemradio");
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toHaveAccessibleName("Default");
+    expect(entries[0]).toHaveAttribute("aria-disabled", "true");
+    // And marked as the selection: it is where audio is going, so an unchecked
+    // lone entry would read as nothing being chosen at all.
+    expect(entries[0]).toHaveAttribute("aria-checked", "true");
+    expect(
+      within(entries[0]).getByRole("radio", { hidden: true }),
+    ).toBeChecked();
   });
 
   test("shows the speaker section disabled when output selection is unsupported", async () => {

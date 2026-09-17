@@ -197,3 +197,34 @@ export const OnlyOneDevice: Story = {
     await expect(only).toHaveAttribute("aria-disabled", "true");
   },
 };
+
+/**
+ * A platform that enumerates no output devices and offers no way to choose one
+ * — Safari. The section still names where audio is going, disabled, rather than
+ * leaving a heading with nothing under it.
+ */
+export const OutputNotEnumerated: Story = {
+  args: {
+    ...Default.args,
+    title: "Microphone",
+    iconsAndLabels: "audio",
+    enabled: true,
+    options: [
+      { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+      { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+    ],
+    selectedOption: "mic1",
+    outputOptions: [],
+    selectedOutputOption: undefined,
+    onSelectOutput: undefined,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+
+    const speakers = await within(document.body).findByRole("menuitemradio", {
+      name: "Default",
+    });
+    await expect(speakers).toHaveAttribute("aria-disabled", "true");
+  },
+};

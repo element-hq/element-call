@@ -126,6 +126,46 @@ describe("createCallFooterViewModel", () => {
     });
   });
 
+  describe("audioOutputOptions", () => {
+    it("is an empty list, not absent, where the platform enumerates no outputs", () => {
+      platformMock.mockReturnValue("desktop");
+      outputSelectionMock.mockReturnValue(true);
+
+      const vm = createCallFooterViewModel(
+        testScope(),
+        buildMinimalCallViewModel(gridLayout),
+        mockMuteStates(),
+        mockMediaDevices({
+          audioInput: {
+            available$: constant(
+              new Map<string, DeviceLabel>([
+                ["mic1", { type: "name", name: "Microphone 1" }],
+              ]),
+            ),
+            selected$: constant(undefined),
+            select: vi.fn(),
+          },
+          // Safari enumerates no output devices whatsoever. Reproduced by the
+          // condition rather than by the browser, so it is checked on the
+          // Linux CI runners that have no Safari to check it with.
+          audioOutput: {
+            available$: constant(new Map<string, DeviceLabel>()),
+            selected$: constant(undefined),
+            select: vi.fn(),
+          },
+        }),
+        /* reactionIdentifier */ undefined,
+        { showControls: true, header: HeaderStyle.Standard },
+      );
+
+      // Empty rather than undefined: undefined means this menu has no notion
+      // of outputs at all, as the camera menu has none, and hides the section.
+      // Empty means there are none to list, and the menu still shows the
+      // section with a default in it, disabled.
+      expect(vm.audioOutputOptions$.value).toEqual([]);
+    });
+  });
+
   describe("audioOptions and videoOptions", () => {
     function checkEmptyFor(platform: string, layout: Layout): void {
       platformMock.mockReturnValue(platform);

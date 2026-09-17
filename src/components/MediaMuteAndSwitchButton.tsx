@@ -85,6 +85,14 @@ export interface MediaMuteAndSwitchButtonProps {
 
 const BLUR_ID = "blur";
 
+/**
+ * Stands for wherever the platform is sending audio, where it will not say.
+ *
+ * Not a device id the browser would recognise: nothing can be selected on a
+ * platform that lists no outputs, so this is only ever shown, never sent.
+ */
+const DEFAULT_OUTPUT_ID = "default";
+
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
   enabled,
@@ -251,6 +259,21 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         ? selectedOutputOption
         : selectedOption);
 
+  // Safari enumerates no output devices at all, and offers no way to choose
+  // one, so the list arrives empty. The section is shown all the same — audio
+  // is playing somewhere — naming that somewhere and disabling it like any
+  // single entry. A heading with nothing beneath it reads as a broken feature,
+  // and leaves the menu a different shape on one browser.
+  const noOutputsListed = outputOptions?.length === 0;
+  const speakerOptions: MenuOptions[] | undefined = noOutputsListed
+    ? [{ id: DEFAULT_OUTPUT_ID, label: { type: "default", name: null } }]
+    : outputOptions;
+  // And it is the selection, not merely the only row: it is where audio is
+  // going. An unchecked lone entry reads as nothing being chosen at all.
+  const selectedSpeaker = noOutputsListed
+    ? DEFAULT_OUTPUT_ID
+    : selectedOutputOption;
+
   const deviceItems = (
     kind: "input" | "output",
     items: MenuOptions[] | undefined,
@@ -356,7 +379,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             } as CSSProperties
           }
         >
-          {iconsAndLabels === "audio" && outputOptions && (
+          {iconsAndLabels === "audio" && speakerOptions && (
             <>
               {/* A menu may only contain items, separators and groups, so each
                   heading belongs to a group rather than sitting beside the
@@ -369,8 +392,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 </div>
                 {deviceItems(
                   "output",
-                  outputOptions,
-                  selectedOutputOption,
+                  speakerOptions,
+                  selectedSpeaker,
                   onSelectOutput,
                   (n) => t("settings.devices.speaker_numbered", { n }),
                 )}
