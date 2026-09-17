@@ -563,8 +563,14 @@ export function createCallViewModel$(
   const ownMembershipIdentity: CallMembershipIdentityParts = {
     userId,
     deviceId,
-    // This will only be consumed by the sticky membership manager. So it has no impact on legacy calls.
-    memberId: uuidv4(),
+    // Consumed by the sticky membership manager as `member.id`, *and* stamped
+    // into every to-device key event by the key transport. A pre-sticky
+    // membership advertises `${userId}:${deviceId}` as its `membershipID`
+    // instead, so a uuid there names a member no peer can resolve.
+    memberId:
+      matrixRTCMode === MatrixRTCMode.Matrix_2_0
+        ? uuidv4()
+        : `${userId}:${deviceId}`,
   };
 
   const localTransport =

@@ -10,6 +10,7 @@ import * as ComponentsCore from "@livekit/components-core";
 
 import { ObservableScope } from "./ObservableScope";
 import { AudioOutput } from "./MediaDevices";
+import { audioOutput as audioOutputSetting } from "../settings/settings";
 import { withTestScheduler } from "../utils/test";
 
 const BT_SPEAKER = {
@@ -93,6 +94,8 @@ describe("AudioOutput Tests", () => {
 
   beforeEach(() => {
     testScope = new ObservableScope();
+    // Device preferences persist in localStorage across tests
+    audioOutputSetting.setValue(undefined);
   });
 
   afterEach(() => {
@@ -150,10 +153,67 @@ describe("AudioOutput Tests", () => {
 
       expectObservable(audioOutput.selected$).toBe("abcde", {
         a: undefined,
-        b: { id: LAPTOP_SPEAKER.deviceId, virtualEarpiece: false },
+        // No "default" pseudo-device (Firefox): the virtual browser default is
+        // selected until the user picks something.
+        b: { id: "", virtualEarpiece: false },
         c: { id: MONITOR_SPEAKER.deviceId, virtualEarpiece: false },
         d: { id: LAPTOP_SPEAKER.deviceId, virtualEarpiece: false },
         e: { id: MONITOR_SPEAKER.deviceId, virtualEarpiece: false },
+      });
+    });
+  });
+
+  it("falls back to the browser default when the selected device disappears", () => {
+    withTestScheduler(({ behavior, cold, schedule, expectObservable }) => {
+      vi.mocked(ComponentsCore.createMediaDeviceObserver).mockReturnValue(
+        cold("a---b", {
+          a: DEVICE_LIST_B,
+          // The monitor is unplugged (or a Bluetooth sink changes profile)
+          b: [LAPTOP_SPEAKER],
+        }),
+      );
+
+      const audioOutput = new AudioOutput(
+        behavior("a", { a: true }),
+        testScope,
+      );
+
+      schedule("--a", {
+        a: () => audioOutput.select(MONITOR_SPEAKER.deviceId),
+      });
+
+      expectObservable(audioOutput.selected$).toBe("a-b-c", {
+        a: { id: "", virtualEarpiece: false },
+        b: { id: MONITOR_SPEAKER.deviceId, virtualEarpiece: false },
+        // Rather than pinning some other physical device, let the browser route
+        c: { id: "", virtualEarpiece: false },
+      });
+    });
+  });
+
+  it("lists the virtual browser default first when there is no default pseudo-device", () => {
+    withTestScheduler(({ behavior, cold, expectObservable }) => {
+      vi.mocked(ComponentsCore.createMediaDeviceObserver).mockReturnValue(
+        cold("a", { a: DEVICE_LIST_B }),
+      );
+
+      const audioOutput = new AudioOutput(
+        behavior("a", { a: true }),
+        testScope,
+      );
+
+      expectObservable(audioOutput.available$).toBe("a", {
+        a: new Map([
+          ["", { type: "default", name: null }],
+          [
+            LAPTOP_SPEAKER.deviceId,
+            { type: "name", name: LAPTOP_SPEAKER.label },
+          ],
+          [
+            MONITOR_SPEAKER.deviceId,
+            { type: "name", name: MONITOR_SPEAKER.label },
+          ],
+        ]),
       });
     });
   });
