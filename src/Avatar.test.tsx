@@ -29,7 +29,6 @@ const TestComponent: FC<
     <ClientContextProvider
       value={{
         state: "valid",
-        disconnected: false,
         supportedFeatures: {
           reactions: true,
         },

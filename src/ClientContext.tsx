@@ -17,8 +17,7 @@ import {
   type JSX,
 } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
-import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { ErrorPage } from "./FullScreenView";
 import { useHostBridge } from "./HostBridge";
@@ -42,9 +41,6 @@ export type ClientState = ValidClientState | ErrorState;
 export type ValidClientState = {
   state: "valid";
   authenticated?: AuthenticatedClient;
-  // 'Disconnected' rather than 'connected' because it tracks specifically
-  // whether the client is supposed to be connected but is not
-  disconnected: boolean;
   supportedFeatures: {
     reactions: boolean;
   };
@@ -276,7 +272,6 @@ export const ClientProvider: FC<Props> = ({ children, client }) => {
     }, [initClientState?.client, setAlreadyOpenedErr]),
   );
 
-  const [isDisconnected, setIsDisconnected] = useState(false);
   const [supportsReactions, setSupportsReactions] = useState(false);
 
   const state: ClientState | undefined = useMemo(() => {
@@ -300,7 +295,6 @@ export const ClientProvider: FC<Props> = ({ children, client }) => {
       state: "valid",
       authenticated,
       setClient,
-      disconnected: isDisconnected,
       supportedFeatures: {
         reactions: supportsReactions,
       },
@@ -311,16 +305,8 @@ export const ClientProvider: FC<Props> = ({ children, client }) => {
     initClientState,
     logout,
     setClient,
-    isDisconnected,
     supportsReactions,
   ]);
-
-  const onSync = useCallback(
-    (state: SyncState, _old: SyncState | null, data?: ISyncStateData) => {
-      setIsDisconnected(clientIsDisconnected(state, data));
-    },
-    [],
-  );
 
   useEffect(() => {
     if (!initClientState) {
@@ -333,20 +319,10 @@ export const ClientProvider: FC<Props> = ({ children, client }) => {
     if (PosthogAnalytics.hasInstance())
       PosthogAnalytics.instance.onLoginStatusChanged();
 
-    if (initClientState.client) {
-      initClientState.client.on(ClientEvent.Sync, onSync);
-    }
-
     if (!hostBridge.supportsReactions)
       logger.warn("The host does not permit reactions");
     setSupportsReactions(hostBridge.supportsReactions);
-
-    return (): void => {
-      if (initClientState.client) {
-        initClientState.client.removeListener(ClientEvent.Sync, onSync);
-      }
-    };
-  }, [initClientState, onSync, hostBridge]);
+  }, [initClientState, hostBridge]);
 
   if (alreadyOpenedErr) {
     return <ErrorPage error={alreadyOpenedErr} />;
@@ -388,9 +364,3 @@ const loadSession = (): Session | undefined => {
 
   return JSON.parse(data);
 };
-
-const clientIsDisconnected = (
-  syncState: SyncState,
-  syncData?: ISyncStateData,
-): boolean =>
-  syncState === "ERROR" && syncData?.error?.name === "ConnectionError";

@@ -88,7 +88,7 @@ builds the view model with
 | Analytics                        | `src/analytics/PosthogEvents.ts`, `PosthogAnalytics.ts`                                                                                                                                                                                            | `rtcSession.statistics`, account data                                                                                                                                                                          |
 | Types only                       | `src/UrlParams.ts`, `src/state/MediaDevices.ts`, `AndroidControlledAudioOutput.ts`, `IOSControlledAudioOutput.ts`, `initialMuteState.ts`, `state/media/RingingMediaViewModel.ts` (`RTCCallIntent`), `src/useEvents.ts` (`TypedEventEmitter` types) | replaced by a local `CallIntent` type / kept as generic emitter typing                                                                                                                                         |
 | Runtime misc                     | `src/useLocalStorage.ts` (`TypedEventEmitter`), `src/room/GroupCallErrorBoundary.tsx` (`MatrixError`), `src/room/KnockLobbyView.tsx` (shell)                                                                                                       | see S6                                                                                                                                                                                                         |
-| Context                          | `src/ClientContext.tsx`                                                                                                                                                                                                                            | `useClient`/`useClientState` used by `Avatar`, `sharedKeyManagement`, `useReactionsSender`, `submit-rageshake`, `DisconnectedBanner`                                                                           |
+| Context                          | `src/ClientContext.tsx`                                                                                                                                                                                                                            | `useClient`/`useClientState` used by `Avatar`, `sharedKeyManagement`, `useReactionsSender`, `submit-rageshake`                                                                           |
 
 Hosts: `component/index.tsx:291`, `src/room/useLoadGroupCall.ts:335`,
 `sdk/main.ts:128` (own `MatrixRTCSessionManager`; waits on
@@ -433,7 +433,6 @@ MSC4143: sticky member events, slots, the spec key message), in
   rageshake requests via `subscribeTimeline`.
 - `DeveloperSettingsTab`: sticky probe → `getCapabilities()`; custom LiveKit
   URL validation → `driver.getLivekitToken(...)`.
-- `DisconnectedBanner` → `HomeserverUnreachable` in `status$` (C12).
 - `window.rtcSession` debug handle → `window.matrixRtc = { participation }`.
 
 ### 4.5 Hosts
@@ -737,7 +736,7 @@ participation, clientDriver, …)` sits next to it; both build a
   `VideoPreview.tsx`, `useRoomInfo()` (replaces `useRoomName/Avatar/JoinRule/State`),
   `InviteModal.tsx`, `Avatar.tsx`, `useOwnProfile.ts`, `ProfileSettingsTab.tsx`,
   `SettingsModal.tsx`, `DeveloperSettingsTab.tsx`, `submit-rageshake.ts`,
-  `DisconnectedBanner.tsx`, `analytics/PosthogEvents.ts`, `controls.ts`, and a
+  `analytics/PosthogEvents.ts`, `controls.ts`, and a
   first `CallView.stories.tsx` (lobby, in call, ended) driven by
   `MockMatrixDriver`.
 - **S4b ☑ (2026-09-16):** `ReactionsSenderProvider` takes `ownIdentifier`,
@@ -785,13 +784,14 @@ roomInfo.encrypted)` (`useRoomEncryptionSystem` keeps the client for the
   client driver's public `client`/`room` are gone. **Consequence:** the
   component and its dev harness (`ElementCallClientBased`) now run every
   call on the crate.
-- **Banner on the driver (2026-09-16):** `useHomeserverConnected(drivers,
-graceMs)` (`src/driver/`) follows `rtcDriver.isHomeserverConnected()` /
-  `subscribeConnectivity` and reports a lapse only after
-  `sync_disconnect_grace_period_ms`, since the driver reports every sync
-  hiccup where the client state waited for a `ConnectionError`;
-  `DisconnectedBanner` uses it whenever drivers are provided and falls back
-  to the client state for the shell. The mock RTC driver keeps several
+- **Banner dropped (2026-09-17):** the disconnected banner, its
+  `useHomeserverConnected` hook and the client state's `disconnected` flag
+  are gone. The local membership already carries the connection state, so
+  the reconnecting overlay covers the in-call case where it matters; in the
+  lobby the banner added little. `HomeserverConnected` in
+  `state/CallViewModel/localMember/` remains the one consumer of
+  `rtcDriver.isHomeserverConnected()` / `subscribeConnectivity` and of
+  `sync_disconnect_grace_period_ms`. The mock RTC driver keeps several
   connectivity sinks (the crate's and the UI's).
 - **S4 closed (2026-09-16):** `CallView.stories.tsx` (Lobby with a peer,
   NoTransport as the error path, Ended) over the mock drivers, no client;

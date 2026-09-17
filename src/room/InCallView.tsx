@@ -505,7 +505,6 @@ export const InCallView: FC<InCallViewProps> = ({
             [styles.hidden]: !showHeader,
           })}
           ref={headerRef}
-          disconnectedBanner={false} // This screen has its own 'reconnecting' toast
         >
           <LeftNav>
             <RoomHeaderInfo
