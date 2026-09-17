@@ -123,7 +123,10 @@ export const backgroundBlur = new Setting<boolean>("background-blur", false);
  */
 export const backgroundEffect = new Setting<string>(
   "background-effect",
-  "none",
+  // Defaults to whatever blur the user had already chosen, so someone who
+  // turned blur on before this existed still has it afterwards. Their own
+  // choice replaces this the moment they make one.
+  backgroundBlur.getValue() ? "blur" : "none",
 );
 
 export const showHandRaisedTimer = new Setting<boolean>(
