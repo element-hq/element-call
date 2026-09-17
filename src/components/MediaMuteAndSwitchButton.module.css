@@ -136,6 +136,16 @@ Please see LICENSE in the repository root for full details.
   outline-offset: calc(-1 * var(--cpd-border-width-2));
 }
 
+/* The rule under a section heading, drawn edge to edge. A separator insets
+   itself by default, which leaves it floating short of the menu's sides.
+   The menu also gives a separator room beneath it, for one dividing two
+   sections; under a heading that reads as the heading floating away from
+   what it names. */
+.menu .sectionRule {
+  margin-inline: 0;
+  margin-block-end: var(--cpd-space-3x);
+}
+
 /*
  * The Background effects grid.
  *

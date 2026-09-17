@@ -650,6 +650,12 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             <div ref={heading} aria-hidden className={styles.sectionHeading}>
               <MenuTitle title={optionsButtonLabel} />
             </div>
+            {/* The camera menu rules off under each heading. The microphone
+                menu still divides its two sections instead, which is the
+                design the audio menu was drawn to. */}
+            {iconsAndLabels === "video" && (
+              <Separator className={styles.sectionRule} />
+            )}
             {/* The heading sits outside, so the meter can never ride up over it:
               sticky only holds while this block is in view. */}
             <div role="none">
@@ -672,22 +678,18 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           {iconsAndLabels === "video" &&
             backgroundEffects !== undefined &&
             backgroundEffects.length > 0 && (
-              <>
-                <Separator />
-                <div
-                  role="group"
-                  aria-label={t("settings.background_effects_header")}
-                >
-                  <div aria-hidden className={styles.sectionHeading}>
-                    <MenuTitle
-                      title={t("settings.background_effects_header")}
-                    />
-                  </div>
-                  <div role="none" className={styles.effectGrid}>
-                    {effectTiles()}
-                  </div>
+              <div
+                role="group"
+                aria-label={t("settings.background_effects_header")}
+              >
+                <div aria-hidden className={styles.sectionHeading}>
+                  <MenuTitle title={t("settings.background_effects_header")} />
                 </div>
-              </>
+                <Separator className={styles.sectionRule} />
+                <div role="none" className={styles.effectGrid}>
+                  {effectTiles()}
+                </div>
+              </div>
             )}
         </div>
         {toggles.length > 0 && <hr />}
