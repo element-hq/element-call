@@ -136,22 +136,6 @@ Please see LICENSE in the repository root for full details.
   outline-offset: calc(-1 * var(--cpd-border-width-2));
 }
 
-/* A heading that is ruled off sits closer to its rule than the menu's own
-   spacing allows, which is set for a heading with nothing under it. */
-.menu .sectionHeadingRuled h3 {
-  padding-block-end: var(--cpd-space-1x);
-}
-
-/* The rule under a section heading, drawn edge to edge. A separator insets
-   itself by default, which leaves it floating short of the menu's sides.
-   The menu also gives a separator room beneath it, for one dividing two
-   sections; under a heading that reads as the heading floating away from
-   what it names. */
-.menu .sectionRule {
-  margin-inline: 0;
-  margin-block-end: var(--cpd-space-3x);
-}
-
 /*
  * The Background effects grid.
  *
@@ -183,11 +167,12 @@ Please see LICENSE in the repository root for full details.
      their left edge up with the "B" of the heading above them and with the
      radio buttons above that. Matching the surrounding boxes instead puts the
      tiles to the left of both, since a heading insets its own text. */
-  /* The same distance to the menu's frame on every side. The rule above and
-     the menu's own bottom padding already supply part of that, so what is set
-     here is only the remainder: the sides carry it all, the top is topped up
-     over the rule's spacing, and the bottom is left to the menu. */
-  padding: var(--cpd-space-1x) var(--cpd-space-4x) 0;
+  /* The sides carry the full inset to the menu's frame. Above, the grid is
+     the first control of its section, so it starts where a device row's
+     control starts under its own rule: the heading's spacing supplies most of
+     that, and this adds the same step a device row holds above its control.
+     Below, the menu's own padding is already the inset, so nothing is set. */
+  padding: var(--cpd-space-2x) var(--cpd-space-4x) 0;
 }
 
 /*

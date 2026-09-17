@@ -823,6 +823,40 @@ export const BackgroundEffects: Story = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
 
+    // The section is headed by its own rule, drawn edge to edge like the
+    // camera section's above it, and nothing divides the two besides.
+    const menu = document.body.querySelector("[role='menu']")!;
+    await expect(
+      document.body.querySelectorAll("[role='separator']"),
+    ).toHaveLength(0);
+    const headings = document.body.querySelectorAll<HTMLElement>(
+      `.${styles.sectionHeading}`,
+    );
+    await expect(headings).toHaveLength(2);
+    const frame = menu.getBoundingClientRect();
+    const rules = [...headings].map((h) => h.querySelector("h3")!);
+    for (const rule of rules) {
+      await expect(
+        Number.parseFloat(getComputedStyle(rule).borderBottomWidth),
+      ).toBeGreaterThan(0);
+      const box = rule.getBoundingClientRect();
+      await expect(box.left - frame.left).toBeLessThanOrEqual(2);
+      await expect(frame.right - box.right).toBeLessThanOrEqual(2);
+    }
+
+    // The grid is its section's first control, so it starts under its rule
+    // where the camera list's first control starts under that one. Stated as
+    // the two being level, because the design draws them level; measured off
+    // the mock they sit within a couple of pixels of each other.
+    const radio = document.body.querySelector("input[type='radio']")!;
+    const tile = document.body.querySelector(`.${styles.effectTile}`)!;
+    const under = (control: Element, rule: Element): number =>
+      control.getBoundingClientRect().top -
+      rule.getBoundingClientRect().bottom;
+    await expect(
+      Math.abs(under(radio, rules[0]) - under(tile, rules[1])),
+    ).toBeLessThanOrEqual(1);
+
     const blur = await within(document.body).findByRole("menuitemradio", {
       name: "Blur",
     });
