@@ -6,9 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ProcessorWrapper,
+  BackgroundProcessorWrapper,
+  type ProcessorWrapper,
   supportsBackgroundProcessors as supportsBackgroundProcessorsLivekitSdk,
   type BackgroundOptions,
+  type SwitchBackgroundProcessorOptions,
 } from "@livekit/track-processors";
 import {
   createContext,
@@ -17,6 +19,7 @@ import {
   use,
   useEffect,
   useMemo,
+  useState,
 } from "react";
 import { type LocalVideoTrack } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -24,10 +27,16 @@ import { combineLatest, map, type Observable } from "rxjs";
 import { useObservable } from "observable-hooks";
 
 import {
-  backgroundBlur as backgroundBlurSettings,
+  backgroundEffect as backgroundEffectSetting,
   useSetting,
 } from "../settings/settings";
-import { BlurBackgroundTransformer } from "./BlurBackgroundTransformer";
+import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
+import {
+  blurRadius,
+  imagePathFor,
+  parseEffect,
+  type BackgroundEffect,
+} from "./backgroundEffects";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
 import { platform } from "../Platform";
@@ -129,26 +138,68 @@ function supportsBackgroundProcessors(): boolean {
   return supportsBackgroundProcessorsLivekitSdk() && platform === "desktop";
 }
 
+/** Translates a chosen effect into the pipeline's own vocabulary. */
+function switchOptionsFor(
+  effect: BackgroundEffect,
+): SwitchBackgroundProcessorOptions {
+  switch (effect.kind) {
+    case "blur":
+      return { mode: "background-blur", blurRadius };
+    case "image": {
+      const imagePath = imagePathFor(effect.id);
+      return imagePath
+        ? { mode: "virtual-background", imagePath }
+        : { mode: "disabled" };
+    }
+    default:
+      return { mode: "disabled" };
+  }
+}
+
 export const ProcessorProvider: FC<Props> = ({ children }) => {
-  // The setting the user wants to have
-  const [blurActivated] = useSetting(backgroundBlurSettings);
+  const [effectRaw] = useSetting(backgroundEffectSetting);
   const supported = useMemo(() => supportsBackgroundProcessors(), []);
-  const blur = useMemo(
+
+  // One pipeline for the lifetime of the app, so the pre-join preview and the
+  // call share it and its priming frame is spent before anything is published
+  // (D4).
+  const pipeline = useMemo(
     () =>
-      new ProcessorWrapper(
-        new BlurBackgroundTransformer({ blurRadius: 15 }),
-        "background-blur",
+      new BackgroundProcessorWrapper(
+        new BackgroundEffectTransformer({ backgroundDisabled: true }),
+        "background-effect",
       ),
     [],
   );
+
+  // D5: nothing is attached until an effect is first chosen, so a user who
+  // never chooses one pays neither the segmentation assets nor the time to
+  // initialise them. Once attached it stays attached, including at no effect,
+  // so a later change is a switch rather than a fresh attachment and spends no
+  // further priming frame.
+  const [attached, setAttached] = useState(
+    () => parseEffect(effectRaw).kind !== "none",
+  );
+  useEffect(() => {
+    if (parseEffect(effectRaw).kind !== "none") setAttached(true);
+  }, [effectRaw]);
+
+  // D2: switch the running pipeline in place rather than tearing it down, so
+  // the previous effect stays in force until the new one is live.
+  useEffect(() => {
+    if (!supported || !attached) return;
+    pipeline
+      .switchTo(switchOptionsFor(parseEffect(effectRaw)))
+      .catch((e) => logger.warn("Failed to switch background effect", e));
+  }, [pipeline, supported, attached, effectRaw]);
 
   // This is the actual state exposed through the context
   const processorState = useMemo(
     () => ({
       supported,
-      processor: supported && blurActivated ? blur : undefined,
+      processor: supported && attached ? pipeline : undefined,
     }),
-    [supported, blurActivated, blur],
+    [supported, attached, pipeline],
   );
 
   return <ProcessorContext value={processorState}>{children}</ProcessorContext>;

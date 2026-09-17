@@ -117,6 +117,15 @@ export const videoInput = new Setting<string | undefined>(
 
 export const backgroundBlur = new Setting<boolean>("background-blur", false);
 
+/**
+ * The background effect applied to the local camera: "none", "blur", or
+ * "image:<id>". See backgroundEffects.ts for the stored form.
+ */
+export const backgroundEffect = new Setting<string>(
+  "background-effect",
+  "none",
+);
+
 export const showHandRaisedTimer = new Setting<boolean>(
   "hand-raised-show-timer",
   false,
