@@ -338,18 +338,32 @@ Please see LICENSE in the repository root for full details.
  */
 .effectRemove {
   position: absolute;
-  inset-block-start: 50%;
-  inset-inline-start: 50%;
-  translate: -50% -50%;
+  /* On the tile's top-right corner, where Zoom and Teams both put it, and
+     clear of the middle: centred, it sat inside the target for choosing the
+     tile, so the one destructive action lived where the ordinary one does. */
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  translate: 30% -30%;
   display: none;
   align-items: center;
   justify-content: center;
-  inline-size: 24px;
-  block-size: 24px;
+  inline-size: 22px;
+  block-size: 22px;
   border-radius: 50%;
   background: var(--cpd-color-bg-canvas-default);
   color: var(--cpd-color-icon-primary);
+  box-shadow: 0 0 0 var(--cpd-border-width-1)
+    var(--cpd-color-border-interactive-secondary);
   cursor: pointer;
+}
+
+/* Red under the pointer: the corner separates it from choosing the tile, and
+   this says what it will do once you are there. */
+.effectRemove:hover {
+  background: var(--cpd-color-bg-critical-subtle);
+  color: var(--cpd-color-icon-critical-primary);
+  box-shadow: 0 0 0 var(--cpd-border-width-1)
+    var(--cpd-color-border-critical-primary);
 }
 
 .effectGrid .effectTileWrap:hover .effectRemove,
