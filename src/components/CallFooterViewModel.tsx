@@ -5,8 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { combineLatest, map, switchMap } from "rxjs";
+import { combineLatest, map, type Observable, switchMap } from "rxjs";
 import { supportsBackgroundProcessors } from "@livekit/track-processors";
+import { supportsAudioOutputSelection } from "livekit-client";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
@@ -67,49 +68,50 @@ function buildDeviceBehaviors(
   | "audioOptions$"
   | "selectedAudio$"
   | "selectAudioButtonOption$"
+  | "audioOutputOptions$"
+  | "selectedAudioOutput$"
+  | "selectAudioOutputOption$"
   | "videoOptions$"
   | "selectedVideo$"
   | "selectVideoButtonOption$"
   | "toggleBlur$"
   | "videoBlurEnabled$"
 > {
-  return {
-    audioOptions$: scope.behavior(
-      disableSwitcher$.pipe(
-        switchMap((disable) =>
-          disable
-            ? constant([] as MenuOptions[])
-            : mediaDevices.audioInput.available$.pipe(
-                map((available) =>
-                  [...available.entries()].map(([id, label]) => ({
-                    id,
-                    label,
-                  })),
-                ),
+  const options$ = (
+    available$: Behavior<Map<string, MenuOptions["label"]>>,
+  ): Observable<MenuOptions[]> =>
+    disableSwitcher$.pipe(
+      switchMap((disable) =>
+        disable
+          ? constant([] as MenuOptions[])
+          : available$.pipe(
+              map((available) =>
+                [...available.entries()].map(([id, label]) => ({ id, label })),
               ),
-        ),
+            ),
       ),
-    ),
+    );
+
+  return {
+    audioOptions$: scope.behavior(options$(mediaDevices.audioInput.available$)),
     selectedAudio$: scope.behavior(
       mediaDevices.audioInput.selected$.pipe(map((s) => s?.id)),
     ),
     selectAudioButtonOption$: constant(mediaDevices.audioInput.select),
-    videoOptions$: scope.behavior(
-      disableSwitcher$.pipe(
-        switchMap((disable) =>
-          disable
-            ? constant([] as MenuOptions[])
-            : mediaDevices.videoInput.available$.pipe(
-                map((available) =>
-                  [...available.entries()].map(([id, label]) => ({
-                    id,
-                    label,
-                  })),
-                ),
-              ),
-        ),
-      ),
+    audioOutputOptions$: scope.behavior(
+      options$(mediaDevices.audioOutput.available$),
     ),
+    selectedAudioOutput$: scope.behavior(
+      mediaDevices.audioOutput.selected$.pipe(map((s) => s?.id)),
+    ),
+    // Safari and most Firefox builds cannot route audio to a chosen device at
+    // all. Withholding the callback is what renders the section disabled.
+    selectAudioOutputOption$: constant(
+      supportsAudioOutputSelection()
+        ? mediaDevices.audioOutput.select
+        : undefined,
+    ),
+    videoOptions$: scope.behavior(options$(mediaDevices.videoInput.available$)),
     selectedVideo$: scope.behavior(
       mediaDevices.videoInput.selected$.pipe(map((s) => s?.id)),
     ),
@@ -263,10 +265,13 @@ export function createLobbyFooterViewModel(
       reactionData: undefined,
       tileStoreGeneration: undefined,
       audioOptions: undefined,
+      audioOutputOptions: undefined,
       videoOptions: undefined,
       selectedAudio: undefined,
+      selectedAudioOutput: undefined,
       selectedVideo: undefined,
       selectAudioButtonOption: undefined,
+      selectAudioOutputOption: undefined,
       selectVideoButtonOption: undefined,
     }),
     ...buildMuteBehaviors(scope, muteStates),
