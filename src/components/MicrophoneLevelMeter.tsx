@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useCallback, useState, type FC } from "react";
+import { useCallback, useState, type FC, type Ref } from "react";
 import { Text } from "@vector-im/compound-web";
 import { MicOnIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
@@ -20,6 +20,11 @@ import { observeElementSize$ } from "../utils/elementSize";
 export interface MicrophoneLevelMeterProps {
   state: MicrophoneState;
   className?: string;
+  /**
+   * The meter's own element. Its height is what a scroll container has to keep
+   * clear to stop the meter covering the row it has just scrolled to.
+   */
+  ref?: Ref<HTMLDivElement>;
 }
 
 /**
@@ -32,6 +37,7 @@ export interface MicrophoneLevelMeterProps {
 export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
   state,
   className,
+  ref,
 }) => {
   const { t } = useTranslation();
   // How many bars there is room for. The bars never change size, so this is
@@ -55,7 +61,7 @@ export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
 
   if (state.type !== "level")
     return (
-      <div className={classNames(styles.meter, className)}>
+      <div ref={ref} className={classNames(styles.meter, className)}>
         <MicOnIcon width={24} height={24} className={styles.icon} aria-hidden />
         <Text size="sm" className={styles.message}>
           {state.type === "permission-denied"
@@ -66,7 +72,7 @@ export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
     );
 
   return (
-    <div className={classNames(styles.meter, className)}>
+    <div ref={ref} className={classNames(styles.meter, className)}>
       <MicOnIcon width={24} height={24} className={styles.icon} aria-hidden />
       <div
         ref={track}

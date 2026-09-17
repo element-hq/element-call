@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  useCallback,
   useState,
   type CSSProperties,
   type FC,
@@ -191,6 +192,43 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 
   // Only while the menu is open, so nothing holds a second capture of the
   // microphone for the length of a call.
+  // The meter sits over the foot of the scrolling list, so the list has to
+  // keep that much of itself clear: a row scrolled to by the keyboard would
+  // otherwise arrive underneath it, half-read. Its own height, measured,
+  // because the failure states are two lines where a level is one.
+  const [meterHeight, setMeterHeight] = useState<number>();
+  const meter = useCallback(
+    (element: HTMLDivElement | null): (() => void) | undefined => {
+      if (element === null) return;
+      const subscription = observeElementSize$(element)
+        .pipe(
+          map(({ height }) => height),
+          distinctUntilChanged(),
+        )
+        .subscribe(setMeterHeight);
+      return (): void => subscription.unsubscribe();
+    },
+    [],
+  );
+
+  // The headings stand over the head of the list, so it has to keep their
+  // height clear too — the same bargain as the meter, at the other end. One
+  // measurement serves both: the sections are headed alike.
+  const [headingHeight, setHeadingHeight] = useState<number>();
+  const heading = useCallback(
+    (element: HTMLDivElement | null): (() => void) | undefined => {
+      if (element === null) return;
+      const subscription = observeElementSize$(element)
+        .pipe(
+          map(({ height }) => height),
+          distinctUntilChanged(),
+        )
+        .subscribe(setHeadingHeight);
+      return (): void => subscription.unsubscribe();
+    },
+    [],
+  );
+
   const microphoneState = useMicrophoneLevel(
     selectedOption,
     menuOpen && iconsAndLabels === "audio",
@@ -409,6 +447,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             {
               "--device-list-max-height":
                 listMaxHeight === undefined ? undefined : `${listMaxHeight}px`,
+              "--device-list-scroll-padding-end":
+                meterHeight === undefined ? undefined : `${meterHeight}px`,
+              "--device-list-scroll-padding-start":
+                headingHeight === undefined ? undefined : `${headingHeight}px`,
             } as CSSProperties
           }
         >
@@ -420,7 +462,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               <div role="group" aria-label={t("settings.devices.speaker")}>
                 {/* The heading is decoration: the group carries the name, and
                     a menu may only contain items, separators and groups. */}
-                <div aria-hidden>
+                <div aria-hidden className={styles.sectionHeading}>
                   <MenuTitle title={t("settings.devices.speaker")} />
                 </div>
                 {deviceItems(
@@ -435,7 +477,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             </>
           )}
           <div role="group" aria-label={optionsButtonLabel}>
-            <div aria-hidden>
+            <div ref={heading} aria-hidden className={styles.sectionHeading}>
               <MenuTitle title={optionsButtonLabel} />
             </div>
             {/* The heading sits outside, so the meter can never ride up over it:
@@ -450,6 +492,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               )}
               {iconsAndLabels === "audio" && (
                 <MicrophoneLevelMeter
+                  ref={meter}
                   state={microphoneState}
                   className={styles.stickyMeter}
                 />

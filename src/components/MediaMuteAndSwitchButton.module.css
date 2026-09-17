@@ -63,6 +63,29 @@ Please see LICENSE in the repository root for full details.
   overflow-y: auto;
   min-block-size: 0;
   max-block-size: var(--device-list-max-height);
+  /* The heading stands over the head of this list and the level meter over its
+     foot. Scrolling a row flush to either edge would put it underneath one of
+     them, which is how a row reached by the keyboard ends up half-readable;
+     this keeps both their heights clear for anything the browser scrolls to.
+     Set by the component, which is the only thing that can measure them. */
+  scroll-padding-block: var(--device-list-scroll-padding-start, 0)
+    var(--device-list-scroll-padding-end, 0);
+}
+
+/* Each section's heading stays at the top of the scrollport while any of that
+   section is still in view, so a long list never leaves you wondering which
+   kind of device you are looking at. It leaves with its own section, because
+   sticky only holds while the group it belongs to is in view.
+
+   Opaque, and held a border width clear of the sides, for the same reason as
+   the meter below: this is a positioned element, so it paints above the
+   outline the menu draws its frame with, and would swallow it. */
+.sectionHeading {
+  position: sticky;
+  inset-block-start: 0;
+  background: var(--cpd-color-bg-canvas-default);
+  margin-inline: var(--cpd-border-width-1);
+  margin-block-start: var(--cpd-border-width-1);
 }
 
 /* The meter belongs to the microphone section: it stays at the bottom of the
