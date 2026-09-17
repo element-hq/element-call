@@ -5,16 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC } from "react";
+import { useCallback, useState, type FC } from "react";
 import { Text } from "@vector-im/compound-web";
 import { MicOnIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
+import { distinctUntilChanged, map } from "rxjs";
+
 import styles from "./MicrophoneLevelMeter.module.css";
 import { METER_SEGMENTS, type MicrophoneState } from "../state/MicrophoneLevel";
+import { observeElementSize$ } from "../utils/elementSize";
 
-interface Props {
+export interface MicrophoneLevelMeterProps {
   state: MicrophoneState;
   className?: string;
 }
@@ -26,8 +29,29 @@ interface Props {
  * as whether the user is being heard: it keeps moving while muted, and the mute
  * control is what says nothing is transmitted.
  */
-export const MicrophoneLevelMeter: FC<Props> = ({ state, className }) => {
+export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
+  state,
+  className,
+}) => {
   const { t } = useTranslation();
+  // How many bars there is room for. The bars never change size, so this is
+  // what absorbs a change of width. Starts at the full count so that the first
+  // paint is a meter rather than a single bar, and so that a renderer with no
+  // layout at all — jsdom — still draws the whole thing.
+  const [barCount, setBarCount] = useState(METER_SEGMENTS);
+  const track = useCallback(
+    (element: HTMLDivElement | null): (() => void) | undefined => {
+      if (element === null) return;
+      const subscription = observeElementSize$(element)
+        .pipe(
+          map(({ width }) => barsThatFit(element, width)),
+          distinctUntilChanged(),
+        )
+        .subscribe(setBarCount);
+      return (): void => subscription.unsubscribe();
+    },
+    [],
+  );
 
   if (state.type !== "level")
     return (
@@ -45,6 +69,7 @@ export const MicrophoneLevelMeter: FC<Props> = ({ state, className }) => {
     <div className={classNames(styles.meter, className)}>
       <MicOnIcon width={24} height={24} className={styles.icon} aria-hidden />
       <div
+        ref={track}
         className={styles.segments}
         role="meter"
         aria-label={t("microphone_level.label")}
@@ -56,12 +81,15 @@ export const MicrophoneLevelMeter: FC<Props> = ({ state, className }) => {
           max: METER_SEGMENTS,
         })}
       >
-        {Array.from({ length: METER_SEGMENTS }, (_, i) => (
+        {Array.from({ length: barCount }, (_, i) => (
           <span
             key={i}
             aria-hidden
             className={classNames(styles.segment, {
-              [styles.segmentLit]: i < state.level,
+              // The level is a share of the scale, not a number of bars: how
+              // many bars stand for it depends on how many there are.
+              [styles.segmentLit]:
+                i < Math.round((state.level / METER_SEGMENTS) * barCount),
             })}
           />
         ))}
@@ -69,3 +97,18 @@ export const MicrophoneLevelMeter: FC<Props> = ({ state, className }) => {
     </div>
   );
 };
+
+/**
+ * How many bars fit across `width`, at the size the stylesheet draws them.
+ *
+ * Measured off a rendered bar rather than told: the size of a bar and of the
+ * space beside it are a design question, settled in the stylesheet, and reading
+ * them back is what keeps them from being settled twice.
+ */
+function barsThatFit(track: HTMLElement, width: number): number {
+  const gap = Number.parseFloat(getComputedStyle(track).columnGap);
+  const bar = track.firstElementChild?.getBoundingClientRect().width ?? 0;
+  // A renderer that lays nothing out tells us nothing; keep the full count.
+  if (!(bar > 0) || !(gap >= 0)) return METER_SEGMENTS;
+  return Math.max(1, Math.floor((width + gap) / (bar + gap)));
+}

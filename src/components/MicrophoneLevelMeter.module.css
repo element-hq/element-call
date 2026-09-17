@@ -27,12 +27,28 @@ Please see LICENSE in the repository root for full details.
 }
 
 .segments {
-  /* Spans the menu by spreading the gaps, so the bars keep their proportion
-     instead of growing to fill the space. */
+  /* A bar and the space beside it are always the same size; what changes with
+     the width available is how many bars there are. Spreading a fixed number of
+     bars instead would make the meter a different shape in every place it is
+     used, and close them up into one solid block wherever the space ran short —
+     and a meter whose bars touch stops reading as a count, which is what
+     carries the level for anyone who cannot rely on the colour.
+
+     Both sizes are set here and nowhere else: the component reads them back off
+     the rendered bars to work out how many fit. */
   flex: 1;
+  /* The width decides the count, never the other way round. Containment is
+     what enforces that: without it the bars are both a floor under the width
+     and the widest thing in the menu, so the meter would set the menu's width
+     and the device names — which are what a person is reading — would have to
+     fit around it. */
+  contain: inline-size;
+  min-inline-size: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* Half again as wide as a bar, as the design has it: bars set as close as
+     their own width read as a solid block long before they touch. */
+  gap: var(--cpd-space-1-5x);
 }
 
 .segment {
